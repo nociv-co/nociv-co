@@ -1,0 +1,20 @@
+backend:
+  name: github
+  repo: nociv-co/nociv-site
+  branch: main
+
+media_folder: "images"
+public_folder: "/images"
+
+collections:
+  - name: "pages"
+    label: "Pages"
+    files:
+      - file: "content/home.json"
+        label: "Home Page"
+        name: "home"
+        fields:
+          - {label: "Title", name: "title", widget: "string"}
+          - {label: "Subtitle", name: "subtitle", widget: "string"}
+          - {label: "Manifesto", name: "manifesto", widget: "text"}
+          - {label: "Next Pop-Up", name: "popup", widget: "string"}
