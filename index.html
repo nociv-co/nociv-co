@@ -6,94 +6,97 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
 <style>
-body{
-  margin:0;
-  background:black;
-  color:#ccc;
-  font-family:Arial, Helvetica, sans-serif;
-  text-align:center;
+body {
+  margin: 0;
+  background: black;
+  color: #ccc;
+  font-family: Arial, Helvetica, sans-serif;
+  text-align: center;
 }
 
-.manifesto{
-  font-size:1.2rem;
-  line-height:2.2;
-  margin-bottom:60px;
-  max-width:700px;
-  margin-left:auto;
-  margin-right:auto;
+a {
+  color: #ccc;
+  text-decoration: none;
 }
 
-.section{ margin-top:80px; }
-
-button{
-  background:#111;
-  color:#aaa;
-  border:1px solid #333;
-  padding:6px 12px;
-  cursor:pointer;
+header img {
+  width: 100%;
+  max-width: 700px;
+  margin-top: 40px;
+  margin-bottom: 40px;
 }
 
-button:hover{ background:#333; }
-
-#toolContainer, #colorContainer{
-  background:#1a1a1a;
-  padding:15px;
-  margin-top:15px;
+#states button {
+  margin: 4px;
+  background: #111;
+  color: #aaa;
+  border: 1px solid #333;
+  padding: 6px 12px;
+  cursor: pointer;
+}
+#states button:hover {
+  background: #333;
 }
 
-#toolRow{
-  display:flex;
-  justify-content:center;
-  gap:10px;
+#editor {
+  display: none;
+  margin-top: 40px;
 }
 
-#states button{
-  margin:4px;
+textarea {
+  width: 100%;
+  padding: 12px;
+  background: #111;
+  border: 1px solid #333;
+  color: #ccc;
+  resize: none;
+  font-size: 16px;
 }
 
-canvas{
-  width:100%;
-  background:white;
-  display:block;
-  touch-action:none;
+#sendBtn {
+  margin-top: 20px;
+  padding: 10px 20px;
+  cursor: pointer;
+  background: #111;
+  border: 1px solid #444;
+  color: #ccc;
+}
+#sendBtn:hover {
+  background: #333;
 }
 
-.stateTag{
-  border:1px solid #444;
-  padding:4px 8px;
-  font-size:12px;
+.postWrap {
+  border-top: 1px solid #222;
+  padding: 16px 0;
+  text-align: left;
+}
+.postDate {
+  float: right;
+  opacity: .6;
+  font-size: 12px;
+}
+.postText {
+  white-space: pre-wrap;
+  margin-top: 10px;
 }
 
-.dateTag{
-  font-size:12px;
-  opacity:.6;
+.greenMark {
+  color: #0b3d2e;
+}
+
+.clearfix {
+  clear: both;
 }
 </style>
 </head>
 
 <body>
 
-<!-- LOGO -->
-<div style="max-width:900px; margin:60px auto 40px auto;">
-  <img src="headernociv.svg" style="width:100%; max-width:600px;">
-</div>
+<header>
+  <img src="headergreynociv.svg" alt="NOCIV">
+</header>
 
-<p class="manifesto">
-Representing Black America.<br><br>
-Showcasing present connection.<br><br>
-No ads. No algorithm. Just human.
-</p>
-
-<div class="section">
-<h2>Next Pop-Up</h2>
-<p>Phoenix, AZ<br>Coming Soon</p>
-</div>
-
-<hr style="margin:80px 0; border-color:#222;">
-
-<div style="max-width:900px; margin:60px auto 40px auto;">
-<img src="black-america.svg" style="width:100%;">
-</div>
+<hr style="border-color:#222; margin:30px 0;">
 
 <section style="max-width:900px; margin:auto;">
 
@@ -104,225 +107,129 @@ this is how word of mouth works, it goes peer to peer and reaches different stat
 
 <div id="states"></div>
 
-<div id="editor" style="display:none; margin-top:40px;">
-<h2 id="stateTitle"></h2>
+<div id="editor">
+  <h2 id="stateTitle"></h2>
 
-<!-- WRITE -->
-<div style="margin-bottom:40px;">
-<h3>Write Something</h3>
-<input id="textInput" placeholder="Type here..."
-style="width:100%; padding:10px; background:#111; border:1px solid #333; color:#ccc;">
-<button id="addTextBtn" style="margin-top:10px;">Add To Canvas</button>
-</div>
+  <div style="margin-bottom:20px; text-align:left;">
+    <label for="postInput">Speak Your Truth</label>
+    <textarea id="postInput" rows="4"></textarea>
+  </div>
 
-<!-- DRAW -->
-<div>
-<h3>Or Draw Something</h3>
+  <button id="sendBtn">Send Mark</button>
 
-<div id="toolContainer">
-<div id="toolRow"></div>
-<div style="display:flex; justify-content:space-between; margin-top:10px;">
-<button id="undoBtn">Undo</button>
-<button id="redoBtn">Redo</button>
-</div>
-</div>
-
-<canvas id="canvas"></canvas>
-
-<div id="colorContainer">
-<div id="colorBar" style="display:flex; justify-content:center; gap:10px;"></div>
-</div>
-</div>
-
-<button id="sendBtn" style="margin-top:30px;">Send Mark</button>
-
+  <div id="postsList" style="margin-top:40px;"></div>
 </div>
 
 </section>
 
 <script>
-const states=[ "Alabama","Alaska","Arizona","Arkansas","California","Colorado",
-"Connecticut","Delaware","Florida","Georgia","Hawaii","Idaho","Illinois",
-"Indiana","Iowa","Kansas","Kentucky","Louisiana","Maine","Maryland",
-"Massachusetts","Michigan","Minnesota","Mississippi","Missouri","Montana",
-"Nebraska","Nevada","New Hampshire","New Jersey","New Mexico","New York",
-"North Carolina","North Dakota","Ohio","Oklahoma","Oregon","Pennsylvania",
-"Rhode Island","South Carolina","South Dakota","Tennessee","Texas","Utah",
-"Vermont","Virginia","Washington","West Virginia","Wisconsin","Wyoming"];
+// --- STATE LIST ---
+const states = [
+  "Alabama","Alaska","Arizona","Arkansas","California","Colorado",
+  "Connecticut","Delaware","Florida","Georgia","Hawaii","Idaho","Illinois",
+  "Indiana","Iowa","Kansas","Kentucky","Louisiana","Maine","Maryland",
+  "Massachusetts","Michigan","Minnesota","Mississippi","Missouri","Montana",
+  "Nebraska","Nevada","New Hampshire","New Jersey","New Mexico","New York",
+  "North Carolina","North Dakota","Ohio","Oklahoma","Oregon","Pennsylvania",
+  "Rhode Island","South Carolina","South Dakota","Tennessee","Texas","Utah",
+  "Vermont","Virginia","Washington","West Virginia","Wisconsin","Wyoming"
+];
 
-const statesDiv=document.getElementById("states");
-const editor=document.getElementById("editor");
-const stateTitle=document.getElementById("stateTitle");
-const canvas=document.getElementById("canvas");
-const ctx=canvas.getContext("2d");
-const toolRow=document.getElementById("toolRow");
-const colorBar=document.getElementById("colorBar");
-const undoBtn=document.getElementById("undoBtn");
-const redoBtn=document.getElementById("redoBtn");
+const statesDiv = document.getElementById("states");
+const editor = document.getElementById("editor");
+const stateTitle = document.getElementById("stateTitle");
+const postInput = document.getElementById("postInput");
+const postsList = document.getElementById("postsList");
 
-let currentState="";
-let tool="pencil";
-let color="#000";
-let drawing=false;
-let history=[];
-let redoStack=[];
+let currentState = "";
+let secretMode = false;
 
-/* CANVAS SETUP */
-function resizeCanvas(){
-  canvas.width=canvas.offsetWidth;
-  canvas.height=350;
-  ctx.fillStyle="white";
-  ctx.fillRect(0,0,canvas.width,canvas.height);
-}
-resizeCanvas();
-window.addEventListener("resize",resizeCanvas);
-
-/* STATES */
-states.forEach(s=>{
- let b=document.createElement("button");
- b.innerText=s;
- b.onclick=()=>{
-   document.querySelectorAll("#states button").forEach(btn=>btn.style.background="#111");
-   b.style.background="#444";
-   currentState=s;
-   stateTitle.innerText=s;
-   editor.style.display="block";
- };
- statesDiv.appendChild(b);
+// render states
+states.forEach(st => {
+  const btn = document.createElement("button");
+  btn.innerText = st;
+  btn.onclick = () => {
+    currentState = st;
+    stateTitle.innerText = st;
+    editor.style.display = "block";
+    loadPosts();
+  };
+  statesDiv.appendChild(btn);
 });
 
-/* TOOLS */
-["pencil","eraser","fill"].forEach(t=>{
- let b=document.createElement("button");
- b.innerText=t;
- b.onclick=()=>{
-   tool=t;
-   document.querySelectorAll("#toolRow button").forEach(x=>x.style.outline="none");
-   b.style.outline="2px solid white";
-
-   if(tool==="fill"){
-     saveState();
-     ctx.fillStyle=color;
-     ctx.fillRect(0,0,canvas.width,canvas.height);
-   }
- };
- toolRow.appendChild(b);
+// secret NOCIV admin mode
+window.addEventListener("keydown", e => {
+  if (e.ctrlKey && e.shiftKey && e.key.toLowerCase() === "n") {
+    secretMode = !secretMode;
+    alert("✦ NOCIV admin mode " + (secretMode ? "enabled" : "disabled"));
+  }
 });
 
-/* COLORS */
-["#0b3d2e","#8b0000","#d4a017","#000","#001f3f","#666","#ccc","#fff"].forEach(c=>{
- let sw=document.createElement("div");
- sw.style.width="28px";
- sw.style.height="28px";
- sw.style.background=c;
- sw.style.cursor="pointer";
- sw.onclick=()=>{
-   color=c;
-   document.querySelectorAll("#colorBar div").forEach(d=>d.style.outline="none");
-   sw.style.outline="2px solid white";
- };
- colorBar.appendChild(sw);
-});
+// load posts
+function loadPosts() {
+  postsList.innerHTML = "";
+  let allPosts = JSON.parse(localStorage.getItem("stallPosts")) || [];
+  let statePosts = allPosts.filter(p => p.state === currentState);
 
-/* WRITE BUTTON */
-document.getElementById("addTextBtn").onclick=function(){
- const text=document.getElementById("textInput").value;
- if(!text) return;
- saveState();
- ctx.fillStyle=color;
- ctx.font="24px monospace";
- ctx.textAlign="center";
- ctx.fillText(text, canvas.width/2, canvas.height/2);
- document.getElementById("textInput").value="";
-};
+  // remove older than 30 days
+  const now = Date.now();
+  statePosts = statePosts.filter(p => now - p.time < 30*24*60*60*1000);
+  localStorage.setItem("stallPosts", JSON.stringify(allPosts));
 
-/* DRAWING (SMOOTH) */
-function getPos(e){
- const rect=canvas.getBoundingClientRect();
- if(e.touches){
-   return {
-     x:e.touches[0].clientX-rect.left,
-     y:e.touches[0].clientY-rect.top
-   };
- }
- return {
-   x:e.clientX-rect.left,
-   y:e.clientY-rect.top
- };
+  if (statePosts.length === 0) {
+    postsList.innerHTML = "<p style='opacity:.6'>No marks yet</p>";
+    return;
+  }
+
+  statePosts.forEach(p => {
+    let div = document.createElement("div");
+    div.className = "postWrap";
+
+    let date = document.createElement("div");
+    date.className = "postDate";
+    date.innerText = p.date;
+
+    let text = document.createElement("div");
+    text.className = "postText";
+    text.innerText = p.text;
+
+    if (p.admin && secretMode) {
+      text.classList.add("greenMark");
+    }
+
+    div.appendChild(date);
+    div.appendChild(text);
+
+    let clear = document.createElement("div");
+    clear.className = "clearfix";
+    div.appendChild(clear);
+
+    postsList.appendChild(div);
+  });
 }
 
-canvas.addEventListener("mousedown",e=>{
- drawing=true;
- saveState();
- const pos=getPos(e);
- ctx.beginPath();
- ctx.moveTo(pos.x,pos.y);
-});
+// send mark
+document.getElementById("sendBtn").onclick = () => {
+  const text = postInput.value.trim();
+  if (!text) return;
 
-canvas.addEventListener("mousemove",e=>{
- if(!drawing) return;
- const pos=getPos(e);
- if(tool==="pencil"){
-   ctx.lineWidth=2;
-   ctx.lineCap="round";
-   ctx.strokeStyle=color;
-   ctx.lineTo(pos.x,pos.y);
-   ctx.stroke();
- }
- if(tool==="eraser"){
-   ctx.clearRect(pos.x-8,pos.y-8,16,16);
- }
-});
+  const today = new Date();
+  const month = today.toLocaleString("en-US", { month: "short" }).toLowerCase();
+  const dateStr = month + "." + today.getDate() + "." + today.getFullYear();
 
-canvas.addEventListener("mouseup",()=>drawing=false);
+  let allPosts = JSON.parse(localStorage.getItem("stallPosts")) || [];
 
-canvas.addEventListener("touchstart",e=>{
- drawing=true;
- saveState();
- const pos=getPos(e);
- ctx.beginPath();
- ctx.moveTo(pos.x,pos.y);
-});
+  allPosts.unshift({
+    state: currentState,
+    text,
+    date: dateStr,
+    time: Date.now(),
+    admin: secretMode
+  });
 
-canvas.addEventListener("touchmove",e=>{
- if(!drawing) return;
- const pos=getPos(e);
- if(tool==="pencil"){
-   ctx.lineWidth=2;
-   ctx.lineCap="round";
-   ctx.strokeStyle=color;
-   ctx.lineTo(pos.x,pos.y);
-   ctx.stroke();
- }
- if(tool==="eraser"){
-   ctx.clearRect(pos.x-8,pos.y-8,16,16);
- }
-});
-
-canvas.addEventListener("touchend",()=>drawing=false);
-
-/* UNDO REDO */
-function saveState(){
- history.push(canvas.toDataURL());
- redoStack=[];
-}
-
-undoBtn.onclick=()=>{
- if(history.length){
-   redoStack.push(canvas.toDataURL());
-   let img=new Image();
-   img.src=history.pop();
-   img.onload=()=>ctx.drawImage(img,0,0);
- }
-};
-
-redoBtn.onclick=()=>{
- if(redoStack.length){
-   history.push(canvas.toDataURL());
-   let img=new Image();
-   img.src=redoStack.pop();
-   img.onload=()=>ctx.drawImage(img,0,0);
- }
+  localStorage.setItem("stallPosts", JSON.stringify(allPosts));
+  postInput.value = "";
+  loadPosts();
 };
 </script>
 
