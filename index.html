@@ -88,10 +88,8 @@
   </script>
 </body>
 </html>
-<hr style="margin:80px 0; border-color:#2a2a2a;">
-<div style="max-width:900px; margin:60px auto 40px auto; text-align:center;">
-  <img src="america.svg" style="width:100%; max-width:900px;">
-</div>
+<hr style="margin:80px 0; border-color:#222;">
+
 <section id="stall-wall" style="max-width:900px; margin:auto;">
 
 <h2 style="letter-spacing:4px;">THE STALL WALL</h2>
@@ -106,17 +104,31 @@ this is how word of mouth works, it goes peer to peer and reaches different stat
 
 <h2 id="stateTitle"></h2>
 
-<div id="toolBar" style="display:flex; gap:8px; flex-wrap:wrap; margin-bottom:15px;"></div>
+<!-- TOOL CONTAINER -->
+<div style="background:#1a1a1a; padding:15px; margin-bottom:15px;">
+  <div id="toolRow" style="display:flex; gap:10px; justify-content:center;"></div>
+  <div style="display:flex; justify-content:space-between; margin-top:10px;">
+    <button id="undoBtn">Undo</button>
+    <button id="redoBtn">Redo</button>
+  </div>
+</div>
 
-<canvas id="canvas"></canvas>
+<canvas id="canvas" style="width:100%; background:white; display:block;"></canvas>
 
-<div id="colorBar" style="display:flex; gap:8px; margin-top:10px; flex-wrap:wrap;"></div>
+<!-- COLOR CONTAINER -->
+<div style="background:#1a1a1a; padding:15px; margin-top:15px;">
+  <div id="colorBar" style="display:flex; gap:10px; justify-content:center;"></div>
+</div>
 
-<button id="sendBtn">Send Mark</button>
+<button id="sendBtn" style="margin-top:20px;">Send Mark</button>
 
 </div>
 
-<div id="mainFeed"></div>
+<!-- FEED -->
+<div style="border-top:1px solid #222; padding-top:30px;">
+  <h3 style="margin-bottom:20px;">Recent Marks</h3>
+  <div id="feedContainer" style="max-height:600px; overflow-y:auto;"></div>
+</div>
 
 </section>
 
@@ -135,10 +147,12 @@ const editor=document.getElementById("editor");
 const stateTitle=document.getElementById("stateTitle");
 const canvas=document.getElementById("canvas");
 const ctx=canvas.getContext("2d");
-const toolBar=document.getElementById("toolBar");
+const toolRow=document.getElementById("toolRow");
 const colorBar=document.getElementById("colorBar");
 const sendBtn=document.getElementById("sendBtn");
-const mainFeed=document.getElementById("mainFeed");
+const feedContainer=document.getElementById("feedContainer");
+const undoBtn=document.getElementById("undoBtn");
+const redoBtn=document.getElementById("redoBtn");
 
 let currentState="";
 let tool="pencil";
@@ -146,20 +160,23 @@ let color="#000";
 let drawing=false;
 let history=[];
 let redoStack=[];
+let nocivMode=false;
 
-/* Responsive canvas */
+/* CANVAS SETUP */
 function resizeCanvas(){
-  canvas.width=canvas.parentElement.offsetWidth;
-  canvas.height=300;
+  canvas.width=canvas.offsetWidth;
+  canvas.height=350;
+  ctx.fillStyle="white";
+  ctx.fillRect(0,0,canvas.width,canvas.height);
 }
 resizeCanvas();
 window.addEventListener("resize",resizeCanvas);
 
-/* States */
+/* STATES */
 states.forEach(s=>{
  let b=document.createElement("button");
  b.innerText=s;
- styleBtn(b);
+ styleStateBtn(b);
  b.onclick=()=>{
    document.querySelectorAll("#states button").forEach(btn=>btn.style.background="#111");
    b.style.background="#444";
@@ -170,23 +187,21 @@ states.forEach(s=>{
  stateContainer.appendChild(b);
 });
 
-/* Tools */
-const tools=["pencil","eraser","spray","fill","text","undo","redo"];
+/* TOOLS */
+const tools=["pencil","eraser","spray","fill","text"];
 tools.forEach(t=>{
  let b=document.createElement("button");
  b.innerText=t;
- styleBtn(b);
- b.onclick=()=>selectTool(t,b);
- toolBar.appendChild(b);
+ styleToolBtn(b);
+ b.onclick=()=>{
+   tool=t;
+   document.querySelectorAll("#toolRow button").forEach(x=>x.style.outline="none");
+   b.style.outline="2px solid white";
+ };
+ toolRow.appendChild(b);
 });
 
-function selectTool(t,btn){
- tool=t;
- document.querySelectorAll("#toolBar button").forEach(b=>b.style.outline="none");
- btn.style.outline="2px solid white";
-}
-
-/* Colors */
+/* COLORS */
 const colors=["#0b3d2e","#8b0000","#d4a017","#000","#001f3f","#666","#ccc","#fff"];
 colors.forEach(c=>{
  let sw=document.createElement("div");
@@ -202,7 +217,7 @@ colors.forEach(c=>{
  colorBar.appendChild(sw);
 });
 
-/* Drawing */
+/* DRAW */
 canvas.addEventListener("mousedown",()=>{drawing=true;saveState();});
 canvas.addEventListener("mouseup",()=>drawing=false);
 canvas.addEventListener("mousemove",e=>{
@@ -224,7 +239,7 @@ canvas.addEventListener("mousemove",e=>{
  }
 });
 
-/* Text tool */
+/* TEXT */
 canvas.addEventListener("click",e=>{
  if(tool==="text"){
    let text=prompt("Enter text");
@@ -237,75 +252,65 @@ canvas.addEventListener("click",e=>{
  }
 });
 
-/* Fill */
-function selectToolAction(){
- if(tool==="fill"){
-   saveState();
-   ctx.fillStyle=color;
-   ctx.fillRect(0,0,canvas.width,canvas.height);
- }
-}
-
-/* Undo/Redo */
+/* UNDO REDO */
 function saveState(){
  history.push(canvas.toDataURL());
  redoStack=[];
 }
-function undo(){
+undoBtn.onclick=()=>{
  if(history.length){
    redoStack.push(canvas.toDataURL());
    let img=new Image();
    img.src=history.pop();
    img.onload=()=>ctx.drawImage(img,0,0);
  }
-}
-function redo(){
+};
+redoBtn.onclick=()=>{
  if(redoStack.length){
    history.push(canvas.toDataURL());
    let img=new Image();
    img.src=redoStack.pop();
    img.onload=()=>ctx.drawImage(img,0,0);
  }
-}
+};
 
-toolBar.querySelectorAll("button")[4].onclick=undo;
-toolBar.querySelectorAll("button")[5].onclick=redo;
+/* SECRET NOCIV MODE */
+window.addEventListener("keydown",e=>{
+ if(e.key==="N") nocivMode=true;
+});
 
-/* Send */
+/* SEND */
 sendBtn.innerText="Send Mark";
-styleBtn(sendBtn);
+styleToolBtn(sendBtn);
 
 sendBtn.onclick=()=>{
- saveState();
  const image=canvas.toDataURL();
  const today=new Date();
  const month=today.toLocaleString('en-US',{month:'short'}).toLowerCase();
  const date=`${month}.${today.getDate()}.${today.getFullYear()}`;
- const post={state:currentState,image,date,time:Date.now()};
+ const post={state:currentState,image,date,time:Date.now(),nociv:nocivMode};
  let posts=JSON.parse(localStorage.getItem("stallPosts"))||[];
  posts.unshift(post);
  localStorage.setItem("stallPosts",JSON.stringify(posts));
- ctx.clearRect(0,0,canvas.width,canvas.height);
+ ctx.fillStyle="white";
+ ctx.fillRect(0,0,canvas.width,canvas.height);
+ nocivMode=false;
  renderFeed();
 };
 
-/* Feed */
+/* FEED */
 function renderFeed(){
- mainFeed.innerHTML="";
+ feedContainer.innerHTML="";
  let posts=JSON.parse(localStorage.getItem("stallPosts"))||[];
  posts=posts.filter(p=>Date.now()-p.time<30*24*60*60*1000);
- localStorage.setItem("stallPosts",JSON.stringify(posts));
- posts.forEach(p=>{
+ posts.slice(0,5).forEach(p=>{
    let wrap=document.createElement("div");
-   wrap.style.borderTop="1px solid #222";
+   wrap.style.borderBottom="1px solid #222";
    wrap.style.padding="20px 0";
-   wrap.style.display="flex";
-   wrap.style.flexDirection="column";
 
    let header=document.createElement("div");
    header.style.display="flex";
    header.style.justifyContent="space-between";
-   header.style.marginBottom="10px";
 
    let tag=document.createElement("div");
    tag.innerText=p.state;
@@ -324,24 +329,29 @@ function renderFeed(){
    let img=document.createElement("img");
    img.src=p.image;
    img.style.width="100%";
-   img.style.marginTop="10px";
+   if(p.nociv) img.style.border="2px solid green";
 
    wrap.appendChild(header);
    wrap.appendChild(img);
-   mainFeed.appendChild(wrap);
+   feedContainer.appendChild(wrap);
  });
 }
 
-function styleBtn(b){
+function styleToolBtn(b){
+ b.style.background="#333";
+ b.style.color="#aaa";
+ b.style.border="1px solid #444";
+ b.style.padding="6px 12px";
+ b.style.cursor="pointer";
+}
+function styleStateBtn(b){
  b.style.background="#111";
  b.style.color="#aaa";
  b.style.border="1px solid #333";
  b.style.padding="6px 10px";
  b.style.cursor="pointer";
- b.onmouseover=()=>b.style.background="#333";
- b.onmouseout=()=>b.style.background="#111";
+ b.style.margin="3px";
 }
 
 renderFeed();
 </script>
-
