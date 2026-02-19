@@ -14,32 +14,16 @@ body{
   text-align:center;
 }
 
-.container{
-  padding:15vh 20px;
-  max-width:700px;
-  margin:auto;
-}
-
-h1{
-  font-size:4rem;
-  letter-spacing:8px;
-  margin-bottom:10px;
-}
-
-.subtitle{
-  font-size:1.2rem;
-  letter-spacing:2px;
-  margin-bottom:50px;
-  color:#aaa;
-}
-
 .manifesto{
   font-size:1.2rem;
   line-height:2.2;
   margin-bottom:60px;
+  max-width:700px;
+  margin-left:auto;
+  margin-right:auto;
 }
 
-.section{ margin-top:100px; }
+.section{ margin-top:80px; }
 
 button{
   background:#111;
@@ -74,11 +58,6 @@ canvas{
   touch-action:none;
 }
 
-.feedWrap{
-  border-bottom:1px solid #222;
-  padding:20px 0;
-}
-
 .stateTag{
   border:1px solid #444;
   padding:4px 8px;
@@ -94,10 +73,12 @@ canvas{
 
 <body>
 
+<!-- LOGO -->
 <div style="max-width:900px; margin:60px auto 40px auto;">
   <img src="headernociv.svg" style="width:100%; max-width:600px;">
 </div>
-<p class="manifesto" id="site-manifesto">
+
+<p class="manifesto">
 Representing Black America.<br><br>
 Showcasing present connection.<br><br>
 No ads. No algorithm. Just human.
@@ -105,20 +86,8 @@ No ads. No algorithm. Just human.
 
 <div class="section">
 <h2>Next Pop-Up</h2>
-<p id="site-popup">Phoenix, AZ<br>Coming Soon</p>
+<p>Phoenix, AZ<br>Coming Soon</p>
 </div>
-</div>
-
-<script>
-fetch('content/home.json')
-.then(res=>res.json())
-.then(data=>{
-  document.getElementById('site-title').innerText=data.title;
-  document.getElementById('site-subtitle').innerText=data.subtitle;
-  document.getElementById('site-manifesto').innerText=data.manifesto;
-  document.getElementById('site-popup').innerText=data.popup;
-});
-</script>
 
 <hr style="margin:80px 0; border-color:#222;">
 
@@ -136,35 +105,33 @@ this is how word of mouth works, it goes peer to peer and reaches different stat
 <div id="states"></div>
 
 <div id="editor" style="display:none; margin-top:40px;">
-
 <h2 id="stateTitle"></h2>
 
-<!-- WRITE SECTION -->
+<!-- WRITE -->
 <div style="margin-bottom:40px;">
-  <h3>Write Something</h3>
-  <input id="textInput" 
-         placeholder="Type here..."
-         style="width:100%; padding:10px; background:#111; border:1px solid #333; color:#ccc;">
-  <button id="addTextBtn" style="margin-top:10px;">Add To Canvas</button>
+<h3>Write Something</h3>
+<input id="textInput" placeholder="Type here..."
+style="width:100%; padding:10px; background:#111; border:1px solid #333; color:#ccc;">
+<button id="addTextBtn" style="margin-top:10px;">Add To Canvas</button>
 </div>
 
-<!-- DRAW SECTION -->
+<!-- DRAW -->
 <div>
-  <h3>Or Draw Something</h3>
+<h3>Or Draw Something</h3>
 
-  <div id="toolContainer">
-    <div id="toolRow"></div>
-    <div style="display:flex; justify-content:space-between; margin-top:10px;">
-      <button id="undoBtn">Undo</button>
-      <button id="redoBtn">Redo</button>
-    </div>
-  </div>
+<div id="toolContainer">
+<div id="toolRow"></div>
+<div style="display:flex; justify-content:space-between; margin-top:10px;">
+<button id="undoBtn">Undo</button>
+<button id="redoBtn">Redo</button>
+</div>
+</div>
 
-  <canvas id="canvas"></canvas>
+<canvas id="canvas"></canvas>
 
-  <div id="colorContainer">
-    <div id="colorBar" style="display:flex; justify-content:center; gap:10px;"></div>
-  </div>
+<div id="colorContainer">
+<div id="colorBar" style="display:flex; justify-content:center; gap:10px;"></div>
+</div>
 </div>
 
 <button id="sendBtn" style="margin-top:30px;">Send Mark</button>
@@ -190,7 +157,6 @@ const canvas=document.getElementById("canvas");
 const ctx=canvas.getContext("2d");
 const toolRow=document.getElementById("toolRow");
 const colorBar=document.getElementById("colorBar");
-const feed=document.getElementById("feedContainer");
 const undoBtn=document.getElementById("undoBtn");
 const redoBtn=document.getElementById("redoBtn");
 
@@ -200,8 +166,8 @@ let color="#000";
 let drawing=false;
 let history=[];
 let redoStack=[];
-let nocivMode=false;
 
+/* CANVAS SETUP */
 function resizeCanvas(){
   canvas.width=canvas.offsetWidth;
   canvas.height=350;
@@ -211,6 +177,7 @@ function resizeCanvas(){
 resizeCanvas();
 window.addEventListener("resize",resizeCanvas);
 
+/* STATES */
 states.forEach(s=>{
  let b=document.createElement("button");
  b.innerText=s;
@@ -224,7 +191,8 @@ states.forEach(s=>{
  statesDiv.appendChild(b);
 });
 
-["pencil","eraser","text"].forEach(t=>{
+/* TOOLS */
+["pencil","eraser","fill"].forEach(t=>{
  let b=document.createElement("button");
  b.innerText=t;
  b.onclick=()=>{
@@ -232,20 +200,16 @@ states.forEach(s=>{
    document.querySelectorAll("#toolRow button").forEach(x=>x.style.outline="none");
    b.style.outline="2px solid white";
 
-   if(tool==="text"){
-     let text=prompt("Enter text");
-     if(text){
-       saveState();
-       ctx.fillStyle=color;
-       ctx.font="22px monospace";
-       ctx.textAlign="center";
-       ctx.fillText(text, canvas.width/2, canvas.height/2);
-     }
+   if(tool==="fill"){
+     saveState();
+     ctx.fillStyle=color;
+     ctx.fillRect(0,0,canvas.width,canvas.height);
    }
  };
  toolRow.appendChild(b);
 });
 
+/* COLORS */
 ["#0b3d2e","#8b0000","#d4a017","#000","#001f3f","#666","#ccc","#fff"].forEach(c=>{
  let sw=document.createElement("div");
  sw.style.width="28px";
@@ -260,46 +224,88 @@ states.forEach(s=>{
  colorBar.appendChild(sw);
 });
 
+/* WRITE BUTTON */
+document.getElementById("addTextBtn").onclick=function(){
+ const text=document.getElementById("textInput").value;
+ if(!text) return;
+ saveState();
+ ctx.fillStyle=color;
+ ctx.font="24px monospace";
+ ctx.textAlign="center";
+ ctx.fillText(text, canvas.width/2, canvas.height/2);
+ document.getElementById("textInput").value="";
+};
+
+/* DRAWING (SMOOTH) */
+function getPos(e){
+ const rect=canvas.getBoundingClientRect();
+ if(e.touches){
+   return {
+     x:e.touches[0].clientX-rect.left,
+     y:e.touches[0].clientY-rect.top
+   };
+ }
+ return {
+   x:e.clientX-rect.left,
+   y:e.clientY-rect.top
+ };
+}
+
+canvas.addEventListener("mousedown",e=>{
+ drawing=true;
+ saveState();
+ const pos=getPos(e);
+ ctx.beginPath();
+ ctx.moveTo(pos.x,pos.y);
+});
+
+canvas.addEventListener("mousemove",e=>{
+ if(!drawing) return;
+ const pos=getPos(e);
+ if(tool==="pencil"){
+   ctx.lineWidth=2;
+   ctx.lineCap="round";
+   ctx.strokeStyle=color;
+   ctx.lineTo(pos.x,pos.y);
+   ctx.stroke();
+ }
+ if(tool==="eraser"){
+   ctx.clearRect(pos.x-8,pos.y-8,16,16);
+ }
+});
+
+canvas.addEventListener("mouseup",()=>drawing=false);
+
+canvas.addEventListener("touchstart",e=>{
+ drawing=true;
+ saveState();
+ const pos=getPos(e);
+ ctx.beginPath();
+ ctx.moveTo(pos.x,pos.y);
+});
+
+canvas.addEventListener("touchmove",e=>{
+ if(!drawing) return;
+ const pos=getPos(e);
+ if(tool==="pencil"){
+   ctx.lineWidth=2;
+   ctx.lineCap="round";
+   ctx.strokeStyle=color;
+   ctx.lineTo(pos.x,pos.y);
+   ctx.stroke();
+ }
+ if(tool==="eraser"){
+   ctx.clearRect(pos.x-8,pos.y-8,16,16);
+ }
+});
+
+canvas.addEventListener("touchend",()=>drawing=false);
+
+/* UNDO REDO */
 function saveState(){
  history.push(canvas.toDataURL());
  redoStack=[];
 }
-
-canvas.addEventListener("mousedown",()=>{drawing=true; saveState();});
-canvas.addEventListener("mouseup",()=>drawing=false);
-canvas.addEventListener("mousemove",e=>{
- if(!drawing) return;
- const rect=canvas.getBoundingClientRect();
- const x=e.clientX-rect.left;
- const y=e.clientY-rect.top;
-
- if(tool==="pencil"){
-   ctx.fillStyle=color;
-   ctx.fillRect(x,y,3,3);
- }
-
- if(tool==="eraser"){
-   ctx.clearRect(x,y,10,10);
- }
-});
-
-canvas.addEventListener("touchstart",()=>{drawing=true; saveState();});
-canvas.addEventListener("touchend",()=>drawing=false);
-canvas.addEventListener("touchmove",e=>{
- if(!drawing) return;
- const rect=canvas.getBoundingClientRect();
- const x=e.touches[0].clientX-rect.left;
- const y=e.touches[0].clientY-rect.top;
-
- if(tool==="pencil"){
-   ctx.fillStyle=color;
-   ctx.fillRect(x,y,3,3);
- }
-
- if(tool==="eraser"){
-   ctx.clearRect(x,y,10,10);
- }
-});
 
 undoBtn.onclick=()=>{
  if(history.length){
@@ -318,68 +324,6 @@ redoBtn.onclick=()=>{
    img.onload=()=>ctx.drawImage(img,0,0);
  }
 };
-
-window.addEventListener("keydown",e=>{
- if(e.ctrlKey && e.shiftKey && e.key.toLowerCase()==="n"){
-   nocivMode=true;
-   alert("NOCIV mode enabled");
- }
-});
-
-document.getElementById("sendBtn").onclick=()=>{
- const image=canvas.toDataURL();
- const today=new Date();
- const month=today.toLocaleString('en-US',{month:'short'}).toLowerCase();
- const date=`${month}.${today.getDate()}.${today.getFullYear()}`;
- const post={state:currentState,image,date,time:Date.now(),nociv:nocivMode};
-
- let posts=JSON.parse(localStorage.getItem("stallPosts"))||[];
- posts.unshift(post);
- localStorage.setItem("stallPosts",JSON.stringify(posts));
-
- ctx.fillStyle="white";
- ctx.fillRect(0,0,canvas.width,canvas.height);
-
- nocivMode=false;
- renderFeed();
-};
-
-function renderFeed(){
- feed.innerHTML="";
- let posts=JSON.parse(localStorage.getItem("stallPosts"))||[];
- posts=posts.filter(p=>Date.now()-p.time<30*24*60*60*1000);
-
- posts.slice(0,5).forEach(p=>{
-   let wrap=document.createElement("div");
-   wrap.className="feedWrap";
-
-   let header=document.createElement("div");
-   header.style.display="flex";
-   header.style.justifyContent="space-between";
-
-   let tag=document.createElement("div");
-   tag.className="stateTag";
-   tag.innerText=p.state;
-
-   let date=document.createElement("div");
-   date.className="dateTag";
-   date.innerText=p.date;
-
-   header.appendChild(tag);
-   header.appendChild(date);
-
-   let img=document.createElement("img");
-   img.src=p.image;
-   img.style.width="100%";
-   if(p.nociv) img.style.border="2px solid #0b3d2e";
-
-   wrap.appendChild(header);
-   wrap.appendChild(img);
-   feed.appendChild(wrap);
- });
-}
-
-renderFeed();
 </script>
 
 </body>
