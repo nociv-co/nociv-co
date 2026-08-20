@@ -1,249 +1,42 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
 <meta charset="UTF-8">
-<title>NOCIV.CO</title>
+<title>NOCIV.CO — Nothing Of Civilization</title>
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-
-<style>
-body {
-  margin: 0;
-  background: black;
-  color: #ccc;
-  font-family: Arial, Helvetica, sans-serif;
-  text-align: center;
-}
-
-header img {
-  width: 100%;
-  max-width: 700px;
-  margin-top: 40px;
-  margin-bottom: 40px;
-}
-
-.manifesto {
-  font-size: 1.2rem;
-  line-height: 2.2;
-  margin-bottom: 60px;
-  max-width: 700px;
-  margin-left: auto;
-  margin-right: auto;
-  padding: 0 20px;
-}
-
-/* --- POP-UP SECTION STYLES --- */
-.popup-section {
-  margin: 60px auto;
-  max-width: 900px;
-  padding: 0 20px;
-}
-
-.map-placeholder {
-  width: 100%;
-  height: 250px;
-  background: #111;
-  border: 1px solid #333;
-  margin: 20px 0;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  color: #444;
-  text-transform: uppercase;
-  letter-spacing: 2px;
-}
-
-hr {
-  border: 0;
-  border-top: 1px solid #222;
-  margin: 40px 0;
-}
-
-#states button {
-  margin: 4px;
-  background: #111;
-  color: #aaa;
-  border: 1px solid #333;
-  padding: 6px 12px;
-  cursor: pointer;
-}
-#states button:hover { background: #333; }
-
-#editor { display: none; margin-top: 40px; }
-
-textarea {
-  width: 100%;
-  padding: 12px;
-  background: #111;
-  border: 1px solid #333;
-  color: #ccc;
-  resize: none;
-  font-size: 16px;
-}
-
-#sendBtn {
-  margin-top: 20px;
-  padding: 10px 20px;
-  cursor: pointer;
-  background: #111;
-  border: 1px solid #444;
-  color: #ccc;
-}
-
-.postWrap {
-  border-top: 1px solid #222;
-  padding: 16px 0;
-  text-align: left;
-}
-.postDate { float: right; opacity: .6; font-size: 12px; }
-.postText { white-space: pre-wrap; margin-top: 10px; }
-.greenMark { color: #0b3d2e; }
-.clearfix { clear: both; }
-</style>
+<meta name="description" content="Nociv Enterprise — representing Black America, no ads, no algorithm, just being human. Pop-up shops, original garments, and open hardware.">
+<link rel="stylesheet" href="style.css">
 </head>
-
 <body>
 
-<header>
-  <img src="headergreynociv.svg" alt="NOCIV">
+<header class="nociv-header">
+  <img src="headergreynociv.svg" alt="NOCIV.CO" style="width:100%; max-width:700px;">
+  <div class="tagline">Nothing Of Civilization</div>
 </header>
 
-<p class="manifesto">
-Representing Black America.<br><br>
-Showcasing present connection.<br><br>
-No ads. No algorithm. Just human.
-</p>
-
-<hr>
-<section class="popup-section">
-  <h2 style="letter-spacing:4px;">NEXT POP-UP</h2>
-  
-  <div class="map-placeholder">
-    [ Visual / Map Placeholder ]
-  </div>
-  
-  <p id="popup-location" style="font-size: 1.5rem; margin-top: 10px;">
-    </p>
-</section>
-<hr>
-
-<div style="max-width:900px; margin:60px auto 40px auto; padding: 0 20px;">
-  <img src="black-america.svg" style="width:100%;" alt="Black America">
+<div class="wrap" style="padding-top:0;">
+  <ul class="checklist">
+    <li>Representing Black America.</li>
+    <li>No socials, algorithm, or ads, just being <strong>human</strong>.</li>
+  </ul>
 </div>
 
-<section style="max-width:900px; margin:auto; padding: 0 20px;">
-  <h2 style="letter-spacing:4px;">THE STALL WALL</h2>
-  <p style="opacity:.7; margin-bottom:40px;">
-  this is how word of mouth works, it goes peer to peer and reaches different states
+<nav class="tabs">
+  <a href="about.html">About <small>Mission / Founder</small></a>
+  <a href="clothing.html">Clothing <small>Pop-up / Gallery / Vinted</small></a>
+  <a href="tech.html">Tech <small>Pro-people device builder</small></a>
+  <a href="books.html">Books <small>Free food for thought</small></a>
+  <a href="community.html">Community <small>Stall Wall / Join</small></a>
+</nav>
+
+<div class="wrap" style="text-align:center; padding-top:10px;">
+  <p style="font-size:1.4rem; letter-spacing:0.05em;">AURA</p>
+  <p style="opacity:.75; max-width:420px; margin:0 auto;">
+    Your signaling.<br>Intentionally or not.
   </p>
+</div>
 
-  <div id="states"></div>
-
-  <div id="editor">
-    <h2 id="stateTitle"></h2>
-    <div style="margin-bottom:20px; text-align:left;">
-      <label for="postInput">Speak Your Truth</label>
-      <textarea id="postInput" rows="4"></textarea>
-    </div>
-    <button id="sendBtn">Send Mark</button>
-    <div id="postsList" style="margin-top:40px;"></div>
-  </div>
-</section>
-
-<script>
-// --- QUICK SETTINGS: UPDATE LOCATION HERE ---
-const currentPopUpLocation = "Phoenix, AZ<br>Coming Soon";
-
-// Apply the location to the page
-document.getElementById('popup-location').innerHTML = currentPopUpLocation;
-
-// --- STATE LIST ---
-const states = [
-  "Alabama","Alaska","Arizona","Arkansas","California","Colorado",
-  "Connecticut","Delaware","Florida","Georgia","Hawaii","Idaho","Illinois",
-  "Indiana","Iowa","Kansas","Kentucky","Louisiana","Maine","Maryland",
-  "Massachusetts","Michigan","Minnesota","Mississippi","Missouri","Montana",
-  "Nebraska","Nevada","New Hampshire","New Jersey","New Mexico","New York",
-  "North Carolina","North Dakota","Ohio","Oklahoma","Oregon","Pennsylvania",
-  "Rhode Island","South Carolina","South Dakota","Tennessee","Texas","Utah",
-  "Vermont","Virginia","Washington","West Virginia","Wisconsin","Wyoming"
-];
-
-const statesDiv = document.getElementById("states");
-const editor = document.getElementById("editor");
-const stateTitle = document.getElementById("stateTitle");
-const postInput = document.getElementById("postInput");
-const postsList = document.getElementById("postsList");
-
-let currentState = "";
-let secretMode = false;
-
-states.forEach(st => {
-  const btn = document.createElement("button");
-  btn.innerText = st;
-  btn.onclick = () => {
-    currentState = st;
-    stateTitle.innerText = st;
-    editor.style.display = "block";
-    loadPosts();
-  };
-  statesDiv.appendChild(btn);
-});
-
-window.addEventListener("keydown", e => {
-  if (e.ctrlKey && e.shiftKey && e.key.toLowerCase() === "n") {
-    secretMode = !secretMode;
-    alert("✦ NOCIV admin mode " + (secretMode ? "enabled" : "disabled"));
-  }
-});
-
-function loadPosts() {
-  postsList.innerHTML = "";
-  let allPosts = JSON.parse(localStorage.getItem("stallPosts")) || [];
-  let statePosts = allPosts.filter(p => p.state === currentState);
-  const now = Date.now();
-  statePosts = statePosts.filter(p => now - p.time < 30*24*60*60*1000);
-  if (statePosts.length === 0) {
-    postsList.innerHTML = "<p style='opacity:.6'>No marks yet</p>";
-    return;
-  }
-  statePosts.forEach(p => {
-    let div = document.createElement("div");
-    div.className = "postWrap";
-    let date = document.createElement("div");
-    date.className = "postDate";
-    date.innerText = p.date;
-    let text = document.createElement("div");
-    text.className = "postText";
-    text.innerText = p.text;
-    if (p.admin && secretMode) text.classList.add("greenMark");
-    div.appendChild(date);
-    div.appendChild(text);
-    let clear = document.createElement("div");
-    clear.className = "clearfix";
-    div.appendChild(clear);
-    postsList.appendChild(div);
-  });
-}
-
-document.getElementById("sendBtn").onclick = () => {
-  const text = postInput.value.trim();
-  if (!text) return;
-  const today = new Date();
-  const month = today.toLocaleString("en-US", { month: "short" }).toLowerCase();
-  const dateStr = month + "." + today.getDate() + "." + today.getFullYear();
-  let allPosts = JSON.parse(localStorage.getItem("stallPosts")) || [];
-  allPosts.unshift({
-    state: currentState,
-    text,
-    date: dateStr,
-    time: Date.now(),
-    admin: secretMode
-  });
-  localStorage.setItem("stallPosts", JSON.stringify(allPosts));
-  postInput.value = "";
-  loadPosts();
-};
-</script>
+<footer class="nociv-footer">NOCIV.CO — Nothing Of Civilization</footer>
 
 </body>
 </html>
