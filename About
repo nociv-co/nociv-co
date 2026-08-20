@@ -1,0 +1,104 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>About — NOCIV.CO</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+<header class="nociv-header">
+  <a href="index.html" class="wordmark" style="text-decoration:none;">NOCIV.CO</a>
+  <div class="tagline">Nothing Of Civilization</div>
+</header>
+
+<nav class="tabs">
+  <a href="about.html" class="active">About</a>
+  <a href="clothing.html">Clothing</a>
+  <a href="tech.html">Tech</a>
+  <a href="books.html">Books</a>
+  <a href="community.html">Community</a>
+</nav>
+
+<div class="wrap">
+  <div class="eyebrow">Timeline · Vision</div>
+  <h1 class="headline" style="font-size:2rem;">Where we're headed</h1>
+
+  <div style="overflow-x:auto; padding:20px 0;">
+    <div style="display:flex; gap:24px; min-width:700px; padding:0 4px;">
+
+      <div style="flex:1;">
+        <div style="font-weight:900; font-size:1.1rem;">① We are here</div>
+        <p style="font-size:0.9rem;">
+          <strong>Phase 1</strong> — pop-up shops only, all around Arizona.
+          Second hand + upcycled, 1-of-1 pieces.
+        </p>
+      </div>
+
+      <div style="flex:1;">
+        <div style="font-weight:900; font-size:1.1rem;">②</div>
+        <p style="font-size:0.9rem;">
+          <strong>Phase 2</strong> — adding original designs to wholesale
+          blanks. Opening up on Depop to reach other states.
+        </p>
+      </div>
+
+      <div style="flex:1;">
+        <div style="font-weight:900; font-size:1.1rem;">③</div>
+        <p style="font-size:0.9rem;">
+          <strong>Phase 3</strong> — create, cut, and sew garments.
+          Garments in local shops.
+        </p>
+      </div>
+
+      <div style="flex:1;">
+        <div style="font-weight:900; font-size:1.1rem;">④</div>
+        <p style="font-size:0.9rem;">
+          <strong>Phase 4</strong> — pop-up shops in different states.
+          Garments in select stores throughout the USA.
+        </p>
+      </div>
+
+      <div style="flex:1;">
+        <div style="font-weight:900; font-size:1.1rem;">⑤</div>
+        <p style="font-size:0.9rem;">
+          Find a USA manufacturer, or create one. Retire the Depop
+          store — selling only in person.
+        </p>
+      </div>
+
+    </div>
+  </div>
+</div>
+
+<div class="torn dark-to-light"></div>
+
+<div class="wrap">
+  <div class="eyebrow">Manifesto</div>
+  <blockquote style="font-size:1.6rem; font-weight:900; line-height:1.3; margin:0 0 20px;">
+    "We should own what we buy, even if that means creating it."
+  </blockquote>
+  <p style="font-size:1.1rem; line-height:1.7;">
+    Creation is the betterment of humanity — reclaiming narratives,
+    creating new norms. Bringing back in-person connection, word of
+    mouth being the only way the movement spreads. Envisioning and
+    sharing creations to inspire that change is obtainable, in
+    multiple disciplines at once. You are, we are, I am, a creator.
+    So let's put act behind what matters to us.
+  </p>
+</div>
+
+<div class="wrap" style="background:var(--black); color:var(--white); text-align:left;">
+  <div class="eyebrow">About Founder</div>
+  <p style="font-size:1.1rem; line-height:1.7;">
+    My name is Jasilyn Anderson. I am a Black American — my journey
+    has been a lot of unlearning and learning, and my art reflects
+    those realizations.
+  </p>
+</div>
+
+<footer class="nociv-footer">NOCIV.CO — Nothing Of Civilization</footer>
+
+</body>
+</html>
