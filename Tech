@@ -1,0 +1,50 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Tech — NOCIV.CO</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<link rel="stylesheet" href="style.css">
+</head>
+<body class="dark">
+
+<header class="nociv-header">
+  <a href="index.html" class="wordmark" style="text-decoration:none;">NOCIV.CO</a>
+  <div class="tagline">Nothing Of Civilization</div>
+</header>
+
+<nav class="tabs">
+  <a href="about.html">About</a>
+  <a href="clothing.html">Clothing</a>
+  <a href="tech.html" class="active">Tech</a>
+  <a href="books.html">Books</a>
+  <a href="community.html">Community</a>
+</nav>
+
+<div class="wrap">
+  <h1 style="font-size:clamp(1.6rem,6vw,2.6rem); font-weight:900; text-transform:uppercase; letter-spacing:0.02em; line-height:1.15;">
+    The <span style="color:#ccc;">Attention</span> <span style="color:var(--red);">Economy</span>
+  </h1>
+
+  <div style="background:var(--eyebrow); margin:30px 0;">
+    <div class="eyebrow" style="background:#fff; color:#000;">Utopia / Dystopia</div>
+    <p style="opacity:.7; max-width:500px;">Make the rebellion of screens punk.</p>
+  </div>
+
+  <hr style="border:0; border-top:1px solid #333; margin:40px 0;">
+
+  <div style="text-align:center;">
+    <h2 style="font-size:1.6rem; font-weight:900; text-transform:uppercase;">
+      Build your own devices — coming soon
+    </h2>
+    <p style="max-width:520px; margin:20px auto; font-size:1.1rem; line-height:1.7;">
+      We deserve to be free from attention-consuming, subscription and
+      paywall-based tech. Ownership is enough. It's simple.
+    </p>
+  </div>
+</div>
+
+<footer class="nociv-footer">NOCIV.CO — Nothing Of Civilization</footer>
+
+</body>
+</html>
