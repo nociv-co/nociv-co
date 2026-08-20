@@ -1,0 +1,35 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Books — NOCIV.CO</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+<header class="nociv-header">
+  <a href="index.html" class="wordmark" style="text-decoration:none;">NOCIV.CO</a>
+  <div class="tagline">Nothing Of Civilization</div>
+</header>
+
+<nav class="tabs">
+  <a href="about.html">About</a>
+  <a href="clothing.html">Clothing</a>
+  <a href="tech.html">Tech</a>
+  <a href="books.html" class="active">Books</a>
+  <a href="community.html">Community</a>
+</nav>
+
+<div class="wrap" style="text-align:center;">
+  <div class="eyebrow">Free food for thought</div>
+  <h1 class="headline" style="font-size:2rem;">Coming soon</h1>
+  <p style="opacity:.7; max-width:400px; margin:0 auto;">
+    This page is reserved. Drop your content here when it's ready.
+  </p>
+</div>
+
+<footer class="nociv-footer">NOCIV.CO — Nothing Of Civilization</footer>
+
+</body>
+</html>
