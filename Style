@@ -1,0 +1,189 @@
+/* ============================================
+   NOCIV.CO — shared styles
+   Two surfaces used across the site:
+   - .light  : off-white / grey manifesto pages (About, Clothing)
+   - .dark   : black pages (Community, Tech)
+   ============================================ */
+
+@font-face {
+  font-family: 'Nociv Marker';
+  src: local('Marker Felt'), local('Comic Sans MS');
+}
+
+:root {
+  --paper: #efefef;
+  --paper-dim: #d8d8d8;
+  --ink: #1a1a1a;
+  --grey: #8a8a8a;
+  --grey-dark: #444;
+  --black: #0a0a0a;
+  --white: #f2f2f2;
+  --red: #d94f3d;
+  --gold: #d1a13e;
+  --green: #3c6b4a;
+  --max: 900px;
+}
+
+* { box-sizing: border-box; }
+
+body {
+  margin: 0;
+  font-family: Arial, Helvetica, sans-serif;
+  background: var(--paper);
+  color: var(--ink);
+}
+
+body.dark {
+  background: var(--black);
+  color: var(--white);
+}
+
+a { color: inherit; text-decoration: none; }
+
+/* ---------- NAV ---------- */
+.nociv-header {
+  text-align: center;
+  padding: 40px 20px 20px;
+}
+
+.nociv-header .wordmark {
+  font-size: clamp(2.5rem, 9vw, 5rem);
+  font-weight: 900;
+  letter-spacing: 0.02em;
+  margin: 0;
+  color: var(--grey);
+}
+
+.nociv-header .tagline {
+  letter-spacing: 0.3em;
+  font-size: 0.75rem;
+  color: var(--grey);
+  text-transform: uppercase;
+  margin-top: 8px;
+}
+
+body.dark .nociv-header .wordmark,
+body.dark .nociv-header .tagline {
+  color: var(--white);
+}
+
+nav.tabs {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 10px;
+  padding: 20px;
+  max-width: var(--max);
+  margin: 0 auto;
+}
+
+nav.tabs a {
+  background: var(--grey-dark);
+  color: var(--white);
+  padding: 14px 10px;
+  text-align: center;
+  flex: 1 1 130px;
+  min-width: 110px;
+  font-weight: 700;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  font-size: 0.85rem;
+  border: 1px solid #333;
+  transition: background 0.15s ease;
+}
+
+nav.tabs a small {
+  display: block;
+  font-weight: 400;
+  text-transform: none;
+  letter-spacing: normal;
+  opacity: 0.6;
+  font-size: 0.7rem;
+  margin-top: 4px;
+}
+
+nav.tabs a:hover,
+nav.tabs a.active {
+  background: var(--red);
+}
+
+/* ---------- TORN PAPER DIVIDER ---------- */
+.torn {
+  height: 40px;
+  width: 100%;
+  background: var(--paper);
+  clip-path: polygon(
+    0% 40%, 3% 20%, 6% 45%, 10% 15%, 14% 50%, 18% 25%, 22% 55%,
+    26% 20%, 30% 48%, 34% 18%, 38% 52%, 42% 22%, 46% 45%, 50% 15%,
+    54% 50%, 58% 20%, 62% 55%, 66% 25%, 70% 48%, 74% 18%, 78% 52%,
+    82% 22%, 86% 45%, 90% 15%, 94% 50%, 97% 25%, 100% 40%, 100% 100%, 0% 100%
+  );
+}
+
+.torn.flip {
+  clip-path: polygon(
+    0% 60%, 3% 80%, 6% 55%, 10% 85%, 14% 50%, 18% 75%, 22% 45%,
+    26% 80%, 30% 52%, 34% 82%, 38% 48%, 42% 78%, 46% 55%, 50% 85%,
+    54% 50%, 58% 80%, 62% 45%, 66% 75%, 70% 52%, 74% 82%, 78% 48%,
+    82% 78%, 86% 55%, 90% 85%, 94% 50%, 97% 75%, 100% 60%, 100% 0%, 0% 0%
+  );
+}
+
+.torn.dark-to-light { background: var(--paper); }
+.torn.light-to-dark { background: var(--black); }
+
+/* ---------- SECTION WRAP ---------- */
+.wrap {
+  max-width: var(--max);
+  margin: 0 auto;
+  padding: 40px 20px;
+}
+
+.eyebrow {
+  display: inline-block;
+  background: var(--black);
+  color: var(--white);
+  padding: 6px 14px;
+  font-weight: 700;
+  letter-spacing: 0.2em;
+  font-size: 0.75rem;
+  text-transform: uppercase;
+  margin-bottom: 16px;
+}
+
+body.dark .eyebrow {
+  background: var(--white);
+  color: var(--black);
+}
+
+h1.headline, h2.headline {
+  font-weight: 900;
+  letter-spacing: 0.03em;
+  text-transform: uppercase;
+  line-height: 1.1;
+}
+
+.checklist { list-style: none; padding: 0; margin: 30px 0; }
+.checklist li {
+  font-size: 1.1rem;
+  margin-bottom: 18px;
+  padding-left: 34px;
+  position: relative;
+}
+.checklist li::before {
+  content: '✓';
+  position: absolute;
+  left: 0;
+  color: var(--red);
+  font-weight: 900;
+  font-size: 1.3rem;
+}
+
+footer.nociv-footer {
+  text-align: center;
+  padding: 40px 20px;
+  font-size: 0.75rem;
+  letter-spacing: 0.1em;
+  color: var(--grey);
+  text-transform: uppercase;
+}
