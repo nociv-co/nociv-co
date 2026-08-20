@@ -1,0 +1,194 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Community — NOCIV.CO</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<link rel="stylesheet" href="style.css">
+<style>
+  #states {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    justify-content: center;
+    margin: 30px 0;
+  }
+  #states button {
+    background: #111;
+    color: #aaa;
+    border: 1px solid #333;
+    padding: 8px 14px;
+    cursor: pointer;
+    font-size: 0.85rem;
+  }
+  #states button:hover { background: #333; color: #fff; }
+
+  #editor { display: none; margin-top: 40px; max-width: 600px; margin-left:auto; margin-right:auto; }
+  #editor textarea {
+    width: 100%;
+    padding: 12px;
+    background: #111;
+    border: 1px solid #333;
+    color: #ccc;
+    resize: vertical;
+    font-size: 16px;
+  }
+  #sendBtn {
+    margin-top: 14px;
+    padding: 10px 20px;
+    cursor: pointer;
+    background: #111;
+    border: 1px solid #444;
+    color: #ccc;
+  }
+  #sendBtn:hover { background: #333; }
+
+  .postWrap { border-top: 1px solid #222; padding: 16px 0; text-align: left; }
+  .postDate { float: right; opacity: .6; font-size: 12px; }
+  .postText { white-space: pre-wrap; margin-top: 10px; }
+  .greenMark { color: #6fbf8f; }
+  .clearfix { clear: both; }
+</style>
+</head>
+<body class="dark">
+
+<header class="nociv-header">
+  <a href="index.html" class="wordmark" style="text-decoration:none;">NOCIV.CO</a>
+  <div class="tagline">Nothing Of Civilization</div>
+</header>
+
+<nav class="tabs">
+  <a href="about.html">About</a>
+  <a href="clothing.html">Clothing</a>
+  <a href="tech.html">Tech</a>
+  <a href="books.html">Books</a>
+  <a href="community.html" class="active">Community</a>
+</nav>
+
+<div class="wrap" style="text-align:center;">
+  <img src="black-america.svg" style="width:100%; max-width:500px;" alt="Black America">
+
+  <h2 style="letter-spacing:4px; margin-top:40px;">THE STALL WALL</h2>
+  <p style="opacity:.7; max-width:500px; margin:0 auto 20px;">
+    this is how word of mouth works, it goes peer to peer and reaches different states
+  </p>
+
+  <div id="states"></div>
+
+  <div id="editor">
+    <h3 id="stateTitle"></h3>
+    <div style="margin-bottom:20px; text-align:left;">
+      <label for="postInput">Speak Your Truth</label>
+      <textarea id="postInput" rows="4"></textarea>
+    </div>
+    <button id="sendBtn">Send Mark</button>
+    <div id="postsList" style="margin-top:40px;"></div>
+  </div>
+</div>
+
+<footer class="nociv-footer">NOCIV.CO — Nothing Of Civilization</footer>
+
+<script>
+const states = [
+"Alabama","Alaska","Arizona","Arkansas","California","Colorado",
+"Connecticut","Delaware","Florida","Georgia","Hawaii","Idaho","Illinois",
+"Indiana","Iowa","Kansas","Kentucky","Louisiana","Maine","Maryland",
+"Massachusetts","Michigan","Minnesota","Mississippi","Missouri","Montana",
+"Nebraska","Nevada","New Hampshire","New Jersey","New Mexico","New York",
+"North Carolina","North Dakota","Ohio","Oklahoma","Oregon","Pennsylvania",
+"Rhode Island","South Carolina","South Dakota","Tennessee","Texas","Utah",
+"Vermont","Virginia","Washington","West Virginia","Wisconsin","Wyoming"
+];
+
+const statesDiv = document.getElementById("states");
+const editor = document.getElementById("editor");
+const stateTitle = document.getElementById("stateTitle");
+const postInput = document.getElementById("postInput");
+const postsList = document.getElementById("postsList");
+
+let currentState = "";
+let secretMode = false;
+
+states.forEach(st => {
+  const btn = document.createElement("button");
+  btn.innerText = st;
+  btn.onclick = () => {
+    currentState = st;
+    stateTitle.innerText = st;
+    editor.style.display = "block";
+    loadPosts();
+  };
+  statesDiv.appendChild(btn);
+});
+
+// secret NOCIV admin mode: Ctrl+Shift+N
+window.addEventListener("keydown", e => {
+  if (e.ctrlKey && e.shiftKey && e.key.toLowerCase() === "n") {
+    secretMode = !secretMode;
+    alert("✦ NOCIV admin mode " + (secretMode ? "enabled" : "disabled"));
+  }
+});
+
+function loadPosts() {
+  postsList.innerHTML = "";
+  let allPosts = JSON.parse(localStorage.getItem("stallPosts")) || [];
+  let statePosts = allPosts.filter(p => p.state === currentState);
+
+  const now = Date.now();
+  statePosts = statePosts.filter(p => now - p.time < 30*24*60*60*1000);
+
+  if (statePosts.length === 0) {
+    postsList.innerHTML = "<p style='opacity:.6'>No marks yet</p>";
+    return;
+  }
+
+  statePosts.forEach(p => {
+    let div = document.createElement("div");
+    div.className = "postWrap";
+
+    let date = document.createElement("div");
+    date.className = "postDate";
+    date.innerText = p.date;
+
+    let text = document.createElement("div");
+    text.className = "postText";
+    text.innerText = p.text;
+    if (p.admin && secretMode) text.classList.add("greenMark");
+
+    div.appendChild(date);
+    div.appendChild(text);
+
+    let clear = document.createElement("div");
+    clear.className = "clearfix";
+    div.appendChild(clear);
+
+    postsList.appendChild(div);
+  });
+}
+
+document.getElementById("sendBtn").onclick = () => {
+  const text = postInput.value.trim();
+  if (!text) return;
+
+  const today = new Date();
+  const month = today.toLocaleString("en-US", { month: "short" }).toLowerCase();
+  const dateStr = month + "." + today.getDate() + "." + today.getFullYear();
+
+  let allPosts = JSON.parse(localStorage.getItem("stallPosts")) || [];
+
+  allPosts.unshift({
+    state: currentState,
+    text,
+    date: dateStr,
+    time: Date.now(),
+    admin: secretMode
+  });
+
+  localStorage.setItem("stallPosts", JSON.stringify(allPosts));
+  postInput.value = "";
+  loadPosts();
+};
+</script>
+
+</body>
+</html>
