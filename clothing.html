@@ -96,15 +96,15 @@
 <body>
 
 <header class="nociv-header">
-  <a href="index.html"><img class="torn-header-img" src="assets/header.png" alt="NOCIV.CO — Nothing Of Civilization"></a>
+  <a href="index.html"><img class="torn-header-img" src="header.png" alt="NOCIV.CO — Nothing Of Civilization"></a>
 </header>
 
 <nav class="tabs">
-  <a href="about.html" class="img-tab"><img src="assets/nav-about.png" alt="About"></a>
-  <a href="clothing.html" class="img-tab active"><img src="assets/nav-clothing.png" alt="Clothing"></a>
-  <a href="tech.html" class="img-tab"><img src="assets/nav-tech.png" alt="Tech"></a>
-  <a href="books.html" class="img-tab"><img src="assets/nav-books.png" alt="Books"></a>
-  <a href="community.html" class="text-tab">Community</a>
+  <a href="about.html" class="img-tab"><img src="nav-about.png" alt="About"></a>
+  <a href="clothing.html" class="img-tab active"><img src="nav-clothing.png" alt="Clothing"></a>
+  <a href="tech.html" class="img-tab"><img src="nav-tech.png" alt="Tech"></a>
+  <a href="books.html" class="img-tab"><img src="nav-books.png" alt="Books"></a>
+  <a href="community.html" class="img-tab"><img src="community button.PNG" alt="Community"></a>
 </nav>
 
 <div class="wrap">
@@ -114,7 +114,7 @@
     <!-- Photo album card -->
     <div>
       <div class="album" id="albumEl">
-        <img class="album-bg" id="albumBg" src="assets/album-closed.png" alt="Nociv photo album">
+        <img class="album-bg" id="albumBg" src="photo gallery closed.PNG" alt="Nociv photo album">
         <img class="album-slot" id="slotA" alt="">
         <img class="album-slot" id="slotB" alt="">
       </div>
@@ -126,7 +126,7 @@
 
     <!-- Pop-up shop card -->
     <div>
-      <img class="popup-card-img" src="assets/pop-up-shop.png" alt="Pop-up shop — posting soon">
+      <img class="popup-card-img" src="pop-up-shop.png" alt="Pop-up shop — posting soon">
 
       <div class="popup-note">
         Enter your email or phone # to get notified of next location & time. Nothing else.
@@ -135,7 +135,7 @@
       <form id="signupForm">
         <input type="text" placeholder="Email or phone number" required>
         <button type="submit" class="join-btn-img" style="padding:0; border:none; background:none;">
-          <img src="assets/join-button.png" alt="Join List" style="width:100%;">
+          <img src="join-button.png" alt="Join List" style="width:100%;">
         </button>
       </form>
       <p id="signupConfirm" style="display:none; text-align:center; color:var(--green); font-weight:700;">
@@ -163,16 +163,16 @@
   // Drop your garment photo URLs in here, two per page.
   // Add more pages by copying the { bg, slots: [...] } pattern below.
   const albumPages = [
-    { bg: "assets/album-closed.png", slots: [] }, // closed cover, no photos
+    { bg: "photo gallery closed.PNG", slots: [] }, // closed cover, no photos
     {
-      bg: "assets/album-page1.png",
+      bg: "photo ablum flipped 1.PNG",
       slots: [
         { src: "", left: "27.42%", top: "12.75%", width: "49.15%", height: "23.66%" },
         { src: "", left: "27.42%", top: "53.40%", width: "49.15%", height: "23.66%" }
       ]
     },
     {
-      bg: "assets/album-page2.png",
+      bg: "photo album flip 2.PNG",
       slots: [
         { src: "", left: "23.35%", top: "12.75%", width: "49.15%", height: "23.66%" },
         { src: "", left: "23.35%", top: "53.40%", width: "49.15%", height: "23.66%" }
