@@ -17,17 +17,31 @@
   @media (max-width: 640px) {
     .flip-wrap { grid-template-columns: 1fr; }
   }
-  .flip-card {
-    border: 3px solid var(--ink);
-    padding: 30px;
-    min-height: 260px;
-    display: flex;
-    flex-direction: column;
-    justify-content: center;
-    align-items: center;
-    text-align: center;
-    background: #fff;
+
+  /* --- Photo album, plug-and-play --- */
+  .album {
+    position: relative;
+    width: 100%;
+    max-width: 420px;
+    margin: 0 auto;
+    aspect-ratio: 1229 / 1513;
   }
+  .album-bg {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    object-fit: contain;
+    pointer-events: none;
+    user-select: none;
+  }
+  .album-slot {
+    position: absolute;
+    object-fit: cover;
+    display: none;
+  }
+  .album-slot.show { display: block; }
+
   .flip-nav {
     display: flex;
     justify-content: center;
@@ -82,16 +96,15 @@
 <body>
 
 <header class="nociv-header">
-  <a href="index.html" class="wordmark" style="text-decoration:none;">NOCIV.CO</a>
-  <div class="tagline">Nothing Of Civilization</div>
+  <a href="index.html"><img class="torn-header-img" src="assets/header.png" alt="NOCIV.CO — Nothing Of Civilization"></a>
 </header>
 
 <nav class="tabs">
-  <a href="about.html">About</a>
-  <a href="clothing.html" class="active">Clothing</a>
-  <a href="tech.html">Tech</a>
-  <a href="books.html">Books</a>
-  <a href="community.html">Community</a>
+  <a href="about.html" class="img-tab"><img src="assets/nav-about.png" alt="About"></a>
+  <a href="clothing.html" class="img-tab active"><img src="assets/nav-clothing.png" alt="Clothing"></a>
+  <a href="tech.html" class="img-tab"><img src="assets/nav-tech.png" alt="Tech"></a>
+  <a href="books.html" class="img-tab"><img src="assets/nav-books.png" alt="Books"></a>
+  <a href="community.html" class="text-tab">Community</a>
 </nav>
 
 <div class="wrap">
@@ -100,10 +113,10 @@
 
     <!-- Photo album card -->
     <div>
-      <div class="flip-card" id="albumCard">
-        <div style="font-size:2rem;">◇</div>
-        <div style="font-weight:900; font-size:1.3rem; margin-top:10px;">PHOTO ALBUM</div>
-        <p style="opacity:.6; font-size:0.85rem; margin-top:10px;">Garments, worn.</p>
+      <div class="album" id="albumEl">
+        <img class="album-bg" id="albumBg" src="assets/album-closed.png" alt="Nociv photo album">
+        <img class="album-slot" id="slotA" alt="">
+        <img class="album-slot" id="slotB" alt="">
       </div>
       <div class="flip-nav">
         <button id="prevPhoto" aria-label="Previous">&#8592;</button>
@@ -113,10 +126,7 @@
 
     <!-- Pop-up shop card -->
     <div>
-      <div class="flip-card" style="background:var(--gold); border-color:#000;">
-        <div style="font-weight:900; font-size:1.6rem;">POP-UP SHOP</div>
-        <div style="color:var(--red); font-weight:700; margin:8px 0;">Posting Soon!</div>
-      </div>
+      <img class="popup-card-img" src="assets/pop-up-shop.png" alt="Pop-up shop — posting soon">
 
       <div class="popup-note">
         Enter your email or phone # to get notified of next location & time. Nothing else.
@@ -124,7 +134,9 @@
 
       <form id="signupForm">
         <input type="text" placeholder="Email or phone number" required>
-        <button type="submit">Join List</button>
+        <button type="submit" class="join-btn-img" style="padding:0; border:none; background:none;">
+          <img src="assets/join-button.png" alt="Join List" style="width:100%;">
+        </button>
       </form>
       <p id="signupConfirm" style="display:none; text-align:center; color:var(--green); font-weight:700;">
         You're on the list.
@@ -141,30 +153,72 @@
 
   <a class="vinted-link" href="#" target="_blank" rel="noopener">Vinted Online Store →</a>
 
+
 </div>
 
 <footer class="nociv-footer">NOCIV.CO — Nothing Of Civilization</footer>
 
 <script>
-  // Placeholder photo set — replace src values with real garment photos
-  const photos = [
-    { caption: "Garment 01" },
-    { caption: "Garment 02" },
-    { caption: "Garment 03" }
+  // ===== PHOTO ALBUM — plug and play =====
+  // Drop your garment photo URLs in here, two per page.
+  // Add more pages by copying the { bg, slots: [...] } pattern below.
+  const albumPages = [
+    { bg: "assets/album-closed.png", slots: [] }, // closed cover, no photos
+    {
+      bg: "assets/album-page1.png",
+      slots: [
+        { src: "", left: "27.42%", top: "12.75%", width: "49.15%", height: "23.66%" },
+        { src: "", left: "27.42%", top: "53.40%", width: "49.15%", height: "23.66%" }
+      ]
+    },
+    {
+      bg: "assets/album-page2.png",
+      slots: [
+        { src: "", left: "23.35%", top: "12.75%", width: "49.15%", height: "23.66%" },
+        { src: "", left: "23.35%", top: "53.40%", width: "49.15%", height: "23.66%" }
+      ]
+    }
   ];
-  let idx = 0;
-  const card = document.getElementById('albumCard');
-  function render() {
-    card.querySelector('div[style*="opacity"]').textContent = photos[idx].caption;
+  // ========================================
+
+  let pageIdx = 0;
+  const albumBg = document.getElementById('albumBg');
+  const slotEls = [document.getElementById('slotA'), document.getElementById('slotB')];
+
+  function renderAlbum() {
+    const page = albumPages[pageIdx];
+    albumBg.src = page.bg;
+    slotEls.forEach((el, i) => {
+      const slot = page.slots[i];
+      if (slot && slot.src) {
+        el.src = slot.src;
+        el.style.left = slot.left;
+        el.style.top = slot.top;
+        el.style.width = slot.width;
+        el.style.height = slot.height;
+        el.classList.add('show');
+      } else {
+        el.classList.remove('show');
+      }
+    });
   }
-  document.getElementById('nextPhoto').onclick = () => { idx = (idx+1) % photos.length; render(); };
-  document.getElementById('prevPhoto').onclick = () => { idx = (idx-1+photos.length) % photos.length; render(); };
+  document.getElementById('nextPhoto').onclick = () => {
+    pageIdx = (pageIdx + 1) % albumPages.length;
+    renderAlbum();
+  };
+  document.getElementById('prevPhoto').onclick = () => {
+    pageIdx = (pageIdx - 1 + albumPages.length) % albumPages.length;
+    renderAlbum();
+  };
+  renderAlbum();
 
   document.getElementById('signupForm').addEventListener('submit', function(e){
     e.preventDefault();
     // TODO: wire this to your actual mailing list service (e.g. Mailchimp, Buttondown)
+    const btn = this.querySelector('.join-btn-img');
+    btn.classList.add('clicked');
     document.getElementById('signupConfirm').style.display = 'block';
-    this.reset();
+    this.querySelector('input').disabled = true;
   });
 </script>
 
