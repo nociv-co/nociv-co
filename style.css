@@ -207,25 +207,21 @@ footer.nociv-footer {
   text-transform: uppercase;
 }
 
-/* ---------- LANDING PAGE background figure ---------- */
-.landing-hero {
-  position: relative;
-  overflow: hidden;
+/* ---------- LANDING PAGE figure ---------- */
+.hero-figure-wrap {
+  text-align: right;
+  padding: 10px 20px 0;
+  max-width: var(--max);
+  margin: 0 auto;
 }
-.landing-hero .bg-figure {
-  position: absolute;
-  right: -5%;
-  top: 0;
-  height: 100%;
-  width: auto;
-  max-width: none;
-  opacity: 0.9;
-  z-index: 0;
-  pointer-events: none;
+.hero-figure {
+  width: 65%;
+  max-width: 460px;
+  height: auto;
+  display: inline-block;
 }
-.landing-hero .hero-content {
-  position: relative;
-  z-index: 1;
+@media (max-width: 500px) {
+  .hero-figure { width: 78%; }
 }
 
 /* ---------- Pop-up shop card ---------- */
