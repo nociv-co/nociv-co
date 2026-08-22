@@ -43,6 +43,29 @@
   }
   #sendBtn:hover { background: #333; }
 
+  #stateSelect {
+    background: #111;
+    color: #ccc;
+    border: 1px solid #444;
+    padding: 10px 14px;
+    font-size: 1rem;
+    width: 100%;
+    max-width: 300px;
+    margin: 0 auto 16px;
+    display: block;
+  }
+  .section-divider {
+    border: 0;
+    border-top: 1px solid #333;
+    max-width: 500px;
+    margin: 40px auto;
+  }
+  .stall-explain {
+    opacity: .6;
+    font-size: 0.85rem;
+    max-width: 460px;
+    margin: 0 auto 20px;
+  }
   .postWrap { border-top: 1px solid #222; padding: 16px 0; text-align: left; }
   .postDate { float: right; opacity: .6; font-size: 12px; }
   .postText { white-space: pre-wrap; margin-top: 10px; }
@@ -68,20 +91,36 @@
   <img src="black-america.svg" style="width:100%; max-width:500px;" alt="Black America">
 
   <h2 style="letter-spacing:4px; margin-top:40px;">THE STALL WALL</h2>
-  <p style="opacity:.7; max-width:500px; margin:0 auto 20px;">
+  <p style="opacity:.7; max-width:500px; margin:0 auto;">
     this is how word of mouth works, it goes peer to peer and reaches different states
+  </p>
+
+  <hr class="section-divider">
+
+  <h3 style="letter-spacing:2px;">LEAVE YOUR MARK</h3>
+  <select id="stateSelect">
+    <option value="">Choose your state</option>
+  </select>
+  <div style="max-width:500px; margin:0 auto; text-align:left;">
+    <label for="postInput">Speak Your Truth</label>
+    <textarea id="postInput" rows="4"></textarea>
+  </div>
+  <button id="sendBtn">Send Mark</button>
+  <p id="sendConfirm" style="display:none; color:#6fbf8f; font-weight:700; margin-top:14px;">
+    Your mark is up.
+  </p>
+
+  <hr class="section-divider">
+
+  <p class="stall-explain">
+    Marks in the Stall Wall stay up for a month. Then the cycle repeats.
   </p>
 
   <div id="states"></div>
 
-  <div id="editor">
+  <div id="editor" style="display:none; margin-top:40px; max-width:600px; margin-left:auto; margin-right:auto;">
     <h3 id="stateTitle"></h3>
-    <div style="margin-bottom:20px; text-align:left;">
-      <label for="postInput">Speak Your Truth</label>
-      <textarea id="postInput" rows="4"></textarea>
-    </div>
-    <button id="sendBtn">Send Mark</button>
-    <div id="postsList" style="margin-top:40px;"></div>
+    <div id="postsList" style="margin-top:20px;"></div>
   </div>
 </div>
 
@@ -100,22 +139,34 @@ const states = [
 ];
 
 const statesDiv = document.getElementById("states");
+const stateSelect = document.getElementById("stateSelect");
 const editor = document.getElementById("editor");
 const stateTitle = document.getElementById("stateTitle");
 const postInput = document.getElementById("postInput");
 const postsList = document.getElementById("postsList");
+const sendConfirm = document.getElementById("sendConfirm");
 
-let currentState = "";
+let viewState = "";
 let secretMode = false;
 
+// populate the "Leave Your Mark" dropdown
+states.forEach(st => {
+  const opt = document.createElement("option");
+  opt.value = st;
+  opt.textContent = st;
+  stateSelect.appendChild(opt);
+});
+
+// populate the browse-by-state button grid (view only)
 states.forEach(st => {
   const btn = document.createElement("button");
   btn.innerText = st;
   btn.onclick = () => {
-    currentState = st;
+    viewState = st;
     stateTitle.innerText = st;
     editor.style.display = "block";
     loadPosts();
+    editor.scrollIntoView({ behavior: "smooth", block: "start" });
   };
   statesDiv.appendChild(btn);
 });
@@ -131,7 +182,7 @@ window.addEventListener("keydown", e => {
 function loadPosts() {
   postsList.innerHTML = "";
   let allPosts = JSON.parse(localStorage.getItem("stallPosts")) || [];
-  let statePosts = allPosts.filter(p => p.state === currentState);
+  let statePosts = allPosts.filter(p => p.state === viewState);
 
   const now = Date.now();
   statePosts = statePosts.filter(p => now - p.time < 30*24*60*60*1000);
@@ -167,7 +218,9 @@ function loadPosts() {
 
 document.getElementById("sendBtn").onclick = () => {
   const text = postInput.value.trim();
-  if (!text) return;
+  const chosenState = stateSelect.value;
+  if (!chosenState) { stateSelect.focus(); return; }
+  if (!text) { postInput.focus(); return; }
 
   const today = new Date();
   const month = today.toLocaleString("en-US", { month: "short" }).toLowerCase();
@@ -176,7 +229,7 @@ document.getElementById("sendBtn").onclick = () => {
   let allPosts = JSON.parse(localStorage.getItem("stallPosts")) || [];
 
   allPosts.unshift({
-    state: currentState,
+    state: chosenState,
     text,
     date: dateStr,
     time: Date.now(),
@@ -185,7 +238,11 @@ document.getElementById("sendBtn").onclick = () => {
 
   localStorage.setItem("stallPosts", JSON.stringify(allPosts));
   postInput.value = "";
-  loadPosts();
+  sendConfirm.style.display = "block";
+  setTimeout(() => { sendConfirm.style.display = "none"; }, 3000);
+
+  // if they're currently browsing the state they just posted to, refresh the view
+  if (viewState === chosenState) loadPosts();
 };
 </script>
 
