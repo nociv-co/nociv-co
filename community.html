@@ -6,12 +6,90 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <link rel="stylesheet" href="style.css">
 <style>
+  .section-divider {
+    border: 0;
+    border-top: 1px solid #333;
+    max-width: 500px;
+    margin: 50px auto;
+  }
+  .board-title {
+    letter-spacing: 3px;
+    font-size: 1.3rem;
+    margin-bottom: 6px;
+  }
+  .board-sub {
+    opacity: .65;
+    font-size: 0.85rem;
+    max-width: 460px;
+    margin: 0 auto 24px;
+  }
+
+  /* ---- Mark card: the key CTA, needs to pop ---- */
+  .mark-card {
+    max-width: 460px;
+    margin: 0 auto;
+    background: #161616;
+    border: 2px solid var(--red);
+    padding: 28px 24px;
+    text-align: center;
+  }
+  .mark-card h3 {
+    letter-spacing: 2px;
+    margin: 0 0 18px;
+    color: var(--white);
+  }
+  .mark-card select,
+  .mark-card textarea,
+  .mark-card input[type="text"] {
+    width: 100%;
+    background: #0d0d0d;
+    color: #ddd;
+    border: 1px solid #444;
+    padding: 12px;
+    font-size: 1rem;
+    margin-bottom: 12px;
+    box-sizing: border-box;
+  }
+  .mark-card textarea { resize: vertical; }
+  .mark-card label {
+    display: block;
+    text-align: left;
+    font-size: 0.8rem;
+    opacity: .7;
+    margin-bottom: 6px;
+  }
+  .cta-btn {
+    width: 100%;
+    background: var(--red);
+    color: #fff;
+    border: none;
+    padding: 14px;
+    font-weight: 900;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    font-size: 0.9rem;
+    cursor: pointer;
+  }
+  .cta-btn:hover { background: #b83c2c; }
+  .confirm-msg {
+    display: none;
+    color: #6fbf8f;
+    font-weight: 700;
+    margin-top: 14px;
+  }
+
+  /* ---- Stall wall browse grid ---- */
+  .active-counter {
+    font-size: 0.85rem;
+    opacity: .7;
+    margin-bottom: 16px;
+  }
   #states {
     display: flex;
     flex-wrap: wrap;
     gap: 8px;
     justify-content: center;
-    margin: 30px 0;
+    margin: 20px 0;
   }
   #states button {
     background: #111;
@@ -22,55 +100,111 @@
     font-size: 0.85rem;
   }
   #states button:hover { background: #333; color: #fff; }
-
+  #states button.has-marks {
+    border-color: var(--gold);
+    color: var(--gold);
+  }
   #editor { display: none; margin-top: 40px; max-width: 600px; margin-left:auto; margin-right:auto; }
-  #editor textarea {
-    width: 100%;
-    padding: 12px;
-    background: #111;
-    border: 1px solid #333;
-    color: #ccc;
-    resize: vertical;
-    font-size: 16px;
-  }
-  #sendBtn {
-    margin-top: 14px;
-    padding: 10px 20px;
-    cursor: pointer;
-    background: #111;
-    border: 1px solid #444;
-    color: #ccc;
-  }
-  #sendBtn:hover { background: #333; }
-
-  #stateSelect {
-    background: #111;
-    color: #ccc;
-    border: 1px solid #444;
-    padding: 10px 14px;
-    font-size: 1rem;
-    width: 100%;
-    max-width: 300px;
-    margin: 0 auto 16px;
-    display: block;
-  }
-  .section-divider {
-    border: 0;
-    border-top: 1px solid #333;
-    max-width: 500px;
-    margin: 40px auto;
-  }
-  .stall-explain {
-    opacity: .6;
-    font-size: 0.85rem;
-    max-width: 460px;
-    margin: 0 auto 20px;
-  }
   .postWrap { border-top: 1px solid #222; padding: 16px 0; text-align: left; }
   .postDate { float: right; opacity: .6; font-size: 12px; }
   .postText { white-space: pre-wrap; margin-top: 10px; }
   .greenMark { color: #6fbf8f; }
   .clearfix { clear: both; }
+
+  /* ---- Opportunity board ---- */
+  .opp-list { max-width: 600px; margin: 30px auto 0; text-align: left; }
+  .opp-card {
+    border: 1px solid #333;
+    padding: 16px;
+    margin-bottom: 12px;
+    background: #111;
+  }
+  .opp-tag {
+    display: inline-block;
+    font-size: 0.7rem;
+    letter-spacing: 0.05em;
+    text-transform: uppercase;
+    padding: 3px 8px;
+    margin-bottom: 8px;
+    background: var(--gold);
+    color: #1a1a1a;
+    font-weight: 700;
+  }
+  .opp-tag.offering { background: var(--green); color: #fff; }
+
+  /* ---- Event board ---- */
+  .state-swipe {
+    display: flex;
+    overflow-x: auto;
+    gap: 8px;
+    padding: 10px 4px 20px;
+    max-width: 600px;
+    margin: 0 auto;
+    scroll-snap-type: x mandatory;
+  }
+  .state-swipe button {
+    flex: 0 0 auto;
+    scroll-snap-align: start;
+    background: #111;
+    color: #aaa;
+    border: 1px solid #333;
+    padding: 8px 14px;
+    cursor: pointer;
+    white-space: nowrap;
+    font-size: 0.85rem;
+  }
+  .state-swipe button.active { background: var(--red); color: #fff; border-color: var(--red); }
+
+  .calendar {
+    max-width: 500px;
+    margin: 20px auto;
+    display: grid;
+    grid-template-columns: repeat(7, 1fr);
+    gap: 4px;
+    text-align: center;
+  }
+  .calendar .cal-head {
+    font-size: 0.7rem;
+    opacity: .5;
+    padding-bottom: 6px;
+  }
+  .calendar .cal-day {
+    aspect-ratio: 1;
+    background: #111;
+    border: 1px solid #222;
+    font-size: 0.75rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    position: relative;
+  }
+  .calendar .cal-day.has-event {
+    border-color: var(--gold);
+    color: var(--gold);
+    font-weight: 700;
+  }
+  .calendar .cal-day.empty { border: none; background: none; }
+
+  .event-list { max-width: 500px; margin: 20px auto 0; text-align: left; }
+  .event-card {
+    display: flex;
+    gap: 12px;
+    border: 1px solid #333;
+    padding: 12px;
+    margin-bottom: 10px;
+    background: #111;
+    align-items: center;
+  }
+  .event-card img {
+    width: 64px;
+    height: 64px;
+    object-fit: cover;
+    flex-shrink: 0;
+  }
+  .event-meta { font-size: 0.85rem; opacity: .7; }
+
+  /* ---- Suggestion wall ---- */
+  .suggestion-list { max-width: 500px; margin: 30px auto 0; text-align: left; }
 </style>
 </head>
 <body class="dark">
@@ -97,34 +231,104 @@
 
   <hr class="section-divider">
 
-  <h3 style="letter-spacing:2px;">LEAVE YOUR MARK</h3>
-  <select id="stateSelect">
-    <option value="">Choose your state</option>
-  </select>
-  <div style="max-width:500px; margin:0 auto; text-align:left;">
+  <!-- LEAVE YOUR MARK — the key CTA, now visually distinct -->
+  <div class="mark-card">
+    <h3>Leave Your Mark</h3>
+    <label for="stateSelect">Your state</label>
+    <select id="stateSelect">
+      <option value="">Choose your state</option>
+    </select>
     <label for="postInput">Speak Your Truth</label>
     <textarea id="postInput" rows="4"></textarea>
+    <button id="sendBtn" class="cta-btn">Send Mark</button>
+    <p id="sendConfirm" class="confirm-msg">Your mark is up.</p>
   </div>
-  <button id="sendBtn">Send Mark</button>
-  <p id="sendConfirm" style="display:none; color:#6fbf8f; font-weight:700; margin-top:14px;">
-    Your mark is up.
-  </p>
 
   <hr class="section-divider">
 
-  <p class="stall-explain">
+  <p class="board-sub" style="margin-bottom:6px;">
     Marks in the Stall Wall stay up for a month. Then the cycle repeats.
   </p>
+  <p class="active-counter" id="activeCounter"></p>
 
   <div id="states"></div>
 
-  <div id="editor" style="display:none; margin-top:40px; max-width:600px; margin-left:auto; margin-right:auto;">
+  <div id="editor">
     <h3 id="stateTitle"></h3>
     <div id="postsList" style="margin-top:20px;"></div>
   </div>
+
+  <hr class="section-divider">
+
+  <!-- OPPORTUNITY BOARD -->
+  <h2 class="board-title">OPPORTUNITY BOARD</h2>
+  <p class="board-sub">
+    Calls for artists, creative collabs, hiring, or looking for a specific
+    skill. Post it here.
+  </p>
+
+  <div class="mark-card">
+    <label for="oppType">Type</label>
+    <select id="oppType">
+      <option value="Looking for">Looking for</option>
+      <option value="Offering">Offering</option>
+    </select>
+    <label for="oppTitle">Title</label>
+    <input type="text" id="oppTitle" placeholder="e.g. Screen printer needed for pop-up">
+    <label for="oppDetails">Details</label>
+    <textarea id="oppDetails" rows="3" placeholder="What's the opportunity? How do people reach you?"></textarea>
+    <button id="oppSendBtn" class="cta-btn">Post It</button>
+    <p id="oppConfirm" class="confirm-msg">Posted to the board.</p>
+  </div>
+
+  <div class="opp-list" id="oppList"></div>
+
+  <hr class="section-divider">
+
+  <!-- EVENT BOARD -->
+  <h2 class="board-title">EVENT BOARD</h2>
+  <p class="board-sub">
+    Pop-ups and events, by state. Swipe to see other states. Calendar shows this month only.
+  </p>
+
+  <div class="mark-card">
+    <label for="evtState">State</label>
+    <select id="evtState"></select>
+    <label for="evtTitle">Event name</label>
+    <input type="text" id="evtTitle" placeholder="e.g. Nociv Pop-Up — Roosevelt Row">
+    <label for="evtDate">Date</label>
+    <input type="text" id="evtDate" placeholder="e.g. Aug 30">
+    <label for="evtPhoto">Photo</label>
+    <input type="file" id="evtPhoto" accept="image/*">
+    <button id="evtSendBtn" class="cta-btn">Add Event</button>
+    <p id="evtConfirm" class="confirm-msg">Event added.</p>
+  </div>
+
+  <div class="state-swipe" id="evtStateSwipe"></div>
+
+  <div class="calendar" id="evtCalendar"></div>
+  <div class="event-list" id="evtList"></div>
+
+  <hr class="section-divider">
+
+  <!-- SUGGESTION WALL -->
+  <h2 class="board-title">SUGGESTION WALL</h2>
+  <p class="board-sub">
+    Anonymous. No names, no accounts. Suggestions stay up for a year.
+  </p>
+
+  <div class="mark-card">
+    <label for="suggInput">Say it</label>
+    <textarea id="suggInput" rows="3"></textarea>
+    <button id="suggSendBtn" class="cta-btn">Post Anonymously</button>
+    <p id="suggConfirm" class="confirm-msg">Posted.</p>
+  </div>
+
+  <div class="suggestion-list" id="suggList"></div>
+
 </div>
 
-<footer class="nociv-footer">NOCIV.CO — Nothing Of Civilization</footer>
+<footer class="nociv-footer">NOCIV.CO — Nothing Of Civilization<br>© 2023–2026 NOCIV.CO. Established 2023. All rights reserved.</footer>
 
 <script>
 const states = [
@@ -138,6 +342,7 @@ const states = [
 "Vermont","Virginia","Washington","West Virginia","Wisconsin","Wyoming"
 ];
 
+/* ============ STALL WALL ============ */
 const statesDiv = document.getElementById("states");
 const stateSelect = document.getElementById("stateSelect");
 const editor = document.getElementById("editor");
@@ -145,33 +350,47 @@ const stateTitle = document.getElementById("stateTitle");
 const postInput = document.getElementById("postInput");
 const postsList = document.getElementById("postsList");
 const sendConfirm = document.getElementById("sendConfirm");
+const activeCounter = document.getElementById("activeCounter");
 
 let viewState = "";
 let secretMode = false;
 
-// populate the "Leave Your Mark" dropdown
 states.forEach(st => {
   const opt = document.createElement("option");
-  opt.value = st;
-  opt.textContent = st;
+  opt.value = st; opt.textContent = st;
   stateSelect.appendChild(opt);
 });
 
-// populate the browse-by-state button grid (view only)
-states.forEach(st => {
-  const btn = document.createElement("button");
-  btn.innerText = st;
-  btn.onclick = () => {
-    viewState = st;
-    stateTitle.innerText = st;
-    editor.style.display = "block";
-    loadPosts();
-    editor.scrollIntoView({ behavior: "smooth", block: "start" });
-  };
-  statesDiv.appendChild(btn);
-});
+function activeStatesThisCycle() {
+  const now = Date.now();
+  let allPosts = JSON.parse(localStorage.getItem("stallPosts")) || [];
+  allPosts = allPosts.filter(p => now - p.time < 30*24*60*60*1000);
+  return new Set(allPosts.map(p => p.state));
+}
 
-// secret NOCIV admin mode: Ctrl+Shift+N
+function renderStateGrid() {
+  statesDiv.innerHTML = "";
+  const active = activeStatesThisCycle();
+  activeCounter.textContent = active.size === 0
+    ? "No states active yet this cycle."
+    : active.size + " state" + (active.size === 1 ? "" : "s") + " have spoken this cycle.";
+
+  states.forEach(st => {
+    const btn = document.createElement("button");
+    btn.innerText = st;
+    if (active.has(st)) btn.classList.add("has-marks");
+    btn.onclick = () => {
+      viewState = st;
+      stateTitle.innerText = st;
+      editor.style.display = "block";
+      loadPosts();
+      editor.scrollIntoView({ behavior: "smooth", block: "start" });
+    };
+    statesDiv.appendChild(btn);
+  });
+}
+renderStateGrid();
+
 window.addEventListener("keydown", e => {
   if (e.ctrlKey && e.shiftKey && e.key.toLowerCase() === "n") {
     secretMode = !secretMode;
@@ -183,7 +402,6 @@ function loadPosts() {
   postsList.innerHTML = "";
   let allPosts = JSON.parse(localStorage.getItem("stallPosts")) || [];
   let statePosts = allPosts.filter(p => p.state === viewState);
-
   const now = Date.now();
   statePosts = statePosts.filter(p => now - p.time < 30*24*60*60*1000);
 
@@ -191,27 +409,20 @@ function loadPosts() {
     postsList.innerHTML = "<p style='opacity:.6'>No marks yet</p>";
     return;
   }
-
   statePosts.forEach(p => {
     let div = document.createElement("div");
     div.className = "postWrap";
-
     let date = document.createElement("div");
     date.className = "postDate";
     date.innerText = p.date;
-
     let text = document.createElement("div");
     text.className = "postText";
     text.innerText = p.text;
     if (p.admin && secretMode) text.classList.add("greenMark");
-
-    div.appendChild(date);
-    div.appendChild(text);
-
+    div.appendChild(date); div.appendChild(text);
     let clear = document.createElement("div");
     clear.className = "clearfix";
     div.appendChild(clear);
-
     postsList.appendChild(div);
   });
 }
@@ -227,22 +438,240 @@ document.getElementById("sendBtn").onclick = () => {
   const dateStr = month + "." + today.getDate() + "." + today.getFullYear();
 
   let allPosts = JSON.parse(localStorage.getItem("stallPosts")) || [];
-
-  allPosts.unshift({
-    state: chosenState,
-    text,
-    date: dateStr,
-    time: Date.now(),
-    admin: secretMode
-  });
-
+  allPosts.unshift({ state: chosenState, text, date: dateStr, time: Date.now(), admin: secretMode });
   localStorage.setItem("stallPosts", JSON.stringify(allPosts));
+
   postInput.value = "";
   sendConfirm.style.display = "block";
   setTimeout(() => { sendConfirm.style.display = "none"; }, 3000);
-
-  // if they're currently browsing the state they just posted to, refresh the view
+  renderStateGrid();
   if (viewState === chosenState) loadPosts();
+};
+
+/* ============ OPPORTUNITY BOARD ============ */
+const oppList = document.getElementById("oppList");
+
+function renderOpps() {
+  oppList.innerHTML = "";
+  let opps = JSON.parse(localStorage.getItem("opportunityPosts")) || [];
+  const now = Date.now();
+  opps = opps.filter(o => now - o.time < 60*24*60*60*1000); // 60 days
+  if (opps.length === 0) {
+    oppList.innerHTML = "<p style='opacity:.6; text-align:center;'>Nothing posted yet.</p>";
+    return;
+  }
+  opps.forEach(o => {
+    const card = document.createElement("div");
+    card.className = "opp-card";
+    const tag = document.createElement("span");
+    tag.className = "opp-tag" + (o.type === "Offering" ? " offering" : "");
+    tag.textContent = o.type;
+    const title = document.createElement("div");
+    title.style.fontWeight = "700";
+    title.style.margin = "6px 0";
+    title.textContent = o.title;
+    const details = document.createElement("div");
+    details.style.fontSize = "0.9rem";
+    details.style.opacity = ".85";
+    details.style.whiteSpace = "pre-wrap";
+    details.textContent = o.details;
+    const date = document.createElement("div");
+    date.style.fontSize = "0.75rem";
+    date.style.opacity = ".5";
+    date.style.marginTop = "8px";
+    date.textContent = o.date;
+    card.appendChild(tag); card.appendChild(title); card.appendChild(details); card.appendChild(date);
+    oppList.appendChild(card);
+  });
+}
+renderOpps();
+
+document.getElementById("oppSendBtn").onclick = () => {
+  const type = document.getElementById("oppType").value;
+  const title = document.getElementById("oppTitle").value.trim();
+  const details = document.getElementById("oppDetails").value.trim();
+  if (!title || !details) return;
+
+  const today = new Date();
+  const dateStr = today.toLocaleString("en-US", { month: "short" }).toLowerCase() + "." + today.getDate() + "." + today.getFullYear();
+
+  let opps = JSON.parse(localStorage.getItem("opportunityPosts")) || [];
+  opps.unshift({ type, title, details, date: dateStr, time: Date.now() });
+  localStorage.setItem("opportunityPosts", JSON.stringify(opps));
+
+  document.getElementById("oppTitle").value = "";
+  document.getElementById("oppDetails").value = "";
+  const c = document.getElementById("oppConfirm");
+  c.style.display = "block";
+  setTimeout(() => { c.style.display = "none"; }, 3000);
+  renderOpps();
+};
+
+/* ============ EVENT BOARD ============ */
+const evtStateSelect = document.getElementById("evtState");
+const evtStateSwipe = document.getElementById("evtStateSwipe");
+const evtCalendar = document.getElementById("evtCalendar");
+const evtList = document.getElementById("evtList");
+let evtViewState = "Arizona";
+
+states.forEach(st => {
+  const opt = document.createElement("option");
+  opt.value = st; opt.textContent = st;
+  evtStateSelect.appendChild(opt);
+});
+evtStateSelect.value = "Arizona";
+
+states.forEach(st => {
+  const btn = document.createElement("button");
+  btn.textContent = st;
+  if (st === evtViewState) btn.classList.add("active");
+  btn.onclick = () => {
+    evtViewState = st;
+    evtStateSwipe.querySelectorAll("button").forEach(b => b.classList.remove("active"));
+    btn.classList.add("active");
+    renderCalendar();
+    renderEventList();
+  };
+  evtStateSwipe.appendChild(btn);
+});
+
+function getEvents() {
+  return JSON.parse(localStorage.getItem("eventPosts")) || [];
+}
+
+function renderCalendar() {
+  evtCalendar.innerHTML = "";
+  const now = new Date();
+  const year = now.getFullYear(), month = now.getMonth();
+  const firstDay = new Date(year, month, 1).getDay();
+  const daysInMonth = new Date(year, month + 1, 0).getDate();
+
+  const events = getEvents().filter(e => e.state === evtViewState);
+  const eventDays = new Set(events.map(e => e.day));
+
+  ["S","M","T","W","T","F","S"].forEach(d => {
+    const h = document.createElement("div");
+    h.className = "cal-head";
+    h.textContent = d;
+    evtCalendar.appendChild(h);
+  });
+  for (let i = 0; i < firstDay; i++) {
+    const empty = document.createElement("div");
+    empty.className = "cal-day empty";
+    evtCalendar.appendChild(empty);
+  }
+  for (let d = 1; d <= daysInMonth; d++) {
+    const cell = document.createElement("div");
+    cell.className = "cal-day" + (eventDays.has(d) ? " has-event" : "");
+    cell.textContent = d;
+    evtCalendar.appendChild(cell);
+  }
+}
+
+function renderEventList() {
+  evtList.innerHTML = "";
+  const events = getEvents().filter(e => e.state === evtViewState);
+  if (events.length === 0) {
+    evtList.innerHTML = "<p style='opacity:.6; text-align:center;'>No events posted for " + evtViewState + " yet.</p>";
+    return;
+  }
+  events.forEach(e => {
+    const card = document.createElement("div");
+    card.className = "event-card";
+    if (e.photo) {
+      const img = document.createElement("img");
+      img.src = e.photo;
+      card.appendChild(img);
+    }
+    const meta = document.createElement("div");
+    meta.innerHTML = `<div style="font-weight:700;">${e.title}</div>
+                       <div class="event-meta">${e.date} — ${e.state}</div>`;
+    card.appendChild(meta);
+    evtList.appendChild(card);
+  });
+}
+renderCalendar();
+renderEventList();
+
+document.getElementById("evtSendBtn").onclick = () => {
+  const state = evtStateSelect.value;
+  const title = document.getElementById("evtTitle").value.trim();
+  const dateStr = document.getElementById("evtDate").value.trim();
+  const fileInput = document.getElementById("evtPhoto");
+  if (!title || !dateStr) return;
+
+  const now = new Date();
+  const dayNum = now.getDate(); // events default to today's calendar slot; edit date text freely
+
+  const save = (photoDataUrl) => {
+    let events = getEvents();
+    events.unshift({ state, title, date: dateStr, day: dayNum, photo: photoDataUrl || "", time: Date.now() });
+    localStorage.setItem("eventPosts", JSON.stringify(events));
+
+    document.getElementById("evtTitle").value = "";
+    document.getElementById("evtDate").value = "";
+    fileInput.value = "";
+    const c = document.getElementById("evtConfirm");
+    c.style.display = "block";
+    setTimeout(() => { c.style.display = "none"; }, 3000);
+
+    if (state === evtViewState) { renderCalendar(); renderEventList(); }
+  };
+
+  if (fileInput.files && fileInput.files[0]) {
+    const reader = new FileReader();
+    reader.onload = () => save(reader.result);
+    reader.readAsDataURL(fileInput.files[0]);
+  } else {
+    save(null);
+  }
+};
+
+/* ============ SUGGESTION WALL ============ */
+const suggList = document.getElementById("suggList");
+
+function renderSuggestions() {
+  suggList.innerHTML = "";
+  let suggs = JSON.parse(localStorage.getItem("suggestionPosts")) || [];
+  const now = Date.now();
+  suggs = suggs.filter(s => now - s.time < 365*24*60*60*1000); // 1 year
+  if (suggs.length === 0) {
+    suggList.innerHTML = "<p style='opacity:.6; text-align:center;'>No suggestions yet.</p>";
+    return;
+  }
+  suggs.forEach(s => {
+    const div = document.createElement("div");
+    div.className = "postWrap";
+    const date = document.createElement("div");
+    date.className = "postDate";
+    date.textContent = s.date;
+    const text = document.createElement("div");
+    text.className = "postText";
+    text.textContent = s.text;
+    div.appendChild(date); div.appendChild(text);
+    const clear = document.createElement("div");
+    clear.className = "clearfix";
+    div.appendChild(clear);
+    suggList.appendChild(div);
+  });
+}
+renderSuggestions();
+
+document.getElementById("suggSendBtn").onclick = () => {
+  const text = document.getElementById("suggInput").value.trim();
+  if (!text) return;
+  const today = new Date();
+  const dateStr = today.toLocaleString("en-US", { month: "short" }).toLowerCase() + "." + today.getDate() + "." + today.getFullYear();
+
+  let suggs = JSON.parse(localStorage.getItem("suggestionPosts")) || [];
+  suggs.unshift({ text, date: dateStr, time: Date.now() });
+  localStorage.setItem("suggestionPosts", JSON.stringify(suggs));
+
+  document.getElementById("suggInput").value = "";
+  const c = document.getElementById("suggConfirm");
+  c.style.display = "block";
+  setTimeout(() => { c.style.display = "none"; }, 3000);
+  renderSuggestions();
 };
 </script>
 
