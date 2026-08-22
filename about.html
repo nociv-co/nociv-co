@@ -5,6 +5,31 @@
 <title>About — NOCIV.CO</title>
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <link rel="stylesheet" href="style.css">
+<style>
+  .phase-track-btn {
+    background: #e2e2e2;
+    color: #333;
+    border: 1px solid #999;
+    padding: 8px 18px;
+    font-weight: 700;
+    letter-spacing: 0.03em;
+    text-transform: uppercase;
+    font-size: 0.8rem;
+    cursor: pointer;
+  }
+  .phase-track-btn.active {
+    background: var(--black);
+    color: var(--white);
+    border-color: var(--black);
+  }
+  .phase-scroll-wrap { position: relative; }
+  .scroll-hint {
+    font-size: 0.75rem;
+    opacity: .5;
+    text-align: center;
+    letter-spacing: 0.05em;
+  }
+</style>
 </head>
 <body>
 
@@ -22,52 +47,108 @@
 
 <div class="wrap">
   <div class="eyebrow">Timeline · Vision</div>
-  <h1 class="headline" style="font-size:2rem;">Where we're headed</h1>
+  <h1 class="headline" style="font-size:2rem; margin-bottom:6px;">Learn about our phases</h1>
+  <p style="opacity:.7; margin-top:0;">Pick a track to see where it's headed.</p>
 
-  <div style="overflow-x:auto; padding:20px 0;">
-    <div style="display:flex; gap:24px; min-width:700px; padding:0 4px;">
+  <div style="display:flex; gap:10px; margin:20px 0;">
+    <button class="phase-track-btn active" data-track="clothing">Clothing</button>
+    <button class="phase-track-btn" data-track="tech">Tech</button>
+  </div>
 
-      <div style="flex:1;">
-        <div style="font-weight:900; font-size:1.1rem;">① We are here</div>
-        <p style="font-size:0.9rem;">
-          <strong>Phase 1</strong> — pop-up shops only, all around Arizona.
-          Second hand + upcycled, 1-of-1 pieces.
-        </p>
+  <div class="phase-scroll-wrap">
+    <div id="phases-clothing" class="phase-track" style="overflow-x:auto; padding:20px 0;">
+      <div style="display:flex; gap:24px; min-width:700px; padding:0 4px;">
+
+        <div style="flex:1;">
+          <div style="font-weight:900; font-size:1.1rem;">① We are here</div>
+          <p style="font-size:0.9rem;">
+            <strong>Phase 1</strong> — pop-up shops only, all around Arizona.
+            Second hand + upcycled, 1-of-1 pieces.
+          </p>
+        </div>
+
+        <div style="flex:1;">
+          <div style="font-weight:900; font-size:1.1rem;">②</div>
+          <p style="font-size:0.9rem;">
+            <strong>Phase 2</strong> — adding original designs to wholesale
+            blanks. Opening up on Vinted to reach other states.
+          </p>
+        </div>
+
+        <div style="flex:1;">
+          <div style="font-weight:900; font-size:1.1rem;">③</div>
+          <p style="font-size:0.9rem;">
+            <strong>Phase 3</strong> — create, cut, and sew garments.
+            Garments in local shops.
+          </p>
+        </div>
+
+        <div style="flex:1;">
+          <div style="font-weight:900; font-size:1.1rem;">④</div>
+          <p style="font-size:0.9rem;">
+            <strong>Phase 4</strong> — pop-up shops in different states.
+            Garments in select stores throughout the USA.
+          </p>
+        </div>
+
+        <div style="flex:1;">
+          <div style="font-weight:900; font-size:1.1rem;">⑤</div>
+          <p style="font-size:0.9rem;">
+            Find a USA manufacturer, or create one. Retire the Vinted
+            store — selling only in person.
+          </p>
+        </div>
+
       </div>
-
-      <div style="flex:1;">
-        <div style="font-weight:900; font-size:1.1rem;">②</div>
-        <p style="font-size:0.9rem;">
-          <strong>Phase 2</strong> — adding original designs to wholesale
-          blanks. Opening up on Vinted to reach other states.
-        </p>
-      </div>
-
-      <div style="flex:1;">
-        <div style="font-weight:900; font-size:1.1rem;">③</div>
-        <p style="font-size:0.9rem;">
-          <strong>Phase 3</strong> — create, cut, and sew garments.
-          Garments in local shops.
-        </p>
-      </div>
-
-      <div style="flex:1;">
-        <div style="font-weight:900; font-size:1.1rem;">④</div>
-        <p style="font-size:0.9rem;">
-          <strong>Phase 4</strong> — pop-up shops in different states.
-          Garments in select stores throughout the USA.
-        </p>
-      </div>
-
-      <div style="flex:1;">
-        <div style="font-weight:900; font-size:1.1rem;">⑤</div>
-        <p style="font-size:0.9rem;">
-          Find a USA manufacturer, or create one. Retire the Vinted
-          store — selling only in person.
-        </p>
-      </div>
-
     </div>
+
+    <div id="phases-tech" class="phase-track" style="overflow-x:auto; padding:20px 0; display:none;">
+      <div style="display:flex; gap:24px; min-width:700px; padding:0 4px;">
+
+        <div style="flex:1;">
+          <div style="font-weight:900; font-size:1.1rem;">① We are here</div>
+          <p style="font-size:0.9rem;">
+            <strong>Phase 1</strong> — hand-building enclosures, prototyping
+            in CAD, testing real wood joinery.
+          </p>
+        </div>
+
+        <div style="flex:1;">
+          <div style="font-weight:900; font-size:1.1rem;">②</div>
+          <p style="font-size:0.9rem;">
+            <strong>Phase 2</strong> — durability testing, deciding between
+            3D printing and laser cutting for production.
+          </p>
+        </div>
+
+        <div style="flex:1;">
+          <div style="font-weight:900; font-size:1.1rem;">③</div>
+          <p style="font-size:0.9rem;">
+            <strong>Phase 3</strong> — first small hand-finished batch,
+            sold in person at pop-ups.
+          </p>
+        </div>
+
+        <div style="flex:1;">
+          <div style="font-weight:900; font-size:1.1rem;">④</div>
+          <p style="font-size:0.9rem;">
+            <strong>Phase 4</strong> — open the design. Release the build
+            files for anyone who wants to make their own.
+          </p>
+        </div>
+
+        <div style="flex:1;">
+          <div style="font-weight:900; font-size:1.1rem;">⑤</div>
+          <p style="font-size:0.9rem;">
+            Free the tools. Ownership over subscriptions — no paywalls,
+            just what you build.
+          </p>
+        </div>
+
+      </div>
+    </div>
+
+    <div class="scroll-hint">&#8592; swipe to see more &#8594;</div>
   </div>
 </div>
 
@@ -98,6 +179,20 @@
 </div>
 
 <footer class="nociv-footer">NOCIV.CO — Nothing Of Civilization</footer>
+
+<script>
+  // ===== PHASE TRACKS — plug and play =====
+  // Add a new track by: 1) adding a button here with data-track="yourkey"
+  // 2) adding a matching <div id="phases-yourkey" class="phase-track">...</div> above
+  document.querySelectorAll('.phase-track-btn').forEach(btn => {
+    btn.addEventListener('click', () => {
+      document.querySelectorAll('.phase-track-btn').forEach(b => b.classList.remove('active'));
+      document.querySelectorAll('.phase-track').forEach(t => t.style.display = 'none');
+      btn.classList.add('active');
+      document.getElementById('phases-' + btn.dataset.track).style.display = 'block';
+    });
+  });
+</script>
 
 </body>
 </html>
