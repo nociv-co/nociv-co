@@ -84,6 +84,7 @@
   <a href="tech.html" class="img-tab"><img src="nav-tech.png" alt="Tech"></a>
   <a href="books.html" class="img-tab active"><img src="nav-books.png" alt="Books"></a>
   <a href="community.html" class="img-tab"><img src="community-button.png" alt="Community"></a>
+  <a href="art-homies.html" class="text-tab">Art Homies</a>
 </nav>
 
 <div class="wrap">
@@ -112,7 +113,10 @@
         { label: "Part 1", file: "zines/how-to-feel-the-void-of-life-part1.pdf" },
         { label: "Part 2", file: "zines/how-to-feel-the-void-of-life-part2.pdf" },
         { label: "Part 3", file: "zines/how-to-feel-the-void-of-life-part3.pdf" }
-      ]
+      ],
+      // Leave empty to show "Available at pop-ups". Once you have a
+      // print-to-order or Stripe link, paste it here for a Buy button.
+      buyLink: ""
     }
   ];
   // ==========================================
@@ -163,6 +167,21 @@
     dl.download = '';
     dl.textContent = 'Download';
     partsRow.appendChild(dl);
+
+    if (zine.buyLink) {
+      const buy = document.createElement('a');
+      buy.href = zine.buyLink;
+      buy.target = '_blank';
+      buy.rel = 'noopener';
+      buy.textContent = 'Buy Print Copy';
+      buy.style.cssText = 'background:var(--red); color:#fff; border:none; padding:10px 16px; font-size:0.85rem; font-weight:700; letter-spacing:0.03em;';
+      partsRow.appendChild(buy);
+    } else {
+      const badge = document.createElement('span');
+      badge.textContent = 'Print copy: available at pop-ups';
+      badge.style.cssText = 'font-size:0.75rem; opacity:.55; font-style:italic; align-self:center;';
+      partsRow.appendChild(badge);
+    }
 
     wrap.appendChild(partsRow);
     wrap.appendChild(viewer);
