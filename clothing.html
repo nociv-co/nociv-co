@@ -231,6 +231,7 @@
   <a href="tech.html" class="img-tab"><img src="nav-tech.png" alt="Tech"></a>
   <a href="books.html" class="img-tab"><img src="nav-books.png" alt="Books"></a>
   <a href="community.html" class="img-tab"><img src="community-button.png" alt="Community"></a>
+  <a href="art-homies.html" class="text-tab">Art Homies</a>
 </nav>
 
 <div class="wrap">
@@ -238,15 +239,15 @@
   <ul class="checklist" style="margin-top:0; margin-bottom:30px;">
     <li>Representing Black America.</li>
     <li>Showcasing present connection.</li>
-    <li>No socials, algorithm, or ads, just being <strong>human</strong>.</li>
   </ul>
+  <img src="no-socials-checkbox.png" alt="No socials, algorithm, or ads, just being human." style="width:100%; max-width:420px; display:block; margin:0 auto 30px;">
 
   <div class="flip-wrap">
 
     <!-- Photo album card -->
     <div>
       <div class="album" id="albumEl">
-        <img class="album-bg" id="albumBg" src="photo-closed.png" alt="Nociv photo album — click to view all photos">
+        <img class="album-bg" id="albumBg" src="photo-album-cover.png" alt="Nociv photo album — click to view all photos">
         <img class="album-slot" id="slotA" alt="">
         <img class="album-slot" id="slotB" alt="">
       </div>
@@ -301,7 +302,9 @@
     </p>
   </div>
 
-  <a class="vinted-link" href="#" target="_blank" rel="noopener">Vinted Online Store →</a>
+  <a href="#" target="_blank" rel="noopener" style="display:block; max-width:340px; margin:20px auto 0;">
+    <img src="shop-online-vinted.png" alt="Shop Online — Vinted" style="width:100%; display:block;">
+  </a>
 
 
 </div>
@@ -321,11 +324,11 @@
   const printVideoSrc = ""; // e.g. "screen-printing.mp4"
   // ========================================
 
-  const albumArt = ["photo-album-1.png", "photo-album-2.png"];
-  const albumPages = [{ bg: "photo-closed.png", slots: [] }];
+  const albumArt = ["photo-album-page.png"];
+  const albumPages = [{ bg: "photo-album-cover.png", slots: [] }];
   for (let i = 0; i < garmentPhotos.length; i += 2) {
     albumPages.push({
-      bg: albumArt[(albumPages.length - 1) % 2],
+      bg: albumArt[(albumPages.length - 1) % albumArt.length],
       slots: [
         { src: garmentPhotos[i] || "", index: i },
         { src: garmentPhotos[i+1] || "", index: i+1 }
@@ -333,8 +336,7 @@
     });
   }
   const slotCoords = [
-    [ { left:"27.42%", top:"12.75%", width:"49.15%", height:"23.66%" }, { left:"27.42%", top:"53.40%", width:"49.15%", height:"23.66%" } ],
-    [ { left:"23.35%", top:"12.75%", width:"49.15%", height:"23.66%" }, { left:"23.35%", top:"53.40%", width:"49.15%", height:"23.66%" } ]
+    [ { left:"24.60%", top:"9.46%", width:"56.15%", height:"26.40%" }, { left:"24.60%", top:"54.98%", width:"56.15%", height:"26.40%" } ]
   ];
 
   let pageIdx = 0;
