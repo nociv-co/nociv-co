@@ -168,40 +168,38 @@
     padding: 10px;
   }
 
-  /* --- Screen printing video, phone-frame mockup --- */
-  .phone-frame {
+  /* --- Screen printing video, inside hand-drawn phone frame --- */
+  .phone-frame-art {
+    position: relative;
     width: 220px;
+    aspect-ratio: 1472/2000;
     margin: 40px auto 0;
-    background: #111;
-    border: 6px solid #111;
-    border-radius: 32px;
-    box-shadow: 0 0 0 2px #333;
-    padding: 10px 8px;
   }
-  .phone-frame .notch {
-    width: 60px;
-    height: 14px;
-    background: #111;
-    border-radius: 8px;
-    margin: 0 auto 8px;
-    box-shadow: inset 0 0 0 2px #333;
-  }
-  .phone-frame video, .phone-frame .video-placeholder {
-    width: 100%;
-    aspect-ratio: 9/16;
-    background: #000;
-    display: block;
-    border-radius: 10px;
+  .phone-frame-art video,
+  .phone-frame-art .video-placeholder {
+    position: absolute;
+    left: 18.21%;
+    top: 12.3%;
+    width: 65.49%;
+    height: 68.15%;
     object-fit: cover;
+    background: #000;
   }
-  .phone-frame .video-placeholder {
+  .phone-frame-art .video-placeholder {
     display: flex;
     align-items: center;
     justify-content: center;
     color: #666;
-    font-size: 0.7rem;
+    font-size: 0.65rem;
     text-align: center;
-    padding: 10px;
+    padding: 6px;
+  }
+  .phone-frame-overlay {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    pointer-events: none;
   }
   .video-caption {
     text-align: center;
@@ -256,14 +254,14 @@
       </div>
       <div class="preview-strip" id="previewStrip"></div>
 
-      <div class="phone-frame">
-        <div class="notch"></div>
+      <div class="phone-frame-art">
         <video id="printVideo" controls poster="screen-printing-poster.jpg" style="display:none;"></video>
         <div class="video-placeholder" id="videoPlaceholder">
           Screen-printing video<br>coming soon
         </div>
+        <img class="phone-frame-overlay" src="phone-frame-art.png" alt="">
       </div>
-      <p class="video-caption">Behind the process — talking art while screen printing.</p>
+      <p class="video-caption">Part of the process — shot at Fraqtals.</p>
     </div>
 
     <!-- Pop-up shop card -->
@@ -276,9 +274,7 @@
 
       <form id="signupForm">
         <input type="text" placeholder="Email or phone number" required>
-        <button type="submit" class="join-btn-img" style="padding:0; border:none; background:none;">
-          <img src="join-button.png" alt="Join List" style="width:100%;">
-        </button>
+        <button type="submit">Join</button>
       </form>
       <p id="signupConfirm" style="display:none; text-align:center; color:var(--green); font-weight:700;">
         You're on the list.
@@ -295,11 +291,7 @@
 
   <hr style="border:0; border-top:1px solid #ccc; max-width:420px; margin:40px auto 0;">
 
-  <div style="text-align:center; margin-top:20px;">
-    <p style="opacity:.75; max-width:420px; margin:0 auto;">
-      Aura – Your signaling intentionally or not.
-    </p>
-  </div>
+  <img src="aura-graphic.png" alt="Aura — your signaling, intentionally or not." style="width:100%; max-width:340px; display:block; margin:30px auto 0;">
 
   <a href="#" target="_blank" rel="noopener" style="display:block; max-width:340px; margin:20px auto 0;">
     <img src="shop-online-vinted.png" alt="Shop Online — Vinted" style="width:100%; display:block;">
@@ -430,8 +422,7 @@
   document.getElementById('signupForm').addEventListener('submit', function(e){
     e.preventDefault();
     // TODO: wire this to your actual mailing list service (e.g. Mailchimp, Buttondown)
-    const btn = this.querySelector('.join-btn-img');
-    btn.classList.add('clicked');
+    this.querySelector('button').disabled = true;
     document.getElementById('signupConfirm').style.display = 'block';
     this.querySelector('input').disabled = true;
   });
