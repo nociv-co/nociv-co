@@ -59,7 +59,7 @@
   .clearfix { clear: both; }
   .suggestion-list { max-width: 500px; margin: 30px auto 0; text-align: left; }
 
-  /* ---- Board: 4 categories, that's it ---- */
+  /* ---- Board: 4 categories ---- */
   .cat-pill-row { display: flex; flex-wrap: wrap; gap: 8px; justify-content: center; max-width: 500px; margin: 0 auto 24px; }
   .cat-pill { border: 1px solid #333; padding: 7px 14px; font-size: 0.8rem; cursor: pointer; background: #111; color: #aaa; display: flex; align-items: center; gap: 6px; }
   .cat-pill.active { background: #fff; color: #111; border-color: #fff; }
@@ -261,6 +261,10 @@
 
 <footer class="nociv-footer">NOCIV.CO — Nothing Of Civilization<br>© 2023–2026 NOCIV.CO. Established 2023. All rights reserved.</footer>
 
+<!-- SUPABASE SCRIPTS -->
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="supabase.js"></script>
+
 <script>
 const states = [
 "Alabama","Alaska","Arizona","Arkansas","California","Colorado",
@@ -284,6 +288,12 @@ document.querySelectorAll('.tab-btn').forEach(btn => {
   });
 });
 
+/* ============ HELPER FORMAT DATE ============ */
+function formatDate(isoString) {
+  const d = new Date(isoString);
+  return d.toLocaleString("en-US", { month: "short" }).toLowerCase() + "." + d.getDate() + "." + d.getFullYear();
+}
+
 /* ============ STALL WALL ============ */
 const statesDiv = document.getElementById("states");
 const stateSelect = document.getElementById("stateSelect");
@@ -303,16 +313,20 @@ states.forEach(st => {
   stateSelect.appendChild(opt);
 });
 
-function activeStatesThisCycle() {
-  const now = Date.now();
-  let allPosts = JSON.parse(localStorage.getItem("stallPosts")) || [];
-  allPosts = allPosts.filter(p => now - p.time < 30*24*60*60*1000);
-  return new Set(allPosts.map(p => p.state));
+async function getActiveStatesThisCycle() {
+  const thirtyDaysAgo = new Date(Date.now() - 30*24*60*60*1000).toISOString();
+  const { data, error } = await supabaseClient
+    .from('stall_posts')
+    .select('state')
+    .gte('created_at', thirtyDaysAgo);
+
+  if (error || !data) return new Set();
+  return new Set(data.map(p => p.state));
 }
 
-function renderStateGrid() {
+async function renderStateGrid() {
   statesDiv.innerHTML = "";
-  const active = activeStatesThisCycle();
+  const active = await getActiveStatesThisCycle();
   activeCounter.textContent = active.size === 0
     ? "No states active yet this cycle."
     : active.size + " state" + (active.size === 1 ? "" : "s") + " have spoken this cycle.";
@@ -321,11 +335,11 @@ function renderStateGrid() {
     const btn = document.createElement("button");
     btn.innerText = st;
     if (active.has(st)) btn.classList.add("has-marks");
-    btn.onclick = () => {
+    btn.onclick = async () => {
       viewState = st;
       stateTitle.innerText = st;
       editor.style.display = "block";
-      loadPosts();
+      await loadPosts();
       editor.scrollIntoView({ behavior: "smooth", block: "start" });
     };
     statesDiv.appendChild(btn);
@@ -340,21 +354,28 @@ window.addEventListener("keydown", e => {
   }
 });
 
-function loadPosts() {
-  postsList.innerHTML = "";
-  let allPosts = JSON.parse(localStorage.getItem("stallPosts")) || [];
-  let statePosts = allPosts.filter(p => p.state === viewState);
-  const now = Date.now();
-  statePosts = statePosts.filter(p => now - p.time < 30*24*60*60*1000);
-  if (statePosts.length === 0) {
+async function loadPosts() {
+  postsList.innerHTML = "<p style='opacity:.6'>Loading marks...</p>";
+  const thirtyDaysAgo = new Date(Date.now() - 30*24*60*60*1000).toISOString();
+
+  const { data: statePosts, error } = await supabaseClient
+    .from('stall_posts')
+    .select('*')
+    .eq('state', viewState)
+    .gte('created_at', thirtyDaysAgo)
+    .order('created_at', { ascending: false });
+
+  if (error || !statePosts || statePosts.length === 0) {
     postsList.innerHTML = "<p style='opacity:.6'>No marks yet</p>";
     return;
   }
+
+  postsList.innerHTML = "";
   statePosts.forEach(p => {
     let div = document.createElement("div");
     div.className = "postWrap";
     let date = document.createElement("div");
-    date.className = "postDate"; date.innerText = p.date;
+    date.className = "postDate"; date.innerText = formatDate(p.created_at);
     let text = document.createElement("div");
     text.className = "postText"; text.innerText = p.text;
     if (p.admin && secretMode) text.classList.add("greenMark");
@@ -365,39 +386,52 @@ function loadPosts() {
   });
 }
 
-document.getElementById("sendBtn").onclick = () => {
+document.getElementById("sendBtn").onclick = async () => {
   const text = postInput.value.trim();
   const chosenState = stateSelect.value;
   if (!chosenState) { stateSelect.focus(); return; }
   if (!text) { postInput.focus(); return; }
-  const today = new Date();
-  const dateStr = today.toLocaleString("en-US", { month: "short" }).toLowerCase() + "." + today.getDate() + "." + today.getFullYear();
-  let allPosts = JSON.parse(localStorage.getItem("stallPosts")) || [];
-  allPosts.unshift({ state: chosenState, text, date: dateStr, time: Date.now(), admin: secretMode });
-  localStorage.setItem("stallPosts", JSON.stringify(allPosts));
+
+  const { error } = await supabaseClient
+    .from('stall_posts')
+    .insert([{ state: chosenState, text: text, admin: secretMode }]);
+
+  if (error) {
+    alert("Error saving post to Supabase: " + error.message);
+    return;
+  }
+
   postInput.value = "";
   sendConfirm.style.display = "block";
   setTimeout(() => { sendConfirm.style.display = "none"; }, 3000);
-  renderStateGrid();
-  if (viewState === chosenState) loadPosts();
+  await renderStateGrid();
+  if (viewState === chosenState) await loadPosts();
 };
 
 /* ============ SUGGESTION WALL ============ */
 const suggList = document.getElementById('suggList');
-function renderSuggestions() {
-  suggList.innerHTML = "";
-  let suggs = JSON.parse(localStorage.getItem("suggestionPosts")) || [];
-  const now = Date.now();
-  suggs = suggs.filter(s => now - s.time < 365*24*60*60*1000);
-  if (suggs.length === 0) {
+
+async function renderSuggestions() {
+  suggList.innerHTML = "<p style='opacity:.6; text-align:center;'>Loading suggestions...</p>";
+  const oneYearAgo = new Date(Date.now() - 365*24*60*60*1000).toISOString();
+
+  const { data: suggs, error } = await supabaseClient
+    .from('suggestion_posts')
+    .select('*')
+    .gte('created_at', oneYearAgo)
+    .order('created_at', { ascending: false });
+
+  if (error || !suggs || suggs.length === 0) {
     suggList.innerHTML = "<p style='opacity:.6; text-align:center;'>No suggestions yet.</p>";
     return;
   }
+
+  suggList.innerHTML = "";
   suggs.forEach(s => {
     const div = document.createElement('div');
     div.className = 'postWrap';
     const date = document.createElement('div');
-    date.className = 'postDate'; date.textContent = s.date;
+    date.className = 'postDate'; date.textContent = formatDate(s.created_at);
     const text = document.createElement('div');
     text.className = 'postText'; text.textContent = s.text;
     div.appendChild(date); div.appendChild(text);
@@ -408,22 +442,27 @@ function renderSuggestions() {
 }
 renderSuggestions();
 
-document.getElementById('suggSendBtn').onclick = () => {
+document.getElementById('suggSendBtn').onclick = async () => {
   const text = document.getElementById('suggInput').value.trim();
   if (!text) return;
-  const today = new Date();
-  const dateStr = today.toLocaleString("en-US", { month: "short" }).toLowerCase() + "." + today.getDate() + "." + today.getFullYear();
-  let suggs = JSON.parse(localStorage.getItem("suggestionPosts")) || [];
-  suggs.unshift({ text, date: dateStr, time: Date.now() });
-  localStorage.setItem("suggestionPosts", JSON.stringify(suggs));
+
+  const { error } = await supabaseClient
+    .from('suggestion_posts')
+    .insert([{ text: text }]);
+
+  if (error) {
+    alert("Error saving suggestion to Supabase: " + error.message);
+    return;
+  }
+
   document.getElementById('suggInput').value = "";
   const c = document.getElementById('suggConfirm');
   c.style.display = 'block';
   setTimeout(() => { c.style.display = 'none'; }, 3000);
-  renderSuggestions();
+  await renderSuggestions();
 };
 
-/* ============ THE BOARD — simplified: category only ============ */
+/* ============ THE BOARD ============ */
 const catLabels = { wall: "Wall & Mural", workshop: "Workshop / Class", share: "Tool / Garage / Space Share", call: "Grant, Residency & Call" };
 let activeCat = "All";
 const boardList = document.getElementById('boardList');
@@ -437,26 +476,34 @@ document.querySelectorAll('.cat-pill').forEach(pill => {
   });
 });
 
-function getBoardPosts() {
-  const now = Date.now();
-  let posts = JSON.parse(localStorage.getItem("boardPosts")) || [];
-  return posts.filter(p => now - p.time < 60*24*60*60*1000);
-}
+async function renderBoard() {
+  boardList.innerHTML = '<p style="opacity:.5; text-align:center;">Loading board posts...</p>';
+  const sixtyDaysAgo = new Date(Date.now() - 60*24*60*60*1000).toISOString();
 
-function renderBoard() {
-  boardList.innerHTML = "";
-  let posts = getBoardPosts();
-  if (activeCat !== "All") posts = posts.filter(p => p.category === activeCat);
-  if (posts.length === 0) {
+  let query = supabaseClient
+    .from('board_posts')
+    .select('*')
+    .gte('created_at', sixtyDaysAgo)
+    .order('created_at', { ascending: false });
+
+  if (activeCat !== "All") {
+    query = query.eq('category', activeCat);
+  }
+
+  const { data: posts, error } = await query;
+
+  if (error || !posts || posts.length === 0) {
     boardList.innerHTML = '<p style="opacity:.5; text-align:center;">Nothing posted yet.</p>';
     return;
   }
+
+  boardList.innerHTML = "";
   posts.forEach(p => {
     const card = document.createElement('div');
     card.className = 'board-card ' + p.category;
     card.innerHTML = `
       <div class="board-card-title">${p.title}</div>
-      <div class="board-card-meta">${catLabels[p.category]} · ${p.date}</div>
+      <div class="board-card-meta">${catLabels[p.category] || p.category} · ${formatDate(p.created_at)}</div>
       <div class="board-card-desc">${p.details}</div>
     `;
     boardList.appendChild(card);
@@ -464,25 +511,30 @@ function renderBoard() {
 }
 renderBoard();
 
-document.getElementById('boardSendBtn').onclick = () => {
+document.getElementById('boardSendBtn').onclick = async () => {
   const category = document.getElementById('boardCategory').value;
   const title = document.getElementById('boardTitle').value.trim();
   const details = document.getElementById('boardDetails').value.trim();
   if (!title || !details) return;
-  const today = new Date();
-  const dateStr = today.toLocaleString("en-US", { month: "short" }).toLowerCase() + "." + today.getDate() + "." + today.getFullYear();
-  let posts = JSON.parse(localStorage.getItem("boardPosts")) || [];
-  posts.unshift({ category, title, details, date: dateStr, time: Date.now() });
-  localStorage.setItem("boardPosts", JSON.stringify(posts));
+
+  const { error } = await supabaseClient
+    .from('board_posts')
+    .insert([{ category, title, details }]);
+
+  if (error) {
+    alert("Error saving board post to Supabase: " + error.message);
+    return;
+  }
+
   document.getElementById('boardTitle').value = "";
   document.getElementById('boardDetails').value = "";
   const c = document.getElementById('boardConfirm');
   c.style.display = 'block';
   setTimeout(() => { c.style.display = 'none'; }, 3000);
-  renderBoard();
+  await renderBoard();
 };
 
-/* ============ PHOENIX DIRECTORY — plug and play ============ */
+/* ============ PHOENIX DIRECTORY ============ */
 const directory = [
   {
     name: "Fraqtals",
