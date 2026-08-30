@@ -4,6 +4,7 @@
 <meta charset="UTF-8">
 <title>Community — NOCIV.CO</title>
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="description" content="The Stall Wall, Art Homies directory, and the Phoenix creative network — Nociv's community hub.">
 <link rel="stylesheet" href="style.css">
 <style>
   .section-divider {
@@ -24,7 +25,7 @@
     margin: 0 auto 24px;
   }
 
-  /* ---- Mark card: the key CTA, needs to pop ---- */
+  /* ---- Mark card: Stall Wall CTA ---- */
   .mark-card {
     max-width: 460px;
     margin: 0 auto;
@@ -33,77 +34,25 @@
     padding: 28px 24px;
     text-align: center;
   }
-  .mark-card h3 {
-    letter-spacing: 2px;
-    margin: 0 0 18px;
-    color: var(--white);
-  }
-  .mark-card select,
-  .mark-card textarea,
-  .mark-card input[type="text"] {
-    width: 100%;
-    background: #0d0d0d;
-    color: #ddd;
-    border: 1px solid #444;
-    padding: 12px;
-    font-size: 1rem;
-    margin-bottom: 12px;
-    box-sizing: border-box;
+  .mark-card h3 { letter-spacing: 2px; margin: 0 0 18px; color: var(--white); }
+  .mark-card select, .mark-card textarea, .mark-card input[type="text"] {
+    width: 100%; background: #0d0d0d; color: #ddd; border: 1px solid #444;
+    padding: 12px; font-size: 1rem; margin-bottom: 12px; box-sizing: border-box;
   }
   .mark-card textarea { resize: vertical; }
-  .mark-card label {
-    display: block;
-    text-align: left;
-    font-size: 0.8rem;
-    opacity: .7;
-    margin-bottom: 6px;
-  }
+  .mark-card label { display: block; text-align: left; font-size: 0.8rem; opacity: .7; margin-bottom: 6px; }
   .cta-btn {
-    width: 100%;
-    background: var(--red);
-    color: #fff;
-    border: none;
-    padding: 14px;
-    font-weight: 900;
-    letter-spacing: 0.08em;
-    text-transform: uppercase;
-    font-size: 0.9rem;
-    cursor: pointer;
+    width: 100%; background: var(--red); color: #fff; border: none; padding: 14px;
+    font-weight: 900; letter-spacing: 0.08em; text-transform: uppercase; font-size: 0.9rem; cursor: pointer;
   }
   .cta-btn:hover { background: #b83c2c; }
-  .confirm-msg {
-    display: none;
-    color: #6fbf8f;
-    font-weight: 700;
-    margin-top: 14px;
-  }
+  .confirm-msg { display: none; color: #6fbf8f; font-weight: 700; margin-top: 14px; }
 
-  /* ---- Stall wall browse grid ---- */
-  .active-counter {
-    font-size: 0.85rem;
-    opacity: .7;
-    margin-bottom: 16px;
-  }
-  #states {
-    display: flex;
-    flex-wrap: wrap;
-    gap: 8px;
-    justify-content: center;
-    margin: 20px 0;
-  }
-  #states button {
-    background: #111;
-    color: #aaa;
-    border: 1px solid #333;
-    padding: 8px 14px;
-    cursor: pointer;
-    font-size: 0.85rem;
-  }
+  .active-counter { font-size: 0.85rem; opacity: .7; margin-bottom: 16px; }
+  #states { display: flex; flex-wrap: wrap; gap: 8px; justify-content: center; margin: 20px 0; }
+  #states button { background: #111; color: #aaa; border: 1px solid #333; padding: 8px 14px; cursor: pointer; font-size: 0.85rem; }
   #states button:hover { background: #333; color: #fff; }
-  #states button.has-marks {
-    border-color: var(--gold);
-    color: var(--gold);
-  }
+  #states button.has-marks { border-color: var(--gold); color: var(--gold); }
   #editor { display: none; margin-top: 40px; max-width: 600px; margin-left:auto; margin-right:auto; }
   .postWrap { border-top: 1px solid #222; padding: 16px 0; text-align: left; }
   .postDate { float: right; opacity: .6; font-size: 12px; }
@@ -111,100 +60,110 @@
   .greenMark { color: #6fbf8f; }
   .clearfix { clear: both; }
 
-  /* ---- Opportunity board ---- */
-  .opp-list { max-width: 600px; margin: 30px auto 0; text-align: left; }
-  .opp-card {
-    border: 1px solid #333;
-    padding: 16px;
-    margin-bottom: 12px;
-    background: #111;
+  /* ---- Discipline filter pills (drive both board + directory) ---- */
+  .filter-row {
+    display: flex; flex-wrap: wrap; gap: 8px; justify-content: center;
+    max-width: 600px; margin: 0 auto 30px;
   }
-  .opp-tag {
-    display: inline-block;
-    font-size: 0.7rem;
-    letter-spacing: 0.05em;
-    text-transform: uppercase;
-    padding: 3px 8px;
-    margin-bottom: 8px;
-    background: var(--gold);
-    color: #1a1a1a;
-    font-weight: 700;
+  .filter-pill {
+    background: #111; color: #aaa; border: 1px solid #333;
+    padding: 7px 14px; font-size: 0.8rem; cursor: pointer; white-space: nowrap;
   }
-  .opp-tag.offering { background: var(--green); color: #fff; }
+  .filter-pill.active { background: var(--white); color: #111; border-color: var(--white); }
 
-  /* ---- Event board ---- */
-  .state-swipe {
-    display: flex;
-    overflow-x: auto;
-    gap: 8px;
-    padding: 10px 4px 20px;
-    max-width: 600px;
-    margin: 0 auto;
-    scroll-snap-type: x mandatory;
+  /* ---- Color-coded board ---- */
+  .board-legend {
+    display: flex; flex-wrap: wrap; gap: 14px; justify-content: center;
+    font-size: 0.75rem; opacity: .75; margin-bottom: 20px;
   }
-  .state-swipe button {
-    flex: 0 0 auto;
-    scroll-snap-align: start;
-    background: #111;
-    color: #aaa;
-    border: 1px solid #333;
-    padding: 8px 14px;
-    cursor: pointer;
-    white-space: nowrap;
-    font-size: 0.85rem;
-  }
-  .state-swipe button.active { background: var(--red); color: #fff; border-color: var(--red); }
+  .board-legend span { display: flex; align-items: center; gap: 5px; }
+  .legend-dot { width: 10px; height: 10px; border-radius: 50%; display: inline-block; }
+  .cat-wall { background: #d94f3d; }
+  .cat-workshop { background: #4a7fd9; }
+  .cat-share { background: #3c9d5c; }
+  .cat-call { background: var(--gold); }
 
-  .calendar {
-    max-width: 500px;
-    margin: 20px auto;
-    display: grid;
-    grid-template-columns: repeat(7, 1fr);
-    gap: 4px;
-    text-align: center;
+  .board-list { max-width: 600px; margin: 0 auto; }
+  .board-card {
+    border: 1px solid #333; border-left: 4px solid #666;
+    padding: 16px; margin-bottom: 12px; background: #111; text-align: left;
   }
-  .calendar .cal-head {
-    font-size: 0.7rem;
-    opacity: .5;
-    padding-bottom: 6px;
-  }
-  .calendar .cal-day {
-    aspect-ratio: 1;
-    background: #111;
-    border: 1px solid #222;
-    font-size: 0.75rem;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    position: relative;
-  }
-  .calendar .cal-day.has-event {
-    border-color: var(--gold);
-    color: var(--gold);
-    font-weight: 700;
-  }
-  .calendar .cal-day.empty { border: none; background: none; }
+  .board-card.wall { border-left-color: #d94f3d; }
+  .board-card.workshop { border-left-color: #4a7fd9; }
+  .board-card.share { border-left-color: #3c9d5c; }
+  .board-card.call { border-left-color: var(--gold); }
+  .board-card .board-card-title { font-weight: 900; font-size: 1rem; }
+  .board-card .board-card-meta { font-size: 0.75rem; opacity: .6; margin: 4px 0 8px; }
+  .board-card .board-card-desc { font-size: 0.9rem; opacity: .9; white-space: pre-wrap; }
+  .board-card img { width: 100%; max-width: 200px; margin-top: 10px; display: block; }
 
-  .event-list { max-width: 500px; margin: 20px auto 0; text-align: left; }
-  .event-card {
-    display: flex;
-    gap: 12px;
-    border: 1px solid #333;
-    padding: 12px;
-    margin-bottom: 10px;
-    background: #111;
-    align-items: center;
+  /* ---- Phoenix Directory ---- */
+  .directory-grid { display: grid; grid-template-columns: 1fr; gap: 14px; max-width: 600px; margin: 0 auto; }
+  @media (min-width: 560px) { .directory-grid { grid-template-columns: 1fr 1fr; } }
+  .directory-card {
+    border: 1px solid #333; background: #111; padding: 18px; text-align: left;
   }
-  .event-card img {
-    width: 64px;
-    height: 64px;
-    object-fit: cover;
-    flex-shrink: 0;
+  .directory-card .dc-name { font-weight: 900; font-size: 1.05rem; }
+  .directory-card .dc-neighborhood { font-size: 0.75rem; opacity: .6; margin-bottom: 8px; }
+  .directory-card .dc-tags { display: flex; gap: 6px; flex-wrap: wrap; margin-bottom: 8px; }
+  .directory-card .dc-tag {
+    font-size: 0.65rem; text-transform: uppercase; letter-spacing: 0.04em;
+    padding: 3px 7px; background: #222; color: #aaa; border: 1px solid #333;
   }
-  .event-meta { font-size: 0.85rem; opacity: .7; }
+  .directory-card .dc-desc { font-size: 0.85rem; opacity: .85; margin-bottom: 10px; }
+  .directory-card a.dc-link { color: var(--gold); font-size: 0.8rem; text-decoration: underline; }
+  .directory-empty { opacity: .5; font-style: italic; font-size: 0.85rem; text-align: center; grid-column: 1 / -1; }
+
+  /* ---- Land Initiative ---- */
+  .blueprint-item { border-left: 2px solid var(--red); padding-left: 16px; margin-bottom: 24px; max-width: 600px; margin-left:auto; margin-right:auto; text-align:left; }
+  .blueprint-item h3 { margin: 0 0 6px; font-size: 1rem; letter-spacing: 0.03em; }
+  .blueprint-item p { font-size: 0.9rem; opacity: .85; margin: 0; }
+
+  .tier-card { border: 1px solid #333; background: #111; padding: 18px; margin-bottom: 12px; max-width: 500px; margin-left:auto; margin-right:auto; text-align:left; }
+  .tier-card .tier-num { display: inline-block; background: var(--gold); color: #1a1a1a; font-weight: 900; font-size: 0.7rem; padding: 3px 8px; margin-bottom: 6px; }
+  .tier-card h3 { margin: 0 0 6px; font-size: 0.95rem; }
+  .tier-card p { font-size: 0.85rem; opacity: .85; margin: 0; }
+
+  .form-embed-wrap { border: 1px solid #333; background: #111; padding: 20px; text-align: center; margin-top: 20px; max-width: 500px; margin-left:auto; margin-right:auto; }
+  .form-embed-wrap iframe { width: 100%; border: none; }
+  .form-embed-placeholder { padding: 30px 20px; opacity: .5; font-size: 0.85rem; }
+
+  .action-row { display: flex; gap: 14px; flex-wrap: wrap; max-width: 500px; margin: 0 auto; }
+  .action-btn { flex: 1 1 200px; background: var(--red); color: #fff; text-align: center; padding: 16px; font-weight: 900; letter-spacing: 0.05em; text-transform: uppercase; font-size: 0.85rem; }
+  .action-btn.secondary { background: var(--gold); color: #1a1a1a; }
 
   /* ---- Suggestion wall ---- */
   .suggestion-list { max-width: 500px; margin: 30px auto 0; text-align: left; }
+
+  /* ---- Jump nav ---- */
+  .jump-nav {
+    position: sticky;
+    top: 0;
+    z-index: 50;
+    display: flex;
+    overflow-x: auto;
+    gap: 6px;
+    padding: 10px 16px;
+    background: #0a0a0a;
+    border-bottom: 1px solid #262626;
+  }
+  .jump-nav a {
+    flex: 0 0 auto;
+    color: #999;
+    font-size: 0.75rem;
+    letter-spacing: 0.05em;
+    text-transform: uppercase;
+    padding: 6px 12px;
+    border: 1px solid #333;
+    white-space: nowrap;
+  }
+  .jump-nav a:hover { color: #fff; border-color: #666; }
+  .filter-note {
+    font-size: 0.7rem;
+    opacity: .5;
+    margin: -14px auto 20px;
+    max-width: 460px;
+  }
 </style>
 </head>
 <body class="dark">
@@ -221,7 +180,15 @@
   <a href="community.html" class="img-tab active"><img src="community-button.png" alt="Community"></a>
 </nav>
 
-<div class="wrap" style="text-align:center;">
+<div class="jump-nav">
+  <a href="#section-stallwall">Stall Wall</a>
+  <a href="#section-board">Board</a>
+  <a href="#section-directory">Directory</a>
+  <a href="#section-land">Land Initiative</a>
+</div>
+
+<!-- 1. THE STALL WALL — nationwide hook -->
+<div class="wrap" id="section-stallwall" style="text-align:center;">
   <img src="black-america.svg" style="width:100%; max-width:500px;" alt="Black America">
 
   <h2 style="letter-spacing:4px; margin-top:40px;">THE STALL WALL</h2>
@@ -231,13 +198,10 @@
 
   <hr class="section-divider">
 
-  <!-- LEAVE YOUR MARK — the key CTA, now visually distinct -->
   <div class="mark-card">
     <h3>Leave Your Mark</h3>
     <label for="stateSelect">Your state</label>
-    <select id="stateSelect">
-      <option value="">Choose your state</option>
-    </select>
+    <select id="stateSelect"><option value="">Choose your state</option></select>
     <label for="postInput">Speak Your Truth</label>
     <textarea id="postInput" rows="4"></textarea>
     <button id="sendBtn" class="cta-btn">Send Mark</button>
@@ -250,72 +214,19 @@
     Marks in the Stall Wall stay up for a month. Then the cycle repeats.
   </p>
   <p class="active-counter" id="activeCounter"></p>
-
   <div id="states"></div>
-
   <div id="editor">
     <h3 id="stateTitle"></h3>
     <div id="postsList" style="margin-top:20px;"></div>
   </div>
+</div>
 
-  <hr class="section-divider">
+<div class="torn light-to-dark"></div>
 
-  <!-- OPPORTUNITY BOARD -->
-  <h2 class="board-title">OPPORTUNITY BOARD</h2>
-  <p class="board-sub">
-    Calls for artists, creative collabs, hiring, or looking for a specific
-    skill. Post it here.
-  </p>
-
-  <div class="mark-card">
-    <label for="oppType">Type</label>
-    <select id="oppType">
-      <option value="Looking for">Looking for</option>
-      <option value="Offering">Offering</option>
-    </select>
-    <label for="oppTitle">Title</label>
-    <input type="text" id="oppTitle" placeholder="e.g. Screen printer needed for pop-up">
-    <label for="oppDetails">Details</label>
-    <textarea id="oppDetails" rows="3" placeholder="What's the opportunity? How do people reach you?"></textarea>
-    <button id="oppSendBtn" class="cta-btn">Post It</button>
-    <p id="oppConfirm" class="confirm-msg">Posted to the board.</p>
-  </div>
-
-  <div class="opp-list" id="oppList"></div>
-
-  <hr class="section-divider">
-
-  <!-- EVENT BOARD -->
-  <h2 class="board-title">EVENT BOARD</h2>
-  <p class="board-sub">
-    Pop-ups and events, by state. Swipe to see other states. Calendar shows this month only.
-  </p>
-
-  <div class="mark-card">
-    <label for="evtState">State</label>
-    <select id="evtState"></select>
-    <label for="evtTitle">Event name</label>
-    <input type="text" id="evtTitle" placeholder="e.g. Nociv Pop-Up — Roosevelt Row">
-    <label for="evtDate">Date</label>
-    <input type="text" id="evtDate" placeholder="e.g. Aug 30">
-    <label for="evtPhoto">Photo</label>
-    <input type="file" id="evtPhoto" accept="image/*">
-    <button id="evtSendBtn" class="cta-btn">Add Event</button>
-    <p id="evtConfirm" class="confirm-msg">Event added.</p>
-  </div>
-
-  <div class="state-swipe" id="evtStateSwipe"></div>
-
-  <div class="calendar" id="evtCalendar"></div>
-  <div class="event-list" id="evtList"></div>
-
-  <hr class="section-divider">
-
-  <!-- SUGGESTION WALL -->
+<!-- SUGGESTION WALL — grouped with Stall Wall, both quick anonymous drops -->
+<div class="wrap" style="text-align:center;">
   <h2 class="board-title">SUGGESTION WALL</h2>
-  <p class="board-sub">
-    Anonymous. No names, no accounts. Suggestions stay up for a year.
-  </p>
+  <p class="board-sub">Anonymous. No names, no accounts. Suggestions stay up for a year.</p>
 
   <div class="mark-card">
     <label for="suggInput">Say it</label>
@@ -325,8 +236,155 @@
   </div>
 
   <div class="suggestion-list" id="suggList"></div>
-
 </div>
+
+<div class="torn light-to-dark"></div>
+
+<!-- 2. ART HOMIES VISION + DISCIPLINE FILTER -->
+<div class="wrap" style="text-align:center;">
+  <img src="art-homies-logo.png" alt="Art Homies" style="width:60px; display:block; margin:0 auto 16px;">
+  <h2 class="board-title">ART HOMIES</h2>
+  <p class="board-sub">
+    A Phoenix-rooted initiative, built to scale to other cities. A
+    physical hub for grassroots creatives — space to build, create,
+    and connect, without corporate or landlord gatekeeping.
+  </p>
+
+  <div class="filter-row" id="filterRow">
+    <button class="filter-pill active" data-filter="All">All</button>
+    <button class="filter-pill" data-filter="Print & Graphic">Print & Graphic</button>
+    <button class="filter-pill" data-filter="3D & Fab">3D & Fab</button>
+    <button class="filter-pill" data-filter="Textiles">Textiles</button>
+    <button class="filter-pill" data-filter="Wood & Metal">Wood & Metal</button>
+    <button class="filter-pill" data-filter="Natural Building">Natural Building</button>
+  </div>
+  <p class="filter-note">Filters the Board and Directory sections below.</p>
+</div>
+
+<!-- 3. COLOR-CODED OPPORTUNITY BOARD -->
+<div class="wrap" id="section-board" style="text-align:center; padding-top:0;">
+  <h3 class="board-title" style="font-size:1.1rem;">THE BOARD</h3>
+  <p class="board-sub">Workshops, practice walls, calls for artists, host requests — filtered by discipline above.</p>
+
+  <div class="board-legend">
+    <span><i class="legend-dot cat-wall"></i>Wall & Mural</span>
+    <span><i class="legend-dot cat-workshop"></i>Workshops & Classes</span>
+    <span><i class="legend-dot cat-share"></i>Tool / Garage / Space Share</span>
+    <span><i class="legend-dot cat-call"></i>Grants, Residencies & Calls</span>
+  </div>
+
+  <div class="mark-card" style="text-align:left;">
+    <h3 style="text-align:center;">Post to the Board</h3>
+    <label for="boardCategory">Category</label>
+    <select id="boardCategory">
+      <option value="wall">Wall & Mural Opportunity</option>
+      <option value="workshop">Workshop / Class</option>
+      <option value="share">Tool / Garage / Space Share</option>
+      <option value="call">Grant, Residency, or Call for Art</option>
+    </select>
+    <label for="boardDiscipline">Discipline</label>
+    <select id="boardDiscipline">
+      <option value="Print & Graphic">Print & Graphic</option>
+      <option value="3D & Fab">3D & Fab</option>
+      <option value="Textiles">Textiles</option>
+      <option value="Wood & Metal">Wood & Metal</option>
+      <option value="Natural Building">Natural Building</option>
+    </select>
+    <label for="boardTitle">Title</label>
+    <input type="text" id="boardTitle" placeholder="e.g. Garage available for a 1-day screen printing demo">
+    <label for="boardDetails">Details</label>
+    <textarea id="boardDetails" rows="3" placeholder="What's the opportunity? How do people reach you?"></textarea>
+    <button id="boardSendBtn" class="cta-btn">Post It</button>
+    <p id="boardConfirm" class="confirm-msg">Posted to the board.</p>
+  </div>
+
+  <div class="board-list" id="boardList" style="margin-top:30px;"></div>
+</div>
+
+<div class="torn light-to-dark"></div>
+
+<!-- 4. PHOENIX DIRECTORY -->
+<div class="wrap" id="section-directory" style="text-align:center;">
+  <h2 class="board-title">THE PHOENIX DIRECTORY</h2>
+  <p class="board-sub">Verified local resources. The permanent anchor.</p>
+
+  <div class="directory-grid" id="directoryGrid"></div>
+</div>
+
+<div class="torn light-to-dark"></div>
+
+<!-- 5. LAND INITIATIVE -->
+<div class="wrap" id="section-land" style="text-align:center;">
+  <h2 class="board-title">THE LAND INITIATIVE</h2>
+  <p class="board-sub">Off-grid, non-profit, built in phases — starting now, with no land owned yet.</p>
+
+  <div class="blueprint-item">
+    <h3>Residency Pods</h3>
+    <p>1-month residency: a private aircrete dome studio with bed, storage, and A/C per pod.</p>
+  </div>
+  <div class="blueprint-item">
+    <h3>Shared Facilities</h3>
+    <p>Indoor/outdoor communal kitchen, solar showers, and composting setups.</p>
+  </div>
+  <div class="blueprint-item">
+    <h3>Build Bays</h3>
+    <p>Covered outdoor shop space for timber work, metal fabrication, and van or tiny home builds.</p>
+  </div>
+  <div class="blueprint-item">
+    <h3>Hands-On Workshops</h3>
+    <p>Community workshops teach aircrete dome construction, off-grid solar, rainwater harvesting, and natural building — by building the site in real time.</p>
+  </div>
+
+  <hr class="section-divider">
+
+  <h3 style="letter-spacing:2px; margin-bottom:16px;">HOW TO PARTICIPATE NOW — NO LAND OWNED YET</h3>
+
+  <div class="tier-card">
+    <span class="tier-num">TIER 1</span>
+    <h3>Wall Hosts</h3>
+    <p>Offer an exterior fence or wall for practice paint sessions.</p>
+  </div>
+  <div class="tier-card">
+    <span class="tier-num">TIER 2</span>
+    <h3>Garage / Workshop Hosts</h3>
+    <p>Offer a driveway or garage for a 1-day pop-up build.</p>
+  </div>
+  <div class="tier-card">
+    <span class="tier-num">TIER 3</span>
+    <h3>Land Partners</h3>
+    <p>Offer a vacant lot, acreage, or yard to pilot a small build.</p>
+  </div>
+
+  <div class="form-embed-wrap">
+    <strong style="display:block; margin-bottom:10px;">I Have Space / Tools</strong>
+    <p style="font-size:0.85rem; opacity:.7; margin-bottom:12px;">Form's being built — for now, email your interest directly.</p>
+    <a href="mailto:hello@nociv.co?subject=I%20Have%20Space%20or%20Tools" style="color:var(--gold); font-size:0.85rem; text-decoration:underline;">Email hello@nociv.co →</a>
+    <!-- Once your Google Form is live, replace this block with:
+    <iframe src="YOUR_GOOGLE_FORM_EMBED_URL" height="700">Loading…</iframe>
+    -->
+  </div>
+  <div class="form-embed-wrap">
+    <strong style="display:block; margin-bottom:10px;">I Want to Build / Teach</strong>
+    <p style="font-size:0.85rem; opacity:.7; margin-bottom:12px;">Form's being built — for now, email your interest directly.</p>
+    <a href="mailto:hello@nociv.co?subject=I%20Want%20to%20Build%20or%20Teach" style="color:var(--gold); font-size:0.85rem; text-decoration:underline;">Email hello@nociv.co →</a>
+    <!-- Once your Google Form is live, replace this block with:
+    <iframe src="YOUR_GOOGLE_FORM_EMBED_URL" height="700">Loading…</iframe>
+    -->
+  </div>
+
+  <hr class="section-divider">
+
+  <h3 style="letter-spacing:2px; margin-bottom:16px;">SUPPORT THE MOVEMENT</h3>
+  <div class="action-row">
+    <a class="action-btn" href="#">Material Donation Fund</a>
+    <a class="action-btn secondary" href="#">Volunteer / Instructor Sign-Up</a>
+  </div>
+  <p style="font-size:0.8rem; opacity:.6; margin-top:14px;">
+    Want to propose a mural, or offer a wall or land as a host? Use the forms above.
+  </p>
+</div>
+
+<div class="torn light-to-dark"></div>
 
 <footer class="nociv-footer">NOCIV.CO — Nothing Of Civilization<br>© 2023–2026 NOCIV.CO. Established 2023. All rights reserved.</footer>
 
@@ -404,7 +462,6 @@ function loadPosts() {
   let statePosts = allPosts.filter(p => p.state === viewState);
   const now = Date.now();
   statePosts = statePosts.filter(p => now - p.time < 30*24*60*60*1000);
-
   if (statePosts.length === 0) {
     postsList.innerHTML = "<p style='opacity:.6'>No marks yet</p>";
     return;
@@ -413,15 +470,12 @@ function loadPosts() {
     let div = document.createElement("div");
     div.className = "postWrap";
     let date = document.createElement("div");
-    date.className = "postDate";
-    date.innerText = p.date;
+    date.className = "postDate"; date.innerText = p.date;
     let text = document.createElement("div");
-    text.className = "postText";
-    text.innerText = p.text;
+    text.className = "postText"; text.innerText = p.text;
     if (p.admin && secretMode) text.classList.add("greenMark");
     div.appendChild(date); div.appendChild(text);
-    let clear = document.createElement("div");
-    clear.className = "clearfix";
+    let clear = document.createElement("div"); clear.className = "clearfix";
     div.appendChild(clear);
     postsList.appendChild(div);
   });
@@ -432,15 +486,11 @@ document.getElementById("sendBtn").onclick = () => {
   const chosenState = stateSelect.value;
   if (!chosenState) { stateSelect.focus(); return; }
   if (!text) { postInput.focus(); return; }
-
   const today = new Date();
-  const month = today.toLocaleString("en-US", { month: "short" }).toLowerCase();
-  const dateStr = month + "." + today.getDate() + "." + today.getFullYear();
-
+  const dateStr = today.toLocaleString("en-US", { month: "short" }).toLowerCase() + "." + today.getDate() + "." + today.getFullYear();
   let allPosts = JSON.parse(localStorage.getItem("stallPosts")) || [];
   allPosts.unshift({ state: chosenState, text, date: dateStr, time: Date.now(), admin: secretMode });
   localStorage.setItem("stallPosts", JSON.stringify(allPosts));
-
   postInput.value = "";
   sendConfirm.style.display = "block";
   setTimeout(() => { sendConfirm.style.display = "none"; }, 3000);
@@ -448,229 +498,152 @@ document.getElementById("sendBtn").onclick = () => {
   if (viewState === chosenState) loadPosts();
 };
 
-/* ============ OPPORTUNITY BOARD ============ */
-const oppList = document.getElementById("oppList");
+/* ============ DISCIPLINE FILTER ============ */
+let activeFilter = "All";
+document.querySelectorAll('.filter-pill').forEach(pill => {
+  pill.addEventListener('click', () => {
+    document.querySelectorAll('.filter-pill').forEach(p => p.classList.remove('active'));
+    pill.classList.add('active');
+    activeFilter = pill.dataset.filter;
+    renderBoard();
+    renderDirectory();
+  });
+});
 
-function renderOpps() {
-  oppList.innerHTML = "";
-  let opps = JSON.parse(localStorage.getItem("opportunityPosts")) || [];
+/* ============ COLOR-CODED BOARD ============ */
+const boardList = document.getElementById('boardList');
+const catLabels = { wall: "Wall & Mural", workshop: "Workshop / Class", share: "Tool / Garage / Space Share", call: "Grant, Residency & Call" };
+
+function getBoardPosts() {
   const now = Date.now();
-  opps = opps.filter(o => now - o.time < 60*24*60*60*1000); // 60 days
-  if (opps.length === 0) {
-    oppList.innerHTML = "<p style='opacity:.6; text-align:center;'>Nothing posted yet.</p>";
+  let posts = JSON.parse(localStorage.getItem("boardPosts")) || [];
+  return posts.filter(p => now - p.time < 60*24*60*60*1000); // 60 days
+}
+
+function renderBoard() {
+  boardList.innerHTML = "";
+  let posts = getBoardPosts();
+  if (activeFilter !== "All") posts = posts.filter(p => p.discipline === activeFilter);
+
+  if (posts.length === 0) {
+    boardList.innerHTML = '<p style="opacity:.5; text-align:center;">Nothing posted yet.</p>';
     return;
   }
-  opps.forEach(o => {
-    const card = document.createElement("div");
-    card.className = "opp-card";
-    const tag = document.createElement("span");
-    tag.className = "opp-tag" + (o.type === "Offering" ? " offering" : "");
-    tag.textContent = o.type;
-    const title = document.createElement("div");
-    title.style.fontWeight = "700";
-    title.style.margin = "6px 0";
-    title.textContent = o.title;
-    const details = document.createElement("div");
-    details.style.fontSize = "0.9rem";
-    details.style.opacity = ".85";
-    details.style.whiteSpace = "pre-wrap";
-    details.textContent = o.details;
-    const date = document.createElement("div");
-    date.style.fontSize = "0.75rem";
-    date.style.opacity = ".5";
-    date.style.marginTop = "8px";
-    date.textContent = o.date;
-    card.appendChild(tag); card.appendChild(title); card.appendChild(details); card.appendChild(date);
-    oppList.appendChild(card);
+  posts.forEach(p => {
+    const card = document.createElement('div');
+    card.className = 'board-card ' + p.category;
+    card.innerHTML = `
+      <div class="board-card-title">${p.title}</div>
+      <div class="board-card-meta">${catLabels[p.category]} · ${p.discipline} · ${p.date}</div>
+      <div class="board-card-desc">${p.details}</div>
+    `;
+    boardList.appendChild(card);
   });
 }
-renderOpps();
+renderBoard();
 
-document.getElementById("oppSendBtn").onclick = () => {
-  const type = document.getElementById("oppType").value;
-  const title = document.getElementById("oppTitle").value.trim();
-  const details = document.getElementById("oppDetails").value.trim();
+document.getElementById('boardSendBtn').onclick = () => {
+  const category = document.getElementById('boardCategory').value;
+  const discipline = document.getElementById('boardDiscipline').value;
+  const title = document.getElementById('boardTitle').value.trim();
+  const details = document.getElementById('boardDetails').value.trim();
   if (!title || !details) return;
 
   const today = new Date();
   const dateStr = today.toLocaleString("en-US", { month: "short" }).toLowerCase() + "." + today.getDate() + "." + today.getFullYear();
 
-  let opps = JSON.parse(localStorage.getItem("opportunityPosts")) || [];
-  opps.unshift({ type, title, details, date: dateStr, time: Date.now() });
-  localStorage.setItem("opportunityPosts", JSON.stringify(opps));
+  let posts = JSON.parse(localStorage.getItem("boardPosts")) || [];
+  posts.unshift({ category, discipline, title, details, date: dateStr, time: Date.now() });
+  localStorage.setItem("boardPosts", JSON.stringify(posts));
 
-  document.getElementById("oppTitle").value = "";
-  document.getElementById("oppDetails").value = "";
-  const c = document.getElementById("oppConfirm");
-  c.style.display = "block";
-  setTimeout(() => { c.style.display = "none"; }, 3000);
-  renderOpps();
+  document.getElementById('boardTitle').value = "";
+  document.getElementById('boardDetails').value = "";
+  const c = document.getElementById('boardConfirm');
+  c.style.display = 'block';
+  setTimeout(() => { c.style.display = 'none'; }, 3000);
+  renderBoard();
 };
 
-/* ============ EVENT BOARD ============ */
-const evtStateSelect = document.getElementById("evtState");
-const evtStateSwipe = document.getElementById("evtStateSwipe");
-const evtCalendar = document.getElementById("evtCalendar");
-const evtList = document.getElementById("evtList");
-let evtViewState = "Arizona";
-
-states.forEach(st => {
-  const opt = document.createElement("option");
-  opt.value = st; opt.textContent = st;
-  evtStateSelect.appendChild(opt);
-});
-evtStateSelect.value = "Arizona";
-
-states.forEach(st => {
-  const btn = document.createElement("button");
-  btn.textContent = st;
-  if (st === evtViewState) btn.classList.add("active");
-  btn.onclick = () => {
-    evtViewState = st;
-    evtStateSwipe.querySelectorAll("button").forEach(b => b.classList.remove("active"));
-    btn.classList.add("active");
-    renderCalendar();
-    renderEventList();
-  };
-  evtStateSwipe.appendChild(btn);
-});
-
-function getEvents() {
-  return JSON.parse(localStorage.getItem("eventPosts")) || [];
-}
-
-function renderCalendar() {
-  evtCalendar.innerHTML = "";
-  const now = new Date();
-  const year = now.getFullYear(), month = now.getMonth();
-  const firstDay = new Date(year, month, 1).getDay();
-  const daysInMonth = new Date(year, month + 1, 0).getDate();
-
-  const events = getEvents().filter(e => e.state === evtViewState);
-  const eventDays = new Set(events.map(e => e.day));
-
-  ["S","M","T","W","T","F","S"].forEach(d => {
-    const h = document.createElement("div");
-    h.className = "cal-head";
-    h.textContent = d;
-    evtCalendar.appendChild(h);
-  });
-  for (let i = 0; i < firstDay; i++) {
-    const empty = document.createElement("div");
-    empty.className = "cal-day empty";
-    evtCalendar.appendChild(empty);
+/* ============ PHOENIX DIRECTORY — plug and play ============ */
+// Add a resource any time. discipline must match one of the filter
+// pill values above (or "All" disciplines by adding multiple entries).
+const directory = [
+  {
+    name: "Fraqtals",
+    neighborhood: "Phoenix, AZ",
+    discipline: "Print & Graphic",
+    access: "Shared Studio · Membership",
+    desc: "Membership creative studio — shared space, screen printing.",
+    link: ""
   }
-  for (let d = 1; d <= daysInMonth; d++) {
-    const cell = document.createElement("div");
-    cell.className = "cal-day" + (eventDays.has(d) ? " has-event" : "");
-    cell.textContent = d;
-    evtCalendar.appendChild(cell);
-  }
-}
+];
 
-function renderEventList() {
-  evtList.innerHTML = "";
-  const events = getEvents().filter(e => e.state === evtViewState);
-  if (events.length === 0) {
-    evtList.innerHTML = "<p style='opacity:.6; text-align:center;'>No events posted for " + evtViewState + " yet.</p>";
+const directoryGrid = document.getElementById('directoryGrid');
+function renderDirectory() {
+  directoryGrid.innerHTML = "";
+  let items = directory;
+  if (activeFilter !== "All") items = items.filter(d => d.discipline === activeFilter);
+
+  if (items.length === 0) {
+    directoryGrid.innerHTML = '<p class="directory-empty">Nothing listed yet for this discipline — check back soon.</p>';
     return;
   }
-  events.forEach(e => {
-    const card = document.createElement("div");
-    card.className = "event-card";
-    if (e.photo) {
-      const img = document.createElement("img");
-      img.src = e.photo;
-      card.appendChild(img);
-    }
-    const meta = document.createElement("div");
-    meta.innerHTML = `<div style="font-weight:700;">${e.title}</div>
-                       <div class="event-meta">${e.date} — ${e.state}</div>`;
-    card.appendChild(meta);
-    evtList.appendChild(card);
+  items.forEach(d => {
+    const card = document.createElement('div');
+    card.className = 'directory-card';
+    card.innerHTML = `
+      <div class="dc-name">${d.name}</div>
+      <div class="dc-neighborhood">${d.neighborhood}</div>
+      <div class="dc-tags">
+        <span class="dc-tag">${d.discipline}</span>
+        <span class="dc-tag">${d.access}</span>
+      </div>
+      <div class="dc-desc">${d.desc}</div>
+      ${d.link ? `<a class="dc-link" href="${d.link}" target="_blank" rel="noopener">Visit →</a>` : '<span style="font-size:0.75rem; opacity:.5;">Link coming soon</span>'}
+    `;
+    directoryGrid.appendChild(card);
   });
 }
-renderCalendar();
-renderEventList();
-
-document.getElementById("evtSendBtn").onclick = () => {
-  const state = evtStateSelect.value;
-  const title = document.getElementById("evtTitle").value.trim();
-  const dateStr = document.getElementById("evtDate").value.trim();
-  const fileInput = document.getElementById("evtPhoto");
-  if (!title || !dateStr) return;
-
-  const now = new Date();
-  const dayNum = now.getDate(); // events default to today's calendar slot; edit date text freely
-
-  const save = (photoDataUrl) => {
-    let events = getEvents();
-    events.unshift({ state, title, date: dateStr, day: dayNum, photo: photoDataUrl || "", time: Date.now() });
-    localStorage.setItem("eventPosts", JSON.stringify(events));
-
-    document.getElementById("evtTitle").value = "";
-    document.getElementById("evtDate").value = "";
-    fileInput.value = "";
-    const c = document.getElementById("evtConfirm");
-    c.style.display = "block";
-    setTimeout(() => { c.style.display = "none"; }, 3000);
-
-    if (state === evtViewState) { renderCalendar(); renderEventList(); }
-  };
-
-  if (fileInput.files && fileInput.files[0]) {
-    const reader = new FileReader();
-    reader.onload = () => save(reader.result);
-    reader.readAsDataURL(fileInput.files[0]);
-  } else {
-    save(null);
-  }
-};
+renderDirectory();
 
 /* ============ SUGGESTION WALL ============ */
-const suggList = document.getElementById("suggList");
-
+const suggList = document.getElementById('suggList');
 function renderSuggestions() {
   suggList.innerHTML = "";
   let suggs = JSON.parse(localStorage.getItem("suggestionPosts")) || [];
   const now = Date.now();
-  suggs = suggs.filter(s => now - s.time < 365*24*60*60*1000); // 1 year
+  suggs = suggs.filter(s => now - s.time < 365*24*60*60*1000);
   if (suggs.length === 0) {
     suggList.innerHTML = "<p style='opacity:.6; text-align:center;'>No suggestions yet.</p>";
     return;
   }
   suggs.forEach(s => {
-    const div = document.createElement("div");
-    div.className = "postWrap";
-    const date = document.createElement("div");
-    date.className = "postDate";
-    date.textContent = s.date;
-    const text = document.createElement("div");
-    text.className = "postText";
-    text.textContent = s.text;
+    const div = document.createElement('div');
+    div.className = 'postWrap';
+    const date = document.createElement('div');
+    date.className = 'postDate'; date.textContent = s.date;
+    const text = document.createElement('div');
+    text.className = 'postText'; text.textContent = s.text;
     div.appendChild(date); div.appendChild(text);
-    const clear = document.createElement("div");
-    clear.className = "clearfix";
+    const clear = document.createElement('div'); clear.className = 'clearfix';
     div.appendChild(clear);
     suggList.appendChild(div);
   });
 }
 renderSuggestions();
 
-document.getElementById("suggSendBtn").onclick = () => {
-  const text = document.getElementById("suggInput").value.trim();
+document.getElementById('suggSendBtn').onclick = () => {
+  const text = document.getElementById('suggInput').value.trim();
   if (!text) return;
   const today = new Date();
   const dateStr = today.toLocaleString("en-US", { month: "short" }).toLowerCase() + "." + today.getDate() + "." + today.getFullYear();
-
   let suggs = JSON.parse(localStorage.getItem("suggestionPosts")) || [];
   suggs.unshift({ text, date: dateStr, time: Date.now() });
   localStorage.setItem("suggestionPosts", JSON.stringify(suggs));
-
-  document.getElementById("suggInput").value = "";
-  const c = document.getElementById("suggConfirm");
-  c.style.display = "block";
-  setTimeout(() => { c.style.display = "none"; }, 3000);
+  document.getElementById('suggInput').value = "";
+  const c = document.getElementById('suggConfirm');
+  c.style.display = 'block';
+  setTimeout(() => { c.style.display = 'none'; }, 3000);
   renderSuggestions();
 };
 </script>
