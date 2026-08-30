@@ -4,35 +4,32 @@
 <meta charset="UTF-8">
 <title>Community — NOCIV.CO</title>
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<meta name="description" content="The Stall Wall, Art Homies directory, and the Phoenix creative network — Nociv's community hub.">
+<meta name="description" content="The Stall Wall, the Board, the Phoenix Directory, and the Land Initiative — Nociv's community hub.">
 <link rel="stylesheet" href="style.css">
 <style>
-  .section-divider {
-    border: 0;
-    border-top: 1px solid #333;
-    max-width: 500px;
-    margin: 50px auto;
-  }
-  .board-title {
-    letter-spacing: 3px;
-    font-size: 1.3rem;
-    margin-bottom: 6px;
-  }
-  .board-sub {
-    opacity: .65;
-    font-size: 0.85rem;
-    max-width: 460px;
-    margin: 0 auto 24px;
-  }
+  .board-title { letter-spacing: 3px; font-size: 1.3rem; margin-bottom: 6px; }
+  .board-sub { opacity: .65; font-size: 0.85rem; max-width: 460px; margin: 0 auto 24px; }
+  .section-divider { border: 0; border-top: 1px solid #333; max-width: 500px; margin: 40px auto; }
 
-  /* ---- Mark card: Stall Wall CTA ---- */
+  /* ---- Tab panels ---- */
+  .tab-nav {
+    position: sticky; top: 0; z-index: 50;
+    display: flex; overflow-x: auto; gap: 6px;
+    padding: 10px 16px; background: #0a0a0a; border-bottom: 1px solid #262626;
+  }
+  .tab-nav button {
+    flex: 0 0 auto; background: none; color: #999; border: 1px solid #333;
+    font-size: 0.75rem; letter-spacing: 0.05em; text-transform: uppercase;
+    padding: 8px 14px; white-space: nowrap; cursor: pointer;
+  }
+  .tab-nav button.active { background: var(--red); color: #fff; border-color: var(--red); }
+  .tab-panel { display: none; }
+  .tab-panel.active { display: block; }
+
+  /* ---- Mark card: general CTA style, reused everywhere ---- */
   .mark-card {
-    max-width: 460px;
-    margin: 0 auto;
-    background: #161616;
-    border: 2px solid var(--red);
-    padding: 28px 24px;
-    text-align: center;
+    max-width: 460px; margin: 0 auto; background: #161616;
+    border: 2px solid var(--red); padding: 28px 24px; text-align: center;
   }
   .mark-card h3 { letter-spacing: 2px; margin: 0 0 18px; color: var(--white); }
   .mark-card select, .mark-card textarea, .mark-card input[type="text"] {
@@ -48,6 +45,7 @@
   .cta-btn:hover { background: #b83c2c; }
   .confirm-msg { display: none; color: #6fbf8f; font-weight: 700; margin-top: 14px; }
 
+  /* ---- Stall Wall ---- */
   .active-counter { font-size: 0.85rem; opacity: .7; margin-bottom: 16px; }
   #states { display: flex; flex-wrap: wrap; gap: 8px; justify-content: center; margin: 20px 0; }
   #states button { background: #111; color: #aaa; border: 1px solid #333; padding: 8px 14px; cursor: pointer; font-size: 0.85rem; }
@@ -59,35 +57,19 @@
   .postText { white-space: pre-wrap; margin-top: 10px; }
   .greenMark { color: #6fbf8f; }
   .clearfix { clear: both; }
+  .suggestion-list { max-width: 500px; margin: 30px auto 0; text-align: left; }
 
-  /* ---- Discipline filter pills (drive both board + directory) ---- */
-  .filter-row {
-    display: flex; flex-wrap: wrap; gap: 8px; justify-content: center;
-    max-width: 600px; margin: 0 auto 30px;
-  }
-  .filter-pill {
-    background: #111; color: #aaa; border: 1px solid #333;
-    padding: 7px 14px; font-size: 0.8rem; cursor: pointer; white-space: nowrap;
-  }
-  .filter-pill.active { background: var(--white); color: #111; border-color: var(--white); }
-
-  /* ---- Color-coded board ---- */
-  .board-legend {
-    display: flex; flex-wrap: wrap; gap: 14px; justify-content: center;
-    font-size: 0.75rem; opacity: .75; margin-bottom: 20px;
-  }
-  .board-legend span { display: flex; align-items: center; gap: 5px; }
+  /* ---- Board: 4 categories, that's it ---- */
+  .cat-pill-row { display: flex; flex-wrap: wrap; gap: 8px; justify-content: center; max-width: 500px; margin: 0 auto 24px; }
+  .cat-pill { border: 1px solid #333; padding: 7px 14px; font-size: 0.8rem; cursor: pointer; background: #111; color: #aaa; display: flex; align-items: center; gap: 6px; }
+  .cat-pill.active { background: #fff; color: #111; border-color: #fff; }
   .legend-dot { width: 10px; height: 10px; border-radius: 50%; display: inline-block; }
   .cat-wall { background: #d94f3d; }
   .cat-workshop { background: #4a7fd9; }
   .cat-share { background: #3c9d5c; }
   .cat-call { background: var(--gold); }
-
   .board-list { max-width: 600px; margin: 0 auto; }
-  .board-card {
-    border: 1px solid #333; border-left: 4px solid #666;
-    padding: 16px; margin-bottom: 12px; background: #111; text-align: left;
-  }
+  .board-card { border: 1px solid #333; border-left: 4px solid #666; padding: 16px; margin-bottom: 12px; background: #111; text-align: left; }
   .board-card.wall { border-left-color: #d94f3d; }
   .board-card.workshop { border-left-color: #4a7fd9; }
   .board-card.share { border-left-color: #3c9d5c; }
@@ -95,21 +77,18 @@
   .board-card .board-card-title { font-weight: 900; font-size: 1rem; }
   .board-card .board-card-meta { font-size: 0.75rem; opacity: .6; margin: 4px 0 8px; }
   .board-card .board-card-desc { font-size: 0.9rem; opacity: .9; white-space: pre-wrap; }
-  .board-card img { width: 100%; max-width: 200px; margin-top: 10px; display: block; }
 
-  /* ---- Phoenix Directory ---- */
+  /* ---- Directory ---- */
+  .filter-row { display: flex; flex-wrap: wrap; gap: 8px; justify-content: center; max-width: 600px; margin: 0 auto 30px; }
+  .filter-pill { background: #111; color: #aaa; border: 1px solid #333; padding: 7px 14px; font-size: 0.8rem; cursor: pointer; white-space: nowrap; }
+  .filter-pill.active { background: var(--white); color: #111; border-color: var(--white); }
   .directory-grid { display: grid; grid-template-columns: 1fr; gap: 14px; max-width: 600px; margin: 0 auto; }
   @media (min-width: 560px) { .directory-grid { grid-template-columns: 1fr 1fr; } }
-  .directory-card {
-    border: 1px solid #333; background: #111; padding: 18px; text-align: left;
-  }
+  .directory-card { border: 1px solid #333; background: #111; padding: 18px; text-align: left; }
   .directory-card .dc-name { font-weight: 900; font-size: 1.05rem; }
   .directory-card .dc-neighborhood { font-size: 0.75rem; opacity: .6; margin-bottom: 8px; }
   .directory-card .dc-tags { display: flex; gap: 6px; flex-wrap: wrap; margin-bottom: 8px; }
-  .directory-card .dc-tag {
-    font-size: 0.65rem; text-transform: uppercase; letter-spacing: 0.04em;
-    padding: 3px 7px; background: #222; color: #aaa; border: 1px solid #333;
-  }
+  .directory-card .dc-tag { font-size: 0.65rem; text-transform: uppercase; letter-spacing: 0.04em; padding: 3px 7px; background: #222; color: #aaa; border: 1px solid #333; }
   .directory-card .dc-desc { font-size: 0.85rem; opacity: .85; margin-bottom: 10px; }
   .directory-card a.dc-link { color: var(--gold); font-size: 0.8rem; text-decoration: underline; }
   .directory-empty { opacity: .5; font-style: italic; font-size: 0.85rem; text-align: center; grid-column: 1 / -1; }
@@ -118,52 +97,8 @@
   .blueprint-item { border-left: 2px solid var(--red); padding-left: 16px; margin-bottom: 24px; max-width: 600px; margin-left:auto; margin-right:auto; text-align:left; }
   .blueprint-item h3 { margin: 0 0 6px; font-size: 1rem; letter-spacing: 0.03em; }
   .blueprint-item p { font-size: 0.9rem; opacity: .85; margin: 0; }
-
-  .tier-card { border: 1px solid #333; background: #111; padding: 18px; margin-bottom: 12px; max-width: 500px; margin-left:auto; margin-right:auto; text-align:left; }
-  .tier-card .tier-num { display: inline-block; background: var(--gold); color: #1a1a1a; font-weight: 900; font-size: 0.7rem; padding: 3px 8px; margin-bottom: 6px; }
-  .tier-card h3 { margin: 0 0 6px; font-size: 0.95rem; }
-  .tier-card p { font-size: 0.85rem; opacity: .85; margin: 0; }
-
-  .form-embed-wrap { border: 1px solid #333; background: #111; padding: 20px; text-align: center; margin-top: 20px; max-width: 500px; margin-left:auto; margin-right:auto; }
-  .form-embed-wrap iframe { width: 100%; border: none; }
-  .form-embed-placeholder { padding: 30px 20px; opacity: .5; font-size: 0.85rem; }
-
   .action-row { display: flex; gap: 14px; flex-wrap: wrap; max-width: 500px; margin: 0 auto; }
   .action-btn { flex: 1 1 200px; background: var(--red); color: #fff; text-align: center; padding: 16px; font-weight: 900; letter-spacing: 0.05em; text-transform: uppercase; font-size: 0.85rem; }
-  .action-btn.secondary { background: var(--gold); color: #1a1a1a; }
-
-  /* ---- Suggestion wall ---- */
-  .suggestion-list { max-width: 500px; margin: 30px auto 0; text-align: left; }
-
-  /* ---- Jump nav ---- */
-  .jump-nav {
-    position: sticky;
-    top: 0;
-    z-index: 50;
-    display: flex;
-    overflow-x: auto;
-    gap: 6px;
-    padding: 10px 16px;
-    background: #0a0a0a;
-    border-bottom: 1px solid #262626;
-  }
-  .jump-nav a {
-    flex: 0 0 auto;
-    color: #999;
-    font-size: 0.75rem;
-    letter-spacing: 0.05em;
-    text-transform: uppercase;
-    padding: 6px 12px;
-    border: 1px solid #333;
-    white-space: nowrap;
-  }
-  .jump-nav a:hover { color: #fff; border-color: #666; }
-  .filter-note {
-    font-size: 0.7rem;
-    opacity: .5;
-    margin: -14px auto 20px;
-    max-width: 460px;
-  }
 </style>
 </head>
 <body class="dark">
@@ -180,211 +115,149 @@
   <a href="community.html" class="img-tab active"><img src="community-button.png" alt="Community"></a>
 </nav>
 
-<div class="jump-nav">
-  <a href="#section-stallwall">Stall Wall</a>
-  <a href="#section-board">Board</a>
-  <a href="#section-directory">Directory</a>
-  <a href="#section-land">Land Initiative</a>
+<div class="tab-nav">
+  <button class="tab-btn active" data-tab="stallwall">Stall Wall</button>
+  <button class="tab-btn" data-tab="board">Board</button>
+  <button class="tab-btn" data-tab="directory">Directory</button>
+  <button class="tab-btn" data-tab="land">Land Initiative</button>
 </div>
 
-<!-- 1. THE STALL WALL — nationwide hook -->
-<div class="wrap" id="section-stallwall" style="text-align:center;">
-  <img src="black-america.svg" style="width:100%; max-width:500px;" alt="Black America">
+<!-- STALL WALL + SUGGESTION WALL -->
+<div class="tab-panel active" id="panel-stallwall">
+  <div class="wrap" style="text-align:center;">
+    <img src="black-america.svg" style="width:100%; max-width:500px;" alt="Black America">
 
-  <h2 style="letter-spacing:4px; margin-top:40px;">THE STALL WALL</h2>
-  <p style="opacity:.7; max-width:500px; margin:0 auto;">
-    this is how word of mouth works, it goes peer to peer and reaches different states
-  </p>
+    <h2 style="letter-spacing:4px; margin-top:40px;">THE STALL WALL</h2>
+    <p style="opacity:.7; max-width:500px; margin:0 auto;">
+      this is how word of mouth works, it goes peer to peer and reaches different states
+    </p>
 
-  <hr class="section-divider">
+    <hr class="section-divider">
 
-  <div class="mark-card">
-    <h3>Leave Your Mark</h3>
-    <label for="stateSelect">Your state</label>
-    <select id="stateSelect"><option value="">Choose your state</option></select>
-    <label for="postInput">Speak Your Truth</label>
-    <textarea id="postInput" rows="4"></textarea>
-    <button id="sendBtn" class="cta-btn">Send Mark</button>
-    <p id="sendConfirm" class="confirm-msg">Your mark is up.</p>
-  </div>
+    <div class="mark-card">
+      <h3>Leave Your Mark</h3>
+      <label for="stateSelect">Your state</label>
+      <select id="stateSelect"><option value="">Choose your state</option></select>
+      <label for="postInput">Speak Your Truth</label>
+      <textarea id="postInput" rows="4"></textarea>
+      <button id="sendBtn" class="cta-btn">Send Mark</button>
+      <p id="sendConfirm" class="confirm-msg">Your mark is up.</p>
+    </div>
 
-  <hr class="section-divider">
+    <hr class="section-divider">
 
-  <p class="board-sub" style="margin-bottom:6px;">
-    Marks in the Stall Wall stay up for a month. Then the cycle repeats.
-  </p>
-  <p class="active-counter" id="activeCounter"></p>
-  <div id="states"></div>
-  <div id="editor">
-    <h3 id="stateTitle"></h3>
-    <div id="postsList" style="margin-top:20px;"></div>
+    <p class="board-sub" style="margin-bottom:6px;">Marks stay up for a month. Then the cycle repeats.</p>
+    <p class="active-counter" id="activeCounter"></p>
+    <div id="states"></div>
+    <div id="editor">
+      <h3 id="stateTitle"></h3>
+      <div id="postsList" style="margin-top:20px;"></div>
+    </div>
+
+    <hr class="section-divider">
+
+    <h2 class="board-title">SUGGESTION WALL</h2>
+    <p class="board-sub">Anonymous. No names, no accounts. Stays up for a year.</p>
+    <div class="mark-card">
+      <label for="suggInput">Say it</label>
+      <textarea id="suggInput" rows="3"></textarea>
+      <button id="suggSendBtn" class="cta-btn">Post Anonymously</button>
+      <p id="suggConfirm" class="confirm-msg">Posted.</p>
+    </div>
+    <div class="suggestion-list" id="suggList"></div>
   </div>
 </div>
 
-<div class="torn light-to-dark"></div>
+<!-- BOARD -->
+<div class="tab-panel" id="panel-board">
+  <div class="wrap" style="text-align:center;">
+    <img src="art-homies-logo.png" alt="Art Homies" style="width:50px; display:block; margin:0 auto 14px;">
+    <h2 class="board-title">THE BOARD</h2>
+    <p class="board-sub">Wall & mural spots, workshops, tool/space shares, and calls for art — all in one feed.</p>
 
-<!-- SUGGESTION WALL — grouped with Stall Wall, both quick anonymous drops -->
-<div class="wrap" style="text-align:center;">
-  <h2 class="board-title">SUGGESTION WALL</h2>
-  <p class="board-sub">Anonymous. No names, no accounts. Suggestions stay up for a year.</p>
+    <div class="mark-card">
+      <h3>Post It</h3>
+      <label for="boardCategory">What kind of post is this?</label>
+      <select id="boardCategory">
+        <option value="wall">🔴 Wall & Mural Opportunity</option>
+        <option value="workshop">🔵 Workshop / Class</option>
+        <option value="share">🟢 Tool / Garage / Space Share</option>
+        <option value="call">🟡 Grant, Residency, or Call for Art</option>
+      </select>
+      <label for="boardTitle">Title</label>
+      <input type="text" id="boardTitle" placeholder="e.g. Garage available for a 1-day screen printing demo">
+      <label for="boardDetails">Details</label>
+      <textarea id="boardDetails" rows="3" placeholder="What's the opportunity? How do people reach you?"></textarea>
+      <button id="boardSendBtn" class="cta-btn">Post It</button>
+      <p id="boardConfirm" class="confirm-msg">Posted to the board.</p>
+    </div>
 
-  <div class="mark-card">
-    <label for="suggInput">Say it</label>
-    <textarea id="suggInput" rows="3"></textarea>
-    <button id="suggSendBtn" class="cta-btn">Post Anonymously</button>
-    <p id="suggConfirm" class="confirm-msg">Posted.</p>
+    <div class="cat-pill-row" id="catPillRow" style="margin-top:30px;">
+      <button class="cat-pill active" data-cat="All"><span class="legend-dot" style="background:#888;"></span>All</button>
+      <button class="cat-pill" data-cat="wall"><span class="legend-dot cat-wall"></span>Wall & Mural</button>
+      <button class="cat-pill" data-cat="workshop"><span class="legend-dot cat-workshop"></span>Workshops</button>
+      <button class="cat-pill" data-cat="share"><span class="legend-dot cat-share"></span>Share</button>
+      <button class="cat-pill" data-cat="call"><span class="legend-dot cat-call"></span>Calls</button>
+    </div>
+
+    <div class="board-list" id="boardList"></div>
   </div>
-
-  <div class="suggestion-list" id="suggList"></div>
 </div>
 
-<div class="torn light-to-dark"></div>
+<!-- PHOENIX DIRECTORY -->
+<div class="tab-panel" id="panel-directory">
+  <div class="wrap" style="text-align:center;">
+    <h2 class="board-title">THE PHOENIX DIRECTORY</h2>
+    <p class="board-sub">Verified local resources. The permanent anchor.</p>
 
-<!-- 2. ART HOMIES VISION + DISCIPLINE FILTER -->
-<div class="wrap" style="text-align:center;">
-  <img src="art-homies-logo.png" alt="Art Homies" style="width:60px; display:block; margin:0 auto 16px;">
-  <h2 class="board-title">ART HOMIES</h2>
-  <p class="board-sub">
-    A Phoenix-rooted initiative, built to scale to other cities. A
-    physical hub for grassroots creatives — space to build, create,
-    and connect, without corporate or landlord gatekeeping.
-  </p>
+    <div class="filter-row" id="filterRow">
+      <button class="filter-pill active" data-filter="All">All</button>
+      <button class="filter-pill" data-filter="Print & Graphic">Print & Graphic</button>
+      <button class="filter-pill" data-filter="3D & Fab">3D & Fab</button>
+      <button class="filter-pill" data-filter="Textiles">Textiles</button>
+      <button class="filter-pill" data-filter="Wood & Metal">Wood & Metal</button>
+      <button class="filter-pill" data-filter="Natural Building">Natural Building</button>
+    </div>
 
-  <div class="filter-row" id="filterRow">
-    <button class="filter-pill active" data-filter="All">All</button>
-    <button class="filter-pill" data-filter="Print & Graphic">Print & Graphic</button>
-    <button class="filter-pill" data-filter="3D & Fab">3D & Fab</button>
-    <button class="filter-pill" data-filter="Textiles">Textiles</button>
-    <button class="filter-pill" data-filter="Wood & Metal">Wood & Metal</button>
-    <button class="filter-pill" data-filter="Natural Building">Natural Building</button>
+    <div class="directory-grid" id="directoryGrid"></div>
   </div>
-  <p class="filter-note">Filters the Board and Directory sections below.</p>
 </div>
 
-<!-- 3. COLOR-CODED OPPORTUNITY BOARD -->
-<div class="wrap" id="section-board" style="text-align:center; padding-top:0;">
-  <h3 class="board-title" style="font-size:1.1rem;">THE BOARD</h3>
-  <p class="board-sub">Workshops, practice walls, calls for artists, host requests — filtered by discipline above.</p>
+<!-- LAND INITIATIVE -->
+<div class="tab-panel" id="panel-land">
+  <div class="wrap" style="text-align:center;">
+    <h2 class="board-title">THE LAND INITIATIVE</h2>
+    <p class="board-sub">Off-grid, non-profit, built in phases — starting now, with no land owned yet.</p>
 
-  <div class="board-legend">
-    <span><i class="legend-dot cat-wall"></i>Wall & Mural</span>
-    <span><i class="legend-dot cat-workshop"></i>Workshops & Classes</span>
-    <span><i class="legend-dot cat-share"></i>Tool / Garage / Space Share</span>
-    <span><i class="legend-dot cat-call"></i>Grants, Residencies & Calls</span>
+    <div class="blueprint-item">
+      <h3>Residency Pods</h3>
+      <p>1-month residency: a private aircrete dome studio with bed, storage, and A/C per pod.</p>
+    </div>
+    <div class="blueprint-item">
+      <h3>Shared Facilities</h3>
+      <p>Indoor/outdoor communal kitchen, solar showers, and composting setups.</p>
+    </div>
+    <div class="blueprint-item">
+      <h3>Build Bays</h3>
+      <p>Covered outdoor shop space for timber work, metal fabrication, and van or tiny home builds.</p>
+    </div>
+    <div class="blueprint-item">
+      <h3>Hands-On Workshops</h3>
+      <p>Community workshops teach aircrete dome construction, off-grid solar, rainwater harvesting, and natural building — by building the site in real time.</p>
+    </div>
+
+    <hr class="section-divider">
+
+    <h3 style="letter-spacing:2px; margin-bottom:10px;">NO LAND OWNED YET — HERE'S HOW TO HELP NOW</h3>
+    <p class="board-sub">
+      Got a wall, a garage, or a lot? Want to teach a skill or pick one up? Post it directly on <strong>The Board</strong> — wall space, workshop hosting, tool shares, and calls for art all live there, no forms, no email.
+    </p>
+
+    <div class="action-row">
+      <a class="action-btn" href="#">Material Donation Fund</a>
+    </div>
   </div>
-
-  <div class="mark-card" style="text-align:left;">
-    <h3 style="text-align:center;">Post to the Board</h3>
-    <label for="boardCategory">Category</label>
-    <select id="boardCategory">
-      <option value="wall">Wall & Mural Opportunity</option>
-      <option value="workshop">Workshop / Class</option>
-      <option value="share">Tool / Garage / Space Share</option>
-      <option value="call">Grant, Residency, or Call for Art</option>
-    </select>
-    <label for="boardDiscipline">Discipline</label>
-    <select id="boardDiscipline">
-      <option value="Print & Graphic">Print & Graphic</option>
-      <option value="3D & Fab">3D & Fab</option>
-      <option value="Textiles">Textiles</option>
-      <option value="Wood & Metal">Wood & Metal</option>
-      <option value="Natural Building">Natural Building</option>
-    </select>
-    <label for="boardTitle">Title</label>
-    <input type="text" id="boardTitle" placeholder="e.g. Garage available for a 1-day screen printing demo">
-    <label for="boardDetails">Details</label>
-    <textarea id="boardDetails" rows="3" placeholder="What's the opportunity? How do people reach you?"></textarea>
-    <button id="boardSendBtn" class="cta-btn">Post It</button>
-    <p id="boardConfirm" class="confirm-msg">Posted to the board.</p>
-  </div>
-
-  <div class="board-list" id="boardList" style="margin-top:30px;"></div>
 </div>
-
-<div class="torn light-to-dark"></div>
-
-<!-- 4. PHOENIX DIRECTORY -->
-<div class="wrap" id="section-directory" style="text-align:center;">
-  <h2 class="board-title">THE PHOENIX DIRECTORY</h2>
-  <p class="board-sub">Verified local resources. The permanent anchor.</p>
-
-  <div class="directory-grid" id="directoryGrid"></div>
-</div>
-
-<div class="torn light-to-dark"></div>
-
-<!-- 5. LAND INITIATIVE -->
-<div class="wrap" id="section-land" style="text-align:center;">
-  <h2 class="board-title">THE LAND INITIATIVE</h2>
-  <p class="board-sub">Off-grid, non-profit, built in phases — starting now, with no land owned yet.</p>
-
-  <div class="blueprint-item">
-    <h3>Residency Pods</h3>
-    <p>1-month residency: a private aircrete dome studio with bed, storage, and A/C per pod.</p>
-  </div>
-  <div class="blueprint-item">
-    <h3>Shared Facilities</h3>
-    <p>Indoor/outdoor communal kitchen, solar showers, and composting setups.</p>
-  </div>
-  <div class="blueprint-item">
-    <h3>Build Bays</h3>
-    <p>Covered outdoor shop space for timber work, metal fabrication, and van or tiny home builds.</p>
-  </div>
-  <div class="blueprint-item">
-    <h3>Hands-On Workshops</h3>
-    <p>Community workshops teach aircrete dome construction, off-grid solar, rainwater harvesting, and natural building — by building the site in real time.</p>
-  </div>
-
-  <hr class="section-divider">
-
-  <h3 style="letter-spacing:2px; margin-bottom:16px;">HOW TO PARTICIPATE NOW — NO LAND OWNED YET</h3>
-
-  <div class="tier-card">
-    <span class="tier-num">TIER 1</span>
-    <h3>Wall Hosts</h3>
-    <p>Offer an exterior fence or wall for practice paint sessions.</p>
-  </div>
-  <div class="tier-card">
-    <span class="tier-num">TIER 2</span>
-    <h3>Garage / Workshop Hosts</h3>
-    <p>Offer a driveway or garage for a 1-day pop-up build.</p>
-  </div>
-  <div class="tier-card">
-    <span class="tier-num">TIER 3</span>
-    <h3>Land Partners</h3>
-    <p>Offer a vacant lot, acreage, or yard to pilot a small build.</p>
-  </div>
-
-  <div class="form-embed-wrap">
-    <strong style="display:block; margin-bottom:10px;">I Have Space / Tools</strong>
-    <p style="font-size:0.85rem; opacity:.7; margin-bottom:12px;">Form's being built — for now, email your interest directly.</p>
-    <a href="mailto:hello@nociv.co?subject=I%20Have%20Space%20or%20Tools" style="color:var(--gold); font-size:0.85rem; text-decoration:underline;">Email hello@nociv.co →</a>
-    <!-- Once your Google Form is live, replace this block with:
-    <iframe src="YOUR_GOOGLE_FORM_EMBED_URL" height="700">Loading…</iframe>
-    -->
-  </div>
-  <div class="form-embed-wrap">
-    <strong style="display:block; margin-bottom:10px;">I Want to Build / Teach</strong>
-    <p style="font-size:0.85rem; opacity:.7; margin-bottom:12px;">Form's being built — for now, email your interest directly.</p>
-    <a href="mailto:hello@nociv.co?subject=I%20Want%20to%20Build%20or%20Teach" style="color:var(--gold); font-size:0.85rem; text-decoration:underline;">Email hello@nociv.co →</a>
-    <!-- Once your Google Form is live, replace this block with:
-    <iframe src="YOUR_GOOGLE_FORM_EMBED_URL" height="700">Loading…</iframe>
-    -->
-  </div>
-
-  <hr class="section-divider">
-
-  <h3 style="letter-spacing:2px; margin-bottom:16px;">SUPPORT THE MOVEMENT</h3>
-  <div class="action-row">
-    <a class="action-btn" href="#">Material Donation Fund</a>
-    <a class="action-btn secondary" href="#">Volunteer / Instructor Sign-Up</a>
-  </div>
-  <p style="font-size:0.8rem; opacity:.6; margin-top:14px;">
-    Want to propose a mural, or offer a wall or land as a host? Use the forms above.
-  </p>
-</div>
-
-<div class="torn light-to-dark"></div>
 
 <footer class="nociv-footer">NOCIV.CO — Nothing Of Civilization<br>© 2023–2026 NOCIV.CO. Established 2023. All rights reserved.</footer>
 
@@ -399,6 +272,17 @@ const states = [
 "Rhode Island","South Carolina","South Dakota","Tennessee","Texas","Utah",
 "Vermont","Virginia","Washington","West Virginia","Wisconsin","Wyoming"
 ];
+
+/* ============ TAB SWITCHING ============ */
+document.querySelectorAll('.tab-btn').forEach(btn => {
+  btn.addEventListener('click', () => {
+    document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+    document.querySelectorAll('.tab-panel').forEach(p => p.classList.remove('active'));
+    btn.classList.add('active');
+    document.getElementById('panel-' + btn.dataset.tab).classList.add('active');
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  });
+});
 
 /* ============ STALL WALL ============ */
 const statesDiv = document.getElementById("states");
@@ -498,114 +382,6 @@ document.getElementById("sendBtn").onclick = () => {
   if (viewState === chosenState) loadPosts();
 };
 
-/* ============ DISCIPLINE FILTER ============ */
-let activeFilter = "All";
-document.querySelectorAll('.filter-pill').forEach(pill => {
-  pill.addEventListener('click', () => {
-    document.querySelectorAll('.filter-pill').forEach(p => p.classList.remove('active'));
-    pill.classList.add('active');
-    activeFilter = pill.dataset.filter;
-    renderBoard();
-    renderDirectory();
-  });
-});
-
-/* ============ COLOR-CODED BOARD ============ */
-const boardList = document.getElementById('boardList');
-const catLabels = { wall: "Wall & Mural", workshop: "Workshop / Class", share: "Tool / Garage / Space Share", call: "Grant, Residency & Call" };
-
-function getBoardPosts() {
-  const now = Date.now();
-  let posts = JSON.parse(localStorage.getItem("boardPosts")) || [];
-  return posts.filter(p => now - p.time < 60*24*60*60*1000); // 60 days
-}
-
-function renderBoard() {
-  boardList.innerHTML = "";
-  let posts = getBoardPosts();
-  if (activeFilter !== "All") posts = posts.filter(p => p.discipline === activeFilter);
-
-  if (posts.length === 0) {
-    boardList.innerHTML = '<p style="opacity:.5; text-align:center;">Nothing posted yet.</p>';
-    return;
-  }
-  posts.forEach(p => {
-    const card = document.createElement('div');
-    card.className = 'board-card ' + p.category;
-    card.innerHTML = `
-      <div class="board-card-title">${p.title}</div>
-      <div class="board-card-meta">${catLabels[p.category]} · ${p.discipline} · ${p.date}</div>
-      <div class="board-card-desc">${p.details}</div>
-    `;
-    boardList.appendChild(card);
-  });
-}
-renderBoard();
-
-document.getElementById('boardSendBtn').onclick = () => {
-  const category = document.getElementById('boardCategory').value;
-  const discipline = document.getElementById('boardDiscipline').value;
-  const title = document.getElementById('boardTitle').value.trim();
-  const details = document.getElementById('boardDetails').value.trim();
-  if (!title || !details) return;
-
-  const today = new Date();
-  const dateStr = today.toLocaleString("en-US", { month: "short" }).toLowerCase() + "." + today.getDate() + "." + today.getFullYear();
-
-  let posts = JSON.parse(localStorage.getItem("boardPosts")) || [];
-  posts.unshift({ category, discipline, title, details, date: dateStr, time: Date.now() });
-  localStorage.setItem("boardPosts", JSON.stringify(posts));
-
-  document.getElementById('boardTitle').value = "";
-  document.getElementById('boardDetails').value = "";
-  const c = document.getElementById('boardConfirm');
-  c.style.display = 'block';
-  setTimeout(() => { c.style.display = 'none'; }, 3000);
-  renderBoard();
-};
-
-/* ============ PHOENIX DIRECTORY — plug and play ============ */
-// Add a resource any time. discipline must match one of the filter
-// pill values above (or "All" disciplines by adding multiple entries).
-const directory = [
-  {
-    name: "Fraqtals",
-    neighborhood: "Phoenix, AZ",
-    discipline: "Print & Graphic",
-    access: "Shared Studio · Membership",
-    desc: "Membership creative studio — shared space, screen printing.",
-    link: ""
-  }
-];
-
-const directoryGrid = document.getElementById('directoryGrid');
-function renderDirectory() {
-  directoryGrid.innerHTML = "";
-  let items = directory;
-  if (activeFilter !== "All") items = items.filter(d => d.discipline === activeFilter);
-
-  if (items.length === 0) {
-    directoryGrid.innerHTML = '<p class="directory-empty">Nothing listed yet for this discipline — check back soon.</p>';
-    return;
-  }
-  items.forEach(d => {
-    const card = document.createElement('div');
-    card.className = 'directory-card';
-    card.innerHTML = `
-      <div class="dc-name">${d.name}</div>
-      <div class="dc-neighborhood">${d.neighborhood}</div>
-      <div class="dc-tags">
-        <span class="dc-tag">${d.discipline}</span>
-        <span class="dc-tag">${d.access}</span>
-      </div>
-      <div class="dc-desc">${d.desc}</div>
-      ${d.link ? `<a class="dc-link" href="${d.link}" target="_blank" rel="noopener">Visit →</a>` : '<span style="font-size:0.75rem; opacity:.5;">Link coming soon</span>'}
-    `;
-    directoryGrid.appendChild(card);
-  });
-}
-renderDirectory();
-
 /* ============ SUGGESTION WALL ============ */
 const suggList = document.getElementById('suggList');
 function renderSuggestions() {
@@ -646,6 +422,115 @@ document.getElementById('suggSendBtn').onclick = () => {
   setTimeout(() => { c.style.display = 'none'; }, 3000);
   renderSuggestions();
 };
+
+/* ============ THE BOARD — simplified: category only ============ */
+const catLabels = { wall: "Wall & Mural", workshop: "Workshop / Class", share: "Tool / Garage / Space Share", call: "Grant, Residency & Call" };
+let activeCat = "All";
+const boardList = document.getElementById('boardList');
+
+document.querySelectorAll('.cat-pill').forEach(pill => {
+  pill.addEventListener('click', () => {
+    document.querySelectorAll('.cat-pill').forEach(p => p.classList.remove('active'));
+    pill.classList.add('active');
+    activeCat = pill.dataset.cat;
+    renderBoard();
+  });
+});
+
+function getBoardPosts() {
+  const now = Date.now();
+  let posts = JSON.parse(localStorage.getItem("boardPosts")) || [];
+  return posts.filter(p => now - p.time < 60*24*60*60*1000);
+}
+
+function renderBoard() {
+  boardList.innerHTML = "";
+  let posts = getBoardPosts();
+  if (activeCat !== "All") posts = posts.filter(p => p.category === activeCat);
+  if (posts.length === 0) {
+    boardList.innerHTML = '<p style="opacity:.5; text-align:center;">Nothing posted yet.</p>';
+    return;
+  }
+  posts.forEach(p => {
+    const card = document.createElement('div');
+    card.className = 'board-card ' + p.category;
+    card.innerHTML = `
+      <div class="board-card-title">${p.title}</div>
+      <div class="board-card-meta">${catLabels[p.category]} · ${p.date}</div>
+      <div class="board-card-desc">${p.details}</div>
+    `;
+    boardList.appendChild(card);
+  });
+}
+renderBoard();
+
+document.getElementById('boardSendBtn').onclick = () => {
+  const category = document.getElementById('boardCategory').value;
+  const title = document.getElementById('boardTitle').value.trim();
+  const details = document.getElementById('boardDetails').value.trim();
+  if (!title || !details) return;
+  const today = new Date();
+  const dateStr = today.toLocaleString("en-US", { month: "short" }).toLowerCase() + "." + today.getDate() + "." + today.getFullYear();
+  let posts = JSON.parse(localStorage.getItem("boardPosts")) || [];
+  posts.unshift({ category, title, details, date: dateStr, time: Date.now() });
+  localStorage.setItem("boardPosts", JSON.stringify(posts));
+  document.getElementById('boardTitle').value = "";
+  document.getElementById('boardDetails').value = "";
+  const c = document.getElementById('boardConfirm');
+  c.style.display = 'block';
+  setTimeout(() => { c.style.display = 'none'; }, 3000);
+  renderBoard();
+};
+
+/* ============ PHOENIX DIRECTORY — plug and play ============ */
+const directory = [
+  {
+    name: "Fraqtals",
+    neighborhood: "Phoenix, AZ",
+    discipline: "Print & Graphic",
+    access: "Shared Studio · Membership",
+    desc: "Membership creative studio — shared space, screen printing.",
+    link: ""
+  }
+];
+
+let activeFilter = "All";
+const directoryGrid = document.getElementById('directoryGrid');
+
+document.querySelectorAll('.filter-pill').forEach(pill => {
+  pill.addEventListener('click', () => {
+    document.querySelectorAll('.filter-pill').forEach(p => p.classList.remove('active'));
+    pill.classList.add('active');
+    activeFilter = pill.dataset.filter;
+    renderDirectory();
+  });
+});
+
+function renderDirectory() {
+  directoryGrid.innerHTML = "";
+  let items = directory;
+  if (activeFilter !== "All") items = items.filter(d => d.discipline === activeFilter);
+  if (items.length === 0) {
+    directoryGrid.innerHTML = '<p class="directory-empty">Nothing listed yet for this discipline — check back soon.</p>';
+    return;
+  }
+  items.forEach(d => {
+    const card = document.createElement('div');
+    card.className = 'directory-card';
+    card.innerHTML = `
+      <div class="dc-name">${d.name}</div>
+      <div class="dc-neighborhood">${d.neighborhood}</div>
+      <div class="dc-tags">
+        <span class="dc-tag">${d.discipline}</span>
+        <span class="dc-tag">${d.access}</span>
+      </div>
+      <div class="dc-desc">${d.desc}</div>
+      ${d.link ? `<a class="dc-link" href="${d.link}" target="_blank" rel="noopener">Visit →</a>` : '<span style="font-size:0.75rem; opacity:.5;">Link coming soon</span>'}
+    `;
+    directoryGrid.appendChild(card);
+  });
+}
+renderDirectory();
 </script>
 
 </body>
