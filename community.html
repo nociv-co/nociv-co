@@ -1,6 +1,7 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
+<!-- Site Created & Designed by Jasilyn A. Anderson | NOCIV.CO -->
 <meta charset="UTF-8">
 <title>Community — NOCIV.CO</title>
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -11,7 +12,6 @@
   .board-sub { opacity: .65; font-size: 0.85rem; max-width: 460px; margin: 0 auto 24px; }
   .section-divider { border: 0; border-top: 1px solid #333; max-width: 500px; margin: 40px auto; }
 
-  /* ---- Tab panels ---- */
   .tab-nav {
     position: sticky; top: 0; z-index: 50;
     display: flex; overflow-x: auto; gap: 6px;
@@ -26,7 +26,6 @@
   .tab-panel { display: none; }
   .tab-panel.active { display: block; }
 
-  /* ---- Mark card: general CTA style, reused everywhere ---- */
   .mark-card {
     max-width: 460px; margin: 0 auto; background: #161616;
     border: 2px solid var(--red); padding: 28px 24px; text-align: center;
@@ -45,7 +44,6 @@
   .cta-btn:hover { background: #b83c2c; }
   .confirm-msg { display: none; color: #6fbf8f; font-weight: 700; margin-top: 14px; }
 
-  /* ---- Stall Wall ---- */
   .active-counter { font-size: 0.85rem; opacity: .7; margin-bottom: 16px; }
   #states { display: flex; flex-wrap: wrap; gap: 8px; justify-content: center; margin: 20px 0; }
   #states button { background: #111; color: #aaa; border: 1px solid #333; padding: 8px 14px; cursor: pointer; font-size: 0.85rem; }
@@ -59,7 +57,6 @@
   .clearfix { clear: both; }
   .suggestion-list { max-width: 500px; margin: 30px auto 0; text-align: left; }
 
-  /* ---- Board: 4 categories ---- */
   .cat-pill-row { display: flex; flex-wrap: wrap; gap: 8px; justify-content: center; max-width: 500px; margin: 0 auto 24px; }
   .cat-pill { border: 1px solid #333; padding: 7px 14px; font-size: 0.8rem; cursor: pointer; background: #111; color: #aaa; display: flex; align-items: center; gap: 6px; }
   .cat-pill.active { background: #fff; color: #111; border-color: #fff; }
@@ -68,17 +65,25 @@
   .cat-workshop { background: #4a7fd9; }
   .cat-share { background: #3c9d5c; }
   .cat-call { background: var(--gold); }
+  .cat-space { background: #a35fd9; }
   .board-list { max-width: 600px; margin: 0 auto; }
   .board-card { border: 1px solid #333; border-left: 4px solid #666; padding: 16px; margin-bottom: 12px; background: #111; text-align: left; }
   .board-card.wall { border-left-color: #d94f3d; }
   .board-card.workshop { border-left-color: #4a7fd9; }
   .board-card.share { border-left-color: #3c9d5c; }
   .board-card.call { border-left-color: var(--gold); }
+  .board-card.space { border-left-color: #a35fd9; }
   .board-card .board-card-title { font-weight: 900; font-size: 1rem; }
   .board-card .board-card-meta { font-size: 0.75rem; opacity: .6; margin: 4px 0 8px; }
   .board-card .board-card-desc { font-size: 0.9rem; opacity: .9; white-space: pre-wrap; }
+  .interest-row { display: flex; align-items: center; gap: 10px; margin-top: 12px; }
+  .interest-btn {
+    background: #1c1c1c; color: #ddd; border: 1px solid #444; padding: 6px 12px;
+    font-size: 0.75rem; cursor: pointer; letter-spacing: 0.03em;
+  }
+  .interest-btn.clicked { background: var(--gold); color: #1a1a1a; border-color: var(--gold); cursor: default; }
+  .interest-count { font-size: 0.75rem; opacity: .6; }
 
-  /* ---- Directory ---- */
   .filter-row { display: flex; flex-wrap: wrap; gap: 8px; justify-content: center; max-width: 600px; margin: 0 auto 30px; }
   .filter-pill { background: #111; color: #aaa; border: 1px solid #333; padding: 7px 14px; font-size: 0.8rem; cursor: pointer; white-space: nowrap; }
   .filter-pill.active { background: var(--white); color: #111; border-color: var(--white); }
@@ -93,7 +98,6 @@
   .directory-card a.dc-link { color: var(--gold); font-size: 0.8rem; text-decoration: underline; }
   .directory-empty { opacity: .5; font-style: italic; font-size: 0.85rem; text-align: center; grid-column: 1 / -1; }
 
-  /* ---- Land Initiative ---- */
   .blueprint-item { border-left: 2px solid var(--red); padding-left: 16px; margin-bottom: 24px; max-width: 600px; margin-left:auto; margin-right:auto; text-align:left; }
   .blueprint-item h3 { margin: 0 0 6px; font-size: 1rem; letter-spacing: 0.03em; }
   .blueprint-item p { font-size: 0.9rem; opacity: .85; margin: 0; }
@@ -173,7 +177,7 @@
   <div class="wrap" style="text-align:center;">
     <img src="art-homies-logo.png" alt="Art Homies" style="width:50px; display:block; margin:0 auto 14px;">
     <h2 class="board-title">THE BOARD</h2>
-    <p class="board-sub">Wall & mural spots, workshops, tool/space shares, and calls for art — all in one feed.</p>
+    <p class="board-sub">Wall & mural spots, workshops, spaces, tool shares, and calls for art — all in one feed.</p>
 
     <div class="mark-card">
       <h3>Post It</h3>
@@ -183,20 +187,51 @@
         <option value="workshop">🔵 Workshop / Class</option>
         <option value="share">🟢 Tool / Garage / Space Share</option>
         <option value="call">🟡 Grant, Residency, or Call for Art</option>
+        <option value="space">🟣 Space to Offer (Studio / Venue)</option>
       </select>
+
+      <div id="spaceTypeWrap" style="display:none;">
+        <label for="spaceType">Space type</label>
+        <select id="spaceType">
+          <option value="Studio">Studio</option>
+          <option value="Venue">Venue</option>
+        </select>
+      </div>
+
+      <label for="boardDiscipline">Discipline</label>
+      <select id="boardDiscipline">
+        <option value="Print & Graphic">Print & Graphic</option>
+        <option value="3D & Fab">3D & Fab</option>
+        <option value="Textiles">Textiles</option>
+        <option value="Wood & Metal">Wood & Metal</option>
+        <option value="Natural Building">Natural Building</option>
+        <option value="Photography">Photography</option>
+        <option value="Music">Music</option>
+        <option value="Poetry">Poetry</option>
+        <option value="General">General / Not discipline-specific</option>
+      </select>
+
       <label for="boardTitle">Title</label>
       <input type="text" id="boardTitle" placeholder="e.g. Garage available for a 1-day screen printing demo">
       <label for="boardDetails">Details</label>
-      <textarea id="boardDetails" rows="3" placeholder="What's the opportunity? How do people reach you?"></textarea>
+      <textarea id="boardDetails" rows="3" placeholder="General area (not exact address), what's available, and how people reach you."></textarea>
       <button id="boardSendBtn" class="cta-btn">Post It</button>
       <p id="boardConfirm" class="confirm-msg">Posted to the board.</p>
     </div>
 
-    <div class="cat-pill-row" id="catPillRow" style="margin-top:30px;">
+    <p class="board-sub" style="margin-top:24px; font-size:0.78rem;">
+      Offering a space? List a general area, not your exact address.
+      The interest count on each post shows real demand before you
+      commit to anything — share exact details directly with people
+      once they've reached out.
+    </p>
+
+    <div class="cat-pill-row" id="catPillRow">
       <button class="cat-pill active" data-cat="All"><span class="legend-dot" style="background:#888;"></span>All</button>
       <button class="cat-pill" data-cat="wall"><span class="legend-dot cat-wall"></span>Wall & Mural</button>
       <button class="cat-pill" data-cat="workshop"><span class="legend-dot cat-workshop"></span>Workshops</button>
       <button class="cat-pill" data-cat="share"><span class="legend-dot cat-share"></span>Share</button>
+      <button class="cat-pill" data-cat="space"><span class="legend-dot cat-space"></span>Spaces</button>
       <button class="cat-pill" data-cat="call"><span class="legend-dot cat-call"></span>Calls</button>
     </div>
 
@@ -217,6 +252,9 @@
       <button class="filter-pill" data-filter="Textiles">Textiles</button>
       <button class="filter-pill" data-filter="Wood & Metal">Wood & Metal</button>
       <button class="filter-pill" data-filter="Natural Building">Natural Building</button>
+      <button class="filter-pill" data-filter="Photography">Photography</button>
+      <button class="filter-pill" data-filter="Music">Music</button>
+      <button class="filter-pill" data-filter="Poetry">Poetry</button>
     </div>
 
     <div class="directory-grid" id="directoryGrid"></div>
@@ -250,7 +288,7 @@
 
     <h3 style="letter-spacing:2px; margin-bottom:10px;">NO LAND OWNED YET — HERE'S HOW TO HELP NOW</h3>
     <p class="board-sub">
-      Got a wall, a garage, or a lot? Want to teach a skill or pick one up? Post it directly on <strong>The Board</strong> — wall space, workshop hosting, tool shares, and calls for art all live there, no forms, no email.
+      Got a wall, a garage, a studio, or a venue? Want to teach a skill or pick one up? Post it directly on <strong>The Board</strong> — no forms, no email.
     </p>
 
     <div class="action-row">
@@ -277,7 +315,6 @@ const states = [
 "Vermont","Virginia","Washington","West Virginia","Wisconsin","Wyoming"
 ];
 
-/* ============ TAB SWITCHING ============ */
 document.querySelectorAll('.tab-btn').forEach(btn => {
   btn.addEventListener('click', () => {
     document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
@@ -288,7 +325,6 @@ document.querySelectorAll('.tab-btn').forEach(btn => {
   });
 });
 
-/* ============ HELPER FORMAT DATE ============ */
 function formatDate(isoString) {
   const d = new Date(isoString);
   return d.toLocaleString("en-US", { month: "short" }).toLowerCase() + "." + d.getDate() + "." + d.getFullYear();
@@ -319,7 +355,6 @@ async function getActiveStatesThisCycle() {
     .from('stall_posts')
     .select('state')
     .gte('created_at', thirtyDaysAgo);
-
   if (error || !data) return new Set();
   return new Set(data.map(p => p.state));
 }
@@ -357,7 +392,6 @@ window.addEventListener("keydown", e => {
 async function loadPosts() {
   postsList.innerHTML = "<p style='opacity:.6'>Loading marks...</p>";
   const thirtyDaysAgo = new Date(Date.now() - 30*24*60*60*1000).toISOString();
-
   const { data: statePosts, error } = await supabaseClient
     .from('stall_posts')
     .select('*')
@@ -369,7 +403,6 @@ async function loadPosts() {
     postsList.innerHTML = "<p style='opacity:.6'>No marks yet</p>";
     return;
   }
-
   postsList.innerHTML = "";
   statePosts.forEach(p => {
     let div = document.createElement("div");
@@ -391,16 +424,10 @@ document.getElementById("sendBtn").onclick = async () => {
   const chosenState = stateSelect.value;
   if (!chosenState) { stateSelect.focus(); return; }
   if (!text) { postInput.focus(); return; }
-
   const { error } = await supabaseClient
     .from('stall_posts')
     .insert([{ state: chosenState, text: text, admin: secretMode }]);
-
-  if (error) {
-    alert("Error saving post to Supabase: " + error.message);
-    return;
-  }
-
+  if (error) { alert("Error saving post: " + error.message); return; }
   postInput.value = "";
   sendConfirm.style.display = "block";
   setTimeout(() => { sendConfirm.style.display = "none"; }, 3000);
@@ -414,7 +441,6 @@ const suggList = document.getElementById('suggList');
 async function renderSuggestions() {
   suggList.innerHTML = "<p style='opacity:.6; text-align:center;'>Loading suggestions...</p>";
   const oneYearAgo = new Date(Date.now() - 365*24*60*60*1000).toISOString();
-
   const { data: suggs, error } = await supabaseClient
     .from('suggestion_posts')
     .select('*')
@@ -425,7 +451,6 @@ async function renderSuggestions() {
     suggList.innerHTML = "<p style='opacity:.6; text-align:center;'>No suggestions yet.</p>";
     return;
   }
-
   suggList.innerHTML = "";
   suggs.forEach(s => {
     const div = document.createElement('div');
@@ -445,16 +470,10 @@ renderSuggestions();
 document.getElementById('suggSendBtn').onclick = async () => {
   const text = document.getElementById('suggInput').value.trim();
   if (!text) return;
-
   const { error } = await supabaseClient
     .from('suggestion_posts')
     .insert([{ text: text }]);
-
-  if (error) {
-    alert("Error saving suggestion to Supabase: " + error.message);
-    return;
-  }
-
+  if (error) { alert("Error saving suggestion: " + error.message); return; }
   document.getElementById('suggInput').value = "";
   const c = document.getElementById('suggConfirm');
   c.style.display = 'block';
@@ -463,9 +482,15 @@ document.getElementById('suggSendBtn').onclick = async () => {
 };
 
 /* ============ THE BOARD ============ */
-const catLabels = { wall: "Wall & Mural", workshop: "Workshop / Class", share: "Tool / Garage / Space Share", call: "Grant, Residency & Call" };
+const catLabels = { wall: "Wall & Mural", workshop: "Workshop / Class", share: "Tool / Garage / Space Share", call: "Grant, Residency & Call", space: "Space to Offer" };
 let activeCat = "All";
 const boardList = document.getElementById('boardList');
+const boardCategorySelect = document.getElementById('boardCategory');
+const spaceTypeWrap = document.getElementById('spaceTypeWrap');
+
+boardCategorySelect.addEventListener('change', () => {
+  spaceTypeWrap.style.display = boardCategorySelect.value === 'space' ? 'block' : 'none';
+});
 
 document.querySelectorAll('.cat-pill').forEach(pill => {
   pill.addEventListener('click', () => {
@@ -475,6 +500,19 @@ document.querySelectorAll('.cat-pill').forEach(pill => {
     renderBoard();
   });
 });
+
+// Track which posts this browser already marked "interested" in, so
+// the button can't be spammed from the same device.
+function getInterestedIds() {
+  return JSON.parse(localStorage.getItem('interestedBoardIds') || '[]');
+}
+function markInterested(id) {
+  const ids = getInterestedIds();
+  if (!ids.includes(id)) {
+    ids.push(id);
+    localStorage.setItem('interestedBoardIds', JSON.stringify(ids));
+  }
+}
 
 async function renderBoard() {
   boardList.innerHTML = '<p style="opacity:.5; text-align:center;">Loading board posts...</p>';
@@ -486,9 +524,7 @@ async function renderBoard() {
     .gte('created_at', sixtyDaysAgo)
     .order('created_at', { ascending: false });
 
-  if (activeCat !== "All") {
-    query = query.eq('category', activeCat);
-  }
+  if (activeCat !== "All") query = query.eq('category', activeCat);
 
   const { data: posts, error } = await query;
 
@@ -497,34 +533,59 @@ async function renderBoard() {
     return;
   }
 
+  const interestedIds = getInterestedIds();
   boardList.innerHTML = "";
   posts.forEach(p => {
     const card = document.createElement('div');
     card.className = 'board-card ' + p.category;
+    const alreadyInterested = interestedIds.includes(p.id);
+    const metaBits = [catLabels[p.category] || p.category];
+    if (p.space_type) metaBits.push(p.space_type);
+    if (p.discipline) metaBits.push(p.discipline);
+    metaBits.push(formatDate(p.created_at));
+
     card.innerHTML = `
       <div class="board-card-title">${p.title}</div>
-      <div class="board-card-meta">${catLabels[p.category] || p.category} · ${formatDate(p.created_at)}</div>
+      <div class="board-card-meta">${metaBits.join(' · ')}</div>
       <div class="board-card-desc">${p.details}</div>
+      <div class="interest-row">
+        <button class="interest-btn ${alreadyInterested ? 'clicked' : ''}" data-id="${p.id}" ${alreadyInterested ? 'disabled' : ''}>
+          ${alreadyInterested ? 'You\\'re interested' : "I'm Interested"}
+        </button>
+        <span class="interest-count">${p.interest_count || 0} interested</span>
+      </div>
     `;
     boardList.appendChild(card);
+  });
+
+  boardList.querySelectorAll('.interest-btn').forEach(btn => {
+    btn.addEventListener('click', async () => {
+      const id = btn.dataset.id;
+      const { data: current } = await supabaseClient.from('board_posts').select('interest_count').eq('id', id).single();
+      const newCount = (current?.interest_count || 0) + 1;
+      const { error } = await supabaseClient.from('board_posts').update({ interest_count: newCount }).eq('id', id);
+      if (!error) {
+        markInterested(id);
+        await renderBoard();
+      }
+    });
   });
 }
 renderBoard();
 
 document.getElementById('boardSendBtn').onclick = async () => {
-  const category = document.getElementById('boardCategory').value;
+  const category = boardCategorySelect.value;
+  const discipline = document.getElementById('boardDiscipline').value;
+  const spaceType = category === 'space' ? document.getElementById('spaceType').value : null;
   const title = document.getElementById('boardTitle').value.trim();
   const details = document.getElementById('boardDetails').value.trim();
   if (!title || !details) return;
 
   const { error } = await supabaseClient
     .from('board_posts')
-    .insert([{ category, title, details }]);
+    .insert([{ category, discipline, space_type: spaceType, title, details, interest_count: 0 }]);
 
-  if (error) {
-    alert("Error saving board post to Supabase: " + error.message);
-    return;
-  }
+  if (error) { alert("Error saving board post: " + error.message); return; }
 
   document.getElementById('boardTitle').value = "";
   document.getElementById('boardDetails').value = "";
