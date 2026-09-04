@@ -550,7 +550,7 @@ async function renderBoard() {
       <div class="board-card-desc">${p.details}</div>
       <div class="interest-row">
         <button class="interest-btn ${alreadyInterested ? 'clicked' : ''}" data-id="${p.id}" ${alreadyInterested ? 'disabled' : ''}>
-          ${alreadyInterested ? 'You\\'re interested' : "I'm Interested"}
+          ${alreadyInterested ? "You are interested" : "I'm Interested"}
         </button>
         <span class="interest-count">${p.interest_count || 0} interested</span>
       </div>
