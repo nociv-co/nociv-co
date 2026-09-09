@@ -1,7 +1,6 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<!-- Site Created & Designed by Jasilyn A. Anderson | NOCIV.CO -->
 <meta charset="UTF-8">
 <title>Books — NOCIV.CO</title>
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -64,6 +63,35 @@
     opacity: .6;
     margin-top: 8px;
   }
+
+  /* --- Buy / Build / Share sub-nav --- */
+  .subnav {
+    display: flex;
+    justify-content: center;
+    gap: 10px;
+    max-width: var(--max);
+    margin: 0 auto;
+    padding: 0 20px 10px;
+  }
+  .subnav button {
+    flex: 1 1 140px;
+    background: var(--grey-dark);
+    color: var(--white);
+    border: 1px solid #333;
+    padding: 14px 10px;
+    font-weight: 700;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    font-size: 0.85rem;
+    cursor: pointer;
+    transition: background 0.15s ease;
+  }
+  .subnav button:hover { background: var(--gold); color: #1a1a1a; }
+  .subnav button.active { background: var(--red); }
+
+  .subpanel { display: none; }
+  .subpanel.show { display: block; }
+
   .coming-soon {
     opacity: .5;
     font-style: italic;
@@ -73,47 +101,84 @@
   }
 </style>
 </head>
-<body class="dark" style="background:#2b2b2b;">
+<body class="dark">
 
 <header class="nociv-header">
-  <a href="index.html"><img class="torn-header-img" src="header.png" alt="NOCIV.CO — Nothing Of Civilization"></a>
+  <a href="index.html"><img class="torn-header-img" src="assets/header.png" alt="NOCIV.CO — Nothing Of Civilization"></a>
 </header>
 
 <nav class="tabs">
-  <a href="about.html" class="img-tab"><img src="nav-about.png" alt="About"></a>
-  <a href="clothing.html" class="img-tab"><img src="nav-clothing.png" alt="Clothing"></a>
-  <a href="tech.html" class="img-tab"><img src="nav-tech.png" alt="Tech"></a>
-  <a href="books.html" class="img-tab active"><img src="nav-books.png" alt="Books"></a>
-  <a href="community.html" class="img-tab"><img src="community-button.png" alt="Community"></a>
+  <a href="about.html" class="img-tab"><img src="assets/nav-about.png" alt="About"></a>
+  <a href="clothing.html" class="img-tab"><img src="assets/nav-clothing.png" alt="Clothing"></a>
+  <a href="tech.html" class="img-tab"><img src="assets/nav-tech.png" alt="Tech"></a>
+  <a href="books.html" class="img-tab active"><img src="assets/nav-books.png" alt="Books"></a>
+  <a href="community.html" class="text-tab">Community</a>
 </nav>
 
-<div class="wrap">
-  <div class="eyebrow">Free food for thought</div>
-  <p style="opacity:.7; max-width:500px; margin-bottom:30px;">
-    Zines, free to read and free to keep. No sign-up, no paywall.
-  </p>
+<nav class="subnav">
+  <button data-panel="buyPanel" class="active">Buy</button>
+  <button data-panel="buildPanel">Build</button>
+  <button data-panel="sharePanel">Share</button>
+</nav>
 
-  <div id="zineList"></div>
+<!-- ===== BUY ===== -->
+<div class="subpanel show" id="buyPanel">
+  <div class="wrap">
+    <div class="eyebrow">Free food for thought</div>
+    <p style="opacity:.7; max-width:500px; margin-bottom:30px;">
+      Zines, free to read and free to keep. No sign-up, no paywall.
+    </p>
 
-  <div class="coming-soon">More zines coming soon.</div>
+    <div id="zineList"></div>
+
+    <div class="coming-soon">More zines coming soon.</div>
+  </div>
 </div>
 
-<footer class="nociv-footer">NOCIV.CO — Nothing Of Civilization<br>© 2023–2026 NOCIV.CO. Established 2023. All rights reserved.</footer>
+<!-- ===== BUILD ===== -->
+<div class="subpanel" id="buildPanel">
+  <div class="wrap">
+    <div class="coming-soon">
+      Tools and resources for writing, laying out, and self-publishing your own zines. Coming soon.
+    </div>
+  </div>
+</div>
+
+<!-- ===== SHARE ===== -->
+<div class="subpanel" id="sharePanel">
+  <div class="wrap">
+    <div class="coming-soon">
+      Share your own writing or zine. Submit it for the community to vote on, and the top pick can be manufactured — creator keeps 80% of profit. Coming soon.
+    </div>
+  </div>
+</div>
+
+<footer class="nociv-footer">NOCIV.CO — Nothing Of Civilization</footer>
 
 <script>
+  const subnavBtns = document.querySelectorAll('.subnav button');
+  subnavBtns.forEach(btn => {
+    btn.addEventListener('click', () => {
+      subnavBtns.forEach(b => b.classList.remove('active'));
+      document.querySelectorAll('.subpanel').forEach(p => p.classList.remove('show'));
+      btn.classList.add('active');
+      document.getElementById(btn.dataset.panel).classList.add('show');
+    });
+  });
+
   // ===== ZINE LIBRARY — plug and play =====
   // Add a new zine by copying one of these objects.
-  // Each "parts" entry needs a PDF file path — drop your PDFs in /zines/
+  // Each "parts" entry needs a PDF file path — drop your PDFs in /assets/zines/
+  // TITLE BELOW IS A PLACEHOLDER — confirm the exact wording you want, then edit here.
   const zines = [
     {
       title: "How to Feel the Void of Life",
-      sub: "Zine · 42 pages",
+      sub: "Zine · 3 parts",
       parts: [
-        { label: "Full Zine", file: "zines/how-to-feel-the-void-of-life.pdf" }
-      ],
-      // Leave empty to show "Available at pop-ups". Once you have a
-      // print-to-order or Stripe link, paste it here for a Buy button.
-      buyLink: ""
+        { label: "Part 1", file: "assets/zines/how-to-feel-the-void-of-life-part1.pdf" },
+        { label: "Part 2", file: "assets/zines/how-to-feel-the-void-of-life-part2.pdf" },
+        { label: "Part 3", file: "assets/zines/how-to-feel-the-void-of-life-part3.pdf" }
+      ]
     }
   ];
   // ==========================================
@@ -164,21 +229,6 @@
     dl.download = '';
     dl.textContent = 'Download';
     partsRow.appendChild(dl);
-
-    if (zine.buyLink) {
-      const buy = document.createElement('a');
-      buy.href = zine.buyLink;
-      buy.target = '_blank';
-      buy.rel = 'noopener';
-      buy.textContent = 'Buy Print Copy';
-      buy.style.cssText = 'background:var(--red); color:#fff; border:none; padding:10px 16px; font-size:0.85rem; font-weight:700; letter-spacing:0.03em;';
-      partsRow.appendChild(buy);
-    } else {
-      const badge = document.createElement('span');
-      badge.textContent = 'Print copy: available at pop-ups';
-      badge.style.cssText = 'font-size:0.75rem; opacity:.55; font-style:italic; align-self:center;';
-      partsRow.appendChild(badge);
-    }
 
     wrap.appendChild(partsRow);
     wrap.appendChild(viewer);
