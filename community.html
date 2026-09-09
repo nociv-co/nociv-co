@@ -5,7 +5,7 @@
 <meta charset="UTF-8">
 <title>Community — NOCIV.CO</title>
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<meta name="description" content="The Stall Wall, the Board, the Phoenix Directory, and the Land Initiative — Nociv's community hub.">
+<meta name="description" content="The Stall Wall, the Directory, and Share — Nociv's community hub.">
 <link rel="stylesheet" href="style.css">
 <style>
   .board-title { letter-spacing: 3px; font-size: 1.3rem; margin-bottom: 6px; }
@@ -66,6 +66,11 @@
   .cat-share { background: #3c9d5c; }
   .cat-call { background: var(--gold); }
   .cat-space { background: #a35fd9; }
+  .cat-clothing { background: #d94f3d; }
+  .cat-tech { background: #4a7fd9; }
+  .cat-books { background: var(--gold); }
+  .cat-other { background: #a35fd9; }
+
   .board-list { max-width: 600px; margin: 0 auto; }
   .board-card { border: 1px solid #333; border-left: 4px solid #666; padding: 16px; margin-bottom: 12px; background: #111; text-align: left; }
   .board-card.wall { border-left-color: #d94f3d; }
@@ -73,9 +78,14 @@
   .board-card.share { border-left-color: #3c9d5c; }
   .board-card.call { border-left-color: var(--gold); }
   .board-card.space { border-left-color: #a35fd9; }
+  .board-card.clothing { border-left-color: #d94f3d; }
+  .board-card.tech { border-left-color: #4a7fd9; }
+  .board-card.books { border-left-color: var(--gold); }
+  .board-card.other { border-left-color: #a35fd9; }
   .board-card .board-card-title { font-weight: 900; font-size: 1rem; }
   .board-card .board-card-meta { font-size: 0.75rem; opacity: .6; margin: 4px 0 8px; }
   .board-card .board-card-desc { font-size: 0.9rem; opacity: .9; white-space: pre-wrap; }
+  .board-card a.board-card-link { color: var(--gold); font-size: 0.8rem; display: inline-block; margin-top: 8px; }
   .interest-row { display: flex; align-items: center; gap: 10px; margin-top: 12px; }
   .interest-btn {
     background: #1c1c1c; color: #ddd; border: 1px solid #444; padding: 6px 12px;
@@ -98,11 +108,7 @@
   .directory-card a.dc-link { color: var(--gold); font-size: 0.8rem; text-decoration: underline; }
   .directory-empty { opacity: .5; font-style: italic; font-size: 0.85rem; text-align: center; grid-column: 1 / -1; }
 
-  .blueprint-item { border-left: 2px solid var(--red); padding-left: 16px; margin-bottom: 24px; max-width: 600px; margin-left:auto; margin-right:auto; text-align:left; }
-  .blueprint-item h3 { margin: 0 0 6px; font-size: 1rem; letter-spacing: 0.03em; }
-  .blueprint-item p { font-size: 0.9rem; opacity: .85; margin: 0; }
-  .action-row { display: flex; gap: 14px; flex-wrap: wrap; max-width: 500px; margin: 0 auto; }
-  .action-btn { flex: 1 1 200px; background: var(--red); color: #fff; text-align: center; padding: 16px; font-weight: 900; letter-spacing: 0.05em; text-transform: uppercase; font-size: 0.85rem; }
+  .subsection-label { letter-spacing: 2px; font-size: 0.95rem; opacity: .8; margin: 40px 0 16px; text-align:center; }
 </style>
 </head>
 <body class="dark">
@@ -121,12 +127,11 @@
 
 <div class="tab-nav">
   <button class="tab-btn active" data-tab="stallwall">Stall Wall</button>
-  <button class="tab-btn" data-tab="board">Board</button>
   <button class="tab-btn" data-tab="directory">Directory</button>
-  <button class="tab-btn" data-tab="land">Land Initiative</button>
+  <button class="tab-btn" data-tab="share">Share</button>
 </div>
 
-<!-- STALL WALL + SUGGESTION WALL -->
+<!-- STALL WALL + SUGGESTION WALL (unchanged) -->
 <div class="tab-panel active" id="panel-stallwall">
   <div class="wrap" style="text-align:center;">
     <img src="black-america.svg" style="width:100%; max-width:500px;" alt="Black America">
@@ -172,12 +177,11 @@
   </div>
 </div>
 
-<!-- BOARD -->
-<div class="tab-panel" id="panel-board">
+<!-- DIRECTORY (verified resources + community-posted listings, formerly "the Board") -->
+<div class="tab-panel" id="panel-directory">
   <div class="wrap" style="text-align:center;">
-    <img src="art-homies-logo.png" alt="Art Homies" style="width:50px; display:block; margin:0 auto 14px;">
-    <h2 class="board-title">THE BOARD</h2>
-    <p class="board-sub">Wall & mural spots, workshops, spaces, tool shares, and calls for art — all in one feed.</p>
+    <h2 class="board-title">THE DIRECTORY</h2>
+    <p class="board-sub">A resource of local talent, creatives, and businesses. Verified listings, plus what the community posts directly.</p>
 
     <div class="mark-card">
       <h3>Post It</h3>
@@ -216,7 +220,7 @@
       <label for="boardDetails">Details</label>
       <textarea id="boardDetails" rows="3" placeholder="General area (not exact address), what's available, and how people reach you."></textarea>
       <button id="boardSendBtn" class="cta-btn">Post It</button>
-      <p id="boardConfirm" class="confirm-msg">Posted to the board.</p>
+      <p id="boardConfirm" class="confirm-msg">Posted to the Directory.</p>
     </div>
 
     <p class="board-sub" style="margin-top:24px; font-size:0.78rem;">
@@ -236,13 +240,10 @@
     </div>
 
     <div class="board-list" id="boardList"></div>
-  </div>
-</div>
 
-<!-- PHOENIX DIRECTORY -->
-<div class="tab-panel" id="panel-directory">
-  <div class="wrap" style="text-align:center;">
-    <h2 class="board-title">THE PHOENIX DIRECTORY</h2>
+    <hr class="section-divider">
+
+    <div class="subsection-label">VERIFIED DIRECTORY</div>
     <p class="board-sub">Verified local resources. The permanent anchor.</p>
 
     <div class="filter-row" id="filterRow">
@@ -261,39 +262,40 @@
   </div>
 </div>
 
-<!-- LAND INITIATIVE -->
-<div class="tab-panel" id="panel-land">
+<!-- SHARE -->
+<div class="tab-panel" id="panel-share">
   <div class="wrap" style="text-align:center;">
-    <h2 class="board-title">THE LAND INITIATIVE</h2>
-    <p class="board-sub">Off-grid, non-profit, built in phases — starting now, with no land owned yet.</p>
+    <h2 class="board-title">SHARE</h2>
+    <p class="board-sub">Show what you made. Voting and the manufacturing opt-in (80% profit to the creator) are coming later — for now, this is the showcase.</p>
 
-    <div class="blueprint-item">
-      <h3>Residency Pods</h3>
-      <p>1-month residency: a private aircrete dome studio with bed, storage, and A/C per pod.</p>
-    </div>
-    <div class="blueprint-item">
-      <h3>Shared Facilities</h3>
-      <p>Indoor/outdoor communal kitchen, solar showers, and composting setups.</p>
-    </div>
-    <div class="blueprint-item">
-      <h3>Build Bays</h3>
-      <p>Covered outdoor shop space for timber work, metal fabrication, and van or tiny home builds.</p>
-    </div>
-    <div class="blueprint-item">
-      <h3>Hands-On Workshops</h3>
-      <p>Community workshops teach aircrete dome construction, off-grid solar, rainwater harvesting, and natural building — by building the site in real time.</p>
+    <div class="mark-card">
+      <h3>Share It</h3>
+      <label for="shareCategory">Category</label>
+      <select id="shareCategory">
+        <option value="clothing">🔴 Clothing</option>
+        <option value="tech">🔵 Tech</option>
+        <option value="books">🟡 Books</option>
+        <option value="other">🟣 Other</option>
+      </select>
+      <label for="shareTitle">Title</label>
+      <input type="text" id="shareTitle" placeholder="What did you make?">
+      <label for="shareDetails">Tell us about it</label>
+      <textarea id="shareDetails" rows="3"></textarea>
+      <label for="shareLink">Link or photo URL (optional)</label>
+      <input type="text" id="shareLink" placeholder="https://...">
+      <button id="shareSendBtn" class="cta-btn">Share It</button>
+      <p id="shareConfirm" class="confirm-msg">Shared.</p>
     </div>
 
-    <hr class="section-divider">
-
-    <h3 style="letter-spacing:2px; margin-bottom:10px;">NO LAND OWNED YET — HERE'S HOW TO HELP NOW</h3>
-    <p class="board-sub">
-      Got a wall, a garage, a studio, or a venue? Want to teach a skill or pick one up? Post it directly on <strong>The Board</strong> — no forms, no email.
-    </p>
-
-    <div class="action-row">
-      <a class="action-btn" href="#">Material Donation Fund</a>
+    <div class="cat-pill-row" id="shareCatPillRow" style="margin-top:30px;">
+      <button class="cat-pill active" data-cat="All"><span class="legend-dot" style="background:#888;"></span>All</button>
+      <button class="cat-pill" data-cat="clothing"><span class="legend-dot cat-clothing"></span>Clothing</button>
+      <button class="cat-pill" data-cat="tech"><span class="legend-dot cat-tech"></span>Tech</button>
+      <button class="cat-pill" data-cat="books"><span class="legend-dot cat-books"></span>Books</button>
+      <button class="cat-pill" data-cat="other"><span class="legend-dot cat-other"></span>Other</button>
     </div>
+
+    <div class="board-list" id="shareList"></div>
   </div>
 </div>
 
@@ -330,7 +332,7 @@ function formatDate(isoString) {
   return d.toLocaleString("en-US", { month: "short" }).toLowerCase() + "." + d.getDate() + "." + d.getFullYear();
 }
 
-/* ============ STALL WALL ============ */
+/* ============ STALL WALL (unchanged) ============ */
 const statesDiv = document.getElementById("states");
 const stateSelect = document.getElementById("stateSelect");
 const editor = document.getElementById("editor");
@@ -435,7 +437,7 @@ document.getElementById("sendBtn").onclick = async () => {
   if (viewState === chosenState) await loadPosts();
 };
 
-/* ============ SUGGESTION WALL ============ */
+/* ============ SUGGESTION WALL (unchanged) ============ */
 const suggList = document.getElementById('suggList');
 
 async function renderSuggestions() {
@@ -481,7 +483,7 @@ document.getElementById('suggSendBtn').onclick = async () => {
   await renderSuggestions();
 };
 
-/* ============ THE BOARD ============ */
+/* ============ DIRECTORY — community postings (table: board_posts, unchanged) ============ */
 const catLabels = { wall: "Wall & Mural", workshop: "Workshop / Class", share: "Tool / Garage / Space Share", call: "Grant, Residency & Call", space: "Space to Offer" };
 let activeCat = "All";
 const boardList = document.getElementById('boardList');
@@ -492,9 +494,9 @@ boardCategorySelect.addEventListener('change', () => {
   spaceTypeWrap.style.display = boardCategorySelect.value === 'space' ? 'block' : 'none';
 });
 
-document.querySelectorAll('.cat-pill').forEach(pill => {
+document.querySelectorAll('#catPillRow .cat-pill').forEach(pill => {
   pill.addEventListener('click', () => {
-    document.querySelectorAll('.cat-pill').forEach(p => p.classList.remove('active'));
+    document.querySelectorAll('#catPillRow .cat-pill').forEach(p => p.classList.remove('active'));
     pill.classList.add('active');
     activeCat = pill.dataset.cat;
     renderBoard();
@@ -515,7 +517,7 @@ function markInterested(id) {
 }
 
 async function renderBoard() {
-  boardList.innerHTML = '<p style="opacity:.5; text-align:center;">Loading board posts...</p>';
+  boardList.innerHTML = '<p style="opacity:.5; text-align:center;">Loading Directory posts...</p>';
   const sixtyDaysAgo = new Date(Date.now() - 60*24*60*60*1000).toISOString();
 
   let query = supabaseClient
@@ -585,7 +587,7 @@ document.getElementById('boardSendBtn').onclick = async () => {
     .from('board_posts')
     .insert([{ category, discipline, space_type: spaceType, title, details, interest_count: 0 }]);
 
-  if (error) { alert("Error saving board post: " + error.message); return; }
+  if (error) { alert("Error saving post: " + error.message); return; }
 
   document.getElementById('boardTitle').value = "";
   document.getElementById('boardDetails').value = "";
@@ -595,7 +597,7 @@ document.getElementById('boardSendBtn').onclick = async () => {
   await renderBoard();
 };
 
-/* ============ PHOENIX DIRECTORY ============ */
+/* ============ VERIFIED DIRECTORY (hardcoded, unchanged) ============ */
 const directory = [
   {
     name: "Fraqtals",
@@ -644,6 +646,79 @@ function renderDirectory() {
   });
 }
 renderDirectory();
+
+/* ============ SHARE (new — table: share_posts) ============ */
+const shareCatLabels = { clothing: "Clothing", tech: "Tech", books: "Books", other: "Other" };
+let activeShareCat = "All";
+const shareList = document.getElementById('shareList');
+
+document.querySelectorAll('#shareCatPillRow .cat-pill').forEach(pill => {
+  pill.addEventListener('click', () => {
+    document.querySelectorAll('#shareCatPillRow .cat-pill').forEach(p => p.classList.remove('active'));
+    pill.classList.add('active');
+    activeShareCat = pill.dataset.cat;
+    renderShare();
+  });
+});
+
+async function renderShare() {
+  shareList.innerHTML = '<p style="opacity:.5; text-align:center;">Loading shared work...</p>';
+
+  let query = supabaseClient
+    .from('share_posts')
+    .select('*')
+    .order('created_at', { ascending: false });
+
+  if (activeShareCat !== "All") query = query.eq('category', activeShareCat);
+
+  const { data: posts, error } = await query;
+
+  if (error || !posts || posts.length === 0) {
+    shareList.innerHTML = '<p style="opacity:.5; text-align:center;">Nothing shared yet — be the first.</p>';
+    return;
+  }
+
+  shareList.innerHTML = "";
+  posts.forEach(p => {
+    const card = document.createElement('div');
+    card.className = 'board-card ' + p.category;
+    const metaBits = [shareCatLabels[p.category] || p.category, formatDate(p.created_at)];
+    const linkHtml = p.link
+      ? `<a class="board-card-link" href="${p.link}" target="_blank" rel="noopener">View →</a>`
+      : "";
+    card.innerHTML = `
+      <div class="board-card-title">${p.title}</div>
+      <div class="board-card-meta">${metaBits.join(' · ')}</div>
+      <div class="board-card-desc">${p.details || ""}</div>
+      ${linkHtml}
+    `;
+    // NOTE: voting + "opt in to manufacturing at 80% profit" UI goes here later.
+    shareList.appendChild(card);
+  });
+}
+renderShare();
+
+document.getElementById('shareSendBtn').onclick = async () => {
+  const category = document.getElementById('shareCategory').value;
+  const title = document.getElementById('shareTitle').value.trim();
+  const details = document.getElementById('shareDetails').value.trim();
+  const link = document.getElementById('shareLink').value.trim();
+  if (!title) { document.getElementById('shareTitle').focus(); return; }
+
+  const { error } = await supabaseClient
+    .from('share_posts')
+    .insert([{ category, title, details, link: link || null }]);
+
+  if (error) { alert("Error saving share post: " + error.message); return; }
+
+  document.getElementById('shareTitle').value = "";
+  document.getElementById('shareDetails').value = "";
+  document.getElementById('shareLink').value = "";
+  const c = document.getElementById('shareConfirm');
+  c.style.display = 'block';
+  setTimeout(() => { c.style.display = 'none'; }, 3000);
+  await renderShare();
+};
 </script>
 
 </body>
