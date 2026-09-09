@@ -2,9 +2,8 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<title>NOCIV.CO — Nothing Of Civilization</title>
+<title>Clothing — NOCIV.CO</title>
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<meta name="description" content="Nociv Enterprise — representing Black America, no ads, no algorithm, just being human. Pop-up shops, original garments, and open hardware.">
 <link rel="stylesheet" href="style.css">
 <style>
   .flip-wrap {
@@ -93,242 +92,169 @@
     margin-top: 30px;
   }
 
-  /* --- Album cover is now clickable to open lightbox --- */
-  .album { cursor: pointer; }
-  .album-slot { cursor: pointer; }
-
-  /* --- Lightbox: full-screen vertical scroll gallery --- */
-  .lightbox {
-    display: none;
-    position: fixed;
-    inset: 0;
-    background: rgba(0,0,0,0.92);
-    z-index: 1000;
-    overflow-y: auto;
-    padding: 60px 0 40px;
-  }
-  .lightbox.open { display: block; }
-  .lightbox-close {
-    position: fixed;
-    top: 16px;
-    right: 20px;
-    background: none;
-    border: none;
-    color: #fff;
-    font-size: 2rem;
-    line-height: 1;
-    cursor: pointer;
-    z-index: 1001;
-  }
-  .lightbox-track {
-    max-width: 600px;
-    margin: 0 auto;
+  /* --- Buy / Build / Share sub-nav --- */
+  .subnav {
     display: flex;
-    flex-direction: column;
-    gap: 24px;
-    padding: 0 16px;
-  }
-  .lightbox-track img {
-    width: 100%;
-    height: auto;
-    display: block;
-  }
-  .lightbox-empty {
-    color: #999;
-    text-align: center;
-    padding: 60px 20px;
-  }
-
-  /* --- Wood floor preview thumbnail strip (replaces plain arrows) --- */
-  .preview-strip {
-    display: flex;
-    gap: 8px;
-    overflow-x: auto;
-    padding: 12px 4px;
-    margin-top: 10px;
-  }
-  .preview-strip img {
-    width: 64px;
-    height: 64px;
-    object-fit: cover;
-    flex-shrink: 0;
-    cursor: pointer;
-    border: 2px solid transparent;
-    opacity: .75;
-  }
-  .preview-strip img:hover,
-  .preview-strip img.active {
-    border-color: var(--red);
-    opacity: 1;
-  }
-  .preview-strip-empty {
-    font-size: 0.75rem;
-    opacity: .5;
-    text-align: center;
-    padding: 10px;
-  }
-
-  /* --- Screen printing video, inside hand-drawn phone frame --- */
-  .phone-frame-art {
-    position: relative;
-    width: 220px;
-    aspect-ratio: 1472/2000;
-    margin: 40px auto 0;
-  }
-  .phone-frame-art video,
-  .phone-frame-art .video-placeholder {
-    position: absolute;
-    left: 18.21%;
-    top: 12.3%;
-    width: 65.49%;
-    height: 68.15%;
-    object-fit: cover;
-    background: #000;
-  }
-  .phone-frame-art .video-placeholder {
-    display: flex;
-    align-items: center;
     justify-content: center;
-    color: #666;
-    font-size: 0.65rem;
-    text-align: center;
-    padding: 6px;
+    gap: 10px;
+    max-width: var(--max);
+    margin: 0 auto;
+    padding: 0 20px 10px;
   }
-  .phone-frame-overlay {
-    position: absolute;
-    inset: 0;
-    width: 100%;
-    height: 100%;
-    pointer-events: none;
-  }
-  .video-caption {
-    text-align: center;
+  .subnav button {
+    flex: 1 1 140px;
+    background: var(--grey-dark);
+    color: var(--white);
+    border: 1px solid #333;
+    padding: 14px 10px;
+    font-weight: 700;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
     font-size: 0.85rem;
-    opacity: .7;
-    max-width: 300px;
-    margin: 12px auto 0;
+    cursor: pointer;
+    transition: background 0.15s ease;
+  }
+  .subnav button:hover { background: var(--gold); color: #1a1a1a; }
+  .subnav button.active { background: var(--red); }
+
+  .subpanel { display: none; }
+  .subpanel.show { display: block; }
+
+  .coming-soon {
+    opacity: .6;
+    font-style: italic;
+    padding: 30px 20px;
+    text-align: center;
+    border: 1px dashed #999;
+    max-width: 500px;
+    margin: 0 auto;
   }
 </style>
 </head>
 <body>
 
-<!-- LIGHTBOX -->
-<div class="lightbox" id="lightbox">
-  <button class="lightbox-close" id="lightboxClose" aria-label="Close">&times;</button>
-  <div class="lightbox-track" id="lightboxTrack"></div>
-</div>
-
-
 <header class="nociv-header">
-  <a href="index.html"><img class="torn-header-img" src="header.png" alt="NOCIV.CO — Nothing Of Civilization"></a>
+  <a href="index.html"><img class="torn-header-img" src="assets/header.png" alt="NOCIV.CO — Nothing Of Civilization"></a>
 </header>
 
 <nav class="tabs">
-  <a href="about.html" class="img-tab"><img src="nav-about.png" alt="About"></a>
-  <a href="clothing.html" class="img-tab active"><img src="nav-clothing.png" alt="Clothing"></a>
-  <a href="tech.html" class="img-tab"><img src="nav-tech.png" alt="Tech"></a>
-  <a href="books.html" class="img-tab"><img src="nav-books.png" alt="Books"></a>
-  <a href="community.html" class="img-tab"><img src="community-button.png" alt="Community"></a>
+  <a href="about.html" class="img-tab"><img src="assets/nav-about.png" alt="About"></a>
+  <a href="clothing.html" class="img-tab active"><img src="assets/nav-clothing.png" alt="Clothing"></a>
+  <a href="tech.html" class="img-tab"><img src="assets/nav-tech.png" alt="Tech"></a>
+  <a href="books.html" class="img-tab"><img src="assets/nav-books.png" alt="Books"></a>
+  <a href="community.html" class="text-tab">Community</a>
 </nav>
 
-<div class="wrap">
+<nav class="subnav">
+  <button data-panel="buyPanel" class="active">Buy</button>
+  <button data-panel="buildPanel">Build</button>
+  <button data-panel="sharePanel">Share</button>
+</nav>
 
-  <ul class="checklist" style="margin-top:0; margin-bottom:30px;">
-    <li>Representing Black America.</li>
-    <li>Showcasing present connection.</li>
-  </ul>
-  <img src="no-socials-checkbox.png" alt="No socials, algorithm, or ads, just being human." style="width:100%; max-width:420px; display:block; margin:0 auto 30px;">
+<!-- ===== BUY ===== -->
+<div class="subpanel show" id="buyPanel">
+  <div class="wrap">
 
-  <div class="flip-wrap">
+    <div class="flip-wrap">
 
-    <!-- Photo album card -->
-    <div>
-      <div class="album" id="albumEl">
-        <img class="album-bg" id="albumBg" src="photo-album-cover.png" alt="Nociv photo album — click to view all photos">
-        <img class="album-slot" id="slotA" alt="">
-        <img class="album-slot" id="slotB" alt="">
-      </div>
-      <div class="flip-nav">
-        <button id="prevPhoto" aria-label="Previous">&#8592;</button>
-        <button id="nextPhoto" aria-label="Next">&#8594;</button>
-      </div>
-      <div class="preview-strip" id="previewStrip"></div>
-
-      <div class="phone-frame-art">
-        <video id="printVideo" controls poster="screen-printing-poster.jpg" style="display:none;"></video>
-        <div class="video-placeholder" id="videoPlaceholder">
-          Screen-printing video<br>coming soon
+      <!-- Photo album card -->
+      <div>
+        <div class="album" id="albumEl">
+          <img class="album-bg" id="albumBg" src="assets/album-closed.png" alt="Nociv photo album">
+          <img class="album-slot" id="slotA" alt="">
+          <img class="album-slot" id="slotB" alt="">
         </div>
-        <img class="phone-frame-overlay" src="phone-frame-art.png" alt="">
+        <div class="flip-nav">
+          <button id="prevPhoto" aria-label="Previous">&#8592;</button>
+          <button id="nextPhoto" aria-label="Next">&#8594;</button>
+        </div>
       </div>
-      <p class="video-caption">Part of the process — shot at Fraqtals.</p>
+
+      <!-- Pop-up shop card -->
+      <div>
+        <img class="popup-card-img" src="assets/pop-up-shop.png" alt="Pop-up shop — posting soon">
+
+        <div class="popup-note">
+          Enter your email or phone # to get notified of next location & time. Nothing else.
+        </div>
+
+        <form id="signupForm">
+          <input type="text" placeholder="Email or phone number" required>
+          <button type="submit" class="join-btn-img" style="padding:0; border:none; background:none;">
+            <img src="assets/join-button.png" alt="Join List" style="width:100%;">
+          </button>
+        </form>
+        <p id="signupConfirm" style="display:none; text-align:center; color:var(--green); font-weight:700;">
+          You're on the list.
+        </p>
+
+        <div style="margin-top:20px; font-size:0.9rem;">
+          <strong>Next Location:</strong> TBD<br>
+          <strong>Date:</strong> TBD<br>
+          <strong>Time:</strong> TBD
+        </div>
+      </div>
+
     </div>
 
-    <!-- Pop-up shop card -->
-    <div>
-      <img class="popup-card-img" src="pop-up-shop.png" alt="Pop-up shop — posting soon">
-
-      <div class="popup-note">
-        Enter your email or phone # to get notified of next location & time. Nothing else.
-      </div>
-
-      <form id="signupForm">
-        <input type="text" placeholder="Email or phone number" required>
-        <button type="submit">Join</button>
-      </form>
-      <p id="signupConfirm" style="display:none; text-align:center; color:var(--green); font-weight:700;">
-        You're on the list.
-      </p>
-
-      <div style="margin-top:20px; font-size:0.9rem;">
-        <strong>Next Location:</strong> TBD<br>
-        <strong>Date:</strong> TBD<br>
-        <strong>Time:</strong> TBD
-      </div>
-    </div>
+    <a class="vinted-link" href="#" target="_blank" rel="noopener">Vinted Online Store →</a>
 
   </div>
-
-  <hr style="border:0; border-top:1px solid #ccc; max-width:420px; margin:40px auto 0;">
-
-  <img src="aura-graphic.png" alt="Aura — your signaling, intentionally or not." style="width:100%; max-width:340px; display:block; margin:30px auto 0;">
-
-  <a href="#" target="_blank" rel="noopener" style="display:block; max-width:340px; margin:20px auto 0;">
-    <img src="shop-online-vinted.png" alt="Shop Online — Vinted" style="width:100%; display:block;">
-  </a>
-
-
 </div>
 
-<footer class="nociv-footer">NOCIV.CO — Nothing Of Civilization<br>© 2023–2026 NOCIV.CO. Established 2023. All rights reserved.</footer>
+<!-- ===== BUILD ===== -->
+<div class="subpanel" id="buildPanel">
+  <div class="wrap">
+    <div class="coming-soon">
+      Tools for building your own garments — patterns, guides, and resources for the clothing field. Coming soon.
+    </div>
+  </div>
+</div>
+
+<!-- ===== SHARE ===== -->
+<div class="subpanel" id="sharePanel">
+  <div class="wrap">
+    <div class="coming-soon">
+      Show what you made. Submit your own pieces, get voted on by the community, and the top pick can be manufactured — creator keeps 80% of profit. Coming soon.
+    </div>
+  </div>
+</div>
+
+<footer class="nociv-footer">NOCIV.CO — Nothing Of Civilization</footer>
 
 <script>
-  // ===== GARMENT PHOTOS — plug and play =====
-  // Add your wood-floor garment photo URLs here, in any order.
-  // This single list powers: the album page-flip, the thumbnail
-  // preview strip, AND the full-screen lightbox. Add as many as you want.
-  const garmentPhotos = [
-    "garment-1.jpg",
-    "garment-2.jpg",
-  ];
-  // Screen-printing video — drop your video file path here once you have it.
-  const printVideoSrc = "screen-printing-process.mp4";
-  // ========================================
-
-  const albumArt = ["photo-album-page.png"];
-  const albumPages = [{ bg: "photo-album-cover.png", slots: [] }];
-  for (let i = 0; i < garmentPhotos.length; i += 2) {
-    albumPages.push({
-      bg: albumArt[(albumPages.length - 1) % albumArt.length],
-      slots: [
-        { src: garmentPhotos[i] || "", index: i },
-        { src: garmentPhotos[i+1] || "", index: i+1 }
-      ]
+  // ===== SUB-NAV: Buy / Build / Share =====
+  const subnavBtns = document.querySelectorAll('.subnav button');
+  subnavBtns.forEach(btn => {
+    btn.addEventListener('click', () => {
+      subnavBtns.forEach(b => b.classList.remove('active'));
+      document.querySelectorAll('.subpanel').forEach(p => p.classList.remove('show'));
+      btn.classList.add('active');
+      document.getElementById(btn.dataset.panel).classList.add('show');
     });
-  }
-  const slotCoords = [
-    [ { left:"24.60%", top:"9.46%", width:"56.15%", height:"26.40%" }, { left:"24.60%", top:"54.98%", width:"56.15%", height:"26.40%" } ]
+  });
+
+  // ===== PHOTO ALBUM — plug and play =====
+  // Drop your garment photo URLs in here, two per page.
+  // Add more pages by copying the { bg, slots: [...] } pattern below.
+  const albumPages = [
+    { bg: "assets/album-closed.png", slots: [] }, // closed cover, no photos
+    {
+      bg: "assets/album-page1.png",
+      slots: [
+        { src: "", left: "27.42%", top: "12.75%", width: "49.15%", height: "23.66%" },
+        { src: "", left: "27.42%", top: "53.40%", width: "49.15%", height: "23.66%" }
+      ]
+    },
+    {
+      bg: "assets/album-page2.png",
+      slots: [
+        { src: "", left: "23.35%", top: "12.75%", width: "49.15%", height: "23.66%" },
+        { src: "", left: "23.35%", top: "53.40%", width: "49.15%", height: "23.66%" }
+      ]
+    }
   ];
+  // ========================================
 
   let pageIdx = 0;
   const albumBg = document.getElementById('albumBg');
@@ -337,19 +263,17 @@
   function renderAlbum() {
     const page = albumPages[pageIdx];
     albumBg.src = page.bg;
-    const coords = slotCoords[(pageIdx - 1 + slotCoords.length) % slotCoords.length] || slotCoords[0];
     slotEls.forEach((el, i) => {
       const slot = page.slots[i];
       if (slot && slot.src) {
-        const c = coords[i];
         el.src = slot.src;
-        el.style.left = c.left; el.style.top = c.top;
-        el.style.width = c.width; el.style.height = c.height;
+        el.style.left = slot.left;
+        el.style.top = slot.top;
+        el.style.width = slot.width;
+        el.style.height = slot.height;
         el.classList.add('show');
-        el.onclick = (e) => { e.stopPropagation(); openLightbox(slot.index); };
       } else {
         el.classList.remove('show');
-        el.onclick = null;
       }
     });
   }
@@ -363,66 +287,11 @@
   };
   renderAlbum();
 
-  // Clicking the album cover/background opens the full gallery
-  document.getElementById('albumEl').addEventListener('click', () => openLightbox(0));
-
-  // ---- Preview strip (wood floor thumbnails) ----
-  const previewStrip = document.getElementById('previewStrip');
-  if (garmentPhotos.length === 0) {
-    previewStrip.innerHTML = '<div class="preview-strip-empty">Garment previews coming soon</div>';
-  } else {
-    garmentPhotos.forEach((src, i) => {
-      const thumb = document.createElement('img');
-      thumb.src = src;
-      thumb.alt = 'Garment preview';
-      thumb.onclick = () => openLightbox(i);
-      previewStrip.appendChild(thumb);
-    });
-  }
-
-  // ---- Lightbox: click-to-expand, vertical scroll through all photos ----
-  const lightbox = document.getElementById('lightbox');
-  const lightboxTrack = document.getElementById('lightboxTrack');
-
-  function openLightbox(startIndex) {
-    lightboxTrack.innerHTML = '';
-    if (garmentPhotos.length === 0) {
-      lightboxTrack.innerHTML = '<p class="lightbox-empty">Garment photos coming soon.</p>';
-    } else {
-      garmentPhotos.forEach(src => {
-        const img = document.createElement('img');
-        img.src = src;
-        img.alt = 'Garment photo';
-        lightboxTrack.appendChild(img);
-      });
-    }
-    lightbox.classList.add('open');
-    document.body.style.overflow = 'hidden';
-    // scroll to the clicked photo
-    requestAnimationFrame(() => {
-      const target = lightboxTrack.children[startIndex];
-      if (target) target.scrollIntoView({ block: 'start' });
-    });
-  }
-  function closeLightbox() {
-    lightbox.classList.remove('open');
-    document.body.style.overflow = '';
-  }
-  document.getElementById('lightboxClose').onclick = closeLightbox;
-  lightbox.addEventListener('click', (e) => { if (e.target === lightbox) closeLightbox(); });
-
-  // ---- Screen-printing video ----
-  if (printVideoSrc) {
-    const vid = document.getElementById('printVideo');
-    vid.src = printVideoSrc;
-    vid.style.display = 'block';
-    document.getElementById('videoPlaceholder').style.display = 'none';
-  }
-
   document.getElementById('signupForm').addEventListener('submit', function(e){
     e.preventDefault();
-    // TODO: wire this to your actual mailing list service (e.g. Mailchimp, Buttondown)
-    this.querySelector('button').disabled = true;
+    // TODO: wire this to your actual mailing list service (e.g. Mailchimp, Buttondown) or Supabase table
+    const btn = this.querySelector('.join-btn-img');
+    btn.classList.add('clicked');
     document.getElementById('signupConfirm').style.display = 'block';
     this.querySelector('input').disabled = true;
   });
