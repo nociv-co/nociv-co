@@ -5,28 +5,79 @@
 <title>Tech — NOCIV.CO</title>
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <link rel="stylesheet" href="style.css">
+<style>
+  /* --- Buy / Build / Share sub-nav --- */
+  .subnav {
+    display: flex;
+    justify-content: center;
+    gap: 10px;
+    max-width: var(--max);
+    margin: 0 auto;
+    padding: 0 20px 10px;
+  }
+  .subnav button {
+    flex: 1 1 140px;
+    background: var(--grey-dark);
+    color: var(--white);
+    border: 1px solid #333;
+    padding: 14px 10px;
+    font-weight: 700;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    font-size: 0.85rem;
+    cursor: pointer;
+    transition: background 0.15s ease;
+  }
+  .subnav button:hover { background: var(--gold); color: #1a1a1a; }
+  .subnav button.active { background: var(--red); }
+
+  .subpanel { display: none; }
+  .subpanel.show { display: block; }
+
+  .coming-soon {
+    opacity: .6;
+    font-style: italic;
+    padding: 30px 20px;
+    text-align: center;
+    border: 1px dashed #444;
+    max-width: 500px;
+    margin: 0 auto;
+  }
+</style>
 </head>
-<body class="dark" style="background:#2b2b2b;">
+<body class="dark">
 
 <header class="nociv-header">
-  <a href="index.html"><img class="torn-header-img" src="header.png" alt="NOCIV.CO — Nothing Of Civilization"></a>
+  <a href="index.html"><img class="torn-header-img" src="assets/header.png" alt="NOCIV.CO — Nothing Of Civilization"></a>
 </header>
 
 <nav class="tabs">
-  <a href="about.html" class="img-tab"><img src="nav-about.png" alt="About"></a>
-  <a href="clothing.html" class="img-tab"><img src="nav-clothing.png" alt="Clothing"></a>
-  <a href="tech.html" class="img-tab active"><img src="nav-tech.png" alt="Tech"></a>
-  <a href="books.html" class="img-tab"><img src="nav-books.png" alt="Books"></a>
-  <a href="community.html" class="img-tab"><img src="community-button.png" alt="Community"></a>
-  <a href="art-homies.html" class="text-tab">Art Homies</a>
+  <a href="about.html" class="img-tab"><img src="assets/nav-about.png" alt="About"></a>
+  <a href="clothing.html" class="img-tab"><img src="assets/nav-clothing.png" alt="Clothing"></a>
+  <a href="tech.html" class="img-tab active"><img src="assets/nav-tech.png" alt="Tech"></a>
+  <a href="books.html" class="img-tab"><img src="assets/nav-books.png" alt="Books"></a>
+  <a href="community.html" class="text-tab">Community</a>
 </nav>
 
-<div class="wrap">
-  <img src="tech-imagery-1.png" alt="The Attention Economy — Utopia/Dystopia. Make the rebellion of screens punk." style="width:100%; display:block;">
+<nav class="subnav">
+  <button data-panel="buyPanel" class="active">Buy</button>
+  <button data-panel="buildPanel">Build</button>
+  <button data-panel="sharePanel">Share</button>
+</nav>
 
-  <hr style="border:0; border-top:1px solid #333; margin:40px 0;">
+<!-- ===== BUY ===== -->
+<div class="subpanel show" id="buyPanel">
+  <div class="wrap">
+    <img src="assets/tech-attention-economy.png" alt="The Attention Economy — Utopia/Dystopia. Make the rebellion of screens punk." style="width:100%; display:block;">
+    <div class="coming-soon" style="margin-top:30px;">
+      Community-voted devices and tech will be showcased here for purchase. Coming soon.
+    </div>
+  </div>
+</div>
 
-  <div style="text-align:center;">
+<!-- ===== BUILD ===== -->
+<div class="subpanel" id="buildPanel">
+  <div class="wrap" style="text-align:center;">
     <h2 style="font-size:1.6rem; font-weight:900; text-transform:uppercase;">
       Build your own devices — coming soon
     </h2>
@@ -35,65 +86,30 @@
       paywall-based tech. Ownership is enough. It's simple.
     </p>
   </div>
-
-  <hr style="border:0; border-top:1px solid #333; margin:40px 0;">
-
-  <div style="text-align:center; margin-bottom:20px;">
-    <h2 style="letter-spacing:3px; font-size:1.3rem;">PRODUCTS</h2>
-  </div>
-
-  <div id="productList" style="max-width:600px; margin:0 auto;"></div>
 </div>
 
+<!-- ===== SHARE ===== -->
+<div class="subpanel" id="sharePanel">
+  <div class="wrap">
+    <div class="coming-soon">
+      Show what you built. Submit your own devices or projects, get voted on by the community, and the top pick can be manufactured — creator keeps 80% of profit. Coming soon.
+    </div>
+  </div>
+</div>
+
+<footer class="nociv-footer">NOCIV.CO — Nothing Of Civilization</footer>
+
 <script>
-  // ===== TECH PRODUCTS — plug and play =====
-  // Add a product any time. Leave buyLink empty to show "Available at
-  // pop-ups" — once you have a Stripe Payment Link (or any buy link),
-  // paste it in and a Buy button appears automatically.
-  const techProducts = [
-    // {
-    //   name: "Product name",
-    //   description: "Short description of what it is.",
-    //   price: "$00",
-    //   buyLink: "" // paste your Stripe Payment Link here when ready
-    // },
-  ];
-  // ==========================================
-
-  const productList = document.getElementById('productList');
-  if (techProducts.length === 0) {
-    productList.innerHTML = '<p style="opacity:.5; text-align:center;">Nothing listed yet — check back soon.</p>';
-  } else {
-    techProducts.forEach(p => {
-      const card = document.createElement('div');
-      card.style.cssText = 'border:1px solid #444; background:#1c1c1c; padding:18px; margin-bottom:14px; display:flex; justify-content:space-between; align-items:center; gap:14px; flex-wrap:wrap;';
-
-      const info = document.createElement('div');
-      info.innerHTML = `<div style="font-weight:900; font-size:1.05rem;">${p.name}</div>
-                         <div style="font-size:0.85rem; opacity:.75; margin-top:4px;">${p.description}</div>
-                         ${p.price ? `<div style="font-size:0.9rem; margin-top:6px; color:var(--gold);">${p.price}</div>` : ''}`;
-      card.appendChild(info);
-
-      if (p.buyLink) {
-        const btn = document.createElement('a');
-        btn.href = p.buyLink;
-        btn.target = '_blank';
-        btn.rel = 'noopener';
-        btn.textContent = 'Buy';
-        btn.style.cssText = 'background:var(--red); color:#fff; padding:10px 18px; font-weight:700; letter-spacing:0.05em; text-transform:uppercase; font-size:0.8rem; white-space:nowrap;';
-        card.appendChild(btn);
-      } else {
-        const badge = document.createElement('span');
-        badge.textContent = 'Available at pop-ups';
-        badge.style.cssText = 'font-size:0.75rem; opacity:.6; white-space:nowrap; font-style:italic;';
-        card.appendChild(badge);
-      }
-      productList.appendChild(card);
+  const subnavBtns = document.querySelectorAll('.subnav button');
+  subnavBtns.forEach(btn => {
+    btn.addEventListener('click', () => {
+      subnavBtns.forEach(b => b.classList.remove('active'));
+      document.querySelectorAll('.subpanel').forEach(p => p.classList.remove('show'));
+      btn.classList.add('active');
+      document.getElementById(btn.dataset.panel).classList.add('show');
     });
-  }
+  });
 </script>
-
-<footer class="nociv-footer">NOCIV.CO — Nothing Of Civilization<br>© 2023–2026 NOCIV.CO. Established 2023. All rights reserved.</footer>
 
 </body>
 </html>
