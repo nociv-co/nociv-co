@@ -80,7 +80,6 @@
   }
   .phone-frame-wrap video {
     position: absolute;
-    /* ADJUST these to match the screen cutout in phone-frame-art.png */
     top: 4%;
     left: 6%;
     width: 88%;
@@ -152,6 +151,21 @@
     max-width: 500px;
     margin: 0 auto;
   }
+
+  /* --- Embedded App Styling --- */
+  .builder-iframe-container {
+    width: 100%;
+    max-width: 1100px;
+    margin: 0 auto;
+    padding: 0 10px;
+  }
+  .builder-iframe {
+    width: 100%;
+    height: 850px;
+    border: 2px solid #333;
+    border-radius: 6px;
+    background: #0f0f0f;
+  }
 </style>
 </head>
 <body>
@@ -185,7 +199,6 @@
         <div class="album" id="albumEl">
           <img class="album-frame album-cover-img" src="photo-album-cover.png" alt="Nociv photo album">
           <img class="album-frame album-page-img" src="photo-album-page.png" alt="Nociv photo album, open">
-          <!-- ADJUST left/top/width/height % to match the slot cutouts in photo-album-page.png -->
           <img class="album-slot" src="garment-1.jpg" alt="Garment" style="left:8%; top:12%; width:40%; height:35%;">
           <img class="album-slot" src="garment-2.jpg" alt="Garment" style="left:52%; top:12%; width:40%; height:35%;">
         </div>
@@ -241,10 +254,12 @@
 
 <!-- ===== BUILD ===== -->
 <div class="subpanel" id="buildPanel">
-  <div class="wrap">
-    <div class="coming-soon">
-      Tools for building your own garments — patterns, guides, and resources for the clothing field. Coming soon.
-    </div>
+  <div class="builder-iframe-container">
+    <iframe 
+      class="builder-iframe" 
+      src="https://nociv-co.github.io/nociv-clothing-builder/clothing-builder.html" 
+      title="NOCIV Clothing Pattern Builder">
+    </iframe>
   </div>
 </div>
 
@@ -280,7 +295,6 @@
   // ===== SIGNUP FORM =====
   document.getElementById('signupForm').addEventListener('submit', function(e){
     e.preventDefault();
-    // TODO: wire this to your actual mailing list service or a Supabase table
     const btn = this.querySelector('.join-btn-img');
     btn.classList.add('clicked');
     document.getElementById('signupConfirm').style.display = 'block';
