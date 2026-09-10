@@ -12,36 +12,35 @@
   .board-sub { opacity: .65; font-size: 0.85rem; max-width: 460px; margin: 0 auto 24px; }
   .section-divider { border: 0; border-top: 1px solid #333; max-width: 500px; margin: 40px auto; }
 
-  /* --- tab-nav: big & chunky, matches Buy/Build/Share on other pages --- */
+  /* --- tab-nav: back to sleek/small, sits below the main pillar nav --- */
   .tab-nav {
-    display: flex;
-    justify-content: center;
-    gap: 10px;
-    max-width: var(--max);
-    margin: 0 auto;
-    padding: 0 20px 10px;
-    flex-wrap: wrap;
+    position: sticky; top: 0; z-index: 50;
+    display: flex; overflow-x: auto; gap: 6px;
+    padding: 10px 16px; background: #0a0a0a; border-bottom: 1px solid #262626;
+    transition: background 0.15s ease, border-color 0.15s ease;
   }
   .tab-nav button {
-    flex: 1 1 140px;
-    background: var(--grey-dark);
-    color: var(--white);
-    border: 1px solid #333;
-    padding: 14px 10px;
-    font-weight: 700;
-    letter-spacing: 0.1em;
-    text-transform: uppercase;
-    font-size: 0.85rem;
-    cursor: pointer;
-    transition: background 0.15s ease;
+    flex: 0 0 auto; background: none; color: #999; border: 1px solid #333;
+    font-size: 0.75rem; letter-spacing: 0.05em; text-transform: uppercase;
+    padding: 8px 14px; white-space: nowrap; cursor: pointer;
   }
-  .tab-nav button:hover { background: var(--gold); color: #1a1a1a; }
-  .tab-nav button.active { background: var(--red); color: #fff; }
-  .tab-nav button img {
-    max-height: 26px;
-    display: block;
-    margin: 0 auto;
+  .tab-nav button.active { background: var(--red); color: #fff; border-color: var(--red); }
+
+  /* when Directory is the active tab, the tab bar itself goes light too, so there's no seam */
+  body.directory-mode .tab-nav {
+    background: var(--paper);
+    border-bottom-color: #ccc;
   }
+  body.directory-mode .tab-nav button {
+    color: var(--ink);
+    border-color: #ccc;
+  }
+  body.directory-mode .tab-nav button.active {
+    background: var(--red);
+    color: #fff;
+    border-color: var(--red);
+  }
+
   .tab-panel { display: none; }
   .tab-panel.active { display: block; }
 
@@ -129,17 +128,43 @@
   .directory-empty { opacity: .5; font-style: italic; font-size: 0.85rem; text-align: center; grid-column: 1 / -1; }
 
   .subsection-label { letter-spacing: 2px; font-size: 0.95rem; opacity: .8; margin: 40px 0 16px; text-align:center; }
+  .top-banner-art { width: 100%; max-width: 500px; display: block; margin: 0 auto; }
+  .top-icon-art { width: 100%; max-width: 220px; display: block; margin: 0 auto; }
 
-  /* --- Directory panel: light background, matches clothing.html --- */
+  /* --- Directory panel: light background, softened (not black) components --- */
   #panel-directory {
     background: var(--paper);
     color: var(--ink);
   }
-  #panel-directory .directory-top-art {
-    width: 100%;
-    max-width: 500px;
-    display: block;
-    margin: 0 auto;
+  #panel-directory .mark-card {
+    background: var(--grey-dark);
+    border-color: var(--red);
+  }
+  #panel-directory .board-card {
+    background: #2a2a2a;
+    border-color: #555;
+  }
+  #panel-directory .directory-card {
+    background: #2a2a2a;
+    border-color: #555;
+  }
+  #panel-directory .cat-pill,
+  #panel-directory .filter-pill,
+  #panel-directory .interest-btn {
+    background: var(--grey-dark);
+    color: #ddd;
+    border-color: #666;
+  }
+  #panel-directory .cat-pill.active,
+  #panel-directory .filter-pill.active {
+    background: var(--white);
+    color: #111;
+    border-color: var(--white);
+  }
+  #panel-directory .interest-btn.clicked {
+    background: var(--gold);
+    color: #1a1a1a;
+    border-color: var(--gold);
   }
 </style>
 </head>
@@ -160,13 +185,13 @@
 <div class="tab-nav">
   <button class="tab-btn active" data-tab="stallwall">Stall Wall</button>
   <button class="tab-btn" data-tab="directory">Directory</button>
-  <button class="tab-btn" data-tab="share"><img src="share-icon.png" alt="Share"></button>
+  <button class="tab-btn" data-tab="share">Share</button>
 </div>
 
 <!-- STALL WALL + SUGGESTION WALL (unchanged) -->
 <div class="tab-panel active" id="panel-stallwall">
   <div class="wrap" style="text-align:center;">
-    <img src="black-america.svg" style="width:100%; max-width:500px;" alt="Black America">
+    <img class="top-banner-art" src="black-america.svg" alt="Black America">
 
     <h2 style="letter-spacing:4px; margin-top:40px;">THE STALL WALL</h2>
     <p style="opacity:.7; max-width:500px; margin:0 auto;">
@@ -212,7 +237,7 @@
 <!-- DIRECTORY (verified resources + community-posted listings, formerly "the Board") -->
 <div class="tab-panel" id="panel-directory">
   <div class="wrap" style="text-align:center;">
-    <img class="directory-top-art" src="directory-ave.png" alt="Directory Ave">
+    <img class="top-banner-art" src="directory-ave.png" alt="Directory Ave">
 
     <h2 class="board-title" style="margin-top:30px;">THE DIRECTORY</h2>
     <p class="board-sub">A resource of local talent, creatives, and businesses. Verified listings, plus what the community posts directly.</p>
@@ -299,7 +324,9 @@
 <!-- SHARE -->
 <div class="tab-panel" id="panel-share">
   <div class="wrap" style="text-align:center;">
-    <h2 class="board-title">SHARE</h2>
+    <img class="top-icon-art" src="share-icon.png" alt="Share">
+
+    <h2 class="board-title" style="margin-top:20px;">SHARE</h2>
     <p class="board-sub">Show what you made. Voting and the manufacturing opt-in (80% profit to the creator) are coming later — for now, this is the showcase.</p>
 
     <div class="mark-card">
@@ -357,6 +384,7 @@ document.querySelectorAll('.tab-btn').forEach(btn => {
     document.querySelectorAll('.tab-panel').forEach(p => p.classList.remove('active'));
     btn.classList.add('active');
     document.getElementById('panel-' + btn.dataset.tab).classList.add('active');
+    document.body.classList.toggle('directory-mode', btn.dataset.tab === 'directory');
     window.scrollTo({ top: 0, behavior: 'smooth' });
   });
 });
