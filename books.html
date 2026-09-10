@@ -88,14 +88,16 @@
   }
   .subnav button:hover { background: var(--gold); color: #1a1a1a; }
   .subnav button.active { background: var(--red); }
-  .subnav button img {
-    max-height: 26px;
-    display: block;
-    margin: 0 auto;
-  }
 
   .subpanel { display: none; }
   .subpanel.show { display: block; }
+
+  .top-icon-art {
+    width: 100%;
+    max-width: 220px;
+    display: block;
+    margin: 0 auto 10px;
+  }
 
   .coming-soon {
     opacity: .5;
@@ -123,7 +125,7 @@
 <nav class="subnav">
   <button data-panel="buyPanel" class="active">Buy</button>
   <button data-panel="buildPanel">Build</button>
-  <button data-panel="sharePanel"><img src="share-icon.png" alt="Share"></button>
+  <button data-panel="sharePanel">Share</button>
 </nav>
 
 <!-- ===== BUY ===== -->
@@ -151,7 +153,8 @@
 
 <!-- ===== SHARE ===== -->
 <div class="subpanel" id="sharePanel">
-  <div class="wrap">
+  <div class="wrap" style="text-align:center;">
+    <img class="top-icon-art" src="share-icon.png" alt="Share">
     <div class="coming-soon">
       Share your own writing or zine. Submit it for the community to vote on, and the top pick can be manufactured — creator keeps 80% of profit. Coming soon.
     </div>
@@ -175,7 +178,7 @@
   const zines = [
     {
       title: "How to Feel the Void of Life",
-      sub: "Zine · 3 parts",
+      sub: "Zine",
       parts: [
         { label: "Part 1", file: "how-to-feel-the-void-of-life.pdf" }
       ]
