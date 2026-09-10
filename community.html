@@ -8,67 +8,93 @@
 <meta name="description" content="The Stall Wall, the Directory, and Share — Nociv's community hub.">
 <link rel="stylesheet" href="style.css">
 <style>
+  /* --- Global Typography & Hierarchy --- */
   .board-title { letter-spacing: 3px; font-size: 1.3rem; margin-bottom: 6px; }
   .board-sub { opacity: .65; font-size: 0.85rem; max-width: 460px; margin: 0 auto 24px; }
   .section-divider { border: 0; border-top: 1px solid #333; max-width: 500px; margin: 40px auto; }
 
-  /* --- tab-nav: back to sleek/small, sits below the main pillar nav --- */
+  /* --- Navigation Tabs (small/sleek, matches Buy/Build/Share hierarchy) --- */
   .tab-nav {
     position: sticky; top: 0; z-index: 50;
     display: flex; overflow-x: auto; gap: 6px;
     padding: 10px 16px; background: #0a0a0a; border-bottom: 1px solid #262626;
-    transition: background 0.15s ease, border-color 0.15s ease;
   }
   .tab-nav button {
     flex: 0 0 auto; background: none; color: #999; border: 1px solid #333;
     font-size: 0.75rem; letter-spacing: 0.05em; text-transform: uppercase;
-    padding: 8px 14px; white-space: nowrap; cursor: pointer;
+    padding: 8px 14px; white-space: nowrap; cursor: pointer; transition: all 0.2s ease;
   }
-  .tab-nav button.active { background: var(--red); color: #fff; border-color: var(--red); }
-
-  /* when Directory is the active tab, the tab bar itself goes light too, so there's no seam */
-  body.directory-mode .tab-nav {
-    background: var(--paper);
-    border-bottom-color: #ccc;
-  }
-  body.directory-mode .tab-nav button {
-    color: var(--ink);
-    border-color: #ccc;
-  }
-  body.directory-mode .tab-nav button.active {
+  .tab-nav button.active {
     background: var(--red);
     color: #fff;
     border-color: var(--red);
+    font-weight: 700;
   }
 
   .tab-panel { display: none; }
   .tab-panel.active { display: block; }
 
+  /* --- Card & Form Controls --- */
   .mark-card {
-    max-width: 460px; margin: 0 auto; background: #161616;
+    max-width: 460px; margin: 0 auto; background: #141414;
     border: 2px solid var(--red); padding: 28px 24px; text-align: center;
-    color: var(--white);
+    color: var(--white); border-radius: 6px;
   }
   .mark-card h3 { letter-spacing: 2px; margin: 0 0 18px; color: var(--white); }
   .mark-card select, .mark-card textarea, .mark-card input[type="text"] {
-    width: 100%; background: #0d0d0d; color: #ddd; border: 1px solid #444;
+    width: 100%; background: #0d0d0d; color: #ddd; border: 1px solid #333;
     padding: 12px; font-size: 1rem; margin-bottom: 12px; box-sizing: border-box;
   }
   .mark-card textarea { resize: vertical; }
   .mark-card label { display: block; text-align: left; font-size: 0.8rem; opacity: .7; margin-bottom: 6px; color: var(--white); }
+
   .cta-btn {
     width: 100%; background: var(--red); color: #fff; border: none; padding: 14px;
     font-weight: 900; letter-spacing: 0.08em; text-transform: uppercase; font-size: 0.9rem; cursor: pointer;
+    transition: background 0.15s ease;
   }
   .cta-btn:hover { background: #b83c2c; }
+
   .confirm-msg { display: none; color: #6fbf8f; font-weight: 700; margin-top: 14px; }
 
-  .active-counter { font-size: 0.85rem; opacity: .7; margin-bottom: 16px; }
-  #states { display: flex; flex-wrap: wrap; gap: 8px; justify-content: center; margin: 20px 0; }
-  #states button { background: #111; color: #aaa; border: 1px solid #333; padding: 8px 14px; cursor: pointer; font-size: 0.85rem; }
-  #states button:hover { background: #333; color: #fff; }
-  #states button.has-marks { border-color: var(--gold); color: var(--gold); }
-  #editor { display: none; margin-top: 40px; max-width: 600px; margin-left:auto; margin-right:auto; }
+  /* --- Stall Wall: 3-Row Horizontal Scroll Box --- */
+  .active-counter { font-size: 0.85rem; opacity: .7; margin-top: 10px; margin-bottom: 16px; }
+
+  #states {
+    display: grid;
+    grid-template-rows: repeat(3, 40px);
+    grid-auto-flow: column;
+    grid-auto-columns: minmax(130px, max-content);
+    gap: 8px;
+    overflow-x: auto;
+    overflow-y: hidden;
+    padding: 12px 10px;
+    margin: 20px auto;
+    max-width: 650px;
+    border: 1px solid #222;
+    background: #0d0d0d;
+    border-radius: 6px;
+    -webkit-overflow-scrolling: touch;
+  }
+  #states::-webkit-scrollbar { height: 6px; }
+  #states::-webkit-scrollbar-track { background: #111; }
+  #states::-webkit-scrollbar-thumb { background: #333; border-radius: 3px; }
+  #states::-webkit-scrollbar-thumb:hover { background: var(--gold); }
+
+  #states button {
+    background: #161616; color: #aaa; border: 1px solid #333;
+    padding: 8px 14px; cursor: pointer; font-size: 0.85rem;
+    white-space: nowrap; border-radius: 4px; transition: all 0.15s ease;
+  }
+  #states button:hover { background: #252525; color: #fff; border-color: #555; }
+  #states button.has-marks {
+    border-color: var(--gold);
+    color: var(--gold);
+    background: rgba(212, 175, 55, 0.12);
+    font-weight: 700;
+  }
+
+  #editor { display: none; margin-top: 30px; max-width: 600px; margin-left:auto; margin-right:auto; }
   .postWrap { border-top: 1px solid #222; padding: 16px 0; text-align: left; }
   .postDate { float: right; opacity: .6; font-size: 12px; }
   .postText { white-space: pre-wrap; margin-top: 10px; }
@@ -76,50 +102,59 @@
   .clearfix { clear: both; }
   .suggestion-list { max-width: 500px; margin: 30px auto 0; text-align: left; }
 
-  .cat-pill-row { display: flex; flex-wrap: wrap; gap: 8px; justify-content: center; max-width: 500px; margin: 0 auto 24px; }
+  /* --- Category & Filter Pills --- */
+  .cat-pill-row { display: flex; flex-wrap: wrap; gap: 8px; justify-content: center; max-width: 560px; margin: 0 auto 24px; }
   .cat-pill { border: 1px solid #333; padding: 7px 14px; font-size: 0.8rem; cursor: pointer; background: #111; color: #aaa; display: flex; align-items: center; gap: 6px; }
-  .cat-pill.active { background: #fff; color: #111; border-color: #fff; }
+  .cat-pill.active { background: #fff; color: #111; border-color: #fff; font-weight: 700; }
+
   .legend-dot { width: 10px; height: 10px; border-radius: 50%; display: inline-block; }
   .cat-wall { background: #d94f3d; }
   .cat-workshop { background: #4a7fd9; }
   .cat-share { background: #3c9d5c; }
   .cat-call { background: var(--gold); }
   .cat-space { background: #a35fd9; }
+  .cat-meetup { background: #e08a3e; }
   .cat-clothing { background: #d94f3d; }
   .cat-tech { background: #4a7fd9; }
   .cat-books { background: var(--gold); }
   .cat-other { background: #a35fd9; }
 
   .board-list { max-width: 600px; margin: 0 auto; }
-  .board-card { border: 1px solid #333; border-left: 4px solid #666; padding: 16px; margin-bottom: 12px; background: #111; text-align: left; color: #ddd; }
+  .board-card { border: 1px solid #262626; border-left: 4px solid #666; padding: 16px; margin-bottom: 12px; background: #141414; text-align: left; color: #ddd; border-radius: 4px; }
   .board-card.wall { border-left-color: #d94f3d; }
   .board-card.workshop { border-left-color: #4a7fd9; }
   .board-card.share { border-left-color: #3c9d5c; }
   .board-card.call { border-left-color: var(--gold); }
   .board-card.space { border-left-color: #a35fd9; }
+  .board-card.meetup { border-left-color: #e08a3e; }
   .board-card.clothing { border-left-color: #d94f3d; }
   .board-card.tech { border-left-color: #4a7fd9; }
   .board-card.books { border-left-color: var(--gold); }
   .board-card.other { border-left-color: #a35fd9; }
+
   .board-card .board-card-title { font-weight: 900; font-size: 1rem; }
   .board-card .board-card-meta { font-size: 0.75rem; opacity: .6; margin: 4px 0 8px; }
   .board-card .board-card-desc { font-size: 0.9rem; opacity: .9; white-space: pre-wrap; }
   .board-card a.board-card-link { color: var(--gold); font-size: 0.8rem; display: inline-block; margin-top: 8px; }
+
   .interest-row { display: flex; align-items: center; gap: 10px; margin-top: 12px; }
   .interest-btn {
     background: #1c1c1c; color: #ddd; border: 1px solid #444; padding: 6px 12px;
     font-size: 0.75rem; cursor: pointer; letter-spacing: 0.03em;
   }
-  .interest-btn.clicked { background: var(--gold); color: #1a1a1a; border-color: var(--gold); cursor: default; }
+  .interest-btn.clicked { background: var(--gold); color: #1a1a1a; border-color: var(--gold); cursor: default; font-weight: bold; }
   .interest-count { font-size: 0.75rem; opacity: .6; }
 
-  .filter-row { display: flex; flex-wrap: wrap; gap: 8px; justify-content: center; max-width: 600px; margin: 0 auto 30px; }
+  /* --- Directory Section Styles --- */
+  .filter-row { display: flex; flex-wrap: wrap; gap: 8px; justify-content: center; max-width: 640px; margin: 0 auto 30px; }
   .filter-pill { background: #111; color: #aaa; border: 1px solid #333; padding: 7px 14px; font-size: 0.8rem; cursor: pointer; white-space: nowrap; }
-  .filter-pill.active { background: var(--white); color: #111; border-color: var(--white); }
+  .filter-pill.active { background: var(--white); color: #111; border-color: var(--white); font-weight: 700; }
+
   .directory-grid { display: grid; grid-template-columns: 1fr; gap: 14px; max-width: 600px; margin: 0 auto; }
   @media (min-width: 560px) { .directory-grid { grid-template-columns: 1fr 1fr; } }
-  .directory-card { border: 1px solid #333; background: #111; padding: 18px; text-align: left; color: #ddd; }
-  .directory-card .dc-name { font-weight: 900; font-size: 1.05rem; }
+  .directory-card { border: 1px solid #262626; background: #141414; padding: 18px; text-align: left; color: #ddd; border-radius: 4px; transition: border-color 0.15s ease; }
+  .directory-card:hover { border-color: var(--gold); }
+  .directory-card .dc-name { font-weight: 900; font-size: 1.05rem; color: var(--gold); }
   .directory-card .dc-neighborhood { font-size: 0.75rem; opacity: .6; margin-bottom: 8px; }
   .directory-card .dc-tags { display: flex; gap: 6px; flex-wrap: wrap; margin-bottom: 8px; }
   .directory-card .dc-tag { font-size: 0.65rem; text-transform: uppercase; letter-spacing: 0.04em; padding: 3px 7px; background: #222; color: #aaa; border: 1px solid #333; }
@@ -127,45 +162,9 @@
   .directory-card a.dc-link { color: var(--gold); font-size: 0.8rem; text-decoration: underline; }
   .directory-empty { opacity: .5; font-style: italic; font-size: 0.85rem; text-align: center; grid-column: 1 / -1; }
 
-  .subsection-label { letter-spacing: 2px; font-size: 0.95rem; opacity: .8; margin: 40px 0 16px; text-align:center; }
+  .subsection-label { letter-spacing: 2px; font-size: 1.05rem; font-weight: 900; color: var(--gold); margin: 10px 0 6px; text-align:center; }
   .top-banner-art { width: 100%; max-width: 500px; display: block; margin: 0 auto; }
   .top-icon-art { width: 100%; max-width: 220px; display: block; margin: 0 auto; }
-
-  /* --- Directory panel: light background, softened (not black) components --- */
-  #panel-directory {
-    background: var(--paper);
-    color: var(--ink);
-  }
-  #panel-directory .mark-card {
-    background: var(--grey-dark);
-    border-color: var(--red);
-  }
-  #panel-directory .board-card {
-    background: #2a2a2a;
-    border-color: #555;
-  }
-  #panel-directory .directory-card {
-    background: #2a2a2a;
-    border-color: #555;
-  }
-  #panel-directory .cat-pill,
-  #panel-directory .filter-pill,
-  #panel-directory .interest-btn {
-    background: var(--grey-dark);
-    color: #ddd;
-    border-color: #666;
-  }
-  #panel-directory .cat-pill.active,
-  #panel-directory .filter-pill.active {
-    background: var(--white);
-    color: #111;
-    border-color: var(--white);
-  }
-  #panel-directory .interest-btn.clicked {
-    background: var(--gold);
-    color: #1a1a1a;
-    border-color: var(--gold);
-  }
 </style>
 </head>
 <body class="dark">
@@ -188,15 +187,23 @@
   <button class="tab-btn" data-tab="share">Share</button>
 </div>
 
-<!-- STALL WALL + SUGGESTION WALL (unchanged) -->
+<!-- ================= STALL WALL ================= -->
 <div class="tab-panel active" id="panel-stallwall">
   <div class="wrap" style="text-align:center;">
     <img class="top-banner-art" src="black-america.svg" alt="Black America">
 
-    <h2 style="letter-spacing:4px; margin-top:40px;">THE STALL WALL</h2>
-    <p style="opacity:.7; max-width:500px; margin:0 auto;">
+    <h2 style="letter-spacing:4px; margin-top:20px;">THE STALL WALL</h2>
+    <p style="opacity:.7; max-width:500px; margin:0 auto 10px;">
       this is how word of mouth works, it goes peer to peer and reaches different states
     </p>
+
+    <div id="states"></div>
+    <p class="active-counter" id="activeCounter"></p>
+
+    <div id="editor">
+      <h3 id="stateTitle" style="color:var(--gold);"></h3>
+      <div id="postsList" style="margin-top:20px;"></div>
+    </div>
 
     <hr class="section-divider">
 
@@ -208,16 +215,6 @@
       <textarea id="postInput" rows="4"></textarea>
       <button id="sendBtn" class="cta-btn">Send Mark</button>
       <p id="sendConfirm" class="confirm-msg">Your mark is up.</p>
-    </div>
-
-    <hr class="section-divider">
-
-    <p class="board-sub" style="margin-bottom:6px;">Marks stay up for a month. Then the cycle repeats.</p>
-    <p class="active-counter" id="activeCounter"></p>
-    <div id="states"></div>
-    <div id="editor">
-      <h3 id="stateTitle"></h3>
-      <div id="postsList" style="margin-top:20px;"></div>
     </div>
 
     <hr class="section-divider">
@@ -234,13 +231,26 @@
   </div>
 </div>
 
-<!-- DIRECTORY (verified resources + community-posted listings, formerly "the Board") -->
+<!-- ================= DIRECTORY ================= -->
 <div class="tab-panel" id="panel-directory">
   <div class="wrap" style="text-align:center;">
     <img class="top-banner-art" src="directory-ave.png" alt="Directory Ave">
 
     <h2 class="board-title" style="margin-top:30px;">THE DIRECTORY</h2>
-    <p class="board-sub">A resource of local talent, creatives, and businesses. Verified listings, plus what the community posts directly.</p>
+    <p class="board-sub">A hub of point-of-contact for every creative venture in Phoenix, Arizona — verified listings, plus what the community posts directly.</p>
+
+    <!-- 1. VERIFIED DIRECTORY AT THE TOP -->
+    <div class="subsection-label">VERIFIED DIRECTORY</div>
+    <p class="board-sub" style="margin-bottom:16px;">Verified local resources. The permanent anchor.</p>
+
+    <div class="filter-row" id="filterRow"></div>
+    <div class="directory-grid" id="directoryGrid"></div>
+
+    <hr class="section-divider">
+
+    <!-- 2. COMMUNITY POSTINGS & FORM UNDERNEATH -->
+    <div class="subsection-label">COMMUNITY BOARD</div>
+    <p class="board-sub">Post local opportunities, tool shares, meetups, or space listings.</p>
 
     <div class="mark-card">
       <h3>Post It</h3>
@@ -248,9 +258,10 @@
       <select id="boardCategory">
         <option value="wall">🔴 Wall & Mural Opportunity</option>
         <option value="workshop">🔵 Workshop / Class</option>
-        <option value="share">🟢 Tool / Garage / Space Share</option>
+        <option value="share">🟢 Tool / Equipment / Garage Share</option>
         <option value="call">🟡 Grant, Residency, or Call for Art</option>
         <option value="space">🟣 Space to Offer (Studio / Venue)</option>
+        <option value="meetup">🟠 Recurring Meetup / Hangout</option>
       </select>
 
       <div id="spaceTypeWrap" style="display:none;">
@@ -261,18 +272,8 @@
         </select>
       </div>
 
-      <label for="boardDiscipline">Discipline</label>
-      <select id="boardDiscipline">
-        <option value="Print & Graphic">Print & Graphic</option>
-        <option value="3D & Fab">3D & Fab</option>
-        <option value="Textiles">Textiles</option>
-        <option value="Wood & Metal">Wood & Metal</option>
-        <option value="Natural Building">Natural Building</option>
-        <option value="Photography">Photography</option>
-        <option value="Music">Music</option>
-        <option value="Poetry">Poetry</option>
-        <option value="General">General / Not discipline-specific</option>
-      </select>
+      <label for="boardDiscipline">Discipline / Creative Field</label>
+      <select id="boardDiscipline"></select>
 
       <label for="boardTitle">Title</label>
       <input type="text" id="boardTitle" placeholder="e.g. Garage available for a 1-day screen printing demo">
@@ -282,52 +283,27 @@
       <p id="boardConfirm" class="confirm-msg">Posted to the Directory.</p>
     </div>
 
-    <p class="board-sub" style="margin-top:24px; font-size:0.78rem;">
-      Offering a space? List a general area, not your exact address.
-      The interest count on each post shows real demand before you
-      commit to anything — share exact details directly with people
-      once they've reached out.
-    </p>
-
-    <div class="cat-pill-row" id="catPillRow">
+    <div class="cat-pill-row" id="catPillRow" style="margin-top:30px;">
       <button class="cat-pill active" data-cat="All"><span class="legend-dot" style="background:#888;"></span>All</button>
       <button class="cat-pill" data-cat="wall"><span class="legend-dot cat-wall"></span>Wall & Mural</button>
       <button class="cat-pill" data-cat="workshop"><span class="legend-dot cat-workshop"></span>Workshops</button>
-      <button class="cat-pill" data-cat="share"><span class="legend-dot cat-share"></span>Share</button>
+      <button class="cat-pill" data-cat="share"><span class="legend-dot cat-share"></span>Tool/Garage Share</button>
       <button class="cat-pill" data-cat="space"><span class="legend-dot cat-space"></span>Spaces</button>
       <button class="cat-pill" data-cat="call"><span class="legend-dot cat-call"></span>Calls</button>
+      <button class="cat-pill" data-cat="meetup"><span class="legend-dot cat-meetup"></span>Meetups</button>
     </div>
 
     <div class="board-list" id="boardList"></div>
-
-    <hr class="section-divider" style="border-top-color:#ccc;">
-
-    <div class="subsection-label">VERIFIED DIRECTORY</div>
-    <p class="board-sub">Verified local resources. The permanent anchor.</p>
-
-    <div class="filter-row" id="filterRow">
-      <button class="filter-pill active" data-filter="All">All</button>
-      <button class="filter-pill" data-filter="Print & Graphic">Print & Graphic</button>
-      <button class="filter-pill" data-filter="3D & Fab">3D & Fab</button>
-      <button class="filter-pill" data-filter="Textiles">Textiles</button>
-      <button class="filter-pill" data-filter="Wood & Metal">Wood & Metal</button>
-      <button class="filter-pill" data-filter="Natural Building">Natural Building</button>
-      <button class="filter-pill" data-filter="Photography">Photography</button>
-      <button class="filter-pill" data-filter="Music">Music</button>
-      <button class="filter-pill" data-filter="Poetry">Poetry</button>
-    </div>
-
-    <div class="directory-grid" id="directoryGrid"></div>
   </div>
 </div>
 
-<!-- SHARE -->
+<!-- ================= SHARE ================= -->
 <div class="tab-panel" id="panel-share">
   <div class="wrap" style="text-align:center;">
     <img class="top-icon-art" src="share-icon.png" alt="Share">
 
     <h2 class="board-title" style="margin-top:20px;">SHARE</h2>
-    <p class="board-sub">Show what you made. Voting and the manufacturing opt-in (80% profit to the creator) are coming later — for now, this is the showcase.</p>
+    <p class="board-sub">Show what you made. Voting and manufacturing opt-in (80% profit to the creator) coming soon — showcase your work below.</p>
 
     <div class="mark-card">
       <h3>Share It</h3>
@@ -378,13 +354,32 @@ const states = [
 "Vermont","Virginia","Washington","West Virginia","Wisconsin","Wyoming"
 ];
 
+// Single source of truth for creative disciplines — used by both the
+// Verified Directory filter pills and the Community Board posting form,
+// so the two can never drift out of sync.
+const disciplines = [
+  "Visual Art & Murals",
+  "Tattoo",
+  "Print & Graphic",
+  "3D & Fab",
+  "Wood & Metal",
+  "Textiles & Fabric",
+  "Natural Building",
+  "Photography & Film",
+  "Music & Audio",
+  "Writing & Poetry",
+  "Garage & Tool Share",
+  "Event & Venue Space",
+  "Meetup Spots"
+];
+
+// TAB SWITCHING
 document.querySelectorAll('.tab-btn').forEach(btn => {
   btn.addEventListener('click', () => {
     document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
     document.querySelectorAll('.tab-panel').forEach(p => p.classList.remove('active'));
     btn.classList.add('active');
     document.getElementById('panel-' + btn.dataset.tab).classList.add('active');
-    document.body.classList.toggle('directory-mode', btn.dataset.tab === 'directory');
     window.scrollTo({ top: 0, behavior: 'smooth' });
   });
 });
@@ -394,7 +389,7 @@ function formatDate(isoString) {
   return d.toLocaleString("en-US", { month: "short" }).toLowerCase() + "." + d.getDate() + "." + d.getFullYear();
 }
 
-/* ============ STALL WALL (unchanged) ============ */
+/* ============ STALL WALL ============ */
 const statesDiv = document.getElementById("states");
 const stateSelect = document.getElementById("stateSelect");
 const editor = document.getElementById("editor");
@@ -428,7 +423,7 @@ async function renderStateGrid() {
   const active = await getActiveStatesThisCycle();
   activeCounter.textContent = active.size === 0
     ? "No states active yet this cycle."
-    : active.size + " state" + (active.size === 1 ? "" : "s") + " have spoken this cycle.";
+    : active.size + " state" + (active.size === 1 ? "" : "s") + " active this cycle.";
 
   states.forEach(st => {
     const btn = document.createElement("button");
@@ -499,7 +494,7 @@ document.getElementById("sendBtn").onclick = async () => {
   if (viewState === chosenState) await loadPosts();
 };
 
-/* ============ SUGGESTION WALL (unchanged) ============ */
+/* ============ SUGGESTION WALL ============ */
 const suggList = document.getElementById('suggList');
 
 async function renderSuggestions() {
@@ -545,12 +540,90 @@ document.getElementById('suggSendBtn').onclick = async () => {
   await renderSuggestions();
 };
 
-/* ============ DIRECTORY — community postings (table: board_posts, unchanged) ============ */
-const catLabels = { wall: "Wall & Mural", workshop: "Workshop / Class", share: "Tool / Garage / Space Share", call: "Grant, Residency & Call", space: "Space to Offer" };
+/* ============ VERIFIED DIRECTORY ============ */
+// Add new verified listings here as you confirm them. discipline must
+// match one of the strings in the `disciplines` array above so filtering works.
+const directory = [
+  {
+    name: "Fraqtals",
+    neighborhood: "Phoenix, AZ",
+    discipline: "Print & Graphic",
+    access: "Shared Studio · Membership",
+    desc: "Membership creative studio — shared space, screen printing.",
+    link: "https://www.fraqtals.com/"
+  }
+];
+
+let activeFilter = "All";
+const directoryGrid = document.getElementById('directoryGrid');
+const filterRow = document.getElementById('filterRow');
+
+function renderFilterPills() {
+  filterRow.innerHTML = '<button class="filter-pill active" data-filter="All">All</button>' +
+    disciplines.map(d => `<button class="filter-pill" data-filter="${d}">${d}</button>`).join('');
+
+  filterRow.querySelectorAll('.filter-pill').forEach(pill => {
+    pill.addEventListener('click', () => {
+      filterRow.querySelectorAll('.filter-pill').forEach(p => p.classList.remove('active'));
+      pill.classList.add('active');
+      activeFilter = pill.dataset.filter;
+      renderDirectory();
+    });
+  });
+}
+renderFilterPills();
+
+function renderDirectory() {
+  directoryGrid.innerHTML = "";
+  let items = directory;
+  if (activeFilter !== "All") items = items.filter(d => d.discipline === activeFilter);
+  if (items.length === 0) {
+    directoryGrid.innerHTML = '<p class="directory-empty">Nothing listed yet for this category — check back soon.</p>';
+    return;
+  }
+  items.forEach(d => {
+    const card = document.createElement('div');
+    card.className = 'directory-card';
+    card.innerHTML = `
+      <div class="dc-name">${d.name}</div>
+      <div class="dc-neighborhood">${d.neighborhood}</div>
+      <div class="dc-tags">
+        <span class="dc-tag">${d.discipline}</span>
+        <span class="dc-tag">${d.access}</span>
+      </div>
+      <div class="dc-desc">${d.desc}</div>
+      ${d.link ? `<a class="dc-link" href="${d.link}" target="_blank" rel="noopener">Visit →</a>` : '<span style="font-size:0.75rem; opacity:.5;">Link coming soon</span>'}
+    `;
+    directoryGrid.appendChild(card);
+  });
+}
+renderDirectory();
+
+/* ============ COMMUNITY BOARD (Directory Table) ============ */
+const catLabels = {
+  wall: "Wall & Mural",
+  workshop: "Workshop / Class",
+  share: "Tool / Equipment / Garage Share",
+  call: "Grant & Call",
+  space: "Space Offer",
+  meetup: "Recurring Meetup"
+};
 let activeCat = "All";
 const boardList = document.getElementById('boardList');
 const boardCategorySelect = document.getElementById('boardCategory');
 const spaceTypeWrap = document.getElementById('spaceTypeWrap');
+const boardDisciplineSelect = document.getElementById('boardDiscipline');
+
+// populate the discipline dropdown from the same shared list, plus a catch-all
+disciplines.forEach(d => {
+  const opt = document.createElement('option');
+  opt.value = d; opt.textContent = d;
+  boardDisciplineSelect.appendChild(opt);
+});
+const generalOpt = document.createElement('option');
+generalOpt.value = "General";
+generalOpt.textContent = "General / Not discipline-specific";
+boardDisciplineSelect.appendChild(generalOpt);
 
 boardCategorySelect.addEventListener('change', () => {
   spaceTypeWrap.style.display = boardCategorySelect.value === 'space' ? 'block' : 'none';
@@ -565,8 +638,6 @@ document.querySelectorAll('#catPillRow .cat-pill').forEach(pill => {
   });
 });
 
-// Track which posts this browser already marked "interested" in, so
-// the button can't be spammed from the same device.
 function getInterestedIds() {
   return JSON.parse(localStorage.getItem('interestedBoardIds') || '[]');
 }
@@ -639,7 +710,7 @@ renderBoard();
 
 document.getElementById('boardSendBtn').onclick = async () => {
   const category = boardCategorySelect.value;
-  const discipline = document.getElementById('boardDiscipline').value;
+  const discipline = boardDisciplineSelect.value;
   const spaceType = category === 'space' ? document.getElementById('spaceType').value : null;
   const title = document.getElementById('boardTitle').value.trim();
   const details = document.getElementById('boardDetails').value.trim();
@@ -659,57 +730,7 @@ document.getElementById('boardSendBtn').onclick = async () => {
   await renderBoard();
 };
 
-/* ============ VERIFIED DIRECTORY (hardcoded, unchanged) ============ */
-const directory = [
-  {
-    name: "Fraqtals",
-    neighborhood: "Phoenix, AZ",
-    discipline: "Print & Graphic",
-    access: "Shared Studio · Membership",
-    desc: "Membership creative studio — shared space, screen printing.",
-    link: "https://www.fraqtals.com/"
-  }
-];
-
-let activeFilter = "All";
-const directoryGrid = document.getElementById('directoryGrid');
-
-document.querySelectorAll('.filter-pill').forEach(pill => {
-  pill.addEventListener('click', () => {
-    document.querySelectorAll('.filter-pill').forEach(p => p.classList.remove('active'));
-    pill.classList.add('active');
-    activeFilter = pill.dataset.filter;
-    renderDirectory();
-  });
-});
-
-function renderDirectory() {
-  directoryGrid.innerHTML = "";
-  let items = directory;
-  if (activeFilter !== "All") items = items.filter(d => d.discipline === activeFilter);
-  if (items.length === 0) {
-    directoryGrid.innerHTML = '<p class="directory-empty">Nothing listed yet for this discipline — check back soon.</p>';
-    return;
-  }
-  items.forEach(d => {
-    const card = document.createElement('div');
-    card.className = 'directory-card';
-    card.innerHTML = `
-      <div class="dc-name">${d.name}</div>
-      <div class="dc-neighborhood">${d.neighborhood}</div>
-      <div class="dc-tags">
-        <span class="dc-tag">${d.discipline}</span>
-        <span class="dc-tag">${d.access}</span>
-      </div>
-      <div class="dc-desc">${d.desc}</div>
-      ${d.link ? `<a class="dc-link" href="${d.link}" target="_blank" rel="noopener">Visit →</a>` : '<span style="font-size:0.75rem; opacity:.5;">Link coming soon</span>'}
-    `;
-    directoryGrid.appendChild(card);
-  });
-}
-renderDirectory();
-
-/* ============ SHARE (new — table: share_posts) ============ */
+/* ============ SHARE CHANNEL ============ */
 const shareCatLabels = { clothing: "Clothing", tech: "Tech", books: "Books", other: "Other" };
 let activeShareCat = "All";
 const shareList = document.getElementById('shareList');
@@ -724,7 +745,8 @@ document.querySelectorAll('#shareCatPillRow .cat-pill').forEach(pill => {
 });
 
 async function renderShare() {
-  shareList.innerHTML = '<p style="opacity:.5; text-align:center;">Loading shared work...</p>';
+  if (!shareList) return;
+  shareList.innerHTML = '<p style="opacity:.5; text-align:center;">Loading showcase...</p>';
 
   let query = supabaseClient
     .from('share_posts')
@@ -736,7 +758,7 @@ async function renderShare() {
   const { data: posts, error } = await query;
 
   if (error || !posts || posts.length === 0) {
-    shareList.innerHTML = '<p style="opacity:.5; text-align:center;">Nothing shared yet — be the first.</p>';
+    shareList.innerHTML = '<p style="opacity:.5; text-align:center;">Nothing shared yet. Be the first!</p>';
     return;
   }
 
@@ -746,7 +768,7 @@ async function renderShare() {
     card.className = 'board-card ' + p.category;
     const metaBits = [shareCatLabels[p.category] || p.category, formatDate(p.created_at)];
     const linkHtml = p.link
-      ? `<a class="board-card-link" href="${p.link}" target="_blank" rel="noopener">View →</a>`
+      ? `<a class="board-card-link" href="${p.link}" target="_blank" rel="noopener">View Link →</a>`
       : "";
     card.innerHTML = `
       <div class="board-card-title">${p.title}</div>
@@ -771,7 +793,7 @@ document.getElementById('shareSendBtn').onclick = async () => {
     .from('share_posts')
     .insert([{ category, title, details, link: link || null }]);
 
-  if (error) { alert("Error saving share post: " + error.message); return; }
+  if (error) { alert("Error saving post: " + error.message); return; }
 
   document.getElementById('shareTitle').value = "";
   document.getElementById('shareDetails').value = "";
