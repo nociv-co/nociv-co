@@ -12,23 +12,43 @@
   .board-sub { opacity: .65; font-size: 0.85rem; max-width: 460px; margin: 0 auto 24px; }
   .section-divider { border: 0; border-top: 1px solid #333; max-width: 500px; margin: 40px auto; }
 
+  /* --- tab-nav: big & chunky, matches Buy/Build/Share on other pages --- */
   .tab-nav {
-    position: sticky; top: 0; z-index: 50;
-    display: flex; overflow-x: auto; gap: 6px;
-    padding: 10px 16px; background: #0a0a0a; border-bottom: 1px solid #262626;
+    display: flex;
+    justify-content: center;
+    gap: 10px;
+    max-width: var(--max);
+    margin: 0 auto;
+    padding: 0 20px 10px;
+    flex-wrap: wrap;
   }
   .tab-nav button {
-    flex: 0 0 auto; background: none; color: #999; border: 1px solid #333;
-    font-size: 0.75rem; letter-spacing: 0.05em; text-transform: uppercase;
-    padding: 8px 14px; white-space: nowrap; cursor: pointer;
+    flex: 1 1 140px;
+    background: var(--grey-dark);
+    color: var(--white);
+    border: 1px solid #333;
+    padding: 14px 10px;
+    font-weight: 700;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    font-size: 0.85rem;
+    cursor: pointer;
+    transition: background 0.15s ease;
   }
-  .tab-nav button.active { background: var(--red); color: #fff; border-color: var(--red); }
+  .tab-nav button:hover { background: var(--gold); color: #1a1a1a; }
+  .tab-nav button.active { background: var(--red); color: #fff; }
+  .tab-nav button img {
+    max-height: 26px;
+    display: block;
+    margin: 0 auto;
+  }
   .tab-panel { display: none; }
   .tab-panel.active { display: block; }
 
   .mark-card {
     max-width: 460px; margin: 0 auto; background: #161616;
     border: 2px solid var(--red); padding: 28px 24px; text-align: center;
+    color: var(--white);
   }
   .mark-card h3 { letter-spacing: 2px; margin: 0 0 18px; color: var(--white); }
   .mark-card select, .mark-card textarea, .mark-card input[type="text"] {
@@ -36,7 +56,7 @@
     padding: 12px; font-size: 1rem; margin-bottom: 12px; box-sizing: border-box;
   }
   .mark-card textarea { resize: vertical; }
-  .mark-card label { display: block; text-align: left; font-size: 0.8rem; opacity: .7; margin-bottom: 6px; }
+  .mark-card label { display: block; text-align: left; font-size: 0.8rem; opacity: .7; margin-bottom: 6px; color: var(--white); }
   .cta-btn {
     width: 100%; background: var(--red); color: #fff; border: none; padding: 14px;
     font-weight: 900; letter-spacing: 0.08em; text-transform: uppercase; font-size: 0.9rem; cursor: pointer;
@@ -72,7 +92,7 @@
   .cat-other { background: #a35fd9; }
 
   .board-list { max-width: 600px; margin: 0 auto; }
-  .board-card { border: 1px solid #333; border-left: 4px solid #666; padding: 16px; margin-bottom: 12px; background: #111; text-align: left; }
+  .board-card { border: 1px solid #333; border-left: 4px solid #666; padding: 16px; margin-bottom: 12px; background: #111; text-align: left; color: #ddd; }
   .board-card.wall { border-left-color: #d94f3d; }
   .board-card.workshop { border-left-color: #4a7fd9; }
   .board-card.share { border-left-color: #3c9d5c; }
@@ -99,7 +119,7 @@
   .filter-pill.active { background: var(--white); color: #111; border-color: var(--white); }
   .directory-grid { display: grid; grid-template-columns: 1fr; gap: 14px; max-width: 600px; margin: 0 auto; }
   @media (min-width: 560px) { .directory-grid { grid-template-columns: 1fr 1fr; } }
-  .directory-card { border: 1px solid #333; background: #111; padding: 18px; text-align: left; }
+  .directory-card { border: 1px solid #333; background: #111; padding: 18px; text-align: left; color: #ddd; }
   .directory-card .dc-name { font-weight: 900; font-size: 1.05rem; }
   .directory-card .dc-neighborhood { font-size: 0.75rem; opacity: .6; margin-bottom: 8px; }
   .directory-card .dc-tags { display: flex; gap: 6px; flex-wrap: wrap; margin-bottom: 8px; }
@@ -109,6 +129,18 @@
   .directory-empty { opacity: .5; font-style: italic; font-size: 0.85rem; text-align: center; grid-column: 1 / -1; }
 
   .subsection-label { letter-spacing: 2px; font-size: 0.95rem; opacity: .8; margin: 40px 0 16px; text-align:center; }
+
+  /* --- Directory panel: light background, matches clothing.html --- */
+  #panel-directory {
+    background: var(--paper);
+    color: var(--ink);
+  }
+  #panel-directory .directory-top-art {
+    width: 100%;
+    max-width: 500px;
+    display: block;
+    margin: 0 auto;
+  }
 </style>
 </head>
 <body class="dark">
@@ -128,7 +160,7 @@
 <div class="tab-nav">
   <button class="tab-btn active" data-tab="stallwall">Stall Wall</button>
   <button class="tab-btn" data-tab="directory">Directory</button>
-  <button class="tab-btn" data-tab="share">Share</button>
+  <button class="tab-btn" data-tab="share"><img src="share-icon.png" alt="Share"></button>
 </div>
 
 <!-- STALL WALL + SUGGESTION WALL (unchanged) -->
@@ -180,7 +212,9 @@
 <!-- DIRECTORY (verified resources + community-posted listings, formerly "the Board") -->
 <div class="tab-panel" id="panel-directory">
   <div class="wrap" style="text-align:center;">
-    <h2 class="board-title">THE DIRECTORY</h2>
+    <img class="directory-top-art" src="directory-ave.png" alt="Directory Ave">
+
+    <h2 class="board-title" style="margin-top:30px;">THE DIRECTORY</h2>
     <p class="board-sub">A resource of local talent, creatives, and businesses. Verified listings, plus what the community posts directly.</p>
 
     <div class="mark-card">
@@ -241,7 +275,7 @@
 
     <div class="board-list" id="boardList"></div>
 
-    <hr class="section-divider">
+    <hr class="section-divider" style="border-top-color:#ccc;">
 
     <div class="subsection-label">VERIFIED DIRECTORY</div>
     <p class="board-sub">Verified local resources. The permanent anchor.</p>
