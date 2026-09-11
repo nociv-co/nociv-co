@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<title>Books — NOCIV.CO</title>
+<title>Zines — NOCIV.CO</title>
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <link rel="stylesheet" href="style.css">
 <style>
@@ -64,30 +64,30 @@
     margin-top: 8px;
   }
 
-  /* --- Buy / Build / Share sub-nav --- */
+  /* --- Buy / Build / Share sub-nav: small, sleek, sticky --- */
   .subnav {
-    display: flex;
-    justify-content: center;
-    gap: 10px;
-    max-width: var(--max);
-    margin: 0 auto;
-    padding: 0 20px 10px;
+    position: sticky; top: 0; z-index: 50;
+    display: flex; overflow-x: auto; gap: 6px;
+    padding: 10px 16px;
+    background: #0a0a0a;
+    border-top: 1px solid #262626;
+    border-bottom: 1px solid #262626;
   }
   .subnav button {
-    flex: 1 1 140px;
-    background: var(--grey-dark);
-    color: var(--white);
+    flex: 0 0 auto;
+    background: none;
+    color: #999;
     border: 1px solid #333;
-    padding: 14px 10px;
-    font-weight: 700;
-    letter-spacing: 0.1em;
+    font-size: 0.75rem;
+    letter-spacing: 0.05em;
     text-transform: uppercase;
-    font-size: 0.85rem;
+    padding: 8px 14px;
+    white-space: nowrap;
     cursor: pointer;
-    transition: background 0.15s ease;
+    transition: all 0.2s ease;
   }
-  .subnav button:hover { background: var(--gold); color: #1a1a1a; }
-  .subnav button.active { background: var(--red); }
+  .subnav button:hover { background: #252525; color: #fff; }
+  .subnav button.active { background: var(--red); color: #fff; border-color: var(--red); font-weight: 700; }
 
   .subpanel { display: none; }
   .subpanel.show { display: block; }
@@ -153,7 +153,7 @@
   <a href="about.html" class="img-tab"><img src="nav-about.png" alt="About"></a>
   <a href="clothing.html" class="img-tab"><img src="nav-clothing.png" alt="Clothing"></a>
   <a href="tech.html" class="img-tab"><img src="nav-tech.png" alt="Tech"></a>
-  <a href="books.html" class="img-tab active"><img src="nav-books.png" alt="Books"></a>
+  <a href="books.html" class="img-tab active"><img src="nav-books.png" alt="Zines"></a>
   <a href="community.html" class="img-tab"><img src="community-button.png" alt="Community"></a>
 </nav>
 
@@ -190,9 +190,9 @@
       </a>
     </div>
 
-    <iframe 
-      src="https://nociv-co.github.io/nociv-zine-builder/" 
-      class="builder-iframe" 
+    <iframe
+      src="https://nociv-co.github.io/nociv-zine-builder/"
+      class="builder-iframe"
       title="NOCIV Zine Builder"
       allow="fullscreen">
     </iframe>
