@@ -7,6 +7,8 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <meta name="description" content="The Stall Wall, the Directory, and Share — Nociv's community hub.">
 <link rel="stylesheet" href="style.css">
+<!-- Tesseract.js for Business Card OCR Scanner -->
+<script src="https://cdn.jsdelivr.net/npm/tesseract.js@5/dist/tesseract.min.js"></script>
 <style>
   /* --- Global Typography & Hierarchy --- */
   .board-title { letter-spacing: 3px; font-size: 1.3rem; margin-bottom: 6px; }
@@ -47,6 +49,24 @@
   }
   .mark-card textarea { resize: vertical; }
   .mark-card label { display: block; text-align: left; font-size: 0.8rem; opacity: .7; margin-bottom: 6px; color: var(--white); }
+
+  /* --- OCR Scanner UI Box --- */
+  .card-uploader {
+    border: 1px dashed #444;
+    padding: 16px;
+    text-align: center;
+    margin-bottom: 20px;
+    background: #0d0d0d;
+    border-radius: 6px;
+  }
+  .card-uploader label {
+    cursor: pointer;
+    font-weight: bold;
+    display: block;
+    color: var(--gold) !important;
+    text-align: center !important;
+    font-size: 0.85rem !important;
+  }
 
   .cta-btn {
     width: 100%; background: var(--red); color: #fff; border: none; padding: 14px;
@@ -252,6 +272,16 @@
 
     <div class="mark-card">
       <h3>Post It</h3>
+
+      <!-- BUSINESS CARD OCR SCANNER UI -->
+      <div class="card-uploader">
+        <label for="cardScanInput">
+          📷 SCAN BUSINESS CARD TO PRE-FILL
+        </label>
+        <input type="file" id="cardScanInput" accept="image/*" capture="environment" style="display: none;" onchange="handleCardScan(event)">
+        <p id="ocrStatus" style="font-size: 0.85rem; color: #888; margin-top: 6px;">Take a photo or upload an image of a card</p>
+      </div>
+
       <label for="boardCategory">What kind of post is this?</label>
       <select id="boardCategory">
         <option value="wall">🔴 Wall & Mural Opportunity</option>
@@ -382,6 +412,40 @@ document.querySelectorAll('.tab-btn').forEach(btn => {
 function formatDate(isoString) {
   const d = new Date(isoString);
   return d.toLocaleString("en-US", { month: "short" }).toLowerCase() + "." + d.getDate() + "." + d.getFullYear();
+}
+
+/* ============ OCR BUSINESS CARD SCANNER ============ */
+async function handleCardScan(event) {
+  const file = event.target.files[0];
+  if (!file) return;
+
+  const statusText = document.getElementById('ocrStatus');
+  statusText.textContent = "Scanning business card... Please wait.";
+
+  try {
+    const result = await Tesseract.recognize(file, 'eng');
+    const scannedText = result.data.text.trim();
+
+    if (!scannedText) {
+      statusText.textContent = "Could not read text. Try a clearer photo.";
+      return;
+    }
+
+    const lines = scannedText.split('\n').filter(line => line.trim() !== '');
+    const suggestedTitle = lines[0] || "";
+    const remainingDetails = lines.slice(1).join('\n');
+
+    const titleInput = document.getElementById('boardTitle');
+    const detailsTextarea = document.getElementById('boardDetails');
+
+    if (titleInput && !titleInput.value) titleInput.value = suggestedTitle;
+    if (detailsTextarea) detailsTextarea.value = remainingDetails;
+
+    statusText.textContent = "✓ Card scanned! Review and refine details below.";
+  } catch (err) {
+    console.error(err);
+    statusText.textContent = "Scan error. Please enter details manually.";
+  }
 }
 
 /* ============ STALL WALL ============ */
