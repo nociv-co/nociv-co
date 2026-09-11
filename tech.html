@@ -50,6 +50,159 @@
     max-width: 500px;
     margin: 0 auto;
   }
+
+  /* --- CASE ZERO BUILD ENGINE STYLES --- */
+  :root {
+    --cz-bg: #101216;
+    --cz-panel: #161920;
+    --cz-panel-2: #1c2029;
+    --cz-border: #292e39;
+    --cz-border-bright: #3a4150;
+    --cz-text: #e7e9ec;
+    --cz-muted: #8b92a0;
+    --cz-accent: #f2a65a;
+    --cz-accent-dim: #7a5a34;
+    --cz-accent-glow: rgba(242, 166, 90, 0.15);
+    --cz-ok: #4ade80;
+    --cz-err: #f2555a;
+    --cz-mono: ui-monospace, SFMono-Regular, "SF Mono", Menlo, Consolas, monospace;
+    --cz-sans: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+  }
+
+  .cz-device {
+    width: 100%;
+    max-width: 900px;
+    margin: 20px auto;
+    display: flex;
+    flex-direction: column;
+    height: 720px;
+    background: var(--cz-panel);
+    border: 1px solid var(--cz-border);
+    border-radius: 12px;
+    overflow: hidden;
+    box-shadow: 0 20px 50px rgba(0,0,0,0.5);
+    color: var(--cz-text);
+    font-family: var(--cz-sans);
+    text-align: left;
+  }
+
+  /* BAR */
+  .cz-bar { display:flex; align-items:center; gap:12px; padding: 12px 18px; border-bottom: 1px solid var(--cz-border); background: var(--cz-panel-2); }
+  .cz-dot { width:8px; height:8px; border-radius:50%; background: var(--cz-muted); flex-shrink:0; transition: background .2s; }
+  .cz-dot.ok { background: var(--cz-ok); box-shadow: 0 0 8px var(--cz-ok); }
+  .cz-dot.err { background: var(--cz-err); box-shadow: 0 0 8px var(--cz-err); }
+  .cz-bar .device-col { display:flex; flex-direction:column; }
+  .cz-bar .brand { font-weight:800; font-size: 13px; letter-spacing: 0.1em; color: var(--cz-accent); }
+  .cz-bar .device-tag { font-size: 10px; color: var(--cz-muted); font-family: var(--cz-mono); }
+  select#modelSelect {
+    margin-left:auto; background: var(--cz-bg); color: var(--cz-text);
+    border: 1px solid var(--cz-border); border-radius: 6px; padding: 5px 8px;
+    font-family: var(--cz-mono); font-size: 11px;
+  }
+
+  /* NAV */
+  .czNav { display:flex; gap:6px; padding:8px 14px; border-bottom:1px solid var(--cz-border); background:#12141a; overflow-x:auto; flex-shrink:0 }
+  .czTab { flex-shrink:0; background:transparent; color:var(--cz-muted); border:1px solid transparent; border-radius:7px; padding:7px 12px; font-size:12px; font-weight:600; cursor:pointer; transition: all 0.15s ease; }
+  .czTab:hover { color:var(--cz-text); border-color:var(--cz-border) }
+  .czTab.active { background:var(--cz-panel-2); color:var(--cz-accent); border-color:var(--cz-border) }
+
+  /* VIEWS */
+  .viewStack { flex:1; min-height:0; overflow:hidden; position: relative; }
+  .czView { display:none; height:100%; overflow-y:auto; padding:20px; }
+  .czView.active { display:block; }
+
+  /* HUB */
+  .hubHeader { text-align: center; margin-bottom: 28px; }
+  .hubHeader h1 { font-size: 24px; font-weight: 800; letter-spacing: 0.05em; margin: 0 0 6px 0; color: var(--cz-text); }
+  .hubHeader p { font-size: 13px; color: var(--cz-muted); margin: 0; }
+
+  .categorySection { margin-bottom: 24px; }
+  .categoryTitle { font-size: 11px; font-family: var(--cz-mono); letter-spacing: 0.12em; color: var(--cz-accent); margin-bottom: 10px; text-transform: uppercase; }
+  .presetGrid { display: grid; grid-template-columns: repeat(auto-fill, minmax(190px, 1fr)); gap: 10px; }
+  .presetCard {
+    background: var(--cz-panel-2); border: 1px solid var(--cz-border); border-radius: 8px; padding: 14px;
+    cursor: pointer; transition: all 0.15s ease; display: flex; flex-direction: column; gap: 6px;
+  }
+  .presetCard:hover { border-color: var(--cz-accent); transform: translateY(-2px); background: #222631; }
+  .presetIcon { font-size: 20px; margin-bottom: 2px; }
+  .presetName { font-weight: 700; font-size: 14px; color: var(--cz-text); }
+  .presetDesc { font-size: 11px; color: var(--cz-muted); line-height: 1.35; }
+  .scratchCard { border: 1px dashed var(--cz-accent-dim); background: var(--cz-accent-glow); }
+  .scratchCard:hover { border-color: var(--cz-accent); background: rgba(242, 166, 90, 0.25); }
+
+  /* FORM */
+  .machineForm { max-width: 680px; margin: 0 auto; display: flex; flex-direction: column; gap: 22px; }
+  .formBlock { background: var(--cz-panel-2); border: 1px solid var(--cz-border); border-radius: 10px; padding: 18px; }
+  .formBlock h3 { margin: 0 0 12px 0; font-size: 14px; color: var(--cz-accent); font-family: var(--cz-mono); letter-spacing: 0.05em; }
+  
+  .checkboxGrid { display: grid; grid-template-columns: repeat(auto-fill, minmax(180px, 1fr)); gap: 8px; }
+  .checkTile {
+    display: flex; align-items: center; gap: 8px; background: var(--cz-bg); border: 1px solid var(--cz-border);
+    padding: 8px 10px; border-radius: 6px; font-size: 12.5px; cursor: pointer; user-select: none; color: var(--cz-text);
+  }
+  .checkTile input { accent-color: var(--cz-accent); }
+  .checkTile:hover { border-color: var(--cz-border-bright); }
+
+  .radioGroup { display: flex; flex-wrap: wrap; gap: 8px; }
+  .radioTile {
+    background: var(--cz-bg); border: 1px solid var(--cz-border); padding: 8px 14px; border-radius: 6px;
+    font-size: 12px; cursor: pointer; font-family: var(--cz-mono); color: var(--cz-muted);
+  }
+  .radioTile.selected { border-color: var(--cz-accent); color: var(--cz-accent); background: var(--cz-accent-glow); }
+
+  .submitBtn {
+    background: var(--cz-accent); color: #1a1206; border: 0; padding: 12px 20px; border-radius: 8px;
+    font-weight: 700; font-size: 13.5px; cursor: pointer; width: 100%; transition: opacity 0.15s ease;
+  }
+  .submitBtn:hover { opacity: 0.9; }
+
+  /* RECOMMENDATIONS */
+  .recommendBox { max-width: 720px; margin: 0 auto; display: flex; flex-direction: column; gap: 16px; }
+  .recHeader { background: var(--cz-panel-2); border: 1px solid var(--cz-border); border-radius: 10px; padding: 20px; }
+  .recHeader .eyebrow { font: 10px var(--cz-mono); color: var(--cz-accent); letter-spacing: 0.15em; }
+  .recHeader h2 { font-size: 22px; margin: 4px 0 10px 0; color: var(--cz-text); }
+  .recHeader .whyText { font-size: 13px; color: var(--cz-muted); line-height: 1.5; margin-bottom: 14px; }
+  
+  .specPills { display: flex; gap: 6px; flex-wrap: wrap; margin-top: 10px; }
+  .specPill { background: var(--cz-bg); border: 1px solid var(--cz-border); font-size: 11px; font-family: var(--cz-mono); padding: 4px 8px; border-radius: 4px; color: var(--cz-ok); }
+
+  .partsGrid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+  .partListCard { background: var(--cz-panel-2); border: 1px solid var(--cz-border); border-radius: 10px; padding: 16px; }
+  .partListCard h4 { margin: 0 0 10px 0; font-size: 12px; font-family: var(--cz-mono); color: var(--cz-accent); }
+  .partListCard ul { margin: 0; padding-left: 18px; font-size: 12.5px; color: var(--cz-text); line-height: 1.6; }
+
+  .gameplanCard { background: var(--cz-panel-2); border: 1px solid var(--cz-border); border-radius: 10px; padding: 18px; }
+  .gameplanCard h3 { margin: 0 0 14px 0; font-size: 14px; font-family: var(--cz-mono); color: var(--cz-accent); }
+  .stepRow { display: flex; gap: 12px; margin-bottom: 12px; font-size: 13px; }
+  .stepNum { font-family: var(--cz-mono); font-weight: 700; color: var(--cz-accent); width: 20px; }
+  .stepText b { display: block; color: var(--cz-text); margin-bottom: 2px; }
+  .stepText span { font-size: 11.5px; color: var(--cz-muted); }
+
+  .machineryBtn {
+    background: var(--cz-panel-2); border: 1px solid var(--cz-border-bright); color: var(--cz-accent);
+    padding: 10px 16px; border-radius: 8px; font-family: var(--cz-mono); font-size: 11.5px;
+    cursor: pointer; text-align: center; margin-top: 10px; transition: all 0.15s ease;
+  }
+  .machineryBtn:hover { background: var(--cz-accent-glow); border-color: var(--cz-accent); }
+
+  /* LAB TABLE */
+  .labTable { width: 100%; border-collapse: collapse; margin-top: 14px; font-size: 12px; color: var(--cz-text); }
+  .labTable th, .labTable td { padding: 10px 12px; text-align: left; border-bottom: 1px solid var(--cz-border); }
+  .labTable th { font-family: var(--cz-mono); color: var(--cz-accent); font-size: 10.5px; text-transform: uppercase; background: var(--cz-panel-2); }
+  .labTable tr:hover td { background: var(--cz-panel-2); }
+
+  /* CHAT */
+  .chat { height: 100%; display:flex; flex-direction:column; gap: 14px; overflow-y: auto; }
+  .msg { max-width: 88%; line-height: 1.5; font-size: 14px; white-space: pre-wrap; word-wrap: break-word; }
+  .msg.user { align-self:flex-end; background: var(--cz-panel-2); border: 1px solid var(--cz-border); padding: 10px 14px; border-radius: 12px 12px 2px 12px; color: var(--cz-text); }
+  .msg.assistant { align-self:flex-start; border-left: 2px solid var(--cz-accent); padding-left: 12px; color: var(--cz-text); }
+  .msg.system { align-self:center; color: var(--cz-muted); font-family: var(--cz-mono); font-size: 11px; text-align:center; }
+
+  /* INPUT */
+  .inputRow { display:flex; gap:8px; padding: 12px; border-top: 1px solid var(--cz-border); background: var(--cz-panel-2); align-items:flex-end; }
+  textarea#czInput { flex:1; resize:none; background: var(--cz-bg); color: var(--cz-text); border: 1px solid var(--cz-border); border-radius: 8px; padding: 10px 12px; font-family: var(--cz-sans); font-size: 13.5px; max-height: 120px; }
+  textarea#czInput:focus { outline: none; border-color: var(--cz-accent-dim); }
+  button.actionBtn { border:none; border-radius: 8px; padding: 0 16px; height: 38px; font-size: 13px; font-weight:600; cursor:pointer; background: var(--cz-accent); color: #1a1206; }
 </style>
 </head>
 <body class="dark">
@@ -67,13 +220,13 @@
 </nav>
 
 <nav class="subnav">
-  <button data-panel="buyPanel" class="active">Buy</button>
-  <button data-panel="buildPanel">Build</button>
+  <button data-panel="buyPanel">Buy</button>
+  <button data-panel="buildPanel" class="active">Build</button>
   <button data-panel="sharePanel">Share</button>
 </nav>
 
 <!-- ===== BUY ===== -->
-<div class="subpanel show" id="buyPanel">
+<div class="subpanel" id="buyPanel">
   <div class="wrap">
     <img src="tech-imagery-1.png" alt="The Attention Economy — Utopia/Dystopia. Make the rebellion of screens punk." style="width:100%; display:block;">
     <div class="coming-soon" style="margin-top:30px;">
@@ -83,15 +236,302 @@
 </div>
 
 <!-- ===== BUILD ===== -->
-<div class="subpanel" id="buildPanel">
+<div class="subpanel show" id="buildPanel">
   <div class="wrap" style="text-align:center;">
     <h2 style="font-size:1.6rem; font-weight:900; text-transform:uppercase;">
-      Build your own devices — coming soon
+      Case Zero Engine — Build Your Own Devices
     </h2>
-    <p style="max-width:520px; margin:20px auto; font-size:1.1rem; line-height:1.7;">
-      We deserve to be free from attention-consuming, subscription and
-      paywall-based tech. Ownership is enough. It's simple.
+    <p style="max-width:580px; margin:10px auto 20px; font-size:1.05rem; line-height:1.6;">
+      We deserve to be free from attention-consuming, subscription and paywall-based tech. Ownership is enough. Translate your idea into hardware.
     </p>
+
+    <!-- CASE ZERO HARDWARE BUILDER ENGINE -->
+    <div class="cz-device">
+      <div class="cz-bar">
+        <span class="cz-dot ok" id="statusDot"></span>
+        <div class="device-col">
+          <span class="brand">CASE ZERO</span>
+          <span class="device-tag">CORTEX ENGINE // V0.2</span>
+        </div>
+        <select id="modelSelect"><option>dolphin-llama3:8b</option></select>
+      </div>
+
+      <div class="czNav">
+        <button class="czTab active" data-view="hubView">💡 What Do You Want to Make?</button>
+        <button class="czTab" data-view="machineView">⚙️ Define Machine</button>
+        <button class="czTab" data-view="recommendView">🎯 Cortex Recommendation</button>
+        <button class="czTab" data-view="labView">🔬 Microcontroller Lab</button>
+        <button class="czTab" data-view="chatView">🧠 Cortex Assistant</button>
+      </div>
+
+      <div class="viewStack">
+        
+        <!-- VIEW 1: PRESET HUB -->
+        <section class="czView active" id="hubView">
+          <div class="hubHeader">
+            <h1>WHAT DO YOU WANT TO MAKE?</h1>
+            <p>Pick a preset to start with or begin from your own raw idea.</p>
+          </div>
+
+          <div class="categorySection">
+            <div class="categoryTitle">MUSIC</div>
+            <div class="presetGrid">
+              <div class="presetCard" onclick="selectPreset('midi-synth')">
+                <div class="presetIcon">🎹</div>
+                <div class="presetName">MIDI Synth</div>
+                <div class="presetDesc">Hardware synthesizer with knob controls & MIDI output.</div>
+              </div>
+              <div class="presetCard" onclick="selectPreset('guitar-pedal')">
+                <div class="presetIcon">🎸</div>
+                <div class="presetName">Guitar Pedal</div>
+                <div class="presetDesc">Real-time digital audio effect processor pedal.</div>
+              </div>
+              <div class="presetCard" onclick="selectPreset('pocket-player')">
+                <div class="presetIcon">🎧</div>
+                <div class="presetName">Pocket Music Player</div>
+                <div class="presetDesc">Dedicated offline audio player with SD storage.</div>
+              </div>
+              <div class="presetCard" onclick="selectPreset('drum-machine')">
+                <div class="presetIcon">🥁</div>
+                <div class="presetName">Drum Machine</div>
+                <div class="presetDesc">Grid-based step sequencer with tactile pad triggers.</div>
+              </div>
+            </div>
+          </div>
+
+          <div class="categorySection">
+            <div class="categoryTitle">COMPUTING</div>
+            <div class="presetGrid">
+              <div class="presetCard" onclick="selectPreset('cyberdeck')">
+                <div class="presetIcon">📟</div>
+                <div class="presetName">Cyberdeck</div>
+                <div class="presetDesc">Portable field terminal with display & custom keyboard.</div>
+              </div>
+              <div class="presetCard" onclick="selectPreset('ai-assistant')">
+                <div class="presetIcon">🎙️</div>
+                <div class="presetName">Personal AI Assistant</div>
+                <div class="presetDesc">Voice-prompted local assistant with visual indicators.</div>
+              </div>
+              <div class="presetCard" onclick="selectPreset('linux-laptop')">
+                <div class="presetIcon">💻</div>
+                <div class="presetName">Linux Laptop</div>
+                <div class="presetDesc">Minimal SBC-based laptop built into a custom enclosure.</div>
+              </div>
+            </div>
+          </div>
+
+          <div class="categorySection">
+            <div class="categoryTitle">GAMES</div>
+            <div class="presetGrid">
+              <div class="presetCard" onclick="selectPreset('game-controller')">
+                <div class="presetIcon">🎮</div>
+                <div class="presetName">Simple Game Controller</div>
+                <div class="presetDesc">Custom USB/Bluetooth gamepad with arcade buttons.</div>
+              </div>
+              <div class="presetCard" onclick="selectPreset('portable-arcade')">
+                <div class="presetIcon">👾</div>
+                <div class="presetName">Portable Arcade</div>
+                <div class="presetDesc">Handheld retro emulator machine with integrated screen.</div>
+              </div>
+            </div>
+          </div>
+
+          <div class="categorySection">
+            <div class="categoryTitle">LIGHT + ENVIRONMENT</div>
+            <div class="presetGrid">
+              <div class="presetCard" onclick="selectPreset('led-light')">
+                <div class="presetIcon">💡</div>
+                <div class="presetName">LED Light</div>
+                <div class="presetDesc">Custom addressable RGB strip controller with modes.</div>
+              </div>
+              <div class="presetCard" onclick="selectPreset('plant-monitor')">
+                <div class="presetIcon">🌱</div>
+                <div class="presetName">Plant Monitor</div>
+                <div class="presetDesc">Soil moisture, ambient light, and water level tracker.</div>
+              </div>
+            </div>
+          </div>
+
+          <div class="categorySection">
+            <div class="categoryTitle">OR START FROM SCRATCH</div>
+            <div class="presetGrid">
+              <div class="presetCard scratchCard" onclick="selectPreset('scratch')">
+                <div class="presetIcon">✨</div>
+                <div class="presetName">I Have An Idea</div>
+                <div class="presetDesc">Define a custom hardware machine from a blank slate.</div>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <!-- VIEW 2: DEFINE THE MACHINE -->
+        <section class="czView" id="machineView">
+          <div class="machineForm">
+            <div class="formBlock">
+              <h3 id="selectedPresetTitle">DEFINING YOUR MACHINE</h3>
+              <p style="font-size: 12.5px; color: var(--cz-muted); margin-bottom: 12px;">What do you want it to do?</p>
+              <div class="checkboxGrid" id="functionCheckboxes">
+                <label class="checkTile"><input type="checkbox" value="Play sounds"> Play sounds</label>
+                <label class="checkTile"><input type="checkbox" value="Accept buttons"> Accept buttons</label>
+                <label class="checkTile"><input type="checkbox" value="Read knobs"> Read knobs</label>
+                <label class="checkTile"><input type="checkbox" value="Control MIDI"> Control MIDI</label>
+                <label class="checkTile"><input type="checkbox" value="Display information"> Display information</label>
+                <label class="checkTile"><input type="checkbox" value="Save settings"> Save settings</label>
+                <label class="checkTile"><input type="checkbox" value="Connect wirelessly"> Connect wirelessly</label>
+              </div>
+            </div>
+
+            <div class="formBlock">
+              <h3>HOW SHOULD IT CONNECT?</h3>
+              <div class="radioGroup" id="connectionGroup">
+                <div class="radioTile selected" onclick="selectRadio(this, 'Nothing')">○ Nothing</div>
+                <div class="radioTile" onclick="selectRadio(this, 'USB')">○ USB</div>
+                <div class="radioTile" onclick="selectRadio(this, 'Wi-Fi')">○ Wi-Fi</div>
+                <div class="radioTile" onclick="selectRadio(this, 'Bluetooth')">○ Bluetooth</div>
+                <div class="radioTile" onclick="selectRadio(this, 'USB + Bluetooth')">○ USB + Bluetooth</div>
+                <div class="radioTile" onclick="selectRadio(this, 'Wi-Fi + Bluetooth')">○ Wi-Fi + Bluetooth</div>
+              </div>
+            </div>
+
+            <div class="formBlock">
+              <h3>HOW MUCH DO YOU WANT TO SPEND?</h3>
+              <div class="radioGroup" id="budgetGroup">
+                <div class="radioTile selected" onclick="selectRadio(this, '$')">$ Basic</div>
+                <div class="radioTile" onclick="selectRadio(this, '$$')">$$ Affordable</div>
+                <div class="radioTile" onclick="selectRadio(this, '$$$')">$$$ More capable</div>
+                <div class="radioTile" onclick="selectRadio(this, '$$$$')">$$$$ Advanced</div>
+                <div class="radioTile" onclick="selectRadio(this, '$$$$$')">$$$$$ Go wild</div>
+              </div>
+            </div>
+
+            <button class="submitBtn" onclick="generateRecommendation()">CORTEX, RECOMMEND MY BUILD</button>
+          </div>
+        </section>
+
+        <!-- VIEW 3: CORTEX RECOMMENDS -->
+        <section class="czView" id="recommendView">
+          <div class="recommendBox">
+            <div class="recHeader">
+              <div class="eyebrow">CORTEX RECOMMENDS</div>
+              <h2 id="recBoardName">Raspberry Pi Pico 2</h2>
+              <div class="whyText" id="recWhyText">Good fit for buttons, knobs, MIDI, displays, and real-time hardware control.</div>
+              <div style="font-size: 11px; font-family: var(--cz-mono); color: var(--cz-muted); margin-bottom: 6px;">CAPABILITIES VERIFIED:</div>
+              <div class="specPills">
+                <span class="specPill">✓ GPIO</span>
+                <span class="specPill">✓ ADC</span>
+                <span class="specPill">✓ PWM</span>
+                <span class="specPill">✓ SPI</span>
+                <span class="specPill">✓ I2C</span>
+              </div>
+            </div>
+
+            <div class="partsGrid">
+              <div class="partListCard">
+                <h4>YOU WILL NEED</h4>
+                <ul id="recPartsList">
+                  <li>Pico 2 Microcontroller</li>
+                  <li>MIDI interface components</li>
+                  <li>Potentiometers (10k)</li>
+                  <li>Tactile buttons</li>
+                  <li>Breadboard & Wires</li>
+                </ul>
+              </div>
+              <div class="partListCard">
+                <h4>YOU MAY ALSO WANT</h4>
+                <ul id="recOptionalList">
+                  <li>OLED Display (128x64)</li>
+                  <li>Case Zero Enclosure</li>
+                  <li>Rechargeable LiPo Battery</li>
+                </ul>
+              </div>
+            </div>
+
+            <div class="gameplanCard">
+              <h3>BUILD THIS PROJECT</h3>
+              <div class="stepRow"><div class="stepNum">1</div><div class="stepText"><b>Get the parts</b><span>Gather your board, sensors, and breadboard cables.</span></div></div>
+              <div class="stepRow"><div class="stepNum">2</div><div class="stepText"><b>Wire it</b><span>Follow the Cortex Pin Mapper to build the breadboard prototype.</span></div></div>
+              <div class="stepRow"><div class="stepNum">3</div><div class="stepText"><b>Upload the starter code</b><span>Flash the initial C++/MicroPython starter template.</span></div></div>
+              <div class="stepRow"><div class="stepNum">4</div><div class="stepText"><b>Test each part</b><span>Run individual diagnostic checks on buttons, knobs, and sensors.</span></div></div>
+              <div class="stepRow"><div class="stepNum">5</div><div class="stepText"><b>Make your enclosure</b><span>Fit the working circuit into your Case Zero shell setup.</span></div></div>
+              <div class="stepRow"><div class="stepNum">6</div><div class="stepText"><b>Modify it</b><span>Expand capabilities with add-ons and custom code logic.</span></div></div>
+            </div>
+
+            <button class="machineryBtn" onclick="switchCzTab('labView')">WHY THIS BOARD? Reveal Microcontroller Machinery →</button>
+          </div>
+        </section>
+
+        <!-- VIEW 4: MICROCONTROLLER LAB -->
+        <section class="czView" id="labView">
+          <div style="margin-bottom: 16px;">
+            <div style="font-family: var(--cz-mono); font-size: 10px; color: var(--cz-accent); letter-spacing: 0.1em;">HARDWARE COMPARISON ENGINE</div>
+            <h2 style="margin: 4px 0; color: var(--cz-text);">Microcontroller Matrix</h2>
+            <p style="font-size: 12.5px; color: var(--cz-muted);">Compare options when you want to look under the hood of Cortex's recommendations.</p>
+          </div>
+
+          <table class="labTable">
+            <thead>
+              <tr>
+                <th>Board</th>
+                <th>Best For</th>
+                <th>Cost</th>
+                <th>Wireless</th>
+                <th>Key Hardware Specs</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td><b>Pico 2</b></td>
+                <td>Hardware projects & real-time control</td>
+                <td>$$</td>
+                <td>No</td>
+                <td>520 KB SRAM, 4 MB Flash, 2x SPI, 2x I2C, 2x UART, 24 PWM</td>
+              </tr>
+              <tr>
+                <td><b>Pico 2 W</b></td>
+                <td>Hardware + wireless connectivity</td>
+                <td>$$</td>
+                <td>Wi-Fi + Bluetooth</td>
+                <td>520 KB SRAM, 4 MB Flash + CYW43439 Wireless module</td>
+              </tr>
+              <tr>
+                <td><b>UNO R4 Minima</b></td>
+                <td>Beginner electronics & standard shields</td>
+                <td>$$</td>
+                <td>No</td>
+                <td>32-bit ARM M4, 14 Digital I/O, 6 Analog Inputs, DAC</td>
+              </tr>
+              <tr>
+                <td><b>UNO R4 WiFi</b></td>
+                <td>Arduino ecosystem + wireless IoT</td>
+                <td>$$$</td>
+                <td>Wi-Fi + Bluetooth</td>
+                <td>RA4M1 + ESP32-S3 module, 12x8 LED Matrix, Qwiic connector</td>
+              </tr>
+              <tr>
+                <td><b>ESP32-S3</b></td>
+                <td>Connected devices & AI/Display builds</td>
+                <td>$$$</td>
+                <td>Wi-Fi + Bluetooth</td>
+                <td>Dual-core Xtensa, USB OTG, Vector hardware acceleration</td>
+              </tr>
+            </tbody>
+          </table>
+        </section>
+
+        <!-- VIEW 5: CHAT / CORTEX ASSISTANT -->
+        <section class="czView" id="chatView">
+          <div class="chat" id="chat">
+            <div class="msg system">Cortex engine online. State your build objectives or ask a technical question.</div>
+          </div>
+        </section>
+
+      </div>
+
+      <div class="inputRow">
+        <textarea id="czInput" rows="1" placeholder="Ask Cortex about your build, code, or wiring..."></textarea>
+        <button class="actionBtn" onclick="sendChat()">Send</button>
+      </div>
+    </div>
   </div>
 </div>
 
@@ -108,6 +548,7 @@
 <footer class="nociv-footer">NOCIV.CO — Nothing Of Civilization</footer>
 
 <script>
+  // --- SUBNAV SWITCHER ---
   const subnavBtns = document.querySelectorAll('.subnav button');
   subnavBtns.forEach(btn => {
     btn.addEventListener('click', () => {
@@ -117,6 +558,127 @@
       document.getElementById(btn.dataset.panel).classList.add('show');
     });
   });
+
+  // --- CASE ZERO BUILDER ENGINE SCRIPT ---
+  const czTabs = document.querySelectorAll('.czTab');
+  const czViews = document.querySelectorAll('.czView');
+
+  czTabs.forEach(tab => {
+    tab.addEventListener('click', () => {
+      const targetView = tab.getAttribute('data-view');
+      switchCzTab(targetView);
+    });
+  });
+
+  function switchCzTab(viewId) {
+    czTabs.forEach(t => t.classList.remove('active'));
+    czViews.forEach(v => v.classList.remove('active'));
+    
+    const targetTab = document.querySelector(`.czTab[data-view="${viewId}"]`);
+    const targetView = document.getElementById(viewId);
+    
+    if(targetTab) targetTab.classList.add('active');
+    if(targetView) targetView.classList.add('active');
+  }
+
+  const PRESETS = {
+    'midi-synth': {
+      name: 'MIDI Synth',
+      functions: ['Play sounds', 'Accept buttons', 'Read knobs', 'Control MIDI'],
+      connection: 'USB',
+      budget: '$$',
+      board: 'Raspberry Pi Pico 2',
+      why: 'Good fit for buttons, knobs, MIDI, displays, and real-time hardware audio control.',
+      parts: ['Pico 2 Microcontroller', 'MIDI DIN / USB interface', '10k Potentiometers (x4)', 'Tactile Push Buttons (x8)', 'Audio DAC / Passive Low-pass Filter', 'Breadboard & Jumper Wires'],
+      optional: ['OLED Display (128x64 I2C)', 'Case Zero Timber Enclosure', 'Rechargeable LiPo Battery Module']
+    },
+    'guitar-pedal': {
+      name: 'Guitar Pedal',
+      functions: ['Play sounds', 'Accept buttons', 'Read knobs', 'Save settings'],
+      connection: 'Nothing',
+      budget: '$$',
+      board: 'Raspberry Pi Pico 2',
+      why: 'High-clock speed for digital signal processing (DSP) and high analog pin sampling.',
+      parts: ['Pico 2 Microcontroller', 'Audio Input/Output Jacks (1/4")', 'Operational Amplifier (Op-Amp)', 'Expression Potentiometers', 'Heavy-duty Footswitch'],
+      optional: ['Status LED Ring', 'EEPROM for patch storage', 'Die-cast aluminum case']
+    },
+    'cyberdeck': {
+      name: 'Cyberdeck',
+      functions: ['Display information', 'Save settings', 'Accept buttons', 'Connect wirelessly'],
+      connection: 'USB + Bluetooth',
+      budget: '$$$',
+      board: 'ESP32-S3 Board',
+      why: 'Native USB OTG support, display driver capabilities, and wireless communication.',
+      parts: ['ESP32-S3 Microcontroller', '3.5 inch SPI TFT Screen', 'Mini Mechanical Keyboard Module', 'Custom Power Board', 'MicroSD Card Module'],
+      optional: ['LoRa Radio Transceiver', 'Battery Power Gauge', 'Modular Expansion Bus']
+    },
+    'scratch': {
+      name: 'Custom Machine Idea',
+      functions: ['Accept buttons', 'Display information'],
+      connection: 'USB',
+      budget: '$$',
+      board: 'Arduino UNO R4 Minima',
+      why: 'Versatile starter board with reliable 5V/3.3V tolerance for beginner prototyping.',
+      parts: ['Arduino UNO R4 Minima', 'Breadboard', 'Assorted Resistance Kit', 'Jumper Wire Bundle'],
+      optional: ['Proto-shield', 'Modular Sensor Pack']
+    }
+  };
+
+  let currentSelection = PRESETS['midi-synth'];
+
+  function selectPreset(key) {
+    currentSelection = PRESETS[key] || PRESETS['scratch'];
+    document.getElementById('selectedPresetTitle').textContent = `DEFINING: ${currentSelection.name.toUpperCase()}`;
+    
+    const checkboxes = document.querySelectorAll('#functionCheckboxes input');
+    checkboxes.forEach(cb => {
+      cb.checked = currentSelection.functions.includes(cb.value);
+    });
+
+    switchCzTab('machineView');
+  }
+
+  function selectRadio(element, value) {
+    const parent = element.parentElement;
+    parent.querySelectorAll('.radioTile').forEach(tile => tile.classList.remove('selected'));
+    element.classList.add('selected');
+  }
+
+  function generateRecommendation() {
+    document.getElementById('recBoardName').textContent = currentSelection.board;
+    document.getElementById('recWhyText').textContent = currentSelection.why;
+    
+    const partsList = document.getElementById('recPartsList');
+    partsList.innerHTML = currentSelection.parts.map(p => `<li>${p}</li>`).join('');
+
+    const optionalList = document.getElementById('recOptionalList');
+    optionalList.innerHTML = currentSelection.optional.map(o => `<li>${o}</li>`).join('');
+
+    switchCzTab('recommendView');
+  }
+
+  function sendChat() {
+    const input = document.getElementById('czInput');
+    const msg = input.value.trim();
+    if(!msg) return;
+
+    const chat = document.getElementById('chat');
+    const userDiv = document.createElement('div');
+    userDiv.className = 'msg user';
+    userDiv.textContent = msg;
+    chat.appendChild(userDiv);
+
+    input.value = '';
+    chat.scrollTop = chat.scrollHeight;
+
+    setTimeout(() => {
+      const assistantDiv = document.createElement('div');
+      assistantDiv.className = 'msg assistant';
+      assistantDiv.textContent = `Cortex response to: "${msg}"\n\nTo build this, make sure your pin configuration matches your hardware bus choices (SPI/I2C).`;
+      chat.appendChild(assistantDiv);
+      chat.scrollTop = chat.scrollHeight;
+    }, 600);
+  }
 </script>
 
 </body>
