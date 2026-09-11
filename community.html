@@ -13,7 +13,7 @@
   .board-sub { opacity: .65; font-size: 0.85rem; max-width: 460px; margin: 0 auto 24px; }
   .section-divider { border: 0; border-top: 1px solid #333; max-width: 500px; margin: 40px auto; }
 
-  /* --- Navigation Tabs (small/sleek, matches Buy/Build/Share hierarchy) --- */
+  /* --- Navigation Tabs --- */
   .tab-nav {
     position: sticky; top: 0; z-index: 50;
     display: flex; overflow-x: auto; gap: 6px;
@@ -239,7 +239,6 @@
     <h2 class="board-title" style="margin-top:30px;">THE DIRECTORY</h2>
     <p class="board-sub">A hub of point-of-contact for every creative venture in Phoenix, Arizona — verified listings, plus what the community posts directly.</p>
 
-    <!-- 1. VERIFIED DIRECTORY AT THE TOP -->
     <div class="subsection-label">VERIFIED DIRECTORY</div>
     <p class="board-sub" style="margin-bottom:16px;">Verified local resources. The permanent anchor.</p>
 
@@ -248,7 +247,6 @@
 
     <hr class="section-divider">
 
-    <!-- 2. COMMUNITY POSTINGS & FORM UNDERNEATH -->
     <div class="subsection-label">COMMUNITY BOARD</div>
     <p class="board-sub">Post local opportunities, tool shares, meetups, or space listings.</p>
 
@@ -354,9 +352,6 @@ const states = [
 "Vermont","Virginia","Washington","West Virginia","Wisconsin","Wyoming"
 ];
 
-// Single source of truth for creative disciplines — used by both the
-// Verified Directory filter pills and the Community Board posting form,
-// so the two can never drift out of sync.
 const disciplines = [
   "Visual Art & Murals",
   "Tattoo",
@@ -541,8 +536,6 @@ document.getElementById('suggSendBtn').onclick = async () => {
 };
 
 /* ============ VERIFIED DIRECTORY ============ */
-// Add new verified listings here as you confirm them. discipline must
-// match one of the strings in the `disciplines` array above so filtering works.
 const directory = [
   {
     name: "Fraqtals",
@@ -599,7 +592,7 @@ function renderDirectory() {
 }
 renderDirectory();
 
-/* ============ COMMUNITY BOARD (Directory Table) ============ */
+/* ============ COMMUNITY BOARD ============ */
 const catLabels = {
   wall: "Wall & Mural",
   workshop: "Workshop / Class",
@@ -614,7 +607,6 @@ const boardCategorySelect = document.getElementById('boardCategory');
 const spaceTypeWrap = document.getElementById('spaceTypeWrap');
 const boardDisciplineSelect = document.getElementById('boardDiscipline');
 
-// populate the discipline dropdown from the same shared list, plus a catch-all
 disciplines.forEach(d => {
   const opt = document.createElement('option');
   opt.value = d; opt.textContent = d;
@@ -746,7 +738,7 @@ document.querySelectorAll('#shareCatPillRow .cat-pill').forEach(pill => {
 
 async function renderShare() {
   if (!shareList) return;
-  shareList.innerHTML = '<p style="opacity:.5; text-align:center;">Loading showcase...</p>';
+  shareList.innerHTML = '<p style="opacity:.5; text-align:center;">Loading shared work...</p>';
 
   let query = supabaseClient
     .from('share_posts')
@@ -758,7 +750,7 @@ async function renderShare() {
   const { data: posts, error } = await query;
 
   if (error || !posts || posts.length === 0) {
-    shareList.innerHTML = '<p style="opacity:.5; text-align:center;">Nothing shared yet. Be the first!</p>';
+    shareList.innerHTML = '<p style="opacity:.5; text-align:center;">Nothing shared yet.</p>';
     return;
   }
 
@@ -767,16 +759,13 @@ async function renderShare() {
     const card = document.createElement('div');
     card.className = 'board-card ' + p.category;
     const metaBits = [shareCatLabels[p.category] || p.category, formatDate(p.created_at)];
-    const linkHtml = p.link
-      ? `<a class="board-card-link" href="${p.link}" target="_blank" rel="noopener">View Link →</a>`
-      : "";
+
     card.innerHTML = `
       <div class="board-card-title">${p.title}</div>
       <div class="board-card-meta">${metaBits.join(' · ')}</div>
-      <div class="board-card-desc">${p.details || ""}</div>
-      ${linkHtml}
+      <div class="board-card-desc">${p.details}</div>
+      ${p.link ? `<a class="board-card-link" href="${p.link}" target="_blank" rel="noopener">View Link →</a>` : ''}
     `;
-    // NOTE: voting + "opt in to manufacturing at 80% profit" UI goes here later.
     shareList.appendChild(card);
   });
 }
@@ -787,23 +776,27 @@ document.getElementById('shareSendBtn').onclick = async () => {
   const title = document.getElementById('shareTitle').value.trim();
   const details = document.getElementById('shareDetails').value.trim();
   const link = document.getElementById('shareLink').value.trim();
-  if (!title) { document.getElementById('shareTitle').focus(); return; }
+
+  if (!title || !details) return;
 
   const { error } = await supabaseClient
     .from('share_posts')
-    .insert([{ category, title, details, link: link || null }]);
+    .insert([{ category, title, details, link }]);
 
-  if (error) { alert("Error saving post: " + error.message); return; }
+  if (error) { 
+    alert("Error sharing: " + error.message); 
+    return; 
+  }
 
   document.getElementById('shareTitle').value = "";
   document.getElementById('shareDetails').value = "";
   document.getElementById('shareLink').value = "";
+
   const c = document.getElementById('shareConfirm');
   c.style.display = 'block';
   setTimeout(() => { c.style.display = 'none'; }, 3000);
   await renderShare();
 };
 </script>
-
 </body>
 </html>
