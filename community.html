@@ -43,7 +43,7 @@
     color: var(--white); border-radius: 6px;
   }
   .mark-card h3 { letter-spacing: 2px; margin: 0 0 18px; color: var(--white); }
-  .mark-card select, .mark-card textarea, .mark-card input[type="text"] {
+  .mark-card select, .mark-card textarea, .mark-card input[type="text"], .mark-card input[type="date"] {
     width: 100%; background: #0d0d0d; color: #ddd; border: 1px solid #333;
     padding: 12px; font-size: 1rem; margin-bottom: 12px; box-sizing: border-box;
   }
@@ -113,14 +113,40 @@
     background: rgba(212, 175, 55, 0.12);
     font-weight: 700;
   }
+  #states button.viewing {
+    border-color: var(--red);
+    color: #fff;
+    background: var(--red);
+  }
 
   #editor { display: none; margin-top: 30px; max-width: 600px; margin-left:auto; margin-right:auto; }
   .postWrap { border-top: 1px solid #222; padding: 16px 0; text-align: left; }
   .postDate { float: right; opacity: .6; font-size: 12px; }
   .postText { white-space: pre-wrap; margin-top: 10px; }
+  .postDrawing { display: block; max-width: 100%; margin-top: 10px; border: 1px solid #333; border-radius: 4px; }
   .greenMark { color: #6fbf8f; }
   .clearfix { clear: both; }
   .suggestion-list { max-width: 500px; margin: 30px auto 0; text-align: left; }
+
+  /* --- Doodle Canvas (Stall Wall) --- */
+  .doodle-wrap { text-align: left; margin-bottom: 14px; }
+  #doodleCanvas {
+    width: 100%;
+    max-width: 100%;
+    height: 150px;
+    background: #fff;
+    border: 1px solid #333;
+    border-radius: 6px;
+    touch-action: none;
+    cursor: crosshair;
+    display: block;
+  }
+  .doodle-controls { display: flex; justify-content: space-between; align-items: center; margin-top: 6px; }
+  .doodle-hint { font-size: 0.75rem; opacity: .6; }
+  .doodle-clear-btn {
+    background: #1c1c1c; color: #ddd; border: 1px solid #444; padding: 5px 10px;
+    font-size: 0.72rem; cursor: pointer; letter-spacing: 0.03em;
+  }
 
   /* --- Category & Filter Pills --- */
   .cat-pill-row { display: flex; flex-wrap: wrap; gap: 8px; justify-content: center; max-width: 560px; margin: 0 auto 24px; }
@@ -137,7 +163,7 @@
   .cat-clothing { background: #d94f3d; }
   .cat-tech { background: #4a7fd9; }
   .cat-books { background: var(--gold); }
-  .cat-other { background: #a35fd9; }
+  .cat-art { background: #3c9d5c; }
 
   .board-list { max-width: 600px; margin: 0 auto; }
   .board-card { border: 1px solid #262626; border-left: 4px solid #666; padding: 16px; margin-bottom: 12px; background: #141414; text-align: left; color: #ddd; border-radius: 4px; }
@@ -150,7 +176,7 @@
   .board-card.clothing { border-left-color: #d94f3d; }
   .board-card.tech { border-left-color: #4a7fd9; }
   .board-card.books { border-left-color: var(--gold); }
-  .board-card.other { border-left-color: #a35fd9; }
+  .board-card.art { border-left-color: #3c9d5c; }
 
   .board-card .board-card-title { font-weight: 900; font-size: 1rem; }
   .board-card .board-card-meta { font-size: 0.75rem; opacity: .6; margin: 4px 0 8px; }
@@ -185,6 +211,62 @@
   .subsection-label { letter-spacing: 2px; font-size: 1.05rem; font-weight: 900; color: var(--gold); margin: 10px 0 6px; text-align:center; }
   .top-banner-art { width: 100%; max-width: 500px; display: block; margin: 0 auto; }
   .top-icon-art { width: 100%; max-width: 220px; display: block; margin: 0 auto; }
+
+  /* --- Opportunity Board Calendar --- */
+  .opp-calendar {
+    max-width: 380px;
+    margin: 0 auto 24px;
+    background: #141414;
+    border: 1px solid #262626;
+    border-radius: 6px;
+    padding: 14px;
+  }
+  .opp-calendar-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 10px;
+    font-weight: 700;
+    font-size: 0.9rem;
+    letter-spacing: 0.05em;
+  }
+  .opp-calendar-clear {
+    font-size: 0.7rem;
+    color: var(--gold);
+    cursor: pointer;
+    text-decoration: underline;
+    background: none;
+    border: none;
+  }
+  .opp-calendar-grid {
+    display: grid;
+    grid-template-columns: repeat(7, 1fr);
+    gap: 4px;
+    text-align: center;
+  }
+  .opp-calendar-grid .dow {
+    font-size: 0.65rem;
+    opacity: .5;
+    padding-bottom: 4px;
+  }
+  .opp-calendar-day {
+    position: relative;
+    padding: 8px 0;
+    font-size: 0.8rem;
+    border-radius: 4px;
+    cursor: default;
+    color: #ccc;
+  }
+  .opp-calendar-day.has-event {
+    cursor: pointer;
+    background: #1c1c1c;
+    border: 1px solid var(--gold);
+    color: var(--gold);
+    font-weight: 700;
+  }
+  .opp-calendar-day.has-event:hover { background: rgba(212,175,55,0.15); }
+  .opp-calendar-day.selected { background: var(--red); color: #fff; border-color: var(--red); }
+  .opp-calendar-day.empty { visibility: hidden; }
 </style>
 </head>
 <body class="dark">
@@ -197,7 +279,7 @@
   <a href="about.html" class="img-tab"><img src="nav-about.png" alt="About"></a>
   <a href="clothing.html" class="img-tab"><img src="nav-clothing.png" alt="Clothing"></a>
   <a href="tech.html" class="img-tab"><img src="nav-tech.png" alt="Tech"></a>
-  <a href="books.html" class="img-tab"><img src="nav-books.png" alt="Books"></a>
+  <a href="books.html" class="img-tab"><img src="nav-books.png" alt="Zines"></a>
   <a href="community.html" class="img-tab active"><img src="community-button.png" alt="Community"></a>
 </nav>
 
@@ -233,6 +315,16 @@
       <select id="stateSelect"><option value="">Choose your state</option></select>
       <label for="postInput">Speak Your Truth</label>
       <textarea id="postInput" rows="4"></textarea>
+
+      <div class="doodle-wrap">
+        <label>Or draw it out (optional)</label>
+        <canvas id="doodleCanvas"></canvas>
+        <div class="doodle-controls">
+          <span class="doodle-hint">Draw with your finger or mouse</span>
+          <button type="button" class="doodle-clear-btn" id="doodleClearBtn">Clear</button>
+        </div>
+      </div>
+
       <button id="sendBtn" class="cta-btn">Send Mark</button>
       <p id="sendConfirm" class="confirm-msg">Your mark is up.</p>
     </div>
@@ -267,8 +359,10 @@
 
     <hr class="section-divider">
 
-    <div class="subsection-label">COMMUNITY BOARD</div>
-    <p class="board-sub">Post local opportunities, tool shares, meetups, or space listings.</p>
+    <div class="subsection-label">OPPORTUNITY BOARD</div>
+    <p class="board-sub">Post local opportunities, tool shares, meetups, or space listings — and see what's happening this month.</p>
+
+    <div class="opp-calendar" id="oppCalendar"></div>
 
     <div class="mark-card">
       <h3>Post It</h3>
@@ -307,8 +401,12 @@
       <input type="text" id="boardTitle" placeholder="e.g. Garage available for a 1-day screen printing demo">
       <label for="boardDetails">Details</label>
       <textarea id="boardDetails" rows="3" placeholder="General area (not exact address), what's available, and how people reach you."></textarea>
+
+      <label for="boardEventDate">Event date (optional — shows this on the calendar above)</label>
+      <input type="date" id="boardEventDate">
+
       <button id="boardSendBtn" class="cta-btn">Post It</button>
-      <p id="boardConfirm" class="confirm-msg">Posted to the Directory.</p>
+      <p id="boardConfirm" class="confirm-msg">Posted to the Opportunity Board.</p>
     </div>
 
     <div class="cat-pill-row" id="catPillRow" style="margin-top:30px;">
@@ -337,10 +435,10 @@
       <h3>Share It</h3>
       <label for="shareCategory">Category</label>
       <select id="shareCategory">
-        <option value="clothing">🔴 Clothing</option>
+        <option value="art">🟢 Art</option>
         <option value="tech">🔵 Tech</option>
-        <option value="books">🟡 Books</option>
-        <option value="other">🟣 Other</option>
+        <option value="books">🟡 Zines</option>
+        <option value="clothing">🔴 Clothing</option>
       </select>
       <label for="shareTitle">Title</label>
       <input type="text" id="shareTitle" placeholder="What did you make?">
@@ -354,10 +452,10 @@
 
     <div class="cat-pill-row" id="shareCatPillRow" style="margin-top:30px;">
       <button class="cat-pill active" data-cat="All"><span class="legend-dot" style="background:#888;"></span>All</button>
-      <button class="cat-pill" data-cat="clothing"><span class="legend-dot cat-clothing"></span>Clothing</button>
+      <button class="cat-pill" data-cat="art"><span class="legend-dot cat-art"></span>Art</button>
       <button class="cat-pill" data-cat="tech"><span class="legend-dot cat-tech"></span>Tech</button>
-      <button class="cat-pill" data-cat="books"><span class="legend-dot cat-books"></span>Books</button>
-      <button class="cat-pill" data-cat="other"><span class="legend-dot cat-other"></span>Other</button>
+      <button class="cat-pill" data-cat="books"><span class="legend-dot cat-books"></span>Zines</button>
+      <button class="cat-pill" data-cat="clothing"><span class="legend-dot cat-clothing"></span>Clothing</button>
     </div>
 
     <div class="board-list" id="shareList"></div>
@@ -467,6 +565,59 @@ states.forEach(st => {
   stateSelect.appendChild(opt);
 });
 
+/* --- Doodle canvas --- */
+const doodleCanvas = document.getElementById('doodleCanvas');
+const doodleCtx = doodleCanvas.getContext('2d');
+let doodleHasDrawing = false;
+let isDrawing = false;
+
+function resizeDoodleCanvas() {
+  const rect = doodleCanvas.getBoundingClientRect();
+  doodleCanvas.width = rect.width;
+  doodleCanvas.height = rect.height;
+  doodleCtx.fillStyle = '#fff';
+  doodleCtx.fillRect(0, 0, doodleCanvas.width, doodleCanvas.height);
+  doodleCtx.lineWidth = 2.5;
+  doodleCtx.lineCap = 'round';
+  doodleCtx.strokeStyle = '#111';
+}
+window.addEventListener('resize', resizeDoodleCanvas);
+resizeDoodleCanvas();
+
+function getDoodlePos(e) {
+  const rect = doodleCanvas.getBoundingClientRect();
+  const point = e.touches ? e.touches[0] : e;
+  return { x: point.clientX - rect.left, y: point.clientY - rect.top };
+}
+function doodleStart(e) {
+  isDrawing = true;
+  doodleHasDrawing = true;
+  const pos = getDoodlePos(e);
+  doodleCtx.beginPath();
+  doodleCtx.moveTo(pos.x, pos.y);
+  e.preventDefault();
+}
+function doodleMove(e) {
+  if (!isDrawing) return;
+  const pos = getDoodlePos(e);
+  doodleCtx.lineTo(pos.x, pos.y);
+  doodleCtx.stroke();
+  e.preventDefault();
+}
+function doodleEnd() { isDrawing = false; }
+
+doodleCanvas.addEventListener('mousedown', doodleStart);
+doodleCanvas.addEventListener('mousemove', doodleMove);
+window.addEventListener('mouseup', doodleEnd);
+doodleCanvas.addEventListener('touchstart', doodleStart);
+doodleCanvas.addEventListener('touchmove', doodleMove);
+doodleCanvas.addEventListener('touchend', doodleEnd);
+
+document.getElementById('doodleClearBtn').addEventListener('click', () => {
+  resizeDoodleCanvas();
+  doodleHasDrawing = false;
+});
+
 async function getActiveStatesThisCycle() {
   const thirtyDaysAgo = new Date(Date.now() - 30*24*60*60*1000).toISOString();
   const { data, error } = await supabaseClient
@@ -488,17 +639,27 @@ async function renderStateGrid() {
     const btn = document.createElement("button");
     btn.innerText = st;
     if (active.has(st)) btn.classList.add("has-marks");
+    if (st === viewState) btn.classList.add("viewing");
     btn.onclick = async () => {
       viewState = st;
       stateTitle.innerText = st;
       editor.style.display = "block";
       await loadPosts();
+      await renderStateGrid();
       editor.scrollIntoView({ behavior: "smooth", block: "start" });
     };
     statesDiv.appendChild(btn);
   });
 }
-renderStateGrid();
+
+// Arizona is home base — show it by default on load without requiring a click.
+(async () => {
+  viewState = "Arizona";
+  await renderStateGrid();
+  stateTitle.innerText = "Arizona";
+  editor.style.display = "block";
+  await loadPosts();
+})();
 
 window.addEventListener("keydown", e => {
   if (e.ctrlKey && e.shiftKey && e.key.toLowerCase() === "n") {
@@ -531,6 +692,13 @@ async function loadPosts() {
     text.className = "postText"; text.innerText = p.text;
     if (p.admin && secretMode) text.classList.add("greenMark");
     div.appendChild(date); div.appendChild(text);
+    if (p.drawing) {
+      const img = document.createElement('img');
+      img.className = 'postDrawing';
+      img.src = p.drawing;
+      img.alt = 'Doodle';
+      div.appendChild(img);
+    }
     let clear = document.createElement("div"); clear.className = "clearfix";
     div.appendChild(clear);
     postsList.appendChild(div);
@@ -542,11 +710,16 @@ document.getElementById("sendBtn").onclick = async () => {
   const chosenState = stateSelect.value;
   if (!chosenState) { stateSelect.focus(); return; }
   if (!text) { postInput.focus(); return; }
+
+  const drawingData = doodleHasDrawing ? doodleCanvas.toDataURL('image/png') : null;
+
   const { error } = await supabaseClient
     .from('stall_posts')
-    .insert([{ state: chosenState, text: text, admin: secretMode }]);
+    .insert([{ state: chosenState, text: text, admin: secretMode, drawing: drawingData }]);
   if (error) { alert("Error saving post: " + error.message); return; }
   postInput.value = "";
+  resizeDoodleCanvas();
+  doodleHasDrawing = false;
   sendConfirm.style.display = "block";
   setTimeout(() => { sendConfirm.style.display = "none"; }, 3000);
   await renderStateGrid();
@@ -656,7 +829,7 @@ function renderDirectory() {
 }
 renderDirectory();
 
-/* ============ COMMUNITY BOARD ============ */
+/* ============ OPPORTUNITY BOARD (table: board_posts, unchanged name) ============ */
 const catLabels = {
   wall: "Wall & Mural",
   workshop: "Workshop / Class",
@@ -666,10 +839,12 @@ const catLabels = {
   meetup: "Recurring Meetup"
 };
 let activeCat = "All";
+let selectedEventDate = null; // 'YYYY-MM-DD' or null
 const boardList = document.getElementById('boardList');
 const boardCategorySelect = document.getElementById('boardCategory');
 const spaceTypeWrap = document.getElementById('spaceTypeWrap');
 const boardDisciplineSelect = document.getElementById('boardDiscipline');
+const oppCalendar = document.getElementById('oppCalendar');
 
 disciplines.forEach(d => {
   const opt = document.createElement('option');
@@ -705,8 +880,61 @@ function markInterested(id) {
   }
 }
 
+/* --- Calendar: shows current month, dots on days with an event_date --- */
+async function renderCalendar() {
+  const now = new Date();
+  const year = now.getFullYear();
+  const month = now.getMonth();
+  const monthStart = new Date(year, month, 1).toISOString().slice(0, 10);
+  const monthEnd = new Date(year, month + 1, 0).toISOString().slice(0, 10);
+
+  const { data: eventPosts } = await supabaseClient
+    .from('board_posts')
+    .select('event_date')
+    .gte('event_date', monthStart)
+    .lte('event_date', monthEnd);
+
+  const eventDays = new Set((eventPosts || []).map(p => p.event_date));
+
+  const monthName = now.toLocaleString('en-US', { month: 'long', year: 'numeric' });
+  const firstDow = new Date(year, month, 1).getDay();
+  const daysInMonth = new Date(year, month + 1, 0).getDate();
+
+  let html = `<div class="opp-calendar-header">
+    <span>${monthName}</span>
+    ${selectedEventDate ? '<button class="opp-calendar-clear" id="clearDateFilter">Clear date filter</button>' : ''}
+  </div>`;
+  html += '<div class="opp-calendar-grid">';
+  ['S','M','T','W','T','F','S'].forEach(d => html += `<div class="dow">${d}</div>`);
+  for (let i = 0; i < firstDow; i++) html += '<div class="opp-calendar-day empty"></div>';
+  for (let d = 1; d <= daysInMonth; d++) {
+    const dateStr = new Date(year, month, d).toISOString().slice(0, 10);
+    const hasEvent = eventDays.has(dateStr);
+    const isSelected = selectedEventDate === dateStr;
+    html += `<div class="opp-calendar-day ${hasEvent ? 'has-event' : ''} ${isSelected ? 'selected' : ''}" data-date="${dateStr}">${d}</div>`;
+  }
+  html += '</div>';
+  oppCalendar.innerHTML = html;
+
+  oppCalendar.querySelectorAll('.opp-calendar-day.has-event').forEach(cell => {
+    cell.addEventListener('click', () => {
+      const date = cell.dataset.date;
+      selectedEventDate = (selectedEventDate === date) ? null : date;
+      renderCalendar();
+      renderBoard();
+    });
+  });
+  const clearBtn = document.getElementById('clearDateFilter');
+  if (clearBtn) clearBtn.addEventListener('click', () => {
+    selectedEventDate = null;
+    renderCalendar();
+    renderBoard();
+  });
+}
+renderCalendar();
+
 async function renderBoard() {
-  boardList.innerHTML = '<p style="opacity:.5; text-align:center;">Loading Directory posts...</p>';
+  boardList.innerHTML = '<p style="opacity:.5; text-align:center;">Loading Opportunity Board posts...</p>';
   const sixtyDaysAgo = new Date(Date.now() - 60*24*60*60*1000).toISOString();
 
   let query = supabaseClient
@@ -716,6 +944,7 @@ async function renderBoard() {
     .order('created_at', { ascending: false });
 
   if (activeCat !== "All") query = query.eq('category', activeCat);
+  if (selectedEventDate) query = query.eq('event_date', selectedEventDate);
 
   const { data: posts, error } = await query;
 
@@ -733,6 +962,7 @@ async function renderBoard() {
     const metaBits = [catLabels[p.category] || p.category];
     if (p.space_type) metaBits.push(p.space_type);
     if (p.discipline) metaBits.push(p.discipline);
+    if (p.event_date) metaBits.push('📅 ' + p.event_date);
     metaBits.push(formatDate(p.created_at));
 
     card.innerHTML = `
@@ -770,24 +1000,27 @@ document.getElementById('boardSendBtn').onclick = async () => {
   const spaceType = category === 'space' ? document.getElementById('spaceType').value : null;
   const title = document.getElementById('boardTitle').value.trim();
   const details = document.getElementById('boardDetails').value.trim();
+  const eventDate = document.getElementById('boardEventDate').value || null;
   if (!title || !details) return;
 
   const { error } = await supabaseClient
     .from('board_posts')
-    .insert([{ category, discipline, space_type: spaceType, title, details, interest_count: 0 }]);
+    .insert([{ category, discipline, space_type: spaceType, title, details, event_date: eventDate, interest_count: 0 }]);
 
   if (error) { alert("Error saving post: " + error.message); return; }
 
   document.getElementById('boardTitle').value = "";
   document.getElementById('boardDetails').value = "";
+  document.getElementById('boardEventDate').value = "";
   const c = document.getElementById('boardConfirm');
   c.style.display = 'block';
   setTimeout(() => { c.style.display = 'none'; }, 3000);
   await renderBoard();
+  await renderCalendar();
 };
 
 /* ============ SHARE CHANNEL ============ */
-const shareCatLabels = { clothing: "Clothing", tech: "Tech", books: "Books", other: "Other" };
+const shareCatLabels = { art: "Art", tech: "Tech", books: "Zines", clothing: "Clothing" };
 let activeShareCat = "All";
 const shareList = document.getElementById('shareList');
 
