@@ -2,7 +2,7 @@
    NOCIV.CO — shared styles
    Two surfaces used across the site:
    - .light  : off-white / grey manifesto pages (About, Clothing)
-   - .dark   : black pages (Community, Tech)
+   - .dark   : black pages (Community, Tech, Zines)
    ============================================ */
 
 @font-face {
@@ -40,7 +40,7 @@ body.dark {
 
 a { color: inherit; text-decoration: none; }
 
-/* ---------- NAV ---------- */
+/* ---------- NAV: main pillar row ---------- */
 .nociv-header {
   text-align: center;
   padding: 0;
@@ -50,27 +50,6 @@ a { color: inherit; text-decoration: none; }
 .nociv-header .torn-header-img {
   width: 100%;
   display: block;
-}
-
-.nociv-header .wordmark {
-  font-size: clamp(2.5rem, 9vw, 5rem);
-  font-weight: 900;
-  letter-spacing: 0.02em;
-  margin: 0;
-  color: var(--grey);
-}
-
-.nociv-header .tagline {
-  letter-spacing: 0.3em;
-  font-size: 0.75rem;
-  color: var(--grey);
-  text-transform: uppercase;
-  margin-top: 8px;
-}
-
-body.dark .nociv-header .wordmark,
-body.dark .nociv-header .tagline {
-  color: var(--white);
 }
 
 nav.tabs {
@@ -83,7 +62,6 @@ nav.tabs {
   margin: 0 auto;
 }
 
-/* Image-based nav buttons (About/Clothing/Tech/Books) */
 nav.tabs a.img-tab {
   background: var(--grey-dark);
   padding: 14px 18px;
@@ -106,25 +84,168 @@ nav.tabs a.img-tab.active {
   background: var(--red);
 }
 
-/* Text-based fallback tab (used for Community, no art supplied yet) */
-nav.tabs a.text-tab {
-  background: var(--grey-dark);
+/* Temporary text label for nav items that don't have matching artwork yet —
+   swap back to an <img> inside .img-tab once the art exists, no CSS change needed. */
+nav.tabs a.img-tab.text-tab-temp {
   color: var(--white);
-  padding: 14px 10px;
-  text-align: center;
-  flex: 1 1 130px;
-  min-width: 110px;
   font-weight: 700;
   letter-spacing: 0.05em;
   text-transform: uppercase;
   font-size: 0.85rem;
-  border: 1px solid #333;
+  text-align: center;
+}
+
+/* ---------- SUB-NAV: Buy/Build/Share, Stall Wall/Directory/Share, etc. ----------
+   One definition, used on every page. Background is a mid-grey so it reads
+   correctly on both light pages (Clothing) and dark pages (Tech/Zines/Community)
+   without needing a page-specific override. */
+.subnav {
+  position: sticky; top: 0; z-index: 50;
+  display: flex; overflow-x: auto; gap: 6px;
+  padding: 10px 16px;
+  background: var(--grey-dark);
+  border-top: 1px solid #333;
+  border-bottom: 1px solid #333;
+}
+.subnav button {
+  flex: 0 0 auto;
+  background: none;
+  color: #ddd;
+  border: 1px solid #666;
+  font-size: 0.75rem;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  padding: 8px 14px;
+  white-space: nowrap;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+.subnav button:hover { background: var(--gold); color: #1a1a1a; border-color: var(--gold); }
+.subnav button.active { background: var(--red); color: #fff; border-color: var(--red); font-weight: 700; }
+
+.subpanel { display: none; }
+.subpanel.show, .subpanel.active { display: block; }
+
+/* ---------- NESTED SUB-TABS (e.g. Directory: Verified / Opportunity Board) ----------
+   Same visual language as .subnav, but not sticky and narrower — for a second
+   level of tabs living inside a panel rather than pinned to page scroll. */
+.dir-subnav {
+  display: flex; justify-content: center; gap: 8px; flex-wrap: wrap;
+  max-width: 420px; margin: 0 auto 24px;
+}
+.dir-subnav button {
+  background: none; color: #999; border: 1px solid #333;
+  font-size: 0.75rem; letter-spacing: 0.05em; text-transform: uppercase;
+  padding: 8px 14px; cursor: pointer; transition: all 0.2s ease;
+}
+.dir-subnav button:hover { color: #fff; border-color: #666; }
+.dir-subnav button.active { background: var(--red); color: #fff; border-color: var(--red); font-weight: 700; }
+
+.dir-subpanel { display: none; }
+.dir-subpanel.active { display: block; }
+
+/* ---------- SHARED CARD / FORM STYLES (mark-card, cta-btn) ---------- */
+.mark-card {
+  max-width: 460px; margin: 0 auto; background: #141414;
+  border: 2px solid var(--red); padding: 28px 24px; text-align: center;
+  color: var(--white); border-radius: 6px;
+}
+.mark-card h3 { letter-spacing: 2px; margin: 0 0 18px; color: var(--white); }
+.mark-card select, .mark-card textarea, .mark-card input[type="text"], .mark-card input[type="date"] {
+  width: 100%; background: #0d0d0d; color: #ddd; border: 1px solid #333;
+  padding: 12px; font-size: 1rem; margin-bottom: 12px; box-sizing: border-box;
+}
+.mark-card textarea { resize: vertical; }
+.mark-card label { display: block; text-align: left; font-size: 0.8rem; opacity: .7; margin-bottom: 6px; color: var(--white); }
+
+.cta-btn {
+  width: 100%; background: var(--red); color: #fff; border: none; padding: 14px;
+  font-weight: 900; letter-spacing: 0.08em; text-transform: uppercase; font-size: 0.9rem; cursor: pointer;
   transition: background 0.15s ease;
 }
-nav.tabs a.text-tab:hover,
-nav.tabs a.text-tab.active {
-  background: var(--red);
+.cta-btn:hover { background: #b83c2c; }
+.confirm-msg { display: none; color: #6fbf8f; font-weight: 700; margin-top: 14px; }
+
+/* ---------- SHARED PILLS (category / filter) ---------- */
+.cat-pill-row, .filter-row { display: flex; flex-wrap: wrap; gap: 8px; justify-content: center; max-width: 640px; margin: 0 auto 24px; }
+.cat-pill, .filter-pill { border: 1px solid #333; padding: 7px 14px; font-size: 0.8rem; cursor: pointer; background: #111; color: #aaa; display: flex; align-items: center; gap: 6px; white-space: nowrap; }
+.cat-pill.active, .filter-pill.active { background: #fff; color: #111; border-color: #fff; font-weight: 700; }
+.legend-dot { width: 10px; height: 10px; border-radius: 50%; display: inline-block; }
+
+.cat-wall { background: #d94f3d; }
+.cat-workshop { background: #4a7fd9; }
+.cat-share { background: #3c9d5c; }
+.cat-call { background: var(--gold); }
+.cat-space { background: #a35fd9; }
+.cat-meetup { background: #e08a3e; }
+.cat-clothing { background: #d94f3d; }
+.cat-tech { background: #4a7fd9; }
+.cat-books { background: var(--gold); }
+.cat-art { background: #3c9d5c; }
+
+/* ---------- SHARED CARDS: board posts + directory listings ---------- */
+.board-list { max-width: 600px; margin: 0 auto; }
+.board-card { border: 1px solid #262626; border-left: 4px solid #666; padding: 16px; margin-bottom: 12px; background: #141414; text-align: left; color: #ddd; border-radius: 4px; }
+.board-card.wall { border-left-color: #d94f3d; }
+.board-card.workshop { border-left-color: #4a7fd9; }
+.board-card.share { border-left-color: #3c9d5c; }
+.board-card.call { border-left-color: var(--gold); }
+.board-card.space { border-left-color: #a35fd9; }
+.board-card.meetup { border-left-color: #e08a3e; }
+.board-card.clothing { border-left-color: #d94f3d; }
+.board-card.tech { border-left-color: #4a7fd9; }
+.board-card.books { border-left-color: var(--gold); }
+.board-card.art { border-left-color: #3c9d5c; }
+.board-card .board-card-title { font-weight: 900; font-size: 1rem; }
+.board-card .board-card-meta { font-size: 0.75rem; opacity: .6; margin: 4px 0 8px; }
+.board-card .board-card-desc { font-size: 0.9rem; opacity: .9; white-space: pre-wrap; }
+.board-card a.board-card-link { color: var(--gold); font-size: 0.8rem; display: inline-block; margin-top: 8px; }
+
+.interest-row { display: flex; align-items: center; gap: 10px; margin-top: 12px; }
+.interest-btn { background: #1c1c1c; color: #ddd; border: 1px solid #444; padding: 6px 12px; font-size: 0.75rem; cursor: pointer; letter-spacing: 0.03em; }
+.interest-btn.clicked { background: var(--gold); color: #1a1a1a; border-color: var(--gold); cursor: default; font-weight: bold; }
+.interest-count { font-size: 0.75rem; opacity: .6; }
+
+.directory-grid { display: grid; grid-template-columns: 1fr; gap: 14px; max-width: 600px; margin: 0 auto; }
+@media (min-width: 560px) { .directory-grid { grid-template-columns: 1fr 1fr; } }
+.directory-card { border: 1px solid #262626; background: #141414; padding: 18px; text-align: left; color: #ddd; border-radius: 4px; transition: border-color 0.15s ease; }
+.directory-card:hover { border-color: var(--gold); }
+.directory-card .dc-name { font-weight: 900; font-size: 1.05rem; color: var(--gold); }
+.directory-card .dc-neighborhood { font-size: 0.75rem; opacity: .6; margin-bottom: 8px; }
+.directory-card .dc-tags { display: flex; gap: 6px; flex-wrap: wrap; margin-bottom: 8px; }
+.directory-card .dc-tag { font-size: 0.65rem; text-transform: uppercase; letter-spacing: 0.04em; padding: 3px 7px; background: #222; color: #aaa; border: 1px solid #333; }
+.directory-card .dc-desc { font-size: 0.85rem; opacity: .85; margin-bottom: 10px; }
+.directory-card a.dc-link { color: var(--gold); font-size: 0.8rem; text-decoration: underline; }
+.directory-empty { opacity: .5; font-style: italic; font-size: 0.85rem; text-align: center; grid-column: 1 / -1; }
+
+/* ---------- SHARED SECTION LABELS / BANNER ART ---------- */
+.board-title { letter-spacing: 3px; font-size: 1.3rem; margin-bottom: 6px; }
+.board-sub { opacity: .65; font-size: 0.85rem; max-width: 460px; margin: 0 auto 24px; }
+.section-divider { border: 0; border-top: 1px solid #333; max-width: 500px; margin: 40px auto; }
+.subsection-label { letter-spacing: 2px; font-size: 1.05rem; font-weight: 900; color: var(--gold); margin: 10px 0 6px; text-align: center; }
+.top-banner-art { width: 100%; max-width: 500px; display: block; margin: 0 auto; }
+.top-icon-art { width: 100%; max-width: 220px; display: block; margin: 0 auto; }
+
+/* ---------- Legitimate "coming soon" notes (Buy panels, not placeholder Share) ---------- */
+.coming-soon {
+  opacity: .6;
+  font-style: italic;
+  padding: 24px 20px;
+  text-align: center;
+  border: 1px dashed #999;
+  max-width: 500px;
+  margin: 0 auto;
 }
+body.dark .coming-soon { border-color: #444; }
+
+/* ---------- Redirect card: used where a page's Share tab now points to Community ---------- */
+.redirect-card {
+  max-width: 420px; margin: 30px auto; text-align: center;
+  border: 1px dashed #999; padding: 30px 20px; border-radius: 6px;
+}
+body.dark .redirect-card { border-color: #444; }
+.redirect-card p { opacity: .75; font-size: 0.95rem; margin: 16px 0 18px; }
+.redirect-card a.cta-btn { display: block; text-decoration: none; }
 
 /* ---------- TORN PAPER DIVIDER ---------- */
 .torn {
@@ -138,16 +259,6 @@ nav.tabs a.text-tab.active {
     82% 22%, 86% 45%, 90% 15%, 94% 50%, 97% 25%, 100% 40%, 100% 100%, 0% 100%
   );
 }
-
-.torn.flip {
-  clip-path: polygon(
-    0% 60%, 3% 80%, 6% 55%, 10% 85%, 14% 50%, 18% 75%, 22% 45%,
-    26% 80%, 30% 52%, 34% 82%, 38% 48%, 42% 78%, 46% 55%, 50% 85%,
-    54% 50%, 58% 80%, 62% 45%, 66% 75%, 70% 52%, 74% 82%, 78% 48%,
-    82% 78%, 86% 55%, 90% 85%, 94% 50%, 97% 75%, 100% 60%, 100% 0%, 0% 0%
-  );
-}
-
 .torn.dark-to-light { background: var(--paper); }
 .torn.light-to-dark { background: var(--black); }
 
@@ -169,33 +280,12 @@ nav.tabs a.text-tab.active {
   text-transform: uppercase;
   margin-bottom: 16px;
 }
-
-body.dark .eyebrow {
-  background: var(--white);
-  color: var(--black);
-}
-
-h1.headline, h2.headline {
-  font-weight: 900;
-  letter-spacing: 0.03em;
-  text-transform: uppercase;
-  line-height: 1.1;
-}
+body.dark .eyebrow { background: var(--white); color: var(--black); }
 
 .checklist { list-style: none; padding: 0; margin: 30px 0; }
-.checklist li {
-  font-size: 1.1rem;
-  margin-bottom: 18px;
-  padding-left: 34px;
-  position: relative;
-}
+.checklist li { font-size: 1.1rem; margin-bottom: 18px; padding-left: 34px; position: relative; }
 .checklist li::before {
-  content: '✓';
-  position: absolute;
-  left: 0;
-  color: var(--red);
-  font-weight: 900;
-  font-size: 1.3rem;
+  content: '✓'; position: absolute; left: 0; color: var(--red); font-weight: 900; font-size: 1.3rem;
 }
 
 footer.nociv-footer {
@@ -207,24 +297,7 @@ footer.nociv-footer {
   text-transform: uppercase;
 }
 
-/* ---------- LANDING PAGE figure ---------- */
-.hero-figure-wrap {
-  text-align: right;
-  padding: 10px 20px 0;
-  max-width: var(--max);
-  margin: 0 auto;
-}
-.hero-figure {
-  width: 65%;
-  max-width: 460px;
-  height: auto;
-  display: inline-block;
-}
-@media (max-width: 500px) {
-  .hero-figure { width: 78%; }
-}
-
-/* ---------- Pop-up shop card ---------- */
+/* ---------- Pop-up shop card (Clothing) ---------- */
 .popup-card-img {
   width: 100%;
   max-width: 360px;
