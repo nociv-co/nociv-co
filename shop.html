@@ -1,0 +1,299 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Shop Nociv — NOCIV.CO</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<link rel="stylesheet" href="style.css">
+<style>
+  /* Page-specific only — sub-nav, cards, and pills all live in style.css */
+  .flip-wrap {
+    max-width: 900px;
+    margin: 0 auto;
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 30px;
+    align-items: start;
+  }
+  @media (max-width: 640px) {
+    .flip-wrap { grid-template-columns: 1fr; }
+  }
+
+  .album {
+    position: relative;
+    width: 100%;
+    max-width: 420px;
+    margin: 0 auto;
+    cursor: pointer;
+  }
+  .album img.album-frame { width: 100%; display: block; }
+  .album-slot { position: absolute; object-fit: cover; display: none; }
+  .album.open .album-slot { display: block; }
+  .album.open .album-cover-img { display: none; }
+  .album:not(.open) .album-page-img { display: none; }
+  .album-hint { text-align: center; font-size: 0.8rem; opacity: .6; margin-top: 10px; }
+
+  .popup-note {
+    background: var(--gold);
+    color: #1a1a1a;
+    padding: 14px;
+    font-size: 0.85rem;
+    text-align: center;
+    margin: 20px 0;
+  }
+  #signupForm input {
+    width: 100%;
+    padding: 12px;
+    margin-bottom: 4px;
+    border: 1px solid #999;
+    font-size: 1rem;
+  }
+  .signup-hint { font-size: 0.75rem; opacity: .6; text-align: center; margin: 0 0 12px; }
+
+  .phone-showcase { max-width: 320px; margin: 40px auto; text-align: center; }
+  .phone-frame-wrap { position: relative; width: 100%; }
+  .phone-frame-wrap img.phone-frame { width: 100%; display: block; position: relative; z-index: 2; pointer-events: none; }
+  .phone-frame-wrap video {
+    position: absolute;
+    top: 4%; left: 6%; width: 88%; height: 92%;
+    object-fit: cover; z-index: 1;
+  }
+  .phone-showcase-label { font-size: 0.85rem; opacity: .7; margin-top: 14px; }
+
+  .aura-graphic { display: block; width: 100%; max-width: 500px; margin: 40px auto 20px; }
+  .vinted-link img { display: block; width: 100%; max-width: 500px; margin: 0 auto; }
+
+  /* Zine reader (from the old books.html Buy tab) */
+  .zine {
+    border: 1px solid #333;
+    margin-bottom: 30px;
+    padding: 24px;
+    background: #111;
+  }
+  .zine h2 { margin: 0 0 6px; font-size: 1.4rem; text-transform: uppercase; letter-spacing: 0.03em; }
+  .zine .zine-sub { opacity: .6; font-size: 0.85rem; margin-bottom: 20px; }
+  .zine-parts { display: flex; flex-wrap: wrap; gap: 10px; }
+  .zine-parts button {
+    background: #1c1c1c; color: #eee; border: 1px solid #444;
+    padding: 10px 16px; cursor: pointer; font-size: 0.85rem; letter-spacing: 0.03em;
+  }
+  .zine-parts button.active { background: var(--red); border-color: var(--red); }
+  .zine-parts a.download {
+    background: var(--gold); color: #1a1a1a; border: none; padding: 10px 16px;
+    font-size: 0.85rem; font-weight: 700; letter-spacing: 0.03em;
+  }
+  .zine-viewer { margin-top: 20px; display: none; }
+  .zine-viewer.show { display: block; }
+  .zine-viewer embed, .zine-viewer object { width: 100%; height: 70vh; border: 1px solid #333; background: #fff; }
+  .zine-viewer-note { font-size: 0.75rem; opacity: .6; margin-top: 8px; }
+</style>
+</head>
+<body class="dark">
+
+<header class="nociv-header">
+  <a href="index.html"><img class="torn-header-img" src="header.png" alt="NOCIV.CO — Nothing Of Civilization"></a>
+</header>
+
+<nav class="tabs">
+  <a href="about.html" class="img-tab"><img src="nav-about.png" alt="About"></a>
+  <a href="shop.html" class="img-tab text-tab-temp active">Shop Nociv</a>
+  <a href="creator-tools.html" class="img-tab text-tab-temp">Creator Tools</a>
+  <a href="community.html" class="img-tab"><img src="community-button.png" alt="Community"></a>
+</nav>
+
+<nav class="subnav">
+  <button data-panel="clothingPanel" class="active">Clothing</button>
+  <button data-panel="techPanel">Tech</button>
+  <button data-panel="zinesPanel">Zines</button>
+  <button data-panel="artPanel">Art</button>
+</nav>
+
+<!-- ===== CLOTHING ===== -->
+<div class="subpanel show" id="clothingPanel">
+  <div class="wrap">
+    <div class="flip-wrap">
+      <div>
+        <div class="album" id="albumEl">
+          <img class="album-frame album-cover-img" src="photo-album-cover.png" alt="Nociv photo album">
+          <img class="album-frame album-page-img" src="photo-album-page.png" alt="Nociv photo album, open">
+          <img class="album-slot" src="garment-1.jpg" alt="Garment" style="left:8%; top:12%; width:40%; height:35%;">
+          <img class="album-slot" src="garment-2.jpg" alt="Garment" style="left:52%; top:12%; width:40%; height:35%;">
+        </div>
+        <div class="album-hint">Tap the album to open it</div>
+      </div>
+
+      <div>
+        <img class="popup-card-img" src="pop-up-shop.png" alt="Pop-up shop — posting soon">
+        <div class="popup-note">
+          Enter your email or phone # to get notified of next location & time. Nothing else.
+        </div>
+        <form id="signupForm">
+          <input type="text" placeholder="Email or phone number" required>
+          <p class="signup-hint">Press Enter to join the list.</p>
+        </form>
+        <p id="signupConfirm" style="display:none; text-align:center; color:var(--green); font-weight:700;">
+          You're on the list.
+        </p>
+        <div style="margin-top:20px; font-size:0.9rem;">
+          <strong>Next Location:</strong> TBD<br>
+          <strong>Date:</strong> TBD<br>
+          <strong>Time:</strong> TBD
+        </div>
+      </div>
+    </div>
+
+    <div class="phone-showcase">
+      <div class="phone-frame-wrap">
+        <video controls poster="screen-printing-poster.jpg">
+          <source src="screen-printing-process.mp4" type="video/mp4">
+        </video>
+        <img class="phone-frame" src="phone-frame-art.png" alt="">
+      </div>
+      <p class="phone-showcase-label">Watch it get made — screen printing, start to finish.</p>
+    </div>
+
+    <img class="aura-graphic" src="aura-graphic.png" alt="Nociv clothing">
+
+    <a class="vinted-link" href="#" target="_blank" rel="noopener">
+      <img src="shop-online-vinted.png" alt="Shop Online on Vinted">
+    </a>
+  </div>
+</div>
+
+<!-- ===== TECH ===== -->
+<div class="subpanel" id="techPanel">
+  <div class="wrap">
+    <img src="tech-imagery-1.png" alt="The Attention Economy — Utopia/Dystopia. Make the rebellion of screens punk." style="width:100%; display:block;">
+    <div class="coming-soon" style="margin-top:30px;">
+      Community-voted devices and tech will be showcased here for purchase. Coming soon.
+    </div>
+  </div>
+</div>
+
+<!-- ===== ZINES ===== -->
+<div class="subpanel" id="zinesPanel">
+  <div class="wrap">
+    <div class="eyebrow">Free food for thought</div>
+    <p style="opacity:.7; max-width:500px; margin-bottom:30px;">
+      Zines, free to read and free to keep. No sign-up, no paywall.
+    </p>
+    <div id="zineList"></div>
+    <div class="coming-soon">More zines coming soon.</div>
+  </div>
+</div>
+
+<!-- ===== ART ===== -->
+<div class="subpanel" id="artPanel">
+  <div class="wrap">
+    <div class="coming-soon">
+      Original art from Jasilyn, for sale — coming soon.
+    </div>
+  </div>
+</div>
+
+<footer class="nociv-footer">NOCIV.CO — Nothing Of Civilization</footer>
+
+<!-- SUPABASE SCRIPTS -->
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="supabase.js"></script>
+
+<script>
+  const subnavBtns = document.querySelectorAll('.subnav button');
+  subnavBtns.forEach(btn => {
+    btn.addEventListener('click', () => {
+      subnavBtns.forEach(b => b.classList.remove('active'));
+      document.querySelectorAll('.subpanel').forEach(p => p.classList.remove('show'));
+      btn.classList.add('active');
+      document.getElementById(btn.dataset.panel).classList.add('show');
+    });
+  });
+
+  document.getElementById('albumEl').addEventListener('click', function(){
+    this.classList.toggle('open');
+  });
+
+  document.getElementById('signupForm').addEventListener('submit', async function(e){
+    e.preventDefault();
+    const input = this.querySelector('input');
+    const value = input.value.trim();
+    if (!value) return;
+
+    const { error } = await supabaseClient
+      .from('signups')
+      .insert([{ contact: value }]);
+
+    if (error) {
+      alert("Error saving: " + error.message);
+      return;
+    }
+
+    document.getElementById('signupConfirm').style.display = 'block';
+    input.disabled = true;
+  });
+
+  // ===== ZINE LIBRARY — plug and play =====
+  const zines = [
+    {
+      title: "How to Feel the Void of Life",
+      sub: "Zine",
+      parts: [
+        { label: "Zine 1", file: "how-to-feel-the-void-of-life.pdf" }
+      ]
+    }
+  ];
+
+  const zineList = document.getElementById('zineList');
+
+  zines.forEach((zine) => {
+    const wrap = document.createElement('div');
+    wrap.className = 'zine';
+
+    const h2 = document.createElement('h2');
+    h2.textContent = zine.title;
+    wrap.appendChild(h2);
+
+    const sub = document.createElement('div');
+    sub.className = 'zine-sub';
+    sub.textContent = zine.sub;
+    wrap.appendChild(sub);
+
+    const partsRow = document.createElement('div');
+    partsRow.className = 'zine-parts';
+
+    const viewer = document.createElement('div');
+    viewer.className = 'zine-viewer';
+    viewer.innerHTML = `
+      <embed src="" type="application/pdf">
+      <div class="zine-viewer-note">
+        If the reader doesn't load on your phone, use the download link
+        for that part instead — some mobile browsers don't preview PDFs inline.
+      </div>
+    `;
+
+    zine.parts.forEach((part) => {
+      const btn = document.createElement('button');
+      btn.textContent = 'Read ' + part.label;
+      btn.onclick = () => {
+        partsRow.querySelectorAll('button').forEach(b => b.classList.remove('active'));
+        btn.classList.add('active');
+        viewer.querySelector('embed').src = part.file;
+        viewer.classList.add('show');
+      };
+      partsRow.appendChild(btn);
+    });
+
+    const dl = document.createElement('a');
+    dl.className = 'download';
+    dl.href = zine.parts[0].file;
+    dl.download = '';
+    dl.textContent = 'Download';
+    partsRow.appendChild(dl);
+
+    wrap.appendChild(partsRow);
+    wrap.appendChild(viewer);
+    zineList.appendChild(wrap);
+  });
+</script>
+
+</body>
+</html>
