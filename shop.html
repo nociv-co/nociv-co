@@ -444,7 +444,10 @@
         : `<div class="no-photo">Photo coming soon</div>`;
 
       let actionHtml = '';
-      if (p.status === 'for_sale') {
+      const isSoldOut = p.inventory_count !== null && p.inventory_count <= 0;
+      if (p.status === 'for_sale' && isSoldOut) {
+        actionHtml = `<button class="card-action voted" disabled>Sold Out</button>`;
+      } else if (p.status === 'for_sale') {
         actionHtml = `<button class="card-action buy" data-action="buy" data-id="${p.id}">Buy — ${p.price ? '$' + p.price : 'Price TBD'}</button>`;
       } else {
         const alreadyVoted = votedIds.includes(p.id);
