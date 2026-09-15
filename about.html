@@ -5,7 +5,7 @@
 <meta charset="UTF-8">
 <title>About — NOCIV.CO</title>
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<link rel="stylesheet" href="style.css">
+<link rel="stylesheet" href="style.css?v=4.0">
 <style>
   .phase-track-btn {
     background: #e2e2e2;
@@ -19,9 +19,9 @@
     cursor: pointer;
   }
   .phase-track-btn.active {
-    background: var(--black);
-    color: var(--white);
-    border-color: var(--black);
+    background: var(--black, #000);
+    color: var(--white, #fff);
+    border-color: var(--black, #000);
   }
   .phase-scroll-wrap { position: relative; }
   .scroll-hint {
@@ -38,11 +38,12 @@
   <a href="index.html"><img class="torn-header-img" src="header.png" alt="NOCIV.CO — Nothing Of Civilization"></a>
 </header>
 
+<!-- Main Navigation Tabs using updated custom image assets -->
 <nav class="tabs">
-  <a href="about.html" class="img-tab text-tab-temp"><span>About</span></a>
-  <a href="shop.html" class="img-tab text-tab-temp"><span>Shop</span></a>
-  <a href="creator-tools.html" class="img-tab text-tab-temp"><span>Tools</span></a>
-  <a href="community.html" class="img-tab text-tab-temp"><span>Community</span></a>
+  <a href="about.html" class="img-tab active"><img src="nav-about.png" alt="About"></a>
+  <a href="shop.html" class="img-tab"><img src="nav-shop.png" alt="Shop"></a>
+  <a href="creator-tools.html" class="img-tab"><img src="nav-tools.png" alt="Tools"></a>
+  <a href="community.html" class="img-tab"><img src="community-button.png" alt="Community"></a>
 </nav>
   
 <div class="wrap" style="text-align:center; max-width:640px;">
@@ -139,8 +140,8 @@
   <div style="display:flex; gap:10px; margin:20px 0; flex-wrap:wrap;">
     <button class="phase-track-btn active" data-track="clothing">Clothing</button>
     <button class="phase-track-btn" data-track="tech">Tech</button>
-    <button class="phase-track-btn" data-track="books">Zines</button>
-    <button class="phase-track-btn" data-track="arthomies">Community</button>
+    <button class="phase-track-btn" data-track="zines">Zines</button>
+    <button class="phase-track-btn" data-track="community">Community</button>
   </div>
 
   <div class="phase-scroll-wrap">
@@ -233,7 +234,7 @@
       </div>
     </div>
 
-    <div id="phases-books" class="phase-track" style="overflow-x:auto; padding:20px 0; display:none;">
+    <div id="phases-zines" class="phase-track" style="overflow-x:auto; padding:20px 0; display:none;">
       <div style="display:flex; gap:24px; min-width:700px; padding:0 4px;">
 
         <div style="flex:1;">
@@ -272,7 +273,7 @@
       </div>
     </div>
 
-    <div id="phases-arthomies" class="phase-track" style="overflow-x:auto; padding:20px 0; display:none;">
+    <div id="phases-community" class="phase-track" style="overflow-x:auto; padding:20px 0; display:none;">
       <div style="display:flex; gap:24px; min-width:700px; padding:0 4px;">
 
         <div style="flex:1;">
@@ -393,15 +394,16 @@
 <footer class="nociv-footer">NOCIV.CO — Nothing Of Civilization<br>© 2023–2026 NOCIV.CO. Established 2023. All rights reserved.</footer>
 
 <script>
-  // ===== PHASE TRACKS — plug and play =====
-  // Add a new track by: 1) adding a button here with data-track="yourkey"
-  // 2) adding a matching <div id="phases-yourkey" class="phase-track">...</div> above
+  // Timeline Track Switcher Script
   document.querySelectorAll('.phase-track-btn').forEach(btn => {
     btn.addEventListener('click', () => {
       document.querySelectorAll('.phase-track-btn').forEach(b => b.classList.remove('active'));
       document.querySelectorAll('.phase-track').forEach(t => t.style.display = 'none');
       btn.classList.add('active');
-      document.getElementById('phases-' + btn.dataset.track).style.display = 'block';
+      const targetTrack = document.getElementById('phases-' + btn.dataset.track);
+      if (targetTrack) {
+        targetTrack.style.display = 'block';
+      }
     });
   });
 </script>
