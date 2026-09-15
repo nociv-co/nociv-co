@@ -53,7 +53,7 @@ a { color: inherit; text-decoration: none; }
 }
 
 /* ============================================
-   FLAT MANILA FOLDER NAVIGATION (COHESIVE NOCIV STYLE)
+   FLAT MANILA FOLDER NAVIGATION (NOCIV STYLE)
    ============================================ */
 
 /* Main tab row container */
@@ -61,7 +61,7 @@ nav.tabs {
   display: flex;
   justify-content: center;
   align-items: flex-end;
-  gap: 6px;
+  gap: 4px;
   padding: 24px 16px 0 16px;
   max-width: var(--max);
   margin: 0 auto;
@@ -73,7 +73,7 @@ nav.tabs {
 /* Individual Folder Tab shape */
 nav.tabs a.img-tab {
   position: relative;
-  background: #e5cb9b; /* Manila folder base */
+  background: #e5cb9b; /* Standard Manila folder base */
   color: #1a1a1a !important;
   font-family: Arial, Helvetica, sans-serif;
   font-weight: 700;
@@ -82,7 +82,7 @@ nav.tabs a.img-tab {
   font-size: 0.85rem;
   text-align: center;
   padding: 12px 18px 10px 18px;
-  border: 1.5px solid #a88e63; /* Subtle folder edge shade */
+  border: 1.5px solid #a88e63;
   border-bottom: none;
   border-radius: 6px 6px 0 0;
   box-shadow: none;
@@ -96,7 +96,7 @@ nav.tabs a.img-tab {
   transform: skewX(8deg);
 }
 
-/* Counter-skew inner span/text so Arial stays crisp & vertical */
+/* Counter-skew inner text/images */
 nav.tabs a.img-tab > span,
 nav.tabs a.img-tab img {
   transform: skewX(-8deg);
@@ -110,24 +110,15 @@ nav.tabs a.img-tab:hover {
   background: #f0dbb3;
 }
 
-/* Selected Tab: Slightly darker manila shade to show active state */
+/* Selected Tab: Melts seamlessly into the subnav panel */
 nav.tabs a.img-tab.active {
-  background: #cbb183; /* Pressed/selected manila shade */
+  background: #cbb183; /* Darker pressed tab tone */
   color: #000000 !important;
   border-color: #987d52;
-  border-bottom: 2px solid #e5cb9b; /* Seamlessly joins the subnav */
+  border-bottom: 2px solid #cbb183; /* Matches tab fill to seamlessly fuse down */
   margin-bottom: -2px;
   z-index: 12;
   font-weight: 900;
-}
-
-/* Temporary text label support */
-nav.tabs a.img-tab.text-tab-temp {
-  font-weight: 700;
-  letter-spacing: 0.05em;
-  text-transform: uppercase;
-  font-size: 0.85rem;
-  text-align: center;
 }
 
 /* ---------- SUB-NAV: Manila Folder Body Panel ---------- */
@@ -137,16 +128,16 @@ nav.tabs a.img-tab.text-tab-temp {
   display: flex;
   overflow-x: auto;
   gap: 8px;
-  padding: 10px 16px;
-  background: #e5cb9b; /* Same Manila background as folder body */
-  border: 1.5px solid #a88e63; /* Matching subtle outline */
-  margin-top: -2px; /* Seamlessly fuses under active tab */
+  padding: 12px 16px;
+  background: #e5cb9b; /* Manila folder interior base */
+  border: 1.5px solid #a88e63;
+  margin-top: -2px; /* Pulls up under active top tab */
   box-shadow: none;
   min-height: 52px;
   align-items: center;
 }
 
-/* Dark mode adjustment for Manila Panel */
+/* Dark mode folder overrides */
 body.dark nav.tabs a.img-tab {
   background: #2d2820;
   color: #e5cb9b !important;
@@ -155,19 +146,19 @@ body.dark nav.tabs a.img-tab {
 body.dark nav.tabs a.img-tab.active {
   background: #3e382e;
   border-color: #584f40;
-  border-bottom: 2px solid #2d2820;
+  border-bottom: 2px solid #3e382e;
 }
 body.dark .subnav {
   background: #2d2820;
   border-color: #443c30;
 }
 
-/* Boxy Sub-Tab buttons with soft Manila borders */
+/* Sub-Tab buttons */
 .subnav button {
   flex: 0 0 auto;
-  background: #f0dbb3; /* Slightly lighter manila button */
+  background: #f0dbb3; /* Slightly lighter inner folder card */
   color: #1a1a1a;
-  border: 1.5px solid #a88e63; /* Subtle folder outline */
+  border: 1.5px solid #a88e63;
   border-radius: 2px;
   font-family: Arial, Helvetica, sans-serif;
   font-size: 0.75rem;
@@ -178,7 +169,6 @@ body.dark .subnav {
   white-space: nowrap;
   cursor: pointer;
   transition: all 0.15s ease;
-  box-shadow: none;
 }
 
 .subnav button:hover {
@@ -186,12 +176,13 @@ body.dark .subnav {
   color: #000000;
 }
 
-/* Selected sub-tab: NOCIV Red */
+/* Active Sub-Tab */
 .subnav button.active {
-  background: var(--red); /* Accent Red */
+  background: var(--red);
   color: #ffffff;
   border: 1.5px solid #b83c2c;
   font-weight: 900;
+}
 }
 .subpanel { display: none; }
 .subpanel.show, .subpanel.active { display: block; }
