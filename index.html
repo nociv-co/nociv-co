@@ -7,7 +7,7 @@
 <meta name="description" content="Nociv Enterprise — representing Black America, no ads, no algorithm, just being human. Buy. Build. Share.">
 <link rel="stylesheet" href="style.css?v=3.0">
 <style>
-  /* Full-width banner for Arizona landing graphic */
+  /* Wall-to-wall banner for Arizona landing graphic */
   .landing-banner-full {
     width: 100%;
     margin: 0 auto;
@@ -18,7 +18,7 @@
     height: auto;
   }
 
-  /* Notebook container for Buy. Build. Share. */
+  /* Centered notebook graphic container */
   .landing-notebook {
     max-width: 640px;
     margin: 0 auto;
@@ -27,6 +27,7 @@
   .landing-notebook img {
     width: 100%;
     display: block;
+    height: auto;
   }
 
   .landing-about {
@@ -37,8 +38,8 @@
   }
   .landing-about a {
     display: block;
-    background: var(--grey-dark);
-    color: var(--white);
+    background: var(--grey-dark, #444);
+    color: var(--white, #f2f2f2);
     font-weight: 700;
     letter-spacing: 0.05em;
     text-transform: uppercase;
@@ -48,7 +49,7 @@
     transition: background 0.15s ease;
   }
   .landing-about a:hover {
-    background: var(--gold);
+    background: var(--gold, #d1a13e);
     color: #1a1a1a;
   }
 </style>
@@ -59,19 +60,20 @@
   <img class="torn-header-img" src="header.png" alt="NOCIV.CO — Nothing Of Civilization">
 </header>
 
+<!-- Main Nav matching your repository image tab assets -->
 <nav class="tabs">
-  <a href="about.html" class="img-tab text-tab-temp"><span>About</span></a>
-  <a href="shop.html" class="img-tab text-tab-temp"><span>Shop</span></a>
-  <a href="creator-tools.html" class="img-tab text-tab-temp"><span>Tools</span></a>
-  <a href="community.html" class="img-tab text-tab-temp"><span>Community</span></a>
+  <a href="about.html" class="img-tab"><img src="nav-about.png" alt="About"></a>
+  <a href="shop.html" class="img-tab"><img src="nav-clothing.png" alt="Shop"></a>
+  <a href="creator-tools.html" class="img-tab"><img src="nav-tech.png" alt="Tools"></a>
+  <a href="community.html" class="img-tab"><img src="community-button.png" alt="Community"></a>
 </nav>
 
-<!-- Full-width Arizona Creator Brand Graphic (Wall-to-Wall) -->
+<!-- Wall-to-Wall Arizona Graphic Banner -->
 <div class="landing-banner-full">
-  <img src="az_landing.png" alt="Arizona Based Creator Brand That Uses Digital Space to Set The Condition for Physical Reality.">
+  <img src="arizona-based.png" alt="Arizona Based Creator Brand That Uses Digital Space to Set The Condition for Physical Reality.">
 </div>
 
-<!-- Centered Notebook Graphic -->
+<!-- Centered Buy/Build/Share Graphic -->
 <div class="landing-notebook">
   <img src="buy-build-share.png" alt="Buy. Build. Share. Representing Black America. No socials, algorithm, or ads, just being human.">
 </div>
@@ -81,6 +83,8 @@
 </div>
 
 <footer class="nociv-footer">NOCIV.CO — Nothing Of Civilization</footer>
+
+<script src="supabase.js"></script>
 
 </body>
 </html>
