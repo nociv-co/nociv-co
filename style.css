@@ -183,7 +183,7 @@ body.dark .subnav {
   border: 1.5px solid #b83c2c;
   font-weight: 900;
 }
-}
+
 .subpanel { display: none; }
 .subpanel.show, .subpanel.active { display: block; }
 
