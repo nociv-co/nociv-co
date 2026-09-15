@@ -96,7 +96,7 @@ nav.tabs a.img-tab.text-tab-temp {
 }
 
 /* ============================================
-   MANILA FOLDER NAVIGATION (Updated)
+   FLAT MANILA FOLDER NAVIGATION (NOCIV STYLE)
    ============================================ */
 
 /* Main tab row container */
@@ -110,65 +110,59 @@ nav.tabs {
   margin: 0 auto;
   position: relative;
   z-index: 10;
+  font-family: Arial, Helvetica, sans-serif;
 }
 
-/* Individual Manila Tab shape */
+/* Individual Folder Tab shape */
 nav.tabs a.img-tab {
   position: relative;
-  background: linear-gradient(180deg, #eedab2 0%, #e5cb9b 100%);
-  color: #2b2218 !important;
-  font-weight: 800;
-  letter-spacing: 0.06em;
+  background: #e5cb9b; /* Flat Manila base */
+  color: #1a1a1a !important;
+  font-family: Arial, Helvetica, sans-serif;
+  font-weight: 700;
+  letter-spacing: 0.05em;
   text-transform: uppercase;
-  font-size: 0.82rem;
+  font-size: 0.85rem;
   text-align: center;
-  padding: 12px 20px 10px 20px;
-  border: 1px solid #c4ab7c;
+  padding: 12px 18px 10px 18px;
+  border: 2px solid #000000; /* Flat black outline */
   border-bottom: none;
-  border-radius: 8px 8px 0 0;
-  box-shadow: 0 -3px 8px rgba(0, 0, 0, 0.15);
-  transition: all 0.2s cubic-bezier(0.2, 0, 0, 1);
+  border-radius: 6px 6px 0 0;
+  box-shadow: none; /* Removed all shadows */
+  transition: background 0.15s ease;
   display: flex;
   align-items: center;
   justify-content: center;
   flex: 1 1 120px;
   min-width: 100px;
   text-decoration: none;
-  /* Angled folder tab effect */
   transform: skewX(8deg);
 }
 
-/* Counter-skew the text/image so content stays straight */
-nav.tabs a.img-tab > * {
+/* Counter-skew inner span/text so Arial stays crisp & vertical */
+nav.tabs a.img-tab > span,
+nav.tabs a.img-tab img {
   transform: skewX(-8deg);
+  display: inline-block;
 }
 
 /* Hover state */
 nav.tabs a.img-tab:hover {
-  background: linear-gradient(180deg, #f5e4c4 0%, #ebd3a5 100%);
-  transform: skewX(8deg) translateY(-3px);
-  box-shadow: 0 -5px 12px rgba(0, 0, 0, 0.25);
+  background: #f0dbb3;
 }
 
-/* Active tab state */
+/* Active tab state: Turns Gray and connects to subnav */
 nav.tabs a.img-tab.active {
-  background: linear-gradient(180deg, #f2e3c6 0%, #e8d0a2 100%);
-  color: #1a140e !important;
-  border-color: #b59b68;
-  border-bottom: 2px solid #e8d0a2; /* Fuses into subnav panel */
-  margin-bottom: -1px;
+  background: #555555; /* Selected tab turns Gray */
+  color: #ffffff !important;
+  border-color: #000000;
+  border-bottom: 2px solid #555555; /* Seamless transition into subnav */
+  margin-bottom: -2px;
   z-index: 12;
   font-weight: 900;
 }
 
-/* Images inside tabs if swapped back later */
-nav.tabs a.img-tab img {
-  max-width: 100%;
-  max-height: 28px;
-  transform: skewX(-8deg);
-}
-
-/* ---------- SUB-NAV: Manila Folder Body Panel ---------- */
+/* ---------- SUB-NAV: Always Visible Bar ---------- */
 .subnav {
   position: relative;
   z-index: 5;
@@ -176,58 +170,54 @@ nav.tabs a.img-tab img {
   overflow-x: auto;
   gap: 8px;
   padding: 12px 18px;
-  background: #e8d0a2; /* Same tone as active tab bottom */
-  border-top: 1px solid #b59b68;
-  border-bottom: 2px solid #9c8352;
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
-  margin-top: -1px; /* Fuse directly under tabs */
+  background: #555555; /* Matches active gray tab */
+  border: 2px solid #000000;
+  margin-top: -2px; /* Fuse under active tab */
+  box-shadow: none; /* Flat design */
+  min-height: 52px; /* Guarantees bar never disappears */
+  align-items: center;
 }
 
-/* Dark mode adjustment for Manila Subnav when used inside dark pages */
-body.dark .subnav {
-  background: #2a2824;
-  border-top: 1px solid #524739;
-  border-bottom: 2px solid #141311;
-}
-
+/* Dark mode adjustment for gray panel */
 body.dark nav.tabs a.img-tab.active {
-  background: linear-gradient(180deg, #3d372e 0%, #2a2824 100%);
-  color: #f2e3c6 !important;
-  border-color: #524739;
-  border-bottom: 2px solid #2a2824;
+  background: #333333;
+  border-bottom: 2px solid #333333;
+}
+body.dark .subnav {
+  background: #333333;
 }
 
-/* Subnav buttons */
+/* Boxy Sub-Tab buttons with black outlines */
 .subnav button {
   flex: 0 0 auto;
-  background: #383229;
-  color: #f0e6d2;
-  border: 1px solid #524739;
+  background: #ffffff;
+  color: #000000;
+  border: 2px solid #000000; /* Boxy black outline */
+  border-radius: 0px; /* Sharp boxy corners */
+  font-family: Arial, Helvetica, sans-serif;
   font-size: 0.75rem;
+  font-weight: 700;
   letter-spacing: 0.05em;
   text-transform: uppercase;
   padding: 8px 16px;
   white-space: nowrap;
   cursor: pointer;
-  border-radius: 4px;
-  font-weight: 700;
-  transition: all 0.2s ease;
+  transition: all 0.15s ease;
+  box-shadow: none;
 }
 
 .subnav button:hover {
-  background: var(--gold);
-  color: #1a1a1a;
-  border-color: var(--gold);
+  background: #e0e0e0;
+  color: #000000;
 }
 
+/* Selected sub-tab: Turns Red with black outline */
 .subnav button.active {
-  background: var(--red);
-  color: #fff;
-  border-color: var(--red);
-  font-weight: 800;
-  box-shadow: 0 2px 6px rgba(217, 79, 61, 0.4);
+  background: var(--red); /* Turns Red */
+  color: #ffffff;
+  border: 2px solid #000000;
+  font-weight: 900;
 }
-
 .subpanel { display: none; }
 .subpanel.show, .subpanel.active { display: block; }
 
