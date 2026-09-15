@@ -63,6 +63,59 @@
   .aura-graphic { display: block; width: 100%; max-width: 500px; margin: 40px auto 20px; }
   .vinted-link img { display: block; width: 100%; max-width: 500px; margin: 0 auto; }
 
+  /* --- Product Catalog --- */
+  .catalog-section { margin-bottom: 50px; }
+  .catalog-price-row {
+    display: flex; gap: 8px; flex-wrap: wrap; justify-content: center; margin-bottom: 16px;
+  }
+  .catalog-price-row button {
+    background: #111; color: #ddd; border: 1px solid #333; padding: 7px 14px;
+    font-size: 0.8rem; cursor: pointer; white-space: nowrap;
+  }
+  .catalog-price-row button.active { background: #fff; color: #111; border-color: #fff; font-weight: 700; }
+
+  .catalog-layout { display: flex; gap: 16px; align-items: flex-start; }
+  .catalog-category-rail {
+    display: flex; flex-direction: column; gap: 8px; flex: 0 0 110px;
+  }
+  .catalog-category-rail button {
+    background: var(--grey-dark); color: #fff; border: 1px solid #333;
+    padding: 12px 8px; font-size: 0.75rem; letter-spacing: 0.03em; text-transform: uppercase;
+    cursor: pointer; text-align: center;
+  }
+  .catalog-category-rail button.active { background: var(--red); }
+
+  .catalog-swipe {
+    flex: 1; display: flex; gap: 14px; overflow-x: auto; padding-bottom: 10px;
+    scroll-snap-type: x mandatory; -webkit-overflow-scrolling: touch;
+  }
+  .catalog-card {
+    flex: 0 0 220px; scroll-snap-align: start; background: #111; border: 1px solid #333;
+    border-radius: 6px; overflow: hidden; color: #eee; text-align: left;
+  }
+  .catalog-card img { width: 100%; height: 220px; object-fit: cover; display: block; }
+  .catalog-card .no-photo {
+    width: 100%; height: 220px; background: #1c1c1c; display: flex;
+    align-items: center; justify-content: center; font-size: 0.75rem; opacity: .5;
+  }
+  .catalog-card .card-body { padding: 14px; }
+  .catalog-card .card-name { font-weight: 900; font-size: 0.95rem; margin-bottom: 4px; }
+  .catalog-card .card-meta { font-size: 0.75rem; opacity: .6; margin-bottom: 10px; }
+  .catalog-card .card-badge {
+    display: inline-block; font-size: 0.65rem; letter-spacing: 0.05em; text-transform: uppercase;
+    padding: 3px 8px; margin-bottom: 8px; font-weight: 700;
+  }
+  .catalog-card .card-badge.for-sale { background: var(--green); color: #fff; }
+  .catalog-card .card-badge.coming-soon { background: var(--gold); color: #1a1a1a; }
+  .catalog-card button.card-action {
+    width: 100%; padding: 10px; border: none; font-weight: 900; letter-spacing: 0.05em;
+    text-transform: uppercase; font-size: 0.8rem; cursor: pointer;
+  }
+  .catalog-card button.card-action.buy { background: var(--red); color: #fff; }
+  .catalog-card button.card-action.vote { background: var(--gold); color: #1a1a1a; }
+  .catalog-card button.card-action.voted { background: #333; color: #999; cursor: default; }
+  .catalog-empty { opacity: .5; font-style: italic; padding: 20px; text-align: center; }
+
   /* Zine reader (from the old books.html Buy tab) */
   .zine {
     border: 1px solid #333;
@@ -94,13 +147,15 @@
   <a href="index.html"><img class="torn-header-img" src="header.png" alt="NOCIV.CO — Nothing Of Civilization"></a>
 </header>
 
+<!-- MAIN TABS (Using your new Shop & Tools image buttons) -->
 <nav class="tabs">
-  <a href="about.html" class="img-tab text-tab-temp">About</a>
-  <a href="shop.html" class="img-tab text-tab-temp active">Shop Nociv</a>
-  <a href="creator-tools.html" class="img-tab text-tab-temp">Creator Tools</a>
-  <a href="community.html" class="img-tab text-tab-temp">Community</a>
+  <a href="about.html" class="img-tab"><img src="nav-about.png" alt="About"></a>
+  <a href="shop.html" class="img-tab active"><img src="nav-shop.png" alt="Shop"></a>
+  <a href="creator-tools.html" class="img-tab"><img src="nav-tools.png" alt="Tools"></a>
+  <a href="community.html" class="img-tab"><img src="community-button.png" alt="Community"></a>
 </nav>
 
+<!-- SUB-NAV: switches between panels on this page -->
 <nav class="subnav">
   <button data-panel="clothingPanel" class="active">Clothing</button>
   <button data-panel="techPanel">Tech</button>
@@ -111,17 +166,34 @@
 <!-- ===== CLOTHING ===== -->
 <div class="subpanel show" id="clothingPanel">
   <div class="wrap">
-    <div class="flip-wrap">
-      <div>
-        <div class="album" id="albumEl">
-          <img class="album-frame album-cover-img" src="photo-album-cover.png" alt="Nociv photo album">
-          <img class="album-frame album-page-img" src="photo-album-page.png" alt="Nociv photo album, open">
-          <img class="album-slot" src="garment-1.jpg" alt="Garment" style="left:8%; top:12%; width:40%; height:35%;">
-          <img class="album-slot" src="garment-2.jpg" alt="Garment" style="left:52%; top:12%; width:40%; height:35%;">
-        </div>
-        <div class="album-hint">Tap the album to open it</div>
+
+    <!-- ===== PRODUCT CATALOG ===== -->
+    <div class="catalog-section">
+      <h2 style="text-align:center; letter-spacing:2px;">SHOP THE COLLECTION</h2>
+
+      <div class="catalog-price-row" id="priceFilterRow">
+        <button class="active" data-max="all">All</button>
+        <button data-max="5">$5</button>
+        <button data-max="15">$15</button>
+        <button data-max="25">$25</button>
+        <button data-max="35">$35</button>
+        <button data-max="45">$45</button>
       </div>
 
+      <div class="catalog-layout">
+        <div class="catalog-category-rail" id="categoryRail">
+          <button class="active" data-cat="all">All</button>
+          <button data-cat="Accessories">Accessories</button>
+          <button data-cat="T-Shirts">T-Shirts</button>
+          <button data-cat="Pants">Pants</button>
+        </div>
+        <div class="catalog-swipe" id="catalogSwipe">
+          <p class="catalog-empty">Loading products...</p>
+        </div>
+      </div>
+    </div>
+
+    <div class="flip-wrap">
       <div>
         <img class="popup-card-img" src="pop-up-shop.png" alt="Pop-up shop — posting soon">
         <div class="popup-note">
@@ -139,6 +211,16 @@
           <strong>Date:</strong> TBD<br>
           <strong>Time:</strong> TBD
         </div>
+      </div>
+
+      <div>
+        <div class="album" id="albumEl">
+          <img class="album-frame album-cover-img" src="photo-album-cover.png" alt="Nociv photo album">
+          <img class="album-frame album-page-img" src="photo-album-page.png" alt="Nociv photo album, open">
+          <img class="album-slot" src="garment-1.jpg" alt="Garment" style="left:8%; top:12%; width:40%; height:35%;">
+          <img class="album-slot" src="garment-2.jpg" alt="Garment" style="left:52%; top:12%; width:40%; height:35%;">
+        </div>
+        <div class="album-hint">Tap the album to open it</div>
       </div>
     </div>
 
@@ -293,6 +375,159 @@
     wrap.appendChild(viewer);
     zineList.appendChild(wrap);
   });
+
+  // ===== PRODUCT CATALOG =====
+  let activeCategory = 'all';
+  let activeMaxPrice = 'all';
+  const catalogSwipe = document.getElementById('catalogSwipe');
+
+  function getVotedIds() {
+    return JSON.parse(localStorage.getItem('votedProductIds') || '[]');
+  }
+  function markVoted(id) {
+    const ids = getVotedIds();
+    if (!ids.includes(id)) {
+      ids.push(id);
+      localStorage.setItem('votedProductIds', JSON.stringify(ids));
+    }
+  }
+
+  document.querySelectorAll('#categoryRail button').forEach(btn => {
+    btn.addEventListener('click', () => {
+      document.querySelectorAll('#categoryRail button').forEach(b => b.classList.remove('active'));
+      btn.classList.add('active');
+      activeCategory = btn.dataset.cat;
+      renderCatalog();
+    });
+  });
+
+  document.querySelectorAll('#priceFilterRow button').forEach(btn => {
+    btn.addEventListener('click', () => {
+      document.querySelectorAll('#priceFilterRow button').forEach(b => b.classList.remove('active'));
+      btn.classList.add('active');
+      activeMaxPrice = btn.dataset.max;
+      renderCatalog();
+    });
+  });
+
+  async function renderCatalog() {
+    catalogSwipe.innerHTML = '<p class="catalog-empty">Loading products...</p>';
+
+    let query = supabaseClient
+      .from('products_public')
+      .select('*')
+      .order('created_at', { ascending: false });
+
+    if (activeCategory !== 'all') query = query.eq('category', activeCategory);
+    if (activeMaxPrice !== 'all') query = query.lte('price', parseFloat(activeMaxPrice));
+
+    const { data: products, error } = await query;
+
+    if (error || !products || products.length === 0) {
+      catalogSwipe.innerHTML = '<p class="catalog-empty">Nothing here yet — check back soon.</p>';
+      return;
+    }
+
+    // Vote counts, fetched separately since product_votes isn't part of the public view
+    const { data: votes } = await supabaseClient.from('product_votes').select('product_id');
+    const voteCounts = {};
+    (votes || []).forEach(v => { voteCounts[v.product_id] = (voteCounts[v.product_id] || 0) + 1; });
+    const votedIds = getVotedIds();
+
+    catalogSwipe.innerHTML = '';
+    products.forEach(p => {
+      const card = document.createElement('div');
+      card.className = 'catalog-card';
+
+      const mediaHtml = p.image_url
+        ? `<img src="${p.image_url}" alt="${p.name}">`
+        : `<div class="no-photo">Photo coming soon</div>`;
+
+      let actionHtml = '';
+      if (p.status === 'for_sale') {
+        actionHtml = `<button class="card-action buy" data-action="buy" data-id="${p.id}">Buy — ${p.price ? '$' + p.price : 'Price TBD'}</button>`;
+      } else {
+        const alreadyVoted = votedIds.includes(p.id);
+        const count = voteCounts[p.id] || 0;
+        actionHtml = `<button class="card-action ${alreadyVoted ? 'voted' : 'vote'}" data-action="vote" data-id="${p.id}" ${alreadyVoted ? 'disabled' : ''}>
+          ${alreadyVoted ? 'Voted ✓' : 'Vote for this'} (${count})
+        </button>`;
+      }
+
+      card.innerHTML = `
+        ${mediaHtml}
+        <div class="card-body">
+          <div class="card-badge ${p.status === 'for_sale' ? 'for-sale' : 'coming-soon'}">
+            ${p.status === 'for_sale' ? 'For Sale' : 'Coming Soon'}
+          </div>
+          <div class="card-name">${p.name}</div>
+          <div class="card-meta">${p.category}</div>
+          ${actionHtml}
+        </div>
+      `;
+      catalogSwipe.appendChild(card);
+    });
+
+    catalogSwipe.querySelectorAll('[data-action="buy"]').forEach(btn => {
+      btn.addEventListener('click', async () => {
+        const originalText = btn.textContent;
+        btn.disabled = true;
+        btn.textContent = 'Redirecting to checkout...';
+        try {
+          const res = await fetch(
+            'https://vscombrgcdtrfndqyugb.supabase.co/functions/v1/create-checkout-session',
+            {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({ productId: btn.dataset.id })
+            }
+          );
+          const result = await res.json();
+          if (result.url) {
+            window.location.href = result.url;
+          } else {
+            alert(result.error || 'Something went wrong starting checkout.');
+            btn.disabled = false;
+            btn.textContent = originalText;
+          }
+        } catch (err) {
+          alert('Could not reach checkout. Please try again in a moment.');
+          btn.disabled = false;
+          btn.textContent = originalText;
+        }
+      });
+    });
+
+    catalogSwipe.querySelectorAll('[data-action="vote"]').forEach(btn => {
+      btn.addEventListener('click', async () => {
+        const id = btn.dataset.id;
+        let fingerprint = localStorage.getItem('voterFingerprint');
+        if (!fingerprint) {
+          fingerprint = 'v-' + Date.now() + '-' + Math.random().toString(36).slice(2);
+          localStorage.setItem('voterFingerprint', fingerprint);
+        }
+        const { error } = await supabaseClient
+          .from('product_votes')
+          .insert([{ product_id: id, voter_fingerprint: fingerprint }]);
+        if (!error) {
+          markVoted(parseInt(id));
+          await renderCatalog();
+        }
+      });
+    });
+  }
+  renderCatalog();
+
+  // Show a confirmation banner if returning from Stripe checkout
+  (function handleCheckoutReturn(){
+    const params = new URLSearchParams(window.location.search);
+    const status = params.get('checkout');
+    if (status === 'success') {
+      alert('Thank you! Your order went through. We\'ll be in touch about pickup or shipping.');
+    } else if (status === 'cancelled') {
+      alert('Checkout was cancelled — nothing was charged.');
+    }
+  })();
 </script>
 
 </body>
