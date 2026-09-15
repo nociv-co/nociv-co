@@ -126,6 +126,11 @@ nav.tabs a.img-tab.text-tab-temp {
 .subpanel { display: none; }
 .subpanel.show, .subpanel.active { display: block; }
 
+/* Community's Stall Wall / Directory / Share panels use this class name —
+   same show/hide behavior as .subpanel, just a different class on that page. */
+.tab-panel { display: none; }
+.tab-panel.active { display: block; }
+
 /* ---------- NESTED SUB-TABS (e.g. Directory: Verified / Opportunity Board) ----------
    Same visual language as .subnav, but not sticky and narrower — for a second
    level of tabs living inside a panel rather than pinned to page scroll. */
