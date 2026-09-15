@@ -1,0 +1,269 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Admin — NOCIV.CO</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<link rel="stylesheet" href="style.css">
+<style>
+  .admin-wrap { max-width: 700px; margin: 0 auto; padding: 30px 20px 60px; }
+  .admin-login { max-width: 360px; margin: 60px auto; }
+  .admin-login input {
+    width: 100%; padding: 12px; margin-bottom: 12px; border: 1px solid #999; font-size: 1rem;
+    box-sizing: border-box;
+  }
+  .admin-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 24px; }
+  .logout-btn {
+    background: none; border: 1px solid var(--grey-dark); color: var(--ink);
+    padding: 8px 14px; font-size: 0.8rem; cursor: pointer; letter-spacing: 0.03em;
+  }
+  .admin-form { border: 1px solid var(--grey-dark); padding: 20px; margin-bottom: 40px; }
+  .admin-form label { display: block; font-size: 0.8rem; opacity: .7; margin: 12px 0 4px; }
+  .admin-form input, .admin-form select {
+    width: 100%; padding: 10px; border: 1px solid #999; font-size: 1rem; box-sizing: border-box;
+  }
+  .admin-form-row { display: flex; gap: 12px; }
+  .admin-form-row > div { flex: 1; }
+  .admin-submit {
+    width: 100%; margin-top: 16px; background: var(--red); color: #fff; border: none;
+    padding: 12px; font-weight: 900; letter-spacing: 0.05em; text-transform: uppercase; cursor: pointer;
+  }
+  .admin-error { color: var(--red); font-size: 0.85rem; margin-top: 8px; display: none; }
+  .admin-note { color: var(--green); font-size: 0.85rem; margin-top: 8px; display: none; }
+
+  .product-row {
+    display: flex; align-items: center; gap: 14px; border: 1px solid #ccc;
+    padding: 12px; margin-bottom: 10px; background: #fff;
+  }
+  .product-row img { width: 56px; height: 56px; object-fit: cover; border: 1px solid #ccc; }
+  .product-row .no-img {
+    width: 56px; height: 56px; background: #eee; border: 1px solid #ccc;
+    display: flex; align-items: center; justify-content: center; font-size: 0.6rem; opacity: .5; text-align: center;
+  }
+  .product-row .info { flex: 1; }
+  .product-row .name { font-weight: 700; }
+  .product-row .meta { font-size: 0.8rem; opacity: .7; }
+  .product-row .votes { font-size: 0.8rem; font-weight: 700; color: var(--gold); }
+  .product-row .del-btn {
+    background: none; border: 1px solid var(--red); color: var(--red);
+    padding: 6px 10px; font-size: 0.75rem; cursor: pointer;
+  }
+</style>
+</head>
+<body>
+
+<header class="nociv-header">
+  <a href="index.html"><img class="torn-header-img" src="header.png" alt="NOCIV.CO — Nothing Of Civilization"></a>
+</header>
+
+<div class="admin-wrap">
+
+  <!-- LOGIN -->
+  <div id="loginBox" class="admin-login">
+    <h2 style="text-align:center;">Admin Login</h2>
+    <input type="email" id="loginEmail" placeholder="Email">
+    <input type="password" id="loginPassword" placeholder="Password">
+    <button class="admin-submit" id="loginBtn">Log In</button>
+    <p class="admin-error" id="loginError">Wrong email or password.</p>
+  </div>
+
+  <!-- DASHBOARD (hidden until logged in) -->
+  <div id="dashboard" style="display:none;">
+    <div class="admin-header">
+      <h2 style="margin:0;">Product Dashboard</h2>
+      <button class="logout-btn" id="logoutBtn">Log Out</button>
+    </div>
+
+    <div class="admin-form">
+      <h3 style="margin-top:0;">Add a Product</h3>
+      <label for="pName">Name</label>
+      <input type="text" id="pName" placeholder="e.g. Ash Grey Tee">
+
+      <div class="admin-form-row">
+        <div>
+          <label for="pPrice">Price ($, leave blank if unknown yet)</label>
+          <input type="number" id="pPrice" step="0.01" placeholder="28.00">
+        </div>
+        <div>
+          <label for="pCost">Your cost ($ — private, never shown publicly)</label>
+          <input type="number" id="pCost" step="0.01" placeholder="11.00">
+        </div>
+      </div>
+
+      <div class="admin-form-row">
+        <div>
+          <label for="pCategory">Category</label>
+          <select id="pCategory">
+            <option>Accessories</option>
+            <option>T-Shirts</option>
+            <option>Pants</option>
+          </select>
+        </div>
+        <div>
+          <label for="pStatus">Status</label>
+          <select id="pStatus">
+            <option value="for_sale">For Sale</option>
+            <option value="coming_soon">Coming Soon</option>
+          </select>
+        </div>
+      </div>
+
+      <label for="pImage">Photo</label>
+      <input type="file" id="pImage" accept="image/*">
+
+      <button class="admin-submit" id="addProductBtn">Add Product</button>
+      <p class="admin-note" id="addConfirm">Product added.</p>
+      <p class="admin-error" id="addError"></p>
+    </div>
+
+    <h3>Your Products</h3>
+    <div id="productList"></div>
+  </div>
+
+</div>
+
+<footer class="nociv-footer">NOCIV.CO — Nothing Of Civilization</footer>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="supabase.js"></script>
+<script>
+  const loginBox = document.getElementById('loginBox');
+  const dashboard = document.getElementById('dashboard');
+
+  // ===== AUTH =====
+  async function checkSession() {
+    const { data } = await supabaseClient.auth.getSession();
+    if (data.session) {
+      loginBox.style.display = 'none';
+      dashboard.style.display = 'block';
+      loadProducts();
+    } else {
+      loginBox.style.display = 'block';
+      dashboard.style.display = 'none';
+    }
+  }
+  checkSession();
+
+  document.getElementById('loginBtn').onclick = async () => {
+    const email = document.getElementById('loginEmail').value.trim();
+    const password = document.getElementById('loginPassword').value;
+    const { error } = await supabaseClient.auth.signInWithPassword({ email, password });
+    const errEl = document.getElementById('loginError');
+    if (error) {
+      errEl.textContent = error.message;
+      errEl.style.display = 'block';
+      return;
+    }
+    errEl.style.display = 'none';
+    await checkSession();
+  };
+
+  document.getElementById('logoutBtn').onclick = async () => {
+    await supabaseClient.auth.signOut();
+    await checkSession();
+  };
+
+  // ===== ADD PRODUCT (with optional image upload) =====
+  document.getElementById('addProductBtn').onclick = async () => {
+    const name = document.getElementById('pName').value.trim();
+    const priceVal = document.getElementById('pPrice').value;
+    const costVal = document.getElementById('pCost').value;
+    const category = document.getElementById('pCategory').value;
+    const status = document.getElementById('pStatus').value;
+    const file = document.getElementById('pImage').files[0];
+    const errEl = document.getElementById('addError');
+    const confirmEl = document.getElementById('addConfirm');
+    errEl.style.display = 'none';
+    confirmEl.style.display = 'none';
+
+    if (!name) { errEl.textContent = 'Name is required.'; errEl.style.display = 'block'; return; }
+
+    let image_url = null;
+    if (file) {
+      const fileName = `${Date.now()}-${file.name.replace(/\s+/g, '-')}`;
+      const { error: uploadError } = await supabaseClient.storage
+        .from('product-images')
+        .upload(fileName, file);
+      if (uploadError) {
+        errEl.textContent = 'Image upload failed: ' + uploadError.message;
+        errEl.style.display = 'block';
+        return;
+      }
+      const { data: urlData } = supabaseClient.storage.from('product-images').getPublicUrl(fileName);
+      image_url = urlData.publicUrl;
+    }
+
+    const { error } = await supabaseClient.from('products').insert([{
+      name,
+      price: priceVal ? parseFloat(priceVal) : null,
+      cost: costVal ? parseFloat(costVal) : null,
+      category,
+      status,
+      image_url
+    }]);
+
+    if (error) {
+      errEl.textContent = 'Error saving: ' + error.message;
+      errEl.style.display = 'block';
+      return;
+    }
+
+    document.getElementById('pName').value = '';
+    document.getElementById('pPrice').value = '';
+    document.getElementById('pCost').value = '';
+    document.getElementById('pImage').value = '';
+    confirmEl.style.display = 'block';
+    setTimeout(() => { confirmEl.style.display = 'none'; }, 3000);
+    await loadProducts();
+  };
+
+  // ===== PRODUCT LIST + VOTE ANALYTICS =====
+  async function loadProducts() {
+    const listEl = document.getElementById('productList');
+    listEl.innerHTML = '<p style="opacity:.5;">Loading...</p>';
+
+    const { data: products, error } = await supabaseClient
+      .from('products')
+      .select('*')
+      .order('created_at', { ascending: false });
+
+    if (error || !products) {
+      listEl.innerHTML = '<p style="opacity:.5;">Could not load products.</p>';
+      return;
+    }
+
+    const { data: votes } = await supabaseClient.from('product_votes').select('product_id');
+    const voteCounts = {};
+    (votes || []).forEach(v => { voteCounts[v.product_id] = (voteCounts[v.product_id] || 0) + 1; });
+
+    listEl.innerHTML = '';
+    products.forEach(p => {
+      const row = document.createElement('div');
+      row.className = 'product-row';
+      const imgHtml = p.image_url
+        ? `<img src="${p.image_url}" alt="${p.name}">`
+        : `<div class="no-img">no photo</div>`;
+      row.innerHTML = `
+        ${imgHtml}
+        <div class="info">
+          <div class="name">${p.name}</div>
+          <div class="meta">${p.category} · ${p.status === 'for_sale' ? 'For Sale' : 'Coming Soon'} · ${p.price ? '$' + p.price : 'no price set'} · cost $${p.cost ?? '—'}</div>
+          <div class="votes">${voteCounts[p.id] || 0} votes</div>
+        </div>
+        <button class="del-btn" data-id="${p.id}">Delete</button>
+      `;
+      listEl.appendChild(row);
+    });
+
+    listEl.querySelectorAll('.del-btn').forEach(btn => {
+      btn.addEventListener('click', async () => {
+        if (!confirm('Delete this product?')) return;
+        await supabaseClient.from('products').delete().eq('id', btn.dataset.id);
+        await loadProducts();
+      });
+    });
+  }
+</script>
+
+</body>
+</html>
