@@ -108,6 +108,9 @@
         </div>
       </div>
 
+      <label for="pInventory">Starting inventory (optional — leave blank if you don't want stock tracked)</label>
+      <input type="number" id="pInventory" min="0" placeholder="e.g. 5">
+
       <label for="pImage">Photo</label>
       <input type="file" id="pImage" accept="image/*">
 
@@ -118,6 +121,9 @@
 
     <h3>Your Products</h3>
     <div id="productList"></div>
+
+    <h3 style="margin-top:40px;">Recent Orders</h3>
+    <div id="orderList"></div>
   </div>
 
 </div>
@@ -137,6 +143,7 @@
       loginBox.style.display = 'none';
       dashboard.style.display = 'block';
       loadProducts();
+      loadOrders();
     } else {
       loginBox.style.display = 'block';
       dashboard.style.display = 'none';
@@ -168,6 +175,7 @@
     const name = document.getElementById('pName').value.trim();
     const priceVal = document.getElementById('pPrice').value;
     const costVal = document.getElementById('pCost').value;
+    const inventoryVal = document.getElementById('pInventory').value;
     const category = document.getElementById('pCategory').value;
     const status = document.getElementById('pStatus').value;
     const file = document.getElementById('pImage').files[0];
@@ -197,6 +205,7 @@
       name,
       price: priceVal ? parseFloat(priceVal) : null,
       cost: costVal ? parseFloat(costVal) : null,
+      inventory_count: inventoryVal ? parseInt(inventoryVal) : null,
       category,
       status,
       image_url
@@ -211,6 +220,7 @@
     document.getElementById('pName').value = '';
     document.getElementById('pPrice').value = '';
     document.getElementById('pCost').value = '';
+    document.getElementById('pInventory').value = '';
     document.getElementById('pImage').value = '';
     confirmEl.style.display = 'block';
     setTimeout(() => { confirmEl.style.display = 'none'; }, 3000);
@@ -247,7 +257,7 @@
         ${imgHtml}
         <div class="info">
           <div class="name">${p.name}</div>
-          <div class="meta">${p.category} · ${p.status === 'for_sale' ? 'For Sale' : 'Coming Soon'} · ${p.price ? '$' + p.price : 'no price set'} · cost $${p.cost ?? '—'}</div>
+          <div class="meta">${p.category} · ${p.status === 'for_sale' ? 'For Sale' : 'Coming Soon'} · ${p.price ? '$' + p.price : 'no price set'} · cost $${p.cost ?? '—'} · stock: ${p.inventory_count ?? 'not tracked'}</div>
           <div class="votes">${voteCounts[p.id] || 0} votes</div>
         </div>
         <button class="del-btn" data-id="${p.id}">Delete</button>
@@ -261,6 +271,35 @@
         await supabaseClient.from('products').delete().eq('id', btn.dataset.id);
         await loadProducts();
       });
+    });
+  }
+
+  // ===== ORDERS =====
+  async function loadOrders() {
+    const orderListEl = document.getElementById('orderList');
+    orderListEl.innerHTML = '<p style="opacity:.5;">Loading...</p>';
+
+    const { data: orders, error } = await supabaseClient
+      .from('orders')
+      .select('*, products(name)')
+      .order('created_at', { ascending: false });
+
+    if (error || !orders || orders.length === 0) {
+      orderListEl.innerHTML = '<p style="opacity:.5;">No orders yet.</p>';
+      return;
+    }
+
+    orderListEl.innerHTML = '';
+    orders.forEach(o => {
+      const row = document.createElement('div');
+      row.className = 'product-row';
+      row.innerHTML = `
+        <div class="info">
+          <div class="name">${o.products?.name || 'Product #' + o.product_id}</div>
+          <div class="meta">$${o.amount_paid ?? '—'} · ${o.customer_email || 'no email'} · ${new Date(o.created_at).toLocaleString()}</div>
+        </div>
+      `;
+      orderListEl.appendChild(row);
     });
   }
 </script>
