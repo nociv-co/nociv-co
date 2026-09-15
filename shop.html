@@ -197,16 +197,16 @@
       <div>
         <img class="popup-card-img" src="pop-up-shop.png" alt="Pop-up shop — posting soon">
         <div class="popup-note">
-          Enter your email or phone # to get notified of next location & time. Nothing else.
+          Enter your email to get notified of next location & time. Nothing else.
         </div>
         <form id="signupForm">
-          <input type="text" placeholder="Email or phone number" required>
+          <input type="email" placeholder="Your email" required>
           <p class="signup-hint">Press Enter to join the list.</p>
         </form>
         <p id="signupConfirm" style="display:none; text-align:center; color:var(--green); font-weight:700;">
           You're on the list.
         </p>
-        <div style="margin-top:20px; font-size:0.9rem;">
+        <div style="margin-top:20px; font-size:0.9rem;" id="popupDetails">
           <strong>Next Location:</strong> TBD<br>
           <strong>Date:</strong> TBD<br>
           <strong>Time:</strong> TBD
@@ -312,6 +312,25 @@
     document.getElementById('signupConfirm').style.display = 'block';
     input.disabled = true;
   });
+
+  // ===== LIVE POP-UP DETAILS =====
+  async function loadPopupStatus() {
+    const { data, error } = await supabaseClient
+      .from('popup_status')
+      .select('*')
+      .order('updated_at', { ascending: false })
+      .limit(1)
+      .single();
+
+    if (error || !data) return; // leave the TBD defaults showing
+
+    document.getElementById('popupDetails').innerHTML = `
+      <strong>Next Location:</strong> ${data.location || 'TBD'}<br>
+      <strong>Date:</strong> ${data.event_date || 'TBD'}<br>
+      <strong>Time:</strong> ${data.event_time || 'TBD'}
+    `;
+  }
+  loadPopupStatus();
 
   // ===== ZINE LIBRARY — plug and play =====
   const zines = [
