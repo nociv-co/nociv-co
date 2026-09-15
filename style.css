@@ -95,33 +95,138 @@ nav.tabs a.img-tab.text-tab-temp {
   text-align: center;
 }
 
-/* ---------- SUB-NAV: Buy/Build/Share, Stall Wall/Directory/Share, etc. ----------
-   One definition, used on every page. Background is a mid-grey so it reads
-   correctly on both light pages (Clothing) and dark pages (Tech/Zines/Community)
-   without needing a page-specific override. */
-.subnav {
-  position: sticky; top: 0; z-index: 50;
-  display: flex; overflow-x: auto; gap: 6px;
-  padding: 10px 16px;
-  background: var(--grey-dark);
-  border-top: 1px solid #333;
-  border-bottom: 1px solid #333;
+/* ============================================
+   MANILA FOLDER NAVIGATION (Updated)
+   ============================================ */
+
+/* Main tab row container */
+nav.tabs {
+  display: flex;
+  justify-content: center;
+  align-items: flex-end;
+  gap: 6px;
+  padding: 24px 16px 0 16px;
+  max-width: var(--max);
+  margin: 0 auto;
+  position: relative;
+  z-index: 10;
 }
+
+/* Individual Manila Tab shape */
+nav.tabs a.img-tab {
+  position: relative;
+  background: linear-gradient(180deg, #eedab2 0%, #e5cb9b 100%);
+  color: #2b2218 !important;
+  font-weight: 800;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  font-size: 0.82rem;
+  text-align: center;
+  padding: 12px 20px 10px 20px;
+  border: 1px solid #c4ab7c;
+  border-bottom: none;
+  border-radius: 8px 8px 0 0;
+  box-shadow: 0 -3px 8px rgba(0, 0, 0, 0.15);
+  transition: all 0.2s cubic-bezier(0.2, 0, 0, 1);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex: 1 1 120px;
+  min-width: 100px;
+  text-decoration: none;
+  /* Angled folder tab effect */
+  transform: skewX(8deg);
+}
+
+/* Counter-skew the text/image so content stays straight */
+nav.tabs a.img-tab > * {
+  transform: skewX(-8deg);
+}
+
+/* Hover state */
+nav.tabs a.img-tab:hover {
+  background: linear-gradient(180deg, #f5e4c4 0%, #ebd3a5 100%);
+  transform: skewX(8deg) translateY(-3px);
+  box-shadow: 0 -5px 12px rgba(0, 0, 0, 0.25);
+}
+
+/* Active tab state */
+nav.tabs a.img-tab.active {
+  background: linear-gradient(180deg, #f2e3c6 0%, #e8d0a2 100%);
+  color: #1a140e !important;
+  border-color: #b59b68;
+  border-bottom: 2px solid #e8d0a2; /* Fuses into subnav panel */
+  margin-bottom: -1px;
+  z-index: 12;
+  font-weight: 900;
+}
+
+/* Images inside tabs if swapped back later */
+nav.tabs a.img-tab img {
+  max-width: 100%;
+  max-height: 28px;
+  transform: skewX(-8deg);
+}
+
+/* ---------- SUB-NAV: Manila Folder Body Panel ---------- */
+.subnav {
+  position: relative;
+  z-index: 5;
+  display: flex;
+  overflow-x: auto;
+  gap: 8px;
+  padding: 12px 18px;
+  background: #e8d0a2; /* Same tone as active tab bottom */
+  border-top: 1px solid #b59b68;
+  border-bottom: 2px solid #9c8352;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+  margin-top: -1px; /* Fuse directly under tabs */
+}
+
+/* Dark mode adjustment for Manila Subnav when used inside dark pages */
+body.dark .subnav {
+  background: #2a2824;
+  border-top: 1px solid #524739;
+  border-bottom: 2px solid #141311;
+}
+
+body.dark nav.tabs a.img-tab.active {
+  background: linear-gradient(180deg, #3d372e 0%, #2a2824 100%);
+  color: #f2e3c6 !important;
+  border-color: #524739;
+  border-bottom: 2px solid #2a2824;
+}
+
+/* Subnav buttons */
 .subnav button {
   flex: 0 0 auto;
-  background: none;
-  color: #ddd;
-  border: 1px solid #666;
+  background: #383229;
+  color: #f0e6d2;
+  border: 1px solid #524739;
   font-size: 0.75rem;
   letter-spacing: 0.05em;
   text-transform: uppercase;
-  padding: 8px 14px;
+  padding: 8px 16px;
   white-space: nowrap;
   cursor: pointer;
+  border-radius: 4px;
+  font-weight: 700;
   transition: all 0.2s ease;
 }
-.subnav button:hover { background: var(--gold); color: #1a1a1a; border-color: var(--gold); }
-.subnav button.active { background: var(--red); color: #fff; border-color: var(--red); font-weight: 700; }
+
+.subnav button:hover {
+  background: var(--gold);
+  color: #1a1a1a;
+  border-color: var(--gold);
+}
+
+.subnav button.active {
+  background: var(--red);
+  color: #fff;
+  border-color: var(--red);
+  font-weight: 800;
+  box-shadow: 0 2px 6px rgba(217, 79, 61, 0.4);
+}
 
 .subpanel { display: none; }
 .subpanel.show, .subpanel.active { display: block; }
