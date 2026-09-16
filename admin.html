@@ -7,7 +7,11 @@
 <link rel="stylesheet" href="style.css">
 <style>
   .admin-wrap { max-width: 700px; margin: 0 auto; padding: 30px 20px 60px; }
-  .admin-login { max-width: 360px; margin: 60px auto; }
+  .admin-login {
+    max-width: 360px; margin: 60px auto; padding: 28px;
+    background: rgba(255,255,255,0.55); backdrop-filter: blur(6px);
+    border: 1px solid rgba(0,0,0,0.08); border-radius: 10px;
+  }
   .admin-login input {
     width: 100%; padding: 12px; margin-bottom: 12px; border: 1px solid #999; font-size: 1rem;
     box-sizing: border-box;
@@ -17,7 +21,10 @@
     background: none; border: 1px solid var(--grey-dark); color: var(--ink);
     padding: 8px 14px; font-size: 0.8rem; cursor: pointer; letter-spacing: 0.03em;
   }
-  .admin-form { border: 1px solid var(--grey-dark); padding: 20px; margin-bottom: 40px; }
+  .admin-form {
+    border: 1px solid rgba(0,0,0,0.08); padding: 20px; margin-bottom: 40px;
+    background: rgba(255,255,255,0.55); backdrop-filter: blur(6px); border-radius: 10px;
+  }
   .admin-form label { display: block; font-size: 0.8rem; opacity: .7; margin: 12px 0 4px; }
   .admin-form input, .admin-form select {
     width: 100%; padding: 10px; border: 1px solid #999; font-size: 1rem; box-sizing: border-box;
@@ -47,6 +54,10 @@
   .product-row .del-btn {
     background: none; border: 1px solid var(--red); color: var(--red);
     padding: 6px 10px; font-size: 0.75rem; cursor: pointer;
+  }
+  .product-row .edit-btn {
+    background: none; border: 1px solid var(--grey-dark); color: var(--ink);
+    padding: 6px 10px; font-size: 0.75rem; cursor: pointer; margin-right: 6px;
   }
 </style>
 </head>
@@ -97,6 +108,10 @@
             <option>Accessories</option>
             <option>T-Shirts</option>
             <option>Pants</option>
+            <option>Tapestry</option>
+            <option>Prints</option>
+            <option>Stickers</option>
+            <option>Novelty</option>
           </select>
         </div>
         <div>
@@ -111,6 +126,20 @@
       <label for="pInventory">Starting inventory (optional — leave blank if you don't want stock tracked)</label>
       <input type="number" id="pInventory" min="0" placeholder="e.g. 5">
 
+      <div class="admin-form-row">
+        <div>
+          <label for="pFulfillment">Fulfillment</label>
+          <select id="pFulfillment">
+            <option value="in_house">In-House (you make/ship it)</option>
+            <option value="prodigi">Prodigi Print-on-Demand</option>
+          </select>
+        </div>
+        <div id="prodigiSkuWrap" style="display:none;">
+          <label for="pProdigiSku">Prodigi SKU (look this up on prodigi.com for the exact product)</label>
+          <input type="text" id="pProdigiSku" placeholder="e.g. GLOBAL-CAN-16x20">
+        </div>
+      </div>
+
       <label for="pImage">Photo</label>
       <input type="file" id="pImage" accept="image/*">
 
@@ -124,6 +153,18 @@
 
     <h3 style="margin-top:40px;">Recent Orders</h3>
     <div id="orderList"></div>
+
+    <h3 style="margin-top:40px;">Process Album (the "making of" photo gallery on Shop)</h3>
+    <div class="admin-form">
+      <label for="albumImage">Add a photo</label>
+      <input type="file" id="albumImage" accept="image/*">
+      <label for="albumCaption">Caption (optional)</label>
+      <input type="text" id="albumCaption" placeholder="e.g. Cutting the first pattern piece">
+      <button class="admin-submit" id="addAlbumBtn">Add to Album</button>
+      <p class="admin-note" id="albumAddConfirm">Added.</p>
+      <p class="admin-error" id="albumAddError"></p>
+    </div>
+    <div id="albumList"></div>
   </div>
 
 </div>
@@ -144,6 +185,7 @@
       dashboard.style.display = 'block';
       loadProducts();
       loadOrders();
+      loadAlbum();
     } else {
       loginBox.style.display = 'block';
       dashboard.style.display = 'none';
@@ -171,6 +213,10 @@
   };
 
   // ===== ADD PRODUCT (with optional image upload) =====
+  document.getElementById('pFulfillment').addEventListener('change', (e) => {
+    document.getElementById('prodigiSkuWrap').style.display = e.target.value === 'prodigi' ? 'block' : 'none';
+  });
+
   document.getElementById('addProductBtn').onclick = async () => {
     const name = document.getElementById('pName').value.trim();
     const priceVal = document.getElementById('pPrice').value;
@@ -178,6 +224,8 @@
     const inventoryVal = document.getElementById('pInventory').value;
     const category = document.getElementById('pCategory').value;
     const status = document.getElementById('pStatus').value;
+    const fulfillment_type = document.getElementById('pFulfillment').value;
+    const prodigi_sku = document.getElementById('pProdigiSku').value.trim() || null;
     const file = document.getElementById('pImage').files[0];
     const errEl = document.getElementById('addError');
     const confirmEl = document.getElementById('addConfirm');
@@ -185,6 +233,11 @@
     confirmEl.style.display = 'none';
 
     if (!name) { errEl.textContent = 'Name is required.'; errEl.style.display = 'block'; return; }
+    if (fulfillment_type === 'prodigi' && !prodigi_sku) {
+      errEl.textContent = 'Prodigi SKU is required for print-on-demand items.';
+      errEl.style.display = 'block';
+      return;
+    }
 
     let image_url = null;
     if (file) {
@@ -205,9 +258,11 @@
       name,
       price: priceVal ? parseFloat(priceVal) : null,
       cost: costVal ? parseFloat(costVal) : null,
-      inventory_count: inventoryVal ? parseInt(inventoryVal) : null,
+      inventory_count: fulfillment_type === 'prodigi' ? null : (inventoryVal ? parseInt(inventoryVal) : null),
       category,
       status,
+      fulfillment_type,
+      prodigi_sku,
       image_url
     }]);
 
@@ -221,6 +276,7 @@
     document.getElementById('pPrice').value = '';
     document.getElementById('pCost').value = '';
     document.getElementById('pInventory').value = '';
+    document.getElementById('pProdigiSku').value = '';
     document.getElementById('pImage').value = '';
     confirmEl.style.display = 'block';
     setTimeout(() => { confirmEl.style.display = 'none'; }, 3000);
@@ -250,27 +306,93 @@
     products.forEach(p => {
       const row = document.createElement('div');
       row.className = 'product-row';
-      const imgHtml = p.image_url
-        ? `<img src="${p.image_url}" alt="${p.name}">`
-        : `<div class="no-img">no photo</div>`;
-      row.innerHTML = `
-        ${imgHtml}
-        <div class="info">
-          <div class="name">${p.name}</div>
-          <div class="meta">${p.category} · ${p.status === 'for_sale' ? 'For Sale' : 'Coming Soon'} · ${p.price ? '$' + p.price : 'no price set'} · cost $${p.cost ?? '—'} · stock: ${p.inventory_count ?? 'not tracked'}</div>
-          <div class="votes">${voteCounts[p.id] || 0} votes</div>
-        </div>
-        <button class="del-btn" data-id="${p.id}">Delete</button>
-      `;
+      row.dataset.id = p.id;
+      renderRowView(row, p, voteCounts[p.id] || 0);
       listEl.appendChild(row);
     });
+  }
 
-    listEl.querySelectorAll('.del-btn').forEach(btn => {
-      btn.addEventListener('click', async () => {
-        if (!confirm('Delete this product?')) return;
-        await supabaseClient.from('products').delete().eq('id', btn.dataset.id);
-        await loadProducts();
-      });
+  function renderRowView(row, p, voteCount) {
+    const imgHtml = p.image_url
+      ? `<img src="${p.image_url}" alt="${p.name}">`
+      : `<div class="no-img">no photo</div>`;
+    row.innerHTML = `
+      ${imgHtml}
+      <div class="info">
+        <div class="name">${p.name}</div>
+        <div class="meta">${p.category} · ${p.status === 'for_sale' ? 'For Sale' : 'Coming Soon'} · ${p.price ? '$' + p.price : 'no price set'} · cost $${p.cost ?? '—'} · stock: ${p.fulfillment_type === 'prodigi' ? 'unlimited (Prodigi)' : (p.inventory_count ?? 'not tracked')} · ${p.fulfillment_type === 'prodigi' ? 'Prodigi SKU: ' + (p.prodigi_sku || 'none set') : 'In-House'}</div>
+        <div class="votes">${voteCount} votes</div>
+      </div>
+      <button class="edit-btn" data-id="${p.id}">Edit</button>
+      <button class="del-btn" data-id="${p.id}">Delete</button>
+    `;
+
+    row.querySelector('.del-btn').addEventListener('click', async () => {
+      if (!confirm('Delete this product?')) return;
+      await supabaseClient.from('products').delete().eq('id', p.id);
+      await loadProducts();
+    });
+
+    row.querySelector('.edit-btn').addEventListener('click', () => {
+      renderRowEdit(row, p);
+    });
+  }
+
+  function renderRowEdit(row, p) {
+    row.innerHTML = `
+      <div class="info" style="width:100%;">
+        <label style="font-size:0.75rem; opacity:.7; display:block; margin-bottom:2px;">Name</label>
+        <input type="text" class="edit-name" value="${p.name}" style="width:100%; margin-bottom:8px; padding:6px;">
+        <div style="display:flex; gap:8px; margin-bottom:8px;">
+          <div style="flex:1;">
+            <label style="font-size:0.75rem; opacity:.7; display:block;">Price</label>
+            <input type="number" step="0.01" class="edit-price" value="${p.price ?? ''}" style="width:100%; padding:6px;">
+          </div>
+          <div style="flex:1;">
+            <label style="font-size:0.75rem; opacity:.7; display:block;">Cost</label>
+            <input type="number" step="0.01" class="edit-cost" value="${p.cost ?? ''}" style="width:100%; padding:6px;">
+          </div>
+          <div style="flex:1;">
+            <label style="font-size:0.75rem; opacity:.7; display:block;">Stock</label>
+            <input type="number" class="edit-inventory" value="${p.inventory_count ?? ''}" style="width:100%; padding:6px;">
+          </div>
+        </div>
+        <div style="display:flex; gap:8px; margin-bottom:10px;">
+          <select class="edit-category" style="flex:1; padding:6px;">
+            <option ${p.category === 'Accessories' ? 'selected' : ''}>Accessories</option>
+            <option ${p.category === 'T-Shirts' ? 'selected' : ''}>T-Shirts</option>
+            <option ${p.category === 'Pants' ? 'selected' : ''}>Pants</option>
+            <option ${p.category === 'Tapestry' ? 'selected' : ''}>Tapestry</option>
+            <option ${p.category === 'Prints' ? 'selected' : ''}>Prints</option>
+            <option ${p.category === 'Stickers' ? 'selected' : ''}>Stickers</option>
+            <option ${p.category === 'Novelty' ? 'selected' : ''}>Novelty</option>
+          </select>
+          <select class="edit-status" style="flex:1; padding:6px;">
+            <option value="for_sale" ${p.status === 'for_sale' ? 'selected' : ''}>For Sale</option>
+            <option value="coming_soon" ${p.status === 'coming_soon' ? 'selected' : ''}>Coming Soon</option>
+          </select>
+        </div>
+        <div style="display:flex; gap:8px;">
+          <button class="save-edit-btn" style="flex:1; background:var(--red); color:#fff; border:none; padding:8px; cursor:pointer;">Save</button>
+          <button class="cancel-edit-btn" style="flex:1; background:#eee; border:1px solid #ccc; padding:8px; cursor:pointer;">Cancel</button>
+        </div>
+      </div>
+    `;
+
+    row.querySelector('.cancel-edit-btn').addEventListener('click', () => loadProducts());
+
+    row.querySelector('.save-edit-btn').addEventListener('click', async () => {
+      const updated = {
+        name: row.querySelector('.edit-name').value.trim(),
+        price: row.querySelector('.edit-price').value ? parseFloat(row.querySelector('.edit-price').value) : null,
+        cost: row.querySelector('.edit-cost').value ? parseFloat(row.querySelector('.edit-cost').value) : null,
+        inventory_count: row.querySelector('.edit-inventory').value ? parseInt(row.querySelector('.edit-inventory').value) : null,
+        category: row.querySelector('.edit-category').value,
+        status: row.querySelector('.edit-status').value,
+      };
+      const { error } = await supabaseClient.from('products').update(updated).eq('id', p.id);
+      if (error) { alert('Error saving: ' + error.message); return; }
+      await loadProducts();
     });
   }
 
@@ -300,6 +422,80 @@
         </div>
       `;
       orderListEl.appendChild(row);
+    });
+  }
+
+  // ===== PROCESS ALBUM =====
+  document.getElementById('addAlbumBtn').onclick = async () => {
+    const file = document.getElementById('albumImage').files[0];
+    const caption = document.getElementById('albumCaption').value.trim() || null;
+    const errEl = document.getElementById('albumAddError');
+    const confirmEl = document.getElementById('albumAddConfirm');
+    errEl.style.display = 'none';
+    confirmEl.style.display = 'none';
+
+    if (!file) { errEl.textContent = 'Choose a photo first.'; errEl.style.display = 'block'; return; }
+
+    const fileName = `${Date.now()}-${file.name.replace(/\s+/g, '-')}`;
+    const { error: uploadError } = await supabaseClient.storage
+      .from('album-photos')
+      .upload(fileName, file);
+    if (uploadError) {
+      errEl.textContent = 'Upload failed: ' + uploadError.message;
+      errEl.style.display = 'block';
+      return;
+    }
+    const { data: urlData } = supabaseClient.storage.from('album-photos').getPublicUrl(fileName);
+
+    const { error } = await supabaseClient.from('album_photos').insert([{
+      image_url: urlData.publicUrl,
+      caption
+    }]);
+    if (error) {
+      errEl.textContent = 'Error saving: ' + error.message;
+      errEl.style.display = 'block';
+      return;
+    }
+
+    document.getElementById('albumImage').value = '';
+    document.getElementById('albumCaption').value = '';
+    confirmEl.style.display = 'block';
+    setTimeout(() => { confirmEl.style.display = 'none'; }, 3000);
+    await loadAlbum();
+  };
+
+  async function loadAlbum() {
+    const listEl = document.getElementById('albumList');
+    listEl.innerHTML = '<p style="opacity:.5;">Loading...</p>';
+
+    const { data: photos, error } = await supabaseClient
+      .from('album_photos')
+      .select('*')
+      .order('created_at', { ascending: false });
+
+    if (error || !photos || photos.length === 0) {
+      listEl.innerHTML = '<p style="opacity:.5;">No photos yet.</p>';
+      return;
+    }
+
+    listEl.innerHTML = '';
+    photos.forEach(p => {
+      const row = document.createElement('div');
+      row.className = 'product-row';
+      row.innerHTML = `
+        <img src="${p.image_url}" alt="${p.caption || 'Process photo'}">
+        <div class="info">
+          <div class="name">${p.caption || '(no caption)'}</div>
+          <div class="meta">${new Date(p.created_at).toLocaleDateString()}</div>
+        </div>
+        <button class="del-btn" data-id="${p.id}">Delete</button>
+      `;
+      row.querySelector('.del-btn').addEventListener('click', async () => {
+        if (!confirm('Delete this photo?')) return;
+        await supabaseClient.from('album_photos').delete().eq('id', p.id);
+        await loadAlbum();
+      });
+      listEl.appendChild(row);
     });
   }
 </script>
