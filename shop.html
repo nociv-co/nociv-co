@@ -27,11 +27,32 @@
     cursor: pointer;
   }
   .album img.album-frame { width: 100%; display: block; }
-  .album-slot { position: absolute; object-fit: cover; display: none; }
-  .album.open .album-slot { display: block; }
   .album.open .album-cover-img { display: none; }
-  .album:not(.open) .album-page-img { display: none; }
   .album-hint { text-align: center; font-size: 0.8rem; opacity: .6; margin-top: 10px; }
+
+  /* --- Album gallery (shown once opened) --- */
+  .album-gallery {
+    display: none;
+    gap: 10px;
+    overflow-x: auto;
+    padding: 10px 4px;
+    scroll-snap-type: x mandatory;
+    -webkit-overflow-scrolling: touch;
+  }
+  .album.open .album-gallery { display: flex; }
+  .album-gallery-item {
+    flex: 0 0 260px;
+    scroll-snap-align: start;
+    background: #111;
+    border: 1px solid #333;
+    border-radius: 6px;
+    overflow: hidden;
+  }
+  .album-gallery-item img { width: 100%; height: 260px; object-fit: cover; display: block; }
+  .album-gallery-caption {
+    padding: 8px 10px; font-size: 0.75rem; color: #ddd; background: #111;
+  }
+  .album-gallery-empty { opacity: .5; font-style: italic; padding: 20px; text-align: center; }
 
   .popup-note {
     background: var(--gold);
@@ -186,6 +207,10 @@
           <button data-cat="Accessories">Accessories</button>
           <button data-cat="T-Shirts">T-Shirts</button>
           <button data-cat="Pants">Pants</button>
+          <button data-cat="Tapestry">Tapestry</button>
+          <button data-cat="Prints">Prints</button>
+          <button data-cat="Stickers">Stickers</button>
+          <button data-cat="Novelty">Novelty</button>
         </div>
         <div class="catalog-swipe" id="catalogSwipe">
           <p class="catalog-empty">Loading products...</p>
@@ -216,9 +241,9 @@
       <div>
         <div class="album" id="albumEl">
           <img class="album-frame album-cover-img" src="photo-album-cover.png" alt="Nociv photo album">
-          <img class="album-frame album-page-img" src="photo-album-page.png" alt="Nociv photo album, open">
-          <img class="album-slot" src="garment-1.jpg" alt="Garment" style="left:8%; top:12%; width:40%; height:35%;">
-          <img class="album-slot" src="garment-2.jpg" alt="Garment" style="left:52%; top:12%; width:40%; height:35%;">
+          <div class="album-gallery" id="albumGallery">
+            <p class="album-gallery-empty">Loading photos...</p>
+          </div>
         </div>
         <div class="album-hint">Tap the album to open it</div>
       </div>
@@ -273,7 +298,7 @@
   </div>
 </div>
 
-<footer class="nociv-footer">NOCIV.CO — Nothing Of Civilization</footer>
+<footer class="nociv-footer">NOCIV.CO — Nothing Of Civilization <a href="admin.html" style="opacity:.15; font-size:0.65rem;">·</a></footer>
 
 <!-- SUPABASE SCRIPTS -->
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
@@ -290,9 +315,38 @@
     });
   });
 
+  let albumLoaded = false;
   document.getElementById('albumEl').addEventListener('click', function(){
     this.classList.toggle('open');
+    if (this.classList.contains('open') && !albumLoaded) {
+      albumLoaded = true;
+      loadAlbumGallery();
+    }
   });
+
+  async function loadAlbumGallery() {
+    const galleryEl = document.getElementById('albumGallery');
+    const { data: photos, error } = await supabaseClient
+      .from('album_photos')
+      .select('*')
+      .order('created_at', { ascending: false });
+
+    if (error || !photos || photos.length === 0) {
+      galleryEl.innerHTML = '<p class="album-gallery-empty">Photos coming soon.</p>';
+      return;
+    }
+
+    galleryEl.innerHTML = '';
+    photos.forEach(p => {
+      const item = document.createElement('div');
+      item.className = 'album-gallery-item';
+      item.innerHTML = `
+        <img src="${p.image_url}" alt="${p.caption || 'Process photo'}">
+        ${p.caption ? `<div class="album-gallery-caption">${p.caption}</div>` : ''}
+      `;
+      galleryEl.appendChild(item);
+    });
+  }
 
   document.getElementById('signupForm').addEventListener('submit', async function(e){
     e.preventDefault();
