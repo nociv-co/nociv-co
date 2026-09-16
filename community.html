@@ -112,6 +112,100 @@
   .opp-calendar-day.has-event:hover { background: rgba(212,175,55,0.15); }
   .opp-calendar-day.selected { background: var(--red); color: #fff; border-color: var(--red); }
   .opp-calendar-day.empty { visibility: hidden; }
+
+  /* ============================================
+     PANEL-SPECIFIC PAPER THEMES
+     Each panel's containers get their own material —
+     boxy shapes, subtle borders, minimal curve.
+     ============================================ */
+
+  /* ---------- STALL WALL: manila folder ---------- */
+  #panel-stallwall .mark-card {
+    background: #f0dbb3;
+    border: 2px solid #a88e63;
+    border-radius: 2px;
+    color: #3a2f1e;
+  }
+  #panel-stallwall .mark-card h3,
+  #panel-stallwall .mark-card label { color: #3a2f1e; }
+  #panel-stallwall .mark-card select,
+  #panel-stallwall .mark-card textarea,
+  #panel-stallwall .mark-card input[type="text"] {
+    background: #fff8ea; border: 1px solid #a88e63; color: #3a2f1e; border-radius: 2px;
+  }
+  #panel-stallwall #states { background: #f0dbb3; border: 1.5px solid #a88e63; }
+  #panel-stallwall #states button {
+    background: #e5cb9b; border: 1px solid #a88e63; color: #3a2f1e; border-radius: 2px;
+  }
+  #panel-stallwall #states button:hover { background: #fff8ea; }
+  #panel-stallwall #states button.has-marks {
+    border-color: var(--gold); color: #8a5a00; background: #f7e6b8;
+  }
+  #panel-stallwall #states button.viewing { background: var(--red); color: #fff; border-color: var(--red); }
+  #panel-stallwall .postWrap { border-top: 1px solid #a88e63; }
+  #panel-stallwall #doodleCanvas { border: 2px solid #a88e63; }
+
+  /* ---------- SHARE: ruled notebook paper ---------- */
+  #panel-share .mark-card,
+  #panel-share .board-card {
+    background: repeating-linear-gradient(
+      to bottom, #fdfcf7, #fdfcf7 27px, #b8d4e8 28px, #fdfcf7 29px
+    );
+    border: 1px solid #ccc;
+    border-radius: 0;
+    color: #2a2a2a;
+    position: relative;
+    padding-left: 48px;
+  }
+  #panel-share .mark-card::before,
+  #panel-share .board-card::before {
+    content: ''; position: absolute; left: 36px; top: 0; bottom: 0;
+    width: 1px; background: #e08a8a;
+  }
+  #panel-share .mark-card h3,
+  #panel-share .mark-card label { color: #2a2a2a; }
+  #panel-share .mark-card select,
+  #panel-share .mark-card textarea,
+  #panel-share .mark-card input[type="text"] {
+    background: #fff; border: 1px solid #ccc; color: #2a2a2a; border-radius: 0;
+  }
+  #panel-share .board-card-title,
+  #panel-share .board-card-meta,
+  #panel-share .board-card-desc { color: #2a2a2a; }
+
+  /* ---------- DIRECTORY: graph paper ---------- */
+  #panel-directory .mark-card,
+  #panel-directory .board-card,
+  #panel-directory .directory-card,
+  #panel-directory .opp-calendar {
+    background-color: #fbfbf8;
+    background-image:
+      linear-gradient(to right, rgba(0,0,0,0.08) 1px, transparent 1px),
+      linear-gradient(to bottom, rgba(0,0,0,0.08) 1px, transparent 1px);
+    background-size: 16px 16px;
+    border: 1px solid #ccc;
+    border-radius: 0;
+    color: #2a2a2a;
+  }
+  #panel-directory .mark-card h3,
+  #panel-directory .mark-card label { color: #2a2a2a; }
+  #panel-directory .mark-card select,
+  #panel-directory .mark-card textarea,
+  #panel-directory .mark-card input[type="text"],
+  #panel-directory .mark-card input[type="date"] {
+    background: #fff; border: 1px solid #ccc; color: #2a2a2a; border-radius: 0;
+  }
+  #panel-directory .board-card-title,
+  #panel-directory .board-card-meta,
+  #panel-directory .board-card-desc { color: #2a2a2a; }
+  #panel-directory .card-uploader { background: #fff; border: 1px dashed #999; }
+  #panel-directory .cat-pill,
+  #panel-directory .filter-pill {
+    background: #fff; color: #444; border: 1px solid #ccc; border-radius: 0;
+  }
+  #panel-directory .cat-pill.active,
+  #panel-directory .filter-pill.active { background: #333; color: #fff; border-color: #333; }
+  #panel-directory .opp-calendar-day { color: #444; }
 </style>
 </head>
 <body>
