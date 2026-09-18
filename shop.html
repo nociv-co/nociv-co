@@ -116,13 +116,14 @@
     flex: 0 0 220px; scroll-snap-align: start; background: #111; border: 1px solid #333;
     border-radius: 6px; overflow: hidden; color: #eee; text-align: left;
   }
+  .catalog-card .card-media { cursor: pointer; display: block; }
   .catalog-card img { width: 100%; height: 220px; object-fit: cover; display: block; }
   .catalog-card .no-photo {
     width: 100%; height: 220px; background: #1c1c1c; display: flex;
-    align-items: center; justify-content: center; font-size: 0.75rem; opacity: .5;
+    align-items: center; justify-content: center; font-size: 0.75rem; opacity: .5; cursor: pointer;
   }
   .catalog-card .card-body { padding: 14px; }
-  .catalog-card .card-name { font-weight: 900; font-size: 0.95rem; margin-bottom: 4px; }
+  .catalog-card .card-name { font-weight: 900; font-size: 0.95rem; margin-bottom: 4px; cursor: pointer; }
   .catalog-card .card-meta { font-size: 0.75rem; opacity: .6; margin-bottom: 10px; }
   .catalog-card .card-badge {
     display: inline-block; font-size: 0.65rem; letter-spacing: 0.05em; text-transform: uppercase;
@@ -138,6 +139,54 @@
   .catalog-card button.card-action.vote { background: var(--gold); color: #1a1a1a; }
   .catalog-card button.card-action.voted { background: #333; color: #999; cursor: default; }
   .catalog-empty { opacity: .5; font-style: italic; padding: 20px; text-align: center; }
+
+  /* --- Product detail modal (tap a card to zoom + read the description) --- */
+  .product-modal-overlay {
+    display: none;
+    position: fixed; inset: 0; background: rgba(0,0,0,0.82);
+    z-index: 1000; align-items: center; justify-content: center;
+    padding: 20px; overflow-y: auto;
+  }
+  .product-modal-overlay.show { display: flex; }
+  .product-modal {
+    background: #111; color: #eee; max-width: 480px; width: 100%;
+    border-radius: 10px; overflow: hidden; position: relative;
+    margin: auto;
+  }
+  .product-modal-close {
+    position: absolute; top: 10px; right: 10px; z-index: 2;
+    background: rgba(0,0,0,0.6); color: #fff; border: none;
+    width: 34px; height: 34px; border-radius: 50%; font-size: 1.1rem;
+    cursor: pointer; line-height: 1;
+  }
+  .product-modal-media { width: 100%; background: #000; cursor: zoom-in; }
+  .product-modal-media img { width: 100%; display: block; max-height: 60vh; object-fit: contain; }
+  .product-modal-media .no-photo {
+    width: 100%; height: 260px; display: flex; align-items: center; justify-content: center;
+    opacity: .5; font-size: 0.85rem;
+  }
+  .product-modal-body { padding: 20px; }
+  .product-modal-badge {
+    display: inline-block; font-size: 0.65rem; letter-spacing: 0.05em; text-transform: uppercase;
+    padding: 3px 8px; margin-bottom: 10px; font-weight: 700;
+  }
+  .product-modal-badge.for-sale { background: var(--green); color: #fff; }
+  .product-modal-badge.coming-soon { background: var(--gold); color: #1a1a1a; }
+  .product-modal-name { font-size: 1.3rem; font-weight: 900; margin-bottom: 4px; }
+  .product-modal-meta { font-size: 0.8rem; opacity: .6; margin-bottom: 14px; }
+  .product-modal-description { font-size: 0.95rem; line-height: 1.6; margin-bottom: 20px; white-space: pre-wrap; }
+  .product-modal-description.empty { opacity: .5; font-style: italic; }
+  .product-modal-price { font-size: 1.4rem; font-weight: 900; margin-bottom: 16px; }
+
+  /* Fullscreen zoom on top of the modal */
+  .zoom-overlay {
+    display: none;
+    position: fixed; inset: 0; background: rgba(0,0,0,0.95);
+    z-index: 1100; align-items: center; justify-content: center;
+    padding: 10px; cursor: zoom-out;
+  }
+  .zoom-overlay.show { display: flex; }
+  .zoom-overlay img { max-width: 100%; max-height: 100%; object-fit: contain; }
 
   /* Zine reader (from the old books.html Buy tab) */
   .zine {
@@ -269,6 +318,26 @@
 </div>
 
 <footer class="nociv-footer">NOCIV.CO — Nothing Of Civilization <a href="admin.html" style="opacity:.15; font-size:0.65rem;">·</a></footer>
+
+<!-- PRODUCT DETAIL MODAL — shared by every shop tab -->
+<div class="product-modal-overlay" id="productModalOverlay">
+  <div class="product-modal" id="productModal">
+    <button class="product-modal-close" id="productModalClose">&times;</button>
+    <div class="product-modal-media" id="productModalMedia"></div>
+    <div class="product-modal-body">
+      <div class="product-modal-badge" id="productModalBadge"></div>
+      <div class="product-modal-name" id="productModalName"></div>
+      <div class="product-modal-meta" id="productModalMeta"></div>
+      <div class="product-modal-description" id="productModalDescription"></div>
+      <div id="productModalAction"></div>
+    </div>
+  </div>
+</div>
+
+<!-- FULLSCREEN ZOOM — tap the modal photo to fill the screen -->
+<div class="zoom-overlay" id="zoomOverlay">
+  <img id="zoomImage" src="" alt="">
+</div>
 
 <!-- SUPABASE SCRIPTS -->
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
@@ -419,6 +488,82 @@
     zineList.appendChild(wrap);
   });
 
+  // ===== PRODUCT DETAIL MODAL =====
+  const modalOverlay = document.getElementById('productModalOverlay');
+  const zoomOverlay = document.getElementById('zoomOverlay');
+  const zoomImage = document.getElementById('zoomImage');
+
+  function closeProductModal() {
+    modalOverlay.classList.remove('show');
+  }
+  document.getElementById('productModalClose').addEventListener('click', closeProductModal);
+  modalOverlay.addEventListener('click', (e) => {
+    if (e.target === modalOverlay) closeProductModal();
+  });
+  zoomOverlay.addEventListener('click', () => zoomOverlay.classList.remove('show'));
+  document.addEventListener('keydown', (e) => {
+    if (e.key !== 'Escape') return;
+    if (zoomOverlay.classList.contains('show')) zoomOverlay.classList.remove('show');
+    else if (modalOverlay.classList.contains('show')) closeProductModal();
+  });
+
+  // buyAction/voteAction are passed in so the modal's Buy/Vote button behaves
+  // exactly like the card's own button, without duplicating that logic.
+  function openProductModal(p, { isSoldOut, alreadyVoted, voteCount }, onBuy, onVote) {
+    const mediaEl = document.getElementById('productModalMedia');
+    if (p.image_url) {
+      mediaEl.innerHTML = `<img src="${p.image_url}" alt="${p.name}">`;
+      mediaEl.onclick = () => {
+        zoomImage.src = p.image_url;
+        zoomOverlay.classList.add('show');
+      };
+    } else {
+      mediaEl.innerHTML = `<div class="no-photo">Photo coming soon</div>`;
+      mediaEl.onclick = null;
+    }
+
+    const badgeEl = document.getElementById('productModalBadge');
+    badgeEl.textContent = p.status === 'for_sale' ? 'For Sale' : 'Coming Soon';
+    badgeEl.className = 'product-modal-badge ' + (p.status === 'for_sale' ? 'for-sale' : 'coming-soon');
+
+    document.getElementById('productModalName').textContent = p.name;
+    document.getElementById('productModalMeta').textContent = p.category;
+
+    const descEl = document.getElementById('productModalDescription');
+    if (p.description) {
+      descEl.textContent = p.description;
+      descEl.classList.remove('empty');
+    } else {
+      descEl.textContent = 'No description yet for this item.';
+      descEl.classList.add('empty');
+    }
+
+    const actionEl = document.getElementById('productModalAction');
+    actionEl.innerHTML = '';
+    if (p.status === 'for_sale' && isSoldOut) {
+      actionEl.innerHTML = `<button class="card-action voted" disabled>Sold Out</button>`;
+    } else if (p.status === 'for_sale') {
+      const priceLine = document.createElement('div');
+      priceLine.className = 'product-modal-price';
+      priceLine.textContent = p.price ? '$' + p.price : 'Price TBD';
+      actionEl.appendChild(priceLine);
+      const btn = document.createElement('button');
+      btn.className = 'card-action buy';
+      btn.textContent = 'Buy Now';
+      btn.addEventListener('click', () => onBuy(btn));
+      actionEl.appendChild(btn);
+    } else {
+      const btn = document.createElement('button');
+      btn.className = 'card-action ' + (alreadyVoted ? 'voted' : 'vote');
+      btn.textContent = (alreadyVoted ? 'Voted ✓' : 'Vote for this') + ' (' + voteCount + ')';
+      if (alreadyVoted) btn.disabled = true;
+      btn.addEventListener('click', () => onVote(btn));
+      actionEl.appendChild(btn);
+    }
+
+    modalOverlay.classList.add('show');
+  }
+
   // ===== PRODUCT CATALOG — one reusable engine, mounted into each of the 4 shop tabs =====
   function getVotedIds() {
     return JSON.parse(localStorage.getItem('votedProductIds') || '[]');
@@ -429,6 +574,48 @@
       ids.push(id);
       localStorage.setItem('votedProductIds', JSON.stringify(ids));
     }
+  }
+
+  // Shared so the modal's Buy button can reuse the exact same checkout flow as the card's.
+  async function startCheckout(btn) {
+    const originalText = btn.textContent;
+    btn.disabled = true;
+    btn.textContent = 'Redirecting to checkout...';
+    try {
+      const res = await fetch(
+        'https://vscombrgcdtrfndqyugb.supabase.co/functions/v1/create-checkout-session',
+        {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ productId: btn.dataset.id })
+        }
+      );
+      const result = await res.json();
+      if (result.url) {
+        window.location.href = result.url;
+      } else {
+        alert(result.error || 'Something went wrong starting checkout.');
+        btn.disabled = false;
+        btn.textContent = originalText;
+      }
+    } catch (err) {
+      alert('Could not reach checkout. Please try again in a moment.');
+      btn.disabled = false;
+      btn.textContent = originalText;
+    }
+  }
+
+  async function submitVote(id) {
+    let fingerprint = localStorage.getItem('voterFingerprint');
+    if (!fingerprint) {
+      fingerprint = 'v-' + Date.now() + '-' + Math.random().toString(36).slice(2);
+      localStorage.setItem('voterFingerprint', fingerprint);
+    }
+    const { error } = await supabaseClient
+      .from('product_votes')
+      .insert([{ product_id: id, voter_fingerprint: fingerprint }]);
+    if (!error) markVoted(parseInt(id));
+    return !error;
   }
 
   function catalogMarkup(shopKey) {
@@ -529,26 +716,27 @@
         const card = document.createElement('div');
         card.className = 'catalog-card';
 
+        const isSoldOut = p.inventory_count !== null && p.inventory_count <= 0;
+        const alreadyVoted = votedIds.includes(p.id);
+        const count = voteCounts[p.id] || 0;
+
         const mediaHtml = p.image_url
           ? `<img src="${p.image_url}" alt="${p.name}">`
           : `<div class="no-photo">Photo coming soon</div>`;
 
         let actionHtml = '';
-        const isSoldOut = p.inventory_count !== null && p.inventory_count <= 0;
         if (p.status === 'for_sale' && isSoldOut) {
           actionHtml = `<button class="card-action voted" disabled>Sold Out</button>`;
         } else if (p.status === 'for_sale') {
           actionHtml = `<button class="card-action buy" data-action="buy" data-id="${p.id}">Buy — ${p.price ? '$' + p.price : 'Price TBD'}</button>`;
         } else {
-          const alreadyVoted = votedIds.includes(p.id);
-          const count = voteCounts[p.id] || 0;
           actionHtml = `<button class="card-action ${alreadyVoted ? 'voted' : 'vote'}" data-action="vote" data-id="${p.id}" ${alreadyVoted ? 'disabled' : ''}>
             ${alreadyVoted ? 'Voted ✓' : 'Vote for this'} (${count})
           </button>`;
         }
 
         card.innerHTML = `
-          ${mediaHtml}
+          <div class="card-media">${mediaHtml}</div>
           <div class="card-body">
             <div class="card-badge ${p.status === 'for_sale' ? 'for-sale' : 'coming-soon'}">
               ${p.status === 'for_sale' ? 'For Sale' : 'Coming Soon'}
@@ -559,53 +747,41 @@
           </div>
         `;
         swipeEl.appendChild(card);
+
+        // Tapping the photo or the name opens the detail modal (zoom + description).
+        // Tapping Buy/Vote directly does NOT open the modal — those act immediately,
+        // same as before.
+        const openThisModal = () => {
+          openProductModal(
+            p,
+            { isSoldOut, alreadyVoted, voteCount: count },
+            (btn) => startCheckout(btn),
+            async (btn) => {
+              btn.disabled = true;
+              const ok = await submitVote(p.id);
+              if (ok) {
+                closeProductModal();
+                renderThisCatalog();
+              } else {
+                btn.disabled = false;
+              }
+            }
+          );
+        };
+        card.querySelector('.card-media').addEventListener('click', openThisModal);
+        card.querySelector('.card-name').addEventListener('click', openThisModal);
       });
 
       swipeEl.querySelectorAll('[data-action="buy"]').forEach(btn => {
-        btn.addEventListener('click', async () => {
-          const originalText = btn.textContent;
-          btn.disabled = true;
-          btn.textContent = 'Redirecting to checkout...';
-          try {
-            const res = await fetch(
-              'https://vscombrgcdtrfndqyugb.supabase.co/functions/v1/create-checkout-session',
-              {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ productId: btn.dataset.id })
-              }
-            );
-            const result = await res.json();
-            if (result.url) {
-              window.location.href = result.url;
-            } else {
-              alert(result.error || 'Something went wrong starting checkout.');
-              btn.disabled = false;
-              btn.textContent = originalText;
-            }
-          } catch (err) {
-            alert('Could not reach checkout. Please try again in a moment.');
-            btn.disabled = false;
-            btn.textContent = originalText;
-          }
-        });
+        btn.addEventListener('click', () => startCheckout(btn));
       });
 
       swipeEl.querySelectorAll('[data-action="vote"]').forEach(btn => {
         btn.addEventListener('click', async () => {
-          const id = btn.dataset.id;
-          let fingerprint = localStorage.getItem('voterFingerprint');
-          if (!fingerprint) {
-            fingerprint = 'v-' + Date.now() + '-' + Math.random().toString(36).slice(2);
-            localStorage.setItem('voterFingerprint', fingerprint);
-          }
-          const { error } = await supabaseClient
-            .from('product_votes')
-            .insert([{ product_id: id, voter_fingerprint: fingerprint }]);
-          if (!error) {
-            markVoted(parseInt(id));
-            await renderThisCatalog();
-          }
+          btn.disabled = true;
+          const ok = await submitVote(btn.dataset.id);
+          if (ok) await renderThisCatalog();
+          else btn.disabled = false;
         });
       });
     }
