@@ -38,6 +38,8 @@
     padding: 10px 4px;
     scroll-snap-type: x mandatory;
     -webkit-overflow-scrolling: touch;
+    min-height: 260px;
+    align-items: center;
   }
   .album.open .album-gallery { display: flex; }
   .album-gallery-item {
@@ -188,35 +190,7 @@
 <div class="subpanel show" id="clothingPanel">
   <div class="wrap">
 
-    <!-- ===== PRODUCT CATALOG ===== -->
-    <div class="catalog-section">
-      <h2 style="text-align:center; letter-spacing:2px;">SHOP THE COLLECTION</h2>
-
-      <div class="catalog-price-row" id="priceFilterRow">
-        <button class="active" data-max="all">All</button>
-        <button data-max="5">$5</button>
-        <button data-max="15">$15</button>
-        <button data-max="25">$25</button>
-        <button data-max="35">$35</button>
-        <button data-max="45">$45</button>
-      </div>
-
-      <div class="catalog-layout">
-        <div class="catalog-category-rail" id="categoryRail">
-          <button class="active" data-cat="all">All</button>
-          <button data-cat="Accessories">Accessories</button>
-          <button data-cat="T-Shirts">T-Shirts</button>
-          <button data-cat="Pants">Pants</button>
-          <button data-cat="Tapestry">Tapestry</button>
-          <button data-cat="Prints">Prints</button>
-          <button data-cat="Stickers">Stickers</button>
-          <button data-cat="Novelty">Novelty</button>
-        </div>
-        <div class="catalog-swipe" id="catalogSwipe">
-          <p class="catalog-empty">Loading products...</p>
-        </div>
-      </div>
-    </div>
+    <div class="catalog-mount" id="catalogMount-clothing"></div>
 
     <div class="flip-wrap">
       <div>
@@ -260,19 +234,16 @@
     </div>
 
     <img class="aura-graphic" src="aura-graphic.png" alt="Nociv clothing">
-
-    <a class="vinted-link" href="#" target="_blank" rel="noopener">
-      <img src="shop-online-vinted.png" alt="Shop Online on Vinted">
-    </a>
   </div>
 </div>
 
 <!-- ===== TECH ===== -->
 <div class="subpanel" id="techPanel">
   <div class="wrap">
-    <img src="tech-imagery-1.png" alt="The Attention Economy — Utopia/Dystopia. Make the rebellion of screens punk." style="width:100%; display:block;">
-    <div class="coming-soon" style="margin-top:30px;">
-      Community-voted devices and tech will be showcased here for purchase. Coming soon.
+    <div class="catalog-mount" id="catalogMount-tech"></div>
+    <img src="tech-imagery-1.png" alt="The Attention Economy — Utopia/Dystopia. Make the rebellion of screens punk." style="width:100%; display:block; margin-top:30px;">
+    <div class="coming-soon" style="margin-top:20px;">
+      Community-voted devices and tech will be showcased here as they're built.
     </div>
   </div>
 </div>
@@ -280,7 +251,8 @@
 <!-- ===== ZINES ===== -->
 <div class="subpanel" id="zinesPanel">
   <div class="wrap">
-    <div class="eyebrow">Free food for thought</div>
+    <div class="catalog-mount" id="catalogMount-zines"></div>
+    <div class="eyebrow" style="margin-top:30px;">Free food for thought</div>
     <p style="opacity:.7; max-width:500px; margin-bottom:30px;">
       Zines, free to read and free to keep. No sign-up, no paywall.
     </p>
@@ -292,9 +264,7 @@
 <!-- ===== ART ===== -->
 <div class="subpanel" id="artPanel">
   <div class="wrap">
-    <div class="coming-soon">
-      Original art from Jasilyn, for sale — coming soon.
-    </div>
+    <div class="catalog-mount" id="catalogMount-art"></div>
   </div>
 </div>
 
@@ -449,11 +419,7 @@
     zineList.appendChild(wrap);
   });
 
-  // ===== PRODUCT CATALOG =====
-  let activeCategory = 'all';
-  let activeMaxPrice = 'all';
-  const catalogSwipe = document.getElementById('catalogSwipe');
-
+  // ===== PRODUCT CATALOG — one reusable engine, mounted into each of the 4 shop tabs =====
   function getVotedIds() {
     return JSON.parse(localStorage.getItem('votedProductIds') || '[]');
   }
@@ -465,134 +431,189 @@
     }
   }
 
-  document.querySelectorAll('#categoryRail button').forEach(btn => {
-    btn.addEventListener('click', () => {
-      document.querySelectorAll('#categoryRail button').forEach(b => b.classList.remove('active'));
-      btn.classList.add('active');
-      activeCategory = btn.dataset.cat;
-      renderCatalog();
-    });
-  });
+  function catalogMarkup(shopKey) {
+    return `
+      <div class="catalog-section">
+        <h2 style="text-align:center; letter-spacing:2px;">SHOP THE COLLECTION</h2>
+        <div class="catalog-price-row" id="priceFilterRow-${shopKey}">
+          <button class="active" data-max="all">All</button>
+          <button data-max="5">$5</button>
+          <button data-max="15">$15</button>
+          <button data-max="25">$25</button>
+          <button data-max="35">$35</button>
+          <button data-max="45">$45</button>
+        </div>
+        <div class="catalog-layout">
+          <div class="catalog-category-rail" id="categoryRail-${shopKey}">
+            <button class="active" data-cat="all">All</button>
+          </div>
+          <div class="catalog-swipe" id="catalogSwipe-${shopKey}">
+            <p class="catalog-empty">Loading products...</p>
+          </div>
+        </div>
+      </div>
+    `;
+  }
 
-  document.querySelectorAll('#priceFilterRow button').forEach(btn => {
-    btn.addEventListener('click', () => {
-      document.querySelectorAll('#priceFilterRow button').forEach(b => b.classList.remove('active'));
-      btn.classList.add('active');
-      activeMaxPrice = btn.dataset.max;
-      renderCatalog();
-    });
-  });
+  async function initShopCatalog(shopKey) {
+    const mount = document.getElementById('catalogMount-' + shopKey);
+    if (!mount) return;
+    mount.innerHTML = catalogMarkup(shopKey);
 
-  async function renderCatalog() {
-    catalogSwipe.innerHTML = '<p class="catalog-empty">Loading products...</p>';
+    let activeCategory = 'all';
+    let activeMaxPrice = 'all';
+    const railEl = document.getElementById('categoryRail-' + shopKey);
+    const swipeEl = document.getElementById('catalogSwipe-' + shopKey);
 
-    let query = supabaseClient
+    // Build the category rail from whatever categories actually exist in this shop —
+    // new categories added in the admin show up automatically, no code changes needed.
+    const { data: catRows } = await supabaseClient
       .from('products_public')
-      .select('*')
-      .order('created_at', { ascending: false });
+      .select('category')
+      .eq('shop', shopKey);
+    const categories = [...new Set((catRows || []).map(r => r.category).filter(Boolean))];
+    categories.forEach(cat => {
+      const btn = document.createElement('button');
+      btn.dataset.cat = cat;
+      btn.textContent = cat;
+      btn.addEventListener('click', () => {
+        railEl.querySelectorAll('button').forEach(b => b.classList.remove('active'));
+        btn.classList.add('active');
+        activeCategory = cat;
+        renderThisCatalog();
+      });
+      railEl.appendChild(btn);
+    });
+    railEl.querySelector('button[data-cat="all"]').addEventListener('click', (e) => {
+      railEl.querySelectorAll('button').forEach(b => b.classList.remove('active'));
+      e.target.classList.add('active');
+      activeCategory = 'all';
+      renderThisCatalog();
+    });
 
-    if (activeCategory !== 'all') query = query.eq('category', activeCategory);
-    if (activeMaxPrice !== 'all') query = query.lte('price', parseFloat(activeMaxPrice));
+    document.querySelectorAll(`#priceFilterRow-${shopKey} button`).forEach(btn => {
+      btn.addEventListener('click', () => {
+        document.querySelectorAll(`#priceFilterRow-${shopKey} button`).forEach(b => b.classList.remove('active'));
+        btn.classList.add('active');
+        activeMaxPrice = btn.dataset.max;
+        renderThisCatalog();
+      });
+    });
 
-    const { data: products, error } = await query;
+    async function renderThisCatalog() {
+      swipeEl.innerHTML = '<p class="catalog-empty">Loading products...</p>';
 
-    if (error || !products || products.length === 0) {
-      catalogSwipe.innerHTML = '<p class="catalog-empty">Nothing here yet — check back soon.</p>';
-      return;
-    }
+      let query = supabaseClient
+        .from('products_public')
+        .select('*')
+        .eq('shop', shopKey)
+        .order('created_at', { ascending: false });
 
-    // Vote counts, fetched separately since product_votes isn't part of the public view
-    const { data: votes } = await supabaseClient.from('product_votes').select('product_id');
-    const voteCounts = {};
-    (votes || []).forEach(v => { voteCounts[v.product_id] = (voteCounts[v.product_id] || 0) + 1; });
-    const votedIds = getVotedIds();
+      if (activeCategory !== 'all') query = query.eq('category', activeCategory);
+      if (activeMaxPrice !== 'all') query = query.lte('price', parseFloat(activeMaxPrice));
 
-    catalogSwipe.innerHTML = '';
-    products.forEach(p => {
-      const card = document.createElement('div');
-      card.className = 'catalog-card';
+      const { data: products, error } = await query;
 
-      const mediaHtml = p.image_url
-        ? `<img src="${p.image_url}" alt="${p.name}">`
-        : `<div class="no-photo">Photo coming soon</div>`;
-
-      let actionHtml = '';
-      const isSoldOut = p.inventory_count !== null && p.inventory_count <= 0;
-      if (p.status === 'for_sale' && isSoldOut) {
-        actionHtml = `<button class="card-action voted" disabled>Sold Out</button>`;
-      } else if (p.status === 'for_sale') {
-        actionHtml = `<button class="card-action buy" data-action="buy" data-id="${p.id}">Buy — ${p.price ? '$' + p.price : 'Price TBD'}</button>`;
-      } else {
-        const alreadyVoted = votedIds.includes(p.id);
-        const count = voteCounts[p.id] || 0;
-        actionHtml = `<button class="card-action ${alreadyVoted ? 'voted' : 'vote'}" data-action="vote" data-id="${p.id}" ${alreadyVoted ? 'disabled' : ''}>
-          ${alreadyVoted ? 'Voted ✓' : 'Vote for this'} (${count})
-        </button>`;
+      if (error || !products || products.length === 0) {
+        swipeEl.innerHTML = '<p class="catalog-empty">Nothing here yet — check back soon.</p>';
+        return;
       }
 
-      card.innerHTML = `
-        ${mediaHtml}
-        <div class="card-body">
-          <div class="card-badge ${p.status === 'for_sale' ? 'for-sale' : 'coming-soon'}">
-            ${p.status === 'for_sale' ? 'For Sale' : 'Coming Soon'}
-          </div>
-          <div class="card-name">${p.name}</div>
-          <div class="card-meta">${p.category}</div>
-          ${actionHtml}
-        </div>
-      `;
-      catalogSwipe.appendChild(card);
-    });
+      const { data: votes } = await supabaseClient.from('product_votes').select('product_id');
+      const voteCounts = {};
+      (votes || []).forEach(v => { voteCounts[v.product_id] = (voteCounts[v.product_id] || 0) + 1; });
+      const votedIds = getVotedIds();
 
-    catalogSwipe.querySelectorAll('[data-action="buy"]').forEach(btn => {
-      btn.addEventListener('click', async () => {
-        const originalText = btn.textContent;
-        btn.disabled = true;
-        btn.textContent = 'Redirecting to checkout...';
-        try {
-          const res = await fetch(
-            'https://vscombrgcdtrfndqyugb.supabase.co/functions/v1/create-checkout-session',
-            {
-              method: 'POST',
-              headers: { 'Content-Type': 'application/json' },
-              body: JSON.stringify({ productId: btn.dataset.id })
+      swipeEl.innerHTML = '';
+      products.forEach(p => {
+        const card = document.createElement('div');
+        card.className = 'catalog-card';
+
+        const mediaHtml = p.image_url
+          ? `<img src="${p.image_url}" alt="${p.name}">`
+          : `<div class="no-photo">Photo coming soon</div>`;
+
+        let actionHtml = '';
+        const isSoldOut = p.inventory_count !== null && p.inventory_count <= 0;
+        if (p.status === 'for_sale' && isSoldOut) {
+          actionHtml = `<button class="card-action voted" disabled>Sold Out</button>`;
+        } else if (p.status === 'for_sale') {
+          actionHtml = `<button class="card-action buy" data-action="buy" data-id="${p.id}">Buy — ${p.price ? '$' + p.price : 'Price TBD'}</button>`;
+        } else {
+          const alreadyVoted = votedIds.includes(p.id);
+          const count = voteCounts[p.id] || 0;
+          actionHtml = `<button class="card-action ${alreadyVoted ? 'voted' : 'vote'}" data-action="vote" data-id="${p.id}" ${alreadyVoted ? 'disabled' : ''}>
+            ${alreadyVoted ? 'Voted ✓' : 'Vote for this'} (${count})
+          </button>`;
+        }
+
+        card.innerHTML = `
+          ${mediaHtml}
+          <div class="card-body">
+            <div class="card-badge ${p.status === 'for_sale' ? 'for-sale' : 'coming-soon'}">
+              ${p.status === 'for_sale' ? 'For Sale' : 'Coming Soon'}
+            </div>
+            <div class="card-name">${p.name}</div>
+            <div class="card-meta">${p.category}</div>
+            ${actionHtml}
+          </div>
+        `;
+        swipeEl.appendChild(card);
+      });
+
+      swipeEl.querySelectorAll('[data-action="buy"]').forEach(btn => {
+        btn.addEventListener('click', async () => {
+          const originalText = btn.textContent;
+          btn.disabled = true;
+          btn.textContent = 'Redirecting to checkout...';
+          try {
+            const res = await fetch(
+              'https://vscombrgcdtrfndqyugb.supabase.co/functions/v1/create-checkout-session',
+              {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ productId: btn.dataset.id })
+              }
+            );
+            const result = await res.json();
+            if (result.url) {
+              window.location.href = result.url;
+            } else {
+              alert(result.error || 'Something went wrong starting checkout.');
+              btn.disabled = false;
+              btn.textContent = originalText;
             }
-          );
-          const result = await res.json();
-          if (result.url) {
-            window.location.href = result.url;
-          } else {
-            alert(result.error || 'Something went wrong starting checkout.');
+          } catch (err) {
+            alert('Could not reach checkout. Please try again in a moment.');
             btn.disabled = false;
             btn.textContent = originalText;
           }
-        } catch (err) {
-          alert('Could not reach checkout. Please try again in a moment.');
-          btn.disabled = false;
-          btn.textContent = originalText;
-        }
+        });
       });
-    });
 
-    catalogSwipe.querySelectorAll('[data-action="vote"]').forEach(btn => {
-      btn.addEventListener('click', async () => {
-        const id = btn.dataset.id;
-        let fingerprint = localStorage.getItem('voterFingerprint');
-        if (!fingerprint) {
-          fingerprint = 'v-' + Date.now() + '-' + Math.random().toString(36).slice(2);
-          localStorage.setItem('voterFingerprint', fingerprint);
-        }
-        const { error } = await supabaseClient
-          .from('product_votes')
-          .insert([{ product_id: id, voter_fingerprint: fingerprint }]);
-        if (!error) {
-          markVoted(parseInt(id));
-          await renderCatalog();
-        }
+      swipeEl.querySelectorAll('[data-action="vote"]').forEach(btn => {
+        btn.addEventListener('click', async () => {
+          const id = btn.dataset.id;
+          let fingerprint = localStorage.getItem('voterFingerprint');
+          if (!fingerprint) {
+            fingerprint = 'v-' + Date.now() + '-' + Math.random().toString(36).slice(2);
+            localStorage.setItem('voterFingerprint', fingerprint);
+          }
+          const { error } = await supabaseClient
+            .from('product_votes')
+            .insert([{ product_id: id, voter_fingerprint: fingerprint }]);
+          if (!error) {
+            markVoted(parseInt(id));
+            await renderThisCatalog();
+          }
+        });
       });
-    });
+    }
+
+    renderThisCatalog();
   }
-  renderCatalog();
+
+  ['clothing', 'tech', 'zines', 'art'].forEach(shopKey => initShopCatalog(shopKey));
 
   // Show a confirmation banner if returning from Stripe checkout
   (function handleCheckoutReturn(){
