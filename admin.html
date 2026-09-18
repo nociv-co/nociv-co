@@ -103,17 +103,22 @@
 
       <div class="admin-form-row">
         <div>
-          <label for="pCategory">Category</label>
-          <select id="pCategory">
-            <option>Accessories</option>
-            <option>T-Shirts</option>
-            <option>Pants</option>
-            <option>Tapestry</option>
-            <option>Prints</option>
-            <option>Stickers</option>
-            <option>Novelty</option>
+          <label for="pShop">Shop (which tab it shows on)</label>
+          <select id="pShop">
+            <option value="clothing">Clothing</option>
+            <option value="tech">Tech</option>
+            <option value="zines">Zines</option>
+            <option value="art">Art</option>
           </select>
         </div>
+        <div>
+          <label for="pCategory">Category (type anything — new ones save automatically)</label>
+          <input type="text" id="pCategory" list="categoryOptions" placeholder="e.g. Patches">
+          <datalist id="categoryOptions"></datalist>
+        </div>
+      </div>
+
+      <div class="admin-form-row">
         <div>
           <label for="pStatus">Status</label>
           <select id="pStatus">
@@ -121,10 +126,11 @@
             <option value="coming_soon">Coming Soon</option>
           </select>
         </div>
+        <div>
+          <label for="pInventory">Starting inventory (optional)</label>
+          <input type="number" id="pInventory" min="0" placeholder="e.g. 5">
+        </div>
       </div>
-
-      <label for="pInventory">Starting inventory (optional — leave blank if you don't want stock tracked)</label>
-      <input type="number" id="pInventory" min="0" placeholder="e.g. 5">
 
       <div class="admin-form-row">
         <div>
@@ -149,6 +155,13 @@
     </div>
 
     <h3>Your Products</h3>
+    <div class="cat-pill-row" id="shopFilterRow" style="margin-bottom:16px;">
+      <button class="cat-pill active" data-shop="all">All</button>
+      <button class="cat-pill" data-shop="clothing">Clothing</button>
+      <button class="cat-pill" data-shop="tech">Tech</button>
+      <button class="cat-pill" data-shop="zines">Zines</button>
+      <button class="cat-pill" data-shop="art">Art</button>
+    </div>
     <div id="productList"></div>
 
     <h3 style="margin-top:40px;">Recent Orders</h3>
@@ -222,7 +235,8 @@
     const priceVal = document.getElementById('pPrice').value;
     const costVal = document.getElementById('pCost').value;
     const inventoryVal = document.getElementById('pInventory').value;
-    const category = document.getElementById('pCategory').value;
+    const shop = document.getElementById('pShop').value;
+    const category = document.getElementById('pCategory').value.trim();
     const status = document.getElementById('pStatus').value;
     const fulfillment_type = document.getElementById('pFulfillment').value;
     const prodigi_sku = document.getElementById('pProdigiSku').value.trim() || null;
@@ -233,6 +247,7 @@
     confirmEl.style.display = 'none';
 
     if (!name) { errEl.textContent = 'Name is required.'; errEl.style.display = 'block'; return; }
+    if (!category) { errEl.textContent = 'Category is required.'; errEl.style.display = 'block'; return; }
     if (fulfillment_type === 'prodigi' && !prodigi_sku) {
       errEl.textContent = 'Prodigi SKU is required for print-on-demand items.';
       errEl.style.display = 'block';
@@ -259,6 +274,7 @@
       price: priceVal ? parseFloat(priceVal) : null,
       cost: costVal ? parseFloat(costVal) : null,
       inventory_count: fulfillment_type === 'prodigi' ? null : (inventoryVal ? parseInt(inventoryVal) : null),
+      shop,
       category,
       status,
       fulfillment_type,
@@ -276,22 +292,44 @@
     document.getElementById('pPrice').value = '';
     document.getElementById('pCost').value = '';
     document.getElementById('pInventory').value = '';
+    document.getElementById('pCategory').value = '';
     document.getElementById('pProdigiSku').value = '';
     document.getElementById('pImage').value = '';
     confirmEl.style.display = 'block';
     setTimeout(() => { confirmEl.style.display = 'none'; }, 3000);
+    await loadCategoryOptions();
     await loadProducts();
   };
+
+  // Autocomplete: every category that already exists, across all shops
+  async function loadCategoryOptions() {
+    const { data } = await supabaseClient.from('products').select('category');
+    const unique = [...new Set((data || []).map(p => p.category).filter(Boolean))];
+    const datalist = document.getElementById('categoryOptions');
+    datalist.innerHTML = unique.map(c => `<option value="${c}">`).join('');
+  }
+  loadCategoryOptions();
+
+  // ===== SHOP FILTER TOGGLE =====
+  let activeShopFilter = 'all';
+  document.querySelectorAll('#shopFilterRow .cat-pill').forEach(btn => {
+    btn.addEventListener('click', () => {
+      document.querySelectorAll('#shopFilterRow .cat-pill').forEach(b => b.classList.remove('active'));
+      btn.classList.add('active');
+      activeShopFilter = btn.dataset.shop;
+      loadProducts();
+    });
+  });
 
   // ===== PRODUCT LIST + VOTE ANALYTICS =====
   async function loadProducts() {
     const listEl = document.getElementById('productList');
     listEl.innerHTML = '<p style="opacity:.5;">Loading...</p>';
 
-    const { data: products, error } = await supabaseClient
-      .from('products')
-      .select('*')
-      .order('created_at', { ascending: false });
+    let query = supabaseClient.from('products').select('*').order('created_at', { ascending: false });
+    if (activeShopFilter !== 'all') query = query.eq('shop', activeShopFilter);
+
+    const { data: products, error } = await query;
 
     if (error || !products) {
       listEl.innerHTML = '<p style="opacity:.5;">Could not load products.</p>';
@@ -303,6 +341,10 @@
     (votes || []).forEach(v => { voteCounts[v.product_id] = (voteCounts[v.product_id] || 0) + 1; });
 
     listEl.innerHTML = '';
+    if (products.length === 0) {
+      listEl.innerHTML = '<p style="opacity:.5;">Nothing in this shop yet.</p>';
+      return;
+    }
     products.forEach(p => {
       const row = document.createElement('div');
       row.className = 'product-row';
@@ -320,7 +362,7 @@
       ${imgHtml}
       <div class="info">
         <div class="name">${p.name}</div>
-        <div class="meta">${p.category} · ${p.status === 'for_sale' ? 'For Sale' : 'Coming Soon'} · ${p.price ? '$' + p.price : 'no price set'} · cost $${p.cost ?? '—'} · stock: ${p.fulfillment_type === 'prodigi' ? 'unlimited (Prodigi)' : (p.inventory_count ?? 'not tracked')} · ${p.fulfillment_type === 'prodigi' ? 'Prodigi SKU: ' + (p.prodigi_sku || 'none set') : 'In-House'}</div>
+        <div class="meta">${p.shop} · ${p.category} · ${p.status === 'for_sale' ? 'For Sale' : 'Coming Soon'} · ${p.price ? '$' + p.price : 'no price set'} · cost $${p.cost ?? '—'} · stock: ${p.fulfillment_type === 'prodigi' ? 'unlimited (Prodigi)' : (p.inventory_count ?? 'not tracked')} · ${p.fulfillment_type === 'prodigi' ? 'Prodigi SKU: ' + (p.prodigi_sku || 'none set') : 'In-House'}</div>
         <div class="votes">${voteCount} votes</div>
       </div>
       <button class="edit-btn" data-id="${p.id}">Edit</button>
@@ -358,15 +400,13 @@
           </div>
         </div>
         <div style="display:flex; gap:8px; margin-bottom:10px;">
-          <select class="edit-category" style="flex:1; padding:6px;">
-            <option ${p.category === 'Accessories' ? 'selected' : ''}>Accessories</option>
-            <option ${p.category === 'T-Shirts' ? 'selected' : ''}>T-Shirts</option>
-            <option ${p.category === 'Pants' ? 'selected' : ''}>Pants</option>
-            <option ${p.category === 'Tapestry' ? 'selected' : ''}>Tapestry</option>
-            <option ${p.category === 'Prints' ? 'selected' : ''}>Prints</option>
-            <option ${p.category === 'Stickers' ? 'selected' : ''}>Stickers</option>
-            <option ${p.category === 'Novelty' ? 'selected' : ''}>Novelty</option>
+          <select class="edit-shop" style="flex:1; padding:6px;">
+            <option value="clothing" ${p.shop === 'clothing' ? 'selected' : ''}>Clothing</option>
+            <option value="tech" ${p.shop === 'tech' ? 'selected' : ''}>Tech</option>
+            <option value="zines" ${p.shop === 'zines' ? 'selected' : ''}>Zines</option>
+            <option value="art" ${p.shop === 'art' ? 'selected' : ''}>Art</option>
           </select>
+          <input type="text" class="edit-category" list="categoryOptions" value="${p.category}" style="flex:1; padding:6px;">
           <select class="edit-status" style="flex:1; padding:6px;">
             <option value="for_sale" ${p.status === 'for_sale' ? 'selected' : ''}>For Sale</option>
             <option value="coming_soon" ${p.status === 'coming_soon' ? 'selected' : ''}>Coming Soon</option>
@@ -387,7 +427,8 @@
         price: row.querySelector('.edit-price').value ? parseFloat(row.querySelector('.edit-price').value) : null,
         cost: row.querySelector('.edit-cost').value ? parseFloat(row.querySelector('.edit-cost').value) : null,
         inventory_count: row.querySelector('.edit-inventory').value ? parseInt(row.querySelector('.edit-inventory').value) : null,
-        category: row.querySelector('.edit-category').value,
+        shop: row.querySelector('.edit-shop').value,
+        category: row.querySelector('.edit-category').value.trim(),
         status: row.querySelector('.edit-status').value,
       };
       const { error } = await supabaseClient.from('products').update(updated).eq('id', p.id);
