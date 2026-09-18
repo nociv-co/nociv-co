@@ -26,8 +26,9 @@
     background: rgba(255,255,255,0.55); backdrop-filter: blur(6px); border-radius: 10px;
   }
   .admin-form label { display: block; font-size: 0.8rem; opacity: .7; margin: 12px 0 4px; }
-  .admin-form input, .admin-form select {
+  .admin-form input, .admin-form select, .admin-form textarea {
     width: 100%; padding: 10px; border: 1px solid #999; font-size: 1rem; box-sizing: border-box;
+    font-family: inherit;
   }
   .admin-form-row { display: flex; gap: 12px; }
   .admin-form-row > div { flex: 1; }
@@ -37,6 +38,7 @@
   }
   .admin-error { color: var(--red); font-size: 0.85rem; margin-top: 8px; display: none; }
   .admin-note { color: var(--green); font-size: 0.85rem; margin-top: 8px; display: none; }
+  .field-hint { font-size: 0.72rem; opacity: .55; margin-top: -2px; margin-bottom: 4px; }
 
   .product-row {
     display: flex; align-items: center; gap: 14px; border: 1px solid #ccc;
@@ -59,6 +61,7 @@
     background: none; border: 1px solid var(--grey-dark); color: var(--ink);
     padding: 6px 10px; font-size: 0.75rem; cursor: pointer; margin-right: 6px;
   }
+  .missing-flag { color: var(--red); font-weight: 700; }
 </style>
 </head>
 <body>
@@ -88,16 +91,19 @@
     <div class="admin-form">
       <h3 style="margin-top:0;">Add a Product</h3>
       <label for="pName">Name</label>
-      <input type="text" id="pName" placeholder="e.g. Ash Grey Tee">
+      <input type="text" id="pName" placeholder="e.g. Nociv America Cream">
+
+      <label for="pDescription">Description (shown when a customer taps the product)</label>
+      <textarea id="pDescription" rows="3" placeholder="e.g. 16x20 print on museum-quality paper. Ships in 5-7 days via Prodigi."></textarea>
 
       <div class="admin-form-row">
         <div>
           <label for="pPrice">Price ($, leave blank if unknown yet)</label>
-          <input type="number" id="pPrice" step="0.01" placeholder="28.00">
+          <input type="number" id="pPrice" step="0.01" placeholder="15.00">
         </div>
         <div>
           <label for="pCost">Your cost ($ — private, never shown publicly)</label>
-          <input type="number" id="pCost" step="0.01" placeholder="11.00">
+          <input type="number" id="pCost" step="0.01" placeholder="6.00">
         </div>
       </div>
 
@@ -113,7 +119,7 @@
         </div>
         <div>
           <label for="pCategory">Category (type anything — new ones save automatically)</label>
-          <input type="text" id="pCategory" list="categoryOptions" placeholder="e.g. Patches">
+          <input type="text" id="pCategory" list="categoryOptions" placeholder="e.g. Posters">
           <datalist id="categoryOptions"></datalist>
         </div>
       </div>
@@ -127,7 +133,7 @@
           </select>
         </div>
         <div>
-          <label for="pInventory">Starting inventory (optional)</label>
+          <label for="pInventory">Starting inventory (optional — leave blank for Prodigi items)</label>
           <input type="number" id="pInventory" min="0" placeholder="e.g. 5">
         </div>
       </div>
@@ -141,12 +147,19 @@
           </select>
         </div>
         <div id="prodigiSkuWrap" style="display:none;">
-          <label for="pProdigiSku">Prodigi SKU (look this up on prodigi.com for the exact product)</label>
-          <input type="text" id="pProdigiSku" placeholder="e.g. GLOBAL-CAN-16x20">
+          <label for="pProdigiSku">Prodigi SKU (exact code from prodigi.com's catalogue for this product/size)</label>
+          <input type="text" id="pProdigiSku" placeholder="e.g. GLOBAL-FAP-16x20">
         </div>
       </div>
 
-      <label for="pImage">Photo — upload a file...</label>
+      <label for="pStripePriceId">Stripe Price ID <span class="missing-flag" id="stripeRequiredFlag" style="display:none;">— required, or Buy will fail</span></label>
+      <input type="text" id="pStripePriceId" placeholder="price_1AbCdEfGhIjKlMnOp">
+      <div class="field-hint">
+        Stripe Dashboard → Product catalog → open (or create) the product → copy the Price ID under Pricing.
+        This is what actually charges the customer — without it, checkout fails every time.
+      </div>
+
+      <label for="pImage">Photo — upload a file (full resolution — this is what gets sent to Prodigi to print, so use the real, final-quality file)</label>
       <input type="file" id="pImage" accept="image/*">
 
       <label for="pImageUrl" style="margin-top:10px;">...or paste an image link instead (e.g. from Prodigi's Image Library) — skip the upload above if you use this</label>
@@ -193,41 +206,11 @@
   const loginBox = document.getElementById('loginBox');
   const dashboard = document.getElementById('dashboard');
 
-  // ===== IMAGE RESIZE — shrinks any uploaded photo before it goes to storage =====
-  // Caps the longest side at 2000px. Plenty sharp for on-site display and most
-  // POD print sizes, but for very large or up-close prints, true full resolution
-  // would look sharper — if that ever matters for a specific piece, skip this by
-  // using the "paste an image link" field instead of the file picker.
-  function resizeImageFile(file, maxDim = 2000, quality = 0.85) {
-    return new Promise((resolve, reject) => {
-      const img = new Image();
-      const reader = new FileReader();
-      reader.onload = (e) => { img.src = e.target.result; };
-      reader.onerror = reject;
-      img.onload = () => {
-        let { width, height } = img;
-        if (width > maxDim || height > maxDim) {
-          if (width > height) {
-            height = Math.round(height * (maxDim / width));
-            width = maxDim;
-          } else {
-            width = Math.round(width * (maxDim / height));
-            height = maxDim;
-          }
-        }
-        const canvas = document.createElement('canvas');
-        canvas.width = width;
-        canvas.height = height;
-        canvas.getContext('2d').drawImage(img, 0, 0, width, height);
-        canvas.toBlob((blob) => {
-          if (blob) resolve(blob);
-          else reject(new Error('Could not process image'));
-        }, 'image/jpeg', quality);
-      };
-      img.onerror = reject;
-      reader.readAsDataURL(file);
-    });
-  }
+  // NOTE: the old resizeImageFile() step has been removed on purpose.
+  // It was capping every uploaded photo at 2000px on the long side, which is
+  // far below what a real print needs (a 16x20 print at proper 300 DPI needs
+  // roughly 4800x6000px). Uploads now go to storage exactly as they came off
+  // your device — full resolution, no recompression.
 
   // ===== AUTH =====
   async function checkSession() {
@@ -264,13 +247,18 @@
     await checkSession();
   };
 
-  // ===== ADD PRODUCT (with optional image upload) =====
+  // ===== ADD PRODUCT (full-resolution upload, no resizing) =====
   document.getElementById('pFulfillment').addEventListener('change', (e) => {
     document.getElementById('prodigiSkuWrap').style.display = e.target.value === 'prodigi' ? 'block' : 'none';
   });
 
+  document.getElementById('pStatus').addEventListener('change', (e) => {
+    document.getElementById('stripeRequiredFlag').style.display = e.target.value === 'for_sale' ? 'inline' : 'none';
+  });
+
   document.getElementById('addProductBtn').onclick = async () => {
     const name = document.getElementById('pName').value.trim();
+    const description = document.getElementById('pDescription').value.trim() || null;
     const priceVal = document.getElementById('pPrice').value;
     const costVal = document.getElementById('pCost').value;
     const inventoryVal = document.getElementById('pInventory').value;
@@ -279,6 +267,7 @@
     const status = document.getElementById('pStatus').value;
     const fulfillment_type = document.getElementById('pFulfillment').value;
     const prodigi_sku = document.getElementById('pProdigiSku').value.trim() || null;
+    const stripe_price_id = document.getElementById('pStripePriceId').value.trim() || null;
     const file = document.getElementById('pImage').files[0];
     const imageUrlInput = document.getElementById('pImageUrl').value.trim();
     const errEl = document.getElementById('addError');
@@ -293,22 +282,23 @@
       errEl.style.display = 'block';
       return;
     }
+    if (status === 'for_sale' && !stripe_price_id) {
+      errEl.textContent = 'A Stripe Price ID is required for anything marked "For Sale" — otherwise the Buy button will fail. Set status to "Coming Soon" if you don\'t have one yet.';
+      errEl.style.display = 'block';
+      return;
+    }
 
     let image_url = null;
     if (imageUrlInput) {
       // A pasted link takes priority — skip the upload entirely
       image_url = imageUrlInput;
     } else if (file) {
-      let uploadBlob = file;
-      try {
-        uploadBlob = await resizeImageFile(file);
-      } catch (e) {
-        uploadBlob = file; // fall back to the original if resizing fails for any reason
-      }
-      const fileName = `${Date.now()}-${file.name.replace(/\s+/g, '-').replace(/\.[^/.]+$/, '')}.jpg`;
+      // Uploaded exactly as-is — full resolution, no resizing or recompression.
+      const ext = (file.name.split('.').pop() || 'jpg').toLowerCase();
+      const fileName = `${Date.now()}-${file.name.replace(/\s+/g, '-').replace(/\.[^/.]+$/, '')}.${ext}`;
       const { error: uploadError } = await supabaseClient.storage
         .from('product-images')
-        .upload(fileName, uploadBlob, { contentType: 'image/jpeg' });
+        .upload(fileName, file, { contentType: file.type || 'application/octet-stream' });
       if (uploadError) {
         errEl.textContent = 'Image upload failed: ' + uploadError.message;
         errEl.style.display = 'block';
@@ -320,6 +310,7 @@
 
     const { error } = await supabaseClient.from('products').insert([{
       name,
+      description,
       price: priceVal ? parseFloat(priceVal) : null,
       cost: costVal ? parseFloat(costVal) : null,
       inventory_count: fulfillment_type === 'prodigi' ? null : (inventoryVal ? parseInt(inventoryVal) : null),
@@ -328,6 +319,7 @@
       status,
       fulfillment_type,
       prodigi_sku,
+      stripe_price_id,
       image_url
     }]);
 
@@ -338,11 +330,13 @@
     }
 
     document.getElementById('pName').value = '';
+    document.getElementById('pDescription').value = '';
     document.getElementById('pPrice').value = '';
     document.getElementById('pCost').value = '';
     document.getElementById('pInventory').value = '';
     document.getElementById('pCategory').value = '';
     document.getElementById('pProdigiSku').value = '';
+    document.getElementById('pStripePriceId').value = '';
     document.getElementById('pImage').value = '';
     document.getElementById('pImageUrl').value = '';
     confirmEl.style.display = 'block';
@@ -408,11 +402,14 @@
     const imgHtml = p.image_url
       ? `<img src="${p.image_url}" alt="${p.name}">`
       : `<div class="no-img">no photo</div>`;
+    const stripeWarning = (p.status === 'for_sale' && !p.stripe_price_id)
+      ? ' · <span class="missing-flag">NO STRIPE PRICE — BUY WILL FAIL</span>'
+      : '';
     row.innerHTML = `
       ${imgHtml}
       <div class="info">
         <div class="name">${p.name}</div>
-        <div class="meta">${p.shop} · ${p.category} · ${p.status === 'for_sale' ? 'For Sale' : 'Coming Soon'} · ${p.price ? '$' + p.price : 'no price set'} · cost $${p.cost ?? '—'} · stock: ${p.fulfillment_type === 'prodigi' ? 'unlimited (Prodigi)' : (p.inventory_count ?? 'not tracked')} · ${p.fulfillment_type === 'prodigi' ? 'Prodigi SKU: ' + (p.prodigi_sku || 'none set') : 'In-House'}</div>
+        <div class="meta">${p.shop} · ${p.category} · ${p.status === 'for_sale' ? 'For Sale' : 'Coming Soon'} · ${p.price ? '$' + p.price : 'no price set'} · cost $${p.cost ?? '—'} · stock: ${p.fulfillment_type === 'prodigi' ? 'unlimited (Prodigi)' : (p.inventory_count ?? 'not tracked')} · ${p.fulfillment_type === 'prodigi' ? 'Prodigi SKU: ' + (p.prodigi_sku || 'none set') : 'In-House'}${stripeWarning}</div>
         <div class="votes">${voteCount} votes</div>
       </div>
       <button class="edit-btn" data-id="${p.id}">Edit</button>
@@ -435,6 +432,8 @@
       <div class="info" style="width:100%;">
         <label style="font-size:0.75rem; opacity:.7; display:block; margin-bottom:2px;">Name</label>
         <input type="text" class="edit-name" value="${p.name}" style="width:100%; margin-bottom:8px; padding:6px;">
+        <label style="font-size:0.75rem; opacity:.7; display:block; margin-bottom:2px;">Description</label>
+        <textarea class="edit-description" rows="2" style="width:100%; margin-bottom:8px; padding:6px; font-family:inherit;">${p.description ?? ''}</textarea>
         <div style="display:flex; gap:8px; margin-bottom:8px;">
           <div style="flex:1;">
             <label style="font-size:0.75rem; opacity:.7; display:block;">Price</label>
@@ -449,6 +448,8 @@
             <input type="number" class="edit-inventory" value="${p.inventory_count ?? ''}" style="width:100%; padding:6px;">
           </div>
         </div>
+        <label style="font-size:0.75rem; opacity:.7; display:block;">Stripe Price ID</label>
+        <input type="text" class="edit-stripe-price" value="${p.stripe_price_id ?? ''}" style="width:100%; margin-bottom:8px; padding:6px;">
         <div style="display:flex; gap:8px; margin-bottom:10px;">
           <select class="edit-shop" style="flex:1; padding:6px;">
             <option value="clothing" ${p.shop === 'clothing' ? 'selected' : ''}>Clothing</option>
@@ -472,14 +473,22 @@
     row.querySelector('.cancel-edit-btn').addEventListener('click', () => loadProducts());
 
     row.querySelector('.save-edit-btn').addEventListener('click', async () => {
+      const newStatus = row.querySelector('.edit-status').value;
+      const newStripePrice = row.querySelector('.edit-stripe-price').value.trim() || null;
+      if (newStatus === 'for_sale' && !newStripePrice) {
+        alert('This product is marked "For Sale" but has no Stripe Price ID — the Buy button will fail. Add a Stripe Price ID or set status back to "Coming Soon".');
+        return;
+      }
       const updated = {
         name: row.querySelector('.edit-name').value.trim(),
+        description: row.querySelector('.edit-description').value.trim() || null,
         price: row.querySelector('.edit-price').value ? parseFloat(row.querySelector('.edit-price').value) : null,
         cost: row.querySelector('.edit-cost').value ? parseFloat(row.querySelector('.edit-cost').value) : null,
         inventory_count: row.querySelector('.edit-inventory').value ? parseInt(row.querySelector('.edit-inventory').value) : null,
+        stripe_price_id: newStripePrice,
         shop: row.querySelector('.edit-shop').value,
         category: row.querySelector('.edit-category').value.trim(),
-        status: row.querySelector('.edit-status').value,
+        status: newStatus,
       };
       const { error } = await supabaseClient.from('products').update(updated).eq('id', p.id);
       if (error) { alert('Error saving: ' + error.message); return; }
@@ -506,17 +515,20 @@
     orders.forEach(o => {
       const row = document.createElement('div');
       row.className = 'product-row';
+      const prodigiBit = o.prodigi_order_id
+        ? ` · Prodigi #${o.prodigi_order_id} (${o.prodigi_status || 'submitted'})`
+        : (o.prodigi_status === 'failed' ? ' · <span class="missing-flag">PRODIGI ORDER FAILED — check manually</span>' : '');
       row.innerHTML = `
         <div class="info">
           <div class="name">${o.products?.name || 'Product #' + o.product_id}</div>
-          <div class="meta">$${o.amount_paid ?? '—'} · ${o.customer_email || 'no email'} · ${new Date(o.created_at).toLocaleString()}</div>
+          <div class="meta">$${o.amount_paid ?? '—'} · ${o.customer_email || 'no email'} · ${new Date(o.created_at).toLocaleString()}${prodigiBit}</div>
         </div>
       `;
       orderListEl.appendChild(row);
     });
   }
 
-  // ===== PROCESS ALBUM =====
+  // ===== PROCESS ALBUM (full resolution, no resizing) =====
   document.getElementById('addAlbumBtn').onclick = async () => {
     const file = document.getElementById('albumImage').files[0];
     const caption = document.getElementById('albumCaption').value.trim() || null;
@@ -527,16 +539,11 @@
 
     if (!file) { errEl.textContent = 'Choose a photo first.'; errEl.style.display = 'block'; return; }
 
-    let uploadBlob = file;
-    try {
-      uploadBlob = await resizeImageFile(file);
-    } catch (e) {
-      uploadBlob = file;
-    }
-    const fileName = `${Date.now()}-${file.name.replace(/\s+/g, '-').replace(/\.[^/.]+$/, '')}.jpg`;
+    const ext = (file.name.split('.').pop() || 'jpg').toLowerCase();
+    const fileName = `${Date.now()}-${file.name.replace(/\s+/g, '-').replace(/\.[^/.]+$/, '')}.${ext}`;
     const { error: uploadError } = await supabaseClient.storage
       .from('album-photos')
-      .upload(fileName, uploadBlob, { contentType: 'image/jpeg' });
+      .upload(fileName, file, { contentType: file.type || 'application/octet-stream' });
     if (uploadError) {
       errEl.textContent = 'Upload failed: ' + uploadError.message;
       errEl.style.display = 'block';
