@@ -146,8 +146,11 @@
         </div>
       </div>
 
-      <label for="pImage">Photo</label>
+      <label for="pImage">Photo — upload a file...</label>
       <input type="file" id="pImage" accept="image/*">
+
+      <label for="pImageUrl" style="margin-top:10px;">...or paste an image link instead (e.g. from Prodigi's Image Library) — skip the upload above if you use this</label>
+      <input type="text" id="pImageUrl" placeholder="https://...">
 
       <button class="admin-submit" id="addProductBtn">Add Product</button>
       <p class="admin-note" id="addConfirm">Product added.</p>
@@ -241,6 +244,7 @@
     const fulfillment_type = document.getElementById('pFulfillment').value;
     const prodigi_sku = document.getElementById('pProdigiSku').value.trim() || null;
     const file = document.getElementById('pImage').files[0];
+    const imageUrlInput = document.getElementById('pImageUrl').value.trim();
     const errEl = document.getElementById('addError');
     const confirmEl = document.getElementById('addConfirm');
     errEl.style.display = 'none';
@@ -255,7 +259,10 @@
     }
 
     let image_url = null;
-    if (file) {
+    if (imageUrlInput) {
+      // A pasted link takes priority — skip the upload entirely
+      image_url = imageUrlInput;
+    } else if (file) {
       const fileName = `${Date.now()}-${file.name.replace(/\s+/g, '-')}`;
       const { error: uploadError } = await supabaseClient.storage
         .from('product-images')
@@ -295,6 +302,7 @@
     document.getElementById('pCategory').value = '';
     document.getElementById('pProdigiSku').value = '';
     document.getElementById('pImage').value = '';
+    document.getElementById('pImageUrl').value = '';
     confirmEl.style.display = 'block';
     setTimeout(() => { confirmEl.style.display = 'none'; }, 3000);
     await loadCategoryOptions();
