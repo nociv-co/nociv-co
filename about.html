@@ -30,6 +30,49 @@
     text-align: center;
     letter-spacing: 0.05em;
   }
+
+  /* --- Buy / Build / Share explainer --- */
+  .participate-grid {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 14px;
+    max-width: 640px;
+    margin: 24px auto 0;
+    text-align: left;
+  }
+  @media (min-width: 640px) {
+    .participate-grid { grid-template-columns: repeat(3, 1fr); }
+  }
+  .participate-card {
+    background: var(--paper-dim, #d8d8d8);
+    border: 1px solid #bbb;
+    border-left: 4px solid var(--red);
+    border-radius: 4px;
+    padding: 18px;
+    color: var(--ink, #1a1a1a);
+  }
+  .participate-card.build { border-left-color: var(--gold); }
+  .participate-card.share { border-left-color: var(--green); }
+  .participate-card h3 {
+    margin: 0 0 8px;
+    font-size: 1rem;
+    letter-spacing: 0.05em;
+    text-transform: uppercase;
+    color: var(--ink, #1a1a1a);
+  }
+  .participate-card p {
+    margin: 0;
+    font-size: 0.9rem;
+    line-height: 1.6;
+    opacity: .9;
+  }
+  .participate-note {
+    max-width: 640px;
+    margin: 18px auto 0;
+    text-align: center;
+    font-weight: 700;
+    font-size: 1.05rem;
+  }
 </style>
 </head>
 <body>
@@ -45,356 +88,404 @@
   <a href="creator-tools.html" class="img-tab"><img src="nav-tools.png" alt="Tools"></a>
   <a href="community.html" class="img-tab"><img src="community-button.png" alt="Community"></a>
 </nav>
-  
-<div class="wrap" style="text-align:center; max-width:640px;">
-  <p style="font-size:1.3rem; line-height:1.7; font-weight:700;">
-    NOCIV is an Arizona based creator brand that uses digital space
-    to set the conditions for physical reality.
-  </p>
-  <p style="font-size:1.05rem; line-height:1.8; opacity:.9;">
-    We live in an era where we can communicate instantly across the
-    globe, yet feel increasingly disconnected from the physical world
-    right in front of us. Technology isn't the problem — we just
-    forgot what it was built to do.
-  </p>
-</div>
 
-<div class="torn dark-to-light"></div>
+<!-- SUB-NAV: swipe between About's sections instead of one long scroll -->
+<nav class="subnav">
+  <button data-panel="philosophyPanel" class="active">Philosophy</button>
+  <button data-panel="culturePanel">Culture</button>
+  <button data-panel="creationPanel">Creation</button>
+  <button data-panel="communityPanel">Community</button>
+  <button data-panel="founderPanel">Founder</button>
+</nav>
 
-<div class="wrap">
-  <div class="eyebrow">What Is NOCIV?</div>
-  <div style="font-size:1.05rem; line-height:1.8; max-width:640px;">
-    <p>
-      NOCIV uses the internet as a starting point, not the
-      destination. A website can introduce you to an artist, a tool,
-      a zine, a garment, or an idea. That digital interaction should
-      eventually leave the screen — leading to a pop-up, a workshop,
-      a conversation, or a physical object you make yourself.
+<!-- ===== PHILOSOPHY ===== -->
+<div class="subpanel show" id="philosophyPanel">
+  <div class="wrap" style="text-align:center; max-width:640px;">
+    <p style="font-size:1.3rem; line-height:1.7; font-weight:700;">
+      NOCIV is an Arizona based creator brand that uses digital space
+      to set the conditions for physical reality.
     </p>
-    <p>
-      NOCIV isn't a company that happens to do many things. It is a
-      creative practice expressed across clothing, art, hardware,
-      writing, software, and physical community. This platform
-      operates without algorithms, advertisements, or tracking. It
-      exists purely as a dedicated safe space for genuine human
-      connection.
+    <p style="font-size:1.05rem; line-height:1.8; opacity:.9;">
+      We live in an era where we can communicate instantly across the
+      globe, yet feel increasingly disconnected from the physical world
+      right in front of us. Technology isn't the problem — we just
+      forgot what it was built to do.
     </p>
-    <p style="font-weight:700;">Why express it through so many mediums?</p>
-    <p style="font-weight:900; font-size:1.2rem;">Why not?</p>
+  </div>
+
+  <div class="wrap">
+    <div class="eyebrow">What Is NOCIV?</div>
+    <div style="font-size:1.05rem; line-height:1.8; max-width:640px;">
+      <p>
+        NOCIV uses the internet as a starting point, not the
+        destination. A website can introduce you to an artist, a tool,
+        a zine, a garment, or an idea. That digital interaction should
+        eventually leave the screen — leading to a pop-up, a workshop,
+        a conversation, or a physical object you make yourself.
+      </p>
+      <p>
+        NOCIV isn't a company that happens to do many things. It is a
+        creative practice expressed across clothing, art, hardware,
+        writing, software, and physical community. This platform
+        operates without algorithms, advertisements, or tracking. It
+        exists purely as a dedicated safe space for genuine human
+        connection.
+      </p>
+      <p style="font-weight:700;">Why express it through so many mediums?</p>
+      <p style="font-weight:900; font-size:1.2rem;">Why not?</p>
+    </div>
+  </div>
+
+  <div class="wrap">
+    <h1 class="headline" style="font-size:1.6rem; letter-spacing:0.04em;">
+      What Does "Nothing Of Civilization" Mean?
+    </h1>
+    <div style="font-size:1.05rem; line-height:1.8; max-width:640px;">
+      <p>NOCIV stands for Nothing Of Civilization.</p>
+      <p>
+        It isn't about going backward or pretending we can return to a
+        previous era. It is a reminder that the systems, objects, and
+        norms around us aren't permanent features of nature, because
+        somebody built them.
+      </p>
+      <p>
+        We buy things without knowing who made them. We use technology
+        without understanding how it functions. We live inside social
+        norms as if they simply exist on their own. But every system,
+        tool, and product was constructed by people.
+      </p>
+      <p style="font-weight:700;">
+        We built this world. Which means we can build something else.
+      </p>
+    </div>
   </div>
 </div>
 
-<div class="torn dark-to-light"></div>
+<!-- ===== CULTURE ===== -->
+<div class="subpanel" id="culturePanel">
+  <div class="wrap">
+    <div class="eyebrow">Why Arizona?</div>
+    <div style="font-size:1.05rem; line-height:1.8; max-width:640px;">
+      <p>NOCIV is built in Arizona. Arizona is home.</p>
+      <p>
+        Born in California and raised in Texas before moving to
+        Arizona, identity for me has always been a hybrid experience.
+        Parts of my life exist across state lines, but a brand needs to
+        physically exist somewhere to build real community.
+      </p>
+      <p>
+        Arizona is where NOCIV collaborates, hosts, crafts, and builds
+        in person. Those connections start locally, but they travel
+        globally.
+      </p>
+      <p style="font-weight:700;">NOCIV is Arizona based, not Arizona limited.</p>
+    </div>
+  </div>
 
-<div class="wrap">
-  <div class="eyebrow">Why Arizona?</div>
-  <div style="font-size:1.05rem; line-height:1.8; max-width:640px;">
-    <p>NOCIV is built in Arizona. Arizona is home.</p>
-    <p>
-      Born in California and raised in Texas before moving to
-      Arizona, identity for me has always been a hybrid experience.
-      Parts of my life exist across state lines, but a brand needs to
-      physically exist somewhere to build real community.
-    </p>
-    <p>
-      Arizona is where NOCIV collaborates, hosts, crafts, and builds
-      in person. Those connections start locally, but they travel
-      globally.
-    </p>
-    <p style="font-weight:700;">NOCIV is Arizona based, not Arizona limited.</p>
+  <div class="wrap">
+    <div class="eyebrow">Representing Black America</div>
+    <div style="font-size:1.05rem; line-height:1.8; max-width:640px;">
+      <p>
+        NOCIV is a Black American owned company, and that foundation
+        shapes everything we create.
+      </p>
+      <p>
+        Our roots in this country run deep. Black Americans didn't
+        just survive here — we built, adapted, and forged a culture
+        that continuously shapes world history.
+      </p>
+      <p style="font-weight:700;">
+        We know who we are. We are not lost. We are here.
+      </p>
+      <p>
+        Representing Black America means honoring that legacy without
+        flattening it into caricature. It isn't just about sanitized
+        "Black excellence" or historical stereotypes. It is about
+        representing Black life in all its nuances, contradictions,
+        regional styles, and creative expressions.
+      </p>
+      <p>
+        We create from this history, acknowledge its proximity, and
+        express it as something living, active, and present.
+      </p>
+    </div>
   </div>
 </div>
 
-<div class="torn dark-to-light"></div>
+<!-- ===== CREATION ===== -->
+<div class="subpanel" id="creationPanel">
+  <div class="wrap">
+    <img src="timeline-vision-header.png" alt="Timeline: Vision" style="width:100%; max-width:600px; display:block; margin:0 auto 12px;">
+    <p style="opacity:.7; margin-top:0; text-align:center;">Pick a track to see where it's headed.</p>
 
-<div class="wrap">
-  <h1 class="headline" style="font-size:1.6rem; letter-spacing:0.04em;">
-    What Does "Nothing Of Civilization" Mean?
-  </h1>
-  <div style="font-size:1.05rem; line-height:1.8; max-width:640px;">
-    <p>NOCIV stands for Nothing Of Civilization.</p>
-    <p>
-      It isn't about going backward or pretending we can return to a
-      previous era. It is a reminder that the systems, objects, and
-      norms around us aren't permanent features of nature, because
-      somebody built them.
-    </p>
-    <p>
-      We buy things without knowing who made them. We use technology
-      without understanding how it functions. We live inside social
-      norms as if they simply exist on their own. But every system,
-      tool, and product was constructed by people.
-    </p>
-    <p style="font-weight:700;">
-      We built this world. Which means we can build something else.
-    </p>
+    <div style="display:flex; gap:10px; margin:20px 0; flex-wrap:wrap;">
+      <button class="phase-track-btn active" data-track="clothing">Clothing</button>
+      <button class="phase-track-btn" data-track="tech">Tech</button>
+      <button class="phase-track-btn" data-track="zines">Zines</button>
+      <button class="phase-track-btn" data-track="community">Community</button>
+    </div>
+
+    <div class="phase-scroll-wrap">
+      <div id="phases-clothing" class="phase-track" style="overflow-x:auto; padding:20px 0;">
+        <div style="display:flex; gap:24px; min-width:700px; padding:0 4px;">
+
+          <div style="flex:1;">
+            <div style="font-weight:900; font-size:1.1rem;">① We are here</div>
+            <p style="font-size:0.9rem;">
+              <strong>Phase 1</strong> — pop-up shops only, all around Arizona.
+              Second hand + upcycled, 1-of-1 pieces.
+            </p>
+          </div>
+
+          <div style="flex:1;">
+            <div style="font-weight:900; font-size:1.1rem;">②</div>
+            <p style="font-size:0.9rem;">
+              <strong>Phase 2</strong> — adding original designs to wholesale
+              blanks. Opening up on Vinted to reach other states.
+            </p>
+          </div>
+
+          <div style="flex:1;">
+            <div style="font-weight:900; font-size:1.1rem;">③</div>
+            <p style="font-size:0.9rem;">
+              <strong>Phase 3</strong> — create, cut, and sew garments.
+              Garments in local shops.
+            </p>
+          </div>
+
+          <div style="flex:1;">
+            <div style="font-weight:900; font-size:1.1rem;">④</div>
+            <p style="font-size:0.9rem;">
+              <strong>Phase 4</strong> — pop-up shops in different states.
+              Garments in select stores throughout the USA.
+            </p>
+          </div>
+
+          <div style="flex:1;">
+            <div style="font-weight:900; font-size:1.1rem;">⑤</div>
+            <p style="font-size:0.9rem;">
+              Find a USA manufacturer, or create one. Retire the Vinted
+              store — selling only in person.
+            </p>
+          </div>
+
+        </div>
+      </div>
+
+      <div id="phases-tech" class="phase-track" style="overflow-x:auto; padding:20px 0; display:none;">
+        <div style="display:flex; gap:24px; min-width:700px; padding:0 4px;">
+
+          <div style="flex:1;">
+            <div style="font-weight:900; font-size:1.1rem;">① We are here</div>
+            <p style="font-size:0.9rem;">
+              <strong>Phase 1</strong> — prototyping concepts for different
+              use cases of hardware and software. Durability testing for
+              production.
+            </p>
+          </div>
+
+          <div style="flex:1;">
+            <div style="font-weight:900; font-size:1.1rem;">②</div>
+            <p style="font-size:0.9rem;">
+              <strong>Phase 2</strong> — create products that help people
+              build devices with ease. Simplify the learning curve. First
+              small hand-finished batch, sold in person at pop-ups.
+            </p>
+          </div>
+
+          <div style="flex:1;">
+            <div style="font-weight:900; font-size:1.1rem;">③</div>
+            <p style="font-size:0.9rem;">
+              <strong>Phase 3</strong> — make parts of the design open
+              source. Release build files for anyone who wants to make
+              their own, plus a sharing hub where people can share
+              information on their builds.
+            </p>
+          </div>
+
+          <div style="flex:1;">
+            <div style="font-weight:900; font-size:1.1rem;">④</div>
+            <p style="font-size:0.9rem;">
+              <strong>Phase 4</strong> — free the tools. Ownership over
+              subscriptions, no paywalls. Modify and reuse components to
+              build something new instead of buying new every time.
+            </p>
+          </div>
+
+        </div>
+      </div>
+
+      <div id="phases-zines" class="phase-track" style="overflow-x:auto; padding:20px 0; display:none;">
+        <div style="display:flex; gap:24px; min-width:700px; padding:0 4px;">
+
+          <div style="flex:1;">
+            <div style="font-weight:900; font-size:1.1rem;">① We are here</div>
+            <p style="font-size:0.9rem;">
+              <strong>Phase 1</strong> — publish original writings and
+              zines on the site as free reads.
+            </p>
+          </div>
+
+          <div style="flex:1;">
+            <div style="font-weight:900; font-size:1.1rem;">②</div>
+            <p style="font-size:0.9rem;">
+              <strong>Phase 2</strong> — install a print-to-order option
+              so physical copies can be made when someone wants one.
+            </p>
+          </div>
+
+          <div style="flex:1;">
+            <div style="font-weight:900; font-size:1.1rem;">③</div>
+            <p style="font-size:0.9rem;">
+              <strong>Phase 3</strong> — create a zine template anyone
+              can use to make their own.
+            </p>
+          </div>
+
+          <div style="flex:1;">
+            <div style="font-weight:900; font-size:1.1rem;">④</div>
+            <p style="font-size:0.9rem;">
+              <strong>Phase 4</strong> — build a hub where people can
+              share their own writing on-site, free for others to
+              download.
+            </p>
+          </div>
+
+        </div>
+      </div>
+
+      <div id="phases-community" class="phase-track" style="overflow-x:auto; padding:20px 0; display:none;">
+        <div style="display:flex; gap:24px; min-width:700px; padding:0 4px;">
+
+          <div style="flex:1;">
+            <div style="font-weight:900; font-size:1.1rem;">① We are here</div>
+            <p style="font-size:0.9rem;">
+              <strong>Phase 1</strong> — decentralized launch. No land, no
+              storage. Wall hosts, workshop hosts, and land partners
+              connect directly, starting in Arizona.
+            </p>
+          </div>
+
+          <div style="flex:1;">
+            <div style="font-weight:900; font-size:1.1rem;">②</div>
+            <p style="font-size:0.9rem;">
+              <strong>Phase 2</strong> — the infrastructure blueprint. A
+              plot of land, aircrete dome studios, shared kitchen and
+              showers, a covered build bay, and a materials store at cost.
+            </p>
+          </div>
+
+        </div>
+      </div>
+
+      <div class="scroll-hint">&#8592; swipe to see more &#8594;</div>
+    </div>
   </div>
 </div>
 
-<div class="torn dark-to-light"></div>
+<!-- ===== COMMUNITY ===== -->
+<div class="subpanel" id="communityPanel">
+  <div class="wrap">
+    <div class="eyebrow">Buy. Build. Share.</div>
+    <p style="font-size:1.05rem; line-height:1.8; max-width:640px;">
+      This is the whole model, stated plainly. NOCIV isn't asking you
+      to pick a side — it's giving you three honest ways in, and
+      you choose how far you go.
+    </p>
 
-<div class="wrap">
-  <img src="timeline-vision-header.png" alt="Timeline: Vision" style="width:100%; max-width:600px; display:block; margin:0 auto 12px;">
-  <p style="opacity:.7; margin-top:0; text-align:center;">Pick a track to see where it's headed.</p>
-
-  <div style="display:flex; gap:10px; margin:20px 0; flex-wrap:wrap;">
-    <button class="phase-track-btn active" data-track="clothing">Clothing</button>
-    <button class="phase-track-btn" data-track="tech">Tech</button>
-    <button class="phase-track-btn" data-track="zines">Zines</button>
-    <button class="phase-track-btn" data-track="community">Community</button>
-  </div>
-
-  <div class="phase-scroll-wrap">
-    <div id="phases-clothing" class="phase-track" style="overflow-x:auto; padding:20px 0;">
-      <div style="display:flex; gap:24px; min-width:700px; padding:0 4px;">
-
-        <div style="flex:1;">
-          <div style="font-weight:900; font-size:1.1rem;">① We are here</div>
-          <p style="font-size:0.9rem;">
-            <strong>Phase 1</strong> — pop-up shops only, all around Arizona.
-            Second hand + upcycled, 1-of-1 pieces.
-          </p>
-        </div>
-
-        <div style="flex:1;">
-          <div style="font-weight:900; font-size:1.1rem;">②</div>
-          <p style="font-size:0.9rem;">
-            <strong>Phase 2</strong> — adding original designs to wholesale
-            blanks. Opening up on Vinted to reach other states.
-          </p>
-        </div>
-
-        <div style="flex:1;">
-          <div style="font-weight:900; font-size:1.1rem;">③</div>
-          <p style="font-size:0.9rem;">
-            <strong>Phase 3</strong> — create, cut, and sew garments.
-            Garments in local shops.
-          </p>
-        </div>
-
-        <div style="flex:1;">
-          <div style="font-weight:900; font-size:1.1rem;">④</div>
-          <p style="font-size:0.9rem;">
-            <strong>Phase 4</strong> — pop-up shops in different states.
-            Garments in select stores throughout the USA.
-          </p>
-        </div>
-
-        <div style="flex:1;">
-          <div style="font-weight:900; font-size:1.1rem;">⑤</div>
-          <p style="font-size:0.9rem;">
-            Find a USA manufacturer, or create one. Retire the Vinted
-            store — selling only in person.
-          </p>
-        </div>
-
+    <div class="participate-grid">
+      <div class="participate-card buy">
+        <h3>Buy</h3>
+        <p>Get something directly from Nociv — clothing, hardware, a zine. Support the brand and take home something real.</p>
+      </div>
+      <div class="participate-card build">
+        <h3>Build</h3>
+        <p>Use the free tools we provide — the Clothing Pattern Builder, the Zine Builder, the Case Zero engine — and make your own thing instead of buying one.</p>
+      </div>
+      <div class="participate-card share">
+        <h3>Share</h3>
+        <p>Connect with the Arizona creative community — the Stall Wall, the Directory, the Share board. No purchase required, just show up.</p>
       </div>
     </div>
 
-    <div id="phases-tech" class="phase-track" style="overflow-x:auto; padding:20px 0; display:none;">
-      <div style="display:flex; gap:24px; min-width:700px; padding:0 4px;">
+    <p class="participate-note">The site is a platform for participation. You choose how.</p>
+  </div>
 
-        <div style="flex:1;">
-          <div style="font-weight:900; font-size:1.1rem;">① We are here</div>
-          <p style="font-size:0.9rem;">
-            <strong>Phase 1</strong> — prototyping concepts for different
-            use cases of hardware and software. Durability testing for
-            production.
-          </p>
-        </div>
-
-        <div style="flex:1;">
-          <div style="font-weight:900; font-size:1.1rem;">②</div>
-          <p style="font-size:0.9rem;">
-            <strong>Phase 2</strong> — create products that help people
-            build devices with ease. Simplify the learning curve. First
-            small hand-finished batch, sold in person at pop-ups.
-          </p>
-        </div>
-
-        <div style="flex:1;">
-          <div style="font-weight:900; font-size:1.1rem;">③</div>
-          <p style="font-size:0.9rem;">
-            <strong>Phase 3</strong> — make parts of the design open
-            source. Release build files for anyone who wants to make
-            their own, plus a sharing hub where people can share
-            information on their builds.
-          </p>
-        </div>
-
-        <div style="flex:1;">
-          <div style="font-weight:900; font-size:1.1rem;">④</div>
-          <p style="font-size:0.9rem;">
-            <strong>Phase 4</strong> — free the tools. Ownership over
-            subscriptions, no paywalls. Modify and reuse components to
-            build something new instead of buying new every time.
-          </p>
-        </div>
-
-      </div>
+  <div class="wrap">
+    <div class="eyebrow">Who Is NOCIV For?</div>
+    <div style="font-size:1.05rem; line-height:1.8; max-width:640px;">
+      <p>
+        NOCIV is for makers, learners, and anyone tired of being
+        treated purely as a consumer in a world they had no hand in
+        building.
+      </p>
+      <p>
+        Whether you come to buy a piece of clothing, read a zine, use
+        a tool to build something, or attend an event, NOCIV exists to
+        bridge the gap between vision and action.
+      </p>
+      <p>
+        The world around us was made by people.<br>
+        We built this.<br>
+        <span style="font-weight:900; font-size:1.15rem;">Now let's build something else.</span>
+      </p>
     </div>
-
-    <div id="phases-zines" class="phase-track" style="overflow-x:auto; padding:20px 0; display:none;">
-      <div style="display:flex; gap:24px; min-width:700px; padding:0 4px;">
-
-        <div style="flex:1;">
-          <div style="font-weight:900; font-size:1.1rem;">① We are here</div>
-          <p style="font-size:0.9rem;">
-            <strong>Phase 1</strong> — publish original writings and
-            zines on the site as free reads.
-          </p>
-        </div>
-
-        <div style="flex:1;">
-          <div style="font-weight:900; font-size:1.1rem;">②</div>
-          <p style="font-size:0.9rem;">
-            <strong>Phase 2</strong> — install a print-to-order option
-            so physical copies can be made when someone wants one.
-          </p>
-        </div>
-
-        <div style="flex:1;">
-          <div style="font-weight:900; font-size:1.1rem;">③</div>
-          <p style="font-size:0.9rem;">
-            <strong>Phase 3</strong> — create a zine template anyone
-            can use to make their own.
-          </p>
-        </div>
-
-        <div style="flex:1;">
-          <div style="font-weight:900; font-size:1.1rem;">④</div>
-          <p style="font-size:0.9rem;">
-            <strong>Phase 4</strong> — build a hub where people can
-            share their own writing on-site, free for others to
-            download.
-          </p>
-        </div>
-
-      </div>
-    </div>
-
-    <div id="phases-community" class="phase-track" style="overflow-x:auto; padding:20px 0; display:none;">
-      <div style="display:flex; gap:24px; min-width:700px; padding:0 4px;">
-
-        <div style="flex:1;">
-          <div style="font-weight:900; font-size:1.1rem;">① We are here</div>
-          <p style="font-size:0.9rem;">
-            <strong>Phase 1</strong> — decentralized launch. No land, no
-            storage. Wall hosts, workshop hosts, and land partners
-            connect directly, starting in Arizona.
-          </p>
-        </div>
-
-        <div style="flex:1;">
-          <div style="font-weight:900; font-size:1.1rem;">②</div>
-          <p style="font-size:0.9rem;">
-            <strong>Phase 2</strong> — the infrastructure blueprint. A
-            plot of land, aircrete dome studios, shared kitchen and
-            showers, a covered build bay, and a materials store at cost.
-          </p>
-        </div>
-
-      </div>
-    </div>
-
-    <div class="scroll-hint">&#8592; swipe to see more &#8594;</div>
   </div>
 </div>
 
-<div class="torn dark-to-light"></div>
-
-<div class="wrap" style="padding:0; max-width:100%;">
-  <img src="about-founder-art.png" alt="About Founder — My name is Jasilyn Anderson, I am a Black American, my journey has been a lot of unlearning and learning, and my art reflects those realizations." style="width:100%; display:block;">
-</div>
-
-<div class="wrap">
-  <div class="eyebrow">Who Is Behind NOCIV?</div>
-  <div style="font-size:1.05rem; line-height:1.8; max-width:640px;">
-    <p>
-      I'm Jasilyn Anderson, also known as Lofty Lyn. I'm a creator
-      and self-described Renaissance woman.
-    </p>
-    <p>
-      Trying to fit NOCIV into a single neat business category never
-      worked, because that isn't how my brain operates. You won't
-      find personal or company social media profiles here. Instead
-      of chasing engagement metrics, I collect interests like
-      Infinity Stones: art, design, textiles, hardware design,
-      programming, writing, and physical fabrication.
-    </p>
-    <p>
-      There is something deeply fulfilling about starting with zero
-      knowledge, figuring out one piece at a time, and making
-      something tangible that didn't exist before.
-    </p>
-    <p>
-      NOCIV reflects that same multidisciplinary energy. It is built
-      for anyone who refuses to pick just one discipline and stay
-      there forever. Artists, builders, programmers, writers,
-      designers, and anyone who wants to try something new are all
-      part of the same ecosystem.
-    </p>
+<!-- ===== FOUNDER ===== -->
+<div class="subpanel" id="founderPanel">
+  <div class="wrap" style="padding:0; max-width:100%;">
+    <img src="about-founder-art.png" alt="About Founder — My name is Jasilyn Anderson, I am a Black American, my journey has been a lot of unlearning and learning, and my art reflects those realizations." style="width:100%; display:block;">
   </div>
-</div>
 
-<div class="torn dark-to-light"></div>
-
-<div class="wrap">
-  <div class="eyebrow">Representing Black America</div>
-  <div style="font-size:1.05rem; line-height:1.8; max-width:640px;">
-    <p>
-      NOCIV is a Black American owned company, and that foundation
-      shapes everything we create.
-    </p>
-    <p>
-      Our roots in this country run deep. Black Americans didn't
-      just survive here — we built, adapted, and forged a culture
-      that continuously shapes world history.
-    </p>
-    <p style="font-weight:700;">
-      We know who we are. We are not lost. We are here.
-    </p>
-    <p>
-      Representing Black America means honoring that legacy without
-      flattening it into caricature. It isn't just about sanitized
-      "Black excellence" or historical stereotypes. It is about
-      representing Black life in all its nuances, contradictions,
-      regional styles, and creative expressions.
-    </p>
-    <p>
-      We create from this history, acknowledge its proximity, and
-      express it as something living, active, and present.
-    </p>
-  </div>
-</div>
-
-<div class="torn dark-to-light"></div>
-
-<div class="wrap">
-  <div class="eyebrow">Who Is NOCIV For?</div>
-  <div style="font-size:1.05rem; line-height:1.8; max-width:640px;">
-    <p>
-      NOCIV is for makers, learners, and anyone tired of being
-      treated purely as a consumer in a world they had no hand in
-      building.
-    </p>
-    <p>
-      Whether you come to buy a piece of clothing, read a zine, use
-      a tool to build something, or attend an event, NOCIV exists to
-      bridge the gap between vision and action.
-    </p>
-    <p>
-      The world around us was made by people.<br>
-      We built this.<br>
-      <span style="font-weight:900; font-size:1.15rem;">Now let's build something else.</span>
-    </p>
+  <div class="wrap">
+    <div class="eyebrow">Who Is Behind NOCIV?</div>
+    <div style="font-size:1.05rem; line-height:1.8; max-width:640px;">
+      <p>
+        I'm Jasilyn Anderson, also known as Lofty Lyn. I'm a creator
+        and self-described Renaissance woman.
+      </p>
+      <p>
+        Trying to fit NOCIV into a single neat business category never
+        worked, because that isn't how my brain operates. You won't
+        find personal or company social media profiles here. Instead
+        of chasing engagement metrics, I collect interests like
+        Infinity Stones: art, design, textiles, hardware design,
+        programming, writing, and physical fabrication.
+      </p>
+      <p>
+        There is something deeply fulfilling about starting with zero
+        knowledge, figuring out one piece at a time, and making
+        something tangible that didn't exist before.
+      </p>
+      <p>
+        NOCIV reflects that same multidisciplinary energy. It is built
+        for anyone who refuses to pick just one discipline and stay
+        there forever. Artists, builders, programmers, writers,
+        designers, and anyone who wants to try something new are all
+        part of the same ecosystem.
+      </p>
+    </div>
   </div>
 </div>
 
 <footer class="nociv-footer">NOCIV.CO — Nothing Of Civilization<br>© 2023–2026 NOCIV.CO. Established 2023. All rights reserved.</footer>
 
 <script>
-  // Timeline Track Switcher Script
+  // SUB-NAV: switches between About's five sections
+  const subnavBtns = document.querySelectorAll('.subnav button');
+  subnavBtns.forEach(btn => {
+    btn.addEventListener('click', () => {
+      subnavBtns.forEach(b => b.classList.remove('active'));
+      document.querySelectorAll('.subpanel').forEach(p => p.classList.remove('show'));
+      btn.classList.add('active');
+      document.getElementById(btn.dataset.panel).classList.add('show');
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    });
+  });
+
+  // Timeline Track Switcher Script (inside the Creation panel)
   document.querySelectorAll('.phase-track-btn').forEach(btn => {
     btn.addEventListener('click', () => {
       document.querySelectorAll('.phase-track-btn').forEach(b => b.classList.remove('active'));
