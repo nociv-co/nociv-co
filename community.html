@@ -217,9 +217,9 @@
 <!-- MAIN TABS (Using your new Shop & Tools image buttons) -->
 <nav class="tabs">
   <a href="about.html" class="img-tab"><img src="nav-about.png" alt="About"></a>
-  <a href="shop.html" class="img-tab active"><img src="nav-shop.png" alt="Shop"></a>
+  <a href="shop.html" class="img-tab"><img src="nav-shop.png" alt="Shop"></a>
   <a href="creator-tools.html" class="img-tab"><img src="nav-tools.png" alt="Tools"></a>
-  <a href="community.html" class="img-tab"><img src="community-button.png" alt="Community"></a>
+  <a href="community.html" class="img-tab active"><img src="community-button.png" alt="Community"></a>
 </nav>
 
 <!-- SUB-NAV: switches between Stall Wall / Directory / Share -->
@@ -1034,9 +1034,9 @@ document.getElementById('shareSendBtn').onclick = async () => {
     .from('share_posts')
     .insert([{ category, title, details, link }]);
 
-  if (error) { 
-    alert("Error sharing: " + error.message); 
-    return; 
+  if (error) {
+    alert("Error sharing: " + error.message);
+    return;
   }
 
   document.getElementById('shareTitle').value = "";
