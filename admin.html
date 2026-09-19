@@ -62,6 +62,71 @@
     padding: 6px 10px; font-size: 0.75rem; cursor: pointer; margin-right: 6px;
   }
   .missing-flag { color: var(--red); font-weight: 700; }
+
+  /* --- Today's Goals: calendar + list --- */
+  .opp-calendar {
+    max-width: 380px; margin: 0 auto 16px; background: rgba(255,255,255,0.55);
+    backdrop-filter: blur(6px); border: 1px solid rgba(0,0,0,0.08); border-radius: 10px; padding: 14px;
+  }
+  .opp-calendar-header {
+    display: flex; justify-content: space-between; align-items: center;
+    margin-bottom: 10px; font-weight: 700; font-size: 0.9rem; letter-spacing: 0.05em;
+  }
+  .opp-calendar-nav {
+    background: none; border: 1px solid var(--grey-dark); color: var(--ink);
+    padding: 2px 10px; font-size: 0.9rem; cursor: pointer; border-radius: 4px;
+  }
+  .opp-calendar-grid { display: grid; grid-template-columns: repeat(7, 1fr); gap: 4px; text-align: center; }
+  .opp-calendar-grid .dow { font-size: 0.65rem; opacity: .5; padding-bottom: 4px; }
+  .opp-calendar-day { position: relative; padding: 8px 0; font-size: 0.8rem; border-radius: 4px; cursor: pointer; color: #444; }
+  .opp-calendar-day.has-event {
+    background: #fff; border: 1px solid var(--gold); color: #8a6d1f; font-weight: 700;
+  }
+  .opp-calendar-day.has-event:hover { background: rgba(212,175,55,0.15); }
+  .opp-calendar-day.selected { background: var(--red); color: #fff; border-color: var(--red); }
+  .opp-calendar-day.empty { visibility: hidden; cursor: default; }
+
+  .goal-add-row { display: flex; gap: 8px; margin-bottom: 16px; max-width: 380px; margin-left: auto; margin-right: auto; }
+  .goal-add-row input { flex: 1; padding: 10px; border: 1px solid #999; font-size: 0.95rem; }
+  .goal-add-row button {
+    background: var(--red); color: #fff; border: none; padding: 0 18px; font-weight: 700; cursor: pointer;
+  }
+  .goal-row {
+    display: flex; align-items: center; gap: 10px; border: 1px solid #ccc;
+    padding: 10px 12px; margin-bottom: 8px; background: #fff; max-width: 380px; margin-left: auto; margin-right: auto;
+  }
+  .goal-row.done .goal-text { text-decoration: line-through; opacity: .5; }
+  .goal-row .goal-text { flex: 1; }
+  .goal-row input[type="checkbox"] { width: auto; margin: 0; }
+  .goal-row .del-btn {
+    background: none; border: 1px solid var(--red); color: var(--red);
+    padding: 5px 9px; font-size: 0.72rem; cursor: pointer;
+  }
+
+  /* --- Time Tracker --- */
+  .rate-row { display: flex; align-items: center; gap: 8px; justify-content: flex-end; margin-bottom: 12px; font-size: 0.85rem; }
+  .rate-row input { width: 80px; padding: 6px; border: 1px solid #999; }
+  .clock-box {
+    text-align: center; background: rgba(255,255,255,0.55); backdrop-filter: blur(6px);
+    border: 1px solid rgba(0,0,0,0.08); border-radius: 10px; padding: 20px; margin-bottom: 20px;
+  }
+  .clock-box input[type="text"] { max-width: 320px; margin: 0 auto 12px; display: block; }
+  .clock-box input[type="text"]:disabled { opacity: .6; }
+  .clock-btn {
+    padding: 12px 30px; font-weight: 900; letter-spacing: 0.05em; text-transform: uppercase;
+    border: none; cursor: pointer; border-radius: 4px;
+  }
+  .clock-btn.in { background: var(--green); color: #fff; }
+  .clock-btn.out { background: var(--red); color: #fff; }
+  .clock-live { font-size: 0.85rem; opacity: .7; margin-top: 10px; }
+  .time-summary { display: flex; gap: 12px; margin-bottom: 16px; flex-wrap: wrap; }
+  .time-summary-card {
+    flex: 1; min-width: 130px; background: rgba(255,255,255,0.55); backdrop-filter: blur(6px);
+    border: 1px solid rgba(0,0,0,0.08); border-radius: 10px; padding: 14px; text-align: center;
+  }
+  .time-summary-card .label { font-size: 0.72rem; opacity: .6; text-transform: uppercase; letter-spacing: 0.04em; }
+  .time-summary-card .hours { font-size: 1.4rem; font-weight: 900; margin: 4px 0; }
+  .time-summary-card .value { font-size: 0.85rem; color: var(--green); font-weight: 700; }
 </style>
 </head>
 <body>
@@ -88,7 +153,41 @@
       <button class="logout-btn" id="logoutBtn">Log Out</button>
     </div>
 
-    <div class="admin-form">
+    <h3 style="margin-top:0;">Time Tracker</h3>
+    <div class="rate-row">
+      <label for="hourlyRate" style="margin:0;">Target rate ($/hr)</label>
+      <input type="number" id="hourlyRate" step="0.5" value="20">
+    </div>
+    <div class="clock-box" id="clockBox">
+      <input type="text" id="clockLabel" placeholder="What are you working on? (optional)">
+      <div id="clockButtons">
+        <button class="clock-btn in" id="clockInBtn">Clock In</button>
+      </div>
+      <div class="clock-live" id="clockLive"></div>
+    </div>
+    <div class="time-summary">
+      <div class="time-summary-card">
+        <div class="label">Today</div>
+        <div class="hours" id="todayHours">0h 0m</div>
+        <div class="value" id="todayValue">$0.00</div>
+      </div>
+      <div class="time-summary-card">
+        <div class="label">This Week</div>
+        <div class="hours" id="weekHours">0h 0m</div>
+        <div class="value" id="weekValue">$0.00</div>
+      </div>
+    </div>
+    <div id="timeEntryList"></div>
+
+    <h3 style="margin-top:40px;">Today's Goals</h3>
+    <div class="opp-calendar" id="goalsCalendar"></div>
+    <div class="goal-add-row">
+      <input type="text" id="newGoalText" placeholder="Add a goal for this day">
+      <button id="addGoalBtn">Add</button>
+    </div>
+    <div id="goalList"></div>
+
+    <div class="admin-form" style="margin-top:40px;">
       <h3 style="margin-top:0;">Add a Product</h3>
       <label for="pName">Name</label>
       <input type="text" id="pName" placeholder="e.g. Nociv America Cream">
@@ -221,6 +320,10 @@
       loadProducts();
       loadOrders();
       loadAlbum();
+      renderGoalsCalendar();
+      loadGoals();
+      checkActiveTimeEntry();
+      loadTimeEntries();
     } else {
       loginBox.style.display = 'block';
       dashboard.style.display = 'none';
@@ -601,6 +704,267 @@
       });
       listEl.appendChild(row);
     });
+  }
+
+  // ===== TODAY'S GOALS =====
+  let goalsCalMonth = new Date().getMonth();
+  let goalsCalYear = new Date().getFullYear();
+  let selectedGoalDate = new Date().toISOString().slice(0, 10);
+
+  async function renderGoalsCalendar() {
+    const monthStart = new Date(goalsCalYear, goalsCalMonth, 1).toISOString().slice(0, 10);
+    const monthEnd = new Date(goalsCalYear, goalsCalMonth + 1, 0).toISOString().slice(0, 10);
+
+    const { data: goalRows } = await supabaseClient
+      .from('daily_goals')
+      .select('entry_date')
+      .gte('entry_date', monthStart)
+      .lte('entry_date', monthEnd);
+
+    const goalDays = new Set((goalRows || []).map(g => g.entry_date));
+
+    const monthName = new Date(goalsCalYear, goalsCalMonth, 1).toLocaleString('en-US', { month: 'long', year: 'numeric' });
+    const firstDow = new Date(goalsCalYear, goalsCalMonth, 1).getDay();
+    const daysInMonth = new Date(goalsCalYear, goalsCalMonth + 1, 0).getDate();
+
+    let html = `<div class="opp-calendar-header">
+      <button class="opp-calendar-nav" id="goalsPrevMonth">‹</button>
+      <span>${monthName}</span>
+      <button class="opp-calendar-nav" id="goalsNextMonth">›</button>
+    </div>`;
+    html += '<div class="opp-calendar-grid">';
+    ['S', 'M', 'T', 'W', 'T', 'F', 'S'].forEach(d => html += `<div class="dow">${d}</div>`);
+    for (let i = 0; i < firstDow; i++) html += '<div class="opp-calendar-day empty"></div>';
+    for (let d = 1; d <= daysInMonth; d++) {
+      const dateStr = new Date(goalsCalYear, goalsCalMonth, d).toISOString().slice(0, 10);
+      const hasEvent = goalDays.has(dateStr);
+      const isSelected = selectedGoalDate === dateStr;
+      html += `<div class="opp-calendar-day ${hasEvent ? 'has-event' : ''} ${isSelected ? 'selected' : ''}" data-date="${dateStr}">${d}</div>`;
+    }
+    html += '</div>';
+    document.getElementById('goalsCalendar').innerHTML = html;
+
+    document.querySelectorAll('#goalsCalendar .opp-calendar-day:not(.empty)').forEach(cell => {
+      cell.addEventListener('click', () => {
+        selectedGoalDate = cell.dataset.date;
+        renderGoalsCalendar();
+        loadGoals();
+      });
+    });
+    document.getElementById('goalsPrevMonth').addEventListener('click', () => {
+      goalsCalMonth--;
+      if (goalsCalMonth < 0) { goalsCalMonth = 11; goalsCalYear--; }
+      renderGoalsCalendar();
+    });
+    document.getElementById('goalsNextMonth').addEventListener('click', () => {
+      goalsCalMonth++;
+      if (goalsCalMonth > 11) { goalsCalMonth = 0; goalsCalYear++; }
+      renderGoalsCalendar();
+    });
+  }
+
+  async function loadGoals() {
+    const listEl = document.getElementById('goalList');
+    listEl.innerHTML = '<p style="opacity:.5; text-align:center;">Loading...</p>';
+
+    const { data: goals, error } = await supabaseClient
+      .from('daily_goals')
+      .select('*')
+      .eq('entry_date', selectedGoalDate)
+      .order('created_at', { ascending: true });
+
+    if (error || !goals || goals.length === 0) {
+      listEl.innerHTML = `<p style="opacity:.5; text-align:center;">No goals for ${selectedGoalDate} yet.</p>`;
+      return;
+    }
+
+    listEl.innerHTML = '';
+    goals.forEach(g => {
+      const row = document.createElement('div');
+      row.className = 'goal-row' + (g.done ? ' done' : '');
+      row.innerHTML = `
+        <input type="checkbox" class="goal-check" ${g.done ? 'checked' : ''}>
+        <div class="goal-text">${g.text}</div>
+        <button class="del-btn goal-del">Delete</button>
+      `;
+      row.querySelector('.goal-check').addEventListener('change', async (e) => {
+        await supabaseClient.from('daily_goals').update({ done: e.target.checked }).eq('id', g.id);
+        row.classList.toggle('done', e.target.checked);
+      });
+      row.querySelector('.goal-del').addEventListener('click', async () => {
+        if (!confirm('Delete this goal?')) return;
+        await supabaseClient.from('daily_goals').delete().eq('id', g.id);
+        await loadGoals();
+        await renderGoalsCalendar();
+      });
+      listEl.appendChild(row);
+    });
+  }
+
+  document.getElementById('addGoalBtn').onclick = async () => {
+    const input = document.getElementById('newGoalText');
+    const text = input.value.trim();
+    if (!text) return;
+    const { error } = await supabaseClient.from('daily_goals').insert([{ entry_date: selectedGoalDate, text }]);
+    if (error) { alert('Error saving goal: ' + error.message); return; }
+    input.value = '';
+    await loadGoals();
+    await renderGoalsCalendar();
+  };
+  document.getElementById('newGoalText').addEventListener('keydown', (e) => {
+    if (e.key === 'Enter') document.getElementById('addGoalBtn').click();
+  });
+
+  // ===== TIME TRACKER =====
+  let activeTimeEntry = null;
+  let clockLiveInterval = null;
+  let lastTimeEntries = [];
+
+  function loadHourlyRate() {
+    const saved = localStorage.getItem('adminHourlyRate');
+    if (saved) document.getElementById('hourlyRate').value = saved;
+  }
+  document.getElementById('hourlyRate').addEventListener('change', (e) => {
+    localStorage.setItem('adminHourlyRate', e.target.value);
+    renderTimeSummary(lastTimeEntries);
+  });
+  loadHourlyRate();
+
+  function fmtDuration(ms) {
+    const totalMin = Math.max(0, Math.floor(ms / 60000));
+    const h = Math.floor(totalMin / 60);
+    const m = totalMin % 60;
+    return `${h}h ${m}m`;
+  }
+
+  function getRate() {
+    return parseFloat(document.getElementById('hourlyRate').value) || 0;
+  }
+
+  async function checkActiveTimeEntry() {
+    const { data } = await supabaseClient
+      .from('time_entries')
+      .select('*')
+      .is('clock_out', null)
+      .order('clock_in', { ascending: false })
+      .limit(1);
+    activeTimeEntry = (data && data[0]) || null;
+    renderClockBox();
+  }
+
+  function renderClockBox() {
+    const btnWrap = document.getElementById('clockButtons');
+    const labelInput = document.getElementById('clockLabel');
+    if (activeTimeEntry) {
+      labelInput.value = activeTimeEntry.label || '';
+      labelInput.disabled = true;
+      btnWrap.innerHTML = '<button class="clock-btn out" id="clockOutBtn">Clock Out</button>';
+      document.getElementById('clockOutBtn').addEventListener('click', clockOut);
+      if (!clockLiveInterval) {
+        clockLiveInterval = setInterval(updateClockLive, 1000);
+        updateClockLive();
+      }
+    } else {
+      labelInput.disabled = false;
+      btnWrap.innerHTML = '<button class="clock-btn in" id="clockInBtn">Clock In</button>';
+      document.getElementById('clockInBtn').addEventListener('click', clockIn);
+      if (clockLiveInterval) { clearInterval(clockLiveInterval); clockLiveInterval = null; }
+      document.getElementById('clockLive').textContent = '';
+    }
+  }
+
+  function updateClockLive() {
+    if (!activeTimeEntry) return;
+    const elapsed = Date.now() - new Date(activeTimeEntry.clock_in).getTime();
+    document.getElementById('clockLive').textContent = 'Running: ' + fmtDuration(elapsed);
+  }
+
+  async function clockIn() {
+    const label = document.getElementById('clockLabel').value.trim() || null;
+    const { data, error } = await supabaseClient
+      .from('time_entries')
+      .insert([{ label, clock_in: new Date().toISOString() }])
+      .select();
+    if (error) { alert('Error clocking in: ' + error.message); return; }
+    activeTimeEntry = data[0];
+    renderClockBox();
+  }
+
+  async function clockOut() {
+    if (!activeTimeEntry) return;
+    const { error } = await supabaseClient
+      .from('time_entries')
+      .update({ clock_out: new Date().toISOString() })
+      .eq('id', activeTimeEntry.id);
+    if (error) { alert('Error clocking out: ' + error.message); return; }
+    activeTimeEntry = null;
+    document.getElementById('clockLabel').value = '';
+    renderClockBox();
+    await loadTimeEntries();
+  }
+
+  async function loadTimeEntries() {
+    const listEl = document.getElementById('timeEntryList');
+    listEl.innerHTML = '<p style="opacity:.5;">Loading...</p>';
+
+    const thirtyDaysAgo = new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString();
+    const { data: entries, error } = await supabaseClient
+      .from('time_entries')
+      .select('*')
+      .not('clock_out', 'is', null)
+      .gte('clock_in', thirtyDaysAgo)
+      .order('clock_in', { ascending: false });
+
+    lastTimeEntries = entries || [];
+    renderTimeSummary(lastTimeEntries);
+
+    if (error || !entries || entries.length === 0) {
+      listEl.innerHTML = '<p style="opacity:.5;">No completed sessions yet.</p>';
+      return;
+    }
+
+    listEl.innerHTML = '';
+    entries.forEach(t => {
+      const durationMs = new Date(t.clock_out) - new Date(t.clock_in);
+      const row = document.createElement('div');
+      row.className = 'product-row';
+      row.innerHTML = `
+        <div class="info">
+          <div class="name">${t.label || '(no label)'}</div>
+          <div class="meta">${new Date(t.clock_in).toLocaleString()} → ${new Date(t.clock_out).toLocaleTimeString()} · ${fmtDuration(durationMs)}</div>
+        </div>
+        <button class="del-btn" data-id="${t.id}">Delete</button>
+      `;
+      row.querySelector('.del-btn').addEventListener('click', async () => {
+        if (!confirm('Delete this time entry?')) return;
+        await supabaseClient.from('time_entries').delete().eq('id', t.id);
+        await loadTimeEntries();
+      });
+      listEl.appendChild(row);
+    });
+  }
+
+  function renderTimeSummary(entries) {
+    const rate = getRate();
+    const now = new Date();
+    const todayStr = now.toISOString().slice(0, 10);
+    const startOfWeek = new Date(now);
+    startOfWeek.setDate(now.getDate() - now.getDay());
+    startOfWeek.setHours(0, 0, 0, 0);
+
+    let todayMs = 0, weekMs = 0;
+    (entries || []).forEach(t => {
+      const inTime = new Date(t.clock_in);
+      const outTime = new Date(t.clock_out);
+      const dur = outTime - inTime;
+      if (inTime.toISOString().slice(0, 10) === todayStr) todayMs += dur;
+      if (inTime >= startOfWeek) weekMs += dur;
+    });
+
+    document.getElementById('todayHours').textContent = fmtDuration(todayMs);
+    document.getElementById('todayValue').textContent = '$' + ((todayMs / 3600000) * rate).toFixed(2);
+    document.getElementById('weekHours').textContent = fmtDuration(weekMs);
+    document.getElementById('weekValue').textContent = '$' + ((weekMs / 3600000) * rate).toFixed(2);
   }
 </script>
 
