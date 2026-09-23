@@ -1,229 +1,306 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
+<!-- Site Created & Designed by Jasilyn A. Anderson | NOCIV.CO -->
 <meta charset="UTF-8">
-<title>NOCIV.CO — Nothing Of Civilization</title>
+<title>About - NOCIV.CO</title>
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<meta name="description" content="NOCIV — a Black-owned clothing brand built around reclaiming narratives and creating new norms. No ads. No algorithm. Word of mouth only.">
 <link rel="stylesheet" href="style.css?v=4.0">
 <style>
-  /* Wall-to-wall banner for Arizona landing graphic */
-  .landing-banner-full {
-    width: 100%;
-    margin: 0 auto;
-  }
-  .landing-banner-full img {
-    width: 100%;
-    display: block;
-    height: auto;
-  }
-
-  /* ---------- Editorial column: everything below the hero lives in one
-     left-aligned column instead of being centered on the page ---------- */
-  .landing-col {
-    max-width: 720px;
-    margin: 0 auto;
-    padding: 0 24px;
+  /* --- Buy / Build / Share explainer --- */
+  .participate-grid {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 14px;
+    max-width: 640px;
+    margin: 24px auto 0;
     text-align: left;
   }
-
-  /* Level 1 — display / section titles: 28–36px desktop, 22–28px mobile, 700, tight leading */
-  .landing-display {
-    font-size: clamp(22px, 4.2vw, 34px);
-    font-weight: 700;
-    line-height: 1.08;
-    margin: 40px 0 0;
+  @media (min-width: 640px) {
+    .participate-grid { grid-template-columns: repeat(3, 1fr); }
   }
-
-  /* Thin rule as the only transition device between sections — no cards, no shadows */
-  .landing-rule {
-    width: 85%;
-    max-width: 620px;
-    margin: 28px 0;
-    border: none;
-    border-top: 1px solid var(--ink, #1a1a1a);
-    opacity: .18;
+  .participate-card {
+    background: var(--paper-dim, #d8d8d8);
+    border: 1px solid #bbb;
+    border-left: 4px solid var(--red);
+    border-radius: 4px;
+    padding: 18px;
+    color: var(--ink, #1a1a1a);
   }
-
-  /* The mission block sits slightly inset from the flush-left headings —
-     the one deliberate asymmetry on the page */
-  .landing-mission {
-    padding-left: clamp(0px, 6vw, 48px);
-    max-width: 700px;
-  }
-
-  /* Level 2 — mission / important statement: 20–24px desktop, 18–20px mobile, 500–600, 1.35–1.45 leading */
-  .landing-mission .mission-statement {
-    font-size: clamp(18px, 2.6vw, 23px);
-    font-weight: 600;
-    line-height: 1.4;
-    color: var(--grey);
-  }
-
-  /* Level 3 — supporting text within the mission block */
-  .landing-mission .mission-how {
-    margin-top: 22px;
-    font-size: 15px;
-    font-weight: 700;
-    letter-spacing: 0.06em;
-    color: var(--grey);
-  }
-  .landing-mission .mission-personal {
-    margin-top: 14px;
-    margin-bottom: 6px;
-    font-size: 14px;
-    font-style: italic;
-    opacity: .7;
-  }
-
-  /* ---------- Buttons: same language throughout, weight tells them apart ---------- */
-  .landing-btn {
-    display: inline-block;
-    font-size: 15px;
-    font-weight: 700;
-    letter-spacing: 0.04em;
+  .participate-card.build { border-left-color: var(--gold); }
+  .participate-card.share { border-left-color: var(--green); }
+  .participate-card h3 {
+    margin: 0 0 8px;
+    font-size: 1rem;
+    letter-spacing: 0.05em;
     text-transform: uppercase;
-    padding: 15px 30px;
-    border: 2px solid #111;
+    color: var(--ink, #1a1a1a);
+  }
+  .participate-card p {
+    margin: 0;
+    font-size: 0.9rem;
+    line-height: 1.6;
+    opacity: .9;
+  }
+  .participate-note {
+    max-width: 640px;
+    margin: 18px auto 0;
     text-align: center;
-    cursor: pointer;
-    background: none;
-    font-family: inherit;
-  }
-  .landing-btn-primary {
-    background: var(--red);
-    border-color: var(--red);
-    color: #fff;
-  }
-  .landing-btn-primary:hover {
-    background: #fff;
-    color: var(--red);
-  }
-  .landing-btn-secondary {
-    background: none;
-    color: #111;
-  }
-  .landing-btn-secondary:hover {
-    background: #111;
-    color: #fff;
-  }
-  .landing-mission .landing-btn { margin-top: 26px; }
-
-  /* ---------- Come Through In Person: flush left, plain — no card, no border box ---------- */
-  .landing-inperson h2 {
-    font-size: clamp(19px, 2.6vw, 22px);
     font-weight: 700;
-    margin: 0 0 10px;
-  }
-  .landing-inperson p {
-    font-size: 15px;
-    line-height: 1.5;
-    opacity: .85;
-    max-width: 460px;
-    margin: 0 0 22px;
-  }
-  .landing-inperson form {
-    display: flex;
-    gap: 10px;
-    max-width: 460px;
-  }
-  .landing-inperson input[type="email"] {
-    flex: 1;
-    padding: 15px;
-    border: 2px solid #111;
-    font-size: 15px;
-    background: #fff;
-    font-family: inherit;
-  }
-  .landing-inperson .subscribe-hint {
-    font-size: 13px;
-    opacity: .55;
-    margin-top: 12px;
-  }
-  .landing-inperson .subscribe-confirm {
-    display: none;
-    color: var(--green);
-    font-weight: 700;
-    margin-top: 14px;
+    font-size: 1.05rem;
   }
 
-  .landing-footer-space { margin-top: 44px; }
+  /* --- Culture panel: tighter spacing, less air between paragraphs/sections --- */
+  #culturePanel .wrap { padding: 24px 20px; }
+  #culturePanel .wrap + .wrap { padding-top: 4px; }
+  #culturePanel p { line-height: 1.6; margin: 0 0 12px; }
+  #culturePanel p:last-child { margin-bottom: 0; }
 </style>
 </head>
 <body>
 
 <header class="nociv-header">
-  <img class="torn-header-img" src="header.png" alt="NOCIV.CO — Nothing Of Civilization">
+  <a href="index.html"><img class="torn-header-img" src="header.png" alt="NOCIV.CO: Nothing Of Civilization"></a>
 </header>
 
-<!-- Main Navigation Tabs using updated custom button images -->
+<!-- Main Navigation Tabs using updated custom image assets -->
 <nav class="tabs">
-  <a href="about.html" class="img-tab"><img src="nav-about.png" alt="About"></a>
+  <a href="about.html" class="img-tab active"><img src="nav-about.png" alt="About"></a>
   <a href="shop.html" class="img-tab"><img src="nav-shop.png" alt="Shop"></a>
   <a href="creator-tools.html" class="img-tab"><img src="nav-tools.png" alt="Tools"></a>
   <a href="community.html" class="img-tab"><img src="base-button.png" alt="Base"></a>
 </nav>
 
-<!-- Full-Width Arizona Graphic Banner (Wall-to-Wall) -->
-<div class="landing-banner-full">
-  <img src="arizona-based.png" alt="AZ Based. Black-Owned Clothing.">
-</div>
+<!-- SUB-NAV: swipe between About's sections instead of one long scroll -->
+<nav class="subnav">
+  <button data-panel="philosophyPanel" class="active">Philosophy</button>
+  <button data-panel="culturePanel">Culture</button>
+  <button data-panel="communityPanel">Community</button>
+  <button data-panel="founderPanel">Founder</button>
+</nav>
 
-<div class="landing-col">
-
-  <!-- HERO IDENTITY: flush left, tight display type -->
-  <h1 class="landing-display">AZ BASED.</h1>
-
-  <hr class="landing-rule">
-
-  <!-- MISSION: the one indented block on the page -->
-  <div class="landing-mission">
-    <p class="mission-statement">NOCIV: Nothing of Civilization. Is built around reclaiming narratives and creating new norms. Clothing is where we begin. Design, culture, and human connection are where we go.</p>
-    <p class="mission-how">NO ADS. NO ALGORITHM. WORD OF MOUTH ONLY.</p>
-    <p class="mission-personal">If you're here, someone told you.</p>
-    <a class="landing-btn landing-btn-primary" href="shop.html">Shop Clothing</a>
+<!-- ===== PHILOSOPHY ===== -->
+<div class="subpanel show" id="philosophyPanel">
+  <div class="wrap" style="text-align:center; max-width:640px;">
+    <p style="font-size:1.3rem; line-height:1.7; font-weight:700;">
+      NOCIV is an Arizona based creator brand. Creator in the original
+      sense: someone who makes things, not content for a feed.
+    </p>
+    <p style="font-size:1.15rem; line-height:1.7; font-weight:700;">
+      NOCIV isn't content. It's clothing: Black-owned, reclaiming what
+      "American" looks like off the feed and onto your body.
+    </p>
+    <p style="font-size:1.05rem; line-height:1.8; opacity:.9;">
+      No ads. If you're here, someone told you.
+    </p>
   </div>
 
-  <hr class="landing-rule">
-
-  <!-- COME THROUGH IN PERSON: flush left again, plain — no card -->
-  <div class="landing-inperson">
-    <h2>Come Through In Person.</h2>
-    <p>Pop ups. New releases. Where NOCIV will be next.</p>
-    <form id="landingSignupForm">
-      <input type="email" placeholder="Your email" required>
-      <button type="submit" class="landing-btn landing-btn-secondary">Join The List</button>
-    </form>
-    <p class="subscribe-hint">No spam. No selling your information.</p>
-    <p class="subscribe-confirm" id="landingSignupConfirm">You're on the list.</p>
+  <div class="wrap">
+    <div class="eyebrow">What Is NOCIV?</div>
+    <div style="font-size:1.05rem; line-height:1.8; max-width:640px;">
+      <p>
+        NOCIV uses the internet as a starting point, not the
+        destination. A website can introduce you to an artist, a tool,
+        a zine, a garment, or an idea. That digital interaction should
+        eventually leave the screen, leading to a pop-up, a workshop,
+        a conversation, or a physical object you make yourself.
+      </p>
+      <p>
+        NOCIV isn't a single product line. It's a creative practice
+        expressed across clothing, art, hardware, writing, software,
+        and physical community.
+      </p>
+      <p>
+        This platform runs without algorithms, ads, or tracking. No
+        paid promotion, no chasing shares. Growth happens the old way:
+        a sticker on a lamppost, a flyer in a coffee shop window, a
+        business card on a counter, someone wearing a piece in public.
+        If you're here, someone told you.
+      </p>
+      <p style="font-weight:700;">Why express it through so many mediums?</p>
+      <p style="font-weight:900; font-size:1.2rem;">Why not?</p>
+    </div>
   </div>
 
-  <div class="landing-footer-space"></div>
+  <div class="wrap">
+    <h1 class="headline" style="font-size:1.6rem; letter-spacing:0.04em;">
+      What Does "Nothing Of Civilization" Mean?
+    </h1>
+    <div style="font-size:1.05rem; line-height:1.8; max-width:640px;">
+      <p>NOCIV stands for Nothing Of Civilization.</p>
+      <p>
+        It isn't about going backward or pretending we can return to a
+        previous era. It is a reminder that the systems, objects, and
+        norms around us aren't permanent features of nature, because
+        somebody built them.
+      </p>
+      <p>
+        We buy things without knowing who made them. We use technology
+        without understanding how it functions. We live inside social
+        norms as if they simply exist on their own. But every system,
+        tool, and product was constructed by people.
+      </p>
+      <p style="font-weight:700;">
+        We built this world. Which means we can build something else.
+      </p>
+    </div>
+  </div>
 </div>
 
-<footer class="nociv-footer">NOCIV.CO — Nothing Of Civilization</footer>
+<!-- ===== CULTURE ===== -->
+<div class="subpanel" id="culturePanel">
+  <div class="wrap">
+    <div class="eyebrow">Why Arizona?</div>
+    <div style="font-size:1.05rem; line-height:1.8; max-width:640px;">
+      <p>NOCIV is built in Arizona. Arizona is home.</p>
+      <p>
+        Born in California and raised in Texas before moving to
+        Arizona, identity for me has always been a hybrid experience.
+        Parts of my life exist across state lines, but a brand needs to
+        physically exist somewhere to build real community.
+      </p>
+      <p>
+        Arizona is where NOCIV collaborates, hosts, crafts, and builds
+        in person. Those connections start locally, but they travel
+        globally.
+      </p>
+      <p style="font-weight:700;">NOCIV is Arizona based, not Arizona limited.</p>
+    </div>
+  </div>
 
-<script src="supabase.js"></script>
+  <div class="wrap">
+    <div class="eyebrow">Representing Black America</div>
+    <div style="font-size:1.05rem; line-height:1.8; max-width:640px;">
+      <p>
+        NOCIV is a Black American owned company, and that foundation
+        shapes everything we create.
+      </p>
+      <p>
+        Our roots in this country run deep. Black Americans didn't
+        just survive here. We built, adapted, and forged a culture
+        that continuously shapes world history.
+      </p>
+      <p style="font-weight:700;">
+        We know who we are. We are not lost. We are here.
+      </p>
+      <p>
+        Representing Black America means honoring that legacy without
+        flattening it into caricature. It isn't just about sanitized
+        "Black excellence" or historical stereotypes. It is about
+        representing Black life in all its nuances, contradictions,
+        regional styles, and creative expressions.
+      </p>
+      <p>
+        We create from this history, acknowledge its proximity, and
+        express it as something living, active, and present.
+      </p>
+    </div>
+  </div>
+</div>
+
+<!-- ===== COMMUNITY ===== -->
+<div class="subpanel" id="communityPanel">
+  <div class="wrap">
+    <img src="buy-build-share.png" alt="Buy. Build. Share. Representing Black America. No socials, algorithm, or ads, just being human." style="width:100%; max-width:640px; display:block; margin:0 auto 24px;">
+    <div class="eyebrow">Buy. Build. Share.</div>
+    <p style="font-size:1.05rem; line-height:1.8; max-width:640px;">
+      NOCIV is a Black-owned clothing brand built around reclaiming
+      narratives and creating new norms. Clothing is where we begin.
+      Design, culture, and human connection are where we go. No ads,
+      no algorithm, word of mouth only. Here's what that looks like in
+      practice: three honest ways in, and you choose how far you go.
+    </p>
+
+    <div class="participate-grid">
+      <div class="participate-card buy">
+        <h3>Buy</h3>
+        <p>Get something directly from Nociv: clothing, hardware, a zine. Support the brand and take home something real.</p>
+      </div>
+      <div class="participate-card build">
+        <h3>Build</h3>
+        <p>Use the free tools we provide: the Clothing Pattern Builder, the Zine Builder, the Case Zero engine. Make your own thing instead of buying one.</p>
+      </div>
+      <div class="participate-card share">
+        <h3>Share</h3>
+        <p>Connect with the Arizona creative community: the Stall Wall, the Directory, the Share board. No purchase required, just show up.</p>
+      </div>
+    </div>
+
+    <p class="participate-note">The site is a platform for participation. You choose how.</p>
+  </div>
+
+  <div class="wrap">
+    <div class="eyebrow">Who Is NOCIV For?</div>
+    <div style="font-size:1.05rem; line-height:1.8; max-width:640px;">
+      <p>
+        NOCIV is for makers, learners, and anyone tired of being
+        treated purely as a consumer in a world they had no hand in
+        building.
+      </p>
+      <p>
+        Whether you come to buy a piece of clothing, read a zine, use
+        a tool to build something, or attend an event, NOCIV exists to
+        bridge the gap between vision and action.
+      </p>
+      <p>
+        The world around us was made by people.<br>
+        We built this.<br>
+        <span style="font-weight:900; font-size:1.15rem;">Now let's build something else.</span>
+      </p>
+    </div>
+  </div>
+</div>
+
+<!-- ===== FOUNDER ===== -->
+<div class="subpanel" id="founderPanel">
+  <div class="wrap" style="padding:0; max-width:100%;">
+    <img src="about-founder-art.png" alt="About Founder: My name is Jasilyn Anderson, I am a Black American, my journey has been a lot of unlearning and learning, and my art reflects those realizations." style="width:100%; display:block;">
+  </div>
+
+  <div class="wrap">
+    <div class="eyebrow">Who Is Behind NOCIV?</div>
+    <div style="font-size:1.05rem; line-height:1.8; max-width:640px;">
+      <p>
+        I'm Jasilyn Anderson, also known as Lofty Lyn. I'm a creator
+        and self-described Renaissance woman.
+      </p>
+      <p>
+        Trying to fit NOCIV into a single neat business category never
+        worked, because that isn't how my brain operates. You won't
+        find personal or company social media profiles here. Instead
+        of chasing engagement metrics, I collect interests like
+        Infinity Stones: art, design, textiles, hardware design,
+        programming, writing, and physical fabrication.
+      </p>
+      <p>
+        There is something deeply fulfilling about starting with zero
+        knowledge, figuring out one piece at a time, and making
+        something tangible that didn't exist before.
+      </p>
+      <p>
+        NOCIV reflects that same multidisciplinary energy. It is built
+        for anyone who refuses to pick just one discipline and stay
+        there forever. Artists, builders, programmers, writers,
+        designers, and anyone who wants to try something new are all
+        part of the same ecosystem.
+      </p>
+    </div>
+  </div>
+</div>
+
+<footer class="nociv-footer">NOCIV.CO: Nothing Of Civilization<br>© 2023–2026 NOCIV.CO. Established 2023. All rights reserved.</footer>
+
 <script>
-  // ===== COME THROUGH IN PERSON SIGNUP (same "signups" table as the Clothing pop-up list) =====
-  document.getElementById('landingSignupForm').addEventListener('submit', async function (e) {
-    e.preventDefault();
-    const input = this.querySelector('input');
-    const value = input.value.trim();
-    if (!value) return;
-
-    const { error } = await supabaseClient
-      .from('signups')
-      .insert([{ contact: value }]);
-
-    if (error) {
-      alert('Error saving: ' + error.message);
-      return;
-    }
-
-    document.getElementById('landingSignupConfirm').style.display = 'block';
-    input.disabled = true;
-    this.querySelector('button').disabled = true;
+  // SUB-NAV: switches between About's five sections
+  const subnavBtns = document.querySelectorAll('.subnav button');
+  subnavBtns.forEach(btn => {
+    btn.addEventListener('click', () => {
+      subnavBtns.forEach(b => b.classList.remove('active'));
+      document.querySelectorAll('.subpanel').forEach(p => p.classList.remove('show'));
+      btn.classList.add('active');
+      document.getElementById(btn.dataset.panel).classList.add('show');
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    });
   });
 </script>
 
