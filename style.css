@@ -281,7 +281,7 @@ nav.tabs a.img-tab.active {
 .album {
   position: relative;
   width: 100%;
-  max-width: 420px;
+  max-width: 300px;
   margin: 0 auto;
   cursor: pointer;
 }
@@ -353,14 +353,36 @@ nav.tabs a.img-tab.active {
   cursor: pointer;
 }
 
-/* ---------- PHONE SHOWCASE (shared: Shop → Clothing, and the Landing page) ---------- */
-.phone-showcase { max-width: 320px; margin: 40px auto; text-align: center; }
-.phone-frame-wrap { position: relative; width: 100%; }
-.phone-frame-wrap img.phone-frame { width: 100%; display: block; position: relative; z-index: 2; pointer-events: none; }
-.phone-frame-wrap video {
+/* ---------- PHONE SHOWCASE (shared: Shop → Clothing, and the Landing page) ----------
+   Pure-CSS black phone bezel — no phone-frame-art.png needed. */
+.phone-showcase { max-width: 300px; margin: 40px auto; text-align: center; }
+.phone-frame-wrap {
+  position: relative;
+  width: 100%;
+  background: #0a0a0a;
+  border-radius: 34px;
+  padding: 14px;
+  box-shadow: 0 0 0 2px #000, 0 14px 34px rgba(0,0,0,.5);
+}
+.phone-frame-wrap::before {
+  /* notch */
+  content: '';
   position: absolute;
-  top: 4%; left: 6%; width: 88%; height: 92%;
-  object-fit: cover; z-index: 1;
+  top: 14px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 64px;
+  height: 14px;
+  background: #0a0a0a;
+  border-radius: 0 0 10px 10px;
+  z-index: 3;
+}
+.phone-frame-wrap video {
+  position: relative;
+  width: 100%;
+  display: block;
+  border-radius: 20px;
+  z-index: 1;
 }
 .phone-showcase-label { font-size: 0.85rem; opacity: .7; margin-top: 14px; }
 
