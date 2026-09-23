@@ -19,42 +19,8 @@
     .flip-wrap { grid-template-columns: 1fr; }
   }
 
-  .album {
-    position: relative;
-    width: 100%;
-    max-width: 420px;
-    margin: 0 auto;
-    cursor: pointer;
-  }
-  .album img.album-frame { width: 100%; display: block; }
-  .album.open .album-cover-img { display: none; }
-  .album-hint { text-align: center; font-size: 0.8rem; opacity: .6; margin-top: 10px; }
-
-  /* --- Album gallery (shown once opened) --- */
-  .album-gallery {
-    display: none;
-    gap: 10px;
-    overflow-x: auto;
-    padding: 10px 4px;
-    scroll-snap-type: x mandatory;
-    -webkit-overflow-scrolling: touch;
-    min-height: 260px;
-    align-items: center;
-  }
-  .album.open .album-gallery { display: flex; }
-  .album-gallery-item {
-    flex: 0 0 260px;
-    scroll-snap-align: start;
-    background: #111;
-    border: 1px solid #333;
-    border-radius: 6px;
-    overflow: hidden;
-  }
-  .album-gallery-item img { width: 100%; height: 260px; object-fit: cover; display: block; }
-  .album-gallery-caption {
-    padding: 8px 10px; font-size: 0.75rem; color: #ddd; background: #111;
-  }
-  .album-gallery-empty { opacity: .5; font-style: italic; padding: 20px; text-align: center; }
+  /* .album / .album-gallery / .photo-lightbox now live in the shared style.css
+     so the Shop process album and the landing page use the exact same look. */
 
   .popup-note {
     background: var(--gold);
@@ -264,7 +230,7 @@
       <div>
         <div class="album" id="albumEl">
           <img class="album-frame album-cover-img" src="photo-album-cover.png" alt="Nociv photo album">
-          <div class="album-gallery" id="albumGallery">
+          <div class="album-gallery collapsed" id="albumGallery">
             <p class="album-gallery-empty">Loading photos...</p>
           </div>
         </div>
@@ -318,6 +284,12 @@
   </div>
 </div>
 
+<!-- Zoomed-in photo view — shared by the process album -->
+<div class="photo-lightbox" id="photoLightbox">
+  <span class="photo-lightbox-close">&times;</span>
+  <img id="photoLightboxImg" src="" alt="">
+</div>
+
 <footer class="nociv-footer">NOCIV.CO — Nothing Of Civilization <a href="admin.html" style="opacity:.15; font-size:0.65rem;">·</a></footer>
 
 <!-- PRODUCT DETAIL MODAL — shared by every shop tab -->
@@ -358,14 +330,18 @@
   let albumLoaded = false;
   document.getElementById('albumEl').addEventListener('click', function(){
     this.classList.toggle('open');
+    document.getElementById('albumGallery').classList.toggle('collapsed');
     if (this.classList.contains('open') && !albumLoaded) {
       albumLoaded = true;
-      loadAlbumGallery();
+      loadAlbumGallery('albumGallery');
     }
   });
 
-  async function loadAlbumGallery() {
-    const galleryEl = document.getElementById('albumGallery');
+  // Shared loader — also used by the landing page's always-open gallery.
+  // loading="lazy" means the browser only fetches a photo once it's about
+  // to scroll into view, instead of pulling every photo at once.
+  async function loadAlbumGallery(mountId) {
+    const galleryEl = document.getElementById(mountId);
     const { data: photos, error } = await supabaseClient
       .from('album_photos')
       .select('*')
@@ -381,12 +357,28 @@
       const item = document.createElement('div');
       item.className = 'album-gallery-item';
       item.innerHTML = `
-        <img src="${p.image_url}" alt="${p.caption || 'Process photo'}">
+        <img src="${p.image_url}" alt="${p.caption || 'Process photo'}" loading="lazy" decoding="async">
         ${p.caption ? `<div class="album-gallery-caption">${p.caption}</div>` : ''}
       `;
+      item.querySelector('img').addEventListener('click', (e) => {
+        e.stopPropagation();
+        openPhotoLightbox(p.image_url, p.caption || 'Process photo');
+      });
       galleryEl.appendChild(item);
     });
   }
+
+  // ===== PHOTO LIGHTBOX (tap any album photo to zoom in, tap again to close) =====
+  function openPhotoLightbox(src, alt) {
+    document.getElementById('photoLightboxImg').src = src;
+    document.getElementById('photoLightboxImg').alt = alt || '';
+    document.getElementById('photoLightbox').classList.add('show');
+  }
+  function closePhotoLightbox() {
+    document.getElementById('photoLightbox').classList.remove('show');
+    document.getElementById('photoLightboxImg').src = '';
+  }
+  document.getElementById('photoLightbox').addEventListener('click', closePhotoLightbox);
 
   document.getElementById('signupForm').addEventListener('submit', async function(e){
     e.preventDefault();
