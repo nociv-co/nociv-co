@@ -25,6 +25,7 @@
      site's normal background. ---------- */
   .landing-paper {
     background: #efe8d6;
+    padding-top: 8px;
   }
 
   /* ---------- Editorial column: everything below the hero lives in one
@@ -44,7 +45,7 @@
     line-height: 1.15;
     margin: 0;
     padding-top: 52px;
-    color: var(--ink, #1a1a1a);
+    color: var(--grey);
     letter-spacing: 0.01em;
   }
 
@@ -184,15 +185,16 @@
   <img src="arizona-based.png" alt="AZ Based. Black-Owned Clothing.">
 </div>
 
-<!-- Everything below the Arizona banner sits on a warm paper background;
-     the banner image and nav above are untouched. -->
+<!-- HERO IDENTITY: sits on the plain page background, right under the banner -->
+<div class="landing-col">
+  <h1 class="landing-display">NOCIV: Nothing of Civilization</h1>
+  <hr class="landing-rule">
+</div>
+
+<!-- Everything from the mission down sits on a warm paper background;
+     the banner, nav, and hero heading above stay on the plain background. -->
 <div class="landing-paper">
 <div class="landing-col">
-
-  <!-- HERO IDENTITY: flush left, tight display type -->
-  <h1 class="landing-display">NOCIV: Nothing of Civilization</h1>
-
-  <hr class="landing-rule">
 
   <!-- MISSION: the one indented block on the page -->
   <div class="landing-mission">
