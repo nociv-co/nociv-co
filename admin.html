@@ -305,11 +305,48 @@
   const loginBox = document.getElementById('loginBox');
   const dashboard = document.getElementById('dashboard');
 
-  // NOTE: the old resizeImageFile() step has been removed on purpose.
-  // It was capping every uploaded photo at 2000px on the long side, which is
-  // far below what a real print needs (a 16x20 print at proper 300 DPI needs
-  // roughly 4800x6000px). Uploads now go to storage exactly as they came off
-  // your device — full resolution, no recompression.
+  // NOTE: the old resizeImageFile() step has been removed on purpose for
+  // PRODUCT photos. It was capping every uploaded photo at 2000px on the
+  // long side, which is far below what a real print needs (a 16x20 print at
+  // proper 300 DPI needs roughly 4800x6000px). Product uploads go to storage
+  // exactly as they came off your device — full resolution, no recompression.
+
+  // Process Album photos are different: nobody prints these, they're just
+  // viewed on the site — Shop → Clothing's album and the landing page's photo
+  // strip. A full-resolution phone photo (often 4000px+, several MB) makes
+  // those scroll strips feel slow to load for no visual benefit, since each
+  // photo only ever displays at 260px tall. This resizes album photos down
+  // to a sensible web size before upload, which is the actual fix for that.
+  function resizeAlbumPhoto(file, maxDim = 1600, quality = 0.85) {
+    return new Promise((resolve, reject) => {
+      const img = new Image();
+      const url = URL.createObjectURL(file);
+      img.onload = () => {
+        URL.revokeObjectURL(url);
+        let { width, height } = img;
+        if (width > maxDim || height > maxDim) {
+          if (width > height) {
+            height = Math.round(height * (maxDim / width));
+            width = maxDim;
+          } else {
+            width = Math.round(width * (maxDim / height));
+            height = maxDim;
+          }
+        }
+        const canvas = document.createElement('canvas');
+        canvas.width = width;
+        canvas.height = height;
+        canvas.getContext('2d').drawImage(img, 0, 0, width, height);
+        canvas.toBlob(
+          (blob) => blob ? resolve(blob) : reject(new Error('Could not process image')),
+          'image/jpeg',
+          quality
+        );
+      };
+      img.onerror = () => { URL.revokeObjectURL(url); reject(new Error('Could not read image')); };
+      img.src = url;
+    });
+  }
 
   // ===== AUTH =====
   async function checkSession() {
@@ -631,7 +668,7 @@
     });
   }
 
-  // ===== PROCESS ALBUM (full resolution, no resizing) =====
+  // ===== PROCESS ALBUM (resized for the web — see resizeAlbumPhoto() above) =====
   document.getElementById('addAlbumBtn').onclick = async () => {
     const file = document.getElementById('albumImage').files[0];
     const caption = document.getElementById('albumCaption').value.trim() || null;
@@ -642,11 +679,22 @@
 
     if (!file) { errEl.textContent = 'Choose a photo first.'; errEl.style.display = 'block'; return; }
 
-    const ext = (file.name.split('.').pop() || 'jpg').toLowerCase();
+    let uploadBlob = file;
+    let ext = (file.name.split('.').pop() || 'jpg').toLowerCase();
+    try {
+      uploadBlob = await resizeAlbumPhoto(file);
+      ext = 'jpg'; // resized output is always a JPEG
+    } catch (resizeErr) {
+      // If resizing fails for any reason, fall back to uploading the
+      // original rather than blocking the add entirely.
+      console.warn('Album photo resize skipped:', resizeErr);
+    }
+
     const fileName = `${Date.now()}-${file.name.replace(/\s+/g, '-').replace(/\.[^/.]+$/, '')}.${ext}`;
+    const contentType = (uploadBlob === file) ? (file.type || 'application/octet-stream') : 'image/jpeg';
     const { error: uploadError } = await supabaseClient.storage
       .from('album-photos')
-      .upload(fileName, file, { contentType: file.type || 'application/octet-stream' });
+      .upload(fileName, uploadBlob, { contentType });
     if (uploadError) {
       errEl.textContent = 'Upload failed: ' + uploadError.message;
       errEl.style.display = 'block';
