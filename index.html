@@ -18,16 +18,6 @@
     height: auto;
   }
 
-  /* ---------- Paper section: everything below the Arizona banner sits on a
-     warmer, cream paper tone (distinct from the site's neutral --paper grey)
-     so the page reads as one continuous sheet of writing under the art.
-     Explicitly does NOT extend above the banner — header/nav keep the
-     site's normal background. ---------- */
-  .landing-paper {
-    background: #efe8d6;
-    padding-top: 8px;
-  }
-
   /* ---------- Editorial column: everything below the hero lives in one
      left-aligned column instead of being centered on the page ---------- */
   .landing-col {
@@ -66,12 +56,33 @@
     max-width: 700px;
   }
 
-  /* Level 2 — mission / important statement: 20–24px desktop, 18–20px mobile, 500–600, 1.35–1.45 leading */
+  /* Level 2 — mission statement is the one "posted note" element on the
+     page: a cream sticky-note card, slightly tilted, with a little tape
+     at the top, holding just this one sentence. Text is charcoal, not black. */
   .landing-mission .mission-statement {
-    font-size: clamp(26px, 4.6vw, 38px);
+    font-size: clamp(22px, 3.8vw, 32px);
     font-weight: 600;
-    line-height: 1.28;
-    color: var(--ink, #1a1a1a);
+    line-height: 1.35;
+    color: var(--charcoal, #2b2b2b);
+    background: #f2ecd6;
+    display: inline-block;
+    padding: 28px 30px;
+    margin: 0;
+    box-shadow: 0 6px 16px rgba(0,0,0,0.18);
+    transform: rotate(-1deg);
+    position: relative;
+  }
+  .landing-mission .mission-statement::before {
+    /* little strip of tape across the top corner */
+    content: '';
+    position: absolute;
+    top: -14px;
+    left: 28px;
+    width: 70px;
+    height: 24px;
+    background: rgba(230,225,205,0.75);
+    border: 1px solid rgba(0,0,0,0.06);
+    transform: rotate(-3deg);
   }
 
   /* Level 3 — supporting text within the mission block */
@@ -80,7 +91,7 @@
     font-size: 15px;
     font-weight: 700;
     letter-spacing: 0.08em;
-    color: var(--ink, #1a1a1a);
+    color: var(--grey);
   }
   .landing-mission .mission-personal {
     margin-top: 18px;
@@ -185,18 +196,16 @@
   <img src="arizona-based.png" alt="AZ Based. Black-Owned Clothing.">
 </div>
 
-<!-- HERO IDENTITY: sits on the plain page background, right under the banner -->
 <div class="landing-col">
+
+  <!-- HERO IDENTITY: flush left, tight display type -->
   <h1 class="landing-display">NOCIV: Nothing of Civilization</h1>
+
   <hr class="landing-rule">
-</div>
 
-<!-- Everything from the mission down sits on a warm paper background;
-     the banner, nav, and hero heading above stay on the plain background. -->
-<div class="landing-paper">
-<div class="landing-col">
-
-  <!-- MISSION: the one indented block on the page -->
+  <!-- MISSION: the one indented block on the page. The mission statement
+       itself is the single "posted note" element, everything else on
+       the page stays plain grey text. -->
   <div class="landing-mission">
     <p class="mission-statement">Built around reclaiming narratives and creating new norms. Clothing is where we begin. Design, culture, and human connection are where we go.</p>
     <p class="mission-how">NO ADS. NO ALGORITHM. WORD OF MOUTH ONLY.</p>
@@ -219,7 +228,6 @@
   </div>
 
   <div class="landing-footer-space"></div>
-</div>
 </div>
 
 <footer class="nociv-footer">NOCIV.CO — Nothing Of Civilization</footer>
