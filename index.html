@@ -183,13 +183,19 @@
   <p class="mission-personal">If you're here, someone told you.</p>
 </div>
 
-<!-- PROCESS ALBUM: no products live yet, so this is the proof-of-real instead —
-     see it get made. Always open, no cover art to tap, straight to the scroll. -->
+<!-- SEE IT GET MADE: no products or album photos live yet, so proof-of-real
+     comes from the one piece of real footage that's always ready — no
+     database, no loading state, nothing that can show up empty. -->
 <div class="landing-section">
   <div class="eyebrow">See It Get Made</div>
-  <p>Straight from the process album — swipe through.</p>
-  <div class="album-gallery" id="landingAlbumGallery" style="max-width:560px; margin:20px auto 0;">
-    <p class="album-gallery-empty">Loading photos...</p>
+  <p>Screen printing, start to finish.</p>
+  <div class="phone-showcase">
+    <div class="phone-frame-wrap">
+      <video controls poster="screen-printing-poster.jpg">
+        <source src="screen-printing-process.mp4" type="video/mp4">
+      </video>
+      <img class="phone-frame" src="phone-frame-art.png" alt="">
+    </div>
   </div>
 </div>
 
@@ -223,62 +229,10 @@
   <a class="section-link" href="about.html">Read the Full Story →</a>
 </div>
 
-<!-- Zoomed-in photo view -->
-<div class="photo-lightbox" id="photoLightbox">
-  <span class="photo-lightbox-close">&times;</span>
-  <img id="photoLightboxImg" src="" alt="">
-</div>
-
 <footer class="nociv-footer">NOCIV.CO — Nothing Of Civilization</footer>
 
 <script src="supabase.js"></script>
 <script>
-  // ===== LANDING PAGE PROCESS ALBUM =====
-  // Same "album_photos" table and admin uploader as Shop → Clothing's process
-  // album, just always open here — no cover art to tap first. loading="lazy"
-  // means only the photos actually scrolled into view get fetched.
-  (async function loadLandingAlbum() {
-    const mount = document.getElementById('landingAlbumGallery');
-    if (!mount || typeof supabaseClient === 'undefined') return;
-
-    const { data: photos, error } = await supabaseClient
-      .from('album_photos')
-      .select('*')
-      .order('created_at', { ascending: false });
-
-    if (error || !photos || photos.length === 0) {
-      mount.innerHTML = '<p class="album-gallery-empty">Photos coming soon.</p>';
-      return;
-    }
-
-    mount.innerHTML = '';
-    photos.forEach(p => {
-      const item = document.createElement('div');
-      item.className = 'album-gallery-item';
-      item.innerHTML = `
-        <img src="${p.image_url}" alt="${p.caption || 'Process photo'}" loading="lazy" decoding="async">
-        ${p.caption ? `<div class="album-gallery-caption">${p.caption}</div>` : ''}
-      `;
-      item.querySelector('img').addEventListener('click', (e) => {
-        e.stopPropagation();
-        openPhotoLightbox(p.image_url, p.caption || 'Process photo');
-      });
-      mount.appendChild(item);
-    });
-  })();
-
-  // ===== PHOTO LIGHTBOX (tap a photo to zoom in, tap again to close) =====
-  function openPhotoLightbox(src, alt) {
-    document.getElementById('photoLightboxImg').src = src;
-    document.getElementById('photoLightboxImg').alt = alt || '';
-    document.getElementById('photoLightbox').classList.add('show');
-  }
-  function closePhotoLightbox() {
-    document.getElementById('photoLightbox').classList.remove('show');
-    document.getElementById('photoLightboxImg').src = '';
-  }
-  document.getElementById('photoLightbox').addEventListener('click', closePhotoLightbox);
-
   // ===== COME THROUGH IN PERSON SIGNUP (same "signups" table as the Clothing pop-up list) =====
   document.getElementById('landingSignupForm').addEventListener('submit', async function (e) {
     e.preventDefault();
