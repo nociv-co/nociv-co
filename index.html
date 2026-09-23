@@ -25,7 +25,7 @@
     margin: 0 auto;
     padding: 0 24px;
     text-align: left;
-    color: var(--grey);
+    color: #111111;
   }
 
   /* Level 1 — display / section titles: 28–36px desktop, 22–28px mobile, 700, tight leading */
@@ -35,18 +35,18 @@
     line-height: 1.15;
     margin: 0;
     padding-top: 52px;
-    color: var(--grey);
+    color: #111111;
     letter-spacing: 0.01em;
   }
 
-  /* Thin rule as the only transition device between sections — no cards, no shadows */
+  /* Sharp, solid black rule as the only transition device between sections —
+     no cards, no shadows, no fade */
   .landing-rule {
     width: 85%;
     max-width: 620px;
     margin: 40px 0;
     border: none;
-    border-top: 1px solid var(--ink, #1a1a1a);
-    opacity: .25;
+    border-top: 1px solid #111111;
   }
 
   /* The mission block sits slightly inset from the flush-left headings —
@@ -73,16 +73,26 @@
     position: relative;
   }
   .landing-mission .mission-statement::before {
-    /* little strip of tape across the top corner */
+    /* little strip of black tape across the top corner, ties the note
+       into the rest of the page's linework instead of floating on its own */
     content: '';
     position: absolute;
     top: -14px;
     left: 28px;
     width: 70px;
     height: 24px;
-    background: rgba(230,225,205,0.75);
-    border: 1px solid rgba(0,0,0,0.06);
+    background: #1a1a1a;
+    opacity: .85;
     transform: rotate(-3deg);
+  }
+
+  /* A hand-drawn-feeling marker underline under one key phrase */
+  .marker-underline {
+    text-decoration: underline;
+    text-decoration-style: wavy;
+    text-decoration-color: #111111;
+    text-decoration-thickness: 2.5px;
+    text-underline-offset: 6px;
   }
 
   /* Level 3 — supporting text within the mission block */
@@ -91,7 +101,7 @@
     font-size: 15px;
     font-weight: 700;
     letter-spacing: 0.08em;
-    color: var(--grey);
+    color: #111111;
   }
   .landing-mission .mission-personal {
     margin-top: 18px;
@@ -99,7 +109,7 @@
     font-size: 14px;
     font-style: italic;
     opacity: .65;
-    color: var(--grey);
+    color: #111111;
   }
 
   /* ---------- Buttons: same language throughout, weight tells them apart ---------- */
@@ -208,7 +218,7 @@
        the page stays plain grey text. -->
   <div class="landing-mission">
     <p class="mission-statement">Built around reclaiming narratives and creating new norms. Clothing is where we begin. Design, culture, and human connection are where we go.</p>
-    <p class="mission-how">NO ADS. NO ALGORITHM. WORD OF MOUTH ONLY.</p>
+    <p class="mission-how">NO ADS. NO ALGORITHM. <span class="marker-underline">WORD OF MOUTH ONLY.</span></p>
     <p class="mission-personal">If you're here, someone told you.</p>
     <a class="landing-btn landing-btn-primary" href="shop.html">Shop Clothing</a>
   </div>
