@@ -4,7 +4,7 @@
 <meta charset="UTF-8">
 <title>NOCIV.CO — Nothing Of Civilization</title>
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<meta name="description" content="Nociv Enterprise — representing Black America, no ads, no algorithm, just being human. Buy. Build. Share.">
+<meta name="description" content="NOCIV — a Black-owned clothing brand built around reclaiming narratives and creating new norms. No ads. No algorithm. Word of mouth only.">
 <link rel="stylesheet" href="style.css?v=4.0">
 <style>
   /* Wall-to-wall banner for Arizona landing graphic */
@@ -18,51 +18,177 @@
     height: auto;
   }
 
-  /* Centered notebook graphic container */
-  .landing-notebook {
-    max-width: 640px;
-    margin: 0 auto;
-    padding: 20px 20px 10px;
-  }
-  .landing-notebook img {
-    width: 100%;
-    display: block;
-    height: auto;
-  }
-
-  .landing-about {
-    max-width: 300px;
-    margin: 20px auto 30px;
-    padding: 0 20px;
+  /* ---------- Mission block ---------- */
+  .landing-mission {
+    max-width: 680px;
+    margin: 32px auto 0;
+    padding: 0 24px;
     text-align: center;
   }
-  .landing-about a {
-    display: block;
-    background: var(--grey-dark, #444);
-    color: var(--white, #f2f2f2);
+  .landing-mission .mission-statement {
+    font-family: Arial, Helvetica, sans-serif;
+    font-size: clamp(19px, 2.4vw, 27px);
+    font-weight: 600;
+    line-height: 1.45;
+    color: var(--grey, #777);
+  }
+  .landing-mission .mission-how {
+    margin-top: 16px;
+    font-size: 0.95rem;
     font-weight: 700;
+    letter-spacing: 0.02em;
+    color: var(--ink, #1a1a1a);
+  }
+  .landing-mission .mission-personal {
+    margin-top: 6px;
+    font-size: 0.95rem;
+    font-style: italic;
+    opacity: .75;
+  }
+
+  /* ---------- Shared section rhythm ---------- */
+  .landing-section {
+    max-width: 680px;
+    margin: 44px auto 0;
+    padding: 0 24px;
+    text-align: center;
+  }
+  .landing-section p {
+    font-size: 1rem;
+    line-height: 1.75;
+    opacity: .9;
+    max-width: 560px;
+    margin: 0 auto;
+  }
+  .landing-section .section-link {
+    display: inline-block;
+    margin-top: 16px;
+    font-weight: 700;
+    font-size: 0.85rem;
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+    color: var(--ink, #1a1a1a);
+    border-bottom: 2px solid var(--gold, #d1a13e);
+    padding-bottom: 2px;
+  }
+
+  /* ---------- Buy preview cards ---------- */
+  .landing-shop-preview {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+    gap: 14px;
+    max-width: 560px;
+    margin: 24px auto 0;
+  }
+  .preview-card {
+    display: block;
+    text-decoration: none;
+    color: inherit;
+    border: 1px solid #ddd;
+    border-radius: 6px;
+    overflow: hidden;
+    background: #fff;
+    transition: border-color .15s ease;
+  }
+  .preview-card:hover { border-color: var(--gold, #d1a13e); }
+  .preview-card .preview-img {
+    width: 100%;
+    aspect-ratio: 1 / 1;
+    object-fit: cover;
+    display: block;
+    background: #eee;
+  }
+  .preview-card .preview-body { padding: 10px; text-align: left; }
+  .preview-card .preview-name { font-size: 0.85rem; font-weight: 700; line-height: 1.3; }
+  .preview-card .preview-price { font-size: 0.8rem; opacity: .65; margin-top: 2px; }
+  .landing-shop-preview .preview-empty {
+    grid-column: 1 / -1;
+    font-size: 0.9rem;
+    opacity: .55;
+    font-style: italic;
+    padding: 20px 0;
+  }
+
+  /* ---------- Primary CTA: Shop Clothing (solid, unmistakable) ---------- */
+  .landing-cta-shop {
+    max-width: 320px;
+    margin: 32px auto 0;
+    padding: 0 24px;
+    text-align: center;
+  }
+  .landing-cta-shop a {
+    display: block;
+    background: #111;
+    color: #fff;
+    font-weight: 900;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    font-size: 0.95rem;
+    padding: 16px 20px;
+    border: 2px solid #111;
+    transition: background 0.15s ease, color 0.15s ease;
+  }
+  .landing-cta-shop a:hover {
+    background: #fff;
+    color: #111;
+  }
+
+  /* ---------- Come Through In Person: intentionally NOT a store button ---------- */
+  .landing-inperson {
+    max-width: 460px;
+    margin: 44px auto 0;
+    padding: 26px 24px;
+    text-align: center;
+    background: var(--paper-dim, #efe9db);
+    border: 1px dashed var(--gold, #d1a13e);
+    border-radius: 8px;
+  }
+  .landing-inperson h3 {
+    margin: 0 0 6px;
+    font-size: 1rem;
     letter-spacing: 0.05em;
     text-transform: uppercase;
-    font-size: 0.85rem;
-    padding: 14px 18px;
-    border: 1px solid #333;
-    transition: background 0.15s ease;
+    font-weight: 900;
   }
-  .landing-about a:hover {
+  .landing-inperson p {
+    font-size: 0.88rem;
+    opacity: .8;
+    max-width: 380px;
+    margin: 0 auto;
+  }
+  .landing-inperson form {
+    display: flex;
+    gap: 8px;
+    margin-top: 16px;
+  }
+  .landing-inperson input[type="email"] {
+    flex: 1;
+    padding: 12px;
+    border: 1px solid #999;
+    font-size: 0.95rem;
+    background: #fff;
+  }
+  .landing-inperson button {
     background: var(--gold, #d1a13e);
     color: #1a1a1a;
+    border: none;
+    padding: 0 18px;
+    font-weight: 900;
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+    font-size: 0.8rem;
+    cursor: pointer;
   }
-
-  .landing-intro {
-    font-family: Arial, Helvetica, sans-serif;
-    font-size: clamp(20px, 2.5vw, 30px);
-    font-weight: 600;
-    line-height: 1.4;
-    text-align: center;
-    max-width: 720px;
-    margin: 28px auto 0;
-    padding: 0 24px;
-    color: var(--grey, #777);
+  .landing-inperson .subscribe-hint {
+    font-size: 0.75rem;
+    opacity: .55;
+    margin-top: 10px;
+  }
+  .landing-inperson .subscribe-confirm {
+    display: none;
+    color: var(--green);
+    font-weight: 700;
+    margin-top: 14px;
   }
 </style>
 </head>
@@ -77,28 +203,129 @@
   <a href="about.html" class="img-tab"><img src="nav-about.png" alt="About"></a>
   <a href="shop.html" class="img-tab"><img src="nav-shop.png" alt="Shop"></a>
   <a href="creator-tools.html" class="img-tab"><img src="nav-tools.png" alt="Tools"></a>
-  <a href="community.html" class="img-tab"><img src="community-button.png" alt="Community"></a>
+  <a href="community.html" class="img-tab"><img src="base-button.png" alt="Base"></a>
 </nav>
 
 <!-- Full-Width Arizona Graphic Banner (Wall-to-Wall) -->
+<!-- NOTE: swap this file for the redrawn version — "AZ BASED. BLACK-OWNED CLOTHING."
+     with the torn-paper edge and AZ mark kept, smaller explanatory words dropped. -->
 <div class="landing-banner-full">
-  <img src="arizona-based.png" alt="Arizona Based Creator Brand That Uses Digital Space to Set The Condition for Physical Reality.">
+  <img src="arizona-based.png" alt="AZ Based. Black-Owned Clothing.">
 </div>
 
-<p class="landing-intro">No algorithm decided you'd end up here. Buy something made by NOCIV, build something yourself for free, or come connect. However you enter, you're part of the same space.</p>
-
-<!-- Centered Buy. Build. Share. Notebook Graphic -->
-<div class="landing-notebook">
-  <img src="buy-build-share.png" alt="Buy. Build. Share. Representing Black America. No socials, algorithm, or ads, just being human.">
+<!-- MISSION: the why, then the how, then the personal close -->
+<div class="landing-mission">
+  <p class="mission-statement">NOCIV is a Black-owned clothing brand built around reclaiming narratives and creating new norms. Clothing is where we begin. Design, culture, and human connection are where we go.</p>
+  <p class="mission-how">No ads. No algorithm. Word of mouth only.</p>
+  <p class="mission-personal">If you're here, someone told you.</p>
 </div>
 
-<div class="landing-about">
-  <a href="shop.html">Shop</a>
+<!-- BUY: real products, right after the mission -->
+<div class="landing-section">
+  <div class="eyebrow">Something To Buy</div>
+  <p>Straight from the Clothing shop — no clicking through to see it first.</p>
+  <div class="landing-shop-preview" id="landingShopPreview">
+    <div class="preview-empty">Loading products...</div>
+  </div>
+</div>
+
+<!-- PRIMARY CTA: unmistakable, goes straight to Clothing -->
+<div class="landing-cta-shop">
+  <a href="shop.html">Shop Clothing</a>
+</div>
+
+<!-- COME THROUGH IN PERSON: visually its own thing, not a second store button,
+     and not styled like the pop-up signup form inside Shop → Clothing -->
+<div class="landing-inperson">
+  <h3>Come Through In Person</h3>
+  <p>Get updates on upcoming pop-ups, new releases, and where NOCIV will be next.</p>
+  <form id="landingSignupForm">
+    <input type="email" placeholder="Your email" required>
+    <button type="submit">Join The List</button>
+  </form>
+  <p class="subscribe-hint">One list. Nothing sold, nothing shared.</p>
+  <p class="subscribe-confirm" id="landingSignupConfirm">You're on the list.</p>
+</div>
+
+<!-- LEARN: for anyone who scrolls this far wanting more depth -->
+<div class="landing-section">
+  <div class="eyebrow">Why NOCIV Exists</div>
+  <p>
+    NOCIV is an Arizona based creator brand that treats every discipline as
+    the same discipline — clothing, tech, writing, and art, all under one
+    name. We built this world without asking most of us how we wanted it to
+    look. NOCIV is proof you can build something else.
+  </p>
+  <a class="section-link" href="about.html">Read the Full Story →</a>
 </div>
 
 <footer class="nociv-footer">NOCIV.CO — Nothing Of Civilization</footer>
 
 <script src="supabase.js"></script>
+<script>
+  // ===== LANDING PAGE SHOP PREVIEW =====
+  // Pulls a few real Clothing items straight from Supabase so people see
+  // something to buy without leaving the landing page. Clicking a card
+  // goes to shop.html, which opens on the Clothing tab by default.
+  (async function loadLandingPreview() {
+    const mount = document.getElementById('landingShopPreview');
+    if (!mount || typeof supabaseClient === 'undefined') return;
+
+    const { data: products, error } = await supabaseClient
+      .from('products_public')
+      .select('*')
+      .eq('shop', 'clothing')
+      .order('created_at', { ascending: false })
+      .limit(3);
+
+    if (error || !products || products.length === 0) {
+      mount.innerHTML = '<div class="preview-empty">New pieces coming soon.</div>';
+      return;
+    }
+
+    mount.innerHTML = '';
+    products.forEach(p => {
+      const card = document.createElement('a');
+      card.className = 'preview-card';
+      card.href = 'shop.html';
+      const imgHtml = p.image_url
+        ? `<img class="preview-img" src="${p.image_url}" alt="${p.name}">`
+        : `<div class="preview-img"></div>`;
+      const priceText = p.status === 'for_sale'
+        ? (p.price ? '$' + p.price : 'For Sale')
+        : 'Coming Soon';
+      card.innerHTML = `
+        ${imgHtml}
+        <div class="preview-body">
+          <div class="preview-name">${p.name}</div>
+          <div class="preview-price">${priceText}</div>
+        </div>
+      `;
+      mount.appendChild(card);
+    });
+  })();
+
+  // ===== COME THROUGH IN PERSON SIGNUP (same "signups" table as the Clothing pop-up list) =====
+  document.getElementById('landingSignupForm').addEventListener('submit', async function (e) {
+    e.preventDefault();
+    const input = this.querySelector('input');
+    const value = input.value.trim();
+    if (!value) return;
+
+    const { error } = await supabaseClient
+      .from('signups')
+      .insert([{ contact: value }]);
+
+    if (error) {
+      alert('Error saving: ' + error.message);
+      return;
+    }
+
+    document.getElementById('landingSignupConfirm').style.display = 'block';
+    input.disabled = true;
+    this.querySelector('button').disabled = true;
+  });
+</script>
 
 </body>
 </html>
