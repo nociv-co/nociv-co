@@ -75,8 +75,8 @@ nav.tabs {
 /* Individual Folder Tab shape */
 nav.tabs a.img-tab {
   position: relative;
-  background: var(--charcoal); /* Charcoal tab base — hosts the light hand-written nav images */
-  color: #f2f2f2 !important;
+  background: var(--grey); /* Grey tab base — lighter than the old charcoal */
+  color: #1a1a1a !important;
   font-family: Arial, Helvetica, sans-serif;
   font-weight: 700;
   letter-spacing: 0.05em;
@@ -84,7 +84,7 @@ nav.tabs a.img-tab {
   font-size: 0.85rem;
   text-align: center;
   padding: 12px 18px 10px 18px;
-  border: 1.5px solid #1a1a1a;
+  border: 1.5px solid #6e6e6e;
   border-bottom: none;
   border-radius: 6px 6px 0 0;
   box-shadow: none;
@@ -105,33 +105,24 @@ nav.tabs a.img-tab img {
   display: inline-block;
   max-width: 100%;
   max-height: 32px;
-  transition: filter 0.15s ease;
 }
 
 /* Hover state */
 nav.tabs a.img-tab:hover {
-  background: var(--charcoal-light);
+  background: #9a9a9a;
 }
 
-/* Selected Tab: pressed lighter tone so the (normally white) hand-written
-   nav image can flip to black and still read clearly against it. Melts
-   into the also-charcoal subnav panel below via matching border tone. */
+/* Selected Tab: stays black — the clear "you are here" marker against the
+   lighter grey field. The nav images are light/white hand-written graphics,
+   so they read fine on their own against black; no color swap needed. */
 nav.tabs a.img-tab.active {
-  background: var(--grey); /* Lighter "pressed" tone against the charcoal field */
-  color: #000000 !important;
-  border-color: #1a1a1a;
-  border-bottom: 2px solid var(--grey);
+  background: #000000;
+  color: #ffffff !important;
+  border-color: #000000;
+  border-bottom: 2px solid #000000;
   margin-bottom: -2px;
   z-index: 12;
   font-weight: 900;
-}
-
-/* The nav image itself is a light/white hand-written graphic — on the
-   active (current-page) tab, flip it to black so it reads against the
-   lighter pressed background. brightness(0) turns any visible pixel
-   black while preserving the image's transparency. */
-nav.tabs a.img-tab.active img {
-  filter: brightness(0);
 }
 
 /* ---------- SUB-NAV: Charcoal Folder Body Panel ---------- */
@@ -361,6 +352,17 @@ nav.tabs a.img-tab.active img {
   line-height: 1;
   cursor: pointer;
 }
+
+/* ---------- PHONE SHOWCASE (shared: Shop → Clothing, and the Landing page) ---------- */
+.phone-showcase { max-width: 320px; margin: 40px auto; text-align: center; }
+.phone-frame-wrap { position: relative; width: 100%; }
+.phone-frame-wrap img.phone-frame { width: 100%; display: block; position: relative; z-index: 2; pointer-events: none; }
+.phone-frame-wrap video {
+  position: absolute;
+  top: 4%; left: 6%; width: 88%; height: 92%;
+  object-fit: cover; z-index: 1;
+}
+.phone-showcase-label { font-size: 0.85rem; opacity: .7; margin-top: 14px; }
 
 /* ---------- COMING SOON ---------- */
 .coming-soon {
