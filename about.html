@@ -49,6 +49,12 @@
     font-weight: 700;
     font-size: 1.05rem;
   }
+
+  /* --- Culture panel: tighter spacing, less air between paragraphs/sections --- */
+  #culturePanel .wrap { padding: 24px 20px; }
+  #culturePanel .wrap + .wrap { padding-top: 4px; }
+  #culturePanel p { line-height: 1.6; margin: 0 0 12px; }
+  #culturePanel p:last-child { margin-bottom: 0; }
 </style>
 </head>
 <body>
@@ -62,7 +68,7 @@
   <a href="about.html" class="img-tab active"><img src="nav-about.png" alt="About"></a>
   <a href="shop.html" class="img-tab"><img src="nav-shop.png" alt="Shop"></a>
   <a href="creator-tools.html" class="img-tab"><img src="nav-tools.png" alt="Tools"></a>
-  <a href="community.html" class="img-tab"><img src="community-button.png" alt="Community"></a>
+  <a href="community.html" class="img-tab"><img src="base-button.png" alt="Base"></a>
 </nav>
 
 <!-- SUB-NAV: swipe between About's sections instead of one long scroll -->
@@ -77,14 +83,15 @@
 <div class="subpanel show" id="philosophyPanel">
   <div class="wrap" style="text-align:center; max-width:640px;">
     <p style="font-size:1.3rem; line-height:1.7; font-weight:700;">
-      NOCIV is an Arizona based creator brand that uses digital space
-      to set the conditions for physical reality.
+      NOCIV is an Arizona based creator brand — creator in the original
+      sense: someone who makes things, not content for a feed.
+    </p>
+    <p style="font-size:1.15rem; line-height:1.7; font-weight:700;">
+      NOCIV isn't content. It's clothing — Black-owned, reclaiming what
+      "American" looks like off the feed and onto your body.
     </p>
     <p style="font-size:1.05rem; line-height:1.8; opacity:.9;">
-      We live in an era where we can communicate instantly across the
-      globe, yet feel increasingly disconnected from the physical world
-      right in front of us. Technology isn't the problem — we just
-      forgot what it was built to do.
+      No ads. If you're here, someone told you.
     </p>
   </div>
 
@@ -99,12 +106,16 @@
         a conversation, or a physical object you make yourself.
       </p>
       <p>
-        NOCIV isn't a company that happens to do many things. It is a
-        creative practice expressed across clothing, art, hardware,
-        writing, software, and physical community. This platform
-        operates without algorithms, advertisements, or tracking. It
-        exists purely as a dedicated safe space for genuine human
-        connection.
+        NOCIV isn't a single product line — it's a creative practice
+        expressed across clothing, art, hardware, writing, software,
+        and physical community.
+      </p>
+      <p>
+        This platform runs without algorithms, ads, or tracking. No
+        paid promotion, no chasing shares. Growth happens the old way:
+        a sticker on a lamppost, a flyer in a coffee shop window, a
+        business card on a counter, someone wearing a piece in public.
+        If you're here, someone told you.
       </p>
       <p style="font-weight:700;">Why express it through so many mediums?</p>
       <p style="font-weight:900; font-size:1.2rem;">Why not?</p>
