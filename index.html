@@ -18,6 +18,15 @@
     height: auto;
   }
 
+  /* ---------- Paper section: everything below the Arizona banner sits on a
+     warmer, cream paper tone (distinct from the site's neutral --paper grey)
+     so the page reads as one continuous sheet of writing under the art.
+     Explicitly does NOT extend above the banner — header/nav keep the
+     site's normal background. ---------- */
+  .landing-paper {
+    background: #efe8d6;
+  }
+
   /* ---------- Editorial column: everything below the hero lives in one
      left-aligned column instead of being centered on the page ---------- */
   .landing-col {
@@ -33,22 +42,11 @@
     font-size: clamp(22px, 4.2vw, 34px);
     font-weight: 700;
     line-height: 1.15;
-    margin: 52px 0 0;
+    margin: 0;
+    padding-top: 52px;
     color: var(--ink, #1a1a1a);
     letter-spacing: 0.01em;
   }
-
-  /* Small red kicker label above the heading — the one accent color on the page */
-  .landing-kicker {
-    display: inline-block;
-    font-size: 12px;
-    font-weight: 700;
-    letter-spacing: 0.18em;
-    text-transform: uppercase;
-    color: var(--red);
-    margin: 52px 0 0;
-  }
-  .landing-kicker + .landing-display { margin-top: 10px; }
 
   /* Thin rule as the only transition device between sections — no cards, no shadows */
   .landing-rule {
@@ -61,12 +59,10 @@
   }
 
   /* The mission block sits slightly inset from the flush-left headings —
-     the one deliberate asymmetry on the page — and carries a red rule
-     down the left edge, like a pulled quote or a margin annotation */
+     the one deliberate asymmetry on the page */
   .landing-mission {
-    padding-left: clamp(14px, 6vw, 48px);
+    padding-left: clamp(0px, 6vw, 48px);
     max-width: 700px;
-    border-left: 3px solid var(--red);
   }
 
   /* Level 2 — mission / important statement: 20–24px desktop, 18–20px mobile, 500–600, 1.35–1.45 leading */
@@ -83,7 +79,7 @@
     font-size: 15px;
     font-weight: 700;
     letter-spacing: 0.08em;
-    color: var(--red);
+    color: var(--ink, #1a1a1a);
   }
   .landing-mission .mission-personal {
     margin-top: 18px;
@@ -188,10 +184,12 @@
   <img src="arizona-based.png" alt="AZ Based. Black-Owned Clothing.">
 </div>
 
+<!-- Everything below the Arizona banner sits on a warm paper background;
+     the banner image and nav above are untouched. -->
+<div class="landing-paper">
 <div class="landing-col">
 
   <!-- HERO IDENTITY: flush left, tight display type -->
-  <div class="landing-kicker">AZ Based. Black-Owned.</div>
   <h1 class="landing-display">NOCIV: Nothing of Civilization</h1>
 
   <hr class="landing-rule">
@@ -219,6 +217,7 @@
   </div>
 
   <div class="landing-footer-space"></div>
+</div>
 </div>
 
 <footer class="nociv-footer">NOCIV.CO — Nothing Of Civilization</footer>
