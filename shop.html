@@ -23,12 +23,10 @@
      so the Shop process album and the landing page use the exact same look. */
 
   .popup-note {
-    background: var(--gold);
-    color: #1a1a1a;
-    padding: 14px;
+    color: var(--charcoal, #2b2b2b);
+    padding: 0 0 14px;
     font-size: 0.85rem;
     text-align: center;
-    margin: 20px 0;
   }
   #signupForm input {
     width: 100%;
@@ -36,8 +34,41 @@
     margin-bottom: 4px;
     border: 1px solid #999;
     font-size: 1rem;
+    box-sizing: border-box;
+    background: #fff;
+    font-family: inherit;
   }
   .signup-hint { font-size: 0.75rem; opacity: .6; text-align: center; margin: 0 0 12px; }
+
+  /* ---------- Posted note: the Join The List signup, styled to match the
+     landing page's sticky-note mission statement. Lives at the very bottom
+     of the Clothing page, under the aura graphic. ---------- */
+  .signup-note-wrap { text-align: center; margin: 50px auto 20px; }
+  .signup-note {
+    display: inline-block;
+    text-align: left;
+    background: #f2ecd6;
+    color: var(--charcoal, #2b2b2b);
+    padding: 26px 26px 22px;
+    max-width: 380px;
+    width: 100%;
+    box-shadow: 0 6px 16px rgba(0,0,0,0.18);
+    transform: rotate(-1deg);
+    position: relative;
+  }
+  .signup-note::before {
+    content: '';
+    position: absolute;
+    top: -14px;
+    left: 26px;
+    width: 70px;
+    height: 24px;
+    background: #1a1a1a;
+    opacity: .85;
+    transform: rotate(-3deg);
+  }
+  .signup-note .popup-card-img { width: 100%; display: block; margin-bottom: 14px; }
+  .signup-note #popupDetails { color: var(--charcoal, #2b2b2b); }
 
   /* .phone-showcase now lives in the shared style.css */
 
@@ -200,8 +231,30 @@
 
     <div class="catalog-mount" id="catalogMount-clothing"></div>
 
-    <div class="flip-wrap">
-      <div>
+    <div style="text-align:center; margin-top:20px;">
+      <div class="album" id="albumEl">
+        <img class="album-frame album-cover-img" src="photo-album-cover.png" alt="Nociv photo album">
+        <div class="album-gallery collapsed" id="albumGallery">
+          <p class="album-gallery-empty">Loading photos...</p>
+        </div>
+      </div>
+      <div class="album-hint">Tap the album to open it</div>
+    </div>
+
+    <div class="phone-showcase">
+      <div class="phone-frame-wrap">
+        <video controls poster="screen-printing-poster.jpg">
+          <source src="screen-printing-process.mp4" type="video/mp4">
+        </video>
+      </div>
+      <p class="phone-showcase-label">Watch it get made — screen printing, start to finish.</p>
+    </div>
+
+    <img class="aura-graphic" src="aura-graphic.png" alt="Nociv clothing">
+
+    <!-- Posted note: Join The List signup, the last thing on the page -->
+    <div class="signup-note-wrap">
+      <div class="signup-note">
         <img class="popup-card-img" src="pop-up-shop.png" alt="Pop-up shop — posting soon">
         <div class="popup-note">
           Enter your email to get notified of next location & time. Nothing else.
@@ -219,28 +272,7 @@
           <strong>Time:</strong> TBD
         </div>
       </div>
-
-      <div>
-        <div class="album" id="albumEl">
-          <img class="album-frame album-cover-img" src="photo-album-cover.png" alt="Nociv photo album">
-          <div class="album-gallery collapsed" id="albumGallery">
-            <p class="album-gallery-empty">Loading photos...</p>
-          </div>
-        </div>
-        <div class="album-hint">Tap the album to open it</div>
-      </div>
     </div>
-
-    <div class="phone-showcase">
-      <div class="phone-frame-wrap">
-        <video controls poster="screen-printing-poster.jpg">
-          <source src="screen-printing-process.mp4" type="video/mp4">
-        </video>
-      </div>
-      <p class="phone-showcase-label">Watch it get made — screen printing, start to finish.</p>
-    </div>
-
-    <img class="aura-graphic" src="aura-graphic.png" alt="Nociv clothing">
   </div>
 </div>
 
