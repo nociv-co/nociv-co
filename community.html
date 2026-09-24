@@ -298,7 +298,7 @@
     <!-- ---- VERIFIED ---- -->
     <div class="dir-subpanel active" id="dirpanel-verified">
       <p class="board-sub">Verified local resources. The permanent anchor.</p>
-      <div class="filter-row" id="filterRow"></div>
+      <select class="filter-select" id="filterRow"></select>
       <div class="directory-grid" id="directoryGrid"></div>
     </div>
 
@@ -306,7 +306,18 @@
     <div class="dir-subpanel" id="dirpanel-opportunity">
       <p class="board-sub">Post local opportunities, tool shares, meetups, or space listings — and see what's happening this month.</p>
 
+      <!-- What's posted comes first -->
       <div class="opp-calendar" id="oppCalendar"></div>
+
+      <select class="filter-select" id="catPillRow"></select>
+
+      <div class="board-list" id="boardList"></div>
+
+      <!-- Clear break before the "post your own" area -->
+      <div class="dir-post-divider">
+        <hr>
+        <span>Post Your Own</span>
+      </div>
 
       <div class="mark-card">
         <h3>Post It</h3>
@@ -352,18 +363,6 @@
         <button id="boardSendBtn" class="cta-btn">Post It</button>
         <p id="boardConfirm" class="confirm-msg">Posted to the Opportunity Board.</p>
       </div>
-
-      <div class="cat-pill-row" id="catPillRow" style="margin-top:30px;">
-        <button class="cat-pill active" data-cat="All"><span class="legend-dot" style="background:#888;"></span>All</button>
-        <button class="cat-pill" data-cat="wall"><span class="legend-dot cat-wall"></span>Wall & Mural</button>
-        <button class="cat-pill" data-cat="workshop"><span class="legend-dot cat-workshop"></span>Workshops</button>
-        <button class="cat-pill" data-cat="share"><span class="legend-dot cat-share"></span>Tool/Garage Share</button>
-        <button class="cat-pill" data-cat="space"><span class="legend-dot cat-space"></span>Spaces</button>
-        <button class="cat-pill" data-cat="call"><span class="legend-dot cat-call"></span>Calls</button>
-        <button class="cat-pill" data-cat="meetup"><span class="legend-dot cat-meetup"></span>Meetups</button>
-      </div>
-
-      <div class="board-list" id="boardList"></div>
     </div>
   </div>
 </div>
@@ -744,16 +743,12 @@ const directoryGrid = document.getElementById('directoryGrid');
 const filterRow = document.getElementById('filterRow');
 
 function renderFilterPills() {
-  filterRow.innerHTML = '<button class="filter-pill active" data-filter="All">All</button>' +
-    disciplines.map(d => `<button class="filter-pill" data-filter="${d}">${d}</button>`).join('');
+  filterRow.innerHTML = '<option value="All">All Disciplines</option>' +
+    disciplines.map(d => `<option value="${d}">${d}</option>`).join('');
 
-  filterRow.querySelectorAll('.filter-pill').forEach(pill => {
-    pill.addEventListener('click', () => {
-      filterRow.querySelectorAll('.filter-pill').forEach(p => p.classList.remove('active'));
-      pill.classList.add('active');
-      activeFilter = pill.dataset.filter;
-      renderDirectory();
-    });
+  filterRow.addEventListener('change', () => {
+    activeFilter = filterRow.value;
+    renderDirectory();
   });
 }
 renderFilterPills();
@@ -815,13 +810,12 @@ boardCategorySelect.addEventListener('change', () => {
   spaceTypeWrap.style.display = boardCategorySelect.value === 'space' ? 'block' : 'none';
 });
 
-document.querySelectorAll('#catPillRow .cat-pill').forEach(pill => {
-  pill.addEventListener('click', () => {
-    document.querySelectorAll('#catPillRow .cat-pill').forEach(p => p.classList.remove('active'));
-    pill.classList.add('active');
-    activeCat = pill.dataset.cat;
-    renderBoard();
-  });
+const catPillRow = document.getElementById('catPillRow');
+catPillRow.innerHTML = '<option value="All">All Categories</option>' +
+  Object.entries(catLabels).map(([val, label]) => `<option value="${val}">${label}</option>`).join('');
+catPillRow.addEventListener('change', () => {
+  activeCat = catPillRow.value;
+  renderBoard();
 });
 
 function getInterestedIds() {
