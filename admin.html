@@ -190,6 +190,7 @@
       <a href="#sec-album">Album</a>
       <a href="#sec-directory">Directory</a>
       <a href="#sec-zines">Zines</a>
+      <a href="#sec-promo">Spread The Word</a>
     </nav>
 
     <details class="admin-section" id="sec-popup">
@@ -449,6 +450,27 @@
         <div id="zineAdminList"></div>
       </div>
     </details>
+
+    <details class="admin-section" id="sec-promo">
+      <summary>Spread The Word <span class="admin-section-hint">shows on Base &rarr; Share &rarr; Spread The Word</span></summary>
+      <div class="admin-section-body">
+        <div class="admin-form">
+          <label for="promoTitle">Title</label>
+          <input type="text" id="promoTitle" placeholder="e.g. NOCIV Sticker Sheet">
+          <label for="promoDesc">Description (optional)</label>
+          <textarea id="promoDesc" rows="2" placeholder="e.g. Print on regular paper, cut along the lines."></textarea>
+          <label for="promoFile">Upload the file (image, PDF, whatever's print-ready)</label>
+          <input type="file" id="promoFile">
+          <label for="promoFileUrl" style="margin-top:10px;">...or paste a link to it instead, skip the upload above if you use this</label>
+          <input type="text" id="promoFileUrl" placeholder="https://...">
+          <button class="admin-submit" id="addPromoBtn">Add Material</button>
+          <p class="admin-note" id="promoAddConfirm">Added.</p>
+          <p class="admin-error" id="promoAddError"></p>
+        </div>
+        <h3>Current Materials</h3>
+        <div id="promoAdminList"></div>
+      </div>
+    </details>
   </div>
 
 </div>
@@ -540,6 +562,7 @@
       loadDirectoryAdminList();
       loadZineAdminList();
       loadMailingList();
+      loadPromoAdminList();
     } else {
       loginBox.style.display = 'block';
       dashboard.style.display = 'none';
@@ -1352,6 +1375,109 @@
     await supabaseClient.from('zines').update({ sort_order: bOrder }).eq('id', a.id);
     await supabaseClient.from('zines').update({ sort_order: aOrder }).eq('id', b.id);
     await loadZineAdminList();
+  }
+
+  // ===== SPREAD THE WORD (table: promo_materials, storage bucket: promo-materials) =====
+  document.getElementById('addPromoBtn').onclick = async () => {
+    const title = document.getElementById('promoTitle').value.trim();
+    const description = document.getElementById('promoDesc').value.trim() || null;
+    const file = document.getElementById('promoFile').files[0];
+    const urlInput = document.getElementById('promoFileUrl').value.trim();
+    const errEl = document.getElementById('promoAddError');
+    const confirmEl = document.getElementById('promoAddConfirm');
+    errEl.style.display = 'none';
+    confirmEl.style.display = 'none';
+
+    if (!title) { errEl.textContent = 'Title is required.'; errEl.style.display = 'block'; return; }
+
+    let file_url = null;
+    if (urlInput) {
+      file_url = urlInput;
+    } else if (file) {
+      const fileName = `${Date.now()}-${file.name.replace(/\s+/g, '-')}`;
+      const { error: uploadError } = await supabaseClient.storage
+        .from('promo-materials')
+        .upload(fileName, file, { contentType: file.type || 'application/octet-stream' });
+      if (uploadError) {
+        errEl.textContent = 'Upload failed: ' + uploadError.message;
+        errEl.style.display = 'block';
+        return;
+      }
+      const { data: urlData } = supabaseClient.storage.from('promo-materials').getPublicUrl(fileName);
+      file_url = urlData.publicUrl;
+    } else {
+      errEl.textContent = 'Upload a file, or paste a link to one.';
+      errEl.style.display = 'block';
+      return;
+    }
+
+    const { data: maxRows } = await supabaseClient
+      .from('promo_materials').select('sort_order').order('sort_order', { ascending: false }).limit(1);
+    const nextOrder = (maxRows && maxRows[0] && maxRows[0].sort_order != null) ? maxRows[0].sort_order + 1 : 1;
+
+    const { error } = await supabaseClient.from('promo_materials').insert([{ title, description, file_url, sort_order: nextOrder }]);
+    if (error) { errEl.textContent = 'Error saving: ' + error.message; errEl.style.display = 'block'; return; }
+
+    document.getElementById('promoTitle').value = '';
+    document.getElementById('promoDesc').value = '';
+    document.getElementById('promoFile').value = '';
+    document.getElementById('promoFileUrl').value = '';
+    confirmEl.style.display = 'block';
+    setTimeout(() => { confirmEl.style.display = 'none'; }, 3000);
+    await loadPromoAdminList();
+  };
+
+  async function loadPromoAdminList() {
+    const listEl = document.getElementById('promoAdminList');
+    listEl.innerHTML = '<p style="opacity:.5;">Loading...</p>';
+    const { data: promoRows, error } = await supabaseClient
+      .from('promo_materials')
+      .select('*')
+      .order('sort_order', { ascending: true, nullsFirst: false })
+      .order('created_at', { ascending: false });
+
+    if (error || !promoRows || promoRows.length === 0) {
+      listEl.innerHTML = '<p style="opacity:.5;">Nothing posted yet.</p>';
+      return;
+    }
+    listEl.innerHTML = '';
+    const imageExt = /\.(png|jpe?g|webp|gif|svg)$/i;
+    promoRows.forEach((m, idx) => {
+      const row = document.createElement('div');
+      row.className = 'product-row';
+      const promoImgHtml = (m.file_url && imageExt.test(m.file_url))
+        ? `<img src="${m.file_url}" alt="${m.title}">`
+        : `<div class="no-img">file</div>`;
+      row.innerHTML = `
+        ${promoImgHtml}
+        <div class="info">
+          <div class="name">${m.title}</div>
+          <div class="meta">${m.description || ''}</div>
+        </div>
+        <button class="edit-btn" data-dir="up" ${idx === 0 ? 'disabled' : ''}>↑</button>
+        <button class="edit-btn" data-dir="down" ${idx === promoRows.length - 1 ? 'disabled' : ''}>↓</button>
+        <button class="del-btn" data-id="${m.id}">Delete</button>
+      `;
+      row.querySelector('[data-dir="up"]').addEventListener('click', () => movePromo(promoRows, idx, -1));
+      row.querySelector('[data-dir="down"]').addEventListener('click', () => movePromo(promoRows, idx, 1));
+      row.querySelector('.del-btn').addEventListener('click', async () => {
+        if (!confirm('Delete this material?')) return;
+        await supabaseClient.from('promo_materials').delete().eq('id', m.id);
+        await loadPromoAdminList();
+      });
+      listEl.appendChild(row);
+    });
+  }
+
+  async function movePromo(promoRows, idx, dir) {
+    const swapIdx = idx + dir;
+    if (swapIdx < 0 || swapIdx >= promoRows.length) return;
+    const a = promoRows[idx], b = promoRows[swapIdx];
+    const aOrder = a.sort_order ?? idx;
+    const bOrder = b.sort_order ?? swapIdx;
+    await supabaseClient.from('promo_materials').update({ sort_order: bOrder }).eq('id', a.id);
+    await supabaseClient.from('promo_materials').update({ sort_order: aOrder }).eq('id', b.id);
+    await loadPromoAdminList();
   }
 
   // ===== TIME TRACKER =====
