@@ -127,6 +127,33 @@
   .time-summary-card .label { font-size: 0.72rem; opacity: .6; text-transform: uppercase; letter-spacing: 0.04em; }
   .time-summary-card .hours { font-size: 1.4rem; font-weight: 900; margin: 4px 0; }
   .time-summary-card .value { font-size: 0.85rem; color: var(--green); font-weight: 700; }
+
+  /* --- Jump nav + collapsible sections, so the dashboard isn't one long scroll --- */
+  .admin-jumpnav {
+    display: flex; gap: 8px; overflow-x: auto; padding: 6px 0 16px;
+    position: sticky; top: 0; background: var(--paper); z-index: 20;
+    -webkit-overflow-scrolling: touch;
+  }
+  .admin-jumpnav a {
+    flex: 0 0 auto; background: var(--charcoal, #2b2b2b); color: #fff;
+    padding: 8px 14px; font-size: 0.75rem; font-weight: 700; letter-spacing: 0.03em;
+    text-transform: uppercase; border-radius: 4px; white-space: nowrap; text-decoration: none;
+  }
+  .admin-section {
+    border: 1px solid rgba(0,0,0,0.08); border-radius: 10px; margin-bottom: 14px;
+    background: rgba(255,255,255,0.4); overflow: hidden;
+  }
+  .admin-section summary {
+    cursor: pointer; padding: 16px 18px; font-weight: 800; font-size: 1.05rem;
+    list-style: none; display: flex; align-items: baseline; gap: 8px; flex-wrap: wrap;
+  }
+  .admin-section summary::-webkit-details-marker { display: none; }
+  .admin-section summary::before {
+    content: '▸'; display: inline-block; margin-right: 2px; transition: transform 0.15s ease; font-size: 0.8em;
+  }
+  .admin-section[open] summary::before { transform: rotate(90deg); }
+  .admin-section-hint { font-weight: 400; font-size: 0.75rem; opacity: .6; }
+  .admin-section-body { padding: 0 18px 18px; }
 </style>
 </head>
 <body>
@@ -153,146 +180,275 @@
       <button class="logout-btn" id="logoutBtn">Log Out</button>
     </div>
 
-    <h3 style="margin-top:0;">Time Tracker</h3>
-    <div class="rate-row">
-      <label for="hourlyRate" style="margin:0;">Target rate ($/hr)</label>
-      <input type="number" id="hourlyRate" step="0.5" value="20">
-    </div>
-    <div class="clock-box" id="clockBox">
-      <input type="text" id="clockLabel" placeholder="What are you working on? (optional)">
-      <div id="clockButtons">
-        <button class="clock-btn in" id="clockInBtn">Clock In</button>
-      </div>
-      <div class="clock-live" id="clockLive"></div>
-    </div>
-    <div class="time-summary">
-      <div class="time-summary-card">
-        <div class="label">Today</div>
-        <div class="hours" id="todayHours">0h 0m</div>
-        <div class="value" id="todayValue">$0.00</div>
-      </div>
-      <div class="time-summary-card">
-        <div class="label">This Week</div>
-        <div class="hours" id="weekHours">0h 0m</div>
-        <div class="value" id="weekValue">$0.00</div>
-      </div>
-    </div>
-    <div id="timeEntryList"></div>
+    <nav class="admin-jumpnav" id="adminJumpNav">
+      <a href="#sec-popup">Pop-Up</a>
+      <a href="#sec-mailing">Mailing List</a>
+      <a href="#sec-time">Time Tracker</a>
+      <a href="#sec-goals">Goals</a>
+      <a href="#sec-products">Products</a>
+      <a href="#sec-orders">Orders</a>
+      <a href="#sec-album">Album</a>
+      <a href="#sec-directory">Directory</a>
+      <a href="#sec-zines">Zines</a>
+    </nav>
 
-    <h3 style="margin-top:40px;">Today's Goals</h3>
-    <div class="opp-calendar" id="goalsCalendar"></div>
-    <div class="goal-add-row">
-      <input type="text" id="newGoalText" placeholder="Add a goal for this day">
-      <button id="addGoalBtn">Add</button>
-    </div>
-    <div id="goalList"></div>
-
-    <div class="admin-form" style="margin-top:40px;">
-      <h3 style="margin-top:0;">Add a Product</h3>
-      <label for="pName">Name</label>
-      <input type="text" id="pName" placeholder="e.g. Nociv America Cream">
-
-      <label for="pDescription">Description (shown when a customer taps the product)</label>
-      <textarea id="pDescription" rows="3" placeholder="e.g. 16x20 print on museum-quality paper. Ships in 5-7 days via Prodigi."></textarea>
-
-      <div class="admin-form-row">
-        <div>
-          <label for="pPrice">Price ($, leave blank if unknown yet)</label>
-          <input type="number" id="pPrice" step="0.01" placeholder="15.00">
-        </div>
-        <div>
-          <label for="pCost">Your cost ($ — private, never shown publicly)</label>
-          <input type="number" id="pCost" step="0.01" placeholder="6.00">
+    <details class="admin-section" id="sec-popup">
+      <summary>Pop-Up Details <span class="admin-section-hint">shows on Shop &rarr; Clothing</span></summary>
+      <div class="admin-section-body">
+        <div class="admin-form">
+          <p class="admin-note" style="display:block; opacity:.7;" id="popupCurrent">Loading current status…</p>
+          <label for="popupLocation">Location</label>
+          <input type="text" id="popupLocation" placeholder="e.g. Roosevelt Row, Phoenix">
+          <div class="admin-form-row">
+            <div>
+              <label for="popupDate">Date</label>
+              <input type="date" id="popupDate">
+            </div>
+            <div>
+              <label for="popupTime">Time</label>
+              <input type="text" id="popupTime" placeholder="e.g. 11am-4pm">
+            </div>
+          </div>
+          <button class="admin-submit" id="updatePopupBtn">Update Pop-Up Details</button>
+          <p class="admin-note" id="popupUpdateConfirm">Updated. Live on the site and posted to the Opportunity Board.</p>
+          <p class="admin-error" id="popupUpdateError"></p>
         </div>
       </div>
+    </details>
 
-      <div class="admin-form-row">
-        <div>
-          <label for="pShop">Shop (which tab it shows on)</label>
-          <select id="pShop">
-            <option value="clothing">Clothing</option>
-            <option value="tech">Tech</option>
-            <option value="zines">Zines</option>
-            <option value="art">Art</option>
-          </select>
-        </div>
-        <div>
-          <label for="pCategory">Category (type anything — new ones save automatically)</label>
-          <input type="text" id="pCategory" list="categoryOptions" placeholder="e.g. Posters">
-          <datalist id="categoryOptions"></datalist>
+    <details class="admin-section" id="sec-mailing">
+      <summary>Mailing List</summary>
+      <div class="admin-section-body">
+        <div class="admin-form">
+          <p class="admin-note" style="display:block; opacity:.7;" id="mailingCount">Loading...</p>
+          <button class="admin-submit" id="copyEmailsBtn" type="button">Copy All Emails</button>
+          <p class="admin-note" id="copyEmailsConfirm">Copied. Paste into your email's Bcc field.</p>
+          <div class="field-hint">
+            There's no auto send yet, this just puts every email on your clipboard so you can paste it into a Bcc and send the update yourself.
+            Want one-click sending built in, just say so and I'll wire up an email service for it.
+          </div>
         </div>
       </div>
+    </details>
 
-      <div class="admin-form-row">
-        <div>
-          <label for="pStatus">Status</label>
-          <select id="pStatus">
-            <option value="for_sale">For Sale</option>
-            <option value="coming_soon">Coming Soon</option>
-          </select>
+    <details class="admin-section" id="sec-time">
+      <summary>Time Tracker</summary>
+      <div class="admin-section-body">
+        <div class="rate-row">
+          <label for="hourlyRate" style="margin:0;">Target rate ($/hr)</label>
+          <input type="number" id="hourlyRate" step="0.5" value="20">
         </div>
-        <div>
-          <label for="pInventory">Starting inventory (optional — leave blank for Prodigi items)</label>
-          <input type="number" id="pInventory" min="0" placeholder="e.g. 5">
+        <div class="clock-box" id="clockBox">
+          <input type="text" id="clockLabel" placeholder="What are you working on? (optional)">
+          <div id="clockButtons">
+            <button class="clock-btn in" id="clockInBtn">Clock In</button>
+          </div>
+          <div class="clock-live" id="clockLive"></div>
         </div>
+        <div class="time-summary">
+          <div class="time-summary-card">
+            <div class="label">Today</div>
+            <div class="hours" id="todayHours">0h 0m</div>
+            <div class="value" id="todayValue">$0.00</div>
+          </div>
+          <div class="time-summary-card">
+            <div class="label">This Week</div>
+            <div class="hours" id="weekHours">0h 0m</div>
+            <div class="value" id="weekValue">$0.00</div>
+          </div>
+        </div>
+        <div id="timeEntryList"></div>
       </div>
+    </details>
 
-      <div class="admin-form-row">
-        <div>
-          <label for="pFulfillment">Fulfillment</label>
-          <select id="pFulfillment">
-            <option value="in_house">In-House (you make/ship it)</option>
-            <option value="prodigi">Prodigi Print-on-Demand</option>
-          </select>
+    <details class="admin-section" id="sec-goals">
+      <summary>Today's Goals</summary>
+      <div class="admin-section-body">
+        <div class="opp-calendar" id="goalsCalendar"></div>
+        <div class="goal-add-row">
+          <input type="text" id="newGoalText" placeholder="Add a goal for this day">
+          <button id="addGoalBtn">Add</button>
         </div>
-        <div id="prodigiSkuWrap" style="display:none;">
-          <label for="pProdigiSku">Prodigi SKU (exact code from prodigi.com's catalogue for this product/size)</label>
-          <input type="text" id="pProdigiSku" placeholder="e.g. GLOBAL-FAP-16x20">
+        <div id="goalList"></div>
+      </div>
+    </details>
+
+    <details class="admin-section" id="sec-products">
+      <summary>Products</summary>
+      <div class="admin-section-body">
+        <div class="admin-form">
+          <h3 style="margin-top:0;">Add a Product</h3>
+          <label for="pName">Name</label>
+          <input type="text" id="pName" placeholder="e.g. Nociv America Cream">
+
+          <label for="pDescription">Description (shown when a customer taps the product)</label>
+          <textarea id="pDescription" rows="3" placeholder="e.g. 16x20 print on museum-quality paper. Ships in 5-7 days via Prodigi."></textarea>
+
+          <div class="admin-form-row">
+            <div>
+              <label for="pPrice">Price ($, leave blank if unknown yet)</label>
+              <input type="number" id="pPrice" step="0.01" placeholder="15.00">
+            </div>
+            <div>
+              <label for="pCost">Your cost ($ — private, never shown publicly)</label>
+              <input type="number" id="pCost" step="0.01" placeholder="6.00">
+            </div>
+          </div>
+
+          <div class="admin-form-row">
+            <div>
+              <label for="pShop">Shop (which tab it shows on)</label>
+              <select id="pShop">
+                <option value="clothing">Clothing</option>
+                <option value="tech">Tech</option>
+                <option value="zines">Zines</option>
+                <option value="art">Art</option>
+              </select>
+            </div>
+            <div>
+              <label for="pCategory">Category (type anything — new ones save automatically)</label>
+              <input type="text" id="pCategory" list="categoryOptions" placeholder="e.g. Posters">
+              <datalist id="categoryOptions"></datalist>
+            </div>
+          </div>
+
+          <div class="admin-form-row">
+            <div>
+              <label for="pStatus">Status</label>
+              <select id="pStatus">
+                <option value="for_sale">For Sale</option>
+                <option value="coming_soon">Coming Soon</option>
+              </select>
+            </div>
+            <div>
+              <label for="pInventory">Starting inventory (optional — leave blank for Prodigi items)</label>
+              <input type="number" id="pInventory" min="0" placeholder="e.g. 5">
+            </div>
+          </div>
+
+          <div class="admin-form-row">
+            <div>
+              <label for="pFulfillment">Fulfillment</label>
+              <select id="pFulfillment">
+                <option value="in_house">In-House (you make/ship it)</option>
+                <option value="prodigi">Prodigi Print-on-Demand</option>
+              </select>
+            </div>
+            <div id="prodigiSkuWrap" style="display:none;">
+              <label for="pProdigiSku">Prodigi SKU (exact code from prodigi.com's catalogue for this product/size)</label>
+              <input type="text" id="pProdigiSku" placeholder="e.g. GLOBAL-FAP-16x20">
+            </div>
+          </div>
+
+          <label for="pStripePriceId">Stripe Price ID <span class="missing-flag" id="stripeRequiredFlag" style="display:none;">— required, or Buy will fail</span></label>
+          <input type="text" id="pStripePriceId" placeholder="price_1AbCdEfGhIjKlMnOp">
+          <div class="field-hint">
+            Stripe Dashboard → Product catalog → open (or create) the product → copy the Price ID under Pricing.
+            This is what actually charges the customer — without it, checkout fails every time.
+          </div>
+
+          <label for="pImage">Photo — upload a file (full resolution — this is what gets sent to Prodigi to print, so use the real, final-quality file)</label>
+          <input type="file" id="pImage" accept="image/*">
+
+          <label for="pImageUrl" style="margin-top:10px;">...or paste an image link instead (e.g. from Prodigi's Image Library) — skip the upload above if you use this</label>
+          <input type="text" id="pImageUrl" placeholder="https://...">
+
+          <button class="admin-submit" id="addProductBtn">Add Product</button>
+          <p class="admin-note" id="addConfirm">Product added.</p>
+          <p class="admin-error" id="addError"></p>
         </div>
+
+        <h3>Your Products</h3>
+        <div class="cat-pill-row" id="shopFilterRow" style="margin-bottom:16px;">
+          <button class="cat-pill active" data-shop="all">All</button>
+          <button class="cat-pill" data-shop="clothing">Clothing</button>
+          <button class="cat-pill" data-shop="tech">Tech</button>
+          <button class="cat-pill" data-shop="zines">Zines</button>
+          <button class="cat-pill" data-shop="art">Art</button>
+        </div>
+        <div id="productList"></div>
       </div>
+    </details>
 
-      <label for="pStripePriceId">Stripe Price ID <span class="missing-flag" id="stripeRequiredFlag" style="display:none;">— required, or Buy will fail</span></label>
-      <input type="text" id="pStripePriceId" placeholder="price_1AbCdEfGhIjKlMnOp">
-      <div class="field-hint">
-        Stripe Dashboard → Product catalog → open (or create) the product → copy the Price ID under Pricing.
-        This is what actually charges the customer — without it, checkout fails every time.
+    <details class="admin-section" id="sec-orders">
+      <summary>Recent Orders</summary>
+      <div class="admin-section-body">
+        <div id="orderList"></div>
       </div>
+    </details>
 
-      <label for="pImage">Photo — upload a file (full resolution — this is what gets sent to Prodigi to print, so use the real, final-quality file)</label>
-      <input type="file" id="pImage" accept="image/*">
+    <details class="admin-section" id="sec-album">
+      <summary>Process Album <span class="admin-section-hint">the "making of" photo gallery on Shop</span></summary>
+      <div class="admin-section-body">
+        <div class="admin-form">
+          <label for="albumImage">Add a photo</label>
+          <input type="file" id="albumImage" accept="image/*">
+          <label for="albumCaption">Caption (optional)</label>
+          <input type="text" id="albumCaption" placeholder="e.g. Cutting the first pattern piece">
+          <button class="admin-submit" id="addAlbumBtn">Add to Album</button>
+          <p class="admin-note" id="albumAddConfirm">Added.</p>
+          <p class="admin-error" id="albumAddError"></p>
+        </div>
+        <div id="albumList"></div>
+      </div>
+    </details>
 
-      <label for="pImageUrl" style="margin-top:10px;">...or paste an image link instead (e.g. from Prodigi's Image Library) — skip the upload above if you use this</label>
-      <input type="text" id="pImageUrl" placeholder="https://...">
+    <details class="admin-section" id="sec-directory">
+      <summary>Directory Listings <span class="admin-section-hint">shows on Base &rarr; Directory &rarr; Verified</span></summary>
+      <div class="admin-section-body">
+        <div class="admin-form">
+          <label for="dirName">Business or person name</label>
+          <input type="text" id="dirName" placeholder="e.g. Fraqtals">
+          <div class="admin-form-row">
+            <div>
+              <label for="dirNeighborhood">Neighborhood / city</label>
+              <input type="text" id="dirNeighborhood" placeholder="e.g. Phoenix, AZ">
+            </div>
+            <div>
+              <label for="dirDiscipline">Discipline (type anything, new ones save automatically)</label>
+              <input type="text" id="dirDiscipline" list="disciplineOptions" placeholder="e.g. Print & Graphic">
+              <datalist id="disciplineOptions"></datalist>
+            </div>
+          </div>
+          <label for="dirAccess">Access (how someone gets in)</label>
+          <input type="text" id="dirAccess" placeholder="e.g. Shared Studio, Membership">
+          <label for="dirDesc">Short description</label>
+          <textarea id="dirDesc" rows="2" placeholder="e.g. Membership creative studio, shared space, screen printing."></textarea>
+          <label for="dirLink">Link (optional)</label>
+          <input type="text" id="dirLink" placeholder="https://...">
+          <button class="admin-submit" id="addDirectoryBtn">Add Listing</button>
+          <p class="admin-note" id="dirAddConfirm">Listing added.</p>
+          <p class="admin-error" id="dirAddError"></p>
+        </div>
+        <h3>Current Directory Listings</h3>
+        <div id="directoryAdminList"></div>
+      </div>
+    </details>
 
-      <button class="admin-submit" id="addProductBtn">Add Product</button>
-      <p class="admin-note" id="addConfirm">Product added.</p>
-      <p class="admin-error" id="addError"></p>
-    </div>
-
-    <h3>Your Products</h3>
-    <div class="cat-pill-row" id="shopFilterRow" style="margin-bottom:16px;">
-      <button class="cat-pill active" data-shop="all">All</button>
-      <button class="cat-pill" data-shop="clothing">Clothing</button>
-      <button class="cat-pill" data-shop="tech">Tech</button>
-      <button class="cat-pill" data-shop="zines">Zines</button>
-      <button class="cat-pill" data-shop="art">Art</button>
-    </div>
-    <div id="productList"></div>
-
-    <h3 style="margin-top:40px;">Recent Orders</h3>
-    <div id="orderList"></div>
-
-    <h3 style="margin-top:40px;">Process Album (the "making of" photo gallery on Shop)</h3>
-    <div class="admin-form">
-      <label for="albumImage">Add a photo</label>
-      <input type="file" id="albumImage" accept="image/*">
-      <label for="albumCaption">Caption (optional)</label>
-      <input type="text" id="albumCaption" placeholder="e.g. Cutting the first pattern piece">
-      <button class="admin-submit" id="addAlbumBtn">Add to Album</button>
-      <p class="admin-note" id="albumAddConfirm">Added.</p>
-      <p class="admin-error" id="albumAddError"></p>
-    </div>
-    <div id="albumList"></div>
+    <details class="admin-section" id="sec-zines">
+      <summary>Zine Library <span class="admin-section-hint">shows on Shop &rarr; Zines</span></summary>
+      <div class="admin-section-body">
+        <div class="admin-form">
+          <label for="zineTitle">Title</label>
+          <input type="text" id="zineTitle" placeholder="e.g. How to Feel the Void of Life">
+          <label for="zineSub">Subtitle or tag (optional)</label>
+          <input type="text" id="zineSub" placeholder="e.g. Zine, or Issue 2">
+          <label for="zineCover">Cover image (optional, shows on the card)</label>
+          <input type="file" id="zineCover" accept="image/*">
+          <label for="zineCoverUrl" style="margin-top:10px;">...or paste a link to the cover instead, skip the upload above if you use this</label>
+          <input type="text" id="zineCoverUrl" placeholder="https://...">
+          <label for="zineFile" style="margin-top:10px;">Upload the PDF</label>
+          <input type="file" id="zineFile" accept="application/pdf">
+          <label for="zineFileUrl" style="margin-top:10px;">...or paste a link to the PDF instead, skip the upload above if you use this</label>
+          <input type="text" id="zineFileUrl" placeholder="https://...">
+          <button class="admin-submit" id="addZineBtn">Add Zine</button>
+          <p class="admin-note" id="zineAddConfirm">Zine added.</p>
+          <p class="admin-error" id="zineAddError"></p>
+        </div>
+        <h3>Current Zines</h3>
+        <div id="zineAdminList"></div>
+      </div>
+    </details>
   </div>
 
 </div>
@@ -304,6 +460,24 @@
 <script>
   const loginBox = document.getElementById('loginBox');
   const dashboard = document.getElementById('dashboard');
+
+  // ===== COLLAPSIBLE SECTIONS: remember which ones were left open, and
+  // jump-to-section links force that section open even if it was collapsed =====
+  document.querySelectorAll('.admin-section').forEach(sec => {
+    if (localStorage.getItem('adminSectionOpen_' + sec.id) === '1') sec.open = true;
+    sec.addEventListener('toggle', () => {
+      localStorage.setItem('adminSectionOpen_' + sec.id, sec.open ? '1' : '0');
+    });
+  });
+  document.querySelectorAll('.admin-jumpnav a').forEach(a => {
+    a.addEventListener('click', () => {
+      const target = document.querySelector(a.getAttribute('href'));
+      if (target && target.tagName === 'DETAILS' && !target.open) {
+        target.open = true;
+        localStorage.setItem('adminSectionOpen_' + target.id, '1');
+      }
+    });
+  });
 
   // NOTE: the old resizeImageFile() step has been removed on purpose for
   // PRODUCT photos. It was capping every uploaded photo at 2000px on the
@@ -354,6 +528,7 @@
     if (data.session) {
       loginBox.style.display = 'none';
       dashboard.style.display = 'block';
+      loadPopupStatus();
       loadProducts();
       loadOrders();
       loadAlbum();
@@ -361,6 +536,10 @@
       loadGoals();
       checkActiveTimeEntry();
       loadTimeEntries();
+      loadDisciplineOptions();
+      loadDirectoryAdminList();
+      loadZineAdminList();
+      loadMailingList();
     } else {
       loginBox.style.display = 'block';
       dashboard.style.display = 'none';
@@ -385,6 +564,98 @@
   document.getElementById('logoutBtn').onclick = async () => {
     await supabaseClient.auth.signOut();
     await checkSession();
+  };
+
+  // ===== POP-UP DETAILS (feeds Shop -> Clothing's "Next Location" note,
+  // and also posts itself to the Opportunity Board automatically) =====
+  function formatEventDate(iso) {
+    if (!iso) return 'TBD';
+    return new Date(iso + 'T00:00:00').toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
+  }
+
+  async function loadPopupStatus() {
+    const currentEl = document.getElementById('popupCurrent');
+    const { data, error } = await supabaseClient
+      .from('popup_status')
+      .select('*')
+      .order('updated_at', { ascending: false })
+      .limit(1)
+      .single();
+
+    if (error || !data) {
+      currentEl.textContent = 'Nothing posted yet. Fill this in and it will show on the site.';
+      return;
+    }
+
+    currentEl.textContent = `Currently live: ${data.location || 'TBD'} · ${formatEventDate(data.event_date)} · ${data.event_time || 'TBD'}`;
+    document.getElementById('popupLocation').value = data.location || '';
+    document.getElementById('popupDate').value = data.event_date || '';
+    document.getElementById('popupTime').value = data.event_time || '';
+  }
+
+  document.getElementById('updatePopupBtn').onclick = async () => {
+    const location = document.getElementById('popupLocation').value.trim() || null;
+    const event_date = document.getElementById('popupDate').value || null;
+    const event_time = document.getElementById('popupTime').value.trim() || null;
+    const errEl = document.getElementById('popupUpdateError');
+    const confirmEl = document.getElementById('popupUpdateConfirm');
+    errEl.style.display = 'none';
+    confirmEl.style.display = 'none';
+
+    const { error } = await supabaseClient
+      .from('popup_status')
+      .insert([{ location, event_date, event_time, updated_at: new Date().toISOString() }]);
+
+    if (error) {
+      errEl.textContent = 'Error saving: ' + error.message;
+      errEl.style.display = 'block';
+      return;
+    }
+
+    // Replace any previous pop-up post on the Opportunity Board with this one,
+    // so Base -> Directory -> Opportunity Board always shows the current pop-up.
+    await supabaseClient.from('board_posts').delete().eq('category', 'popup');
+    if (location || event_date || event_time) {
+      await supabaseClient.from('board_posts').insert([{
+        category: 'popup',
+        title: 'Pop-Up Shop' + (location ? ': ' + location : ''),
+        details: [
+          location ? 'Location: ' + location : null,
+          event_time ? 'Time: ' + event_time : null
+        ].filter(Boolean).join('. ') || 'Details coming soon.',
+        event_date,
+        interest_count: 0
+      }]);
+    }
+
+    confirmEl.style.display = 'block';
+    setTimeout(() => { confirmEl.style.display = 'none'; }, 3000);
+    await loadPopupStatus();
+  };
+
+  // ===== MAILING LIST (table: signups, read only here, no editing) =====
+  async function loadMailingList() {
+    const countEl = document.getElementById('mailingCount');
+    const { data, error } = await supabaseClient.from('signups').select('contact');
+    if (error || !data) {
+      countEl.textContent = 'Could not load signups.';
+      return;
+    }
+    window._mailingListEmails = data.map(s => s.contact).filter(Boolean);
+    countEl.textContent = window._mailingListEmails.length + ' people signed up.';
+  }
+
+  document.getElementById('copyEmailsBtn').onclick = async () => {
+    const emails = window._mailingListEmails || [];
+    if (emails.length === 0) { alert('No signups yet.'); return; }
+    try {
+      await navigator.clipboard.writeText(emails.join(', '));
+      const c = document.getElementById('copyEmailsConfirm');
+      c.style.display = 'block';
+      setTimeout(() => { c.style.display = 'none'; }, 3000);
+    } catch (e) {
+      alert('Could not copy automatically. Here are the emails:\n\n' + emails.join(', '));
+    }
   };
 
   // ===== ADD PRODUCT (full-resolution upload, no resizing) =====
@@ -862,6 +1133,226 @@
   document.getElementById('newGoalText').addEventListener('keydown', (e) => {
     if (e.key === 'Enter') document.getElementById('addGoalBtn').click();
   });
+
+  // ===== DIRECTORY LISTINGS (table: directory_listings) =====
+  async function loadDisciplineOptions() {
+    const { data } = await supabaseClient.from('disciplines').select('name').order('name');
+    const names = (data || []).map(d => d.name);
+    document.getElementById('disciplineOptions').innerHTML = names.map(n => `<option value="${n}">`).join('');
+  }
+
+  async function upsertDiscipline(name) {
+    if (!name) return;
+    await supabaseClient.from('disciplines').upsert([{ name }], { onConflict: 'name' });
+  }
+
+  document.getElementById('addDirectoryBtn').onclick = async () => {
+    const name = document.getElementById('dirName').value.trim();
+    const neighborhood = document.getElementById('dirNeighborhood').value.trim() || null;
+    const discipline = document.getElementById('dirDiscipline').value.trim() || null;
+    const access = document.getElementById('dirAccess').value.trim() || null;
+    const description = document.getElementById('dirDesc').value.trim() || null;
+    const link = document.getElementById('dirLink').value.trim() || null;
+    const errEl = document.getElementById('dirAddError');
+    const confirmEl = document.getElementById('dirAddConfirm');
+    errEl.style.display = 'none';
+    confirmEl.style.display = 'none';
+
+    if (!name) { errEl.textContent = 'Name is required.'; errEl.style.display = 'block'; return; }
+
+    const { data: maxRows } = await supabaseClient
+      .from('directory_listings').select('sort_order').order('sort_order', { ascending: false }).limit(1);
+    const nextOrder = (maxRows && maxRows[0] && maxRows[0].sort_order != null) ? maxRows[0].sort_order + 1 : 1;
+
+    const { error } = await supabaseClient.from('directory_listings').insert([{
+      name, neighborhood, discipline, access, description, link, sort_order: nextOrder
+    }]);
+    if (error) { errEl.textContent = 'Error saving: ' + error.message; errEl.style.display = 'block'; return; }
+
+    if (discipline) await upsertDiscipline(discipline);
+
+    document.getElementById('dirName').value = '';
+    document.getElementById('dirNeighborhood').value = '';
+    document.getElementById('dirDiscipline').value = '';
+    document.getElementById('dirAccess').value = '';
+    document.getElementById('dirDesc').value = '';
+    document.getElementById('dirLink').value = '';
+    confirmEl.style.display = 'block';
+    setTimeout(() => { confirmEl.style.display = 'none'; }, 3000);
+    await loadDisciplineOptions();
+    await loadDirectoryAdminList();
+  };
+
+  async function loadDirectoryAdminList() {
+    const listEl = document.getElementById('directoryAdminList');
+    listEl.innerHTML = '<p style="opacity:.5;">Loading...</p>';
+    const { data: listings, error } = await supabaseClient
+      .from('directory_listings')
+      .select('*')
+      .order('sort_order', { ascending: true, nullsFirst: false })
+      .order('created_at', { ascending: false });
+
+    if (error || !listings || listings.length === 0) {
+      listEl.innerHTML = '<p style="opacity:.5;">Nothing listed yet.</p>';
+      return;
+    }
+    listEl.innerHTML = '';
+    listings.forEach((d, idx) => {
+      const row = document.createElement('div');
+      row.className = 'product-row';
+      row.innerHTML = `
+        <div class="info">
+          <div class="name">${d.name}</div>
+          <div class="meta">${d.neighborhood || ''}${d.discipline ? ' · ' + d.discipline : ''}</div>
+        </div>
+        <button class="edit-btn" data-dir="up" ${idx === 0 ? 'disabled' : ''}>↑</button>
+        <button class="edit-btn" data-dir="down" ${idx === listings.length - 1 ? 'disabled' : ''}>↓</button>
+        <button class="del-btn" data-id="${d.id}">Delete</button>
+      `;
+      row.querySelector('[data-dir="up"]').addEventListener('click', () => moveDirectoryListing(listings, idx, -1));
+      row.querySelector('[data-dir="down"]').addEventListener('click', () => moveDirectoryListing(listings, idx, 1));
+      row.querySelector('.del-btn').addEventListener('click', async () => {
+        if (!confirm('Delete this listing?')) return;
+        await supabaseClient.from('directory_listings').delete().eq('id', d.id);
+        await loadDirectoryAdminList();
+      });
+      listEl.appendChild(row);
+    });
+  }
+
+  async function moveDirectoryListing(listings, idx, dir) {
+    const swapIdx = idx + dir;
+    if (swapIdx < 0 || swapIdx >= listings.length) return;
+    const a = listings[idx], b = listings[swapIdx];
+    const aOrder = a.sort_order ?? idx;
+    const bOrder = b.sort_order ?? swapIdx;
+    await supabaseClient.from('directory_listings').update({ sort_order: bOrder }).eq('id', a.id);
+    await supabaseClient.from('directory_listings').update({ sort_order: aOrder }).eq('id', b.id);
+    await loadDirectoryAdminList();
+  }
+
+  // ===== ZINE LIBRARY (table: zines, storage bucket: zine-files) =====
+  document.getElementById('addZineBtn').onclick = async () => {
+    const title = document.getElementById('zineTitle').value.trim();
+    const sub = document.getElementById('zineSub').value.trim() || null;
+    const coverFile = document.getElementById('zineCover').files[0];
+    const coverUrlInput = document.getElementById('zineCoverUrl').value.trim();
+    const file = document.getElementById('zineFile').files[0];
+    const urlInput = document.getElementById('zineFileUrl').value.trim();
+    const errEl = document.getElementById('zineAddError');
+    const confirmEl = document.getElementById('zineAddConfirm');
+    errEl.style.display = 'none';
+    confirmEl.style.display = 'none';
+
+    if (!title) { errEl.textContent = 'Title is required.'; errEl.style.display = 'block'; return; }
+
+    let file_url = null;
+    if (urlInput) {
+      file_url = urlInput;
+    } else if (file) {
+      const fileName = `${Date.now()}-${file.name.replace(/\s+/g, '-')}`;
+      const { error: uploadError } = await supabaseClient.storage
+        .from('zine-files')
+        .upload(fileName, file, { contentType: file.type || 'application/pdf' });
+      if (uploadError) {
+        errEl.textContent = 'Upload failed: ' + uploadError.message;
+        errEl.style.display = 'block';
+        return;
+      }
+      const { data: urlData } = supabaseClient.storage.from('zine-files').getPublicUrl(fileName);
+      file_url = urlData.publicUrl;
+    } else {
+      errEl.textContent = 'Upload a PDF, or paste a link to one.';
+      errEl.style.display = 'block';
+      return;
+    }
+
+    let cover_url = null;
+    if (coverUrlInput) {
+      cover_url = coverUrlInput;
+    } else if (coverFile) {
+      const coverName = `cover-${Date.now()}-${coverFile.name.replace(/\s+/g, '-')}`;
+      const { error: coverUploadError } = await supabaseClient.storage
+        .from('zine-files')
+        .upload(coverName, coverFile, { contentType: coverFile.type || 'image/jpeg' });
+      if (coverUploadError) {
+        errEl.textContent = 'Cover upload failed: ' + coverUploadError.message;
+        errEl.style.display = 'block';
+        return;
+      }
+      const { data: coverUrlData } = supabaseClient.storage.from('zine-files').getPublicUrl(coverName);
+      cover_url = coverUrlData.publicUrl;
+    }
+
+    const { data: maxRows } = await supabaseClient
+      .from('zines').select('sort_order').order('sort_order', { ascending: false }).limit(1);
+    const nextOrder = (maxRows && maxRows[0] && maxRows[0].sort_order != null) ? maxRows[0].sort_order + 1 : 1;
+
+    const { error } = await supabaseClient.from('zines').insert([{ title, sub, file_url, cover_url, sort_order: nextOrder }]);
+    if (error) { errEl.textContent = 'Error saving: ' + error.message; errEl.style.display = 'block'; return; }
+
+    document.getElementById('zineTitle').value = '';
+    document.getElementById('zineSub').value = '';
+    document.getElementById('zineCover').value = '';
+    document.getElementById('zineCoverUrl').value = '';
+    document.getElementById('zineFile').value = '';
+    document.getElementById('zineFileUrl').value = '';
+    confirmEl.style.display = 'block';
+    setTimeout(() => { confirmEl.style.display = 'none'; }, 3000);
+    await loadZineAdminList();
+  };
+
+  async function loadZineAdminList() {
+    const listEl = document.getElementById('zineAdminList');
+    listEl.innerHTML = '<p style="opacity:.5;">Loading...</p>';
+    const { data: zineRows, error } = await supabaseClient
+      .from('zines')
+      .select('*')
+      .order('sort_order', { ascending: true, nullsFirst: false })
+      .order('created_at', { ascending: false });
+
+    if (error || !zineRows || zineRows.length === 0) {
+      listEl.innerHTML = '<p style="opacity:.5;">No zines yet.</p>';
+      return;
+    }
+    listEl.innerHTML = '';
+    zineRows.forEach((z, idx) => {
+      const row = document.createElement('div');
+      row.className = 'product-row';
+      const zineImgHtml = z.cover_url
+        ? `<img src="${z.cover_url}" alt="${z.title}">`
+        : `<div class="no-img">no cover</div>`;
+      row.innerHTML = `
+        ${zineImgHtml}
+        <div class="info">
+          <div class="name">${z.title}</div>
+          <div class="meta">${z.sub || ''}</div>
+        </div>
+        <button class="edit-btn" data-dir="up" ${idx === 0 ? 'disabled' : ''}>↑</button>
+        <button class="edit-btn" data-dir="down" ${idx === zineRows.length - 1 ? 'disabled' : ''}>↓</button>
+        <button class="del-btn" data-id="${z.id}">Delete</button>
+      `;
+      row.querySelector('[data-dir="up"]').addEventListener('click', () => moveZine(zineRows, idx, -1));
+      row.querySelector('[data-dir="down"]').addEventListener('click', () => moveZine(zineRows, idx, 1));
+      row.querySelector('.del-btn').addEventListener('click', async () => {
+        if (!confirm('Delete this zine?')) return;
+        await supabaseClient.from('zines').delete().eq('id', z.id);
+        await loadZineAdminList();
+      });
+      listEl.appendChild(row);
+    });
+  }
+
+  async function moveZine(zineRows, idx, dir) {
+    const swapIdx = idx + dir;
+    if (swapIdx < 0 || swapIdx >= zineRows.length) return;
+    const a = zineRows[idx], b = zineRows[swapIdx];
+    const aOrder = a.sort_order ?? idx;
+    const bOrder = b.sort_order ?? swapIdx;
+    await supabaseClient.from('zines').update({ sort_order: bOrder }).eq('id', a.id);
+    await supabaseClient.from('zines').update({ sort_order: aOrder }).eq('id', b.id);
+    await loadZineAdminList();
+  }
 
   // ===== TIME TRACKER =====
   let activeTimeEntry = null;
