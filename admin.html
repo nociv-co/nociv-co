@@ -333,11 +333,16 @@
               <select id="pFulfillment">
                 <option value="in_house">In-House (you make/ship it)</option>
                 <option value="prodigi">Prodigi Print-on-Demand</option>
+                <option value="printify">Printify Print-on-Demand</option>
               </select>
             </div>
             <div id="prodigiSkuWrap" style="display:none;">
               <label for="pProdigiSku">Prodigi SKU (exact code from prodigi.com's catalogue for this product/size)</label>
               <input type="text" id="pProdigiSku" placeholder="e.g. GLOBAL-FAP-16x20">
+            </div>
+            <div id="printifyIdWrap" style="display:none;">
+              <label for="pPrintifyProductId">Printify Product ID (from that product's page URL in your Printify account)</label>
+              <input type="text" id="pPrintifyProductId" placeholder="e.g. 6abc3722276e43a5870e7476">
             </div>
           </div>
 
@@ -684,6 +689,7 @@
   // ===== ADD PRODUCT (full-resolution upload, no resizing) =====
   document.getElementById('pFulfillment').addEventListener('change', (e) => {
     document.getElementById('prodigiSkuWrap').style.display = e.target.value === 'prodigi' ? 'block' : 'none';
+    document.getElementById('printifyIdWrap').style.display = e.target.value === 'printify' ? 'block' : 'none';
   });
 
   document.getElementById('pStatus').addEventListener('change', (e) => {
@@ -701,6 +707,7 @@
     const status = document.getElementById('pStatus').value;
     const fulfillment_type = document.getElementById('pFulfillment').value;
     const prodigi_sku = document.getElementById('pProdigiSku').value.trim() || null;
+    const printify_product_id = document.getElementById('pPrintifyProductId').value.trim() || null;
     const stripe_price_id = document.getElementById('pStripePriceId').value.trim() || null;
     const file = document.getElementById('pImage').files[0];
     const imageUrlInput = document.getElementById('pImageUrl').value.trim();
@@ -713,6 +720,11 @@
     if (!category) { errEl.textContent = 'Category is required.'; errEl.style.display = 'block'; return; }
     if (fulfillment_type === 'prodigi' && !prodigi_sku) {
       errEl.textContent = 'Prodigi SKU is required for print-on-demand items.';
+      errEl.style.display = 'block';
+      return;
+    }
+    if (fulfillment_type === 'printify' && !printify_product_id) {
+      errEl.textContent = 'Printify Product ID is required for print-on-demand items.';
       errEl.style.display = 'block';
       return;
     }
@@ -747,12 +759,13 @@
       description,
       price: priceVal ? parseFloat(priceVal) : null,
       cost: costVal ? parseFloat(costVal) : null,
-      inventory_count: fulfillment_type === 'prodigi' ? null : (inventoryVal ? parseInt(inventoryVal) : null),
+      inventory_count: (fulfillment_type === 'prodigi' || fulfillment_type === 'printify') ? null : (inventoryVal ? parseInt(inventoryVal) : null),
       shop,
       category,
       status,
       fulfillment_type,
       prodigi_sku,
+      printify_product_id,
       stripe_price_id,
       image_url
     }]);
@@ -770,6 +783,7 @@
     document.getElementById('pInventory').value = '';
     document.getElementById('pCategory').value = '';
     document.getElementById('pProdigiSku').value = '';
+    document.getElementById('pPrintifyProductId').value = '';
     document.getElementById('pStripePriceId').value = '';
     document.getElementById('pImage').value = '';
     document.getElementById('pImageUrl').value = '';
@@ -843,7 +857,7 @@
       ${imgHtml}
       <div class="info">
         <div class="name">${p.name}</div>
-        <div class="meta">${p.shop} · ${p.category} · ${p.status === 'for_sale' ? 'For Sale' : 'Coming Soon'} · ${p.price ? '$' + p.price : 'no price set'} · cost $${p.cost ?? '—'} · stock: ${p.fulfillment_type === 'prodigi' ? 'unlimited (Prodigi)' : (p.inventory_count ?? 'not tracked')} · ${p.fulfillment_type === 'prodigi' ? 'Prodigi SKU: ' + (p.prodigi_sku || 'none set') : 'In-House'}${stripeWarning}</div>
+        <div class="meta">${p.shop} · ${p.category} · ${p.status === 'for_sale' ? 'For Sale' : 'Coming Soon'} · ${p.price ? '$' + p.price : 'no price set'} · cost $${p.cost ?? '—'} · stock: ${(p.fulfillment_type === 'prodigi' || p.fulfillment_type === 'printify') ? 'unlimited (' + (p.fulfillment_type === 'prodigi' ? 'Prodigi' : 'Printify') + ')' : (p.inventory_count ?? 'not tracked')} · ${p.fulfillment_type === 'prodigi' ? 'Prodigi SKU: ' + (p.prodigi_sku || 'none set') : p.fulfillment_type === 'printify' ? 'Printify ID: ' + (p.printify_product_id || 'none set') : 'In-House'}${stripeWarning}</div>
         <div class="votes">${voteCount} votes</div>
       </div>
       <button class="edit-btn" data-id="${p.id}">Edit</button>
@@ -952,10 +966,13 @@
       const prodigiBit = o.prodigi_order_id
         ? ` · Prodigi #${o.prodigi_order_id} (${o.prodigi_status || 'submitted'})`
         : (o.prodigi_status === 'failed' ? ' · <span class="missing-flag">PRODIGI ORDER FAILED — check manually</span>' : '');
+      const printifyBit = o.printify_order_id
+        ? ` · Printify #${o.printify_order_id} (${o.printify_status || 'submitted'})`
+        : (o.printify_status === 'failed' ? ' · <span class="missing-flag">PRINTIFY ORDER FAILED — check manually</span>' : '');
       row.innerHTML = `
         <div class="info">
           <div class="name">${o.products?.name || 'Product #' + o.product_id}</div>
-          <div class="meta">$${o.amount_paid ?? '—'} · ${o.customer_email || 'no email'} · ${new Date(o.created_at).toLocaleString()}${prodigiBit}</div>
+          <div class="meta">$${o.amount_paid ?? '—'} · ${o.customer_email || 'no email'} · ${new Date(o.created_at).toLocaleString()}${prodigiBit}${printifyBit}</div>
         </div>
       `;
       orderListEl.appendChild(row);
