@@ -119,31 +119,31 @@
      boxy shapes, subtle borders, minimal curve.
      ============================================ */
 
-  /* ---------- STALL WALL section (inside Share): manila folder ---------- */
-  #stallwall-section .mark-card {
+  /* ---------- STALL WALL panel: manila folder ---------- */
+  #panel-stallwall .mark-card {
     background: #f0dbb3;
     border: 2px solid #a88e63;
     border-radius: 2px;
     color: #3a2f1e;
   }
-  #stallwall-section .mark-card h3,
-  #stallwall-section .mark-card label { color: #3a2f1e; }
-  #stallwall-section .mark-card select,
-  #stallwall-section .mark-card textarea,
-  #stallwall-section .mark-card input[type="text"] {
+  #panel-stallwall .mark-card h3,
+  #panel-stallwall .mark-card label { color: #3a2f1e; }
+  #panel-stallwall .mark-card select,
+  #panel-stallwall .mark-card textarea,
+  #panel-stallwall .mark-card input[type="text"] {
     background: #fff8ea; border: 1px solid #a88e63; color: #3a2f1e; border-radius: 2px;
   }
-  #stallwall-section #states { background: #f0dbb3; border: 1.5px solid #a88e63; }
-  #stallwall-section #states button {
+  #panel-stallwall #states { background: #f0dbb3; border: 1.5px solid #a88e63; }
+  #panel-stallwall #states button {
     background: #e5cb9b; border: 1px solid #a88e63; color: #3a2f1e; border-radius: 2px;
   }
-  #stallwall-section #states button:hover { background: #fff8ea; }
-  #stallwall-section #states button.has-marks {
+  #panel-stallwall #states button:hover { background: #fff8ea; }
+  #panel-stallwall #states button.has-marks {
     border-color: var(--gold); color: #8a5a00; background: #f7e6b8;
   }
-  #stallwall-section #states button.viewing { background: var(--red); color: #fff; border-color: var(--red); }
-  #stallwall-section .postWrap { border-top: 1px solid #a88e63; }
-  #stallwall-section #doodleCanvas { border: 2px solid #a88e63; }
+  #panel-stallwall #states button.viewing { background: var(--red); color: #fff; border-color: var(--red); }
+  #panel-stallwall .postWrap { border-top: 1px solid #a88e63; }
+  #panel-stallwall #doodleCanvas { border: 2px solid #a88e63; }
 
   /* ---------- SHARE section (inside Share): ruled notebook paper ---------- */
   #share-section .mark-card,
@@ -206,6 +206,27 @@
   #panel-directory .cat-pill.active,
   #panel-directory .filter-pill.active { background: #333; color: #fff; border-color: #333; }
   #panel-directory .opp-calendar-day { color: #444; }
+
+  /* ---------- SPREAD THE WORD: printable flyers, posters, stickers ---------- */
+  .promo-grid {
+    display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+    gap: 16px; max-width: 900px; margin: 20px auto 0;
+  }
+  .promo-card {
+    background: #111; border: 1px solid #333; border-radius: 8px; overflow: hidden;
+    text-align: left; color: #eee;
+  }
+  .promo-media { width: 100%; aspect-ratio: 3/4; background: #0d0d0d; display: flex; align-items: center; justify-content: center; }
+  .promo-media img { width: 100%; height: 100%; object-fit: cover; display: block; }
+  .promo-nomedia { font-size: 0.85rem; opacity: .5; }
+  .promo-body { padding: 12px 14px 16px; }
+  .promo-name { font-weight: 800; margin-bottom: 4px; }
+  .promo-desc { font-size: 0.82rem; opacity: .7; line-height: 1.4; margin-bottom: 12px; }
+  .promo-download {
+    display: inline-block; background: var(--gold); color: #1a1a1a; text-decoration: none;
+    font-size: 0.78rem; font-weight: 800; letter-spacing: 0.04em; text-transform: uppercase;
+    padding: 8px 14px; border-radius: 4px;
+  }
 </style>
 </head>
 <body>
@@ -222,15 +243,86 @@
   <a href="community.html" class="img-tab active"><img src="base-button.png" alt="Base"></a>
 </nav>
 
-<!-- SUB-NAV: switches between Stall Wall / Directory / Share -->
-<div class="subnav">
-  <button class="tab-btn active" data-tab="share">Share</button>
-  <button class="tab-btn" data-tab="directory">Directory</button>
+<!-- ================= BASE HUB (landing) ================= -->
+<div class="wrap" id="baseHub" style="text-align:center;">
+  <h2 style="letter-spacing:2px; margin:20px 0 6px;">BASE</h2>
+  <p style="opacity:.7; max-width:500px; margin:0 auto 24px;">Where the AZ community connects. Pick where you want to go.</p>
+  <div class="hub-grid">
+    <div class="hub-card" data-target="panel-stallwall">
+      <div class="hub-icon">🧵</div>
+      <div class="hub-name">Stall Wall</div>
+      <div class="hub-desc">Leave a public mark tied to your state. The only social space here.</div>
+    </div>
+    <div class="hub-card" data-target="panel-share">
+      <div class="hub-icon">📣</div>
+      <div class="hub-name">Share</div>
+      <div class="hub-desc">Show your own work, or grab printable material to help spread the word.</div>
+    </div>
+    <div class="hub-card" data-target="panel-directory">
+      <div class="hub-icon">📇</div>
+      <div class="hub-name">Directory</div>
+      <div class="hub-desc">A resource. Verified local contacts and open opportunities.</div>
+    </div>
+  </div>
+</div>
+
+<!-- ================= STALL WALL ================= -->
+<div class="tab-panel" id="panel-stallwall">
+  <div class="wrap" style="text-align:center;">
+    <span class="hub-back" data-back-hub>&larr; Back to Base</span>
+    <h3 class="subsection-label">THE STALL WALL</h3>
+    <p style="opacity:.7; max-width:500px; margin:0 auto 10px;">
+      this is how word of mouth works, it goes peer to peer and reaches different states
+    </p>
+
+    <div id="states"></div>
+    <p class="active-counter" id="activeCounter"></p>
+
+    <div id="editor">
+      <h3 id="stateTitle" style="color:var(--gold);"></h3>
+      <div id="postsList" style="margin-top:20px;"></div>
+    </div>
+
+    <hr class="section-divider">
+
+    <div class="mark-card">
+      <h3>Leave Your Mark</h3>
+      <label for="stateSelect">Your state</label>
+      <select id="stateSelect"><option value="">Choose your state</option></select>
+      <label for="postInput">Speak Your Truth</label>
+      <textarea id="postInput" rows="4"></textarea>
+
+      <div class="doodle-wrap">
+        <label>Or draw it out (optional)</label>
+        <canvas id="doodleCanvas"></canvas>
+        <div class="doodle-controls">
+          <span class="doodle-hint">Draw with your finger or mouse</span>
+          <button type="button" class="doodle-clear-btn" id="doodleClearBtn">Clear</button>
+        </div>
+      </div>
+
+      <button id="sendBtn" class="cta-btn">Send Mark</button>
+      <p id="sendConfirm" class="confirm-msg">Your mark is up.</p>
+    </div>
+
+    <hr class="section-divider">
+
+    <h2 class="board-title">SUGGESTION WALL</h2>
+    <p class="board-sub">Anonymous. No names, no accounts. Stays up for a year.</p>
+    <div class="mark-card">
+      <label for="suggInput">Say it</label>
+      <textarea id="suggInput" rows="3"></textarea>
+      <button id="suggSendBtn" class="cta-btn">Post Anonymously</button>
+      <p id="suggConfirm" class="confirm-msg">Posted.</p>
+    </div>
+    <div class="suggestion-list" id="suggList"></div>
+  </div>
 </div>
 
 <!-- ================= DIRECTORY ================= -->
 <div class="tab-panel" id="panel-directory">
   <div class="wrap" style="text-align:center;">
+    <span class="hub-back" data-back-hub>&larr; Back to Base</span>
     <img class="top-banner-art" src="directory-ave.png" alt="Directory Ave">
 
     <h2 class="board-title" style="margin-top:30px;">THE DIRECTORY</h2>
@@ -313,72 +405,32 @@
   </div>
 </div>
 
-<!-- ================= SHARE (Stall Wall + Share, combined) ================= -->
-<div class="tab-panel active" id="panel-share">
+<!-- ================= SHARE ================= -->
+<div class="tab-panel" id="panel-share">
 
   <div class="wrap" style="text-align:center; padding-bottom:0;">
+    <span class="hub-back" data-back-hub>&larr; Back to Base</span>
     <img class="top-icon-art" src="share-icon.png" alt="Share">
     <h2 class="board-title" style="margin-top:20px;">SHARE</h2>
-    <p class="board-sub">This is where the AZ creative community makes itself known. Leave a mark on your state, post what you're working on, and see what others are making.</p>
-  </div>
-
-  <!-- ---- STALL WALL: peer to peer, state by state ---- -->
-  <div id="stallwall-section">
-    <div class="wrap" style="text-align:center;">
-      <h3 class="subsection-label">THE STALL WALL</h3>
-      <p style="opacity:.7; max-width:500px; margin:0 auto 10px;">
-        this is how word of mouth works, it goes peer to peer and reaches different states
-      </p>
-
-      <div id="states"></div>
-      <p class="active-counter" id="activeCounter"></p>
-
-      <div id="editor">
-        <h3 id="stateTitle" style="color:var(--gold);"></h3>
-        <div id="postsList" style="margin-top:20px;"></div>
+    <p class="board-sub">Two ways to spread NOCIV. Both are your choice, never ours.</p>
+    <div class="hub-grid" id="shareHub">
+      <div class="hub-card" data-share-target="share-section">
+        <div class="hub-icon">🛠️</div>
+        <div class="hub-name">Share Your Work</div>
+        <div class="hub-desc">Post what you made. Art, tech, zines, clothing, whatever you're building.</div>
       </div>
-
-      <hr class="section-divider">
-
-      <div class="mark-card">
-        <h3>Leave Your Mark</h3>
-        <label for="stateSelect">Your state</label>
-        <select id="stateSelect"><option value="">Choose your state</option></select>
-        <label for="postInput">Speak Your Truth</label>
-        <textarea id="postInput" rows="4"></textarea>
-
-        <div class="doodle-wrap">
-          <label>Or draw it out (optional)</label>
-          <canvas id="doodleCanvas"></canvas>
-          <div class="doodle-controls">
-            <span class="doodle-hint">Draw with your finger or mouse</span>
-            <button type="button" class="doodle-clear-btn" id="doodleClearBtn">Clear</button>
-          </div>
-        </div>
-
-        <button id="sendBtn" class="cta-btn">Send Mark</button>
-        <p id="sendConfirm" class="confirm-msg">Your mark is up.</p>
+      <div class="hub-card" data-share-target="spread-section">
+        <div class="hub-icon">📌</div>
+        <div class="hub-name">Spread The Word</div>
+        <div class="hub-desc">Print ready flyers, posters, and stickers. Take some, put them up, tell people yourself.</div>
       </div>
-
-      <hr class="section-divider">
-
-      <h2 class="board-title">SUGGESTION WALL</h2>
-      <p class="board-sub">Anonymous. No names, no accounts. Stays up for a year.</p>
-      <div class="mark-card">
-        <label for="suggInput">Say it</label>
-        <textarea id="suggInput" rows="3"></textarea>
-        <button id="suggSendBtn" class="cta-btn">Post Anonymously</button>
-        <p id="suggConfirm" class="confirm-msg">Posted.</p>
-      </div>
-      <div class="suggestion-list" id="suggList"></div>
     </div>
   </div>
 
-  <hr class="section-divider">
-
   <!-- ---- SHARE: post your own work ---- -->
-  <div id="share-section">
+  <div id="share-section" style="display:none;">
     <div class="wrap" style="text-align:center;">
+      <span class="hub-back" data-share-back>&larr; Back to Share</span>
       <h3 class="subsection-label">SHARE YOUR WORK</h3>
 
       <div class="mark-card">
@@ -411,6 +463,17 @@
       <div class="board-list" id="shareList"></div>
     </div>
   </div>
+
+  <!-- ---- SPREAD THE WORD: printable flyers, posters, stickers ---- -->
+  <div id="spread-section" style="display:none;">
+    <div class="wrap" style="text-align:center;">
+      <span class="hub-back" data-share-back>&larr; Back to Share</span>
+      <h3 class="subsection-label">SPREAD THE WORD</h3>
+      <p class="board-sub">Print these yourself and put them up. No paid ads, ever, this is the only marketing NOCIV does.</p>
+      <div class="promo-grid" id="promoGrid"></div>
+      <div class="coming-soon" id="promoEmpty" style="display:none;">Nothing posted yet. Check back soon.</div>
+    </div>
+  </div>
 </div>
 
 <footer class="nociv-footer">NOCIV.CO — Nothing Of Civilization<br>© 2023–2026 NOCIV.CO. Established 2023. All rights reserved.</footer>
@@ -440,16 +503,79 @@ async function loadDisciplines() {
   disciplines = (data || []).map(d => d.name);
 }
 
-// TAB SWITCHING (Stall Wall / Directory / Share)
-document.querySelectorAll('.tab-btn').forEach(btn => {
-  btn.addEventListener('click', () => {
-    document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+// BASE HUB: pick Stall Wall, Share, or Directory by reading a description first
+document.querySelectorAll('#baseHub .hub-card').forEach(card => {
+  card.addEventListener('click', () => {
+    document.getElementById('baseHub').style.display = 'none';
     document.querySelectorAll('.tab-panel').forEach(p => p.classList.remove('active'));
-    btn.classList.add('active');
-    document.getElementById('panel-' + btn.dataset.tab).classList.add('active');
+    document.getElementById(card.dataset.target).classList.add('active');
+    if (card.dataset.target === 'panel-share') showShareHub();
     window.scrollTo({ top: 0, behavior: 'smooth' });
   });
 });
+document.querySelectorAll('[data-back-hub]').forEach(link => {
+  link.addEventListener('click', () => {
+    document.querySelectorAll('.tab-panel').forEach(p => p.classList.remove('active'));
+    document.getElementById('baseHub').style.display = 'block';
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  });
+});
+
+// SHARE sub-hub: Share Your Work vs Spread The Word
+function showShareHub() {
+  document.getElementById('shareHub').style.display = 'grid';
+  document.getElementById('share-section').style.display = 'none';
+  document.getElementById('spread-section').style.display = 'none';
+}
+document.querySelectorAll('#shareHub .hub-card').forEach(card => {
+  card.addEventListener('click', () => {
+    document.getElementById('shareHub').style.display = 'none';
+    document.getElementById('share-section').style.display = 'none';
+    document.getElementById('spread-section').style.display = 'none';
+    document.getElementById(card.dataset.shareTarget).style.display = 'block';
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+    if (card.dataset.shareTarget === 'spread-section') loadPromoMaterials();
+  });
+});
+document.querySelectorAll('[data-share-back]').forEach(link => {
+  link.addEventListener('click', () => {
+    showShareHub();
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  });
+});
+
+/* ============ SPREAD THE WORD (table: promo_materials, admin-uploaded) ============ */
+const promoGrid = document.getElementById('promoGrid');
+const promoEmpty = document.getElementById('promoEmpty');
+let promoLoaded = false;
+async function loadPromoMaterials() {
+  if (promoLoaded) return;
+  promoLoaded = true;
+  const { data: items, error } = await supabaseClient
+    .from('promo_materials')
+    .select('*')
+    .order('sort_order', { ascending: true, nullsFirst: false })
+    .order('created_at', { ascending: false });
+  if (error || !items || items.length === 0) { promoEmpty.style.display = 'block'; return; }
+  const imageExt = /\.(png|jpe?g|webp|gif|svg)$/i;
+  promoGrid.innerHTML = '';
+  items.forEach(p => {
+    const card = document.createElement('div');
+    card.className = 'promo-card';
+    const mediaHtml = p.file_url && imageExt.test(p.file_url)
+      ? `<img src="${p.file_url}" alt="${p.title}">`
+      : `<div class="promo-nomedia">📄 Print File</div>`;
+    card.innerHTML = `
+      <div class="promo-media">${mediaHtml}</div>
+      <div class="promo-body">
+        <div class="promo-name">${p.title}</div>
+        ${p.description ? `<div class="promo-desc">${p.description}</div>` : ''}
+        <a class="promo-download" href="${p.file_url}" download>Download</a>
+      </div>
+    `;
+    promoGrid.appendChild(card);
+  });
+}
 
 // NESTED TAB SWITCHING (Verified / Opportunity Board)
 document.querySelectorAll('.dir-subtab').forEach(btn => {
@@ -1063,10 +1189,12 @@ document.getElementById('shareSendBtn').onclick = async () => {
   const tab = params.get('tab');
   const cat = params.get('cat');
   if (tab === 'share') {
-    document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+    document.getElementById('baseHub').style.display = 'none';
     document.querySelectorAll('.tab-panel').forEach(p => p.classList.remove('active'));
-    document.querySelector('.tab-btn[data-tab="share"]').classList.add('active');
     document.getElementById('panel-share').classList.add('active');
+    document.getElementById('shareHub').style.display = 'none';
+    document.getElementById('spread-section').style.display = 'none';
+    document.getElementById('share-section').style.display = 'block';
     if (cat) {
       document.querySelectorAll('#shareCatPillRow .cat-pill').forEach(p => p.classList.remove('active'));
       const target = document.querySelector(`#shareCatPillRow .cat-pill[data-cat="${cat}"]`);
