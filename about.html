@@ -71,17 +71,34 @@
   <a href="community.html" class="img-tab"><img src="base-button.png" alt="Base"></a>
 </nav>
 
-<!-- SUB-NAV: swipe between About's sections instead of one long scroll -->
-<nav class="subnav">
-  <button data-panel="philosophyPanel" class="active">Philosophy</button>
-  <button data-panel="culturePanel">Culture</button>
-  <button data-panel="communityPanel">Community</button>
-  <button data-panel="founderPanel">Founder</button>
-</nav>
+<!-- ================= ABOUT HUB (landing) ================= -->
+<div class="wrap" id="aboutHub" style="text-align:center;">
+  <h2 style="letter-spacing:2px; margin:20px 0 6px;">ABOUT</h2>
+  <p style="opacity:.7; max-width:500px; margin:0 auto 24px;">Pick where you want to start.</p>
+  <div class="hub-grid">
+    <div class="hub-card" data-panel="philosophyPanel">
+      <div class="hub-name">Philosophy</div>
+      <div class="hub-desc">What NOCIV is, and what Nothing Of Civilization actually means.</div>
+    </div>
+    <div class="hub-card" data-panel="culturePanel">
+      <div class="hub-name">Culture</div>
+      <div class="hub-desc">Why Arizona, and what it means to represent Black America.</div>
+    </div>
+    <div class="hub-card" data-panel="communityPanel">
+      <div class="hub-name">Community</div>
+      <div class="hub-desc">Buy, build, or share, three honest ways to take part.</div>
+    </div>
+    <div class="hub-card" data-panel="founderPanel">
+      <div class="hub-name">Founder</div>
+      <div class="hub-desc">Who's behind NOCIV, and why it's built the way it is.</div>
+    </div>
+  </div>
+</div>
 
 <!-- ===== PHILOSOPHY ===== -->
-<div class="subpanel show" id="philosophyPanel">
+<div class="subpanel" id="philosophyPanel">
   <div class="wrap" style="text-align:center; max-width:640px;">
+    <span class="hub-back" data-back="aboutHub">&larr; Back to About</span>
     <p style="font-size:1.3rem; line-height:1.7; font-weight:700;">
       NOCIV is an Arizona based creator brand. Creator in the original
       sense: someone who makes things, not content for a feed.
@@ -150,6 +167,7 @@
 <!-- ===== CULTURE ===== -->
 <div class="subpanel" id="culturePanel">
   <div class="wrap">
+    <span class="hub-back" data-back="aboutHub">&larr; Back to About</span>
     <div class="eyebrow">Why Arizona?</div>
     <div style="font-size:1.05rem; line-height:1.8; max-width:640px;">
       <p>NOCIV is built in Arizona. Arizona is home.</p>
@@ -201,6 +219,7 @@
 <!-- ===== COMMUNITY ===== -->
 <div class="subpanel" id="communityPanel">
   <div class="wrap">
+    <span class="hub-back" data-back="aboutHub">&larr; Back to About</span>
     <img src="buy-build-share.png" alt="Buy. Build. Share. Representing Black America. No socials, algorithm, or ads, just being human." style="width:100%; max-width:640px; display:block; margin:0 auto 24px;">
     <div class="eyebrow">Buy. Build. Share.</div>
     <p style="font-size:1.05rem; line-height:1.8; max-width:640px;">
@@ -254,6 +273,7 @@
 <!-- ===== FOUNDER ===== -->
 <div class="subpanel" id="founderPanel">
   <div class="wrap" style="padding:0; max-width:100%;">
+    <span class="hub-back" data-back="aboutHub" style="display:block; margin:16px 0 0 20px;">&larr; Back to About</span>
     <img src="about-founder-art.png" alt="About Founder: My name is Jasilyn Anderson, I am a Black American, my journey has been a lot of unlearning and learning, and my art reflects those realizations." style="width:100%; display:block;">
   </div>
 
@@ -291,14 +311,19 @@
 <footer class="nociv-footer">NOCIV.CO: Nothing Of Civilization<br>© 2023–2026 NOCIV.CO. Established 2023. All rights reserved.</footer>
 
 <script>
-  // SUB-NAV: switches between About's five sections
-  const subnavBtns = document.querySelectorAll('.subnav button');
-  subnavBtns.forEach(btn => {
-    btn.addEventListener('click', () => {
-      subnavBtns.forEach(b => b.classList.remove('active'));
+  // ABOUT HUB: pick a section by reading a description first, no sub nav
+  document.querySelectorAll('#aboutHub .hub-card').forEach(card => {
+    card.addEventListener('click', () => {
+      document.getElementById('aboutHub').style.display = 'none';
       document.querySelectorAll('.subpanel').forEach(p => p.classList.remove('show'));
-      btn.classList.add('active');
-      document.getElementById(btn.dataset.panel).classList.add('show');
+      document.getElementById(card.dataset.panel).classList.add('show');
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    });
+  });
+  document.querySelectorAll('.hub-back').forEach(link => {
+    link.addEventListener('click', () => {
+      document.querySelectorAll('.subpanel').forEach(p => p.classList.remove('show'));
+      document.getElementById(link.dataset.back).style.display = 'block';
       window.scrollTo({ top: 0, behavior: 'smooth' });
     });
   });
