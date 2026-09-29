@@ -177,30 +177,21 @@
   .zoom-overlay.show { display: flex; }
   .zoom-overlay img { max-width: 100%; max-height: 100%; object-fit: contain; }
 
-  /* Zine reader (from the old books.html Buy tab) */
-  .zine {
-    border: 1px solid #333;
-    margin-bottom: 30px;
-    padding: 24px;
-    background: #111;
-    color: #f2f2f2;
+  /* Zine reader — displayed as a card grid like the rest of the shop, just free.
+     One shared viewer opens below the grid when you tap Read on any card. */
+  .zine-grid {
+    display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+    gap: 14px; max-width: 900px; margin: 0 auto;
   }
-  .zine h2 { margin: 0 0 6px; font-size: 1.4rem; text-transform: uppercase; letter-spacing: 0.03em; color: #fff; }
-  .zine .zine-sub { opacity: .75; font-size: 0.85rem; margin-bottom: 20px; color: #f2f2f2; }
-  .zine-parts { display: flex; flex-wrap: wrap; gap: 10px; }
-  .zine-parts button {
-    background: #1c1c1c; color: #eee; border: 1px solid #444;
-    padding: 10px 16px; cursor: pointer; font-size: 0.85rem; letter-spacing: 0.03em;
-  }
-  .zine-parts button.active { background: var(--red); border-color: var(--red); }
-  .zine-parts a.download {
-    background: var(--gold); color: #1a1a1a; border: none; padding: 10px 16px;
-    font-size: 0.85rem; font-weight: 700; letter-spacing: 0.03em;
-  }
-  .zine-viewer { margin-top: 20px; display: none; }
+  .zine-viewer { margin: 24px auto 0; max-width: 900px; display: none; }
   .zine-viewer.show { display: block; }
   .zine-viewer embed, .zine-viewer object { width: 100%; height: 70vh; border: 1px solid #333; background: #fff; }
   .zine-viewer-note { font-size: 0.75rem; opacity: .6; margin-top: 8px; }
+  .zine-download-link {
+    display: block; text-align: center; margin-top: 8px; background: #1c1c1c; color: #eee;
+    border: 1px solid #444; text-decoration: none; padding: 10px; font-weight: 900;
+    text-transform: uppercase; font-size: 0.8rem; letter-spacing: 0.05em;
+  }
 </style>
 </head>
 <body>
@@ -220,9 +211,9 @@
 <!-- SUB-NAV: switches between panels on this page -->
 <nav class="subnav">
   <button data-panel="clothingPanel" class="active">Clothing</button>
-  <button data-panel="techPanel">Tech</button>
-  <button data-panel="zinesPanel">Zines</button>
   <button data-panel="artPanel">Art</button>
+  <button data-panel="zinesPanel">Zines</button>
+  <button data-panel="techPanel">Tech</button>
 </nav>
 
 <!-- ===== CLOTHING ===== -->
@@ -296,8 +287,15 @@
     <p style="opacity:.7; max-width:500px; margin-bottom:30px;">
       Zines, free to read and free to keep. No sign-up, no paywall.
     </p>
-    <div id="zineList"></div>
-    <div class="coming-soon">More zines coming soon.</div>
+    <div class="zine-grid" id="zineList"></div>
+    <div class="zine-viewer" id="zineViewer">
+      <embed src="" type="application/pdf">
+      <div class="zine-viewer-note">
+        If the reader doesn't load on your phone, use the Download button on the zine instead.
+        Some mobile browsers don't preview PDFs inline.
+      </div>
+    </div>
+    <div class="coming-soon">More issues coming soon.</div>
   </div>
 </div>
 
@@ -424,6 +422,11 @@
   });
 
   // ===== LIVE POP-UP DETAILS =====
+  function formatEventDate(iso) {
+    if (!iso) return 'TBD';
+    return new Date(iso + 'T00:00:00').toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
+  }
+
   async function loadPopupStatus() {
     const { data, error } = await supabaseClient
       .from('popup_status')
@@ -436,74 +439,57 @@
 
     document.getElementById('popupDetails').innerHTML = `
       <strong>Next Location:</strong> ${data.location || 'TBD'}<br>
-      <strong>Date:</strong> ${data.event_date || 'TBD'}<br>
+      <strong>Date:</strong> ${formatEventDate(data.event_date)}<br>
       <strong>Time:</strong> ${data.event_time || 'TBD'}
     `;
   }
   loadPopupStatus();
 
-  // ===== ZINE LIBRARY — plug and play =====
-  const zines = [
-    {
-      title: "How to Feel the Void of Life",
-      sub: "Zine",
-      parts: [
-        { label: "Zine 1", file: "how-to-feel-the-void-of-life.pdf" }
-      ]
-    }
-  ];
-
+  // ===== ZINE LIBRARY — displayed like the rest of the shop, just free.
+  // No price/category filter since it's meant to grow as a small run of
+  // issues, not a big catalog. Tap a card to read, or download it straight
+  // off the card. (table: zines, editable from admin) =====
   const zineList = document.getElementById('zineList');
+  const zineViewer = document.getElementById('zineViewer');
 
-  zines.forEach((zine) => {
-    const wrap = document.createElement('div');
-    wrap.className = 'zine';
+  async function loadZines() {
+    const { data: zineRows, error } = await supabaseClient
+      .from('zines')
+      .select('*')
+      .order('sort_order', { ascending: true, nullsFirst: false })
+      .order('created_at', { ascending: false });
 
-    const h2 = document.createElement('h2');
-    h2.textContent = zine.title;
-    wrap.appendChild(h2);
+    if (error || !zineRows || zineRows.length === 0) return; // "More issues coming soon" already shows below the grid
 
-    const sub = document.createElement('div');
-    sub.className = 'zine-sub';
-    sub.textContent = zine.sub;
-    wrap.appendChild(sub);
+    zineRows.forEach((zine) => {
+      const card = document.createElement('div');
+      card.className = 'catalog-card';
 
-    const partsRow = document.createElement('div');
-    partsRow.className = 'zine-parts';
+      const mediaHtml = zine.cover_url
+        ? `<img src="${zine.cover_url}" alt="${zine.title}">`
+        : `<div class="no-photo">Zine</div>`;
 
-    const viewer = document.createElement('div');
-    viewer.className = 'zine-viewer';
-    viewer.innerHTML = `
-      <embed src="" type="application/pdf">
-      <div class="zine-viewer-note">
-        If the reader doesn't load on your phone, use the download link
-        for that part instead — some mobile browsers don't preview PDFs inline.
-      </div>
-    `;
+      card.innerHTML = `
+        <div class="card-media">${mediaHtml}</div>
+        <div class="card-body">
+          <div class="card-badge for-sale" style="background:var(--gold); color:#1a1a1a;">FREE</div>
+          <div class="card-name">${zine.title}</div>
+          <div class="card-meta">${zine.sub || 'Zine'}</div>
+          <button class="card-action buy" data-action="read">Read</button>
+          <a class="zine-download-link" href="${zine.file_url}" download>Download</a>
+        </div>
+      `;
 
-    zine.parts.forEach((part) => {
-      const btn = document.createElement('button');
-      btn.textContent = 'Read ' + part.label;
-      btn.onclick = () => {
-        partsRow.querySelectorAll('button').forEach(b => b.classList.remove('active'));
-        btn.classList.add('active');
-        viewer.querySelector('embed').src = part.file;
-        viewer.classList.add('show');
-      };
-      partsRow.appendChild(btn);
+      card.querySelector('[data-action="read"]').addEventListener('click', () => {
+        zineViewer.querySelector('embed').src = zine.file_url;
+        zineViewer.classList.add('show');
+        zineViewer.scrollIntoView({ behavior: 'smooth', block: 'start' });
+      });
+
+      zineList.appendChild(card);
     });
-
-    const dl = document.createElement('a');
-    dl.className = 'download';
-    dl.href = zine.parts[0].file;
-    dl.download = '';
-    dl.textContent = 'Download';
-    partsRow.appendChild(dl);
-
-    wrap.appendChild(partsRow);
-    wrap.appendChild(viewer);
-    zineList.appendChild(wrap);
-  });
+  }
+  loadZines();
 
   // ===== PRODUCT DETAIL MODAL =====
   const modalOverlay = document.getElementById('productModalOverlay');
@@ -806,7 +792,7 @@
     renderThisCatalog();
   }
 
-  ['clothing', 'tech', 'zines', 'art'].forEach(shopKey => initShopCatalog(shopKey));
+  ['clothing', 'art', 'zines', 'tech'].forEach(shopKey => initShopCatalog(shopKey));
 
   // Show a confirmation banner if returning from Stripe checkout
   (function handleCheckoutReturn(){
