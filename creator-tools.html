@@ -171,20 +171,31 @@
 </nav>
 
 <div class="wrap" style="text-align:center; padding-bottom:0;">
-  <h2 style="letter-spacing:2px; margin:0 0 6px;">FREE TOOLS</h2>
-  <p style="opacity:.7; max-width:500px; margin:0 auto;">Everything here is free to use, no sign up, no paywall.</p>
+  <h2 style="letter-spacing:2px; margin:0 0 6px;">THE BUILD</h2>
+  <p style="opacity:.7; max-width:500px; margin:0 auto 24px;">Free to use, no sign up, no paywall. Pick one to try it.</p>
+  <div class="hub-grid" id="buildHub">
+    <div class="hub-card" data-panel="clothingBuilderPanel">
+      <div class="hub-icon">👕</div>
+      <div class="hub-name">Clothing Pattern Builder</div>
+      <div class="hub-desc">Design your own clothing patterns and export them ready to print or cut.</div>
+    </div>
+    <div class="hub-card" data-panel="zineBuilderPanel">
+      <div class="hub-icon">📖</div>
+      <div class="hub-name">Zine Builder</div>
+      <div class="hub-desc">Design, auto-impose, and print custom booklets directly from your browser.</div>
+    </div>
+    <div class="hub-card" data-panel="caseZeroPanel">
+      <div class="hub-icon">🔧</div>
+      <div class="hub-name">Case Zero (Tech)</div>
+      <div class="hub-desc">Translate a hardware idea into a real build plan, from parts list to wiring.</div>
+    </div>
+  </div>
 </div>
 
-<!-- SUB-NAV: switches between panels on this page -->
-<nav class="subnav">
-  <button data-panel="clothingBuilderPanel" class="active">Clothing Pattern Builder</button>
-  <button data-panel="zineBuilderPanel">Zine Builder</button>
-  <button data-panel="caseZeroPanel">Case Zero (Tech)</button>
-</nav>
-
 <!-- ===== CLOTHING PATTERN BUILDER ===== -->
-<div class="subpanel show" id="clothingBuilderPanel">
+<div class="subpanel" id="clothingBuilderPanel">
   <div class="wrap" style="text-align:center; padding-bottom:0;">
+    <span class="hub-back" data-back="buildHub">&larr; Back to The Build</span>
     <h2 style="margin:0 0 4px; font-size:1.3rem; letter-spacing:0.05em;">CLOTHING PATTERN BUILDER</h2>
     <p style="opacity:.7; max-width:500px; margin:0 auto 16px;">Design your own clothing patterns and export them ready to print or cut.</p>
   </div>
@@ -200,6 +211,7 @@
 <!-- ===== ZINE BUILDER ===== -->
 <div class="subpanel" id="zineBuilderPanel">
   <div class="wrap">
+    <span class="hub-back" data-back="buildHub">&larr; Back to The Build</span>
     <div class="build-header">
       <div>
         <h2 style="margin: 0 0 4px; font-size: 1.3rem; letter-spacing: 0.05em;">ZINECRAFTER BUILDER</h2>
@@ -222,6 +234,7 @@
 <!-- ===== CASE ZERO (TECH) ===== -->
 <div class="subpanel" id="caseZeroPanel">
   <div class="wrap" style="text-align:center;">
+    <span class="hub-back" data-back="buildHub">&larr; Back to The Build</span>
     <div class="coming-soon" style="margin-bottom:24px;">
       🚧 Under Construction — Case Zero is a working prototype. Recommendations and specs are illustrative while we build out the real engine.
     </div>
@@ -483,14 +496,20 @@
 <footer class="nociv-footer">NOCIV.CO — Nothing Of Civilization</footer>
 
 <script>
-  // ===== SUB-NAV: Clothing Pattern Builder / Zine Builder / Case Zero =====
-  const subnavBtns = document.querySelectorAll('.subnav button');
-  subnavBtns.forEach(btn => {
-    btn.addEventListener('click', () => {
-      subnavBtns.forEach(b => b.classList.remove('active'));
+  // ===== THE BUILD HUB: pick a tool by reading its description first =====
+  document.querySelectorAll('#buildHub .hub-card').forEach(card => {
+    card.addEventListener('click', () => {
+      document.getElementById('buildHub').closest('.wrap').style.display = 'none';
       document.querySelectorAll('.subpanel').forEach(p => p.classList.remove('show'));
-      btn.classList.add('active');
-      document.getElementById(btn.dataset.panel).classList.add('show');
+      document.getElementById(card.dataset.panel).classList.add('show');
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    });
+  });
+  document.querySelectorAll('.hub-back').forEach(link => {
+    link.addEventListener('click', () => {
+      document.querySelectorAll('.subpanel').forEach(p => p.classList.remove('show'));
+      document.getElementById(link.dataset.back).closest('.wrap').style.display = 'block';
+      window.scrollTo({ top: 0, behavior: 'smooth' });
     });
   });
 
