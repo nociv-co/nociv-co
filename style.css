@@ -485,6 +485,30 @@ footer.nociv-footer {
   text-transform: uppercase;
 }
 
+/* ---------- HUB (Base and The Build landing pages): a visual card menu
+   instead of a subnav — pick a destination by reading a description first,
+   rather than guessing from a tab label. Cards are dark islands regardless
+   of the page's own background, matching the catalog/directory card look
+   used elsewhere on the site. ---------- */
+.hub-grid {
+  display: grid; grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+  gap: 16px; max-width: 900px; margin: 0 auto;
+}
+.hub-card {
+  background: #111; border: 1px solid #333; border-radius: 8px; padding: 26px 20px;
+  text-align: center; cursor: pointer; color: #eee;
+  transition: border-color 0.15s ease, transform 0.15s ease;
+}
+.hub-card:hover { border-color: var(--gold); transform: translateY(-2px); }
+.hub-icon { font-size: 2.4rem; margin-bottom: 10px; }
+.hub-name { font-weight: 900; font-size: 1.05rem; margin-bottom: 6px; letter-spacing: 0.02em; color: #fff; }
+.hub-desc { font-size: 0.85rem; opacity: .7; line-height: 1.4; }
+.hub-back {
+  display: inline-block; margin-bottom: 18px; font-size: 0.8rem; font-weight: 700;
+  letter-spacing: 0.04em; text-transform: uppercase; opacity: .65; cursor: pointer;
+}
+.hub-back:hover { opacity: 1; }
+
 /* ---------- POP-UP SHOP CARD ---------- */
 .popup-card-img {
   width: 100%;
