@@ -249,6 +249,7 @@ nav.tabs a.img-tab.active {
 .cat-pill.active, .filter-pill.active { background: #fff; color: #111; border-color: #fff; font-weight: 700; }
 .legend-dot { width: 10px; height: 10px; border-radius: 50%; display: inline-block; }
 
+.cat-popup { background: var(--red); }
 .cat-wall { background: #d94f3d; }
 .cat-workshop { background: #4a7fd9; }
 .cat-share { background: #3c9d5c; }
@@ -263,6 +264,7 @@ nav.tabs a.img-tab.active {
 /* ---------- SHARED CARDS ---------- */
 .board-list { max-width: 600px; margin: 0 auto; }
 .board-card { border: 1px solid #262626; border-left: 4px solid #666; padding: 16px; margin-bottom: 12px; background: #141414; text-align: left; color: #ddd; border-radius: 4px; }
+.board-card.popup { border-left-color: var(--red); }
 .board-card.wall { border-left-color: #d94f3d; }
 .board-card.workshop { border-left-color: #4a7fd9; }
 .board-card.share { border-left-color: #3c9d5c; }
