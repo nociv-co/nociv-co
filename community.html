@@ -119,35 +119,35 @@
      boxy shapes, subtle borders, minimal curve.
      ============================================ */
 
-  /* ---------- STALL WALL: manila folder ---------- */
-  #panel-stallwall .mark-card {
+  /* ---------- STALL WALL section (inside Share): manila folder ---------- */
+  #stallwall-section .mark-card {
     background: #f0dbb3;
     border: 2px solid #a88e63;
     border-radius: 2px;
     color: #3a2f1e;
   }
-  #panel-stallwall .mark-card h3,
-  #panel-stallwall .mark-card label { color: #3a2f1e; }
-  #panel-stallwall .mark-card select,
-  #panel-stallwall .mark-card textarea,
-  #panel-stallwall .mark-card input[type="text"] {
+  #stallwall-section .mark-card h3,
+  #stallwall-section .mark-card label { color: #3a2f1e; }
+  #stallwall-section .mark-card select,
+  #stallwall-section .mark-card textarea,
+  #stallwall-section .mark-card input[type="text"] {
     background: #fff8ea; border: 1px solid #a88e63; color: #3a2f1e; border-radius: 2px;
   }
-  #panel-stallwall #states { background: #f0dbb3; border: 1.5px solid #a88e63; }
-  #panel-stallwall #states button {
+  #stallwall-section #states { background: #f0dbb3; border: 1.5px solid #a88e63; }
+  #stallwall-section #states button {
     background: #e5cb9b; border: 1px solid #a88e63; color: #3a2f1e; border-radius: 2px;
   }
-  #panel-stallwall #states button:hover { background: #fff8ea; }
-  #panel-stallwall #states button.has-marks {
+  #stallwall-section #states button:hover { background: #fff8ea; }
+  #stallwall-section #states button.has-marks {
     border-color: var(--gold); color: #8a5a00; background: #f7e6b8;
   }
-  #panel-stallwall #states button.viewing { background: var(--red); color: #fff; border-color: var(--red); }
-  #panel-stallwall .postWrap { border-top: 1px solid #a88e63; }
-  #panel-stallwall #doodleCanvas { border: 2px solid #a88e63; }
+  #stallwall-section #states button.viewing { background: var(--red); color: #fff; border-color: var(--red); }
+  #stallwall-section .postWrap { border-top: 1px solid #a88e63; }
+  #stallwall-section #doodleCanvas { border: 2px solid #a88e63; }
 
-  /* ---------- SHARE: ruled notebook paper ---------- */
-  #panel-share .mark-card,
-  #panel-share .board-card {
+  /* ---------- SHARE section (inside Share): ruled notebook paper ---------- */
+  #share-section .mark-card,
+  #share-section .board-card {
     background: repeating-linear-gradient(
       to bottom, #fdfcf7, #fdfcf7 27px, #b8d4e8 28px, #fdfcf7 29px
     );
@@ -157,21 +157,21 @@
     position: relative;
     padding-left: 48px;
   }
-  #panel-share .mark-card::before,
-  #panel-share .board-card::before {
+  #share-section .mark-card::before,
+  #share-section .board-card::before {
     content: ''; position: absolute; left: 36px; top: 0; bottom: 0;
     width: 1px; background: #e08a8a;
   }
-  #panel-share .mark-card h3,
-  #panel-share .mark-card label { color: #2a2a2a; }
-  #panel-share .mark-card select,
-  #panel-share .mark-card textarea,
-  #panel-share .mark-card input[type="text"] {
+  #share-section .mark-card h3,
+  #share-section .mark-card label { color: #2a2a2a; }
+  #share-section .mark-card select,
+  #share-section .mark-card textarea,
+  #share-section .mark-card input[type="text"] {
     background: #fff; border: 1px solid #ccc; color: #2a2a2a; border-radius: 0;
   }
-  #panel-share .board-card-title,
-  #panel-share .board-card-meta,
-  #panel-share .board-card-desc { color: #2a2a2a; }
+  #share-section .board-card-title,
+  #share-section .board-card-meta,
+  #share-section .board-card-desc { color: #2a2a2a; }
 
   /* ---------- DIRECTORY: graph paper ---------- */
   #panel-directory .mark-card,
@@ -224,62 +224,8 @@
 
 <!-- SUB-NAV: switches between Stall Wall / Directory / Share -->
 <div class="subnav">
-  <button class="tab-btn active" data-tab="stallwall">Stall Wall</button>
+  <button class="tab-btn active" data-tab="share">Share</button>
   <button class="tab-btn" data-tab="directory">Directory</button>
-  <button class="tab-btn" data-tab="share">Share</button>
-</div>
-<!-- ================= STALL WALL ================= -->
-<div class="tab-panel active" id="panel-stallwall">
-  <div class="wrap" style="text-align:center;">
-    <img class="top-banner-art" src="black-america.svg" alt="Black America">
-
-    <h2 style="letter-spacing:4px; margin-top:20px;">THE STALL WALL</h2>
-    <p style="opacity:.7; max-width:500px; margin:0 auto 10px;">
-      this is how word of mouth works, it goes peer to peer and reaches different states
-    </p>
-
-    <div id="states"></div>
-    <p class="active-counter" id="activeCounter"></p>
-
-    <div id="editor">
-      <h3 id="stateTitle" style="color:var(--gold);"></h3>
-      <div id="postsList" style="margin-top:20px;"></div>
-    </div>
-
-    <hr class="section-divider">
-
-    <div class="mark-card">
-      <h3>Leave Your Mark</h3>
-      <label for="stateSelect">Your state</label>
-      <select id="stateSelect"><option value="">Choose your state</option></select>
-      <label for="postInput">Speak Your Truth</label>
-      <textarea id="postInput" rows="4"></textarea>
-
-      <div class="doodle-wrap">
-        <label>Or draw it out (optional)</label>
-        <canvas id="doodleCanvas"></canvas>
-        <div class="doodle-controls">
-          <span class="doodle-hint">Draw with your finger or mouse</span>
-          <button type="button" class="doodle-clear-btn" id="doodleClearBtn">Clear</button>
-        </div>
-      </div>
-
-      <button id="sendBtn" class="cta-btn">Send Mark</button>
-      <p id="sendConfirm" class="confirm-msg">Your mark is up.</p>
-    </div>
-
-    <hr class="section-divider">
-
-    <h2 class="board-title">SUGGESTION WALL</h2>
-    <p class="board-sub">Anonymous. No names, no accounts. Stays up for a year.</p>
-    <div class="mark-card">
-      <label for="suggInput">Say it</label>
-      <textarea id="suggInput" rows="3"></textarea>
-      <button id="suggSendBtn" class="cta-btn">Post Anonymously</button>
-      <p id="suggConfirm" class="confirm-msg">Posted.</p>
-    </div>
-    <div class="suggestion-list" id="suggList"></div>
-  </div>
 </div>
 
 <!-- ================= DIRECTORY ================= -->
@@ -367,42 +313,103 @@
   </div>
 </div>
 
-<!-- ================= SHARE ================= -->
-<div class="tab-panel" id="panel-share">
-  <div class="wrap" style="text-align:center;">
+<!-- ================= SHARE (Stall Wall + Share, combined) ================= -->
+<div class="tab-panel active" id="panel-share">
+
+  <div class="wrap" style="text-align:center; padding-bottom:0;">
     <img class="top-icon-art" src="share-icon.png" alt="Share">
-
     <h2 class="board-title" style="margin-top:20px;">SHARE</h2>
-    <p class="board-sub">This is where the AZ creative community makes itself known. Show what you're working on, see what others are making, and find your people.</p>
+    <p class="board-sub">This is where the AZ creative community makes itself known. Leave a mark on your state, post what you're working on, and see what others are making.</p>
+  </div>
 
-    <div class="mark-card">
-      <h3>Share It</h3>
-      <label for="shareCategory">Category</label>
-      <select id="shareCategory">
-        <option value="art">🟢 Art</option>
-        <option value="tech">🔵 Tech</option>
-        <option value="books">🟡 Zines</option>
-        <option value="clothing">🔴 Clothing</option>
-      </select>
-      <label for="shareTitle">Title</label>
-      <input type="text" id="shareTitle" placeholder="What did you make?">
-      <label for="shareDetails">Tell us about it</label>
-      <textarea id="shareDetails" rows="3"></textarea>
-      <label for="shareLink">Link or photo URL (optional)</label>
-      <input type="text" id="shareLink" placeholder="https://...">
-      <button id="shareSendBtn" class="cta-btn">Share It</button>
-      <p id="shareConfirm" class="confirm-msg">Shared.</p>
+  <!-- ---- STALL WALL: peer to peer, state by state ---- -->
+  <div id="stallwall-section">
+    <div class="wrap" style="text-align:center;">
+      <h3 class="subsection-label">THE STALL WALL</h3>
+      <p style="opacity:.7; max-width:500px; margin:0 auto 10px;">
+        this is how word of mouth works, it goes peer to peer and reaches different states
+      </p>
+
+      <div id="states"></div>
+      <p class="active-counter" id="activeCounter"></p>
+
+      <div id="editor">
+        <h3 id="stateTitle" style="color:var(--gold);"></h3>
+        <div id="postsList" style="margin-top:20px;"></div>
+      </div>
+
+      <hr class="section-divider">
+
+      <div class="mark-card">
+        <h3>Leave Your Mark</h3>
+        <label for="stateSelect">Your state</label>
+        <select id="stateSelect"><option value="">Choose your state</option></select>
+        <label for="postInput">Speak Your Truth</label>
+        <textarea id="postInput" rows="4"></textarea>
+
+        <div class="doodle-wrap">
+          <label>Or draw it out (optional)</label>
+          <canvas id="doodleCanvas"></canvas>
+          <div class="doodle-controls">
+            <span class="doodle-hint">Draw with your finger or mouse</span>
+            <button type="button" class="doodle-clear-btn" id="doodleClearBtn">Clear</button>
+          </div>
+        </div>
+
+        <button id="sendBtn" class="cta-btn">Send Mark</button>
+        <p id="sendConfirm" class="confirm-msg">Your mark is up.</p>
+      </div>
+
+      <hr class="section-divider">
+
+      <h2 class="board-title">SUGGESTION WALL</h2>
+      <p class="board-sub">Anonymous. No names, no accounts. Stays up for a year.</p>
+      <div class="mark-card">
+        <label for="suggInput">Say it</label>
+        <textarea id="suggInput" rows="3"></textarea>
+        <button id="suggSendBtn" class="cta-btn">Post Anonymously</button>
+        <p id="suggConfirm" class="confirm-msg">Posted.</p>
+      </div>
+      <div class="suggestion-list" id="suggList"></div>
     </div>
+  </div>
 
-    <div class="cat-pill-row" id="shareCatPillRow" style="margin-top:30px;">
-      <button class="cat-pill active" data-cat="All"><span class="legend-dot" style="background:#888;"></span>All</button>
-      <button class="cat-pill" data-cat="art"><span class="legend-dot cat-art"></span>Art</button>
-      <button class="cat-pill" data-cat="tech"><span class="legend-dot cat-tech"></span>Tech</button>
-      <button class="cat-pill" data-cat="books"><span class="legend-dot cat-books"></span>Zines</button>
-      <button class="cat-pill" data-cat="clothing"><span class="legend-dot cat-clothing"></span>Clothing</button>
+  <hr class="section-divider">
+
+  <!-- ---- SHARE: post your own work ---- -->
+  <div id="share-section">
+    <div class="wrap" style="text-align:center;">
+      <h3 class="subsection-label">SHARE YOUR WORK</h3>
+
+      <div class="mark-card">
+        <h3>Share It</h3>
+        <label for="shareCategory">Category</label>
+        <select id="shareCategory">
+          <option value="art">🟢 Art</option>
+          <option value="tech">🔵 Tech</option>
+          <option value="books">🟡 Zines</option>
+          <option value="clothing">🔴 Clothing</option>
+        </select>
+        <label for="shareTitle">Title</label>
+        <input type="text" id="shareTitle" placeholder="What did you make?">
+        <label for="shareDetails">Tell us about it</label>
+        <textarea id="shareDetails" rows="3"></textarea>
+        <label for="shareLink">Link or photo URL (optional)</label>
+        <input type="text" id="shareLink" placeholder="https://...">
+        <button id="shareSendBtn" class="cta-btn">Share It</button>
+        <p id="shareConfirm" class="confirm-msg">Shared.</p>
+      </div>
+
+      <div class="cat-pill-row" id="shareCatPillRow" style="margin-top:30px;">
+        <button class="cat-pill active" data-cat="All"><span class="legend-dot" style="background:#888;"></span>All</button>
+        <button class="cat-pill" data-cat="art"><span class="legend-dot cat-art"></span>Art</button>
+        <button class="cat-pill" data-cat="tech"><span class="legend-dot cat-tech"></span>Tech</button>
+        <button class="cat-pill" data-cat="books"><span class="legend-dot cat-books"></span>Zines</button>
+        <button class="cat-pill" data-cat="clothing"><span class="legend-dot cat-clothing"></span>Clothing</button>
+      </div>
+
+      <div class="board-list" id="shareList"></div>
     </div>
-
-    <div class="board-list" id="shareList"></div>
   </div>
 </div>
 
@@ -424,21 +431,14 @@ const states = [
 "Vermont","Virginia","Washington","West Virginia","Wisconsin","Wyoming"
 ];
 
-const disciplines = [
-  "Visual Art & Murals",
-  "Tattoo",
-  "Print & Graphic",
-  "3D & Fab",
-  "Wood & Metal",
-  "Textiles & Fabric",
-  "Natural Building",
-  "Photography & Film",
-  "Music & Audio",
-  "Writing & Poetry",
-  "Garage & Tool Share",
-  "Event & Venue Space",
-  "Meetup Spots"
-];
+// Disciplines now live in the "disciplines" Supabase table instead of being
+// hardcoded here. They grow on their own: every time a Directory listing is
+// added in admin with a new discipline, it gets added to this list too.
+let disciplines = [];
+async function loadDisciplines() {
+  const { data } = await supabaseClient.from('disciplines').select('name').order('name');
+  disciplines = (data || []).map(d => d.name);
+}
 
 // TAB SWITCHING (Stall Wall / Directory / Share)
 document.querySelectorAll('.tab-btn').forEach(btn => {
@@ -726,17 +726,16 @@ document.getElementById('suggSendBtn').onclick = async () => {
   await renderSuggestions();
 };
 
-/* ============ VERIFIED DIRECTORY ============ */
-const directory = [
-  {
-    name: "Fraqtals",
-    neighborhood: "Phoenix, AZ",
-    discipline: "Print & Graphic",
-    access: "Shared Studio · Membership",
-    desc: "Membership creative studio — shared space, screen printing.",
-    link: "https://www.fraqtals.com/"
-  }
-];
+/* ============ VERIFIED DIRECTORY (table: directory_listings, editable from admin) ============ */
+let directory = [];
+async function loadDirectoryListings() {
+  const { data } = await supabaseClient
+    .from('directory_listings')
+    .select('*')
+    .order('sort_order', { ascending: true, nullsFirst: false })
+    .order('created_at', { ascending: false });
+  directory = data || [];
+}
 
 let activeFilter = "All";
 const directoryGrid = document.getElementById('directoryGrid');
@@ -751,14 +750,13 @@ function renderFilterPills() {
     renderDirectory();
   });
 }
-renderFilterPills();
 
 function renderDirectory() {
   directoryGrid.innerHTML = "";
   let items = directory;
   if (activeFilter !== "All") items = items.filter(d => d.discipline === activeFilter);
   if (items.length === 0) {
-    directoryGrid.innerHTML = '<p class="directory-empty">Nothing listed yet for this category — check back soon.</p>';
+    directoryGrid.innerHTML = '<p class="directory-empty">Nothing listed yet for this category. Check back soon.</p>';
     return;
   }
   items.forEach(d => {
@@ -766,21 +764,21 @@ function renderDirectory() {
     card.className = 'directory-card';
     card.innerHTML = `
       <div class="dc-name">${d.name}</div>
-      <div class="dc-neighborhood">${d.neighborhood}</div>
+      <div class="dc-neighborhood">${d.neighborhood || ''}</div>
       <div class="dc-tags">
-        <span class="dc-tag">${d.discipline}</span>
-        <span class="dc-tag">${d.access}</span>
+        ${d.discipline ? `<span class="dc-tag">${d.discipline}</span>` : ''}
+        ${d.access ? `<span class="dc-tag">${d.access}</span>` : ''}
       </div>
-      <div class="dc-desc">${d.desc}</div>
+      <div class="dc-desc">${d.description || ''}</div>
       ${d.link ? `<a class="dc-link" href="${d.link}" target="_blank" rel="noopener">Visit →</a>` : '<span style="font-size:0.75rem; opacity:.5;">Link coming soon</span>'}
     `;
     directoryGrid.appendChild(card);
   });
 }
-renderDirectory();
 
 /* ============ OPPORTUNITY BOARD (table: board_posts, unchanged name) ============ */
 const catLabels = {
+  popup: "Pop-Up Shop",
   wall: "Wall & Mural",
   workshop: "Workshop / Class",
   share: "Tool / Equipment / Garage Share",
@@ -796,15 +794,18 @@ const spaceTypeWrap = document.getElementById('spaceTypeWrap');
 const boardDisciplineSelect = document.getElementById('boardDiscipline');
 const oppCalendar = document.getElementById('oppCalendar');
 
-disciplines.forEach(d => {
-  const opt = document.createElement('option');
-  opt.value = d; opt.textContent = d;
-  boardDisciplineSelect.appendChild(opt);
-});
-const generalOpt = document.createElement('option');
-generalOpt.value = "General";
-generalOpt.textContent = "General / Not discipline-specific";
-boardDisciplineSelect.appendChild(generalOpt);
+function populateBoardDisciplineOptions() {
+  boardDisciplineSelect.innerHTML = '';
+  disciplines.forEach(d => {
+    const opt = document.createElement('option');
+    opt.value = d; opt.textContent = d;
+    boardDisciplineSelect.appendChild(opt);
+  });
+  const generalOpt = document.createElement('option');
+  generalOpt.value = "General";
+  generalOpt.textContent = "General / Not discipline-specific";
+  boardDisciplineSelect.appendChild(generalOpt);
+}
 
 boardCategorySelect.addEventListener('change', () => {
   spaceTypeWrap.style.display = boardCategorySelect.value === 'space' ? 'block' : 'none';
@@ -880,6 +881,17 @@ async function renderCalendar() {
   });
 }
 renderCalendar();
+
+// Load disciplines once, then everything that depends on it (the Directory's
+// filter dropdown, the Board's discipline dropdown, and the Directory listings
+// themselves) — all editable from admin now, nothing hardcoded here anymore.
+(async function initDisciplinesAndDirectory() {
+  await loadDisciplines();
+  renderFilterPills();
+  populateBoardDisciplineOptions();
+  await loadDirectoryListings();
+  renderDirectory();
+})();
 
 async function renderBoard() {
   boardList.innerHTML = '<p style="opacity:.5; text-align:center;">Loading Opportunity Board posts...</p>';
