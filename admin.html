@@ -96,6 +96,13 @@
   .opp-calendar-day.selected { background: var(--red); color: #fff; border-color: var(--red); }
   .opp-calendar-day.empty { visibility: hidden; cursor: default; }
 
+  .stripe-launch-btn {
+    display: block; max-width: 380px; margin: 0 auto 14px; text-align: center;
+    background: #6a3fd1; color: #fff; padding: 12px; border-radius: 6px;
+    font-weight: 800; letter-spacing: 0.04em; text-transform: uppercase; font-size: 0.85rem;
+    text-decoration: none; transition: background 0.15s ease;
+  }
+  .stripe-launch-btn:hover { background: #5a34b3; }
   .goal-add-row { display: flex; gap: 8px; margin-bottom: 16px; max-width: 380px; margin-left: auto; margin-right: auto; }
   .goal-add-row input { flex: 1; padding: 10px; border: 1px solid #999; font-size: 0.95rem; }
   .goal-add-row button {
@@ -106,6 +113,7 @@
     padding: 10px 12px; margin-bottom: 8px; background: #fff; max-width: 380px; margin-left: auto; margin-right: auto;
   }
   .goal-row.done .goal-text { text-decoration: line-through; opacity: .5; }
+  .goal-row .goal-num { font-weight: 800; opacity: .5; }
   .goal-row .goal-text { flex: 1; }
   .goal-row input[type="checkbox"] { width: auto; margin: 0; }
   .goal-row .del-btn {
@@ -225,8 +233,9 @@
       <div class="admin-section-body">
         <div class="how-to-box">
           <strong>What this is for</strong>
-          Your own task list and deadline tracker, nothing here shows up on the public site. Tap a date on the calendar, then type a task and hit Add, or open Paste a whole list at once to dump in several tasks in one go. A gold ring around a date means something's saved there. Once the calendar feed is set up below, everything here also shows up on your phone's actual calendar automatically.
+          Your own task list and deadline tracker, nothing here shows up on the public site. Tap a date on the calendar, then type a task and hit Add, or open Paste a whole list at once to dump in several tasks in one go, each one shows up numbered with its own checkbox. A gold ring around a date means something's saved there. Once the calendar feed is set up below, everything here also shows up on your phone's actual calendar automatically. The purple Stripe button above the calendar takes you straight to the Stripe login, which will offer to open the app so you can start Tap to Pay for an in-person sale.
         </div>
+        <a class="stripe-launch-btn" href="https://dashboard.stripe.com/login" target="_blank" rel="noopener">Open Stripe (Tap to Pay)</a>
         <div class="opp-calendar" id="goalsCalendar"></div>
         <div class="goal-add-row">
           <input type="text" id="newGoalText" placeholder="Add a goal for this day">
@@ -1640,11 +1649,12 @@
     }
 
     listEl.innerHTML = '';
-    goals.forEach(g => {
+    goals.forEach((g, i) => {
       const row = document.createElement('div');
       row.className = 'goal-row' + (g.done ? ' done' : '');
       row.innerHTML = `
         <input type="checkbox" class="goal-check" ${g.done ? 'checked' : ''}>
+        <div class="goal-num">${i + 1}.</div>
         <div class="goal-text">${g.text}</div>
         <button class="del-btn goal-del">Delete</button>
       `;
