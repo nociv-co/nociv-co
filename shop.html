@@ -586,6 +586,7 @@
       const btn = document.createElement('button');
       btn.className = 'card-action buy';
       btn.textContent = 'Buy Now';
+      btn.dataset.id = p.id;
       btn.addEventListener('click', () => onBuy(btn));
       actionEl.appendChild(btn);
     } else {
