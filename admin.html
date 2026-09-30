@@ -112,12 +112,17 @@
     display: flex; align-items: center; gap: 10px; border: 1px solid #ccc;
     padding: 10px 12px; margin-bottom: 8px; background: #fff; max-width: 380px; margin-left: auto; margin-right: auto;
   }
-  .edit-photo-gallery { display: flex; flex-wrap: wrap; gap: 8px; margin: 6px 0 10px; }
-  .edit-photo-thumb { position: relative; width: 64px; height: 64px; }
-  .edit-photo-thumb img { width: 100%; height: 100%; object-fit: cover; border: 1px solid #ccc; border-radius: 3px; display: block; }
+  .edit-photo-gallery { display: flex; flex-wrap: wrap; gap: 10px; margin: 6px 0 10px; }
+  .edit-photo-thumb { position: relative; width: 78px; }
+  .edit-photo-thumb img { width: 78px; height: 78px; object-fit: cover; border: 1px solid #ccc; border-radius: 3px; display: block; }
   .edit-photo-cover-tag {
-    position: absolute; bottom: 2px; left: 2px; right: 2px; background: rgba(0,0,0,0.7); color: #fff;
-    font-size: 0.55rem; text-align: center; padding: 1px 0; border-radius: 2px; letter-spacing: 0.03em; text-transform: uppercase;
+    display: block; margin-top: 2px; background: #1a1a1a; color: #fff;
+    font-size: 0.55rem; text-align: center; padding: 2px 0; border-radius: 2px; letter-spacing: 0.03em; text-transform: uppercase;
+  }
+  .edit-photo-make-cover {
+    display: block; width: 100%; margin-top: 2px; background: var(--gold); color: #1a1a1a; border: none;
+    font-size: 0.55rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.02em;
+    padding: 2px 0; border-radius: 2px; cursor: pointer;
   }
   .edit-photo-del {
     position: absolute; top: -6px; right: -6px; width: 18px; height: 18px; border-radius: 50%;
@@ -1300,13 +1305,20 @@
     document.getElementById('pName').focus();
   }
 
+  // Escapes a value going into an HTML attribute, so a stray quote mark in
+  // a product name or ID (e.g. a name like 12" Pin) can't cut the value
+  // short and leave the field looking empty when Edit is opened.
+  function escapeAttr(val) {
+    return String(val ?? '').replace(/&/g, '&amp;').replace(/"/g, '&quot;').replace(/</g, '&lt;');
+  }
+
   function renderRowEdit(row, p) {
     row.innerHTML = `
       <div class="info" style="width:100%;">
         <label style="font-size:0.75rem; opacity:.7; display:block; margin-bottom:2px;">Name</label>
-        <input type="text" class="edit-name" value="${p.name}" style="width:100%; margin-bottom:8px; padding:6px;">
+        <input type="text" class="edit-name" value="${escapeAttr(p.name)}" style="width:100%; margin-bottom:8px; padding:6px;">
         <label style="font-size:0.75rem; opacity:.7; display:block; margin-bottom:2px;">Description</label>
-        <textarea class="edit-description" rows="2" style="width:100%; margin-bottom:8px; padding:6px; font-family:inherit;">${p.description ?? ''}</textarea>
+        <textarea class="edit-description" rows="2" style="width:100%; margin-bottom:8px; padding:6px; font-family:inherit;">${(p.description ?? '').replace(/</g, '&lt;')}</textarea>
         <div style="display:flex; gap:8px; margin-bottom:8px;">
           <div style="flex:1;">
             <label style="font-size:0.75rem; opacity:.7; display:block;">Price</label>
@@ -1340,7 +1352,7 @@
         <div class="edit-photo-gallery" id="editPhotoGallery-${p.id}"></div>
         <input type="file" class="edit-add-photos" accept="image/*" multiple style="margin-bottom:10px;">
         <label style="font-size:0.75rem; opacity:.7; display:block;">Stripe Price ID</label>
-        <input type="text" class="edit-stripe-price" value="${p.stripe_price_id ?? ''}" style="width:100%; margin-bottom:8px; padding:6px;">
+        <input type="text" class="edit-stripe-price" value="${escapeAttr(p.stripe_price_id)}" style="width:100%; margin-bottom:8px; padding:6px;">
         <label style="font-size:0.75rem; opacity:.7; display:block;">Fulfillment</label>
         <select class="edit-fulfillment" style="width:100%; margin-bottom:8px; padding:6px;">
           <option value="in_house" ${p.fulfillment_type === 'in_house' ? 'selected' : ''}>In-House (you make/ship it)</option>
@@ -1349,11 +1361,11 @@
         </select>
         <div class="edit-prodigi-wrap" style="display:${p.fulfillment_type === 'prodigi' ? 'block' : 'none'};">
           <label style="font-size:0.75rem; opacity:.7; display:block;">Prodigi SKU</label>
-          <input type="text" class="edit-prodigi-sku" value="${p.prodigi_sku ?? ''}" style="width:100%; margin-bottom:8px; padding:6px;">
+          <input type="text" class="edit-prodigi-sku" value="${escapeAttr(p.prodigi_sku)}" style="width:100%; margin-bottom:8px; padding:6px;">
         </div>
         <div class="edit-printify-wrap" style="display:${p.fulfillment_type === 'printify' ? 'block' : 'none'};">
           <label style="font-size:0.75rem; opacity:.7; display:block;">Printify Product ID (comma-separate for a bundle)</label>
-          <input type="text" class="edit-printify-id" value="${p.printify_product_id ?? ''}" style="width:100%; margin-bottom:8px; padding:6px;">
+          <input type="text" class="edit-printify-id" value="${escapeAttr(p.printify_product_id)}" style="width:100%; margin-bottom:8px; padding:6px;">
         </div>
         <div style="display:flex; gap:8px; margin-bottom:10px;">
           <select class="edit-shop" style="flex:1; padding:6px;">
@@ -1362,7 +1374,7 @@
             <option value="zines" ${p.shop === 'zines' ? 'selected' : ''}>Zines</option>
             <option value="art" ${p.shop === 'art' ? 'selected' : ''}>Art</option>
           </select>
-          <input type="text" class="edit-category" list="categoryOptions" value="${p.category}" style="flex:1; padding:6px;">
+          <input type="text" class="edit-category" list="categoryOptions" value="${escapeAttr(p.category)}" style="flex:1; padding:6px;">
           <select class="edit-status" style="flex:1; padding:6px;">
             <option value="for_sale" ${p.status === 'for_sale' ? 'selected' : ''}>For Sale</option>
             <option value="coming_soon" ${p.status === 'coming_soon' ? 'selected' : ''}>Coming Soon</option>
@@ -1388,20 +1400,51 @@
         galleryEl.innerHTML = '<p style="opacity:.5; font-size:0.8rem; margin:4px 0;">No photos yet.</p>';
         return;
       }
-      galleryEl.innerHTML = thumbs.map((t, i) => `
+      galleryEl.innerHTML = thumbs.map((t) => `
         <div class="edit-photo-thumb">
           <img src="${t.url}" alt="">
-          ${t.isCover ? '<span class="edit-photo-cover-tag">Cover</span>' : `<button type="button" class="edit-photo-del" data-url="${t.url}">&times;</button>`}
+          ${t.isCover ? '<span class="edit-photo-cover-tag">Cover</span>' : `<button type="button" class="edit-photo-make-cover" data-url="${t.url}" title="Make this the cover photo">Make Cover</button>`}
+          <button type="button" class="edit-photo-del" data-url="${t.url}" title="Delete this photo">&times;</button>
         </div>
       `).join('');
+
+      // Delete works on any photo, including the cover. Deleting the cover
+      // promotes the next extra photo (if there is one) to take its place.
       galleryEl.querySelectorAll('.edit-photo-del').forEach(btn => {
         btn.addEventListener('click', async () => {
-          currentExtraUrls = currentExtraUrls.filter(u => u !== btn.dataset.url);
+          if (!confirm('Delete this photo?')) return;
+          const url = btn.dataset.url;
+          let newCover = p.image_url;
+          let newExtras = [...currentExtraUrls];
+          if (url === p.image_url) {
+            newCover = newExtras.length > 0 ? newExtras.shift() : null;
+          } else {
+            newExtras = newExtras.filter(u => u !== url);
+          }
           const { error } = await supabaseClient.from('products')
-            .update({ extra_image_urls: currentExtraUrls.length ? currentExtraUrls : null })
+            .update({ image_url: newCover, extra_image_urls: newExtras.length ? newExtras : null })
             .eq('id', p.id);
           if (error) { alert('Error removing photo: ' + error.message); return; }
-          p.extra_image_urls = currentExtraUrls;
+          p.image_url = newCover;
+          currentExtraUrls = newExtras;
+          renderEditPhotoGallery();
+        });
+      });
+
+      // Swaps an extra photo into the cover slot, and the old cover (if any)
+      // becomes one of the extras instead of disappearing.
+      galleryEl.querySelectorAll('.edit-photo-make-cover').forEach(btn => {
+        btn.addEventListener('click', async () => {
+          const url = btn.dataset.url;
+          const oldCover = p.image_url;
+          let newExtras = currentExtraUrls.filter(u => u !== url);
+          if (oldCover) newExtras.unshift(oldCover);
+          const { error } = await supabaseClient.from('products')
+            .update({ image_url: url, extra_image_urls: newExtras.length ? newExtras : null })
+            .eq('id', p.id);
+          if (error) { alert('Error updating cover photo: ' + error.message); return; }
+          p.image_url = url;
+          currentExtraUrls = newExtras;
           renderEditPhotoGallery();
         });
       });
