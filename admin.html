@@ -112,6 +112,17 @@
     display: flex; align-items: center; gap: 10px; border: 1px solid #ccc;
     padding: 10px 12px; margin-bottom: 8px; background: #fff; max-width: 380px; margin-left: auto; margin-right: auto;
   }
+  .edit-photo-gallery { display: flex; flex-wrap: wrap; gap: 8px; margin: 6px 0 10px; }
+  .edit-photo-thumb { position: relative; width: 64px; height: 64px; }
+  .edit-photo-thumb img { width: 100%; height: 100%; object-fit: cover; border: 1px solid #ccc; border-radius: 3px; display: block; }
+  .edit-photo-cover-tag {
+    position: absolute; bottom: 2px; left: 2px; right: 2px; background: rgba(0,0,0,0.7); color: #fff;
+    font-size: 0.55rem; text-align: center; padding: 1px 0; border-radius: 2px; letter-spacing: 0.03em; text-transform: uppercase;
+  }
+  .edit-photo-del {
+    position: absolute; top: -6px; right: -6px; width: 18px; height: 18px; border-radius: 50%;
+    background: var(--red); color: #fff; border: none; font-size: 0.8rem; line-height: 1; cursor: pointer; padding: 0;
+  }
   .goal-row.done .goal-text { text-decoration: line-through; opacity: .5; }
   .goal-row .goal-num { font-weight: 800; opacity: .5; }
   .goal-row .goal-text { flex: 1; }
@@ -362,7 +373,7 @@
       <div class="admin-section-body">
         <div class="how-to-box">
           <strong>What this is for</strong>
-          Everything for sale on the site lives here. Use Quick Fill to start from a preset like Printify Pin or In-House Shirt, or hit Duplicate on an existing product below to copy its setup into a fresh one. Fill in name, price, and your real cost, the margin box shows your actual profit before you save anything, red means don't list it yet. Status has to be For Sale with a Stripe Price ID for the Buy button to work, Coming Soon shows on the site with no buy button.
+          Everything for sale on the site lives here. Use Quick Fill to start from a preset like Printify Pin or In-House Shirt, or hit Duplicate on an existing product below to copy its setup into a fresh one. Fill in name, price, and your real cost, the margin box shows your actual profit before you save anything, red means don't list it yet. Status has to be For Sale with a Stripe Price ID for the Buy button to work, Coming Soon shows on the site with no buy button. You can select more than one photo when adding a product, front, back, a detail shot, the first one picked becomes the cover shown on the shop cards, the rest become the gallery someone can flip through when they tap it. Already added a product and want to add more angles after the fact, hit Edit on it below, there's an Additional Photos section there to add or remove photos anytime.
         </div>
         <div class="admin-form">
           <h3 style="margin-top:0;">Add a Product</h3>
@@ -479,8 +490,9 @@
             This is what actually charges the customer — without it, checkout fails every time.
           </div>
 
-          <label for="pImage">Photo — upload a file (full resolution — this is what gets sent to Prodigi to print, so use the real, final-quality file)</label>
-          <input type="file" id="pImage" accept="image/*">
+          <label for="pImage">Photos — upload one or more files (full resolution — the first one is what gets sent to Prodigi to print, so use the real, final-quality file). Select multiple angles at once, front, back, detail shot, whatever you've got.</label>
+          <input type="file" id="pImage" accept="image/*" multiple>
+          <div class="field-hint">The first photo you pick becomes the main cover photo shown on the shop cards. Every photo you pick shows up in the product's photo gallery when someone taps it.</div>
 
           <label for="pImageUrl" style="margin-top:10px;">...or paste an image link instead (e.g. from Prodigi's Image Library) — skip the upload above if you use this</label>
           <input type="text" id="pImageUrl" placeholder="https://...">
@@ -1056,7 +1068,7 @@
     const prodigi_sku = document.getElementById('pProdigiSku').value.trim() || null;
     const printify_product_id = document.getElementById('pPrintifyProductId').value.trim() || null;
     const stripe_price_id = document.getElementById('pStripePriceId').value.trim() || null;
-    const file = document.getElementById('pImage').files[0];
+    const files = Array.from(document.getElementById('pImage').files);
     const imageUrlInput = document.getElementById('pImageUrl').value.trim();
     const errEl = document.getElementById('addError');
     const confirmEl = document.getElementById('addConfirm');
@@ -1082,23 +1094,31 @@
     }
 
     let image_url = null;
+    let extra_image_urls = null;
     if (imageUrlInput) {
       // A pasted link takes priority — skip the upload entirely
       image_url = imageUrlInput;
-    } else if (file) {
+    } else if (files.length > 0) {
       // Uploaded exactly as-is — full resolution, no resizing or recompression.
-      const ext = (file.name.split('.').pop() || 'jpg').toLowerCase();
-      const fileName = `${Date.now()}-${file.name.replace(/\s+/g, '-').replace(/\.[^/.]+$/, '')}.${ext}`;
-      const { error: uploadError } = await supabaseClient.storage
-        .from('product-images')
-        .upload(fileName, file, { contentType: file.type || 'application/octet-stream' });
-      if (uploadError) {
-        errEl.textContent = 'Image upload failed: ' + uploadError.message;
-        errEl.style.display = 'block';
-        return;
+      // Every file picked gets uploaded; the first becomes the cover photo,
+      // the rest become the gallery (extra angles).
+      const uploadedUrls = [];
+      for (const file of files) {
+        const ext = (file.name.split('.').pop() || 'jpg').toLowerCase();
+        const fileName = `${Date.now()}-${Math.random().toString(36).slice(2, 7)}-${file.name.replace(/\s+/g, '-').replace(/\.[^/.]+$/, '')}.${ext}`;
+        const { error: uploadError } = await supabaseClient.storage
+          .from('product-images')
+          .upload(fileName, file, { contentType: file.type || 'application/octet-stream' });
+        if (uploadError) {
+          errEl.textContent = 'Image upload failed on "' + file.name + '": ' + uploadError.message;
+          errEl.style.display = 'block';
+          return;
+        }
+        const { data: urlData } = supabaseClient.storage.from('product-images').getPublicUrl(fileName);
+        uploadedUrls.push(urlData.publicUrl);
       }
-      const { data: urlData } = supabaseClient.storage.from('product-images').getPublicUrl(fileName);
-      image_url = urlData.publicUrl;
+      image_url = uploadedUrls[0];
+      extra_image_urls = uploadedUrls.length > 1 ? uploadedUrls.slice(1) : null;
     }
 
     const { error } = await supabaseClient.from('products').insert([{
@@ -1116,7 +1136,8 @@
       prodigi_sku,
       printify_product_id,
       stripe_price_id,
-      image_url
+      image_url,
+      extra_image_urls
     }]);
 
     if (error) {
@@ -1201,8 +1222,9 @@
   }
 
   function renderRowView(row, p, voteCount) {
+    const extraCount = Array.isArray(p.extra_image_urls) ? p.extra_image_urls.length : 0;
     const imgHtml = p.image_url
-      ? `<img src="${p.image_url}" alt="${p.name}">`
+      ? `<div style="position:relative; display:inline-block;"><img src="${p.image_url}" alt="${p.name}">${extraCount > 0 ? `<span class="edit-photo-cover-tag" style="position:absolute; bottom:2px; left:2px; right:2px;">+${extraCount} more</span>` : ''}</div>`
       : `<div class="no-img">no photo</div>`;
     const stripeWarning = (p.status === 'for_sale' && !p.stripe_price_id)
       ? ' · <span class="missing-flag">NO STRIPE PRICE — BUY WILL FAIL</span>'
@@ -1314,6 +1336,9 @@
           <div class="margin-calc-row total"><span>Profit per sale</span><span class="edit-mc-profit">$0.00</span></div>
           <div class="margin-calc-row total"><span>Margin</span><span class="edit-mc-margin">0%</span></div>
         </div>
+        <label style="font-size:0.75rem; opacity:.7; display:block; margin-top:4px;">Additional photos (other angles)</label>
+        <div class="edit-photo-gallery" id="editPhotoGallery-${p.id}"></div>
+        <input type="file" class="edit-add-photos" accept="image/*" multiple style="margin-bottom:10px;">
         <label style="font-size:0.75rem; opacity:.7; display:block;">Stripe Price ID</label>
         <input type="text" class="edit-stripe-price" value="${p.stripe_price_id ?? ''}" style="width:100%; margin-bottom:8px; padding:6px;">
         <div style="display:flex; gap:8px; margin-bottom:10px;">
@@ -1335,6 +1360,67 @@
         </div>
       </div>
     `;
+
+    // ===== ADDITIONAL PHOTOS (edit view) — shows the cover photo plus every
+    // extra angle, each with its own Delete, and a file picker that uploads
+    // and appends immediately, no separate Save step needed for photos. =====
+    let currentExtraUrls = Array.isArray(p.extra_image_urls) ? [...p.extra_image_urls] : [];
+    function renderEditPhotoGallery() {
+      const galleryEl = row.querySelector(`#editPhotoGallery-${p.id}`);
+      const thumbs = [];
+      if (p.image_url) thumbs.push({ url: p.image_url, isCover: true });
+      currentExtraUrls.forEach(url => thumbs.push({ url, isCover: false }));
+      if (thumbs.length === 0) {
+        galleryEl.innerHTML = '<p style="opacity:.5; font-size:0.8rem; margin:4px 0;">No photos yet.</p>';
+        return;
+      }
+      galleryEl.innerHTML = thumbs.map((t, i) => `
+        <div class="edit-photo-thumb">
+          <img src="${t.url}" alt="">
+          ${t.isCover ? '<span class="edit-photo-cover-tag">Cover</span>' : `<button type="button" class="edit-photo-del" data-url="${t.url}">&times;</button>`}
+        </div>
+      `).join('');
+      galleryEl.querySelectorAll('.edit-photo-del').forEach(btn => {
+        btn.addEventListener('click', async () => {
+          currentExtraUrls = currentExtraUrls.filter(u => u !== btn.dataset.url);
+          const { error } = await supabaseClient.from('products')
+            .update({ extra_image_urls: currentExtraUrls.length ? currentExtraUrls : null })
+            .eq('id', p.id);
+          if (error) { alert('Error removing photo: ' + error.message); return; }
+          p.extra_image_urls = currentExtraUrls;
+          renderEditPhotoGallery();
+        });
+      });
+    }
+    renderEditPhotoGallery();
+
+    row.querySelector('.edit-add-photos').addEventListener('change', async (e) => {
+      const newFiles = Array.from(e.target.files);
+      if (newFiles.length === 0) return;
+      for (const file of newFiles) {
+        const ext = (file.name.split('.').pop() || 'jpg').toLowerCase();
+        const fileName = `${Date.now()}-${Math.random().toString(36).slice(2, 7)}-${file.name.replace(/\s+/g, '-').replace(/\.[^/.]+$/, '')}.${ext}`;
+        const { error: uploadError } = await supabaseClient.storage
+          .from('product-images')
+          .upload(fileName, file, { contentType: file.type || 'application/octet-stream' });
+        if (uploadError) { alert('Upload failed for "' + file.name + '": ' + uploadError.message); continue; }
+        const { data: urlData } = supabaseClient.storage.from('product-images').getPublicUrl(fileName);
+        if (!p.image_url) {
+          // No cover photo yet — the first upload here becomes the cover instead of an extra.
+          p.image_url = urlData.publicUrl;
+          await supabaseClient.from('products').update({ image_url: p.image_url }).eq('id', p.id);
+        } else {
+          currentExtraUrls.push(urlData.publicUrl);
+        }
+      }
+      const { error } = await supabaseClient.from('products')
+        .update({ extra_image_urls: currentExtraUrls.length ? currentExtraUrls : null })
+        .eq('id', p.id);
+      if (error) { alert('Error saving photos: ' + error.message); return; }
+      p.extra_image_urls = currentExtraUrls;
+      e.target.value = '';
+      renderEditPhotoGallery();
+    });
 
     function updateEditMarginCalc() {
       const price = parseFloat(row.querySelector('.edit-price').value) || 0;
