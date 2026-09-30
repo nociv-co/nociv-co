@@ -378,7 +378,7 @@
       <div class="admin-section-body">
         <div class="how-to-box">
           <strong>What this is for</strong>
-          Everything for sale on the site lives here. Use Quick Fill to start from a preset like Printify Pin or In-House Shirt, or hit Duplicate on an existing product below to copy its setup into a fresh one. Fill in name, price, and your real cost, the margin box shows your actual profit before you save anything, red means don't list it yet. Status has to be For Sale with a Stripe Price ID for the Buy button to work, Coming Soon shows on the site with no buy button. You can select more than one photo when adding a product, front, back, a detail shot, the first one picked becomes the cover shown on the shop cards, the rest become the gallery someone can flip through when they tap it. Already added a product and want to add more angles after the fact, hit Edit on it below, there's an Additional Photos section there to add or remove photos anytime.
+          Everything for sale on the site lives here. Use Quick Fill to start from a preset like Printify Pin or In-House Shirt, or hit Duplicate on an existing product below to copy its setup into a fresh one. Fill in name, price, and your real cost, the margin box shows your actual profit before you save anything, red means don't list it yet. Status has to be For Sale with a Stripe Price ID for the Buy button to work, once Name and Price are filled in, hit Create in Stripe next to that field and it makes the Stripe price for you automatically, no need to go to the Stripe website yourself anymore. Coming Soon shows on the site with no buy button. You can select more than one photo when adding a product, front, back, a detail shot, the first one picked becomes the cover shown on the shop cards, the rest become the gallery someone can flip through when they tap it. Already added a product and want to add more angles after the fact, hit Edit on it below, there's an Additional Photos section there to add or remove photos anytime, and the same Create in Stripe button is there too if you ever need a new price.
         </div>
         <div class="admin-form">
           <h3 style="margin-top:0;">Add a Product</h3>
@@ -489,7 +489,12 @@
           </div>
 
           <label for="pStripePriceId">Stripe Price ID <span class="missing-flag" id="stripeRequiredFlag" style="display:none;">— required, or Buy will fail</span></label>
-          <input type="text" id="pStripePriceId" placeholder="price_1AbCdEfGhIjKlMnOp">
+          <div style="display:flex; gap:8px; align-items:center;">
+            <input type="text" id="pStripePriceId" placeholder="price_1AbCdEfGhIjKlMnOp" style="flex:1;">
+            <button type="button" class="admin-submit" id="createStripePriceBtn" style="margin:0; white-space:nowrap; width:auto; padding:10px 14px;">Create in Stripe</button>
+          </div>
+          <div class="field-hint">Fill in Name and Price above first, then hit Create in Stripe, it makes the Stripe product and price for you and fills this box in automatically. No need to go to the Stripe website yourself.</div>
+          <p class="admin-error" id="createStripePriceError"></p>
           <div class="field-hint">
             Stripe Dashboard → Product catalog → open (or create) the product → copy the Price ID under Pricing.
             This is what actually charges the customer — without it, checkout fails every time.
@@ -1058,6 +1063,41 @@
     document.getElementById('stripeRequiredFlag').style.display = e.target.value === 'for_sale' ? 'inline' : 'none';
   });
 
+  // Creates the Stripe Product + Price for you, no Stripe Dashboard trip
+  // needed. Uses whatever Name and Price are currently filled in above.
+  document.getElementById('createStripePriceBtn').addEventListener('click', async () => {
+    const btn = document.getElementById('createStripePriceBtn');
+    const errEl = document.getElementById('createStripePriceError');
+    errEl.style.display = 'none';
+    const name = document.getElementById('pName').value.trim();
+    const price = document.getElementById('pPrice').value;
+    if (!name) { errEl.textContent = 'Fill in the product Name first.'; errEl.style.display = 'block'; return; }
+    if (!price || parseFloat(price) <= 0) { errEl.textContent = 'Fill in a Price first.'; errEl.style.display = 'block'; return; }
+
+    const originalText = btn.textContent;
+    btn.disabled = true;
+    btn.textContent = 'Creating...';
+    try {
+      const res = await fetch('https://vscombrgcdtrfndqyugb.supabase.co/functions/v1/create-stripe-price', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ name, price }),
+      });
+      const result = await res.json();
+      if (result.priceId) {
+        document.getElementById('pStripePriceId').value = result.priceId;
+      } else {
+        errEl.textContent = result.error || 'Something went wrong creating the Stripe price.';
+        errEl.style.display = 'block';
+      }
+    } catch (err) {
+      errEl.textContent = 'Could not reach Stripe. Try again in a moment.';
+      errEl.style.display = 'block';
+    }
+    btn.disabled = false;
+    btn.textContent = originalText;
+  });
+
   document.getElementById('addProductBtn').onclick = async () => {
     const name = document.getElementById('pName').value.trim();
     const description = document.getElementById('pDescription').value.trim() || null;
@@ -1352,7 +1392,11 @@
         <div class="edit-photo-gallery" id="editPhotoGallery-${p.id}"></div>
         <input type="file" class="edit-add-photos" accept="image/*" multiple style="margin-bottom:10px;">
         <label style="font-size:0.75rem; opacity:.7; display:block;">Stripe Price ID</label>
-        <input type="text" class="edit-stripe-price" value="${escapeAttr(p.stripe_price_id)}" style="width:100%; margin-bottom:8px; padding:6px;">
+        <div style="display:flex; gap:8px; align-items:center; margin-bottom:8px;">
+          <input type="text" class="edit-stripe-price" value="${escapeAttr(p.stripe_price_id)}" style="flex:1; padding:6px;">
+          <button type="button" class="edit-create-stripe-price" style="background:var(--gold); color:#1a1a1a; border:none; padding:6px 10px; font-size:0.75rem; font-weight:700; cursor:pointer; white-space:nowrap;">Create in Stripe</button>
+        </div>
+        <p class="admin-error edit-create-stripe-error" style="display:none;"></p>
         <label style="font-size:0.75rem; opacity:.7; display:block;">Fulfillment</label>
         <select class="edit-fulfillment" style="width:100%; margin-bottom:8px; padding:6px;">
           <option value="in_house" ${p.fulfillment_type === 'in_house' ? 'selected' : ''}>In-House (you make/ship it)</option>
@@ -1505,6 +1549,39 @@
     row.querySelector('.edit-fulfillment').addEventListener('change', (e) => {
       row.querySelector('.edit-prodigi-wrap').style.display = e.target.value === 'prodigi' ? 'block' : 'none';
       row.querySelector('.edit-printify-wrap').style.display = e.target.value === 'printify' ? 'block' : 'none';
+    });
+
+    row.querySelector('.edit-create-stripe-price').addEventListener('click', async () => {
+      const btn = row.querySelector('.edit-create-stripe-price');
+      const errEl = row.querySelector('.edit-create-stripe-error');
+      errEl.style.display = 'none';
+      const name = row.querySelector('.edit-name').value.trim();
+      const price = row.querySelector('.edit-price').value;
+      if (!name) { errEl.textContent = 'Fill in the Name first.'; errEl.style.display = 'block'; return; }
+      if (!price || parseFloat(price) <= 0) { errEl.textContent = 'Fill in a Price first.'; errEl.style.display = 'block'; return; }
+
+      const originalText = btn.textContent;
+      btn.disabled = true;
+      btn.textContent = 'Creating...';
+      try {
+        const res = await fetch('https://vscombrgcdtrfndqyugb.supabase.co/functions/v1/create-stripe-price', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ name, price }),
+        });
+        const result = await res.json();
+        if (result.priceId) {
+          row.querySelector('.edit-stripe-price').value = result.priceId;
+        } else {
+          errEl.textContent = result.error || 'Something went wrong creating the Stripe price.';
+          errEl.style.display = 'block';
+        }
+      } catch (err) {
+        errEl.textContent = 'Could not reach Stripe. Try again in a moment.';
+        errEl.style.display = 'block';
+      }
+      btn.disabled = false;
+      btn.textContent = originalText;
     });
 
     row.querySelector('.cancel-edit-btn').addEventListener('click', () => loadProducts());
