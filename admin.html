@@ -113,6 +113,17 @@
     padding: 5px 9px; font-size: 0.72rem; cursor: pointer;
   }
 
+  .paste-goals-box {
+    max-width: 380px; margin: 0 auto 16px; background: rgba(255,255,255,0.5);
+    border: 1px solid rgba(0,0,0,0.08); border-radius: 8px; padding: 4px 12px;
+  }
+  .paste-goals-box summary { cursor: pointer; padding: 8px 0; font-size: 0.85rem; font-weight: 700; }
+  .paste-goals-body { padding-bottom: 12px; }
+  .paste-goals-body textarea {
+    width: 100%; padding: 10px; border: 1px solid #999; font-size: 0.9rem; box-sizing: border-box;
+    font-family: inherit; margin-bottom: 8px;
+  }
+
   /* --- Time Tracker --- */
   .rate-row { display: flex; align-items: center; gap: 8px; justify-content: flex-end; margin-bottom: 12px; font-size: 0.85rem; }
   .rate-row input { width: 80px; padding: 6px; border: 1px solid #999; }
@@ -201,6 +212,7 @@
       <a href="#sec-directory">Directory</a>
       <a href="#sec-zines">Zines</a>
       <a href="#sec-promo">Spread The Word</a>
+      <a href="#sec-vendor">Vendor Spots</a>
     </nav>
 
     <details class="admin-section" id="sec-popup">
@@ -280,6 +292,19 @@
           <input type="text" id="newGoalText" placeholder="Add a goal for this day">
           <button id="addGoalBtn">Add</button>
         </div>
+
+        <details class="paste-goals-box">
+          <summary>Paste a whole list at once</summary>
+          <div class="paste-goals-body">
+            <p class="field-hint" style="margin-top:8px;">
+              Copy a punch list from anywhere, a chat, your notes, whatever, and paste the whole thing in below. One task per line. It'll strip off any bullets, dashes, or numbers you copied along with it, and add every line as its own task under whichever date is selected on the calendar above.
+            </p>
+            <textarea id="pasteGoalsText" rows="6" placeholder="Paste your list here, one task per line..."></textarea>
+            <button class="admin-submit" id="pasteGoalsBtn" type="button">Add All Of These</button>
+            <p class="admin-note" id="pasteGoalsConfirm">Added.</p>
+          </div>
+        </details>
+
         <div id="goalList"></div>
       </div>
     </details>
@@ -428,6 +453,24 @@
     <details class="admin-section" id="sec-orders">
       <summary>Recent Orders</summary>
       <div class="admin-section-body">
+        <div class="time-summary" id="revenueDashboard">
+          <div class="time-summary-card">
+            <div class="label">Total Revenue</div>
+            <div class="hours" id="revTotalRevenue">$0.00</div>
+          </div>
+          <div class="time-summary-card">
+            <div class="label">Known Costs</div>
+            <div class="hours" id="revTotalCost">$0.00</div>
+          </div>
+          <div class="time-summary-card">
+            <div class="label">Net Profit</div>
+            <div class="hours" id="revNetProfit">$0.00</div>
+          </div>
+        </div>
+        <p class="admin-note" style="display:block; opacity:.7;" id="revUnknownNote"></p>
+        <p class="field-hint">
+          Online sales pull their cost from the product's own cost, shipping, and fee numbers. In-person Tap to Pay sales show up here automatically too, but they need their cost filled in by hand below since there's no product tied to them, that's the only manual step left.
+        </p>
         <div id="orderList"></div>
       </div>
     </details>
@@ -525,6 +568,58 @@
         <div id="promoAdminList"></div>
       </div>
     </details>
+
+    <details class="admin-section" id="sec-vendor">
+      <summary>Vendor Spots &amp; Pop-Ups <span class="admin-section-hint">markets, expos, conventions you're weighing</span></summary>
+      <div class="admin-section-body">
+        <div class="admin-form">
+          <label for="voName">Name</label>
+          <input type="text" id="voName" placeholder="e.g. Buy Black Marketplace">
+          <label for="voLocation">Location</label>
+          <input type="text" id="voLocation" placeholder="e.g. Archwood at Eastlake, Phoenix">
+          <div class="admin-form-row">
+            <div>
+              <label for="voDeadline">Application deadline (if known)</label>
+              <input type="date" id="voDeadline">
+            </div>
+            <div>
+              <label for="voEventDate">Event date</label>
+              <input type="date" id="voEventDate">
+            </div>
+          </div>
+          <div class="admin-form-row">
+            <div>
+              <label for="voCost">Booth / table cost ($)</label>
+              <input type="number" id="voCost" step="0.01" placeholder="0.00">
+            </div>
+            <div>
+              <label for="voRevenue">What you realistically think you'd make ($)</label>
+              <input type="number" id="voRevenue" step="0.01" placeholder="0.00">
+            </div>
+          </div>
+          <div class="margin-calc" id="voCalcBox">
+            <div class="margin-calc-row total"><span>Net estimate</span><span id="voNet">$0.00</span></div>
+          </div>
+          <div class="field-hint">
+            A rough guess is fine, the point is having a number in front of you instead of deciding on excitement alone. You can always come back and update this once you know real numbers.
+          </div>
+          <label for="voStatus">Status</label>
+          <select id="voStatus">
+            <option value="researching">Researching</option>
+            <option value="applying">Applying</option>
+            <option value="confirmed">Confirmed — going</option>
+            <option value="passed">Passed on it</option>
+          </select>
+          <label for="voNotes">Notes</label>
+          <textarea id="voNotes" rows="2" placeholder="Anything you don't want to forget — who to contact, what they said, etc."></textarea>
+          <button class="admin-submit" id="addVendorOppBtn">Add</button>
+          <p class="admin-note" id="voAddConfirm">Added.</p>
+          <p class="admin-error" id="voAddError"></p>
+        </div>
+        <h3>Everything You're Weighing</h3>
+        <div id="vendorOppList"></div>
+      </div>
+    </details>
   </div>
 
 </div>
@@ -617,6 +712,7 @@
       loadZineAdminList();
       loadMailingList();
       loadPromoAdminList();
+      loadVendorOpps();
     } else {
       loginBox.style.display = 'block';
       dashboard.style.display = 'none';
@@ -1200,20 +1296,63 @@
   }
 
   // ===== ORDERS =====
+  // What this one order actually cost you, so revenue never gets mistaken
+  // for profit. In-person sales use whatever you've manually entered, since
+  // there's no product record to pull numbers from. Online sales fall back
+  // to the product's own cost, shipping, and platform fee, plus an estimate
+  // of Stripe's cut, same math as the product margin calculator.
+  function orderCost(o) {
+    if (o.cost != null) return parseFloat(o.cost);
+    const price = parseFloat(o.amount_paid) || 0;
+    if (o.products && (o.products.cost != null || o.products.shipping_cost != null)) {
+      const itemCost = parseFloat(o.products.cost) || 0;
+      const shipping = parseFloat(o.products.shipping_cost) || 0;
+      const platformFeePct = parseFloat(o.products.platform_fee_pct) || 0;
+      const platformFee = price * (platformFeePct / 100);
+      const stripeFee = price * 0.029 + 0.30;
+      return itemCost + shipping + platformFee + stripeFee;
+    }
+    return null; // unknown — not counted in the dashboard total, flagged instead
+  }
+
   async function loadOrders() {
     const orderListEl = document.getElementById('orderList');
     orderListEl.innerHTML = '<p style="opacity:.5;">Loading...</p>';
 
     const { data: orders, error } = await supabaseClient
       .from('orders')
-      .select('*, products(name)')
+      .select('*, products(name, cost, shipping_cost, platform_fee_pct)')
       .order('created_at', { ascending: false });
 
     if (error || !orders || orders.length === 0) {
       orderListEl.innerHTML = '<p style="opacity:.5;">No orders yet.</p>';
+      document.getElementById('revTotalRevenue').textContent = '$0.00';
+      document.getElementById('revTotalCost').textContent = '$0.00';
+      document.getElementById('revNetProfit').textContent = '$0.00';
+      document.getElementById('revUnknownNote').textContent = '';
       return;
     }
 
+    // ===== Revenue dashboard =====
+    let totalRevenue = 0, totalCost = 0, unknownCount = 0;
+    orders.forEach(o => {
+      totalRevenue += parseFloat(o.amount_paid) || 0;
+      const c = orderCost(o);
+      if (c == null) unknownCount++;
+      else totalCost += c;
+    });
+    const netProfit = totalRevenue - totalCost;
+    document.getElementById('revTotalRevenue').textContent = '$' + totalRevenue.toFixed(2);
+    document.getElementById('revTotalCost').textContent = '$' + totalCost.toFixed(2);
+    const netEl = document.getElementById('revNetProfit');
+    netEl.textContent = '$' + netProfit.toFixed(2);
+    netEl.style.color = netProfit >= 0 ? 'var(--green)' : 'var(--red)';
+    const unknownNoteEl = document.getElementById('revUnknownNote');
+    unknownNoteEl.textContent = unknownCount > 0
+      ? `${unknownCount} in-person sale${unknownCount === 1 ? '' : 's'} still need${unknownCount === 1 ? 's' : ''} a cost entered below — the totals above don't include those yet.`
+      : '';
+
+    // ===== Order list =====
     orderListEl.innerHTML = '';
     orders.forEach(o => {
       const row = document.createElement('div');
@@ -1224,12 +1363,37 @@
       const printifyBit = o.printify_order_id
         ? ` · Printify #${o.printify_order_id} (${o.printify_status || 'submitted'})`
         : (o.printify_status === 'failed' ? ' · <span class="missing-flag">PRINTIFY ORDER FAILED — check manually</span>' : '');
+      const sourceBit = o.source === 'in_person' ? ' · <strong>In-Person</strong>' : '';
+      const name = o.products?.name || o.description || (o.product_id ? 'Product #' + o.product_id : 'In-person sale');
+
+      const costKnown = orderCost(o) != null;
+      const costInputHtml = o.source === 'in_person'
+        ? `<div style="display:flex; align-items:center; gap:6px; margin-top:6px;">
+             <label style="font-size:0.72rem; opacity:.6; margin:0;">Cost:</label>
+             <input type="number" step="0.01" class="order-cost-input" value="${o.cost ?? ''}" placeholder="0.00" style="width:80px; padding:4px; font-size:0.8rem;">
+             <button class="edit-btn save-order-cost-btn" style="padding:4px 8px; font-size:0.72rem;">Save</button>
+             ${!costKnown ? '<span class="missing-flag" style="font-size:0.72rem;">not counted yet</span>' : ''}
+           </div>`
+        : '';
+
       row.innerHTML = `
         <div class="info">
-          <div class="name">${o.products?.name || 'Product #' + o.product_id}</div>
-          <div class="meta">$${o.amount_paid ?? '—'} · ${o.customer_email || 'no email'} · ${new Date(o.created_at).toLocaleString()}${prodigiBit}${printifyBit}</div>
+          <div class="name">${name}</div>
+          <div class="meta">$${o.amount_paid ?? '—'} · ${o.customer_email || 'no email'} · ${new Date(o.created_at).toLocaleString()}${sourceBit}${prodigiBit}${printifyBit}</div>
+          ${costInputHtml}
         </div>
       `;
+
+      const saveBtn = row.querySelector('.save-order-cost-btn');
+      if (saveBtn) {
+        saveBtn.addEventListener('click', async () => {
+          const val = row.querySelector('.order-cost-input').value;
+          const cost = val ? parseFloat(val) : null;
+          await supabaseClient.from('orders').update({ cost }).eq('id', o.id);
+          await loadOrders();
+        });
+      }
+
       orderListEl.appendChild(row);
     });
   }
@@ -1428,6 +1592,34 @@
   document.getElementById('newGoalText').addEventListener('keydown', (e) => {
     if (e.key === 'Enter') document.getElementById('addGoalBtn').click();
   });
+
+  // Paste a whole punch list in one go, instead of adding one task at a
+  // time. Splits on line breaks, strips off leading bullets/dashes/numbers
+  // that tend to come along when you copy a list from somewhere else, and
+  // adds every non-empty line as its own task under the selected date.
+  document.getElementById('pasteGoalsBtn').onclick = async () => {
+    const textEl = document.getElementById('pasteGoalsText');
+    const raw = textEl.value;
+    const lines = raw
+      .split('\n')
+      .map(line => line.trim())
+      .map(line => line.replace(/^[-*••]+\s*/, '').replace(/^\d+[.)]\s*/, '').trim())
+      .filter(line => line.length > 0);
+
+    if (lines.length === 0) return;
+
+    const rows = lines.map(text => ({ entry_date: selectedGoalDate, text }));
+    const { error } = await supabaseClient.from('daily_goals').insert(rows);
+    if (error) { alert('Error saving goals: ' + error.message); return; }
+
+    textEl.value = '';
+    const confirmEl = document.getElementById('pasteGoalsConfirm');
+    confirmEl.textContent = `Added ${lines.length} task${lines.length === 1 ? '' : 's'}.`;
+    confirmEl.style.display = 'block';
+    setTimeout(() => { confirmEl.style.display = 'none'; }, 3000);
+    await loadGoals();
+    await renderGoalsCalendar();
+  };
 
   // ===== DIRECTORY LISTINGS (table: directory_listings) =====
   async function loadDisciplineOptions() {
@@ -1750,6 +1942,106 @@
     await supabaseClient.from('promo_materials').update({ sort_order: bOrder }).eq('id', a.id);
     await supabaseClient.from('promo_materials').update({ sort_order: aOrder }).eq('id', b.id);
     await loadPromoAdminList();
+  }
+
+  // ===== VENDOR SPOTS & POP-UPS =====
+  // Run the numbers before you spend anything, same idea as the product
+  // margin calculator, just for a booth instead of a single item.
+  function updateVendorOppCalc() {
+    const cost = parseFloat(document.getElementById('voCost').value) || 0;
+    const revenue = parseFloat(document.getElementById('voRevenue').value) || 0;
+    const net = revenue - cost;
+    const netEl = document.getElementById('voNet');
+    netEl.textContent = (net < 0 ? '-$' + Math.abs(net).toFixed(2) : '$' + net.toFixed(2));
+    const row = netEl.closest('.margin-calc-row');
+    row.classList.remove('good', 'warn', 'bad');
+    row.classList.add(net > 0 ? 'good' : (net === 0 ? 'warn' : 'bad'));
+  }
+  ['voCost', 'voRevenue'].forEach(id => {
+    document.getElementById(id).addEventListener('input', updateVendorOppCalc);
+  });
+
+  document.getElementById('addVendorOppBtn').onclick = async () => {
+    const name = document.getElementById('voName').value.trim();
+    const location = document.getElementById('voLocation').value.trim() || null;
+    const application_deadline = document.getElementById('voDeadline').value || null;
+    const event_date = document.getElementById('voEventDate').value || null;
+    const booth_cost = document.getElementById('voCost').value ? parseFloat(document.getElementById('voCost').value) : null;
+    const estimated_revenue = document.getElementById('voRevenue').value ? parseFloat(document.getElementById('voRevenue').value) : null;
+    const status = document.getElementById('voStatus').value;
+    const notes = document.getElementById('voNotes').value.trim() || null;
+    const errEl = document.getElementById('voAddError');
+    const confirmEl = document.getElementById('voAddConfirm');
+    errEl.style.display = 'none';
+    confirmEl.style.display = 'none';
+
+    if (!name) { errEl.textContent = 'Name is required.'; errEl.style.display = 'block'; return; }
+
+    const { error } = await supabaseClient.from('vendor_opportunities').insert([{
+      name, location, application_deadline, event_date, booth_cost, estimated_revenue, status, notes
+    }]);
+    if (error) { errEl.textContent = 'Error saving: ' + error.message; errEl.style.display = 'block'; return; }
+
+    document.getElementById('voName').value = '';
+    document.getElementById('voLocation').value = '';
+    document.getElementById('voDeadline').value = '';
+    document.getElementById('voEventDate').value = '';
+    document.getElementById('voCost').value = '';
+    document.getElementById('voRevenue').value = '';
+    document.getElementById('voStatus').value = 'researching';
+    document.getElementById('voNotes').value = '';
+    updateVendorOppCalc();
+    confirmEl.style.display = 'block';
+    setTimeout(() => { confirmEl.style.display = 'none'; }, 3000);
+    await loadVendorOpps();
+  };
+
+  async function loadVendorOpps() {
+    const listEl = document.getElementById('vendorOppList');
+    listEl.innerHTML = '<p style="opacity:.5;">Loading...</p>';
+
+    const { data: opps, error } = await supabaseClient
+      .from('vendor_opportunities')
+      .select('*')
+      .order('application_deadline', { ascending: true, nullsFirst: false });
+
+    if (error || !opps || opps.length === 0) {
+      listEl.innerHTML = '<p style="opacity:.5;">Nothing on the radar yet.</p>';
+      return;
+    }
+
+    const statusLabels = { researching: 'Researching', applying: 'Applying', confirmed: 'Confirmed — going', passed: 'Passed on it' };
+    const today = new Date().toISOString().slice(0, 10);
+
+    listEl.innerHTML = '';
+    opps.forEach(o => {
+      const row = document.createElement('div');
+      row.className = 'product-row';
+      const net = (o.estimated_revenue ?? 0) - (o.booth_cost ?? 0);
+      const netClass = net > 0 ? '' : (net < 0 ? 'missing-flag' : '');
+      const deadlineSoon = o.application_deadline && o.application_deadline >= today &&
+        (new Date(o.application_deadline) - new Date(today)) / 86400000 <= 14;
+      const deadlineBit = o.application_deadline
+        ? ` · apply by ${o.application_deadline}${deadlineSoon ? ' <span class="missing-flag">— SOON</span>' : ''}`
+        : '';
+      const eventBit = o.event_date ? ` · event ${o.event_date}` : '';
+      const costBit = (o.booth_cost != null || o.estimated_revenue != null)
+        ? ` · cost $${o.booth_cost ?? '—'}, est. $${o.estimated_revenue ?? '—'}, <span class="${netClass}">net ${net >= 0 ? '$' : '-$'}${Math.abs(net).toFixed(2)}</span>`
+        : '';
+      row.innerHTML = `
+        <div class="info">
+          <div class="name">${o.name}</div>
+          <div class="meta">${o.location || 'location not set'} · ${statusLabels[o.status] || o.status}${deadlineBit}${eventBit}${costBit}${o.notes ? ' · ' + o.notes : ''}</div>
+        </div>
+        <button class="del-btn" data-id="${o.id}">Delete</button>
+      `;
+      row.querySelector('.del-btn').addEventListener('click', async () => {
+        if (!confirm('Delete this?')) return;
+        await supabaseClient.from('vendor_opportunities').delete().eq('id', o.id);
+        await loadVendorOpps();
+      });
+      listEl.appendChild(row);
+    });
   }
 
   // ===== TIME TRACKER =====
