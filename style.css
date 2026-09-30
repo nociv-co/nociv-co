@@ -509,6 +509,65 @@ footer.nociv-footer {
 }
 .hub-back:hover { opacity: 1; }
 
+/* ---------- HUB CARD VARIANTS ----------
+   The three hub pages (About, The Build, Base) all sit on the light paper
+   background, so a flat black tile reads wrong on every one of them. Each
+   page gets its own material instead, same grid and click behavior, three
+   different worlds. ---------- */
+
+/* ABOUT: grey and boxy. A solid, square block, not a floating dark island. */
+#aboutHub .hub-card {
+  background: var(--grey-dark);
+  border: 2px solid var(--ink);
+  border-radius: 3px;
+  color: var(--white);
+  transition: background 0.15s ease, border-color 0.15s ease;
+}
+#aboutHub .hub-card:hover {
+  background: var(--charcoal-light);
+  border-color: var(--gold);
+  transform: none;
+}
+#aboutHub .hub-name { color: #fff; }
+#aboutHub .hub-desc { color: #d8d8d8; opacity: .85; }
+
+/* THE BUILD (Tools): a paper, stationery feel, like a page torn from a
+   leather-bound journal instead of a dark app tile. */
+#buildHub .hub-card {
+  background: linear-gradient(180deg, #f6efdd 0%, #ecdfc0 100%);
+  border: 1px solid #c9b896;
+  border-left: 6px solid #5c4029;
+  border-radius: 3px 10px 10px 3px;
+  color: var(--ink);
+  box-shadow: 2px 3px 0 rgba(0,0,0,0.1), inset 0 0 0 1px rgba(255,255,255,0.35);
+}
+#buildHub .hub-card:hover {
+  border-left-color: var(--gold);
+  box-shadow: 3px 5px 0 rgba(0,0,0,0.14), inset 0 0 0 1px rgba(255,255,255,0.4);
+}
+#buildHub .hub-name { color: #3a2a18; }
+#buildHub .hub-desc { color: #5a4a35; opacity: .9; }
+
+/* BASE (and its Share sub-hub): cream instead of black, matching the
+   paper/board-card look already used elsewhere on this page. */
+#baseHub .hub-card,
+#shareHub .hub-card {
+  background: var(--paper-dim);
+  border: 1px solid #bbb;
+  border-left: 4px solid var(--red);
+  border-radius: 4px;
+  color: var(--ink);
+}
+#baseHub .hub-card:hover,
+#shareHub .hub-card:hover {
+  background: #e4e4e4;
+  border-left-color: var(--gold);
+}
+#baseHub .hub-name,
+#shareHub .hub-name { color: var(--ink); }
+#baseHub .hub-desc,
+#shareHub .hub-desc { color: #3a3a3a; opacity: .85; }
+
 /* ---------- POP-UP SHOP CARD ---------- */
 .popup-card-img {
   width: 100%;
