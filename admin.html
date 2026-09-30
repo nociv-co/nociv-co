@@ -40,6 +40,16 @@
   .admin-note { color: var(--green); font-size: 0.85rem; margin-top: 8px; display: none; }
   .field-hint { font-size: 0.72rem; opacity: .55; margin-top: -2px; margin-bottom: 4px; }
 
+  .margin-calc {
+    background: rgba(0,0,0,0.03); border: 1px solid rgba(0,0,0,0.1); border-radius: 8px;
+    padding: 12px 14px; margin: 14px 0 4px; font-size: 0.85rem;
+  }
+  .margin-calc-row { display: flex; justify-content: space-between; padding: 3px 0; opacity: .75; }
+  .margin-calc-row.total { font-weight: 800; opacity: 1; border-top: 1px solid rgba(0,0,0,0.1); margin-top: 4px; padding-top: 6px; }
+  .margin-calc-row.good span:last-child { color: var(--green); }
+  .margin-calc-row.warn span:last-child { color: var(--gold); }
+  .margin-calc-row.bad span:last-child { color: var(--red); }
+
   .product-row {
     display: flex; align-items: center; gap: 14px; border: 1px solid #ccc;
     padding: 12px; margin-bottom: 10px; background: #fff;
@@ -279,6 +289,20 @@
       <div class="admin-section-body">
         <div class="admin-form">
           <h3 style="margin-top:0;">Add a Product</h3>
+
+          <label for="pPreset">Quick fill (optional — starting point only, adjust anything after)</label>
+          <select id="pPreset">
+            <option value="">Choose a preset...</option>
+            <option value="printify_pin">Printify — Pin/Button</option>
+            <option value="printify_poster">Printify — Poster</option>
+            <option value="printify_tapestry">Printify — Tapestry</option>
+            <option value="printify_tote">Printify — Tote Bag</option>
+            <option value="printify_case">Printify — Phone Case</option>
+            <option value="prodigi_item">Prodigi — Print-on-Demand</option>
+            <option value="in_house_shirt">In-House — Screen-Printed Shirt</option>
+          </select>
+          <p class="admin-note" id="presetAppliedNote" style="display:block; opacity:.6;">&nbsp;</p>
+
           <label for="pName">Name</label>
           <input type="text" id="pName" placeholder="e.g. Nociv America Cream">
 
@@ -291,9 +315,31 @@
               <input type="number" id="pPrice" step="0.01" placeholder="15.00">
             </div>
             <div>
-              <label for="pCost">Your cost ($ — private, never shown publicly)</label>
+              <label for="pCost">Item cost ($ — what you pay to make or print it, private)</label>
               <input type="number" id="pCost" step="0.01" placeholder="6.00">
             </div>
+          </div>
+
+          <div class="admin-form-row">
+            <div>
+              <label for="pShippingCost">Shipping cost ($ — what it costs to ship this one item, private)</label>
+              <input type="number" id="pShippingCost" step="0.01" placeholder="4.69">
+            </div>
+            <div>
+              <label for="pPlatformFeePct">Platform fee (% — Printify/Prodigi markup or commission, if any)</label>
+              <input type="number" id="pPlatformFeePct" step="0.1" placeholder="0">
+            </div>
+          </div>
+
+          <div class="margin-calc" id="marginCalcBox">
+            <div class="margin-calc-row"><span>Stripe fee (2.9% + $0.30)</span><span id="mcStripeFee">$0.00</span></div>
+            <div class="margin-calc-row"><span>Platform fee</span><span id="mcPlatformFee">$0.00</span></div>
+            <div class="margin-calc-row"><span>Total cost to you</span><span id="mcTotalCost">$0.00</span></div>
+            <div class="margin-calc-row total"><span>Profit per sale</span><span id="mcProfit">$0.00</span></div>
+            <div class="margin-calc-row total"><span>Margin</span><span id="mcMarginPct">0%</span></div>
+          </div>
+          <div class="field-hint">
+            This updates as you type, before you save anything. Green means a healthy margin, gold means thin but workable, red means you're losing money or barely breaking even, fix the price or find a cheaper fulfillment option before you list it.
           </div>
 
           <div class="admin-form-row">
@@ -343,6 +389,9 @@
             <div id="printifyIdWrap" style="display:none;">
               <label for="pPrintifyProductId">Printify Product ID (from that product's page URL in your Printify account)</label>
               <input type="text" id="pPrintifyProductId" placeholder="e.g. 6abc3722276e43a5870e7476">
+              <div class="field-hint">
+                Selling a bundle of different designs as one item, a 5 pack of pins, say. Paste every design's Printify Product ID here separated by commas. They'll all ship together in one order, so shipping gets charged once for the whole bundle instead of once per pin.
+              </div>
             </div>
           </div>
 
@@ -686,6 +735,114 @@
     }
   };
 
+  // ===== MARGIN CALCULATOR (live, before you ever save the listing) =====
+  // Cost plus shipping plus platform fee plus Stripe's cut, checked against
+  // the price, so you know if a product is actually worth listing before
+  // you build it, not after the first order loses you money.
+  function computeMargin(price, cost, shipping, platformFeePct) {
+    const stripeFee = price > 0 ? (price * 0.029 + 0.30) : 0;
+    const platformFee = price > 0 ? (price * (platformFeePct / 100)) : 0;
+    const totalCost = cost + shipping + stripeFee + platformFee;
+    const profit = price - totalCost;
+    const marginPct = price > 0 ? (profit / price * 100) : 0;
+    return { stripeFee, platformFee, totalCost, profit, marginPct };
+  }
+
+  function renderMarginCalc(price, cost, shipping, platformFeePct, els) {
+    const { stripeFee, platformFee, totalCost, profit, marginPct } = computeMargin(price, cost, shipping, platformFeePct);
+    els.stripeFee.textContent = '$' + stripeFee.toFixed(2);
+    els.platformFee.textContent = '$' + platformFee.toFixed(2);
+    els.totalCost.textContent = '$' + totalCost.toFixed(2);
+    els.profit.textContent = (profit < 0 ? '-$' + Math.abs(profit).toFixed(2) : '$' + profit.toFixed(2));
+    els.marginPct.textContent = marginPct.toFixed(0) + '%';
+
+    const profitRow = els.profit.closest('.margin-calc-row');
+    const marginRow = els.marginPct.closest('.margin-calc-row');
+    [profitRow, marginRow].forEach(row => row.classList.remove('good', 'warn', 'bad'));
+    let cls = 'bad';
+    if (marginPct >= 40) cls = 'good';
+    else if (marginPct >= 15) cls = 'warn';
+    profitRow.classList.add(cls);
+    marginRow.classList.add(cls);
+  }
+
+  function updateAddMarginCalc() {
+    const price = parseFloat(document.getElementById('pPrice').value) || 0;
+    const cost = parseFloat(document.getElementById('pCost').value) || 0;
+    const shipping = parseFloat(document.getElementById('pShippingCost').value) || 0;
+    const platformFeePct = parseFloat(document.getElementById('pPlatformFeePct').value) || 0;
+    renderMarginCalc(price, cost, shipping, platformFeePct, {
+      stripeFee: document.getElementById('mcStripeFee'),
+      platformFee: document.getElementById('mcPlatformFee'),
+      totalCost: document.getElementById('mcTotalCost'),
+      profit: document.getElementById('mcProfit'),
+      marginPct: document.getElementById('mcMarginPct'),
+    });
+  }
+  ['pPrice', 'pCost', 'pShippingCost', 'pPlatformFeePct'].forEach(id => {
+    document.getElementById(id).addEventListener('input', updateAddMarginCalc);
+  });
+  updateAddMarginCalc();
+
+  // ===== QUICK FILL PRESETS =====
+  // Real numbers you and I already worked out, so a new pin or poster starts
+  // from something close to right instead of a blank form. Nothing here is
+  // locked, it's just a faster starting point — change anything after.
+  const productPresets = {
+    printify_pin: {
+      shop: 'clothing', category: 'Accessory', fulfillment_type: 'printify',
+      shipping_cost: 4.69, platform_fee_pct: 0,
+      note: 'Filled in Printify fulfillment and a starting shipping cost of $4.69 (Printify\'s flat rate for a small item). Paste the Printify Product ID, set your price and item cost.'
+    },
+    printify_poster: {
+      shop: 'art', category: 'Posters', fulfillment_type: 'printify',
+      shipping_cost: 5.69, platform_fee_pct: 0,
+      note: 'Filled in Printify fulfillment and a starting shipping cost of $5.69. Paste the Printify Product ID, set your price and item cost.'
+    },
+    printify_tapestry: {
+      shop: 'art', category: 'Tapestries', fulfillment_type: 'printify',
+      shipping_cost: 5.69, platform_fee_pct: 0,
+      note: 'Filled in Printify fulfillment and a starting shipping cost of $5.69. Paste the Printify Product ID, set your price and item cost.'
+    },
+    printify_tote: {
+      shop: 'clothing', category: 'Tote Bags', fulfillment_type: 'printify',
+      shipping_cost: 4.69, platform_fee_pct: 0,
+      note: 'Filled in Printify fulfillment and a starting shipping cost of $4.69. Paste the Printify Product ID, set your price and item cost.'
+    },
+    printify_case: {
+      shop: 'tech', category: 'Phone Cases', fulfillment_type: 'printify',
+      shipping_cost: 4.69, platform_fee_pct: 0,
+      note: 'Filled in Printify fulfillment and a starting shipping cost of $4.69. Paste the Printify Product ID, set your price and item cost.'
+    },
+    prodigi_item: {
+      shop: 'art', category: '', fulfillment_type: 'prodigi',
+      shipping_cost: '', platform_fee_pct: 0,
+      note: 'Filled in Prodigi fulfillment. Shipping cost varies a lot by product with Prodigi, check their order screen for the real number before you set a price. Paste the Prodigi SKU too.'
+    },
+    in_house_shirt: {
+      shop: 'clothing', category: 'Shirts', fulfillment_type: 'in_house',
+      shipping_cost: 0, platform_fee_pct: 0,
+      note: 'Filled in In-House fulfillment. Add your own shipping cost if you charge/pay for it, set a starting inventory count, price, and item cost.'
+    }
+  };
+
+  document.getElementById('pPreset').addEventListener('change', (e) => {
+    const preset = productPresets[e.target.value];
+    const noteEl = document.getElementById('presetAppliedNote');
+    if (!preset) { noteEl.innerHTML = '&nbsp;'; return; }
+
+    document.getElementById('pShop').value = preset.shop;
+    if (preset.category) document.getElementById('pCategory').value = preset.category;
+    document.getElementById('pFulfillment').value = preset.fulfillment_type;
+    document.getElementById('pFulfillment').dispatchEvent(new Event('change'));
+    document.getElementById('pShippingCost').value = preset.shipping_cost;
+    document.getElementById('pPlatformFeePct').value = preset.platform_fee_pct;
+    updateAddMarginCalc();
+
+    noteEl.textContent = preset.note;
+    noteEl.style.color = 'var(--green)';
+  });
+
   // ===== ADD PRODUCT (full-resolution upload, no resizing) =====
   document.getElementById('pFulfillment').addEventListener('change', (e) => {
     document.getElementById('prodigiSkuWrap').style.display = e.target.value === 'prodigi' ? 'block' : 'none';
@@ -701,6 +858,8 @@
     const description = document.getElementById('pDescription').value.trim() || null;
     const priceVal = document.getElementById('pPrice').value;
     const costVal = document.getElementById('pCost').value;
+    const shippingCostVal = document.getElementById('pShippingCost').value;
+    const platformFeePctVal = document.getElementById('pPlatformFeePct').value;
     const inventoryVal = document.getElementById('pInventory').value;
     const shop = document.getElementById('pShop').value;
     const category = document.getElementById('pCategory').value.trim();
@@ -759,6 +918,8 @@
       description,
       price: priceVal ? parseFloat(priceVal) : null,
       cost: costVal ? parseFloat(costVal) : null,
+      shipping_cost: shippingCostVal ? parseFloat(shippingCostVal) : null,
+      platform_fee_pct: platformFeePctVal ? parseFloat(platformFeePctVal) : null,
       inventory_count: (fulfillment_type === 'prodigi' || fulfillment_type === 'printify') ? null : (inventoryVal ? parseInt(inventoryVal) : null),
       shop,
       category,
@@ -780,7 +941,11 @@
     document.getElementById('pDescription').value = '';
     document.getElementById('pPrice').value = '';
     document.getElementById('pCost').value = '';
+    document.getElementById('pShippingCost').value = '';
+    document.getElementById('pPlatformFeePct').value = '';
     document.getElementById('pInventory').value = '';
+    document.getElementById('pPreset').value = '';
+    document.getElementById('presetAppliedNote').innerHTML = '&nbsp;';
     document.getElementById('pCategory').value = '';
     document.getElementById('pProdigiSku').value = '';
     document.getElementById('pPrintifyProductId').value = '';
@@ -789,6 +954,7 @@
     document.getElementById('pImageUrl').value = '';
     confirmEl.style.display = 'block';
     setTimeout(() => { confirmEl.style.display = 'none'; }, 3000);
+    updateAddMarginCalc();
     await loadCategoryOptions();
     await loadProducts();
   };
@@ -853,13 +1019,25 @@
     const stripeWarning = (p.status === 'for_sale' && !p.stripe_price_id)
       ? ' · <span class="missing-flag">NO STRIPE PRICE — BUY WILL FAIL</span>'
       : '';
+    let marginBit = '';
+    if (p.price) {
+      const { profit, marginPct } = computeMargin(
+        parseFloat(p.price) || 0,
+        parseFloat(p.cost) || 0,
+        parseFloat(p.shipping_cost) || 0,
+        parseFloat(p.platform_fee_pct) || 0
+      );
+      const flagClass = marginPct < 0 ? 'missing-flag' : '';
+      marginBit = ` · <span class="${flagClass}">profit $${profit.toFixed(2)} (${marginPct.toFixed(0)}% margin)</span>`;
+    }
     row.innerHTML = `
       ${imgHtml}
       <div class="info">
         <div class="name">${p.name}</div>
-        <div class="meta">${p.shop} · ${p.category} · ${p.status === 'for_sale' ? 'For Sale' : 'Coming Soon'} · ${p.price ? '$' + p.price : 'no price set'} · cost $${p.cost ?? '—'} · stock: ${(p.fulfillment_type === 'prodigi' || p.fulfillment_type === 'printify') ? 'unlimited (' + (p.fulfillment_type === 'prodigi' ? 'Prodigi' : 'Printify') + ')' : (p.inventory_count ?? 'not tracked')} · ${p.fulfillment_type === 'prodigi' ? 'Prodigi SKU: ' + (p.prodigi_sku || 'none set') : p.fulfillment_type === 'printify' ? 'Printify ID: ' + (p.printify_product_id || 'none set') : 'In-House'}${stripeWarning}</div>
+        <div class="meta">${p.shop} · ${p.category} · ${p.status === 'for_sale' ? 'For Sale' : 'Coming Soon'} · ${p.price ? '$' + p.price : 'no price set'} · cost $${p.cost ?? '—'} · stock: ${(p.fulfillment_type === 'prodigi' || p.fulfillment_type === 'printify') ? 'unlimited (' + (p.fulfillment_type === 'prodigi' ? 'Prodigi' : 'Printify') + ')' : (p.inventory_count ?? 'not tracked')} · ${p.fulfillment_type === 'prodigi' ? 'Prodigi SKU: ' + (p.prodigi_sku || 'none set') : p.fulfillment_type === 'printify' ? 'Printify ID: ' + (p.printify_product_id || 'none set') : 'In-House'}${stripeWarning}${marginBit}</div>
         <div class="votes">${voteCount} votes</div>
       </div>
+      <button class="edit-btn dup-btn" data-id="${p.id}">Duplicate</button>
       <button class="edit-btn" data-id="${p.id}">Edit</button>
       <button class="del-btn" data-id="${p.id}">Delete</button>
     `;
@@ -870,9 +1048,46 @@
       await loadProducts();
     });
 
-    row.querySelector('.edit-btn').addEventListener('click', () => {
+    row.querySelector('.dup-btn').addEventListener('click', () => {
+      duplicateProductIntoForm(p);
+    });
+
+    row.querySelector('.edit-btn:not(.dup-btn)').addEventListener('click', () => {
       renderRowEdit(row, p);
     });
+  }
+
+  // Copies an existing product's setup into the Add a Product form so you're
+  // only changing what's actually different, the name, the design ID, maybe
+  // the price, instead of retyping fulfillment type and fees every time.
+  function duplicateProductIntoForm(p) {
+    document.getElementById('pName').value = '';
+    document.getElementById('pDescription').value = p.description || '';
+    document.getElementById('pPrice').value = p.price ?? '';
+    document.getElementById('pCost').value = p.cost ?? '';
+    document.getElementById('pShippingCost').value = p.shipping_cost ?? '';
+    document.getElementById('pPlatformFeePct').value = p.platform_fee_pct ?? '';
+    document.getElementById('pShop').value = p.shop;
+    document.getElementById('pCategory').value = p.category || '';
+    document.getElementById('pStatus').value = p.status;
+    document.getElementById('pInventory').value = p.inventory_count ?? '';
+    document.getElementById('pFulfillment').value = p.fulfillment_type;
+    document.getElementById('pFulfillment').dispatchEvent(new Event('change'));
+    document.getElementById('pProdigiSku').value = p.prodigi_sku || '';
+    document.getElementById('pPrintifyProductId').value = '';
+    document.getElementById('pStripePriceId').value = '';
+    document.getElementById('pImageUrl').value = '';
+    document.getElementById('pImage').value = '';
+    document.getElementById('pPreset').value = '';
+    updateAddMarginCalc();
+
+    const noteEl = document.getElementById('presetAppliedNote');
+    noteEl.textContent = `Duplicated from "${p.name}". Set a new name, a new Printify/Prodigi ID, a new photo, and adjust price if needed, then save.`;
+    noteEl.style.color = 'var(--gold)';
+
+    document.getElementById('sec-products').open = true;
+    document.getElementById('pName').scrollIntoView({ behavior: 'smooth', block: 'center' });
+    document.getElementById('pName').focus();
   }
 
   function renderRowEdit(row, p) {
@@ -896,6 +1111,21 @@
             <input type="number" class="edit-inventory" value="${p.inventory_count ?? ''}" style="width:100%; padding:6px;">
           </div>
         </div>
+        <div style="display:flex; gap:8px; margin-bottom:8px;">
+          <div style="flex:1;">
+            <label style="font-size:0.75rem; opacity:.7; display:block;">Shipping cost</label>
+            <input type="number" step="0.01" class="edit-shipping" value="${p.shipping_cost ?? ''}" style="width:100%; padding:6px;">
+          </div>
+          <div style="flex:1;">
+            <label style="font-size:0.75rem; opacity:.7; display:block;">Platform fee %</label>
+            <input type="number" step="0.1" class="edit-platform-fee" value="${p.platform_fee_pct ?? ''}" style="width:100%; padding:6px;">
+          </div>
+        </div>
+        <div class="margin-calc" id="editMarginCalc-${p.id}">
+          <div class="margin-calc-row"><span>Total cost to you</span><span class="edit-mc-total">$0.00</span></div>
+          <div class="margin-calc-row total"><span>Profit per sale</span><span class="edit-mc-profit">$0.00</span></div>
+          <div class="margin-calc-row total"><span>Margin</span><span class="edit-mc-margin">0%</span></div>
+        </div>
         <label style="font-size:0.75rem; opacity:.7; display:block;">Stripe Price ID</label>
         <input type="text" class="edit-stripe-price" value="${p.stripe_price_id ?? ''}" style="width:100%; margin-bottom:8px; padding:6px;">
         <div style="display:flex; gap:8px; margin-bottom:10px;">
@@ -918,6 +1148,29 @@
       </div>
     `;
 
+    function updateEditMarginCalc() {
+      const price = parseFloat(row.querySelector('.edit-price').value) || 0;
+      const cost = parseFloat(row.querySelector('.edit-cost').value) || 0;
+      const shipping = parseFloat(row.querySelector('.edit-shipping').value) || 0;
+      const platformFeePct = parseFloat(row.querySelector('.edit-platform-fee').value) || 0;
+      const { totalCost, profit, marginPct } = computeMargin(price, cost, shipping, platformFeePct);
+      row.querySelector('.edit-mc-total').textContent = '$' + totalCost.toFixed(2);
+      row.querySelector('.edit-mc-profit').textContent = (profit < 0 ? '-$' + Math.abs(profit).toFixed(2) : '$' + profit.toFixed(2));
+      row.querySelector('.edit-mc-margin').textContent = marginPct.toFixed(0) + '%';
+      const profitRow = row.querySelector('.edit-mc-profit').closest('.margin-calc-row');
+      const marginRow = row.querySelector('.edit-mc-margin').closest('.margin-calc-row');
+      [profitRow, marginRow].forEach(r => r.classList.remove('good', 'warn', 'bad'));
+      let cls = 'bad';
+      if (marginPct >= 40) cls = 'good';
+      else if (marginPct >= 15) cls = 'warn';
+      profitRow.classList.add(cls);
+      marginRow.classList.add(cls);
+    }
+    ['.edit-price', '.edit-cost', '.edit-shipping', '.edit-platform-fee'].forEach(sel => {
+      row.querySelector(sel).addEventListener('input', updateEditMarginCalc);
+    });
+    updateEditMarginCalc();
+
     row.querySelector('.cancel-edit-btn').addEventListener('click', () => loadProducts());
 
     row.querySelector('.save-edit-btn').addEventListener('click', async () => {
@@ -932,6 +1185,8 @@
         description: row.querySelector('.edit-description').value.trim() || null,
         price: row.querySelector('.edit-price').value ? parseFloat(row.querySelector('.edit-price').value) : null,
         cost: row.querySelector('.edit-cost').value ? parseFloat(row.querySelector('.edit-cost').value) : null,
+        shipping_cost: row.querySelector('.edit-shipping').value ? parseFloat(row.querySelector('.edit-shipping').value) : null,
+        platform_fee_pct: row.querySelector('.edit-platform-fee').value ? parseFloat(row.querySelector('.edit-platform-fee').value) : null,
         inventory_count: row.querySelector('.edit-inventory').value ? parseInt(row.querySelector('.edit-inventory').value) : null,
         stripe_price_id: newStripePrice,
         shop: row.querySelector('.edit-shop').value,
