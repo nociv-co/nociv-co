@@ -1341,6 +1341,20 @@
         <input type="file" class="edit-add-photos" accept="image/*" multiple style="margin-bottom:10px;">
         <label style="font-size:0.75rem; opacity:.7; display:block;">Stripe Price ID</label>
         <input type="text" class="edit-stripe-price" value="${p.stripe_price_id ?? ''}" style="width:100%; margin-bottom:8px; padding:6px;">
+        <label style="font-size:0.75rem; opacity:.7; display:block;">Fulfillment</label>
+        <select class="edit-fulfillment" style="width:100%; margin-bottom:8px; padding:6px;">
+          <option value="in_house" ${p.fulfillment_type === 'in_house' ? 'selected' : ''}>In-House (you make/ship it)</option>
+          <option value="prodigi" ${p.fulfillment_type === 'prodigi' ? 'selected' : ''}>Prodigi Print-on-Demand</option>
+          <option value="printify" ${p.fulfillment_type === 'printify' ? 'selected' : ''}>Printify Print-on-Demand</option>
+        </select>
+        <div class="edit-prodigi-wrap" style="display:${p.fulfillment_type === 'prodigi' ? 'block' : 'none'};">
+          <label style="font-size:0.75rem; opacity:.7; display:block;">Prodigi SKU</label>
+          <input type="text" class="edit-prodigi-sku" value="${p.prodigi_sku ?? ''}" style="width:100%; margin-bottom:8px; padding:6px;">
+        </div>
+        <div class="edit-printify-wrap" style="display:${p.fulfillment_type === 'printify' ? 'block' : 'none'};">
+          <label style="font-size:0.75rem; opacity:.7; display:block;">Printify Product ID (comma-separate for a bundle)</label>
+          <input type="text" class="edit-printify-id" value="${p.printify_product_id ?? ''}" style="width:100%; margin-bottom:8px; padding:6px;">
+        </div>
         <div style="display:flex; gap:8px; margin-bottom:10px;">
           <select class="edit-shop" style="flex:1; padding:6px;">
             <option value="clothing" ${p.shop === 'clothing' ? 'selected' : ''}>Clothing</option>
@@ -1445,13 +1459,29 @@
     });
     updateEditMarginCalc();
 
+    row.querySelector('.edit-fulfillment').addEventListener('change', (e) => {
+      row.querySelector('.edit-prodigi-wrap').style.display = e.target.value === 'prodigi' ? 'block' : 'none';
+      row.querySelector('.edit-printify-wrap').style.display = e.target.value === 'printify' ? 'block' : 'none';
+    });
+
     row.querySelector('.cancel-edit-btn').addEventListener('click', () => loadProducts());
 
     row.querySelector('.save-edit-btn').addEventListener('click', async () => {
       const newStatus = row.querySelector('.edit-status').value;
       const newStripePrice = row.querySelector('.edit-stripe-price').value.trim() || null;
+      const newFulfillment = row.querySelector('.edit-fulfillment').value;
+      const newProdigiSku = row.querySelector('.edit-prodigi-sku').value.trim() || null;
+      const newPrintifyId = row.querySelector('.edit-printify-id').value.trim() || null;
       if (newStatus === 'for_sale' && !newStripePrice) {
         alert('This product is marked "For Sale" but has no Stripe Price ID — the Buy button will fail. Add a Stripe Price ID or set status back to "Coming Soon".');
+        return;
+      }
+      if (newFulfillment === 'prodigi' && !newProdigiSku) {
+        alert('This is set to Prodigi Print-on-Demand but has no Prodigi SKU. Add one or switch Fulfillment to something else.');
+        return;
+      }
+      if (newFulfillment === 'printify' && !newPrintifyId) {
+        alert('This is set to Printify Print-on-Demand but has no Printify Product ID. Add one or switch Fulfillment to something else.');
         return;
       }
       const updated = {
@@ -1466,6 +1496,9 @@
         shop: row.querySelector('.edit-shop').value,
         category: row.querySelector('.edit-category').value.trim(),
         status: newStatus,
+        fulfillment_type: newFulfillment,
+        prodigi_sku: newFulfillment === 'prodigi' ? newProdigiSku : null,
+        printify_product_id: newFulfillment === 'printify' ? newPrintifyId : null,
       };
       const { error } = await supabaseClient.from('products').update(updated).eq('id', p.id);
       if (error) { alert('Error saving: ' + error.message); return; }
