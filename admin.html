@@ -175,6 +175,11 @@
   .admin-section[open] summary::before { transform: rotate(90deg); }
   .admin-section-hint { font-weight: 400; font-size: 0.75rem; opacity: .6; }
   .admin-section-body { padding: 0 18px 18px; }
+  .how-to-box {
+    background: rgba(212,175,55,0.1); border: 1px solid rgba(212,175,55,0.35); border-radius: 8px;
+    padding: 10px 14px; margin: 10px 0 16px; font-size: 0.82rem; line-height: 1.5;
+  }
+  .how-to-box strong { display: block; font-size: 0.72rem; text-transform: uppercase; letter-spacing: 0.04em; opacity: .7; margin-bottom: 4px; }
 </style>
 </head>
 <body>
@@ -215,9 +220,60 @@
       <a href="#sec-vendor">Vendor Spots</a>
     </nav>
 
+    <details class="admin-section" id="sec-goals" open>
+      <summary>Today's Goals &amp; Calendar <span class="admin-section-hint">pinned to the top so it's always in view</span></summary>
+      <div class="admin-section-body">
+        <div class="how-to-box">
+          <strong>What this is for</strong>
+          Your own task list and deadline tracker, nothing here shows up on the public site. Tap a date on the calendar, then type a task and hit Add, or open Paste a whole list at once to dump in several tasks in one go. A gold ring around a date means something's saved there. Once the calendar feed is set up below, everything here also shows up on your phone's actual calendar automatically.
+        </div>
+        <div class="opp-calendar" id="goalsCalendar"></div>
+        <div class="goal-add-row">
+          <input type="text" id="newGoalText" placeholder="Add a goal for this day">
+          <button id="addGoalBtn">Add</button>
+        </div>
+
+        <details class="paste-goals-box">
+          <summary>Paste a whole list at once</summary>
+          <div class="paste-goals-body">
+            <p class="field-hint" style="margin-top:8px;">
+              Copy a punch list from anywhere, a chat, your notes, whatever, and paste the whole thing in below. One task per line. It'll strip off any bullets, dashes, or numbers you copied along with it, and add every line as its own task under whichever date is selected on the calendar above.
+            </p>
+            <textarea id="pasteGoalsText" rows="6" placeholder="Paste your list here, one task per line..."></textarea>
+            <button class="admin-submit" id="pasteGoalsBtn" type="button">Add All Of These</button>
+            <p class="admin-note" id="pasteGoalsConfirm">Added.</p>
+          </div>
+        </details>
+
+        <div id="goalList"></div>
+
+        <details class="paste-goals-box">
+          <summary>Show this on your phone's calendar too</summary>
+          <div class="paste-goals-body">
+            <p class="field-hint" style="margin-top:8px;">
+              Every task and deadline you save here, goals and vendor spot deadlines both, can show up in your actual phone calendar, Google Calendar, Apple Calendar, whichever you use, and stay updated automatically as you add more, no re-copying needed. You do this once.
+            </p>
+            <p style="font-size:0.85rem; word-break:break-all; background:#fff; border:1px solid #ccc; padding:8px; border-radius:4px;" id="calendarFeedUrl">
+              Loading your link...
+            </p>
+            <button class="admin-submit" id="copyCalendarFeedBtn" type="button" style="margin-top:0;">Copy Link</button>
+            <p class="admin-note" id="copyCalendarFeedConfirm">Copied.</p>
+            <p class="field-hint">
+              <strong>On your phone (iPhone):</strong> Settings, Calendar, Accounts, Add Account, Other, Add Subscribed Calendar, paste the link above.<br>
+              <strong>Google Calendar:</strong> on a computer, open Google Calendar, the plus next to Other Calendars, From URL, paste the link above.
+            </p>
+          </div>
+        </details>
+      </div>
+    </details>
+
     <details class="admin-section" id="sec-popup">
       <summary>Pop-Up Details <span class="admin-section-hint">shows on Shop &rarr; Clothing</span></summary>
       <div class="admin-section-body">
+        <div class="how-to-box">
+          <strong>What this is for</strong>
+          Tells customers where and when your next in-person pop-up is. Fill in the three fields and hit Update, it instantly updates the "Next Location" note on the Clothing shop page and posts it to the Opportunity Board on Base. Leave a field blank and it shows as TBD on the site.
+        </div>
         <div class="admin-form">
           <p class="admin-note" style="display:block; opacity:.7;" id="popupCurrent">Loading current status…</p>
           <label for="popupLocation">Location</label>
@@ -242,6 +298,10 @@
     <details class="admin-section" id="sec-mailing">
       <summary>Mailing List</summary>
       <div class="admin-section-body">
+        <div class="how-to-box">
+          <strong>What this is for</strong>
+          Everyone who's signed up through the email box on the site, read only, there's nothing to type in here. Hit Copy All Emails, then paste that list into the Bcc field of a regular email you send yourself, that's how you message everyone at once for now.
+        </div>
         <div class="admin-form">
           <p class="admin-note" style="display:block; opacity:.7;" id="mailingCount">Loading...</p>
           <button class="admin-submit" id="copyEmailsBtn" type="button">Copy All Emails</button>
@@ -257,6 +317,10 @@
     <details class="admin-section" id="sec-time">
       <summary>Time Tracker</summary>
       <div class="admin-section-body">
+        <div class="how-to-box">
+          <strong>What this is for</strong>
+          Just for you, not shown on the site. Tracks hours you put into Nociv so you can see if your time's actually worth what you're making. Set your target hourly rate, hit Clock In when you start working, type what you're doing if you want, and Clock Out when you stop. Today and This Week totals update themselves.
+        </div>
         <div class="rate-row">
           <label for="hourlyRate" style="margin:0;">Target rate ($/hr)</label>
           <input type="number" id="hourlyRate" step="0.5" value="20">
@@ -284,34 +348,13 @@
       </div>
     </details>
 
-    <details class="admin-section" id="sec-goals">
-      <summary>Today's Goals</summary>
-      <div class="admin-section-body">
-        <div class="opp-calendar" id="goalsCalendar"></div>
-        <div class="goal-add-row">
-          <input type="text" id="newGoalText" placeholder="Add a goal for this day">
-          <button id="addGoalBtn">Add</button>
-        </div>
-
-        <details class="paste-goals-box">
-          <summary>Paste a whole list at once</summary>
-          <div class="paste-goals-body">
-            <p class="field-hint" style="margin-top:8px;">
-              Copy a punch list from anywhere, a chat, your notes, whatever, and paste the whole thing in below. One task per line. It'll strip off any bullets, dashes, or numbers you copied along with it, and add every line as its own task under whichever date is selected on the calendar above.
-            </p>
-            <textarea id="pasteGoalsText" rows="6" placeholder="Paste your list here, one task per line..."></textarea>
-            <button class="admin-submit" id="pasteGoalsBtn" type="button">Add All Of These</button>
-            <p class="admin-note" id="pasteGoalsConfirm">Added.</p>
-          </div>
-        </details>
-
-        <div id="goalList"></div>
-      </div>
-    </details>
-
     <details class="admin-section" id="sec-products">
       <summary>Products</summary>
       <div class="admin-section-body">
+        <div class="how-to-box">
+          <strong>What this is for</strong>
+          Everything for sale on the site lives here. Use Quick Fill to start from a preset like Printify Pin or In-House Shirt, or hit Duplicate on an existing product below to copy its setup into a fresh one. Fill in name, price, and your real cost, the margin box shows your actual profit before you save anything, red means don't list it yet. Status has to be For Sale with a Stripe Price ID for the Buy button to work, Coming Soon shows on the site with no buy button.
+        </div>
         <div class="admin-form">
           <h3 style="margin-top:0;">Add a Product</h3>
 
@@ -453,6 +496,10 @@
     <details class="admin-section" id="sec-orders">
       <summary>Recent Orders</summary>
       <div class="admin-section-body">
+        <div class="how-to-box">
+          <strong>What this is for</strong>
+          Every sale, from the website and from in-person Tap to Pay, lands here on its own, nothing to type in for a normal online sale. For an in-person sale, type in what it actually cost you in the Cost box on that order and hit Save, that's the only manual step, and it's what makes the Net Profit number at the top accurate.
+        </div>
         <div class="time-summary" id="revenueDashboard">
           <div class="time-summary-card">
             <div class="label">Total Revenue</div>
@@ -478,6 +525,10 @@
     <details class="admin-section" id="sec-album">
       <summary>Process Album <span class="admin-section-hint">the "making of" photo gallery on Shop</span></summary>
       <div class="admin-section-body">
+        <div class="how-to-box">
+          <strong>What this is for</strong>
+          Behind the scenes photos, cutting fabric, screen printing, whatever shows the actual making of things. Shows up in the scrollable photo album on the Clothing shop page. Upload a photo, add a caption if you want one, hit Add to Album, that's it.
+        </div>
         <div class="admin-form">
           <label for="albumImage">Add a photo</label>
           <input type="file" id="albumImage" accept="image/*">
@@ -494,6 +545,10 @@
     <details class="admin-section" id="sec-directory">
       <summary>Directory Listings <span class="admin-section-hint">shows on Base &rarr; Directory &rarr; Verified</span></summary>
       <div class="admin-section-body">
+        <div class="how-to-box">
+          <strong>What this is for</strong>
+          Other creators, shops, or studios you want listed in the community directory on Base. Fill in the fields and hit Add Listing. Use the up and down arrows next to an existing listing to reorder how they appear on the site.
+        </div>
         <div class="admin-form">
           <label for="dirName">Business or person name</label>
           <input type="text" id="dirName" placeholder="e.g. Fraqtals">
@@ -526,6 +581,10 @@
     <details class="admin-section" id="sec-zines">
       <summary>Zine Library <span class="admin-section-hint">shows on Shop &rarr; Zines</span></summary>
       <div class="admin-section-body">
+        <div class="how-to-box">
+          <strong>What this is for</strong>
+          The free zines anyone can read or download from the Shop, no payment involved, this is separate from anything that gets printed and shipped. Upload the PDF, add a cover image if you have one, title it, hit Add Zine.
+        </div>
         <div class="admin-form">
           <label for="zineTitle">Title</label>
           <input type="text" id="zineTitle" placeholder="e.g. How to Feel the Void of Life">
@@ -551,6 +610,10 @@
     <details class="admin-section" id="sec-promo">
       <summary>Spread The Word <span class="admin-section-hint">shows on Base &rarr; Share &rarr; Spread The Word</span></summary>
       <div class="admin-section-body">
+        <div class="how-to-box">
+          <strong>What this is for</strong>
+          Print-ready flyers, stickers, or anything else you want customers to download and hand out themselves, this is the word of mouth toolkit. Upload the file, describe what it is, hit Add Material.
+        </div>
         <div class="admin-form">
           <label for="promoTitle">Title</label>
           <input type="text" id="promoTitle" placeholder="e.g. NOCIV Sticker Sheet">
@@ -572,6 +635,10 @@
     <details class="admin-section" id="sec-vendor">
       <summary>Vendor Spots &amp; Pop-Ups <span class="admin-section-hint">markets, expos, conventions you're weighing</span></summary>
       <div class="admin-section-body">
+        <div class="how-to-box">
+          <strong>What this is for</strong>
+          Nothing here shows on the site, it's just for you, a place to weigh a market, expo, or convention before you commit any money. Fill in what you know, the Net Estimate box does the math live. Not sure about cost or dates yet? Leave those blank and set Status to Researching, come back and fill them in once you know more. Use the paste box below to drop in a whole batch to review at once.
+        </div>
         <div class="admin-form">
           <label for="voName">Name</label>
           <input type="text" id="voName" placeholder="e.g. Buy Black Marketplace">
@@ -616,6 +683,21 @@
           <p class="admin-note" id="voAddConfirm">Added.</p>
           <p class="admin-error" id="voAddError"></p>
         </div>
+
+        <details class="paste-goals-box">
+          <summary>Paste in a batch of research to review</summary>
+          <div class="paste-goals-body">
+            <p class="field-hint" style="margin-top:8px;">
+              For when someone's handed you a list of markets or expos to look over, whether that's from a chat with me or notes from anywhere else. One opportunity per line, format is Name, then a pipe symbol, then Location, then another pipe, then Notes, like this:<br>
+              <code>Buy Black Marketplace | Archwood at Eastlake, Phoenix | vendor sign up on their site, no cost listed yet</code><br>
+              Location and notes are optional, a line with just a name still works. Everything comes in marked Researching so you can review and update each one with real numbers before deciding.
+            </p>
+            <textarea id="pasteVendorText" rows="5" placeholder="Name | Location | Notes&#10;Name | Location | Notes"></textarea>
+            <button class="admin-submit" id="pasteVendorBtn" type="button">Add All Of These</button>
+            <p class="admin-note" id="pasteVendorConfirm">Added.</p>
+          </div>
+        </details>
+
         <h3>Everything You're Weighing</h3>
         <div id="vendorOppList"></div>
       </div>
@@ -713,6 +795,7 @@
       loadMailingList();
       loadPromoAdminList();
       loadVendorOpps();
+      loadCalendarFeedUrl();
     } else {
       loginBox.style.display = 'block';
       dashboard.style.display = 'none';
@@ -1621,6 +1704,42 @@
     await renderGoalsCalendar();
   };
 
+  // ===== CALENDAR FEED LINK =====
+  // Pulls the private key out of app_settings and builds the actual
+  // subscribe link, so it's never sitting in the page's source code where
+  // anyone viewing the page could see it — it only appears here, after you've
+  // logged in.
+  async function loadCalendarFeedUrl() {
+    const el = document.getElementById('calendarFeedUrl');
+    const { data, error } = await supabaseClient
+      .from('app_settings')
+      .select('value')
+      .eq('key', 'calendar_feed_key')
+      .maybeSingle();
+
+    if (error || !data) {
+      el.textContent = "Run the calendar feed SQL migration first, then reload this page.";
+      window._calendarFeedUrl = null;
+      return;
+    }
+
+    const url = `https://vscombrgcdtrfndqyugb.supabase.co/functions/v1/calendar-feed?key=${data.value}`;
+    el.textContent = url;
+    window._calendarFeedUrl = url;
+  }
+
+  document.getElementById('copyCalendarFeedBtn').onclick = async () => {
+    if (!window._calendarFeedUrl) { alert('Link not ready yet, give it a second and try again.'); return; }
+    try {
+      await navigator.clipboard.writeText(window._calendarFeedUrl);
+      const c = document.getElementById('copyCalendarFeedConfirm');
+      c.style.display = 'block';
+      setTimeout(() => { c.style.display = 'none'; }, 3000);
+    } catch (e) {
+      alert('Could not copy automatically. Here is the link:\n\n' + window._calendarFeedUrl);
+    }
+  };
+
   // ===== DIRECTORY LISTINGS (table: directory_listings) =====
   async function loadDisciplineOptions() {
     const { data } = await supabaseClient.from('disciplines').select('name').order('name');
@@ -1991,6 +2110,40 @@
     document.getElementById('voStatus').value = 'researching';
     document.getElementById('voNotes').value = '';
     updateVendorOppCalc();
+    confirmEl.style.display = 'block';
+    setTimeout(() => { confirmEl.style.display = 'none'; }, 3000);
+    await loadVendorOpps();
+  };
+
+  // Paste in a batch of researched opportunities at once, name | location |
+  // notes per line, everything lands marked Researching so it's ready for
+  // you to review and fill in real cost/deadline numbers on your own time.
+  document.getElementById('pasteVendorBtn').onclick = async () => {
+    const textEl = document.getElementById('pasteVendorText');
+    const lines = textEl.value
+      .split('\n')
+      .map(line => line.trim())
+      .map(line => line.replace(/^[-*••]+\s*/, '').replace(/^\d+[.)]\s*/, '').trim())
+      .filter(line => line.length > 0);
+
+    if (lines.length === 0) return;
+
+    const rows = lines.map(line => {
+      const parts = line.split('|').map(p => p.trim());
+      return {
+        name: parts[0] || line,
+        location: parts[1] || null,
+        notes: parts[2] || null,
+        status: 'researching',
+      };
+    });
+
+    const { error } = await supabaseClient.from('vendor_opportunities').insert(rows);
+    if (error) { alert('Error saving: ' + error.message); return; }
+
+    textEl.value = '';
+    const confirmEl = document.getElementById('pasteVendorConfirm');
+    confirmEl.textContent = `Added ${rows.length} to review.`;
     confirmEl.style.display = 'block';
     setTimeout(() => { confirmEl.style.display = 'none'; }, 3000);
     await loadVendorOpps();
