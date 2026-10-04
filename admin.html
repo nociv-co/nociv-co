@@ -204,6 +204,98 @@
     padding: 10px 14px; margin: 10px 0 16px; font-size: 0.82rem; line-height: 1.5;
   }
   .how-to-box strong { display: block; font-size: 0.72rem; text-transform: uppercase; letter-spacing: 0.04em; opacity: .7; margin-bottom: 4px; }
+
+  /* --- Help guide, a plain step by step walkthrough of the whole dashboard --- */
+  .help-btn {
+    background: var(--gold); border: none; color: #1a1a1a;
+    padding: 8px 14px; font-size: 0.8rem; font-weight: 800; cursor: pointer; letter-spacing: 0.03em;
+    border-radius: 4px; margin-right: 8px;
+  }
+  .help-overlay {
+    position: fixed; inset: 0; background: rgba(0,0,0,0.6); z-index: 100;
+    display: none; align-items: center; justify-content: center; padding: 20px;
+  }
+  .help-overlay.show { display: flex; }
+  .help-modal {
+    background: var(--paper, #f4f1ea); max-width: 600px; width: 100%; max-height: 85vh;
+    overflow-y: auto; border-radius: 10px; padding: 24px 26px; position: relative;
+  }
+  .help-modal h2 { margin-top: 0; }
+  .help-modal-close {
+    position: sticky; float: right; top: 0; background: var(--red); color: #fff; border: none;
+    width: 28px; height: 28px; border-radius: 50%; font-size: 1rem; cursor: pointer; line-height: 1;
+  }
+  .help-step { margin-bottom: 18px; padding-bottom: 14px; border-bottom: 1px solid rgba(0,0,0,0.08); }
+  .help-step:last-child { border-bottom: none; }
+  .help-step-num {
+    display: inline-flex; align-items: center; justify-content: center; width: 22px; height: 22px;
+    background: var(--red); color: #fff; border-radius: 50%; font-size: 0.75rem; font-weight: 800; margin-right: 8px;
+  }
+  .help-step h3 { display: inline; font-size: 1rem; margin: 0; }
+  .help-step p { font-size: 0.88rem; line-height: 1.6; opacity: .85; margin: 6px 0 0 30px; }
+
+  /* --- Shipping labels, inside each order row --- */
+  .ship-details { margin-top: 10px; width: 100%; }
+  .ship-details summary {
+    cursor: pointer; font-size: 0.78rem; font-weight: 700; color: var(--ink); opacity: .75; padding: 2px 0;
+  }
+  .ship-fields { display: flex; flex-wrap: wrap; gap: 6px; margin: 8px 0; }
+  .ship-fields input { flex: 1 1 130px; padding: 6px; font-size: 0.8rem; border: 1px solid #999; }
+  .ship-label-row { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; margin-top: 6px; }
+  .ship-label-row input { width: 110px; padding: 6px; font-size: 0.8rem; border: 1px solid #999; }
+  .ship-label-row button {
+    background: var(--gold); color: #1a1a1a; border: none; padding: 7px 12px;
+    font-size: 0.75rem; font-weight: 700; cursor: pointer; border-radius: 3px;
+  }
+  .ship-label-result { font-size: 0.8rem; }
+  .ship-label-result a { color: var(--green); font-weight: 700; }
+
+  /* --- Pricing Cheat Sheet --- */
+  .cheat-fee-ref {
+    background: rgba(0,0,0,0.03); border: 1px solid rgba(0,0,0,0.1); border-radius: 8px;
+    padding: 12px 16px; margin: 14px 0; font-size: 0.85rem; line-height: 1.6;
+  }
+  .cheat-fee-ref > strong { display: block; font-size: 0.72rem; text-transform: uppercase; letter-spacing: 0.04em; opacity: .7; margin-bottom: 6px; }
+  .cheat-fee-ref ul { margin: 0; padding-left: 18px; }
+  .cheat-fee-ref li { margin-bottom: 6px; }
+  .cheat-preset-row { display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 14px; }
+  .cheat-preset-btn {
+    background: none; border: 1px solid var(--grey-dark); color: var(--ink);
+    padding: 7px 12px; font-size: 0.78rem; cursor: pointer; border-radius: 4px;
+  }
+  .cheat-preset-btn.active { background: var(--red); color: #fff; border-color: var(--red); font-weight: 700; }
+
+  /* --- Cross-listing controls on each product row --- */
+  .cross-list-row { display: flex; align-items: center; gap: 6px; flex-wrap: wrap; margin-top: 8px; }
+  .cross-list-label { font-size: 0.72rem; opacity: .6; margin-right: 2px; }
+  .xlist-toggle-btn {
+    background: none; border: 1px solid var(--grey-dark); color: var(--ink);
+    padding: 4px 9px; font-size: 0.72rem; cursor: pointer; border-radius: 3px;
+  }
+  .xlist-toggle-btn.active { background: var(--green); color: #fff; border-color: var(--green); font-weight: 700; }
+  .cross-list-actions { display: flex; gap: 6px; margin-top: 8px; flex-wrap: wrap; }
+  .cross-list-actions button {
+    background: none; border: 1px solid var(--gold); color: #8a6d1f;
+    padding: 5px 10px; font-size: 0.72rem; cursor: pointer; border-radius: 3px; font-weight: 700;
+  }
+  .cross-list-actions .mark-sold-btn { border-color: var(--red); color: var(--red); }
+
+  .xsale-row {
+    display: flex; align-items: center; gap: 10px; border: 1px solid #ccc;
+    padding: 10px 12px; margin-bottom: 8px; background: #fff; font-size: 0.85rem;
+  }
+  .xsale-row .info { flex: 1; }
+  .xsale-channel-tag {
+    display: inline-block; background: #1a1a1a; color: #fff; font-size: 0.65rem;
+    text-transform: uppercase; letter-spacing: 0.03em; padding: 2px 7px; border-radius: 3px; margin-right: 6px;
+  }
+  .xsale-summary { display: flex; gap: 12px; margin-bottom: 16px; flex-wrap: wrap; }
+  .xsale-summary-card {
+    flex: 1; min-width: 110px; background: rgba(255,255,255,0.55); backdrop-filter: blur(6px);
+    border: 1px solid rgba(0,0,0,0.08); border-radius: 10px; padding: 12px; text-align: center;
+  }
+  .xsale-summary-card .label { font-size: 0.68rem; opacity: .6; text-transform: uppercase; letter-spacing: 0.03em; }
+  .xsale-summary-card .count { font-size: 1.3rem; font-weight: 900; margin: 2px 0; }
 </style>
 </head>
 <body>
@@ -227,7 +319,10 @@
   <div id="dashboard" style="display:none;">
     <div class="admin-header">
       <h2 style="margin:0;">Product Dashboard</h2>
-      <button class="logout-btn" id="logoutBtn">Log Out</button>
+      <div>
+        <button class="help-btn" id="helpBtn" type="button">? Help</button>
+        <button class="logout-btn" id="logoutBtn">Log Out</button>
+      </div>
     </div>
 
     <nav class="admin-jumpnav" id="adminJumpNav">
@@ -235,7 +330,9 @@
       <a href="#sec-mailing">Mailing List</a>
       <a href="#sec-time">Time Tracker</a>
       <a href="#sec-goals">Goals</a>
+      <a href="#sec-cheatsheet">Pricing Cheat Sheet</a>
       <a href="#sec-products">Products</a>
+      <a href="#sec-crosslist">Cross-Listing</a>
       <a href="#sec-orders">Orders</a>
       <a href="#sec-album">Album</a>
       <a href="#sec-directory">Directory</a>
@@ -373,6 +470,76 @@
       </div>
     </details>
 
+    <details class="admin-section" id="sec-cheatsheet">
+      <summary>Pricing Cheat Sheet <span class="admin-section-hint">what you actually keep per sale, before you set a price anywhere</span></summary>
+      <div class="admin-section-body">
+        <div class="how-to-box">
+          <strong>What this is for</strong>
+          A scratchpad, nothing here saves anywhere. Play with a price before you ever add a product, pick which channel it'll sell through, the fee math changes depending on that, and watch what you'd actually keep. Once you land on a number you like, that's what goes in the real Add a Product form below.
+        </div>
+
+        <div class="cheat-fee-ref">
+          <strong>The fees, plainly</strong>
+          <ul>
+            <li><strong>Stripe, online checkout:</strong> 2.9% of the price, plus 30&cent; flat. This is the standard card rate everywhere, Square and PayPal land in the same place, it isn't a Nociv-specific markup.</li>
+            <li><strong>Stripe, Tap to Pay in person:</strong> 2.6% plus 10&cent; flat. Already cheaper than online, this is your best-fee option for pop-ups.</li>
+            <li><strong>Cash, Venmo, or Cash App (in person):</strong> no card fee at all if someone just hands you cash or pays a personal Venmo/Cash App, though a business account on those can carry its own small fee, check whichever one you actually use.</li>
+            <li><strong>Vinted or Depop:</strong> their own separate cut, never Stripe, and it changes over time, check their current seller fee before you price something for those platforms specifically.</li>
+            <li><strong>Printify or print-on-demand markup:</strong> whatever their platform fee is on top of the print cost, that's the Platform Fee % field below.</li>
+          </ul>
+        </div>
+
+        <div class="admin-form">
+          <label>Where's this selling?</label>
+          <div class="cheat-preset-row">
+            <button type="button" class="cheat-preset-btn" data-proc-pct="2.9" data-proc-flat="0.30">Online checkout</button>
+            <button type="button" class="cheat-preset-btn" data-proc-pct="2.6" data-proc-flat="0.10">In-Person Tap to Pay</button>
+            <button type="button" class="cheat-preset-btn" data-proc-pct="0" data-proc-flat="0">Cash / Venmo / no fee</button>
+          </div>
+
+          <div class="admin-form-row">
+            <div>
+              <label for="cheatPrice">Price you're thinking of charging ($)</label>
+              <input type="number" id="cheatPrice" step="0.01" placeholder="30.00">
+            </div>
+            <div>
+              <label for="cheatCost">Item cost ($ — blank, materials, printing, whatever it costs to make)</label>
+              <input type="number" id="cheatCost" step="0.01" placeholder="12.00">
+            </div>
+          </div>
+          <div class="admin-form-row">
+            <div>
+              <label for="cheatShipping">Shipping cost ($, leave 0 if it's an in-person sale)</label>
+              <input type="number" id="cheatShipping" step="0.01" placeholder="5.00">
+            </div>
+            <div>
+              <label for="cheatPlatformFee">Platform fee % (Printify markup, etc, 0 if none)</label>
+              <input type="number" id="cheatPlatformFee" step="0.1" placeholder="0">
+            </div>
+          </div>
+          <div class="admin-form-row">
+            <div>
+              <label for="cheatProcPct">Payment processing fee % (filled in by the buttons above)</label>
+              <input type="number" id="cheatProcPct" step="0.1" value="2.9">
+            </div>
+            <div>
+              <label for="cheatProcFlat">Payment processing flat fee $ (filled in by the buttons above)</label>
+              <input type="number" id="cheatProcFlat" step="0.01" value="0.30">
+            </div>
+          </div>
+
+          <div class="margin-calc" id="cheatCalcBox">
+            <div class="margin-calc-row"><span>Processing fee</span><span id="cheatProcFeeOut">$0.00</span></div>
+            <div class="margin-calc-row"><span>Platform fee</span><span id="cheatPlatformFeeOut">$0.00</span></div>
+            <div class="margin-calc-row"><span>Total cost to you</span><span id="cheatTotalOut">$0.00</span></div>
+            <div class="margin-calc-row total"><span>You keep</span><span id="cheatProfitOut">$0.00</span></div>
+            <div class="margin-calc-row total"><span>Margin</span><span id="cheatMarginOut">0%</span></div>
+          </div>
+          <div class="field-hint">Green is a healthy margin, gold is thin but workable, red means you're losing money at this price on this channel, raise the price or find a cheaper way to make or ship it.</div>
+        </div>
+      </div>
+    </details>
+
     <details class="admin-section" id="sec-products">
       <summary>Products</summary>
       <div class="admin-section-body">
@@ -391,7 +558,6 @@
             <option value="printify_tapestry">Printify — Tapestry</option>
             <option value="printify_tote">Printify — Tote Bag</option>
             <option value="printify_case">Printify — Phone Case</option>
-            <option value="prodigi_item">Prodigi — Print-on-Demand</option>
             <option value="in_house_shirt">In-House — Screen-Printed Shirt</option>
           </select>
           <p class="admin-note" id="presetAppliedNote" style="display:block; opacity:.6;">&nbsp;</p>
@@ -400,7 +566,7 @@
           <input type="text" id="pName" placeholder="e.g. Nociv America Cream">
 
           <label for="pDescription">Description (shown when a customer taps the product)</label>
-          <textarea id="pDescription" rows="3" placeholder="e.g. 16x20 print on museum-quality paper. Ships in 5-7 days via Prodigi."></textarea>
+          <textarea id="pDescription" rows="3" placeholder="e.g. 16x20 print on museum-quality paper. Ships in 5-7 days."></textarea>
 
           <div class="admin-form-row">
             <div>
@@ -419,7 +585,7 @@
               <input type="number" id="pShippingCost" step="0.01" placeholder="4.69">
             </div>
             <div>
-              <label for="pPlatformFeePct">Platform fee (% — Printify/Prodigi markup or commission, if any)</label>
+              <label for="pPlatformFeePct">Platform fee (% — Printify's markup or commission, if any)</label>
               <input type="number" id="pPlatformFeePct" step="0.1" placeholder="0">
             </div>
           </div>
@@ -440,7 +606,6 @@
               <label for="pShop">Shop (which tab it shows on)</label>
               <select id="pShop">
                 <option value="clothing">Clothing</option>
-                <option value="tech">Tech</option>
                 <option value="zines">Zines</option>
                 <option value="art">Art</option>
               </select>
@@ -461,7 +626,7 @@
               </select>
             </div>
             <div>
-              <label for="pInventory">Starting inventory (optional — leave blank for Prodigi items)</label>
+              <label for="pInventory">Starting inventory (optional — leave blank for Printify items)</label>
               <input type="number" id="pInventory" min="0" placeholder="e.g. 5">
             </div>
           </div>
@@ -471,13 +636,8 @@
               <label for="pFulfillment">Fulfillment</label>
               <select id="pFulfillment">
                 <option value="in_house">In-House (you make/ship it)</option>
-                <option value="prodigi">Prodigi Print-on-Demand</option>
                 <option value="printify">Printify Print-on-Demand</option>
               </select>
-            </div>
-            <div id="prodigiSkuWrap" style="display:none;">
-              <label for="pProdigiSku">Prodigi SKU (exact code from prodigi.com's catalogue for this product/size)</label>
-              <input type="text" id="pProdigiSku" placeholder="e.g. GLOBAL-FAP-16x20">
             </div>
             <div id="printifyIdWrap" style="display:none;">
               <label for="pPrintifyProductId">Printify Product ID (from that product's page URL in your Printify account)</label>
@@ -500,11 +660,11 @@
             This is what actually charges the customer — without it, checkout fails every time.
           </div>
 
-          <label for="pImage">Photos — upload one or more files (full resolution — the first one is what gets sent to Prodigi to print, so use the real, final-quality file). Select multiple angles at once, front, back, detail shot, whatever you've got.</label>
+          <label for="pImage">Photos — upload one or more files (full resolution — if it's a Printify item, the first one is what gets sent to print, so use the real, final-quality file). Select multiple angles at once, front, back, detail shot, whatever you've got.</label>
           <input type="file" id="pImage" accept="image/*" multiple>
           <div class="field-hint">The first photo you pick becomes the main cover photo shown on the shop cards. Every photo you pick shows up in the product's photo gallery when someone taps it.</div>
 
-          <label for="pImageUrl" style="margin-top:10px;">...or paste an image link instead (e.g. from Prodigi's Image Library) — skip the upload above if you use this</label>
+          <label for="pImageUrl" style="margin-top:10px;">...or paste an image link instead — skip the upload above if you use this</label>
           <input type="text" id="pImageUrl" placeholder="https://...">
 
           <button class="admin-submit" id="addProductBtn">Add Product</button>
@@ -516,11 +676,23 @@
         <div class="cat-pill-row" id="shopFilterRow" style="margin-bottom:16px;">
           <button class="cat-pill active" data-shop="all">All</button>
           <button class="cat-pill" data-shop="clothing">Clothing</button>
-          <button class="cat-pill" data-shop="tech">Tech</button>
           <button class="cat-pill" data-shop="zines">Zines</button>
           <button class="cat-pill" data-shop="art">Art</button>
         </div>
         <div id="productList"></div>
+      </div>
+    </details>
+
+    <details class="admin-section" id="sec-crosslist">
+      <summary>Cross-Listing &amp; External Sales <span class="admin-section-hint">Vinted, Depop, in-person, all in one place</span></summary>
+      <div class="admin-section-body">
+        <div class="how-to-box">
+          <strong>What this is for</strong>
+          You don't need an automatic sync to Vinted or Depop to stay on top of things, this does the same job by hand. On any product below in the Products section, tap Vinted, Depop, or In-Person to mark where it's currently listed, those buttons turn green when active, tap again to turn them off once it's sold or pulled. Tap Copy Listing Text to copy a ready-to-paste block, name, price, description, so you're not retyping the same listing by hand on a second platform. The moment something actually sells anywhere other than your own site, Tap to Pay included, hit Mark Sold Elsewhere on that product, pick where it sold, and it logs the sale here and takes it off your tracked stock automatically, so your inventory numbers stay true no matter which platform it moved on. This is your one source of truth for what's actually sold and what you've still got, that's the whole point.
+        </div>
+        <div class="xsale-summary" id="xsaleSummary"></div>
+        <h3>Sales Log</h3>
+        <div id="xsaleList"></div>
       </div>
     </details>
 
@@ -529,7 +701,7 @@
       <div class="admin-section-body">
         <div class="how-to-box">
           <strong>What this is for</strong>
-          Every sale, from the website and from in-person Tap to Pay, lands here on its own, nothing to type in for a normal online sale. For an in-person sale, type in what it actually cost you in the Cost box on that order and hit Save, that's the only manual step, and it's what makes the Net Profit number at the top accurate.
+          Every sale, from the website and from in-person Tap to Pay, lands here on its own, nothing to type in for a normal online sale. For an in-person sale, type in what it actually cost you in the Cost box on that order and hit Save, that's the only manual step, and it's what makes the Net Profit number at the top accurate. You also get an email the moment a new order comes in, once that's connected on the backend. Open Shipping Address &amp; Label on any order to fill in where it's going and print a real shipping label without leaving this page.
         </div>
         <div class="time-summary" id="revenueDashboard">
           <div class="time-summary-card">
@@ -735,6 +907,68 @@
     </details>
   </div>
 
+  <!-- ===== HELP GUIDE: a plain step by step walkthrough of the whole dashboard, in the same order as the jump nav ===== -->
+  <div class="help-overlay" id="helpOverlay">
+    <div class="help-modal">
+      <button class="help-modal-close" id="helpCloseBtn" type="button">&times;</button>
+      <h2>How This Works</h2>
+      <p style="opacity:.7; font-size:0.9rem; margin-top:-8px;">A plain walkthrough of every section on this page, in the order they appear. Scroll through once, then come back to this anytime you forget a step.</p>
+
+      <div class="help-step">
+        <span class="help-step-num">1</span><h3>Today's Goals &amp; Calendar</h3>
+        <p>Your own task list, not shown on the site. Tap a date on the calendar, type a task, hit Add. Once you set up the calendar feed link here, every task and deadline shows up on your phone's real calendar too.</p>
+      </div>
+      <div class="help-step">
+        <span class="help-step-num">2</span><h3>Pop-Up Details</h3>
+        <p>Fill in where and when your next in-person pop-up is. Hit Update and it shows on the Clothing shop page and posts to the Opportunity Board automatically. Leave something blank and it shows as TBD.</p>
+      </div>
+      <div class="help-step">
+        <span class="help-step-num">3</span><h3>Mailing List</h3>
+        <p>Read only. Hit Copy All Emails, then paste that list into the Bcc field of an email you send from your own inbox, that's how you message everyone right now.</p>
+      </div>
+      <div class="help-step">
+        <span class="help-step-num">4</span><h3>Time Tracker</h3>
+        <p>Just for you. Clock In when you start working on Nociv, Clock Out when you stop, and it tracks your hours against the rate you set, so you can see if your time is actually worth what you're making.</p>
+      </div>
+      <div class="help-step">
+        <span class="help-step-num">5</span><h3>Pricing Cheat Sheet</h3>
+        <p>A scratchpad for testing a price before you commit to it anywhere. Pick a channel (online, in-person Tap to Pay, or cash/Venmo), fill in your real cost, and it shows exactly what you'd keep. Nothing here saves, it's just for figuring out the number before you type it into a real product.</p>
+      </div>
+      <div class="help-step">
+        <span class="help-step-num">6</span><h3>Products</h3>
+        <p>Where everything for sale gets added. Use Quick Fill for a fast starting point, fill in name, price, and your real cost, watch the margin box to make sure you're actually making money, then hit Create in Stripe so the Buy button works. Status has to be For Sale with a Stripe Price ID or checkout fails.</p>
+      </div>
+      <div class="help-step">
+        <span class="help-step-num">7</span><h3>Cross-Listing &amp; External Sales</h3>
+        <p>On any product, tap Vinted, Depop, or In-Person to mark where it's currently posted outside your own site. Hit Copy Listing Text to grab a paste-ready block for that other platform. The moment something sells anywhere else, hit Mark Sold Elsewhere, pick the channel, and it logs the sale and takes it off your tracked stock automatically.</p>
+      </div>
+      <div class="help-step">
+        <span class="help-step-num">8</span><h3>Recent Orders</h3>
+        <p>Every sale from the site lands here on its own, and you get an email the moment a new one comes in. For an in-person Tap to Pay sale, type in what it actually cost you and hit Save, that's the only manual step, and it's what makes the Net Profit number accurate. Open Shipping Address &amp; Label on any order to fill in the address and print a real shipping label right from here.</p>
+      </div>
+      <div class="help-step">
+        <span class="help-step-num">9</span><h3>Process Album</h3>
+        <p>Behind the scenes photos, cutting fabric, screen printing, whatever shows the actual making of things. Upload a photo, add a caption if you want, hit Add to Album. Shows up on the Clothing shop page.</p>
+      </div>
+      <div class="help-step">
+        <span class="help-step-num">10</span><h3>Directory Listings</h3>
+        <p>Other creators, shops, or studios you want listed in the community directory on Base. Fill in the fields, hit Add Listing, reorder with the arrows anytime.</p>
+      </div>
+      <div class="help-step">
+        <span class="help-step-num">11</span><h3>Zine Library</h3>
+        <p>Free zines anyone can read or download, no payment involved. Upload the PDF, add a cover if you have one, title it, hit Add Zine.</p>
+      </div>
+      <div class="help-step">
+        <span class="help-step-num">12</span><h3>Spread The Word</h3>
+        <p>Print-ready flyers and stickers for customers to download and hand out themselves. Upload the file, describe what it is, hit Add Material. This is the actual word of mouth toolkit.</p>
+      </div>
+      <div class="help-step">
+        <span class="help-step-num">13</span><h3>Vendor Spots &amp; Pop-Ups</h3>
+        <p>Nothing here shows on the site, it's just for you. Weigh a market or expo before committing any money, the Net Estimate box does the math live. Not sure yet, leave it blank and set Status to Researching.</p>
+      </div>
+    </div>
+  </div>
+
 </div>
 
 <footer class="nociv-footer">NOCIV.CO — Nothing Of Civilization</footer>
@@ -814,6 +1048,7 @@
       dashboard.style.display = 'block';
       loadPopupStatus();
       loadProducts();
+      loadExternalSales();
       loadOrders();
       loadAlbum();
       renderGoalsCalendar();
@@ -852,6 +1087,17 @@
     await supabaseClient.auth.signOut();
     await checkSession();
   };
+
+  // ===== HELP GUIDE =====
+  document.getElementById('helpBtn').addEventListener('click', () => {
+    document.getElementById('helpOverlay').classList.add('show');
+  });
+  document.getElementById('helpCloseBtn').addEventListener('click', () => {
+    document.getElementById('helpOverlay').classList.remove('show');
+  });
+  document.getElementById('helpOverlay').addEventListener('click', (e) => {
+    if (e.target.id === 'helpOverlay') document.getElementById('helpOverlay').classList.remove('show');
+  });
 
   // ===== POP-UP DETAILS (feeds Shop -> Clothing's "Next Location" note,
   // and also posts itself to the Opportunity Board automatically) =====
@@ -994,6 +1240,61 @@
   });
   updateAddMarginCalc();
 
+  // ===== PRICING CHEAT SHEET =====
+  // A scratchpad version of the same math, nothing here ever saves. The fee
+  // is whatever you set, not locked to Stripe's online rate, since in person
+  // Tap to Pay, cash, and Venmo all run different numbers.
+  function computeMarginGeneric(price, cost, shipping, platformFeePct, procPct, procFlat) {
+    const procFee = price > 0 ? (price * (procPct / 100) + procFlat) : 0;
+    const platformFee = price > 0 ? (price * (platformFeePct / 100)) : 0;
+    const totalCost = cost + shipping + procFee + platformFee;
+    const profit = price - totalCost;
+    const marginPct = price > 0 ? (profit / price * 100) : 0;
+    return { procFee, platformFee, totalCost, profit, marginPct };
+  }
+
+  function updateCheatCalc() {
+    const price = parseFloat(document.getElementById('cheatPrice').value) || 0;
+    const cost = parseFloat(document.getElementById('cheatCost').value) || 0;
+    const shipping = parseFloat(document.getElementById('cheatShipping').value) || 0;
+    const platformFeePct = parseFloat(document.getElementById('cheatPlatformFee').value) || 0;
+    const procPct = parseFloat(document.getElementById('cheatProcPct').value) || 0;
+    const procFlat = parseFloat(document.getElementById('cheatProcFlat').value) || 0;
+
+    const { procFee, platformFee, totalCost, profit, marginPct } = computeMarginGeneric(price, cost, shipping, platformFeePct, procPct, procFlat);
+
+    document.getElementById('cheatProcFeeOut').textContent = '$' + procFee.toFixed(2);
+    document.getElementById('cheatPlatformFeeOut').textContent = '$' + platformFee.toFixed(2);
+    document.getElementById('cheatTotalOut').textContent = '$' + totalCost.toFixed(2);
+    document.getElementById('cheatProfitOut').textContent = (profit < 0 ? '-$' + Math.abs(profit).toFixed(2) : '$' + profit.toFixed(2));
+    document.getElementById('cheatMarginOut').textContent = marginPct.toFixed(0) + '%';
+
+    const profitRow = document.getElementById('cheatProfitOut').closest('.margin-calc-row');
+    const marginRow = document.getElementById('cheatMarginOut').closest('.margin-calc-row');
+    [profitRow, marginRow].forEach(row => row.classList.remove('good', 'warn', 'bad'));
+    let cls = 'bad';
+    if (marginPct >= 40) cls = 'good';
+    else if (marginPct >= 15) cls = 'warn';
+    profitRow.classList.add(cls);
+    marginRow.classList.add(cls);
+  }
+
+  document.querySelectorAll('.cheat-preset-btn').forEach(btn => {
+    btn.addEventListener('click', () => {
+      document.querySelectorAll('.cheat-preset-btn').forEach(b => b.classList.remove('active'));
+      btn.classList.add('active');
+      document.getElementById('cheatProcPct').value = btn.dataset.procPct;
+      document.getElementById('cheatProcFlat').value = btn.dataset.procFlat;
+      updateCheatCalc();
+    });
+  });
+
+  ['cheatPrice', 'cheatCost', 'cheatShipping', 'cheatPlatformFee', 'cheatProcPct', 'cheatProcFlat'].forEach(id => {
+    document.getElementById(id).addEventListener('input', updateCheatCalc);
+  });
+  document.querySelector('.cheat-preset-btn[data-proc-pct="2.9"]').classList.add('active');
+  updateCheatCalc();
+
   // ===== QUICK FILL PRESETS =====
   // Real numbers you and I already worked out, so a new pin or poster starts
   // from something close to right instead of a blank form. Nothing here is
@@ -1020,14 +1321,9 @@
       note: 'Filled in Printify fulfillment and a starting shipping cost of $4.69. Paste the Printify Product ID, set your price and item cost.'
     },
     printify_case: {
-      shop: 'tech', category: 'Phone Cases', fulfillment_type: 'printify',
+      shop: 'clothing', category: 'Phone Cases', fulfillment_type: 'printify',
       shipping_cost: 4.69, platform_fee_pct: 0,
       note: 'Filled in Printify fulfillment and a starting shipping cost of $4.69. Paste the Printify Product ID, set your price and item cost.'
-    },
-    prodigi_item: {
-      shop: 'art', category: '', fulfillment_type: 'prodigi',
-      shipping_cost: '', platform_fee_pct: 0,
-      note: 'Filled in Prodigi fulfillment. Shipping cost varies a lot by product with Prodigi, check their order screen for the real number before you set a price. Paste the Prodigi SKU too.'
     },
     in_house_shirt: {
       shop: 'clothing', category: 'Shirts', fulfillment_type: 'in_house',
@@ -1055,7 +1351,6 @@
 
   // ===== ADD PRODUCT (full-resolution upload, no resizing) =====
   document.getElementById('pFulfillment').addEventListener('change', (e) => {
-    document.getElementById('prodigiSkuWrap').style.display = e.target.value === 'prodigi' ? 'block' : 'none';
     document.getElementById('printifyIdWrap').style.display = e.target.value === 'printify' ? 'block' : 'none';
   });
 
@@ -1110,7 +1405,6 @@
     const category = document.getElementById('pCategory').value.trim();
     const status = document.getElementById('pStatus').value;
     const fulfillment_type = document.getElementById('pFulfillment').value;
-    const prodigi_sku = document.getElementById('pProdigiSku').value.trim() || null;
     const printify_product_id = document.getElementById('pPrintifyProductId').value.trim() || null;
     const stripe_price_id = document.getElementById('pStripePriceId').value.trim() || null;
     const files = Array.from(document.getElementById('pImage').files);
@@ -1122,11 +1416,6 @@
 
     if (!name) { errEl.textContent = 'Name is required.'; errEl.style.display = 'block'; return; }
     if (!category) { errEl.textContent = 'Category is required.'; errEl.style.display = 'block'; return; }
-    if (fulfillment_type === 'prodigi' && !prodigi_sku) {
-      errEl.textContent = 'Prodigi SKU is required for print-on-demand items.';
-      errEl.style.display = 'block';
-      return;
-    }
     if (fulfillment_type === 'printify' && !printify_product_id) {
       errEl.textContent = 'Printify Product ID is required for print-on-demand items.';
       errEl.style.display = 'block';
@@ -1173,12 +1462,11 @@
       cost: costVal ? parseFloat(costVal) : null,
       shipping_cost: shippingCostVal ? parseFloat(shippingCostVal) : null,
       platform_fee_pct: platformFeePctVal ? parseFloat(platformFeePctVal) : null,
-      inventory_count: (fulfillment_type === 'prodigi' || fulfillment_type === 'printify') ? null : (inventoryVal ? parseInt(inventoryVal) : null),
+      inventory_count: (fulfillment_type === 'printify') ? null : (inventoryVal ? parseInt(inventoryVal) : null),
       shop,
       category,
       status,
       fulfillment_type,
-      prodigi_sku,
       printify_product_id,
       stripe_price_id,
       image_url,
@@ -1201,7 +1489,6 @@
     document.getElementById('pPreset').value = '';
     document.getElementById('presetAppliedNote').innerHTML = '&nbsp;';
     document.getElementById('pCategory').value = '';
-    document.getElementById('pProdigiSku').value = '';
     document.getElementById('pPrintifyProductId').value = '';
     document.getElementById('pStripePriceId').value = '';
     document.getElementById('pImage').value = '';
@@ -1285,12 +1572,31 @@
       const flagClass = marginPct < 0 ? 'missing-flag' : '';
       marginBit = ` · <span class="${flagClass}">profit $${profit.toFixed(2)} (${marginPct.toFixed(0)}% margin)</span>`;
     }
+
+    const crossListed = Array.isArray(p.cross_listed_on) ? p.cross_listed_on : [];
+    const XLIST_CHANNELS = [
+      { key: 'vinted', label: 'Vinted' },
+      { key: 'depop', label: 'Depop' },
+      { key: 'in_person', label: 'In-Person' },
+    ];
+    const xlistButtonsHtml = XLIST_CHANNELS.map(c => `
+      <button type="button" class="xlist-toggle-btn ${crossListed.includes(c.key) ? 'active' : ''}" data-channel="${c.key}">${c.label}${crossListed.includes(c.key) ? ' ✓' : ''}</button>
+    `).join('');
+
     row.innerHTML = `
       ${imgHtml}
       <div class="info">
         <div class="name">${p.name}</div>
-        <div class="meta">${p.shop} · ${p.category} · ${p.status === 'for_sale' ? 'For Sale' : 'Coming Soon'} · ${p.price ? '$' + p.price : 'no price set'} · cost $${p.cost ?? '—'} · stock: ${(p.fulfillment_type === 'prodigi' || p.fulfillment_type === 'printify') ? 'unlimited (' + (p.fulfillment_type === 'prodigi' ? 'Prodigi' : 'Printify') + ')' : (p.inventory_count ?? 'not tracked')} · ${p.fulfillment_type === 'prodigi' ? 'Prodigi SKU: ' + (p.prodigi_sku || 'none set') : p.fulfillment_type === 'printify' ? 'Printify ID: ' + (p.printify_product_id || 'none set') : 'In-House'}${stripeWarning}${marginBit}</div>
+        <div class="meta">${p.shop} · ${p.category} · ${p.status === 'for_sale' ? 'For Sale' : 'Coming Soon'} · ${p.price ? '$' + p.price : 'no price set'} · cost $${p.cost ?? '—'} · stock: ${p.fulfillment_type === 'printify' ? 'unlimited (Printify)' : (p.inventory_count ?? 'not tracked')} · ${p.fulfillment_type === 'printify' ? 'Printify ID: ' + (p.printify_product_id || 'none set') : 'In-House'}${stripeWarning}${marginBit}</div>
         <div class="votes">${voteCount} votes</div>
+        <div class="cross-list-row">
+          <span class="cross-list-label">Listed on:</span>
+          ${xlistButtonsHtml}
+        </div>
+        <div class="cross-list-actions">
+          <button type="button" class="copy-listing-btn">Copy Listing Text</button>
+          <button type="button" class="mark-sold-btn">Mark Sold Elsewhere</button>
+        </div>
       </div>
       <button class="edit-btn dup-btn" data-id="${p.id}">Duplicate</button>
       <button class="edit-btn" data-id="${p.id}">Edit</button>
@@ -1310,6 +1616,167 @@
     row.querySelector('.edit-btn:not(.dup-btn)').addEventListener('click', () => {
       renderRowEdit(row, p);
     });
+
+    // ===== CROSS-LISTING: which outside channels this product is currently
+    // posted on, toggled by hand since there's no API that talks to a
+    // bespoke site like this one. =====
+    row.querySelectorAll('.xlist-toggle-btn').forEach(btn => {
+      btn.addEventListener('click', async () => {
+        const channel = btn.dataset.channel;
+        let updated = Array.isArray(p.cross_listed_on) ? [...p.cross_listed_on] : [];
+        if (updated.includes(channel)) updated = updated.filter(c => c !== channel);
+        else updated.push(channel);
+        const { error } = await supabaseClient.from('products').update({ cross_listed_on: updated }).eq('id', p.id);
+        if (error) { alert('Error updating: ' + error.message); return; }
+        p.cross_listed_on = updated;
+        renderRowView(row, p, voteCount);
+      });
+    });
+
+    row.querySelector('.copy-listing-btn').addEventListener('click', async () => {
+      const text = buildListingText(p);
+      const btn = row.querySelector('.copy-listing-btn');
+      const original = btn.textContent;
+      try {
+        await navigator.clipboard.writeText(text);
+        btn.textContent = 'Copied!';
+      } catch (e) {
+        alert('Could not copy automatically. Here is the listing text:\n\n' + text);
+      }
+      setTimeout(() => { btn.textContent = original; }, 2000);
+    });
+
+    row.querySelector('.mark-sold-btn').addEventListener('click', () => {
+      openMarkSoldForm(row, p, voteCount);
+    });
+  }
+
+  // A paste-ready block for Vinted, Depop, or anywhere else that doesn't
+  // talk to this site directly — name, price, description, done.
+  function buildListingText(p) {
+    const lines = [p.name];
+    if (p.price) lines.push('$' + parseFloat(p.price).toFixed(2));
+    if (p.description) { lines.push(''); lines.push(p.description); }
+    lines.push('');
+    lines.push('From NOCIV.CO — nociv.co');
+    return lines.join('\n');
+  }
+
+  // Swaps a product row into a small "mark this sold elsewhere" form —
+  // pick the channel, confirm the price, and it logs the sale and takes
+  // it off tracked stock in one step, no separate screen to visit.
+  function openMarkSoldForm(row, p, voteCount) {
+    const tracksStock = p.fulfillment_type === 'in_house' && p.inventory_count != null;
+    row.innerHTML = `
+      <div class="info" style="width:100%;">
+        <div class="name" style="margin-bottom:8px;">Mark "${p.name}" sold elsewhere</div>
+        <label style="font-size:0.75rem; opacity:.7; display:block;">Where did it sell?</label>
+        <select class="mark-sold-channel" style="width:100%; margin-bottom:8px; padding:6px;">
+          <option value="vinted">Vinted</option>
+          <option value="depop">Depop</option>
+          <option value="in_person">In-Person</option>
+          <option value="other">Other</option>
+        </select>
+        <label style="font-size:0.75rem; opacity:.7; display:block;">Sale price ($)</label>
+        <input type="number" step="0.01" class="mark-sold-price" value="${p.price ?? ''}" style="width:100%; margin-bottom:8px; padding:6px;">
+        <div class="field-hint" style="margin-bottom:8px;">
+          ${tracksStock ? `This will take 1 off your tracked stock (${p.inventory_count} left) and log the sale.` : 'This logs the sale. Stock isn\'t tracked for print-on-demand items, so there\'s nothing to subtract.'}
+        </div>
+        <div style="display:flex; gap:8px;">
+          <button type="button" class="confirm-mark-sold-btn" style="flex:1; background:var(--red); color:#fff; border:none; padding:8px; cursor:pointer;">Confirm Sale</button>
+          <button type="button" class="cancel-mark-sold-btn" style="flex:1; background:#eee; border:1px solid #ccc; padding:8px; cursor:pointer;">Cancel</button>
+        </div>
+      </div>
+    `;
+
+    row.querySelector('.cancel-mark-sold-btn').addEventListener('click', () => renderRowView(row, p, voteCount));
+
+    row.querySelector('.confirm-mark-sold-btn').addEventListener('click', async () => {
+      const btn = row.querySelector('.confirm-mark-sold-btn');
+      btn.disabled = true;
+      btn.textContent = 'Saving...';
+      const channel = row.querySelector('.mark-sold-channel').value;
+      const priceVal = row.querySelector('.mark-sold-price').value;
+      const sale_price = priceVal ? parseFloat(priceVal) : null;
+
+      const { error: logError } = await supabaseClient.from('external_sales').insert([{
+        product_id: p.id,
+        product_name: p.name,
+        channel,
+        sale_price,
+      }]);
+      if (logError) {
+        alert('Error logging sale: ' + logError.message);
+        btn.disabled = false;
+        btn.textContent = 'Confirm Sale';
+        return;
+      }
+
+      if (tracksStock && p.inventory_count > 0) {
+        const newCount = p.inventory_count - 1;
+        const { error: invError } = await supabaseClient.from('products').update({ inventory_count: newCount }).eq('id', p.id);
+        if (invError) alert('Sale logged, but stock could not be updated: ' + invError.message);
+        else p.inventory_count = newCount;
+      }
+
+      await loadExternalSales();
+      await loadProducts();
+    });
+  }
+
+  // ===== EXTERNAL SALES LOG (Vinted, Depop, in-person — manual, trackable) =====
+  async function loadExternalSales() {
+    const listEl = document.getElementById('xsaleList');
+    const summaryEl = document.getElementById('xsaleSummary');
+    if (!listEl) return;
+    listEl.innerHTML = '<p style="opacity:.5;">Loading...</p>';
+
+    const { data: sales, error } = await supabaseClient
+      .from('external_sales')
+      .select('*')
+      .order('sold_at', { ascending: false });
+
+    if (error) {
+      listEl.innerHTML = '<p style="opacity:.5;">Could not load the sales log.</p>';
+      summaryEl.innerHTML = '';
+      return;
+    }
+
+    const byChannel = {};
+    (sales || []).forEach(s => { byChannel[s.channel] = (byChannel[s.channel] || 0) + 1; });
+    const channelLabels = { vinted: 'Vinted', depop: 'Depop', in_person: 'In-Person', other: 'Other' };
+    summaryEl.innerHTML = Object.keys(channelLabels).map(key => `
+      <div class="xsale-summary-card">
+        <div class="label">${channelLabels[key]}</div>
+        <div class="count">${byChannel[key] || 0}</div>
+      </div>
+    `).join('');
+
+    if (!sales || sales.length === 0) {
+      listEl.innerHTML = '<p style="opacity:.5;">Nothing logged yet. Hit Mark Sold Elsewhere on a product once it sells on Vinted, Depop, or in person.</p>';
+      return;
+    }
+
+    listEl.innerHTML = '';
+    sales.forEach(s => {
+      const row = document.createElement('div');
+      row.className = 'xsale-row';
+      row.innerHTML = `
+        <div class="info">
+          <span class="xsale-channel-tag">${channelLabels[s.channel] || s.channel}</span>
+          <strong>${s.product_name}</strong>
+          ${s.sale_price != null ? ' — $' + parseFloat(s.sale_price).toFixed(2) : ''}
+          <span style="opacity:.6;"> · ${new Date(s.sold_at).toLocaleString()}</span>
+        </div>
+        <button class="del-btn xsale-del-btn" data-id="${s.id}">Remove</button>
+      `;
+      row.querySelector('.xsale-del-btn').addEventListener('click', async () => {
+        if (!confirm('Remove this logged sale? This does not add the stock back automatically.')) return;
+        await supabaseClient.from('external_sales').delete().eq('id', s.id);
+        await loadExternalSales();
+      });
+      listEl.appendChild(row);
+    });
   }
 
   // Copies an existing product's setup into the Add a Product form so you're
@@ -1328,7 +1795,6 @@
     document.getElementById('pInventory').value = p.inventory_count ?? '';
     document.getElementById('pFulfillment').value = p.fulfillment_type;
     document.getElementById('pFulfillment').dispatchEvent(new Event('change'));
-    document.getElementById('pProdigiSku').value = p.prodigi_sku || '';
     document.getElementById('pPrintifyProductId').value = '';
     document.getElementById('pStripePriceId').value = '';
     document.getElementById('pImageUrl').value = '';
@@ -1337,7 +1803,7 @@
     updateAddMarginCalc();
 
     const noteEl = document.getElementById('presetAppliedNote');
-    noteEl.textContent = `Duplicated from "${p.name}". Set a new name, a new Printify/Prodigi ID, a new photo, and adjust price if needed, then save.`;
+    noteEl.textContent = `Duplicated from "${p.name}". Set a new name, a new Printify ID, a new photo, and adjust price if needed, then save.`;
     noteEl.style.color = 'var(--gold)';
 
     document.getElementById('sec-products').open = true;
@@ -1400,13 +1866,8 @@
         <label style="font-size:0.75rem; opacity:.7; display:block;">Fulfillment</label>
         <select class="edit-fulfillment" style="width:100%; margin-bottom:8px; padding:6px;">
           <option value="in_house" ${p.fulfillment_type === 'in_house' ? 'selected' : ''}>In-House (you make/ship it)</option>
-          <option value="prodigi" ${p.fulfillment_type === 'prodigi' ? 'selected' : ''}>Prodigi Print-on-Demand</option>
           <option value="printify" ${p.fulfillment_type === 'printify' ? 'selected' : ''}>Printify Print-on-Demand</option>
         </select>
-        <div class="edit-prodigi-wrap" style="display:${p.fulfillment_type === 'prodigi' ? 'block' : 'none'};">
-          <label style="font-size:0.75rem; opacity:.7; display:block;">Prodigi SKU</label>
-          <input type="text" class="edit-prodigi-sku" value="${escapeAttr(p.prodigi_sku)}" style="width:100%; margin-bottom:8px; padding:6px;">
-        </div>
         <div class="edit-printify-wrap" style="display:${p.fulfillment_type === 'printify' ? 'block' : 'none'};">
           <label style="font-size:0.75rem; opacity:.7; display:block;">Printify Product ID (comma-separate for a bundle)</label>
           <input type="text" class="edit-printify-id" value="${escapeAttr(p.printify_product_id)}" style="width:100%; margin-bottom:8px; padding:6px;">
@@ -1414,7 +1875,6 @@
         <div style="display:flex; gap:8px; margin-bottom:10px;">
           <select class="edit-shop" style="flex:1; padding:6px;">
             <option value="clothing" ${p.shop === 'clothing' ? 'selected' : ''}>Clothing</option>
-            <option value="tech" ${p.shop === 'tech' ? 'selected' : ''}>Tech</option>
             <option value="zines" ${p.shop === 'zines' ? 'selected' : ''}>Zines</option>
             <option value="art" ${p.shop === 'art' ? 'selected' : ''}>Art</option>
           </select>
@@ -1547,7 +2007,6 @@
     updateEditMarginCalc();
 
     row.querySelector('.edit-fulfillment').addEventListener('change', (e) => {
-      row.querySelector('.edit-prodigi-wrap').style.display = e.target.value === 'prodigi' ? 'block' : 'none';
       row.querySelector('.edit-printify-wrap').style.display = e.target.value === 'printify' ? 'block' : 'none';
     });
 
@@ -1590,14 +2049,9 @@
       const newStatus = row.querySelector('.edit-status').value;
       const newStripePrice = row.querySelector('.edit-stripe-price').value.trim() || null;
       const newFulfillment = row.querySelector('.edit-fulfillment').value;
-      const newProdigiSku = row.querySelector('.edit-prodigi-sku').value.trim() || null;
       const newPrintifyId = row.querySelector('.edit-printify-id').value.trim() || null;
       if (newStatus === 'for_sale' && !newStripePrice) {
         alert('This product is marked "For Sale" but has no Stripe Price ID — the Buy button will fail. Add a Stripe Price ID or set status back to "Coming Soon".');
-        return;
-      }
-      if (newFulfillment === 'prodigi' && !newProdigiSku) {
-        alert('This is set to Prodigi Print-on-Demand but has no Prodigi SKU. Add one or switch Fulfillment to something else.');
         return;
       }
       if (newFulfillment === 'printify' && !newPrintifyId) {
@@ -1617,7 +2071,6 @@
         category: row.querySelector('.edit-category').value.trim(),
         status: newStatus,
         fulfillment_type: newFulfillment,
-        prodigi_sku: newFulfillment === 'prodigi' ? newProdigiSku : null,
         printify_product_id: newFulfillment === 'printify' ? newPrintifyId : null,
       };
       const { error } = await supabaseClient.from('products').update(updated).eq('id', p.id);
@@ -1688,9 +2141,6 @@
     orders.forEach(o => {
       const row = document.createElement('div');
       row.className = 'product-row';
-      const prodigiBit = o.prodigi_order_id
-        ? ` · Prodigi #${o.prodigi_order_id} (${o.prodigi_status || 'submitted'})`
-        : (o.prodigi_status === 'failed' ? ' · <span class="missing-flag">PRODIGI ORDER FAILED — check manually</span>' : '');
       const printifyBit = o.printify_order_id
         ? ` · Printify #${o.printify_order_id} (${o.printify_status || 'submitted'})`
         : (o.printify_status === 'failed' ? ' · <span class="missing-flag">PRINTIFY ORDER FAILED — check manually</span>' : '');
@@ -1707,11 +2157,36 @@
            </div>`
         : '';
 
+      const labelResultHtml = o.label_url
+        ? `<span class="ship-label-result">Shipped via ${o.carrier || 'carrier'} · Tracking: <strong>${o.tracking_number || '—'}</strong> · <a href="${o.label_url}" target="_blank" rel="noopener">View/Print Label</a></span>`
+        : (o.label_error ? `<span class="missing-flag" style="font-size:0.78rem;">${o.label_error}</span>` : '<span style="font-size:0.78rem; opacity:.5;">No label yet.</span>');
+
       row.innerHTML = `
         <div class="info">
           <div class="name">${name}</div>
-          <div class="meta">$${o.amount_paid ?? '—'} · ${o.customer_email || 'no email'} · ${new Date(o.created_at).toLocaleString()}${sourceBit}${prodigiBit}${printifyBit}</div>
+          <div class="meta">$${o.amount_paid ?? '—'} · ${o.customer_email || 'no email'} · ${new Date(o.created_at).toLocaleString()}${sourceBit}${printifyBit}</div>
           ${costInputHtml}
+          <details class="ship-details">
+            <summary>Shipping address &amp; label</summary>
+            <div class="ship-fields">
+              <input class="ship-name" placeholder="Full name" value="${escapeAttr(o.ship_name)}">
+              <input class="ship-address1" placeholder="Street address" value="${escapeAttr(o.ship_address1)}">
+              <input class="ship-address2" placeholder="Apt / Suite (optional)" value="${escapeAttr(o.ship_address2)}">
+              <input class="ship-city" placeholder="City" value="${escapeAttr(o.ship_city)}">
+              <input class="ship-state" placeholder="State" value="${escapeAttr(o.ship_state)}" style="flex:0 0 70px;">
+              <input class="ship-zip" placeholder="ZIP" value="${escapeAttr(o.ship_zip)}" style="flex:0 0 90px;">
+              <button class="save-ship-btn" style="flex:0 0 auto; background:none; border:1px solid var(--grey-dark); padding:6px 10px; font-size:0.75rem; cursor:pointer;">Save Address</button>
+            </div>
+            <p class="admin-note ship-address-saved" style="display:none;">Address saved.</p>
+            <div class="ship-label-row">
+              <input class="ship-weight" type="number" step="0.1" placeholder="Weight (oz)" value="${o.package_weight_oz ?? ''}">
+              <button class="create-label-btn" type="button">Create Shipping Label</button>
+              ${labelResultHtml}
+            </div>
+            <p class="field-hint" style="margin-top:6px;">
+              Needs a Shippo account connected on the backend (ask your engineer if it isn't set up yet). Fill in the address above first, weight is roughly how heavy the package is in ounces, a shirt in a poly mailer is usually 6 to 10 oz. This buys real postage and charges the card on your Shippo account, so only hit it once you're actually ready to ship.
+            </p>
+          </details>
         </div>
       `;
 
@@ -1724,6 +2199,57 @@
           await loadOrders();
         });
       }
+
+      // ===== Shipping address — save without needing a page reload, so the
+      // label button below always uses whatever's currently in these fields =====
+      row.querySelector('.save-ship-btn').addEventListener('click', async () => {
+        const updated = {
+          ship_name: row.querySelector('.ship-name').value.trim() || null,
+          ship_address1: row.querySelector('.ship-address1').value.trim() || null,
+          ship_address2: row.querySelector('.ship-address2').value.trim() || null,
+          ship_city: row.querySelector('.ship-city').value.trim() || null,
+          ship_state: row.querySelector('.ship-state').value.trim() || null,
+          ship_zip: row.querySelector('.ship-zip').value.trim() || null,
+        };
+        const { error } = await supabaseClient.from('orders').update(updated).eq('id', o.id);
+        if (error) { alert('Error saving address: ' + error.message); return; }
+        Object.assign(o, updated);
+        const savedNote = row.querySelector('.ship-address-saved');
+        savedNote.style.display = 'block';
+        setTimeout(() => { savedNote.style.display = 'none'; }, 2500);
+      });
+
+      // ===== Create Shipping Label — calls the create-shipping-label Supabase
+      // function, which pulls the address straight off this order, buys the
+      // cheapest real rate through Shippo, and saves the tracking number and
+      // label PDF link back onto the order. =====
+      row.querySelector('.create-label-btn').addEventListener('click', async () => {
+        if (!o.ship_name || !o.ship_address1 || !o.ship_city || !o.ship_state || !o.ship_zip) {
+          alert('Fill in and save the shipping address first, name, street, city, state, and ZIP are all required.');
+          return;
+        }
+        const btn = row.querySelector('.create-label-btn');
+        const originalText = btn.textContent;
+        btn.disabled = true;
+        btn.textContent = 'Creating...';
+        const weight_oz = parseFloat(row.querySelector('.ship-weight').value) || null;
+        try {
+          const res = await fetch('https://vscombrgcdtrfndqyugb.supabase.co/functions/v1/create-shipping-label', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ order_id: o.id, weight_oz }),
+          });
+          const result = await res.json();
+          if (result.error) {
+            alert('Could not create the label: ' + result.error);
+          }
+        } catch (err) {
+          alert('Could not reach the shipping label function. Try again in a moment.');
+        }
+        btn.disabled = false;
+        btn.textContent = originalText;
+        await loadOrders();
+      });
 
       orderListEl.appendChild(row);
     });
