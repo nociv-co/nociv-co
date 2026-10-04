@@ -334,6 +334,7 @@
       <a href="#sec-products">Products</a>
       <a href="#sec-crosslist">Cross-Listing</a>
       <a href="#sec-orders">Orders</a>
+      <a href="#sec-expenses">Expenses</a>
       <a href="#sec-album">Album</a>
       <a href="#sec-directory">Directory</a>
       <a href="#sec-zines">Zines</a>
@@ -725,6 +726,39 @@
       </div>
     </details>
 
+    <details class="admin-section" id="sec-expenses">
+      <summary>Expenses <span class="admin-section-hint">everything you actually spend, so it stops disappearing</span></summary>
+      <div class="admin-section-body">
+        <div class="how-to-box">
+          <strong>What this is for</strong>
+          Every dollar that goes out, shipping supplies, printing, software, a mentorship fee, whatever it is. Log it the day you spend it and this answers "where did my money go" without digging through your bank app later. This is different from a product's own Cost field, that tracks just what one item costs to make, this tracks the whole business.
+        </div>
+        <div class="xsale-summary" id="expenseSummary"></div>
+        <div class="admin-form">
+          <label for="expDate">Date</label>
+          <input type="date" id="expDate">
+          <div class="admin-form-row">
+            <div>
+              <label for="expAmount">Amount ($)</label>
+              <input type="number" id="expAmount" step="0.01" placeholder="24.99">
+            </div>
+            <div>
+              <label for="expCategory">Category (type anything, new ones save automatically)</label>
+              <input type="text" id="expCategory" list="expenseCategoryOptions" placeholder="e.g. Shipping Supplies">
+              <datalist id="expenseCategoryOptions"></datalist>
+            </div>
+          </div>
+          <label for="expDescription">What was it (optional)</label>
+          <input type="text" id="expDescription" placeholder="e.g. Scale, poly mailers, and tape from Amazon">
+          <button class="admin-submit" id="addExpenseBtn">Add Expense</button>
+          <p class="admin-note" id="addExpenseConfirm">Added.</p>
+          <p class="admin-error" id="addExpenseError"></p>
+        </div>
+        <h3>Logged Expenses</h3>
+        <div id="expenseList"></div>
+      </div>
+    </details>
+
     <details class="admin-section" id="sec-album">
       <summary>Process Album <span class="admin-section-hint">the "making of" photo gallery on Shop</span></summary>
       <div class="admin-section-body">
@@ -947,23 +981,27 @@
         <p>Every sale from the site lands here on its own, and you get an email the moment a new one comes in. For an in-person Tap to Pay sale, type in what it actually cost you and hit Save, that's the only manual step, and it's what makes the Net Profit number accurate. Open Shipping Address &amp; Label on any order to fill in the address and print a real shipping label right from here.</p>
       </div>
       <div class="help-step">
-        <span class="help-step-num">9</span><h3>Process Album</h3>
+        <span class="help-step-num">9</span><h3>Expenses</h3>
+        <p>Every dollar going out, not tied to a specific product, shipping supplies, printing, software, mentorship fees. Log the date, amount, and category, and it tracks your spend by month and by category, so you stop losing track of where money went.</p>
+      </div>
+      <div class="help-step">
+        <span class="help-step-num">10</span><h3>Process Album</h3>
         <p>Behind the scenes photos, cutting fabric, screen printing, whatever shows the actual making of things. Upload a photo, add a caption if you want, hit Add to Album. Shows up on the Clothing shop page.</p>
       </div>
       <div class="help-step">
-        <span class="help-step-num">10</span><h3>Directory Listings</h3>
+        <span class="help-step-num">11</span><h3>Directory Listings</h3>
         <p>Other creators, shops, or studios you want listed in the community directory on Base. Fill in the fields, hit Add Listing, reorder with the arrows anytime.</p>
       </div>
       <div class="help-step">
-        <span class="help-step-num">11</span><h3>Zine Library</h3>
+        <span class="help-step-num">12</span><h3>Zine Library</h3>
         <p>Free zines anyone can read or download, no payment involved. Upload the PDF, add a cover if you have one, title it, hit Add Zine.</p>
       </div>
       <div class="help-step">
-        <span class="help-step-num">12</span><h3>Spread The Word</h3>
+        <span class="help-step-num">13</span><h3>Spread The Word</h3>
         <p>Print-ready flyers and stickers for customers to download and hand out themselves. Upload the file, describe what it is, hit Add Material. This is the actual word of mouth toolkit.</p>
       </div>
       <div class="help-step">
-        <span class="help-step-num">13</span><h3>Vendor Spots &amp; Pop-Ups</h3>
+        <span class="help-step-num">14</span><h3>Vendor Spots &amp; Pop-Ups</h3>
         <p>Nothing here shows on the site, it's just for you. Weigh a market or expo before committing any money, the Net Estimate box does the math live. Not sure yet, leave it blank and set Status to Researching.</p>
       </div>
     </div>
@@ -1050,6 +1088,7 @@
       loadProducts();
       loadExternalSales();
       loadOrders();
+      loadExpenses();
       loadAlbum();
       renderGoalsCalendar();
       loadGoals();
@@ -2234,7 +2273,7 @@
         btn.textContent = 'Creating...';
         const weight_oz = parseFloat(row.querySelector('.ship-weight').value) || null;
         try {
-          const res = await fetch('https://vscombrgcdtrfndqyugb.supabase.co/functions/v1/create-shipping-label', {
+          const res = await fetch('https://vscombrgcdtrfndqyugb.supabase.co/functions/v1/shipping-label', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ order_id: o.id, weight_oz }),
@@ -2252,6 +2291,108 @@
       });
 
       orderListEl.appendChild(row);
+    });
+  }
+
+  // ===== EXPENSES (table: expenses) — every dollar that goes out, not tied
+  // to any one product, so "where did my money go" has a real answer. =====
+  document.getElementById('expDate').value = new Date().toISOString().slice(0, 10);
+
+  async function loadExpenseCategoryOptions() {
+    const { data } = await supabaseClient.from('expenses').select('category');
+    const unique = [...new Set((data || []).map(e => e.category).filter(Boolean))];
+    document.getElementById('expenseCategoryOptions').innerHTML = unique.map(c => `<option value="${c}">`).join('');
+  }
+  loadExpenseCategoryOptions();
+
+  document.getElementById('addExpenseBtn').onclick = async () => {
+    const expense_date = document.getElementById('expDate').value || new Date().toISOString().slice(0, 10);
+    const amount = parseFloat(document.getElementById('expAmount').value);
+    const category = document.getElementById('expCategory').value.trim();
+    const description = document.getElementById('expDescription').value.trim() || null;
+    const errEl = document.getElementById('addExpenseError');
+    const confirmEl = document.getElementById('addExpenseConfirm');
+    errEl.style.display = 'none';
+    confirmEl.style.display = 'none';
+
+    if (!amount || amount <= 0) { errEl.textContent = 'Enter a real amount.'; errEl.style.display = 'block'; return; }
+    if (!category) { errEl.textContent = 'Category is required.'; errEl.style.display = 'block'; return; }
+
+    const { error } = await supabaseClient.from('expenses').insert([{ expense_date, amount, category, description }]);
+    if (error) { errEl.textContent = 'Error saving: ' + error.message; errEl.style.display = 'block'; return; }
+
+    document.getElementById('expAmount').value = '';
+    document.getElementById('expCategory').value = '';
+    document.getElementById('expDescription').value = '';
+    confirmEl.style.display = 'block';
+    setTimeout(() => { confirmEl.style.display = 'none'; }, 3000);
+    await loadExpenseCategoryOptions();
+    await loadExpenses();
+  };
+
+  async function loadExpenses() {
+    const listEl = document.getElementById('expenseList');
+    const summaryEl = document.getElementById('expenseSummary');
+    if (!listEl) return;
+    listEl.innerHTML = '<p style="opacity:.5;">Loading...</p>';
+
+    const { data: expenses, error } = await supabaseClient
+      .from('expenses')
+      .select('*')
+      .order('expense_date', { ascending: false });
+
+    if (error) {
+      listEl.innerHTML = '<p style="opacity:.5;">Could not load expenses.</p>';
+      summaryEl.innerHTML = '';
+      return;
+    }
+
+    const now = new Date();
+    const thisMonthKey = now.getFullYear() + '-' + String(now.getMonth() + 1).padStart(2, '0');
+    let monthTotal = 0, allTotal = 0;
+    const byCategoryMonth = {};
+    (expenses || []).forEach(e => {
+      const amt = parseFloat(e.amount) || 0;
+      allTotal += amt;
+      if ((e.expense_date || '').slice(0, 7) === thisMonthKey) {
+        monthTotal += amt;
+        byCategoryMonth[e.category] = (byCategoryMonth[e.category] || 0) + amt;
+      }
+    });
+
+    summaryEl.innerHTML = `
+      <div class="xsale-summary-card"><div class="label">This Month</div><div class="count">$${monthTotal.toFixed(2)}</div></div>
+      <div class="xsale-summary-card"><div class="label">All Time</div><div class="count">$${allTotal.toFixed(2)}</div></div>
+    `;
+
+    if (!expenses || expenses.length === 0) {
+      listEl.innerHTML = '<p style="opacity:.5;">Nothing logged yet. Add the first one above.</p>';
+      return;
+    }
+
+    const catEntries = Object.entries(byCategoryMonth);
+    listEl.innerHTML = catEntries.length
+      ? `<p class="field-hint">This month by category: ` + catEntries.map(([c, a]) => `${c} $${a.toFixed(2)}`).join(', ') + `</p>`
+      : '';
+
+    expenses.forEach(e => {
+      const row = document.createElement('div');
+      row.className = 'xsale-row';
+      row.innerHTML = `
+        <div class="info">
+          <span class="xsale-channel-tag">${e.category}</span>
+          <strong>$${parseFloat(e.amount).toFixed(2)}</strong>
+          ${e.description ? ' — ' + e.description : ''}
+          <span style="opacity:.6;"> · ${new Date(e.expense_date + 'T00:00:00').toLocaleDateString()}</span>
+        </div>
+        <button class="del-btn exp-del-btn" data-id="${e.id}">Remove</button>
+      `;
+      row.querySelector('.exp-del-btn').addEventListener('click', async () => {
+        if (!confirm('Remove this expense?')) return;
+        await supabaseClient.from('expenses').delete().eq('id', e.id);
+        await loadExpenses();
+      });
+      listEl.appendChild(row);
     });
   }
 
