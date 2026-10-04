@@ -55,6 +55,34 @@
   #culturePanel .wrap + .wrap { padding-top: 4px; }
   #culturePanel p { line-height: 1.6; margin: 0 0 12px; }
   #culturePanel p:last-child { margin-bottom: 0; }
+
+  /* --- About page anchor nav: jump-to tabs instead of "Back to About" links,
+     so the four sections read as one continuous page. --- */
+  html { scroll-behavior: smooth; }
+  .about-anchor-nav { position: sticky; top: 0; }
+  .about-anchor-nav a {
+    flex: 0 0 auto;
+    background: var(--charcoal-light);
+    color: #f2f2f2;
+    border: 1.5px solid #1a1a1a;
+    border-radius: 2px;
+    font-family: -apple-system, BlinkMacSystemFont, "Helvetica Neue", Arial, sans-serif;
+    font-size: 0.75rem;
+    font-weight: 700;
+    letter-spacing: 0.05em;
+    text-transform: uppercase;
+    padding: 8px 16px;
+    white-space: nowrap;
+    cursor: pointer;
+    text-decoration: none;
+    transition: all 0.15s ease;
+  }
+  .about-anchor-nav a:hover { background: #ffffff; color: #000000; }
+  .about-anchor-nav a.active {
+    background: var(--red); color: #ffffff; border: 1.5px solid #b83c2c; font-weight: 900;
+  }
+  #philosophyPanel, #participatePanel, #culturePanel, #founderPanel { scroll-margin-top: 66px; }
+  .about-intro { text-align: center; opacity: .7; max-width: 500px; margin: 20px auto; }
 </style>
 </head>
 <body>
@@ -71,34 +99,18 @@
   <a href="community.html" class="img-tab"><img src="base-button.png" alt="Base"></a>
 </nav>
 
-<!-- ================= ABOUT HUB (landing) ================= -->
-<div class="wrap" id="aboutHub" style="text-align:center;">
-  <h2 style="letter-spacing:2px; margin:20px 0 6px;">ABOUT</h2>
-  <p style="opacity:.7; max-width:500px; margin:0 auto 24px;">Pick where you want to start.</p>
-  <div class="hub-grid">
-    <div class="hub-card" data-panel="philosophyPanel">
-      <div class="hub-name">Philosophy</div>
-      <div class="hub-desc">What NOCIV is, and what Nothing Of Civilization actually means.</div>
-    </div>
-    <div class="hub-card" data-panel="culturePanel">
-      <div class="hub-name">Culture</div>
-      <div class="hub-desc">Why Arizona, and what it means to represent Black America.</div>
-    </div>
-    <div class="hub-card" data-panel="communityPanel">
-      <div class="hub-name">Community</div>
-      <div class="hub-desc">Buy, build, or share, three honest ways to take part.</div>
-    </div>
-    <div class="hub-card" data-panel="founderPanel">
-      <div class="hub-name">Founder</div>
-      <div class="hub-desc">Who's behind NOCIV, and why it's built the way it is.</div>
-    </div>
-  </div>
-</div>
+<!-- ================= ABOUT ANCHOR NAV ================= -->
+<nav class="subnav about-anchor-nav" id="aboutAnchorNav">
+  <a href="#philosophyPanel" class="active">Philosophy</a>
+  <a href="#participatePanel">Participate</a>
+  <a href="#culturePanel">Culture</a>
+  <a href="#founderPanel">Founder</a>
+</nav>
+<p class="about-intro">Four sides of the same thing. Jump to any of them, or just keep scrolling.</p>
 
 <!-- ===== PHILOSOPHY ===== -->
-<div class="subpanel" id="philosophyPanel">
+<div class="subpanel show" id="philosophyPanel">
   <div class="wrap" style="text-align:center; max-width:640px;">
-    <span class="hub-back" data-back="aboutHub">&larr; Back to About</span>
     <p style="font-size:1.3rem; line-height:1.7; font-weight:700;">
       NOCIV is an Arizona based creator brand. Creator in the original
       sense: someone who makes things, not content for a feed.
@@ -118,44 +130,34 @@
       <p>
         NOCIV uses the internet as a starting point, not the
         destination. A website can introduce you to an artist, a tool,
-        a zine, a garment, or an idea. That digital interaction should
-        eventually leave the screen, leading to a pop-up, a workshop,
-        a conversation, or a physical object you make yourself.
-      </p>
-      <p>
-        NOCIV isn't a single product line. It's a creative practice
-        expressed across clothing, art, hardware, writing, software,
-        and physical community.
+        a zine, a garment, or an idea, and from there it leads to a
+        pop-up, a workshop, a conversation, or a physical object you
+        make yourself. It's not a single product line, it's a
+        creative practice expressed across clothing, art, hardware,
+        writing, software, and physical community.
       </p>
       <p>
         This platform runs without algorithms, ads, or tracking. No
         paid promotion, no chasing shares. Growth happens the old way:
         a sticker on a lamppost, a flyer in a coffee shop window, a
         business card on a counter, someone wearing a piece in public.
-        If you're here, someone told you.
       </p>
-      <p style="font-weight:700;">Why express it through so many mediums?</p>
-      <p style="font-weight:900; font-size:1.2rem;">Why not?</p>
+      <p style="font-weight:700;">Why express it through so many mediums? Why not?</p>
     </div>
   </div>
 
   <div class="wrap">
-    <h1 class="headline" style="font-size:1.6rem; letter-spacing:0.04em;">
-      What Does "Nothing Of Civilization" Mean?
-    </h1>
+    <div class="eyebrow">What Does "Nothing Of Civilization" Mean?</div>
     <div style="font-size:1.05rem; line-height:1.8; max-width:640px;">
-      <p>NOCIV stands for Nothing Of Civilization.</p>
       <p>
-        It isn't about going backward or pretending we can return to a
-        previous era. It is a reminder that the systems, objects, and
+        It isn't about going backward, or pretending we can return to
+        a previous era. It's a reminder that the systems, objects, and
         norms around us aren't permanent features of nature, because
-        somebody built them.
-      </p>
-      <p>
-        We buy things without knowing who made them. We use technology
-        without understanding how it functions. We live inside social
-        norms as if they simply exist on their own. But every system,
-        tool, and product was constructed by people.
+        somebody built them. We buy things without knowing who made
+        them, use technology without understanding how it functions,
+        and live inside social norms as if they simply exist on their
+        own. But every system, tool, and product was constructed by
+        people.
       </p>
       <p style="font-weight:700;">
         We built this world. Which means we can build something else.
@@ -164,18 +166,47 @@
   </div>
 </div>
 
-<!-- ===== CULTURE ===== -->
-<div class="subpanel" id="culturePanel">
+<!-- ===== PARTICIPATE (moved up from Community, this is the actual business model) ===== -->
+<div class="subpanel show" id="participatePanel">
   <div class="wrap">
-    <span class="hub-back" data-back="aboutHub">&larr; Back to About</span>
+    <img src="buy-build-share.png" alt="Buy. Build. Share. Representing Black America. No socials, algorithm, or ads, just being human." style="width:100%; max-width:640px; display:block; margin:0 auto 24px;">
+    <div class="eyebrow">Buy. Build. Share.</div>
+    <p style="font-size:1.05rem; line-height:1.8; max-width:640px;">
+      Clothing is where we begin. Design, culture, and human
+      connection are where we go. Here's what that looks like in
+      practice: three honest ways in, and you choose how far you go.
+    </p>
+
+    <div class="participate-grid">
+      <div class="participate-card buy">
+        <h3>Buy</h3>
+        <p>Get something directly from Nociv: clothing, hardware, a zine. Support the brand and take home something real.</p>
+      </div>
+      <div class="participate-card build">
+        <h3>Build</h3>
+        <p>Use the free tools we provide: the Clothing Pattern Builder, the Zine Builder. Make your own thing instead of buying one.</p>
+      </div>
+      <div class="participate-card share">
+        <h3>Share</h3>
+        <p>Connect with the Arizona creative community: the Stall Wall, the Directory, the Share board. No purchase required, just show up.</p>
+      </div>
+    </div>
+
+    <p class="participate-note">The site is a platform for participation. You choose how.</p>
+  </div>
+</div>
+
+<!-- ===== CULTURE ===== -->
+<div class="subpanel show" id="culturePanel">
+  <div class="wrap">
     <div class="eyebrow">Why Arizona?</div>
     <div style="font-size:1.05rem; line-height:1.8; max-width:640px;">
       <p>NOCIV is built in Arizona. Arizona is home.</p>
       <p>
         Born in California and raised in Texas before moving to
-        Arizona, identity for me has always been a hybrid experience.
-        Parts of my life exist across state lines, but a brand needs to
-        physically exist somewhere to build real community.
+        Arizona, identity has always been a hybrid experience for me,
+        but a brand needs to physically exist somewhere to build real
+        community.
       </p>
       <p>
         Arizona is where NOCIV collaborates, hosts, crafts, and builds
@@ -191,89 +222,28 @@
     <div style="font-size:1.05rem; line-height:1.8; max-width:640px;">
       <p>
         NOCIV is a Black American owned company, and that foundation
-        shapes everything we create.
-      </p>
-      <p>
-        Our roots in this country run deep. Black Americans didn't
-        just survive here. We built, adapted, and forged a culture
-        that continuously shapes world history.
+        shapes everything we create. Our roots in this country run
+        deep. Black Americans didn't just survive here. We built,
+        adapted, and forged a culture that continuously shapes world
+        history.
       </p>
       <p style="font-weight:700;">
         We know who we are. We are not lost. We are here.
       </p>
       <p>
         Representing Black America means honoring that legacy without
-        flattening it into caricature. It isn't just about sanitized
-        "Black excellence" or historical stereotypes. It is about
-        representing Black life in all its nuances, contradictions,
-        regional styles, and creative expressions.
-      </p>
-      <p>
-        We create from this history, acknowledge its proximity, and
-        express it as something living, active, and present.
-      </p>
-    </div>
-  </div>
-</div>
-
-<!-- ===== COMMUNITY ===== -->
-<div class="subpanel" id="communityPanel">
-  <div class="wrap">
-    <span class="hub-back" data-back="aboutHub">&larr; Back to About</span>
-    <img src="buy-build-share.png" alt="Buy. Build. Share. Representing Black America. No socials, algorithm, or ads, just being human." style="width:100%; max-width:640px; display:block; margin:0 auto 24px;">
-    <div class="eyebrow">Buy. Build. Share.</div>
-    <p style="font-size:1.05rem; line-height:1.8; max-width:640px;">
-      NOCIV is a Black-owned clothing brand built around reclaiming
-      narratives and creating new norms. Clothing is where we begin.
-      Design, culture, and human connection are where we go. No ads,
-      no algorithm, word of mouth only. Here's what that looks like in
-      practice: three honest ways in, and you choose how far you go.
-    </p>
-
-    <div class="participate-grid">
-      <div class="participate-card buy">
-        <h3>Buy</h3>
-        <p>Get something directly from Nociv: clothing, hardware, a zine. Support the brand and take home something real.</p>
-      </div>
-      <div class="participate-card build">
-        <h3>Build</h3>
-        <p>Use the free tools we provide: the Clothing Pattern Builder, the Zine Builder, the Case Zero engine. Make your own thing instead of buying one.</p>
-      </div>
-      <div class="participate-card share">
-        <h3>Share</h3>
-        <p>Connect with the Arizona creative community: the Stall Wall, the Directory, the Share board. No purchase required, just show up.</p>
-      </div>
-    </div>
-
-    <p class="participate-note">The site is a platform for participation. You choose how.</p>
-  </div>
-
-  <div class="wrap">
-    <div class="eyebrow">Who Is NOCIV For?</div>
-    <div style="font-size:1.05rem; line-height:1.8; max-width:640px;">
-      <p>
-        NOCIV is for makers, learners, and anyone tired of being
-        treated purely as a consumer in a world they had no hand in
-        building.
-      </p>
-      <p>
-        Whether you come to buy a piece of clothing, read a zine, use
-        a tool to build something, or attend an event, NOCIV exists to
-        bridge the gap between vision and action.
-      </p>
-      <p>
-        The world around us was made by people.<br>
-        We built this.<br>
-        <span style="font-weight:900; font-size:1.15rem;">Now let's build something else.</span>
+        flattening it into caricature, not just sanitized "Black
+        excellence" or historical stereotypes, but Black life in all
+        its nuances, contradictions, regional styles, and creative
+        expressions.
       </p>
     </div>
   </div>
 </div>
 
 <!-- ===== FOUNDER ===== -->
-<div class="subpanel" id="founderPanel">
+<div class="subpanel show" id="founderPanel">
   <div class="wrap" style="padding:0; max-width:100%;">
-    <span class="hub-back" data-back="aboutHub" style="display:block; margin:16px 0 0 20px;">&larr; Back to About</span>
     <img src="about-founder-art.png" alt="About Founder: My name is Jasilyn Anderson, I am a Black American, my journey has been a lot of unlearning and learning, and my art reflects those realizations." style="width:100%; display:block;">
   </div>
 
@@ -290,10 +260,8 @@
         find personal or company social media profiles here. Instead
         of chasing engagement metrics, I collect interests like
         Infinity Stones: art, design, textiles, hardware design,
-        programming, writing, and physical fabrication.
-      </p>
-      <p>
-        There is something deeply fulfilling about starting with zero
+        programming, writing, and physical fabrication. There is
+        something deeply fulfilling about starting with zero
         knowledge, figuring out one piece at a time, and making
         something tangible that didn't exist before.
       </p>
@@ -311,22 +279,23 @@
 <footer class="nociv-footer">NOCIV.CO: Nothing Of Civilization<br>© 2023–2026 NOCIV.CO. Established 2023. All rights reserved.</footer>
 
 <script>
-  // ABOUT HUB: pick a section by reading a description first, no sub nav
-  document.querySelectorAll('#aboutHub .hub-card').forEach(card => {
-    card.addEventListener('click', () => {
-      document.getElementById('aboutHub').style.display = 'none';
-      document.querySelectorAll('.subpanel').forEach(p => p.classList.remove('show'));
-      document.getElementById(card.dataset.panel).classList.add('show');
-      window.scrollTo({ top: 0, behavior: 'smooth' });
+  // ABOUT page is one continuous scroll now. The anchor tabs just jump down
+  // the page (plain href="#id", smooth-scrolled by CSS), and this keeps the
+  // tab highlighted red as whichever section is on screen changes.
+  const anchorLinks = document.querySelectorAll('#aboutAnchorNav a');
+  const anchorSections = ['philosophyPanel', 'participatePanel', 'culturePanel', 'founderPanel']
+    .map(id => document.getElementById(id));
+
+  const sectionObserver = new IntersectionObserver((entries) => {
+    entries.forEach(entry => {
+      if (!entry.isIntersecting) return;
+      anchorLinks.forEach(a => a.classList.remove('active'));
+      const match = document.querySelector(`#aboutAnchorNav a[href="#${entry.target.id}"]`);
+      if (match) match.classList.add('active');
     });
-  });
-  document.querySelectorAll('.hub-back').forEach(link => {
-    link.addEventListener('click', () => {
-      document.querySelectorAll('.subpanel').forEach(p => p.classList.remove('show'));
-      document.getElementById(link.dataset.back).style.display = 'block';
-      window.scrollTo({ top: 0, behavior: 'smooth' });
-    });
-  });
+  }, { rootMargin: '-45% 0px -45% 0px' });
+
+  anchorSections.forEach(section => sectionObserver.observe(section));
 </script>
 
 </body>
