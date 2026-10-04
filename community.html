@@ -71,9 +71,9 @@
   .postDate { float: right; opacity: .6; font-size: 12px; }
   .postText { white-space: pre-wrap; margin-top: 10px; }
   .postDrawing { display: block; max-width: 100%; margin-top: 10px; border: 1px solid #333; border-radius: 4px; }
+  .postShoutout { font-size: 0.78rem; opacity: .65; margin-top: 8px; font-style: italic; }
   .greenMark { color: #6fbf8f; }
   .clearfix { clear: both; }
-  .suggestion-list { max-width: 500px; margin: 30px auto 0; text-align: left; }
 
   /* --- Doodle Canvas (Stall Wall) --- */
   .doodle-wrap { text-align: left; margin-bottom: 14px; }
@@ -144,34 +144,6 @@
   #panel-stallwall #states button.viewing { background: var(--red); color: #fff; border-color: var(--red); }
   #panel-stallwall .postWrap { border-top: 1px solid #a88e63; }
   #panel-stallwall #doodleCanvas { border: 2px solid #a88e63; }
-
-  /* ---------- SHARE section (inside Share): ruled notebook paper ---------- */
-  #share-section .mark-card,
-  #share-section .board-card {
-    background: repeating-linear-gradient(
-      to bottom, #fdfcf7, #fdfcf7 27px, #b8d4e8 28px, #fdfcf7 29px
-    );
-    border: 1px solid #ccc;
-    border-radius: 0;
-    color: #2a2a2a;
-    position: relative;
-    padding-left: 48px;
-  }
-  #share-section .mark-card::before,
-  #share-section .board-card::before {
-    content: ''; position: absolute; left: 36px; top: 0; bottom: 0;
-    width: 1px; background: #e08a8a;
-  }
-  #share-section .mark-card h3,
-  #share-section .mark-card label { color: #2a2a2a; }
-  #share-section .mark-card select,
-  #share-section .mark-card textarea,
-  #share-section .mark-card input[type="text"] {
-    background: #fff; border: 1px solid #ccc; color: #2a2a2a; border-radius: 0;
-  }
-  #share-section .board-card-title,
-  #share-section .board-card-meta,
-  #share-section .board-card-desc { color: #2a2a2a; }
 
   /* ---------- DIRECTORY: graph paper ---------- */
   #panel-directory .mark-card,
@@ -254,7 +226,7 @@
     </div>
     <div class="hub-card" data-target="panel-share">
       <div class="hub-name">Share</div>
-      <div class="hub-desc">Show your own work, or grab printable material to help spread the word.</div>
+      <div class="hub-desc">Grab printable flyers, posters, and stickers to help spread the word.</div>
     </div>
     <div class="hub-card" data-target="panel-directory">
       <div class="hub-name">Directory</div>
@@ -289,6 +261,9 @@
       <label for="postInput">Speak Your Truth</label>
       <textarea id="postInput" rows="4"></textarea>
 
+      <label for="referredByInput">Who told you about Nociv? (optional)</label>
+      <input type="text" id="referredByInput" placeholder="A name, a shop, a pop-up, however you heard">
+
       <div class="doodle-wrap">
         <label>Or draw it out (optional)</label>
         <canvas id="doodleCanvas"></canvas>
@@ -301,18 +276,6 @@
       <button id="sendBtn" class="cta-btn">Send Mark</button>
       <p id="sendConfirm" class="confirm-msg">Your mark is up.</p>
     </div>
-
-    <hr class="section-divider">
-
-    <h2 class="board-title">SUGGESTION WALL</h2>
-    <p class="board-sub">Anonymous. No names, no accounts. Stays up for a year.</p>
-    <div class="mark-card">
-      <label for="suggInput">Say it</label>
-      <textarea id="suggInput" rows="3"></textarea>
-      <button id="suggSendBtn" class="cta-btn">Post Anonymously</button>
-      <p id="suggConfirm" class="confirm-msg">Posted.</p>
-    </div>
-    <div class="suggestion-list" id="suggList"></div>
   </div>
 </div>
 
@@ -402,72 +365,15 @@
   </div>
 </div>
 
-<!-- ================= SHARE ================= -->
+<!-- ================= SHARE (now just Spread The Word, Stall Wall covers sharing thoughts/work) ================= -->
 <div class="tab-panel" id="panel-share">
-
-  <div class="wrap" style="text-align:center; padding-bottom:0;">
+  <div class="wrap" style="text-align:center;">
     <span class="hub-back" data-back-hub>&larr; Back to Base</span>
     <img class="top-icon-art" src="share-icon.png" alt="Share">
-    <h2 class="board-title" style="margin-top:20px;">SHARE</h2>
-    <p class="board-sub">Two ways to spread NOCIV. Both are your choice, never ours.</p>
-    <div class="hub-grid" id="shareHub">
-      <div class="hub-card" data-share-target="share-section">
-        <div class="hub-name">Share Your Work</div>
-        <div class="hub-desc">Post what you made. Art, tech, zines, clothing, whatever you're building.</div>
-      </div>
-      <div class="hub-card" data-share-target="spread-section">
-        <div class="hub-name">Spread The Word</div>
-        <div class="hub-desc">Print ready flyers, posters, and stickers. Take some, put them up, tell people yourself.</div>
-      </div>
-    </div>
-  </div>
-
-  <!-- ---- SHARE: post your own work ---- -->
-  <div id="share-section" style="display:none;">
-    <div class="wrap" style="text-align:center;">
-      <span class="hub-back" data-share-back>&larr; Back to Share</span>
-      <h3 class="subsection-label">SHARE YOUR WORK</h3>
-
-      <div class="mark-card">
-        <h3>Share It</h3>
-        <label for="shareCategory">Category</label>
-        <select id="shareCategory">
-          <option value="art">🟢 Art</option>
-          <option value="tech">🔵 Tech</option>
-          <option value="books">🟡 Zines</option>
-          <option value="clothing">🔴 Clothing</option>
-        </select>
-        <label for="shareTitle">Title</label>
-        <input type="text" id="shareTitle" placeholder="What did you make?">
-        <label for="shareDetails">Tell us about it</label>
-        <textarea id="shareDetails" rows="3"></textarea>
-        <label for="shareLink">Link or photo URL (optional)</label>
-        <input type="text" id="shareLink" placeholder="https://...">
-        <button id="shareSendBtn" class="cta-btn">Share It</button>
-        <p id="shareConfirm" class="confirm-msg">Shared.</p>
-      </div>
-
-      <div class="cat-pill-row" id="shareCatPillRow" style="margin-top:30px;">
-        <button class="cat-pill active" data-cat="All"><span class="legend-dot" style="background:#888;"></span>All</button>
-        <button class="cat-pill" data-cat="art"><span class="legend-dot cat-art"></span>Art</button>
-        <button class="cat-pill" data-cat="tech"><span class="legend-dot cat-tech"></span>Tech</button>
-        <button class="cat-pill" data-cat="books"><span class="legend-dot cat-books"></span>Zines</button>
-        <button class="cat-pill" data-cat="clothing"><span class="legend-dot cat-clothing"></span>Clothing</button>
-      </div>
-
-      <div class="board-list" id="shareList"></div>
-    </div>
-  </div>
-
-  <!-- ---- SPREAD THE WORD: printable flyers, posters, stickers ---- -->
-  <div id="spread-section" style="display:none;">
-    <div class="wrap" style="text-align:center;">
-      <span class="hub-back" data-share-back>&larr; Back to Share</span>
-      <h3 class="subsection-label">SPREAD THE WORD</h3>
-      <p class="board-sub">Print these yourself and put them up. No paid ads, ever, this is the only marketing NOCIV does.</p>
-      <div class="promo-grid" id="promoGrid"></div>
-      <div class="coming-soon" id="promoEmpty" style="display:none;">Nothing posted yet. Check back soon.</div>
-    </div>
+    <h2 class="board-title" style="margin-top:20px;">SPREAD THE WORD</h2>
+    <p class="board-sub">Print these yourself and put them up. No paid ads, ever, this is the only marketing NOCIV does.</p>
+    <div class="promo-grid" id="promoGrid"></div>
+    <div class="coming-soon" id="promoEmpty" style="display:none;">Nothing posted yet. Check back soon.</div>
   </div>
 </div>
 
@@ -504,7 +410,7 @@ document.querySelectorAll('#baseHub .hub-card').forEach(card => {
     document.getElementById('baseHub').style.display = 'none';
     document.querySelectorAll('.tab-panel').forEach(p => p.classList.remove('active'));
     document.getElementById(card.dataset.target).classList.add('active');
-    if (card.dataset.target === 'panel-share') showShareHub();
+    if (card.dataset.target === 'panel-share') loadPromoMaterials();
     window.scrollTo({ top: 0, behavior: 'smooth' });
   });
 });
@@ -512,29 +418,6 @@ document.querySelectorAll('[data-back-hub]').forEach(link => {
   link.addEventListener('click', () => {
     document.querySelectorAll('.tab-panel').forEach(p => p.classList.remove('active'));
     document.getElementById('baseHub').style.display = 'block';
-    window.scrollTo({ top: 0, behavior: 'smooth' });
-  });
-});
-
-// SHARE sub-hub: Share Your Work vs Spread The Word
-function showShareHub() {
-  document.getElementById('shareHub').style.display = 'grid';
-  document.getElementById('share-section').style.display = 'none';
-  document.getElementById('spread-section').style.display = 'none';
-}
-document.querySelectorAll('#shareHub .hub-card').forEach(card => {
-  card.addEventListener('click', () => {
-    document.getElementById('shareHub').style.display = 'none';
-    document.getElementById('share-section').style.display = 'none';
-    document.getElementById('spread-section').style.display = 'none';
-    document.getElementById(card.dataset.shareTarget).style.display = 'block';
-    window.scrollTo({ top: 0, behavior: 'smooth' });
-    if (card.dataset.shareTarget === 'spread-section') loadPromoMaterials();
-  });
-});
-document.querySelectorAll('[data-share-back]').forEach(link => {
-  link.addEventListener('click', () => {
-    showShareHub();
     window.scrollTo({ top: 0, behavior: 'smooth' });
   });
 });
@@ -767,6 +650,12 @@ async function loadPosts() {
     text.className = "postText"; text.innerText = p.text;
     if (p.admin && secretMode) text.classList.add("greenMark");
     div.appendChild(date); div.appendChild(text);
+    if (p.referred_by) {
+      let shoutout = document.createElement("div");
+      shoutout.className = "postShoutout";
+      shoutout.innerText = "Heard it from: " + p.referred_by;
+      div.appendChild(shoutout);
+    }
     if (p.drawing) {
       const img = document.createElement('img');
       img.className = 'postDrawing';
@@ -783,6 +672,7 @@ async function loadPosts() {
 document.getElementById("sendBtn").onclick = async () => {
   const text = postInput.value.trim();
   const chosenState = stateSelect.value;
+  const referredBy = document.getElementById('referredByInput').value.trim() || null;
   if (!chosenState) { stateSelect.focus(); return; }
   if (!text) { postInput.focus(); return; }
 
@@ -790,61 +680,16 @@ document.getElementById("sendBtn").onclick = async () => {
 
   const { error } = await supabaseClient
     .from('stall_posts')
-    .insert([{ state: chosenState, text: text, admin: secretMode, drawing: drawingData }]);
+    .insert([{ state: chosenState, text: text, admin: secretMode, drawing: drawingData, referred_by: referredBy }]);
   if (error) { alert("Error saving post: " + error.message); return; }
   postInput.value = "";
+  document.getElementById('referredByInput').value = "";
   resizeDoodleCanvas();
   doodleHasDrawing = false;
   sendConfirm.style.display = "block";
   setTimeout(() => { sendConfirm.style.display = "none"; }, 3000);
   await renderStateGrid();
   if (viewState === chosenState) await loadPosts();
-};
-
-/* ============ SUGGESTION WALL ============ */
-const suggList = document.getElementById('suggList');
-
-async function renderSuggestions() {
-  suggList.innerHTML = "<p style='opacity:.6; text-align:center;'>Loading suggestions...</p>";
-  const oneYearAgo = new Date(Date.now() - 365*24*60*60*1000).toISOString();
-  const { data: suggs, error } = await supabaseClient
-    .from('suggestion_posts')
-    .select('*')
-    .gte('created_at', oneYearAgo)
-    .order('created_at', { ascending: false });
-
-  if (error || !suggs || suggs.length === 0) {
-    suggList.innerHTML = "<p style='opacity:.6; text-align:center;'>No suggestions yet.</p>";
-    return;
-  }
-  suggList.innerHTML = "";
-  suggs.forEach(s => {
-    const div = document.createElement('div');
-    div.className = 'postWrap';
-    const date = document.createElement('div');
-    date.className = 'postDate'; date.textContent = formatDate(s.created_at);
-    const text = document.createElement('div');
-    text.className = 'postText'; text.textContent = s.text;
-    div.appendChild(date); div.appendChild(text);
-    const clear = document.createElement('div'); clear.className = 'clearfix';
-    div.appendChild(clear);
-    suggList.appendChild(div);
-  });
-}
-renderSuggestions();
-
-document.getElementById('suggSendBtn').onclick = async () => {
-  const text = document.getElementById('suggInput').value.trim();
-  if (!text) return;
-  const { error } = await supabaseClient
-    .from('suggestion_posts')
-    .insert([{ text: text }]);
-  if (error) { alert("Error saving suggestion: " + error.message); return; }
-  document.getElementById('suggInput').value = "";
-  const c = document.getElementById('suggConfirm');
-  c.style.display = 'block';
-  setTimeout(() => { c.style.display = 'none'; }, 3000);
-  await renderSuggestions();
 };
 
 /* ============ VERIFIED DIRECTORY (table: directory_listings, editable from admin) ============ */
@@ -1100,107 +945,6 @@ document.getElementById('boardSendBtn').onclick = async () => {
   await renderCalendar();
 };
 
-/* ============ SHARE CHANNEL ============ */
-const shareCatLabels = { art: "Art", tech: "Tech", books: "Zines", clothing: "Clothing" };
-let activeShareCat = "All";
-const shareList = document.getElementById('shareList');
-
-document.querySelectorAll('#shareCatPillRow .cat-pill').forEach(pill => {
-  pill.addEventListener('click', () => {
-    document.querySelectorAll('#shareCatPillRow .cat-pill').forEach(p => p.classList.remove('active'));
-    pill.classList.add('active');
-    activeShareCat = pill.dataset.cat;
-    renderShare();
-  });
-});
-
-async function renderShare() {
-  if (!shareList) return;
-  shareList.innerHTML = '<p style="opacity:.5; text-align:center;">Loading shared work...</p>';
-
-  let query = supabaseClient
-    .from('share_posts')
-    .select('*')
-    .order('created_at', { ascending: false });
-
-  if (activeShareCat !== "All") query = query.eq('category', activeShareCat);
-
-  const { data: posts, error } = await query;
-
-  if (error || !posts || posts.length === 0) {
-    shareList.innerHTML = '<p style="opacity:.5; text-align:center;">Nothing shared yet.</p>';
-    return;
-  }
-
-  shareList.innerHTML = "";
-  posts.forEach(p => {
-    const card = document.createElement('div');
-    card.className = 'board-card ' + p.category;
-    const metaBits = [shareCatLabels[p.category] || p.category, formatDate(p.created_at)];
-
-    card.innerHTML = `
-      <div class="board-card-title">${p.title}</div>
-      <div class="board-card-meta">${metaBits.join(' · ')}</div>
-      <div class="board-card-desc">${p.details}</div>
-      ${p.link ? `<a class="board-card-link" href="${p.link}" target="_blank" rel="noopener">View Link →</a>` : ''}
-    `;
-    shareList.appendChild(card);
-  });
-}
-renderShare();
-
-document.getElementById('shareSendBtn').onclick = async () => {
-  const category = document.getElementById('shareCategory').value;
-  const title = document.getElementById('shareTitle').value.trim();
-  const details = document.getElementById('shareDetails').value.trim();
-  const link = document.getElementById('shareLink').value.trim();
-
-  if (!title || !details) return;
-
-  const { error } = await supabaseClient
-    .from('share_posts')
-    .insert([{ category, title, details, link }]);
-
-  if (error) {
-    alert("Error sharing: " + error.message);
-    return;
-  }
-
-  document.getElementById('shareTitle').value = "";
-  document.getElementById('shareDetails').value = "";
-  document.getElementById('shareLink').value = "";
-
-  const c = document.getElementById('shareConfirm');
-  c.style.display = 'block';
-  setTimeout(() => { c.style.display = 'none'; }, 3000);
-  await renderShare();
-
-  // Support arriving from a pillar page's Share redirect: ?tab=share&cat=clothing
-  // (placed at end so all Share elements/functions above already exist)
-};
-
-(function handleDeepLink(){
-  const params = new URLSearchParams(window.location.search);
-  const tab = params.get('tab');
-  const cat = params.get('cat');
-  if (tab === 'share') {
-    document.getElementById('baseHub').style.display = 'none';
-    document.querySelectorAll('.tab-panel').forEach(p => p.classList.remove('active'));
-    document.getElementById('panel-share').classList.add('active');
-    document.getElementById('shareHub').style.display = 'none';
-    document.getElementById('spread-section').style.display = 'none';
-    document.getElementById('share-section').style.display = 'block';
-    if (cat) {
-      document.querySelectorAll('#shareCatPillRow .cat-pill').forEach(p => p.classList.remove('active'));
-      const target = document.querySelector(`#shareCatPillRow .cat-pill[data-cat="${cat}"]`);
-      if (target) {
-        target.classList.add('active');
-        activeShareCat = cat;
-      }
-    }
-    renderShare();
-  }
-})();
 </script>
 </body>
 </html>
