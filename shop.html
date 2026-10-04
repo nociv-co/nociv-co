@@ -531,7 +531,9 @@
 
   // buyAction/voteAction are passed in so the modal's Buy/Vote button behaves
   // exactly like the card's own button, without duplicating that logic.
-  function openProductModal(p, { isSoldOut, alreadyVoted, voteCount }, onBuy, onVote) {
+  function openProductModal(p, { isSoldOut, alreadyVoted, voteCount, variants }, onBuy, onVote) {
+    variants = variants || [];
+    const hasVariants = variants.length > 0;
     const mediaEl = document.getElementById('productModalMedia');
     const thumbsEl = document.getElementById('productModalThumbs');
 
@@ -588,6 +590,31 @@
     actionEl.innerHTML = '';
     if (p.status === 'for_sale' && isSoldOut) {
       actionEl.innerHTML = `<button class="card-action voted" disabled>Sold Out</button>`;
+    } else if (p.status === 'for_sale' && hasVariants) {
+      const priceLine = document.createElement('div');
+      priceLine.className = 'product-modal-price';
+      priceLine.textContent = p.price ? '$' + p.price : 'Price TBD';
+      actionEl.appendChild(priceLine);
+
+      const sizeSelect = document.createElement('select');
+      sizeSelect.className = 'product-modal-size-select';
+      sizeSelect.style.cssText = 'width:100%; padding:10px; margin:10px 0; font-size:1rem;';
+      sizeSelect.innerHTML = '<option value="">Choose a size</option>' + variants.map(v =>
+        `<option value="${v.id}" ${v.inventory_count <= 0 ? 'disabled' : ''}>${v.size}${v.inventory_count <= 0 ? ' — Sold out' : ' (' + v.inventory_count + ' left)'}</option>`
+      ).join('');
+      actionEl.appendChild(sizeSelect);
+
+      const btn = document.createElement('button');
+      btn.className = 'card-action buy';
+      btn.textContent = 'Buy Now';
+      btn.dataset.id = p.id;
+      btn.disabled = true;
+      sizeSelect.addEventListener('change', () => {
+        btn.disabled = !sizeSelect.value;
+        btn.dataset.variantId = sizeSelect.value;
+      });
+      btn.addEventListener('click', () => onBuy(btn));
+      actionEl.appendChild(btn);
     } else if (p.status === 'for_sale') {
       const priceLine = document.createElement('div');
       priceLine.className = 'product-modal-price';
@@ -626,6 +653,7 @@
   // Shared so the modal's Buy button can reuse the exact same checkout flow as the card's.
   async function startCheckout(btn) {
     const originalText = btn.textContent;
+    const variantId = btn.dataset.variantId || null;
     btn.disabled = true;
     btn.textContent = 'Redirecting to checkout...';
     try {
@@ -634,7 +662,7 @@
         {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ productId: btn.dataset.id })
+          body: JSON.stringify({ productId: btn.dataset.id, variantId })
         }
       );
       const result = await res.json();
@@ -677,6 +705,9 @@
           <button data-max="35">$35</button>
           <button data-max="45">$45</button>
         </div>
+        <div class="catalog-price-row" id="sizeFilterRow-${shopKey}" style="display:none;">
+          <button class="active" data-size="all">All Sizes</button>
+        </div>
         <div class="catalog-layout">
           <div class="catalog-category-rail" id="categoryRail-${shopKey}">
             <button class="active" data-cat="all">All</button>
@@ -696,8 +727,10 @@
 
     let activeCategory = 'all';
     let activeMaxPrice = 'all';
+    let activeSize = 'all';
     const railEl = document.getElementById('categoryRail-' + shopKey);
     const swipeEl = document.getElementById('catalogSwipe-' + shopKey);
+    const sizeFilterRowEl = document.getElementById('sizeFilterRow-' + shopKey);
 
     // Build the category rail from whatever categories actually exist in this shop —
     // new categories added in the admin show up automatically, no code changes needed.
@@ -734,6 +767,29 @@
       });
     });
 
+    // The size filter is rebuilt inside renderThisCatalog every time, from
+    // whichever products survived the category/price filters, so it only
+    // ever offers sizes that actually exist in what's currently showing —
+    // not every size anywhere in the shop.
+    function renderSizeFilterPills(availableSizes) {
+      if (availableSizes.length === 0) {
+        sizeFilterRowEl.style.display = 'none';
+        sizeFilterRowEl.innerHTML = '';
+        activeSize = 'all';
+        return;
+      }
+      if (activeSize !== 'all' && !availableSizes.includes(activeSize)) activeSize = 'all';
+      sizeFilterRowEl.style.display = 'flex';
+      sizeFilterRowEl.innerHTML = `<button class="${activeSize === 'all' ? 'active' : ''}" data-size="all">All Sizes</button>` +
+        availableSizes.map(sz => `<button class="${activeSize === sz ? 'active' : ''}" data-size="${sz}">${sz}</button>`).join('');
+      sizeFilterRowEl.querySelectorAll('button').forEach(btn => {
+        btn.addEventListener('click', () => {
+          activeSize = btn.dataset.size;
+          renderThisCatalog();
+        });
+      });
+    }
+
     async function renderThisCatalog() {
       swipeEl.innerHTML = '<p class="catalog-empty">Loading products...</p>';
 
@@ -746,10 +802,33 @@
       if (activeCategory !== 'all') query = query.eq('category', activeCategory);
       if (activeMaxPrice !== 'all') query = query.lte('price', parseFloat(activeMaxPrice));
 
-      const { data: products, error } = await query;
+      const { data: allProducts, error } = await query;
 
-      if (error || !products || products.length === 0) {
+      if (error || !allProducts || allProducts.length === 0) {
         swipeEl.innerHTML = '<p class="catalog-empty">Nothing here yet — check back soon.</p>';
+        return;
+      }
+
+      // Sizes live in their own table — one fetch for every product on this
+      // page, grouped client-side, instead of a query per card.
+      const allProductIds = allProducts.map(p => p.id);
+      const { data: variantRows } = await supabaseClient.from('product_variants').select('*').in('product_id', allProductIds);
+      const variantsByProduct = {};
+      (variantRows || []).forEach(v => {
+        (variantsByProduct[v.product_id] = variantsByProduct[v.product_id] || []).push(v);
+      });
+
+      const availableSizes = [...new Set(
+        allProducts.flatMap(p => (variantsByProduct[p.id] || []).filter(v => v.inventory_count > 0).map(v => v.size))
+      )];
+      renderSizeFilterPills(availableSizes);
+
+      const products = activeSize === 'all'
+        ? allProducts
+        : allProducts.filter(p => (variantsByProduct[p.id] || []).some(v => v.size === activeSize && v.inventory_count > 0));
+
+      if (products.length === 0) {
+        swipeEl.innerHTML = '<p class="catalog-empty">Nothing in this size right now — check back soon.</p>';
         return;
       }
 
@@ -763,7 +842,11 @@
         const card = document.createElement('div');
         card.className = 'catalog-card';
 
-        const isSoldOut = p.inventory_count !== null && p.inventory_count <= 0;
+        const variants = variantsByProduct[p.id] || [];
+        const hasVariants = variants.length > 0;
+        const isSoldOut = hasVariants
+          ? variants.every(v => v.inventory_count <= 0)
+          : (p.inventory_count !== null && p.inventory_count <= 0);
         const alreadyVoted = votedIds.includes(p.id);
         const count = voteCounts[p.id] || 0;
 
@@ -774,6 +857,8 @@
         let actionHtml = '';
         if (p.status === 'for_sale' && isSoldOut) {
           actionHtml = `<button class="card-action voted" disabled>Sold Out</button>`;
+        } else if (p.status === 'for_sale' && hasVariants) {
+          actionHtml = `<button class="card-action buy" data-action="select" data-id="${p.id}">Select Size — ${p.price ? '$' + p.price : 'Price TBD'}</button>`;
         } else if (p.status === 'for_sale') {
           actionHtml = `<button class="card-action buy" data-action="buy" data-id="${p.id}">Buy — ${p.price ? '$' + p.price : 'Price TBD'}</button>`;
         } else {
@@ -801,7 +886,7 @@
         const openThisModal = () => {
           openProductModal(
             p,
-            { isSoldOut, alreadyVoted, voteCount: count },
+            { isSoldOut, alreadyVoted, voteCount: count, variants },
             (btn) => startCheckout(btn),
             async (btn) => {
               btn.disabled = true;
@@ -817,6 +902,10 @@
         };
         card.querySelector('.card-media').addEventListener('click', openThisModal);
         card.querySelector('.card-name').addEventListener('click', openThisModal);
+        // An item with sizes always opens the modal to pick one — there's no
+        // single "buy" to fire straight from the card.
+        const selectBtn = card.querySelector('[data-action="select"]');
+        if (selectBtn) selectBtn.addEventListener('click', openThisModal);
       });
 
       swipeEl.querySelectorAll('[data-action="buy"]').forEach(btn => {
