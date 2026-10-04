@@ -626,10 +626,20 @@
                 <option value="coming_soon">Coming Soon</option>
               </select>
             </div>
-            <div>
+            <div id="pInventoryWrap">
               <label for="pInventory">Starting inventory (optional — leave blank for Printify items)</label>
               <input type="number" id="pInventory" min="0" placeholder="e.g. 5">
             </div>
+          </div>
+
+          <label style="display:flex; align-items:center; gap:8px; margin-top:4px; cursor:pointer;">
+            <input type="checkbox" id="pHasSizes" style="width:auto; margin:0;">
+            This item comes in sizes (stock tracked separately per size)
+          </label>
+          <div id="sizeVariantWrap" style="display:none; margin-top:8px;">
+            <div id="sizeVariantRows"></div>
+            <button type="button" id="addSizeRowBtn" class="admin-submit" style="width:auto; padding:8px 14px; margin:4px 0 0; background:var(--gold); color:#1a1a1a;">+ Add Size</button>
+            <div class="field-hint">One row per size you're stocking, Small, Medium, Large, whatever fits this item, with how many you've got of each. One listing, one set of photos, one price, every size lives inside it. The shop will show a size dropdown instead of a plain Buy button.</div>
           </div>
 
           <div class="admin-form-row">
@@ -1432,6 +1442,38 @@
     btn.textContent = originalText;
   });
 
+  // ===== SIZE VARIANTS — shared between the Add form and every Edit row.
+  // One row per size, stock tracked per row. =====
+  function createSizeRow(container, size, stock) {
+    const row = document.createElement('div');
+    row.className = 'size-variant-row';
+    row.style.cssText = 'display:flex; gap:8px; margin-bottom:6px; align-items:center;';
+    row.innerHTML = `
+      <input type="text" class="size-variant-size" placeholder="e.g. Small" value="${escapeAttr(size || '')}" style="flex:1; padding:6px;">
+      <input type="number" class="size-variant-stock" placeholder="Stock" min="0" value="${stock ?? ''}" style="width:90px; padding:6px;">
+      <button type="button" class="size-variant-remove" style="background:#eee; border:1px solid #ccc; padding:6px 10px; cursor:pointer;">✕</button>
+    `;
+    row.querySelector('.size-variant-remove').addEventListener('click', () => row.remove());
+    container.appendChild(row);
+  }
+  function collectSizeVariants(container) {
+    return Array.from(container.querySelectorAll('.size-variant-row')).map(row => ({
+      size: row.querySelector('.size-variant-size').value.trim(),
+      inventory_count: row.querySelector('.size-variant-stock').value ? parseInt(row.querySelector('.size-variant-stock').value) : 0
+    })).filter(v => v.size);
+  }
+
+  document.getElementById('pHasSizes').addEventListener('change', (e) => {
+    document.getElementById('sizeVariantWrap').style.display = e.target.checked ? 'block' : 'none';
+    document.getElementById('pInventoryWrap').style.display = e.target.checked ? 'none' : 'block';
+    if (e.target.checked && !document.querySelector('#sizeVariantRows .size-variant-row')) {
+      createSizeRow(document.getElementById('sizeVariantRows'));
+    }
+  });
+  document.getElementById('addSizeRowBtn').addEventListener('click', () => {
+    createSizeRow(document.getElementById('sizeVariantRows'));
+  });
+
   document.getElementById('addProductBtn').onclick = async () => {
     const name = document.getElementById('pName').value.trim();
     const description = document.getElementById('pDescription').value.trim() || null;
@@ -1440,6 +1482,8 @@
     const shippingCostVal = document.getElementById('pShippingCost').value;
     const platformFeePctVal = document.getElementById('pPlatformFeePct').value;
     const inventoryVal = document.getElementById('pInventory').value;
+    const hasSizes = document.getElementById('pHasSizes').checked;
+    const sizeVariants = hasSizes ? collectSizeVariants(document.getElementById('sizeVariantRows')) : [];
     const shop = document.getElementById('pShop').value;
     const category = document.getElementById('pCategory').value.trim();
     const status = document.getElementById('pStatus').value;
@@ -1462,6 +1506,11 @@
     }
     if (status === 'for_sale' && !stripe_price_id) {
       errEl.textContent = 'A Stripe Price ID is required for anything marked "For Sale" — otherwise the Buy button will fail. Set status to "Coming Soon" if you don\'t have one yet.';
+      errEl.style.display = 'block';
+      return;
+    }
+    if (hasSizes && sizeVariants.length === 0) {
+      errEl.textContent = 'Add at least one size and its stock count, or uncheck "This item comes in sizes".';
       errEl.style.display = 'block';
       return;
     }
@@ -1494,14 +1543,14 @@
       extra_image_urls = uploadedUrls.length > 1 ? uploadedUrls.slice(1) : null;
     }
 
-    const { error } = await supabaseClient.from('products').insert([{
+    const { data: newProduct, error } = await supabaseClient.from('products').insert([{
       name,
       description,
       price: priceVal ? parseFloat(priceVal) : null,
       cost: costVal ? parseFloat(costVal) : null,
       shipping_cost: shippingCostVal ? parseFloat(shippingCostVal) : null,
       platform_fee_pct: platformFeePctVal ? parseFloat(platformFeePctVal) : null,
-      inventory_count: (fulfillment_type === 'printify') ? null : (inventoryVal ? parseInt(inventoryVal) : null),
+      inventory_count: (fulfillment_type === 'printify' || hasSizes) ? null : (inventoryVal ? parseInt(inventoryVal) : null),
       shop,
       category,
       status,
@@ -1510,12 +1559,23 @@
       stripe_price_id,
       image_url,
       extra_image_urls
-    }]);
+    }]).select().single();
 
     if (error) {
       errEl.textContent = 'Error saving: ' + error.message;
       errEl.style.display = 'block';
       return;
+    }
+
+    if (hasSizes && sizeVariants.length > 0) {
+      const { error: variantError } = await supabaseClient.from('product_variants').insert(
+        sizeVariants.map((v, i) => ({ product_id: newProduct.id, size: v.size, inventory_count: v.inventory_count, sort_order: i }))
+      );
+      if (variantError) {
+        errEl.textContent = 'Product saved, but sizes could not be added: ' + variantError.message;
+        errEl.style.display = 'block';
+        return;
+      }
     }
 
     document.getElementById('pName').value = '';
@@ -1532,6 +1592,10 @@
     document.getElementById('pStripePriceId').value = '';
     document.getElementById('pImage').value = '';
     document.getElementById('pImageUrl').value = '';
+    document.getElementById('pHasSizes').checked = false;
+    document.getElementById('sizeVariantWrap').style.display = 'none';
+    document.getElementById('pInventoryWrap').style.display = 'block';
+    document.getElementById('sizeVariantRows').innerHTML = '';
     confirmEl.style.display = 'block';
     setTimeout(() => { confirmEl.style.display = 'none'; }, 3000);
     updateAddMarginCalc();
@@ -1578,6 +1642,17 @@
     const voteCounts = {};
     (votes || []).forEach(v => { voteCounts[v.product_id] = (voteCounts[v.product_id] || 0) + 1; });
 
+    // Sizes live in their own table now, one product can have several.
+    const { data: variantRows } = await supabaseClient
+      .from('product_variants')
+      .select('*')
+      .order('sort_order', { ascending: true, nullsFirst: false })
+      .order('created_at', { ascending: true });
+    const variantsByProduct = {};
+    (variantRows || []).forEach(v => {
+      (variantsByProduct[v.product_id] = variantsByProduct[v.product_id] || []).push(v);
+    });
+
     listEl.innerHTML = '';
     if (products.length === 0) {
       listEl.innerHTML = '<p style="opacity:.5;">Nothing in this shop yet.</p>';
@@ -1587,12 +1662,14 @@
       const row = document.createElement('div');
       row.className = 'product-row';
       row.dataset.id = p.id;
-      renderRowView(row, p, voteCounts[p.id] || 0);
+      renderRowView(row, p, voteCounts[p.id] || 0, variantsByProduct[p.id] || []);
       listEl.appendChild(row);
     });
   }
 
-  function renderRowView(row, p, voteCount) {
+  function renderRowView(row, p, voteCount, variants) {
+    variants = variants || [];
+    const hasVariants = variants.length > 0;
     const extraCount = Array.isArray(p.extra_image_urls) ? p.extra_image_urls.length : 0;
     const imgHtml = p.image_url
       ? `<div style="position:relative; display:inline-block;"><img src="${p.image_url}" alt="${p.name}">${extraCount > 0 ? `<span class="edit-photo-cover-tag" style="position:absolute; bottom:2px; left:2px; right:2px;">+${extraCount} more</span>` : ''}</div>`
@@ -1626,7 +1703,7 @@
       ${imgHtml}
       <div class="info">
         <div class="name">${p.name}</div>
-        <div class="meta">${p.shop} · ${p.category} · ${p.status === 'for_sale' ? 'For Sale' : 'Coming Soon'} · ${p.price ? '$' + p.price : 'no price set'} · cost $${p.cost ?? '—'} · stock: ${p.fulfillment_type === 'printify' ? 'unlimited (Printify)' : (p.inventory_count ?? 'not tracked')} · ${p.fulfillment_type === 'printify' ? 'Printify ID: ' + (p.printify_product_id || 'none set') : 'In-House'}${stripeWarning}${marginBit}</div>
+        <div class="meta">${p.shop} · ${p.category} · ${p.status === 'for_sale' ? 'For Sale' : 'Coming Soon'} · ${p.price ? '$' + p.price : 'no price set'} · cost $${p.cost ?? '—'} · stock: ${hasVariants ? variants.map(v => v.size + ': ' + v.inventory_count).join(', ') : (p.fulfillment_type === 'printify' ? 'unlimited (Printify)' : (p.inventory_count ?? 'not tracked'))} · ${p.fulfillment_type === 'printify' ? 'Printify ID: ' + (p.printify_product_id || 'none set') : 'In-House'}${stripeWarning}${marginBit}</div>
         <div class="votes">${voteCount} votes</div>
         <div class="cross-list-row">
           <span class="cross-list-label">Listed on:</span>
@@ -1649,11 +1726,11 @@
     });
 
     row.querySelector('.dup-btn').addEventListener('click', () => {
-      duplicateProductIntoForm(p);
+      duplicateProductIntoForm(p, variants);
     });
 
     row.querySelector('.edit-btn:not(.dup-btn)').addEventListener('click', () => {
-      renderRowEdit(row, p);
+      renderRowEdit(row, p, variants);
     });
 
     // ===== CROSS-LISTING: which outside channels this product is currently
@@ -1686,7 +1763,7 @@
     });
 
     row.querySelector('.mark-sold-btn').addEventListener('click', () => {
-      openMarkSoldForm(row, p, voteCount);
+      openMarkSoldForm(row, p, voteCount, variants);
     });
   }
 
@@ -1704,11 +1781,20 @@
   // Swaps a product row into a small "mark this sold elsewhere" form —
   // pick the channel, confirm the price, and it logs the sale and takes
   // it off tracked stock in one step, no separate screen to visit.
-  function openMarkSoldForm(row, p, voteCount) {
-    const tracksStock = p.fulfillment_type === 'in_house' && p.inventory_count != null;
+  function openMarkSoldForm(row, p, voteCount, variants) {
+    variants = variants || [];
+    const hasVariants = variants.length > 0;
+    const tracksStock = !hasVariants && p.fulfillment_type === 'in_house' && p.inventory_count != null;
+    const sizePickerHtml = hasVariants
+      ? `<label style="font-size:0.75rem; opacity:.7; display:block;">Which size?</label>
+         <select class="mark-sold-variant" style="width:100%; margin-bottom:8px; padding:6px;">
+           ${variants.map(v => `<option value="${v.id}" ${v.inventory_count <= 0 ? 'disabled' : ''}>${escapeAttr(v.size)} (${v.inventory_count} left)</option>`).join('')}
+         </select>`
+      : '';
     row.innerHTML = `
       <div class="info" style="width:100%;">
         <div class="name" style="margin-bottom:8px;">Mark "${p.name}" sold elsewhere</div>
+        ${sizePickerHtml}
         <label style="font-size:0.75rem; opacity:.7; display:block;">Where did it sell?</label>
         <select class="mark-sold-channel" style="width:100%; margin-bottom:8px; padding:6px;">
           <option value="vinted">Vinted</option>
@@ -1719,7 +1805,7 @@
         <label style="font-size:0.75rem; opacity:.7; display:block;">Sale price ($)</label>
         <input type="number" step="0.01" class="mark-sold-price" value="${p.price ?? ''}" style="width:100%; margin-bottom:8px; padding:6px;">
         <div class="field-hint" style="margin-bottom:8px;">
-          ${tracksStock ? `This will take 1 off your tracked stock (${p.inventory_count} left) and log the sale.` : 'This logs the sale. Stock isn\'t tracked for print-on-demand items, so there\'s nothing to subtract.'}
+          ${hasVariants ? 'This will take 1 off that size\'s tracked stock and log the sale.' : (tracksStock ? `This will take 1 off your tracked stock (${p.inventory_count} left) and log the sale.` : 'This logs the sale. Stock isn\'t tracked for print-on-demand items, so there\'s nothing to subtract.')}
         </div>
         <div style="display:flex; gap:8px;">
           <button type="button" class="confirm-mark-sold-btn" style="flex:1; background:var(--red); color:#fff; border:none; padding:8px; cursor:pointer;">Confirm Sale</button>
@@ -1728,7 +1814,7 @@
       </div>
     `;
 
-    row.querySelector('.cancel-mark-sold-btn').addEventListener('click', () => renderRowView(row, p, voteCount));
+    row.querySelector('.cancel-mark-sold-btn').addEventListener('click', () => renderRowView(row, p, voteCount, variants));
 
     row.querySelector('.confirm-mark-sold-btn').addEventListener('click', async () => {
       const btn = row.querySelector('.confirm-mark-sold-btn');
@@ -1737,10 +1823,11 @@
       const channel = row.querySelector('.mark-sold-channel').value;
       const priceVal = row.querySelector('.mark-sold-price').value;
       const sale_price = priceVal ? parseFloat(priceVal) : null;
+      const selectedVariant = hasVariants ? variants.find(v => v.id === row.querySelector('.mark-sold-variant').value) : null;
 
       const { error: logError } = await supabaseClient.from('external_sales').insert([{
         product_id: p.id,
-        product_name: p.name,
+        product_name: selectedVariant ? `${p.name} (${selectedVariant.size})` : p.name,
         channel,
         sale_price,
       }]);
@@ -1751,7 +1838,11 @@
         return;
       }
 
-      if (tracksStock && p.inventory_count > 0) {
+      if (selectedVariant && selectedVariant.inventory_count > 0) {
+        const newCount = selectedVariant.inventory_count - 1;
+        const { error: invError } = await supabaseClient.from('product_variants').update({ inventory_count: newCount }).eq('id', selectedVariant.id);
+        if (invError) alert('Sale logged, but stock could not be updated: ' + invError.message);
+      } else if (tracksStock && p.inventory_count > 0) {
         const newCount = p.inventory_count - 1;
         const { error: invError } = await supabaseClient.from('products').update({ inventory_count: newCount }).eq('id', p.id);
         if (invError) alert('Sale logged, but stock could not be updated: ' + invError.message);
@@ -1821,7 +1912,9 @@
   // Copies an existing product's setup into the Add a Product form so you're
   // only changing what's actually different, the name, the design ID, maybe
   // the price, instead of retyping fulfillment type and fees every time.
-  function duplicateProductIntoForm(p) {
+  function duplicateProductIntoForm(p, variants) {
+    variants = variants || [];
+    const hasSizes = variants.length > 0;
     document.getElementById('pName').value = '';
     document.getElementById('pDescription').value = p.description || '';
     document.getElementById('pPrice').value = p.price ?? '';
@@ -1832,6 +1925,12 @@
     document.getElementById('pCategory').value = p.category || '';
     document.getElementById('pStatus').value = p.status;
     document.getElementById('pInventory').value = p.inventory_count ?? '';
+    document.getElementById('pHasSizes').checked = hasSizes;
+    document.getElementById('sizeVariantWrap').style.display = hasSizes ? 'block' : 'none';
+    document.getElementById('pInventoryWrap').style.display = hasSizes ? 'none' : 'block';
+    const dupSizeRowsEl = document.getElementById('sizeVariantRows');
+    dupSizeRowsEl.innerHTML = '';
+    if (hasSizes) variants.forEach(v => createSizeRow(dupSizeRowsEl, v.size, v.inventory_count));
     document.getElementById('pFulfillment').value = p.fulfillment_type;
     document.getElementById('pFulfillment').dispatchEvent(new Event('change'));
     document.getElementById('pPrintifyProductId').value = '';
@@ -1857,7 +1956,9 @@
     return String(val ?? '').replace(/&/g, '&amp;').replace(/"/g, '&quot;').replace(/</g, '&lt;');
   }
 
-  function renderRowEdit(row, p) {
+  function renderRowEdit(row, p, variants) {
+    variants = variants || [];
+    const hasSizes = variants.length > 0;
     row.innerHTML = `
       <div class="info" style="width:100%;">
         <label style="font-size:0.75rem; opacity:.7; display:block; margin-bottom:2px;">Name</label>
@@ -1873,10 +1974,18 @@
             <label style="font-size:0.75rem; opacity:.7; display:block;">Cost</label>
             <input type="number" step="0.01" class="edit-cost" value="${p.cost ?? ''}" style="width:100%; padding:6px;">
           </div>
-          <div style="flex:1;">
-            <label style="font-size:0.75rem; opacity:.7; display:block;">Stock</label>
-            <input type="number" class="edit-inventory" value="${p.inventory_count ?? ''}" style="width:100%; padding:6px;">
-          </div>
+        </div>
+        <div class="edit-inventory-wrap" style="display:${hasSizes ? 'none' : 'block'}; margin-bottom:8px;">
+          <label style="font-size:0.75rem; opacity:.7; display:block;">Stock</label>
+          <input type="number" class="edit-inventory" value="${p.inventory_count ?? ''}" style="width:100%; padding:6px;">
+        </div>
+        <label style="display:flex; align-items:center; gap:8px; margin-bottom:6px; cursor:pointer;">
+          <input type="checkbox" class="edit-has-sizes" style="width:auto; margin:0;" ${hasSizes ? 'checked' : ''}>
+          This item comes in sizes
+        </label>
+        <div class="edit-size-variant-wrap" style="display:${hasSizes ? 'block' : 'none'}; margin-bottom:10px;">
+          <div class="edit-size-variant-rows"></div>
+          <button type="button" class="edit-add-size-row-btn" style="background:var(--gold); border:none; padding:6px 10px; font-size:0.75rem; font-weight:700; cursor:pointer;">+ Add Size</button>
         </div>
         <div style="display:flex; gap:8px; margin-bottom:8px;">
           <div style="flex:1;">
@@ -2049,6 +2158,15 @@
       row.querySelector('.edit-printify-wrap').style.display = e.target.value === 'printify' ? 'block' : 'none';
     });
 
+    const editSizeRowsEl = row.querySelector('.edit-size-variant-rows');
+    variants.forEach(v => createSizeRow(editSizeRowsEl, v.size, v.inventory_count));
+    row.querySelector('.edit-has-sizes').addEventListener('change', (e) => {
+      row.querySelector('.edit-size-variant-wrap').style.display = e.target.checked ? 'block' : 'none';
+      row.querySelector('.edit-inventory-wrap').style.display = e.target.checked ? 'none' : 'block';
+      if (e.target.checked && !editSizeRowsEl.querySelector('.size-variant-row')) createSizeRow(editSizeRowsEl);
+    });
+    row.querySelector('.edit-add-size-row-btn').addEventListener('click', () => createSizeRow(editSizeRowsEl));
+
     row.querySelector('.edit-create-stripe-price').addEventListener('click', async () => {
       const btn = row.querySelector('.edit-create-stripe-price');
       const errEl = row.querySelector('.edit-create-stripe-error');
@@ -2097,6 +2215,12 @@
         alert('This is set to Printify Print-on-Demand but has no Printify Product ID. Add one or switch Fulfillment to something else.');
         return;
       }
+      const newHasSizes = row.querySelector('.edit-has-sizes').checked;
+      const newVariants = newHasSizes ? collectSizeVariants(row.querySelector('.edit-size-variant-rows')) : [];
+      if (newHasSizes && newVariants.length === 0) {
+        alert('Add at least one size and its stock count, or uncheck "This item comes in sizes".');
+        return;
+      }
       const updated = {
         name: row.querySelector('.edit-name').value.trim(),
         description: row.querySelector('.edit-description').value.trim() || null,
@@ -2104,7 +2228,7 @@
         cost: row.querySelector('.edit-cost').value ? parseFloat(row.querySelector('.edit-cost').value) : null,
         shipping_cost: row.querySelector('.edit-shipping').value ? parseFloat(row.querySelector('.edit-shipping').value) : null,
         platform_fee_pct: row.querySelector('.edit-platform-fee').value ? parseFloat(row.querySelector('.edit-platform-fee').value) : null,
-        inventory_count: row.querySelector('.edit-inventory').value ? parseInt(row.querySelector('.edit-inventory').value) : null,
+        inventory_count: newHasSizes ? null : (row.querySelector('.edit-inventory').value ? parseInt(row.querySelector('.edit-inventory').value) : null),
         stripe_price_id: newStripePrice,
         shop: row.querySelector('.edit-shop').value,
         category: row.querySelector('.edit-category').value.trim(),
@@ -2114,6 +2238,21 @@
       };
       const { error } = await supabaseClient.from('products').update(updated).eq('id', p.id);
       if (error) { alert('Error saving: ' + error.message); return; }
+
+      // Sizes are replaced wholesale on save: simplest way to keep renamed/
+      // removed/reordered rows correct without diffing against what was there.
+      const { error: delVariantsError } = await supabaseClient.from('product_variants').delete().eq('product_id', p.id);
+      if (delVariantsError) {
+        alert('Product saved, but sizes could not be updated: ' + delVariantsError.message);
+        await loadProducts();
+        return;
+      }
+      if (newHasSizes) {
+        const { error: insVariantsError } = await supabaseClient.from('product_variants').insert(
+          newVariants.map((v, i) => ({ product_id: p.id, size: v.size, inventory_count: v.inventory_count, sort_order: i }))
+        );
+        if (insVariantsError) alert('Product saved, but sizes could not be updated: ' + insVariantsError.message);
+      }
       await loadProducts();
     });
   }
@@ -2184,6 +2323,7 @@
         ? ` · Printify #${o.printify_order_id} (${o.printify_status || 'submitted'})`
         : (o.printify_status === 'failed' ? ' · <span class="missing-flag">PRINTIFY ORDER FAILED — check manually</span>' : '');
       const sourceBit = o.source === 'in_person' ? ' · <strong>In-Person</strong>' : '';
+      const sizeBit = o.size ? ` · <strong>Size: ${o.size}</strong>` : '';
       const name = o.products?.name || o.description || (o.product_id ? 'Product #' + o.product_id : 'In-person sale');
 
       const costKnown = orderCost(o) != null;
@@ -2203,7 +2343,7 @@
       row.innerHTML = `
         <div class="info">
           <div class="name">${name}</div>
-          <div class="meta">$${o.amount_paid ?? '—'} · ${o.customer_email || 'no email'} · ${new Date(o.created_at).toLocaleString()}${sourceBit}${printifyBit}</div>
+          <div class="meta">$${o.amount_paid ?? '—'} · ${o.customer_email || 'no email'} · ${new Date(o.created_at).toLocaleString()}${sizeBit}${sourceBit}${printifyBit}</div>
           ${costInputHtml}
           <details class="ship-details">
             <summary>Shipping address &amp; label</summary>
