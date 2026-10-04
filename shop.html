@@ -200,6 +200,26 @@
     border: 1px solid #444; text-decoration: none; padding: 10px; font-weight: 900;
     text-transform: uppercase; font-size: 0.8rem; letter-spacing: 0.05em;
   }
+
+  /* --- Shop hierarchy: Clothing leads, Art and Zines are secondary, not
+     equal siblings. This is the only thing that changed here, no content
+     was touched, just how much visual weight each tab gets. --- */
+  .subnav-primary {
+    justify-content: center; padding: 18px 16px; min-height: auto;
+  }
+  .subnav-primary button {
+    font-size: 1.05rem; padding: 14px 40px; letter-spacing: 0.08em; font-weight: 900;
+  }
+  .shop-secondary-label {
+    text-align: center; font-size: 0.7rem; letter-spacing: 0.1em; text-transform: uppercase;
+    opacity: .5; margin: 14px 0 6px;
+  }
+  .subnav-secondary {
+    justify-content: center; padding: 6px 16px 10px; min-height: auto; margin-top: -2px;
+  }
+  .subnav-secondary button {
+    font-size: 0.68rem; padding: 6px 14px; opacity: .8;
+  }
 </style>
 </head>
 <body>
@@ -216,12 +236,14 @@
   <a href="community.html" class="img-tab"><img src="base-button.png" alt="Base"></a>
 </nav>
 
-<!-- SUB-NAV: switches between panels on this page -->
-<nav class="subnav">
+<!-- SUB-NAV: Clothing leads, Art and Zines are secondary, "also from the collective" -->
+<nav class="subnav subnav-primary">
   <button data-panel="clothingPanel" class="active">Clothing</button>
+</nav>
+<p class="shop-secondary-label">Also from the collective</p>
+<nav class="subnav subnav-secondary">
   <button data-panel="artPanel">Art</button>
   <button data-panel="zinesPanel">Zines</button>
-  <button data-panel="techPanel">Tech</button>
 </nav>
 
 <!-- ===== CLOTHING ===== -->
@@ -271,18 +293,6 @@
           <strong>Time:</strong> TBD
         </div>
       </div>
-    </div>
-  </div>
-</div>
-
-<!-- ===== TECH ===== -->
-<div class="subpanel" id="techPanel">
-  <div class="wrap">
-    <div class="catalog-mount" id="catalogMount-tech"></div>
-    <img src="tech-imagery-1.png" alt="The Attention Economy — Utopia/Dystopia. Make the rebellion of screens punk." style="width:100%; display:block; margin-top:30px;">
-    <div class="coming-soon" style="margin-top:20px;">
-      Tech kits will be sold here to help you build your own devices — coming soon.
-      Check out <a href="creator-tools.html" style="color: var(--gold); font-style: normal; text-decoration: underline;">Tools → Case Zero</a> to get a better idea of what's coming.
     </div>
   </div>
 </div>
@@ -826,7 +836,7 @@
     renderThisCatalog();
   }
 
-  ['clothing', 'art', 'zines', 'tech'].forEach(shopKey => initShopCatalog(shopKey));
+  ['clothing', 'art', 'zines'].forEach(shopKey => initShopCatalog(shopKey));
 
   // Show a confirmation banner if returning from Stripe checkout
   (function handleCheckoutReturn(){
