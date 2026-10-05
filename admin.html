@@ -841,10 +841,10 @@
           <input type="file" id="zineCover" accept="image/*">
           <label for="zineCoverUrl" style="margin-top:10px;">...or paste a link to the cover instead, skip the upload above if you use this</label>
           <input type="text" id="zineCoverUrl" placeholder="https://...">
-          <label for="zineFile" style="margin-top:10px;">Upload the PDF</label>
-          <input type="file" id="zineFile" accept="application/pdf">
-          <label for="zineFileUrl" style="margin-top:10px;">...or paste a link to the PDF instead, skip the upload above if you use this</label>
-          <input type="text" id="zineFileUrl" placeholder="https://...">
+          <label style="margin-top:10px;">PDF parts</label>
+          <p class="admin-note" style="display:block; opacity:.7;">One PDF? Fill in one row, leave the part name blank. Multi-part zine? Add a row per part (Part 1, Part 2, Part 3). They all live under one cover in the shop.</p>
+          <div id="zinePartRows"></div>
+          <button type="button" class="edit-btn" id="addZinePartRowBtn" style="margin-top:6px;">+ Add another part</button>
           <button class="admin-submit" id="addZineBtn">Add Zine</button>
           <p class="admin-note" id="zineAddConfirm">Zine added.</p>
           <p class="admin-error" id="zineAddError"></p>
@@ -2894,40 +2894,65 @@
   }
 
   // ===== ZINE LIBRARY (table: zines, storage bucket: zine-files) =====
+  // One zine = one cover + one or more PDF parts (zines.parts, a JSON list of
+  // {label, url}). file_url keeps the first part so older code still works.
+  function addZinePartRow() {
+    const wrap = document.getElementById('zinePartRows');
+    const n = wrap.children.length + 1;
+    const row = document.createElement('div');
+    row.className = 'zine-part-row';
+    row.style.cssText = 'border:1px solid #333; padding:10px; margin-bottom:8px;';
+    row.innerHTML = `
+      <input type="text" class="zp-label" placeholder="Part name, e.g. Part ${n} (blank if only one PDF)">
+      <input type="file" class="zp-file" accept="application/pdf" style="margin-top:6px;">
+      <input type="text" class="zp-url" placeholder="...or paste a PDF link instead" style="margin-top:6px;">
+      <label style="margin-top:8px; font-size:.75rem; opacity:.7;">Part cover image (optional, for picking this part as the issue cover later)</label>
+      <input type="file" class="zp-cover" accept="image/*">
+      <button type="button" class="del-btn zp-remove" style="margin-top:6px;">Remove part</button>`;
+    row.querySelector('.zp-remove').onclick = () => row.remove();
+    wrap.appendChild(row);
+  }
+  document.getElementById('addZinePartRowBtn').onclick = addZinePartRow;
+  addZinePartRow();
+
+  async function uploadZinePdf(file, type) {
+    const fileName = `${Date.now()}-${Math.random().toString(36).slice(2,6)}-${file.name.replace(/\s+/g, '-')}`;
+    const { error } = await supabaseClient.storage.from('zine-files')
+      .upload(fileName, file, { contentType: type || 'application/pdf' });
+    if (error) throw new Error('Upload failed: ' + error.message);
+    return supabaseClient.storage.from('zine-files').getPublicUrl(fileName).data.publicUrl;
+  }
+
   document.getElementById('addZineBtn').onclick = async () => {
     const title = document.getElementById('zineTitle').value.trim();
     const sub = document.getElementById('zineSub').value.trim() || null;
     const coverFile = document.getElementById('zineCover').files[0];
     const coverUrlInput = document.getElementById('zineCoverUrl').value.trim();
-    const file = document.getElementById('zineFile').files[0];
-    const urlInput = document.getElementById('zineFileUrl').value.trim();
     const errEl = document.getElementById('zineAddError');
     const confirmEl = document.getElementById('zineAddConfirm');
     errEl.style.display = 'none';
     confirmEl.style.display = 'none';
+    const fail = (m) => { errEl.textContent = m; errEl.style.display = 'block'; };
 
-    if (!title) { errEl.textContent = 'Title is required.'; errEl.style.display = 'block'; return; }
+    if (!title) return fail('Title is required.');
 
-    let file_url = null;
-    if (urlInput) {
-      file_url = urlInput;
-    } else if (file) {
-      const fileName = `${Date.now()}-${file.name.replace(/\s+/g, '-')}`;
-      const { error: uploadError } = await supabaseClient.storage
-        .from('zine-files')
-        .upload(fileName, file, { contentType: file.type || 'application/pdf' });
-      if (uploadError) {
-        errEl.textContent = 'Upload failed: ' + uploadError.message;
-        errEl.style.display = 'block';
-        return;
+    const rows = [...document.querySelectorAll('#zinePartRows .zine-part-row')];
+    const parts = [];
+    try {
+      for (let i = 0; i < rows.length; i++) {
+        const r = rows[i];
+        const label = r.querySelector('.zp-label').value.trim();
+        const f = r.querySelector('.zp-file').files[0];
+        const u = r.querySelector('.zp-url').value.trim();
+        if (!f && !u) continue;
+        const url = u || await uploadZinePdf(f);
+        const cf = r.querySelector('.zp-cover').files[0];
+        const pcover = cf ? await uploadZinePdf(cf, cf.type || 'image/jpeg') : null;
+        parts.push({ label: label || (rows.length > 1 ? 'Part ' + (parts.length + 1) : ''), url, cover: pcover });
       }
-      const { data: urlData } = supabaseClient.storage.from('zine-files').getPublicUrl(fileName);
-      file_url = urlData.publicUrl;
-    } else {
-      errEl.textContent = 'Upload a PDF, or paste a link to one.';
-      errEl.style.display = 'block';
-      return;
-    }
+    } catch (e) { return fail(e.message); }
+    if (parts.length === 0) return fail('Add at least one PDF, upload it or paste a link.');
+    const file_url = parts[0].url;
 
     let cover_url = null;
     if (coverUrlInput) {
@@ -2937,32 +2962,40 @@
       const { error: coverUploadError } = await supabaseClient.storage
         .from('zine-files')
         .upload(coverName, coverFile, { contentType: coverFile.type || 'image/jpeg' });
-      if (coverUploadError) {
-        errEl.textContent = 'Cover upload failed: ' + coverUploadError.message;
-        errEl.style.display = 'block';
-        return;
-      }
-      const { data: coverUrlData } = supabaseClient.storage.from('zine-files').getPublicUrl(coverName);
-      cover_url = coverUrlData.publicUrl;
+      if (coverUploadError) return fail('Cover upload failed: ' + coverUploadError.message);
+      cover_url = supabaseClient.storage.from('zine-files').getPublicUrl(coverName).data.publicUrl;
     }
 
+    if (!cover_url) cover_url = (parts.find(pt => pt.cover) || {}).cover || null;
     const { data: maxRows } = await supabaseClient
       .from('zines').select('sort_order').order('sort_order', { ascending: false }).limit(1);
     const nextOrder = (maxRows && maxRows[0] && maxRows[0].sort_order != null) ? maxRows[0].sort_order + 1 : 1;
 
-    const { error } = await supabaseClient.from('zines').insert([{ title, sub, file_url, cover_url, sort_order: nextOrder }]);
-    if (error) { errEl.textContent = 'Error saving: ' + error.message; errEl.style.display = 'block'; return; }
+    const { error } = await supabaseClient.from('zines').insert([{ title, sub, file_url, cover_url, parts, sort_order: nextOrder }]);
+    if (error) return fail('Error saving: ' + error.message);
 
     document.getElementById('zineTitle').value = '';
     document.getElementById('zineSub').value = '';
     document.getElementById('zineCover').value = '';
     document.getElementById('zineCoverUrl').value = '';
-    document.getElementById('zineFile').value = '';
-    document.getElementById('zineFileUrl').value = '';
+    document.getElementById('zinePartRows').innerHTML = '';
+    addZinePartRow();
     confirmEl.style.display = 'block';
     setTimeout(() => { confirmEl.style.display = 'none'; }, 3000);
     await loadZineAdminList();
   };
+
+  function zinePartsOf(z) {
+    if (Array.isArray(z.parts) && z.parts.length) return z.parts;
+    return z.file_url ? [{ label: '', url: z.file_url }] : [];
+  }
+
+  async function saveZineParts(z, parts, extra) {
+    const upd = Object.assign({ parts, file_url: parts[0] ? parts[0].url : z.file_url }, extra || {});
+    const { error } = await supabaseClient.from('zines').update(upd).eq('id', z.id);
+    if (error) { alert('Could not save: ' + error.message); return false; }
+    return true;
+  }
 
   async function loadZineAdminList() {
     const listEl = document.getElementById('zineAdminList');
@@ -2978,25 +3011,101 @@
       return;
     }
     listEl.innerHTML = '';
+
+    if (zineRows.length > 1) {
+      const bar = document.createElement('div');
+      bar.style.cssText = 'margin-bottom:12px; padding:10px; border:1px dashed #555;';
+      bar.innerHTML = `<p class="admin-note" style="display:block; margin:0 0 8px;">Posted parts as separate zines? Tick two or more, then combine. The <b>top one you ticked</b> becomes the cover card and the title, the rest become its parts. Use the arrows to change which one is on top.</p>
+        <button type="button" class="edit-btn" id="combineZinesBtn">Combine ticked into one issue</button>`;
+      listEl.appendChild(bar);
+      bar.querySelector('#combineZinesBtn').onclick = async () => {
+        const ticked = zineRows.filter((z, i) => listEl.querySelector(`.zine-tick[data-i="${i}"]`).checked);
+        if (ticked.length < 2) { alert('Tick at least two zines to combine.'); return; }
+        const base = ticked[0];
+        const title = prompt('Title for the combined issue', base.title);
+        if (!title) return;
+        const merged = [];
+        ticked.forEach((z) => {
+          zinePartsOf(z).forEach((pt) => {
+            merged.push({
+              label: pt.label || (z.sub && z.sub.trim()) || ('Part ' + (merged.length + 1)),
+              url: pt.url,
+              cover: pt.cover || z.cover_url || null
+            });
+          });
+        });
+        const ok = await saveZineParts(base, merged, { title, sub: null });
+        if (!ok) return;
+        for (const z of ticked.slice(1)) await supabaseClient.from('zines').delete().eq('id', z.id);
+        await loadZineAdminList();
+      };
+    }
+
     zineRows.forEach((z, idx) => {
       const row = document.createElement('div');
       row.className = 'product-row';
+      row.style.flexWrap = 'wrap';
+      const parts = zinePartsOf(z);
       const zineImgHtml = z.cover_url
         ? `<img src="${z.cover_url}" alt="${z.title}">`
         : `<div class="no-img">no cover</div>`;
       row.innerHTML = `
+        <input type="checkbox" class="zine-tick" data-i="${idx}" style="width:22px; height:22px; margin-right:6px;">
         ${zineImgHtml}
         <div class="info">
           <div class="name">${z.title}</div>
-          <div class="meta">${z.sub || ''}</div>
+          <div class="meta">${z.sub || ''} ${parts.length} PDF${parts.length === 1 ? '' : 's'}</div>
         </div>
         <button class="edit-btn" data-dir="up" ${idx === 0 ? 'disabled' : ''}>↑</button>
         <button class="edit-btn" data-dir="down" ${idx === zineRows.length - 1 ? 'disabled' : ''}>↓</button>
+        <button class="edit-btn" data-act="addpart">+ Part</button>
+        <input type="file" accept="application/pdf" class="addpart-file" style="display:none;">
         <button class="del-btn" data-id="${z.id}">Delete</button>
+        <div class="zine-parts-admin" style="flex-basis:100%; margin-top:8px;"></div>
       `;
       row.querySelector('[data-dir="up"]').addEventListener('click', () => moveZine(zineRows, idx, -1));
       row.querySelector('[data-dir="down"]').addEventListener('click', () => moveZine(zineRows, idx, 1));
-      row.querySelector('.del-btn').addEventListener('click', async () => {
+
+      // Parts manager: rename, reorder, remove, use as cover
+      const pa = row.querySelector('.zine-parts-admin');
+      if (parts.length > 1) {
+        parts.forEach((pt, i) => {
+          const line = document.createElement('div');
+          line.style.cssText = 'display:flex; gap:6px; align-items:center; padding:4px 0; border-top:1px solid #222; font-size:.8rem;';
+          line.innerHTML = `
+            ${pt.cover ? `<img src="${pt.cover}" style="width:32px;height:32px;object-fit:cover;">` : '<span style="width:32px;"></span>'}
+            <span style="flex:1;">${i + 1}. ${pt.label || 'Part ' + (i + 1)}</span>
+            <button class="edit-btn" data-p="up" ${i === 0 ? 'disabled' : ''}>↑</button>
+            <button class="edit-btn" data-p="down" ${i === parts.length - 1 ? 'disabled' : ''}>↓</button>
+            <button class="edit-btn" data-p="rename">Rename</button>
+            ${pt.cover ? '<button class="edit-btn" data-p="cover">Use as cover</button>' : ''}
+            <button class="del-btn" data-p="remove">✕</button>`;
+          const q = (k) => line.querySelector(`[data-p="${k}"]`);
+          q('up').onclick = async () => { const n = parts.slice(); [n[i-1], n[i]] = [n[i], n[i-1]]; if (await saveZineParts(z, n)) loadZineAdminList(); };
+          q('down').onclick = async () => { const n = parts.slice(); [n[i+1], n[i]] = [n[i], n[i+1]]; if (await saveZineParts(z, n)) loadZineAdminList(); };
+          q('rename').onclick = async () => { const v = prompt('Part name', pt.label || ''); if (v === null) return; const n = parts.slice(); n[i] = { ...pt, label: v.trim() }; if (await saveZineParts(z, n)) loadZineAdminList(); };
+          const cv = q('cover'); if (cv) cv.onclick = async () => { if (await saveZineParts(z, parts, { cover_url: pt.cover })) loadZineAdminList(); };
+          q('remove').onclick = async () => { if (!confirm('Remove this part from the issue?')) return; const n = parts.filter((_, k) => k !== i); if (await saveZineParts(z, n)) loadZineAdminList(); };
+          pa.appendChild(line);
+        });
+      }
+
+      const fileInput = row.querySelector('.addpart-file');
+      row.querySelector('[data-act="addpart"]').addEventListener('click', () => fileInput.click());
+      fileInput.addEventListener('change', async () => {
+        const f = fileInput.files[0];
+        if (!f) return;
+        const label = prompt('Name for this part', 'Part ' + (parts.length + 1));
+        if (label === null) return;
+        try {
+          const url = await uploadZinePdf(f);
+          const next = parts.slice();
+          if (next.length === 1 && !next[0].label) next[0] = { ...next[0], label: 'Part 1' };
+          next.push({ label: label.trim() || 'Part ' + (next.length + 1), url });
+          if (await saveZineParts(z, next)) await loadZineAdminList();
+        } catch (e) { alert('Could not add part: ' + e.message); }
+      });
+      row.querySelector('.del-btn[data-id]').addEventListener('click', async () => {
         if (!confirm('Delete this zine?')) return;
         await supabaseClient.from('zines').delete().eq('id', z.id);
         await loadZineAdminList();
