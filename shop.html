@@ -77,56 +77,67 @@
 
   /* --- Product Catalog --- */
   .catalog-section { margin-bottom: 50px; }
-  .catalog-price-row {
-    display: flex; gap: 8px; flex-wrap: wrap; justify-content: center; margin-bottom: 16px;
+  /* One slim toolbar: three dropdowns, no pill walls. Size only appears when
+     something on screen actually has sizes. */
+  .catalog-toolbar {
+    display: flex; gap: 10px; flex-wrap: wrap; align-items: center;
+    border-top: 2px solid #fff; border-bottom: 1px solid #333;
+    padding: 12px 0; margin-bottom: 22px;
   }
-  .catalog-price-row button {
-    background: #111; color: #ddd; border: 1px solid #333; padding: 7px 14px;
-    font-size: 0.8rem; cursor: pointer; white-space: nowrap;
+  .catalog-toolbar .tb-label {
+    font-size: 0.7rem; letter-spacing: 0.14em; text-transform: uppercase; opacity: .55; margin-right: 4px;
   }
-  .catalog-price-row button.active { background: #fff; color: #111; border-color: #fff; font-weight: 700; }
-
-  .catalog-layout { display: flex; gap: 16px; align-items: flex-start; }
-  .catalog-category-rail {
-    display: flex; flex-direction: column; gap: 8px; flex: 0 0 110px;
+  .catalog-toolbar select {
+    background: #111; color: #eee; border: 1px solid #444; border-radius: 0;
+    padding: 9px 30px 9px 12px; font-size: 0.8rem; letter-spacing: 0.04em; text-transform: uppercase;
+    font-family: inherit; cursor: pointer; appearance: none; -webkit-appearance: none;
+    background-image: linear-gradient(45deg, transparent 50%, #aaa 50%), linear-gradient(135deg, #aaa 50%, transparent 50%);
+    background-position: calc(100% - 15px) 55%, calc(100% - 10px) 55%;
+    background-size: 5px 5px, 5px 5px; background-repeat: no-repeat;
   }
-  .catalog-category-rail button {
-    background: var(--grey-dark); color: #fff; border: 1px solid #333;
-    padding: 12px 8px; font-size: 0.75rem; letter-spacing: 0.03em; text-transform: uppercase;
-    cursor: pointer; text-align: center;
+  .catalog-toolbar select.on { border-color: #fff; color: #fff; }
+  .catalog-toolbar .tb-clear {
+    background: none; border: none; color: #aaa; text-decoration: underline; font-size: 0.75rem;
+    cursor: pointer; display: none; margin-left: auto;
   }
-  .catalog-category-rail button.active { background: #fff; color: #111; border-color: #fff; font-weight: 700; }
+  .catalog-toolbar .tb-count { font-size: 0.72rem; opacity: .5; margin-left: auto; }
+  .catalog-toolbar .tb-clear + .tb-count { margin-left: 0; }
 
   .catalog-swipe {
-    flex: 1; display: flex; gap: 14px; overflow-x: auto; padding-bottom: 10px;
-    scroll-snap-type: x mandatory; -webkit-overflow-scrolling: touch;
+    display: grid; grid-template-columns: repeat(auto-fill, minmax(210px, 1fr)); gap: 18px;
   }
+  .catalog-swipe > .catalog-empty { grid-column: 1 / -1; }
+  @media (max-width: 520px) { .catalog-swipe { grid-template-columns: repeat(2, 1fr); gap: 12px; } }
   .catalog-card {
-    flex: 0 0 220px; scroll-snap-align: start; background: #111; border: 1px solid #333;
-    border-radius: 6px; overflow: hidden; color: #eee; text-align: left;
+    background: #0d0d0d; border: 1px solid #2a2a2a; color: #eee; text-align: left;
+    display: flex; flex-direction: column; overflow: hidden; transition: border-color .15s, transform .15s;
   }
-  .catalog-card .card-media { cursor: pointer; display: block; }
-  .catalog-card img { width: 100%; height: 220px; object-fit: cover; display: block; }
+  .catalog-card:hover { border-color: #fff; transform: translateY(-2px); }
+  .catalog-card .card-media { cursor: pointer; display: block; position: relative; aspect-ratio: 1 / 1; background: #1a1a1a; }
+  .catalog-card img { width: 100%; height: 100%; object-fit: cover; display: block; }
   .catalog-card .no-photo {
-    width: 100%; height: 220px; background: #1c1c1c; display: flex;
+    width: 100%; height: 100%; background: #1c1c1c; display: flex;
     align-items: center; justify-content: center; font-size: 0.75rem; opacity: .5; cursor: pointer;
   }
-  .catalog-card .card-body { padding: 14px; }
-  .catalog-card .card-name { font-weight: 900; font-size: 0.95rem; margin-bottom: 4px; cursor: pointer; }
-  .catalog-card .card-meta { font-size: 0.75rem; opacity: .6; margin-bottom: 10px; }
+  .catalog-card .card-body { padding: 12px 12px 14px; display: flex; flex-direction: column; flex: 1; }
+  .catalog-card .card-name { font-weight: 900; font-size: 0.92rem; line-height: 1.25; cursor: pointer; text-transform: uppercase; letter-spacing: 0.02em; }
+  .catalog-card .card-meta { font-size: 0.7rem; opacity: .5; margin: 3px 0 8px; text-transform: uppercase; letter-spacing: 0.08em; }
+  .catalog-card .card-price { font-size: 1.05rem; font-weight: 900; margin-bottom: 10px; }
+  .catalog-card .card-price small { font-size: 0.65rem; font-weight: 400; opacity: .55; letter-spacing: 0.06em; text-transform: uppercase; margin-left: 4px; }
+  /* Status tag sits on the photo corner instead of eating a row of the card */
   .catalog-card .card-badge {
-    display: inline-block; font-size: 0.65rem; letter-spacing: 0.05em; text-transform: uppercase;
-    padding: 3px 8px; margin-bottom: 8px; font-weight: 700;
+    position: absolute; top: 8px; left: 8px; font-size: 0.6rem; letter-spacing: 0.08em; text-transform: uppercase;
+    padding: 3px 7px; font-weight: 700; margin: 0;
   }
-  .catalog-card .card-badge.for-sale { background: var(--green); color: #fff; }
+  .catalog-card .card-badge.for-sale { background: #fff; color: #111; }
   .catalog-card .card-badge.coming-soon { background: var(--gold); color: #1a1a1a; }
   .catalog-card button.card-action {
-    width: 100%; padding: 10px; border: none; font-weight: 900; letter-spacing: 0.05em;
-    text-transform: uppercase; font-size: 0.8rem; cursor: pointer;
+    width: 100%; padding: 11px; border: 1px solid transparent; font-weight: 900; letter-spacing: 0.08em;
+    text-transform: uppercase; font-size: 0.74rem; cursor: pointer; margin-top: auto; border-radius: 0;
   }
   .catalog-card button.card-action.buy { background: var(--red); color: #fff; }
-  .catalog-card button.card-action.vote { background: var(--gold); color: #1a1a1a; }
-  .catalog-card button.card-action.voted { background: #333; color: #999; cursor: default; }
+  .catalog-card button.card-action.vote { background: transparent; color: var(--gold); border-color: var(--gold); }
+  .catalog-card button.card-action.voted { background: #222; color: #888; cursor: default; }
   .catalog-empty { opacity: .5; font-style: italic; padding: 20px; text-align: center; }
 
   /* --- Product detail modal (tap a card to zoom + read the description) --- */
@@ -185,21 +196,42 @@
   .zoom-overlay.show { display: flex; }
   .zoom-overlay img { max-width: 100%; max-height: 100%; object-fit: contain; }
 
-  /* Zine reader — displayed as a card grid like the rest of the shop, just free.
-     One shared viewer opens below the grid when you tap Read on any card. */
+  /* Zines: one card per issue. Cover is shown whole (never cropped, no text
+     laid over it), parts are plain tap rows underneath. PDFs open in a new
+     tab, which works on every phone, unlike inline embeds on iOS. */
   .zine-grid {
     display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
-    gap: 14px; max-width: 900px; margin: 0 auto;
+    gap: 18px; max-width: 900px; margin: 0 auto;
   }
-  .zine-viewer { margin: 24px auto 0; max-width: 900px; display: none; }
-  .zine-viewer.show { display: block; }
-  .zine-viewer embed, .zine-viewer object { width: 100%; height: 70vh; border: 1px solid #333; background: #fff; }
-  .zine-viewer-note { font-size: 0.75rem; opacity: .6; margin-top: 8px; }
-  .zine-download-link {
-    display: block; text-align: center; margin-top: 8px; background: #1c1c1c; color: #eee;
-    border: 1px solid #444; text-decoration: none; padding: 10px; font-weight: 900;
-    text-transform: uppercase; font-size: 0.8rem; letter-spacing: 0.05em;
+  @media (max-width: 520px) { .zine-grid { grid-template-columns: repeat(2, 1fr); gap: 12px; } }
+  .zine-card .zine-cover { aspect-ratio: 3 / 4; background: #1a1a1a; display: flex; align-items: center; justify-content: center; }
+  .zine-card .zine-cover img { width: 100%; height: 100%; object-fit: contain; }
+  .zine-card .zine-cover span { font-size: 0.75rem; opacity: .5; letter-spacing: 0.1em; text-transform: uppercase; }
+  .zine-card .zine-free { font-size: 0.6rem; letter-spacing: 0.1em; text-transform: uppercase; background: var(--gold); color: #1a1a1a; font-weight: 700; padding: 3px 7px; display: inline-block; margin-bottom: 8px; align-self: flex-start; }
+  .zine-parts { display: flex; flex-direction: column; gap: 6px; margin-top: auto; }
+  .zine-part {
+    display: flex; justify-content: space-between; align-items: center; gap: 8px;
+    background: transparent; color: #fff; border: 1px solid #555; text-decoration: none;
+    padding: 10px 12px; font-weight: 900; text-transform: uppercase; font-size: 0.74rem; letter-spacing: 0.06em;
   }
+  button.zine-part { width:100%; font-family:inherit; cursor:pointer; text-align:left; border-radius:0; }
+  .zine-part:hover, .zine-part:active { background: #fff; color: #111; }
+  .zine-part .arrow { opacity: .7; }
+  /* Full-screen reader */
+  .zr { display:none; position:fixed; inset:0; background:#000; z-index:2000; flex-direction:column; }
+  .zr.show { display:flex; }
+  .zr-bar { display:flex; align-items:center; gap:8px; padding:10px 12px; padding-top:max(10px, env(safe-area-inset-top)); background:#111; border-bottom:1px solid #333; }
+  .zr-close { background:#fff; color:#111; border:none; font-weight:900; padding:9px 14px; font-size:.75rem; letter-spacing:.08em; text-transform:uppercase; cursor:pointer; }
+  .zr-title { flex:1; min-width:0; color:#eee; font-size:.8rem; font-weight:900; text-transform:uppercase; letter-spacing:.04em; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+  .zr-open { color:#aaa; font-size:.7rem; text-decoration:underline; white-space:nowrap; }
+  .zr-tabs { display:flex; gap:6px; padding:8px 12px; overflow-x:auto; background:#0a0a0a; border-bottom:1px solid #222; }
+  .zr-tabs button { flex:0 0 auto; background:transparent; color:#bbb; border:1px solid #444; padding:8px 14px; font-size:.72rem; font-weight:900; text-transform:uppercase; letter-spacing:.06em; cursor:pointer; }
+  .zr-tabs button.active { background:#fff; color:#111; border-color:#fff; }
+  .zr-body { flex:1; overflow-y:auto; -webkit-overflow-scrolling:touch; background:#222; text-align:center; }
+  .zr-page { display:block; margin:0 auto 6px; background:#fff; max-width:100%; }
+  .zr-msg { color:#aaa; padding:40px 20px; font-size:.85rem; }
+  .zr-msg a { color:#fff; }
+  .zine-save-note { font-size: 0.7rem; opacity: .5; margin-top: 8px; }
 
   /* --- Shop hierarchy: Clothing leads, Art and Zines are secondary, not
      equal siblings. This is the only thing that changed here, no content
@@ -297,21 +329,27 @@
   </div>
 </div>
 
+<!-- Full-screen zine reader -->
+<div class="zr" id="zr">
+  <div class="zr-bar">
+    <button class="zr-close" id="zrClose" type="button">Close</button>
+    <div class="zr-title" id="zrTitle"></div>
+    <a class="zr-open" id="zrOpen" href="#" target="_blank" rel="noopener">Open / Save</a>
+  </div>
+  <div class="zr-tabs" id="zrTabs"></div>
+  <div class="zr-body" id="zrBody"></div>
+</div>
+
 <!-- ===== ZINES ===== -->
 <div class="subpanel" id="zinesPanel">
   <div class="wrap">
     <div class="catalog-mount" id="catalogMount-zines"></div>
-    <div class="eyebrow" style="margin-top:30px;">Free food for thought</div>
+    <div class="eyebrow" style="margin-top:30px;">Free zines</div>
     <p style="opacity:.7; max-width:500px; margin-bottom:30px;">
-      Zines, free to read and free to keep. No sign-up, no paywall.
+      Free to read, free to keep. No sign-up, no paywall.
     </p>
     <div class="zine-grid" id="zineList"></div>
-    <div class="zine-viewer" id="zineViewer">
-      <embed src="" type="application/pdf">
-      <div class="zine-viewer-note">
-        If the reader doesn't load on your phone, use the Download button on the zine instead.
-        Some mobile browsers don't preview PDFs inline.
-      </div>
+    <p class="zine-save-note" style="text-align:center;">Tap a zine to read it full screen. Use Open / Save in the reader to keep a copy.</p>
     </div>
     <div class="coming-soon">More issues coming soon.</div>
   </div>
@@ -469,7 +507,7 @@
   // issues, not a big catalog. Tap a card to read, or download it straight
   // off the card. (table: zines, editable from admin) =====
   const zineList = document.getElementById('zineList');
-  const zineViewer = document.getElementById('zineViewer');
+  const escAttr = (t) => String(t == null ? '' : t).replace(/&/g,'&amp;').replace(/"/g,'&quot;').replace(/</g,'&lt;');
 
   async function loadZines() {
     const { data: zineRows, error } = await supabaseClient
@@ -478,36 +516,132 @@
       .order('sort_order', { ascending: true, nullsFirst: false })
       .order('created_at', { ascending: false });
 
-    if (error || !zineRows || zineRows.length === 0) return; // "More issues coming soon" already shows below the grid
+    if (error || !zineRows || zineRows.length === 0) return;
 
     zineRows.forEach((zine) => {
+      const parts = (Array.isArray(zine.parts) && zine.parts.length)
+        ? zine.parts
+        : (zine.file_url ? [{ label: '', url: zine.file_url }] : []);
       const card = document.createElement('div');
-      card.className = 'catalog-card';
-
-      const mediaHtml = zine.cover_url
-        ? `<img src="${zine.cover_url}" alt="${zine.title}">`
-        : `<div class="no-photo">Zine</div>`;
-
+      card.className = 'catalog-card zine-card';
+      const cover = zine.cover_url
+        ? `<img src="${escAttr(zine.cover_url)}" alt="${escAttr(zine.title)}">`
+        : `<span>Zine</span>`;
+      const partsHtml = parts.map((pt, i) => {
+        const label = pt.label || (parts.length > 1 ? 'Part ' + (i + 1) : 'Read');
+        return `<button class="zine-part" type="button" data-i="${i}"><span>${escAttr(label)}</span><span class="arrow">&rarr;</span></button>`;
+      }).join('');
       card.innerHTML = `
-        <div class="card-media">${mediaHtml}</div>
+        <div class="zine-cover" style="cursor:pointer;">${cover}</div>
         <div class="card-body">
-          <div class="card-badge for-sale" style="background:var(--gold); color:#1a1a1a;">FREE</div>
-          <div class="card-name">${zine.title}</div>
-          <div class="card-meta">${zine.sub || 'Zine'}</div>
-          <button class="card-action buy" data-action="read">Read</button>
-          <a class="zine-download-link" href="${zine.file_url}" download>Download</a>
-        </div>
-      `;
-
-      card.querySelector('[data-action="read"]').addEventListener('click', () => {
-        zineViewer.querySelector('embed').src = zine.file_url;
-        zineViewer.classList.add('show');
-        zineViewer.scrollIntoView({ behavior: 'smooth', block: 'start' });
-      });
-
+          <span class="zine-free">Free</span>
+          <div class="card-name" style="cursor:default;">${escAttr(zine.title)}</div>
+          <div class="card-meta">${escAttr(zine.sub || (parts.length > 1 ? parts.length + ' parts, pick one' : 'Zine'))}</div>
+          <div class="zine-parts">${partsHtml}</div>
+        </div>`;
+      card.querySelectorAll('.zine-part').forEach(b => b.addEventListener('click', () => openReader(zine.title, parts, +b.dataset.i)));
+      card.querySelector('.zine-cover').addEventListener('click', () => openReader(zine.title, parts, 0));
       zineList.appendChild(card);
     });
   }
+
+  // ===== FULL-SCREEN READER. Draws the PDF page by page with PDF.js so it
+  // works on iPhone (iOS can't show PDFs inline). Falls back to a plain link.
+  const zr = document.getElementById('zr'), zrBody = document.getElementById('zrBody'),
+        zrTabs = document.getElementById('zrTabs'), zrTitle = document.getElementById('zrTitle'),
+        zrOpen = document.getElementById('zrOpen');
+  let pdfLibPromise = null, readToken = 0, io = null;
+  function loadPdfLib() {
+    if (pdfLibPromise) return pdfLibPromise;
+    pdfLibPromise = new Promise((res, rej) => {
+      const sc = document.createElement('script');
+      sc.src = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js';
+      sc.onload = () => {
+        pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
+        res(pdfjsLib);
+      };
+      sc.onerror = () => rej(new Error('pdfjs'));
+      document.head.appendChild(sc);
+    });
+    return pdfLibPromise;
+  }
+  async function showPart(parts, i, title) {
+    const token = ++readToken;
+    const part = parts[i];
+    zrOpen.href = part.url;
+    zrTabs.querySelectorAll('button').forEach((b, k) => b.classList.toggle('active', k === i));
+    zrBody.scrollTop = 0;
+    zrBody.innerHTML = '<div class="zr-msg">Loading...</div>';
+    if (io) io.disconnect();
+    try {
+      const lib = await loadPdfLib();
+      const pdf = await lib.getDocument({ url: part.url }).promise;
+      if (token !== readToken) return;
+      zrBody.innerHTML = '';
+      const width = Math.min(zrBody.clientWidth, 900);
+      const dpr = Math.min(window.devicePixelRatio || 1, 2);
+      const first = await pdf.getPage(1);
+      const v1 = first.getViewport({ scale: 1 });
+      const ratio = v1.height / v1.width;
+      const slots = [];
+      for (let n = 1; n <= pdf.numPages; n++) {
+        const c = document.createElement('canvas');
+        c.className = 'zr-page';
+        c.style.width = width + 'px';
+        c.style.height = Math.round(width * ratio) + 'px';
+        c.dataset.n = n;
+        zrBody.appendChild(c);
+        slots.push(c);
+      }
+      io = new IntersectionObserver((entries) => {
+        entries.forEach(async (en) => {
+          if (!en.isIntersecting) return;
+          const c = en.target;
+          if (c.dataset.done) return;
+          c.dataset.done = '1';
+          try {
+            const pg = await pdf.getPage(+c.dataset.n);
+            if (token !== readToken) return;
+            const vp0 = pg.getViewport({ scale: 1 });
+            const scale = (width / vp0.width) * dpr;
+            const vp = pg.getViewport({ scale });
+            c.width = vp.width; c.height = vp.height;
+            c.style.height = Math.round(width * vp0.height / vp0.width) + 'px';
+            await pg.render({ canvasContext: c.getContext('2d'), viewport: vp }).promise;
+          } catch (e) {}
+        });
+      }, { root: zrBody, rootMargin: '600px 0px' });
+      slots.forEach(c => io.observe(c));
+    } catch (e) {
+      if (token !== readToken) return;
+      zrBody.innerHTML = `<div class="zr-msg">Couldn't load the reader here. <a href="${escAttr(part.url)}" target="_blank" rel="noopener">Open the PDF</a></div>`;
+    }
+  }
+  function openReader(title, parts, startIdx) {
+    zrTitle.textContent = title;
+    zrTabs.innerHTML = '';
+    zrTabs.style.display = parts.length > 1 ? 'flex' : 'none';
+    parts.forEach((pt, i) => {
+      const b = document.createElement('button');
+      b.type = 'button';
+      b.textContent = pt.label || 'Part ' + (i + 1);
+      b.addEventListener('click', () => showPart(parts, i, title));
+      zrTabs.appendChild(b);
+    });
+    zr.classList.add('show');
+    document.body.style.overflow = 'hidden';
+    showPart(parts, startIdx || 0, title);
+  }
+  function closeReader() {
+    readToken++;
+    if (io) io.disconnect();
+    zr.classList.remove('show');
+    zrBody.innerHTML = '';
+    document.body.style.overflow = '';
+  }
+  document.getElementById('zrClose').addEventListener('click', closeReader);
+  document.addEventListener('keydown', (e) => { if (e.key === 'Escape' && zr.classList.contains('show')) closeReader(); });
+
   loadZines();
 
   // ===== PRODUCT DETAIL MODAL =====
@@ -696,25 +830,22 @@
   function catalogMarkup(shopKey) {
     return `
       <div class="catalog-section">
-        <h2 style="text-align:center; letter-spacing:2px;">SHOP THE COLLECTION</h2>
-        <div class="catalog-price-row" id="priceFilterRow-${shopKey}">
-          <button class="active" data-max="all">All</button>
-          <button data-max="5">$5</button>
-          <button data-max="15">$15</button>
-          <button data-max="25">$25</button>
-          <button data-max="35">$35</button>
-          <button data-max="45">$45</button>
+        <div class="catalog-toolbar" id="toolbar-${shopKey}">
+          <select id="catSel-${shopKey}" aria-label="Category"><option value="all">All types</option></select>
+          <select id="priceSel-${shopKey}" aria-label="Price">
+            <option value="all">Any price</option>
+            <option value="5">Under $5</option>
+            <option value="15">Up to $15</option>
+            <option value="25">Up to $25</option>
+            <option value="35">Up to $35</option>
+            <option value="45">Up to $45</option>
+          </select>
+          <select id="sizeSel-${shopKey}" aria-label="Size" style="display:none;"><option value="all">All sizes</option></select>
+          <button class="tb-clear" id="clear-${shopKey}" type="button">Clear</button>
+          <span class="tb-count" id="count-${shopKey}"></span>
         </div>
-        <div class="catalog-price-row" id="sizeFilterRow-${shopKey}" style="display:none;">
-          <button class="active" data-size="all">All Sizes</button>
-        </div>
-        <div class="catalog-layout">
-          <div class="catalog-category-rail" id="categoryRail-${shopKey}">
-            <button class="active" data-cat="all">All</button>
-          </div>
-          <div class="catalog-swipe" id="catalogSwipe-${shopKey}">
-            <p class="catalog-empty">Loading products...</p>
-          </div>
+        <div class="catalog-swipe" id="catalogSwipe-${shopKey}">
+          <p class="catalog-empty">Loading products...</p>
         </div>
       </div>
     `;
@@ -728,66 +859,53 @@
     let activeCategory = 'all';
     let activeMaxPrice = 'all';
     let activeSize = 'all';
-    const railEl = document.getElementById('categoryRail-' + shopKey);
     const swipeEl = document.getElementById('catalogSwipe-' + shopKey);
-    const sizeFilterRowEl = document.getElementById('sizeFilterRow-' + shopKey);
+    const catSel = document.getElementById('catSel-' + shopKey);
+    const priceSel = document.getElementById('priceSel-' + shopKey);
+    const sizeSel = document.getElementById('sizeSel-' + shopKey);
+    const clearBtn = document.getElementById('clear-' + shopKey);
+    const countEl = document.getElementById('count-' + shopKey);
 
-    // Build the category rail from whatever categories actually exist in this shop —
-    // new categories added in the admin show up automatically, no code changes needed.
+    // Categories come from whatever exists in this shop, new ones show up on their own.
     const { data: catRows } = await supabaseClient
       .from('products_public')
       .select('category')
       .eq('shop', shopKey);
     const categories = [...new Set((catRows || []).map(r => r.category).filter(Boolean))];
+    if (categories.length < 2) catSel.style.display = 'none';
     categories.forEach(cat => {
-      const btn = document.createElement('button');
-      btn.dataset.cat = cat;
-      btn.textContent = cat;
-      btn.addEventListener('click', () => {
-        railEl.querySelectorAll('button').forEach(b => b.classList.remove('active'));
-        btn.classList.add('active');
-        activeCategory = cat;
-        renderThisCatalog();
-      });
-      railEl.appendChild(btn);
+      const o = document.createElement('option');
+      o.value = cat; o.textContent = cat;
+      catSel.appendChild(o);
     });
-    railEl.querySelector('button[data-cat="all"]').addEventListener('click', (e) => {
-      railEl.querySelectorAll('button').forEach(b => b.classList.remove('active'));
-      e.target.classList.add('active');
-      activeCategory = 'all';
+
+    function syncToolbar() {
+      catSel.classList.toggle('on', activeCategory !== 'all');
+      priceSel.classList.toggle('on', activeMaxPrice !== 'all');
+      sizeSel.classList.toggle('on', activeSize !== 'all');
+      clearBtn.style.display = (activeCategory !== 'all' || activeMaxPrice !== 'all' || activeSize !== 'all') ? 'inline' : 'none';
+    }
+    catSel.addEventListener('change', () => { activeCategory = catSel.value; renderThisCatalog(); });
+    priceSel.addEventListener('change', () => { activeMaxPrice = priceSel.value; renderThisCatalog(); });
+    sizeSel.addEventListener('change', () => { activeSize = sizeSel.value; renderThisCatalog(); });
+    clearBtn.addEventListener('click', () => {
+      activeCategory = activeMaxPrice = activeSize = 'all';
+      catSel.value = priceSel.value = sizeSel.value = 'all';
       renderThisCatalog();
     });
 
-    document.querySelectorAll(`#priceFilterRow-${shopKey} button`).forEach(btn => {
-      btn.addEventListener('click', () => {
-        document.querySelectorAll(`#priceFilterRow-${shopKey} button`).forEach(b => b.classList.remove('active'));
-        btn.classList.add('active');
-        activeMaxPrice = btn.dataset.max;
-        renderThisCatalog();
-      });
-    });
-
-    // The size filter is rebuilt inside renderThisCatalog every time, from
-    // whichever products survived the category/price filters, so it only
-    // ever offers sizes that actually exist in what's currently showing —
-    // not every size anywhere in the shop.
+    // Size options are rebuilt every render from what is actually showing.
     function renderSizeFilterPills(availableSizes) {
       if (availableSizes.length === 0) {
-        sizeFilterRowEl.style.display = 'none';
-        sizeFilterRowEl.innerHTML = '';
+        sizeSel.style.display = 'none';
         activeSize = 'all';
         return;
       }
       if (activeSize !== 'all' && !availableSizes.includes(activeSize)) activeSize = 'all';
-      sizeFilterRowEl.style.display = 'flex';
-      sizeFilterRowEl.innerHTML = `<button class="${activeSize === 'all' ? 'active' : ''}" data-size="all">All Sizes</button>` +
-        availableSizes.map(sz => `<button class="${activeSize === sz ? 'active' : ''}" data-size="${sz}">${sz}</button>`).join('');
-      sizeFilterRowEl.querySelectorAll('button').forEach(btn => {
-        btn.addEventListener('click', () => {
-          activeSize = btn.dataset.size;
-          renderThisCatalog();
-        });
-      });
+      sizeSel.style.display = '';
+      sizeSel.innerHTML = '<option value="all">All sizes</option>' +
+        availableSizes.map(sz => `<option value="${escAttr(sz)}">${escAttr(sz)}</option>`).join('');
+      sizeSel.value = activeSize;
     }
 
     async function renderThisCatalog() {
@@ -805,7 +923,8 @@
       const { data: allProducts, error } = await query;
 
       if (error || !allProducts || allProducts.length === 0) {
-        swipeEl.innerHTML = '<p class="catalog-empty">Nothing here yet — check back soon.</p>';
+        swipeEl.innerHTML = '<p class="catalog-empty">Nothing here yet. Check back soon.</p>';
+        countEl.textContent = ''; syncToolbar();
         return;
       }
 
@@ -828,7 +947,8 @@
         : allProducts.filter(p => (variantsByProduct[p.id] || []).some(v => v.size === activeSize && v.inventory_count > 0));
 
       if (products.length === 0) {
-        swipeEl.innerHTML = '<p class="catalog-empty">Nothing in this size right now — check back soon.</p>';
+        swipeEl.innerHTML = '<p class="catalog-empty">Nothing in this size right now.</p>';
+        countEl.textContent = ''; syncToolbar();
         return;
       }
 
@@ -838,6 +958,8 @@
       const votedIds = getVotedIds();
 
       swipeEl.innerHTML = '';
+      countEl.textContent = products.length + (products.length === 1 ? ' item' : ' items');
+      syncToolbar();
       products.forEach(p => {
         const card = document.createElement('div');
         card.className = 'catalog-card';
@@ -858,9 +980,9 @@
         if (p.status === 'for_sale' && isSoldOut) {
           actionHtml = `<button class="card-action voted" disabled>Sold Out</button>`;
         } else if (p.status === 'for_sale' && hasVariants) {
-          actionHtml = `<button class="card-action buy" data-action="select" data-id="${p.id}">Select Size — ${p.price ? '$' + p.price : 'Price TBD'}</button>`;
+          actionHtml = `<button class="card-action buy" data-action="select" data-id="${p.id}">Pick a size</button>`;
         } else if (p.status === 'for_sale') {
-          actionHtml = `<button class="card-action buy" data-action="buy" data-id="${p.id}">Buy — ${p.price ? '$' + p.price : 'Price TBD'}</button>`;
+          actionHtml = `<button class="card-action buy" data-action="buy" data-id="${p.id}">Buy now</button>`;
         } else {
           actionHtml = `<button class="card-action ${alreadyVoted ? 'voted' : 'vote'}" data-action="vote" data-id="${p.id}" ${alreadyVoted ? 'disabled' : ''}>
             ${alreadyVoted ? 'Voted ✓' : 'Vote for this'} (${count})
@@ -868,13 +990,14 @@
         }
 
         card.innerHTML = `
-          <div class="card-media">${mediaHtml}</div>
+          <div class="card-media">
+            ${mediaHtml}
+            ${p.status === 'for_sale' ? '' : '<div class="card-badge coming-soon">Vote to make it</div>'}
+          </div>
           <div class="card-body">
-            <div class="card-badge ${p.status === 'for_sale' ? 'for-sale' : 'coming-soon'}">
-              ${p.status === 'for_sale' ? 'For Sale' : 'Coming Soon'}
-            </div>
             <div class="card-name">${p.name}</div>
-            <div class="card-meta">${p.category}</div>
+            <div class="card-meta">${p.category || ''}</div>
+            ${p.status === 'for_sale' && p.price ? `<div class="card-price">$${p.price}</div>` : ''}
             ${actionHtml}
           </div>
         `;
