@@ -2,10 +2,25 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<title>Admin — NOCIV.CO</title>
+<title>Admin: NOCIV.CO</title>
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<link rel="stylesheet" href="style.css">
+<meta name="robots" content="noindex">
+<link rel="stylesheet" href="style.css?v=4.1">
 <style>
+  /* ===== VINTED / DEPOP SWITCH =====
+     The body tag has class="xlist-off", which hides every Vinted and Depop
+     tool on this page. Nothing is deleted. To bring them all back, remove
+     xlist-off from the body tag. */
+  body.xlist-off .xlist-only { display: none !important; }
+  body:not(.xlist-off) .xlist-off-only { display: none !important; }
+
+  .camroll-launch {
+    display: block; max-width: 380px; margin: 0 auto 14px; text-align: center;
+    background: #111; color: #fff; padding: 14px; border-radius: 6px;
+    font-weight: 900; letter-spacing: 0.06em; text-transform: uppercase; font-size: 0.9rem;
+    text-decoration: none;
+  }
+
   .admin-wrap { max-width: 700px; margin: 0 auto; padding: 30px 20px 60px; }
   .admin-login {
     max-width: 360px; margin: 60px auto; padding: 28px;
@@ -298,10 +313,10 @@
   .xsale-summary-card .count { font-size: 1.3rem; font-weight: 900; margin: 2px 0; }
 </style>
 </head>
-<body>
+<body class="xlist-off">
 
 <header class="nociv-header">
-  <a href="index.html"><img class="torn-header-img" src="header.png" alt="NOCIV.CO — Nothing Of Civilization"></a>
+  <a href="index.html"><img class="torn-header-img" src="header.png" alt="NOCIV.CO: Nothing Of Civilization"></a>
 </header>
 
 <div class="admin-wrap">
@@ -326,13 +341,16 @@
     </div>
 
     <nav class="admin-jumpnav" id="adminJumpNav">
+      <a href="post.html">Post To Album</a>
+      <a href="#sec-messages">Messages <span id="msgUnreadBadge"></span></a>
+      <a href="#sec-shipping">Shipping</a>
       <a href="#sec-popup">Pop-Up</a>
       <a href="#sec-mailing">Mailing List</a>
       <a href="#sec-time">Time Tracker</a>
       <a href="#sec-goals">Goals</a>
       <a href="#sec-cheatsheet">Pricing Cheat Sheet</a>
       <a href="#sec-products">Products</a>
-      <a href="#sec-crosslist">Cross-Listing</a>
+      <a href="#sec-crosslist"><span class="xlist-only">Cross-Listing</span><span class="xlist-off-only">Outside Sales</span></a>
       <a href="#sec-orders">Orders</a>
       <a href="#sec-expenses">Expenses</a>
       <a href="#sec-album">Album</a>
@@ -349,6 +367,7 @@
           <strong>What this is for</strong>
           Your own task list and deadline tracker, nothing here shows up on the public site. Tap a date on the calendar, then type a task and hit Add, or open Paste a whole list at once to dump in several tasks in one go, each one shows up numbered with its own checkbox. A gold ring around a date means something's saved there. Once the calendar feed is set up below, everything here also shows up on your phone's actual calendar automatically. The purple Stripe button above the calendar takes you straight to the Stripe login, which will offer to open the app so you can start Tap to Pay for an in-person sale.
         </div>
+        <a class="camroll-launch" href="post.html">+ Post to Process Album</a>
         <a class="stripe-launch-btn" href="https://dashboard.stripe.com/login" target="_blank" rel="noopener">Open Stripe (Tap to Pay)</a>
         <div class="opp-calendar" id="goalsCalendar"></div>
         <div class="goal-add-row">
@@ -387,6 +406,48 @@
             </p>
           </div>
         </details>
+      </div>
+    </details>
+
+    <details class="admin-section" id="sec-messages">
+      <summary>Messages <span class="admin-section-hint" id="msgSummaryHint">from About, Contact</span></summary>
+      <div class="admin-section-body">
+        <div class="how-to-box">
+          <strong>What this is for</strong>
+          Everything people send from the Contact box on the About page. Hit Reply and your email app opens with their address filled in. Mark Read once you've handled it. If the contact email is set up on the backend, these also land in your inbox.
+        </div>
+        <div id="msgList"></div>
+      </div>
+    </details>
+
+    <details class="admin-section" id="sec-shipping">
+      <summary>Shipping <span class="admin-section-hint">what customers pay at checkout</span></summary>
+      <div class="admin-section-body">
+        <div class="how-to-box">
+          <strong>What this is for</strong>
+          What shipping costs the customer, once per order no matter how many things are in the bag. Leave Free Shipping Over blank if you never want free shipping. Local pickup is free and only shows up when everything in the bag is something you make yourself (Printify and Prodigi items always ship). Changes apply to the next checkout, nothing to redeploy.
+        </div>
+        <div class="admin-form">
+          <div class="admin-form-row">
+            <div>
+              <label for="shipFlat">Shipping per order ($)</label>
+              <input type="number" id="shipFlat" step="0.01" min="0" placeholder="5.00">
+            </div>
+            <div>
+              <label for="shipFreeOver">Free shipping when the bag is at least ($, blank = never)</label>
+              <input type="number" id="shipFreeOver" step="0.01" min="0" placeholder="e.g. 75">
+            </div>
+          </div>
+          <label style="display:flex; align-items:center; gap:8px; margin-top:12px; cursor:pointer; opacity:1;">
+            <input type="checkbox" id="shipPickupOn" style="width:auto; margin:0;"> Offer free local pickup
+          </label>
+          <label for="shipPickupLabel">What pickup says at checkout</label>
+          <input type="text" id="shipPickupLabel" maxlength="100" placeholder="Local pickup, Phoenix (we email you to set a time)">
+          <button class="admin-submit" id="saveShippingBtn" type="button">Save Shipping</button>
+          <p class="admin-note" id="shipSaved">Saved. The next checkout uses this.</p>
+          <p class="admin-error" id="shipError"></p>
+          <div class="field-hint">Check the Pricing Cheat Sheet: a tee in a poly mailer usually costs you about $4 to $6 to ship USPS. If you charge less than that, the difference comes out of your profit.</div>
+        </div>
       </div>
     </details>
 
@@ -485,7 +546,7 @@
             <li><strong>Stripe, online checkout:</strong> 2.9% of the price, plus 30&cent; flat. This is the standard card rate everywhere, Square and PayPal land in the same place, it isn't a Nociv-specific markup.</li>
             <li><strong>Stripe, Tap to Pay in person:</strong> 2.6% plus 10&cent; flat. Already cheaper than online, this is your best-fee option for pop-ups.</li>
             <li><strong>Cash, Venmo, or Cash App (in person):</strong> no card fee at all if someone just hands you cash or pays a personal Venmo/Cash App, though a business account on those can carry its own small fee, check whichever one you actually use.</li>
-            <li><strong>Vinted or Depop:</strong> their own separate cut, never Stripe, and it changes over time, check their current seller fee before you price something for those platforms specifically.</li>
+            <li class="xlist-only"><strong>Vinted or Depop:</strong> their own separate cut, never Stripe, and it changes over time, check their current seller fee before you price something for those platforms specifically.</li>
             <li><strong>Printify or print-on-demand markup:</strong> whatever their platform fee is on top of the print cost, that's the Platform Fee % field below.</li>
           </ul>
         </div>
@@ -504,7 +565,7 @@
               <input type="number" id="cheatPrice" step="0.01" placeholder="30.00">
             </div>
             <div>
-              <label for="cheatCost">Item cost ($ — blank, materials, printing, whatever it costs to make)</label>
+              <label for="cheatCost">Item cost ($, blank, materials, printing, whatever it costs to make)</label>
               <input type="number" id="cheatCost" step="0.01" placeholder="12.00">
             </div>
           </div>
@@ -551,15 +612,15 @@
         <div class="admin-form">
           <h3 style="margin-top:0;">Add a Product</h3>
 
-          <label for="pPreset">Quick fill (optional — starting point only, adjust anything after)</label>
+          <label for="pPreset">Quick fill (optional, starting point only, adjust anything after)</label>
           <select id="pPreset">
             <option value="">Choose a preset...</option>
-            <option value="printify_pin">Printify — Pin/Button</option>
-            <option value="printify_poster">Printify — Poster</option>
-            <option value="printify_tapestry">Printify — Tapestry</option>
-            <option value="printify_tote">Printify — Tote Bag</option>
-            <option value="printify_case">Printify — Phone Case</option>
-            <option value="in_house_shirt">In-House — Screen-Printed Shirt</option>
+            <option value="printify_pin">Printify: Pin/Button</option>
+            <option value="printify_poster">Printify: Poster</option>
+            <option value="printify_tapestry">Printify: Tapestry</option>
+            <option value="printify_tote">Printify: Tote Bag</option>
+            <option value="printify_case">Printify: Phone Case</option>
+            <option value="in_house_shirt">In-House: Screen-Printed Shirt</option>
           </select>
           <p class="admin-note" id="presetAppliedNote" style="display:block; opacity:.6;">&nbsp;</p>
 
@@ -575,18 +636,18 @@
               <input type="number" id="pPrice" step="0.01" placeholder="15.00">
             </div>
             <div>
-              <label for="pCost">Item cost ($ — what you pay to make or print it, private)</label>
+              <label for="pCost">Item cost ($, what you pay to make or print it, private)</label>
               <input type="number" id="pCost" step="0.01" placeholder="6.00">
             </div>
           </div>
 
           <div class="admin-form-row">
             <div>
-              <label for="pShippingCost">Shipping cost ($ — what it costs to ship this one item, private)</label>
+              <label for="pShippingCost">Shipping cost ($, what it costs to ship this one item, private)</label>
               <input type="number" id="pShippingCost" step="0.01" placeholder="4.69">
             </div>
             <div>
-              <label for="pPlatformFeePct">Platform fee (% — Printify's markup or commission, if any)</label>
+              <label for="pPlatformFeePct">Platform fee (%, Printify's markup or commission, if any)</label>
               <input type="number" id="pPlatformFeePct" step="0.1" placeholder="0">
             </div>
           </div>
@@ -612,7 +673,7 @@
               </select>
             </div>
             <div>
-              <label for="pCategory">Category (type anything — new ones save automatically)</label>
+              <label for="pCategory">Category (type anything, new ones save automatically)</label>
               <input type="text" id="pCategory" list="categoryOptions" placeholder="e.g. Posters">
               <datalist id="categoryOptions"></datalist>
             </div>
@@ -627,7 +688,7 @@
               </select>
             </div>
             <div id="pInventoryWrap">
-              <label for="pInventory">Starting inventory (optional — leave blank for Printify items)</label>
+              <label for="pInventory">Starting inventory (optional, leave blank for Printify items)</label>
               <input type="number" id="pInventory" min="0" placeholder="e.g. 5">
             </div>
           </div>
@@ -659,7 +720,7 @@
             </div>
           </div>
 
-          <label for="pStripePriceId">Stripe Price ID <span class="missing-flag" id="stripeRequiredFlag" style="display:none;">— required, or Buy will fail</span></label>
+          <label for="pStripePriceId">Stripe Price ID <span class="missing-flag" id="stripeRequiredFlag" style="display:none;">required, or Buy will fail</span></label>
           <div style="display:flex; gap:8px; align-items:center;">
             <input type="text" id="pStripePriceId" placeholder="price_1AbCdEfGhIjKlMnOp" style="flex:1;">
             <button type="button" class="admin-submit" id="createStripePriceBtn" style="margin:0; white-space:nowrap; width:auto; padding:10px 14px;">Create in Stripe</button>
@@ -667,15 +728,15 @@
           <div class="field-hint">Fill in Name and Price above first, then hit Create in Stripe, it makes the Stripe product and price for you and fills this box in automatically. No need to go to the Stripe website yourself.</div>
           <p class="admin-error" id="createStripePriceError"></p>
           <div class="field-hint">
-            Stripe Dashboard → Product catalog → open (or create) the product → copy the Price ID under Pricing.
-            This is what actually charges the customer — without it, checkout fails every time.
+            Stripe Dashboard, Product catalog, open (or create) the product, copy the Price ID under Pricing.
+            This is what actually charges the customer. Without it, checkout fails every time.
           </div>
 
-          <label for="pImage">Photos — upload one or more files (full resolution — if it's a Printify item, the first one is what gets sent to print, so use the real, final-quality file). Select multiple angles at once, front, back, detail shot, whatever you've got.</label>
+          <label for="pImage">Photos: upload one or more files (full resolution, if it's a Printify item, the first one is what gets sent to print, so use the real, final-quality file). Select multiple angles at once, front, back, detail shot, whatever you've got.</label>
           <input type="file" id="pImage" accept="image/*" multiple>
           <div class="field-hint">The first photo you pick becomes the main cover photo shown on the shop cards. Every photo you pick shows up in the product's photo gallery when someone taps it.</div>
 
-          <label for="pImageUrl" style="margin-top:10px;">...or paste an image link instead — skip the upload above if you use this</label>
+          <label for="pImageUrl" style="margin-top:10px;">...or paste an image link instead, skip the upload above if you use this</label>
           <input type="text" id="pImageUrl" placeholder="https://...">
 
           <button class="admin-submit" id="addProductBtn">Add Product</button>
@@ -695,11 +756,18 @@
     </details>
 
     <details class="admin-section" id="sec-crosslist">
-      <summary>Cross-Listing &amp; External Sales <span class="admin-section-hint">Vinted, Depop, in-person, all in one place</span></summary>
+      <summary>
+        <span class="xlist-only">Cross-Listing &amp; External Sales <span class="admin-section-hint">Vinted, Depop, in-person, all in one place</span></span>
+        <span class="xlist-off-only">Sales Outside The Site <span class="admin-section-hint">market, pop-up, in person</span></span>
+      </summary>
       <div class="admin-section-body">
-        <div class="how-to-box">
+        <div class="how-to-box xlist-only">
           <strong>What this is for</strong>
           You don't need an automatic sync to Vinted or Depop to stay on top of things, this does the same job by hand. On any product below in the Products section, tap Vinted, Depop, or In-Person to mark where it's currently listed, those buttons turn green when active, tap again to turn them off once it's sold or pulled. Tap Copy Listing Text to copy a ready-to-paste block, name, price, description, so you're not retyping the same listing by hand on a second platform. The moment something actually sells anywhere other than your own site, Tap to Pay included, hit Mark Sold Elsewhere on that product, pick where it sold, and it logs the sale here and takes it off your tracked stock automatically, so your inventory numbers stay true no matter which platform it moved on. This is your one source of truth for what's actually sold and what you've still got, that's the whole point.
+        </div>
+        <div class="how-to-box xlist-off-only">
+          <strong>What this is for</strong>
+          Sold something at the market or a pop-up? Find it in Products, hit Sold In Person, pick the size if it has one, confirm. It logs the sale here and takes one off your stock, so the website never sells something you already handed to someone. Logged one by mistake? Hit Remove below (it won't add the stock back, fix that in Edit).
         </div>
         <div class="xsale-summary" id="xsaleSummary"></div>
         <h3>Sales Log</h3>
@@ -770,11 +838,11 @@
     </details>
 
     <details class="admin-section" id="sec-album">
-      <summary>Process Album <span class="admin-section-hint">the "making of" photo gallery on Shop</span></summary>
+      <summary>Process Album <span class="admin-section-hint">NOW (this week) + the album, on Shop &rarr; Clothing</span></summary>
       <div class="admin-section-body">
         <div class="how-to-box">
           <strong>What this is for</strong>
-          Behind the scenes photos, cutting fabric, screen printing, whatever shows the actual making of things. Shows up in the scrollable photo album on the Clothing shop page. Upload a photo, add a caption if you want one, hit Add to Album, that's it.
+          Behind the scenes photos, cutting fabric, screen printing, whatever shows the actual making of things. Shows up in the scrollable photo album on the Clothing shop page. Upload a photo, add a caption if you want one, hit Add to Album, that's it. Anything new sits in NOW at the top for 7 days, story style, then drops into the album on its own. For clips, several shots in one post, or tags, use <a href="post.html">+ Post to Process Album</a> (easiest on your phone). This quick form still works for a single photo.
         </div>
         <div class="admin-form">
           <label for="albumImage">Add a photo</label>
@@ -806,7 +874,7 @@
             </div>
             <div>
               <label for="dirDiscipline">Discipline (type anything, new ones save automatically)</label>
-              <input type="text" id="dirDiscipline" list="disciplineOptions" placeholder="e.g. Print & Graphic">
+              <input type="text" id="dirDiscipline" list="disciplineOptions" placeholder="e.g. Print &amp; Graphic">
               <datalist id="disciplineOptions"></datalist>
             </div>
           </div>
@@ -921,11 +989,11 @@
           <select id="voStatus">
             <option value="researching">Researching</option>
             <option value="applying">Applying</option>
-            <option value="confirmed">Confirmed — going</option>
+            <option value="confirmed">Confirmed, going</option>
             <option value="passed">Passed on it</option>
           </select>
           <label for="voNotes">Notes</label>
-          <textarea id="voNotes" rows="2" placeholder="Anything you don't want to forget — who to contact, what they said, etc."></textarea>
+          <textarea id="voNotes" rows="2" placeholder="Anything you don't want to forget, who to contact, what they said, etc."></textarea>
           <button class="admin-submit" id="addVendorOppBtn">Add</button>
           <p class="admin-note" id="voAddConfirm">Added.</p>
           <p class="admin-error" id="voAddError"></p>
@@ -951,13 +1019,21 @@
     </details>
   </div>
 
-  <!-- ===== HELP GUIDE: a plain step by step walkthrough of the whole dashboard, in the same order as the jump nav ===== -->
+  <!-- ===== HELP GUIDE ===== -->
   <div class="help-overlay" id="helpOverlay">
     <div class="help-modal">
       <button class="help-modal-close" id="helpCloseBtn" type="button">&times;</button>
       <h2>How This Works</h2>
       <p style="opacity:.7; font-size:0.9rem; margin-top:-8px;">A plain walkthrough of every section on this page, in the order they appear. Scroll through once, then come back to this anytime you forget a step.</p>
 
+      <div class="help-step">
+        <span class="help-step-num">0</span><h3>Post to Process Album</h3>
+        <p>The black button at the top. Pick photos or clips straight from your phone, add a caption and tag if you want, Post It. It shows in NOW on Shop, Clothing for 7 days, then moves into the album on its own. People can comment, and you can delete posts or comments from that same page.</p>
+      </div>
+      <div class="help-step">
+        <span class="help-step-num">0</span><h3>Messages and Shipping</h3>
+        <p>Messages is everything people send from the Contact box on About, with a Reply button that opens your email. Shipping is what customers pay at checkout, once per order, plus free local pickup when the whole bag is stuff you make.</p>
+      </div>
       <div class="help-step">
         <span class="help-step-num">1</span><h3>Today's Goals &amp; Calendar</h3>
         <p>Your own task list, not shown on the site. Tap a date on the calendar, type a task, hit Add. Once you set up the calendar feed link here, every task and deadline shows up on your phone's real calendar too.</p>
@@ -982,9 +1058,13 @@
         <span class="help-step-num">6</span><h3>Products</h3>
         <p>Where everything for sale gets added. Use Quick Fill for a fast starting point, fill in name, price, and your real cost, watch the margin box to make sure you're actually making money, then hit Create in Stripe so the Buy button works. Status has to be For Sale with a Stripe Price ID or checkout fails.</p>
       </div>
-      <div class="help-step">
+      <div class="help-step xlist-only">
         <span class="help-step-num">7</span><h3>Cross-Listing &amp; External Sales</h3>
         <p>On any product, tap Vinted, Depop, or In-Person to mark where it's currently posted outside your own site. Hit Copy Listing Text to grab a paste-ready block for that other platform. The moment something sells anywhere else, hit Mark Sold Elsewhere, pick the channel, and it logs the sale and takes it off your tracked stock automatically.</p>
+      </div>
+      <div class="help-step xlist-off-only">
+        <span class="help-step-num">7</span><h3>Sales Outside The Site</h3>
+        <p>Sold something at the market? On that product, hit Sold In Person, pick the size, confirm. It logs the sale and takes it off your stock so the site can't sell it twice.</p>
       </div>
       <div class="help-step">
         <span class="help-step-num">8</span><h3>Recent Orders</h3>
@@ -1019,13 +1099,16 @@
 
 </div>
 
-<footer class="nociv-footer">NOCIV.CO — Nothing Of Civilization</footer>
+<footer class="nociv-footer">NOCIV.CO: Nothing Of Civilization</footer>
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script src="supabase.js"></script>
 <script>
   const loginBox = document.getElementById('loginBox');
   const dashboard = document.getElementById('dashboard');
+
+  // Vinted and Depop tools are hidden while the body has class="xlist-off".
+  const XLIST_ON = !document.body.classList.contains('xlist-off');
 
   // ===== COLLAPSIBLE SECTIONS: remember which ones were left open, and
   // jump-to-section links force that section open even if it was collapsed =====
@@ -1037,7 +1120,9 @@
   });
   document.querySelectorAll('.admin-jumpnav a').forEach(a => {
     a.addEventListener('click', () => {
-      const target = document.querySelector(a.getAttribute('href'));
+      const href = a.getAttribute('href');
+      if (!href.startsWith('#')) return;
+      const target = document.querySelector(href);
       if (target && target.tagName === 'DETAILS' && !target.open) {
         target.open = true;
         localStorage.setItem('adminSectionOpen_' + target.id, '1');
@@ -1045,18 +1130,8 @@
     });
   });
 
-  // NOTE: the old resizeImageFile() step has been removed on purpose for
-  // PRODUCT photos. It was capping every uploaded photo at 2000px on the
-  // long side, which is far below what a real print needs (a 16x20 print at
-  // proper 300 DPI needs roughly 4800x6000px). Product uploads go to storage
-  // exactly as they came off your device — full resolution, no recompression.
-
-  // Process Album photos are different: nobody prints these, they're just
-  // viewed on the site — Shop → Clothing's album and the landing page's photo
-  // strip. A full-resolution phone photo (often 4000px+, several MB) makes
-  // those scroll strips feel slow to load for no visual benefit, since each
-  // photo only ever displays at 260px tall. This resizes album photos down
-  // to a sensible web size before upload, which is the actual fix for that.
+  // Product photos upload at full resolution on purpose (print files).
+  // Process Album photos are only viewed on the site, so they get resized.
   function resizeAlbumPhoto(file, maxDim = 1600, quality = 0.85) {
     return new Promise((resolve, reject) => {
       const img = new Image();
@@ -1111,6 +1186,8 @@
       loadPromoAdminList();
       loadVendorOpps();
       loadCalendarFeedUrl();
+      loadMessages();
+      loadShippingSettings();
     } else {
       loginBox.style.display = 'block';
       dashboard.style.display = 'none';
@@ -1148,8 +1225,7 @@
     if (e.target.id === 'helpOverlay') document.getElementById('helpOverlay').classList.remove('show');
   });
 
-  // ===== POP-UP DETAILS (feeds Shop -> Clothing's "Next Location" note,
-  // and also posts itself to the Opportunity Board automatically) =====
+  // ===== POP-UP DETAILS =====
   function formatEventDate(iso) {
     if (!iso) return 'TBD';
     return new Date(iso + 'T00:00:00').toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
@@ -1194,8 +1270,6 @@
       return;
     }
 
-    // Replace any previous pop-up post on the Opportunity Board with this one,
-    // so Base -> Directory -> Opportunity Board always shows the current pop-up.
     await supabaseClient.from('board_posts').delete().eq('category', 'popup');
     if (location || event_date || event_time) {
       await supabaseClient.from('board_posts').insert([{
@@ -1215,7 +1289,89 @@
     await loadPopupStatus();
   };
 
-  // ===== MAILING LIST (table: signups, read only here, no editing) =====
+  // ===== MESSAGES (table: contact_messages, from About, Contact) =====
+  async function loadMessages() {
+    const listEl = document.getElementById('msgList');
+    listEl.innerHTML = '<p style="opacity:.5;">Loading...</p>';
+    const { data: msgs, error } = await supabaseClient
+      .from('contact_messages').select('*').order('created_at', { ascending: false }).limit(200);
+    if (error) {
+      listEl.innerHTML = '<p style="opacity:.5;">Could not load messages. Has the cart and contact SQL been run?</p>';
+      return;
+    }
+    const unread = (msgs || []).filter(m => !m.is_read).length;
+    document.getElementById('msgUnreadBadge').textContent = unread ? '(' + unread + ')' : '';
+    document.getElementById('msgSummaryHint').textContent = unread ? unread + ' new' : 'from About, Contact';
+    if (unread) document.getElementById('sec-messages').open = true;
+    if (!msgs || !msgs.length) { listEl.innerHTML = '<p style="opacity:.5;">No messages yet.</p>'; return; }
+
+    listEl.innerHTML = '';
+    msgs.forEach(m => {
+      const row = document.createElement('div');
+      row.className = 'product-row';
+      row.style.flexWrap = 'wrap';
+      if (!m.is_read) row.style.borderLeft = '4px solid var(--red)';
+      const mailto = 'mailto:' + encodeURIComponent(m.email) + '?subject=' + encodeURIComponent('Re: your message to NOCIV') +
+        '&body=' + encodeURIComponent('\n\n---\nYou wrote:\n' + m.message);
+      row.innerHTML = `
+        <div class="info" style="flex-basis:100%;">
+          <div class="name">${escapeAttr(m.name || m.email)}${m.is_read ? '' : ' <span class="missing-flag">NEW</span>'}</div>
+          <div class="meta">${escapeAttr(m.email)} · ${new Date(m.created_at).toLocaleString()}${m.add_to_list ? ' · joined the list' : ''}</div>
+          <div style="white-space:pre-wrap; margin:8px 0; font-size:0.92rem;">${escapeAttr(m.message)}</div>
+        </div>
+        <a class="edit-btn" href="${mailto}" style="text-decoration:none;">Reply</a>
+        <button class="edit-btn" data-a="read">${m.is_read ? 'Mark Unread' : 'Mark Read'}</button>
+        <button class="del-btn" data-a="del">Delete</button>
+      `;
+      row.querySelector('[data-a="read"]').addEventListener('click', async () => {
+        const { error } = await supabaseClient.from('contact_messages').update({ is_read: !m.is_read }).eq('id', m.id);
+        if (error) { alert('Could not update: ' + error.message); return; }
+        loadMessages();
+      });
+      row.querySelector('[data-a="del"]').addEventListener('click', async () => {
+        if (!confirm('Delete this message?')) return;
+        await supabaseClient.from('contact_messages').delete().eq('id', m.id);
+        loadMessages();
+      });
+      listEl.appendChild(row);
+    });
+  }
+
+  // ===== SHIPPING SETTINGS (app_settings, read by the checkout function) =====
+  async function loadShippingSettings() {
+    const { data } = await supabaseClient.from('app_settings').select('key, value')
+      .in('key', ['shipping_flat', 'free_shipping_over', 'pickup_enabled', 'pickup_label']);
+    const m = Object.fromEntries((data || []).map(r => [r.key, r.value]));
+    document.getElementById('shipFlat').value = m.shipping_flat ?? '5.00';
+    document.getElementById('shipFreeOver').value = m.free_shipping_over ?? '';
+    document.getElementById('shipPickupOn').checked = String(m.pickup_enabled ?? 'true') === 'true';
+    document.getElementById('shipPickupLabel').value = m.pickup_label ?? 'Local pickup, Phoenix (we email you to set a time)';
+  }
+  document.getElementById('saveShippingBtn').addEventListener('click', async () => {
+    const errEl = document.getElementById('shipError');
+    const okEl = document.getElementById('shipSaved');
+    errEl.style.display = 'none'; okEl.style.display = 'none';
+    const flat = document.getElementById('shipFlat').value.trim();
+    const freeOver = document.getElementById('shipFreeOver').value.trim();
+    if (flat === '' || isNaN(parseFloat(flat)) || parseFloat(flat) < 0) {
+      errEl.textContent = 'Put in a shipping price, 0 is fine if shipping is always free.'; errEl.style.display = 'block'; return;
+    }
+    if (freeOver !== '' && (isNaN(parseFloat(freeOver)) || parseFloat(freeOver) < 0)) {
+      errEl.textContent = 'Free shipping amount has to be a number, or leave it blank.'; errEl.style.display = 'block'; return;
+    }
+    const rows = [
+      { key: 'shipping_flat', value: parseFloat(flat).toFixed(2) },
+      { key: 'free_shipping_over', value: freeOver === '' ? '' : parseFloat(freeOver).toFixed(2) },
+      { key: 'pickup_enabled', value: document.getElementById('shipPickupOn').checked ? 'true' : 'false' },
+      { key: 'pickup_label', value: document.getElementById('shipPickupLabel').value.trim() || 'Local pickup, Phoenix' },
+    ];
+    const { error } = await supabaseClient.from('app_settings').upsert(rows, { onConflict: 'key' });
+    if (error) { errEl.textContent = 'Could not save: ' + error.message; errEl.style.display = 'block'; return; }
+    okEl.style.display = 'block';
+    setTimeout(() => { okEl.style.display = 'none'; }, 3000);
+  });
+
+  // ===== MAILING LIST (table: signups, read only here) =====
   async function loadMailingList() {
     const countEl = document.getElementById('mailingCount');
     const { data, error } = await supabaseClient.from('signups').select('contact');
@@ -1240,10 +1396,7 @@
     }
   };
 
-  // ===== MARGIN CALCULATOR (live, before you ever save the listing) =====
-  // Cost plus shipping plus platform fee plus Stripe's cut, checked against
-  // the price, so you know if a product is actually worth listing before
-  // you build it, not after the first order loses you money.
+  // ===== MARGIN CALCULATOR =====
   function computeMargin(price, cost, shipping, platformFeePct) {
     const stripeFee = price > 0 ? (price * 0.029 + 0.30) : 0;
     const platformFee = price > 0 ? (price * (platformFeePct / 100)) : 0;
@@ -1290,9 +1443,6 @@
   updateAddMarginCalc();
 
   // ===== PRICING CHEAT SHEET =====
-  // A scratchpad version of the same math, nothing here ever saves. The fee
-  // is whatever you set, not locked to Stripe's online rate, since in person
-  // Tap to Pay, cash, and Venmo all run different numbers.
   function computeMarginGeneric(price, cost, shipping, platformFeePct, procPct, procFlat) {
     const procFee = price > 0 ? (price * (procPct / 100) + procFlat) : 0;
     const platformFee = price > 0 ? (price * (platformFeePct / 100)) : 0;
@@ -1345,9 +1495,6 @@
   updateCheatCalc();
 
   // ===== QUICK FILL PRESETS =====
-  // Real numbers you and I already worked out, so a new pin or poster starts
-  // from something close to right instead of a blank form. Nothing here is
-  // locked, it's just a faster starting point — change anything after.
   const productPresets = {
     printify_pin: {
       shop: 'clothing', category: 'Accessory', fulfillment_type: 'printify',
@@ -1407,8 +1554,6 @@
     document.getElementById('stripeRequiredFlag').style.display = e.target.value === 'for_sale' ? 'inline' : 'none';
   });
 
-  // Creates the Stripe Product + Price for you, no Stripe Dashboard trip
-  // needed. Uses whatever Name and Price are currently filled in above.
   document.getElementById('createStripePriceBtn').addEventListener('click', async () => {
     const btn = document.getElementById('createStripePriceBtn');
     const errEl = document.getElementById('createStripePriceError');
@@ -1442,8 +1587,7 @@
     btn.textContent = originalText;
   });
 
-  // ===== SIZE VARIANTS — shared between the Add form and every Edit row.
-  // One row per size, stock tracked per row. =====
+  // ===== SIZE VARIANTS, shared between the Add form and every Edit row =====
   function createSizeRow(container, size, stock) {
     const row = document.createElement('div');
     row.className = 'size-variant-row';
@@ -1505,7 +1649,7 @@
       return;
     }
     if (status === 'for_sale' && !stripe_price_id) {
-      errEl.textContent = 'A Stripe Price ID is required for anything marked "For Sale" — otherwise the Buy button will fail. Set status to "Coming Soon" if you don\'t have one yet.';
+      errEl.textContent = 'A Stripe Price ID is required for anything marked "For Sale", otherwise the Buy button will fail. Set status to "Coming Soon" if you don\'t have one yet.';
       errEl.style.display = 'block';
       return;
     }
@@ -1518,12 +1662,8 @@
     let image_url = null;
     let extra_image_urls = null;
     if (imageUrlInput) {
-      // A pasted link takes priority — skip the upload entirely
       image_url = imageUrlInput;
     } else if (files.length > 0) {
-      // Uploaded exactly as-is — full resolution, no resizing or recompression.
-      // Every file picked gets uploaded; the first becomes the cover photo,
-      // the rest become the gallery (extra angles).
       const uploadedUrls = [];
       for (const file of files) {
         const ext = (file.name.split('.').pop() || 'jpg').toLowerCase();
@@ -1603,12 +1743,11 @@
     await loadProducts();
   };
 
-  // Autocomplete: every category that already exists, across all shops
   async function loadCategoryOptions() {
     const { data } = await supabaseClient.from('products').select('category');
     const unique = [...new Set((data || []).map(p => p.category).filter(Boolean))];
     const datalist = document.getElementById('categoryOptions');
-    datalist.innerHTML = unique.map(c => `<option value="${c}">`).join('');
+    datalist.innerHTML = unique.map(c => `<option value="${escapeAttr(c)}">`).join('');
   }
   loadCategoryOptions();
 
@@ -1642,7 +1781,6 @@
     const voteCounts = {};
     (votes || []).forEach(v => { voteCounts[v.product_id] = (voteCounts[v.product_id] || 0) + 1; });
 
-    // Sizes live in their own table now, one product can have several.
     const { data: variantRows } = await supabaseClient
       .from('product_variants')
       .select('*')
@@ -1672,10 +1810,10 @@
     const hasVariants = variants.length > 0;
     const extraCount = Array.isArray(p.extra_image_urls) ? p.extra_image_urls.length : 0;
     const imgHtml = p.image_url
-      ? `<div style="position:relative; display:inline-block;"><img src="${p.image_url}" alt="${p.name}">${extraCount > 0 ? `<span class="edit-photo-cover-tag" style="position:absolute; bottom:2px; left:2px; right:2px;">+${extraCount} more</span>` : ''}</div>`
+      ? `<div style="position:relative; display:inline-block;"><img src="${escapeAttr(p.image_url)}" alt="${escapeAttr(p.name)}">${extraCount > 0 ? `<span class="edit-photo-cover-tag" style="position:absolute; bottom:2px; left:2px; right:2px;">+${extraCount} more</span>` : ''}</div>`
       : `<div class="no-img">no photo</div>`;
     const stripeWarning = (p.status === 'for_sale' && !p.stripe_price_id)
-      ? ' · <span class="missing-flag">NO STRIPE PRICE — BUY WILL FAIL</span>'
+      ? ' · <span class="missing-flag">NO STRIPE PRICE, BUY WILL FAIL</span>'
       : '';
     let marginBit = '';
     if (p.price) {
@@ -1702,16 +1840,16 @@
     row.innerHTML = `
       ${imgHtml}
       <div class="info">
-        <div class="name">${p.name}</div>
-        <div class="meta">${p.shop} · ${p.category} · ${p.status === 'for_sale' ? 'For Sale' : 'Coming Soon'} · ${p.price ? '$' + p.price : 'no price set'} · cost $${p.cost ?? '—'} · stock: ${hasVariants ? variants.map(v => v.size + ': ' + v.inventory_count).join(', ') : (p.fulfillment_type === 'printify' ? 'unlimited (Printify)' : (p.inventory_count ?? 'not tracked'))} · ${p.fulfillment_type === 'printify' ? 'Printify ID: ' + (p.printify_product_id || 'none set') : 'In-House'}${stripeWarning}${marginBit}</div>
+        <div class="name">${escapeAttr(p.name)}</div>
+        <div class="meta">${p.shop} · ${escapeAttr(p.category)} · ${p.status === 'for_sale' ? 'For Sale' : 'Coming Soon'} · ${p.price ? '$' + p.price : 'no price set'} · cost $${p.cost ?? '-'} · stock: ${hasVariants ? variants.map(v => escapeAttr(v.size) + ': ' + v.inventory_count).join(', ') : (p.fulfillment_type === 'printify' ? 'unlimited (Printify)' : (p.inventory_count ?? 'not tracked'))} · ${p.fulfillment_type === 'printify' ? 'Printify ID: ' + (escapeAttr(p.printify_product_id) || 'none set') : 'In-House'}${stripeWarning}${marginBit}</div>
         <div class="votes">${voteCount} votes</div>
-        <div class="cross-list-row">
+        <div class="cross-list-row xlist-only">
           <span class="cross-list-label">Listed on:</span>
           ${xlistButtonsHtml}
         </div>
         <div class="cross-list-actions">
-          <button type="button" class="copy-listing-btn">Copy Listing Text</button>
-          <button type="button" class="mark-sold-btn">Mark Sold Elsewhere</button>
+          <button type="button" class="copy-listing-btn xlist-only">Copy Listing Text</button>
+          <button type="button" class="mark-sold-btn">${XLIST_ON ? 'Mark Sold Elsewhere' : 'Sold In Person'}</button>
         </div>
       </div>
       <button class="edit-btn dup-btn" data-id="${p.id}">Duplicate</button>
@@ -1733,9 +1871,7 @@
       renderRowEdit(row, p, variants);
     });
 
-    // ===== CROSS-LISTING: which outside channels this product is currently
-    // posted on, toggled by hand since there's no API that talks to a
-    // bespoke site like this one. =====
+    // ===== CROSS-LISTING toggles (hidden while xlist-off) =====
     row.querySelectorAll('.xlist-toggle-btn').forEach(btn => {
       btn.addEventListener('click', async () => {
         const channel = btn.dataset.channel;
@@ -1745,7 +1881,7 @@
         const { error } = await supabaseClient.from('products').update({ cross_listed_on: updated }).eq('id', p.id);
         if (error) { alert('Error updating: ' + error.message); return; }
         p.cross_listed_on = updated;
-        renderRowView(row, p, voteCount);
+        renderRowView(row, p, voteCount, variants);
       });
     });
 
@@ -1767,20 +1903,18 @@
     });
   }
 
-  // A paste-ready block for Vinted, Depop, or anywhere else that doesn't
-  // talk to this site directly — name, price, description, done.
+  // A paste-ready block for Vinted, Depop, or anywhere else
   function buildListingText(p) {
     const lines = [p.name];
     if (p.price) lines.push('$' + parseFloat(p.price).toFixed(2));
     if (p.description) { lines.push(''); lines.push(p.description); }
     lines.push('');
-    lines.push('From NOCIV.CO — nociv.co');
+    lines.push('From NOCIV.CO, nociv.co');
     return lines.join('\n');
   }
 
-  // Swaps a product row into a small "mark this sold elsewhere" form —
-  // pick the channel, confirm the price, and it logs the sale and takes
-  // it off tracked stock in one step, no separate screen to visit.
+  // Swaps a product row into a small "mark this sold" form. In person is the
+  // default. Vinted and Depop only show up when the xlist switch is on.
   function openMarkSoldForm(row, p, voteCount, variants) {
     variants = variants || [];
     const hasVariants = variants.length > 0;
@@ -1791,17 +1925,17 @@
            ${variants.map(v => `<option value="${v.id}" ${v.inventory_count <= 0 ? 'disabled' : ''}>${escapeAttr(v.size)} (${v.inventory_count} left)</option>`).join('')}
          </select>`
       : '';
+    const channelOptions = [
+      { v: 'in_person', l: 'In-Person / Market' },
+      ...(XLIST_ON ? [{ v: 'vinted', l: 'Vinted' }, { v: 'depop', l: 'Depop' }] : []),
+      { v: 'other', l: 'Other' },
+    ].map(o => `<option value="${o.v}">${o.l}</option>`).join('');
     row.innerHTML = `
       <div class="info" style="width:100%;">
-        <div class="name" style="margin-bottom:8px;">Mark "${p.name}" sold elsewhere</div>
+        <div class="name" style="margin-bottom:8px;">Mark "${escapeAttr(p.name)}" sold</div>
         ${sizePickerHtml}
         <label style="font-size:0.75rem; opacity:.7; display:block;">Where did it sell?</label>
-        <select class="mark-sold-channel" style="width:100%; margin-bottom:8px; padding:6px;">
-          <option value="vinted">Vinted</option>
-          <option value="depop">Depop</option>
-          <option value="in_person">In-Person</option>
-          <option value="other">Other</option>
-        </select>
+        <select class="mark-sold-channel" style="width:100%; margin-bottom:8px; padding:6px;">${channelOptions}</select>
         <label style="font-size:0.75rem; opacity:.7; display:block;">Sale price ($)</label>
         <input type="number" step="0.01" class="mark-sold-price" value="${p.price ?? ''}" style="width:100%; margin-bottom:8px; padding:6px;">
         <div class="field-hint" style="margin-bottom:8px;">
@@ -1854,7 +1988,7 @@
     });
   }
 
-  // ===== EXTERNAL SALES LOG (Vinted, Depop, in-person — manual, trackable) =====
+  // ===== EXTERNAL SALES LOG =====
   async function loadExternalSales() {
     const listEl = document.getElementById('xsaleList');
     const summaryEl = document.getElementById('xsaleSummary');
@@ -1875,7 +2009,9 @@
     const byChannel = {};
     (sales || []).forEach(s => { byChannel[s.channel] = (byChannel[s.channel] || 0) + 1; });
     const channelLabels = { vinted: 'Vinted', depop: 'Depop', in_person: 'In-Person', other: 'Other' };
-    summaryEl.innerHTML = Object.keys(channelLabels).map(key => `
+    // With the switch off, Vinted and Depop cards only show if a sale was already logged there.
+    const cardKeys = Object.keys(channelLabels).filter(k => XLIST_ON || k === 'in_person' || k === 'other' || byChannel[k]);
+    summaryEl.innerHTML = cardKeys.map(key => `
       <div class="xsale-summary-card">
         <div class="label">${channelLabels[key]}</div>
         <div class="count">${byChannel[key] || 0}</div>
@@ -1883,7 +2019,7 @@
     `).join('');
 
     if (!sales || sales.length === 0) {
-      listEl.innerHTML = '<p style="opacity:.5;">Nothing logged yet. Hit Mark Sold Elsewhere on a product once it sells on Vinted, Depop, or in person.</p>';
+      listEl.innerHTML = `<p style="opacity:.5;">Nothing logged yet. Hit ${XLIST_ON ? 'Mark Sold Elsewhere' : 'Sold In Person'} on a product once it sells off the site.</p>`;
       return;
     }
 
@@ -1893,9 +2029,9 @@
       row.className = 'xsale-row';
       row.innerHTML = `
         <div class="info">
-          <span class="xsale-channel-tag">${channelLabels[s.channel] || s.channel}</span>
-          <strong>${s.product_name}</strong>
-          ${s.sale_price != null ? ' — $' + parseFloat(s.sale_price).toFixed(2) : ''}
+          <span class="xsale-channel-tag">${channelLabels[s.channel] || escapeAttr(s.channel)}</span>
+          <strong>${escapeAttr(s.product_name)}</strong>
+          ${s.sale_price != null ? ' · $' + parseFloat(s.sale_price).toFixed(2) : ''}
           <span style="opacity:.6;"> · ${new Date(s.sold_at).toLocaleString()}</span>
         </div>
         <button class="del-btn xsale-del-btn" data-id="${s.id}">Remove</button>
@@ -1909,9 +2045,6 @@
     });
   }
 
-  // Copies an existing product's setup into the Add a Product form so you're
-  // only changing what's actually different, the name, the design ID, maybe
-  // the price, instead of retyping fulfillment type and fees every time.
   function duplicateProductIntoForm(p, variants) {
     variants = variants || [];
     const hasSizes = variants.length > 0;
@@ -1949,9 +2082,8 @@
     document.getElementById('pName').focus();
   }
 
-  // Escapes a value going into an HTML attribute, so a stray quote mark in
-  // a product name or ID (e.g. a name like 12" Pin) can't cut the value
-  // short and leave the field looking empty when Edit is opened.
+  // Escapes text going into the page, so a stray quote or bracket in a
+  // product name can't break the row.
   function escapeAttr(val) {
     return String(val ?? '').replace(/&/g, '&amp;').replace(/"/g, '&quot;').replace(/</g, '&lt;');
   }
@@ -2039,9 +2171,7 @@
       </div>
     `;
 
-    // ===== ADDITIONAL PHOTOS (edit view) — shows the cover photo plus every
-    // extra angle, each with its own Delete, and a file picker that uploads
-    // and appends immediately, no separate Save step needed for photos. =====
+    // ===== ADDITIONAL PHOTOS (edit view) =====
     let currentExtraUrls = Array.isArray(p.extra_image_urls) ? [...p.extra_image_urls] : [];
     function renderEditPhotoGallery() {
       const galleryEl = row.querySelector(`#editPhotoGallery-${p.id}`);
@@ -2054,14 +2184,12 @@
       }
       galleryEl.innerHTML = thumbs.map((t) => `
         <div class="edit-photo-thumb">
-          <img src="${t.url}" alt="">
-          ${t.isCover ? '<span class="edit-photo-cover-tag">Cover</span>' : `<button type="button" class="edit-photo-make-cover" data-url="${t.url}" title="Make this the cover photo">Make Cover</button>`}
-          <button type="button" class="edit-photo-del" data-url="${t.url}" title="Delete this photo">&times;</button>
+          <img src="${escapeAttr(t.url)}" alt="">
+          ${t.isCover ? '<span class="edit-photo-cover-tag">Cover</span>' : `<button type="button" class="edit-photo-make-cover" data-url="${escapeAttr(t.url)}" title="Make this the cover photo">Make Cover</button>`}
+          <button type="button" class="edit-photo-del" data-url="${escapeAttr(t.url)}" title="Delete this photo">&times;</button>
         </div>
       `).join('');
 
-      // Delete works on any photo, including the cover. Deleting the cover
-      // promotes the next extra photo (if there is one) to take its place.
       galleryEl.querySelectorAll('.edit-photo-del').forEach(btn => {
         btn.addEventListener('click', async () => {
           if (!confirm('Delete this photo?')) return;
@@ -2083,8 +2211,6 @@
         });
       });
 
-      // Swaps an extra photo into the cover slot, and the old cover (if any)
-      // becomes one of the extras instead of disappearing.
       galleryEl.querySelectorAll('.edit-photo-make-cover').forEach(btn => {
         btn.addEventListener('click', async () => {
           const url = btn.dataset.url;
@@ -2115,7 +2241,6 @@
         if (uploadError) { alert('Upload failed for "' + file.name + '": ' + uploadError.message); continue; }
         const { data: urlData } = supabaseClient.storage.from('product-images').getPublicUrl(fileName);
         if (!p.image_url) {
-          // No cover photo yet — the first upload here becomes the cover instead of an extra.
           p.image_url = urlData.publicUrl;
           await supabaseClient.from('products').update({ image_url: p.image_url }).eq('id', p.id);
         } else {
@@ -2208,7 +2333,7 @@
       const newFulfillment = row.querySelector('.edit-fulfillment').value;
       const newPrintifyId = row.querySelector('.edit-printify-id').value.trim() || null;
       if (newStatus === 'for_sale' && !newStripePrice) {
-        alert('This product is marked "For Sale" but has no Stripe Price ID — the Buy button will fail. Add a Stripe Price ID or set status back to "Coming Soon".');
+        alert('This product is marked "For Sale" but has no Stripe Price ID, the Buy button will fail. Add a Stripe Price ID or set status back to "Coming Soon".');
         return;
       }
       if (newFulfillment === 'printify' && !newPrintifyId) {
@@ -2239,8 +2364,6 @@
       const { error } = await supabaseClient.from('products').update(updated).eq('id', p.id);
       if (error) { alert('Error saving: ' + error.message); return; }
 
-      // Sizes are replaced wholesale on save: simplest way to keep renamed/
-      // removed/reordered rows correct without diffing against what was there.
       const { error: delVariantsError } = await supabaseClient.from('product_variants').delete().eq('product_id', p.id);
       if (delVariantsError) {
         alert('Product saved, but sizes could not be updated: ' + delVariantsError.message);
@@ -2258,11 +2381,6 @@
   }
 
   // ===== ORDERS =====
-  // What this one order actually cost you, so revenue never gets mistaken
-  // for profit. In-person sales use whatever you've manually entered, since
-  // there's no product record to pull numbers from. Online sales fall back
-  // to the product's own cost, shipping, and platform fee, plus an estimate
-  // of Stripe's cut, same math as the product margin calculator.
   function orderCost(o) {
     if (o.cost != null) return parseFloat(o.cost);
     const price = parseFloat(o.amount_paid) || 0;
@@ -2274,7 +2392,7 @@
       const stripeFee = price * 0.029 + 0.30;
       return itemCost + shipping + platformFee + stripeFee;
     }
-    return null; // unknown — not counted in the dashboard total, flagged instead
+    return null;
   }
 
   async function loadOrders() {
@@ -2295,7 +2413,6 @@
       return;
     }
 
-    // ===== Revenue dashboard =====
     let totalRevenue = 0, totalCost = 0, unknownCount = 0;
     orders.forEach(o => {
       totalRevenue += parseFloat(o.amount_paid) || 0;
@@ -2311,20 +2428,27 @@
     netEl.style.color = netProfit >= 0 ? 'var(--green)' : 'var(--red)';
     const unknownNoteEl = document.getElementById('revUnknownNote');
     unknownNoteEl.textContent = unknownCount > 0
-      ? `${unknownCount} in-person sale${unknownCount === 1 ? '' : 's'} still need${unknownCount === 1 ? 's' : ''} a cost entered below — the totals above don't include those yet.`
+      ? `${unknownCount} in-person sale${unknownCount === 1 ? '' : 's'} still need${unknownCount === 1 ? 's' : ''} a cost entered below. The totals above don't include those yet.`
       : '';
 
-    // ===== Order list =====
     orderListEl.innerHTML = '';
     orders.forEach(o => {
       const row = document.createElement('div');
       row.className = 'product-row';
       const printifyBit = o.printify_order_id
-        ? ` · Printify #${o.printify_order_id} (${o.printify_status || 'submitted'})`
-        : (o.printify_status === 'failed' ? ' · <span class="missing-flag">PRINTIFY ORDER FAILED — check manually</span>' : '');
+        ? ` · Printify #${escapeAttr(o.printify_order_id)} (${escapeAttr(o.printify_status || 'submitted')})`
+        : (o.printify_status === 'failed' ? ' · <span class="missing-flag">PRINTIFY ORDER FAILED, check manually</span>' : '');
       const sourceBit = o.source === 'in_person' ? ' · <strong>In-Person</strong>' : '';
-      const sizeBit = o.size ? ` · <strong>Size: ${o.size}</strong>` : '';
-      const name = o.products?.name || o.description || (o.product_id ? 'Product #' + o.product_id : 'In-person sale');
+      const sizeBit = (o.size && !(Array.isArray(o.items) && o.items.length > 1)) ? ` · <strong>Size: ${escapeAttr(o.size)}</strong>` : '';
+      const methodBit = o.shipping_method === 'pickup'
+        ? ' · <strong style="color:var(--red);">LOCAL PICKUP</strong>'
+        : (o.shipping_method === 'ship' ? ` · ships${o.shipping_paid != null ? ' (paid $' + Number(o.shipping_paid).toFixed(2) + ' shipping)' : ''}` : '');
+      const itemsHtml = (Array.isArray(o.items) && o.items.length > 1)
+        ? `<ul style="margin:6px 0 0; padding-left:18px; font-size:0.82rem;">${o.items.map(i => `<li>${escapeAttr(i.name)}${i.size ? ' (' + escapeAttr(i.size) + ')' : ''}${i.quantity > 1 ? ' x' + i.quantity : ''}${i.fulfillment_type && i.fulfillment_type !== 'in_house' ? ' <span style="opacity:.6;">' + escapeAttr(i.fulfillment_type) + ' ships it</span>' : ''}</li>`).join('')}</ul>`
+        : '';
+      const name = (Array.isArray(o.items) && o.items.length > 1)
+        ? o.items.reduce((n, i) => n + (Number(i.quantity) || 1), 0) + ' items'
+        : (o.products?.name || o.description || (o.product_id ? 'Product #' + o.product_id : 'In-person sale'));
 
       const costKnown = orderCost(o) != null;
       const costInputHtml = o.source === 'in_person'
@@ -2337,13 +2461,14 @@
         : '';
 
       const labelResultHtml = o.label_url
-        ? `<span class="ship-label-result">Shipped via ${o.carrier || 'carrier'} · Tracking: <strong>${o.tracking_number || '—'}</strong> · <a href="${o.label_url}" target="_blank" rel="noopener">View/Print Label</a></span>`
-        : (o.label_error ? `<span class="missing-flag" style="font-size:0.78rem;">${o.label_error}</span>` : '<span style="font-size:0.78rem; opacity:.5;">No label yet.</span>');
+        ? `<span class="ship-label-result">Shipped via ${escapeAttr(o.carrier || 'carrier')} · Tracking: <strong>${escapeAttr(o.tracking_number || '-')}</strong> · <a href="${escapeAttr(o.label_url)}" target="_blank" rel="noopener">View/Print Label</a></span>`
+        : (o.label_error ? `<span class="missing-flag" style="font-size:0.78rem;">${escapeAttr(o.label_error)}</span>` : '<span style="font-size:0.78rem; opacity:.5;">No label yet.</span>');
 
       row.innerHTML = `
         <div class="info">
-          <div class="name">${name}</div>
-          <div class="meta">$${o.amount_paid ?? '—'} · ${o.customer_email || 'no email'} · ${new Date(o.created_at).toLocaleString()}${sizeBit}${sourceBit}${printifyBit}</div>
+          <div class="name">${escapeAttr(name)}</div>
+          <div class="meta">$${o.amount_paid ?? '-'} · ${escapeAttr(o.customer_email || 'no email')} · ${new Date(o.created_at).toLocaleString()}${sizeBit}${sourceBit}${methodBit}${printifyBit}</div>
+          ${itemsHtml}
           ${costInputHtml}
           <details class="ship-details">
             <summary>Shipping address &amp; label</summary>
@@ -2379,8 +2504,6 @@
         });
       }
 
-      // ===== Shipping address — save without needing a page reload, so the
-      // label button below always uses whatever's currently in these fields =====
       row.querySelector('.save-ship-btn').addEventListener('click', async () => {
         const updated = {
           ship_name: row.querySelector('.ship-name').value.trim() || null,
@@ -2398,10 +2521,6 @@
         setTimeout(() => { savedNote.style.display = 'none'; }, 2500);
       });
 
-      // ===== Create Shipping Label — calls the create-shipping-label Supabase
-      // function, which pulls the address straight off this order, buys the
-      // cheapest real rate through Shippo, and saves the tracking number and
-      // label PDF link back onto the order. =====
       row.querySelector('.create-label-btn').addEventListener('click', async () => {
         if (!o.ship_name || !o.ship_address1 || !o.ship_city || !o.ship_state || !o.ship_zip) {
           alert('Fill in and save the shipping address first, name, street, city, state, and ZIP are all required.');
@@ -2413,7 +2532,7 @@
         btn.textContent = 'Creating...';
         const weight_oz = parseFloat(row.querySelector('.ship-weight').value) || null;
         try {
-          const res = await fetch('https://vscombrgcdtrfndqyugb.supabase.co/functions/v1/shipping-label', {
+          const res = await fetch('https://vscombrgcdtrfndqyugb.supabase.co/functions/v1/create-shipping-label', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ order_id: o.id, weight_oz }),
@@ -2434,14 +2553,13 @@
     });
   }
 
-  // ===== EXPENSES (table: expenses) — every dollar that goes out, not tied
-  // to any one product, so "where did my money go" has a real answer. =====
+  // ===== EXPENSES =====
   document.getElementById('expDate').value = new Date().toISOString().slice(0, 10);
 
   async function loadExpenseCategoryOptions() {
     const { data } = await supabaseClient.from('expenses').select('category');
     const unique = [...new Set((data || []).map(e => e.category).filter(Boolean))];
-    document.getElementById('expenseCategoryOptions').innerHTML = unique.map(c => `<option value="${c}">`).join('');
+    document.getElementById('expenseCategoryOptions').innerHTML = unique.map(c => `<option value="${escapeAttr(c)}">`).join('');
   }
   loadExpenseCategoryOptions();
 
@@ -2512,7 +2630,7 @@
 
     const catEntries = Object.entries(byCategoryMonth);
     listEl.innerHTML = catEntries.length
-      ? `<p class="field-hint">This month by category: ` + catEntries.map(([c, a]) => `${c} $${a.toFixed(2)}`).join(', ') + `</p>`
+      ? `<p class="field-hint">This month by category: ` + catEntries.map(([c, a]) => `${escapeAttr(c)} $${a.toFixed(2)}`).join(', ') + `</p>`
       : '';
 
     expenses.forEach(e => {
@@ -2520,9 +2638,9 @@
       row.className = 'xsale-row';
       row.innerHTML = `
         <div class="info">
-          <span class="xsale-channel-tag">${e.category}</span>
+          <span class="xsale-channel-tag">${escapeAttr(e.category)}</span>
           <strong>$${parseFloat(e.amount).toFixed(2)}</strong>
-          ${e.description ? ' — ' + e.description : ''}
+          ${e.description ? ' · ' + escapeAttr(e.description) : ''}
           <span style="opacity:.6;"> · ${new Date(e.expense_date + 'T00:00:00').toLocaleDateString()}</span>
         </div>
         <button class="del-btn exp-del-btn" data-id="${e.id}">Remove</button>
@@ -2536,7 +2654,7 @@
     });
   }
 
-  // ===== PROCESS ALBUM (resized for the web — see resizeAlbumPhoto() above) =====
+  // ===== PROCESS ALBUM =====
   document.getElementById('addAlbumBtn').onclick = async () => {
     const file = document.getElementById('albumImage').files[0];
     const caption = document.getElementById('albumCaption').value.trim() || null;
@@ -2551,10 +2669,8 @@
     let ext = (file.name.split('.').pop() || 'jpg').toLowerCase();
     try {
       uploadBlob = await resizeAlbumPhoto(file);
-      ext = 'jpg'; // resized output is always a JPEG
+      ext = 'jpg';
     } catch (resizeErr) {
-      // If resizing fails for any reason, fall back to uploading the
-      // original rather than blocking the add entirely.
       console.warn('Album photo resize skipped:', resizeErr);
     }
 
@@ -2606,10 +2722,12 @@
       const row = document.createElement('div');
       row.className = 'product-row';
       row.innerHTML = `
-        <img src="${p.image_url}" alt="${p.caption || 'Process photo'}">
+        ${/\.(mov|mp4|m4v|webm)(\?|$)/i.test(p.image_url || '')
+          ? `<video src="${escapeAttr(p.image_url)}#t=0.1" muted playsinline preload="metadata" style="width:56px; height:56px; object-fit:cover; border:1px solid #ccc;"></video>`
+          : `<img src="${escapeAttr(p.image_url)}" alt="${escapeAttr(p.caption || 'Process photo')}">`}
         <div class="info">
-          <div class="name">${p.caption || '(no caption)'}</div>
-          <div class="meta">${new Date(p.created_at).toLocaleDateString()}</div>
+          <div class="name">${p.caption ? escapeAttr(p.caption) : '(no caption)'}</div>
+          <div class="meta">${new Date(p.created_at).toLocaleDateString()}${Array.isArray(p.media) && p.media.length > 1 ? ' · ' + p.media.length + ' shots' : ''}${(Date.now() - Date.parse(p.created_at)) < 7 * 86400000 ? ' · <strong>in NOW</strong>' : ''}</div>
         </div>
         <button class="del-btn" data-id="${p.id}">Delete</button>
       `;
@@ -2701,7 +2819,7 @@
       row.innerHTML = `
         <input type="checkbox" class="goal-check" ${g.done ? 'checked' : ''}>
         <div class="goal-num">${i + 1}.</div>
-        <div class="goal-text">${g.text}</div>
+        <div class="goal-text">${escapeAttr(g.text)}</div>
         <button class="del-btn goal-del">Delete</button>
       `;
       row.querySelector('.goal-check').addEventListener('change', async (e) => {
@@ -2732,17 +2850,13 @@
     if (e.key === 'Enter') document.getElementById('addGoalBtn').click();
   });
 
-  // Paste a whole punch list in one go, instead of adding one task at a
-  // time. Splits on line breaks, strips off leading bullets/dashes/numbers
-  // that tend to come along when you copy a list from somewhere else, and
-  // adds every non-empty line as its own task under the selected date.
   document.getElementById('pasteGoalsBtn').onclick = async () => {
     const textEl = document.getElementById('pasteGoalsText');
     const raw = textEl.value;
     const lines = raw
       .split('\n')
       .map(line => line.trim())
-      .map(line => line.replace(/^[-*••]+\s*/, '').replace(/^\d+[.)]\s*/, '').trim())
+      .map(line => line.replace(/^[-*•·]+\s*/, '').replace(/^\d+[.)]\s*/, '').trim())
       .filter(line => line.length > 0);
 
     if (lines.length === 0) return;
@@ -2761,10 +2875,6 @@
   };
 
   // ===== CALENDAR FEED LINK =====
-  // Pulls the private key out of app_settings and builds the actual
-  // subscribe link, so it's never sitting in the page's source code where
-  // anyone viewing the page could see it — it only appears here, after you've
-  // logged in.
   async function loadCalendarFeedUrl() {
     const el = document.getElementById('calendarFeedUrl');
     const { data, error } = await supabaseClient
@@ -2796,11 +2906,11 @@
     }
   };
 
-  // ===== DIRECTORY LISTINGS (table: directory_listings) =====
+  // ===== DIRECTORY LISTINGS =====
   async function loadDisciplineOptions() {
     const { data } = await supabaseClient.from('disciplines').select('name').order('name');
     const names = (data || []).map(d => d.name);
-    document.getElementById('disciplineOptions').innerHTML = names.map(n => `<option value="${n}">`).join('');
+    document.getElementById('disciplineOptions').innerHTML = names.map(n => `<option value="${escapeAttr(n)}">`).join('');
   }
 
   async function upsertDiscipline(name) {
@@ -2864,8 +2974,8 @@
       row.className = 'product-row';
       row.innerHTML = `
         <div class="info">
-          <div class="name">${d.name}</div>
-          <div class="meta">${d.neighborhood || ''}${d.discipline ? ' · ' + d.discipline : ''}</div>
+          <div class="name">${escapeAttr(d.name)}</div>
+          <div class="meta">${escapeAttr(d.neighborhood || '')}${d.discipline ? ' · ' + escapeAttr(d.discipline) : ''}</div>
         </div>
         <button class="edit-btn" data-dir="up" ${idx === 0 ? 'disabled' : ''}>↑</button>
         <button class="edit-btn" data-dir="down" ${idx === listings.length - 1 ? 'disabled' : ''}>↓</button>
@@ -2894,8 +3004,6 @@
   }
 
   // ===== ZINE LIBRARY (table: zines, storage bucket: zine-files) =====
-  // One zine = one cover + one or more PDF parts (zines.parts, a JSON list of
-  // {label, url}). file_url keeps the first part so older code still works.
   function addZinePartRow() {
     const wrap = document.getElementById('zinePartRows');
     const n = wrap.children.length + 1;
@@ -3047,14 +3155,14 @@
       row.style.flexWrap = 'wrap';
       const parts = zinePartsOf(z);
       const zineImgHtml = z.cover_url
-        ? `<img src="${z.cover_url}" alt="${z.title}">`
+        ? `<img src="${escapeAttr(z.cover_url)}" alt="${escapeAttr(z.title)}">`
         : `<div class="no-img">no cover</div>`;
       row.innerHTML = `
         <input type="checkbox" class="zine-tick" data-i="${idx}" style="width:22px; height:22px; margin-right:6px;">
         ${zineImgHtml}
         <div class="info">
-          <div class="name">${z.title}</div>
-          <div class="meta">${z.sub || ''} ${parts.length} PDF${parts.length === 1 ? '' : 's'}</div>
+          <div class="name">${escapeAttr(z.title)}</div>
+          <div class="meta">${escapeAttr(z.sub || '')} ${parts.length} PDF${parts.length === 1 ? '' : 's'}</div>
         </div>
         <button class="edit-btn" data-dir="up" ${idx === 0 ? 'disabled' : ''}>↑</button>
         <button class="edit-btn" data-dir="down" ${idx === zineRows.length - 1 ? 'disabled' : ''}>↓</button>
@@ -3066,15 +3174,14 @@
       row.querySelector('[data-dir="up"]').addEventListener('click', () => moveZine(zineRows, idx, -1));
       row.querySelector('[data-dir="down"]').addEventListener('click', () => moveZine(zineRows, idx, 1));
 
-      // Parts manager: rename, reorder, remove, use as cover
       const pa = row.querySelector('.zine-parts-admin');
       if (parts.length > 1) {
         parts.forEach((pt, i) => {
           const line = document.createElement('div');
           line.style.cssText = 'display:flex; gap:6px; align-items:center; padding:4px 0; border-top:1px solid #222; font-size:.8rem;';
           line.innerHTML = `
-            ${pt.cover ? `<img src="${pt.cover}" style="width:32px;height:32px;object-fit:cover;">` : '<span style="width:32px;"></span>'}
-            <span style="flex:1;">${i + 1}. ${pt.label || 'Part ' + (i + 1)}</span>
+            ${pt.cover ? `<img src="${escapeAttr(pt.cover)}" style="width:32px;height:32px;object-fit:cover;">` : '<span style="width:32px;"></span>'}
+            <span style="flex:1;">${i + 1}. ${escapeAttr(pt.label || 'Part ' + (i + 1))}</span>
             <button class="edit-btn" data-p="up" ${i === 0 ? 'disabled' : ''}>↑</button>
             <button class="edit-btn" data-p="down" ${i === parts.length - 1 ? 'disabled' : ''}>↓</button>
             <button class="edit-btn" data-p="rename">Rename</button>
@@ -3194,13 +3301,13 @@
       const row = document.createElement('div');
       row.className = 'product-row';
       const promoImgHtml = (m.file_url && imageExt.test(m.file_url))
-        ? `<img src="${m.file_url}" alt="${m.title}">`
+        ? `<img src="${escapeAttr(m.file_url)}" alt="${escapeAttr(m.title)}">`
         : `<div class="no-img">file</div>`;
       row.innerHTML = `
         ${promoImgHtml}
         <div class="info">
-          <div class="name">${m.title}</div>
-          <div class="meta">${m.description || ''}</div>
+          <div class="name">${escapeAttr(m.title)}</div>
+          <div class="meta">${escapeAttr(m.description || '')}</div>
         </div>
         <button class="edit-btn" data-dir="up" ${idx === 0 ? 'disabled' : ''}>↑</button>
         <button class="edit-btn" data-dir="down" ${idx === promoRows.length - 1 ? 'disabled' : ''}>↓</button>
@@ -3229,8 +3336,6 @@
   }
 
   // ===== VENDOR SPOTS & POP-UPS =====
-  // Run the numbers before you spend anything, same idea as the product
-  // margin calculator, just for a booth instead of a single item.
   function updateVendorOppCalc() {
     const cost = parseFloat(document.getElementById('voCost').value) || 0;
     const revenue = parseFloat(document.getElementById('voRevenue').value) || 0;
@@ -3280,15 +3385,12 @@
     await loadVendorOpps();
   };
 
-  // Paste in a batch of researched opportunities at once, name | location |
-  // notes per line, everything lands marked Researching so it's ready for
-  // you to review and fill in real cost/deadline numbers on your own time.
   document.getElementById('pasteVendorBtn').onclick = async () => {
     const textEl = document.getElementById('pasteVendorText');
     const lines = textEl.value
       .split('\n')
       .map(line => line.trim())
-      .map(line => line.replace(/^[-*••]+\s*/, '').replace(/^\d+[.)]\s*/, '').trim())
+      .map(line => line.replace(/^[-*•·]+\s*/, '').replace(/^\d+[.)]\s*/, '').trim())
       .filter(line => line.length > 0);
 
     if (lines.length === 0) return;
@@ -3328,7 +3430,7 @@
       return;
     }
 
-    const statusLabels = { researching: 'Researching', applying: 'Applying', confirmed: 'Confirmed — going', passed: 'Passed on it' };
+    const statusLabels = { researching: 'Researching', applying: 'Applying', confirmed: 'Confirmed, going', passed: 'Passed on it' };
     const today = new Date().toISOString().slice(0, 10);
 
     listEl.innerHTML = '';
@@ -3340,16 +3442,16 @@
       const deadlineSoon = o.application_deadline && o.application_deadline >= today &&
         (new Date(o.application_deadline) - new Date(today)) / 86400000 <= 14;
       const deadlineBit = o.application_deadline
-        ? ` · apply by ${o.application_deadline}${deadlineSoon ? ' <span class="missing-flag">— SOON</span>' : ''}`
+        ? ` · apply by ${o.application_deadline}${deadlineSoon ? ' <span class="missing-flag">SOON</span>' : ''}`
         : '';
       const eventBit = o.event_date ? ` · event ${o.event_date}` : '';
       const costBit = (o.booth_cost != null || o.estimated_revenue != null)
-        ? ` · cost $${o.booth_cost ?? '—'}, est. $${o.estimated_revenue ?? '—'}, <span class="${netClass}">net ${net >= 0 ? '$' : '-$'}${Math.abs(net).toFixed(2)}</span>`
+        ? ` · cost $${o.booth_cost ?? '-'}, est. $${o.estimated_revenue ?? '-'}, <span class="${netClass}">net ${net >= 0 ? '$' : '-$'}${Math.abs(net).toFixed(2)}</span>`
         : '';
       row.innerHTML = `
         <div class="info">
-          <div class="name">${o.name}</div>
-          <div class="meta">${o.location || 'location not set'} · ${statusLabels[o.status] || o.status}${deadlineBit}${eventBit}${costBit}${o.notes ? ' · ' + o.notes : ''}</div>
+          <div class="name">${escapeAttr(o.name)}</div>
+          <div class="meta">${escapeAttr(o.location || 'location not set')} · ${statusLabels[o.status] || escapeAttr(o.status)}${deadlineBit}${eventBit}${costBit}${o.notes ? ' · ' + escapeAttr(o.notes) : ''}</div>
         </div>
         <button class="del-btn" data-id="${o.id}">Delete</button>
       `;
@@ -3477,7 +3579,7 @@
       row.className = 'product-row';
       row.innerHTML = `
         <div class="info">
-          <div class="name">${t.label || '(no label)'}</div>
+          <div class="name">${t.label ? escapeAttr(t.label) : '(no label)'}</div>
           <div class="meta">${new Date(t.clock_in).toLocaleString()} → ${new Date(t.clock_out).toLocaleTimeString()} · ${fmtDuration(durationMs)}</div>
         </div>
         <button class="del-btn" data-id="${t.id}">Delete</button>
