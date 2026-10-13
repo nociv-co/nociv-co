@@ -2,9 +2,9 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<title>Shop Nociv — NOCIV.CO</title>
+<title>Shop Nociv: NOCIV.CO</title>
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<link rel="stylesheet" href="style.css">
+<link rel="stylesheet" href="style.css?v=4.1">
 <style>
   /* Page-specific only — sub-nav, cards, and pills all live in style.css */
   .flip-wrap {
@@ -52,6 +52,7 @@
     padding: 26px 26px 22px;
     max-width: 380px;
     width: 100%;
+    box-sizing: border-box;
     box-shadow: 0 6px 16px rgba(0,0,0,0.18);
     transform: rotate(-1deg);
     position: relative;
@@ -233,9 +234,7 @@
   .zr-msg a { color:#fff; }
   .zine-save-note { font-size: 0.7rem; opacity: .5; margin-top: 8px; }
 
-  /* --- Shop hierarchy: Clothing leads, Art and Zines are secondary, not
-     equal siblings. This is the only thing that changed here, no content
-     was touched, just how much visual weight each tab gets. --- */
+  /* --- Shop hierarchy: Clothing leads, Art and Zines are secondary --- */
   .subnav-primary {
     justify-content: center; padding: 18px 16px; min-height: auto;
   }
@@ -252,12 +251,158 @@
   .subnav-secondary button {
     font-size: 0.68rem; padding: 6px 14px; opacity: .8;
   }
+
+  /* ================= PROCESS ALBUM: NOW + ALL =================
+     NOW is the story row: anything posted in the last 7 days, round
+     thumbnails, red ring until you've seen it. After 7 days a post drops
+     into the album below on its own. */
+  .now-wrap { max-width: 560px; margin: 0 auto 22px; text-align: left; }
+  .now-wrap[hidden] { display: none; }
+  .now-head { display: flex; align-items: baseline; gap: 10px; margin: 0 4px 10px; }
+  .now-label {
+    background: var(--red, #c8412f); color: #fff; font-weight: 900; font-size: 0.8rem;
+    letter-spacing: 0.14em; padding: 4px 9px; transform: rotate(-2deg); display: inline-block;
+  }
+  .now-sub { font-size: 0.78rem; opacity: .65; }
+  .now-row { display: flex; gap: 14px; overflow-x: auto; padding: 4px 4px 8px; -webkit-overflow-scrolling: touch; scrollbar-width: none; }
+  .now-row::-webkit-scrollbar { display: none; }
+  .now-bubble { flex: 0 0 auto; width: 74px; background: none; border: none; padding: 0; cursor: pointer; font: inherit; color: inherit; text-align: center; }
+  .now-ring {
+    width: 70px; height: 70px; border-radius: 50%; padding: 3px; margin: 0 auto;
+    background: var(--red, #c8412f); box-sizing: border-box;
+  }
+  .now-bubble.seen .now-ring { background: #999; }
+  .now-ring img, .now-ring video {
+    width: 100%; height: 100%; border-radius: 50%; object-fit: cover; display: block;
+    border: 2px solid var(--paper, #e9e6df); box-sizing: border-box; background: #111;
+  }
+  .now-cap { font-size: 0.66rem; margin-top: 5px; opacity: .8; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; font-family: ui-monospace, Menlo, monospace; }
+
+  /* Album items can be clips now, and hold more than one shot */
+  .album-gallery-item video { width: 100%; height: 260px; object-fit: cover; display: block; }
+  .album-gallery-badge {
+    position: absolute; top: 8px; right: 8px; background: rgba(0,0,0,0.75); color: #fff;
+    font: 700 11px/1 ui-monospace, Menlo, monospace; padding: 5px 7px; letter-spacing: 0.04em;
+  }
+  .album-gallery-tag {
+    position: absolute; top: 8px; left: 8px; background: #111; color: #fff; font-size: 10px; font-weight: 900;
+    letter-spacing: 0.08em; text-transform: uppercase; padding: 4px 7px; transform: rotate(-2deg);
+  }
+
+  /* ---------- Story viewer (NOW, and any album post tapped open) ---------- */
+  .sv { position: fixed; inset: 0; background: #000; z-index: 1500; display: flex; flex-direction: column; color: #fff; }
+  .sv[hidden] { display: none; }
+  .sv-bars { display: flex; gap: 4px; padding: 10px 10px 0; padding-top: max(10px, env(safe-area-inset-top)); }
+  .sv-bar { flex: 1; height: 3px; background: rgba(255,255,255,0.3); overflow: hidden; }
+  .sv-bar i { display: block; height: 100%; width: 0; background: #fff; }
+  .sv-top { display: flex; align-items: center; gap: 8px; padding: 10px 12px; }
+  .sv-date { font: 12px ui-monospace, Menlo, monospace; opacity: .8; }
+  .sv-tag { font-size: 10px; font-weight: 900; letter-spacing: 0.08em; text-transform: uppercase; background: #fff; color: #111; padding: 3px 7px; }
+  .sv-tag:empty { display: none; }
+  .sv-close {
+    margin-left: auto; background: #fff; color: #111; border: none; font: inherit; font-weight: 900; font-size: 0.72rem;
+    letter-spacing: 0.08em; text-transform: uppercase; padding: 9px 13px; cursor: pointer;
+  }
+  .sv-stage { flex: 1; position: relative; min-height: 0; display: flex; align-items: center; justify-content: center; touch-action: manipulation; user-select: none; -webkit-user-select: none; }
+  .sv-stage img, .sv-stage video { max-width: 100%; max-height: 100%; object-fit: contain; display: block; }
+  .sv-stage video[hidden], .sv-stage img[hidden] { display: none; }
+  .sv-bottom { padding: 12px 14px; padding-bottom: max(14px, env(safe-area-inset-bottom)); background: linear-gradient(transparent, rgba(0,0,0,0.85) 30%); }
+  .sv-caption { font-size: 15px; line-height: 1.45; margin: 0 0 10px; white-space: pre-wrap; word-wrap: break-word; }
+  .sv-caption:empty { display: none; }
+  .sv-actions { display: flex; gap: 8px; flex-wrap: wrap; }
+  .sv-actions button {
+    background: none; color: #fff; border: 1.5px solid #fff; font: inherit; font-size: 12px; font-weight: 900;
+    letter-spacing: 0.06em; text-transform: uppercase; padding: 9px 12px; cursor: pointer;
+  }
+  .sv-actions button[hidden] { display: none; }
+
+  .sv-sheet {
+    position: absolute; left: 0; right: 0; bottom: 0; max-height: 70%; overflow-y: auto; background: #f2ecd6; color: #111;
+    padding: 16px 16px max(16px, env(safe-area-inset-bottom)); box-shadow: 0 -8px 24px rgba(0,0,0,0.5); text-align: left;
+  }
+  .sv-sheet[hidden] { display: none; }
+  .sv-sheet-head { display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px; }
+  .sv-sheet-head b { font-size: 0.85rem; letter-spacing: 0.08em; text-transform: uppercase; }
+  .sv-sheet-head button { background: #111; color: #fff; border: none; font: inherit; font-size: 0.72rem; font-weight: 900; padding: 8px 12px; cursor: pointer; text-transform: uppercase; }
+  .sv-comment { font-size: 14px; line-height: 1.45; padding: 6px 0; border-bottom: 1px dotted #a99; white-space: pre-wrap; word-wrap: break-word; }
+  .sv-comment .when { font: 11px ui-monospace, Menlo, monospace; opacity: .5; margin-left: 4px; }
+  .sv-empty { font-size: 13px; opacity: .6; padding: 4px 0 8px; }
+  .sv-form { margin-top: 10px; display: flex; flex-direction: column; gap: 8px; position: relative; }
+  .sv-form input, .sv-form textarea {
+    width: 100%; box-sizing: border-box; font: inherit; font-size: 16px; padding: 11px; border: 1.5px solid #111; background: #fff; color: #111;
+  }
+  .sv-form .hp { position: absolute; left: -9999px; width: 1px; height: 1px; opacity: 0; }
+  .sv-form button { align-self: flex-start; background: var(--red, #c8412f); color: #fff; border: none; font: inherit; font-size: 14px; font-weight: 900; letter-spacing: 0.06em; text-transform: uppercase; padding: 11px 18px; cursor: pointer; }
+  .sv-form-msg { font-size: 13px; font-weight: 700; min-height: 1em; }
+  .sv-form-msg.err { color: var(--red, #c8412f); }
+
+  /* ================= THE BAG (cart) =================
+     Cream paper with tape, same family as the pop-up note. Bag button only
+     shows once something is in it. */
+  .bag-btn {
+    position: fixed; right: 16px; bottom: max(16px, env(safe-area-inset-bottom)); z-index: 900;
+    background: #111; color: #fff; border: 2px solid #111; font: inherit; font-weight: 900;
+    font-size: 0.85rem; letter-spacing: 0.1em; text-transform: uppercase; padding: 13px 16px;
+    cursor: pointer; display: flex; align-items: center; gap: 10px; box-shadow: 0 6px 18px rgba(0,0,0,0.3);
+  }
+  .bag-btn[hidden] { display: none; }
+  .bag-btn .bag-count { background: var(--red, #c8412f); color: #fff; min-width: 24px; height: 24px; border-radius: 12px; display: inline-flex; align-items: center; justify-content: center; font-size: 0.8rem; padding: 0 6px; }
+  .bag-btn.bump { animation: bagBump .35s ease; }
+  @keyframes bagBump { 50% { transform: scale(1.08) rotate(-2deg); } }
+  @media (prefers-reduced-motion: reduce) { .bag-btn.bump { animation: none; } }
+
+  .bag-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.55); z-index: 1200; display: flex; align-items: flex-end; justify-content: center; }
+  .bag-overlay[hidden] { display: none; }
+  @media (min-width: 700px) { .bag-overlay { align-items: stretch; justify-content: flex-end; } }
+  .bag {
+    background: #f2ecd6; color: #1a1a1a; width: 100%; max-width: 460px; max-height: 88vh; overflow-y: auto;
+    padding: 26px 18px max(18px, env(safe-area-inset-bottom)); position: relative; box-sizing: border-box;
+    box-shadow: 0 -8px 30px rgba(0,0,0,0.35);
+  }
+  @media (min-width: 700px) { .bag { max-height: none; height: 100%; } }
+  .bag::before {
+    content: ''; position: absolute; top: 10px; left: 22px; width: 70px; height: 22px;
+    background: #1a1a1a; opacity: .85; transform: rotate(-3deg);
+  }
+  .bag-head { display: flex; justify-content: space-between; align-items: center; margin: 14px 0 12px; }
+  .bag-head h2 { margin: 0; font-size: 1.35rem; font-weight: 900; letter-spacing: 0.08em; }
+  .bag-close { background: #111; color: #fff; border: none; font: inherit; font-weight: 900; font-size: 0.75rem; letter-spacing: 0.08em; text-transform: uppercase; padding: 9px 13px; cursor: pointer; }
+  .bag-empty { padding: 26px 0; text-align: center; opacity: .7; }
+  .bag-line { display: flex; gap: 12px; padding: 12px 0; border-bottom: 1px dashed #1a1a1a; align-items: flex-start; }
+  .bag-thumb { width: 64px; height: 64px; flex: 0 0 64px; background: #ddd; object-fit: cover; display: block; border: 1.5px solid #1a1a1a; }
+  .bag-info { flex: 1; min-width: 0; }
+  .bag-name { font-weight: 900; font-size: 0.9rem; text-transform: uppercase; letter-spacing: 0.02em; line-height: 1.25; word-wrap: break-word; }
+  .bag-meta { font-size: 0.78rem; opacity: .7; margin-top: 2px; }
+  .bag-warn { font-size: 0.78rem; color: var(--red, #c8412f); font-weight: 700; margin-top: 4px; }
+  .bag-row { display: flex; align-items: center; justify-content: space-between; margin-top: 8px; gap: 8px; }
+  .bag-qty { display: inline-flex; align-items: center; border: 1.5px solid #1a1a1a; background: #fff; }
+  .bag-qty button { width: 38px; height: 38px; background: none; border: none; font: inherit; font-size: 1.1rem; font-weight: 900; cursor: pointer; color: #1a1a1a; }
+  .bag-qty button:disabled { opacity: .3; cursor: default; }
+  .bag-qty span { min-width: 26px; text-align: center; font-weight: 900; }
+  .bag-price { font-weight: 900; }
+  .bag-remove { background: none; border: none; font: inherit; font-size: 0.75rem; text-decoration: underline; cursor: pointer; color: #1a1a1a; opacity: .7; padding: 6px 0; }
+  .bag-sum { margin-top: 14px; font-size: 0.92rem; }
+  .bag-sum-row { display: flex; justify-content: space-between; padding: 4px 0; }
+  .bag-sum-row.total { font-weight: 900; font-size: 1.05rem; border-top: 2px solid #1a1a1a; margin-top: 6px; padding-top: 10px; }
+  .bag-note { font-size: 0.78rem; opacity: .75; margin: 6px 0 0; line-height: 1.45; }
+  .bag-go {
+    width: 100%; margin-top: 16px; background: var(--red, #c8412f); color: #fff; border: none; font: inherit;
+    font-size: 1rem; font-weight: 900; letter-spacing: 0.1em; text-transform: uppercase; padding: 17px; cursor: pointer;
+  }
+  .bag-go:disabled { opacity: .5; cursor: default; }
+  .bag-err { color: var(--red, #c8412f); font-weight: 700; font-size: 0.88rem; margin: 10px 0 0; min-height: 1em; }
+
+  .shop-banner { max-width: 560px; margin: 16px auto 0; padding: 16px 18px; background: #111; color: #fff; position: relative; box-sizing: border-box; width: calc(100% - 32px); }
+  .shop-banner[hidden] { display: none; }
+  .shop-banner b { display: block; font-size: 1rem; letter-spacing: 0.06em; text-transform: uppercase; margin-bottom: 4px; }
+  .shop-banner p { margin: 0; font-size: 0.88rem; opacity: .85; line-height: 1.45; }
+  .shop-banner button { position: absolute; top: 8px; right: 8px; background: none; border: none; color: #fff; font-size: 1.3rem; cursor: pointer; line-height: 1; padding: 4px 8px; }
 </style>
 </head>
 <body>
 
 <header class="nociv-header">
-  <a href="index.html"><img class="torn-header-img" src="header.png" alt="NOCIV.CO — Nothing Of Civilization"></a>
+  <a href="index.html"><img class="torn-header-img" src="header.png" alt="NOCIV.CO: Nothing Of Civilization"></a>
 </header>
 
 <!-- MAIN TABS (Using your new Shop & Tools image buttons) -->
@@ -267,6 +412,12 @@
   <a href="creator-tools.html" class="img-tab"><img src="nav-tools.png" alt="Tools"></a>
   <a href="community.html" class="img-tab"><img src="base-button.png" alt="Base"></a>
 </nav>
+
+<div class="shop-banner" id="shopBanner" role="status" hidden>
+  <button type="button" id="shopBannerClose" aria-label="Close">&times;</button>
+  <b id="shopBannerTitle"></b>
+  <p id="shopBannerText"></p>
+</div>
 
 <!-- SUB-NAV: Clothing leads, Art and Zines are secondary, "also from the collective" -->
 <nav class="subnav subnav-primary">
@@ -284,7 +435,13 @@
 
     <div class="catalog-mount" id="catalogMount-clothing"></div>
 
-    <div style="text-align:center; margin-top:20px;">
+    <!-- PROCESS ALBUM: NOW (this week, story style) on top, the album (everything older) below -->
+    <div id="process-album" style="text-align:center; margin-top:20px;">
+      <div class="now-wrap" id="nowWrap" hidden>
+        <div class="now-head"><span class="now-label">NOW</span><span class="now-sub">on the table this week</span></div>
+        <div class="now-row" id="nowRow"></div>
+      </div>
+
       <div class="album" id="albumEl">
         <img class="album-frame album-cover-img" src="photo-album-cover.png" alt="Nociv photo album">
         <div class="album-gallery collapsed" id="albumGallery">
@@ -296,11 +453,11 @@
 
     <div class="phone-showcase">
       <div class="phone-frame-wrap">
-        <video controls poster="screen-printing-poster.jpg">
+        <video controls playsinline preload="none" poster="screen-printing-poster.jpg">
           <source src="screen-printing-process.mp4" type="video/mp4">
         </video>
       </div>
-      <p class="phone-showcase-label">Watch it get made — screen printing, start to finish.</p>
+      <p class="phone-showcase-label">Watch it get made. Screen printing, start to finish.</p>
     </div>
 
     <img class="aura-graphic" src="aura-graphic.png" alt="Nociv clothing">
@@ -308,7 +465,7 @@
     <!-- Posted note: Join The List signup, the last thing on the page -->
     <div class="signup-note-wrap">
       <div class="signup-note">
-        <img class="popup-card-img" src="pop-up-shop.png" alt="Pop-up shop — posting soon">
+        <img class="popup-card-img" src="pop-up-shop.png" alt="Pop-up shop, posting soon">
         <div class="popup-note">
           Enter your email to get notified of next location & time. Nothing else.
         </div>
@@ -327,6 +484,29 @@
       </div>
     </div>
   </div>
+</div>
+
+<!-- Story viewer for the Process Album -->
+<div class="sv" id="sv" hidden>
+  <div class="sv-bars" id="svBars"></div>
+  <div class="sv-top">
+    <span class="sv-date" id="svDate"></span>
+    <span class="sv-tag" id="svTag"></span>
+    <button class="sv-close" id="svClose" type="button">Close</button>
+  </div>
+  <div class="sv-stage" id="svStage">
+    <img id="svImg" alt="" hidden>
+    <video id="svVideo" playsinline muted preload="auto" hidden></video>
+  </div>
+  <div class="sv-bottom">
+    <p class="sv-caption" id="svCaption"></p>
+    <div class="sv-actions">
+      <button type="button" id="svTalk">Comments</button>
+      <button type="button" id="svSend">Send This</button>
+      <button type="button" id="svSound" hidden>Sound Off</button>
+    </div>
+  </div>
+  <div class="sv-sheet" id="svSheet" hidden></div>
 </div>
 
 <!-- Full-screen zine reader -->
@@ -362,15 +542,15 @@
   </div>
 </div>
 
-<!-- Zoomed-in photo view — shared by the process album -->
+<!-- Zoomed-in photo view -->
 <div class="photo-lightbox" id="photoLightbox">
   <span class="photo-lightbox-close">&times;</span>
   <img id="photoLightboxImg" src="" alt="">
 </div>
 
-<footer class="nociv-footer">NOCIV.CO — Nothing Of Civilization <a href="admin.html" style="opacity:.15; font-size:0.65rem;">·</a></footer>
+<footer class="nociv-footer">NOCIV.CO: Nothing Of Civilization <a href="admin.html" style="opacity:.15; font-size:0.65rem;">·</a></footer>
 
-<!-- PRODUCT DETAIL MODAL — shared by every shop tab -->
+<!-- PRODUCT DETAIL MODAL, shared by every shop tab -->
 <div class="product-modal-overlay" id="productModalOverlay">
   <div class="product-modal" id="productModal">
     <button class="product-modal-close" id="productModalClose">&times;</button>
@@ -386,9 +566,21 @@
   </div>
 </div>
 
-<!-- FULLSCREEN ZOOM — tap the modal photo to fill the screen -->
+<!-- FULLSCREEN ZOOM, tap the modal photo to fill the screen -->
 <div class="zoom-overlay" id="zoomOverlay">
   <img id="zoomImage" src="" alt="">
+</div>
+
+<!-- THE BAG -->
+<button type="button" class="bag-btn" id="bagBtn" hidden aria-label="Open your bag">Bag <span class="bag-count" id="bagCount">0</span></button>
+<div class="bag-overlay" id="bagOverlay" hidden>
+  <div class="bag" role="dialog" aria-modal="true" aria-labelledby="bagTitle">
+    <div class="bag-head"><h2 id="bagTitle">YOUR BAG</h2><button type="button" class="bag-close" id="bagClose">Close</button></div>
+    <div id="bagLines"></div>
+    <div id="bagSummary"></div>
+    <button type="button" class="bag-go" id="bagGo">Checkout</button>
+    <p class="bag-err" id="bagErr" aria-live="polite"></p>
+  </div>
 </div>
 
 <!-- SUPABASE SCRIPTS -->
@@ -406,6 +598,71 @@
     });
   });
 
+  // =====================================================================
+  // PROCESS ALBUM: NOW + ALL
+  // One table (album_photos). A post sits in NOW for NOW_DAYS days, then
+  // shows in the album instead. Change NOW_DAYS here to change that.
+  // =====================================================================
+  const NOW_DAYS = 7;
+  const ALBUM_TAGS = { wip: 'In progress', one_of_one: '1 of 1', might_replicate: 'Might make more', idea: 'Just an idea' };
+  const esc = (s) => String(s ?? '').replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+  const safeUrl = (u) => (typeof u === 'string' && /^https?:\/\//i.test(u)) ? u : '';
+  const isClipUrl = (u) => /\.(mov|mp4|m4v|webm)(\?|$)/i.test(u || '');
+  const shortDate = (iso) => {
+    const d = new Date(iso);
+    return d.toLocaleString('en-US', { month: 'short' }).toLowerCase() + '.' + d.getDate() + '.' + d.getFullYear();
+  };
+  const store = {
+    get(k) { try { return localStorage.getItem(k); } catch (e) { return null; } },
+    set(k, v) { try { localStorage.setItem(k, v); } catch (e) {} }
+  };
+  function mediaOf(p) {
+    const list = (Array.isArray(p.media) && p.media.length) ? p.media
+      : (p.image_url ? [{ url: p.image_url, type: isClipUrl(p.image_url) ? 'video' : 'image' }] : []);
+    return list.filter(m => m && safeUrl(m.url));
+  }
+  function seenIds() { try { return JSON.parse(store.get('nocivAlbumSeen') || '[]'); } catch (e) { return []; } }
+  function markSeen(id) {
+    const ids = seenIds();
+    if (!ids.includes(id)) { ids.push(id); store.set('nocivAlbumSeen', JSON.stringify(ids.slice(-300))); }
+  }
+
+  let albumPosts = null;
+  async function getAlbumPosts() {
+    if (albumPosts) return albumPosts;
+    const { data, error } = await supabaseClient
+      .from('album_photos').select('*').order('created_at', { ascending: false });
+    albumPosts = (error || !data) ? [] : data.filter(p => mediaOf(p).length);
+    return albumPosts;
+  }
+  const nowCutoff = () => Date.now() - NOW_DAYS * 86400000;
+  const isNow = (p) => Date.parse(p.created_at) > nowCutoff();
+
+  // ---------- NOW row ----------
+  async function renderNowRow() {
+    const posts = (await getAlbumPosts()).filter(isNow);
+    const wrap = document.getElementById('nowWrap');
+    const row = document.getElementById('nowRow');
+    if (!posts.length) { wrap.hidden = true; return; }
+    const seen = seenIds();
+    row.innerHTML = '';
+    posts.forEach((p, i) => {
+      const m = mediaOf(p)[0];
+      const b = document.createElement('button');
+      b.type = 'button';
+      b.className = 'now-bubble' + (seen.includes(p.id) ? ' seen' : '');
+      b.setAttribute('aria-label', 'Open ' + (p.caption || 'post from ' + shortDate(p.created_at)));
+      b.innerHTML = `<div class="now-ring">${m.type === 'video'
+          ? `<video src="${esc(m.url)}#t=0.1" muted playsinline preload="metadata"></video>`
+          : `<img src="${esc(m.url)}" alt="" loading="lazy">`}</div>
+        <div class="now-cap">${esc(p.tag && ALBUM_TAGS[p.tag] ? ALBUM_TAGS[p.tag] : shortDate(p.created_at).replace(/\.\d{4}$/, ''))}</div>`;
+      b.addEventListener('click', () => openViewer(posts, i, 'now'));
+      row.appendChild(b);
+    });
+    wrap.hidden = false;
+  }
+
+  // ---------- The album (everything older than NOW) ----------
   let albumLoaded = false;
   document.getElementById('albumEl').addEventListener('click', function(){
     this.classList.toggle('open');
@@ -416,38 +673,276 @@
     }
   });
 
-  // Shared loader — also used by the landing page's always-open gallery.
-  // loading="lazy" means the browser only fetches a photo once it's about
-  // to scroll into view, instead of pulling every photo at once.
   async function loadAlbumGallery(mountId) {
     const galleryEl = document.getElementById(mountId);
-    const { data: photos, error } = await supabaseClient
-      .from('album_photos')
-      .select('*')
-      .order('created_at', { ascending: false });
+    const all = await getAlbumPosts();
+    const posts = all.filter(p => !isNow(p));
 
-    if (error || !photos || photos.length === 0) {
-      galleryEl.innerHTML = '<p class="album-gallery-empty">Photos coming soon.</p>';
+    if (!posts.length) {
+      galleryEl.innerHTML = all.length
+        ? '<p class="album-gallery-empty">Everything new is up in NOW. It lands in here after a week.</p>'
+        : '<p class="album-gallery-empty">Photos coming soon.</p>';
       return;
     }
 
     galleryEl.innerHTML = '';
-    photos.forEach(p => {
+    posts.forEach(p => {
+      const media = mediaOf(p);
+      const m = media[0];
       const item = document.createElement('div');
       item.className = 'album-gallery-item';
       item.innerHTML = `
-        <img src="${p.image_url}" alt="${p.caption || 'Process photo'}" loading="lazy" decoding="async">
-        ${p.caption ? `<div class="album-gallery-caption">${p.caption}</div>` : ''}
+        ${m.type === 'video'
+          ? `<video src="${esc(m.url)}#t=0.1" muted playsinline preload="metadata"></video>`
+          : `<img src="${esc(m.url)}" alt="${esc(p.caption || 'Process photo')}" loading="lazy" decoding="async">`}
+        ${p.tag && ALBUM_TAGS[p.tag] ? `<span class="album-gallery-tag">${esc(ALBUM_TAGS[p.tag])}</span>` : ''}
+        ${media.length > 1 ? `<span class="album-gallery-badge">1/${media.length}</span>` : (m.type === 'video' ? '<span class="album-gallery-badge">CLIP</span>' : '')}
+        ${p.caption ? `<div class="album-gallery-caption">${esc(p.caption)}</div>` : ''}
       `;
-      item.querySelector('img').addEventListener('click', (e) => {
+      item.addEventListener('click', (e) => {
         e.stopPropagation();
-        openPhotoLightbox(p.image_url, p.caption || 'Process photo');
+        openViewer([p], 0, 'one');
       });
       galleryEl.appendChild(item);
     });
   }
 
-  // ===== PHOTO LIGHTBOX (tap any album photo to zoom in, tap again to close) =====
+  // ---------- Story viewer ----------
+  const sv = document.getElementById('sv');
+  const svImg = document.getElementById('svImg');
+  const svVideo = document.getElementById('svVideo');
+  const svBars = document.getElementById('svBars');
+  const svSheet = document.getElementById('svSheet');
+  const svSound = document.getElementById('svSound');
+  const PHOTO_MS = 6000;
+  let V = { posts: [], pi: 0, mi: 0, mode: 'now', timer: null, start: 0, left: PHOTO_MS, paused: false };
+  let soundOn = false;
+
+  function openViewer(posts, startIdx, mode) {
+    V = { posts, pi: startIdx, mi: 0, mode, timer: null, start: 0, left: PHOTO_MS, paused: false };
+    sv.hidden = false;
+    document.body.style.overflow = 'hidden';
+    showItem();
+  }
+  function closeViewer() {
+    clearTimeout(V.timer);
+    svVideo.pause(); svVideo.removeAttribute('src'); svVideo.load();
+    svSheet.hidden = true;
+    sv.hidden = true;
+    document.body.style.overflow = '';
+    if (location.hash.startsWith('#album-')) history.replaceState(null, '', location.pathname + location.search);
+    renderNowRow();
+  }
+  function curPost() { return V.posts[V.pi]; }
+
+  function showItem() {
+    clearTimeout(V.timer);
+    const p = curPost();
+    const media = mediaOf(p);
+    const m = media[V.mi];
+    markSeen(p.id);
+
+    svBars.innerHTML = media.map((_, i) => `<div class="sv-bar"><i style="width:${i < V.mi ? 100 : 0}%"></i></div>`).join('');
+    document.getElementById('svDate').textContent = shortDate(p.created_at);
+    document.getElementById('svTag').textContent = p.tag && ALBUM_TAGS[p.tag] ? ALBUM_TAGS[p.tag] : '';
+    document.getElementById('svCaption').textContent = p.caption || '';
+    document.getElementById('svTalk').textContent = 'Comments' + (commentCounts[p.id] ? ' (' + commentCounts[p.id] + ')' : '');
+    loadCount(p.id);
+    svSheet.hidden = true;
+    V.paused = false;
+
+    if (m.type === 'video') {
+      svImg.hidden = true; svImg.removeAttribute('src');
+      svVideo.hidden = false;
+      svVideo.muted = !soundOn;
+      svVideo.src = m.url;
+      svSound.hidden = false;
+      svSound.textContent = soundOn ? 'Sound On' : 'Sound Off';
+      svVideo.play().catch(() => { svVideo.muted = true; svVideo.play().catch(() => {}); });
+    } else {
+      svVideo.pause(); svVideo.hidden = true; svVideo.removeAttribute('src');
+      svSound.hidden = true;
+      svImg.hidden = false;
+      svImg.src = m.url;
+      V.left = PHOTO_MS;
+      runPhotoTimer();
+    }
+  }
+
+  function bar() { const b = svBars.children[V.mi]; return b ? b.firstElementChild : null; }
+  function runPhotoTimer() {
+    V.start = Date.now();
+    const b = bar();
+    if (b) {
+      b.style.transition = 'none';
+      b.style.width = ((PHOTO_MS - V.left) / PHOTO_MS * 100) + '%';
+      requestAnimationFrame(() => { b.style.transition = `width ${V.left}ms linear`; b.style.width = '100%'; });
+    }
+    V.timer = setTimeout(next, V.left);
+  }
+  svVideo.addEventListener('timeupdate', () => {
+    const b = bar();
+    if (b && svVideo.duration) { b.style.transition = 'none'; b.style.width = (svVideo.currentTime / svVideo.duration * 100) + '%'; }
+  });
+  svVideo.addEventListener('ended', () => next());
+
+  function pause() {
+    if (V.paused || sv.hidden) return;
+    V.paused = true;
+    if (!svVideo.hidden) { svVideo.pause(); return; }
+    clearTimeout(V.timer);
+    V.left = Math.max(0, V.left - (Date.now() - V.start));
+    const b = bar();
+    if (b) { const w = getComputedStyle(b).width; b.style.transition = 'none'; b.style.width = w; }
+  }
+  function resume() {
+    if (!V.paused || sv.hidden) return;
+    V.paused = false;
+    if (!svVideo.hidden) { svVideo.play().catch(() => {}); return; }
+    runPhotoTimer();
+  }
+
+  function next() {
+    const media = mediaOf(curPost());
+    if (V.mi < media.length - 1) { V.mi++; showItem(); return; }
+    if (V.pi < V.posts.length - 1) { V.pi++; V.mi = 0; showItem(); return; }
+    if (V.mode === 'now') { closeViewer(); return; }
+    // Single album post: stay on the last shot instead of closing on them.
+    clearTimeout(V.timer);
+    const b = bar(); if (b) { b.style.transition = 'none'; b.style.width = '100%'; }
+  }
+  function prev() {
+    if (V.mi > 0) { V.mi--; showItem(); return; }
+    if (V.pi > 0) { V.pi--; V.mi = mediaOf(curPost()).length - 1; showItem(); return; }
+    showItem();
+  }
+
+  // Tap left third = back, tap the rest = next, press and hold = pause.
+  const svStage = document.getElementById('svStage');
+  let pressAt = 0, pressX = 0;
+  svStage.addEventListener('pointerdown', (e) => { pressAt = Date.now(); pressX = e.clientX; pause(); });
+  svStage.addEventListener('pointerup', () => {
+    const held = Date.now() - pressAt;
+    if (held < 250) {
+      V.paused = false;
+      const r = svStage.getBoundingClientRect();
+      (pressX - r.left < r.width / 3) ? prev() : next();
+    } else {
+      resume();
+    }
+  });
+  svStage.addEventListener('pointercancel', resume);
+  svStage.addEventListener('contextmenu', (e) => e.preventDefault());
+
+  document.getElementById('svClose').addEventListener('click', closeViewer);
+  document.addEventListener('keydown', (e) => {
+    if (sv.hidden) return;
+    if (e.key === 'Escape') closeViewer();
+    if (e.key === 'ArrowRight') next();
+    if (e.key === 'ArrowLeft') prev();
+  });
+  svSound.addEventListener('click', () => {
+    soundOn = !soundOn;
+    svVideo.muted = !soundOn;
+    if (soundOn) svVideo.play().catch(() => {});
+    svSound.textContent = soundOn ? 'Sound On' : 'Sound Off';
+  });
+
+  // Word of mouth: one tap to text someone a link to this exact post.
+  document.getElementById('svSend').addEventListener('click', async (e) => {
+    const btn = e.currentTarget;
+    const p = curPost();
+    const url = location.origin + location.pathname + '#album-' + p.id;
+    pause();
+    try {
+      if (navigator.share) { await navigator.share({ title: 'NOCIV', text: p.caption ? p.caption.slice(0, 80) : 'Look at this from NOCIV', url }); }
+      else { await navigator.clipboard.writeText(url); btn.textContent = 'Link Copied'; setTimeout(() => { btn.textContent = 'Send This'; }, 2000); }
+    } catch (err) {
+      if (!err || err.name !== 'AbortError') prompt('Copy this link', url);
+    }
+    resume();
+  });
+
+  // ---------- Comments ----------
+  const commentCounts = {};
+  async function loadCount(id) {
+    if (commentCounts[id] !== undefined) return;
+    const { data } = await supabaseClient.from('album_comments').select('id').eq('photo_id', id);
+    commentCounts[id] = (data || []).length;
+    if (!sv.hidden && curPost() && curPost().id === id) {
+      document.getElementById('svTalk').textContent = 'Comments' + (commentCounts[id] ? ' (' + commentCounts[id] + ')' : '');
+    }
+  }
+
+  document.getElementById('svTalk').addEventListener('click', async () => {
+    const p = curPost();
+    pause();
+    svSheet.hidden = false;
+    svSheet.innerHTML = '<div class="sv-empty">Loading...</div>';
+    const { data } = await supabaseClient.from('album_comments')
+      .select('name, body, created_at').eq('photo_id', p.id).order('created_at', { ascending: true });
+    const savedName = store.get('nocivCommentName') || '';
+    svSheet.innerHTML = `
+      <div class="sv-sheet-head"><b>Comments</b><button type="button" class="sv-sheet-close">Done</button></div>
+      <div class="sv-list"></div>
+      <form class="sv-form">
+        <input type="text" name="who" maxlength="40" placeholder="Your name (optional)" value="${esc(savedName)}" autocomplete="nickname">
+        <textarea name="body" rows="2" maxlength="500" placeholder="Say something" required></textarea>
+        <input class="hp" type="text" name="website" tabindex="-1" autocomplete="off" aria-hidden="true">
+        <button type="submit">Say It</button>
+        <div class="sv-form-msg" aria-live="polite"></div>
+      </form>`;
+    const list = svSheet.querySelector('.sv-list');
+    const addLine = (c) => {
+      const d = document.createElement('div');
+      d.className = 'sv-comment';
+      d.innerHTML = `<b>${esc(c.name || 'someone')}</b> ${esc(c.body)}<span class="when">${shortDate(c.created_at)}</span>`;
+      list.appendChild(d);
+    };
+    (data || []).forEach(addLine);
+    if (!data || !data.length) list.innerHTML = '<div class="sv-empty">Nobody said anything yet. Be first.</div>';
+
+    svSheet.querySelector('.sv-sheet-close').addEventListener('click', () => { svSheet.hidden = true; resume(); });
+    const form = svSheet.querySelector('.sv-form');
+    form.addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const msg = form.querySelector('.sv-form-msg');
+      const submit = form.querySelector('button[type=submit]');
+      const name = form.who.value.trim();
+      const body = form.body.value.trim();
+      msg.className = 'sv-form-msg'; msg.textContent = '';
+      if (!body) return;
+      if (form.website.value) { form.body.value = ''; return; }
+      submit.disabled = true;
+      const { error } = await supabaseClient.from('album_comments').insert([{ photo_id: p.id, name: name || null, body }]);
+      submit.disabled = false;
+      if (error) {
+        msg.className = 'sv-form-msg err';
+        msg.textContent = /try again/i.test(error.message || '') ? error.message : "Didn't go through. Try again.";
+        return;
+      }
+      if (name) store.set('nocivCommentName', name);
+      const empty = list.querySelector('.sv-empty'); if (empty) empty.remove();
+      addLine({ name, body, created_at: new Date().toISOString() });
+      form.body.value = '';
+      commentCounts[p.id] = (commentCounts[p.id] || 0) + 1;
+      document.getElementById('svTalk').textContent = 'Comments (' + commentCounts[p.id] + ')';
+    });
+  });
+
+  // Someone texted a link to one post (shop.html#album-123): open it.
+  (async function initAlbum() {
+    await renderNowRow();
+    const m = location.hash.match(/^#album-(\d+)$/);
+    if (m) {
+      const p = (await getAlbumPosts()).find(x => String(x.id) === m[1]);
+      if (p) openViewer([p], 0, 'one');
+    } else if (location.hash === '#process-album') {
+      document.getElementById('process-album').scrollIntoView({ block: 'start' });
+    }
+  })();
+
+  // ===== PHOTO LIGHTBOX =====
   function openPhotoLightbox(src, alt) {
     document.getElementById('photoLightboxImg').src = src;
     document.getElementById('photoLightboxImg').alt = alt || '';
@@ -495,17 +990,14 @@
     if (error || !data) return; // leave the TBD defaults showing
 
     document.getElementById('popupDetails').innerHTML = `
-      <strong>Next Location:</strong> ${data.location || 'TBD'}<br>
+      <strong>Next Location:</strong> ${esc(data.location || 'TBD')}<br>
       <strong>Date:</strong> ${formatEventDate(data.event_date)}<br>
-      <strong>Time:</strong> ${data.event_time || 'TBD'}
+      <strong>Time:</strong> ${esc(data.event_time || 'TBD')}
     `;
   }
   loadPopupStatus();
 
-  // ===== ZINE LIBRARY — displayed like the rest of the shop, just free.
-  // No price/category filter since it's meant to grow as a small run of
-  // issues, not a big catalog. Tap a card to read, or download it straight
-  // off the card. (table: zines, editable from admin) =====
+  // ===== ZINE LIBRARY (table: zines, editable from admin) =====
   const zineList = document.getElementById('zineList');
   const escAttr = (t) => String(t == null ? '' : t).replace(/&/g,'&amp;').replace(/"/g,'&quot;').replace(/</g,'&lt;');
 
@@ -679,7 +1171,7 @@
 
     function showPhoto(url) {
       if (url) {
-        mediaEl.innerHTML = `<img src="${url}" alt="${p.name}">`;
+        mediaEl.innerHTML = `<img src="${escAttr(url)}" alt="${escAttr(p.name)}">`;
         mediaEl.onclick = () => {
           zoomImage.src = url;
           zoomOverlay.classList.add('show');
@@ -693,7 +1185,7 @@
 
     if (allPhotos.length > 1) {
       thumbsEl.style.display = 'flex';
-      thumbsEl.innerHTML = allPhotos.map(url => `<img src="${url}" data-url="${url}" alt="">`).join('');
+      thumbsEl.innerHTML = allPhotos.map(url => `<img src="${escAttr(url)}" data-url="${escAttr(url)}" alt="">`).join('');
       thumbsEl.querySelectorAll('img').forEach(t => {
         t.addEventListener('click', () => showPhoto(t.dataset.url));
       });
@@ -734,13 +1226,13 @@
       sizeSelect.className = 'product-modal-size-select';
       sizeSelect.style.cssText = 'width:100%; padding:10px; margin:10px 0; font-size:1rem;';
       sizeSelect.innerHTML = '<option value="">Choose a size</option>' + variants.map(v =>
-        `<option value="${v.id}" ${v.inventory_count <= 0 ? 'disabled' : ''}>${v.size}${v.inventory_count <= 0 ? ' — Sold out' : ' (' + v.inventory_count + ' left)'}</option>`
+        `<option value="${v.id}" ${v.inventory_count <= 0 ? 'disabled' : ''}>${escAttr(v.size)}${v.inventory_count <= 0 ? ', sold out' : ' (' + v.inventory_count + ' left)'}</option>`
       ).join('');
       actionEl.appendChild(sizeSelect);
 
       const btn = document.createElement('button');
       btn.className = 'card-action buy';
-      btn.textContent = 'Buy Now';
+      btn.textContent = 'Add to Bag';
       btn.dataset.id = p.id;
       btn.disabled = true;
       sizeSelect.addEventListener('change', () => {
@@ -756,7 +1248,7 @@
       actionEl.appendChild(priceLine);
       const btn = document.createElement('button');
       btn.className = 'card-action buy';
-      btn.textContent = 'Buy Now';
+      btn.textContent = 'Add to Bag';
       btn.dataset.id = p.id;
       btn.addEventListener('click', () => onBuy(btn));
       actionEl.appendChild(btn);
@@ -772,7 +1264,7 @@
     modalOverlay.classList.add('show');
   }
 
-  // ===== PRODUCT CATALOG — one reusable engine, mounted into each of the 4 shop tabs =====
+  // ===== PRODUCT CATALOG, one reusable engine, mounted into each shop tab =====
   function getVotedIds() {
     return JSON.parse(localStorage.getItem('votedProductIds') || '[]');
   }
@@ -784,35 +1276,205 @@
     }
   }
 
-  // Shared so the modal's Buy button can reuse the exact same checkout flow as the card's.
-  async function startCheckout(btn) {
-    const originalText = btn.textContent;
-    const variantId = btn.dataset.variantId || null;
-    btn.disabled = true;
-    btn.textContent = 'Redirecting to checkout...';
-    try {
-      const res = await fetch(
-        'https://vscombrgcdtrfndqyugb.supabase.co/functions/v1/create-checkout-session',
-        {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ productId: btn.dataset.id, variantId })
-        }
-      );
-      const result = await res.json();
-      if (result.url) {
-        window.location.href = result.url;
-      } else {
-        alert(result.error || 'Something went wrong starting checkout.');
-        btn.disabled = false;
-        btn.textContent = originalText;
-      }
-    } catch (err) {
-      alert('Could not reach checkout. Please try again in a moment.');
-      btn.disabled = false;
-      btn.textContent = originalText;
-    }
+  // =====================================================================
+  // THE BAG. Lives on this phone (localStorage) as [{productId, variantId,
+  // quantity}]. Prices, photos and stock are always re-read fresh, and the
+  // checkout function checks everything again before anyone pays.
+  // =====================================================================
+  const CHECKOUT_URL = 'https://vscombrgcdtrfndqyugb.supabase.co/functions/v1/create-checkout-session';
+  const BAG_KEY = 'nocivBag';
+  const MAX_QTY = 10;
+  const POD_TYPES = ['printify', 'prodigi'];
+
+  function readBag() {
+    try { const b = JSON.parse(localStorage.getItem(BAG_KEY) || '[]'); return Array.isArray(b) ? b : []; } catch (e) { return []; }
   }
+  function writeBag(bag) {
+    try { localStorage.setItem(BAG_KEY, JSON.stringify(bag)); } catch (e) {}
+    updateBagButton();
+  }
+  function bagCount() { return readBag().reduce((n, l) => n + (Number(l.quantity) || 0), 0); }
+  function updateBagButton() {
+    const n = bagCount();
+    document.getElementById('bagCount').textContent = n;
+    document.getElementById('bagBtn').hidden = n === 0;
+  }
+  // Most you can have of one thing: what's in stock for things you make,
+  // 10 for print on demand.
+  function maxFor(product, variant) {
+    if (variant) return Math.min(MAX_QTY, Math.max(0, Number(variant.inventory_count) || 0));
+    if (product && !POD_TYPES.includes(product.fulfillment_type) && product.inventory_count !== null && product.inventory_count !== undefined) {
+      return Math.min(MAX_QTY, Math.max(0, Number(product.inventory_count) || 0));
+    }
+    return MAX_QTY;
+  }
+  function addToBag(product, variant) {
+    const bag = readBag();
+    const key = (l) => String(l.productId) + '|' + (l.variantId || '');
+    const k = String(product.id) + '|' + (variant ? variant.id : '');
+    const line = bag.find(l => key(l) === k);
+    const cap = maxFor(product, variant);
+    if (line) {
+      if (line.quantity >= cap) { openBag('You already have all of those that are left.'); return false; }
+      line.quantity += 1;
+    } else {
+      if (cap <= 0) return false;
+      bag.push({ productId: product.id, variantId: variant ? variant.id : null, quantity: 1 });
+    }
+    writeBag(bag);
+    const btn = document.getElementById('bagBtn');
+    btn.classList.remove('bump'); void btn.offsetWidth; btn.classList.add('bump');
+    return true;
+  }
+
+  let bagShipping = null;
+  async function loadShippingSettings() {
+    if (bagShipping) return bagShipping;
+    const { data } = await supabaseClient.from('shipping_settings_public').select('key, value');
+    const m = Object.fromEntries((data || []).map(r => [r.key, r.value]));
+    const num = (v) => { const n = parseFloat(String(v ?? '').replace(/[$,\s]/g, '')); return Number.isFinite(n) && n >= 0 ? n : null; };
+    bagShipping = {
+      flat: num(m.shipping_flat) ?? 5,
+      freeOver: num(m.free_shipping_over),
+      pickup: String(m.pickup_enabled ?? 'true').toLowerCase() === 'true',
+      pickupLabel: m.pickup_label || 'Local pickup, Phoenix',
+    };
+    return bagShipping;
+  }
+
+  const bagOverlay = document.getElementById('bagOverlay');
+  let bagReady = false; // true when every line is valid and checkout can go
+  function closeBag() { bagOverlay.hidden = true; document.body.style.overflow = ''; }
+  async function openBag(message) {
+    bagOverlay.hidden = false;
+    document.body.style.overflow = 'hidden';
+    await renderBag();
+    if (message) document.getElementById('bagErr').textContent = message;
+  }
+  document.getElementById('bagBtn').addEventListener('click', () => openBag());
+  document.getElementById('bagClose').addEventListener('click', closeBag);
+  bagOverlay.addEventListener('click', (e) => { if (e.target === bagOverlay) closeBag(); });
+  document.addEventListener('keydown', (e) => { if (e.key === 'Escape' && !bagOverlay.hidden) closeBag(); });
+
+  async function renderBag() {
+    const linesEl = document.getElementById('bagLines');
+    const sumEl = document.getElementById('bagSummary');
+    const goBtn = document.getElementById('bagGo');
+    document.getElementById('bagErr').textContent = '';
+    let bag = readBag();
+    if (!bag.length) {
+      linesEl.innerHTML = '<p class="bag-empty">Nothing in here yet.</p>';
+      sumEl.innerHTML = ''; goBtn.hidden = true; bagReady = false;
+      return;
+    }
+    goBtn.hidden = false;
+    linesEl.innerHTML = '<p class="bag-empty">Loading...</p>';
+
+    const ids = [...new Set(bag.map(l => l.productId))];
+    const [{ data: prods }, { data: vars }, ship] = await Promise.all([
+      supabaseClient.from('products_public').select('*').in('id', ids),
+      supabaseClient.from('product_variants').select('*').in('product_id', ids),
+      loadShippingSettings(),
+    ]);
+    const pById = Object.fromEntries((prods || []).map(p => [p.id, p]));
+    const varsByProduct = {};
+    (vars || []).forEach(v => (varsByProduct[v.product_id] = varsByProduct[v.product_id] || []).push(v));
+
+    // Drop anything that isn't for sale anymore, so the bag never lies.
+    const gone = bag.filter(l => !pById[l.productId] || pById[l.productId].status !== 'for_sale');
+    if (gone.length) { bag = bag.filter(l => !gone.includes(l)); writeBag(bag); }
+
+    let subtotal = 0, ok = true, hasPod = false;
+    linesEl.innerHTML = '';
+    bag.forEach((l, idx) => {
+      const p = pById[l.productId];
+      const sizes = varsByProduct[l.productId] || [];
+      const v = l.variantId ? sizes.find(x => String(x.id) === String(l.variantId)) : null;
+      const cap = maxFor(p, v);
+      let warn = '';
+      if (sizes.length && !v) { warn = 'That size is gone. Remove it and pick another.'; ok = false; }
+      else if (cap <= 0) { warn = 'Sold out. Remove it to check out.'; ok = false; }
+      else if (l.quantity > cap) { l.quantity = cap; writeBag(bag); warn = `Only ${cap} left, so you've got ${cap}.`; }
+      if (POD_TYPES.includes(p.fulfillment_type)) hasPod = true;
+      const price = Number(p.price) || 0;
+      subtotal += price * l.quantity;
+
+      const row = document.createElement('div');
+      row.className = 'bag-line';
+      row.innerHTML = `
+        ${p.image_url ? `<img class="bag-thumb" src="${escAttr(p.image_url)}" alt="">` : '<div class="bag-thumb"></div>'}
+        <div class="bag-info">
+          <div class="bag-name">${escAttr(p.name)}</div>
+          <div class="bag-meta">${v ? 'Size ' + escAttr(v.size) + ' · ' : ''}$${price.toFixed(2)} each</div>
+          ${warn ? `<div class="bag-warn">${warn}</div>` : ''}
+          <div class="bag-row">
+            <div class="bag-qty">
+              <button type="button" data-q="-1" aria-label="One less">&minus;</button>
+              <span>${l.quantity}</span>
+              <button type="button" data-q="1" aria-label="One more" ${l.quantity >= cap ? 'disabled' : ''}>+</button>
+            </div>
+            <span class="bag-price">$${(price * l.quantity).toFixed(2)}</span>
+          </div>
+          <button type="button" class="bag-remove">Remove</button>
+        </div>`;
+      row.querySelectorAll('[data-q]').forEach(b => b.addEventListener('click', () => {
+        const bagNow = readBag();
+        const line = bagNow[idx];
+        if (!line) return;
+        line.quantity += Number(b.dataset.q);
+        if (line.quantity <= 0) bagNow.splice(idx, 1);
+        else line.quantity = Math.min(line.quantity, cap);
+        writeBag(bagNow); renderBag();
+      }));
+      row.querySelector('.bag-remove').addEventListener('click', () => {
+        const bagNow = readBag(); bagNow.splice(idx, 1); writeBag(bagNow); renderBag();
+      });
+      linesEl.appendChild(row);
+    });
+
+    if (!bag.length) { renderBag(); return; }
+    const free = ship.freeOver !== null && ship.freeOver > 0 && subtotal >= ship.freeOver;
+    const shipText = free ? 'Free' : '$' + ship.flat.toFixed(2);
+    const toFree = (!free && ship.freeOver) ? ship.freeOver - subtotal : 0;
+    sumEl.innerHTML = `
+      <div class="bag-sum">
+        <div class="bag-sum-row"><span>Subtotal</span><span>$${subtotal.toFixed(2)}</span></div>
+        <div class="bag-sum-row"><span>Shipping</span><span>${shipText}</span></div>
+        <div class="bag-sum-row total"><span>Total</span><span>$${(subtotal + (free ? 0 : ship.flat)).toFixed(2)}</span></div>
+        ${toFree > 0 ? `<p class="bag-note">$${toFree.toFixed(2)} more and shipping's free.</p>` : ''}
+        ${ship.pickup && !hasPod ? `<p class="bag-note">Free pickup is an option too: ${escAttr(ship.pickupLabel)}. Pick it at checkout.</p>` : ''}
+        ${ship.pickup && hasPod ? `<p class="bag-note">Something in here is printed to order, so this bag ships. No pickup.</p>` : ''}
+        <p class="bag-note">Promo codes go in at checkout.</p>
+      </div>`;
+    bagReady = ok;
+    goBtn.disabled = !ok;
+    goBtn.textContent = 'Checkout';
+  }
+
+  document.getElementById('bagGo').addEventListener('click', async () => {
+    const btn = document.getElementById('bagGo');
+    const errEl = document.getElementById('bagErr');
+    if (!bagReady) return;
+    btn.disabled = true;
+    btn.textContent = 'Taking you to checkout...';
+    errEl.textContent = '';
+    try {
+      const res = await fetch(CHECKOUT_URL, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ items: readBag() })
+      });
+      const result = await res.json();
+      if (result.url) { window.location.href = result.url; return; }
+      errEl.textContent = result.error || 'Something went wrong starting checkout.';
+    } catch (err) {
+      errEl.textContent = "Couldn't reach checkout. Check your signal and try again.";
+    }
+    btn.disabled = false;
+    btn.textContent = 'Checkout';
+  });
+
+  updateBagButton();
 
   async function submitVote(id) {
     let fingerprint = localStorage.getItem('voterFingerprint');
@@ -928,7 +1590,7 @@
         return;
       }
 
-      // Sizes live in their own table — one fetch for every product on this
+      // Sizes live in their own table: one fetch for every product on this
       // page, grouped client-side, instead of a query per card.
       const allProductIds = allProducts.map(p => p.id);
       const { data: variantRows } = await supabaseClient.from('product_variants').select('*').in('product_id', allProductIds);
@@ -973,7 +1635,7 @@
         const count = voteCounts[p.id] || 0;
 
         const mediaHtml = p.image_url
-          ? `<img src="${p.image_url}" alt="${p.name}">`
+          ? `<img src="${escAttr(p.image_url)}" alt="${escAttr(p.name)}">`
           : `<div class="no-photo">Photo coming soon</div>`;
 
         let actionHtml = '';
@@ -982,7 +1644,7 @@
         } else if (p.status === 'for_sale' && hasVariants) {
           actionHtml = `<button class="card-action buy" data-action="select" data-id="${p.id}">Pick a size</button>`;
         } else if (p.status === 'for_sale') {
-          actionHtml = `<button class="card-action buy" data-action="buy" data-id="${p.id}">Buy now</button>`;
+          actionHtml = `<button class="card-action buy" data-action="buy" data-id="${p.id}">Add to bag</button>`;
         } else {
           actionHtml = `<button class="card-action ${alreadyVoted ? 'voted' : 'vote'}" data-action="vote" data-id="${p.id}" ${alreadyVoted ? 'disabled' : ''}>
             ${alreadyVoted ? 'Voted ✓' : 'Vote for this'} (${count})
@@ -995,8 +1657,8 @@
             ${p.status === 'for_sale' ? '' : '<div class="card-badge coming-soon">Vote to make it</div>'}
           </div>
           <div class="card-body">
-            <div class="card-name">${p.name}</div>
-            <div class="card-meta">${p.category || ''}</div>
+            <div class="card-name">${escAttr(p.name)}</div>
+            <div class="card-meta">${escAttr(p.category || '')}</div>
             ${p.status === 'for_sale' && p.price ? `<div class="card-price">$${p.price}</div>` : ''}
             ${actionHtml}
           </div>
@@ -1004,13 +1666,15 @@
         swipeEl.appendChild(card);
 
         // Tapping the photo or the name opens the detail modal (zoom + description).
-        // Tapping Buy/Vote directly does NOT open the modal — those act immediately,
-        // same as before.
+        // Tapping Buy/Vote directly does NOT open the modal, those act immediately.
         const openThisModal = () => {
           openProductModal(
             p,
             { isSoldOut, alreadyVoted, voteCount: count, variants },
-            (btn) => startCheckout(btn),
+            (btn) => {
+              const v = btn.dataset.variantId ? variants.find(x => String(x.id) === btn.dataset.variantId) : null;
+              if (addToBag(p, v)) { closeProductModal(); openBag(); }
+            },
             async (btn) => {
               btn.disabled = true;
               const ok = await submitVote(p.id);
@@ -1025,14 +1689,19 @@
         };
         card.querySelector('.card-media').addEventListener('click', openThisModal);
         card.querySelector('.card-name').addEventListener('click', openThisModal);
-        // An item with sizes always opens the modal to pick one — there's no
-        // single "buy" to fire straight from the card.
+        // An item with sizes always opens the modal to pick one.
         const selectBtn = card.querySelector('[data-action="select"]');
         if (selectBtn) selectBtn.addEventListener('click', openThisModal);
       });
 
       swipeEl.querySelectorAll('[data-action="buy"]').forEach(btn => {
-        btn.addEventListener('click', () => startCheckout(btn));
+        btn.addEventListener('click', () => {
+          const p = products.find(x => String(x.id) === btn.dataset.id);
+          if (p && addToBag(p, null)) {
+            btn.textContent = 'In your bag';
+            setTimeout(() => { btn.textContent = 'Add to bag'; }, 1600);
+          }
+        });
       });
 
       swipeEl.querySelectorAll('[data-action="vote"]').forEach(btn => {
@@ -1050,15 +1719,28 @@
 
   ['clothing', 'art', 'zines'].forEach(shopKey => initShopCatalog(shopKey));
 
-  // Show a confirmation banner if returning from Stripe checkout
+  // Coming back from Stripe: on-page note instead of a popup, bag cleared
+  // after a real order, and the ?checkout bit removed so a refresh doesn't
+  // show it again.
   (function handleCheckoutReturn(){
     const params = new URLSearchParams(window.location.search);
     const status = params.get('checkout');
+    if (!status) return;
+    const banner = document.getElementById('shopBanner');
     if (status === 'success') {
-      alert('Thank you! Your order went through. We\'ll be in touch about pickup or shipping.');
+      writeBag([]);
+      document.getElementById('shopBannerTitle').textContent = 'Order in. Thank you.';
+      document.getElementById('shopBannerText').textContent = "Your receipt is on its way to your email. If you picked local pickup, we'll email you to set a time.";
+      banner.hidden = false;
     } else if (status === 'cancelled') {
-      alert('Checkout was cancelled — nothing was charged.');
+      document.getElementById('shopBannerTitle').textContent = 'Checkout cancelled';
+      document.getElementById('shopBannerText').textContent = 'Nothing was charged. Your bag is still here.';
+      banner.hidden = false;
     }
+    document.getElementById('shopBannerClose').addEventListener('click', () => { banner.hidden = true; });
+    params.delete('checkout');
+    const q = params.toString();
+    history.replaceState(null, '', location.pathname + (q ? '?' + q : '') + location.hash);
   })();
 </script>
 
