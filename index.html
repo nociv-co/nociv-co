@@ -139,51 +139,56 @@
   }
   .landing-mission .landing-btn { margin-top: 34px; }
 
-  /* ---------- Come Through In Person ---------- */
-  .landing-inperson h2 {
-    font-size: clamp(19px, 2.6vw, 22px);
-    font-weight: 700;
-    margin: 0 0 14px;
+  .popup-note {
+    color: var(--charcoal, #2b2b2b);
+    padding: 0 0 14px;
+    font-size: 0.85rem;
+    text-align: center;
   }
-  .landing-inperson p {
-    font-size: 15px;
-    line-height: 1.5;
-    opacity: .85;
-    max-width: 460px;
-    margin: 0 0 28px;
-  }
-  .landing-inperson form {
-    display: flex;
-    gap: 10px;
-    max-width: 460px;
-  }
-  .landing-inperson input[type="email"] {
-    flex: 1;
-    min-width: 0;
-    padding: 15px;
-    border: 2px solid #111;
-    font-size: 16px; /* 16px or iPhone zooms the whole page on tap */
+  #popupSignupForm input {
+    width: 100%;
+    padding: 12px;
+    margin-bottom: 4px;
+    border: 1px solid #999;
+    font-size: 1rem;
+    box-sizing: border-box;
     background: #fff;
     font-family: inherit;
   }
-  .landing-inperson .subscribe-hint {
-    font-size: 13px;
-    opacity: .55;
-    margin-top: 16px;
-  }
-  .landing-inperson .subscribe-confirm {
-    display: none;
-    color: var(--green);
-    font-weight: 700;
-    margin-top: 14px;
-  }
-  .landing-inperson .subscribe-error {
-    display: none;
-    color: var(--red);
-    font-weight: 700;
-    margin-top: 14px;
-  }
+  .signup-hint { font-size: 0.75rem; opacity: .6; text-align: center; margin: 0 0 12px; }
 
+  /* ---------- Posted note: the Join The List signup, styled to match the
+     landing page's sticky-note mission statement. Lives on the homepage,
+     under the mission note. ---------- */
+  .signup-note-wrap { text-align: center; margin: 10px auto 20px; }
+  .signup-note {
+    display: inline-block;
+    text-align: left;
+    background: #f2ecd6;
+    color: var(--charcoal, #2b2b2b);
+    padding: 26px 26px 22px;
+    max-width: 380px;
+    width: 100%;
+    box-sizing: border-box;
+    box-shadow: 0 6px 16px rgba(0,0,0,0.18);
+    transform: rotate(-1deg);
+    position: relative;
+  }
+  .signup-note::before {
+    content: '';
+    position: absolute;
+    top: -14px;
+    left: 26px;
+    width: 70px;
+    height: 24px;
+    background: #1a1a1a;
+    opacity: .85;
+    transform: rotate(-3deg);
+  }
+  .signup-note .popup-card-img { width: 100%; display: block; margin-bottom: 14px; }
+  .signup-note #popupDetails { color: var(--charcoal, #2b2b2b); }
+
+  .signup-error { display: none; text-align: center; color: var(--red); font-weight: 700; font-size: 0.85rem; margin: 0 0 12px; }
   .landing-footer-space { margin-top: 60px; }
 
 </style>
@@ -222,16 +227,27 @@
 
   <hr class="landing-rule">
 
-  <div class="landing-inperson">
-    <h2>Come Through In Person.</h2>
-    <p>Pop ups. New releases. Where NOCIV will be next.</p>
-    <form id="landingSignupForm">
-      <input type="email" placeholder="Your email" required autocomplete="email">
-      <button type="submit" class="landing-btn landing-btn-secondary">Join The List</button>
-    </form>
-    <p class="subscribe-hint">No spam. No selling your information.</p>
-    <p class="subscribe-confirm" id="landingSignupConfirm">You're on the list.</p>
-    <p class="subscribe-error" id="landingSignupError">That didn't go through. Try again in a minute.</p>
+  <!-- Posted note: pop-up shop signup + next location (Admin, Pop-Up Details) -->
+  <div class="signup-note-wrap">
+    <div class="signup-note">
+      <img class="popup-card-img" src="pop-up-shop.png" alt="Pop-up shop, posting soon">
+      <div class="popup-note">
+        Enter your email to get notified of next location & time. Nothing else.
+      </div>
+      <form id="popupSignupForm">
+        <input type="email" placeholder="Your email" required autocomplete="email" enterkeyhint="go">
+        <p class="signup-hint">Press Enter (Go on iPhone) to join the list.</p>
+        <p class="signup-error" id="popupSignupError">That didn't go through. Try again in a minute.</p>
+      </form>
+      <p id="signupConfirm" style="display:none; text-align:center; color:var(--green); font-weight:700;">
+        You're on the list.
+      </p>
+      <div style="margin-top:20px; font-size:0.9rem;" id="popupDetails">
+        <strong>Next Location:</strong> TBD<br>
+        <strong>Date:</strong> TBD<br>
+        <strong>Time:</strong> TBD
+      </div>
+    </div>
   </div>
 
   <div class="landing-footer-space"></div>
@@ -243,28 +259,48 @@
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script src="supabase.js"></script>
 <script>
-  // ===== COME THROUGH IN PERSON SIGNUP =====
-  document.getElementById('landingSignupForm').addEventListener('submit', async function (e) {
+  // ===== POP-UP SHOP SIGNUP (same signups table as before) =====
+  const esc = (s) => String(s ?? '').replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+  document.getElementById('popupSignupForm').addEventListener('submit', async function (e) {
     e.preventDefault();
     const input = this.querySelector('input');
-    const button = this.querySelector('button');
     const value = input.value.trim();
-    const errEl = document.getElementById('landingSignupError');
+    const errEl = document.getElementById('popupSignupError');
     if (!value) return;
     errEl.style.display = 'none';
-    button.disabled = true;
+    input.disabled = true;
 
     const { error } = await supabaseClient.from('signups').insert([{ contact: value }]);
 
     if (error) {
       console.error(error);
       errEl.style.display = 'block';
-      button.disabled = false;
+      input.disabled = false;
       return;
     }
-    document.getElementById('landingSignupConfirm').style.display = 'block';
-    input.disabled = true;
+    document.getElementById('signupConfirm').style.display = 'block';
   });
+
+  // ===== LIVE POP-UP DETAILS (Admin, Pop-Up Details) =====
+  function formatEventDate(iso) {
+    if (!iso) return 'TBD';
+    return new Date(iso + 'T00:00:00').toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
+  }
+  async function loadPopupStatus() {
+    const { data, error } = await supabaseClient
+      .from('popup_status')
+      .select('*')
+      .order('updated_at', { ascending: false })
+      .limit(1)
+      .single();
+    if (error || !data) return; // leave the TBD defaults showing
+    document.getElementById('popupDetails').innerHTML = `
+      <strong>Next Location:</strong> ${esc(data.location || 'TBD')}<br>
+      <strong>Date:</strong> ${formatEventDate(data.event_date)}<br>
+      <strong>Time:</strong> ${esc(data.event_time || 'TBD')}
+    `;
+  }
+  loadPopupStatus();
 </script>
 
 </body>
