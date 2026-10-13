@@ -1,11 +1,12 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
+<!-- Site Created & Designed by Jasilyn A. Anderson | NOCIV.CO -->
 <meta charset="UTF-8">
-<title>NOCIV.CO — Nothing Of Civilization</title>
+<title>NOCIV.CO: Nothing Of Civilization</title>
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<meta name="description" content="NOCIV — a Black-owned clothing brand built around reclaiming narratives and creating new norms. No ads. No algorithm. Word of mouth only.">
-<link rel="stylesheet" href="style.css?v=4.0">
+<meta name="description" content="NOCIV. A Black-owned clothing brand built around reclaiming narratives and creating new norms. No ads. No algorithm. Word of mouth only.">
+<link rel="stylesheet" href="style.css?v=4.1">
 <style>
   /* Wall-to-wall banner for Arizona landing graphic */
   .landing-banner-full {
@@ -28,7 +29,7 @@
     color: #111111;
   }
 
-  /* Level 1 — display / section titles: 28–36px desktop, 22–28px mobile, 700, tight leading */
+  /* Level 1, display / section titles */
   .landing-display {
     font-size: clamp(22px, 4.2vw, 34px);
     font-weight: 700;
@@ -39,8 +40,7 @@
     letter-spacing: 0.01em;
   }
 
-  /* Sharp, solid black rule as the only transition device between sections —
-     no cards, no shadows, no fade */
+  /* Sharp, solid black rule as the only transition device between sections */
   .landing-rule {
     width: 85%;
     max-width: 620px;
@@ -49,16 +49,11 @@
     border-top: 1px solid #111111;
   }
 
-  /* The mission block sits slightly inset from the flush-left headings —
-     the one deliberate asymmetry on the page */
   .landing-mission {
     padding-left: clamp(0px, 6vw, 48px);
     max-width: 700px;
   }
 
-  /* Level 2 — mission statement is the one "posted note" element on the
-     page: a cream sticky-note card, slightly tilted, with a little tape
-     at the top, holding just this one sentence. Text is charcoal, not black. */
   .landing-mission .mission-statement {
     font-size: clamp(22px, 3.8vw, 32px);
     font-weight: 600;
@@ -74,8 +69,6 @@
     text-align: center;
   }
   .landing-mission .mission-statement::before {
-    /* little strip of black tape across the top corner, ties the note
-       into the rest of the page's linework instead of floating on its own */
     content: '';
     position: absolute;
     top: -14px;
@@ -87,7 +80,6 @@
     transform: rotate(-3deg);
   }
 
-  /* A hand-drawn-feeling marker underline under one key phrase */
   .marker-underline {
     text-decoration: underline;
     text-decoration-style: wavy;
@@ -96,7 +88,6 @@
     text-underline-offset: 6px;
   }
 
-  /* Level 3 — supporting text within the mission block */
   .landing-mission .mission-how {
     margin-top: 30px;
     font-size: 15px;
@@ -113,7 +104,7 @@
     color: #111111;
   }
 
-  /* ---------- Buttons: same language throughout, weight tells them apart ---------- */
+  /* ---------- Buttons ---------- */
   .landing-btn {
     display: inline-block;
     font-size: 15px;
@@ -148,7 +139,7 @@
   }
   .landing-mission .landing-btn { margin-top: 34px; }
 
-  /* ---------- Come Through In Person: flush left, plain — no card, no border box ---------- */
+  /* ---------- Come Through In Person ---------- */
   .landing-inperson h2 {
     font-size: clamp(19px, 2.6vw, 22px);
     font-weight: 700;
@@ -168,9 +159,10 @@
   }
   .landing-inperson input[type="email"] {
     flex: 1;
+    min-width: 0;
     padding: 15px;
     border: 2px solid #111;
-    font-size: 15px;
+    font-size: 16px; /* 16px or iPhone zooms the whole page on tap */
     background: #fff;
     font-family: inherit;
   }
@@ -185,14 +177,21 @@
     font-weight: 700;
     margin-top: 14px;
   }
+  .landing-inperson .subscribe-error {
+    display: none;
+    color: var(--red);
+    font-weight: 700;
+    margin-top: 14px;
+  }
 
   .landing-footer-space { margin-top: 60px; }
+
 </style>
 </head>
 <body>
 
 <header class="nociv-header">
-  <img class="torn-header-img" src="header.png" alt="NOCIV.CO — Nothing Of Civilization">
+  <img class="torn-header-img" src="header.png" alt="NOCIV.CO: Nothing Of Civilization">
 </header>
 
 <!-- Main Navigation Tabs using updated custom button images -->
@@ -210,16 +209,12 @@
 
 <div class="landing-col">
 
-  <!-- HERO IDENTITY: flush left, tight display type -->
   <h1 class="landing-display">NOCIV: Nothing of Civilization</h1>
 
   <hr class="landing-rule">
 
-  <!-- MISSION: the one indented block on the page. The mission statement
-       itself is the single "posted note" element, everything else on
-       the page stays plain grey text. -->
   <div class="landing-mission">
-    <p class="mission-statement">Built around reclaiming narratives and creating new norms. Clothing is where we begin. Design, culture, and human connection are where we go.</p>
+    <p class="mission-statement">Built around reclaiming narratives and creating new norms. NOCIV is art, not content. Clothing is where we begin. Design, culture, and human connection are where we go.</p>
     <p class="mission-how">NO ADS. NO ALGORITHM. WORD OF MOUTH ONLY.</p>
     <p class="mission-personal">If you're here, someone told you.</p>
     <a class="landing-btn landing-btn-primary" href="shop.html">Shop Clothing</a>
@@ -227,44 +222,48 @@
 
   <hr class="landing-rule">
 
-  <!-- COME THROUGH IN PERSON: flush left again, plain — no card -->
   <div class="landing-inperson">
     <h2>Come Through In Person.</h2>
     <p>Pop ups. New releases. Where NOCIV will be next.</p>
     <form id="landingSignupForm">
-      <input type="email" placeholder="Your email" required>
+      <input type="email" placeholder="Your email" required autocomplete="email">
       <button type="submit" class="landing-btn landing-btn-secondary">Join The List</button>
     </form>
     <p class="subscribe-hint">No spam. No selling your information.</p>
     <p class="subscribe-confirm" id="landingSignupConfirm">You're on the list.</p>
+    <p class="subscribe-error" id="landingSignupError">That didn't go through. Try again in a minute.</p>
   </div>
 
   <div class="landing-footer-space"></div>
 </div>
 
-<footer class="nociv-footer">NOCIV.CO — Nothing Of Civilization</footer>
+<footer class="nociv-footer">NOCIV.CO: Nothing Of Civilization</footer>
 
+<!-- The Supabase library has to load BEFORE supabase.js, or nothing that talks to the database works -->
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script src="supabase.js"></script>
 <script>
-  // ===== COME THROUGH IN PERSON SIGNUP (same "signups" table as the Clothing pop-up list) =====
+  // ===== COME THROUGH IN PERSON SIGNUP =====
   document.getElementById('landingSignupForm').addEventListener('submit', async function (e) {
     e.preventDefault();
     const input = this.querySelector('input');
+    const button = this.querySelector('button');
     const value = input.value.trim();
+    const errEl = document.getElementById('landingSignupError');
     if (!value) return;
+    errEl.style.display = 'none';
+    button.disabled = true;
 
-    const { error } = await supabaseClient
-      .from('signups')
-      .insert([{ contact: value }]);
+    const { error } = await supabaseClient.from('signups').insert([{ contact: value }]);
 
     if (error) {
-      alert('Error saving: ' + error.message);
+      console.error(error);
+      errEl.style.display = 'block';
+      button.disabled = false;
       return;
     }
-
     document.getElementById('landingSignupConfirm').style.display = 'block';
     input.disabled = true;
-    this.querySelector('button').disabled = true;
   });
 </script>
 
