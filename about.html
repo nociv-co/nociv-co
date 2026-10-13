@@ -5,7 +5,7 @@
 <meta charset="UTF-8">
 <title>About - NOCIV.CO</title>
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<link rel="stylesheet" href="style.css?v=4.0">
+<link rel="stylesheet" href="style.css?v=4.1">
 <style>
   /* --- Buy / Build / Share explainer --- */
   .participate-grid {
@@ -50,16 +50,20 @@
     font-size: 1.05rem;
   }
 
-  /* --- Culture panel: tighter spacing, less air between paragraphs/sections --- */
+  /* --- Culture panel: tighter spacing --- */
   #culturePanel .wrap { padding: 24px 20px; }
   #culturePanel .wrap + .wrap { padding-top: 4px; }
   #culturePanel p { line-height: 1.6; margin: 0 0 12px; }
   #culturePanel p:last-child { margin-bottom: 0; }
 
-  /* --- About page anchor nav: jump-to tabs instead of "Back to About" links,
-     so the four sections read as one continuous page. --- */
+  /* --- About page anchor nav: jump-to tabs, so the sections read as one
+     continuous page. Left aligned with auto margins on the ends, so it
+     centers when it fits and scrolls from the first button when it doesn't
+     (plain centering was hiding the first button on phones). --- */
   html { scroll-behavior: smooth; }
-  .about-anchor-nav { position: sticky; top: 0; }
+  .about-anchor-nav { position: sticky; top: 0; justify-content: flex-start; }
+  .about-anchor-nav a:first-child { margin-left: auto; }
+  .about-anchor-nav a:last-child { margin-right: auto; }
   .about-anchor-nav a {
     flex: 0 0 auto;
     background: var(--charcoal-light);
@@ -81,8 +85,38 @@
   .about-anchor-nav a.active {
     background: var(--red); color: #ffffff; border: 1.5px solid #b83c2c; font-weight: 900;
   }
-  #philosophyPanel, #participatePanel, #culturePanel, #founderPanel { scroll-margin-top: 66px; }
+  #philosophyPanel, #participatePanel, #culturePanel, #founderPanel, #contactPanel { scroll-margin-top: 66px; }
   .about-intro { text-align: center; opacity: .7; max-width: 500px; margin: 20px auto; }
+
+  /* --- Contact: a posted note, same paper and tape as the rest of the site --- */
+  .contact-note {
+    background: #f2ecd6; color: var(--charcoal, #2b2b2b); max-width: 520px; margin: 18px auto 0;
+    padding: 28px 22px 22px; position: relative; box-sizing: border-box; box-shadow: 0 6px 16px rgba(0,0,0,0.18);
+    transform: rotate(-0.6deg);
+  }
+  .contact-note::before {
+    content: ''; position: absolute; top: -12px; left: 26px; width: 70px; height: 24px;
+    background: #1a1a1a; opacity: .85; transform: rotate(-3deg);
+  }
+  .contact-note p.lead { margin: 0 0 16px; font-size: 1rem; line-height: 1.55; }
+  .contact-note label { display: block; font-size: 0.72rem; font-weight: 800; letter-spacing: 0.08em; text-transform: uppercase; margin: 12px 0 5px; }
+  .contact-note input[type="text"], .contact-note input[type="email"], .contact-note textarea {
+    width: 100%; box-sizing: border-box; font: inherit; font-size: 16px; padding: 12px;
+    border: 1.5px solid #1a1a1a; background: #fff; color: #1a1a1a; border-radius: 0;
+  }
+  .contact-note textarea { resize: vertical; min-height: 120px; }
+  .contact-note .hp { position: absolute; left: -9999px; width: 1px; height: 1px; opacity: 0; }
+  .contact-note label.contact-check { display: flex; gap: 10px; align-items: flex-start; margin: 14px 0 0; font-size: 0.92rem; line-height: 1.4; cursor: pointer; text-transform: none; letter-spacing: 0; font-weight: 500; }
+  .contact-check input { width: 20px; height: 20px; margin: 1px 0 0; flex: 0 0 20px; accent-color: #1a1a1a; }
+  .contact-send {
+    width: 100%; margin-top: 18px; background: var(--red); color: #fff; border: none; font: inherit; font-size: 1rem;
+    font-weight: 900; letter-spacing: 0.1em; text-transform: uppercase; padding: 16px; cursor: pointer;
+  }
+  .contact-send:disabled { opacity: .5; }
+  .contact-msg { font-weight: 700; font-size: 0.92rem; margin: 12px 0 0; min-height: 1em; }
+  .contact-msg.err { color: var(--red); }
+  .contact-done { text-align: center; padding: 10px 0; }
+  .contact-done b { display: block; font-size: 1.2rem; letter-spacing: 0.06em; margin-bottom: 6px; }
 </style>
 </head>
 <body>
@@ -105,8 +139,9 @@
   <a href="#participatePanel">Participate</a>
   <a href="#culturePanel">Culture</a>
   <a href="#founderPanel">Founder</a>
+  <a href="#contactPanel">Contact</a>
 </nav>
-<p class="about-intro">Four sides of the same thing. Jump to any of them, or just keep scrolling.</p>
+<p class="about-intro">Five sides of the same thing. Jump to any of them, or just keep scrolling.</p>
 
 <!-- ===== PHILOSOPHY ===== -->
 <div class="subpanel show" id="philosophyPanel">
@@ -276,14 +311,41 @@
   </div>
 </div>
 
+<!-- ===== CONTACT ===== -->
+<div class="subpanel show" id="contactPanel">
+  <div class="wrap">
+    <div class="eyebrow">Contact</div>
+    <div class="contact-note">
+      <div id="contactFormWrap">
+        <p class="lead">Question about an order, a custom piece, a collab, a spot for a pop-up? Write it here. It comes straight to me.</p>
+        <form id="contactForm" novalidate>
+          <label for="cName">Your name (optional)</label>
+          <input type="text" id="cName" maxlength="80" autocomplete="name">
+          <label for="cEmail">Your email, so I can write back</label>
+          <input type="email" id="cEmail" maxlength="200" autocomplete="email" required>
+          <label for="cMessage">Message</label>
+          <textarea id="cMessage" maxlength="2000" required></textarea>
+          <input class="hp" type="text" id="cWebsite" tabindex="-1" autocomplete="off" aria-hidden="true">
+          <label class="contact-check"><input type="checkbox" id="cList"> Add me to the list for pop-ups and drops too</label>
+          <button type="submit" class="contact-send" id="cSend">Send It</button>
+          <p class="contact-msg" id="cMsg" aria-live="polite"></p>
+        </form>
+      </div>
+    </div>
+  </div>
+</div>
+
 <footer class="nociv-footer">NOCIV.CO: Nothing Of Civilization<br>© 2023–2026 NOCIV.CO. Established 2023. All rights reserved.</footer>
 
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="supabase.js"></script>
 <script>
-  // ABOUT page is one continuous scroll now. The anchor tabs just jump down
-  // the page (plain href="#id", smooth-scrolled by CSS), and this keeps the
-  // tab highlighted red as whichever section is on screen changes.
+  // ABOUT page is one continuous scroll. The anchor tabs jump down the page
+  // (plain href="#id", smooth-scrolled by CSS), and this keeps the tab
+  // highlighted red as whichever section is on screen changes.
+  const anchorNav = document.getElementById('aboutAnchorNav');
   const anchorLinks = document.querySelectorAll('#aboutAnchorNav a');
-  const anchorSections = ['philosophyPanel', 'participatePanel', 'culturePanel', 'founderPanel']
+  const anchorSections = ['philosophyPanel', 'participatePanel', 'culturePanel', 'founderPanel', 'contactPanel']
     .map(id => document.getElementById(id));
 
   const sectionObserver = new IntersectionObserver((entries) => {
@@ -291,11 +353,56 @@
       if (!entry.isIntersecting) return;
       anchorLinks.forEach(a => a.classList.remove('active'));
       const match = document.querySelector(`#aboutAnchorNav a[href="#${entry.target.id}"]`);
-      if (match) match.classList.add('active');
+      if (match) {
+        match.classList.add('active');
+        // keep the active button in view when the strip scrolls sideways
+        const l = match.offsetLeft, r = l + match.offsetWidth;
+        if (l < anchorNav.scrollLeft || r > anchorNav.scrollLeft + anchorNav.clientWidth) {
+          anchorNav.scrollTo({ left: l - 16, behavior: 'smooth' });
+        }
+      }
     });
   }, { rootMargin: '-45% 0px -45% 0px' });
 
   anchorSections.forEach(section => sectionObserver.observe(section));
+
+  // ===== CONTACT (table: contact_messages, read in Admin, Messages) =====
+  document.getElementById('contactForm').addEventListener('submit', async (e) => {
+    e.preventDefault();
+    const msgEl = document.getElementById('cMsg');
+    const btn = document.getElementById('cSend');
+    const name = document.getElementById('cName').value.trim();
+    const email = document.getElementById('cEmail').value.trim();
+    const message = document.getElementById('cMessage').value.trim();
+    const addToList = document.getElementById('cList').checked;
+    const fail = (t) => { msgEl.className = 'contact-msg err'; msgEl.textContent = t; };
+    msgEl.className = 'contact-msg'; msgEl.textContent = '';
+
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) return fail("That email doesn't look right. I need it to write you back.");
+    if (!message) return fail('Write something first.');
+    if (document.getElementById('cWebsite').value) return; // a bot filled the hidden field
+
+    btn.disabled = true;
+    btn.textContent = 'Sending...';
+    const { error } = await supabaseClient.from('contact_messages')
+      .insert([{ name: name || null, email, message, add_to_list: addToList }]);
+    if (error) {
+      btn.disabled = false;
+      btn.textContent = 'Send It';
+      return fail(/give it|try again/i.test(error.message || '') ? error.message : "That didn't go through. Try again in a minute.");
+    }
+    if (addToList) {
+      // Ok if this fails (they might already be on the list), the message still went.
+      await supabaseClient.from('signups').insert([{ contact: email }]);
+    }
+    const done = document.createElement('div');
+    done.className = 'contact-done';
+    done.innerHTML = '<b>SENT.</b><p></p>';
+    done.querySelector('p').textContent = `Got it. I'll write back to ${email}.`;
+    const wrap = document.getElementById('contactFormWrap');
+    wrap.innerHTML = '';
+    wrap.appendChild(done);
+  });
 </script>
 
 </body>
