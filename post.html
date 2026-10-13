@@ -1,0 +1,377 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<!-- Site Created & Designed by Jasilyn A. Anderson | NOCIV.CO -->
+<meta charset="UTF-8">
+<title>Process Album: NOCIV.CO</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<meta name="robots" content="noindex">
+<link rel="stylesheet" href="style.css?v=4.1">
+<style>
+  /* Camera Roll posting page. Phone first: open it, pick from camera roll, hit Post. */
+  .post-wrap { max-width: 560px; margin: 0 auto; padding: 18px 16px 60px; }
+  .post-top { display: flex; justify-content: space-between; align-items: center; gap: 10px; margin-bottom: 18px; }
+  .post-top-btns { display: flex; gap: 8px; flex-wrap: wrap; justify-content: flex-end; }
+  .post-top a, .post-top button { display: inline-block; white-space: nowrap; }
+  .post-top h1 { font-size: 1.5rem; letter-spacing: 0.04em; margin: 0; }
+  .post-top a, .post-top button {
+    font-size: 0.8rem; font-weight: 700; letter-spacing: 0.04em; text-transform: uppercase;
+    color: #111; background: none; border: 1.5px solid #111; padding: 8px 12px; text-decoration: none; cursor: pointer;
+  }
+  .post-box { background: #fff; border: 2px solid #111; padding: 16px; margin-bottom: 26px; position: relative; }
+  .post-box::before {
+    content: ''; position: absolute; top: -12px; left: 22px; width: 64px; height: 22px;
+    background: #1a1a1a; opacity: .85; transform: rotate(-3deg);
+  }
+  .post-box input[type="email"], .post-box input[type="password"], .post-box textarea {
+    width: 100%; box-sizing: border-box; font-size: 16px; font-family: inherit;
+    padding: 12px; border: 1.5px solid #111; margin-bottom: 10px; background: #fff; color: #111;
+  }
+  .pick-btn {
+    display: block; width: 100%; box-sizing: border-box; text-align: center; cursor: pointer;
+    border: 2px dashed #111; padding: 26px 12px; font-weight: 900; letter-spacing: 0.06em;
+    text-transform: uppercase; font-size: 1rem; background: #f2ecd6; color: #111;
+  }
+  .pick-btn small { display: block; font-weight: 400; letter-spacing: 0; text-transform: none; font-size: 0.8rem; opacity: .7; margin-top: 6px; }
+  .pick-btn input { display: none; }
+  .preview-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 6px; margin: 12px 0; }
+  .preview-grid:empty { display: none; }
+  .preview-item { position: relative; aspect-ratio: 1; background: #111; overflow: hidden; }
+  .preview-item img, .preview-item video { width: 100%; height: 100%; object-fit: cover; display: block; }
+  .preview-item .pv-remove {
+    position: absolute; top: 4px; right: 4px; width: 28px; height: 28px; border-radius: 50%;
+    border: none; background: var(--red, #c8412f); color: #fff; font-size: 1rem; line-height: 1; cursor: pointer;
+  }
+  .preview-item .pv-badge, .preview-item .pv-warn {
+    position: absolute; left: 4px; bottom: 4px; background: #111; color: #fff; font-size: 0.65rem;
+    font-weight: 700; padding: 2px 6px; letter-spacing: 0.04em; text-transform: uppercase;
+  }
+  .preview-item .pv-warn { background: var(--red, #c8412f); right: 4px; text-transform: none; }
+  .tag-row { display: flex; flex-wrap: wrap; gap: 8px; margin: 4px 0 14px; }
+  .tag-chip {
+    border: 1.5px solid #111; background: #fff; color: #111; padding: 9px 12px;
+    font-size: 0.85rem; font-weight: 700; cursor: pointer; font-family: inherit;
+  }
+  .tag-chip.on { background: #111; color: #fff; }
+  .post-label { display: block; font-size: 0.75rem; font-weight: 700; letter-spacing: 0.05em; text-transform: uppercase; margin: 6px 0 6px; }
+  .post-go {
+    width: 100%; background: var(--red, #c8412f); color: #fff; border: none; padding: 16px;
+    font-size: 1rem; font-weight: 900; letter-spacing: 0.08em; text-transform: uppercase; cursor: pointer; font-family: inherit;
+  }
+  .post-go:disabled { opacity: .5; }
+  .post-msg { font-size: 0.9rem; margin: 10px 0 0; min-height: 1.2em; }
+  .post-msg.err { color: var(--red, #c8412f); font-weight: 700; }
+  .post-msg.ok { color: var(--green, #2f7a4b); font-weight: 700; }
+  .post-tip { font-size: 0.78rem; opacity: .7; line-height: 1.5; margin-top: 12px; }
+
+  .mine h2 { font-size: 1rem; letter-spacing: 0.06em; text-transform: uppercase; margin: 0 0 12px; }
+  .mine-row { border: 1.5px solid #111; background: #fff; padding: 10px; margin-bottom: 10px; }
+  .mine-head { display: flex; gap: 10px; align-items: flex-start; }
+  .mine-thumb { width: 64px; height: 64px; flex: 0 0 64px; background: #111; object-fit: cover; display: block; }
+  .mine-info { flex: 1; min-width: 0; font-size: 0.85rem; }
+  .mine-info .cap { font-weight: 700; word-wrap: break-word; }
+  .mine-info .meta { opacity: .6; font-size: 0.75rem; margin-top: 2px; }
+  .mine-actions { display: flex; gap: 6px; flex-wrap: wrap; margin-top: 8px; }
+  .mine-actions button {
+    background: none; border: 1px solid #111; color: #111; padding: 7px 10px; font-size: 0.75rem; cursor: pointer; font-family: inherit;
+  }
+  .mine-actions .danger { border-color: var(--red, #c8412f); color: var(--red, #c8412f); }
+  .mine-comments { margin-top: 8px; border-top: 1px solid #ddd; padding-top: 6px; }
+  .mine-comment { display: flex; gap: 8px; align-items: flex-start; font-size: 0.82rem; padding: 5px 0; border-bottom: 1px dotted #ccc; }
+  .mine-comment div { flex: 1; word-wrap: break-word; white-space: pre-wrap; }
+  .mine-comment button {
+    background: none; border: 1px solid var(--red, #c8412f); color: var(--red, #c8412f); font-size: 0.7rem; padding: 4px 8px; cursor: pointer;
+  }
+</style>
+</head>
+<body>
+
+<div class="post-wrap">
+  <div class="post-top">
+    <h1>PROCESS ALBUM</h1>
+    <div class="post-top-btns">
+      <a href="shop.html#process-album">See It Live</a>
+      <button type="button" id="logoutBtn" style="display:none;">Log Out</button>
+    </div>
+  </div>
+
+  <!-- LOGIN (same login as Admin, if you're logged in there you're logged in here) -->
+  <div class="post-box" id="loginBox" style="display:none;">
+    <label class="post-label" for="loginEmail">Admin login</label>
+    <input type="email" id="loginEmail" placeholder="Email" autocomplete="username">
+    <input type="password" id="loginPassword" placeholder="Password" autocomplete="current-password">
+    <button class="post-go" id="loginBtn" type="button">Log In</button>
+    <p class="post-msg err" id="loginMsg"></p>
+  </div>
+
+  <div id="app" style="display:none;">
+    <div class="post-box">
+      <label class="pick-btn">
+        + Add From Camera Roll
+        <small>Photos or clips. Pick a few of the same piece and they stay together as one post. It sits in NOW for 7 days, then moves into the album.</small>
+        <input type="file" id="filePicker" accept="image/*,video/*" multiple>
+      </label>
+      <div class="preview-grid" id="previewGrid"></div>
+
+      <label class="post-label" for="caption">Say something (optional)</label>
+      <textarea id="caption" rows="2" maxlength="1000" placeholder="what is it, where's it at, whatever"></textarea>
+
+      <span class="post-label">Tag it (optional)</span>
+      <div class="tag-row" id="tagRow"></div>
+
+      <button class="post-go" id="postBtn" type="button" disabled>Post It</button>
+      <p class="post-msg" id="postMsg"></p>
+      <p class="post-tip">
+        Clips over 50MB won't go up. Short clips are best. For clips that play on every phone, not just iPhones:
+        iPhone Settings, Camera, Formats, pick Most Compatible, and Record Video at 1080p 30fps.
+      </p>
+    </div>
+
+    <div class="mine">
+      <h2>In The Album</h2>
+      <div id="mineList"><p style="opacity:.6;">Loading...</p></div>
+    </div>
+  </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="supabase.js"></script>
+<script>
+  const BUCKET = 'album-photos';
+  const NOW_DAYS = 7; // keep in sync with shop.html
+  const MAX_BYTES = 50 * 1024 * 1024;
+  const TAGS = { wip: 'In progress', one_of_one: '1 of 1', might_replicate: 'Might make more', idea: 'Just an idea' };
+
+  const $ = (id) => document.getElementById(id);
+  const esc = (s) => String(s ?? '').replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+  const safeUrl = (u) => (typeof u === 'string' && /^https?:\/\//i.test(u)) ? u : '';
+  function fmtDate(iso) {
+    const d = new Date(iso);
+    return d.toLocaleString('en-US', { month: 'short' }).toLowerCase() + '.' + d.getDate() + '.' + d.getFullYear();
+  }
+  function setMsg(el, text, kind) { el.textContent = text || ''; el.className = 'post-msg' + (kind ? ' ' + kind : ''); }
+
+  // ===== AUTH =====
+  async function checkSession() {
+    const { data } = await supabaseClient.auth.getSession();
+    const inSession = !!(data && data.session);
+    $('loginBox').style.display = inSession ? 'none' : 'block';
+    $('app').style.display = inSession ? 'block' : 'none';
+    $('logoutBtn').style.display = inSession ? 'inline-block' : 'none';
+    if (inSession) loadMine();
+  }
+  $('loginBtn').onclick = async () => {
+    const { error } = await supabaseClient.auth.signInWithPassword({
+      email: $('loginEmail').value.trim(), password: $('loginPassword').value
+    });
+    if (error) { setMsg($('loginMsg'), 'Wrong email or password.', 'err'); return; }
+    setMsg($('loginMsg'), '');
+    checkSession();
+  };
+  $('logoutBtn').onclick = async () => { await supabaseClient.auth.signOut(); checkSession(); };
+
+  // ===== TAGS =====
+  let chosenTag = null;
+  $('tagRow').innerHTML = Object.entries(TAGS)
+    .map(([k, v]) => `<button type="button" class="tag-chip" data-tag="${k}">${esc(v)}</button>`).join('');
+  $('tagRow').querySelectorAll('.tag-chip').forEach(btn => {
+    btn.onclick = () => {
+      chosenTag = (chosenTag === btn.dataset.tag) ? null : btn.dataset.tag;
+      $('tagRow').querySelectorAll('.tag-chip').forEach(b => b.classList.toggle('on', b.dataset.tag === chosenTag));
+    };
+  });
+
+  // ===== PICKING FILES =====
+  let picked = []; // { file, url, isVideo, tooBig }
+  $('filePicker').addEventListener('change', (e) => {
+    Array.from(e.target.files).forEach(file => {
+      const isVideo = (file.type || '').startsWith('video/') || /\.(mov|mp4|m4v|webm)$/i.test(file.name);
+      picked.push({ file, url: URL.createObjectURL(file), isVideo, tooBig: isVideo && file.size > MAX_BYTES });
+    });
+    e.target.value = '';
+    renderPreviews();
+  });
+  function renderPreviews() {
+    const grid = $('previewGrid');
+    grid.innerHTML = '';
+    picked.forEach((p, i) => {
+      const cell = document.createElement('div');
+      cell.className = 'preview-item';
+      cell.innerHTML = p.isVideo
+        ? `<video src="${p.url}#t=0.1" muted playsinline preload="metadata"></video><span class="${p.tooBig ? 'pv-warn' : 'pv-badge'}">${p.tooBig ? 'Too big, over 50MB' : 'Clip'}</span>`
+        : `<img src="${p.url}" alt="">`;
+      const rm = document.createElement('button');
+      rm.className = 'pv-remove'; rm.type = 'button'; rm.textContent = '×'; rm.setAttribute('aria-label', 'Remove');
+      rm.onclick = () => { URL.revokeObjectURL(p.url); picked.splice(i, 1); renderPreviews(); };
+      cell.appendChild(rm);
+      grid.appendChild(cell);
+    });
+    $('postBtn').disabled = picked.length === 0 || picked.some(p => p.tooBig);
+    if (picked.some(p => p.tooBig)) setMsg($('postMsg'), 'Take the red one out, it is over 50MB. Trim it in Photos first.', 'err');
+    else setMsg($('postMsg'), '');
+  }
+
+  // Photos get shrunk to web size (nobody prints these, and full size phone
+  // photos make the feed crawl on cell data). Clips go up as they are.
+  function shrinkPhoto(file, maxDim = 1600, quality = 0.85) {
+    return new Promise((resolve, reject) => {
+      const img = new Image();
+      const url = URL.createObjectURL(file);
+      img.onload = () => {
+        URL.revokeObjectURL(url);
+        let w = img.naturalWidth, h = img.naturalHeight;
+        const scale = Math.min(1, maxDim / Math.max(w, h));
+        w = Math.round(w * scale); h = Math.round(h * scale);
+        const c = document.createElement('canvas');
+        c.width = w; c.height = h;
+        c.getContext('2d').drawImage(img, 0, 0, w, h);
+        c.toBlob(b => b ? resolve({ blob: b, w, h }) : reject(new Error('no blob')), 'image/jpeg', quality);
+      };
+      img.onerror = () => { URL.revokeObjectURL(url); reject(new Error('Could not read that photo')); };
+      img.src = url;
+    });
+  }
+  function clipSize(url) {
+    return new Promise((resolve) => {
+      const v = document.createElement('video');
+      const done = (w, h) => { clearTimeout(t); resolve({ w, h }); };
+      const t = setTimeout(() => done(null, null), 6000);
+      v.preload = 'metadata'; v.muted = true; v.playsInline = true;
+      v.onloadedmetadata = () => done(v.videoWidth || null, v.videoHeight || null);
+      v.onerror = () => done(null, null);
+      v.src = url;
+    });
+  }
+  async function uploadOne(blob, ext, contentType) {
+    const name = `${Date.now()}-${Math.random().toString(36).slice(2, 8)}.${ext}`;
+    const { error } = await supabaseClient.storage.from(BUCKET)
+      .upload(name, blob, { contentType, cacheControl: '31536000' });
+    if (error) throw new Error(error.message);
+    return supabaseClient.storage.from(BUCKET).getPublicUrl(name).data.publicUrl;
+  }
+
+  $('postBtn').onclick = async () => {
+    if (!picked.length) return;
+    const btn = $('postBtn');
+    btn.disabled = true;
+    const media = [];
+    try {
+      for (let i = 0; i < picked.length; i++) {
+        const p = picked[i];
+        setMsg($('postMsg'), `Uploading ${i + 1} of ${picked.length}${p.isVideo ? ' (clips take a minute on cell data)' : ''}...`);
+        if (p.isVideo) {
+          const { w, h } = await clipSize(p.url);
+          const ext = ((p.file.name.split('.').pop() || 'mov').toLowerCase()).replace(/[^a-z0-9]/g, '') || 'mov';
+          const url = await uploadOne(p.file, ext, p.file.type || 'video/quicktime');
+          media.push({ url, type: 'video', w, h });
+        } else {
+          let out;
+          try { out = await shrinkPhoto(p.file); } catch (e) { out = null; }
+          const url = out
+            ? await uploadOne(out.blob, 'jpg', 'image/jpeg')
+            : await uploadOne(p.file, ((p.file.name.split('.').pop() || 'jpg').toLowerCase()), p.file.type || 'image/jpeg');
+          media.push({ url, type: 'image', w: out ? out.w : null, h: out ? out.h : null });
+        }
+      }
+      const caption = $('caption').value.trim() || null;
+      const { error } = await supabaseClient.from('album_photos').insert([{ image_url: media[0].url, caption, tag: chosenTag, media }]);
+      if (error) throw new Error(error.message);
+    } catch (e) {
+      setMsg($('postMsg'), 'Did not post: ' + e.message, 'err');
+      btn.disabled = false;
+      return;
+    }
+    picked.forEach(p => URL.revokeObjectURL(p.url));
+    picked = [];
+    renderPreviews();
+    $('caption').value = '';
+    chosenTag = null;
+    $('tagRow').querySelectorAll('.tag-chip').forEach(b => b.classList.remove('on'));
+    setMsg($('postMsg'), "It's up.", 'ok');
+    loadMine();
+  };
+
+  // ===== WHAT'S POSTED, with comment cleanup =====
+  function storagePath(url) {
+    const marker = '/object/public/' + BUCKET + '/';
+    const i = (url || '').indexOf(marker);
+    return i === -1 ? null : decodeURIComponent(url.slice(i + marker.length));
+  }
+
+  async function loadMine() {
+    const list = $('mineList');
+    const { data: posts, error } = await supabaseClient
+      .from('album_photos').select('*').order('created_at', { ascending: false }).limit(60);
+    if (error) { list.innerHTML = `<p class="post-msg err">Could not load the album. Did the Process Album SQL get run?</p>`; return; }
+    if (!posts || !posts.length) { list.innerHTML = '<p style="opacity:.6;">Nothing posted yet.</p>'; return; }
+
+    const { data: comments } = await supabaseClient
+      .from('album_comments').select('*')
+      .in('photo_id', posts.map(p => p.id))
+      .order('created_at', { ascending: true });
+    const byPost = {};
+    (comments || []).forEach(c => (byPost[c.photo_id] = byPost[c.photo_id] || []).push(c));
+
+    list.innerHTML = '';
+    posts.forEach(p => {
+      const media = (Array.isArray(p.media) && p.media.length) ? p.media : (p.image_url ? [{ url: p.image_url, type: /\.(mov|mp4|m4v|webm)(\?|$)/i.test(p.image_url) ? 'video' : 'image' }] : []);
+      const nowUntil = new Date(Date.parse(p.created_at) + NOW_DAYS * 86400000);
+      const where = nowUntil > new Date() ? 'In NOW until ' + fmtDate(nowUntil.toISOString()) : 'In the album';
+      const first = media[0] || {};
+      const cs = byPost[p.id] || [];
+      const row = document.createElement('div');
+      row.className = 'mine-row';
+      const thumb = first.type === 'video'
+        ? `<video class="mine-thumb" src="${esc(safeUrl(first.url))}#t=0.1" muted playsinline preload="metadata"></video>`
+        : (first.url ? `<img class="mine-thumb" src="${esc(safeUrl(first.url))}" alt="" loading="lazy">` : '<div class="mine-thumb"></div>');
+      row.innerHTML = `
+        <div class="mine-head">
+          ${thumb}
+          <div class="mine-info">
+            <div class="cap">${p.caption ? esc(p.caption) : '<span style="opacity:.5;">no caption</span>'}</div>
+            <div class="meta"><strong>${where}</strong> · ${fmtDate(p.created_at)} · ${media.length} ${media.length === 1 ? 'thing' : 'things'}${p.tag && TAGS[p.tag] ? ' · ' + esc(TAGS[p.tag]) : ''} · ${cs.length} comment${cs.length === 1 ? '' : 's'}</div>
+          </div>
+        </div>
+        <div class="mine-actions">
+          <button type="button" data-a="cap">Edit caption</button>
+          <button type="button" class="danger" data-a="del">Delete post</button>
+        </div>
+        <div class="mine-comments" ${cs.length ? '' : 'hidden'}></div>`;
+
+      const cBox = row.querySelector('.mine-comments');
+      cs.forEach(c => {
+        const line = document.createElement('div');
+        line.className = 'mine-comment';
+        line.innerHTML = `<div><strong>${esc(c.name || 'someone')}</strong> ${esc(c.body)}</div><button type="button">Delete</button>`;
+        line.querySelector('button').onclick = async () => {
+          if (!confirm('Delete this comment?')) return;
+          const { error } = await supabaseClient.from('album_comments').delete().eq('id', c.id);
+          if (error) { alert('Could not delete: ' + error.message); return; }
+          loadMine();
+        };
+        cBox.appendChild(line);
+      });
+
+      row.querySelector('[data-a="cap"]').onclick = async () => {
+        const v = prompt('Caption', p.caption || '');
+        if (v === null) return;
+        const { error } = await supabaseClient.from('album_photos').update({ caption: v.trim() || null }).eq('id', p.id);
+        if (error) { alert('Could not save: ' + error.message); return; }
+        loadMine();
+      };
+      row.querySelector('[data-a="del"]').onclick = async () => {
+        if (!confirm('Delete this post and its comments?')) return;
+        const { error } = await supabaseClient.from('album_photos').delete().eq('id', p.id);
+        if (error) { alert('Could not delete: ' + error.message); return; }
+        const paths = media.map(m => storagePath(m.url)).filter(Boolean);
+        if (paths.length) await supabaseClient.storage.from(BUCKET).remove(paths);
+        loadMine();
+      };
+      list.appendChild(row);
+    });
+  }
+
+  checkSession();
+</script>
+</body>
+</html>
