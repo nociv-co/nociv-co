@@ -264,8 +264,8 @@
       <h2><b>5</b> Save it</h2>
       <div id="cardOut">
         <div class="chips" id="cardMode">
-          <button type="button" class="chip" data-v="sheet" aria-pressed="true">Sheet to print at home</button>
-          <button type="button" class="chip" data-v="single" aria-pressed="false">One card for a print shop</button>
+          <button type="button" class="chip" data-v="single" aria-pressed="true">One card (file or print shop)</button>
+          <button type="button" class="chip" data-v="sheet" aria-pressed="false">Sheet to print at home</button>
         </div>
         <p class="meta" id="cardModeNote"></p>
       </div>
@@ -401,7 +401,7 @@
     kind: 'card', shape: 'rect', layout: 'classic', flyerLayout: 'stack', head: 'anton', border: 'none', off: {}, sel: null,
     bg: '#111111', ink: '#f2ecd6', accent: '#c8412f', font: 'bold',
     qrOn: true, link: '', qrImg: null, qrFromTool: false, pic: null,
-    cardMode: 'sheet', flyerMode: 1
+    cardMode: 'single', flyerMode: 1
   };
   var F = {};
   ['fName','fTitle','fPhone','fEmail','fWeb','fHandle','fKick','fHead','fSub','fDetails','fFoot','fLink'].forEach(function (id) { F[id] = ''; });
@@ -830,7 +830,7 @@
     queued = requestAnimationFrame(function () { queued = 0; renderNow(); });
   }
   function renderNow() {
-    var sheet = state.kind === 'card' && state.cardMode === 'sheet', fly = state.kind === 'flyer';
+    var sheet = false, fly = state.kind === 'flyer'; // always show one card or flyer at its real shape
     $('stage').classList.toggle('sheet', sheet);
     $('stage').classList.toggle('movable', fly);
     $('moveBar').hidden = !fly;
@@ -850,11 +850,11 @@
     updMove();
     var p2 = pieceIn();
     $('sizeLine').textContent = state.kind === 'card'
-      ? (state.cardMode === 'sheet' ? count() + ' cards on a letter page, ' + p2[0] + ' x ' + p2[1] + ' in each' : 'One card, ' + p2[0] + ' x ' + p2[1] + ' in, plus 1/8 in extra edge for the print shop')
+      ? (state.cardMode === 'sheet' ? 'One card shown, ' + p2[0] + ' x ' + p2[1] + ' in. Prints ' + count() + ' on a letter page.' : 'Your card, ' + p2[0] + ' x ' + p2[1] + ' in')
       : (state.flyerMode === 1 ? 'Full letter page, 8.5 x 11 in' : 'One flyer shown. Prints ' + state.flyerMode + ' on a letter page, ' + p2[0] + ' x ' + p2[1] + ' in each');
     $('cardModeNote').textContent = state.cardMode === 'sheet'
       ? 'A letter page of ' + count() + ' cards with cut marks. Print on card stock and cut on the marks.'
-      : 'Print shops (Vistaprint, Staples, any local shop) want one card with a little extra background around the edge. This file has it.';
+      : 'You get the card as an image to save or text, plus a print shop file (Vistaprint, Staples, any local shop) with the little extra edge they ask for.';
     $('flyerModeNote').textContent = state.flyerMode === 1 ? 'One big flyer, edge to edge.' : (state.flyerMode === 2 ? 'Two 5.5 x 8.5 flyers per sheet. Cut on the line.' : 'Four 4.25 x 5.5 flyers per sheet. Cut on the lines. Good for handing out.');
     drawLayoutThumbs();
     clearFiles();
@@ -962,10 +962,11 @@
     try {
       var base = 'nociv-' + state.kind + '-' + slug(), c, label;
       if (state.kind === 'card' && state.cardMode === 'single') {
-        var p = pieceIn(); c = pieceCanvas(p[0], p[1], DPI, 0.125);
-        label = 'Card for the print shop';
-        files.push({ name: base + '-print-shop.png', label: label + ' (PNG)', blob: await toBlob(c, 'image/png') });
-        files.push({ name: base + '-print-shop.pdf', label: label + ' (PDF)', blob: await makePdf(c) });
+        var p = pieceIn(), c0 = pieceCanvas(p[0], p[1], DPI, 0);
+        files.push({ name: base + '.png', label: 'Card image, ' + p[0] + ' x ' + p[1] + ' in (PNG to save or send)', blob: await toBlob(c0, 'image/png') });
+        c0.width = c0.height = 0;
+        c = pieceCanvas(p[0], p[1], DPI, 0.125);
+        files.push({ name: base + '-print-shop.pdf', label: 'Print shop file, with the extra edge (PDF)', blob: await makePdf(c) });
       } else {
         c = sheetCanvas(DPI);
         label = state.kind === 'card' ? 'Sheet of ' + count() + ' cards' : (state.flyerMode === 1 ? 'Flyer, full page' : 'Sheet of ' + count() + ' flyers');
