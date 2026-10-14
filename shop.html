@@ -6,7 +6,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <link rel="stylesheet" href="style.css?v=4.1">
 <style>
-  /* Page-specific only — sub-nav, cards, and pills all live in style.css */
+  /* Page-specific only, sub-nav, cards, and pills all live in style.css */
   .flip-wrap {
     max-width: 900px;
     margin: 0 auto;
@@ -422,11 +422,13 @@
   .bag-go:disabled { opacity: .5; cursor: default; }
   .bag-err { color: var(--red, #c8412f); font-weight: 700; font-size: 0.88rem; margin: 10px 0 0; min-height: 1em; }
 
-  .shop-banner { max-width: 560px; margin: 16px auto 0; padding: 16px 18px; background: #111; color: #fff; position: relative; box-sizing: border-box; width: calc(100% - 32px); }
+  /* Order banner: cream posted note with tape, same look as the bag */
+  .shop-banner { max-width: 560px; margin: 26px auto 6px; padding: 26px 44px 18px 20px; background: #f2ecd6; color: #1a1a1a; position: relative; box-sizing: border-box; width: calc(100% - 32px); box-shadow: 0 6px 16px rgba(0,0,0,0.18); transform: rotate(-0.8deg); }
+  .shop-banner::before { content: ''; position: absolute; top: -12px; left: 22px; width: 70px; height: 22px; background: #1a1a1a; opacity: .85; transform: rotate(-3deg); }
   .shop-banner[hidden] { display: none; }
-  .shop-banner b { display: block; font-size: 1rem; letter-spacing: 0.06em; text-transform: uppercase; margin-bottom: 4px; }
-  .shop-banner p { margin: 0; font-size: 0.88rem; opacity: .85; line-height: 1.45; }
-  .shop-banner button { position: absolute; top: 8px; right: 8px; background: none; border: none; color: #fff; font-size: 1.3rem; cursor: pointer; line-height: 1; padding: 4px 8px; }
+  .shop-banner b { display: block; font-size: 1.05rem; font-weight: 900; letter-spacing: 0.08em; text-transform: uppercase; margin-bottom: 6px; }
+  .shop-banner p { margin: 0; font-size: 0.9rem; line-height: 1.5; }
+  .shop-banner button { position: absolute; top: 10px; right: 10px; background: #111; border: none; color: #fff; font-size: 1.1rem; cursor: pointer; line-height: 1; width: 30px; height: 30px; padding: 0; }
 </style>
 </head>
 <body>
@@ -443,12 +445,6 @@
   <a href="community.html" class="img-tab"><img src="base-button.png" alt="Base"></a>
 </nav>
 
-<div class="shop-banner" id="shopBanner" role="status" hidden>
-  <button type="button" id="shopBannerClose" aria-label="Close">&times;</button>
-  <b id="shopBannerTitle"></b>
-  <p id="shopBannerText"></p>
-</div>
-
 <!-- SUB-NAV: Clothing leads, Art and Zines are secondary, "also from the collective" -->
 <nav class="subnav subnav-primary">
   <button data-panel="clothingPanel" class="active">Clothing</button>
@@ -458,6 +454,12 @@
   <button data-panel="artPanel">Art</button>
   <button data-panel="zinesPanel">Zines</button>
 </nav>
+
+<div class="shop-banner" id="shopBanner" role="status" hidden>
+  <button type="button" id="shopBannerClose" aria-label="Close">&times;</button>
+  <b id="shopBannerTitle"></b>
+  <p id="shopBannerText"></p>
+</div>
 
 <!-- ===== CLOTHING ===== -->
 <div class="subpanel show" id="clothingPanel">
@@ -1731,7 +1733,7 @@
     if (status === 'success') {
       writeBag([]);
       document.getElementById('shopBannerTitle').textContent = 'Order in. Thank you.';
-      document.getElementById('shopBannerText').textContent = "Your receipt is on its way to your email. If you picked local pickup, we'll email you to set a time.";
+      document.getElementById('shopBannerText').textContent = "Your receipt is on its way to your email. Picked local pickup? Watch your email, we'll set up a time and place with you.";
       banner.hidden = false;
     } else if (status === 'cancelled') {
       document.getElementById('shopBannerTitle').textContent = 'Checkout cancelled';
