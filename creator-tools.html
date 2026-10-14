@@ -224,6 +224,13 @@
       window.scrollTo({ top: 0, behavior: 'smooth' });
     });
   });
+  // Deep links: creator-tools.html#cards opens Cards + Flyers, and so on.
+  (function () {
+    const HASH = { '#zine': 'zineBuilderPanel', '#cutsew': 'clothingBuilderPanel', '#cards': 'cardBuilderPanel', '#qr': 'qrBuilderPanel', '#stencil': 'stencilBuilderPanel' };
+    const id = HASH[location.hash];
+    const card = id && document.querySelector('#buildHub [data-panel="' + id + '"]');
+    if (card) card.click();
+  })();
   // ===== Full screen in place: same frame, same work, just bigger =====
   document.querySelectorAll('.fullscreen-btn').forEach(btn => {
     btn.addEventListener('click', e => {

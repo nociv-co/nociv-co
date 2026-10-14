@@ -145,39 +145,87 @@
   #panel-stallwall .postWrap { border-top: 1px solid #a88e63; }
   #panel-stallwall #doodleCanvas { border: 2px solid #a88e63; }
 
-  /* ---------- DIRECTORY: graph paper ---------- */
-  #panel-directory .mark-card,
-  #panel-directory .board-card,
-  #panel-directory .directory-card,
-  #panel-directory .opp-calendar {
-    background-color: #fbfbf8;
-    background-image:
-      linear-gradient(to right, rgba(0,0,0,0.08) 1px, transparent 1px),
-      linear-gradient(to bottom, rgba(0,0,0,0.08) 1px, transparent 1px);
-    background-size: 16px 16px;
-    border: 1px solid #ccc;
-    border-radius: 0;
-    color: #2a2a2a;
-  }
-  #panel-directory .mark-card h3,
-  #panel-directory .mark-card label { color: #2a2a2a; }
-  #panel-directory .mark-card select,
-  #panel-directory .mark-card textarea,
-  #panel-directory .mark-card input[type="text"],
-  #panel-directory .mark-card input[type="date"] {
-    background: #fff; border: 1px solid #ccc; color: #2a2a2a; border-radius: 0;
-  }
-  #panel-directory .board-card-title,
-  #panel-directory .board-card-meta,
-  #panel-directory .board-card-desc { color: #2a2a2a; }
-  #panel-directory .card-uploader { background: #fff; border: 1px dashed #999; }
-  #panel-directory .cat-pill,
-  #panel-directory .filter-pill {
-    background: #fff; color: #444; border: 1px solid #ccc; border-radius: 0;
-  }
-  #panel-directory .cat-pill.active,
-  #panel-directory .filter-pill.active { background: #333; color: #fff; border-color: #333; }
-  #panel-directory .opp-calendar-day { color: #444; }
+  /* ---------- DIRECTORY: same taped note look as the Build hub. Square buttons, ink borders, big names. ---------- */
+  #panel-directory .dx { text-align: left; max-width: 980px; margin: 0 auto; }
+  #panel-directory .hub-back { display: inline-block; margin: 0 0 18px; }
+  .dx-hero { margin-bottom: 22px; }
+  .dx-kicker { margin: 0 0 10px; font-family: "Courier New", ui-monospace, monospace; font-weight: 700; font-size: 0.82rem; color: var(--bm); text-transform: uppercase; }
+  .dx .dx-title { font-size: clamp(2.8rem, 13vw, 5.4rem); }
+  .dx-tabs { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-top: 16px; }
+  .dx-tabs button { all: unset; box-sizing: border-box; text-align: center; cursor: pointer; padding: 13px 8px; border: 2px solid var(--bi); background: #fff; color: var(--bi); font-weight: 900; font-size: 0.82rem; letter-spacing: .06em; text-transform: uppercase; -webkit-tap-highlight-color: transparent; }
+  .dx-tabs button b { display: inline-block; min-width: 1.4em; margin-left: 4px; padding: 0 4px; background: var(--br); color: #fff; font-size: 0.75rem; }
+  .dx-tabs button b:empty { display: none; }
+  .dx-tabs button.active { background: var(--bi); color: #fff; }
+  .dx-tools { display: grid; gap: 10px; margin: 0 0 16px; }
+  .dx-search { display: flex; align-items: center; gap: 8px; background: #fff; border: 2px solid var(--bi); padding: 0 12px; }
+  .dx-search svg { width: 20px; height: 20px; flex: none; fill: none; stroke: var(--bi); stroke-width: 2.4; stroke-linecap: round; }
+  .dx-search input { flex: 1; min-width: 0; border: 0; outline: 0; background: none; font: inherit; font-size: 16px; padding: 13px 0; color: var(--bi); -webkit-appearance: none; }
+  .dx-chips { display: flex; gap: 6px; overflow-x: auto; scrollbar-width: none; padding-bottom: 2px; margin: 0 -16px; padding-left: 16px; padding-right: 16px; }
+  .dx-chips::-webkit-scrollbar { display: none; }
+  .dx-chip { all: unset; flex: none; cursor: pointer; padding: 9px 12px; border: 2px solid var(--bi); background: #fff; color: var(--bi); font-weight: 800; font-size: 0.82rem; white-space: nowrap; -webkit-tap-highlight-color: transparent; }
+  .dx-chip i { font-style: normal; font-weight: 700; opacity: .55; margin-left: 2px; }
+  .dx-chip[aria-pressed="true"] { background: var(--bi); color: #fff; }
+  .dx-chip[aria-pressed="true"] i { opacity: .75; }
+  .dx-count { margin: 0; font-family: "Courier New", ui-monospace, monospace; font-weight: 700; font-size: 0.8rem; color: var(--bm); }
+  .dx-grid { display: grid; grid-template-columns: 1fr; gap: 16px; }
+  @media (min-width: 680px) { .dx-grid { grid-template-columns: 1fr 1fr; } }
+  .dx-card, #panel-directory .dx-post-card { background: var(--bn); border: 2px solid var(--bi); box-shadow: 4px 4px 0 var(--bi); padding: 14px 14px 16px; color: var(--bi); margin: 0; border-radius: 0; }
+  #panel-directory .dx-post-card { margin-bottom: 14px; border-left-width: 2px; }
+  .dx-top { display: flex; justify-content: space-between; align-items: center; gap: 8px; margin-bottom: 8px; }
+  .dx-disc { background: var(--bi); color: #fff; font-weight: 900; font-size: 0.68rem; letter-spacing: .08em; text-transform: uppercase; padding: 3px 7px; }
+  .dx-ver { font-family: "Courier New", ui-monospace, monospace; font-weight: 700; font-size: 0.7rem; text-transform: uppercase; color: var(--br); border: 1.5px solid var(--br); padding: 2px 6px; transform: rotate(-3deg); }
+  .dx-date { font-weight: 900; font-size: 0.75rem; color: var(--br); text-transform: uppercase; letter-spacing: .04em; }
+  .dx-name { margin: 0; font-family: NocivAnton, Impact, "Arial Narrow", sans-serif; font-weight: 400; font-size: 1.9rem; line-height: .95; text-transform: uppercase; letter-spacing: .01em; overflow-wrap: anywhere; }
+  .dx-name-sm { font-size: 1.45rem; }
+  .dx-role { margin: 6px 0 0; font-weight: 900; font-size: 1rem; }
+  .dx-where { display: flex; align-items: center; gap: 5px; margin: 6px 0 0; font-size: 0.85rem; font-weight: 700; color: var(--bm); }
+  .dx-where svg { width: 15px; height: 15px; flex: none; fill: none; stroke: var(--br); stroke-width: 2.4; }
+  .dx-meta { margin: 6px 0 0; font-size: 0.78rem; font-weight: 700; color: var(--bm); }
+  .dx-desc { margin: 10px 0 0; font-size: 0.92rem; line-height: 1.45; color: #3a372f; }
+  .dx-pre { white-space: pre-wrap; overflow-wrap: anywhere; }
+  .dx-acts { display: grid; grid-template-columns: 1fr 1fr; gap: 6px; margin-top: 14px; }
+  .dx-act { display: flex; align-items: center; gap: 7px; min-width: 0; padding: 11px 10px; background: #fff; border: 2px solid var(--bi); color: var(--bi); text-decoration: none; font-weight: 800; font-size: 0.82rem; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; -webkit-tap-highlight-color: transparent; }
+  .dx-act svg { width: 18px; height: 18px; flex: none; fill: none; stroke: currentColor; stroke-width: 2.2; stroke-linecap: round; stroke-linejoin: round; }
+  .dx-act:active { background: var(--bi); color: #fff; }
+  .dx-soon { margin: 12px 0 0; font-size: 0.8rem; color: var(--bm); }
+  .dx-empty { grid-column: 1 / -1; margin: 10px 0; padding: 22px 16px; text-align: center; border: 2px dashed var(--bm); color: var(--bm); font-weight: 700; }
+  .dx-label { margin: 0; display: flex; align-items: center; gap: 8px; font-weight: 900; font-size: 0.82rem; letter-spacing: .1em; text-transform: uppercase; }
+  .dx-label b { background: var(--br); color: #fff; padding: 1px 7px; }
+  .dx-join, .dx-note { margin: 26px 0 0; background: var(--bn); position: relative; padding: 26px 18px 20px; box-shadow: 0 6px 16px rgba(0,0,0,0.16); }
+  .dx-join::before, .dx-note::before { content: ''; position: absolute; top: -11px; left: 22px; width: 64px; height: 22px; background: var(--bi); opacity: .85; transform: rotate(-3deg); }
+  .dx-cal-note { margin: 0 0 18px; }
+  .dx-join h3, .dx-note h3 { margin: 8px 0 6px; font-weight: 900; font-size: 1.25rem; line-height: 1.15; }
+  .dx-join p:not(.dx-label) { margin: 0; font-size: 0.92rem; line-height: 1.45; color: #3a372f; }
+  .dx-btn { all: unset; box-sizing: border-box; display: block; width: 100%; margin-top: 16px; text-align: center; cursor: pointer; background: var(--br); color: #fff; font-weight: 900; letter-spacing: .1em; text-transform: uppercase; padding: 15px; font-size: 0.95rem; -webkit-tap-highlight-color: transparent; }
+  a.dx-btn::after { content: ' \2192'; }
+  .dx-btn:disabled { opacity: .55; }
+  .dx-err { margin: 10px 0 0; color: var(--br); font-weight: 800; }
+  /* calendar */
+  #panel-directory .opp-calendar { background: none; border: 0; padding: 0; margin: 10px 0 0; color: var(--bi); }
+  #panel-directory .opp-calendar-header { display: flex; align-items: center; justify-content: space-between; margin: 0 0 8px; font-weight: 900; font-size: 1rem; text-transform: uppercase; letter-spacing: .06em; }
+  .dx-mo { all: unset; cursor: pointer; width: 38px; height: 38px; display: grid; place-items: center; border: 2px solid var(--bi); background: #fff; font-size: 0.8rem; }
+  #panel-directory .opp-calendar-grid { gap: 3px; }
+  #panel-directory .opp-calendar-grid .dow { font-weight: 800; opacity: .6; color: var(--bi); }
+  #panel-directory .opp-calendar-day { all: unset; box-sizing: border-box; text-align: center; padding: 9px 0; font-size: 0.85rem; font-weight: 700; color: #8d877a; background: rgba(255,255,255,.5); }
+  #panel-directory .opp-calendar-day.empty { background: none; }
+  #panel-directory .opp-calendar-day.today { outline: 2px solid var(--bi); outline-offset: -2px; color: var(--bi); }
+  #panel-directory .opp-calendar-day.has-event { background: var(--br); color: #fff; cursor: pointer; font-weight: 900; }
+  #panel-directory .opp-calendar-day.has-event::after { display: none; }
+  #panel-directory .opp-calendar-day.selected { background: var(--bi); color: #fff; }
+  .dx-cal-foot { margin: 10px 0 0; font-size: 0.82rem; font-weight: 700; color: var(--bm); }
+  .dx-link { all: unset; cursor: pointer; text-decoration: underline; color: var(--bi); font-weight: 800; }
+  /* board posts + form */
+  #panel-directory .interest-row { margin-top: 14px; }
+  #panel-directory .interest-btn { background: #fff; color: var(--bi); border: 2px solid var(--bi); padding: 10px 14px; font-weight: 900; font-size: 0.8rem; letter-spacing: .04em; text-transform: uppercase; border-radius: 0; }
+  #panel-directory .interest-btn.clicked { background: var(--bi); color: #fff; }
+  #panel-directory .interest-count { font-size: 0.8rem; font-weight: 700; color: var(--bm); }
+  .dx-post label { display: block; margin: 14px 0 6px; font-size: 0.72rem; font-weight: 800; letter-spacing: .08em; text-transform: uppercase; color: var(--bi); opacity: 1; }
+  .dx-post select, .dx-post input[type="text"], .dx-post input[type="date"], .dx-post textarea { width: 100%; box-sizing: border-box; font: inherit; font-size: 16px; padding: 12px; border: 2px solid var(--bi); border-radius: 0; background: #fff; color: var(--bi); margin: 0; }
+  .dx-post textarea { resize: vertical; }
+  #panel-directory .dx-post .card-uploader { margin: 14px 0 0; padding: 14px; background: #fff; border: 2px dashed var(--bi); text-align: center; }
+  #panel-directory .dx-post .card-uploader label { margin: 0; cursor: pointer; font-weight: 900; font-size: 0.85rem; letter-spacing: .06em; color: var(--bi) !important; text-decoration: underline; }
+  #panel-directory .dx-post #ocrStatus { margin: 6px 0 0; font-size: 0.8rem; color: var(--bm); }
+  #panel-directory .confirm-msg { color: #2f7a4b; }
 
   /* ---------- SPREAD THE WORD: printable flyers, posters, stickers ---------- */
   .promo-grid {
@@ -291,62 +339,64 @@
 
 <!-- ================= DIRECTORY ================= -->
 <div class="tab-panel" id="panel-directory">
-  <div class="wrap" style="text-align:center;">
+  <div class="build dx">
     <span class="hub-back" data-back-hub>&larr; Back to Base</span>
-    <img class="top-banner-art" src="directory-ave.png" alt="Directory Ave">
 
-    <h2 class="board-title" style="margin-top:30px;">THE DIRECTORY</h2>
-    <p class="board-sub">A hub of point-of-contact for every creative venture in Phoenix, Arizona.</p>
-
-    <div class="dir-subnav">
-      <button class="dir-subtab active" data-dirtab="verified">Verified</button>
-      <button class="dir-subtab" data-dirtab="opportunity">Opportunity Board</button>
+    <div class="build-hero dx-hero">
+      <p class="dx-kicker">Base / Directory</p>
+      <h2 class="build-title dx-title">The<br>Directory.</h2>
+      <p class="build-quote">Real people. Real contacts. Made in AZ.</p>
+      <div class="dx-tabs" role="tablist">
+        <button type="button" class="dir-subtab active" role="tab" data-dirtab="verified">People + places <b id="dxCountTab"></b></button>
+        <button type="button" class="dir-subtab" role="tab" data-dirtab="opportunity">Opportunity board</button>
+      </div>
     </div>
 
-    <!-- ---- VERIFIED ---- -->
+    <!-- ---- PEOPLE + PLACES ---- -->
     <div class="dir-subpanel active" id="dirpanel-verified">
-      <p class="board-sub">Verified local resources. The permanent anchor.</p>
-      <select class="filter-select" id="filterRow"></select>
-      <div class="directory-grid" id="directoryGrid"></div>
+      <div class="dx-tools">
+        <label class="dx-search"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="10.5" cy="10.5" r="6.5"/><path d="M15.5 15.5L21 21"/></svg><input type="search" id="dxSearch" placeholder="Search names, skills, places" autocomplete="off" enterkeyhint="search" aria-label="Search the Directory"></label>
+        <div class="dx-chips" id="filterRow" role="group" aria-label="Filter by discipline"></div>
+        <p class="dx-count" id="dxCount"></p>
+      </div>
+      <div class="dx-grid" id="directoryGrid"></div>
+      <div class="dx-join">
+        <p class="dx-label"><b>FREE</b>Get listed</p>
+        <h3>Make your card. Tick "List me".</h3>
+        <p>Every business card made in Cards + Flyers can go in the Directory. You pick what shows. We check each one before it goes up.</p>
+        <a class="dx-btn" href="creator-tools.html#cards">Make my card</a>
+      </div>
     </div>
 
     <!-- ---- OPPORTUNITY BOARD ---- -->
     <div class="dir-subpanel" id="dirpanel-opportunity">
-      <p class="board-sub">Post local opportunities, tool shares, meetups, or space listings — and see what's happening this month.</p>
-
-      <!-- What's posted comes first -->
-      <div class="opp-calendar" id="oppCalendar"></div>
-
-      <select class="filter-select" id="catPillRow"></select>
-
-      <div class="board-list" id="boardList"></div>
-
-      <!-- Clear break before the "post your own" area -->
-      <div class="dir-post-divider">
-        <hr>
-        <span>Post Your Own</span>
+      <div class="dx-note dx-cal-note">
+        <p class="dx-label"><b>THIS MONTH</b>What's happening</p>
+        <div class="opp-calendar" id="oppCalendar"></div>
       </div>
+      <div class="dx-tools">
+        <div class="dx-chips" id="catPillRow" role="group" aria-label="Filter by kind of post"></div>
+      </div>
+      <div class="dx-board" id="boardList"></div>
 
-      <div class="mark-card">
-        <h3>Post It</h3>
+      <div class="dx-note dx-post">
+        <p class="dx-label"><b>POST</b>Post your own</p>
+        <h3>Walls, classes, gear, calls, spaces, meetups.</h3>
 
-        <!-- BUSINESS CARD OCR SCANNER UI -->
         <div class="card-uploader">
-          <label for="cardScanInput">
-            📷 SCAN BUSINESS CARD TO PRE-FILL
-          </label>
+          <label for="cardScanInput">Scan a flyer or card to fill this in</label>
           <input type="file" id="cardScanInput" accept="image/*" capture="environment" style="display: none;" onchange="handleCardScan(event)">
-          <p id="ocrStatus" style="font-size: 0.85rem; color: #888; margin-top: 6px;">Take a photo or upload an image of a card</p>
+          <p id="ocrStatus">Take a photo of a flyer or card. Check what it reads before you post.</p>
         </div>
 
         <label for="boardCategory">What kind of post is this?</label>
         <select id="boardCategory">
-          <option value="wall">🔴 Wall & Mural Opportunity</option>
-          <option value="workshop">🔵 Workshop / Class</option>
-          <option value="share">🟢 Tool / Equipment / Garage Share</option>
-          <option value="call">🟡 Grant, Residency, or Call for Art</option>
-          <option value="space">🟣 Space to Offer (Studio / Venue)</option>
-          <option value="meetup">🟠 Recurring Meetup / Hangout</option>
+          <option value="wall">Wall or mural opportunity</option>
+          <option value="workshop">Workshop or class</option>
+          <option value="share">Tool, equipment or garage share</option>
+          <option value="call">Grant, residency or call for art</option>
+          <option value="space">Space to offer (studio or venue)</option>
+          <option value="meetup">Recurring meetup or hangout</option>
         </select>
 
         <div id="spaceTypeWrap" style="display:none;">
@@ -357,18 +407,19 @@
           </select>
         </div>
 
-        <label for="boardDiscipline">Discipline / Creative Field</label>
+        <label for="boardDiscipline">Creative field</label>
         <select id="boardDiscipline"></select>
 
         <label for="boardTitle">Title</label>
-        <input type="text" id="boardTitle" placeholder="e.g. Garage available for a 1-day screen printing demo">
-        <label for="boardDetails">Details</label>
-        <textarea id="boardDetails" rows="3" placeholder="General area (not exact address), what's available, and how people reach you."></textarea>
+        <input type="text" id="boardTitle" maxlength="90" placeholder="e.g. Garage open for a 1 day screen printing demo">
+        <label for="boardDetails">Details and how to reach you</label>
+        <textarea id="boardDetails" rows="4" maxlength="800" placeholder="General area (not your exact address), what's offered, and how people reach you."></textarea>
 
-        <label for="boardEventDate">Event date (optional — shows this on the calendar above)</label>
+        <label for="boardEventDate">Date (optional, puts it on the calendar)</label>
         <input type="date" id="boardEventDate">
 
-        <button id="boardSendBtn" class="cta-btn">Post It</button>
+        <button id="boardSendBtn" class="dx-btn" type="button">Post it</button>
+        <p id="boardError" class="dx-err" hidden></p>
         <p id="boardConfirm" class="confirm-msg">Posted to the Opportunity Board.</p>
       </div>
     </div>
@@ -486,7 +537,7 @@ async function handleCardScan(event) {
   if (!file) return;
 
   const statusText = document.getElementById('ocrStatus');
-  statusText.textContent = "Scanning business card... Please wait.";
+  statusText.textContent = "Reading it... one moment.";
 
   try {
     const result = await Tesseract.recognize(file, 'eng');
@@ -507,7 +558,7 @@ async function handleCardScan(event) {
     if (titleInput && !titleInput.value) titleInput.value = suggestedTitle;
     if (detailsTextarea) detailsTextarea.value = remainingDetails;
 
-    statusText.textContent = "✓ Card scanned! Review and refine details below.";
+    statusText.textContent = "Done. Check the title and details below before you post.";
   } catch (err) {
     console.error(err);
     statusText.textContent = "Scan error. Please enter details manually.";
@@ -702,73 +753,112 @@ document.getElementById("sendBtn").onclick = async () => {
   if (viewState === chosenState) await loadPosts();
 };
 
-/* ============ VERIFIED DIRECTORY (table: directory_listings, editable from admin) ============ */
+/* ============ DIRECTORY: people + places (table: directory_listings, edited in admin, filled by Cards + Flyers) ============ */
+const dxEsc = (s) => String(s ?? '').replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+function dxUrl(u) {
+  u = String(u || '').trim(); if (!u) return '';
+  if (!/^https?:\/\//i.test(u)) u = 'https://' + u;
+  try { const x = new URL(u); return /^https?:$/.test(x.protocol) ? x.href : ''; } catch (e) { return ''; }
+}
+function dxHost(u) { try { return new URL(u).host.replace(/^www\./, ''); } catch (e) { return u; } }
+function dxIg(h) { h = String(h || '').trim().replace(/^@/, '').replace(/^https?:\/\/(www\.)?instagram\.com\//i, '').replace(/\/.*$/, ''); return /^[A-Za-z0-9._]{1,30}$/.test(h) ? h : ''; }
+function dxTel(p) { const d = String(p || '').replace(/[^\d+]/g, ''); return d.length >= 7 ? d : ''; }
+function dxMail(m) { m = String(m || '').trim(); return /^[^\s@<>]+@[^\s@<>]+\.[^\s@<>]+$/.test(m) ? m : ''; }
+const DX_ICON = {
+  call: '<path d="M6 3h4l2 5-2.5 1.5a11 11 0 005 5L16 12l5 2v4a2 2 0 01-2 2A16 16 0 014 5a2 2 0 012-2z"/>',
+  mail: '<rect x="3" y="5" width="18" height="14" rx="1"/><path d="M3 7l9 6 9-6"/>',
+  ig: '<rect x="3" y="3" width="18" height="18" rx="5"/><circle cx="12" cy="12" r="4"/><circle cx="17.5" cy="6.5" r="1"/>',
+  web: '<circle cx="12" cy="12" r="9"/><path d="M3 12h18M12 3c3 3.5 3 14.5 0 18M12 3c-3 3.5-3 14.5 0 18"/>',
+  pin: '<path d="M12 21s-7-6.5-7-12a7 7 0 0114 0c0 5.5-7 12-7 12z"/><circle cx="12" cy="9" r="2.5"/>'
+};
+const dxSvg = k => `<svg viewBox="0 0 24 24" aria-hidden="true">${DX_ICON[k]}</svg>`;
+
 let directory = [];
 async function loadDirectoryListings() {
-  const { data } = await supabaseClient
+  const { data, error } = await supabaseClient
     .from('directory_listings')
     .select('*')
     .order('sort_order', { ascending: true, nullsFirst: false })
     .order('created_at', { ascending: false });
-  directory = data || [];
+  directory = error ? null : (data || []);
 }
 
-let activeFilter = "All";
+let activeFilter = 'All', dxQuery = '';
 const directoryGrid = document.getElementById('directoryGrid');
 const filterRow = document.getElementById('filterRow');
 
 function renderFilterPills() {
-  filterRow.innerHTML = '<option value="All">All Disciplines</option>' +
-    disciplines.map(d => `<option value="${d}">${d}</option>`).join('');
+  const counts = {};
+  (directory || []).forEach(d => { if (d.discipline) counts[d.discipline] = (counts[d.discipline] || 0) + 1; });
+  const names = Object.keys(counts).sort((a, b) => a.localeCompare(b));
+  if (activeFilter !== 'All' && !counts[activeFilter]) activeFilter = 'All';
+  filterRow.innerHTML = [['All', (directory || []).length]].concat(names.map(n => [n, counts[n]]))
+    .map(([n, c]) => `<button type="button" class="dx-chip" data-v="${dxEsc(n)}" aria-pressed="${n === activeFilter}">${dxEsc(n === 'All' ? 'All' : n)} <i>${c}</i></button>`).join('');
+  document.getElementById('dxCountTab').textContent = directory && directory.length ? directory.length : '';
+}
+filterRow.addEventListener('click', e => {
+  const b = e.target.closest('.dx-chip'); if (!b) return;
+  activeFilter = b.dataset.v;
+  filterRow.querySelectorAll('.dx-chip').forEach(x => x.setAttribute('aria-pressed', String(x === b)));
+  renderDirectory();
+});
+let dxT = 0;
+document.getElementById('dxSearch').addEventListener('input', e => { clearTimeout(dxT); dxT = setTimeout(() => { dxQuery = e.target.value.trim().toLowerCase(); renderDirectory(); }, 120); });
 
-  filterRow.addEventListener('change', () => {
-    activeFilter = filterRow.value;
-    renderDirectory();
-  });
+function dxCard(d) {
+  const site = dxUrl(d.link), ig = dxIg(d.instagram), tel = dxTel(d.phone), mail = dxMail(d.email);
+  const acts = [];
+  if (tel) acts.push(`<a class="dx-act" href="tel:${dxEsc(tel)}">${dxSvg('call')}Call</a>`);
+  if (mail) acts.push(`<a class="dx-act" href="mailto:${dxEsc(mail)}">${dxSvg('mail')}Email</a>`);
+  if (ig) acts.push(`<a class="dx-act" href="https://instagram.com/${dxEsc(ig)}" target="_blank" rel="noopener">${dxSvg('ig')}@${dxEsc(ig)}</a>`);
+  if (site) acts.push(`<a class="dx-act" href="${dxEsc(site)}" target="_blank" rel="noopener">${dxSvg('web')}${dxEsc(dxHost(site))}</a>`);
+  const where = [d.neighborhood, d.access].filter(Boolean).map(dxEsc).join(' · ');
+  return `<article class="dx-card">
+      <div class="dx-top">${d.discipline ? `<span class="dx-disc">${dxEsc(d.discipline)}</span>` : '<span></span>'}<span class="dx-ver">Verified</span></div>
+      <h3 class="dx-name">${dxEsc(d.name)}</h3>
+      ${d.role ? `<p class="dx-role">${dxEsc(d.role)}</p>` : ''}
+      ${where ? `<p class="dx-where">${dxSvg('pin')}${where}</p>` : ''}
+      ${d.description ? `<p class="dx-desc">${dxEsc(d.description)}</p>` : ''}
+      ${acts.length ? `<div class="dx-acts">${acts.join('')}</div>` : '<p class="dx-soon">Contact coming soon</p>'}
+    </article>`;
 }
 
 function renderDirectory() {
-  directoryGrid.innerHTML = "";
+  const countEl = document.getElementById('dxCount');
+  if (directory === null) { directoryGrid.innerHTML = '<p class="dx-empty">The Directory did not load. Check your connection and refresh.</p>'; countEl.textContent = ''; return; }
   let items = directory;
-  if (activeFilter !== "All") items = items.filter(d => d.discipline === activeFilter);
-  if (items.length === 0) {
-    directoryGrid.innerHTML = '<p class="directory-empty">Nothing listed yet for this category. Check back soon.</p>';
+  if (activeFilter !== 'All') items = items.filter(d => d.discipline === activeFilter);
+  if (dxQuery) items = items.filter(d => [d.name, d.role, d.discipline, d.neighborhood, d.access, d.description, d.instagram].join(' ').toLowerCase().includes(dxQuery));
+  countEl.textContent = items.length === 1 ? '1 listed' : items.length + ' listed';
+  if (!items.length) {
+    directoryGrid.innerHTML = dxQuery || activeFilter !== 'All'
+      ? '<p class="dx-empty">Nobody matches that yet. Try another word, or tap All.</p>'
+      : '<p class="dx-empty">Nobody listed yet. Be the first: make your card below and tick "List me".</p>';
     return;
   }
-  items.forEach(d => {
-    const card = document.createElement('div');
-    card.className = 'directory-card';
-    card.innerHTML = `
-      <div class="dc-name">${d.name}</div>
-      <div class="dc-neighborhood">${d.neighborhood || ''}</div>
-      <div class="dc-tags">
-        ${d.discipline ? `<span class="dc-tag">${d.discipline}</span>` : ''}
-        ${d.access ? `<span class="dc-tag">${d.access}</span>` : ''}
-      </div>
-      <div class="dc-desc">${d.description || ''}</div>
-      ${d.link ? `<a class="dc-link" href="${d.link}" target="_blank" rel="noopener">Visit →</a>` : '<span style="font-size:0.75rem; opacity:.5;">Link coming soon</span>'}
-    `;
-    directoryGrid.appendChild(card);
-  });
+  directoryGrid.innerHTML = items.map(dxCard).join('');
 }
 
-/* ============ OPPORTUNITY BOARD (table: board_posts, unchanged name) ============ */
+/* ============ OPPORTUNITY BOARD (table: board_posts) ============ */
 const catLabels = {
-  popup: "Pop-Up Shop",
-  wall: "Wall & Mural",
-  workshop: "Workshop / Class",
-  share: "Tool / Equipment / Garage Share",
-  call: "Grant & Call",
-  space: "Space Offer",
-  meetup: "Recurring Meetup"
+  popup: "Pop-up shop",
+  wall: "Wall + mural",
+  workshop: "Workshop / class",
+  share: "Tool + gear share",
+  call: "Grant + call",
+  space: "Space offer",
+  meetup: "Meetup"
 };
 let activeCat = "All";
 let selectedEventDate = null;
+let calMonth = (() => { const n = new Date(); return new Date(n.getFullYear(), n.getMonth(), 1); })();
 const boardList = document.getElementById('boardList');
 const boardCategorySelect = document.getElementById('boardCategory');
 const spaceTypeWrap = document.getElementById('spaceTypeWrap');
 const boardDisciplineSelect = document.getElementById('boardDiscipline');
 const oppCalendar = document.getElementById('oppCalendar');
+const ymd = d => d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0') + '-' + String(d.getDate()).padStart(2, '0');
+const niceDate = s => { const [y, m, d] = String(s).split('-').map(Number); return new Date(y, m - 1, d).toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' }); };
 
 function populateBoardDisciplineOptions() {
   boardDisciplineSelect.innerHTML = '';
@@ -779,7 +869,7 @@ function populateBoardDisciplineOptions() {
   });
   const generalOpt = document.createElement('option');
   generalOpt.value = "General";
-  generalOpt.textContent = "General / Not discipline-specific";
+  generalOpt.textContent = "General, any field";
   boardDisciplineSelect.appendChild(generalOpt);
 }
 
@@ -788,169 +878,150 @@ boardCategorySelect.addEventListener('change', () => {
 });
 
 const catPillRow = document.getElementById('catPillRow');
-catPillRow.innerHTML = '<option value="All">All Categories</option>' +
-  Object.entries(catLabels).map(([val, label]) => `<option value="${val}">${label}</option>`).join('');
-catPillRow.addEventListener('change', () => {
-  activeCat = catPillRow.value;
+catPillRow.innerHTML = [['All', 'All']].concat(Object.entries(catLabels))
+  .map(([v, l]) => `<button type="button" class="dx-chip" data-v="${v}" aria-pressed="${v === 'All'}">${l}</button>`).join('');
+catPillRow.addEventListener('click', e => {
+  const b = e.target.closest('.dx-chip'); if (!b) return;
+  activeCat = b.dataset.v;
+  catPillRow.querySelectorAll('.dx-chip').forEach(x => x.setAttribute('aria-pressed', String(x === b)));
   renderBoard();
 });
 
 function getInterestedIds() {
-  return JSON.parse(localStorage.getItem('interestedBoardIds') || '[]');
+  try { return JSON.parse(localStorage.getItem('interestedBoardIds') || '[]').map(String); } catch (e) { return []; }
 }
 function markInterested(id) {
   const ids = getInterestedIds();
-  if (!ids.includes(id)) {
-    ids.push(id);
-    localStorage.setItem('interestedBoardIds', JSON.stringify(ids));
+  if (!ids.includes(String(id))) {
+    ids.push(String(id));
+    try { localStorage.setItem('interestedBoardIds', JSON.stringify(ids)); } catch (e) {}
   }
 }
 
 async function renderCalendar() {
-  const now = new Date();
-  const year = now.getFullYear();
-  const month = now.getMonth();
-  const monthStart = new Date(year, month, 1).toISOString().slice(0, 10);
-  const monthEnd = new Date(year, month + 1, 0).toISOString().slice(0, 10);
-
+  const year = calMonth.getFullYear(), month = calMonth.getMonth();
+  const monthStart = ymd(new Date(year, month, 1));
+  const monthEnd = ymd(new Date(year, month + 1, 0));
   const { data: eventPosts } = await supabaseClient
     .from('board_posts')
     .select('event_date')
     .gte('event_date', monthStart)
     .lte('event_date', monthEnd);
-
   const eventDays = new Set((eventPosts || []).map(p => p.event_date));
-
-  const monthName = now.toLocaleString('en-US', { month: 'long', year: 'numeric' });
+  const monthName = calMonth.toLocaleString('en-US', { month: 'long', year: 'numeric' });
   const firstDow = new Date(year, month, 1).getDay();
   const daysInMonth = new Date(year, month + 1, 0).getDate();
+  const today = ymd(new Date());
 
   let html = `<div class="opp-calendar-header">
+    <button type="button" class="dx-mo" data-mo="-1" aria-label="Last month">&#9664;</button>
     <span>${monthName}</span>
-    ${selectedEventDate ? '<button class="opp-calendar-clear" id="clearDateFilter">Clear date filter</button>' : ''}
+    <button type="button" class="dx-mo" data-mo="1" aria-label="Next month">&#9654;</button>
   </div>`;
   html += '<div class="opp-calendar-grid">';
   ['S','M','T','W','T','F','S'].forEach(d => html += `<div class="dow">${d}</div>`);
   for (let i = 0; i < firstDow; i++) html += '<div class="opp-calendar-day empty"></div>';
   for (let d = 1; d <= daysInMonth; d++) {
-    const dateStr = new Date(year, month, d).toISOString().slice(0, 10);
+    const dateStr = ymd(new Date(year, month, d));
     const hasEvent = eventDays.has(dateStr);
-    const isSelected = selectedEventDate === dateStr;
-    html += `<div class="opp-calendar-day ${hasEvent ? 'has-event' : ''} ${isSelected ? 'selected' : ''}" data-date="${dateStr}">${d}</div>`;
+    html += `<button type="button" class="opp-calendar-day ${hasEvent ? 'has-event' : ''} ${selectedEventDate === dateStr ? 'selected' : ''} ${dateStr === today ? 'today' : ''}" data-date="${dateStr}" ${hasEvent ? '' : 'disabled'}>${d}</button>`;
   }
   html += '</div>';
+  html += `<p class="dx-cal-foot">${selectedEventDate ? `Showing ${niceDate(selectedEventDate)}. <button type="button" class="dx-link" id="clearDateFilter">Show every day</button>` : (eventDays.size ? 'Red days have something on. Tap one.' : 'Nothing dated this month yet.')}</p>`;
   oppCalendar.innerHTML = html;
-
-  oppCalendar.querySelectorAll('.opp-calendar-day.has-event').forEach(cell => {
-    cell.addEventListener('click', () => {
-      const date = cell.dataset.date;
-      selectedEventDate = (selectedEventDate === date) ? null : date;
-      renderCalendar();
-      renderBoard();
-    });
-  });
-  const clearBtn = document.getElementById('clearDateFilter');
-  if (clearBtn) clearBtn.addEventListener('click', () => {
-    selectedEventDate = null;
-    renderCalendar();
-    renderBoard();
-  });
 }
+oppCalendar.addEventListener('click', e => {
+  const mo = e.target.closest('.dx-mo');
+  if (mo) { calMonth = new Date(calMonth.getFullYear(), calMonth.getMonth() + Number(mo.dataset.mo), 1); renderCalendar(); return; }
+  if (e.target.closest('#clearDateFilter')) { selectedEventDate = null; renderCalendar(); renderBoard(); return; }
+  const cell = e.target.closest('.opp-calendar-day.has-event');
+  if (cell) { selectedEventDate = selectedEventDate === cell.dataset.date ? null : cell.dataset.date; renderCalendar(); renderBoard(); }
+});
 renderCalendar();
 
-// Load disciplines once, then everything that depends on it (the Directory's
-// filter dropdown, the Board's discipline dropdown, and the Directory listings
-// themselves) — all editable from admin now, nothing hardcoded here anymore.
+// Load disciplines once, then the things that use them.
 (async function initDisciplinesAndDirectory() {
   await loadDisciplines();
-  renderFilterPills();
   populateBoardDisciplineOptions();
   await loadDirectoryListings();
+  renderFilterPills();
   renderDirectory();
 })();
 
 async function renderBoard() {
-  boardList.innerHTML = '<p style="opacity:.5; text-align:center;">Loading Opportunity Board posts...</p>';
+  boardList.innerHTML = '<p class="dx-empty">Loading posts...</p>';
   const sixtyDaysAgo = new Date(Date.now() - 60*24*60*60*1000).toISOString();
-
   let query = supabaseClient
     .from('board_posts')
     .select('*')
     .gte('created_at', sixtyDaysAgo)
     .order('created_at', { ascending: false });
-
   if (activeCat !== "All") query = query.eq('category', activeCat);
   if (selectedEventDate) query = query.eq('event_date', selectedEventDate);
-
   const { data: posts, error } = await query;
-
-  if (error || !posts || posts.length === 0) {
-    boardList.innerHTML = '<p style="opacity:.5; text-align:center;">Nothing posted yet.</p>';
+  if (error) { boardList.innerHTML = '<p class="dx-empty">The board did not load. Check your connection and refresh.</p>'; return; }
+  if (!posts || !posts.length) {
+    boardList.innerHTML = `<p class="dx-empty">${activeCat !== 'All' || selectedEventDate ? 'Nothing like that posted right now.' : 'Nothing posted yet. Be the first, it is free.'}</p>`;
     return;
   }
-
   const interestedIds = getInterestedIds();
-  boardList.innerHTML = "";
-  posts.forEach(p => {
-    const card = document.createElement('div');
-    card.className = 'board-card ' + p.category;
-    const alreadyInterested = interestedIds.includes(p.id);
-    const metaBits = [catLabels[p.category] || p.category];
-    if (p.space_type) metaBits.push(p.space_type);
-    if (p.discipline) metaBits.push(p.discipline);
-    if (p.event_date) metaBits.push('📅 ' + p.event_date);
-    metaBits.push(formatDate(p.created_at));
-
-    card.innerHTML = `
-      <div class="board-card-title">${p.title}</div>
-      <div class="board-card-meta">${metaBits.join(' · ')}</div>
-      <div class="board-card-desc">${p.details}</div>
+  boardList.innerHTML = posts.map(p => {
+    const already = interestedIds.includes(String(p.id));
+    const meta = [];
+    if (p.space_type) meta.push(dxEsc(p.space_type));
+    if (p.discipline) meta.push(dxEsc(p.discipline));
+    meta.push('Posted ' + dxEsc(formatDate(p.created_at)));
+    return `<article class="board-card dx-post-card ${dxEsc(p.category)}">
+      <div class="dx-top"><span class="dx-disc">${dxEsc(catLabels[p.category] || p.category || 'Post')}</span>${p.event_date ? `<span class="dx-date">${dxEsc(niceDate(p.event_date))}</span>` : ''}</div>
+      <h3 class="dx-name dx-name-sm">${dxEsc(p.title)}</h3>
+      <p class="dx-meta">${meta.join(' · ')}</p>
+      <p class="dx-desc dx-pre">${dxEsc(p.details)}</p>
       <div class="interest-row">
-        <button class="interest-btn ${alreadyInterested ? 'clicked' : ''}" data-id="${p.id}" ${alreadyInterested ? 'disabled' : ''}>
-          ${alreadyInterested ? "You are interested" : "I'm Interested"}
-        </button>
-        <span class="interest-count">${p.interest_count || 0} interested</span>
+        <button type="button" class="interest-btn ${already ? 'clicked' : ''}" data-id="${dxEsc(p.id)}" ${already ? 'disabled' : ''}>${already ? "You're interested" : "I'm interested"}</button>
+        <span class="interest-count">${Number(p.interest_count) || 0} interested</span>
       </div>
-    `;
-    boardList.appendChild(card);
-  });
-
-  boardList.querySelectorAll('.interest-btn').forEach(btn => {
-    btn.addEventListener('click', async () => {
-      const id = btn.dataset.id;
-      const { data: current } = await supabaseClient.from('board_posts').select('interest_count').eq('id', id).single();
-      const newCount = (current?.interest_count || 0) + 1;
-      const { error } = await supabaseClient.from('board_posts').update({ interest_count: newCount }).eq('id', id);
-      if (!error) {
-        markInterested(id);
-        await renderBoard();
-      }
-    });
-  });
+    </article>`;
+  }).join('');
 }
+boardList.addEventListener('click', async e => {
+  const btn = e.target.closest('.interest-btn'); if (!btn || btn.disabled) return;
+  btn.disabled = true;
+  const id = btn.dataset.id;
+  let { data, error } = await supabaseClient.rpc('board_interest', { p_id: String(id) });
+  if (error && /board_interest|function|schema cache/i.test(error.message || '')) {
+    // Older database without the counter function yet.
+    const { data: cur } = await supabaseClient.from('board_posts').select('interest_count').eq('id', id).single();
+    ({ error } = await supabaseClient.from('board_posts').update({ interest_count: (cur?.interest_count || 0) + 1 }).eq('id', id));
+  }
+  if (error) { btn.disabled = false; return; }
+  markInterested(id);
+  renderBoard();
+});
 renderBoard();
 
 document.getElementById('boardSendBtn').onclick = async () => {
+  const btn = document.getElementById('boardSendBtn'), err = document.getElementById('boardError');
   const category = boardCategorySelect.value;
   const discipline = boardDisciplineSelect.value;
   const spaceType = category === 'space' ? document.getElementById('spaceType').value : null;
   const title = document.getElementById('boardTitle').value.trim();
   const details = document.getElementById('boardDetails').value.trim();
   const eventDate = document.getElementById('boardEventDate').value || null;
-  if (!title || !details) return;
-
+  err.hidden = true;
+  if (!title || !details) { err.textContent = 'Add a title and the details first.'; err.hidden = false; return; }
+  btn.disabled = true;
   const { error } = await supabaseClient
     .from('board_posts')
     .insert([{ category, discipline, space_type: spaceType, title, details, event_date: eventDate, interest_count: 0 }]);
-
-  if (error) { alert("Error saving post: " + error.message); return; }
-
+  btn.disabled = false;
+  if (error) { err.textContent = "That didn't post. Try again in a minute."; err.hidden = false; return; }
   document.getElementById('boardTitle').value = "";
   document.getElementById('boardDetails').value = "";
   document.getElementById('boardEventDate').value = "";
   const c = document.getElementById('boardConfirm');
   c.style.display = 'block';
   setTimeout(() => { c.style.display = 'none'; }, 3000);
+  if (eventDate) { const [y, m] = eventDate.split('-').map(Number); calMonth = new Date(y, m - 1, 1); }
   await renderBoard();
   await renderCalendar();
 };

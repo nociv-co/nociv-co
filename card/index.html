@@ -135,6 +135,22 @@
   .preview-col.focused { background: transparent; border: none; padding: 0; }
   .preview-col.focused .stage { height: calc(100vh - 170px) !important; height: calc(100dvh - 170px) !important; max-height: none !important; }
   .preview-col.focused #preview { max-height: calc(100vh - 200px) !important; max-height: calc(100dvh - 200px) !important; }
+
+  /* Directory listing from the card */
+  .dirbox { margin-top: 20px; padding: 16px 14px; background: #fff; border: 2px solid var(--ink); }
+  .dirhead { display: flex; align-items: center; gap: 8px; font-weight: 900; font-size: 0.9rem; letter-spacing: .08em; text-transform: uppercase; }
+  .dirhead b { background: var(--red); color: #fff; padding: 1px 7px; }
+  .dirtoggle { margin-top: 10px; width: 100%; }
+  .dirtoggle[aria-pressed="true"] { background: var(--ink); color: #fff; }
+  .dirtoggle[aria-pressed="true"]::before { content: '\2713  '; }
+  .dirchecks { display: grid; gap: 6px; margin-bottom: 4px; }
+  .dirck { display: flex; align-items: center; gap: 10px; padding: 9px 10px; border: 2px solid var(--ink); background: var(--note); cursor: pointer; min-width: 0; }
+  .dirck input { width: 20px; height: 20px; accent-color: var(--ink); flex: none; margin: 0; }
+  .dirck span { font-weight: 800; font-size: 0.85rem; flex: none; }
+  .dirck em { font-style: normal; font-size: 0.85rem; color: var(--muted); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; min-width: 0; }
+  .dirck.off { opacity: .45; cursor: default; }
+  .dirmsg.ok { color: var(--green); font-weight: 800; }
+  .dirmsg.bad { color: var(--red); font-weight: 800; }
 </style>
 </head>
 <body>
@@ -311,6 +327,24 @@
       <p class="working" id="working" hidden>Making it...</p>
       <div class="files" id="files"></div>
       <p class="meta">When you print a sheet, pick <b>Actual size</b> or <b>100%</b> in the print settings, not "Fit", or the cards come out the wrong size.</p>
+      <div class="dirbox" id="dirBox">
+        <div class="dirhead"><b>FREE</b>Get found in the Directory</div>
+        <p class="meta" style="margin-top:6px">Your card info goes on nociv.co, Base, Directory, so local people can find you. Optional. You pick what shows. We check each one before it goes up.</p>
+        <button type="button" class="chip dirtoggle" id="dirToggle" aria-pressed="false" aria-expanded="false" aria-controls="dirForm">List me in the Directory</button>
+        <div id="dirForm" hidden>
+          <label class="lbl">What shows</label>
+          <div class="dirchecks" id="dirChecks"></div>
+          <label class="lbl" for="dirField">Your field</label>
+          <input type="text" id="dirField" list="dirFields" maxlength="40" placeholder="Clothing, DJ + Music, Photo..." autocomplete="off">
+          <datalist id="dirFields"></datalist>
+          <label class="lbl" for="dirWhere">City or neighborhood</label>
+          <input type="text" id="dirWhere" maxlength="60" placeholder="Phoenix, AZ">
+          <label class="lbl" for="dirAbout">One line about what you do (optional)</label>
+          <textarea id="dirAbout" maxlength="240" rows="2" placeholder="Hand stenciled one of ones. Pop ups every Saturday."></textarea>
+          <button type="button" class="btn main" id="dirSend">Send to the Directory</button>
+          <p class="meta dirmsg" id="dirMsg" role="status"></p>
+        </div>
+      </div>
     </section>
   </div>
 </div>
@@ -984,7 +1018,7 @@
   chips('kind', function (v) {
     state.kind = v;
     $('cardShapeBox').hidden = v !== 'card'; $('cardFields').hidden = v !== 'card'; $('flyerFields').hidden = v !== 'flyer';
-    $('cardOut').hidden = v !== 'card'; $('flyerOut').hidden = v !== 'flyer';
+    $('cardOut').hidden = v !== 'card'; $('flyerOut').hidden = v !== 'flyer'; $('dirBox').hidden = v !== 'card';
     $('photoBox').hidden = v !== 'flyer';
     $('starterBox').hidden = v !== 'flyer'; $('flyerStyle').hidden = v !== 'flyer';
     buildLayoutButtons();
@@ -1191,6 +1225,78 @@
 
   buildLayoutButtons();
   render();
+
+  // ---------- List me in the Directory (Base, Directory). Opt in only, nothing is sent until they tap Send. ----------
+  (function () {
+    var loaded = null;
+    function loadSb() {
+      if (loaded) return loaded;
+      loaded = new Promise(function (ok, no) {
+        function add(src, next) { var s = document.createElement('script'); s.src = src; s.onload = next; s.onerror = function () { loaded = null; no(new Error('load')); }; document.head.appendChild(s); }
+        if (window.supabaseClient) return ok();
+        add('https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2', function () { add('../supabase.js', function () { ok(); }); });
+      });
+      return loaded;
+    }
+    var ROWS = [
+      ['name', 'Name', 'fName', true, true],
+      ['role', 'What you do', 'fTitle', true, false],
+      ['link', 'Website', 'fWeb', true, false],
+      ['instagram', 'Instagram', 'fHandle', true, false],
+      ['email', 'Email', 'fEmail', true, false],
+      ['phone', 'Phone', 'fPhone', false, false]
+    ];
+    var picked = {};
+    function igFrom(v) { v = (v || '').trim(); var m = v.match(/^@?([A-Za-z0-9._]{1,30})$/); return m ? m[1] : ''; }
+    function val(r) { var v = (F[r[2]] || '').trim(); return r[0] === 'instagram' ? igFrom(v) : v; }
+    function buildChecks() {
+      var box = $('dirChecks'); box.innerHTML = '';
+      ROWS.forEach(function (r) {
+        var v = val(r), lab = document.createElement('label'); lab.className = 'dirck' + (v ? '' : ' off');
+        if (!(r[0] in picked)) picked[r[0]] = r[3];
+        var cb = document.createElement('input'); cb.type = 'checkbox'; cb.checked = !!v && (r[4] || picked[r[0]]); cb.disabled = !v || r[4];
+        cb.onchange = function () { picked[r[0]] = cb.checked; };
+        var t = document.createElement('span'); t.textContent = r[1];
+        var e = document.createElement('em'); e.textContent = v ? (r[0] === 'instagram' ? '@' + v : v) : (r[0] === 'instagram' ? 'add an @handle on the Info step' : 'empty on your card');
+        lab.append(cb, t, e); box.appendChild(lab);
+      });
+    }
+    $('dirToggle').onclick = function () {
+      var on = this.getAttribute('aria-pressed') !== 'true';
+      this.setAttribute('aria-pressed', String(on)); this.setAttribute('aria-expanded', String(on));
+      $('dirForm').hidden = !on;
+      if (!on) return;
+      buildChecks();
+      if (!$('dirAbout').value && F.fTitle) $('dirAbout').placeholder = F.fTitle;
+      try { var last = JSON.parse(localStorage.getItem('nocivDirSent') || 'null'); if (last && last.name === (F.fName || '').trim()) { $('dirMsg').className = 'meta dirmsg'; $('dirMsg').textContent = 'You sent this name before. Sending again updates it for us to check.'; } } catch (e) {}
+      loadSb().then(function () {
+        return supabaseClient.from('disciplines').select('name').order('name');
+      }).then(function (r) {
+        $('dirFields').innerHTML = ((r && r.data) || []).map(function (d) { return '<option value="' + String(d.name).replace(/"/g, '&quot;') + '">'; }).join('');
+      }).catch(function () {});
+    };
+    $('dirSend').onclick = function () {
+      var btn = this, msg = $('dirMsg');
+      buildChecks();
+      var p = {};
+      ROWS.forEach(function (r) { var v = val(r); if (v && (r[4] || picked[r[0]])) p[r[0]] = v; });
+      p.discipline = $('dirField').value.trim();
+      p.neighborhood = $('dirWhere').value.trim();
+      p.description = $('dirAbout').value.trim();
+      msg.className = 'meta dirmsg bad';
+      if (!p.name) { msg.textContent = 'Add your name on the Info step first.'; return; }
+      if (!p.link && !p.instagram && !p.email && !p.phone) { msg.textContent = 'Tick at least one way to reach you.'; return; }
+      btn.disabled = true; msg.className = 'meta dirmsg'; msg.textContent = 'Sending...';
+      loadSb().then(function () {
+        return supabaseClient.rpc('submit_directory', { p: p });
+      }).then(function (r) {
+        btn.disabled = false;
+        if (r.error) { msg.className = 'meta dirmsg bad'; msg.textContent = /reach/.test(r.error.message || '') ? 'Tick at least one way to reach you.' : "That didn't send. Try again in a minute."; return; }
+        msg.className = 'meta dirmsg ok'; msg.textContent = 'Sent. You show up in the Directory once we check it.';
+        try { localStorage.setItem('nocivDirSent', JSON.stringify({ name: p.name, at: Date.now() })); } catch (e) {}
+      }).catch(function () { btn.disabled = false; msg.className = 'meta dirmsg bad'; msg.textContent = "That didn't send. Check your connection and try again."; });
+    };
+  })();
 })();
 </script>
 </body>

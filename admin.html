@@ -1081,6 +1081,20 @@
               <datalist id="disciplineOptions"></datalist>
             </div>
           </div>
+          <label for="dirRole">What they do (optional)</label>
+          <input type="text" id="dirRole" placeholder="e.g. Your local DJ, Owner of a clothing line">
+          <div class="admin-form-row">
+            <div>
+              <label for="dirEmail">Email (optional, shows publicly)</label>
+              <input type="email" id="dirEmail" placeholder="hello@...">
+            </div>
+            <div>
+              <label for="dirIg">Instagram (optional)</label>
+              <input type="text" id="dirIg" placeholder="@handle">
+            </div>
+          </div>
+          <label for="dirPhone">Phone (optional, shows publicly, only with their OK)</label>
+          <input type="tel" id="dirPhone" placeholder="(602) 555-0123">
           <label for="dirAccess">Access (how someone gets in)</label>
           <input type="text" id="dirAccess" placeholder="e.g. Shared Studio, Membership">
           <label for="dirDesc">Short description</label>
@@ -1091,6 +1105,9 @@
           <p class="admin-note" id="dirAddConfirm">Listing added.</p>
           <p class="admin-error" id="dirAddError"></p>
         </div>
+        <h3>Requests from Cards + Flyers <span class="admin-section-hint" id="dirReqCount"></span></h3>
+        <p class="admin-note" style="display:block;color:#555;">People who made a card and tapped "List me in the Directory". Nothing shows publicly until you tap Approve. Check the name and links look real first.</p>
+        <div id="dirRequests"></div>
         <h3>Current Directory Listings</h3>
         <div id="directoryAdminList"></div>
       </div>
@@ -1384,6 +1401,7 @@
       loadTimeEntries();
       loadDisciplineOptions();
       loadDirectoryAdminList();
+      loadDirectoryRequests();
       loadZineAdminList();
       loadMailingList();
       loadPromoAdminList();
@@ -3558,6 +3576,10 @@
     const access = document.getElementById('dirAccess').value.trim() || null;
     const description = document.getElementById('dirDesc').value.trim() || null;
     const link = document.getElementById('dirLink').value.trim() || null;
+    const role = document.getElementById('dirRole').value.trim() || null;
+    const email = document.getElementById('dirEmail').value.trim() || null;
+    const phone = document.getElementById('dirPhone').value.trim() || null;
+    const instagram = document.getElementById('dirIg').value.trim().replace(/^@/, '') || null;
     const errEl = document.getElementById('dirAddError');
     const confirmEl = document.getElementById('dirAddConfirm');
     errEl.style.display = 'none';
@@ -3569,9 +3591,11 @@
       .from('directory_listings').select('sort_order').order('sort_order', { ascending: false }).limit(1);
     const nextOrder = (maxRows && maxRows[0] && maxRows[0].sort_order != null) ? maxRows[0].sort_order + 1 : 1;
 
-    const { error } = await supabaseClient.from('directory_listings').insert([{
+    const extra = {};
+    if (role) extra.role = role; if (email) extra.email = email; if (phone) extra.phone = phone; if (instagram) extra.instagram = instagram;
+    const { error } = await supabaseClient.from('directory_listings').insert([Object.assign({
       name, neighborhood, discipline, access, description, link, sort_order: nextOrder
-    }]);
+    }, extra)]);
     if (error) { errEl.textContent = 'Error saving: ' + error.message; errEl.style.display = 'block'; return; }
 
     if (discipline) await upsertDiscipline(discipline);
@@ -3582,6 +3606,7 @@
     document.getElementById('dirAccess').value = '';
     document.getElementById('dirDesc').value = '';
     document.getElementById('dirLink').value = '';
+    ['dirRole', 'dirEmail', 'dirPhone', 'dirIg'].forEach(id => { document.getElementById(id).value = ''; });
     confirmEl.style.display = 'block';
     setTimeout(() => { confirmEl.style.display = 'none'; }, 3000);
     await loadDisciplineOptions();
@@ -3608,7 +3633,7 @@
       row.innerHTML = `
         <div class="info">
           <div class="name">${escapeAttr(d.name)}</div>
-          <div class="meta">${escapeAttr(d.neighborhood || '')}${d.discipline ? ' · ' + escapeAttr(d.discipline) : ''}</div>
+          <div class="meta">${escapeAttr(d.neighborhood || '')}${d.discipline ? ' · ' + escapeAttr(d.discipline) : ''}${d.source === 'card' ? ' · from a card' : ''}</div>
         </div>
         <button class="edit-btn" data-dir="up" ${idx === 0 ? 'disabled' : ''}>↑</button>
         <button class="edit-btn" data-dir="down" ${idx === listings.length - 1 ? 'disabled' : ''}>↓</button>
@@ -3622,6 +3647,58 @@
         await loadDirectoryAdminList();
       });
       listEl.appendChild(row);
+    });
+  }
+
+  // Requests from the card maker (table: directory_submissions). Approve copies it into directory_listings.
+  async function loadDirectoryRequests() {
+    const box = document.getElementById('dirRequests'), countEl = document.getElementById('dirReqCount');
+    box.innerHTML = '<p style="opacity:.5;">Loading...</p>';
+    const { data, error } = await supabaseClient.from('directory_submissions').select('*').eq('status', 'pending').order('created_at', { ascending: true });
+    if (error) {
+      box.innerHTML = '<p class="admin-error" style="display:block;">Requests need the database update. Run supabase-migration-directory-cards.sql in Supabase, SQL Editor.</p>';
+      countEl.textContent = '';
+      return;
+    }
+    countEl.textContent = data.length ? data.length + ' waiting' : '';
+    if (!data.length) { box.innerHTML = '<p style="opacity:.5;">No new requests.</p>'; return; }
+    box.innerHTML = '';
+    data.forEach(r => {
+      const row = document.createElement('div');
+      row.className = 'product-row';
+      const contacts = [r.link, r.instagram ? '@' + r.instagram : '', r.email, r.phone].filter(Boolean).map(escapeAttr).join(' · ');
+      row.innerHTML = `
+        <div class="info">
+          <div class="name">${escapeAttr(r.name)}${r.role ? ' · ' + escapeAttr(r.role) : ''}</div>
+          <div class="meta">${[r.discipline, r.neighborhood].filter(Boolean).map(escapeAttr).join(' · ')}</div>
+          <div class="meta">${contacts}</div>
+          ${r.description ? `<div class="meta">${escapeAttr(r.description)}</div>` : ''}
+          <div class="meta">Sent ${escapeAttr(new Date(r.created_at).toLocaleDateString())}</div>
+        </div>
+        <button class="edit-btn" data-act="ok">Approve</button>
+        <button class="del-btn" data-act="no">Reject</button>
+      `;
+      row.querySelector('[data-act="ok"]').addEventListener('click', async (e) => {
+        e.target.disabled = true;
+        const { data: maxRows } = await supabaseClient.from('directory_listings').select('sort_order').order('sort_order', { ascending: false }).limit(1);
+        const nextOrder = (maxRows && maxRows[0] && maxRows[0].sort_order != null) ? maxRows[0].sort_order + 1 : 1;
+        const { error: insErr } = await supabaseClient.from('directory_listings').insert([{
+          name: r.name, role: r.role, discipline: r.discipline, neighborhood: r.neighborhood, description: r.description,
+          link: r.link, email: r.email, phone: r.phone, instagram: r.instagram, source: 'card', submission_id: r.id, sort_order: nextOrder
+        }]);
+        if (insErr) { alert('Could not approve: ' + insErr.message); e.target.disabled = false; return; }
+        if (r.discipline) await upsertDiscipline(r.discipline);
+        await supabaseClient.from('directory_submissions').update({ status: 'approved' }).eq('id', r.id);
+        await loadDisciplineOptions();
+        await loadDirectoryRequests();
+        await loadDirectoryAdminList();
+      });
+      row.querySelector('[data-act="no"]').addEventListener('click', async () => {
+        if (!confirm('Reject this request? It will not show in the Directory.')) return;
+        await supabaseClient.from('directory_submissions').update({ status: 'rejected' }).eq('id', r.id);
+        await loadDirectoryRequests();
+      });
+      box.appendChild(row);
     });
   }
 
