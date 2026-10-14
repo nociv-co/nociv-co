@@ -443,6 +443,9 @@
           </label>
           <label for="shipPickupLabel">What pickup says at checkout</label>
           <input type="text" id="shipPickupLabel" maxlength="100" placeholder="Local pickup, Phoenix (we email you to set a time)">
+          <label for="shipPickupNote">Pickup email (only people who chose pickup get this, it never shows on the site)</label>
+          <textarea id="shipPickupNote" rows="7" maxlength="1500" style="width:100%; box-sizing:border-box; font:inherit; font-size:16px; padding:10px;"></textarea>
+          <div class="field-hint">Keep exact spots out of this if you want. Have them reply, then tell them the place yourself. Needs your nociv.co email set up in Resend before it sends.</div>
           <button class="admin-submit" id="saveShippingBtn" type="button">Save Shipping</button>
           <p class="admin-note" id="shipSaved">Saved. The next checkout uses this.</p>
           <p class="admin-error" id="shipError"></p>
@@ -1338,14 +1341,17 @@
   }
 
   // ===== SHIPPING SETTINGS (app_settings, read by the checkout function) =====
+  // Same default the order-notification function uses if nothing is saved.
+  const PICKUP_NOTE_DEFAULT = "Thank you for grabbing something from NOCIV. You chose local pickup in Phoenix, so here's how it works.\n\nSaturday mornings: come through the NOCIV pop-up. The spot and time are posted on nociv.co.\nMondays and Tuesdays: I'm around Phoenix during the day.\n\nJust reply to this email with the day that works for you and I'll send the exact place and time.";
   async function loadShippingSettings() {
     const { data } = await supabaseClient.from('app_settings').select('key, value')
-      .in('key', ['shipping_flat', 'free_shipping_over', 'pickup_enabled', 'pickup_label']);
+      .in('key', ['shipping_flat', 'free_shipping_over', 'pickup_enabled', 'pickup_label', 'pickup_instructions']);
     const m = Object.fromEntries((data || []).map(r => [r.key, r.value]));
     document.getElementById('shipFlat').value = m.shipping_flat ?? '5.00';
     document.getElementById('shipFreeOver').value = m.free_shipping_over ?? '';
     document.getElementById('shipPickupOn').checked = String(m.pickup_enabled ?? 'true') === 'true';
     document.getElementById('shipPickupLabel').value = m.pickup_label ?? 'Local pickup, Phoenix (we email you to set a time)';
+    document.getElementById('shipPickupNote').value = m.pickup_instructions ?? PICKUP_NOTE_DEFAULT;
   }
   document.getElementById('saveShippingBtn').addEventListener('click', async () => {
     const errEl = document.getElementById('shipError');
@@ -1364,6 +1370,7 @@
       { key: 'free_shipping_over', value: freeOver === '' ? '' : parseFloat(freeOver).toFixed(2) },
       { key: 'pickup_enabled', value: document.getElementById('shipPickupOn').checked ? 'true' : 'false' },
       { key: 'pickup_label', value: document.getElementById('shipPickupLabel').value.trim() || 'Local pickup, Phoenix' },
+      { key: 'pickup_instructions', value: document.getElementById('shipPickupNote').value.trim() || PICKUP_NOTE_DEFAULT },
     ];
     const { error } = await supabaseClient.from('app_settings').upsert(rows, { onConflict: 'key' });
     if (error) { errEl.textContent = 'Could not save: ' + error.message; errEl.style.display = 'block'; return; }
