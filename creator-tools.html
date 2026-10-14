@@ -44,7 +44,7 @@
   <p style="opacity:.7; max-width:500px; margin:0 auto 24px;">Free to use, no sign up, no paywall. Pick one and come out with a finished product.</p>
   <div class="hub-grid" id="buildHub">
     <div class="hub-card" data-panel="clothingBuilderPanel">
-      <div class="hub-name">Clothing Pattern Builder</div>
+      <div class="hub-name">Cut &amp; Sew</div>
       <div class="hub-desc">Design your own clothing patterns and export them ready to print or cut.</div>
     </div>
     <div class="hub-card" data-panel="zineBuilderPanel">
@@ -59,21 +59,25 @@
       <div class="hub-name">Stencil + Halftone</div>
       <div class="hub-desc">Turn a photo into a cut stencil, print layers, or halftone dots you can screen print in one color or CMYK.</div>
     </div>
+    <div class="hub-card" data-panel="cardBuilderPanel">
+      <div class="hub-name">Cards + Flyers</div>
+      <div class="hub-desc">Business cards and flyers with your QR code. DJ night, pop up, or just spreading the word. Print a sheet at home and cut them out.</div>
+    </div>
   </div>
 </div>
 
-<!-- ===== CLOTHING PATTERN BUILDER ===== -->
+<!-- ===== CUT & SEW (clothing pattern tool, repo nociv-clothing-builder) ===== -->
 <div class="subpanel" id="clothingBuilderPanel">
   <div class="wrap" style="text-align:center; padding-bottom:0;">
     <span class="hub-back" data-back="buildHub">&larr; Back to The Build</span>
-    <h2 style="margin:0 0 4px; font-size:1.3rem; letter-spacing:0.05em;">CLOTHING PATTERN BUILDER</h2>
+    <h2 style="margin:0 0 4px; font-size:1.3rem; letter-spacing:0.05em;">CUT &amp; SEW</h2>
     <p style="opacity:.7; max-width:500px; margin:0 auto 16px;">Design your own clothing patterns and export them ready to print or cut.</p>
   </div>
   <div class="builder-iframe-container" style="padding-top:0;">
     <iframe
       class="builder-iframe"
       src="https://nociv-co.github.io/nociv-clothing-builder/clothing-builder.html"
-      title="NOCIV Clothing Pattern Builder">
+      title="NOCIV Cut and Sew, clothing patterns">
     </iframe>
   </div>
 </div>
@@ -143,6 +147,30 @@
       src="stencil/"
       class="builder-iframe"
       title="NOCIV Stencil and Halftone"
+      allow="web-share; fullscreen"
+      loading="lazy">
+    </iframe>
+  </div>
+</div>
+
+<!-- ===== CARDS + FLYERS (lives at nociv.co/card) ===== -->
+<div class="subpanel" id="cardBuilderPanel">
+  <div class="wrap">
+    <span class="hub-back" data-back="buildHub">&larr; Back to The Build</span>
+    <div class="build-header">
+      <div>
+        <h2 style="margin: 0 0 4px; font-size: 1.3rem; letter-spacing: 0.05em;">CARDS + FLYERS</h2>
+        <p>Big words, your colors, your QR code. Hand them out, tape them up, tell people.</p>
+      </div>
+      <a href="card/" target="_blank" rel="noopener" class="fullscreen-btn">
+        Open Fullscreen ↗
+      </a>
+    </div>
+
+    <iframe
+      src="card/"
+      class="builder-iframe light"
+      title="NOCIV Cards and Flyers"
       allow="web-share; fullscreen"
       loading="lazy">
     </iframe>

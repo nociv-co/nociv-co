@@ -112,6 +112,7 @@
         <div class="actions">
           <button type="button" class="btn main" id="save" disabled>Save Image</button>
           <a class="btn alt" id="download" href="#" download="qr-code.png" aria-disabled="true">Download PNG</a>
+          <a class="btn alt" id="toCard" href="../card/" target="_top">Put it on a card or flyer &rarr;</a>
         </div>
         <p class="tip"><b>Test it:</b> open your camera and point it at the screen. <b>Printing:</b> stays sharp up to about 5 inches across. Don't go smaller than about 1 inch, or phones struggle.</p>
       </div>
@@ -509,6 +510,13 @@
       c.toBlob(function (b) { resolve(b); }, 'image/png');
     });
   }
+  // Hand the finished code to Cards + Flyers (same site, same tab, so sessionStorage carries it).
+  $('toCard').addEventListener('click', function () {
+    try {
+      if (state.link) { var c = document.createElement('canvas'); draw(c, 900); sessionStorage.setItem('nocivQrHandoff', JSON.stringify({ link: state.link, png: c.toDataURL('image/png') })); }
+      else sessionStorage.removeItem('nocivQrHandoff');
+    } catch (e) {}
+  });
   $('download').addEventListener('click', function (e) {
     e.preventDefault();
     if (!state.link) return;

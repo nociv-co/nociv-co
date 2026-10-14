@@ -1,0 +1,933 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Cards + Flyers: NOCIV.CO</title>
+<meta name="description" content="Free business cards and flyers from NOCIV. Your info, your colors, your QR code. Print at home or send to a print shop.">
+<style>
+  :root { --paper: #e9e6df; --note: #f2ecd6; --ink: #1a1a1a; --red: #c8412f; --green: #2f7a4b; --muted: #6b665c; }
+  * { box-sizing: border-box; }
+  html, body { margin: 0; background: var(--paper); color: var(--ink); }
+  body { font-family: -apple-system, BlinkMacSystemFont, "Helvetica Neue", Arial, sans-serif; -webkit-text-size-adjust: 100%; }
+  .wrap { max-width: 1000px; margin: 0 auto; padding: 22px 16px 60px; }
+  .top { margin: 0 0 22px; }
+  .top h1 { margin: 0; font-size: clamp(28px, 7.5vw, 44px); font-weight: 900; letter-spacing: 0.04em; line-height: 1.05; }
+  .top h1 span { background: var(--ink); color: #fff; padding: 2px 10px; display: inline-block; transform: rotate(-1.5deg); }
+  .top p { margin: 14px 0 0; font-size: 1rem; line-height: 1.5; max-width: 560px; }
+  .in-frame .top .back { display: none; }
+  .back { display: inline-block; margin-top: 10px; font-size: 0.85rem; font-weight: 700; color: var(--ink); }
+
+  .grid { display: grid; grid-template-columns: 1fr; gap: 26px; }
+  @media (min-width: 860px) {
+    .grid { grid-template-columns: 1fr 420px; align-items: start; }
+    .preview-col { position: sticky; top: 16px; grid-row: 1 / span 6; grid-column: 2; }
+  }
+  /* On a phone the preview stays pinned at the top while you fill things in */
+  @media (max-width: 859px) {
+    .preview-col { position: sticky; top: 0; z-index: 5; background: var(--paper); padding: 8px 0 10px; margin: 0 -16px; padding-left: 16px; padding-right: 16px; border-bottom: 2px solid var(--ink); }
+    .preview-col .stage { height: 36vh; height: 36svh; padding: 8px; }
+    .preview-col #preview { max-height: calc(36vh - 20px); max-height: calc(36svh - 20px); width: auto; max-width: 100%; }
+  }
+
+  .note { background: var(--note); padding: 26px 18px 20px; position: relative; box-shadow: 0 6px 16px rgba(0,0,0,0.16); }
+  .note::before { content: ''; position: absolute; top: -11px; left: 22px; width: 64px; height: 22px; background: var(--ink); opacity: .85; transform: rotate(-3deg); }
+  .note h2 { margin: 0 0 12px; font-size: 1rem; font-weight: 900; letter-spacing: 0.08em; text-transform: uppercase; }
+  .note h2 b { background: var(--red); color: #fff; padding: 1px 7px; margin-right: 6px; }
+
+  label.lbl { display: block; font-size: 0.72rem; font-weight: 800; letter-spacing: 0.08em; text-transform: uppercase; margin: 14px 0 6px; }
+  input[type="url"], input[type="text"], input[type="email"], input[type="tel"], textarea {
+    width: 100%; font: inherit; font-size: 16px; padding: 12px; border: 2px solid var(--ink); background: #fff; color: var(--ink); border-radius: 0;
+  }
+  textarea { min-height: 84px; resize: vertical; }
+  .two { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+  .chips { display: flex; flex-wrap: wrap; gap: 8px; }
+  .chip { font: inherit; font-size: 0.85rem; font-weight: 700; padding: 10px 13px; border: 2px solid var(--ink); background: #fff; color: var(--ink); cursor: pointer; border-radius: 0; -webkit-tap-highlight-color: transparent; }
+  .chip[aria-pressed="true"] { background: var(--ink); color: #fff; }
+  .meta { font-size: 0.82rem; color: var(--muted); line-height: 1.45; margin: 8px 0 0; }
+
+  .colors { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; }
+  .colors label { display: block; font-size: 0.72rem; font-weight: 800; letter-spacing: 0.06em; text-transform: uppercase; margin-bottom: 6px; }
+  input[type="color"] { width: 100%; height: 48px; border: 2px solid var(--ink); background: #fff; padding: 2px; border-radius: 0; }
+  .swatches { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 10px; }
+  .swatch { width: 40px; height: 40px; border: 2px solid var(--ink); cursor: pointer; padding: 0; display: grid; grid-template-columns: 1fr 1fr; overflow: hidden; }
+  .swatch i { display: block; }
+
+  .layouts { display: grid; grid-template-columns: repeat(auto-fill, minmax(96px, 1fr)); gap: 10px; }
+  .layout-btn { border: 2px solid var(--ink); background: #fff; padding: 6px; cursor: pointer; font: inherit; font-size: 0.72rem; font-weight: 800; letter-spacing: 0.04em; text-transform: uppercase; color: var(--ink); -webkit-tap-highlight-color: transparent; }
+  .layout-btn canvas { width: 100%; height: auto; display: block; margin-bottom: 4px; }
+  .layout-btn[aria-pressed="true"] { outline: 3px solid var(--red); outline-offset: 2px; }
+
+  .pick { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; }
+  .pick-btn { position: relative; overflow: hidden; display: inline-block; background: var(--ink); color: #fff; font-weight: 900; font-size: 0.8rem; letter-spacing: 0.08em; text-transform: uppercase; padding: 12px 14px; }
+  .pick-btn input { position: absolute; inset: 0; opacity: 0; cursor: pointer; font-size: 16px; }
+  .thumb { width: 48px; height: 48px; object-fit: cover; border: 2px solid var(--ink); background: #fff; display: none; }
+  .thumb.on { display: block; }
+  .linkish { background: none; border: none; font: inherit; text-decoration: underline; cursor: pointer; color: var(--ink); padding: 6px 0; }
+  .qr-from { font-size: 0.85rem; padding: 10px 12px; background: #fff; border: 2px dashed var(--ink); margin-top: 6px; }
+
+  .stage { display: grid; place-items: center; background: repeating-conic-gradient(#ddd8cc 0 25%, #e9e6df 0 50%) 0 0 / 18px 18px; padding: 14px; border: 2px solid var(--ink); overflow: hidden; }
+  #preview { max-width: 100%; max-height: 100%; height: auto; box-shadow: 0 8px 22px rgba(0,0,0,.25); display: block; }
+  .stage.sheet #preview { box-shadow: 0 4px 12px rgba(0,0,0,.2); }
+  .size-line { font-size: 0.8rem; color: var(--muted); margin: 8px 0 0; text-align: center; }
+
+  .btn { display: block; width: 100%; text-align: center; font: inherit; font-weight: 900; letter-spacing: 0.1em; text-transform: uppercase; font-size: 0.95rem; padding: 16px; border: 2px solid var(--ink); cursor: pointer; text-decoration: none; -webkit-tap-highlight-color: transparent; border-radius: 0; }
+  .btn.main { background: var(--red); border-color: var(--red); color: #fff; }
+  .btn:disabled { opacity: .5; cursor: default; }
+  .files { margin-top: 12px; display: grid; gap: 8px; }
+  .file { display: flex; align-items: center; gap: 10px; background: #fff; border: 2px solid var(--ink); padding: 8px 8px 8px 12px; }
+  .file span { flex: 1; font-size: 0.88rem; font-weight: 700; }
+  .file button { font: inherit; font-weight: 900; font-size: 0.78rem; letter-spacing: 0.08em; text-transform: uppercase; background: var(--ink); color: #fff; border: none; padding: 10px 14px; cursor: pointer; }
+  .working { font-size: 0.88rem; margin: 10px 0 0; }
+  [hidden] { display: none !important; }
+  .stage.movable #preview { touch-action: none; cursor: grab; }
+  .movebar { display: flex; align-items: center; gap: 6px; margin-top: 8px; }
+  .movebar span { flex: 1; font-size: 0.8rem; font-weight: 700; line-height: 1.25; }
+  .mini { font: inherit; font-size: 0.78rem; font-weight: 900; padding: 9px 10px; border: 2px solid var(--ink); background: #fff; color: var(--ink); cursor: pointer; border-radius: 0; -webkit-tap-highlight-color: transparent; }
+  .mini:disabled { opacity: .35; }
+  @font-face { font-family: 'NocivAnton'; src: url('fonts/anton.woff') format('woff'); font-display: swap; }
+  @font-face { font-family: 'NocivBagel'; src: url('fonts/bagelfatone.woff') format('woff'); font-display: swap; }
+  @font-face { font-family: 'NocivBungee'; src: url('fonts/bungee.woff') format('woff'); font-display: swap; }
+  @font-face { font-family: 'NocivShrik'; src: url('fonts/shrikhand.woff') format('woff'); font-display: swap; }
+  @font-face { font-family: 'NocivAbril'; src: url('fonts/abrilfatface.woff') format('woff'); font-display: swap; }
+  @font-face { font-family: 'NocivRye'; src: url('fonts/rye.woff') format('woff'); font-display: swap; }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <div class="top">
+    <h1><span>CARDS</span> + FLYERS</h1>
+    <p>Your info, your colors, your QR code. Print a sheet at home and cut them out, or send one card to a print shop. Free. Nothing you type leaves your phone.</p>
+    <a class="back" href="../qr/">&larr; Back to the QR Maker</a>
+  </div>
+
+  <div class="grid">
+    <div class="preview-col">
+      <div class="stage" id="stage"><canvas id="preview" width="700" height="400" aria-label="Preview"></canvas></div>
+      <p class="size-line" id="sizeLine"></p>
+      <div class="movebar" id="moveBar" hidden>
+        <span id="moveTip">Tap any words on the flyer, then drag them.</span>
+        <button type="button" class="mini" id="mvSmaller" aria-label="Smaller">A&minus;</button>
+        <button type="button" class="mini" id="mvBigger" aria-label="Bigger">A+</button>
+        <button type="button" class="mini" id="mvReset">Reset all</button>
+      </div>
+    </div>
+
+    <section class="note">
+      <h2><b>1</b> What are you making?</h2>
+      <div class="chips" id="kind">
+        <button type="button" class="chip" data-v="card" aria-pressed="true">Business card</button>
+        <button type="button" class="chip" data-v="flyer" aria-pressed="false">Flyer</button>
+      </div>
+      <div id="cardShapeBox">
+        <label class="lbl">Card shape</label>
+        <div class="chips" id="shape">
+          <button type="button" class="chip" data-v="rect" aria-pressed="true">Standard 3.5 x 2"</button>
+          <button type="button" class="chip" data-v="square" aria-pressed="false">Square 2.5"</button>
+          <button type="button" class="chip" data-v="tall" aria-pressed="false">Tall 2 x 3.5"</button>
+        </div>
+      </div>
+      <div id="starterBox" hidden>
+        <label class="lbl">Start from an idea</label>
+        <div class="chips" id="starters"></div>
+        <p class="meta">Fills in sample words, colors and a font. Change anything after.</p>
+      </div>
+      <label class="lbl">Layout</label>
+      <div class="layouts" id="layouts"></div>
+    </section>
+
+    <section class="note">
+      <h2><b>2</b> Your info</h2>
+      <div id="cardFields">
+        <label class="lbl" for="fName">Name or brand</label>
+        <input type="text" id="fName" maxlength="40" placeholder="NOCIV.CO" autocomplete="organization">
+        <label class="lbl" for="fTitle">What you do</label>
+        <input type="text" id="fTitle" maxlength="50" placeholder="Hand stenciled clothing, Phoenix">
+        <div class="two">
+          <div><label class="lbl" for="fPhone">Phone</label><input type="tel" id="fPhone" maxlength="24" placeholder="(602) 555-0123" autocomplete="tel"></div>
+          <div><label class="lbl" for="fEmail">Email</label><input type="email" id="fEmail" maxlength="60" placeholder="hello@nociv.co" autocomplete="email"></div>
+        </div>
+        <div class="two">
+          <div><label class="lbl" for="fWeb">Website</label><input type="text" id="fWeb" maxlength="40" placeholder="nociv.co" autocapitalize="off"></div>
+          <div><label class="lbl" for="fHandle">Handle or extra line</label><input type="text" id="fHandle" maxlength="40" placeholder="@yourname" autocapitalize="off"></div>
+        </div>
+      </div>
+      <div id="flyerFields" hidden>
+        <label class="lbl" for="fKick">Top line (small)</label>
+        <input type="text" id="fKick" maxlength="50" placeholder="DJ Nova presents">
+        <label class="lbl" for="fHead">Big headline</label>
+        <input type="text" id="fHead" maxlength="60" placeholder="Pop up Saturday">
+        <label class="lbl" for="fSub">Line under the headline</label>
+        <input type="text" id="fSub" maxlength="60" placeholder="New drops. One of ones. Come through.">
+        <label class="lbl" for="fDetails">Details (one per line)</label>
+        <textarea id="fDetails" maxlength="300" placeholder="Saturday, 8am to noon&#10;Downtown Phoenix Farmers Market&#10;Cash, card, Tap to Pay"></textarea>
+        <label class="lbl" for="fFoot">Bottom line (Retro layout puts it in an oval)</label>
+        <input type="text" id="fFoot" maxlength="50" placeholder="nociv.co" autocapitalize="off">
+      </div>
+      <label class="lbl"><span id="picLabel">Logo</span> (optional)</label>
+      <div class="pick">
+        <label class="pick-btn">Pick a picture<input type="file" id="pic" accept="image/*"></label>
+        <img class="thumb" id="thumb" alt="">
+        <button type="button" class="linkish" id="picRemove" hidden>Remove</button>
+      </div>
+    </section>
+
+    <section class="note">
+      <h2><b>3</b> QR code</h2>
+      <div id="qrFrom" class="qr-from" hidden></div>
+      <label class="lbl" for="fLink">Where the code goes</label>
+      <input type="url" id="fLink" inputmode="url" autocapitalize="off" autocorrect="off" spellcheck="false" placeholder="yourwebsite.com" maxlength="1500">
+      <div class="chips" id="qrOn" style="margin-top:10px;">
+        <button type="button" class="chip" data-v="on" aria-pressed="true">Show the code</button>
+        <button type="button" class="chip" data-v="off" aria-pressed="false">No code</button>
+      </div>
+      <p class="meta">Want your picture in the middle of the code? Make it in the QR Maker first, then tap "Put it on a card or flyer".</p>
+    </section>
+
+    <section class="note">
+      <h2><b>4</b> Colors and type</h2>
+      <div class="colors">
+        <div><label for="cBg">Background</label><input type="color" id="cBg" value="#111111"></div>
+        <div><label for="cInk">Words</label><input type="color" id="cInk" value="#f2ecd6"></div>
+        <div><label for="cAccent">Pop color</label><input type="color" id="cAccent" value="#c8412f"></div>
+      </div>
+      <div class="swatches" id="swatches" aria-label="Color combos"></div>
+      <div id="flyerStyle" hidden>
+        <label class="lbl">Headline font</label>
+        <div class="chips" id="headFont">
+          <button type="button" class="chip" data-v="anton" aria-pressed="true" style="font-family:NocivAnton,sans-serif;font-weight:400;font-size:1rem;">TALL</button>
+          <button type="button" class="chip" data-v="bagel" aria-pressed="false" style="font-family:NocivBagel,sans-serif;font-weight:400;">CHUNKY</button>
+          <button type="button" class="chip" data-v="bungee" aria-pressed="false" style="font-family:NocivBungee,sans-serif;font-weight:400;">BLOCK</button>
+          <button type="button" class="chip" data-v="shrik" aria-pressed="false" style="font-family:NocivShrik,serif;font-weight:400;">Retro</button>
+          <button type="button" class="chip" data-v="abril" aria-pressed="false" style="font-family:NocivAbril,serif;font-weight:400;">FANCY</button>
+          <button type="button" class="chip" data-v="rye" aria-pressed="false" style="font-family:NocivRye,serif;font-weight:400;">WESTERN</button>
+          <button type="button" class="chip" data-v="plain" aria-pressed="false">PLAIN</button>
+        </div>
+        <label class="lbl">Border</label>
+        <div class="chips" id="border">
+          <button type="button" class="chip" data-v="none" aria-pressed="true">None</button>
+          <button type="button" class="chip" data-v="line" aria-pressed="false">Line</button>
+          <button type="button" class="chip" data-v="double" aria-pressed="false">Double</button>
+          <button type="button" class="chip" data-v="ticks" aria-pressed="false">Tick marks</button>
+          <button type="button" class="chip" data-v="dashed" aria-pressed="false">Dashed</button>
+          <button type="button" class="chip" data-v="round" aria-pressed="false">Rounded</button>
+        </div>
+      </div>
+      <label class="lbl">Small words type</label>
+      <div class="chips" id="font">
+        <button type="button" class="chip" data-v="bold" aria-pressed="true">Bold</button>
+        <button type="button" class="chip" data-v="classic" aria-pressed="false" style="font-family:Georgia,serif;">Classic</button>
+        <button type="button" class="chip" data-v="type" aria-pressed="false" style="font-family:'Courier New',monospace;">Typewriter</button>
+      </div>
+    </section>
+
+    <section class="note">
+      <h2><b>5</b> Save it</h2>
+      <div id="cardOut">
+        <div class="chips" id="cardMode">
+          <button type="button" class="chip" data-v="sheet" aria-pressed="true">Sheet to print at home</button>
+          <button type="button" class="chip" data-v="single" aria-pressed="false">One card for a print shop</button>
+        </div>
+        <p class="meta" id="cardModeNote"></p>
+      </div>
+      <div id="flyerOut" hidden>
+        <div class="chips" id="flyerMode">
+          <button type="button" class="chip" data-v="1" aria-pressed="true">Full page</button>
+          <button type="button" class="chip" data-v="4" aria-pressed="false">4 per page</button>
+          <button type="button" class="chip" data-v="6" aria-pressed="false">6 per page</button>
+        </div>
+        <p class="meta" id="flyerModeNote"></p>
+      </div>
+      <button type="button" class="btn main" id="make" style="margin-top:14px;">Make my file</button>
+      <p class="working" id="working" hidden>Making it...</p>
+      <div class="files" id="files"></div>
+      <p class="meta">When you print a sheet, pick <b>Actual size</b> or <b>100%</b> in the print settings, not "Fit", or the cards come out the wrong size.</p>
+    </section>
+  </div>
+</div>
+
+<script src="../qr/qr.js"></script>
+<script>
+(function () {
+  var $ = function (id) { return document.getElementById(id); };
+  if (window.self !== window.top) document.documentElement.classList.add('in-frame');
+  var DPI = 300;
+  var FONTS = {
+    bold: '-apple-system, BlinkMacSystemFont, "Helvetica Neue", Arial, sans-serif',
+    classic: 'Georgia, "Times New Roman", serif',
+    type: '"Courier New", Courier, monospace'
+  };
+  var SHAPES = { rect: [3.5, 2], square: [2.5, 2.5], tall: [2, 3.5] };
+  var CARD_LAYOUTS = [['classic', 'Classic'], ['center', 'Centered'], ['bar', 'Bold bar'], ['split', 'Split'], ['scan', 'Scan me']];
+  var FLYER_LAYOUTS = [['stack', 'Huge words'], ['invite', 'Invite'], ['retro', 'Retro'], ['poster', 'Photo'], ['street', 'Scan me']];
+  // Headline fonts. All free to use (SIL Open Font License), stored on our own site in /card/fonts.
+  var HEADS = {
+    anton: { name: 'Tall', css: 'NocivAnton', up: true },
+    bagel: { name: 'Chunky', css: 'NocivBagel', up: true },
+    bungee: { name: 'Block', css: 'NocivBungee', up: true },
+    shrik: { name: 'Retro script', css: 'NocivShrik', up: false },
+    abril: { name: 'Fancy', css: 'NocivAbril', up: true },
+    rye: { name: 'Western', css: 'NocivRye', up: true },
+    plain: { name: 'Plain', css: FONTS.bold, w: '900', up: true }
+  };
+  var BLOCK_NAMES = { kick: 'Top line', head: 'Headline', sub: 'Small line', details: 'Details', foot: 'Bottom line', qr: 'QR code', pic: 'Photo' };
+  // Starting points. One tap fills in words, colors, font and layout. Then change anything.
+  var STARTERS = [
+    { n: 'DJ night', layout: 'stack', head: 'anton', border: 'none', c: ['#0d0d0d', '#ffffff', '#ff4fb4'],
+      f: { fKick: 'DJ NOVA PRESENTS', fHead: 'Late Night', fSub: 'House, disco, and whatever feels right', fDetails: 'Friday, Nov 7\n10pm till close\nThe Back Room, Phoenix\n$10 at the door', fFoot: 'Bring a friend. That is the guest list.' } },
+    { n: 'Pop up', layout: 'poster', head: 'bagel', border: 'none', c: ['#f2ecd6', '#1a1a1a', '#c8412f'],
+      f: { fKick: 'This Saturday', fHead: 'Pop Up Shop', fSub: 'One of one pieces, made by hand', fDetails: 'Saturday, 8am to noon\nDowntown farmers market\nCash, card, Tap to Pay', fFoot: 'yourshop.com' } },
+    { n: 'Spread the word', layout: 'street', head: 'anton', border: 'none', c: ['#f2ecd6', '#111111', '#c8412f'],
+      f: { fKick: 'Someone told you', fHead: 'No ads. Just us.', fSub: 'Scan it. Pass it on.', fDetails: 'Made by hand in Phoenix\nBuy it, build it, or share it', fFoot: "If you're here, someone told you." } },
+    { n: 'Party invite', layout: 'invite', head: 'abril', border: 'ticks', c: ['#fffdf8', '#d12b2b', '#d12b2b'],
+      f: { fKick: "You're invited to a", fHead: 'Taco Party', fSub: "Mia's 30th birthday", fDetails: 'Saturday, June 11 | 7pm to 10pm\n123 Anywhere St, Phoenix', fFoot: '' } },
+    { n: 'Grand opening', layout: 'retro', head: 'bungee', border: 'none', c: ['#bcc45a', '#8a2318', '#8a2318'],
+      f: { fKick: '', fHead: 'Grand Opening', fSub: 'and launch party', fDetails: 'Join us for drinks and light bites\nSaturday, March 17 at 11am', fFoot: 'Your Shop' } }
+  ];
+  var COMBOS = [['#111111', '#f2ecd6', '#c8412f'], ['#f2ecd6', '#1a1a1a', '#c8412f'], ['#ffffff', '#111111', '#2f7a4b'], ['#c8412f', '#ffffff', '#111111'], ['#d7ff39', '#111111', '#111111'], ['#1d2b64', '#ffffff', '#f8b500'], ['#ec6a2c', '#111111', '#ffffff'], ['#000000', '#ffffff', '#ff4fb4']];
+
+  var state = {
+    kind: 'card', shape: 'rect', layout: 'classic', flyerLayout: 'stack', head: 'anton', border: 'none', off: {}, sel: null,
+    bg: '#111111', ink: '#f2ecd6', accent: '#c8412f', font: 'bold',
+    qrOn: true, link: '', qrImg: null, qrFromTool: false, pic: null,
+    cardMode: 'sheet', flyerMode: 1
+  };
+  var F = {};
+  ['fName','fTitle','fPhone','fEmail','fWeb','fHandle','fKick','fHead','fSub','fDetails','fFoot','fLink'].forEach(function (id) { F[id] = ''; });
+
+  // ---------- handoff from the QR Maker ----------
+  try {
+    var h = JSON.parse(sessionStorage.getItem('nocivQrHandoff') || 'null');
+    if (h && h.png) {
+      var im = new Image();
+      im.onload = function () { state.qrImg = im; state.qrFromTool = true; render(); };
+      im.src = h.png;
+      state.link = h.link || '';
+      $('fLink').value = state.link; F.fLink = state.link;
+      $('qrFrom').hidden = false;
+      $('qrFrom').innerHTML = 'Using the code you made in the QR Maker' + (state.link ? ' (goes to <b></b>)' : '') + '. <button type="button" class="linkish" id="qrDrop">Use a plain one instead</button>';
+      if (state.link) $('qrFrom').querySelector('b').textContent = state.link.replace(/^https?:\/\//, '');
+      $('qrFrom').querySelector('#qrDrop').onclick = function () { state.qrImg = null; state.qrFromTool = false; $('qrFrom').hidden = true; render(); };
+      if (!F.fWeb && state.link) { var host = state.link.replace(/^https?:\/\//, '').replace(/\/.*$/, ''); $('fWeb').value = host; F.fWeb = host; }
+    }
+  } catch (e) {}
+
+  // ---------- helpers ----------
+  function normLink(v) {
+    v = (v || '').trim();
+    if (!v) return '';
+    if (/^(mailto:|tel:|sms:)/i.test(v)) return v;
+    if (!/^[a-z][a-z0-9+.-]*:/i.test(v)) v = 'https://' + v;
+    return v;
+  }
+  var qrCache = { key: '', qr: null };
+  function getQr() {
+    var link = normLink(F.fLink);
+    if (!link) return null;
+    if (qrCache.key !== link) { try { qrCache = { key: link, qr: NocivQR.encode(link, 'M') }; } catch (e) { qrCache = { key: link, qr: null }; } }
+    return qrCache.qr;
+  }
+  // While a flyer block is drawn, everything it paints is measured so it can be tapped and dragged.
+  var bb = null;
+  function track(x0, y0, x1, y1) { if (!bb) return; if (x0 < bb[0]) bb[0] = x0; if (y0 < bb[1]) bb[1] = y0; if (x1 > bb[2]) bb[2] = x1; if (y1 > bb[3]) bb[3] = y1; }
+  function hasQr() { return state.qrOn && (state.qrImg || getQr()); }
+  // QR always sits on a white tile with black dots, so every phone can read it.
+  function drawQr(g, x, y, s) {
+    track(x, y, x + s, y + s);
+    if (state.qrImg) { g.fillStyle = '#fff'; g.fillRect(x, y, s, s); g.drawImage(state.qrImg, x, y, s, s); return; }
+    var qr = getQr(); if (!qr) return;
+    var quiet = 3, n = qr.size + quiet * 2, m = s / n;
+    g.fillStyle = '#ffffff'; g.fillRect(x, y, s, s);
+    g.fillStyle = '#000000';
+    for (var yy = 0; yy < qr.size; yy++) for (var xx = 0; xx < qr.size; xx++) if (qr.get(xx, yy)) g.fillRect(x + (xx + quiet) * m, y + (yy + quiet) * m, Math.ceil(m), Math.ceil(m));
+  }
+  function font(weight, px) { return weight + ' ' + Math.max(1, Math.round(px)) + 'px ' + FONTS[state.font]; }
+  // Biggest size (up to max) that fits the width on one line.
+  function fit(g, text, maxW, maxPx, weight) {
+    var px = maxPx; g.font = font(weight, px);
+    while (px > 6 && g.measureText(text).width > maxW) { px *= 0.92; g.font = font(weight, px); }
+    return px;
+  }
+  function wrap(g, text, maxW) {
+    var words = String(text).split(/\s+/), lines = [], cur = '';
+    words.forEach(function (w) { var t = cur ? cur + ' ' + w : w; if (g.measureText(t).width > maxW && cur) { lines.push(cur); cur = w; } else cur = t; });
+    if (cur) lines.push(cur);
+    return lines;
+  }
+  function text(g, t, x, y, align, color) {
+    g.textAlign = align || 'left'; g.fillStyle = color || state.ink; g.fillText(t, x, y);
+    if (bb) {
+      var m = g.measureText(t), w = m.width, x0 = align === 'center' ? x - w / 2 : align === 'right' ? x - w : x, px = parseFloat((/(\d+(?:\.\d+)?)px/.exec(g.font) || [0, 20])[1]);
+      track(x0, y - (m.actualBoundingBoxAscent || px * 0.8), x0 + w, y + (m.actualBoundingBoxDescent || px * 0.2));
+    }
+  }
+  function lum(hex) { var n = parseInt(hex.slice(1), 16), r = (n >> 16) / 255, gg = (n >> 8 & 255) / 255, b = (n & 255) / 255; return 0.2126 * r + 0.7152 * gg + 0.0722 * b; }
+  function on(hex) { return lum(hex) > 0.5 ? '#111111' : '#ffffff'; }
+  function drawPic(g, x, y, w, h, cover) {
+    var img = state.pic; if (!img) return;
+    track(x, y, x + w, y + h);
+    var iw = img.naturalWidth, ih = img.naturalHeight, k = cover ? Math.max(w / iw, h / ih) : Math.min(w / iw, h / ih);
+    var dw = iw * k, dh = ih * k;
+    g.save(); g.beginPath(); g.rect(x, y, w, h); g.clip();
+    g.drawImage(img, x + (w - dw) / 2, y + (h - dh) / 2, dw, dh); g.restore();
+  }
+  function details() { return [F.fPhone, F.fEmail, F.fWeb, F.fHandle].map(function (v) { return (v || '').trim(); }).filter(Boolean); }
+  function name() { return (F.fName || '').trim() || 'YOUR NAME'; }
+  function stackLines(g, lines, x, yBottom, maxW, px, align, color, gap) {
+    g.font = font('500', px);
+    var y = yBottom;
+    for (var i = lines.length - 1; i >= 0; i--) { var p = fit(g, lines[i], maxW, px, '500'); g.font = font('500', p); text(g, lines[i], x, y, align, color); y -= px * (gap || 1.35); }
+    return y;
+  }
+
+  // ---------- business card layouts ----------
+  function drawCard(g, W, H) {
+    var S = Math.min(W, H), pad = S * 0.1, wide = W >= H * 1.3, qr = hasQr(), d = details(), nm = name(), ttl = (F.fTitle || '').trim();
+    g.fillStyle = state.bg; g.fillRect(0, 0, W, H);
+    g.textBaseline = 'alphabetic';
+    var L = state.layout, qs, px;
+    if (L === 'classic') {
+      if (wide) {
+        qs = qr ? Math.min(H - pad * 2, W * 0.34) : 0;
+        var tw = W - pad * (qr ? 3 : 2) - qs, y = pad;
+        if (state.pic) { drawPic(g, pad, y, H * 0.26, H * 0.26, false); y += H * 0.32; }
+        px = fit(g, nm, tw, H * 0.15, '900'); y += px; text(g, nm, pad, y);
+        if (ttl) { var tp = fit(g, ttl, tw, H * 0.075, '600'); y += tp * 1.5; g.font = font('600', tp); text(g, ttl, pad, y, 'left', state.accent); }
+        stackLines(g, d, pad, H - pad, tw, H * 0.068, 'left');
+        if (qr) drawQr(g, W - pad - qs, (H - qs) / 2, qs);
+      } else {
+        var y2 = pad; qs = qr ? S * 0.4 : 0;
+        if (qr) { drawQr(g, (W - qs) / 2, y2, qs); y2 += qs + pad * 0.6; }
+        else if (state.pic) { drawPic(g, (W - S * 0.4) / 2, y2, S * 0.4, S * 0.4, false); y2 += S * 0.4 + pad * 0.6; }
+        px = fit(g, nm, W - pad * 2, S * 0.13, '900'); y2 += px; text(g, nm, W / 2, y2, 'center');
+        if (ttl) { var tp2 = fit(g, ttl, W - pad * 2, S * 0.065, '600'); y2 += tp2 * 1.5; g.font = font('600', tp2); text(g, ttl, W / 2, y2, 'center', state.accent); }
+        stackLines(g, d, W / 2, H - pad, W - pad * 2, S * 0.058, 'center');
+      }
+    } else if (L === 'center') {
+      qs = qr ? S * 0.26 : 0;
+      var cy = H * (wide ? 0.42 : 0.4);
+      if (state.pic) { var ps = S * 0.26; drawPic(g, (W - ps) / 2, cy - S * 0.2 - ps, ps, ps, false); }
+      px = fit(g, nm, W - pad * 2, S * 0.17, '900'); g.font = font('900', px); text(g, nm, W / 2, cy, 'center');
+      if (ttl) { var tp3 = fit(g, ttl, W - pad * 2.4, S * 0.07, '600'); g.font = font('600', tp3); text(g, ttl, W / 2, cy + tp3 * 1.8, 'center', state.accent); }
+      g.fillStyle = state.accent; g.fillRect(W / 2 - S * 0.12, cy + S * 0.16, S * 0.24, Math.max(2, S * 0.012));
+      var line = d.join('  ·  '), lw = W - pad * 2 - (qr ? qs + pad * 0.5 : 0);
+      if (line) { var lp = fit(g, line, lw, S * 0.055, '500'); g.font = font('500', lp); text(g, line, qr ? pad : W / 2, H - pad, qr ? 'left' : 'center'); }
+      if (qr) drawQr(g, W - pad - qs, H - pad - qs, qs);
+    } else if (L === 'bar') {
+      var bh = H * (wide ? 0.38 : 0.3);
+      g.fillStyle = state.accent; g.fillRect(0, 0, W, bh);
+      var barInk = on(state.accent);
+      px = fit(g, nm.toUpperCase(), W - pad * 2, bh * 0.5, '900'); g.font = font('900', px); text(g, nm.toUpperCase(), pad, bh - pad * 0.7, 'left', barInk);
+      qs = qr ? Math.min(H - bh - pad * 2, W * (wide ? 0.3 : 0.4)) : 0;
+      var tw2 = W - pad * (qr ? 3 : 2) - qs, ty = bh + pad;
+      if (ttl) { var tp4 = fit(g, ttl, tw2, S * 0.075, '700'); ty += tp4; g.font = font('700', tp4); text(g, ttl, pad, ty); }
+      stackLines(g, d, pad, H - pad, tw2, S * 0.062, 'left');
+      if (qr) drawQr(g, W - pad - qs, H - pad - qs, qs);
+      if (state.pic) { var lp2 = bh * 0.62; drawPic(g, W - pad - lp2, (bh - lp2) / 2, lp2, lp2, false); }
+    } else if (L === 'split') {
+      if (wide) {
+        var sw = W * 0.42; g.fillStyle = state.accent; g.fillRect(0, 0, sw, H);
+        var si = on(state.accent), sy = H * 0.5;
+        if (state.pic) { var pz = Math.min(sw - pad * 2, H * 0.36); drawPic(g, (sw - pz) / 2, pad, pz, pz, false); sy = pad + pz + pad * 0.8; }
+        px = fit(g, nm, sw - pad * 1.6, H * 0.14, '900'); g.font = font('900', px); text(g, nm, sw / 2, sy + px * 0.35, 'center', si);
+        if (ttl) { var tp5 = fit(g, ttl, sw - pad * 1.6, H * 0.065, '600'); g.font = font('600', tp5); text(g, ttl, sw / 2, sy + px * 0.35 + tp5 * 1.7, 'center', si); }
+        var rx = sw + pad, rw = W - sw - pad * 2;
+        qs = qr ? Math.min(H * 0.5, rw * 0.62) : 0;
+        if (qr) drawQr(g, W - pad - qs, pad, qs);
+        stackLines(g, d, rx, H - pad, rw, H * 0.068, 'left');
+      } else {
+        var shh = H * 0.46; g.fillStyle = state.accent; g.fillRect(0, 0, W, shh);
+        var si2 = on(state.accent);
+        px = fit(g, nm, W - pad * 2, S * 0.15, '900'); g.font = font('900', px); text(g, nm, W / 2, shh / 2 + px * 0.35, 'center', si2);
+        if (ttl) { var tp6 = fit(g, ttl, W - pad * 2, S * 0.065, '600'); g.font = font('600', tp6); text(g, ttl, W / 2, shh / 2 + px * 0.35 + tp6 * 1.7, 'center', si2); }
+        qs = qr ? Math.min(H - shh - pad * 2, W * 0.42) : 0;
+        if (qr) drawQr(g, W - pad - qs, H - pad - qs, qs);
+        stackLines(g, d, pad, H - pad, W - pad * 3 - qs, S * 0.058, 'left');
+      }
+    } else { // scan
+      if (wide) {
+        qs = H - pad * 2;
+        var qx = pad;
+        if (qr) drawQr(g, qx, pad, qs); else qs = -pad;
+        var rx2 = qx + qs + pad, rw2 = W - rx2 - pad, yy = pad;
+        var sc = fit(g, 'SCAN ME', rw2, H * 0.09, '900'); yy += sc; g.font = font('900', sc); text(g, qr ? 'SCAN ME' : '', rx2, yy, 'left', state.accent);
+        px = fit(g, nm, rw2, H * 0.15, '900'); yy += px * 1.3; g.font = font('900', px); text(g, nm, rx2, yy);
+        if (ttl) { var tp7 = fit(g, ttl, rw2, H * 0.065, '600'); yy += tp7 * 1.6; g.font = font('600', tp7); text(g, ttl, rx2, yy); }
+        stackLines(g, d, rx2, H - pad, rw2, H * 0.062, 'left');
+      } else {
+        qs = qr ? S * 0.56 : 0;
+        var y3 = pad;
+        if (qr) { var sc2 = fit(g, 'SCAN ME', W - pad * 2, S * 0.08, '900'); y3 += sc2; g.font = font('900', sc2); text(g, 'SCAN ME', W / 2, y3, 'center', state.accent); y3 += pad * 0.5; drawQr(g, (W - qs) / 2, y3, qs); y3 += qs; }
+        px = fit(g, nm, W - pad * 2, S * 0.12, '900'); y3 += px * 1.35; g.font = font('900', px); text(g, nm, W / 2, y3, 'center');
+        stackLines(g, d, W / 2, H - pad, W - pad * 2, S * 0.055, 'center');
+      }
+    }
+  }
+
+  // ---------- flyer layouts ----------
+  // Every piece of text is its own "block". The layout puts it in a good spot,
+  // then the person can drag it (state.off) or make it bigger or smaller.
+  function rnd(k) { var s = Math.sin(k * 12.9898) * 43758.5453; return s - Math.floor(s); }
+  function drawBorder(g, W, H, S) {
+    var i = S * 0.035, lw = Math.max(1, S * 0.006), t = state.border;
+    g.save(); g.strokeStyle = state.accent; g.lineWidth = lw;
+    if (t === 'line') g.strokeRect(i, i, W - i * 2, H - i * 2);
+    else if (t === 'double') { g.strokeRect(i, i, W - i * 2, H - i * 2); g.lineWidth = lw * 0.6; var j = i + S * 0.018; g.strokeRect(j, j, W - j * 2, H - j * 2); }
+    else if (t === 'dashed') { g.setLineDash([S * 0.025, S * 0.015]); g.strokeRect(i, i, W - i * 2, H - i * 2); }
+    else if (t === 'round') {
+      var r = S * 0.06, x0 = i, y0 = i, x1 = W - i, y1 = H - i;
+      g.beginPath(); g.moveTo(x0 + r, y0); g.arcTo(x1, y0, x1, y1, r); g.arcTo(x1, y1, x0, y1, r); g.arcTo(x0, y1, x0, y0, r); g.arcTo(x0, y0, x1, y0, r); g.closePath(); g.stroke();
+    } else if (t === 'ticks') {
+      var band = S * 0.05, o = i + band, step = S * 0.016, k = 0, x, y, len;
+      g.strokeRect(i, i, W - i * 2, H - i * 2); g.strokeRect(o, o, W - o * 2, H - o * 2);
+      g.lineWidth = lw * 0.75; g.beginPath();
+      for (x = o + step / 2; x < W - o; x += step) {
+        len = band * (0.3 + 0.35 * rnd(k++)); g.moveTo(x, i + (band - len) / 2); g.lineTo(x, i + (band + len) / 2);
+        len = band * (0.3 + 0.35 * rnd(k++)); g.moveTo(x, H - i - (band + len) / 2); g.lineTo(x, H - i - (band - len) / 2);
+      }
+      for (y = o + step / 2; y < H - o; y += step) {
+        len = band * (0.3 + 0.35 * rnd(k++)); g.moveTo(i + (band - len) / 2, y); g.lineTo(i + (band + len) / 2, y);
+        len = band * (0.3 + 0.35 * rnd(k++)); g.moveTo(W - i - (band + len) / 2, y); g.lineTo(W - i - (band - len) / 2, y);
+      }
+      g.stroke();
+    }
+    g.restore();
+  }
+
+  function drawFlyer(g, W, H, opt) {
+    opt = opt || {};
+    var S = Math.min(W, H), hd = HEADS[state.head], qr = hasQr(), hits = opt.hits;
+    var P = S * 0.07 + (state.border === 'ticks' ? S * 0.07 : state.border !== 'none' ? S * 0.03 : 0), CW = W - P * 2;
+    var kick = (F.fKick || '').trim(), head = (F.fHead || '').trim() || 'Your headline', sub = (F.fSub || '').trim(), foot = (F.fFoot || '').trim();
+    if (hd.up) head = head.toUpperCase();
+    var det = (F.fDetails || '').split('\n').map(function (v) { return v.trim(); }).filter(Boolean).slice(0, 6);
+    g.fillStyle = state.bg; g.fillRect(0, 0, W, H); g.textBaseline = 'alphabetic';
+    if (state.border !== 'none') drawBorder(g, W, H, S);
+
+    function blk(key, ax, ay, fn) {
+      var o = state.off[key] || { dx: 0, dy: 0, s: 1 }, tx = ax + o.dx * W, ty = ay + o.dy * H;
+      g.save(); g.translate(tx, ty); g.scale(o.s, o.s); g.translate(-ax, -ay);
+      var prev = bb; bb = [1e9, 1e9, -1e9, -1e9];
+      var r = fn();
+      var b = bb; bb = prev; g.restore();
+      if (hits && b[0] < b[2]) {
+        var pd = S * 0.015;
+        hits.push({ key: key, x0: (tx + (b[0] - ax) * o.s - pd) / W, y0: (ty + (b[1] - ay) * o.s - pd) / H, x1: (tx + (b[2] - ax) * o.s + pd) / W, y1: (ty + (b[3] - ay) * o.s + pd) / H });
+      }
+      return r;
+    }
+    function hfont(px, h) { h = h || hd; return (h.w || '400') + ' ' + Math.max(1, Math.round(px)) + 'px ' + h.css + ', ' + FONTS.bold; }
+    function capOf(px) { g.font = hfont(px); var m = g.measureText('H'); return (m.actualBoundingBoxAscent || px * 0.72) / px; }
+    // Headline wrapped onto up to maxLines lines, shrunk until it fits. Returns the bottom.
+    function headLines(x, yTop, maxW, maxPx, maxLines, align, maxH) {
+      var px = maxPx, lines = [head], cap, pitch;
+      for (var i = 0; i < 60; i++) {
+        g.font = hfont(px); lines = wrap(g, head, maxW); cap = capOf(px); pitch = hd.up ? cap * px * 1.22 : px * 1.02;
+        var h = (lines.length - 1) * pitch + cap * px;
+        if (lines.length <= maxLines && lines.every(function (l) { return g.measureText(l).width <= maxW; }) && (!maxH || h <= maxH)) break;
+        px *= 0.93;
+      }
+      g.font = hfont(px);
+      lines.forEach(function (l, n) { text(g, l, x, yTop + cap * px + n * pitch, align, state.ink); });
+      return yTop + cap * px + (lines.length - 1) * pitch + (hd.up ? 0 : px * 0.22);
+    }
+    // One word per line, each word as wide as the page (the JOIN US look).
+    function stackHead(x, yTop, maxW, maxH) {
+      var words = head.split(/\s+/).filter(Boolean), lines = words;
+      if (words.length > 4) { var per = Math.ceil(words.length / 4); lines = []; for (var i = 0; i < words.length; i += per) lines.push(words.slice(i, i + per).join(' ')); }
+      g.font = hfont(100);
+      var sizes = lines.map(function (l) { return Math.min(S * 0.6, maxW / Math.max(1, g.measureText(l).width) * 100); });
+      var cap = capOf(100), gap = 0.16, total = 0;
+      sizes.forEach(function (s, n) { total += s * cap + (n ? s * cap * gap : 0); });
+      var k = total > maxH ? maxH / total : 1, yy = yTop;
+      lines.forEach(function (l, n) { var s = sizes[n] * k; if (n) yy += s * cap * gap; yy += s * cap; g.font = hfont(s); text(g, l, x, yy, 'left', state.ink); });
+      return yy;
+    }
+    function line1(t, x, y, maxW, px, weight, align, color) { var p = fit(g, t, maxW, px, weight); g.font = font(weight, p); text(g, t, x, y + p * 0.8, align, color); return y + p * 1.15; }
+    function list(x, yTop, maxW, px, align, color) { var yy = yTop; det.forEach(function (l) { var p = fit(g, l, maxW, px, '600'); g.font = font('600', p); text(g, l, x, yy + px * 0.85, align, color); yy += px * 1.45; }); return yy; }
+    function listH(px) { return det.length ? det.length * px * 1.45 : 0; }
+    // Ruled boxes for the details (date | time). A "|" splits a line into boxes.
+    function boxes(x0, yTop, w, px) {
+      var rh = px * 2.1, lw = Math.max(1, S * 0.004);
+      g.strokeStyle = state.accent; g.lineWidth = lw;
+      det.forEach(function (l, n) {
+        var cells = l.split('|').map(function (c) { return c.trim(); }).filter(Boolean), cw = w / cells.length, y = yTop + n * rh;
+        g.strokeRect(x0, y, w, rh); track(x0, y, x0 + w, y + rh);
+        cells.forEach(function (c, m) {
+          if (m) { g.beginPath(); g.moveTo(x0 + m * cw, y); g.lineTo(x0 + m * cw, y + rh); g.stroke(); }
+          var p = fit(g, c.toUpperCase(), cw - px, px, '700'); g.font = font('700', p); text(g, c.toUpperCase(), x0 + m * cw + cw / 2, y + rh / 2 + p * 0.36, 'center', state.ink);
+        });
+      });
+      return yTop + det.length * rh;
+    }
+    function badge(cx, cy, w, t) {
+      var rx = w / 2, ry = w * 0.2;
+      track(cx - rx, cy - ry * 1.5, cx + rx, cy + ry * 1.5);
+      g.save(); g.translate(cx, cy); g.rotate(-0.13);
+      g.strokeStyle = state.ink; g.lineWidth = Math.max(1, S * 0.005);
+      g.beginPath(); g.ellipse(0, 0, rx, ry, 0, 0, Math.PI * 2); g.stroke();
+      var sh = HEADS.shrik, px = ry * 1.05; g.font = hfont(px, sh);
+      while (px > 6 && g.measureText(t).width > rx * 1.6) { px *= 0.93; g.font = hfont(px, sh); }
+      var prev = bb; bb = null; text(g, t, 0, px * 0.33, 'center', state.ink); bb = prev;
+      g.restore();
+    }
+
+    var L = state.flyerLayout, y, qs;
+    var footY = H - P, footRes = foot ? S * 0.07 : 0;
+
+    if (L === 'stack') {
+      qs = qr ? S * 0.24 : 0;
+      var dpx = S * 0.042, low = Math.max(qs, listH(dpx)) + footRes + S * 0.04;
+      y = P;
+      if (kick) y = blk('kick', P, y, function () { return line1(kick.toUpperCase(), P, y, CW, S * 0.045, '800', 'left', state.accent); }) + S * 0.015;
+      var subRes = sub ? S * 0.08 : 0;
+      y = blk('head', P, y, function () { return stackHead(P, y, CW, H - P - low - y - subRes); });
+      if (sub) blk('sub', P, y + S * 0.03, function () { return line1(sub, P, y + S * 0.03, CW, S * 0.055, '800', 'left', state.accent); });
+      if (det.length) blk('details', P, footY - footRes - listH(dpx), function () { return list(P, footY - footRes - listH(dpx), CW - qs - S * 0.04, dpx, 'left', state.ink); });
+      if (qr) blk('qr', W - P - qs, H - P - qs, function () { drawQr(g, W - P - qs, H - P - qs, qs); });
+      if (foot) blk('foot', P, footY, function () { var p = fit(g, foot, CW - qs - S * 0.04, S * 0.04, '800'); g.font = font('800', p); text(g, foot, P, footY, 'left', state.accent); });
+
+    } else if (L === 'invite') {
+      y = P + S * 0.01;
+      if (kick) y = blk('kick', W / 2, y, function () { return line1(kick.toUpperCase(), W / 2, y, CW, S * 0.042, '700', 'center', state.accent); }) + S * 0.01;
+      y = blk('head', W / 2, y, function () { return headLines(W / 2, y, CW, S * 0.2, 3, 'center', H * 0.34); }) + S * 0.035;
+      if (sub) y = blk('sub', W / 2, y, function () { return line1(sub.toUpperCase(), W / 2, y, CW, S * 0.045, '800', 'center', state.ink); }) + S * 0.02;
+      var bpx = S * 0.034, boxH = det.length * bpx * 2.1, both = state.pic && qr;
+      qs = both ? Math.max(boxH, S * 0.16) : 0;
+      var boxW = CW - (both ? qs + S * 0.03 : 0), boxTop = footY - footRes - Math.max(boxH, qs);
+      if (det.length) blk('details', P, boxTop, function () { return boxes(P, boxTop, boxW, bpx); });
+      var midT = y + S * 0.02, midB = boxTop - S * 0.04, midH = midB - midT;
+      if (state.pic && midH > S * 0.1) blk('pic', W / 2, midT, function () { drawPic(g, P + CW * 0.1, midT, CW * 0.8, midH, false); });
+      if (qr && !state.pic && midH > S * 0.1) { var q1 = Math.min(midH, S * 0.4); blk('qr', W / 2 - q1 / 2, midT + (midH - q1) / 2, function () { drawQr(g, W / 2 - q1 / 2, midT + (midH - q1) / 2, q1); }); }
+      if (both) blk('qr', W - P - qs, boxTop, function () { drawQr(g, W - P - qs, boxTop, qs); });
+      if (foot) blk('foot', W / 2, footY, function () { var p = fit(g, foot, CW, S * 0.04, '700'); g.font = font('700', p); text(g, foot, W / 2, footY, 'center', state.accent); });
+
+    } else if (L === 'retro') {
+      y = P;
+      if (kick) y = blk('kick', P, y, function () { return line1(kick.toUpperCase(), P, y, CW, S * 0.04, '700', 'left', state.accent); }) + S * 0.01;
+      y = blk('head', P, y, function () { return headLines(P, y, CW, S * 0.22, 3, 'left', H * 0.36); }) + S * 0.04;
+      if (sub) y = blk('sub', P, y, function () { var p = S * 0.06; g.font = 'italic 400 ' + Math.round(p) + 'px ' + FONTS.classic; while (p > 6 && g.measureText(sub).width > CW) { p *= 0.93; g.font = 'italic 400 ' + Math.round(p) + 'px ' + FONTS.classic; } text(g, sub, P, y + p * 0.8, 'left', state.ink); return y + p * 1.3; }) + S * 0.01;
+      if (det.length) y = blk('details', P, y, function () { return list(P, y, CW * 0.9, S * 0.036, 'left', state.ink); });
+      var bw = CW * 0.64, bh = bw * 0.4, bcy = H - P - bh / 2;
+      qs = qr ? S * 0.2 : 0;
+      var pT = y + S * 0.04, pB = H - P - Math.max(bh, qs) - S * 0.04;
+      if (state.pic && pB - pT > S * 0.1) blk('pic', P, pT, function () { drawPic(g, P, pT, CW, pB - pT, true); });
+      if (foot) blk('foot', W - P - bw / 2, bcy, function () { badge(W - P - bw / 2, bcy, bw, foot); });
+      if (qr) blk('qr', P, H - P - qs, function () { drawQr(g, P, H - P - qs, qs); });
+
+    } else if (L === 'poster') {
+      var ph = state.pic ? H * 0.46 : 0;
+      if (state.pic) blk('pic', 0, 0, function () { drawPic(g, 0, 0, W, ph, true); });
+      y = state.pic ? ph + S * 0.05 : P;
+      qs = qr ? S * 0.22 : 0;
+      if (kick) y = blk('kick', P, y, function () { return line1(kick.toUpperCase(), P, y, CW, S * 0.045, '800', 'left', state.accent); }) + S * 0.01;
+      y = blk('head', P, y, function () { return headLines(P, y, CW, S * (state.pic ? 0.15 : 0.26), state.pic ? 2 : 3, 'left', H * (state.pic ? 0.2 : 0.42)); }) + S * 0.035;
+      if (sub) y = blk('sub', P, y, function () { return line1(sub, P, y, CW, S * 0.05, '700', 'left', state.accent); }) + S * 0.02;
+      if (det.length) blk('details', P, y, function () { return list(P, y, CW - qs - S * 0.04, S * 0.042, 'left', state.ink); });
+      if (qr) blk('qr', W - P - qs, H - P - qs, function () { drawQr(g, W - P - qs, H - P - qs, qs); });
+      if (foot) blk('foot', P, footY, function () { var p = fit(g, foot, CW - qs - S * 0.04, S * 0.04, '800'); g.font = font('800', p); text(g, foot, P, footY, 'left', state.accent); });
+
+    } else { // street: word of mouth, scan me
+      y = P * 0.7;
+      if (kick) {
+        var rh = S * 0.1, rcy = y + rh / 2;
+        blk('kick', W / 2, rcy, function () {
+          g.save(); g.translate(W / 2, rcy); g.rotate(-0.045);
+          g.fillStyle = state.accent; g.fillRect(-W * 0.62, -rh / 2, W * 1.24, rh);
+          var p = fit(g, kick.toUpperCase(), W * 0.8, rh * 0.52, '900'); g.font = font('900', p);
+          var prev = bb; bb = null; text(g, kick.toUpperCase(), 0, p * 0.36, 'center', on(state.accent)); bb = prev;
+          g.restore(); track(0, rcy - rh * 0.9, W, rcy + rh * 0.9);
+        });
+        y += rh + S * 0.06;
+      } else y = P;
+      y = blk('head', W / 2, y, function () { return headLines(W / 2, y, CW, S * 0.2, 3, 'center', H * 0.3); }) + S * 0.05;
+      var spx = S * 0.05, dpx2 = S * 0.04, below = (sub ? spx * 1.6 : 0) + listH(dpx2) + footRes;
+      var avail = H - P - below - y - S * 0.03;
+      qs = qr ? Math.max(S * 0.14, Math.min(S * 0.42, avail)) : 0;
+      if (qr) { var qy = y; blk('qr', W / 2 - qs / 2, qy, function () { drawQr(g, W / 2 - qs / 2, qy, qs); }); y += qs + S * 0.03; }
+      else if (state.pic && avail > S * 0.1) { var py = y; blk('pic', W / 2, py, function () { drawPic(g, P, py, CW, avail, true); }); y += avail + S * 0.03; }
+      if (sub) y = blk('sub', W / 2, y, function () { return line1(sub.toUpperCase(), W / 2, y, CW, spx, '900', 'center', state.accent); }) + spx * 0.3;
+      if (det.length) blk('details', W / 2, y, function () { return list(W / 2, y, CW, dpx2, 'center', state.ink); });
+      if (foot) blk('foot', W / 2, footY, function () { var p = fit(g, foot, CW, S * 0.04, '800'); g.font = font('800', p); text(g, foot, W / 2, footY, 'center', state.ink); });
+    }
+  }
+
+  // ---------- sizes and sheets ----------
+  function pieceIn() {
+    if (state.kind === 'card') return SHAPES[state.shape];
+    if (state.flyerMode === 4) return [4, 5.25];
+    if (state.flyerMode === 6) return [4, 3.5];
+    return [8.5, 11];
+  }
+  // Business card sheets: how many fit on a letter page, butted together, centered.
+  function cardGrid() {
+    var s = SHAPES[state.shape], cols = Math.floor(8 / s[0]), rows = Math.floor(10.5 / s[1]);
+    return { cols: cols, rows: rows, w: s[0], h: s[1], x0: (8.5 - cols * s[0]) / 2, y0: (11 - rows * s[1]) / 2 };
+  }
+  function flyerGrid() {
+    if (state.flyerMode === 4) return { cols: 2, rows: 2, w: 4, h: 5.25, x0: 0.25, y0: 0.25 };
+    if (state.flyerMode === 6) return { cols: 2, rows: 3, w: 4, h: 3.5, x0: 0.25, y0: 0.25 };
+    return null;
+  }
+  function drawPiece(g, W, H, opt) { if (state.kind === 'card') drawCard(g, W, H); else drawFlyer(g, W, H, opt); }
+  function pieceCanvas(wIn, hIn, dpi, bleedIn, opt) {
+    var b = bleedIn || 0, c = document.createElement('canvas');
+    c.width = Math.round((wIn + b * 2) * dpi); c.height = Math.round((hIn + b * 2) * dpi);
+    var g = c.getContext('2d');
+    g.fillStyle = state.bg; g.fillRect(0, 0, c.width, c.height);
+    g.save(); g.translate(Math.round(b * dpi), Math.round(b * dpi)); drawPiece(g, Math.round(wIn * dpi), Math.round(hIn * dpi), opt); g.restore();
+    return c;
+  }
+  function sheetCanvas(dpi) {
+    var c = document.createElement('canvas'); c.width = Math.round(8.5 * dpi); c.height = Math.round(11 * dpi);
+    var g = c.getContext('2d'); g.fillStyle = '#ffffff'; g.fillRect(0, 0, c.width, c.height);
+    if (state.kind === 'flyer' && state.flyerMode === 1) { drawPiece(g, c.width, c.height); return c; }
+    var gr = state.kind === 'card' ? cardGrid() : flyerGrid();
+    var pw = Math.round(gr.w * dpi), phh = Math.round(gr.h * dpi), one = pieceCanvas(gr.w, gr.h, dpi, 0);
+    for (var r = 0; r < gr.rows; r++) for (var col = 0; col < gr.cols; col++) g.drawImage(one, Math.round((gr.x0 + col * gr.w) * dpi), Math.round((gr.y0 + r * gr.h) * dpi), pw, phh);
+    // Cut marks in the white margin, on every cut line
+    g.strokeStyle = '#888'; g.lineWidth = Math.max(1, dpi / 150);
+    var L = 0.18 * dpi, gap = 0.04 * dpi, X0 = gr.x0 * dpi, Y0 = gr.y0 * dpi, X1 = (gr.x0 + gr.cols * gr.w) * dpi, Y1 = (gr.y0 + gr.rows * gr.h) * dpi;
+    g.beginPath();
+    for (var i = 0; i <= gr.cols; i++) { var x = (gr.x0 + i * gr.w) * dpi; g.moveTo(x, Y0 - gap); g.lineTo(x, Math.max(0, Y0 - gap - L)); g.moveTo(x, Y1 + gap); g.lineTo(x, Math.min(c.height, Y1 + gap + L)); }
+    for (var j = 0; j <= gr.rows; j++) { var yy = (gr.y0 + j * gr.h) * dpi; g.moveTo(X0 - gap, yy); g.lineTo(Math.max(0, X0 - gap - L), yy); g.moveTo(X1 + gap, yy); g.lineTo(Math.min(c.width, X1 + gap + L), yy); }
+    g.stroke();
+    return c;
+  }
+  function count() { if (state.kind === 'card') { var gr = cardGrid(); return gr.cols * gr.rows; } return state.flyerMode; }
+
+  // ---------- preview ----------
+  var pv = $('preview'), pg = pv.getContext('2d'), queued = 0, previewHits = [];
+  function render() {
+    if (queued) return;
+    queued = requestAnimationFrame(function () { queued = 0; renderNow(); });
+  }
+  function renderNow() {
+    var sheet = state.kind === 'card' && state.cardMode === 'sheet', fly = state.kind === 'flyer';
+    $('stage').classList.toggle('sheet', sheet);
+    $('stage').classList.toggle('movable', fly);
+    $('moveBar').hidden = !fly;
+    var c;
+    previewHits = [];
+    if (sheet) c = sheetCanvas(80);
+    else { var p = pieceIn(), dpi = Math.min(220, 900 / Math.max(p[0], p[1])); c = pieceCanvas(p[0], p[1], dpi, 0, fly ? { hits: previewHits } : null); }
+    pv.width = c.width; pv.height = c.height; pg.drawImage(c, 0, 0);
+    if (fly && state.sel) {
+      previewHits.forEach(function (h) {
+        if (h.key !== state.sel) return;
+        pg.save(); pg.lineWidth = Math.max(2, pv.width / 260); pg.setLineDash([pv.width / 70, pv.width / 110]);
+        pg.strokeStyle = lum(state.bg) > 0.5 ? '#1a6cff' : '#7fd1ff';
+        pg.strokeRect(h.x0 * pv.width, h.y0 * pv.height, (h.x1 - h.x0) * pv.width, (h.y1 - h.y0) * pv.height); pg.restore();
+      });
+    }
+    updMove();
+    var p2 = pieceIn();
+    $('sizeLine').textContent = state.kind === 'card'
+      ? (state.cardMode === 'sheet' ? count() + ' cards on a letter page, ' + p2[0] + ' x ' + p2[1] + ' in each' : 'One card, ' + p2[0] + ' x ' + p2[1] + ' in, plus 1/8 in extra edge for the print shop')
+      : (state.flyerMode === 1 ? 'Full letter page, 8.5 x 11 in' : 'One flyer shown. Prints ' + state.flyerMode + ' on a letter page, ' + p2[0] + ' x ' + p2[1] + ' in each');
+    $('cardModeNote').textContent = state.cardMode === 'sheet'
+      ? 'A letter page of ' + count() + ' cards with cut marks. Print on card stock and cut on the marks.'
+      : 'Print shops (Vistaprint, Staples, any local shop) want one card with a little extra background around the edge. This file has it.';
+    $('flyerModeNote').textContent = state.flyerMode === 1 ? 'One big flyer, edge to edge.' : state.flyerMode + ' small flyers per page with cut lines. Good for handing out.';
+    drawLayoutThumbs();
+    clearFiles();
+  }
+
+  // ---------- layout picker with live thumbnails ----------
+  var thumbs = [];
+  function buildLayoutButtons() {
+    var box = $('layouts'); box.innerHTML = ''; thumbs = [];
+    var list = state.kind === 'card' ? CARD_LAYOUTS : FLYER_LAYOUTS, cur = state.kind === 'card' ? state.layout : state.flyerLayout;
+    list.forEach(function (l) {
+      var b = document.createElement('button'); b.type = 'button'; b.className = 'layout-btn'; b.setAttribute('aria-pressed', String(l[0] === cur));
+      var cv = document.createElement('canvas'); b.appendChild(cv); b.appendChild(document.createTextNode(l[1]));
+      b.onclick = function () { if (state.kind === 'card') state.layout = l[0]; else { state.flyerLayout = l[0]; state.off = {}; state.sel = null; } buildLayoutButtons(); render(); };
+      box.appendChild(b); thumbs.push([cv, l[0]]);
+    });
+  }
+  function drawLayoutThumbs() {
+    var p = state.kind === 'card' ? SHAPES[state.shape] : [8.5, 11], k = 160 / Math.max(p[0], p[1]);
+    thumbs.forEach(function (t) {
+      var cv = t[0]; cv.width = Math.round(p[0] * k); cv.height = Math.round(p[1] * k);
+      var g = cv.getContext('2d'), keep = state.kind === 'card' ? state.layout : state.flyerLayout, keepOff = state.off;
+      state.off = {};
+      if (state.kind === 'card') state.layout = t[1]; else state.flyerLayout = t[1];
+      drawPiece(g, cv.width, cv.height);
+      if (state.kind === 'card') state.layout = keep; else state.flyerLayout = keep;
+      state.off = keepOff;
+    });
+  }
+
+  // ---------- controls ----------
+  function chips(id, apply) {
+    var box = $(id);
+    box.querySelectorAll('[data-v]').forEach(function (b) {
+      b.addEventListener('click', function () {
+        box.querySelectorAll('[data-v]').forEach(function (o) { o.setAttribute('aria-pressed', String(o === b)); });
+        apply(b.dataset.v); render();
+      });
+    });
+  }
+  chips('kind', function (v) {
+    state.kind = v;
+    $('cardShapeBox').hidden = v !== 'card'; $('cardFields').hidden = v !== 'card'; $('flyerFields').hidden = v !== 'flyer';
+    $('cardOut').hidden = v !== 'card'; $('flyerOut').hidden = v !== 'flyer';
+    $('picLabel').textContent = v === 'card' ? 'Logo' : 'Photo';
+    $('starterBox').hidden = v !== 'flyer'; $('flyerStyle').hidden = v !== 'flyer';
+    buildLayoutButtons();
+  });
+  chips('shape', function (v) { state.shape = v; });
+  chips('headFont', function (v) { state.head = v; });
+  chips('border', function (v) { state.border = v; });
+  chips('font', function (v) { state.font = v; });
+  chips('qrOn', function (v) { state.qrOn = v === 'on'; });
+  chips('cardMode', function (v) { state.cardMode = v; });
+  chips('flyerMode', function (v) { state.flyerMode = parseInt(v, 10); });
+  Object.keys(F).forEach(function (id) { $(id).addEventListener('input', function () { F[id] = this.value; if (id === 'fLink' && state.qrFromTool) { state.qrImg = null; state.qrFromTool = false; $('qrFrom').hidden = true; } render(); }); });
+  [['cBg', 'bg'], ['cInk', 'ink'], ['cAccent', 'accent']].forEach(function (p) { $(p[0]).addEventListener('input', function () { state[p[1]] = this.value; render(); }); });
+  COMBOS.forEach(function (cmb) {
+    var b = document.createElement('button'); b.type = 'button'; b.className = 'swatch'; b.setAttribute('aria-label', 'Color combo');
+    b.innerHTML = '<i style="background:' + cmb[0] + ';grid-row:1/3"></i><i style="background:' + cmb[1] + '"></i><i style="background:' + cmb[2] + '"></i>';
+    b.onclick = function () { state.bg = cmb[0]; state.ink = cmb[1]; state.accent = cmb[2]; $('cBg').value = cmb[0]; $('cInk').value = cmb[1]; $('cAccent').value = cmb[2]; render(); };
+    $('swatches').appendChild(b);
+  });
+  $('pic').addEventListener('change', function () {
+    var f = this.files && this.files[0]; if (!f) return;
+    var url = URL.createObjectURL(f), img = new Image();
+    img.onload = function () { state.pic = img; $('thumb').src = url; $('thumb').classList.add('on'); $('picRemove').hidden = false; render(); };
+    img.onerror = function () { alert("Couldn't open that picture. Try a JPG or PNG."); };
+    img.src = url; this.value = '';
+  });
+  $('picRemove').addEventListener('click', function () { state.pic = null; $('thumb').classList.remove('on'); this.hidden = true; render(); });
+
+  // ---------- files: PNG + PDF (made first, then saved with a tap, iPhone needs the file ready) ----------
+  var files = [];
+  function clearFiles() { files.forEach(function (f) { if (f.url) URL.revokeObjectURL(f.url); }); files = []; $('files').innerHTML = ''; }
+  function toBlob(c, type, q) { return new Promise(function (res) { c.toBlob(res, type, q); }); }
+  // A tiny PDF with one full page JPEG. Exact page size so "Actual size" prints right.
+  function pdfFromJpeg(jpg, pxW, pxH, ptW, ptH) {
+    var enc = new TextEncoder(), parts = [], offs = [], len = 0;
+    function add(x) { var b = typeof x === 'string' ? enc.encode(x) : x; parts.push(b); len += b.length; }
+    function obj(n, body) { offs[n] = len; add(n + ' 0 obj\n'); body(); add('\nendobj\n'); }
+    add('%PDF-1.4\n%\xE2\xE3\xCF\xD3\n');
+    var content = 'q ' + ptW + ' 0 0 ' + ptH + ' 0 0 cm /Im0 Do Q';
+    obj(1, function () { add('<< /Type /Catalog /Pages 2 0 R >>'); });
+    obj(2, function () { add('<< /Type /Pages /Kids [3 0 R] /Count 1 >>'); });
+    obj(3, function () { add('<< /Type /Page /Parent 2 0 R /MediaBox [0 0 ' + ptW + ' ' + ptH + '] /Resources << /XObject << /Im0 4 0 R >> >> /Contents 5 0 R >>'); });
+    obj(4, function () { add('<< /Type /XObject /Subtype /Image /Width ' + pxW + ' /Height ' + pxH + ' /ColorSpace /DeviceRGB /BitsPerComponent 8 /Filter /DCTDecode /Length ' + jpg.length + ' >>\nstream\n'); add(jpg); add('\nendstream'); });
+    obj(5, function () { add('<< /Length ' + content.length + ' >>\nstream\n' + content + '\nendstream'); });
+    var x = len; add('xref\n0 6\n0000000000 65535 f \n');
+    for (var i = 1; i <= 5; i++) add(String(offs[i]).padStart(10, '0') + ' 00000 n \n');
+    add('trailer\n<< /Size 6 /Root 1 0 R >>\nstartxref\n' + x + '\n%%EOF');
+    var out = new Uint8Array(len), o = 0; parts.forEach(function (p) { out.set(p, o); o += p.length; });
+    return new Blob([out], { type: 'application/pdf' });
+  }
+  async function makePdf(c) {
+    var jb = await toBlob(c, 'image/jpeg', 0.92), jpg = new Uint8Array(await jb.arrayBuffer());
+    var wIn = c.width / DPI, hIn = c.height / DPI;
+    return pdfFromJpeg(jpg, c.width, c.height, +(wIn * 72).toFixed(2), +(hIn * 72).toFixed(2));
+  }
+  function slug() { var n = (state.kind === 'card' ? F.fName : F.fHead) || 'nociv'; return n.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '').slice(0, 30) || 'nociv'; }
+  $('make').addEventListener('click', async function () {
+    var btn = this; btn.disabled = true; $('working').hidden = false; clearFiles();
+    await fontsReady;
+    await new Promise(function (r) { setTimeout(r, 30); });
+    try {
+      var base = 'nociv-' + state.kind + '-' + slug(), c, label;
+      if (state.kind === 'card' && state.cardMode === 'single') {
+        var p = pieceIn(); c = pieceCanvas(p[0], p[1], DPI, 0.125);
+        label = 'Card for the print shop';
+        files.push({ name: base + '-print-shop.png', label: label + ' (PNG)', blob: await toBlob(c, 'image/png') });
+        files.push({ name: base + '-print-shop.pdf', label: label + ' (PDF)', blob: await makePdf(c) });
+      } else {
+        c = sheetCanvas(DPI);
+        label = state.kind === 'card' ? 'Sheet of ' + count() + ' cards' : (state.flyerMode === 1 ? 'Flyer, full page' : 'Sheet of ' + count() + ' flyers');
+        files.push({ name: base + '-sheet.pdf', label: label + ' (PDF, best for printing)', blob: await makePdf(c) });
+        files.push({ name: base + '-sheet.png', label: label + ' (PNG)', blob: await toBlob(c, 'image/png') });
+      }
+      c.width = c.height = 0;
+      showFiles();
+    } catch (e) { $('files').innerHTML = '<p class="meta" style="color:var(--red)">That was too much for this phone. Try again, or try on a computer.</p>'; }
+    $('working').hidden = true; btn.disabled = false;
+  });
+  function showFiles() {
+    var box = $('files'); box.innerHTML = '';
+    files.forEach(function (f) {
+      var row = document.createElement('div'); row.className = 'file';
+      var s = document.createElement('span'); s.textContent = f.label;
+      var b = document.createElement('button'); b.type = 'button'; b.textContent = 'Save';
+      b.onclick = function () { saveFile(f); };
+      row.appendChild(s); row.appendChild(b); box.appendChild(row);
+    });
+  }
+  function saveFile(f) {
+    var type = /\.pdf$/.test(f.name) ? 'application/pdf' : 'image/png', file = new File([f.blob], f.name, { type: type });
+    if (matchMedia('(pointer: coarse)').matches && navigator.canShare && navigator.canShare({ files: [file] })) { navigator.share({ files: [file] }).catch(function () {}); return; }
+    if (!f.url) f.url = URL.createObjectURL(f.blob);
+    var a = document.createElement('a'); a.href = f.url; a.download = f.name; document.body.appendChild(a); a.click(); a.remove();
+  }
+
+  // ---------- flyer starters ----------
+  function setChip(id, v) { $(id).querySelectorAll('[data-v]').forEach(function (o) { o.setAttribute('aria-pressed', String(o.dataset.v === v)); }); }
+  STARTERS.forEach(function (st) {
+    var b = document.createElement('button'); b.type = 'button'; b.className = 'chip'; b.textContent = st.n;
+    b.onclick = function () {
+      Object.keys(st.f).forEach(function (k) { F[k] = st.f[k]; $(k).value = st.f[k]; });
+      state.flyerLayout = st.layout; state.head = st.head; state.border = st.border; state.off = {}; state.sel = null;
+      state.bg = st.c[0]; state.ink = st.c[1]; state.accent = st.c[2]; $('cBg').value = st.c[0]; $('cInk').value = st.c[1]; $('cAccent').value = st.c[2];
+      setChip('headFont', st.head); setChip('border', st.border);
+      buildLayoutButtons(); render();
+    };
+    $('starters').appendChild(b);
+  });
+
+  // ---------- drag words around on the flyer ----------
+  var drag = null;
+  function updMove() {
+    var on = !!state.sel;
+    $('moveTip').textContent = on ? 'Moving: ' + (BLOCK_NAMES[state.sel] || '') : 'Tap any words on the flyer, then drag them.';
+    $('mvSmaller').disabled = !on; $('mvBigger').disabled = !on;
+    $('mvReset').textContent = on ? 'Put back' : 'Reset all';
+  }
+  function frac(e) { var r = pv.getBoundingClientRect(); return [(e.clientX - r.left) / r.width, (e.clientY - r.top) / r.height]; }
+  pv.addEventListener('pointerdown', function (e) {
+    if (state.kind !== 'flyer') return;
+    var f = frac(e), hit = null;
+    for (var i = previewHits.length - 1; i >= 0; i--) { var h = previewHits[i]; if (f[0] >= h.x0 && f[0] <= h.x1 && f[1] >= h.y0 && f[1] <= h.y1) { hit = h; break; } }
+    if (!hit) { state.sel = null; render(); return; }
+    e.preventDefault();
+    state.sel = hit.key;
+    var o = state.off[hit.key] || (state.off[hit.key] = { dx: 0, dy: 0, s: 1 });
+    drag = { id: e.pointerId, fx: f[0], fy: f[1], dx: o.dx, dy: o.dy };
+    try { pv.setPointerCapture(e.pointerId); } catch (err) {}
+    render();
+  });
+  pv.addEventListener('pointermove', function (e) {
+    if (!drag || e.pointerId !== drag.id) return;
+    e.preventDefault();
+    var f = frac(e), o = state.off[state.sel];
+    o.dx = Math.max(-1, Math.min(1, drag.dx + f[0] - drag.fx)); o.dy = Math.max(-1, Math.min(1, drag.dy + f[1] - drag.fy));
+    render();
+  });
+  ['pointerup', 'pointercancel'].forEach(function (t) { pv.addEventListener(t, function () { drag = null; }); });
+  function resize(k) { if (!state.sel) return; var o = state.off[state.sel] || (state.off[state.sel] = { dx: 0, dy: 0, s: 1 }); o.s = Math.max(0.4, Math.min(3, o.s * k)); render(); }
+  $('mvSmaller').addEventListener('click', function () { resize(1 / 1.12); });
+  $('mvBigger').addEventListener('click', function () { resize(1.12); });
+  $('mvReset').addEventListener('click', function () { if (state.sel) delete state.off[state.sel]; else state.off = {}; state.sel = null; render(); });
+
+  // Headline fonts load in the background, then everything redraws with them.
+  var fontsReady = Promise.resolve();
+  if (document.fonts && document.fonts.load) {
+    fontsReady = Promise.all(Object.keys(HEADS).filter(function (k) { return k !== 'plain'; }).map(function (k) { return document.fonts.load('40px ' + HEADS[k].css); }))
+      .then(function () { buildLayoutButtons(); render(); }).catch(function () {});
+  }
+
+  // Exposed for testing only.
+  window.__card = { state: state, F: F, hits: function () { return previewHits; }, sheetCanvas: sheetCanvas, pieceCanvas: pieceCanvas, files: function () { return files; } };
+
+  buildLayoutButtons();
+  render();
+})();
+</script>
+</body>
+</html>
