@@ -76,6 +76,18 @@
     background: none; border: 1px solid #111; color: #111; padding: 7px 10px; font-size: 0.75rem; cursor: pointer; font-family: inherit;
   }
   .mine-actions .danger { border-color: var(--red, #c8412f); color: var(--red, #c8412f); }
+  .mine-actions .pick.on, .mine-actions .pick.on:hover, .mine-actions .pick.on:focus { background: #111 !important; color: #fff !important; border-color: #111 !important; font-weight: 900; }
+  .mine-row.picked { box-shadow: 4px 4px 0 #111; }
+  .mine-actions button, .combine-bar button { -webkit-tap-highlight-color: transparent; }
+  .mine-second { width: 44px; height: 44px; flex: 0 0 44px; object-fit: cover; margin: 20px 0 0 -30px; border: 2px solid #fff; position: relative; }
+  .combine-bar { position: sticky; bottom: 0; z-index: 30; background: #f2ecd6; border: 2px solid #111; box-shadow: 4px 4px 0 #111; padding: 12px; margin: 0 0 12px; }
+  .combine-bar[hidden] { display: none; }
+  .combine-bar p { margin: 0 0 8px; font-weight: 700; font-size: 0.9rem; }
+  .combine-bar .row { display: flex; gap: 8px; }
+  .combine-bar button { font: inherit; font-weight: 900; letter-spacing: 0.06em; text-transform: uppercase; padding: 13px; cursor: pointer; border: 2px solid #111; }
+  .combine-bar .go { flex: 1; background: #111; color: #fff; }
+  .combine-bar .go:disabled { opacity: .4; cursor: default; }
+  .combine-bar .clear { background: #fff; color: #111; }
   .mine-comments { margin-top: 8px; border-top: 1px solid #ddd; padding-top: 6px; }
   .mine-comment { display: flex; gap: 8px; align-items: flex-start; font-size: 0.82rem; padding: 5px 0; border-bottom: 1px dotted #ccc; }
   .mine-comment div { flex: 1; word-wrap: break-word; white-space: pre-wrap; }
@@ -129,7 +141,13 @@
 
     <div class="mine">
       <h2>In The Album</h2>
+      <p style="font-size:0.85rem; opacity:.75; margin:0 0 10px;">Front and back posted separately? Tap Combine on each one in order, front first. They turn into one post people swipe through. Split pulls them apart again.</p>
       <div id="mineList"><p style="opacity:.6;">Loading...</p></div>
+      <div class="combine-bar" id="combineBar" hidden>
+        <p id="combineText"></p>
+        <div class="row"><button type="button" class="go" id="combineGo">Combine into one post</button><button type="button" class="clear" id="combineClear">Clear</button></div>
+        <p class="post-msg err" id="combineErr" style="margin:6px 0 0;"></p>
+      </div>
     </div>
   </div>
 </div>
@@ -301,7 +319,7 @@
   async function loadMine() {
     const list = $('mineList');
     const { data: posts, error } = await supabaseClient
-      .from('album_photos').select('*').order('created_at', { ascending: false }).limit(60);
+      .from('album_photos').select('*').order('created_at', { ascending: false }).limit(200);
     if (error) { list.innerHTML = `<p class="post-msg err">Could not load the album. Did the Process Album SQL get run?</p>`; return; }
     if (!posts || !posts.length) { list.innerHTML = '<p style="opacity:.6;">Nothing posted yet.</p>'; return; }
 
@@ -313,6 +331,8 @@
     (comments || []).forEach(c => (byPost[c.photo_id] = byPost[c.photo_id] || []).push(c));
 
     list.innerHTML = '';
+    allPosts = posts;
+    combinePick = combinePick.filter(id => posts.some(p => p.id === id));
     posts.forEach(p => {
       const media = (Array.isArray(p.media) && p.media.length) ? p.media : (p.image_url ? [{ url: p.image_url, type: /\.(mov|mp4|m4v|webm)(\?|$)/i.test(p.image_url) ? 'video' : 'image' }] : []);
       const nowUntil = new Date(Date.parse(p.created_at) + NOW_DAYS * 86400000);
@@ -326,7 +346,7 @@
         : (first.url ? `<img class="mine-thumb" src="${esc(safeUrl(first.url))}" alt="" loading="lazy">` : '<div class="mine-thumb"></div>');
       row.innerHTML = `
         <div class="mine-head">
-          ${thumb}
+          ${thumb}${media[1] && media[1].type !== 'video' ? `<img class="mine-second" src="${esc(safeUrl(media[1].url))}" alt="" loading="lazy">` : ''}
           <div class="mine-info">
             <div class="cap">${p.caption ? esc(p.caption) : '<span style="opacity:.5;">no caption</span>'}</div>
             <div class="meta"><strong>${where}</strong> · ${fmtDate(p.created_at)} · ${media.length} ${media.length === 1 ? 'thing' : 'things'}${p.tag && TAGS[p.tag] ? ' · ' + esc(TAGS[p.tag]) : ''} · ${cs.length} comment${cs.length === 1 ? '' : 's'}</div>
@@ -334,6 +354,8 @@
         </div>
         <div class="mine-actions">
           <button type="button" data-a="cap">Edit caption</button>
+          <button type="button" class="pick" data-a="pick" data-id="${p.id}">Combine</button>
+          ${media.length > 1 ? '<button type="button" data-a="split">Split apart</button>' : ''}
           <button type="button" class="danger" data-a="del">Delete post</button>
         </div>
         <div class="mine-comments" ${cs.length ? '' : 'hidden'}></div>`;
@@ -359,6 +381,22 @@
         if (error) { alert('Could not save: ' + error.message); return; }
         loadMine();
       };
+      row.querySelector('[data-a="pick"]').onclick = () => {
+        const i = combinePick.indexOf(p.id);
+        if (i >= 0) combinePick.splice(i, 1); else combinePick.push(p.id);
+        pickUI();
+      };
+      const splitBtn = row.querySelector('[data-a="split"]');
+      if (splitBtn) splitBtn.onclick = async () => {
+        if (!confirm(`Split this into ${media.length} separate posts? Comments stay on the first one.`)) return;
+        splitBtn.disabled = true; splitBtn.textContent = 'Splitting...';
+        const extra = media.slice(1).map(m => ({ image_url: m.url, media: [m], caption: p.caption, tag: p.tag, created_at: p.created_at }));
+        const ins = await supabaseClient.from('album_photos').insert(extra);
+        if (ins.error) { alert('Could not split: ' + ins.error.message); loadMine(); return; }
+        const up = await supabaseClient.from('album_photos').update({ media: [media[0]], image_url: media[0].url }).eq('id', p.id);
+        if (up.error) alert('Split made the new posts but could not trim the first one: ' + up.error.message);
+        loadMine();
+      };
       row.querySelector('[data-a="del"]').onclick = async () => {
         if (!confirm('Delete this post and its comments?')) return;
         const { error } = await supabaseClient.from('album_photos').delete().eq('id', p.id);
@@ -369,7 +407,51 @@
       };
       list.appendChild(row);
     });
+    pickUI();
   }
+
+  // ===== COMBINE: tap posts in order (front first), they become one post =====
+  // Keeps the oldest date so an old post doesn't jump back into NOW. Comments move over.
+  let allPosts = [], combinePick = [];
+  const MAX_SHOTS = 12;
+  const mediaOf = (p) => (Array.isArray(p.media) && p.media.length) ? p.media : (p.image_url ? [{ url: p.image_url, type: /\.(mov|mp4|m4v|webm)(\?|$)/i.test(p.image_url) ? 'video' : 'image' }] : []);
+  function pickUI() {
+    document.querySelectorAll('#mineList [data-a="pick"]').forEach(b => {
+      const i = combinePick.indexOf(Number(b.dataset.id));
+      b.classList.toggle('on', i >= 0);
+      b.textContent = i >= 0 ? (i === 0 ? '1, front' : String(i + 1)) : 'Combine';
+      b.closest('.mine-row').classList.toggle('combinePick', i >= 0);
+    });
+    const shots = combinePick.reduce((n, id) => n + mediaOf(allPosts.find(p => p.id === id) || {}).length, 0);
+    $('combineBar').hidden = combinePick.length === 0;
+    $('combineText').textContent = combinePick.length < 2 ? 'Now tap Combine on the next one (the back).' : `${combinePick.length} posts, ${shots} shots, in the order you tapped.`;
+    $('combineGo').disabled = combinePick.length < 2 || shots > MAX_SHOTS;
+    $('combineErr').textContent = shots > MAX_SHOTS ? `That's ${shots} shots. One post holds up to ${MAX_SHOTS}.` : '';
+  }
+  $('combineClear').onclick = () => { combinePick = []; pickUI(); };
+  $('combineGo').onclick = async () => {
+    const ps = combinePick.map(id => allPosts.find(p => p.id === id)).filter(Boolean);
+    if (ps.length < 2) return;
+    if (!confirm(`Combine these ${ps.length} posts into one? You can split it apart later.`)) return;
+    const go = $('combineGo'); go.disabled = true; go.textContent = 'Combining...'; $('combineErr').textContent = '';
+    const keep = ps[0], ids = ps.slice(1).map(p => p.id), media = ps.flatMap(mediaOf);
+    try {
+      const up = await supabaseClient.from('album_photos').update({
+        media, image_url: media[0].url,
+        caption: ps.map(p => (p.caption || '').trim()).find(Boolean) || null,
+        tag: ps.map(p => p.tag).find(Boolean) || null,
+        created_at: ps.map(p => p.created_at).sort()[0],
+      }).eq('id', keep.id);
+      if (up.error) throw up.error;
+      const mv = await supabaseClient.from('album_comments').update({ photo_id: keep.id }).in('photo_id', ids);
+      if (mv.error) throw mv.error;
+      const del = await supabaseClient.from('album_photos').delete().in('id', ids);
+      if (del.error) throw del.error;
+      combinePick = [];
+    } catch (e) { $('combineErr').textContent = 'Could not combine: ' + (e.message || e); }
+    go.textContent = 'Combine into one post';
+    loadMine();
+  };
 
   checkSession();
 </script>
