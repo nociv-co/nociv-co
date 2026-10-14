@@ -41,6 +41,10 @@
   }
   textarea { min-height: 84px; resize: vertical; }
   .two { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+  .inrow { display: flex; gap: 6px; }
+  .inrow input { flex: 1; min-width: 0; }
+  .icsel { flex: none; width: 108px; border: 2px solid var(--ink); background: #fff; color: var(--ink); font: inherit; font-size: 16px; padding: 0 6px; border-radius: 0; -webkit-appearance: none; appearance: none; background-image: linear-gradient(45deg, transparent 50%, var(--ink) 50%), linear-gradient(135deg, var(--ink) 50%, transparent 50%); background-position: calc(100% - 14px) 50%, calc(100% - 9px) 50%; background-size: 5px 5px; background-repeat: no-repeat; }
+  @media (max-width: 640px) { #cardFields .two { grid-template-columns: 1fr; gap: 0; } }
   .chips { display: flex; flex-wrap: wrap; gap: 8px; }
   .chip { font: inherit; font-size: 0.85rem; font-weight: 700; padding: 10px 13px; border: 2px solid var(--ink); background: #fff; color: var(--ink); cursor: pointer; border-radius: 0; -webkit-tap-highlight-color: transparent; }
   .chip[aria-pressed="true"] { background: var(--ink); color: #fff; }
@@ -195,12 +199,12 @@
         <label class="lbl" for="fTitle">What you do</label>
         <input type="text" id="fTitle" maxlength="50" placeholder="Hand stenciled clothing, Phoenix">
         <div class="two">
-          <div><label class="lbl" for="fPhone">Phone</label><input type="tel" id="fPhone" maxlength="24" placeholder="(602) 555-0123" autocomplete="tel"></div>
-          <div><label class="lbl" for="fEmail">Email</label><input type="email" id="fEmail" maxlength="60" placeholder="hello@nociv.co" autocomplete="email"></div>
+          <div><label class="lbl" for="fPhone">Phone</label><div class="inrow"><input type="tel" id="fPhone" maxlength="24" placeholder="(602) 555-0123" autocomplete="tel"><select class="icsel" id="icfPhone" aria-label="Icon"><option value="none">No icon</option><option value="phone" selected>Phone</option><option value="mail">Email</option><option value="web">Website</option><option value="ig">Instagram</option><option value="youtube">YouTube</option><option value="x">X</option><option value="tiktok">TikTok / music</option><option value="art">Art</option><option value="pin">Location</option><option value="shop">Shop</option></select></div></div>
+          <div><label class="lbl" for="fEmail">Email</label><div class="inrow"><input type="email" id="fEmail" maxlength="60" placeholder="hello@nociv.co" autocomplete="email"><select class="icsel" id="icfEmail" aria-label="Icon"><option value="none">No icon</option><option value="phone">Phone</option><option value="mail" selected>Email</option><option value="web">Website</option><option value="ig">Instagram</option><option value="youtube">YouTube</option><option value="x">X</option><option value="tiktok">TikTok / music</option><option value="art">Art</option><option value="pin">Location</option><option value="shop">Shop</option></select></div></div>
         </div>
         <div class="two">
-          <div><label class="lbl" for="fWeb">Website</label><input type="text" id="fWeb" maxlength="40" placeholder="nociv.co" autocapitalize="off"></div>
-          <div><label class="lbl" for="fHandle">Handle or extra line</label><input type="text" id="fHandle" maxlength="40" placeholder="@yourname" autocapitalize="off"></div>
+          <div><label class="lbl" for="fWeb">Website</label><div class="inrow"><input type="text" id="fWeb" maxlength="40" placeholder="nociv.co" autocapitalize="off"><select class="icsel" id="icfWeb" aria-label="Icon"><option value="none">No icon</option><option value="phone">Phone</option><option value="mail">Email</option><option value="web" selected>Website</option><option value="ig">Instagram</option><option value="youtube">YouTube</option><option value="x">X</option><option value="tiktok">TikTok / music</option><option value="art">Art</option><option value="pin">Location</option><option value="shop">Shop</option></select></div></div>
+          <div><label class="lbl" for="fHandle">Handle or extra line</label><div class="inrow"><input type="text" id="fHandle" maxlength="40" placeholder="@yourname" autocapitalize="off"><select class="icsel" id="icfHandle" aria-label="Icon"><option value="none">No icon</option><option value="phone">Phone</option><option value="mail">Email</option><option value="web">Website</option><option value="ig" selected>Instagram</option><option value="youtube">YouTube</option><option value="x">X</option><option value="tiktok">TikTok / music</option><option value="art">Art</option><option value="pin">Location</option><option value="shop">Shop</option></select></div></div>
         </div>
       </div>
       <div id="flyerFields" hidden>
@@ -213,7 +217,7 @@
         <label class="lbl" for="fDetails">Details (one per line)</label>
         <textarea id="fDetails" maxlength="300" placeholder="Saturday, 8am to noon&#10;Downtown Phoenix Farmers Market&#10;Cash, card, Tap to Pay"></textarea>
         <label class="lbl" for="fFoot">Bottom line (Retro layout puts it in an oval)</label>
-        <input type="text" id="fFoot" maxlength="50" placeholder="nociv.co" autocapitalize="off">
+        <div class="inrow"><input type="text" id="fFoot" maxlength="50" placeholder="nociv.co" autocapitalize="off"><select class="icsel" id="icfFoot" aria-label="Icon"><option value="none" selected>No icon</option><option value="phone">Phone</option><option value="mail">Email</option><option value="web">Website</option><option value="ig">Instagram</option><option value="youtube">YouTube</option><option value="x">X</option><option value="tiktok">TikTok / music</option><option value="art">Art</option><option value="pin">Location</option><option value="shop">Shop</option></select></div>
       </div>
       <div id="photoBox" hidden>
       <label class="lbl"><span id="picLabel">Photo</span> (optional)</label>
@@ -266,6 +270,17 @@
           <button type="button" class="chip" data-v="dashed" aria-pressed="false">Dashed</button>
           <button type="button" class="chip" data-v="round" aria-pressed="false">Rounded</button>
         </div>
+      </div>
+      <label class="lbl">Icons</label>
+      <div class="chips" id="iconsOn">
+        <button type="button" class="chip" data-v="on" aria-pressed="true">Show icons</button>
+        <button type="button" class="chip" data-v="off" aria-pressed="false">No icons</button>
+      </div>
+      <label class="lbl">Icon color</label>
+      <div class="chips" id="iconColor">
+        <button type="button" class="chip" data-v="accent" aria-pressed="true">Pop color</button>
+        <button type="button" class="chip" data-v="ink" aria-pressed="false">Words color</button>
+        <label class="chip" style="position:relative;overflow:hidden">Pick a color<input type="color" id="iconPick" value="#2f7a4b" style="position:absolute;inset:0;opacity:0;width:100%;height:100%"></label>
       </div>
       <label class="lbl">Small words type</label>
       <div class="chips" id="font">
@@ -416,7 +431,7 @@
     kind: 'card', shape: 'rect', layout: 'classic', flyerLayout: 'stack', head: 'anton', border: 'none', off: {}, sel: null,
     bg: '#111111', ink: '#f2ecd6', accent: '#c8412f', font: 'bold',
     qrOn: true, link: '', qrImg: null, qrFromTool: false, pic: null,
-    cardMode: 'single', flyerMode: 1
+    cardMode: 'single', flyerMode: 1, iconsOn: true, iconColor: 'accent', icons: { fPhone: 'phone', fEmail: 'mail', fWeb: 'web', fHandle: 'ig', fFoot: 'none' }
   };
   var F = {};
   ['fName','fTitle','fPhone','fEmail','fWeb','fHandle','fKick','fHead','fSub','fDetails','fFoot','fLink'].forEach(function (id) { F[id] = ''; });
@@ -503,12 +518,52 @@
     track(dx, dy, dx + dw, dy + dh);
     g.drawImage(img, dx, dy, dw, dh);
   }
-  function details() { return [F.fPhone, F.fEmail, F.fWeb, F.fHandle].map(function (v) { return (v || '').trim(); }).filter(Boolean); }
+  function details() {
+    var out = [];
+    ['fPhone', 'fEmail', 'fWeb', 'fHandle'].forEach(function (k) { var v = (F[k] || '').trim(); if (v) out.push({ t: v, ic: state.iconsOn && state.icons[k] !== 'none' ? state.icons[k] : null }); });
+    return out;
+  }
+  function footIc() { return state.iconsOn && state.icons.fFoot !== 'none' ? state.icons.fFoot : null; }
+  function iconInk() { return state.iconColor === 'accent' ? state.accent : state.iconColor === 'ink' ? state.ink : state.iconColor; }
+  // Simple flat icons, one color. s = box size, centered on (cx, cy).
+  function drawIcon(g, kind, cx, cy, s, color) {
+    if (!kind || kind === 'none') return;
+    var h = s / 2, lw = Math.max(1, s * 0.12), hole = state.bg;
+    g.save(); g.translate(cx, cy); g.fillStyle = color; g.strokeStyle = color; g.lineWidth = lw; g.lineCap = 'round'; g.lineJoin = 'round';
+    function rr(x, y, w, hh, r) { g.beginPath(); g.moveTo(x + r, y); g.arcTo(x + w, y, x + w, y + hh, r); g.arcTo(x + w, y + hh, x, y + hh, r); g.arcTo(x, y + hh, x, y, r); g.arcTo(x, y, x + w, y, r); g.closePath(); }
+    switch (kind) {
+      case 'phone': rr(-h * 0.55, -h * 0.92, h * 1.1, h * 1.84, h * 0.22); g.stroke(); g.fillRect(-h * 0.2, h * 0.55, h * 0.4, lw * 0.8); break;
+      case 'mail': rr(-h * 0.9, -h * 0.62, h * 1.8, h * 1.24, h * 0.12); g.stroke(); g.beginPath(); g.moveTo(-h * 0.8, -h * 0.5); g.lineTo(0, h * 0.12); g.lineTo(h * 0.8, -h * 0.5); g.stroke(); break;
+      case 'web': g.beginPath(); g.arc(0, 0, h * 0.86, 0, Math.PI * 2); g.stroke(); g.beginPath(); g.ellipse(0, 0, h * 0.36, h * 0.86, 0, 0, Math.PI * 2); g.stroke(); g.beginPath(); g.moveTo(-h * 0.86, 0); g.lineTo(h * 0.86, 0); g.stroke(); break;
+      case 'ig': rr(-h * 0.86, -h * 0.86, h * 1.72, h * 1.72, h * 0.5); g.stroke(); g.beginPath(); g.arc(0, 0, h * 0.4, 0, Math.PI * 2); g.stroke(); g.beginPath(); g.arc(h * 0.45, -h * 0.45, lw * 0.6, 0, Math.PI * 2); g.fill(); break;
+      case 'youtube': rr(-h * 0.95, -h * 0.66, h * 1.9, h * 1.32, h * 0.38); g.fill(); g.fillStyle = hole; g.beginPath(); g.moveTo(-h * 0.28, -h * 0.36); g.lineTo(h * 0.42, 0); g.lineTo(-h * 0.28, h * 0.36); g.closePath(); g.fill(); break;
+      case 'x': g.lineWidth = lw * 1.25; g.beginPath(); g.moveTo(-h * 0.75, -h * 0.8); g.lineTo(h * 0.75, h * 0.8); g.stroke(); g.lineWidth = lw * 0.7; g.beginPath(); g.moveTo(h * 0.75, -h * 0.8); g.lineTo(-h * 0.75, h * 0.8); g.stroke(); break;
+      case 'tiktok': g.beginPath(); g.arc(-h * 0.25, h * 0.45, h * 0.38, 0, Math.PI * 2); g.fill(); g.fillRect(h * 0.02, -h * 0.9, lw * 1.1, h * 1.35); g.beginPath(); g.moveTo(h * 0.08, -h * 0.9); g.quadraticCurveTo(h * 0.35, -h * 0.35, h * 0.85, -h * 0.4); g.stroke(); break;
+      case 'art':
+        g.beginPath(); g.moveTo(0, -h * 0.85); g.bezierCurveTo(h * 0.95, -h * 0.85, h * 1.05, h * 0.3, h * 0.45, h * 0.6); g.bezierCurveTo(h * 0.05, h * 0.8, -h * 0.05, h * 0.25, -h * 0.4, h * 0.6); g.bezierCurveTo(-h * 0.85, h * 0.95, -h * 1.0, -h * 0.85, 0, -h * 0.85); g.fill();
+        g.fillStyle = hole; [[-h * 0.38, -h * 0.25], [-h * 0.02, -h * 0.5], [h * 0.38, -h * 0.28], [h * 0.45, h * 0.15]].forEach(function (q) { g.beginPath(); g.arc(q[0], q[1], h * 0.13, 0, Math.PI * 2); g.fill(); });
+        break;
+      case 'pin': g.beginPath(); g.arc(0, -h * 0.25, h * 0.62, Math.PI * 0.85, Math.PI * 2.15); g.lineTo(0, h * 0.95); g.closePath(); g.fill(); g.fillStyle = hole; g.beginPath(); g.arc(0, -h * 0.25, h * 0.24, 0, Math.PI * 2); g.fill(); break;
+      case 'shop': g.beginPath(); g.moveTo(-h * 0.75, -h * 0.35); g.lineTo(h * 0.75, -h * 0.35); g.lineTo(h * 0.62, h * 0.9); g.lineTo(-h * 0.62, h * 0.9); g.closePath(); g.fill(); g.beginPath(); g.arc(0, -h * 0.35, h * 0.38, Math.PI, 0); g.stroke(); break;
+    }
+    g.restore();
+  }
+  // Text with an optional icon in front. y is the text baseline.
+  function iconText(g, t, x, y, align, color, ic, px) {
+    if (!ic) { text(g, t, x, y, align, color); return; }
+    var is = px * 1.05, gap = px * 0.42, tw = g.measureText(t).width, total = is + gap + tw;
+    var x0 = align === 'center' ? x - total / 2 : align === 'right' ? x - total : x;
+    drawIcon(g, ic, x0 + is / 2, y - px * 0.36, is, iconInk()); track(x0, y - px, x0 + is, y);
+    text(g, t, x0 + is + gap, y, 'left', color);
+  }
   function name() { return (F.fName || '').trim() || 'YOUR NAME'; }
   function stackLines(g, lines, x, yBottom, maxW, px, align, color, gap) {
     g.font = font('500', px);
     var y = yBottom;
-    for (var i = lines.length - 1; i >= 0; i--) { var p = fit(g, lines[i], maxW, px, '500'); g.font = font('500', p); text(g, lines[i], x, y, align, color); y -= px * (gap || 1.35); }
+    for (var i = lines.length - 1; i >= 0; i--) {
+      var it = lines[i], t = typeof it === 'string' ? it : it.t, ic = typeof it === 'string' ? null : it.ic;
+      var p = fit(g, t, maxW - (ic ? px * 1.5 : 0), px, '500'); g.font = font('500', p); iconText(g, t, x, y, align, color, ic, p); y -= px * (gap || 1.35);
+    }
     return y;
   }
 
@@ -542,8 +597,13 @@
       px = fit(g, nm, W - pad * 2, S * 0.17, '900'); g.font = font('900', px); text(g, nm, W / 2, cy, 'center');
       if (ttl) { var tp3 = fit(g, ttl, W - pad * 2.4, S * 0.07, '600'); g.font = font('600', tp3); text(g, ttl, W / 2, cy + tp3 * 1.8, 'center', state.accent); }
       g.fillStyle = state.accent; g.fillRect(W / 2 - S * 0.12, cy + S * 0.16, S * 0.24, Math.max(2, S * 0.012));
-      var line = d.join('  ·  '), lw = W - pad * 2 - (qr ? qs + pad * 0.5 : 0);
-      if (line) { var lp = fit(g, line, lw, S * 0.055, '500'); g.font = font('500', lp); text(g, line, qr ? pad : W / 2, H - pad, qr ? 'left' : 'center'); }
+      var lw = W - pad * 2 - (qr ? qs + pad * 0.5 : 0);
+      if (d.length) {
+        var lp = S * 0.055, segW = function (p) { g.font = font('500', p); var w = 0; d.forEach(function (it, i) { w += g.measureText(it.t).width + (it.ic ? p * 1.47 : 0) + (i ? p * 1.4 : 0); }); return w; };
+        while (lp > 4 && segW(lp) > lw) lp *= 0.93;
+        var tot = segW(lp), cx2 = qr ? pad : W / 2 - tot / 2; g.font = font('500', lp);
+        d.forEach(function (it, i) { if (i) cx2 += lp * 1.4; iconText(g, it.t, cx2, H - pad, 'left', state.ink, it.ic, lp); cx2 += g.measureText(it.t).width + (it.ic ? lp * 1.47 : 0); g.font = font('500', lp); });
+      }
       if (qr) drawQr(g, W - pad - qs, H - pad - qs, qs);
     } else if (L === 'bar') {
       var bh = H * (wide ? 0.38 : 0.3);
@@ -717,7 +777,7 @@
       if (sub) blk('sub', P, y + S * 0.03, function () { return line1(sub, P, y + S * 0.03, CW, S * 0.055, '800', 'left', state.accent); });
       if (det.length) blk('details', P, footY - footRes - listH(dpx), function () { return list(P, footY - footRes - listH(dpx), CW - qs - S * 0.04, dpx, 'left', state.ink); });
       if (qr) blk('qr', W - P - qs, H - P - qs, function () { drawQr(g, W - P - qs, H - P - qs, qs); });
-      if (foot) blk('foot', P, footY, function () { var p = fit(g, foot, CW - qs - S * 0.04, S * 0.04, '800'); g.font = font('800', p); text(g, foot, P, footY, 'left', state.accent); });
+      if (foot) blk('foot', P, footY, function () { var p = fit(g, foot, CW - qs - S * 0.04, S * 0.04, '800'); g.font = font('800', p); iconText(g, foot, P, footY, 'left', state.accent, footIc(), p); });
 
     } else if (L === 'invite') {
       y = P + S * 0.01;
@@ -732,7 +792,7 @@
       if (state.pic && midH > S * 0.1) blk('pic', W / 2, midT, function () { drawPic(g, P + CW * 0.1, midT, CW * 0.8, midH, false); });
       if (qr && !state.pic && midH > S * 0.1) { var q1 = Math.min(midH, S * 0.4); blk('qr', W / 2 - q1 / 2, midT + (midH - q1) / 2, function () { drawQr(g, W / 2 - q1 / 2, midT + (midH - q1) / 2, q1); }); }
       if (both) blk('qr', W - P - qs, boxTop, function () { drawQr(g, W - P - qs, boxTop, qs); });
-      if (foot) blk('foot', W / 2, footY, function () { var p = fit(g, foot, CW, S * 0.04, '700'); g.font = font('700', p); text(g, foot, W / 2, footY, 'center', state.accent); });
+      if (foot) blk('foot', W / 2, footY, function () { var p = fit(g, foot, CW, S * 0.04, '700'); g.font = font('700', p); iconText(g, foot, W / 2, footY, 'center', state.accent, footIc(), p); });
 
     } else if (L === 'retro') {
       y = P;
@@ -757,7 +817,7 @@
       if (sub) y = blk('sub', P, y, function () { return line1(sub, P, y, CW, S * 0.05, '700', 'left', state.accent); }) + S * 0.02;
       if (det.length) blk('details', P, y, function () { return list(P, y, CW - qs - S * 0.04, S * 0.042, 'left', state.ink); });
       if (qr) blk('qr', W - P - qs, H - P - qs, function () { drawQr(g, W - P - qs, H - P - qs, qs); });
-      if (foot) blk('foot', P, footY, function () { var p = fit(g, foot, CW - qs - S * 0.04, S * 0.04, '800'); g.font = font('800', p); text(g, foot, P, footY, 'left', state.accent); });
+      if (foot) blk('foot', P, footY, function () { var p = fit(g, foot, CW - qs - S * 0.04, S * 0.04, '800'); g.font = font('800', p); iconText(g, foot, P, footY, 'left', state.accent, footIc(), p); });
 
     } else { // street: word of mouth, scan me
       y = P * 0.7;
@@ -780,7 +840,7 @@
       else if (state.pic && avail > S * 0.1) { var py = y; blk('pic', W / 2, py, function () { drawPic(g, P, py, CW, avail, true); }); y += avail + S * 0.03; }
       if (sub) y = blk('sub', W / 2, y, function () { return line1(sub.toUpperCase(), W / 2, y, CW, spx, '900', 'center', state.accent); }) + spx * 0.3;
       if (det.length) blk('details', W / 2, y, function () { return list(W / 2, y, CW, dpx2, 'center', state.ink); });
-      if (foot) blk('foot', W / 2, footY, function () { var p = fit(g, foot, CW, S * 0.04, '800'); g.font = font('800', p); text(g, foot, W / 2, footY, 'center', state.ink); });
+      if (foot) blk('foot', W / 2, footY, function () { var p = fit(g, foot, CW, S * 0.04, '800'); g.font = font('800', p); iconText(g, foot, W / 2, footY, 'center', state.ink, footIc(), p); });
     }
     if (state.logo) {
       var ls = S * 0.17, lx = L === 'street' ? P : W - P - ls, ly = L === 'street' ? H - P - ls - (foot ? S * 0.07 : 0) : L === 'poster' && state.pic ? H * 0.46 - ls - S * 0.03 : P * 0.6;
@@ -929,6 +989,10 @@
     buildLayoutButtons();
   });
   chips('shape', function (v) { state.shape = v; });
+  chips('iconsOn', function (v) { state.iconsOn = v === 'on'; });
+  chips('iconColor', function (v) { state.iconColor = v; });
+  $('iconPick').addEventListener('input', function () { state.iconColor = this.value; $('iconColor').querySelectorAll('[data-v]').forEach(function (b) { b.setAttribute('aria-pressed', 'false'); }); render(); });
+  ['fPhone', 'fEmail', 'fWeb', 'fHandle', 'fFoot'].forEach(function (k) { $('ic' + k).addEventListener('change', function () { state.icons[k] = this.value; render(); }); });
   chips('headFont', function (v) { state.head = v; });
   chips('border', function (v) { state.border = v; });
   chips('font', function (v) { state.font = v; });
@@ -1108,7 +1172,7 @@
   // Exposed for testing only.
   if (window.nocivFocus) window.nocivFocus(document.querySelector('.preview-col'), $('stage'), 'Screen locked. Tap words and drag them. A- and A+ resize.');
   // Remember what you typed and picked on this phone (pictures are not saved).
-  var SAVE_KEYS = ['kind', 'shape', 'layout', 'flyerLayout', 'head', 'border', 'off', 'bg', 'ink', 'accent', 'font', 'qrOn', 'cardMode', 'flyerMode'];
+  var SAVE_KEYS = ['iconsOn', 'iconColor', 'icons', 'kind', 'shape', 'layout', 'flyerLayout', 'head', 'border', 'off', 'bg', 'ink', 'accent', 'font', 'qrOn', 'cardMode', 'flyerMode'];
   function remember() { try { var o = { F: F, st: {} }; SAVE_KEYS.forEach(function (k) { o.st[k] = state[k]; }); localStorage.setItem('nocivCard', JSON.stringify(o)); } catch (e) {} }
   var remT = 0; ['input', 'click', 'pointerup', 'change'].forEach(function (ev) { document.addEventListener(ev, function () { clearTimeout(remT); remT = setTimeout(remember, 300); }, true); });
   (function restore() {
@@ -1118,6 +1182,7 @@
     SAVE_KEYS.forEach(function (k) { if (o.st[k] != null) state[k] = o.st[k]; });
     $('cBg').value = state.bg; $('cInk').value = state.ink; $('cAccent').value = state.accent;
     function setC(id, v) { var box = $(id); if (!box) return; box.querySelectorAll('[data-v]').forEach(function (b) { b.setAttribute('aria-pressed', String(b.dataset.v === String(v))); }); }
+    ['fPhone', 'fEmail', 'fWeb', 'fHandle', 'fFoot'].forEach(function (k) { if (state.icons && state.icons[k]) $('ic' + k).value = state.icons[k]; }); setC('iconsOn', state.iconsOn ? 'on' : 'off'); if (state.iconColor === 'accent' || state.iconColor === 'ink') setC('iconColor', state.iconColor); else { setC('iconColor', '-'); }
     setC('shape', state.shape); setC('font', state.font); setC('qrOn', state.qrOn ? 'on' : 'off'); setC('cardMode', state.cardMode); setC('flyerMode', state.flyerMode); setC('headFont', state.head); setC('border', state.border);
     var kb = $('kind').querySelector('[data-v="' + state.kind + '"]'); if (kb) kb.click();
   })();
