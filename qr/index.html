@@ -51,6 +51,12 @@
   .pick { display: flex; align-items: center; gap: 12px; }
   .pick-btn { position: relative; overflow: hidden; display: inline-block; background: var(--ink); color: #fff; font-weight: 900; font-size: 0.85rem; letter-spacing: 0.08em; text-transform: uppercase; padding: 13px 16px; cursor: pointer; }
   .pick-btn input { position: absolute; inset: 0; opacity: 0; cursor: pointer; font-size: 16px; }
+  .pic-edit-wrap { display: flex; gap: 12px; align-items: center; }
+  #picEdit { width: 150px; height: 150px; flex: none; border: 2px solid var(--ink); background: repeating-conic-gradient(#eee 0 25%, #fff 0 50%) 0 0 / 16px 16px; touch-action: none; cursor: grab; }
+  #picEdit:active { cursor: grabbing; }
+  .row-inline { display: flex; gap: 10px; align-items: center; }
+  .row-inline input[type=range] { flex: 1; }
+  input[type=range] { width: 100%; accent-color: var(--ink); }
   .thumb { width: 54px; height: 54px; object-fit: cover; border: 2px solid var(--ink); background: #fff; display: none; }
   .thumb.on { display: block; }
   .linkish { background: none; border: none; font: inherit; font-size: 0.85rem; text-decoration: underline; cursor: pointer; color: var(--ink); padding: 6px 0; }
@@ -132,6 +138,20 @@
           <button type="button" class="chip" data-v="0.26" aria-pressed="false">Large</button>
         </div>
         <p class="meta" id="softNote" hidden>Large isn't available with the Soft style, so it still scans.</p>
+        <label class="lbl">Frame it</label>
+        <div class="pic-edit-wrap">
+          <canvas id="picEdit" width="440" height="440" aria-label="Drag to move your picture. Pinch to zoom."></canvas>
+          <p class="meta">Drag to move it. Pinch or use the slider to zoom.</p>
+        </div>
+        <label class="lbl" for="picZoom">Zoom</label>
+        <input type="range" id="picZoom" min="0.5" max="4" step="0.01" value="1">
+        <label class="lbl" for="picRot">Turn</label>
+        <div class="row-inline"><input type="range" id="picRot" min="-180" max="180" step="1" value="0"><button type="button" class="chip" id="picRot90">Turn 90&deg;</button></div>
+        <div class="chips" id="picFit" style="margin-top:10px;">
+          <button type="button" class="chip" data-v="fill" aria-pressed="true">Fill the shape</button>
+          <button type="button" class="chip" data-v="fit" aria-pressed="false">Show the whole picture</button>
+          <button type="button" class="chip" id="picReset">Reset</button>
+        </div>
       </div>
       <p class="meta">Optional. A logo or face works best. The code gets a little stronger when you add one, so it still scans.</p>
     </section>
@@ -175,7 +195,7 @@
 
   var $ = function (id) { return document.getElementById(id); };
   var EXPORT_PX = 1600;
-  var state = { link: '', color: '#000000', bg: '#ffffff', style: 'square', shape: 'rounded', picSize: 0.22, img: null, caption: '' };
+  var state = { link: '', color: '#000000', bg: '#ffffff', style: 'square', shape: 'rounded', picSize: 0.22, img: null, caption: '', pz: 1, px: 0, py: 0, rot: 0, fit: 'fill' };
 
   // ---------- the link ----------
   // People type "mysite.com". Add https:// for them. Leave mailto:, tel:,
@@ -215,6 +235,7 @@
     var img = new Image();
     img.onload = function () {
       state.img = img;
+      resetFrame();
       $('thumb').src = url; $('thumb').classList.add('on');
       $('picRemove').hidden = false; $('picOpts').hidden = false;
       render();
@@ -230,6 +251,65 @@
     render();
   });
 
+
+  // ---------- framing the picture (zoom, move, turn, fit) ----------
+  // Draws the picture centered at (cx, cy) inside a box of size `box`, with the
+  // person's zoom, offset (fractions of the box) and turn applied.
+  function drawFramed(c, img, cx, cy, box) {
+    var iw = img.naturalWidth, ih = img.naturalHeight;
+    var base = state.fit === 'fit' ? Math.min(box / iw, box / ih) : Math.max(box / iw, box / ih);
+    var k = base * state.pz;
+    c.save();
+    c.translate(cx + state.px * box, cy + state.py * box);
+    c.rotate(state.rot * Math.PI / 180);
+    c.drawImage(img, -iw * k / 2, -ih * k / 2, iw * k, ih * k);
+    c.restore();
+  }
+  var pe = $('picEdit'), pctx = pe.getContext('2d');
+  function shapePath(c, x, y, s) {
+    c.beginPath();
+    if (state.shape === 'circle') c.arc(x + s / 2, y + s / 2, s / 2, 0, Math.PI * 2);
+    else if (state.shape === 'rounded') roundRect(c, x, y, s, s, s * 0.18);
+    else c.rect(x, y, s, s);
+  }
+  function drawEditor() {
+    var S = pe.width, inset = S * 0.12, box = S - inset * 2;
+    pctx.clearRect(0, 0, S, S);
+    if (!state.img) return;
+    // faded picture outside the shape, so you see what's cut
+    pctx.globalAlpha = 0.25; drawFramed(pctx, state.img, S / 2, S / 2, box); pctx.globalAlpha = 1;
+    pctx.save(); shapePath(pctx, inset, inset, box); pctx.clip();
+    if (state.bg !== 'transparent') { pctx.fillStyle = state.bg; pctx.fill(); }
+    drawFramed(pctx, state.img, S / 2, S / 2, box);
+    pctx.restore();
+    pctx.lineWidth = 3; pctx.strokeStyle = '#111'; shapePath(pctx, inset, inset, box); pctx.stroke();
+  }
+  var pts = {}, startDist = 0, startZoom = 1;
+  pe.addEventListener('pointerdown', function (e) { pe.setPointerCapture(e.pointerId); pts[e.pointerId] = { x: e.clientX, y: e.clientY }; var ids = Object.keys(pts); if (ids.length === 2) { var a = pts[ids[0]], b = pts[ids[1]]; startDist = Math.hypot(a.x - b.x, a.y - b.y); startZoom = state.pz; } });
+  pe.addEventListener('pointermove', function (e) {
+    var p = pts[e.pointerId]; if (!p) return;
+    var ids = Object.keys(pts);
+    if (ids.length === 1) {
+      var r = pe.getBoundingClientRect(), box = r.width * 0.76;
+      state.px += (e.clientX - p.x) / box; state.py += (e.clientY - p.y) / box;
+      state.px = Math.max(-1.5, Math.min(1.5, state.px)); state.py = Math.max(-1.5, Math.min(1.5, state.py));
+    }
+    p.x = e.clientX; p.y = e.clientY;
+    if (ids.length === 2) {
+      var a = pts[ids[0]], b = pts[ids[1]], d = Math.hypot(a.x - b.x, a.y - b.y);
+      if (startDist > 0) { state.pz = Math.max(0.5, Math.min(4, startZoom * d / startDist)); $('picZoom').value = state.pz; }
+    }
+    queueRender();
+  });
+  function endPt(e) { delete pts[e.pointerId]; startDist = 0; }
+  pe.addEventListener('pointerup', endPt); pe.addEventListener('pointercancel', endPt);
+  var rq = 0; function queueRender() { if (rq) return; rq = requestAnimationFrame(function () { rq = 0; render(); }); }
+  $('picZoom').addEventListener('input', function () { state.pz = parseFloat(this.value); queueRender(); });
+  $('picRot').addEventListener('input', function () { state.rot = parseFloat(this.value); queueRender(); });
+  $('picRot90').addEventListener('click', function () { var r = state.rot + 90; if (r > 180) r -= 360; state.rot = r; $('picRot').value = r; render(); });
+  function resetFrame() { state.pz = 1; state.px = 0; state.py = 0; state.rot = 0; $('picZoom').value = 1; $('picRot').value = 0; }
+  $('picReset').addEventListener('click', function () { resetFrame(); render(); });
+
   function chipGroup(id, key, parse) {
     var box = $(id);
     box.querySelectorAll('[data-v]').forEach(function (b) {
@@ -242,6 +322,7 @@
   }
   chipGroup('shape', 'shape');
   chipGroup('picSize', 'picSize', parseFloat);
+  chipGroup('picFit', 'fit');
   chipGroup('bg', 'bg');
   chipGroup('style', 'style');
   // Soft corners plus a big picture is too much for scanners (tested), so
@@ -346,10 +427,6 @@
       var bx = (hole.start + quiet) * m, by = bx, bs = hole.n * m;
       var pad = Math.max(2, Math.round(m * 0.4));
       var w = bs - pad * 2, h = bs - pad * 2;
-      var iw = state.img.naturalWidth, ih = state.img.naturalHeight;
-      var scale = Math.max(w / iw, h / ih);               // fill the box, crop the extra
-      var sw = w / scale, sh = h / scale;
-      var sx = (iw - sw) / 2, sy = (ih - sh) / 2;
       ctx.save();
       ctx.beginPath();
       if (state.shape === 'circle') ctx.arc(bx + bs / 2, by + bs / 2, w / 2, 0, Math.PI * 2);
@@ -357,7 +434,7 @@
       else ctx.rect(bx + pad, by + pad, w, h);
       ctx.clip();
       if (state.bg !== 'transparent') { ctx.fillStyle = state.bg; ctx.fill(); }
-      ctx.drawImage(state.img, sx, sy, sw, sh, bx + pad, by + pad, w, h);
+      drawFramed(ctx, state.img, bx + pad + w / 2, by + pad + h / 2, w);
       ctx.restore();
     }
 
@@ -380,6 +457,7 @@
   var renderToken = 0;
   function render() {
     var token = ++renderToken;
+    drawEditor();
     $('contrastWarn').hidden = contrastOk();
     if (!state.link) {
       preview.hidden = true; $('empty').hidden = false;
