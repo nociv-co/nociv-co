@@ -1,0 +1,461 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<!-- Site Created & Designed by Jasilyn A. Anderson | NOCIV.CO -->
+<meta charset="UTF-8">
+<title>QR Maker: NOCIV.CO</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="description" content="Free QR code maker from NOCIV. Your link, your picture in the middle. Nothing tracked, nothing saved.">
+<meta property="og:title" content="NOCIV QR Maker">
+<meta property="og:description" content="Free QR codes with your own picture in the middle. No sign up. Nothing tracked.">
+<style>
+  :root {
+    --paper: #e9e6df; --note: #f2ecd6; --ink: #1a1a1a; --red: #c8412f; --green: #2f7a4b; --muted: #6b665c;
+  }
+  * { box-sizing: border-box; }
+  html, body { margin: 0; background: var(--paper); color: var(--ink); }
+  body { font-family: -apple-system, BlinkMacSystemFont, "Helvetica Neue", Arial, sans-serif; -webkit-text-size-adjust: 100%; }
+  .wrap { max-width: 980px; margin: 0 auto; padding: 22px 16px 60px; }
+
+  .top { margin: 0 0 22px; }
+  .top h1 { margin: 0; font-size: clamp(30px, 8vw, 46px); font-weight: 900; letter-spacing: 0.04em; line-height: 1; }
+  .top h1 span { background: var(--ink); color: #fff; padding: 2px 10px; display: inline-block; transform: rotate(-1.5deg); }
+  .top p { margin: 14px 0 0; font-size: 1rem; line-height: 1.5; max-width: 520px; }
+  .top .full { display: none; margin-top: 10px; font-size: 0.85rem; font-weight: 700; color: var(--ink); }
+  .in-frame .top { display: none; }
+
+  .grid { display: grid; grid-template-columns: 1fr; gap: 26px; }
+  @media (min-width: 820px) {
+    .grid { grid-template-columns: 1fr 380px; align-items: start; }
+    .preview-col { position: sticky; top: 16px; grid-row: 1 / span 3; grid-column: 2; }
+  }
+
+  .note { background: var(--note); padding: 26px 18px 20px; position: relative; box-shadow: 0 6px 16px rgba(0,0,0,0.16); }
+  .note::before { content: ''; position: absolute; top: -11px; left: 22px; width: 64px; height: 22px; background: var(--ink); opacity: .85; transform: rotate(-3deg); }
+  .note:nth-of-type(even) { transform: rotate(0.4deg); }
+  .note h2 { margin: 0 0 12px; font-size: 1rem; font-weight: 900; letter-spacing: 0.08em; text-transform: uppercase; }
+  .note h2 b { background: var(--red); color: #fff; padding: 1px 7px; margin-right: 6px; }
+
+  label.lbl { display: block; font-size: 0.72rem; font-weight: 800; letter-spacing: 0.08em; text-transform: uppercase; margin: 14px 0 6px; }
+  input[type="url"], input[type="text"] {
+    width: 100%; font: inherit; font-size: 16px; padding: 13px 12px; border: 2px solid var(--ink); background: #fff; color: var(--ink); border-radius: 0;
+  }
+  .goes { font-size: 0.82rem; margin: 8px 0 0; word-break: break-all; color: var(--muted); min-height: 1.2em; }
+  .goes.bad { color: var(--red); font-weight: 700; }
+
+  .chips { display: flex; flex-wrap: wrap; gap: 8px; }
+  .chip { font: inherit; font-size: 0.85rem; font-weight: 700; padding: 10px 13px; border: 2px solid var(--ink); background: #fff; color: var(--ink); cursor: pointer; border-radius: 0; }
+  .chip[aria-pressed="true"] { background: var(--ink); color: #fff; }
+  .chip:disabled { opacity: .4; cursor: default; }
+
+  .pick { display: flex; align-items: center; gap: 12px; }
+  .pick-btn { position: relative; overflow: hidden; display: inline-block; background: var(--ink); color: #fff; font-weight: 900; font-size: 0.85rem; letter-spacing: 0.08em; text-transform: uppercase; padding: 13px 16px; cursor: pointer; }
+  .pick-btn input { position: absolute; inset: 0; opacity: 0; cursor: pointer; font-size: 16px; }
+  .thumb { width: 54px; height: 54px; object-fit: cover; border: 2px solid var(--ink); background: #fff; display: none; }
+  .thumb.on { display: block; }
+  .linkish { background: none; border: none; font: inherit; font-size: 0.85rem; text-decoration: underline; cursor: pointer; color: var(--ink); padding: 6px 0; }
+  .pic-opts[hidden] { display: none; }
+
+  .swatches { display: flex; flex-wrap: wrap; gap: 10px; align-items: center; }
+  .sw { width: 40px; height: 40px; border: 2px solid var(--ink); cursor: pointer; padding: 0; border-radius: 0; }
+  .sw[aria-pressed="true"] { outline: 3px solid var(--red); outline-offset: 2px; }
+  .sw-custom { position: relative; width: 40px; height: 40px; border: 2px dashed var(--ink); display: inline-flex; align-items: center; justify-content: center; font-weight: 900; overflow: hidden; }
+  .sw-custom input { position: absolute; inset: 0; opacity: 0; cursor: pointer; width: 100%; height: 100%; }
+  .warn { font-size: 0.85rem; font-weight: 700; color: var(--red); margin: 10px 0 0; }
+  .warn[hidden] { display: none; }
+
+  .preview { background: #fff; border: 2px solid var(--ink); padding: 14px; text-align: center; }
+  .preview canvas { width: 100%; height: auto; display: block; image-rendering: pixelated; }
+  .empty { padding: 60px 10px; color: var(--muted); font-size: 0.95rem; }
+  .meta { font-size: 0.78rem; color: var(--muted); margin: 10px 0 0; text-align: left; line-height: 1.45; }
+  .check { font-size: 0.85rem; font-weight: 700; margin: 8px 0 0; text-align: left; }
+  .check.ok { color: var(--green); }
+  .check.bad { color: var(--red); }
+  .actions { display: grid; gap: 10px; margin-top: 14px; }
+  .btn { font: inherit; font-size: 1rem; font-weight: 900; letter-spacing: 0.1em; text-transform: uppercase; padding: 16px; border: none; cursor: pointer; border-radius: 0; text-align: center; text-decoration: none; display: block; }
+  .btn.main { background: var(--red); color: #fff; }
+  .btn.alt { background: none; color: var(--ink); border: 2px solid var(--ink); }
+  .btn:disabled { opacity: .45; cursor: default; }
+  .tip { font-size: 0.8rem; line-height: 1.5; margin: 12px 0 0; text-align: left; }
+
+  .foot { margin-top: 40px; font-size: 0.78rem; letter-spacing: 0.1em; text-transform: uppercase; color: var(--muted); text-align: center; }
+  .foot a { color: var(--ink); font-weight: 800; }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <div class="top">
+    <h1><span>QR</span> MAKER</h1>
+    <p>Put your link in, put your picture in the middle, point any phone at it and it goes straight there. Free. No sign up. Your picture never leaves your phone.</p>
+    <a class="full" href="https://nociv.co/qr/" target="_blank" rel="noopener">Open full screen &#8599;</a>
+  </div>
+
+  <div class="grid">
+    <section class="note" aria-labelledby="h1">
+      <h2 id="h1"><b>1</b> Where should it go?</h2>
+      <input type="url" id="url" inputmode="url" autocapitalize="off" autocorrect="off" spellcheck="false" placeholder="yourwebsite.com" autocomplete="url" maxlength="1500">
+      <p class="goes" id="goes" aria-live="polite"></p>
+    </section>
+
+    <div class="preview-col">
+      <div class="preview">
+        <canvas id="canvas" width="900" height="900" hidden aria-label="Your QR code"></canvas>
+        <div class="empty" id="empty">Type a link and your code shows up here.</div>
+        <p class="check" id="check" aria-live="polite"></p>
+        <p class="meta" id="meta"></p>
+        <div class="actions">
+          <button type="button" class="btn main" id="save" disabled>Save Image</button>
+          <a class="btn alt" id="download" href="#" download="qr-code.png" aria-disabled="true">Download PNG</a>
+        </div>
+        <p class="tip"><b>Test it:</b> open your camera and point it at the screen. <b>Printing:</b> stays sharp up to about 5 inches across. Don't go smaller than about 1 inch, or phones struggle.</p>
+      </div>
+    </div>
+
+    <section class="note" aria-labelledby="h2">
+      <h2 id="h2"><b>2</b> Picture in the middle</h2>
+      <div class="pick">
+        <label class="pick-btn">Pick a photo<input type="file" id="pic" accept="image/*"></label>
+        <img class="thumb" id="thumb" alt="Your picture">
+        <button type="button" class="linkish" id="picRemove" hidden>Remove</button>
+      </div>
+      <div class="pic-opts" id="picOpts" hidden>
+        <label class="lbl">Shape</label>
+        <div class="chips" id="shape">
+          <button type="button" class="chip" data-v="square" aria-pressed="false">Square</button>
+          <button type="button" class="chip" data-v="rounded" aria-pressed="true">Rounded</button>
+          <button type="button" class="chip" data-v="circle" aria-pressed="false">Circle</button>
+        </div>
+        <label class="lbl">Size</label>
+        <div class="chips" id="picSize">
+          <button type="button" class="chip" data-v="0.18" aria-pressed="false">Small</button>
+          <button type="button" class="chip" data-v="0.22" aria-pressed="true">Medium</button>
+          <button type="button" class="chip" data-v="0.26" aria-pressed="false">Large</button>
+        </div>
+        <p class="meta" id="softNote" hidden>Large isn't available with the Soft style, so it still scans.</p>
+      </div>
+      <p class="meta">Optional. A logo or face works best. The code gets a little stronger when you add one, so it still scans.</p>
+    </section>
+
+    <section class="note" aria-labelledby="h3">
+      <h2 id="h3"><b>3</b> Make it yours</h2>
+      <label class="lbl">Code color</label>
+      <div class="swatches" id="colors">
+        <button type="button" class="sw" data-v="#000000" style="background:#000000" aria-label="Black" aria-pressed="true"></button>
+        <button type="button" class="sw" data-v="#2b2b2b" style="background:#2b2b2b" aria-label="Charcoal" aria-pressed="false"></button>
+        <button type="button" class="sw" data-v="#a8321f" style="background:#a8321f" aria-label="Red" aria-pressed="false"></button>
+        <button type="button" class="sw" data-v="#1f3a5f" style="background:#1f3a5f" aria-label="Navy" aria-pressed="false"></button>
+        <button type="button" class="sw" data-v="#24533a" style="background:#24533a" aria-label="Green" aria-pressed="false"></button>
+        <label class="sw-custom" title="Pick any color">+<input type="color" id="colorCustom" value="#5a2d82" aria-label="Pick any color"></label>
+      </div>
+      <label class="lbl">Background</label>
+      <div class="chips" id="bg">
+        <button type="button" class="chip" data-v="#ffffff" aria-pressed="true">White</button>
+        <button type="button" class="chip" data-v="#f2ecd6" aria-pressed="false">Cream</button>
+        <button type="button" class="chip" data-v="transparent" aria-pressed="false">See-through</button>
+      </div>
+      <p class="warn" id="contrastWarn" hidden>That color is too light against the background. Phones might not read it. Go darker.</p>
+      <label class="lbl">Style</label>
+      <div class="chips" id="style">
+        <button type="button" class="chip" data-v="square" aria-pressed="true">Classic</button>
+        <button type="button" class="chip" data-v="soft" aria-pressed="false">Soft</button>
+      </div>
+      <label class="lbl" for="caption">Words under it (optional)</label>
+      <input type="text" id="caption" maxlength="40" placeholder="SCAN FOR MY SHOP">
+    </section>
+  </div>
+
+  <p class="foot">A free tool from <a href="https://nociv.co" target="_top">NOCIV.CO</a>. Nothing tracked. Nothing saved.</p>
+</div>
+
+<script src="qr.js"></script>
+<script>
+(function () {
+  'use strict';
+  if (window.self !== window.top) document.documentElement.classList.add('in-frame');
+
+  var $ = function (id) { return document.getElementById(id); };
+  var EXPORT_PX = 1600;
+  var state = { link: '', color: '#000000', bg: '#ffffff', style: 'square', shape: 'rounded', picSize: 0.22, img: null, caption: '' };
+
+  // ---------- the link ----------
+  // People type "mysite.com". Add https:// for them. Leave mailto:, tel:,
+  // sms: and anything already with a scheme alone.
+  function normalize(raw) {
+    var s = (raw || '').trim();
+    if (!s) return { link: '', ok: false, msg: '' };
+    if (/^(https?:\/\/|mailto:|tel:|sms:)/i.test(s)) {
+      // fine as typed
+    } else if (/^[a-z][a-z0-9+.-]*:/i.test(s) && !/^[^:]+:\d/.test(s)) {
+      return { link: '', ok: false, msg: "That doesn't look like a website. Try something like yoursite.com" };
+    } else {
+      s = 'https://' + s.replace(/^\/+/, '');
+    }
+    if (/^https?:\/\//i.test(s)) {
+      var host;
+      try { host = new URL(s).hostname; } catch (e) { host = ''; }
+      if (!host || (host.indexOf('.') === -1 && host !== 'localhost') || /\s/.test(s.replace(/%20/g, ''))) {
+        return { link: '', ok: false, msg: "That doesn't look like a website yet. Try something like yoursite.com" };
+      }
+    }
+    return { link: s, ok: true, msg: 'Goes to: ' + s };
+  }
+  $('url').addEventListener('input', function () {
+    var n = normalize(this.value);
+    state.link = n.link;
+    $('goes').textContent = n.msg;
+    $('goes').className = 'goes' + (n.msg && !n.ok ? ' bad' : '');
+    render();
+  });
+
+  // ---------- picture ----------
+  $('pic').addEventListener('change', function () {
+    var f = this.files && this.files[0];
+    if (!f) return;
+    var url = URL.createObjectURL(f);
+    var img = new Image();
+    img.onload = function () {
+      state.img = img;
+      $('thumb').src = url; $('thumb').classList.add('on');
+      $('picRemove').hidden = false; $('picOpts').hidden = false;
+      render();
+    };
+    img.onerror = function () { alert("Couldn't open that picture. Try a JPG or PNG."); };
+    img.src = url;
+    this.value = '';
+  });
+  $('picRemove').addEventListener('click', function () {
+    state.img = null;
+    $('thumb').classList.remove('on'); $('thumb').removeAttribute('src');
+    this.hidden = true; $('picOpts').hidden = true;
+    render();
+  });
+
+  function chipGroup(id, key, parse) {
+    var box = $(id);
+    box.querySelectorAll('[data-v]').forEach(function (b) {
+      b.addEventListener('click', function () {
+        box.querySelectorAll('[data-v]').forEach(function (o) { o.setAttribute('aria-pressed', String(o === b)); });
+        state[key] = parse ? parse(b.dataset.v) : b.dataset.v;
+        render();
+      });
+    });
+  }
+  chipGroup('shape', 'shape');
+  chipGroup('picSize', 'picSize', parseFloat);
+  chipGroup('bg', 'bg');
+  chipGroup('style', 'style');
+  // Soft corners plus a big picture is too much for scanners (tested), so
+  // Soft tops out at a Medium picture.
+  function syncSoftLimit() {
+    var large = document.querySelector('#picSize [data-v="0.26"]');
+    var soft = state.style === 'soft';
+    large.disabled = soft;
+    $('softNote').hidden = !soft;
+    if (soft && state.picSize > 0.22) {
+      state.picSize = 0.22;
+      $('picSize').querySelectorAll('[data-v]').forEach(function (o) { o.setAttribute('aria-pressed', String(o.dataset.v === '0.22')); });
+    }
+  }
+  $('style').querySelectorAll('[data-v]').forEach(function (b) { b.addEventListener('click', function () { syncSoftLimit(); render(); }); });
+  chipGroup('colors', 'color');
+  $('colorCustom').addEventListener('input', function () {
+    $('colors').querySelectorAll('[data-v]').forEach(function (o) { o.setAttribute('aria-pressed', 'false'); });
+    state.color = this.value;
+    render();
+  });
+  $('caption').addEventListener('input', function () { state.caption = this.value.trim(); render(); });
+
+  // ---------- contrast ----------
+  function lum(hex) {
+    var n = parseInt(hex.slice(1), 16);
+    return [n >> 16 & 255, n >> 8 & 255, n & 255].map(function (c) {
+      c /= 255; return c <= 0.03928 ? c / 12.92 : Math.pow((c + 0.055) / 1.055, 2.4);
+    }).reduce(function (s, c, i) { return s + c * [0.2126, 0.7152, 0.0722][i]; }, 0);
+  }
+  function contrastOk() {
+    var bgHex = state.bg === 'transparent' ? '#ffffff' : state.bg;
+    var a = lum(state.color), b = lum(bgHex);
+    return a < b && (b + 0.05) / (a + 0.05) >= 4;
+  }
+
+  // ---------- drawing ----------
+  function roundRect(ctx, x, y, w, h, r) {
+    r = Math.min(r, w / 2, h / 2);
+    ctx.beginPath();
+    ctx.moveTo(x + r, y);
+    ctx.arcTo(x + w, y, x + w, y + h, r);
+    ctx.arcTo(x + w, y + h, x, y + h, r);
+    ctx.arcTo(x, y + h, x, y, r);
+    ctx.arcTo(x, y, x + w, y, r);
+    ctx.closePath();
+  }
+
+  // Draws onto the canvas at the given width. Returns info for the meta line.
+  function draw(canvas, widthPx) {
+    var qr = NocivQR.encode(state.link, state.img ? 'H' : 'M');
+    var quiet = 4;
+    var cells = qr.size + quiet * 2;
+    var m = Math.floor(widthPx / cells);           // whole pixels per module, stays crisp
+    var qrPx = m * cells;
+    var capH = state.caption ? Math.round(m * 5.5) : 0;
+    canvas.width = qrPx;
+    canvas.height = qrPx + capH;
+    var ctx = canvas.getContext('2d');
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+    if (state.bg !== 'transparent') { ctx.fillStyle = state.bg; ctx.fillRect(0, 0, canvas.width, canvas.height); }
+
+    // Hole in the middle for the picture: whole modules, centered, plus a
+    // one module margin, so no half-cut modules confuse scanners.
+    var hole = null;
+    if (state.img) {
+      var n = Math.round(qr.size * state.picSize);
+      if ((qr.size - n) % 2) n += 1;
+      var start = (qr.size - n) / 2;
+      hole = { x0: start - 1, y0: start - 1, x1: start + n, y1: start + n, n: n, start: start };
+    }
+    function inHole(x, y) { return hole && x >= hole.x0 && x <= hole.x1 && y >= hole.y0 && y <= hole.y1; }
+    function inFinder(x, y) {
+      var s = qr.size;
+      return (x < 7 && y < 7) || (x >= s - 7 && y < 7) || (x < 7 && y >= s - 7);
+    }
+
+    ctx.fillStyle = state.color;
+    for (var y = 0; y < qr.size; y++) {
+      for (var x = 0; x < qr.size; x++) {
+        if (!qr.get(x, y) || inHole(x, y) || inFinder(x, y)) continue;
+        var px = (x + quiet) * m, py = (y + quiet) * m;
+        if (state.style === 'soft') { roundRect(ctx, px, py, m, m, m * 0.3); ctx.fill(); }
+        else ctx.fillRect(px, py, m, m);
+      }
+    }
+    // The three corner squares are drawn solid, so they always read.
+    [[0, 0], [qr.size - 7, 0], [0, qr.size - 7]].forEach(function (f) {
+      var ox = (f[0] + quiet) * m, oy = (f[1] + quiet) * m;
+      var soft = state.style === 'soft';
+      ctx.fillStyle = state.color;
+      if (soft) { roundRect(ctx, ox, oy, 7 * m, 7 * m, m * 1.6); ctx.fill(); } else ctx.fillRect(ox, oy, 7 * m, 7 * m);
+      if (state.bg === 'transparent') ctx.globalCompositeOperation = 'destination-out';
+      ctx.fillStyle = state.bg === 'transparent' ? '#000' : state.bg;
+      if (soft) { roundRect(ctx, ox + m, oy + m, 5 * m, 5 * m, m * 1.1); ctx.fill(); } else ctx.fillRect(ox + m, oy + m, 5 * m, 5 * m);
+      ctx.globalCompositeOperation = 'source-over';
+      ctx.fillStyle = state.color;
+      if (soft) { roundRect(ctx, ox + 2 * m, oy + 2 * m, 3 * m, 3 * m, m * 0.8); ctx.fill(); } else ctx.fillRect(ox + 2 * m, oy + 2 * m, 3 * m, 3 * m);
+    });
+
+    if (hole) {
+      var bx = (hole.start + quiet) * m, by = bx, bs = hole.n * m;
+      var pad = Math.max(2, Math.round(m * 0.4));
+      var w = bs - pad * 2, h = bs - pad * 2;
+      var iw = state.img.naturalWidth, ih = state.img.naturalHeight;
+      var scale = Math.max(w / iw, h / ih);               // fill the box, crop the extra
+      var sw = w / scale, sh = h / scale;
+      var sx = (iw - sw) / 2, sy = (ih - sh) / 2;
+      ctx.save();
+      ctx.beginPath();
+      if (state.shape === 'circle') ctx.arc(bx + bs / 2, by + bs / 2, w / 2, 0, Math.PI * 2);
+      else if (state.shape === 'rounded') roundRect(ctx, bx + pad, by + pad, w, h, w * 0.18);
+      else ctx.rect(bx + pad, by + pad, w, h);
+      ctx.clip();
+      if (state.bg !== 'transparent') { ctx.fillStyle = state.bg; ctx.fill(); }
+      ctx.drawImage(state.img, sx, sy, sw, sh, bx + pad, by + pad, w, h);
+      ctx.restore();
+    }
+
+    if (state.caption) {
+      ctx.fillStyle = state.color;
+      var fs = Math.round(m * 2.6);
+      ctx.font = '900 ' + fs + 'px -apple-system, BlinkMacSystemFont, "Helvetica Neue", Arial, sans-serif';
+      ctx.textAlign = 'center';
+      ctx.textBaseline = 'middle';
+      var text = state.caption.toUpperCase();
+      var max = qrPx - quiet * m * 2;
+      while (ctx.measureText(text).width > max && fs > 10) { fs -= 2; ctx.font = '900 ' + fs + 'px -apple-system, BlinkMacSystemFont, "Helvetica Neue", Arial, sans-serif'; }
+      ctx.fillText(text, qrPx / 2, qrPx - m * 1.2 + capH / 2);
+    }
+    return qr;
+  }
+
+  var preview = $('canvas');
+  var downloadUrl = null;
+  var renderToken = 0;
+  function render() {
+    var token = ++renderToken;
+    $('contrastWarn').hidden = contrastOk();
+    if (!state.link) {
+      preview.hidden = true; $('empty').hidden = false;
+      $('meta').textContent = ''; $('check').textContent = '';
+      $('save').disabled = true; $('download').setAttribute('aria-disabled', 'true');
+      return;
+    }
+    var qr;
+    try { qr = draw(preview, 900); }
+    catch (e) {
+      preview.hidden = true; $('empty').hidden = false;
+      $('empty').textContent = e.message === 'TOO_LONG' ? 'That link is too long for one QR code. Use a shorter link.' : 'Something went wrong drawing that one.';
+      $('save').disabled = true; return;
+    }
+    preview.hidden = false; $('empty').hidden = true; $('empty').textContent = 'Type a link and your code shows up here.';
+    var busy = qr.version >= 10;
+    $('meta').textContent = (busy ? 'Long link, so the code is busy. A shorter link scans easier from far away. ' : '') +
+      (state.img ? 'Extra strong code, so the picture fits.' : '');
+    $('save').disabled = false; $('download').removeAttribute('aria-disabled');
+    selfCheck(token);
+  }
+
+  // Phones that can read QR codes in the browser (most Android Chrome) check
+  // the code right here. iPhone can't, so iPhone users test with the camera.
+  var detector = null;
+  try { if ('BarcodeDetector' in window) detector = new BarcodeDetector({ formats: ['qr_code'] }); } catch (e) { detector = null; }
+  function selfCheck(token) {
+    var el = $('check');
+    el.textContent = ''; el.className = 'check';
+    if (!detector) return;
+    detector.detect(preview).then(function (codes) {
+      if (token !== renderToken) return;
+      var hit = codes.some(function (c) { return c.rawValue === state.link; });
+      el.textContent = hit ? 'Scan check: reads fine.' : 'Scan check: this phone had trouble reading it. Try a smaller picture or a darker color.';
+      el.className = 'check ' + (hit ? 'ok' : 'bad');
+    }).catch(function () {});
+  }
+
+  // ---------- saving ----------
+  function fileName() {
+    var host = '';
+    try { host = new URL(state.link).hostname.replace(/^www\./, ''); } catch (e) {}
+    return 'qr-' + (host || 'code').replace(/[^a-z0-9.-]/gi, '') + '.png';
+  }
+  function exportBlob() {
+    return new Promise(function (resolve) {
+      var c = document.createElement('canvas');
+      draw(c, EXPORT_PX);
+      c.toBlob(function (b) { resolve(b); }, 'image/png');
+    });
+  }
+  $('download').addEventListener('click', function (e) {
+    e.preventDefault();
+    if (!state.link) return;
+    var a = this;
+    exportBlob().then(function (blob) {
+      if (downloadUrl) URL.revokeObjectURL(downloadUrl);
+      downloadUrl = URL.createObjectURL(blob);
+      var tmp = document.createElement('a');
+      tmp.href = downloadUrl; tmp.download = fileName();
+      document.body.appendChild(tmp); tmp.click(); tmp.remove();
+    });
+  });
+  // iPhone: the share sheet has "Save Image", which puts it in Photos.
+  $('save').addEventListener('click', function () {
+    if (!state.link) return;
+    var btn = this;
+    exportBlob().then(function (blob) {
+      var file = new File([blob], fileName(), { type: 'image/png' });
+      if (navigator.canShare && navigator.canShare({ files: [file] })) {
+        return navigator.share({ files: [file], title: 'QR code' }).catch(function () {});
+      }
+      $('download').click();
+    });
+  });
+})();
+</script>
+</body>
+</html>

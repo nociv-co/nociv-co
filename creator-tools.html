@@ -2,13 +2,14 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<title>Creator Tools — NOCIV.CO</title>
+<title>Creator Tools: NOCIV.CO</title>
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<link rel="stylesheet" href="style.css">
+<link rel="stylesheet" href="style.css?v=4.1">
 <style>
   /* --- Iframe-based builders --- */
   .builder-iframe-container { width: 100%; max-width: 1100px; margin: 0 auto; padding: 0 10px; }
   .builder-iframe { width: 100%; height: 850px; border: 2px solid #333; border-radius: 6px; background: #0f0f0f; }
+  .builder-iframe.light { background: #e9e6df; }
 
   .build-header {
     display: flex; justify-content: space-between; align-items: center;
@@ -25,10 +26,10 @@
 <body>
 
 <header class="nociv-header">
-  <a href="index.html"><img class="torn-header-img" src="header.png" alt="NOCIV.CO — Nothing Of Civilization"></a>
+  <a href="index.html"><img class="torn-header-img" src="header.png" alt="NOCIV.CO: Nothing Of Civilization"></a>
 </header>
 
-<!-- MAIN TABS (Using your new Shop & Tools image buttons) -->
+<!-- MAIN TABS -->
 <nav class="tabs">
   <a href="about.html" class="img-tab"><img src="nav-about.png" alt="About"></a>
   <a href="shop.html" class="img-tab"><img src="nav-shop.png" alt="Shop"></a>
@@ -47,6 +48,14 @@
     <div class="hub-card" data-panel="zineBuilderPanel">
       <div class="hub-name">Zine Builder</div>
       <div class="hub-desc">Design, auto-impose, and print custom booklets directly from your browser.</div>
+    </div>
+    <div class="hub-card" data-panel="qrBuilderPanel">
+      <div class="hub-name">QR Maker</div>
+      <div class="hub-desc">Your link plus your picture in the middle. Print it on flyers, stickers, your table at the market.</div>
+    </div>
+    <div class="hub-card" data-panel="stencilBuilderPanel">
+      <div class="hub-name">Stencil + Halftone</div>
+      <div class="hub-desc">Turn a photo into a cut stencil, print layers, or halftone dots you can screen print in one color or CMYK.</div>
     </div>
   </div>
 </div>
@@ -90,7 +99,55 @@
   </div>
 </div>
 
-<footer class="nociv-footer">NOCIV.CO — Nothing Of Civilization</footer>
+<!-- ===== QR MAKER (lives at nociv.co/qr) ===== -->
+<div class="subpanel" id="qrBuilderPanel">
+  <div class="wrap">
+    <span class="hub-back" data-back="buildHub">&larr; Back to The Build</span>
+    <div class="build-header">
+      <div>
+        <h2 style="margin: 0 0 4px; font-size: 1.3rem; letter-spacing: 0.05em;">QR MAKER</h2>
+        <p>Your link, your picture in the middle. Save it, print it, stick it up.</p>
+      </div>
+      <a href="qr/" target="_blank" rel="noopener" class="fullscreen-btn">
+        Open Fullscreen ↗
+      </a>
+    </div>
+
+    <iframe
+      src="qr/"
+      class="builder-iframe light"
+      title="NOCIV QR Maker"
+      allow="web-share; clipboard-write; fullscreen"
+      loading="lazy">
+    </iframe>
+  </div>
+</div>
+
+<!-- ===== STENCIL + HALFTONE (lives at nociv.co/stencil) ===== -->
+<div class="subpanel" id="stencilBuilderPanel">
+  <div class="wrap">
+    <span class="hub-back" data-back="buildHub">&larr; Back to The Build</span>
+    <div class="build-header">
+      <div>
+        <h2 style="margin: 0 0 4px; font-size: 1.3rem; letter-spacing: 0.05em;">STENCIL + HALFTONE</h2>
+        <p>Stencils and layers for cutting, or halftone dots for screen printing a photo.</p>
+      </div>
+      <a href="stencil/" target="_blank" rel="noopener" class="fullscreen-btn">
+        Open Fullscreen ↗
+      </a>
+    </div>
+
+    <iframe
+      src="stencil/"
+      class="builder-iframe"
+      title="NOCIV Stencil and Halftone"
+      allow="web-share; fullscreen"
+      loading="lazy">
+    </iframe>
+  </div>
+</div>
+
+<footer class="nociv-footer">NOCIV.CO: Nothing Of Civilization</footer>
 
 <script>
   // ===== THE BUILD HUB: pick a tool by reading its description first =====
@@ -109,7 +166,6 @@
       window.scrollTo({ top: 0, behavior: 'smooth' });
     });
   });
-
 </script>
 
 </body>
