@@ -321,6 +321,26 @@
   }
   .cheat-preset-btn.active { background: var(--red); color: #fff; border-color: var(--red); font-weight: 700; }
 
+  .idea-box { margin-top: 22px; padding: 16px; border: 2px solid #111; background: #fff; box-shadow: 4px 4px 0 #111; }
+  .idea-box h3 { margin: 0 0 6px; font-size: 1.05rem; font-weight: 900; letter-spacing: 0.06em; text-transform: uppercase; }
+  .idea-box input { font-size: 16px; }
+  .idea-small { display: block; font-size: 0.72rem; opacity: .7; margin-top: 3px; }
+  .idea-table { width: 100%; border-collapse: collapse; margin: 14px 0 6px; font-size: 0.88rem; }
+  .idea-table th { text-align: right; font-size: 0.72rem; text-transform: uppercase; letter-spacing: 0.04em; opacity: .7; padding: 4px 0 6px; }
+  .idea-table th:first-child { text-align: left; }
+  .idea-table td { padding: 5px 0; border-top: 1px solid #eee; text-align: right; }
+  .idea-table td:first-child { text-align: left; }
+  .idea-table tr.keep td { font-weight: 900; border-top: 2px solid #111; font-size: 1rem; }
+  .idea-table .good { color: var(--green); } .idea-table .thin { color: #a07800; } .idea-table .bad { color: var(--red); }
+  .idea-verdict { font-size: 0.88rem; line-height: 1.5; margin: 6px 0 12px; padding: 10px 12px; background: #f2ecd6; border-left: 4px solid #111; }
+  .idea-row { border: 1.5px solid #111; padding: 10px 12px; margin-top: 10px; background: #fafafa; }
+  .idea-row b { display: block; font-weight: 900; }
+  .idea-row .meta { font-size: 0.8rem; opacity: .75; margin-top: 2px; }
+  .idea-row a { word-break: break-all; font-size: 0.75rem; }
+  .idea-row .btns { display: flex; gap: 6px; margin-top: 8px; }
+  .idea-row .btns button { background: none; border: 1px solid #111; padding: 7px 10px; font: inherit; font-size: 0.75rem; cursor: pointer; }
+  .idea-row .btns .danger { border-color: var(--red); color: var(--red); }
+
   /* --- Cross-listing controls on each product row --- */
   .cross-list-row { display: flex; align-items: center; gap: 6px; flex-wrap: wrap; margin-top: 8px; }
   .cross-list-label { font-size: 0.72rem; opacity: .6; margin-right: 2px; }
@@ -728,6 +748,49 @@
             <div class="margin-calc-row total"><span>Margin</span><span id="cheatMarginOut">0%</span></div>
           </div>
           <div class="field-hint">Green is a healthy margin, gold is thin but workable, red means you're losing money at this price on this channel, raise the price or find a cheaper way to make or ship it.</div>
+        </div>
+
+        <div class="idea-box">
+          <h3>Thinking about a blank?</h3>
+          <p class="field-hint" style="margin-top:0;">Paste the link from S&amp;S (or anywhere), put in what the order costs you, and see what one finished piece makes you online and at the market. Uses your real shipping table. Save it to compare blanks side by side.</p>
+          <label for="ideaLink">Link to the blank</label>
+          <input type="url" id="ideaLink" inputmode="url" placeholder="https://www.ssactivewear.com/p/...">
+          <label for="ideaName">What is it</label>
+          <input type="text" id="ideaName" maxlength="60" placeholder="e.g. Black ribbed tank">
+          <div class="admin-form-row">
+            <div><label for="ideaPaid">Order total for the blanks ($)</label><input type="number" id="ideaPaid" step="0.01" min="0" placeholder="15.00" inputmode="decimal"></div>
+            <div><label for="ideaQty">How many pieces in that order</label><input type="number" id="ideaQty" step="1" min="1" placeholder="6" inputmode="numeric"></div>
+          </div>
+          <div class="admin-form-row">
+            <div><label for="ideaInbound">Shipping to you on that order ($)</label><input type="number" id="ideaInbound" step="0.01" min="0" placeholder="0" inputmode="decimal"></div>
+            <div><label for="ideaSupplies">Paint, ink, supplies per piece ($)</label><input type="number" id="ideaSupplies" step="0.01" min="0" value="0.75" inputmode="decimal"></div>
+          </div>
+          <div class="admin-form-row">
+            <div><label for="ideaWeight">Packed weight (oz, folded in the mailer)</label><input type="number" id="ideaWeight" step="0.1" min="0" value="5" inputmode="decimal"></div>
+            <div><label for="ideaLabel">What the label really costs you ($)</label><input type="number" id="ideaLabel" step="0.01" min="0" inputmode="decimal"><small class="idea-small" id="ideaLabelHint"></small></div>
+          </div>
+          <div class="admin-form-row">
+            <div><label for="ideaMailer">Poly mailer ($)</label><input type="number" id="ideaMailer" step="0.01" min="0" value="0.30" inputmode="decimal"></div>
+            <div><label for="ideaMinutes">Your minutes per piece</label><input type="number" id="ideaMinutes" step="1" min="0" value="20" inputmode="numeric"></div>
+          </div>
+          <div class="admin-form-row">
+            <div><label for="ideaPrice">Your price online ($)</label><input type="number" id="ideaPrice" step="0.01" min="0" value="15" inputmode="decimal"></div>
+            <div><label for="ideaMarket">Your price at the market ($)</label><input type="number" id="ideaMarket" step="0.01" min="0" value="15" inputmode="decimal"></div>
+          </div>
+          <label for="ideaGoal">What you want to make per hour ($)</label>
+          <input type="number" id="ideaGoal" step="1" min="0" value="20" inputmode="numeric">
+
+          <table class="idea-table" aria-live="polite">
+            <thead><tr><th></th><th>Online</th><th>Market (Tap to Pay)</th></tr></thead>
+            <tbody id="ideaOut"></tbody>
+          </table>
+          <p class="idea-verdict" id="ideaVerdict"></p>
+          <div style="display:flex; gap:8px;">
+            <button type="button" class="admin-submit" id="ideaSave" style="margin:0; flex:1;">Save This Idea</button>
+            <button type="button" class="edit-btn" id="ideaClear">Clear</button>
+          </div>
+          <p class="admin-error" id="ideaErr"></p>
+          <div id="ideaList"></div>
         </div>
       </div>
     </details>
@@ -1330,6 +1393,7 @@
       loadShippingSettings();
       loadCodes();
       loadLaunch();
+      loadIdeas();
     } else {
       loginBox.style.display = 'block';
       dashboard.style.display = 'none';
@@ -1570,6 +1634,7 @@
   // One tap to every outside site the business runs on, so nothing lives in your head.
   const LAUNCH_DEFAULT = [
     { name: 'Shippo', note: 'Labels, tracking, rates', url: 'https://apps.goshippo.com/' },
+    { name: 'S&S Activewear', note: 'Wholesale blanks', url: 'https://www.ssactivewear.com/' },
     { name: 'Printify', note: 'Print on demand orders', url: 'https://printify.com/app/' },
     { name: 'Lulu', note: 'Zines, print on demand', url: 'https://www.lulu.com/account' },
     { name: 'Supabase', note: 'Database, functions, SQL', url: 'https://supabase.com/dashboard/project/vscombrgcdtrfndqyugb' },
@@ -1630,6 +1695,119 @@
     renderLaunch();
     document.getElementById('launchEditBtn').click();
   });
+
+
+  // ===== THINKING ABOUT A BLANK? (profit per piece, ideas saved in app_settings key product_ideas) =====
+  const IDEA_FIELDS = ['ideaLink','ideaName','ideaPaid','ideaQty','ideaInbound','ideaSupplies','ideaWeight','ideaLabel','ideaMailer','ideaMinutes','ideaPrice','ideaMarket','ideaGoal'];
+  const ONLINE_FEE = { pct: 2.9, flat: 0.30 }, MARKET_FEE = { pct: 2.6, flat: 0.10 };
+  let ideaRates = null, ideas = [];
+  const money2 = (n) => (n < 0 ? '-$' : '$') + Math.abs(n).toFixed(2);
+  const ideaNum = (id) => { const v = parseFloat(document.getElementById(id).value); return Number.isFinite(v) ? v : 0; };
+  // Rough real label cost for a Shippo USPS Ground Advantage label, by packed weight. Type a real quote over it.
+  function labelGuess(oz) { if (oz <= 8) return 5.75; if (oz <= 16) return 7.00; if (oz <= 32) return 8.50; if (oz <= 48) return 9.50; return 12.00; }
+  async function ideaLoadRates() {
+    if (ideaRates) return ideaRates;
+    const { data } = await supabaseClient.from('app_settings').select('value').eq('key', 'shipping_rates').maybeSingle();
+    ideaRates = parseShipRates(data && data.value);
+    return ideaRates;
+  }
+  function chargeFor(oz, rates) { for (const r of rates) if (r.up_to_oz === null || r.up_to_oz === undefined || r.up_to_oz === '' || oz <= Number(r.up_to_oz)) return Number(r.price); return Number(rates[rates.length - 1].price); }
+  function nameFromLink(u) {
+    try { const parts = new URL(u).pathname.split('/').filter(Boolean).filter(p => !/^(p|product|products|s|item)$/i.test(p)); return parts.slice(-2).join(' ').replace(/[-_]+/g, ' ').trim(); } catch (e) { return ''; }
+  }
+  function ideaCalc(rates) {
+    const qty = Math.max(1, ideaNum('ideaQty') || 1);
+    const blank = (ideaNum('ideaPaid') + ideaNum('ideaInbound')) / qty;
+    const supplies = ideaNum('ideaSupplies'), mailer = ideaNum('ideaMailer');
+    const oz = ideaNum('ideaWeight');
+    const shipCharged = chargeFor(oz + 0, rates);
+    const labelTyped = document.getElementById('ideaLabel').value !== '';
+    const label = labelTyped ? ideaNum('ideaLabel') : labelGuess(oz);
+    const price = ideaNum('ideaPrice'), market = ideaNum('ideaMarket');
+    const mins = ideaNum('ideaMinutes'), goal = ideaNum('ideaGoal');
+    const onlinePays = price + shipCharged;
+    const onlineFee = onlinePays > 0 ? onlinePays * ONLINE_FEE.pct / 100 + ONLINE_FEE.flat : 0;
+    const marketFee = market > 0 ? market * MARKET_FEE.pct / 100 + MARKET_FEE.flat : 0;
+    const onlineCost = blank + supplies + mailer + label;
+    const marketCost = blank + supplies;
+    const onlineKeep = onlinePays - onlineFee - onlineCost;
+    const marketKeep = market - marketFee - marketCost;
+    const perHr = (k) => mins > 0 ? k / mins * 60 : null;
+    // Online price that hits your hourly goal, with this shipping charge.
+    const target = goal * mins / 60;
+    const needPrice = Math.max(0, Math.ceil(((target + onlineCost + ONLINE_FEE.flat) / (1 - ONLINE_FEE.pct / 100) - shipCharged) * 1) );
+    return { blank, supplies, mailer, label, labelTyped, oz, shipCharged, price, market, onlinePays, onlineFee, marketFee, onlineCost, marketCost, onlineKeep, marketKeep, onlineHr: perHr(onlineKeep), marketHr: perHr(marketKeep), goal, mins, needPrice };
+  }
+  async function ideaRender() {
+    const rates = await ideaLoadRates();
+    const r = ideaCalc(rates);
+    document.getElementById('ideaLabelHint').textContent = r.labelTyped ? '' : `Guess for ${r.oz} oz: ${money2(labelGuess(r.oz))}. Type a real Shippo quote to replace it.`;
+    if (!document.getElementById('ideaLabel').value) document.getElementById('ideaLabel').placeholder = labelGuess(r.oz).toFixed(2);
+    const cls = (k, hr) => k < 0 ? 'bad' : (hr !== null && hr < r.goal ? 'thin' : 'good');
+    const margin = (k, pays) => pays > 0 ? Math.round(k / pays * 100) + '%' : '-';
+    const row = (label, a, b, c) => `<tr${c ? ` class="${c}"` : ''}><td>${label}</td><td>${a}</td><td>${b}</td></tr>`;
+    document.getElementById('ideaOut').innerHTML =
+      row('Customer pays', money2(r.onlinePays) + `<br><small class="idea-small">${money2(r.price)} + ${money2(r.shipCharged)} shipping</small>`, money2(r.market)) +
+      row('Blank each', money2(r.blank), money2(r.blank)) +
+      row('Supplies', money2(r.supplies), money2(r.supplies)) +
+      row('Mailer + label', money2(r.mailer + r.label), '$0.00') +
+      row('Card fee', money2(r.onlineFee), money2(r.marketFee)) +
+      `<tr class="keep"><td>You keep</td><td class="${cls(r.onlineKeep, r.onlineHr)}">${money2(r.onlineKeep)}</td><td class="${cls(r.marketKeep, r.marketHr)}">${money2(r.marketKeep)}</td></tr>` +
+      row('Margin', margin(r.onlineKeep, r.onlinePays), margin(r.marketKeep, r.market)) +
+      row('Per hour of your work', r.onlineHr === null ? '-' : money2(r.onlineHr), r.marketHr === null ? '-' : money2(r.marketHr));
+    let v;
+    if (r.onlineKeep < 0) v = `You lose ${money2(-r.onlineKeep)} on every online sale at this price. To make ${money2(r.goal)}/hr online, price it at about <b>$${r.needPrice}</b>.`;
+    else if (r.onlineHr !== null && r.onlineHr < r.goal) v = `Works, but online pays you ${money2(r.onlineHr)}/hr, under your ${money2(r.goal)}/hr goal. About <b>$${r.needPrice}</b> online hits it. A cheaper blank or faster process also gets you there.`;
+    else v = `Good. Online pays you ${r.onlineHr === null ? money2(r.onlineKeep) + ' a piece' : money2(r.onlineHr) + '/hr'}. You could still drop to <b>$${r.needPrice}</b> online and hit your goal.`;
+    if (r.label > r.shipCharged) v += ` Heads up: the label costs you ${money2(r.label - r.shipCharged)} more than the customer pays for shipping, that's already counted above.`;
+    document.getElementById('ideaVerdict').innerHTML = v;
+    return r;
+  }
+  IDEA_FIELDS.forEach(id => document.getElementById(id).addEventListener('input', ideaRender));
+  document.getElementById('ideaLink').addEventListener('change', () => {
+    const n = document.getElementById('ideaName');
+    if (!n.value.trim()) n.value = nameFromLink(document.getElementById('ideaLink').value);
+  });
+  async function ideaSaveAll() {
+    const { error } = await supabaseClient.from('app_settings').upsert([{ key: 'product_ideas', value: JSON.stringify(ideas) }], { onConflict: 'key' });
+    return error;
+  }
+  function ideaListRender() {
+    const box = document.getElementById('ideaList');
+    box.innerHTML = ideas.length ? '<h4 style="margin:18px 0 0; font-size:0.8rem; letter-spacing:0.08em; text-transform:uppercase; opacity:.7;">Saved ideas</h4>' : '';
+    ideas.forEach((it, i) => {
+      const d = document.createElement('div');
+      d.className = 'idea-row';
+      const link = /^https:\/\//i.test(it.f.ideaLink || '') ? `<a href="${escapeAttr(it.f.ideaLink)}" target="_blank" rel="noopener">${escapeAttr(it.f.ideaLink)}</a>` : '';
+      d.innerHTML = `<b>${escapeAttr(it.f.ideaName || 'Untitled blank')}</b><div class="meta">Online ${money2(it.onlineKeep)} a piece${it.onlineHr != null ? ' (' + money2(it.onlineHr) + '/hr)' : ''} · Market ${money2(it.marketKeep)} · blank ${money2(it.blank)} each</div>${link}<div class="btns"><button type="button" data-a="load">Open</button><button type="button" class="danger" data-a="del">Delete</button></div>`;
+      d.querySelector('[data-a="load"]').onclick = () => { IDEA_FIELDS.forEach(id => { document.getElementById(id).value = it.f[id] ?? ''; }); ideaRender(); document.querySelector('.idea-box').scrollIntoView({ behavior: 'smooth' }); };
+      d.querySelector('[data-a="del"]').onclick = async () => { if (!confirm('Delete this idea?')) return; ideas.splice(i, 1); await ideaSaveAll(); ideaListRender(); };
+      box.appendChild(d);
+    });
+  }
+  document.getElementById('ideaSave').addEventListener('click', async () => {
+    const err = document.getElementById('ideaErr'); err.style.display = 'none';
+    const r = await ideaRender();
+    const f = Object.fromEntries(IDEA_FIELDS.map(id => [id, document.getElementById(id).value]));
+    if (!f.ideaName.trim() && !f.ideaLink.trim()) { err.textContent = 'Give it a name or paste the link first.'; err.style.display = 'block'; return; }
+    const at = ideas.findIndex(x => (x.f.ideaName || '') === f.ideaName && (x.f.ideaLink || '') === f.ideaLink);
+    const entry = { f, onlineKeep: r.onlineKeep, onlineHr: r.onlineHr, marketKeep: r.marketKeep, blank: r.blank, saved: new Date().toISOString() };
+    if (at >= 0) ideas[at] = entry; else ideas.unshift(entry);
+    ideas = ideas.slice(0, 40);
+    const e2 = await ideaSaveAll();
+    if (e2) { err.textContent = 'Could not save: ' + e2.message; err.style.display = 'block'; return; }
+    ideaListRender();
+  });
+  document.getElementById('ideaClear').addEventListener('click', () => {
+    ['ideaLink','ideaName','ideaPaid','ideaQty','ideaInbound','ideaLabel'].forEach(id => { document.getElementById(id).value = ''; });
+    ideaRender();
+  });
+  async function loadIdeas() {
+    const { data } = await supabaseClient.from('app_settings').select('value').eq('key', 'product_ideas').maybeSingle();
+    try { const a = data && JSON.parse(data.value); if (Array.isArray(a)) ideas = a; } catch (e) {}
+    ideaListRender();
+    ideaRender();
+  }
 
   // ===== SALES & CODES (table: discount_codes) =====
   const SITE = 'https://nociv.co';
