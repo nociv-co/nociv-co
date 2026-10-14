@@ -78,6 +78,13 @@
     position: relative;
     text-align: center;
   }
+  .landing-mission .mission-statement em { font-style: italic; font-weight: 500; }
+  .landing-mission .mission-art {
+    font-weight: 900; letter-spacing: 0.08em; color: var(--red, #d94f3d);
+    font-size: 1.12em; display: inline-block; transform: rotate(-2deg);
+    text-decoration: underline wavy #111; text-decoration-thickness: 1.5px; text-underline-offset: 3px; line-height: 1.1;
+  }
+  .landing-mission .mission-not { opacity: .75; }
   .landing-mission .mission-statement::before {
     content: '';
     position: absolute;
@@ -251,7 +258,7 @@
   <div class="landing-mission">
     <p class="mission-how">NO ADS. NO ALGORITHM. WORD OF MOUTH ONLY.</p>
     <p class="mission-personal">If you're here, someone told you.</p>
-    <p class="mission-statement">Built around reclaiming narratives and creating new norms. NOCIV is art, not content. Clothing is where we begin. Design, culture, and human connection are where we go.</p>
+    <p class="mission-statement">Built around <em>reclaiming narratives</em> and <em>creating new norms.</em> NOCIV is <strong class="mission-art">ART</strong>, <em class="mission-not">not content.</em> Clothing is where we begin. Design, culture, and human connection are where we go.</p>
     <a class="landing-btn landing-btn-primary" href="shop.html">Shop Clothing</a>
   </div>
 
