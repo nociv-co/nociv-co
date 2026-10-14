@@ -222,6 +222,32 @@
   .signup-error { display: none; text-align: center; color: var(--red); font-weight: 700; font-size: 0.85rem; margin: 0 0 12px; }
   .landing-footer-space { margin-top: 60px; }
 
+
+  /* Landing in the Build page look: taped notes, Anton headline, clear steps from big to small */
+  .land { padding-top: 30px; }
+  .land-kicker { margin: 0 0 12px; font-family: "Courier New", ui-monospace, monospace; font-weight: 700; font-size: 0.85rem; color: var(--bm); }
+  .land .build-title { font-size: clamp(2.9rem, 14vw, 6rem); }
+  .land-big { margin: 18px 0 6px; font-weight: 900; font-size: clamp(1.35rem, 6vw, 1.9rem); line-height: 1.15; }
+  .land-big b { color: var(--br); text-transform: uppercase; }
+  .land-btn { display: block; margin: 20px 0 0; background: var(--br); color: #fff; text-align: center; text-decoration: none; font-weight: 900; letter-spacing: .1em; text-transform: uppercase; padding: 16px; font-size: 1rem; }
+  .land-btn::after { content: ' \2192'; }
+  .land-note { max-width: 900px; margin: 0 auto; background: var(--bn); position: relative; padding: 30px 20px 24px; box-shadow: 0 6px 16px rgba(0,0,0,0.16); transform: rotate(0.4deg); }
+  .land-note::before { content: ''; position: absolute; top: -11px; right: 24px; width: 64px; height: 22px; background: var(--bi); opacity: .85; transform: rotate(3deg); }
+  .land-note .popup-card-img { width: 100%; max-width: 360px; display: block; margin: 0 auto 16px; }
+  .land-label { margin: 0; display: flex; align-items: center; gap: 8px; font-weight: 900; font-size: 0.85rem; letter-spacing: .1em; text-transform: uppercase; }
+  .land-label b { background: var(--br); color: #fff; padding: 1px 7px; }
+  .land-h { margin: 6px 0 12px; font-family: NocivAnton, Impact, "Arial Narrow", sans-serif; font-weight: 400; font-size: clamp(2.2rem, 11vw, 3.4rem); line-height: .9; text-transform: uppercase; }
+  .land-details { display: grid; border: 2px solid var(--bi); background: #fff; }
+  .land-details div { display: flex; justify-content: space-between; align-items: baseline; gap: 12px; padding: 11px 12px; }
+  .land-details div + div { border-top: 1.5px solid #d8d2c3; }
+  .land-details span { font-family: "Courier New", ui-monospace, monospace; font-weight: 700; font-size: 0.78rem; text-transform: uppercase; color: var(--bm); }
+  .land-details b { font-weight: 900; font-size: 1.05rem; text-align: right; }
+  .land-h3 { margin: 22px 0 4px; font-weight: 900; font-size: 1.15rem; letter-spacing: .06em; text-transform: uppercase; }
+  .land-p { margin: 0 0 12px; font-size: 0.95rem; line-height: 1.45; color: #3a372f; }
+  .land #popupSignupForm { display: grid; gap: 8px; }
+  .land #popupSignupForm input { width: 100%; box-sizing: border-box; font: inherit; font-size: 16px; padding: 14px 12px; border: 2px solid var(--bi); border-radius: 0; background: #fff; color: var(--bi); margin: 0; }
+  .land-join { font: inherit; font-weight: 900; letter-spacing: .1em; text-transform: uppercase; font-size: 0.95rem; padding: 14px; border: 2px solid var(--bi); border-radius: 0; background: var(--bi); color: #fff; cursor: pointer; -webkit-tap-highlight-color: transparent; }
+  .land .signup-code { text-align: left; }
 </style>
 </head>
 <body>
@@ -243,46 +269,39 @@
   <img src="arizona-based.png" alt="AZ Based. Black-Owned Clothing.">
 </div>
 
-<div class="landing-col">
+<section class="build land">
 
-  <h1 class="landing-display">NOCIV: Nothing of Civilization</h1>
-
-  <hr class="landing-rule">
-
-  <div class="landing-mission">
-    <p class="mission-how">NO ADS. NO ALGORITHM. WORD OF MOUTH ONLY.</p>
-    <p class="mission-personal">If you're here, someone told you.</p>
-    <p class="mission-statement">Built around reclaiming narratives and creating new norms. NOCIV is <strong class="mission-art">ART</strong>, not content. Clothing is where we begin.<span class="mission-next">Design, culture, and human connection are where we go.</span></p>
-    <a class="landing-btn landing-btn-primary" href="shop.html">Shop Clothing</a>
+  <div class="build-hero">
+    <p class="land-kicker">If you're here, someone told you.</p>
+    <h1 class="build-title">Nothing of<br>civilization.</h1>
+    <p class="build-quote">"Creating new norms. Reclaiming narratives."</p>
+    <ul class="build-points"><li>No ads</li><li>No algorithm</li><li>Word of mouth only</li></ul>
+    <p class="land-big">NOCIV is <b>art</b>, not content.</p>
+    <p class="build-lede">Clothing is where we begin. Design, culture and human connection are where we go.</p>
+    <a class="land-btn" href="shop.html">Shop clothing</a>
   </div>
 
-  <hr class="landing-rule">
-
-  <!-- Posted note: pop-up shop signup + next location (Admin, Pop-Up Details) -->
-  <div class="signup-note-wrap">
-    <div class="signup-note">
-      <img class="popup-card-img" src="pop-up-shop.png" alt="Pop-up shop, posting soon">
-      <div class="popup-note">
-        Enter your email to get notified of next location & time. You also get free shipping on your first order.
-      </div>
-      <form id="popupSignupForm">
-        <input type="email" placeholder="Your email" required autocomplete="email" enterkeyhint="go">
-        <p class="signup-hint">Press Enter (Go on iPhone) to join the list.</p>
-        <p class="signup-error" id="popupSignupError">That didn't go through. Try again in a minute.</p>
-      </form>
-      <p id="signupConfirm" style="display:none; text-align:center; color:var(--green); font-weight:700;">
-        You're on the list.
-      </p>
-      <div style="margin-top:20px; font-size:0.9rem;" id="popupDetails">
-        <strong>Next Location:</strong> TBD<br>
-        <strong>Date:</strong> TBD<br>
-        <strong>Time:</strong> TBD
-      </div>
+  <div class="land-note">
+    <img class="popup-card-img" src="pop-up-shop.png" alt="Pop-up shop, posting soon">
+    <p class="land-label"><b>IRL</b>Pop-up shop</p>
+    <h2 class="land-h">Next spot</h2>
+    <div class="land-details" id="popupDetails">
+      <div><span>Where</span><b>TBD</b></div>
+      <div><span>Date</span><b>TBD</b></div>
+      <div><span>Time</span><b>TBD</b></div>
     </div>
+    <h3 class="land-h3">Hear it first</h3>
+    <p class="land-p">Drop your email. We only tell you where and when. You also get free shipping on your first order.</p>
+    <form id="popupSignupForm">
+      <input type="email" placeholder="Your email" required autocomplete="email" enterkeyhint="go" aria-label="Your email">
+      <button type="submit" class="land-join">Join the list</button>
+      <p class="signup-error" id="popupSignupError">That didn't go through. Try again in a minute.</p>
+    </form>
+    <p id="signupConfirm" style="display:none; color:var(--green); font-weight:800;">You're on the list.</p>
   </div>
 
-  <div class="landing-footer-space"></div>
-</div>
+  <p class="build-note">No ads here. It only grows when you pass it on.</p>
+</section>
 
 <footer class="nociv-footer">NOCIV.CO: Nothing Of Civilization</footer>
 
@@ -300,6 +319,7 @@
     if (!value) return;
     errEl.style.display = 'none';
     input.disabled = true;
+    const btn = this.querySelector('button'); if (btn) btn.disabled = true;
 
     // join_list adds them and hands back their own free shipping code.
     let { data: code, error } = await supabaseClient.rpc('join_list', { p_contact: value });
@@ -311,7 +331,7 @@
     if (error) {
       console.error(error);
       errEl.style.display = 'block';
-      input.disabled = false;
+      input.disabled = false; if (btn) btn.disabled = false;
       return;
     }
     const conf = document.getElementById('signupConfirm');
@@ -335,10 +355,9 @@
       .single();
     if (error || !data) return; // leave the TBD defaults showing
     document.getElementById('popupDetails').innerHTML = `
-      <strong>Next Location:</strong> ${esc(data.location || 'TBD')}<br>
-      <strong>Date:</strong> ${formatEventDate(data.event_date)}<br>
-      <strong>Time:</strong> ${esc(data.event_time || 'TBD')}
-    `;
+      <div><span>Where</span><b>${esc(data.location || 'TBD')}</b></div>
+      <div><span>Date</span><b>${formatEventDate(data.event_date)}</b></div>
+      <div><span>Time</span><b>${esc(data.event_time || 'TBD')}</b></div>`;
   }
   loadPopupStatus();
 </script>
