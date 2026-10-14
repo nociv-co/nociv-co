@@ -555,6 +555,47 @@ footer.nociv-footer {
 #baseHub .hub-desc,
 #shareHub .hub-desc { color: #3a3a3a; opacity: .85; }
 
+@font-face { font-family: 'NocivAnton'; src: url('fonts/anton.woff') format('woff'); font-display: swap; }
+/* --- HUB LANDINGS (Tools "Build something" + Base): taped notes in the same look as the QR Maker. Used by creator-tools.html and community.html --- */
+.build { --bp: #e9e6df; --bn: #f2ecd6; --bi: #1a1a1a; --br: #c8412f; --bm: #6b665c; background: var(--bp); color: var(--bi); padding: 26px 16px 34px; }
+.build-hero { max-width: 900px; margin: 0 auto 30px; background: var(--bn); position: relative; padding: 30px 20px 22px; box-shadow: 0 6px 16px rgba(0,0,0,0.16); transform: rotate(-0.4deg); }
+.build-hero::before, .tool-card::before { content: ''; position: absolute; top: -11px; left: 22px; width: 64px; height: 22px; background: var(--bi); opacity: .85; transform: rotate(-3deg); }
+.build-hero::after { content: ''; position: absolute; top: -9px; right: 26px; width: 54px; height: 20px; background: var(--bi); opacity: .85; transform: rotate(4deg); }
+.build-title { margin: 0; font-family: NocivAnton, Impact, "Arial Narrow", sans-serif; font-weight: 400; font-size: clamp(3rem, 15vw, 6.4rem); line-height: .86; letter-spacing: .01em; text-transform: uppercase; }
+.build .build-quote { margin: 14px 0 14px; font-style: italic; font-weight: 800; font-size: 1.05rem; }
+.build-lede { margin: 0; color: var(--bm); font-size: 0.95rem; line-height: 1.45; max-width: 460px; }
+.tool-grid { max-width: 900px; margin: 0 auto; display: grid; grid-template-columns: 1fr; gap: 30px; }
+@media (min-width: 680px) { .tool-grid { grid-template-columns: 1fr 1fr; } .tool-card.feat { grid-column: 1 / -1; flex-direction: row; } .tool-card.feat .tool-art { flex: 1.25; margin: 14px 0 14px 14px; } .tool-card.feat .tool-art svg { height: 100%; min-height: 240px; } .tool-card.feat .tool-body { flex: 1; justify-content: center; padding: 22px; } .tool-card.feat .tool-name { font-size: 1.4rem; } }
+.tool-card { all: unset; box-sizing: border-box; position: relative; display: flex; flex-direction: column; background: var(--bn); box-shadow: 0 6px 16px rgba(0,0,0,0.16); cursor: pointer; text-align: left; -webkit-tap-highlight-color: transparent; transition: transform .15s ease, box-shadow .15s ease; }
+.tool-card:nth-child(even) { transform: rotate(0.5deg); }
+.tool-card:nth-child(odd) { transform: rotate(-0.3deg); }
+.tool-card:nth-child(even)::before { left: auto; right: 22px; transform: rotate(3deg); }
+.tool-card:hover, .tool-card:focus-visible { transform: translateY(-3px) rotate(0deg); box-shadow: 0 12px 24px rgba(0,0,0,0.2); }
+.tool-card:focus-visible { outline: 3px solid var(--br); outline-offset: 3px; }
+.tool-card:active { transform: scale(.985); }
+.tool-art { display: block; margin: 14px 14px 0; border: 2px solid var(--bi); overflow: hidden; line-height: 0; }
+.tool-art svg { display: block; width: 100%; height: 170px; transition: transform .3s ease; }
+.tool-card:hover .tool-art svg { transform: scale(1.04); }
+.tool-body { display: flex; flex-direction: column; gap: 8px; padding: 14px 16px 16px; flex: 1; }
+.tool-name { display: flex; align-items: center; gap: 8px; font-weight: 900; font-size: 1.15rem; letter-spacing: .06em; text-transform: uppercase; }
+.tool-name b { background: var(--br); color: #fff; padding: 1px 7px; font-size: 0.9rem; letter-spacing: .04em; }
+.tool-desc { font-size: 0.92rem; line-height: 1.45; color: #3a372f; }
+.tool-foot { margin-top: auto; padding-top: 6px; display: flex; align-items: center; justify-content: space-between; gap: 10px; }
+.tool-get { font-family: "Courier New", ui-monospace, monospace; font-size: 0.74rem; font-weight: 700; color: var(--bm); line-height: 1.3; }
+.tool-open { flex: none; background: var(--br); color: #fff; font-weight: 900; font-size: 0.85rem; letter-spacing: .1em; text-transform: uppercase; padding: 10px 16px; }
+.tool-open::after { content: ' \2192'; }
+.build-note { max-width: 900px; margin: 30px auto 0; text-align: center; font-weight: 800; font-size: 0.9rem; }
+.build-note::before { content: ''; display: block; width: 60px; height: 3px; background: var(--bi); margin: 0 auto 12px; }
+.build-points { list-style: none; margin: 0 0 14px; padding: 0; display: flex; flex-direction: column; gap: 6px; }
+@media (min-width: 680px) { .build-points { flex-direction: row; flex-wrap: wrap; gap: 6px 18px; } }
+.build-points li { position: relative; padding-left: 15px; font-weight: 800; font-size: 0.92rem; }
+.build-points li::before { content: ''; position: absolute; left: 0; top: .45em; width: 7px; height: 7px; background: var(--bi); }
+/* hand drawn art can replace the drawn SVGs: drop an <img> in .tool-art, or in .build-title */
+.tool-art img { display: block; width: 100%; height: 170px; object-fit: cover; }
+.build-title img { display: block; max-width: 100%; height: auto; }
+.hub-wide { max-width: 900px; margin: 0 auto; }
+
+
 /* ---------- POP-UP SHOP CARD ---------- */
 .popup-card-img {
   width: 100%;
