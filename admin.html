@@ -480,7 +480,7 @@
       <div class="admin-section-body">
         <div class="how-to-box">
           <strong>What this is for</strong>
-          What shipping costs the customer. By weight (recommended): checkout adds up the packed weight of everything in the bag (each product's weight in Products, plus the poly mailer) and charges the price from this table. The starting numbers are rounded up from 2026 USPS Ground Advantage commercial prices to the far zones, so a label never costs you more than they paid. Compare with a few real Shippo quotes and adjust. Leave Free Shipping Over blank if you never want free shipping. Local pickup off means the bag says "Local pickup: coming soon". Changes apply to the next checkout, nothing to redeploy.
+          What shipping costs the customer. By weight (recommended): checkout adds up the packed weight of everything in the bag (each product's weight in Products, plus the poly mailer) and charges the price from this table. Tanks and tees (up to 8 oz packed) ship for $3.50: a real label is about $5.50 to $6.40, the rest comes out of the item price, so price those items about $2 to $3 higher than you would with free shipping. Compare with a few real Shippo quotes and adjust. Leave Free Shipping Over blank if you never want free shipping. Local pickup off means the bag says "Local pickup: coming soon". Changes apply to the next checkout, nothing to redeploy.
         </div>
         <div class="admin-form">
           <label for="shipMode">How shipping is priced</label>
@@ -1496,11 +1496,11 @@
     renderShipRates(parseShipRates(m.shipping_rates));
     shipModeUI();
   }
-  const SHIP_RATES_DEFAULT = [{ up_to_oz: 15.99, price: 8.5 }, { up_to_oz: 32, price: 11 }, { up_to_oz: 48, price: 13 }, { up_to_oz: 80, price: 16 }, { up_to_oz: null, price: 20 }];
+  const SHIP_RATES_DEFAULT = [{ up_to_oz: 8, price: 3.5 }, { up_to_oz: 15.99, price: 7.5 }, { up_to_oz: 32, price: 10 }, { up_to_oz: 48, price: 12 }, { up_to_oz: null, price: 15 }];
   function parseShipRates(raw) {
     try { const a = typeof raw === 'string' ? JSON.parse(raw) : raw; return Array.isArray(a) && a.length ? a : SHIP_RATES_DEFAULT; } catch (e) { return SHIP_RATES_DEFAULT; }
   }
-  const ozLabel = (oz) => oz < 16 ? 'under 1 lb' : (oz % 16 === 0 ? (oz / 16) + ' lb' : (oz / 16).toFixed(1) + ' lb');
+  const ozLabel = (oz) => oz < 16 ? (oz > 15 ? 'under 1 lb' : 'tanks, tees') : (oz % 16 === 0 ? (oz / 16) + ' lb' : (oz / 16).toFixed(1) + ' lb');
   function renderShipRates(rates) {
     const body = document.getElementById('shipRatesBody');
     body.innerHTML = '';

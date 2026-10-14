@@ -1366,7 +1366,7 @@
   }
 
   let bagShipping = null;
-  const DEFAULT_RATES = [{ up_to_oz: 15.99, price: 8.5 }, { up_to_oz: 32, price: 11 }, { up_to_oz: 48, price: 13 }, { up_to_oz: 80, price: 16 }, { up_to_oz: null, price: 20 }];
+  const DEFAULT_RATES = [{ up_to_oz: 8, price: 3.5 }, { up_to_oz: 15.99, price: 7.5 }, { up_to_oz: 32, price: 10 }, { up_to_oz: 48, price: 12 }, { up_to_oz: null, price: 15 }];
   function parseRates(raw) {
     try {
       const arr = typeof raw === 'string' ? JSON.parse(raw) : raw;
