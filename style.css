@@ -617,3 +617,28 @@ footer.nociv-footer {
 }
 .join-btn-img:hover { transform: scale(1.03); }
 .join-btn-img.clicked { filter: grayscale(1) brightness(1.3); transform: scale(0.97); }
+
+/* --- Jasilyn's stencil lettering as headings (made in the Stencil maker). Same height as the type it replaced. --- */
+.type-img { display: block; width: auto; max-width: 100%; object-fit: contain; object-position: left center; }
+.build-title img.type-img { height: calc(clamp(3rem, 15vw, 6.4rem) * 1.72); max-width: 100%; }
+.build-title img.type-img.one { height: calc(clamp(3rem, 15vw, 6.4rem) * 0.92); }
+.land .build-title img.type-img { height: calc(clamp(2.9rem, 14vw, 6rem) * 1.72); }
+.land-h img.type-img { height: calc(clamp(2.2rem, 11vw, 3.4rem) * 0.95); }
+
+/* --- Shop bar: masking tape buttons. Clothing is the big tape, Art and Zines are small tapes. --- */
+.subnav button.tape {
+  --tape: #e7dab0;
+  background: var(--tape) linear-gradient(180deg, rgba(255,255,255,.28), rgba(0,0,0,.04) 60%, rgba(255,255,255,.12));
+  color: #141414; border: 0; border-radius: 0;
+  font-family: NocivAnton, Impact, "Arial Narrow", sans-serif; font-weight: 400; letter-spacing: .06em;
+  font-size: 1rem; line-height: 1; padding: 7px 22px 6px;
+  clip-path: polygon(0 0, 100% 0, calc(100% - 5px) 18%, 100% 34%, calc(100% - 4px) 52%, 100% 68%, calc(100% - 5px) 84%, 100% 100%, 0 100%, 5px 84%, 0 68%, 4px 52%, 0 34%, 5px 18%);
+  transform: rotate(-1.5deg); opacity: .72; transition: opacity .15s, transform .15s;
+  -webkit-tap-highlight-color: transparent;
+}
+.subnav button.tape + button.tape { transform: rotate(1.8deg); }
+.subnav button.tape:hover { background-color: var(--tape); color: #141414; opacity: .9; }
+.subnav button.tape.active { --tape: #f1e6c2; opacity: 1; border: 0; color: #141414; }
+.subnav button.tape.active::after { content: ''; display: block; height: 3px; margin: 3px auto 0; width: 70%; background: var(--red); transform: rotate(-1deg); }
+.subnav button.tape-big { padding: 11px 40px 10px; }
+.subnav button.tape-big .tape-type { display: block; height: 28px; width: auto; }
