@@ -2912,7 +2912,7 @@
         btn.textContent = 'Creating...';
         const weight_oz = parseFloat(row.querySelector('.ship-weight').value) || null;
         try {
-          const res = await fetch('https://vscombrgcdtrfndqyugb.supabase.co/functions/v1/create-shipping-label', {
+          const res = await fetch('https://vscombrgcdtrfndqyugb.supabase.co/functions/v1/shipping-label', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ order_id: o.id, weight_oz }),
@@ -3344,7 +3344,7 @@
       return;
     }
 
-    const url = `https://vscombrgcdtrfndqyugb.supabase.co/functions/v1/calendar-feed?key=${data.value}`;
+    const url = `https://vscombrgcdtrfndqyugb.supabase.co/functions/v1/calendar-feed-index-ts?key=${data.value}`;
     el.textContent = url;
     window._calendarFeedUrl = url;
   }
