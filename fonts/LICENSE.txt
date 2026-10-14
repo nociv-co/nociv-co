@@ -1,0 +1,2 @@
+Courier Prime, Anton, Bungee, Shrikhand, Abril Fatface: SIL Open Font License 1.1, from Google Fonts.
+Files were subset to Latin characters and converted to WOFF. Full license texts: https://www.apache.org/licenses/LICENSE-2.0 and https://openfontlicense.org
