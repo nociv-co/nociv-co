@@ -388,6 +388,7 @@
 
 </script>
 <script src="../qr/qr.js"></script>
+<script src="../crop.js"></script>
 <script>
 (function () {
   var $ = function (id) { return document.getElementById(id); };
@@ -1008,11 +1009,12 @@
     $('swatches').appendChild(b);
   });
   $('pic').addEventListener('change', function () {
-    var f = this.files && this.files[0]; if (!f) return;
-    var url = URL.createObjectURL(f), img = new Image();
-    img.onload = function () { state.pic = img; $('thumb').src = url; $('thumb').classList.add('on'); $('picRemove').hidden = false; render(); };
-    img.onerror = function () { alert("Couldn't open that picture. Try a JPG or PNG."); };
-    img.src = url; this.value = '';
+    var f = this.files && this.files[0]; this.value = ''; if (!f) return;
+    window.nocivCrop(f, { title: 'Crop your picture', aspects: [['free', 'Free'], ['orig', 'Original'], [1, 'Square'], [4 / 5, '4:5'], [3 / 4, '3:4'], [3 / 2, '3:2'], [16 / 9, '16:9']], maxPx: 2400 }).then(function (c) {
+      if (!c) return; var u = c.toDataURL('image/jpeg', 0.9), img = new Image();
+      img.onload = function () { state.pic = img; $('thumb').src = u; $('thumb').classList.add('on'); $('picRemove').hidden = false; render(); };
+      img.src = u;
+    });
   });
   // ---------- logo ----------
   function logoFrom(img) {
@@ -1035,11 +1037,10 @@
   }
   function keepLogo() { try { if (state.logoRaw) localStorage.setItem('nocivCardLogo', JSON.stringify({ png: state.logoRaw.toDataURL('image/png'), clear: !!state.logoClear })); else localStorage.removeItem('nocivCardLogo'); } catch (e) {} }
   $('logoIn').addEventListener('change', function () {
-    var f = this.files && this.files[0]; if (!f) return;
-    var url = URL.createObjectURL(f), img = new Image();
-    img.onload = function () { state.logoRaw = logoFrom(img); URL.revokeObjectURL(url); state.logoClear = false; applyLogo(); keepLogo(); };
-    img.onerror = function () { alert("Couldn't open that picture. Try a JPG or PNG."); };
-    img.src = url; this.value = '';
+    var f = this.files && this.files[0]; this.value = ''; if (!f) return;
+    window.nocivCrop(f, { title: 'Crop your logo', aspects: [['free', 'Free'], ['orig', 'Original'], [1, 'Square'], [3 / 2, 'Wide'], [3, 'Extra wide']], maxPx: 1200 }).then(function (c) {
+      if (!c) return; state.logoRaw = logoFrom(c); state.logoClear = false; applyLogo(); keepLogo();
+    });
   });
   $('logoRemove').addEventListener('click', function () { state.logoRaw = null; delete state.off.logo; applyLogo(); keepLogo(); });
   $('logoWhite').querySelectorAll('[data-v]').forEach(function (b) { b.addEventListener('click', function () { state.logoClear = b.dataset.v === 'clear'; applyLogo(); keepLogo(); }); });
