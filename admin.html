@@ -75,6 +75,16 @@
     display: flex; align-items: center; justify-content: center; font-size: 0.6rem; opacity: .5; text-align: center;
   }
   .product-row .info { flex: 1; }
+  .album-pick { flex: 0 0 34px; width: 34px; height: 34px; border: 2px solid #111; background: #fff; font: inherit; font-weight: 900; font-size: 0.95rem; cursor: pointer; padding: 0; border-radius: 0; }
+  .album-pick.on { background: #111; color: #fff; }
+  .product-row.album-picked { border-color: #111; box-shadow: 3px 3px 0 #111; }
+  .product-row img.album-second { width: 40px; height: 40px; margin-left: -26px; margin-top: 22px; border: 2px solid #fff; box-shadow: 0 0 0 1px #ccc; position: relative; }
+  .album-combine-bar { position: sticky; top: 0; z-index: 20; background: #f2ecd6; border: 2px solid #111; padding: 12px; margin-bottom: 12px; box-shadow: 4px 4px 0 #111; }
+  .album-combine-bar[hidden] { display: none; }
+  .album-combine-bar span { display: block; font-weight: 700; font-size: 0.9rem; margin-bottom: 8px; }
+  .album-combine-btns { display: flex; gap: 8px; }
+  .album-combine-btns .admin-submit { flex: 1; }
+  .album-clear { background: #fff; border: 2px solid #111; font: inherit; font-weight: 700; padding: 0 16px; cursor: pointer; }
   .product-row .name { font-weight: 700; }
   .product-row .meta { font-size: 0.8rem; opacity: .7; }
   .product-row .votes { font-size: 0.8rem; font-weight: 700; color: var(--gold); }
@@ -856,6 +866,13 @@
           <p class="admin-note" id="albumAddConfirm">Added.</p>
           <p class="admin-error" id="albumAddError"></p>
         </div>
+        <p class="field-hint" style="margin:14px 0 8px;">Got a front and a back posted separately? Tap the square on each post in order (front first), then Combine. They become one post people can swipe through. Split apart on the posting page undoes it.</p>
+        <div id="albumCombineBar" class="album-combine-bar" hidden>
+          <span id="albumCombineCount"></span>
+          <div class="album-combine-btns"><button type="button" id="albumCombineBtn" class="admin-submit" style="margin:0;">Combine into one post</button><button type="button" id="albumCombineClear" class="album-clear">Clear</button></div>
+          <p class="admin-error" id="albumCombineErr" style="display:block; margin:6px 0 0;"></p>
+        </div>
+        <p class="admin-note" id="albumCombineDone">Combined. It shows as one post on the Shop page now.</p>
         <div id="albumList"></div>
       </div>
     </details>
@@ -2710,6 +2727,66 @@
     await loadAlbum();
   };
 
+  // ===== ALBUM LIST + COMBINE =====
+  // Tap posts in order (front first, then back) and Combine puts them in one post.
+  // The oldest date is kept so an old post doesn't jump back into NOW. Comments move over.
+  let albumPicked = [];
+  const ALBUM_MAX_SHOTS = 12;
+  const albumMediaOf = (p) => (Array.isArray(p.media) && p.media.length)
+    ? p.media
+    : (p.image_url ? [{ url: p.image_url, type: /\.(mov|mp4|m4v|webm)(\?|$)/i.test(p.image_url) ? 'video' : 'image' }] : []);
+
+  function albumPickUI(photos) {
+    const bar = document.getElementById('albumCombineBar');
+    document.querySelectorAll('#albumList .album-pick').forEach(el => {
+      const i = albumPicked.indexOf(Number(el.dataset.id));
+      el.classList.toggle('on', i >= 0);
+      el.textContent = i >= 0 ? String(i + 1) : '';
+      el.setAttribute('aria-pressed', i >= 0 ? 'true' : 'false');
+      el.closest('.product-row').classList.toggle('album-picked', i >= 0);
+    });
+    const shots = albumPicked.reduce((n, id) => n + albumMediaOf(photos.find(p => p.id === id) || {}).length, 0);
+    bar.hidden = albumPicked.length === 0;
+    document.getElementById('albumCombineCount').textContent = albumPicked.length < 2
+      ? 'Tap one more post to combine with it.'
+      : `${albumPicked.length} posts, ${shots} shots, in the order you tapped.`;
+    const btn = document.getElementById('albumCombineBtn');
+    btn.disabled = albumPicked.length < 2 || shots > ALBUM_MAX_SHOTS;
+    document.getElementById('albumCombineErr').textContent = shots > ALBUM_MAX_SHOTS ? `That's ${shots} shots. One post holds up to ${ALBUM_MAX_SHOTS}.` : '';
+  }
+
+  async function combineAlbum(photos) {
+    const picked = albumPicked.map(id => photos.find(p => p.id === id)).filter(Boolean);
+    if (picked.length < 2) return;
+    if (!confirm(`Combine these ${picked.length} posts into one? Photos go in the order you tapped them. Comments move over. To undo, use Split apart on the posting page.`)) return;
+    const btn = document.getElementById('albumCombineBtn'), err = document.getElementById('albumCombineErr');
+    btn.disabled = true; btn.textContent = 'Combining...'; err.textContent = '';
+    const keep = picked[0], others = picked.slice(1);
+    const media = picked.flatMap(albumMediaOf);
+    const caption = picked.map(p => (p.caption || '').trim()).find(Boolean) || null;
+    const tag = picked.map(p => p.tag).find(Boolean) || null;
+    const oldest = picked.map(p => p.created_at).sort()[0];
+    try {
+      const up = await supabaseClient.from('album_photos')
+        .update({ media, image_url: media[0].url, caption, tag, created_at: oldest }).eq('id', keep.id);
+      if (up.error) throw up.error;
+      const ids = others.map(p => p.id);
+      const mv = await supabaseClient.from('album_comments').update({ photo_id: keep.id }).in('photo_id', ids);
+      if (mv.error) throw mv.error;
+      // Only the extra rows go. The photo files stay, the combined post uses them.
+      const del = await supabaseClient.from('album_photos').delete().in('id', ids);
+      if (del.error) throw del.error;
+      albumPicked = [];
+      await loadAlbum();
+      const note = document.getElementById('albumCombineDone');
+      note.style.display = 'block'; setTimeout(() => { note.style.display = 'none'; }, 3500);
+    } catch (e) {
+      err.textContent = 'Could not combine: ' + (e.message || e) + '. Nothing was deleted if this happened on the first step.';
+    }
+    btn.textContent = 'Combine into one post';
+    albumPickUI(photos);
+  }
+
   async function loadAlbum() {
     const listEl = document.getElementById('albumList');
     listEl.innerHTML = '<p style="opacity:.5;">Loading...</p>';
@@ -2721,30 +2798,45 @@
 
     if (error || !photos || photos.length === 0) {
       listEl.innerHTML = '<p style="opacity:.5;">No photos yet.</p>';
+      document.getElementById('albumCombineBar').hidden = true;
       return;
     }
+    albumPicked = albumPicked.filter(id => photos.some(p => p.id === id));
 
     listEl.innerHTML = '';
     photos.forEach(p => {
+      const media = albumMediaOf(p);
+      const first = media[0] || {};
       const row = document.createElement('div');
       row.className = 'product-row';
       row.innerHTML = `
-        ${/\.(mov|mp4|m4v|webm)(\?|$)/i.test(p.image_url || '')
-          ? `<video src="${escapeAttr(p.image_url)}#t=0.1" muted playsinline preload="metadata" style="width:56px; height:56px; object-fit:cover; border:1px solid #ccc;"></video>`
-          : `<img src="${escapeAttr(p.image_url)}" alt="${escapeAttr(p.caption || 'Process photo')}">`}
+        <button type="button" class="album-pick" data-id="${p.id}" aria-label="Pick this post to combine" aria-pressed="false"></button>
+        ${first.type === 'video'
+          ? `<video src="${escapeAttr(first.url || '')}#t=0.1" muted playsinline preload="metadata" style="width:56px; height:56px; object-fit:cover; border:1px solid #ccc;"></video>`
+          : `<img src="${escapeAttr(first.url || '')}" alt="${escapeAttr(p.caption || 'Process photo')}">`}
+        ${media[1] ? (media[1].type === 'video' ? '' : `<img class="album-second" src="${escapeAttr(media[1].url)}" alt="">`) : ''}
         <div class="info">
           <div class="name">${p.caption ? escapeAttr(p.caption) : '(no caption)'}</div>
-          <div class="meta">${new Date(p.created_at).toLocaleDateString()}${Array.isArray(p.media) && p.media.length > 1 ? ' · ' + p.media.length + ' shots' : ''}${(Date.now() - Date.parse(p.created_at)) < 7 * 86400000 ? ' · <strong>in NOW</strong>' : ''}</div>
+          <div class="meta">${new Date(p.created_at).toLocaleDateString()}${media.length > 1 ? ' · ' + media.length + ' shots' : ''}${(Date.now() - Date.parse(p.created_at)) < 7 * 86400000 ? ' · <strong>in NOW</strong>' : ''}</div>
         </div>
         <button class="del-btn" data-id="${p.id}">Delete</button>
       `;
+      row.querySelector('.album-pick').addEventListener('click', () => {
+        const i = albumPicked.indexOf(p.id);
+        if (i >= 0) albumPicked.splice(i, 1); else albumPicked.push(p.id);
+        albumPickUI(photos);
+      });
       row.querySelector('.del-btn').addEventListener('click', async () => {
         if (!confirm('Delete this photo?')) return;
         await supabaseClient.from('album_photos').delete().eq('id', p.id);
+        albumPicked = albumPicked.filter(id => id !== p.id);
         await loadAlbum();
       });
       listEl.appendChild(row);
     });
+    document.getElementById('albumCombineBtn').onclick = () => combineAlbum(photos);
+    document.getElementById('albumCombineClear').onclick = () => { albumPicked = []; albumPickUI(photos); };
+    albumPickUI(photos);
   }
 
   // ===== TODAY'S GOALS =====
