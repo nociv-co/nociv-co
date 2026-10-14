@@ -1,5 +1,5 @@
 /* ============================================
-   NOCIV.CO — shared styles
+   NOCIV.CO, shared styles
    Two surfaces used across the site:
    - .light  : off-white / grey manifesto pages (About, Clothing)
    - .dark   : black pages (Community, Tech, Zines)
@@ -80,7 +80,7 @@ nav.tabs {
 /* Individual Folder Tab shape */
 nav.tabs a.img-tab {
   position: relative;
-  background: var(--grey); /* Grey tab base — lighter than the old charcoal */
+  background: var(--grey); /* Grey tab base, lighter than the old charcoal */
   color: #1a1a1a !important;
   font-family: -apple-system, BlinkMacSystemFont, "Helvetica Neue", Arial, sans-serif;
   font-weight: 700;
@@ -117,7 +117,7 @@ nav.tabs a.img-tab:hover {
   background: #9a9a9a;
 }
 
-/* Selected Tab: stays black — the clear "you are here" marker against the
+/* Selected Tab: stays black, the clear "you are here" marker against the
    lighter grey field. The nav images are light/white hand-written graphics,
    so they read fine on their own against black; no color swap needed. */
 nav.tabs a.img-tab.active {
@@ -132,6 +132,10 @@ nav.tabs a.img-tab.active {
 
 /* ---------- SUB-NAV: Charcoal Folder Body Panel ---------- */
 .subnav {
+  max-width: var(--max); /* same width as the tabs above, no wall-to-wall stretch on desktop */
+  margin-left: auto;
+  margin-right: auto;
+  box-sizing: border-box;
   position: relative;
   z-index: 5;
   display: flex;
@@ -169,7 +173,7 @@ nav.tabs a.img-tab.active {
   color: #000000;
 }
 
-/* Active Sub-Tab — selection stays red, as before */
+/* Active Sub-Tab, selection stays red, as before */
 .subnav button.active {
   background: var(--red);
   color: #ffffff;
@@ -318,7 +322,7 @@ nav.tabs a.img-tab.active {
 .album-hint { text-align: center; font-size: 0.8rem; opacity: .6; margin-top: 10px; }
 
 .album-gallery {
-  display: flex; /* visible/scrollable by default — pages that gate it behind a
+  display: flex; /* visible/scrollable by default, pages that gate it behind a
                     cover click add .collapsed and toggle it off on open */
   gap: 10px;
   overflow-x: auto;
@@ -382,7 +386,7 @@ nav.tabs a.img-tab.active {
 }
 
 /* ---------- PHONE SHOWCASE (shared: Shop → Clothing, and the Landing page) ----------
-   Pure-CSS black phone bezel — no phone-frame-art.png needed. */
+   Pure-CSS black phone bezel, no phone-frame-art.png needed. */
 .phone-showcase { max-width: 300px; margin: 40px auto; text-align: center; }
 .phone-frame-wrap {
   position: relative;
@@ -486,7 +490,7 @@ footer.nociv-footer {
 }
 
 /* ---------- HUB (Base and The Build landing pages): a visual card menu
-   instead of a subnav — pick a destination by reading a description first,
+   instead of a subnav, pick a destination by reading a description first,
    rather than guessing from a tab label. Cards are dark islands regardless
    of the page's own background, matching the catalog/directory card look
    used elsewhere on the site. ---------- */
