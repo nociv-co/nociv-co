@@ -65,6 +65,7 @@
   .swatches { display: flex; flex-wrap: wrap; gap: 10px; align-items: center; }
   .sw { width: 40px; height: 40px; border: 2px solid var(--ink); cursor: pointer; padding: 0; border-radius: 0; }
   .sw[aria-pressed="true"] { outline: 3px solid var(--red); outline-offset: 2px; }
+  .sw-same { background: repeating-linear-gradient(135deg,#fff 0 6px,#e8e2d2 6px 12px); font: inherit; font-weight: 900; font-size: 1.1rem; color: var(--ink); }
   .sw-custom { position: relative; width: 40px; height: 40px; border: 2px dashed var(--ink); display: inline-flex; align-items: center; justify-content: center; font-weight: 900; overflow: hidden; }
   .sw-custom input { position: absolute; inset: 0; opacity: 0; cursor: pointer; width: 100%; height: 100%; }
   .warn { font-size: 0.85rem; font-weight: 700; color: var(--red); margin: 10px 0 0; }
@@ -208,6 +209,16 @@
         <button type="button" class="sw" data-v="#24533a" style="background:#24533a" aria-label="Green" aria-pressed="false"></button>
         <label class="sw-custom" title="Pick any color">+<input type="color" id="colorCustom" value="#5a2d82" aria-label="Pick any color"></label>
       </div>
+      <label class="lbl">Corner squares</label>
+      <div class="swatches" id="eyes">
+        <button type="button" class="sw sw-same" data-v="" aria-label="Same as the code" aria-pressed="true">=</button>
+        <button type="button" class="sw" data-v="#000000" style="background:#000000" aria-label="Black" aria-pressed="false"></button>
+        <button type="button" class="sw" data-v="#a8321f" style="background:#a8321f" aria-label="Red" aria-pressed="false"></button>
+        <button type="button" class="sw" data-v="#1f3a5f" style="background:#1f3a5f" aria-label="Navy" aria-pressed="false"></button>
+        <button type="button" class="sw" data-v="#24533a" style="background:#24533a" aria-label="Green" aria-pressed="false"></button>
+        <label class="sw-custom" title="Pick any color">+<input type="color" id="eyeCustom" value="#5a2d82" aria-label="Pick any color for the corner squares"></label>
+      </div>
+      <p class="goes" style="margin-top:4px">The three big squares are how phones find the code. Any dark color works.</p>
       <label class="lbl">Background</label>
       <div class="chips" id="bg">
         <button type="button" class="chip" data-v="#ffffff" aria-pressed="true">White</button>
@@ -318,7 +329,7 @@
 
   var $ = function (id) { return document.getElementById(id); };
   var EXPORT_PX = 1600;
-  var state = { link: '', color: '#000000', bg: '#ffffff', style: 'square', shape: 'rounded', picSize: 0.22, img: null, caption: '', pz: 1, px: 0, py: 0, rot: 0, fit: 'fill' };
+  var state = { link: '', color: '#000000', eye: '', bg: '#ffffff', style: 'square', shape: 'rounded', picSize: 0.22, img: null, caption: '', pz: 1, px: 0, py: 0, rot: 0, fit: 'fill' };
 
   // ---------- the link ----------
   // People type "mysite.com". Add https:// for them. Leave mailto:, tel:,
@@ -463,6 +474,12 @@
   }
   $('style').querySelectorAll('[data-v]').forEach(function (b) { b.addEventListener('click', function () { syncSoftLimit(); render(); }); });
   chipGroup('colors', 'color');
+  chipGroup('eyes', 'eye');
+  $('eyeCustom').addEventListener('input', function () {
+    $('eyes').querySelectorAll('[data-v]').forEach(function (o) { o.setAttribute('aria-pressed', 'false'); });
+    state.eye = this.value;
+    render();
+  });
   $('colorCustom').addEventListener('input', function () {
     $('colors').querySelectorAll('[data-v]').forEach(function (o) { o.setAttribute('aria-pressed', 'false'); });
     state.color = this.value;
@@ -470,17 +487,18 @@
   });
   $('caption').addEventListener('input', function () { state.caption = this.value.trim(); render(); });
   // Remember the link and look on this phone (the picture is never saved).
-  var KEEP = ['color', 'bg', 'style', 'shape', 'picSize', 'fit', 'caption'];
+  var KEEP = ['color', 'eye', 'bg', 'style', 'shape', 'picSize', 'fit', 'caption'];
   function remember() { try { var o = { url: $('url').value }; KEEP.forEach(function (k) { o[k] = state[k]; }); localStorage.setItem('nocivQr', JSON.stringify(o)); } catch (e) {} }
   ['input', 'click', 'change'].forEach(function (ev) { document.addEventListener(ev, function () { setTimeout(remember, 0); }, true); });
   function restore() {
     var o; try { o = JSON.parse(localStorage.getItem('nocivQr') || 'null'); } catch (e) { o = null; }
     if (!o) return;
-    [['shape', 'shape'], ['picSize', 'picSize'], ['fit', 'picFit'], ['bg', 'bg'], ['style', 'style'], ['color', 'colors']].forEach(function (g) {
+    [['shape', 'shape'], ['picSize', 'picSize'], ['fit', 'picFit'], ['bg', 'bg'], ['style', 'style'], ['color', 'colors'], ['eye', 'eyes']].forEach(function (g) {
       if (o[g[0]] == null) return;
       var b = $(g[1]).querySelector('[data-v="' + o[g[0]] + '"]');
       if (b && !b.disabled) b.click();
       else if (g[0] === 'color' && /^#[0-9a-f]{6}$/i.test(o.color)) { $('colorCustom').value = o.color; $('colorCustom').dispatchEvent(new Event('input')); }
+      else if (g[0] === 'eye' && /^#[0-9a-f]{6}$/i.test(o.eye)) { $('eyeCustom').value = o.eye; $('eyeCustom').dispatchEvent(new Event('input')); }
     });
     if (o.caption) { $('caption').value = o.caption; $('caption').dispatchEvent(new Event('input')); }
     if (o.url) { $('url').value = o.url; $('url').dispatchEvent(new Event('input')); }
@@ -495,8 +513,8 @@
   }
   function contrastOk() {
     var bgHex = state.bg === 'transparent' ? '#ffffff' : state.bg;
-    var a = lum(state.color), b = lum(bgHex);
-    return a < b && (b + 0.05) / (a + 0.05) >= 4;
+    var b = lum(bgHex);
+    return [state.color, state.eye || state.color].every(function (c) { var a = lum(c); return a < b && (b + 0.05) / (a + 0.05) >= 4; });
   }
 
   // ---------- drawing ----------
@@ -553,13 +571,13 @@
     [[0, 0], [qr.size - 7, 0], [0, qr.size - 7]].forEach(function (f) {
       var ox = (f[0] + quiet) * m, oy = (f[1] + quiet) * m;
       var soft = state.style === 'soft';
-      ctx.fillStyle = state.color;
+      ctx.fillStyle = state.eye || state.color;
       if (soft) { roundRect(ctx, ox, oy, 7 * m, 7 * m, m * 1.6); ctx.fill(); } else ctx.fillRect(ox, oy, 7 * m, 7 * m);
       if (state.bg === 'transparent') ctx.globalCompositeOperation = 'destination-out';
       ctx.fillStyle = state.bg === 'transparent' ? '#000' : state.bg;
       if (soft) { roundRect(ctx, ox + m, oy + m, 5 * m, 5 * m, m * 1.1); ctx.fill(); } else ctx.fillRect(ox + m, oy + m, 5 * m, 5 * m);
       ctx.globalCompositeOperation = 'source-over';
-      ctx.fillStyle = state.color;
+      ctx.fillStyle = state.eye || state.color;
       if (soft) { roundRect(ctx, ox + 2 * m, oy + 2 * m, 3 * m, 3 * m, m * 0.8); ctx.fill(); } else ctx.fillRect(ox + 2 * m, oy + 2 * m, 3 * m, 3 * m);
     });
 
