@@ -26,7 +26,8 @@
         var rot = 0, pic = base;
         var box = document.createElement('div'); box.className = 'ncrop'; box.setAttribute('role', 'dialog'); box.setAttribute('aria-label', 'Crop your photo');
         box.innerHTML = '<div class="ncrop-bar"><button type="button" class="ncrop-x">Cancel</button><b>' + (opts.title || 'Crop it') + '</b><button type="button" class="ncrop-ok">Done</button></div><div class="ncrop-stage"><canvas></canvas></div><div class="ncrop-hint">Drag to move. Pinch to zoom. Drag a corner to change the box.</div><div class="ncrop-tools"></div>';
-        document.body.appendChild(box); document.documentElement.style.overflow = 'hidden';
+        document.body.appendChild(box); document.documentElement.style.overflow = 'hidden'; document.body.style.overflow = 'hidden';
+        box.addEventListener('touchmove', function (e) { if (!(e.target.closest && e.target.closest('.ncrop-tools'))) e.preventDefault(); }, { passive: false });
         var stage = box.querySelector('.ncrop-stage'), cv = stage.querySelector('canvas'), g = cv.getContext('2d'), dpr = Math.min(2, window.devicePixelRatio || 1);
         var aspects = opts.aspects || DEF, asp = opts.aspect != null ? opts.aspect : aspects[0][0];
         var V = { s: 1, x: 0, y: 0 }, F = { x: 0, y: 0, w: 0, h: 0 };
@@ -77,7 +78,7 @@
         function up(e) { delete P[e.pointerId]; var ids = Object.keys(P); if (!ids.length) gs = null; else if (gs && gs.t === 'pinch') gs = { t: 'pan', x: P[ids[0]][0], y: P[ids[0]][1], vx: V.x, vy: V.y }; }
         cv.addEventListener('pointerup', up); cv.addEventListener('pointercancel', up);
         cv.addEventListener('wheel', function (e) { e.preventDefault(); var p = pos(e), k = Math.exp(-e.deltaY * 0.0015), cx = (p[0] - V.x) / V.s, cy = (p[1] - V.y) / V.s; V.s *= k; V.x = p[0] - cx * V.s; V.y = p[1] - cy * V.s; clampV(); draw(); }, { passive: false });
-        function close(out) { window.removeEventListener('resize', onR); box.remove(); document.documentElement.style.overflow = ''; resolve(out); }
+        function close(out) { window.removeEventListener('resize', onR); box.remove(); document.documentElement.style.overflow = ''; document.body.style.overflow = ''; resolve(out); }
         function onR() { layout(true); }
         window.addEventListener('resize', onR);
         box.querySelector('.ncrop-x').onclick = function () { close(null); };
