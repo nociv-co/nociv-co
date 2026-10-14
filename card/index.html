@@ -63,6 +63,7 @@
   .pick-btn input { position: absolute; inset: 0; opacity: 0; cursor: pointer; font-size: 16px; }
   .thumb { width: 48px; height: 48px; object-fit: cover; border: 2px solid var(--ink); background: #fff; display: none; }
   .thumb.on { display: block; }
+  .thumb.contain { object-fit: contain; background: repeating-conic-gradient(#ddd8cc 0 25%, #fff 0 50%) 0 0 / 10px 10px; }
   .linkish { background: none; border: none; font: inherit; text-decoration: underline; cursor: pointer; color: var(--ink); padding: 6px 0; }
   .qr-from { font-size: 0.85rem; padding: 10px 12px; background: #fff; border: 2px dashed var(--ink); margin-top: 6px; }
 
@@ -177,6 +178,17 @@
 
     <section class="note" data-step="Info">
       <h2><b>2</b> Your info</h2>
+      <label class="lbl">Your logo (optional)</label>
+      <div class="pick">
+        <label class="pick-btn">Add your logo<input type="file" id="logoIn" accept="image/*"></label>
+        <img class="thumb contain" id="logoThumb" alt="Your logo">
+        <button type="button" class="linkish" id="logoRemove" hidden>Remove</button>
+      </div>
+      <div class="chips" id="logoWhite" hidden style="margin-top:8px;">
+        <button type="button" class="chip" data-v="keep" aria-pressed="true">Keep its background</button>
+        <button type="button" class="chip" data-v="clear" aria-pressed="false">Remove white background</button>
+      </div>
+      <p class="meta" id="logoNote">Your logo shows on the card. On flyers it sits in a corner, tap and drag it to move it.</p>
       <div id="cardFields">
         <label class="lbl" for="fName">Name or brand</label>
         <input type="text" id="fName" maxlength="40" placeholder="NOCIV.CO" autocomplete="organization">
@@ -203,11 +215,14 @@
         <label class="lbl" for="fFoot">Bottom line (Retro layout puts it in an oval)</label>
         <input type="text" id="fFoot" maxlength="50" placeholder="nociv.co" autocapitalize="off">
       </div>
-      <label class="lbl"><span id="picLabel">Logo</span> (optional)</label>
+      <div id="photoBox" hidden>
+      <label class="lbl"><span id="picLabel">Photo</span> (optional)</label>
       <div class="pick">
         <label class="pick-btn">Pick a picture<input type="file" id="pic" accept="image/*"></label>
         <img class="thumb" id="thumb" alt="">
         <button type="button" class="linkish" id="picRemove" hidden>Remove</button>
+      </div>
+      <p class="meta">A big photo for the flyer. Your logo goes above.</p>
       </div>
     </section>
 
@@ -381,7 +396,7 @@
     rye: { name: 'Western', css: 'NocivRye', up: true },
     plain: { name: 'Plain', css: FONTS.bold, w: '900', up: true }
   };
-  var BLOCK_NAMES = { kick: 'Top line', head: 'Headline', sub: 'Small line', details: 'Details', foot: 'Bottom line', qr: 'QR code', pic: 'Photo' };
+  var BLOCK_NAMES = { logo: 'Logo', kick: 'Top line', head: 'Headline', sub: 'Small line', details: 'Details', foot: 'Bottom line', qr: 'QR code', pic: 'Photo' };
   // Starting points. One tap fills in words, colors, font and layout. Then change anything.
   var STARTERS = [
     { n: 'DJ night', layout: 'stack', head: 'anton', border: 'none', c: ['#0d0d0d', '#ffffff', '#ff4fb4'],
@@ -482,6 +497,12 @@
     g.save(); g.beginPath(); g.rect(x, y, w, h); g.clip();
     g.drawImage(img, x + (w - dw) / 2, y + (h - dh) / 2, dw, dh); g.restore();
   }
+  function drawLogo(g, x, y, w, h) {
+    var img = state.logo; if (!img) return;
+    var iw = img.width, ih = img.height, k = Math.min(w / iw, h / ih), dw = iw * k, dh = ih * k, dx = x + (w - dw) / 2, dy = y + (h - dh) / 2;
+    track(dx, dy, dx + dw, dy + dh);
+    g.drawImage(img, dx, dy, dw, dh);
+  }
   function details() { return [F.fPhone, F.fEmail, F.fWeb, F.fHandle].map(function (v) { return (v || '').trim(); }).filter(Boolean); }
   function name() { return (F.fName || '').trim() || 'YOUR NAME'; }
   function stackLines(g, lines, x, yBottom, maxW, px, align, color, gap) {
@@ -501,7 +522,7 @@
       if (wide) {
         qs = qr ? Math.min(H - pad * 2, W * 0.34) : 0;
         var tw = W - pad * (qr ? 3 : 2) - qs, y = pad;
-        if (state.pic) { drawPic(g, pad, y, H * 0.26, H * 0.26, false); y += H * 0.32; }
+        if (state.logo) { drawLogo(g, pad, y, H * 0.26, H * 0.26); y += H * 0.32; }
         px = fit(g, nm, tw, H * 0.15, '900'); y += px; text(g, nm, pad, y);
         if (ttl) { var tp = fit(g, ttl, tw, H * 0.075, '600'); y += tp * 1.5; g.font = font('600', tp); text(g, ttl, pad, y, 'left', state.accent); }
         stackLines(g, d, pad, H - pad, tw, H * 0.068, 'left');
@@ -509,7 +530,7 @@
       } else {
         var y2 = pad; qs = qr ? S * 0.4 : 0;
         if (qr) { drawQr(g, (W - qs) / 2, y2, qs); y2 += qs + pad * 0.6; }
-        else if (state.pic) { drawPic(g, (W - S * 0.4) / 2, y2, S * 0.4, S * 0.4, false); y2 += S * 0.4 + pad * 0.6; }
+        else if (state.logo) { drawLogo(g, (W - S * 0.4) / 2, y2, S * 0.4, S * 0.4); y2 += S * 0.4 + pad * 0.6; }
         px = fit(g, nm, W - pad * 2, S * 0.13, '900'); y2 += px; text(g, nm, W / 2, y2, 'center');
         if (ttl) { var tp2 = fit(g, ttl, W - pad * 2, S * 0.065, '600'); y2 += tp2 * 1.5; g.font = font('600', tp2); text(g, ttl, W / 2, y2, 'center', state.accent); }
         stackLines(g, d, W / 2, H - pad, W - pad * 2, S * 0.058, 'center');
@@ -517,7 +538,7 @@
     } else if (L === 'center') {
       qs = qr ? S * 0.26 : 0;
       var cy = H * (wide ? 0.42 : 0.4);
-      if (state.pic) { var ps = S * 0.26; drawPic(g, (W - ps) / 2, cy - S * 0.2 - ps, ps, ps, false); }
+      if (state.logo) { var ps = S * 0.26; drawLogo(g, (W - ps) / 2, cy - S * 0.2 - ps, ps, ps); }
       px = fit(g, nm, W - pad * 2, S * 0.17, '900'); g.font = font('900', px); text(g, nm, W / 2, cy, 'center');
       if (ttl) { var tp3 = fit(g, ttl, W - pad * 2.4, S * 0.07, '600'); g.font = font('600', tp3); text(g, ttl, W / 2, cy + tp3 * 1.8, 'center', state.accent); }
       g.fillStyle = state.accent; g.fillRect(W / 2 - S * 0.12, cy + S * 0.16, S * 0.24, Math.max(2, S * 0.012));
@@ -534,12 +555,12 @@
       if (ttl) { var tp4 = fit(g, ttl, tw2, S * 0.075, '700'); ty += tp4; g.font = font('700', tp4); text(g, ttl, pad, ty); }
       stackLines(g, d, pad, H - pad, tw2, S * 0.062, 'left');
       if (qr) drawQr(g, W - pad - qs, H - pad - qs, qs);
-      if (state.pic) { var lp2 = bh * 0.62; drawPic(g, W - pad - lp2, (bh - lp2) / 2, lp2, lp2, false); }
+      if (state.logo) { var lp2 = bh * 0.62; drawLogo(g, W - pad - lp2, (bh - lp2) / 2, lp2, lp2); }
     } else if (L === 'split') {
       if (wide) {
         var sw = W * 0.42; g.fillStyle = state.accent; g.fillRect(0, 0, sw, H);
         var si = on(state.accent), sy = H * 0.5;
-        if (state.pic) { var pz = Math.min(sw - pad * 2, H * 0.36); drawPic(g, (sw - pz) / 2, pad, pz, pz, false); sy = pad + pz + pad * 0.8; }
+        if (state.logo) { var pz = Math.min(sw - pad * 2, H * 0.36); drawLogo(g, (sw - pz) / 2, pad, pz, pz); sy = pad + pz + pad * 0.8; }
         px = fit(g, nm, sw - pad * 1.6, H * 0.14, '900'); g.font = font('900', px); text(g, nm, sw / 2, sy + px * 0.35, 'center', si);
         if (ttl) { var tp5 = fit(g, ttl, sw - pad * 1.6, H * 0.065, '600'); g.font = font('600', tp5); text(g, ttl, sw / 2, sy + px * 0.35 + tp5 * 1.7, 'center', si); }
         var rx = sw + pad, rw = W - sw - pad * 2;
@@ -761,6 +782,10 @@
       if (det.length) blk('details', W / 2, y, function () { return list(W / 2, y, CW, dpx2, 'center', state.ink); });
       if (foot) blk('foot', W / 2, footY, function () { var p = fit(g, foot, CW, S * 0.04, '800'); g.font = font('800', p); text(g, foot, W / 2, footY, 'center', state.ink); });
     }
+    if (state.logo) {
+      var ls = S * 0.17, lx = L === 'street' ? P : W - P - ls, ly = L === 'street' ? H - P - ls - (foot ? S * 0.07 : 0) : L === 'poster' && state.pic ? H * 0.46 - ls - S * 0.03 : P * 0.6;
+      blk('logo', lx, ly, function () { drawLogo(g, lx, ly, ls, ls); });
+    }
   }
 
   // ---------- sizes and sheets ----------
@@ -899,7 +924,7 @@
     state.kind = v;
     $('cardShapeBox').hidden = v !== 'card'; $('cardFields').hidden = v !== 'card'; $('flyerFields').hidden = v !== 'flyer';
     $('cardOut').hidden = v !== 'card'; $('flyerOut').hidden = v !== 'flyer';
-    $('picLabel').textContent = v === 'card' ? 'Logo' : 'Photo';
+    $('photoBox').hidden = v !== 'flyer';
     $('starterBox').hidden = v !== 'flyer'; $('flyerStyle').hidden = v !== 'flyer';
     buildLayoutButtons();
   });
@@ -925,6 +950,36 @@
     img.onerror = function () { alert("Couldn't open that picture. Try a JPG or PNG."); };
     img.src = url; this.value = '';
   });
+  // ---------- logo ----------
+  function logoFrom(img) {
+    var k = Math.min(1, 800 / Math.max(img.naturalWidth || img.width, img.naturalHeight || img.height)), c = document.createElement('canvas');
+    c.width = Math.max(1, Math.round((img.naturalWidth || img.width) * k)); c.height = Math.max(1, Math.round((img.naturalHeight || img.height) * k));
+    c.getContext('2d').drawImage(img, 0, 0, c.width, c.height); return c;
+  }
+  function clearWhite(src) {
+    var c = document.createElement('canvas'); c.width = src.width; c.height = src.height; var g = c.getContext('2d'); g.drawImage(src, 0, 0);
+    var id = g.getImageData(0, 0, c.width, c.height), d = id.data;
+    for (var i = 0; i < d.length; i += 4) { var m = Math.min(d[i], d[i + 1], d[i + 2]); if (m > 238) d[i + 3] = 0; else if (m > 210) d[i + 3] = Math.round(d[i + 3] * (238 - m) / 28); }
+    g.putImageData(id, 0, 0); return c;
+  }
+  function applyLogo() {
+    state.logo = state.logoRaw ? (state.logoClear ? clearWhite(state.logoRaw) : state.logoRaw) : null;
+    $('logoThumb').classList.toggle('on', !!state.logo); if (state.logo) $('logoThumb').src = state.logo.toDataURL('image/png');
+    $('logoRemove').hidden = !state.logo; $('logoWhite').hidden = !state.logo;
+    $('logoWhite').querySelectorAll('[data-v]').forEach(function (b) { b.setAttribute('aria-pressed', String((b.dataset.v === 'clear') === !!state.logoClear)); });
+    render();
+  }
+  function keepLogo() { try { if (state.logoRaw) localStorage.setItem('nocivCardLogo', JSON.stringify({ png: state.logoRaw.toDataURL('image/png'), clear: !!state.logoClear })); else localStorage.removeItem('nocivCardLogo'); } catch (e) {} }
+  $('logoIn').addEventListener('change', function () {
+    var f = this.files && this.files[0]; if (!f) return;
+    var url = URL.createObjectURL(f), img = new Image();
+    img.onload = function () { state.logoRaw = logoFrom(img); URL.revokeObjectURL(url); state.logoClear = false; applyLogo(); keepLogo(); };
+    img.onerror = function () { alert("Couldn't open that picture. Try a JPG or PNG."); };
+    img.src = url; this.value = '';
+  });
+  $('logoRemove').addEventListener('click', function () { state.logoRaw = null; delete state.off.logo; applyLogo(); keepLogo(); });
+  $('logoWhite').querySelectorAll('[data-v]').forEach(function (b) { b.addEventListener('click', function () { state.logoClear = b.dataset.v === 'clear'; applyLogo(); keepLogo(); }); });
+  try { var savedLogo = JSON.parse(localStorage.getItem('nocivCardLogo') || 'null'); if (savedLogo && savedLogo.png) { var li = new Image(); li.onload = function () { state.logoRaw = logoFrom(li); state.logoClear = !!savedLogo.clear; applyLogo(); }; li.src = savedLogo.png; } } catch (e) {}
   $('picRemove').addEventListener('click', function () { state.pic = null; $('thumb').classList.remove('on'); this.hidden = true; render(); });
 
   // ---------- files: PNG + PDF (made first, then saved with a tap, iPhone needs the file ready) ----------
