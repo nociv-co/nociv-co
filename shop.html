@@ -420,6 +420,18 @@
     font-size: 1rem; font-weight: 900; letter-spacing: 0.1em; text-transform: uppercase; padding: 17px; cursor: pointer;
   }
   .bag-go:disabled { opacity: .5; cursor: default; }
+  .bag-code { margin-top: 14px; }
+  .bag-code-form { display: flex; gap: 8px; }
+  .bag-code-form input { flex: 1; min-width: 0; padding: 11px 12px; border: 1.5px solid #1a1a1a; background: #fff; font: inherit; font-size: 16px; text-transform: uppercase; border-radius: 0; }
+  .bag-code-form button, .bag-code-on button { background: #111; color: #fff; border: none; font: inherit; font-weight: 900; font-size: 0.8rem; letter-spacing: 0.08em; text-transform: uppercase; padding: 0 16px; cursor: pointer; min-height: 44px; }
+  .bag-code-on { display: flex; gap: 10px; align-items: center; justify-content: space-between; border: 1.5px dashed #1a1a1a; padding: 8px 8px 8px 12px; font-size: 0.88rem; }
+  .bag-code-on em { color: var(--red, #c8412f); font-style: normal; font-weight: 700; }
+  .bag-code-err { color: var(--red, #c8412f); font-weight: 700; font-size: 0.85rem; margin: 6px 0 0; min-height: 0; }
+  .bag-sum-row small { font-weight: 400; opacity: .65; font-size: 0.75rem; }
+  .signup-code { margin-top: 10px; padding: 12px 14px; border: 2px dashed #1a1a1a; background: #fff; color: #1a1a1a; text-align: center; }
+  .signup-code b { display: block; font-size: 1.35rem; letter-spacing: 0.12em; margin: 4px 0; user-select: all; -webkit-user-select: all; }
+  .signup-code small { display: block; opacity: .75; }
+  .signup-code button { margin-top: 8px; background: #111; color: #fff; border: none; font: inherit; font-weight: 900; letter-spacing: 0.08em; text-transform: uppercase; font-size: 0.75rem; padding: 10px 14px; cursor: pointer; }
   .bag-err { color: var(--red, #c8412f); font-weight: 700; font-size: 0.88rem; margin: 10px 0 0; min-height: 1em; }
 
   /* Order banner: cream posted note with tape, same look as the bag */
@@ -497,7 +509,7 @@
     <!-- Come Through In Person: simple signup, the last thing on the page -->
     <div class="shop-inperson">
       <h2>Come Through In Person.</h2>
-      <p>Pop ups. New releases. Where NOCIV will be next.</p>
+      <p>Pop ups. New releases. Where NOCIV will be next. Join and your first order ships free.</p>
       <form id="signupForm">
         <input type="email" placeholder="Your email" required autocomplete="email">
         <button type="submit" class="landing-btn landing-btn-secondary">Join The List</button>
@@ -977,6 +989,21 @@
   }
   document.getElementById('photoLightbox').addEventListener('click', closePhotoLightbox);
 
+  // Shows the free shipping code after someone joins the list.
+  function showSignupCode(afterEl, code) {
+    const box = document.createElement('div');
+    box.className = 'signup-code';
+    box.innerHTML = `You're on the list. Free shipping on your first order:<b>${escAttr(code)}</b><small>One use. Screenshot it, or tap below to put it in your bag.</small><button type="button">Use it now</button>`;
+    afterEl.replaceWith(box);
+    box.querySelector('button').addEventListener('click', async (e) => {
+      e.target.disabled = true;
+      const err = await applyCode(code);
+      // A brand new list code is good. If the check couldn't run, keep it anyway, checkout checks again.
+      if (err) writeCode({ code, kind: 'free_shipping', value: 0, label: 'Free shipping' });
+      e.target.textContent = 'In your bag';
+    });
+  }
+
   // ===== COME THROUGH IN PERSON SIGNUP (same signups table) =====
   document.getElementById('signupForm').addEventListener('submit', async function (e) {
     e.preventDefault();
@@ -988,7 +1015,13 @@
     errEl.style.display = 'none';
     button.disabled = true;
 
-    const { error } = await supabaseClient.from('signups').insert([{ contact: value }]);
+    // join_list adds them and hands back their own free shipping code.
+    let { data: code, error } = await supabaseClient.rpc('join_list', { p_contact: value });
+    if (error && /join_list|function|schema cache/i.test(error.message || '')) {
+      // Shipping-codes SQL not run yet: still add them to the list, no code.
+      code = null;
+      ({ error } = await supabaseClient.from('signups').insert([{ contact: value }]));
+    }
 
     if (error) {
       console.error(error);
@@ -996,7 +1029,9 @@
       button.disabled = false;
       return;
     }
-    document.getElementById('signupConfirm').style.display = 'block';
+    const conf = document.getElementById('signupConfirm');
+    conf.style.display = 'block';
+    if (code) showSignupCode(conf, code);
     input.disabled = true;
   });
 
@@ -1331,6 +1366,31 @@
   }
 
   let bagShipping = null;
+  const DEFAULT_RATES = [{ up_to_oz: 15.99, price: 8.5 }, { up_to_oz: 32, price: 11 }, { up_to_oz: 48, price: 13 }, { up_to_oz: 80, price: 16 }, { up_to_oz: null, price: 20 }];
+  function parseRates(raw) {
+    try {
+      const arr = typeof raw === 'string' ? JSON.parse(raw) : raw;
+      const clean = (Array.isArray(arr) ? arr : []).map(r => ({ up_to_oz: (r && r.up_to_oz !== null && r.up_to_oz !== '' && r.up_to_oz !== undefined) ? Number(r.up_to_oz) : null, price: Number(r && r.price) }))
+        .filter(r => Number.isFinite(r.price) && r.price >= 0 && (r.up_to_oz === null || r.up_to_oz > 0));
+      return clean.length ? clean.sort((a, b) => (a.up_to_oz ?? Infinity) - (b.up_to_oz ?? Infinity)) : DEFAULT_RATES;
+    } catch (e) { return DEFAULT_RATES; }
+  }
+  function rateFor(oz, rates) { for (const r of rates) if (r.up_to_oz === null || oz <= r.up_to_oz) return r.price; return rates[rates.length - 1].price; }
+  // Same guess the checkout uses when a product has no weight in Admin.
+  function guessWeightOz(p) {
+    const w = Number(p && p.ship_weight_oz);
+    if (Number.isFinite(w) && w > 0) return w;
+    const t = ((p && p.name) || '') + ' ' + ((p && p.category) || '');
+    const s = t.toLowerCase();
+    if (/hood|sweat|jacket|coat|fleece/.test(s)) return 18;
+    if (/pant|jean|trouser|cargo|denim/.test(s)) return 20;
+    if (/crew|long ?sleeve|flannel/.test(s)) return 12;
+    if (/short/.test(s)) return 8;
+    if (/tank|hat|cap|beanie|sock|bandana|tote/.test(s)) return 4;
+    if (/zine|sticker|patch|card|print|poster/.test(s)) return 3;
+    if (/tee|t-shirt|shirt/.test(s)) return 6;
+    return 8;
+  }
   async function loadShippingSettings() {
     if (bagShipping) return bagShipping;
     const { data } = await supabaseClient.from('shipping_settings_public').select('key, value');
@@ -1338,12 +1398,41 @@
     const num = (v) => { const n = parseFloat(String(v ?? '').replace(/[$,\s]/g, '')); return Number.isFinite(n) && n >= 0 ? n : null; };
     bagShipping = {
       flat: num(m.shipping_flat) ?? 5,
+      byWeight: String(m.shipping_mode ?? 'weight').toLowerCase() !== 'flat',
+      rates: parseRates(m.shipping_rates),
+      packaging: num(m.packaging_oz) ?? 1,
       freeOver: num(m.free_shipping_over),
       pickup: String(m.pickup_enabled ?? 'true').toLowerCase() === 'true',
       pickupLabel: m.pickup_label || 'Local pickup, Phoenix',
     };
     return bagShipping;
   }
+
+  // ===== SALE CODES: typed in the bag, or from a shared link (shop.html?code=XXXX) =====
+  const CODE_KEY = 'nocivCode';
+  function readCode() { try { const c = JSON.parse(localStorage.getItem(CODE_KEY) || 'null'); return c && c.code ? c : null; } catch (e) { return null; } }
+  function writeCode(c) { try { c ? localStorage.setItem(CODE_KEY, JSON.stringify(c)) : localStorage.removeItem(CODE_KEY); } catch (e) {} }
+  async function checkCode(code) {
+    try {
+      const res = await fetch(CHECKOUT_URL, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ check: true, code }) });
+      return await res.json();
+    } catch (e) { return { ok: false, error: "Couldn't check that code. Check your signal." }; }
+  }
+  async function applyCode(code, quiet) {
+    const r = await checkCode(code);
+    if (r.ok) { writeCode({ code: r.code, kind: r.kind, value: r.value, label: r.label, min: r.min_subtotal }); return null; }
+    if (!quiet) return r.error || "That code didn't work.";
+    return r.error;
+  }
+  (function codeFromLink() {
+    const q = new URLSearchParams(location.search);
+    const c = q.get('code');
+    if (!c) return;
+    q.delete('code');
+    const rest = q.toString();
+    history.replaceState(null, '', location.pathname + (rest ? '?' + rest : '') + location.hash);
+    applyCode(c, true);
+  })();
 
   const bagOverlay = document.getElementById('bagOverlay');
   let bagReady = false; // true when every line is valid and checkout can go
@@ -1374,12 +1463,14 @@
     linesEl.innerHTML = '<p class="bag-empty">Loading...</p>';
 
     const ids = [...new Set(bag.map(l => l.productId))];
-    const [{ data: prods }, { data: vars }, ship] = await Promise.all([
+    const [{ data: prods }, { data: vars }, ship, wRes] = await Promise.all([
       supabaseClient.from('products_public').select('*').in('id', ids),
       supabaseClient.from('product_variants').select('*').in('product_id', ids),
       loadShippingSettings(),
+      supabaseClient.from('product_ship_weights').select('id, ship_weight_oz').in('id', ids),
     ]);
     const pById = Object.fromEntries((prods || []).map(p => [p.id, p]));
+    ((wRes && wRes.data) || []).forEach(w => { if (pById[w.id]) pById[w.id].ship_weight_oz = w.ship_weight_oz; });
     const varsByProduct = {};
     (vars || []).forEach(v => (varsByProduct[v.product_id] = varsByProduct[v.product_id] || []).push(v));
 
@@ -1387,7 +1478,7 @@
     const gone = bag.filter(l => !pById[l.productId] || pById[l.productId].status !== 'for_sale');
     if (gone.length) { bag = bag.filter(l => !gone.includes(l)); writeBag(bag); }
 
-    let subtotal = 0, ok = true, hasPod = false;
+    let subtotal = 0, ok = true, hasPod = false, oz = ship.packaging;
     linesEl.innerHTML = '';
     bag.forEach((l, idx) => {
       const p = pById[l.productId];
@@ -1401,6 +1492,7 @@
       if (POD_TYPES.includes(p.fulfillment_type)) hasPod = true;
       const price = Number(p.price) || 0;
       subtotal += price * l.quantity;
+      oz += guessWeightOz(p) * l.quantity;
 
       const row = document.createElement('div');
       row.className = 'bag-line';
@@ -1436,21 +1528,49 @@
     });
 
     if (!bag.length) { renderBag(); return; }
-    const free = ship.freeOver !== null && ship.freeOver > 0 && subtotal >= ship.freeOver;
-    const shipText = free ? 'Free' : '$' + ship.flat.toFixed(2);
+    const code = readCode();
+    const shipCost = ship.byWeight ? rateFor(oz, ship.rates) : ship.flat;
+    const codeFree = code && code.kind === 'free_shipping';
+    const free = codeFree || (ship.freeOver !== null && ship.freeOver > 0 && subtotal >= ship.freeOver);
+    const shipText = free ? 'Free' : '$' + shipCost.toFixed(2);
     const toFree = (!free && ship.freeOver) ? ship.freeOver - subtotal : 0;
+    const belowMin = code && code.min && subtotal < code.min;
+    let off = 0;
+    if (code && !belowMin && code.kind === 'percent') off = Math.round(subtotal * Number(code.value)) / 100;
+    if (code && !belowMin && code.kind === 'amount') off = Math.min(subtotal, Number(code.value));
+    const total = Math.max(0, subtotal - off) + (free ? 0 : shipCost);
     sumEl.innerHTML = `
       <div class="bag-sum">
         <div class="bag-sum-row"><span>Subtotal</span><span>$${subtotal.toFixed(2)}</span></div>
-        <div class="bag-sum-row"><span>Shipping</span><span>${shipText}</span></div>
-        <div class="bag-sum-row total"><span>Total</span><span>$${(subtotal + (free ? 0 : ship.flat)).toFixed(2)}</span></div>
-        ${toFree > 0 ? `<p class="bag-note">$${toFree.toFixed(2)} more and shipping's free.</p>` : ''}
+        ${off > 0 ? `<div class="bag-sum-row"><span>${escAttr(code.code)}</span><span>&minus;$${off.toFixed(2)}</span></div>` : ''}
+        <div class="bag-sum-row"><span>Shipping${!free && ship.byWeight ? ' <small>(USPS, by weight)</small>' : ''}</span><span>${shipText}</span></div>
+        <div class="bag-sum-row total"><span>Total</span><span>$${total.toFixed(2)}</span></div>
+        ${toFree > 0 && !codeFree ? `<p class="bag-note">$${toFree.toFixed(2)} more and shipping's free.</p>` : ''}
         ${ship.pickup && !hasPod ? `<p class="bag-note">Free pickup is an option too: ${escAttr(ship.pickupLabel)}. Pick it at checkout.</p>` : ''}
         ${ship.pickup && hasPod ? `<p class="bag-note">Something in here is printed to order, so this bag ships. No pickup.</p>` : ''}
-        <p class="bag-note">Promo codes go in at checkout.</p>
+        ${!ship.pickup ? `<p class="bag-note">Local pickup in Phoenix: coming soon.</p>` : ''}
+        <div class="bag-code">
+          ${code
+            ? `<div class="bag-code-on"><span><b>${escAttr(code.code)}</b> ${escAttr(code.label || '')}${belowMin ? ` <em>(needs a $${Number(code.min).toFixed(2)} bag)</em>` : ''}</span><button type="button" id="bagCodeRemove">Remove</button></div>`
+            : `<form id="bagCodeForm" class="bag-code-form"><input id="bagCodeInput" type="text" placeholder="Got a code?" autocapitalize="characters" autocomplete="off" spellcheck="false" maxlength="40" enterkeyhint="done"><button type="submit">Apply</button></form>`}
+          <p class="bag-code-err" id="bagCodeErr"></p>
+        </div>
       </div>`;
-    bagReady = ok;
-    goBtn.disabled = !ok;
+    const form = document.getElementById('bagCodeForm');
+    if (form) form.addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const v = document.getElementById('bagCodeInput').value.trim();
+      const errEl = document.getElementById('bagCodeErr');
+      if (!v) return;
+      const b = form.querySelector('button'); b.disabled = true; b.textContent = '...';
+      const err = await applyCode(v);
+      if (err) { errEl.textContent = err; b.disabled = false; b.textContent = 'Apply'; return; }
+      renderBag();
+    });
+    const rm = document.getElementById('bagCodeRemove');
+    if (rm) rm.addEventListener('click', () => { writeCode(null); renderBag(); });
+    bagReady = ok && !belowMin;
+    goBtn.disabled = !bagReady;
     goBtn.textContent = 'Checkout';
   }
 
@@ -1465,10 +1585,11 @@
       const res = await fetch(CHECKOUT_URL, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ items: readBag() })
+        body: JSON.stringify({ items: readBag(), ...(readCode() ? { code: readCode().code } : {}) })
       });
       const result = await res.json();
       if (result.url) { window.location.href = result.url; return; }
+      if (result.error && /code/i.test(result.error)) { writeCode(null); renderBag(); }
       errEl.textContent = result.error || 'Something went wrong starting checkout.';
     } catch (err) {
       errEl.textContent = "Couldn't reach checkout. Check your signal and try again.";
@@ -1732,6 +1853,7 @@
     const banner = document.getElementById('shopBanner');
     if (status === 'success') {
       writeBag([]);
+      writeCode(null);
       document.getElementById('shopBannerTitle').textContent = 'Order in. Thank you.';
       document.getElementById('shopBannerText').textContent = "Your receipt is on its way to your email. Picked local pickup? Watch your email, we'll set up a time and place with you.";
       banner.hidden = false;
