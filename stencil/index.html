@@ -25,7 +25,7 @@ body.m-st .ht-only,body.m-ht .st-only{display:none!important}
 .stabs{display:none}
 @media(min-width:701px){.stage{position:sticky;top:10px;height:calc(100vh - 100px);align-self:start}.canvasWrap{min-height:0}canvas{max-height:calc(100vh - 150px);width:auto}}
 @media(max-width:700px){canvas{max-height:calc(44svh - 46px);width:auto}}
-.canvasWrap.zoom canvas{max-height:none!important}
+.canvasWrap.zoom canvas{max-height:none!important}.canvasWrap:not(.zoom){overflow:hidden}
 @media(max-width:1000px){main{grid-template-columns:300px 1fr}.right{grid-column:1/-1}}
 @media(max-width:700px){
  header{padding:12px 16px 4px}main{display:flex;flex-direction:column;padding:0 12px 40px;gap:0}
@@ -67,7 +67,26 @@ body.m-st .ht-only,body.m-ht .st-only{display:none!important}
 .sizes{display:grid;grid-template-columns:1fr 1fr;gap:8px}.sizes button{padding:10px 8px;font-size:14px;line-height:1.2}.sizes button small{display:block;font-weight:600;font-size:12px;color:var(--muted);margin-top:2px}.sizes button[aria-pressed=true]{background:var(--text);color:#fff}.sizes button[aria-pressed=true] small{color:#ddd}
 .stabs button{display:flex;align-items:center;gap:6px;padding:7px 13px 7px 7px!important;font-weight:800}.stabs button b{display:inline-grid;place-items:center;width:21px;height:21px;border-radius:50%;background:#efece5;font-size:11px;color:var(--text)}.stabs button[aria-selected=true] b{background:var(--a);color:#fff}
 .stage.focused{height:calc(100vh - 80px)!important;height:calc(100dvh - 80px)!important;padding:0!important;background:transparent}.stage.focused .canvasWrap{min-height:0}.stage.focused canvas{max-height:calc(100vh - 150px)!important;max-height:calc(100dvh - 150px)!important}
-</style></head><body class="m-st"><header><div class="brand"><span>STENCIL</span> + HALFTONE</div><div class="muted">Your photos never leave your phone.</div></header><main><aside>
+.hright{display:flex;align-items:center;gap:10px;flex-wrap:wrap}.learnTop{width:auto;padding:8px 14px;font-size:13px;font-weight:900;letter-spacing:.04em;text-transform:uppercase;background:var(--text);color:#fff;border-color:var(--text)}
+.regs{display:grid;grid-template-columns:repeat(5,1fr);gap:6px}.regs button{padding:6px 2px 5px;font-size:11px;font-weight:800;display:flex;flex-direction:column;align-items:center;gap:3px;border-radius:10px}.regs canvas{width:100%;max-width:64px;height:auto;display:block}.regs button[aria-pressed=true]{background:var(--text);color:#fff}
+@media(max-width:700px){.regs{grid-template-columns:repeat(5,minmax(62px,1fr));overflow-x:auto}}
+.layer .lt{display:inline-grid;place-items:center;min-width:26px;height:26px;border-radius:6px;background:var(--text);color:#fff;font-weight:900;font-size:14px}.layer small{display:block;font-weight:600;color:var(--muted);font-size:12px}.layer .ln{flex:1;line-height:1.2}
+.saveall{margin-top:10px}.file small{display:block;font-weight:600;color:var(--muted);font-size:12px}
+.viewt{position:absolute;top:8px;left:8px;z-index:3;display:flex;background:rgba(255,255,255,.92);border:1.5px solid var(--text);border-radius:999px;padding:2px}.viewt button{width:auto;border:0;border-radius:999px;padding:6px 12px;font-size:13px;font-weight:800;background:transparent}.viewt button[aria-pressed=true]{background:var(--text);color:#fff}
+.shirtbar{position:absolute;left:8px;bottom:8px;right:58px;z-index:3;display:flex;gap:6px;align-items:center;overflow-x:auto;scrollbar-width:none;padding:4px;background:rgba(255,255,255,.92);border:1.5px solid var(--text);border-radius:999px}.shirtbar::-webkit-scrollbar{display:none}
+.shirtbar .sc{flex:none;width:30px;height:30px;border-radius:50%;border:2px solid #fff;box-shadow:0 0 0 1.5px var(--line);padding:0;cursor:pointer}.shirtbar .sc[aria-pressed=true]{box-shadow:0 0 0 2.5px var(--text)}.shirtbar span{flex:none;font-size:12px;font-weight:800;padding:0 4px}.shirtbar label{flex:none;margin:0;position:relative;width:30px;height:30px;border-radius:50%;overflow:hidden;background:conic-gradient(red,yellow,lime,cyan,blue,magenta,red)}.shirtbar label input{position:absolute;inset:0;opacity:0;width:100%;height:100%;padding:0;border:0}
+.learnlist{display:grid;gap:6px}.learnlist button{text-align:left;font-size:14px;padding:10px 12px}
+.learn{position:fixed;inset:0;z-index:10000;background:var(--bg);display:flex;flex-direction:column;padding-top:env(safe-area-inset-top)}.learn[hidden]{display:none}
+.lhead{display:flex;align-items:center;justify-content:space-between;gap:10px;padding:12px 16px 6px;max-width:820px;width:100%;margin:0 auto}.lhead h2{margin:0;font-size:15px}.lclose{width:auto;background:var(--a);color:#fff;border-color:var(--a);font-weight:900;padding:9px 18px;border-radius:999px}
+.ltabs{display:flex;gap:6px;overflow-x:auto;scrollbar-width:none;padding:4px 16px 10px;max-width:820px;width:100%;margin:0 auto}.ltabs::-webkit-scrollbar{display:none}.ltabs button{flex:none;width:auto;border-radius:999px;padding:8px 14px;font-size:14px;font-weight:800}.ltabs button[aria-selected=true]{background:var(--text);color:#fff}
+.lbody{flex:1;overflow-y:auto;overscroll-behavior:contain;padding:4px 16px calc(30px + env(safe-area-inset-bottom))}.lbody article{display:none;max-width:780px;margin:0 auto;background:var(--p);border-radius:14px;padding:18px 18px 20px;box-shadow:0 3px 12px rgba(40,30,10,.07)}.lbody article.on{display:block}
+.lbody h3{margin:0 0 10px;font-size:20px;font-weight:900;line-height:1.15}.lbody h4{margin:22px 0 8px;font-size:15px;font-weight:900}.lead{line-height:1.55;margin:0 0 12px}.lbody a{color:var(--a);font-weight:800}
+.lsteps{margin:0;padding:0;list-style:none;counter-reset:s}.lsteps li{counter-increment:s;position:relative;padding:0 0 12px 40px;line-height:1.5}.lsteps li::before{content:counter(s);position:absolute;left:0;top:0;width:28px;height:28px;border-radius:50%;background:var(--a);color:#fff;font-weight:900;display:grid;place-items:center;font-size:14px}
+.lpoints{margin:0 0 12px;padding:0 0 0 18px;line-height:1.5}.lpoints li{margin-bottom:8px}
+.tipbox{background:#fff;border:1.5px solid var(--text);border-radius:10px;padding:10px 12px;line-height:1.5;margin:14px 0 0}
+.ltable{width:100%;border-collapse:collapse;margin:6px 0 4px;font-size:14px}.ltable th,.ltable td{text-align:left;padding:8px 6px;border-bottom:1px solid var(--line);vertical-align:top}.ltable td:first-child{font-weight:900;white-space:nowrap}
+.abcfig svg,.meshchart svg,.cmykfig svg{display:block;width:100%;height:auto;margin:10px 0}
+</style></head><body class="m-st"><header><div class="brand"><span>STENCIL</span> + HALFTONE</div><div class="hright"><button id="learnTop" class="learnTop">How to print it</button><div class="muted">Your photos never leave your phone.</div></div></header><main><aside>
 <div class="modes" role="tablist"><button id="mSt" class="on" role="tab" aria-selected="true">Stencil</button><button id="mHt" role="tab" aria-selected="false">Halftone</button></div>
 <div class="stabs" id="stabs" role="tablist"></div>
 <section><h2>Photo</h2><input id="file" type="file" accept="image/*"><div class="row"><button id="sample">Sample</button><button id="reset">Reset</button></div><p class="help">Images are processed in this browser and are not uploaded.</p>
@@ -79,7 +98,7 @@ body.m-st .ht-only,body.m-ht .st-only{display:none!important}
 
 <section><h2>Size</h2><p class="help" style="margin-top:0">What is it for? This sets how big it prints and how big the dots are.</p><div class="sizes" id="sizePick"></div><p class="help" id="sizeNote"></p></section>
 
-<section class="st-only"><h2>Light and dark</h2><label>Where light turns to dark</label><div class="range"><input id="thr" type="range" min="0" max="255" value="128"><output id="thro">128</output></div><div class="check"><input id="inv" type="checkbox"><label for="inv">Flip black and white</label></div><label>How many layers (stencils to cut)</label><select id="layers"><option>1</option><option selected>2</option><option>3</option><option>4</option></select><label>Show layer</label><select id="active"></select></section>
+<section class="st-only"><h2>Light and dark</h2><label>Where light turns to dark</label><div class="range"><input id="thr" type="range" min="0" max="255" value="128"><output id="thro">128</output></div><div class="check"><input id="inv" type="checkbox"><label for="inv">Flip black and white</label></div></section>
 <section class="st-only"><h2>Bridges</h2><p class="help">Bridges are thin strips that hold floating pieces (like the middle of an O) in place.</p><label>Bridge width</label><div class="range"><input id="bw" type="range" min="1" max="20" value="5"><output id="bwo">5 px</output></div><div class="check"><input id="ab" type="checkbox"><label for="ab">Show where bridges could go</label></div><p class="help">These are ideas, not rules. Check every floating piece before you cut.</p></section>
 
 <section class="ht-only"><h2>Ink</h2><label for="hInk">Colors</label><select id="hInk"><option value="gray">Grayscale (black ink)</option><option value="one">One color (pick ink and shirt)</option><option value="cmyk">CMYK (4 colors)</option></select>
@@ -94,11 +113,115 @@ body.m-st .ht-only,body.m-ht .st-only{display:none!important}
 <label for="hMax">Largest dot before solid</label><div class="range"><input id="hMax" type="range" min="70" max="100" value="95"><output id="hMaxo">95%</output></div>
 <p class="help">Dots smaller than the smallest size won't hold on the screen, so they drop out. Dots bigger than the largest size fill in, so they go solid.</p></section>
 
+<section class="st-only"><h2>Layers</h2><p class="help" style="margin-top:0">Each layer is one stencil (or one screen). Do them in letter order: A first, the lightest, then B on top, and so on.</p><label for="layers">How many layers</label><select id="layers"><option>1</option><option selected>2</option><option>3</option><option>4</option></select><select id="active" hidden aria-hidden="true"></select><div id="list" style="margin-top:10px"></div><p class="help">Tap a layer to see it alone.</p></section>
+<section class="ht-only"><h2>Ink layers</h2><p class="help" style="margin-top:0">Each ink color is one screen. Print them in letter order, A first. Tap one to see it alone.</p><div id="plist"></div></section>
+<section><h2>Marks</h2><p class="help" style="margin-top:0">Registration marks are little targets printed in the same spot on every layer. Line up the marks on layer B with layer A and your colors land where they should.</p><div class="regs" id="regPick"></div><div class="check"><input id="lblOn" type="checkbox" checked><label for="lblOn">Print the letter and color on each file</label></div></section>
 <section><h2>Save</h2><label>How wide it prints</label><div class="range"><input id="wi" type="range" min="2" max="24" step=".25" value="8"><output id="wio">8 in</output></div>
 <div class="check"><input id="clearBg" type="checkbox"><label for="clearBg">See-through background (PNG)</label></div>
-<div class="st-only"><button id="png" class="primary">Save PNG (300 DPI)</button><button id="svg" style="margin-top:8px">Save SVG (for cutting machines)</button></div>
-<div class="ht-only"><div class="check"><input id="hReg" type="checkbox"><label for="hReg">Registration marks</label></div><button id="hMake" class="primary">Make print files</button><div id="hFiles" class="files"></div><p class="help">Each color comes out as its own black and white 300 DPI file, ready for film or a screen. The mockup is just to show people.</p></div></section>
-</aside><div class="stage"><div class="canvasWrap" id="wrap"><canvas id="c"></canvas><button id="pick" class="primary">Add a photo</button></div><div class="status"><span id="status" class="muted">Load artwork to begin.</span><span id="size" class="muted"></span><button id="zoom" class="ht-only" hidden>Zoom in</button></div></div><aside class="right"><section class="st-only"><h2>Layers</h2><div id="list"></div></section><section class="ht-only"><h2>Ink layers</h2><div id="plist"></div><p class="help">Each ink color gets its own black and white file. Printers call these plates: you burn one screen (or cut one stencil) for each color. Tap one to see it alone.</p></section><section><h2>Check</h2><div class="metric"><span>Input</span><b id="mi">-</b></div><div class="metric"><span class="st-only">Layers</span><span class="ht-only">Ink layers</span><b id="ml">-</b></div><div class="metric"><span class="st-only">Black area</span><span class="ht-only">Ink coverage</span><b id="ma">-</b></div><div class="metric"><span>Print width</span><b id="mw">-</b></div><div class="metric ht-only"><span>Dot spacing</span><b id="md">-</b></div><div class="metric ht-only"><span>Print file</span><b id="mx">-</b></div></section><section><h2>How it works</h2><p class="help st-only">Add a photo, set light and dark, pick how many layers, add bridges, save.</p><p class="help st-only">Black = the part you cut out (or print). White = stays.</p><p class="help ht-only">Add a photo, pick your ink, pick your dots, make the print files.</p><p class="help ht-only">Black on the print file = ink. Print each file as a film positive and burn one screen per color.</p></section></aside></main><script>
+<button id="make" class="primary">Make print files</button><div id="files" class="files"></div><p class="help">You get one file per layer (A, B, C...), one PDF with every layer on its own page at true size, <span class="st-only">cut files for machines, </span>and a shirt mockup to show people. Print at 100% (actual size).</p></section>
+</aside><div class="stage"><div class="canvasWrap" id="wrap"><canvas id="c"></canvas><button id="pick" class="primary">Add a photo</button><div class="viewt" id="viewT" hidden><button id="vArt" aria-pressed="true">Artboard</button><button id="vShirt" aria-pressed="false">On a shirt</button></div><div class="shirtbar" id="shirtBar" hidden></div></div><div class="status"><span id="status" class="muted">Load artwork to begin.</span><span id="size" class="muted"></span><button id="zoom" class="ht-only" hidden>Zoom in</button></div></div><aside class="right"><section><h2>Check</h2><div class="metric"><span>Input</span><b id="mi">-</b></div><div class="metric"><span class="st-only">Layers</span><span class="ht-only">Ink layers</span><b id="ml">-</b></div><div class="metric"><span class="st-only">Black area</span><span class="ht-only">Ink coverage</span><b id="ma">-</b></div><div class="metric"><span>Print width</span><b id="mw">-</b></div><div class="metric ht-only"><span>Dot spacing</span><b id="md">-</b></div><div class="metric ht-only"><span>Print file</span><b id="mx">-</b></div></section><section><h2>Learn</h2><p class="help" style="margin-top:0">Never made a screen? Start here. Cheap ways, real steps.</p><div class="learnlist" id="learnList"></div></section></aside></main><div class="learn" id="learn" hidden role="dialog" aria-modal="true" aria-labelledby="learnTitle">
+<div class="lhead"><h2 id="learnTitle">How to print it</h2><button id="learnClose" class="lclose" aria-label="Close">Done</button></div>
+<div class="ltabs" id="ltabs" role="tablist"></div>
+<div class="lbody" id="lbody">
+
+<article data-t="screen" data-n="Make a screen">
+<h3>Make a screen from scratch, the cheap way</h3>
+<p class="lead">You need: a screen (buy one or build one, see <a href="#" data-go="frame">Build a frame</a>), a photo emulsion kit (a Speedball starter kit with Diazo emulsion and sensitizer works), plain copy paper, cooking or baby oil, a piece of glass or clear plastic, something black and flat (cardboard or a black shirt), tape, and a sunny day.</p>
+<ol class="lsteps">
+<li><b>Print your layer.</b> Save your files here, print layer A on regular copy paper as dark as your printer goes. A laser printer gives the darkest black. Print at 100%, no scaling.</li>
+<li><b>Make the paper see-through.</b> Brush or rub a thin coat of cooking oil or baby oil on the back. Let it soak in, then wipe off the extra so it is not dripping. Hold it up to a window: white parts should glow, black parts should block the light.</li>
+<li><b>Clean the screen.</b> Scrub the mesh with dish soap (no lotion kind) and rinse. Grease and dust make holes in your stencil. Let it dry.</li>
+<li><b>Mix and coat, in dim light.</b> Mix the sensitizer into the emulsion like the jar says (wear gloves). Turn off bright lights, a yellow bug light is safe. Pour a line of emulsion on the screen and pull it across with a squeegee or a stiff card, a thin even coat on both sides.</li>
+<li><b>Dry it in the dark.</b> Lay it flat, outside of the screen facing down, in a dark closet or a box. A fan helps. Wait until it is fully dry, a few hours to overnight.</li>
+<li><b>Set it up.</b> Black flat thing on the bottom, then the screen with the flat (shirt) side up, then your oiled print, then the glass on top to press it flat. The print goes on backwards (mirror image) on this side, so it reads the right way when you look through from the inside.</li>
+<li><b>Sun.</b> Carry it out covered with a towel, uncover in direct midday sun. Printers report about <b>25 to 60 seconds</b>. Oiled paper blocks more light than film, so you may need longer. Do a test strip the first time: cover parts of a scrap screen with cardboard and uncover a strip every 15 seconds.</li>
+<li><b>Wash it out.</b> Cover it again, go inside, and spray both sides with cool water. Where your art was black, the emulsion washes away and leaves open mesh. Spray gently until the image is clean and sharp.</li>
+<li><b>Dry it.</b> Let it dry, then set it in the sun again for a few minutes to harden it. Hold it to the light: the art should be open mesh, everything else solid.</li>
+</ol>
+<p class="tipbox"><b>Washed out completely?</b> Not enough sun. <b>Art will not wash out?</b> Too much sun, or the paper was not dark enough or the glass was not tight.</p>
+</article>
+
+<article data-t="frame" data-n="Build a frame">
+<h3>Build your own frame (and go big)</h3>
+<p class="lead">You need: 2x2 wood, wood glue, screws or metal corner brackets, a staple gun with 3/8 in or 1/2 in staples, screen mesh, waterproof sealer (spar urethane or outdoor polyurethane), duct tape, sandpaper.</p>
+<ol class="lsteps">
+<li><b>Pick the size.</b> The inside of the frame should be about 3 to 4 inches bigger than your art on every side. That gives the squeegee room and a place to pour ink. A 10 x 12 in design wants about an 18 x 20 in inside.</li>
+<li><b>Cut and join the corners.</b> Glue every corner and add 2 screws or a metal corner bracket. Staples alone will not hold the corners, the mesh pulls hard.</li>
+<li><b>Sand and seal.</b> Sand the edge the mesh sits on so nothing snags. Paint the wood with waterproof sealer and let it dry fully. Screens get wet every time you wash them, raw wood swells and warps.</li>
+<li><b>Staple the mesh.</b> Cut the mesh 2 to 3 inches bigger than the frame. Staple the middle of one side. Pull the opposite side tight and staple its middle. Do the same for the other two sides. Then work out from the middles to the corners, alternating sides, a staple about every inch, pulling as you go. Tight like a drum.</li>
+<li><b>Seal the edges.</b> Trim the extra mesh, then cover the staples and the wood edge with duct tape inside and out so ink and water stay out.</li>
+</ol>
+<p class="tipbox"><b>Super glue?</b> You can skip it. Staples plus tape hold fine. If you want extra hold, run a bead of waterproof glue along the staple line, never on the area you print through.</p>
+<h4>Oversized custom screens (all over prints, posters, banners)</h4>
+<ul class="lpoints">
+<li><b>Thicker wood.</b> Past about 20 x 24 in, step up to 2x3 or 2x4 so the frame does not bow when the mesh is tight. Add a small corner brace (a triangle of plywood) at each corner.</li>
+<li><b>More tension.</b> Big mesh sags. Stretch slower, go around twice, and re-tighten any loose side before stapling it down.</li>
+<li><b>Light that covers it all.</b> The sun is the best light for a big screen. Use glass big enough to press the whole print flat, or two pieces butted together.</li>
+<li><b>The squeegee.</b> 1 to 2 inches wider than your art, about an inch narrower than the inside of the frame. Big pulls go better with two people or a long squeegee.</li>
+<li><b>Big prints from small paper.</b> Print your layer in tiles, line the tiles up on a window, and tape them together with clear tape before you oil them.</li>
+</ul>
+</article>
+
+<article data-t="mesh" data-n="Mesh count">
+<h3>What mesh count means</h3>
+<p class="lead">Mesh count is how many threads per inch. Low number = big holes, lots of ink goes through. High number = tiny holes, thin ink, fine detail.</p>
+<div class="meshchart" id="meshChart"></div>
+<table class="ltable">
+<tr><th>Mesh</th><th>Good for</th></tr>
+<tr><td>60 to 86</td><td>Glitter, puff, very thick ink, big blocky shapes</td></tr>
+<tr><td>110</td><td>The all around shirt mesh. Bold art, white ink on dark shirts. Start here.</td></tr>
+<tr><td>156 to 160</td><td>More detail, thinner lines, light shirts</td></tr>
+<tr><td>200 to 230</td><td>Halftone dots on shirts, fine detail, posters with water based ink</td></tr>
+<tr><td>280 to 305</td><td>CMYK, tiny dots, paper and stickers</td></tr>
+</table>
+<p class="tipbox"><b>Halftones rule of thumb:</b> mesh count about 4 to 5 times your dots per inch (LPI). 45 LPI wants about 180 to 230 mesh. Too low a mesh and small dots fall through the holes.</p>
+<p class="lead">Do not know your mesh? Look at the edge of the roll or the bag. If it says something like 110 or 43T, the first is threads per inch, the second is threads per centimeter (43T is about 110).</p>
+</article>
+
+<article data-t="print" data-n="Pull a print">
+<h3>Pull a print</h3>
+<ol class="lsteps">
+<li><b>Tape it off.</b> Tape the inside edges where the mesh meets the wood, and cover any pinholes in the emulsion with tape or a dab of emulsion.</li>
+<li><b>Flat and steady.</b> Shirt on a flat, hard surface with cardboard inside so ink does not soak through. Tape the shirt down or use a board.</li>
+<li><b>A little gap.</b> Set the screen on top, flat side down. A coin under each corner lifts it a hair off the shirt so it snaps back after the squeegee passes. Cleaner prints.</li>
+<li><b>Flood.</b> Pour a line of ink above the art. With light pressure, push the ink across the art to fill the mesh.</li>
+<li><b>Pull.</b> Lean the squeegee about 45 to 75 degrees toward you, press firm and even, and pull it across in one smooth stroke. One or two passes, not ten.</li>
+<li><b>Lift and check.</b> Lift the screen straight up. Patchy? Flood again and pull again before moving the shirt.</li>
+<li><b>Next layer.</b> Let layer A dry to the touch. Put screen B down, line up its registration marks with the marks on A (tape a clear sheet with A printed on it to the board to aim), then print.</li>
+<li><b>Set the ink.</b> Heat set it the way your ink says. Speedball fabric ink sets with a hot iron or a heat press. Wash the screen right away, before ink dries in the mesh.</li>
+</ol>
+</article>
+
+<article data-t="cmyk" data-n="How CMYK works">
+<h3>How CMYK works</h3>
+<p class="lead">CMYK is four see-through inks: <b style="color:#0093c9">Cyan</b> (blue), <b style="color:#d4007a">Magenta</b> (pink), <b style="color:#b59b00">Yellow</b> and <b>Black</b>. Printed on top of each other in tiny dots, they make almost any color. It is how magazines print photos.</p>
+<div class="cmykfig" id="cmykFig"></div>
+<ul class="lpoints">
+<li><b>Dots, not mixing.</b> You never mix the inks in a cup. Each color is a screen full of dots. Big dots = a lot of that color, small dots = a little. Your eye mixes them from a distance.</li>
+<li><b>Overlaps make new colors.</b> Yellow over magenta looks red. Cyan over yellow looks green. All three looks dark brown, so black gets its own screen for clean darks.</li>
+<li><b>Different angles.</b> Each color's dots are turned to a different angle (cyan 15, magenta 75, yellow 0, black 45). If they all lined up you would get a wavy pattern called moire. This tool sets the angles for you.</li>
+<li><b>Needs a white base.</b> The inks are see-through, so they need a white or very light shirt or paper. On a dark shirt you print a white layer first.</li>
+<li><b>Print order.</b> Light to dark is a good start: A yellow, B magenta, C cyan, D black. The files here are lettered in that order.</li>
+<li><b>Registration matters.</b> If a screen is off by a hair, colors look blurry. Use the registration marks and a fine mesh (230 to 305).</li>
+</ul>
+<p class="tipbox"><b>Easier first project:</b> one color halftone on a shirt, or two colors. CMYK is the expert level. Get one screen right, then stack more.</p>
+</article>
+
+<article data-t="draw" data-n="Draw for stencils">
+<h3>Draw it right before you bring it here</h3>
+<p class="lead">The cleanest stencils start as clean drawings. Black marker, white paper, bold and simple.</p>
+<ul class="lpoints">
+<li><b>Full shapes, no open lines.</b> Every shape should be a closed, filled area. A thin outline becomes a thin cut that tears or fills in. Fill your shapes in solid.</li>
+<li><b>Filled = cut out. Empty = what holds it together.</b> Think of the parts you color in as the holes the paint goes through. The white around them is the sheet that keeps it all in one piece.</li>
+<li><b>Watch for islands.</b> The middle of an O, A, B, D, P, R floats loose when you cut it and falls out. Leave a small gap, called a bridge, that ties it to the rest.</li>
+<li><b>Thick enough to cut.</b> Keep lines and bridges at least about 1/8 in wide for paper and cardboard, a little thinner works for vinyl.</li>
+<li><b>Take a good photo.</b> Shoot straight down in daylight, no shadow, fill the frame, then come here and use Light and dark to make it pure black and white.</li>
+</ul>
+<div class="abcfig" id="abcFig"></div>
+<p class="tipbox"><b>Burning a screen instead of cutting?</b> Islands are fine on a photo emulsion screen, the mesh holds them. Bridges only matter for cut stencils (paper, vinyl, spray paint).</p>
+</article>
+</div></div>
+<script>
 /* ===== NOCIV tool shell: step tabs, page zoom lock, big locked artboard ===== */
 (function () {
   // The page itself never zooms (artboards have their own zoom), so nobody gets stuck zoomed in.
@@ -177,8 +300,8 @@ function stSample(){src.width=1000;src.height=700;sx.fillStyle='#fff';sx.fillRec
 function htSample(){src.width=1000;src.height=1000;let g=sx.createLinearGradient(0,0,0,1000);g.addColorStop(0,'#1d2b64');g.addColorStop(.45,'#f8b500');g.addColorStop(1,'#c8102e');sx.fillStyle=g;sx.fillRect(0,0,1000,1000);let r=sx.createRadialGradient(430,380,20,500,500,330);r.addColorStop(0,'#fff');r.addColorStop(.5,'#f3d9c4');r.addColorStop(1,'rgba(40,20,20,1)');sx.fillStyle=r;sx.beginPath();sx.arc(500,500,330,0,7);sx.fill();let s=sx.createLinearGradient(0,0,1000,0);s.addColorStop(0,'#000');s.addColorStop(1,'#fff');sx.fillStyle=s;sx.fillRect(0,880,1000,120)}
 function sample(){mode==='ht'?htSample():stSample();orig.width=src.width;orig.height=src.height;ox.drawImage(src,0,0);resetFrame();loaded()}
 function load(f){let im=new Image();im.onload=()=>{let k=Math.min(1,1600/Math.max(im.width,im.height));orig.width=Math.round(im.width*k);orig.height=Math.round(im.height*k);ox.clearRect(0,0,orig.width,orig.height);ox.drawImage(im,0,0,orig.width,orig.height);URL.revokeObjectURL(im.src);resetFrame();loaded()};im.onerror=()=>{$('status').textContent="Couldn't open that file. Try a JPG or PNG."};im.src=URL.createObjectURL(f)}
-function loaded(){has=true;applyFrame();$('frameBox').hidden=false;$('pick').hidden=true;redraw()}
-$('file').onchange=e=>e.target.files[0]&&load(e.target.files[0]);$('pick').onclick=()=>$('file').click();$('sample').onclick=sample;$('reset').onclick=()=>{has=false;H.cov=null;$('frameBox').hidden=true;c.width=c.height=0;$('pick').hidden=false;$('file').value='';clearFiles();$('status').textContent='Load artwork to begin.';$('size').textContent=''};
+function loaded(){has=true;applyFrame();$('frameBox').hidden=false;$('pick').hidden=true;$('viewT').hidden=false;redraw()}
+$('file').onchange=e=>e.target.files[0]&&load(e.target.files[0]);$('pick').onclick=()=>$('file').click();$('sample').onclick=sample;$('reset').onclick=()=>{has=false;H.cov=null;$('frameBox').hidden=true;c.width=c.height=0;$('pick').hidden=false;$('file').value='';clearFiles();$('status').textContent='Load artwork to begin.';$('size').textContent='';$('viewT').hidden=true;if(M.mock)setView(false)};
 
 
 /* ===== Framing: zoom, move, turn, flip, cut to a shape. Builds src from the original photo. ===== */
@@ -206,7 +329,7 @@ $('fFlip').onclick=()=>{F.flip=!F.flip;frameChanged()};
 $('fReset').onclick=()=>{resetFrame();frameChanged()};
 // Drag to move, pinch to zoom, right on the preview. The page doesn't scroll while you do it.
 const fp={};let pinch0=0,zoom0=1;
-c.addEventListener('pointerdown',e=>{if(!has)return;c.setPointerCapture(e.pointerId);fp[e.pointerId]={x:e.clientX,y:e.clientY};const ids=Object.keys(fp);if(ids.length===2){const a=fp[ids[0]],b=fp[ids[1]];pinch0=Math.hypot(a.x-b.x,a.y-b.y);zoom0=F.zoom}dragging=true});
+c.addEventListener('pointerdown',e=>{if(!has||M.mock)return;c.setPointerCapture(e.pointerId);fp[e.pointerId]={x:e.clientX,y:e.clientY};const ids=Object.keys(fp);if(ids.length===2){const a=fp[ids[0]],b=fp[ids[1]];pinch0=Math.hypot(a.x-b.x,a.y-b.y);zoom0=F.zoom}dragging=true});
 c.addEventListener('pointermove',e=>{const q=fp[e.pointerId];if(!q)return;const ids=Object.keys(fp),r=c.getBoundingClientRect();
  if(ids.length===1){F.px+=(e.clientX-q.x)/r.width;F.py+=(e.clientY-q.y)/r.height;F.px=Math.max(-1.5,Math.min(1.5,F.px));F.py=Math.max(-1.5,Math.min(1.5,F.py))}
  q.x=e.clientX;q.y=e.clientY;
@@ -216,20 +339,19 @@ function fpEnd(e){delete fp[e.pointerId];pinch0=0;if(!Object.keys(fp).length){dr
 c.addEventListener('pointerup',fpEnd);c.addEventListener('pointercancel',fpEnd);
 
 /* ===== Stencil (original tool, unchanged behavior) ===== */
-$('thr').oninput=e=>{S.t=+e.target.value;$('thro').textContent=S.t;draw()};$('inv').onchange=e=>{S.inv=e.target.checked;draw()};$('layers').onchange=e=>{S.n=+e.target.value;S.a=0;layersUI();draw()};$('active').onchange=e=>{S.a=+e.target.value;draw()};$('bw').oninput=e=>{S.bw=+e.target.value;$('bwo').textContent=S.bw+' px';draw()};$('ab').onchange=e=>{S.ab=e.target.checked;draw()};$('wi').oninput=e=>{S.w=+e.target.value;$('wio').textContent=S.w+' in';clearFiles();redraw()};
+$('thr').oninput=e=>{S.t=+e.target.value;$('thro').textContent=S.t;draw()};$('inv').onchange=e=>{S.inv=e.target.checked;draw()};$('layers').onchange=e=>{S.n=+e.target.value;S.a=0;layersUI();autoMarks();clearFiles();draw()};$('active').onchange=e=>{S.a=+e.target.value;draw()};$('bw').oninput=e=>{S.bw=+e.target.value;$('bwo').textContent=S.bw+' px';draw()};$('ab').onchange=e=>{S.ab=e.target.checked;draw()};$('wi').oninput=e=>{S.w=+e.target.value;$('wio').textContent=S.w+' in';clearFiles();redraw()};
 function masks(){let w=src.width,h=src.height,d=sx.getImageData(0,0,w,h).data,g=new Uint8Array(w*h),out=new Uint8Array(w*h);for(let i=0,j=0;i<d.length;i+=4,j++){if(d[i+3]<128){out[j]=1;continue}let v=.2126*d[i]+.7152*d[i+1]+.0722*d[i+2];g[j]=S.inv?255-v:v}let m=Array.from({length:S.n},()=>new Uint8Array(w*h));for(let i=0;i<g.length;i++){if(out[i])continue;let v=g[i];if(S.n===1){if(v<S.t)m[0][i]=1;continue}let q=Math.min(S.n-1,Math.max(0,Math.floor(Math.max(0,Math.min(255,v+128-S.t))/256*S.n)));m[q][i]=1}return{w,h,m}}
 function bridges(mask,w,h){let seen=new Uint8Array(w*h),out=[];for(let y=1;y<h-1;y++)for(let x=1;x<w-1;x++){let p=y*w+x;if(mask[p]||seen[p])continue;let q=[p],comp=[],touch=false;seen[p]=1;for(let z=0;z<q.length;z++){let p2=q[z],yy=Math.floor(p2/w),xx=p2%w;comp.push(p2);if(!xx||!yy||xx===w-1||yy===h-1)touch=true;for(let [dx,dy] of [[1,0],[-1,0],[0,1],[0,-1]]){let nx=xx+dx,ny=yy+dy;if(nx>=0&&ny>=0&&nx<w&&ny<h){let np=ny*w+nx;if(!mask[np]&&!seen[np]){seen[np]=1;q.push(np)}}}}if(!touch&&comp.length>12&&comp.length<w*h*.2){let cx=0,cy=0;for(let p3 of comp){cx+=p3%w;cy+=Math.floor(p3/w)}cx=Math.round(cx/comp.length);cy=Math.round(cy/comp.length);let found=null;for(let [dx,dy] of [[1,0],[-1,0],[0,1],[0,-1]]){let xx=cx,yy=cy;for(let z=0;z<Math.max(w,h);z++){xx+=dx;yy+=dy;if(xx<0||yy<0||xx>=w||yy>=h)break;if(mask[yy*w+xx]){found={x1:cx,y1:cy,x2:xx,y2:yy};break}}if(found)break}if(found)out.push(found)}}return out}
-function layersUI(){$('active').innerHTML='';for(let i=0;i<S.n;i++){let o=document.createElement('option');o.value=i;o.textContent='Layer '+(i+1);$('active').appendChild(o)}$('active').value=S.a;if(mode==='st')$('ml').textContent=S.n;let l=$('list');l.innerHTML='';for(let i=0;i<S.n;i++){let e=document.createElement('div');e.className='layer'+(i===S.a?' active':'');e.onclick=()=>{S.a=i;$('active').value=i;draw()};let sw=document.createElement('span');sw.className='sw';let v=Math.round(20+i*220/Math.max(1,S.n-1));sw.style.background=`rgb(${v},${v},${v})`;e.append(sw,document.createTextNode('Layer '+(i+1)));l.append(e)}}
-function draw(){if(!has||mode!=='st')return;let {w,h,m}=masks();c.width=w;c.height=h;c.style.width='';let im=ctx.createImageData(w,h),d=im.data,mask=m[S.a];const sd=sx.getImageData(0,0,w,h).data;for(let i=0;i<w*h;i++){let k=i*4,v=mask[i]?0:255;d[k]=d[k+1]=d[k+2]=v;d[k+3]=sd[k+3]<128?60:255}ctx.putImageData(im,0,0);if(S.ab){ctx.save();ctx.strokeStyle='rgba(215,255,57,.95)';ctx.lineWidth=S.bw;ctx.lineCap='round';for(let b of bridges(mask,w,h)){ctx.beginPath();ctx.moveTo(b.x1,b.y1);ctx.lineTo(b.x2,b.y2);ctx.stroke()}ctx.restore()}$('mi').textContent=w+' × '+h;$('ma').textContent=Math.round(mask.reduce((a,b)=>a+b,0)/(w*h)*100)+'%';$('mw').textContent=S.w+' in';$('size').textContent=w+' × '+h+' px';$('status').textContent=S.n===1?'Single stencil':'Layer '+(S.a+1)+' of '+S.n;layersUI()}
+function stLetter(i){return String.fromCharCode(65+S.n-1-i)}
+function layersUI(){$('active').innerHTML='';for(let i=0;i<S.n;i++){let o=document.createElement('option');o.value=i;o.textContent='Layer '+stLetter(i);$('active').appendChild(o)}$('active').value=S.a;if(mode==='st')$('ml').textContent=S.n;let l=$('list');l.innerHTML='';for(let i=S.n-1;i>=0;i--){let e=document.createElement('div');e.className='layer'+(i===S.a?' active':'');e.onclick=()=>{S.a=i;$('active').value=i;if(M.mock)setView(false);else draw()};let sw=document.createElement('span');sw.className='lt';sw.textContent=stLetter(i);let v=Math.round(20+i*220/Math.max(1,S.n-1)),tone=document.createElement('span');tone.className='sw';tone.style.background=`rgb(${v},${v},${v})`;let n=document.createElement('span');n.className='ln';let first=i===S.n-1,last=i===0;n.innerHTML='Layer '+stLetter(i)+'<small>'+(S.n===1?'Your one stencil':first?'Lightest. Do this one first':last?'Darkest. Do this one last':'Middle tone')+'</small>';e.append(sw,n,tone);l.append(e)}}
+function draw(){if(!has||mode!=='st')return;if(M.mock){showMock();layersUI();return}let {w,h,m}=masks();c.width=w;c.height=h;c.style.width='';let im=ctx.createImageData(w,h),d=im.data,mask=m[S.a];const sd=sx.getImageData(0,0,w,h).data;for(let i=0;i<w*h;i++){let k=i*4,v=mask[i]?0:255;d[k]=d[k+1]=d[k+2]=v;d[k+3]=sd[k+3]<128?60:255}ctx.putImageData(im,0,0);if(S.ab){ctx.save();ctx.strokeStyle='rgba(215,255,57,.95)';ctx.lineWidth=S.bw;ctx.lineCap='round';for(let b of bridges(mask,w,h)){ctx.beginPath();ctx.moveTo(b.x1,b.y1);ctx.lineTo(b.x2,b.y2);ctx.stroke()}ctx.restore()}$('mi').textContent=w+' × '+h;$('ma').textContent=Math.round(mask.reduce((a,b)=>a+b,0)/(w*h)*100)+'%';$('mw').textContent=S.w+' in';$('size').textContent=w+' × '+h+' px';$('status').textContent=S.n===1?'Single stencil':'Layer '+stLetter(S.a)+' of '+S.n;layersUI()}
 function dl(data,name){let a=document.createElement('a');a.href=data;a.download=name;document.body.appendChild(a);a.click();a.remove()}
-$('png').onclick=()=>{if(!has)return;const clear=$('clearBg').checked;let {w,h,m}=masks(),mask=m[S.a],W=Math.max(1,Math.round(S.w*300)),H=Math.max(1,Math.round(h*W/w)),cc=document.createElement('canvas');cc.width=W;cc.height=H;let x=cc.getContext('2d'),im=x.createImageData(W,H),d=im.data;for(let y=0;y<H;y++)for(let xx=0;xx<W;xx++){let on=mask[Math.min(h-1,Math.floor(y/H*h))*w+Math.min(w-1,Math.floor(xx/W*w))],v=on?0:255,k=(y*W+xx)*4;d[k]=d[k+1]=d[k+2]=v;d[k+3]=(clear&&!on)?0:255}x.putImageData(im,0,0);cc.toBlob(b=>dl(URL.createObjectURL(b),`nociv-stencil-layer-${S.a+1}-300dpi${clear?'-clear':''}.png`),'image/png')};
-$('svg').onclick=()=>{if(!has)return;let {w,h,m}=masks(),mask=m[S.a],d=`<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 ${w} ${h}" width="${S.w}in" height="${(S.w*h/w).toFixed(4)}in"><path fill="#000" d="`;for(let y=0;y<h;y++){let run=-1;for(let x=0;x<=w;x++){let on=x<w&&mask[y*w+x];if(on&&run<0)run=x;if(!on&&run>=0){d+=`M${run} ${y}h${x-run}v1H${run}z`;run=-1}}}d+='"/></svg>';dl(URL.createObjectURL(new Blob([d],{type:'image/svg+xml'})),`nociv-stencil-layer-${S.a+1}.svg`)};
 
 /* ===== Halftone ===== */
 const DPI=300,MAXPX=16e6,PREV=2000;
 const PLATES={gray:[{id:'k',name:'Black',color:'#000000',angle:null}],one:[{id:'ink',name:'Ink',color:null,angle:null}],cmyk:[{id:'c',name:'Cyan',color:'#00aeef',angle:15},{id:'m',name:'Magenta',color:'#ec008c',angle:75},{id:'y',name:'Yellow',color:'#fff200',angle:0},{id:'k',name:'Black',color:'#231f20',angle:45}]};
 const H={ink:'gray',inkC:'#c8102e',shirt:'#f2efe8',light:false,shape:'round',lpi:45,ang:22.5,bri:0,con:10,min:5,max:95,reg:false,view:'all',zoom:false,cov:null,files:[]};
-function plates(){return PLATES[H.ink].map(p=>({...p,color:p.color||H.inkC,angle:p.angle==null?H.ang:p.angle}))}
+const ORDER={y:'A',m:'B',c:'C',k:'D'};function plates(){return PLATES[H.ink].map(p=>({...p,color:p.color||H.inkC,angle:p.angle==null?H.ang:p.angle,letter:H.ink==='cmyk'?ORDER[p.id]:'A'}))}
 
 // Coverage per plate (0..255 ink amount) at a working size, plus a summed area table for fast box averages.
 function buildCov(){let k=Math.min(1,1200/Math.max(src.width,src.height)),w=Math.max(1,Math.round(src.width*k)),h=Math.max(1,Math.round(src.height*k)),t=document.createElement('canvas');t.width=w;t.height=h;let tx=t.getContext('2d',{willReadFrequently:true});tx.imageSmoothingQuality='high';tx.drawImage(src,0,0,w,h);let d=tx.getImageData(0,0,w,h).data,f=(100+H.con)/(100-H.con),b=H.bri/100,ps=plates(),n=w*h,cov=ps.map(()=>new Uint8Array(n));const adj=v=>{v=(v/255-.5)*f+.5+b;return v<0?0:v>1?1:v};
@@ -260,40 +382,136 @@ let m=new Uint8Array(OW*OH);for(let y=0;y<OH;y++){let row=Math.min(bh-1,Math.flo
 
 function outSize(){let W=S.w*DPI,Hh=W*src.height/src.width,dpi=DPI;if(W*Hh>MAXPX){dpi=Math.floor(Math.sqrt(MAXPX/(S.w*S.w*src.height/src.width)));W=S.w*dpi;Hh=W*src.height/src.width}return{W:Math.round(W),H:Math.round(Hh),dpi}}
 let htTimer=0;function drawHT(){clearTimeout(htTimer);htTimer=setTimeout(drawHTnow,40)}
-function drawHTnow(){if(!has||mode!=='ht')return;let cv=H.cov||buildCov(),ps=plates().map((p,i)=>({...p,idx:i})),o=outSize(),sc=Math.min(1,(dragging?900:PREV)/Math.max(o.W,o.H)),PW=Math.round(o.W*sc),PH=Math.round(o.H*sc),cell=o.dpi/H.lpi*sc;c.width=PW;c.height=PH;
+function drawHTnow(){if(!has||mode!=='ht')return;if(M.mock){showMock();platesUI(plates());return}let cv=H.cov||buildCov(),ps=plates().map((p,i)=>({...p,idx:i})),o=outSize(),sc=Math.min(1,(dragging?900:PREV)/Math.max(o.W,o.H)),PW=Math.round(o.W*sc),PH=Math.round(o.H*sc),cell=o.dpi/H.lpi*sc;c.width=PW;c.height=PH;
 let show=H.view==='all'?ps:ps.filter(p=>p.id===H.view);ctx.globalCompositeOperation='source-over';ctx.fillStyle=H.ink==='one'&&H.view==='all'?H.shirt:'#fff';ctx.fillRect(0,0,PW,PH);
 let t=document.createElement('canvas');t.width=PW;t.height=PH;let tg=t.getContext('2d');for(let p of show){tg.clearRect(0,0,PW,PH);renderPlate(tg,cv,p,PW,PH,cell,H.view==='all'?p.color:(H.ink==='one'?p.color:p.color==='#fff200'?'#e6c800':p.color));ctx.globalCompositeOperation=H.ink==='cmyk'&&H.view==='all'?'multiply':'source-over';ctx.drawImage(t,0,0)}ctx.globalCompositeOperation='source-over';t.width=t.height=0;
 applyZoom();let cover=show.length===1?cv.avg[show[0].idx]:null;
 $('mi').textContent=src.width+' × '+src.height;$('ml').textContent=ps.length;$('ma').textContent=cover==null?ps.map(p=>p.name[0]+' '+Math.round(cv.avg[p.idx]*100)+'%').join(' · '):Math.round(cover*100)+'%';$('mw').textContent=S.w+' in';$('md').textContent=H.shape==='grain'?'Grain':H.lpi+' LPI ('+(1/H.lpi).toFixed(3)+' in)';$('mx').textContent=o.dpi+' DPI, '+o.W+' × '+o.H;$('size').textContent=sc<1?'Preview '+Math.round(sc*100)+'%':o.W+' × '+o.H+' px';
-$('status').textContent=(H.view==='all'?(ps.length>1?ps.length+' colors together':'Halftone'):ps.find(p=>p.id===H.view).name+' plate')+(o.dpi<DPI?'. Big print, files at '+o.dpi+' DPI':'');platesUI(ps)}
-function platesUI(ps){let l=$('plist');l.innerHTML='';let all=[{id:'all',name:ps.length>1?'All together':'Preview',color:null}].concat(ps);for(let p of all){let e=document.createElement('div');e.className='layer'+(H.view===p.id?' active':'');e.onclick=()=>{H.view=p.id;drawHTnow()};let sw=document.createElement('span');sw.className='sw';sw.style.background=p.color||(H.ink==='one'?H.shirt:'linear-gradient(135deg,#00aeef,#ec008c,#fff200,#231f20)');e.append(sw,document.createTextNode(p.name));l.append(e)}}
-function applyZoom(){$('zoom').hidden=!has||mode!=='ht';$('zoom').textContent=H.zoom?'Zoom out':'Zoom in';$('wrap').classList.toggle('zoom',H.zoom&&mode==='ht');c.style.width=H.zoom&&mode==='ht'?Math.round(c.width/Math.max(1,Math.min(2,devicePixelRatio||1)))+'px':''}
+$('status').textContent=(H.view==='all'?(ps.length>1?ps.length+' colors together':'Halftone'):'Layer '+ps.find(p=>p.id===H.view).letter+', '+ps.find(p=>p.id===H.view).name)+(o.dpi<DPI?'. Big print, files at '+o.dpi+' DPI':'');platesUI(ps)}
+function platesUI(ps){let l=$('plist');l.innerHTML='';let all=[{id:'all',name:ps.length>1?'All together':'Preview',color:null}].concat(ps.slice().sort((a,b)=>a.letter<b.letter?-1:1));for(let p of all){let e=document.createElement('div');e.className='layer'+(H.view===p.id&&!M.mock?' active':'');e.onclick=()=>{H.view=p.id;if(M.mock)setView(false);else drawHTnow()};let sw=document.createElement('span');sw.className='sw';sw.style.background=p.color||(H.ink==='one'?H.shirt:'linear-gradient(135deg,#00aeef,#ec008c,#fff200,#231f20)');let n=document.createElement('span');n.className='ln';if(p.letter){let lt=document.createElement('span');lt.className='lt';lt.textContent=p.letter;e.append(lt);n.innerHTML=p.name+'<small>'+(ps.length>1?(p.letter==='A'?'Print first':p.letter===String.fromCharCode(64+ps.length)?'Print last':({B:'Print second',C:'Print third'})[p.letter]):'Your one screen')+'</small>'}else n.textContent=p.name;e.append(n,sw);l.append(e)}}
+function applyZoom(){$('zoom').hidden=!has||mode!=='ht'||M.mock;$('zoom').textContent=H.zoom?'Zoom out':'Zoom in';$('wrap').classList.toggle('zoom',H.zoom&&mode==='ht');c.style.width=H.zoom&&mode==='ht'?Math.round(c.width/Math.max(1,Math.min(2,devicePixelRatio||1)))+'px':''}
 $('zoom').onclick=()=>{H.zoom=!H.zoom;applyZoom()};
 
 // Controls
-function inkUI(){$('hOneBox').hidden=H.ink!=='one';$('hAngleBox').hidden=H.ink==='cmyk'||H.shape==='grain';$('hCmykAng').hidden=H.ink!=='cmyk'||H.shape==='grain';$('hInkHelp').textContent=H.ink==='cmyk'?'Four screens: cyan, magenta, yellow, black. Print them in that order on a white or light shirt. Needs good registration.':H.ink==='one'?'One screen in any ink color. Check "light ink" for white or light ink on a dark shirt, so the light parts of the photo get the ink.':'One screen. Prints black dots, the shirt shows through as the light parts.';if(H.ink==='cmyk'&&!$('hReg').dataset.touched){$('hReg').checked=H.reg=true}}
+function inkUI(){$('hOneBox').hidden=H.ink!=='one';$('hAngleBox').hidden=H.ink==='cmyk'||H.shape==='grain';$('hCmykAng').hidden=H.ink!=='cmyk'||H.shape==='grain';$('hInkHelp').textContent=H.ink==='cmyk'?'Four screens, lettered in print order: A yellow, B magenta, C cyan, D black. Print on a white or light shirt. Needs good registration.':H.ink==='one'?'One screen in any ink color. Check "light ink" for white or light ink on a dark shirt, so the light parts of the photo get the ink.':'One screen. Prints black dots, the shirt shows through as the light parts.';autoMarks()}
 const bindR=(id,key,fmt,cov)=>{$(id).oninput=e=>{H[key]=+e.target.value;$(id+'o').textContent=fmt(H[key]);if(cov)H.cov=null;clearFiles();drawHT()}};
 bindR('hLpi','lpi',v=>v);bindR('hAng','ang',v=>v+'°');bindR('hBri','bri',v=>v,true);bindR('hCon','con',v=>v,true);bindR('hMin','min',v=>v+'%');bindR('hMax','max',v=>v+'%');
 $('hInk').onchange=e=>{H.ink=e.target.value;H.view='all';H.cov=null;inkUI();clearFiles();drawHT()};$('hShape').onchange=e=>{H.shape=e.target.value;inkUI();clearFiles();drawHT()};
-$('hInkC').oninput=e=>{H.inkC=e.target.value;clearFiles();drawHT()};$('hShirt').oninput=e=>{H.shirt=e.target.value;clearFiles();drawHT()};$('hLight').onchange=e=>{H.light=e.target.checked;H.cov=null;clearFiles();drawHT()};$('clearBg').onchange=()=>clearFiles();$('hReg').onchange=e=>{H.reg=e.target.checked;e.target.dataset.touched=1;clearFiles()};
+$('hInkC').oninput=e=>{H.inkC=e.target.value;clearFiles();drawHT()};$('hShirt').oninput=e=>{H.shirt=e.target.value;clearFiles();drawHT()};$('hLight').onchange=e=>{H.light=e.target.checked;H.cov=null;clearFiles();drawHT()};$('clearBg').onchange=()=>clearFiles();
 
 // Print files: made first, then each one saves with a tap (iPhone needs the file ready when you tap).
-function clearFiles(){for(let f of H.files)if(f.url)URL.revokeObjectURL(f.url);H.files=[];$('hFiles').innerHTML=''}
+function clearFiles(){for(let f of H.files)if(f.url)URL.revokeObjectURL(f.url);H.files=[];$('files').innerHTML=''}
 const toBlob=cc=>new Promise(r=>cc.toBlob(r,'image/png'));const tick=()=>new Promise(r=>setTimeout(r,20));
-function regMarks(g,W,Hh,m,dpi,label){g.strokeStyle='#000';g.lineWidth=Math.max(2,dpi/100);let r=m*.22,L=m*.42;for(let [x,y] of [[W/2,m/2],[W/2,Hh-m/2],[m/2,Hh/2],[W-m/2,Hh/2]]){g.beginPath();g.arc(x,y,r,0,6.2832);g.moveTo(x-L,y);g.lineTo(x+L,y);g.moveTo(x,y-L);g.lineTo(x,y+L);g.stroke()}g.fillStyle='#000';g.font=`700 ${Math.round(m*.24)}px system-ui,sans-serif`;g.textBaseline='middle';g.fillText(label,m*.2,Hh-m/2)}
-$('hMake').onclick=async()=>{if(!has)return;let btn=$('hMake');btn.disabled=true;clearFiles();$('hFiles').innerHTML='<p class="note">Making files...</p>';await tick();
-try{const clear=$('clearBg').checked;let cv=H.cov||buildCov(),o=outSize(),ps=plates().map((p,i)=>({...p,idx:i})),m=H.reg?Math.round(.375*o.dpi):0,cell=o.dpi/H.lpi,stamp=(H.shape==='grain'?'grain':H.lpi+'lpi')+'-'+o.dpi+'dpi'+(clear?'-clear':'');
-for(let p of ps){let cc=document.createElement('canvas');cc.width=o.W+2*m;cc.height=o.H+2*m;let g=cc.getContext('2d');if(!clear){g.fillStyle='#fff';g.fillRect(0,0,cc.width,cc.height)}g.translate(m,m);renderPlate(g,cv,p,o.W,o.H,cell,'#000');g.setTransform(1,0,0,1,0,0);if(m)regMarks(g,cc.width,cc.height,m,o.dpi,`NOCIV  ${p.name.toUpperCase()}  ${H.shape==='grain'?'GRAIN':p.angle+'°  '+H.lpi+' LPI'}  ${S.w} IN`);let b=await toBlob(cc);cc.width=cc.height=0;H.files.push({name:`nociv-halftone-${p.name.toLowerCase()}-${stamp}.png`,label:p.name+' print file',blob:b});await tick()}
-let mk=document.createElement('canvas'),sc=Math.min(1,1800/Math.max(o.W,o.H)),MW=Math.round(o.W*sc),MH=Math.round(o.H*sc);mk.width=MW;mk.height=MH;let mg=mk.getContext('2d');if(!clear){mg.fillStyle=H.ink==='one'?H.shirt:'#fff';mg.fillRect(0,0,MW,MH)}let t=document.createElement('canvas');t.width=MW;t.height=MH;let tg=t.getContext('2d');for(let p of ps){tg.clearRect(0,0,MW,MH);renderPlate(tg,cv,p,MW,MH,cell*sc,p.color);mg.globalCompositeOperation=H.ink==='cmyk'?'multiply':'source-over';mg.drawImage(t,0,0)}H.files.push({name:`nociv-halftone-mockup.png`,label:clear?'Design, see-through PNG':'Mockup (to show people)',blob:await toBlob(mk)});
-filesUI()}catch(err){$('hFiles').innerHTML='<p class="note">That was too big for this phone. Try a smaller width.</p>'}btn.disabled=false};
-function filesUI(){let box=$('hFiles');box.innerHTML='';for(let f of H.files){let row=document.createElement('div');row.className='file';let s=document.createElement('span');s.textContent=f.label;let b=document.createElement('button');b.textContent='Save';b.onclick=()=>saveFile(f);row.append(s,b);box.append(row)}}
-function saveFile(f){let file=new File([f.blob],f.name,{type:'image/png'});if(matchMedia('(pointer:coarse)').matches&&navigator.canShare&&navigator.canShare({files:[file]})){navigator.share({files:[file]}).catch(()=>{});return}if(!f.url)f.url=URL.createObjectURL(f.blob);dl(f.url,f.name)}
+/* ===== Marks: registration styles with previews ===== */
+const M={style:'target',label:true,touched:false,mock:false,shirt:'#f4f2ec',ink:'#1a1a1a'};
+try{let o=JSON.parse(localStorage.getItem('nocivArtMarks')||'null');if(o){M.style=o.style||M.style;M.label=o.label!==false;M.touched=!!o.touched}}catch(e){}
+const REGS=[['none','None'],['target','Target'],['cross','Cross'],['bull','Bullseye'],['corner','Corners']];
+function saveMarks(){try{localStorage.setItem('nocivArtMarks',JSON.stringify({style:M.style,label:M.label,touched:M.touched}))}catch(e){}}
+function autoMarks(){if(M.touched)return;let multi=mode==='st'?S.n>1:H.ink==='cmyk';M.style=multi?'target':'none';regUI()}
+function mark(g,style,x,y,s){let r=s*.5,L=s;g.beginPath();
+ if(style==='target'){g.arc(x,y,r,0,6.2832);g.moveTo(x-L,y);g.lineTo(x+L,y);g.moveTo(x,y-L);g.lineTo(x,y+L);g.stroke()}
+ else if(style==='cross'){g.moveTo(x-L,y);g.lineTo(x+L,y);g.moveTo(x,y-L);g.lineTo(x,y+L);g.stroke()}
+ else if(style==='bull'){g.arc(x,y,r,0,6.2832);g.moveTo(x+r*.55,y);g.arc(x,y,r*.55,0,6.2832);g.stroke();g.beginPath();g.arc(x,y,r*.2,0,6.2832);g.fill();g.beginPath();g.moveTo(x-L,y);g.lineTo(x-r,y);g.moveTo(x+r,y);g.lineTo(x+L,y);g.moveTo(x,y-L);g.lineTo(x,y-r);g.moveTo(x,y+r);g.lineTo(x,y+L);g.stroke()}}
+// art box is (m,m) to (W-m,H-m); marks sit in the margin
+function drawMarks(g,W,Hh,m,style,lw){if(style==='none'||!m)return;g.save();g.strokeStyle='#000';g.fillStyle='#000';g.lineWidth=lw;g.lineCap='butt';
+ if(style==='corner'){let k=m*.62,o=m*.18;for(let [x,y,dx,dy] of [[m,m,-1,-1],[W-m,m,1,-1],[m,Hh-m,-1,1],[W-m,Hh-m,1,1]]){g.beginPath();g.moveTo(x+dx*o,y);g.lineTo(x+dx*(o+k),y);g.moveTo(x,y+dy*o);g.lineTo(x,y+dy*(o+k));g.stroke()}
+  let s=m*.3;for(let [x,y] of [[W/2,m/2],[W/2,Hh-m/2]]){g.beginPath();g.moveTo(x-s,y);g.lineTo(x+s,y);g.moveTo(x,y-s);g.lineTo(x,y+s);g.stroke()}}
+ else{let s=m*.36;for(let [x,y] of [[W/2,m/2],[W/2,Hh-m/2],[m/2,Hh/2],[W-m/2,Hh/2]])mark(g,style,x,y,s)}
+ g.restore()}
+function drawLabel(g,W,Hh,m,letter,text){let bs=m*.62,x=(M.style==='corner')?m*1.1:m*.19,y=Hh-m/2-bs/2;g.save();g.fillStyle='#000';g.fillRect(x,y,bs,bs);g.fillStyle='#fff';g.font=`900 ${Math.round(bs*.78)}px system-ui,-apple-system,Arial,sans-serif`;g.textAlign='center';g.textBaseline='middle';g.fillText(letter,x+bs/2,y+bs/2+bs*.04);
+ let tx=x+bs+m*.14,room=(M.style==='none'?W-m*.3:W/2-m*.45)-tx,fs=Math.round(m*.2);g.font=`700 ${fs}px system-ui,-apple-system,Arial,sans-serif`;let tw=g.measureText(text).width;if(tw>room&&room>0){fs=Math.max(6,Math.floor(fs*room/tw));g.font=`700 ${fs}px system-ui,-apple-system,Arial,sans-serif`}
+ g.fillStyle='#000';g.textAlign='left';if(room>20)g.fillText(text,tx,Hh-m/2);g.restore()}
+function regUI(){let box=$('regPick');if(!box)return;box.innerHTML='';for(let [id,name] of REGS){let b=document.createElement('button');b.type='button';b.setAttribute('aria-pressed',String(M.style===id));let cv=document.createElement('canvas');cv.width=128;cv.height=104;let g=cv.getContext('2d'),m=24;g.fillStyle='#fff';g.fillRect(0,0,128,104);g.fillStyle='#d9d2c2';g.fillRect(m,m,128-2*m,104-2*m);g.fillStyle='#8a8378';g.beginPath();g.arc(64,52,16,0,6.2832);g.fill();drawMarks(g,128,104,m,id,2);if(id==='none'){g.strokeStyle='#c8412f';g.lineWidth=3;g.beginPath();g.moveTo(8,8);g.lineTo(120,96);g.stroke()}b.append(cv,document.createTextNode(name));b.onclick=()=>{M.style=id;M.touched=true;saveMarks();clearFiles();regUI()};box.append(b)}$('lblOn').checked=M.label}
+$('lblOn').onchange=e=>{M.label=e.target.checked;M.touched=true;saveMarks();clearFiles()};
+
+/* ===== Print files: one per layer, all layers in one PDF, cut files, mockup ===== */
+// 1-bit pages so the PDF stays crisp and true size. Black = ink.
+function packBits(g,W,Hh){let d=g.getImageData(0,0,W,Hh).data,rb=Math.ceil(W/8),out=new Uint8Array(rb*Hh).fill(255);for(let y=0;y<Hh;y++){let o=y*rb,k=y*W*4;for(let x=0;x<W;x++,k+=4){if(d[k+3]>=128&&d[k]<128)out[o+(x>>3)]&=~(128>>(x&7))}}return out}
+function makePDF(pages){const enc=new TextEncoder(),parts=[],off=[];let pos=0;const add=x=>{let b=typeof x==='string'?enc.encode(x):x;parts.push(b);pos+=b.length};
+ add('%PDF-1.4\n');let n=pages.length,kids=[];for(let i=0;i<n;i++)kids.push((3+3*i)+' 0 R');
+ off[1]=pos;add('1 0 obj\n<< /Type /Catalog /Pages 2 0 R >>\nendobj\n');
+ off[2]=pos;add(`2 0 obj\n<< /Type /Pages /Kids [${kids.join(' ')}] /Count ${n} >>\nendobj\n`);
+ pages.forEach((p,i)=>{let pid=3+3*i,cid=pid+1,iid=pid+2,pw=(p.w/p.dpi*72).toFixed(2),ph=(p.h/p.dpi*72).toFixed(2),cs=`q ${pw} 0 0 ${ph} 0 0 cm /Im0 Do Q`;
+  off[pid]=pos;add(`${pid} 0 obj\n<< /Type /Page /Parent 2 0 R /MediaBox [0 0 ${pw} ${ph}] /Resources << /XObject << /Im0 ${iid} 0 R >> >> /Contents ${cid} 0 R >>\nendobj\n`);
+  off[cid]=pos;add(`${cid} 0 obj\n<< /Length ${cs.length} >>\nstream\n${cs}\nendstream\nendobj\n`);
+  off[iid]=pos;add(`${iid} 0 obj\n<< /Type /XObject /Subtype /Image /Width ${p.w} /Height ${p.h} /ColorSpace /DeviceGray /BitsPerComponent 1 /Length ${p.bits.length} >>\nstream\n`);add(p.bits);add('\nendstream\nendobj\n')});
+ let tot=3+3*n,x=pos,xr='xref\n0 '+tot+'\n0000000000 65535 f \n';for(let i=1;i<tot;i++)xr+=String(off[i]).padStart(10,'0')+' 00000 n \n';add(xr);add(`trailer\n<< /Size ${tot} /Root 1 0 R >>\nstartxref\n${x}\n%%EOF\n`);
+ return new Blob(parts,{type:'application/pdf'})}
+function maskCanvas(mask,w,h,W,Hh){let t=document.createElement('canvas');t.width=W;t.height=Hh;let x=t.getContext('2d'),im=x.createImageData(W,Hh),d=im.data;for(let y=0;y<Hh;y++){let row=Math.min(h-1,Math.floor(y/Hh*h))*w;for(let xx=0;xx<W;xx++){if(mask[row+Math.min(w-1,Math.floor(xx/W*w))]){let k=(y*W+xx)*4;d[k+3]=255}}}x.putImageData(im,0,0);return t}
+function svgOf(mask,w,h){let d=`<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 ${w} ${h}" width="${S.w}in" height="${(S.w*h/w).toFixed(4)}in"><path fill="#000" d="`;for(let y=0;y<h;y++){let run=-1;for(let x=0;x<=w;x++){let on=x<w&&mask[y*w+x];if(on&&run<0)run=x;if(!on&&run>=0){d+=`M${run} ${y}h${x-run}v1H${run}z`;run=-1}}}return new Blob([d+'"/></svg>'],{type:'image/svg+xml'})}
+$('make').onclick=async()=>{if(!has)return;let btn=$('make');btn.disabled=true;clearFiles();$('files').innerHTML='<p class="note">Making files...</p>';await tick();
+ try{const clear=$('clearBg').checked,o=outSize(),need=M.style!=='none'||M.label,m=need?Math.round(.42*o.dpi):0,lw=Math.max(2,o.dpi/100),pages=[],kind=mode==='st'?'stencil':'halftone';let layers=[];
+  if(mode==='st'){let r=masks();for(let i=S.n-1;i>=0;i--){let L=stLetter(i);layers.push({letter:L,name:S.n===1?'Stencil':i===S.n-1?'Lightest':i===0?'Darkest':'Middle',mask:r.m[i],w:r.w,h:r.h,info:`${S.w} IN WIDE`})}}
+  else{let cv=H.cov||buildCov(),ps=plates().map((p,i)=>({...p,idx:i})).sort((a,b)=>a.letter<b.letter?-1:1);for(let p of ps)layers.push({letter:p.letter,name:p.name,plate:p,cv,info:(H.shape==='grain'?'GRAIN':p.angle+'°  '+H.lpi+' LPI')+`  ${S.w} IN`})}
+  for(let L of layers){let W=o.W+2*m,Hh=o.H+2*m,cc=document.createElement('canvas');cc.width=W;cc.height=Hh;let g=cc.getContext('2d');if(!clear){g.fillStyle='#fff';g.fillRect(0,0,W,Hh)}
+   if(L.mask){let t=maskCanvas(L.mask,L.w,L.h,o.W,o.H);g.drawImage(t,m,m);t.width=t.height=0}else{g.translate(m,m);renderPlate(g,L.cv,L.plate,o.W,o.H,o.dpi/H.lpi,'#000');g.setTransform(1,0,0,1,0,0)}
+   drawMarks(g,W,Hh,m,M.style,lw);if(M.label)drawLabel(g,W,Hh,m,L.letter,`NOCIV  ${kind.toUpperCase()}  LAYER ${L.letter}  ${L.name.toUpperCase()}  ${L.info}`);
+   let bits=packBits(g,W,Hh);pages.push({w:W,h:Hh,dpi:o.dpi,bits});
+   let b=await toBlob(cc);cc.width=cc.height=0;H.files.push({name:`nociv-${kind}-${L.letter}-${L.name.toLowerCase()}.png`,label:'Layer '+L.letter+', '+L.name,sub:'PNG, '+o.dpi+' DPI',blob:b,type:'image/png'});
+   if(L.mask)H.files.push({name:`nociv-${kind}-${L.letter}-${L.name.toLowerCase()}-cut.svg`,label:'Layer '+L.letter+' cut file',sub:'SVG for Cricut, Silhouette, laser',blob:svgOf(L.mask,L.w,L.h),type:'image/svg+xml',cut:1});
+   await tick()}
+  H.files.unshift({name:`nociv-${kind}-all-layers.pdf`,label:layers.length>1?'All '+layers.length+' layers, one PDF':'PDF to print',sub:'One page per layer, true size',blob:makePDF(pages),type:'application/pdf'});
+  pages.length=0;let mk=mockCanvas(1400);H.files.push({name:`nociv-${kind}-mockup.png`,label:'Shirt mockup',sub:'To show people',blob:await toBlob(mk),type:'image/png'});mk.width=mk.height=0;
+  filesUI()}catch(err){console.error(err);$('files').innerHTML='<p class="note">That was too big for this phone. Try a smaller width.</p>'}btn.disabled=false};
+function filesUI(){let box=$('files');box.innerHTML='';let all=document.createElement('button');all.className='primary saveall';all.textContent='Save all '+H.files.length+' files';all.onclick=saveAll;box.append(all);for(let f of H.files){let row=document.createElement('div');row.className='file';let s=document.createElement('span');s.textContent=f.label;if(f.sub){let sm=document.createElement('small');sm.textContent=f.sub;s.append(sm)}let b=document.createElement('button');b.textContent='Save';b.onclick=()=>saveFile(f);row.append(s,b);box.append(row)}}
+function asFile(f){return new File([f.blob],f.name,{type:f.type||'image/png'})}
+function saveFile(f){let file=asFile(f);if(matchMedia('(pointer:coarse)').matches&&navigator.canShare&&navigator.canShare({files:[file]})){navigator.share({files:[file]}).catch(()=>{});return}if(!f.url)f.url=URL.createObjectURL(f.blob);dl(f.url,f.name)}
+async function saveAll(){let files=H.files.map(asFile);if(matchMedia('(pointer:coarse)').matches&&navigator.canShare&&navigator.canShare({files})){navigator.share({files}).catch(()=>{});return}for(let f of H.files){if(!f.url)f.url=URL.createObjectURL(f.blob);dl(f.url,f.name);await new Promise(r=>setTimeout(r,350))}}
+
+/* ===== On a shirt: flat tee mockup at real size ===== */
+// Tee drawn in a 100 x 110 box. Body is 56 units wide = about 20 in across the chest (adult M).
+const TEE='M38 5 C42 12 58 12 62 5 L82 11 L99 33 L87 43 L78 35 L79 106 L21 106 L22 35 L13 43 L1 33 L18 11 Z';
+const SHIRTS=[['#f4f2ec','White'],['#1c1c1c','Black'],['#b8b8b3','Heather'],['#e6dbc3','Natural'],['#7d1d1f','Red'],['#1f2a44','Navy'],['#3f5a3a','Olive']];
+function designCanvas(){if(mode==='st'){let r=masks(),w=r.w,h=r.h,t=document.createElement('canvas');t.width=w;t.height=h;let x=t.getContext('2d'),im=x.createImageData(w,h),d=im.data,R=parseInt(M.ink.slice(1,3),16),G=parseInt(M.ink.slice(3,5),16),B=parseInt(M.ink.slice(5,7),16);
+  for(let q=0;q<S.n;q++){let f=S.n===1?0:q/(S.n-1)*.82,cr=Math.round(R+(255-R)*f),cg=Math.round(G+(255-G)*f),cb=Math.round(B+(255-B)*f),mk=r.m[q];for(let i=0;i<w*h;i++)if(mk[i]){let k=i*4;d[k]=cr;d[k+1]=cg;d[k+2]=cb;d[k+3]=255}}x.putImageData(im,0,0);return t}
+ let cv=H.cov||buildCov(),o=outSize(),sc=Math.min(1,1100/Math.max(o.W,o.H)),DW=Math.round(o.W*sc),DH=Math.round(o.H*sc),cell=o.dpi/H.lpi*sc,ps=plates().map((p,i)=>({...p,idx:i})),t=document.createElement('canvas');t.width=DW;t.height=DH;let x=t.getContext('2d'),u=document.createElement('canvas');u.width=DW;u.height=DH;let ug=u.getContext('2d');
+ if(H.ink==='cmyk'){x.fillStyle='#fff';x.fillRect(0,0,DW,DH);for(let p of ps){ug.clearRect(0,0,DW,DH);renderPlate(ug,cv,p,DW,DH,cell,p.color);x.globalCompositeOperation='multiply';x.drawImage(u,0,0)}x.globalCompositeOperation='source-over';let im=x.getImageData(0,0,DW,DH),d=im.data;for(let k=0;k<d.length;k+=4)if(d[k]>250&&d[k+1]>250&&d[k+2]>250)d[k+3]=0;x.putImageData(im,0,0)}
+ else for(let p of ps)renderPlate(x,cv,p,DW,DH,cell,p.color);u.width=u.height=0;return t}
+function mockCanvas(size){let k=size/100,cw=size,ch=Math.round(110*k),t=document.createElement('canvas');t.width=cw;t.height=ch;let g=t.getContext('2d');g.fillStyle='#e9e6df';g.fillRect(0,0,cw,ch);g.save();g.scale(k,k);let p=new Path2D(TEE),dark=lum(M.shirt)<.35;
+ g.fillStyle=M.shirt;g.fill(p);g.save();g.clip(p);let des=designCanvas(),dw=S.w*56/20,dh=dw*des.height/des.width,top=19;g.imageSmoothingEnabled=true;g.drawImage(des,50-dw/2,top,dw,dh);des.width=des.height=0;
+ g.strokeStyle=dark?'rgba(255,255,255,.18)':'rgba(0,0,0,.12)';g.lineWidth=.35;g.setLineDash([.9,.7]);g.beginPath();g.moveTo(21.3,102.5);g.lineTo(78.7,102.5);g.moveTo(3.4,35.6);g.lineTo(13.6,41.2);g.moveTo(96.6,35.6);g.lineTo(86.4,41.2);g.stroke();g.setLineDash([]);g.restore();
+ g.strokeStyle='#1a1a1a';g.lineWidth=.7;g.lineJoin='round';g.stroke(p);g.beginPath();g.moveTo(38,5);g.bezierCurveTo(42,12,58,12,62,5);g.moveTo(36.2,6.2);g.bezierCurveTo(41,15.5,59,15.5,63.8,6.2);g.stroke();g.lineWidth=.45;g.beginPath();g.moveTo(22,35);g.lineTo(18,11);g.moveTo(78,35);g.lineTo(82,11);g.stroke();
+ g.restore();g.fillStyle='#6a6458';g.font=`700 ${Math.round(size*.024)}px system-ui,sans-serif`;g.textAlign='right';g.fillText(`Adult M tee, print ${S.w} in wide`,cw-size*.02,size*.04);return t}
+function lum(h){let r=parseInt(h.slice(1,3),16)/255,g=parseInt(h.slice(3,5),16)/255,b=parseInt(h.slice(5,7),16)/255;return .2126*r+.7152*g+.0722*b}
+function showMock(){let t=mockCanvas(1100);c.width=t.width;c.height=t.height;ctx.drawImage(t,0,0);t.width=t.height=0;$('status').textContent=(mode==='ht'&&H.ink==='cmyk'&&lum(M.shirt)<.5)?'CMYK needs a white or light shirt (or a white layer first).':'On a shirt. Change the size on the Save step.';$('size').textContent='';applyZoom()}
+function shirtUI(){let bar=$('shirtBar');bar.innerHTML='';let tag=document.createElement('span');tag.textContent='Shirt';bar.append(tag);for(let [col,name] of SHIRTS){let b=document.createElement('button');b.className='sc';b.style.background=col;b.setAttribute('aria-label',name);b.setAttribute('aria-pressed',String(M.shirt===col));b.onclick=()=>{M.shirt=col;if(mode==='ht'&&H.ink==='one'){H.shirt=col;$('hShirt').value=col}shirtUI();redraw()};bar.append(b)}
+ let cu=document.createElement('label');cu.setAttribute('aria-label','Any shirt color');let ci=document.createElement('input');ci.type='color';ci.value=M.shirt;ci.oninput=()=>{M.shirt=ci.value;redraw()};cu.append(ci);bar.append(cu);
+ if(mode==='st'){let t2=document.createElement('span');t2.textContent='Ink';let il=document.createElement('label');il.style.background=M.ink;il.setAttribute('aria-label','Ink color');let ii=document.createElement('input');ii.type='color';ii.value=M.ink;ii.oninput=()=>{M.ink=ii.value;il.style.background=M.ink;redraw()};il.append(ii);bar.append(t2,il)}}
+function setView(shirt){M.mock=shirt;$('vArt').setAttribute('aria-pressed',String(!shirt));$('vShirt').setAttribute('aria-pressed',String(shirt));$('shirtBar').hidden=!shirt;if(shirt){H.zoom=false;shirtUI()}redraw()}
+$('vArt').onclick=()=>setView(false);$('vShirt').onclick=()=>setView(true);
+
+/* ===== Learn: how-to guide with tabs ===== */
+(function(){const box=$('learn'),tabs=$('ltabs'),arts=[...document.querySelectorAll('#lbody article')];let cur=0;
+ function show(i){cur=i;arts.forEach((a,j)=>a.classList.toggle('on',j===i));[...tabs.children].forEach((b,j)=>b.setAttribute('aria-selected',String(j===i)));$('lbody').scrollTop=0;let b=tabs.children[i];if(b)b.scrollIntoView({inline:'center',block:'nearest'})}
+ arts.forEach((a,i)=>{let b=document.createElement('button');b.type='button';b.setAttribute('role','tab');b.textContent=a.dataset.n;b.onclick=()=>show(i);tabs.append(b);
+  let l=document.createElement('button');l.type='button';l.textContent=a.dataset.n+' →';l.onclick=()=>open(i);$('learnList').append(l)});
+ function open(i){box.hidden=false;document.documentElement.classList.add('focus-open');show(i||0)}
+ function close(){box.hidden=true;document.documentElement.classList.remove('focus-open')}
+ $('learnTop').onclick=()=>open(cur);$('learnClose').onclick=close;document.addEventListener('keydown',e=>{if(e.key==='Escape'&&!box.hidden)close()});
+ box.addEventListener('click',e=>{let g=e.target.closest('[data-go]');if(g){e.preventDefault();show(arts.findIndex(a=>a.dataset.t===g.dataset.go))}});
+ window.nocivLearn=open;
+ // abc: regular letters lose their middles, stencil letters keep them with bridges
+ const INK='#1a1a1a',RED='#c8412f';
+ function arc(cx,cy,r,a0,a1){let p=a=>[cx+r*Math.cos(a*Math.PI/180),cy+r*Math.sin(a*Math.PI/180)],s=p(a0),e=p(a1),big=((a1-a0+360)%360)>180?1:0;return `<path d="M${s[0].toFixed(1)} ${s[1].toFixed(1)}A${r} ${r} 0 ${big} 1 ${e[0].toFixed(1)} ${e[1].toFixed(1)}" fill="none" stroke="${INK}" stroke-width="14"/>`}
+ function ring(cx,cy,r,gaps){if(!gaps.length)return `<circle cx="${cx}" cy="${cy}" r="${r}" fill="none" stroke="${INK}" stroke-width="14"/>`;let out='',g=gaps.slice().sort((a,b)=>a-b),gw=9;for(let i=0;i<g.length;i++){let a0=g[i]+gw,a1=g[(i+1)%g.length]-gw+(i===g.length-1?360:0);out+=arc(cx,cy,r,a0,a1)}return out}
+ function letters(ox,st){let s='';
+  s+=ring(ox+30,62,20,st?[180]:[])+`<rect x="${ox+51}" y="35" width="14" height="47" fill="${INK}"/>`;
+  s+=`<rect x="${ox+78}" y="10" width="14" height="72" fill="${INK}"/>`+ring(ox+105,62,20,st?[270,90]:[]);
+  s+=arc(ox+160,62,20,40,320);
+  if(!st)s+=`<circle cx="${ox+30}" cy="62" r="7" fill="${RED}"/><circle cx="${ox+105}" cy="62" r="7" fill="${RED}"/>`;
+  return s}
+ $('abcFig').innerHTML=`<svg viewBox="0 0 400 150" role="img" aria-label="Letters abc drawn regular and as a stencil"><rect width="400" height="150" fill="#fff" rx="10"/>${letters(10,false)}${letters(205,true)}<text x="100" y="112" text-anchor="middle" font-size="12" font-weight="800" fill="${INK}">Regular</text><text x="100" y="130" text-anchor="middle" font-size="11" fill="${RED}">red middles fall out</text><text x="295" y="112" text-anchor="middle" font-size="12" font-weight="800" fill="${INK}">Stencil</text><text x="295" y="130" text-anchor="middle" font-size="11" fill="#6a6458">gaps (bridges) hold the middles</text><path d="M200 18v110" stroke="#d9d2c2" stroke-width="2"/></svg>`;
+ // mesh: how open the holes are
+ let ms='';[[60,'60'],[110,'110'],[160,'160'],[230,'230'],[305,'305']].forEach(([n,l],i)=>{let x0=8+i*78,sz=64,step=sz/(n/16);ms+=`<g><rect x="${x0}" y="8" width="${sz}" height="${sz}" fill="#fff"/>`;for(let v=0;v<=sz+.1;v+=step)ms+=`<path d="M${(x0+v).toFixed(2)} 8v${sz}M${x0} ${(8+v).toFixed(2)}h${sz}" stroke="${INK}" stroke-width="${Math.max(.4,step*.32).toFixed(2)}"/>`;ms+=`<text x="${x0+sz/2}" y="90" text-anchor="middle" font-size="12" font-weight="800" fill="${INK}">${l}</text></g>`});
+ $('meshChart').innerHTML=`<svg viewBox="0 0 400 100" role="img" aria-label="Mesh counts from open to fine">${ms}</svg>`;
+ $('cmykFig').innerHTML=`<svg viewBox="0 0 400 170" role="img" aria-label="Cyan, magenta and yellow circles overlapping"><rect width="400" height="170" fill="#fff" rx="10"/><g style="mix-blend-mode:multiply"><circle cx="170" cy="70" r="48" fill="#00aeef" style="mix-blend-mode:multiply"/><circle cx="230" cy="70" r="48" fill="#ec008c" style="mix-blend-mode:multiply"/><circle cx="200" cy="112" r="48" fill="#fff200" style="mix-blend-mode:multiply"/></g><g font-size="12" font-weight="800" fill="${INK}"><text x="98" y="40">Cyan</text><text x="282" y="40">Magenta</text><text x="252" y="160">Yellow</text></g><g transform="translate(330 120)"><rect x="-14" y="-14" width="28" height="28" fill="#231f20"/><text x="0" y="30" text-anchor="middle" font-size="12" font-weight="800" fill="${INK}">+ Black</text></g></svg>`;
+})();
 
 /* ===== Mode switch ===== */
-function setMode(m){mode=m;document.body.className='m-'+m;$('mSt').classList.toggle('on',m==='st');$('mHt').classList.toggle('on',m==='ht');$('mSt').setAttribute('aria-selected',m==='st');$('mHt').setAttribute('aria-selected',m==='ht');try{localStorage.setItem('nocivArtMode',m)}catch(e){}if(m==='st')$('ml').textContent=S.n;redraw()}
+function setMode(m){mode=m;document.body.className='m-'+m;$('mSt').classList.toggle('on',m==='st');$('mHt').classList.toggle('on',m==='ht');$('mSt').setAttribute('aria-selected',m==='st');$('mHt').setAttribute('aria-selected',m==='ht');try{localStorage.setItem('nocivArtMode',m)}catch(e){}if(m==='st')$('ml').textContent=S.n;autoMarks();if(M.mock)shirtUI();redraw()}
 function redraw(){if(!has)return;mode==='ht'?drawHTnow():draw();applyZoom()}
 $('mSt').onclick=()=>setMode('st');$('mHt').onclick=()=>setMode('ht');
-layersUI();inkUI();let start=/halftone/i.test(location.hash)?'ht':null;try{start=start||localStorage.getItem('nocivArtMode')}catch(e){}setMode(start==='ht'?'ht':'st');
+regUI();layersUI();inkUI();let start=/halftone/i.test(location.hash)?'ht':null;try{start=start||localStorage.getItem('nocivArtMode')}catch(e){}setMode(start==='ht'?'ht':'st');
 
 /* ===== What is it for: sets print width and dot size ===== */
 (function(){var SIZES=[['T-shirt front',11,45,'About 11 in wide, a normal shirt print.'],['Hoodie back',13,40,'Big back print, about 13 in wide.'],['Tote bag',10,40,'About 10 in wide on canvas.'],['Pocket or hat',4,50,'Small print, about 4 in wide.'],['Sticker',3,65,'Printed stickers hold fine dots.'],['Stamp or cut-out',2,18,'Big chunky dots so you can carve, cut or stamp them.'],['Letter page',8,65,'Zines and flyers on letter paper.'],['Poster',16,35,'Poster size, about 16 in wide.']],box=$('sizePick'),cur=-1;
