@@ -4,7 +4,7 @@
 <!-- Site Created & Designed by Jasilyn A. Anderson | NOCIV.CO -->
 <meta charset="UTF-8">
 <title>QR Maker: NOCIV.CO</title>
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, viewport-fit=cover">
 <meta name="description" content="Free QR code maker from NOCIV. Your link, your picture in the middle. Nothing tracked, nothing saved.">
 <meta property="og:title" content="NOCIV QR Maker">
 <meta property="og:description" content="Free QR codes with your own picture in the middle. No sign up. Nothing tracked.">
@@ -86,6 +86,49 @@
 
   .foot { margin-top: 40px; font-size: 0.78rem; letter-spacing: 0.1em; text-transform: uppercase; color: var(--muted); text-align: center; }
   .foot a { color: var(--ink); font-weight: 800; }
+  /* ===== NOCIV tool shell: step tabs, page zoom lock, big locked artboard ===== */
+  html { touch-action: pan-x pan-y; }
+  .steps { display: flex; gap: 6px; overflow-x: auto; scrollbar-width: none; padding: 10px 0 2px; }
+  .steps::-webkit-scrollbar { display: none; }
+  .steps button { flex: none; display: flex; align-items: center; gap: 6px; font: inherit; font-size: 0.82rem; font-weight: 800; border: 1.5px solid var(--ink); background: #fff; color: var(--ink); border-radius: 999px; padding: 7px 13px 7px 7px; cursor: pointer; -webkit-tap-highlight-color: transparent; white-space: nowrap; }
+  .steps button b { display: inline-grid; place-items: center; width: 21px; height: 21px; border-radius: 50%; background: #efece5; font-size: 0.7rem; }
+  .steps button[aria-selected="true"] { background: var(--ink); color: #fff; }
+  .steps button[aria-selected="true"] b { background: var(--red); color: #fff; }
+  .stepped .grid > * { min-width: 0; }
+  .stepped .grid > section.note { display: none; }
+  .stepped .grid > section.note.on { display: block; }
+  .next-step { display: block; width: 100%; margin-top: 18px; font: inherit; font-weight: 900; font-size: 0.9rem; letter-spacing: 0.03em; padding: 13px; border-radius: 12px; border: 1.5px solid var(--ink); background: #fff; color: var(--ink); cursor: pointer; text-align: center; -webkit-tap-highlight-color: transparent; }
+  @media (min-width: 900px) { .stepped .grid > nav.steps { grid-column: 1; padding-top: 0; } }
+  @media (max-width: 899px) {
+    .stepped .grid > section.note .chips, .stepped .grid > section.note .swatches { flex-wrap: nowrap; overflow-x: auto; scrollbar-width: none; margin-right: -18px; padding-right: 18px; padding-bottom: 3px; }
+    .stepped .grid > section.note .chips::-webkit-scrollbar, .stepped .grid > section.note .swatches::-webkit-scrollbar { display: none; }
+    .stepped .grid > section.note .chip, .stepped .grid > section.note .sw { flex: none; }
+  }
+  .art-lock { position: absolute; right: 8px; bottom: 8px; z-index: 4; width: 42px; height: 42px; border-radius: 50%; border: none; background: rgba(29,28,26,0.55); color: #fff; display: grid; place-items: center; cursor: pointer; -webkit-tap-highlight-color: transparent; backdrop-filter: blur(4px); -webkit-backdrop-filter: blur(4px); padding: 0; }
+  .art-lock svg { width: 20px; height: 20px; }
+  .focus-layer { position: fixed; inset: 0; z-index: 9999; background: #efece5; display: flex; flex-direction: column; padding: max(10px, env(safe-area-inset-top)) 12px max(12px, env(safe-area-inset-bottom)); overscroll-behavior: contain; }
+  .focus-bar { display: flex; align-items: center; gap: 10px; margin-bottom: 8px; }
+  .focus-bar span { flex: 1; font-size: 0.85rem; font-weight: 700; color: #5f5a50; }
+  .focus-bar button { width: auto !important; flex: none; border: none; border-radius: 999px; background: #c8412f; color: #fff; font: inherit; font-weight: 900; font-size: 0.9rem; padding: 11px 18px; cursor: pointer; }
+  .focus-body { flex: 1; min-height: 0; overflow: auto; display: flex; flex-direction: column; }
+  .focus-body > * { position: static !important; margin: 0 auto !important; width: 100% !important; max-width: 900px; box-shadow: none !important; transform: none !important; }
+  .focus-layer .steps, .focus-layer .art-lock { display: none !important; }
+  html.focus-open, html.focus-open body { overflow: hidden; }
+
+  /* QR: phone layout keeps the code pinned on top */
+  @media (max-width: 819px) {
+    .preview-col { order: -1; position: sticky; top: 0; z-index: 5; background: var(--paper); margin: 0 -16px; padding: 8px 16px 6px; border-bottom: 1px solid #d9d2c2; }
+    .preview { padding: 8px; }
+    .preview canvas { max-height: 30vh; max-height: 30svh; width: auto !important; margin: 0 auto; }
+    .preview .empty { padding: 26px 10px; }
+    .grid { gap: 16px; }
+  }
+  @media (min-width: 820px) { .stepped .grid > nav.steps { grid-column: 1; } }
+  #frameBlock.focused { background: transparent; }
+  #frameBlock.focused #picEdit { width: min(86vw, 56vh); height: min(86vw, 56vh); }
+  #frameBlock.focused .pic-edit-wrap { justify-content: center; }
+  #frameBlock.focused .pic-edit-wrap .meta { display: none; }
+  .pic-art { position: relative; flex: none; }
 </style>
 </head>
 <body>
@@ -97,7 +140,7 @@
   </div>
 
   <div class="grid">
-    <section class="note" aria-labelledby="h1">
+    <section class="note" aria-labelledby="h1" data-step="Link">
       <h2 id="h1"><b>1</b> Where should it go?</h2>
       <input type="url" id="url" inputmode="url" autocapitalize="off" autocorrect="off" spellcheck="false" placeholder="yourwebsite.com" autocomplete="url" maxlength="1500">
       <p class="goes" id="goes" aria-live="polite"></p>
@@ -109,16 +152,11 @@
         <div class="empty" id="empty">Type a link and your code shows up here.</div>
         <p class="check" id="check" aria-live="polite"></p>
         <p class="meta" id="meta"></p>
-        <div class="actions">
-          <button type="button" class="btn main" id="save" disabled>Save Image</button>
-          <a class="btn alt" id="download" href="#" download="qr-code.png" aria-disabled="true">Download PNG</a>
-          <a class="btn alt" id="toCard" href="../card/" target="_top">Put it on a card or flyer &rarr;</a>
-        </div>
-        <p class="tip"><b>Test it:</b> open your camera and point it at the screen. <b>Printing:</b> stays sharp up to about 5 inches across. Don't go smaller than about 1 inch, or phones struggle.</p>
+
       </div>
     </div>
 
-    <section class="note" aria-labelledby="h2">
+    <section class="note" aria-labelledby="h2" data-step="Picture">
       <h2 id="h2"><b>2</b> Picture in the middle</h2>
       <div class="pick">
         <label class="pick-btn">Pick a photo<input type="file" id="pic" accept="image/*"></label>
@@ -139,9 +177,10 @@
           <button type="button" class="chip" data-v="0.26" aria-pressed="false">Large</button>
         </div>
         <p class="meta" id="softNote" hidden>Large isn't available with the Soft style, so it still scans.</p>
+        <div id="frameBlock">
         <label class="lbl">Frame it</label>
         <div class="pic-edit-wrap">
-          <canvas id="picEdit" width="440" height="440" aria-label="Drag to move your picture. Pinch to zoom."></canvas>
+          <span class="pic-art" id="picArt"><canvas id="picEdit" width="720" height="720" aria-label="Drag to move your picture. Pinch to zoom."></canvas></span>
           <p class="meta">Drag to move it. Pinch or use the slider to zoom.</p>
         </div>
         <label class="lbl" for="picZoom">Zoom</label>
@@ -153,11 +192,12 @@
           <button type="button" class="chip" data-v="fit" aria-pressed="false">Show the whole picture</button>
           <button type="button" class="chip" id="picReset">Reset</button>
         </div>
+        </div>
       </div>
       <p class="meta">Optional. A logo or face works best. The code gets a little stronger when you add one, so it still scans.</p>
     </section>
 
-    <section class="note" aria-labelledby="h3">
+    <section class="note" aria-labelledby="h3" data-step="Style">
       <h2 id="h3"><b>3</b> Make it yours</h2>
       <label class="lbl">Code color</label>
       <div class="swatches" id="colors">
@@ -183,11 +223,93 @@
       <label class="lbl" for="caption">Words under it (optional)</label>
       <input type="text" id="caption" maxlength="40" placeholder="SCAN FOR MY SHOP">
     </section>
+
+    <section class="note" aria-labelledby="h4" data-step="Save">
+      <h2 id="h4"><b>4</b> Save it</h2>
+        <div class="actions">
+          <button type="button" class="btn main" id="save" disabled>Save Image</button>
+          <a class="btn alt" id="download" href="#" download="qr-code.png" aria-disabled="true">Download PNG</a>
+          <a class="btn alt" id="toCard" href="../card/" target="_top">Put it on a card or flyer &rarr;</a>
+        </div>
+        <p class="tip"><b>Test it:</b> open your camera and point it at the screen. <b>Printing:</b> stays sharp up to about 5 inches across. Don't go smaller than about 1 inch, or phones struggle.</p>
+    </section>
   </div>
 
-  <p class="foot">A free tool from <a href="https://nociv.co" target="_top">NOCIV.CO</a>. Nothing tracked. Nothing saved.</p>
+  <p class="foot">A free tool from <a href="https://nociv.co" target="_top">NOCIV.CO</a>. Nothing tracked. Your picture never leaves your phone.</p>
 </div>
 
+<script>
+/* ===== NOCIV tool shell: step tabs, page zoom lock, big locked artboard ===== */
+(function () {
+  // The page itself never zooms (artboards have their own zoom), so nobody gets stuck zoomed in.
+  document.addEventListener('gesturestart', function (e) { e.preventDefault(); }, { passive: false });
+  document.addEventListener('gesturechange', function (e) { e.preventDefault(); }, { passive: false });
+
+  // ---- Steps: one section at a time, tabs on top, Next at the bottom ----
+  var grid = document.querySelector('.grid');
+  if (grid) {
+    var notes = Array.prototype.filter.call(grid.children, function (n) { return n.matches('section.note'); });
+    var prev = grid.querySelector('.preview-col'), nav = document.createElement('nav'), cur = 0, key = 'nocivStep:' + location.pathname;
+    nav.className = 'steps'; nav.setAttribute('role', 'tablist'); nav.setAttribute('aria-label', 'Steps');
+    function name(n, i) { var h = n.querySelector('h2'); return n.getAttribute('data-step') || (h ? h.textContent.replace(/^\s*\d+\s*/, '') : 'Step ' + (i + 1)); }
+    notes.forEach(function (n, i) {
+      var b = document.createElement('button'); b.type = 'button'; b.setAttribute('role', 'tab');
+      b.innerHTML = '<b>' + (i + 1) + '</b>'; b.appendChild(document.createTextNode(name(n, i)));
+      b.onclick = function () { show(i, true); }; nav.appendChild(b);
+      if (i < notes.length - 1) {
+        var nx = document.createElement('button'); nx.type = 'button'; nx.className = 'next-step';
+        nx.textContent = 'Next: ' + name(notes[i + 1], i + 1) + ' →'; nx.onclick = function () { show(i + 1, true); };
+        n.appendChild(nx);
+      }
+    });
+    var mq = matchMedia('(max-width: 899px)');
+    function place() { if (mq.matches && prev) prev.appendChild(nav); else grid.insertBefore(nav, grid.firstChild); }
+    function show(i, scroll) {
+      cur = Math.max(0, Math.min(notes.length - 1, i));
+      notes.forEach(function (n, j) { n.classList.toggle('on', j === cur); });
+      Array.prototype.forEach.call(nav.children, function (b, j) { b.setAttribute('aria-selected', String(j === cur)); });
+      var a = nav.children[cur]; if (a) nav.scrollTo({ left: Math.max(0, a.offsetLeft - 24), behavior: 'smooth' });
+      try { sessionStorage.setItem(key, String(cur)); } catch (e) {}
+      if (scroll) { var y = grid.getBoundingClientRect().top + window.scrollY - 6; if (window.scrollY > y) window.scrollTo(0, y); }
+      document.dispatchEvent(new CustomEvent('nociv-step', { detail: cur }));
+    }
+    try { cur = parseInt(sessionStorage.getItem(key), 10) || 0; } catch (e) {}
+    place(); if (mq.addEventListener) mq.addEventListener('change', place);
+    document.documentElement.classList.add('stepped');
+    show(cur);
+    window.nocivSteps = { show: show, current: function () { return cur; } };
+  }
+
+  // ---- Big locked artboard: a round button opens it full screen, Done puts it back ----
+  var ICON = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M15 3h6v6M9 21H3v-6M21 3l-7 7M3 21l7-7"/></svg>';
+  window.nocivFocus = function (target, host, hint, onToggle) {
+    if (!target || !host) return;
+    if (getComputedStyle(host).position === 'static') host.style.position = 'relative';
+    var btn = document.createElement('button'); btn.type = 'button'; btn.className = 'art-lock'; btn.innerHTML = ICON;
+    btn.setAttribute('aria-label', 'Make it big and lock the screen');
+    host.appendChild(btn);
+    btn.addEventListener('click', function (e) {
+      e.preventDefault(); e.stopPropagation();
+      var mark = document.createComment('focus'), layer = document.createElement('div'), bar = document.createElement('div'), body = document.createElement('div'), done = document.createElement('button');
+      layer.className = 'focus-layer'; bar.className = 'focus-bar'; body.className = 'focus-body';
+      bar.innerHTML = '<span></span>'; bar.firstChild.textContent = hint || 'Screen locked. Drag and pinch freely.';
+      done.type = 'button'; done.textContent = '✓ Done'; bar.appendChild(done);
+      target.parentNode.insertBefore(mark, target);
+      body.appendChild(target); layer.appendChild(bar); layer.appendChild(body); document.body.appendChild(layer);
+      target.classList.add('focused'); document.documentElement.classList.add('focus-open');
+      if (onToggle) onToggle(true);
+      window.dispatchEvent(new Event('resize'));
+      done.onclick = function () {
+        mark.parentNode.insertBefore(target, mark); mark.remove(); layer.remove();
+        target.classList.remove('focused'); document.documentElement.classList.remove('focus-open');
+        if (onToggle) onToggle(false);
+        window.dispatchEvent(new Event('resize'));
+      };
+    });
+  };
+})();
+
+</script>
 <script src="qr.js"></script>
 <script>
 (function () {
@@ -267,6 +389,7 @@
     c.restore();
   }
   var pe = $('picEdit'), pctx = pe.getContext('2d');
+  if (window.nocivFocus) window.nocivFocus($('frameBlock'), $('picArt'), 'Screen locked. Drag to move, pinch to zoom.');
   function shapePath(c, x, y, s) {
     c.beginPath();
     if (state.shape === 'circle') c.arc(x + s / 2, y + s / 2, s / 2, 0, Math.PI * 2);
@@ -283,7 +406,7 @@
     if (state.bg !== 'transparent') { pctx.fillStyle = state.bg; pctx.fill(); }
     drawFramed(pctx, state.img, S / 2, S / 2, box);
     pctx.restore();
-    pctx.lineWidth = 3; pctx.strokeStyle = '#111'; shapePath(pctx, inset, inset, box); pctx.stroke();
+    pctx.lineWidth = S / 150; pctx.strokeStyle = '#111'; shapePath(pctx, inset, inset, box); pctx.stroke();
   }
   var pts = {}, startDist = 0, startZoom = 1;
   pe.addEventListener('pointerdown', function (e) { pe.setPointerCapture(e.pointerId); pts[e.pointerId] = { x: e.clientX, y: e.clientY }; var ids = Object.keys(pts); if (ids.length === 2) { var a = pts[ids[0]], b = pts[ids[1]]; startDist = Math.hypot(a.x - b.x, a.y - b.y); startZoom = state.pz; } });
@@ -346,6 +469,22 @@
     render();
   });
   $('caption').addEventListener('input', function () { state.caption = this.value.trim(); render(); });
+  // Remember the link and look on this phone (the picture is never saved).
+  var KEEP = ['color', 'bg', 'style', 'shape', 'picSize', 'fit', 'caption'];
+  function remember() { try { var o = { url: $('url').value }; KEEP.forEach(function (k) { o[k] = state[k]; }); localStorage.setItem('nocivQr', JSON.stringify(o)); } catch (e) {} }
+  ['input', 'click', 'change'].forEach(function (ev) { document.addEventListener(ev, function () { setTimeout(remember, 0); }, true); });
+  function restore() {
+    var o; try { o = JSON.parse(localStorage.getItem('nocivQr') || 'null'); } catch (e) { o = null; }
+    if (!o) return;
+    [['shape', 'shape'], ['picSize', 'picSize'], ['fit', 'picFit'], ['bg', 'bg'], ['style', 'style'], ['color', 'colors']].forEach(function (g) {
+      if (o[g[0]] == null) return;
+      var b = $(g[1]).querySelector('[data-v="' + o[g[0]] + '"]');
+      if (b && !b.disabled) b.click();
+      else if (g[0] === 'color' && /^#[0-9a-f]{6}$/i.test(o.color)) { $('colorCustom').value = o.color; $('colorCustom').dispatchEvent(new Event('input')); }
+    });
+    if (o.caption) { $('caption').value = o.caption; $('caption').dispatchEvent(new Event('input')); }
+    if (o.url) { $('url').value = o.url; $('url').dispatchEvent(new Event('input')); }
+  }
 
   // ---------- contrast ----------
   function lum(hex) {
@@ -541,6 +680,7 @@
       $('download').click();
     });
   });
+  restore();
 })();
 </script>
 </body>

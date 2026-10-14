@@ -1,4 +1,4 @@
-<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Stencil + Halftone: NOCIV.CO</title><style>:root{--bg:#efece5;--p:#f8f4e8;--line:#d9d2c2;--text:#1d1c1a;--muted:#6a6458;--a:#c8412f}
+<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,viewport-fit=cover"><title>Stencil + Halftone: NOCIV.CO</title><style>:root{--bg:#efece5;--p:#f8f4e8;--line:#d9d2c2;--text:#1d1c1a;--muted:#6a6458;--a:#c8412f}
 *{box-sizing:border-box;-webkit-tap-highlight-color:transparent}body{margin:0;background:var(--bg);color:var(--text);font:15px -apple-system,BlinkMacSystemFont,"Helvetica Neue",Arial,sans-serif;-webkit-text-size-adjust:100%}
 header{padding:16px 20px 8px;display:flex;justify-content:space-between;align-items:flex-end;gap:10px;flex-wrap:wrap}
 .brand{font-weight:900;letter-spacing:.04em;font-size:clamp(24px,6vw,34px);line-height:1}.brand span{background:var(--text);color:#fff;padding:1px 10px;border-radius:6px;display:inline-block;transform:rotate(-1.2deg)}
@@ -35,6 +35,38 @@ body.m-st .ht-only,body.m-ht .st-only{display:none!important}
  .stabs button{flex:none;width:auto;border-radius:999px;padding:8px 14px;font-size:14px}.stabs button[aria-selected=true]{background:var(--text);color:#fff}
  aside section.tabbed{display:none}aside section.tabbed.show{display:block}
 }
+  /* ===== NOCIV tool shell: step tabs, page zoom lock, big locked artboard ===== */
+  html { touch-action: pan-x pan-y; }
+  .steps { display: flex; gap: 6px; overflow-x: auto; scrollbar-width: none; padding: 10px 0 2px; }
+  .steps::-webkit-scrollbar { display: none; }
+  .steps button { flex: none; display: flex; align-items: center; gap: 6px; font: inherit; font-size: 0.82rem; font-weight: 800; border: 1.5px solid var(--ink); background: #fff; color: var(--ink); border-radius: 999px; padding: 7px 13px 7px 7px; cursor: pointer; -webkit-tap-highlight-color: transparent; white-space: nowrap; }
+  .steps button b { display: inline-grid; place-items: center; width: 21px; height: 21px; border-radius: 50%; background: #efece5; font-size: 0.7rem; }
+  .steps button[aria-selected="true"] { background: var(--ink); color: #fff; }
+  .steps button[aria-selected="true"] b { background: var(--red); color: #fff; }
+  .stepped .grid > * { min-width: 0; }
+  .stepped .grid > section.note { display: none; }
+  .stepped .grid > section.note.on { display: block; }
+  .next-step { display: block; width: 100%; margin-top: 18px; font: inherit; font-weight: 900; font-size: 0.9rem; letter-spacing: 0.03em; padding: 13px; border-radius: 12px; border: 1.5px solid var(--ink); background: #fff; color: var(--ink); cursor: pointer; text-align: center; -webkit-tap-highlight-color: transparent; }
+  @media (min-width: 900px) { .stepped .grid > nav.steps { grid-column: 1; padding-top: 0; } }
+  @media (max-width: 899px) {
+    .stepped .grid > section.note .chips, .stepped .grid > section.note .swatches { flex-wrap: nowrap; overflow-x: auto; scrollbar-width: none; margin-right: -18px; padding-right: 18px; padding-bottom: 3px; }
+    .stepped .grid > section.note .chips::-webkit-scrollbar, .stepped .grid > section.note .swatches::-webkit-scrollbar { display: none; }
+    .stepped .grid > section.note .chip, .stepped .grid > section.note .sw { flex: none; }
+  }
+  .art-lock { position: absolute; right: 8px; bottom: 8px; z-index: 4; width: 42px; height: 42px; border-radius: 50%; border: none; background: rgba(29,28,26,0.55); color: #fff; display: grid; place-items: center; cursor: pointer; -webkit-tap-highlight-color: transparent; backdrop-filter: blur(4px); -webkit-backdrop-filter: blur(4px); padding: 0; }
+  .art-lock svg { width: 20px; height: 20px; }
+  .focus-layer { position: fixed; inset: 0; z-index: 9999; background: #efece5; display: flex; flex-direction: column; padding: max(10px, env(safe-area-inset-top)) 12px max(12px, env(safe-area-inset-bottom)); overscroll-behavior: contain; }
+  .focus-bar { display: flex; align-items: center; gap: 10px; margin-bottom: 8px; }
+  .focus-bar span { flex: 1; font-size: 0.85rem; font-weight: 700; color: #5f5a50; }
+  .focus-bar button { width: auto !important; flex: none; border: none; border-radius: 999px; background: #c8412f; color: #fff; font: inherit; font-weight: 900; font-size: 0.9rem; padding: 11px 18px; cursor: pointer; }
+  .focus-body { flex: 1; min-height: 0; overflow: auto; display: flex; flex-direction: column; }
+  .focus-body > * { position: static !important; margin: 0 auto !important; width: 100% !important; max-width: 900px; box-shadow: none !important; transform: none !important; }
+  .focus-layer .steps, .focus-layer .art-lock { display: none !important; }
+  html.focus-open, html.focus-open body { overflow: hidden; }
+
+.sizes{display:grid;grid-template-columns:1fr 1fr;gap:8px}.sizes button{padding:10px 8px;font-size:14px;line-height:1.2}.sizes button small{display:block;font-weight:600;font-size:12px;color:var(--muted);margin-top:2px}.sizes button[aria-pressed=true]{background:var(--text);color:#fff}.sizes button[aria-pressed=true] small{color:#ddd}
+.stabs button{display:flex;align-items:center;gap:6px;padding:7px 13px 7px 7px!important;font-weight:800}.stabs button b{display:inline-grid;place-items:center;width:21px;height:21px;border-radius:50%;background:#efece5;font-size:11px;color:var(--text)}.stabs button[aria-selected=true] b{background:var(--a);color:#fff}
+.stage.focused{height:calc(100vh - 80px)!important;height:calc(100dvh - 80px)!important;padding:0!important;background:transparent}.stage.focused .canvasWrap{min-height:0}.stage.focused canvas{max-height:calc(100vh - 150px)!important;max-height:calc(100dvh - 150px)!important}
 </style></head><body class="m-st"><header><div class="brand"><span>STENCIL</span> + HALFTONE</div><div class="muted">Your photos never leave your phone.</div></header><main><aside>
 <div class="modes" role="tablist"><button id="mSt" class="on" role="tab" aria-selected="true">Stencil</button><button id="mHt" role="tab" aria-selected="false">Halftone</button></div>
 <div class="stabs" id="stabs" role="tablist"></div>
@@ -44,6 +76,8 @@ body.m-st .ht-only,body.m-ht .st-only{display:none!important}
 <label for="fRot">Turn</label><div class="range"><input id="fRot" type="range" min="-180" max="180" step="1" value="0"><output id="fRoto">0°</output></div>
 <div class="row"><button id="fRot90" type="button">Turn 90°</button><button id="fFlip" type="button">Flip</button></div><div class="row"><button id="fReset" type="button" style="grid-column:1/-1">Reset framing</button></div>
 <p class="help">Drag the preview to move your photo. Pinch it to zoom.</p></div></section>
+
+<section><h2>Size</h2><p class="help" style="margin-top:0">What is it for? This sets how big it prints and how big the dots are.</p><div class="sizes" id="sizePick"></div><p class="help" id="sizeNote"></p></section>
 
 <section class="st-only"><h2>Light and dark</h2><label>Where light turns to dark</label><div class="range"><input id="thr" type="range" min="0" max="255" value="128"><output id="thro">128</output></div><div class="check"><input id="inv" type="checkbox"><label for="inv">Flip black and white</label></div><label>How many layers (stencils to cut)</label><select id="layers"><option>1</option><option selected>2</option><option>3</option><option>4</option></select><label>Show layer</label><select id="active"></select></section>
 <section class="st-only"><h2>Bridges</h2><p class="help">Bridges are thin strips that hold floating pieces (like the middle of an O) in place.</p><label>Bridge width</label><div class="range"><input id="bw" type="range" min="1" max="20" value="5"><output id="bwo">5 px</output></div><div class="check"><input id="ab" type="checkbox"><label for="ab">Show where bridges could go</label></div><p class="help">These are ideas, not rules. Check every floating piece before you cut.</p></section>
@@ -64,7 +98,78 @@ body.m-st .ht-only,body.m-ht .st-only{display:none!important}
 <div class="check"><input id="clearBg" type="checkbox"><label for="clearBg">See-through background (PNG)</label></div>
 <div class="st-only"><button id="png" class="primary">Save PNG (300 DPI)</button><button id="svg" style="margin-top:8px">Save SVG (for cutting machines)</button></div>
 <div class="ht-only"><div class="check"><input id="hReg" type="checkbox"><label for="hReg">Registration marks</label></div><button id="hMake" class="primary">Make print files</button><div id="hFiles" class="files"></div><p class="help">Each color comes out as its own black and white 300 DPI file, ready for film or a screen. The mockup is just to show people.</p></div></section>
-</aside><div class="stage"><div class="canvasWrap" id="wrap"><canvas id="c"></canvas><button id="pick" class="primary">Add a photo</button></div><div class="status"><span id="status" class="muted">Load artwork to begin.</span><span id="size" class="muted"></span><button id="zoom" class="ht-only" hidden>Zoom in</button></div></div><aside class="right"><section class="st-only"><h2>Layers</h2><div id="list"></div></section><section class="ht-only"><h2>Plates</h2><div id="plist"></div><p class="help">Tap a plate to see it alone.</p></section><section><h2>Check</h2><div class="metric"><span>Input</span><b id="mi">-</b></div><div class="metric"><span class="st-only">Layers</span><span class="ht-only">Plates</span><b id="ml">-</b></div><div class="metric"><span class="st-only">Black area</span><span class="ht-only">Ink coverage</span><b id="ma">-</b></div><div class="metric"><span>Print width</span><b id="mw">-</b></div><div class="metric ht-only"><span>Dot spacing</span><b id="md">-</b></div><div class="metric ht-only"><span>Print file</span><b id="mx">-</b></div></section><section><h2>How it works</h2><p class="help st-only">Add a photo, set light and dark, pick how many layers, add bridges, save.</p><p class="help st-only">Black = the part you cut out (or print). White = stays.</p><p class="help ht-only">Add a photo, pick your ink, pick your dots, make the print files.</p><p class="help ht-only">Black on the print file = ink. Print each file as a film positive and burn one screen per color.</p></section></aside></main><script>
+</aside><div class="stage"><div class="canvasWrap" id="wrap"><canvas id="c"></canvas><button id="pick" class="primary">Add a photo</button></div><div class="status"><span id="status" class="muted">Load artwork to begin.</span><span id="size" class="muted"></span><button id="zoom" class="ht-only" hidden>Zoom in</button></div></div><aside class="right"><section class="st-only"><h2>Layers</h2><div id="list"></div></section><section class="ht-only"><h2>Ink layers</h2><div id="plist"></div><p class="help">Each ink color gets its own black and white file. Printers call these plates: you burn one screen (or cut one stencil) for each color. Tap one to see it alone.</p></section><section><h2>Check</h2><div class="metric"><span>Input</span><b id="mi">-</b></div><div class="metric"><span class="st-only">Layers</span><span class="ht-only">Ink layers</span><b id="ml">-</b></div><div class="metric"><span class="st-only">Black area</span><span class="ht-only">Ink coverage</span><b id="ma">-</b></div><div class="metric"><span>Print width</span><b id="mw">-</b></div><div class="metric ht-only"><span>Dot spacing</span><b id="md">-</b></div><div class="metric ht-only"><span>Print file</span><b id="mx">-</b></div></section><section><h2>How it works</h2><p class="help st-only">Add a photo, set light and dark, pick how many layers, add bridges, save.</p><p class="help st-only">Black = the part you cut out (or print). White = stays.</p><p class="help ht-only">Add a photo, pick your ink, pick your dots, make the print files.</p><p class="help ht-only">Black on the print file = ink. Print each file as a film positive and burn one screen per color.</p></section></aside></main><script>
+/* ===== NOCIV tool shell: step tabs, page zoom lock, big locked artboard ===== */
+(function () {
+  // The page itself never zooms (artboards have their own zoom), so nobody gets stuck zoomed in.
+  document.addEventListener('gesturestart', function (e) { e.preventDefault(); }, { passive: false });
+  document.addEventListener('gesturechange', function (e) { e.preventDefault(); }, { passive: false });
+
+  // ---- Steps: one section at a time, tabs on top, Next at the bottom ----
+  var grid = document.querySelector('.grid');
+  if (grid) {
+    var notes = Array.prototype.filter.call(grid.children, function (n) { return n.matches('section.note'); });
+    var prev = grid.querySelector('.preview-col'), nav = document.createElement('nav'), cur = 0, key = 'nocivStep:' + location.pathname;
+    nav.className = 'steps'; nav.setAttribute('role', 'tablist'); nav.setAttribute('aria-label', 'Steps');
+    function name(n, i) { var h = n.querySelector('h2'); return n.getAttribute('data-step') || (h ? h.textContent.replace(/^\s*\d+\s*/, '') : 'Step ' + (i + 1)); }
+    notes.forEach(function (n, i) {
+      var b = document.createElement('button'); b.type = 'button'; b.setAttribute('role', 'tab');
+      b.innerHTML = '<b>' + (i + 1) + '</b>'; b.appendChild(document.createTextNode(name(n, i)));
+      b.onclick = function () { show(i, true); }; nav.appendChild(b);
+      if (i < notes.length - 1) {
+        var nx = document.createElement('button'); nx.type = 'button'; nx.className = 'next-step';
+        nx.textContent = 'Next: ' + name(notes[i + 1], i + 1) + ' →'; nx.onclick = function () { show(i + 1, true); };
+        n.appendChild(nx);
+      }
+    });
+    var mq = matchMedia('(max-width: 899px)');
+    function place() { if (mq.matches && prev) prev.appendChild(nav); else grid.insertBefore(nav, grid.firstChild); }
+    function show(i, scroll) {
+      cur = Math.max(0, Math.min(notes.length - 1, i));
+      notes.forEach(function (n, j) { n.classList.toggle('on', j === cur); });
+      Array.prototype.forEach.call(nav.children, function (b, j) { b.setAttribute('aria-selected', String(j === cur)); });
+      var a = nav.children[cur]; if (a) nav.scrollTo({ left: Math.max(0, a.offsetLeft - 24), behavior: 'smooth' });
+      try { sessionStorage.setItem(key, String(cur)); } catch (e) {}
+      if (scroll) { var y = grid.getBoundingClientRect().top + window.scrollY - 6; if (window.scrollY > y) window.scrollTo(0, y); }
+      document.dispatchEvent(new CustomEvent('nociv-step', { detail: cur }));
+    }
+    try { cur = parseInt(sessionStorage.getItem(key), 10) || 0; } catch (e) {}
+    place(); if (mq.addEventListener) mq.addEventListener('change', place);
+    document.documentElement.classList.add('stepped');
+    show(cur);
+    window.nocivSteps = { show: show, current: function () { return cur; } };
+  }
+
+  // ---- Big locked artboard: a round button opens it full screen, Done puts it back ----
+  var ICON = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M15 3h6v6M9 21H3v-6M21 3l-7 7M3 21l7-7"/></svg>';
+  window.nocivFocus = function (target, host, hint, onToggle) {
+    if (!target || !host) return;
+    if (getComputedStyle(host).position === 'static') host.style.position = 'relative';
+    var btn = document.createElement('button'); btn.type = 'button'; btn.className = 'art-lock'; btn.innerHTML = ICON;
+    btn.setAttribute('aria-label', 'Make it big and lock the screen');
+    host.appendChild(btn);
+    btn.addEventListener('click', function (e) {
+      e.preventDefault(); e.stopPropagation();
+      var mark = document.createComment('focus'), layer = document.createElement('div'), bar = document.createElement('div'), body = document.createElement('div'), done = document.createElement('button');
+      layer.className = 'focus-layer'; bar.className = 'focus-bar'; body.className = 'focus-body';
+      bar.innerHTML = '<span></span>'; bar.firstChild.textContent = hint || 'Screen locked. Drag and pinch freely.';
+      done.type = 'button'; done.textContent = '✓ Done'; bar.appendChild(done);
+      target.parentNode.insertBefore(mark, target);
+      body.appendChild(target); layer.appendChild(bar); layer.appendChild(body); document.body.appendChild(layer);
+      target.classList.add('focused'); document.documentElement.classList.add('focus-open');
+      if (onToggle) onToggle(true);
+      window.dispatchEvent(new Event('resize'));
+      done.onclick = function () {
+        mark.parentNode.insertBefore(target, mark); mark.remove(); layer.remove();
+        target.classList.remove('focused'); document.documentElement.classList.remove('focus-open');
+        if (onToggle) onToggle(false);
+        window.dispatchEvent(new Event('resize'));
+      };
+    });
+  };
+})();
+
+</script><script>
 const $=x=>document.getElementById(x),c=$('c'),ctx=c.getContext('2d',{willReadFrequently:true}),src=document.createElement('canvas'),sx=src.getContext('2d',{willReadFrequently:true});let has=false,mode='st',S={t:128,inv:false,n:2,a:0,bw:5,ab:false,w:8};
 
 /* ===== Artwork ===== */
@@ -161,7 +266,7 @@ let t=document.createElement('canvas');t.width=PW;t.height=PH;let tg=t.getContex
 applyZoom();let cover=show.length===1?cv.avg[show[0].idx]:null;
 $('mi').textContent=src.width+' × '+src.height;$('ml').textContent=ps.length;$('ma').textContent=cover==null?ps.map(p=>p.name[0]+' '+Math.round(cv.avg[p.idx]*100)+'%').join(' · '):Math.round(cover*100)+'%';$('mw').textContent=S.w+' in';$('md').textContent=H.shape==='grain'?'Grain':H.lpi+' LPI ('+(1/H.lpi).toFixed(3)+' in)';$('mx').textContent=o.dpi+' DPI, '+o.W+' × '+o.H;$('size').textContent=sc<1?'Preview '+Math.round(sc*100)+'%':o.W+' × '+o.H+' px';
 $('status').textContent=(H.view==='all'?(ps.length>1?ps.length+' colors together':'Halftone'):ps.find(p=>p.id===H.view).name+' plate')+(o.dpi<DPI?'. Big print, files at '+o.dpi+' DPI':'');platesUI(ps)}
-function platesUI(ps){let l=$('plist');l.innerHTML='';let all=[{id:'all',name:ps.length>1?'All together':'Preview',color:null}].concat(ps);for(let p of all){let e=document.createElement('div');e.className='layer'+(H.view===p.id?' active':'');e.onclick=()=>{H.view=p.id;drawHTnow()};let sw=document.createElement('span');sw.className='sw';sw.style.background=p.color||(H.ink==='one'?H.shirt:'linear-gradient(135deg,#00aeef,#ec008c,#fff200,#231f20)');e.append(sw,document.createTextNode(p.name+(p.id!=='all'&&H.shape!=='grain'?'  '+p.angle+'°':'')));l.append(e)}}
+function platesUI(ps){let l=$('plist');l.innerHTML='';let all=[{id:'all',name:ps.length>1?'All together':'Preview',color:null}].concat(ps);for(let p of all){let e=document.createElement('div');e.className='layer'+(H.view===p.id?' active':'');e.onclick=()=>{H.view=p.id;drawHTnow()};let sw=document.createElement('span');sw.className='sw';sw.style.background=p.color||(H.ink==='one'?H.shirt:'linear-gradient(135deg,#00aeef,#ec008c,#fff200,#231f20)');e.append(sw,document.createTextNode(p.name));l.append(e)}}
 function applyZoom(){$('zoom').hidden=!has||mode!=='ht';$('zoom').textContent=H.zoom?'Zoom out':'Zoom in';$('wrap').classList.toggle('zoom',H.zoom&&mode==='ht');c.style.width=H.zoom&&mode==='ht'?Math.round(c.width/Math.max(1,Math.min(2,devicePixelRatio||1)))+'px':''}
 $('zoom').onclick=()=>{H.zoom=!H.zoom;applyZoom()};
 
@@ -190,11 +295,18 @@ function redraw(){if(!has)return;mode==='ht'?drawHTnow():draw();applyZoom()}
 $('mSt').onclick=()=>setMode('st');$('mHt').onclick=()=>setMode('ht');
 layersUI();inkUI();let start=/halftone/i.test(location.hash)?'ht':null;try{start=start||localStorage.getItem('nocivArtMode')}catch(e){}setMode(start==='ht'?'ht':'st');
 
+/* ===== What is it for: sets print width and dot size ===== */
+(function(){var SIZES=[['T-shirt front',11,45,'About 11 in wide, a normal shirt print.'],['Hoodie back',13,40,'Big back print, about 13 in wide.'],['Tote bag',10,40,'About 10 in wide on canvas.'],['Pocket or hat',4,50,'Small print, about 4 in wide.'],['Sticker',3,65,'Printed stickers hold fine dots.'],['Stamp or cut-out',2,18,'Big chunky dots so you can carve, cut or stamp them.'],['Letter page',8,65,'Zines and flyers on letter paper.'],['Poster',16,35,'Poster size, about 16 in wide.']],box=$('sizePick'),cur=-1;
+function set(i){cur=i;var z=SIZES[i];box.querySelectorAll('button').forEach(function(b,j){b.setAttribute('aria-pressed',String(j===i))});var wi=$('wi');wi.value=z[1];wi.dispatchEvent(new Event('input',{bubbles:true}));if(mode==='ht'){var l=$('hLpi');l.value=z[2];l.dispatchEvent(new Event('input',{bubbles:true}))}$('sizeNote').textContent=z[3]+(mode==='ht'?' Dots set to '+z[2]+' per inch.':'');try{localStorage.setItem('nocivArtSize',String(i))}catch(e){}}
+SIZES.forEach(function(z,i){var b=document.createElement('button');b.type='button';b.innerHTML=z[0]+'<small>'+z[1]+' in wide</small>';b.setAttribute('aria-pressed','false');b.onclick=function(){set(i)};box.appendChild(b)});
+$('mHt').addEventListener('click',function(){if(cur>=0)setTimeout(function(){set(cur)},0)});
+var saved=-1;try{saved=parseInt(localStorage.getItem('nocivArtSize'),10)}catch(e){}if(saved>=0&&SIZES[saved])set(saved);})();
+if(window.nocivFocus)nocivFocus(document.querySelector('.stage'),$('wrap'),'Screen locked. Drag to move your photo, pinch to zoom.');
 /* ===== Phone tabs: one section at a time instead of a long scroll ===== */
 (function(){var bar=$('stabs'),left=document.querySelector('main > aside:not(.right)'),cur=0;
 if(matchMedia('(max-width:700px)').matches){var right=document.querySelector('main > aside.right');if(right){Array.prototype.slice.call(right.children).forEach(function(sec){left.appendChild(sec)});right.remove()}}
 function vis(){return Array.prototype.filter.call(left.querySelectorAll(':scope > section'),function(sec){return getComputedStyle(sec).display!=='none'||sec.classList.contains('tabbed')}).filter(function(sec){var b=document.body.className;return !(b.indexOf('m-st')>=0&&sec.classList.contains('ht-only'))&&!(b.indexOf('m-ht')>=0&&sec.classList.contains('st-only'))})}
 function build(){var list=vis();bar.innerHTML='';if(cur>=list.length)cur=0;left.querySelectorAll(':scope > section').forEach(function(sec){sec.classList.add('tabbed');sec.classList.remove('show')});
-list.forEach(function(sec,i){var b=document.createElement('button');b.type='button';b.setAttribute('role','tab');b.textContent=sec.querySelector('h2').textContent;b.setAttribute('aria-selected',String(i===cur));b.onclick=function(){cur=i;build()};bar.appendChild(b);if(i===cur)sec.classList.add('show')})}
+list.forEach(function(sec,i){var b=document.createElement('button');b.type='button';b.setAttribute('role','tab');b.innerHTML='<b>'+(i+1)+'</b>';b.appendChild(document.createTextNode(sec.querySelector('h2').textContent));b.setAttribute('aria-selected',String(i===cur));b.onclick=function(){cur=i;build()};bar.appendChild(b);if(i===cur)sec.classList.add('show')})}
 build();new MutationObserver(build).observe(document.body,{attributes:true,attributeFilter:['class']});window.__stTabs=build})();
 </script></body></html>

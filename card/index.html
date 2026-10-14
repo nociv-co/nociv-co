@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, viewport-fit=cover">
 <title>Cards + Flyers: NOCIV.CO</title>
 <meta name="description" content="Free business cards and flyers from NOCIV. Your info, your colors, your QR code. Print at home or send to a print shop.">
 <style>
@@ -91,6 +91,45 @@
   @font-face { font-family: 'NocivShrik'; src: url('fonts/shrikhand.woff') format('woff'); font-display: swap; }
   @font-face { font-family: 'NocivAbril'; src: url('fonts/abrilfatface.woff') format('woff'); font-display: swap; }
   @font-face { font-family: 'NocivRye'; src: url('fonts/rye.woff') format('woff'); font-display: swap; }
+  /* ===== NOCIV tool shell: step tabs, page zoom lock, big locked artboard ===== */
+  html { touch-action: pan-x pan-y; }
+  .steps { display: flex; gap: 6px; overflow-x: auto; scrollbar-width: none; padding: 10px 0 2px; }
+  .steps::-webkit-scrollbar { display: none; }
+  .steps button { flex: none; display: flex; align-items: center; gap: 6px; font: inherit; font-size: 0.82rem; font-weight: 800; border: 1.5px solid var(--ink); background: #fff; color: var(--ink); border-radius: 999px; padding: 7px 13px 7px 7px; cursor: pointer; -webkit-tap-highlight-color: transparent; white-space: nowrap; }
+  .steps button b { display: inline-grid; place-items: center; width: 21px; height: 21px; border-radius: 50%; background: #efece5; font-size: 0.7rem; }
+  .steps button[aria-selected="true"] { background: var(--ink); color: #fff; }
+  .steps button[aria-selected="true"] b { background: var(--red); color: #fff; }
+  .stepped .grid > * { min-width: 0; }
+  .stepped .grid > section.note { display: none; }
+  .stepped .grid > section.note.on { display: block; }
+  .next-step { display: block; width: 100%; margin-top: 18px; font: inherit; font-weight: 900; font-size: 0.9rem; letter-spacing: 0.03em; padding: 13px; border-radius: 12px; border: 1.5px solid var(--ink); background: #fff; color: var(--ink); cursor: pointer; text-align: center; -webkit-tap-highlight-color: transparent; }
+  @media (min-width: 900px) { .stepped .grid > nav.steps { grid-column: 1; padding-top: 0; } }
+  @media (max-width: 899px) {
+    .stepped .grid > section.note .chips, .stepped .grid > section.note .swatches { flex-wrap: nowrap; overflow-x: auto; scrollbar-width: none; margin-right: -18px; padding-right: 18px; padding-bottom: 3px; }
+    .stepped .grid > section.note .chips::-webkit-scrollbar, .stepped .grid > section.note .swatches::-webkit-scrollbar { display: none; }
+    .stepped .grid > section.note .chip, .stepped .grid > section.note .sw { flex: none; }
+  }
+  .art-lock { position: absolute; right: 8px; bottom: 8px; z-index: 4; width: 42px; height: 42px; border-radius: 50%; border: none; background: rgba(29,28,26,0.55); color: #fff; display: grid; place-items: center; cursor: pointer; -webkit-tap-highlight-color: transparent; backdrop-filter: blur(4px); -webkit-backdrop-filter: blur(4px); padding: 0; }
+  .art-lock svg { width: 20px; height: 20px; }
+  .focus-layer { position: fixed; inset: 0; z-index: 9999; background: #efece5; display: flex; flex-direction: column; padding: max(10px, env(safe-area-inset-top)) 12px max(12px, env(safe-area-inset-bottom)); overscroll-behavior: contain; }
+  .focus-bar { display: flex; align-items: center; gap: 10px; margin-bottom: 8px; }
+  .focus-bar span { flex: 1; font-size: 0.85rem; font-weight: 700; color: #5f5a50; }
+  .focus-bar button { width: auto !important; flex: none; border: none; border-radius: 999px; background: #c8412f; color: #fff; font: inherit; font-weight: 900; font-size: 0.9rem; padding: 11px 18px; cursor: pointer; }
+  .focus-body { flex: 1; min-height: 0; overflow: auto; display: flex; flex-direction: column; }
+  .focus-body > * { position: static !important; margin: 0 auto !important; width: 100% !important; max-width: 900px; box-shadow: none !important; transform: none !important; }
+  .focus-layer .steps, .focus-layer .art-lock { display: none !important; }
+  html.focus-open, html.focus-open body { overflow: hidden; }
+
+  /* Cards + Flyers: phone rows scroll sideways, big locked preview */
+  @media (max-width: 859px) {
+    .stepped .layouts { display: flex; overflow-x: auto; scrollbar-width: none; margin-right: -18px; padding-right: 18px; }
+    .stepped .layouts::-webkit-scrollbar { display: none; }
+    .stepped .layouts .layout-btn { flex: none; width: 96px; }
+    .preview-col .stage { height: 32vh; height: 32svh; }
+  }
+  .preview-col.focused { background: transparent; border: none; padding: 0; }
+  .preview-col.focused .stage { height: calc(100vh - 170px) !important; height: calc(100dvh - 170px) !important; max-height: none !important; }
+  .preview-col.focused #preview { max-height: calc(100vh - 200px) !important; max-height: calc(100dvh - 200px) !important; }
 </style>
 </head>
 <body>
@@ -113,7 +152,7 @@
       </div>
     </div>
 
-    <section class="note">
+    <section class="note" data-step="What">
       <h2><b>1</b> What are you making?</h2>
       <div class="chips" id="kind">
         <button type="button" class="chip" data-v="card" aria-pressed="true">Business card</button>
@@ -136,7 +175,7 @@
       <div class="layouts" id="layouts"></div>
     </section>
 
-    <section class="note">
+    <section class="note" data-step="Info">
       <h2><b>2</b> Your info</h2>
       <div id="cardFields">
         <label class="lbl" for="fName">Name or brand</label>
@@ -172,7 +211,7 @@
       </div>
     </section>
 
-    <section class="note">
+    <section class="note" data-step="QR code">
       <h2><b>3</b> QR code</h2>
       <div id="qrFrom" class="qr-from" hidden></div>
       <label class="lbl" for="fLink">Where the code goes</label>
@@ -184,7 +223,7 @@
       <p class="meta">Want your picture in the middle of the code? Make it in the QR Maker first, then tap "Put it on a card or flyer".</p>
     </section>
 
-    <section class="note">
+    <section class="note" data-step="Colors">
       <h2><b>4</b> Colors and type</h2>
       <div class="colors">
         <div><label for="cBg">Background</label><input type="color" id="cBg" value="#111111"></div>
@@ -221,7 +260,7 @@
       </div>
     </section>
 
-    <section class="note">
+    <section class="note" data-step="Save">
       <h2><b>5</b> Save it</h2>
       <div id="cardOut">
         <div class="chips" id="cardMode">
@@ -246,6 +285,78 @@
   </div>
 </div>
 
+<script>
+/* ===== NOCIV tool shell: step tabs, page zoom lock, big locked artboard ===== */
+(function () {
+  // The page itself never zooms (artboards have their own zoom), so nobody gets stuck zoomed in.
+  document.addEventListener('gesturestart', function (e) { e.preventDefault(); }, { passive: false });
+  document.addEventListener('gesturechange', function (e) { e.preventDefault(); }, { passive: false });
+
+  // ---- Steps: one section at a time, tabs on top, Next at the bottom ----
+  var grid = document.querySelector('.grid');
+  if (grid) {
+    var notes = Array.prototype.filter.call(grid.children, function (n) { return n.matches('section.note'); });
+    var prev = grid.querySelector('.preview-col'), nav = document.createElement('nav'), cur = 0, key = 'nocivStep:' + location.pathname;
+    nav.className = 'steps'; nav.setAttribute('role', 'tablist'); nav.setAttribute('aria-label', 'Steps');
+    function name(n, i) { var h = n.querySelector('h2'); return n.getAttribute('data-step') || (h ? h.textContent.replace(/^\s*\d+\s*/, '') : 'Step ' + (i + 1)); }
+    notes.forEach(function (n, i) {
+      var b = document.createElement('button'); b.type = 'button'; b.setAttribute('role', 'tab');
+      b.innerHTML = '<b>' + (i + 1) + '</b>'; b.appendChild(document.createTextNode(name(n, i)));
+      b.onclick = function () { show(i, true); }; nav.appendChild(b);
+      if (i < notes.length - 1) {
+        var nx = document.createElement('button'); nx.type = 'button'; nx.className = 'next-step';
+        nx.textContent = 'Next: ' + name(notes[i + 1], i + 1) + ' →'; nx.onclick = function () { show(i + 1, true); };
+        n.appendChild(nx);
+      }
+    });
+    var mq = matchMedia('(max-width: 899px)');
+    function place() { if (mq.matches && prev) prev.appendChild(nav); else grid.insertBefore(nav, grid.firstChild); }
+    function show(i, scroll) {
+      cur = Math.max(0, Math.min(notes.length - 1, i));
+      notes.forEach(function (n, j) { n.classList.toggle('on', j === cur); });
+      Array.prototype.forEach.call(nav.children, function (b, j) { b.setAttribute('aria-selected', String(j === cur)); });
+      var a = nav.children[cur]; if (a) nav.scrollTo({ left: Math.max(0, a.offsetLeft - 24), behavior: 'smooth' });
+      try { sessionStorage.setItem(key, String(cur)); } catch (e) {}
+      if (scroll) { var y = grid.getBoundingClientRect().top + window.scrollY - 6; if (window.scrollY > y) window.scrollTo(0, y); }
+      document.dispatchEvent(new CustomEvent('nociv-step', { detail: cur }));
+    }
+    try { cur = parseInt(sessionStorage.getItem(key), 10) || 0; } catch (e) {}
+    place(); if (mq.addEventListener) mq.addEventListener('change', place);
+    document.documentElement.classList.add('stepped');
+    show(cur);
+    window.nocivSteps = { show: show, current: function () { return cur; } };
+  }
+
+  // ---- Big locked artboard: a round button opens it full screen, Done puts it back ----
+  var ICON = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M15 3h6v6M9 21H3v-6M21 3l-7 7M3 21l7-7"/></svg>';
+  window.nocivFocus = function (target, host, hint, onToggle) {
+    if (!target || !host) return;
+    if (getComputedStyle(host).position === 'static') host.style.position = 'relative';
+    var btn = document.createElement('button'); btn.type = 'button'; btn.className = 'art-lock'; btn.innerHTML = ICON;
+    btn.setAttribute('aria-label', 'Make it big and lock the screen');
+    host.appendChild(btn);
+    btn.addEventListener('click', function (e) {
+      e.preventDefault(); e.stopPropagation();
+      var mark = document.createComment('focus'), layer = document.createElement('div'), bar = document.createElement('div'), body = document.createElement('div'), done = document.createElement('button');
+      layer.className = 'focus-layer'; bar.className = 'focus-bar'; body.className = 'focus-body';
+      bar.innerHTML = '<span></span>'; bar.firstChild.textContent = hint || 'Screen locked. Drag and pinch freely.';
+      done.type = 'button'; done.textContent = '✓ Done'; bar.appendChild(done);
+      target.parentNode.insertBefore(mark, target);
+      body.appendChild(target); layer.appendChild(bar); layer.appendChild(body); document.body.appendChild(layer);
+      target.classList.add('focused'); document.documentElement.classList.add('focus-open');
+      if (onToggle) onToggle(true);
+      window.dispatchEvent(new Event('resize'));
+      done.onclick = function () {
+        mark.parentNode.insertBefore(target, mark); mark.remove(); layer.remove();
+        target.classList.remove('focused'); document.documentElement.classList.remove('focus-open');
+        if (onToggle) onToggle(false);
+        window.dispatchEvent(new Event('resize'));
+      };
+    });
+  };
+})();
+
+</script>
 <script src="../qr/qr.js"></script>
 <script>
 (function () {
@@ -279,7 +390,7 @@
       f: { fKick: 'This Saturday', fHead: 'Pop Up Shop', fSub: 'One of one pieces, made by hand', fDetails: 'Saturday, 8am to noon\nDowntown farmers market\nCash, card, Tap to Pay', fFoot: 'yourshop.com' } },
     { n: 'Spread the word', layout: 'street', head: 'anton', border: 'none', c: ['#f2ecd6', '#111111', '#c8412f'],
       f: { fKick: 'Someone told you', fHead: 'No ads. Just us.', fSub: 'Scan it. Pass it on.', fDetails: 'Made by hand in Phoenix\nBuy it, build it, or share it', fFoot: "If you're here, someone told you." } },
-    { n: 'Block party', layout: 'invite', head: 'rye', border: 'double', c: ['#1d2b64', '#f6efe0', '#f2994a'],
+    { n: 'Block party', layout: 'invite', head: 'abril', border: 'double', c: ['#1d2b64', '#f6efe0', '#f2994a'],
       f: { fKick: 'Come through', fHead: 'Block Party', fSub: 'Food, music, neighbors', fDetails: 'Saturday, June 11 | 4pm till dark\nCorner of 5th and Main', fFoot: 'Bring a chair and a friend' } },
     { n: 'Now open', layout: 'retro', head: 'bagel', border: 'none', c: ['#d9643a', '#fff3e2', '#2a1a12'],
       f: { fKick: 'Hey neighbor', fHead: 'Now Open', fSub: 'come say hi, stay a while', fDetails: 'Fresh pieces every Saturday\n9am to 2pm, downtown', fFoot: 'Your Shop' } }
@@ -939,6 +1050,21 @@
   }
 
   // Exposed for testing only.
+  if (window.nocivFocus) window.nocivFocus(document.querySelector('.preview-col'), $('stage'), 'Screen locked. Tap words and drag them. A- and A+ resize.');
+  // Remember what you typed and picked on this phone (pictures are not saved).
+  var SAVE_KEYS = ['kind', 'shape', 'layout', 'flyerLayout', 'head', 'border', 'off', 'bg', 'ink', 'accent', 'font', 'qrOn', 'cardMode', 'flyerMode'];
+  function remember() { try { var o = { F: F, st: {} }; SAVE_KEYS.forEach(function (k) { o.st[k] = state[k]; }); localStorage.setItem('nocivCard', JSON.stringify(o)); } catch (e) {} }
+  var remT = 0; ['input', 'click', 'pointerup', 'change'].forEach(function (ev) { document.addEventListener(ev, function () { clearTimeout(remT); remT = setTimeout(remember, 300); }, true); });
+  (function restore() {
+    var o; try { o = JSON.parse(localStorage.getItem('nocivCard') || 'null'); } catch (e) { o = null; }
+    if (!o || !o.st) return;
+    Object.keys(o.F || {}).forEach(function (k) { if (k in F && $(k) && !(k === 'fLink' && state.qrFromTool)) { F[k] = o.F[k]; $(k).value = o.F[k]; } });
+    SAVE_KEYS.forEach(function (k) { if (o.st[k] != null) state[k] = o.st[k]; });
+    $('cBg').value = state.bg; $('cInk').value = state.ink; $('cAccent').value = state.accent;
+    function setC(id, v) { var box = $(id); if (!box) return; box.querySelectorAll('[data-v]').forEach(function (b) { b.setAttribute('aria-pressed', String(b.dataset.v === String(v))); }); }
+    setC('shape', state.shape); setC('font', state.font); setC('qrOn', state.qrOn ? 'on' : 'off'); setC('cardMode', state.cardMode); setC('flyerMode', state.flyerMode); setC('headFont', state.head); setC('border', state.border);
+    var kb = $('kind').querySelector('[data-v="' + state.kind + '"]'); if (kb) kb.click();
+  })();
   window.__card = { state: state, F: F, hits: function () { return previewHits; }, sheetCanvas: sheetCanvas, pieceCanvas: pieceCanvas, files: function () { return files; } };
 
   buildLayoutButtons();

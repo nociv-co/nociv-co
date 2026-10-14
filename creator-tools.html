@@ -18,6 +18,10 @@
   }
   .build-header p { margin: 0; font-size: 0.9rem; opacity: 0.8; }
   .build-quote { margin: 4px auto 10px; font-size: 1.05rem; font-style: italic; font-weight: 700; letter-spacing: 0.02em; }
+  /* Full screen grows the tool in place, so nothing reloads and nobody starts over */
+  .subpanel.fs .builder-iframe { position: fixed; inset: 0; width: 100vw; height: 100vh; height: 100dvh; max-width: none; z-index: 1000; border: 0; border-radius: 0; margin: 0; }
+  .fs-close { position: fixed; top: max(10px, env(safe-area-inset-top)); right: 10px; z-index: 1001; width: 44px; height: 44px; border-radius: 50%; border: none; background: rgba(29,28,26,0.7); color: #fff; font-size: 20px; font-weight: 900; cursor: pointer; display: grid; place-items: center; -webkit-tap-highlight-color: transparent; backdrop-filter: blur(4px); -webkit-backdrop-filter: blur(4px); }
+  html.fs-open, html.fs-open body { overflow: hidden; }
   .fullscreen-btn {
     background: var(--gold); color: #1a1a1a; border: none; padding: 10px 18px;
     font-size: 0.8rem; font-weight: 800; letter-spacing: 0.05em; text-transform: uppercase;
@@ -72,7 +76,8 @@
   <div class="wrap" style="text-align:center; padding-bottom:0;">
     <span class="hub-back" data-back="buildHub">&larr; Back to The Build</span>
     <h2 style="margin:0 0 4px; font-size:1.3rem; letter-spacing:0.05em;">CUT &amp; SEW</h2>
-    <p style="opacity:.7; max-width:500px; margin:0 auto 16px;">Put in your measurements, print the pattern life size, sew it. Pants, tees, tanks, beanies and totes. Free.</p>
+    <p style="opacity:.7; max-width:500px; margin:0 auto 12px;">Put in your measurements, print the pattern life size, sew it. Pants, tees, tanks, beanies and totes. Free.</p>
+    <a href="https://nociv-co.github.io/nociv-clothing-builder/clothing-builder.html" target="_blank" rel="noopener" class="fullscreen-btn" style="margin-bottom:16px;">Full screen &#10530;</a>
   </div>
   <div class="builder-iframe-container" style="padding-top:0;">
     <iframe
@@ -94,7 +99,7 @@
         <p>Your camera roll. Your notes app. That trip. Your poems. That's a zine. Make it on your phone, print one sheet, fold it, pass it on.</p>
       </div>
       <a href="https://nociv-co.github.io/nociv-zine-builder/" target="_blank" rel="noopener" class="fullscreen-btn">
-        Open Fullscreen ↗
+        Full screen &#10530;
       </a>
     </div>
 
@@ -117,7 +122,7 @@
         <p>Your link, your picture in the middle. Save it, print it, stick it up.</p>
       </div>
       <a href="qr/" target="_blank" rel="noopener" class="fullscreen-btn">
-        Open Fullscreen ↗
+        Full screen &#10530;
       </a>
     </div>
 
@@ -141,7 +146,7 @@
         <p>Stencils and layers for cutting, or halftone dots for screen printing a photo.</p>
       </div>
       <a href="stencil/" target="_blank" rel="noopener" class="fullscreen-btn">
-        Open Fullscreen ↗
+        Full screen &#10530;
       </a>
     </div>
 
@@ -165,7 +170,7 @@
         <p>Big words, your colors, your QR code. Hand them out, tape them up, tell people.</p>
       </div>
       <a href="card/" target="_blank" rel="noopener" class="fullscreen-btn">
-        Open Fullscreen ↗
+        Full screen &#10530;
       </a>
     </div>
 
@@ -189,6 +194,17 @@
       document.querySelectorAll('.subpanel').forEach(p => p.classList.remove('show'));
       document.getElementById(card.dataset.panel).classList.add('show');
       window.scrollTo({ top: 0, behavior: 'smooth' });
+    });
+  });
+  // ===== Full screen in place: same frame, same work, just bigger =====
+  document.querySelectorAll('.fullscreen-btn').forEach(btn => {
+    btn.addEventListener('click', e => {
+      const panel = btn.closest('.subpanel'); if (!panel) return;
+      e.preventDefault();
+      panel.classList.add('fs'); document.documentElement.classList.add('fs-open');
+      const x = document.createElement('button'); x.className = 'fs-close'; x.type = 'button'; x.setAttribute('aria-label', 'Leave full screen'); x.innerHTML = '&#10005;';
+      x.onclick = () => { panel.classList.remove('fs'); document.documentElement.classList.remove('fs-open'); x.remove(); };
+      document.body.appendChild(x);
     });
   });
   document.querySelectorAll('.hub-back').forEach(link => {
