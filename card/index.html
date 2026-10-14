@@ -233,8 +233,8 @@
       <div id="flyerOut" hidden>
         <div class="chips" id="flyerMode">
           <button type="button" class="chip" data-v="1" aria-pressed="true">Full page</button>
-          <button type="button" class="chip" data-v="4" aria-pressed="false">4 per page</button>
-          <button type="button" class="chip" data-v="6" aria-pressed="false">6 per page</button>
+          <button type="button" class="chip" data-v="2" aria-pressed="false">Half page (2 per sheet)</button>
+          <button type="button" class="chip" data-v="4" aria-pressed="false">Quarter page (4 per sheet)</button>
         </div>
         <p class="meta" id="flyerModeNote"></p>
       </div>
@@ -655,8 +655,8 @@
   // ---------- sizes and sheets ----------
   function pieceIn() {
     if (state.kind === 'card') return SHAPES[state.shape];
-    if (state.flyerMode === 4) return [4, 5.25];
-    if (state.flyerMode === 6) return [4, 3.5];
+    if (state.flyerMode === 2) return [5.5, 8.5];
+    if (state.flyerMode === 4) return [4.25, 5.5];
     return [8.5, 11];
   }
   // Business card sheets: how many fit on a letter page, butted together, centered.
@@ -665,8 +665,9 @@
     return { cols: cols, rows: rows, w: s[0], h: s[1], x0: (8.5 - cols * s[0]) / 2, y0: (11 - rows * s[1]) / 2 };
   }
   function flyerGrid() {
-    if (state.flyerMode === 4) return { cols: 2, rows: 2, w: 4, h: 5.25, x0: 0.25, y0: 0.25 };
-    if (state.flyerMode === 6) return { cols: 2, rows: 3, w: 4, h: 3.5, x0: 0.25, y0: 0.25 };
+    // Print shop standard sizes, edge to edge on a letter sheet.
+    if (state.flyerMode === 2) return { cols: 1, rows: 2, w: 8.5, h: 5.5, x0: 0, y0: 0, turn: true };
+    if (state.flyerMode === 4) return { cols: 2, rows: 2, w: 4.25, h: 5.5, x0: 0, y0: 0 };
     return null;
   }
   function drawPiece(g, W, H, opt) { if (state.kind === 'card') drawCard(g, W, H); else drawFlyer(g, W, H, opt); }
@@ -682,7 +683,22 @@
     var c = document.createElement('canvas'); c.width = Math.round(8.5 * dpi); c.height = Math.round(11 * dpi);
     var g = c.getContext('2d'); g.fillStyle = '#ffffff'; g.fillRect(0, 0, c.width, c.height);
     if (state.kind === 'flyer' && state.flyerMode === 1) { drawPiece(g, c.width, c.height); return c; }
-    var gr = state.kind === 'card' ? cardGrid() : flyerGrid();
+    if (state.kind === 'flyer') {
+      var fg = flyerGrid(), p = pieceIn(), one2 = pieceCanvas(p[0], p[1], dpi, 0);
+      for (var r2 = 0; r2 < fg.rows; r2++) for (var c2 = 0; c2 < fg.cols; c2++) {
+        var sx = Math.round((c2 * fg.w) * dpi), sy = Math.round((r2 * fg.h) * dpi);
+        if (fg.turn) { g.save(); g.translate(sx, sy + Math.round(fg.h * dpi)); g.rotate(-Math.PI / 2); g.drawImage(one2, 0, 0, Math.round(p[0] * dpi), Math.round(p[1] * dpi)); g.restore(); }
+        else g.drawImage(one2, sx, sy, Math.round(fg.w * dpi), Math.round(fg.h * dpi));
+      }
+      // Thin cut lines where the flyers meet
+      g.strokeStyle = 'rgba(128,128,128,.8)'; g.lineWidth = Math.max(1, dpi / 200); g.setLineDash([dpi * 0.08, dpi * 0.06]);
+      g.beginPath();
+      for (var ci = 1; ci < fg.cols; ci++) { g.moveTo(ci * fg.w * dpi, 0); g.lineTo(ci * fg.w * dpi, c.height); }
+      for (var ri = 1; ri < fg.rows; ri++) { g.moveTo(0, ri * fg.h * dpi); g.lineTo(c.width, ri * fg.h * dpi); }
+      g.stroke();
+      return c;
+    }
+    var gr = cardGrid();
     var pw = Math.round(gr.w * dpi), phh = Math.round(gr.h * dpi), one = pieceCanvas(gr.w, gr.h, dpi, 0);
     for (var r = 0; r < gr.rows; r++) for (var col = 0; col < gr.cols; col++) g.drawImage(one, Math.round((gr.x0 + col * gr.w) * dpi), Math.round((gr.y0 + r * gr.h) * dpi), pw, phh);
     // Cut marks in the white margin, on every cut line
@@ -728,7 +744,7 @@
     $('cardModeNote').textContent = state.cardMode === 'sheet'
       ? 'A letter page of ' + count() + ' cards with cut marks. Print on card stock and cut on the marks.'
       : 'Print shops (Vistaprint, Staples, any local shop) want one card with a little extra background around the edge. This file has it.';
-    $('flyerModeNote').textContent = state.flyerMode === 1 ? 'One big flyer, edge to edge.' : state.flyerMode + ' small flyers per page with cut lines. Good for handing out.';
+    $('flyerModeNote').textContent = state.flyerMode === 1 ? 'One big flyer, edge to edge.' : (state.flyerMode === 2 ? 'Two 5.5 x 8.5 flyers per sheet. Cut on the line.' : 'Four 4.25 x 5.5 flyers per sheet. Cut on the lines. Good for handing out.');
     drawLayoutThumbs();
     clearFiles();
   }
