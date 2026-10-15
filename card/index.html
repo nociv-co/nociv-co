@@ -145,6 +145,7 @@
   .dirbox { margin-top: 20px; padding: 16px 14px; background: #fff; border: 2px solid var(--ink); }
   .dirhead { display: flex; align-items: center; gap: 8px; font-weight: 900; font-size: 0.9rem; letter-spacing: .08em; text-transform: uppercase; }
   .dirhead b { background: var(--red); color: #fff; padding: 1px 7px; }
+  .vpsteps { margin: 12px 0 0; padding-left: 20px; } .vpsteps li { margin: 4px 0; }
   .dirtoggle { margin-top: 10px; width: 100%; }
   .dirtoggle[aria-pressed="true"] { background: var(--ink); color: #fff; }
   .dirtoggle[aria-pressed="true"]::before { content: '\2713  '; }
@@ -370,6 +371,19 @@
       <p class="working" id="working" hidden>Making it...</p>
       <div class="files" id="files"></div>
       <p class="meta">When you print a sheet, pick <b>Actual size</b> or <b>100%</b> in the print settings, not "Fit", or the cards come out the wrong size.</p>
+      <div class="dirbox" id="vpBox">
+        <div class="dirhead"><b>PRO</b>Get them printed at Vistaprint</div>
+        <p class="meta" style="margin-top:6px">No printer, or want thick, clean cut cards? Vistaprint prints them cheap and mails them to you. Starts around 50 cards for $10. Printing the back costs a little extra. Prices change, check at checkout.</p>
+        <button type="button" class="btn" id="vpMake" style="margin-top:10px;width:100%">1. Make my Vistaprint file</button>
+        <a class="btn" id="vpGo" href="https://www.vistaprint.com/business-cards/standard" target="_blank" rel="noopener" style="margin-top:8px;width:100%;display:block;text-align:center;box-sizing:border-box">2. Open Vistaprint</a>
+        <ol class="meta vpsteps">
+          <li>Pick your paper and corners, then tap <b>Upload your design</b>, then <b>Upload from this device</b>.</li>
+          <li>Pick the Vistaprint PDF you saved. It is made at Vistaprint's exact size, so it fills their frame. Do not stretch or resize it.</li>
+          <li id="vpBackStep">Made a back? Tap the back side, upload the same PDF and pick page 2.</li>
+          <li>Check the preview. Words and the QR code should sit inside the dashed line.</li>
+          <li>Order the smallest pack first. Scan the QR on the real card before you order a big stack.</li>
+        </ol>
+      </div>
       <div class="dirbox" id="pinBox" hidden>
         <div class="dirhead"><b>FREE</b>Pin it to the Opportunity Board</div>
         <p class="meta" style="margin-top:6px">Your flyer info goes up on nociv.co, Base, Directory, Opportunity board right away, so locals see it. Optional. Nothing is sent until you tap Pin it.</p>
@@ -498,6 +512,8 @@
   var $ = function (id) { return document.getElementById(id); };
   if (window.self !== window.top) document.documentElement.classList.add('in-frame');
   var DPI = 300;
+  // Vistaprint's full bleed for a standard card is 3.61 x 2.11 in (trim 3.5 x 2), so 0.055 in extra on each side.
+  var VP_BLEED = 0.055;
   var FONTS = {
     bold: '-apple-system, BlinkMacSystemFont, "Helvetica Neue", Arial, sans-serif',
     classic: 'Georgia, "Times New Roman", serif',
@@ -1173,8 +1189,10 @@
         ? 'Two pages: page 1 is ' + count() + ' fronts with cut marks, page 2 is the backs. In print settings pick "Print on both sides" and "Flip on long edge". No two sided printer? Print page 1, put the sheet back in, print page 2. Print one test on plain paper first and hold it up to a light to check they line up. Cut on the marks.'
         : 'A letter page of ' + count() + ' cards with cut marks. Print on card stock and cut on the marks.')
       : (hasBack()
-        ? 'You get the front and back as images, plus one print shop file: page 1 front, page 2 back, each 3.75 x 2.25 in with the 1/8 in extra edge most shops ask for. Check the shop\'s upload preview before you order.'
-        : 'You get the card as an image to save or text, plus a print shop file (Vistaprint, Staples, any local shop) with the little extra edge they ask for.');
+        ? 'You get the front and back as images, plus one print file sized for Vistaprint: page 1 front, page 2 back. Another shop? Check their upload preview, some want a bigger extra edge.'
+        : 'You get the card as an image to save or text, plus a print file sized for Vistaprint. Another shop? Check their upload preview, some want a bigger extra edge.');
+    $('vpBackStep').hidden = !hasBack();
+    $('vpGo').href = 'https://www.vistaprint.com/business-cards/' + (state.shape === 'square' ? 'square' : 'standard');
     drawBackThumbs();
     $('flyerModeNote').textContent = state.flyerMode === 1 ? 'One big flyer, edge to edge.' : (state.flyerMode === 2 ? 'Two 5.5 x 8.5 flyers per sheet. Cut on the line.' : 'Four 4.25 x 5.5 flyers per sheet. Cut on the lines. Good for handing out.');
     drawLayoutThumbs();
@@ -1219,7 +1237,7 @@
   chips('kind', function (v) {
     state.kind = v;
     $('cardShapeBox').hidden = v !== 'card'; $('cardFields').hidden = v !== 'card'; $('flyerFields').hidden = v !== 'flyer';
-    $('cardOut').hidden = v !== 'card'; $('flyerOut').hidden = v !== 'flyer'; $('dirBox').hidden = v !== 'card'; $('pinBox').hidden = v !== 'flyer';
+    $('cardOut').hidden = v !== 'card'; $('flyerOut').hidden = v !== 'flyer'; $('dirBox').hidden = v !== 'card'; $('vpBox').hidden = v !== 'card'; $('pinBox').hidden = v !== 'flyer';
     $('photoBox').hidden = v !== 'flyer';
     $('starterBox').hidden = v !== 'flyer'; $('flyerStyle').hidden = v !== 'flyer';
     $('backBox').hidden = v !== 'card'; $('backFlyerNote').hidden = v !== 'flyer';
@@ -1368,7 +1386,12 @@
     var out = new Uint8Array(len), off = 0; parts.forEach(function (q) { out.set(q, off); off += q.length; });
     return new Blob([out], { type: 'application/pdf' });
   }
+  function vpSize(p) { return (Math.round((p[0] + VP_BLEED * 2) * 100) / 100) + ' x ' + (Math.round((p[1] + VP_BLEED * 2) * 100) / 100) + ' in with the extra edge'; }
   function slug() { var n = (state.kind === 'card' ? F.fName : F.fHead) || 'nociv'; return n.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '').slice(0, 30) || 'nociv'; }
+  $('vpMake').addEventListener('click', function () {
+    var b = document.querySelector('#cardMode [data-v="single"]'); if (state.cardMode !== 'single' && b) b.click();
+    $('make').click(); $('files').scrollIntoView({ behavior: 'smooth', block: 'center' });
+  });
   $('make').addEventListener('click', async function () {
     var btn = this; btn.disabled = true; $('working').hidden = false; clearFiles();
     await fontsReady;
@@ -1380,9 +1403,9 @@
         files.push({ name: base + (back ? '-front' : '') + '.png', label: (back ? 'Front' : 'Card') + ' image, ' + p[0] + ' x ' + p[1] + ' in (PNG to save or send)', blob: await toBlob(c0, 'image/png') });
         c0.width = c0.height = 0;
         if (back) { var cb0 = pieceCanvas(p[0], p[1], DPI, 0, { side: 'back' }); files.push({ name: base + '-back.png', label: 'Back image, ' + p[0] + ' x ' + p[1] + ' in (PNG)', blob: await toBlob(cb0, 'image/png') }); cb0.width = cb0.height = 0; }
-        c = pieceCanvas(p[0], p[1], DPI, 0.125);
-        if (back) { var cbk = pieceCanvas(p[0], p[1], DPI, 0.125, { side: 'back' }); files.push({ name: base + '-print-shop-front-back.pdf', label: 'Print shop file, front + back, with the extra edge (PDF, 2 pages)', blob: await makePdfPages([c, cbk]) }); cbk.width = cbk.height = 0; }
-        else files.push({ name: base + '-print-shop.pdf', label: 'Print shop file, with the extra edge (PDF)', blob: await makePdf(c) });
+        c = pieceCanvas(p[0], p[1], DPI, VP_BLEED);
+        if (back) { var cbk = pieceCanvas(p[0], p[1], DPI, VP_BLEED, { side: 'back' }); files.push({ name: base + '-vistaprint-front-back.pdf', label: 'Vistaprint print file, page 1 front, page 2 back, ' + vpSize(p) + ' (PDF)', blob: await makePdfPages([c, cbk]) }); cbk.width = cbk.height = 0; }
+        else files.push({ name: base + '-vistaprint.pdf', label: 'Vistaprint print file, ' + vpSize(p) + ' (PDF)', blob: await makePdf(c) });
       } else if (hasBack()) {
         c = sheetCanvas(DPI); var csb = sheetCanvas(DPI, 'back');
         files.push({ name: base + '-sheet-front-back.pdf', label: 'Sheet of ' + count() + ' cards, front + back (PDF, 2 pages, best for printing)', blob: await makePdfPages([c, csb]) });
