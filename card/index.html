@@ -58,6 +58,10 @@
   .swatch { width: 40px; height: 40px; border: 2px solid var(--ink); cursor: pointer; padding: 0; display: grid; grid-template-columns: 1fr 1fr; overflow: hidden; }
   .swatch i { display: block; }
 
+  .sidebar { display: flex; justify-content: center; gap: 0; margin: 8px auto 0; width: max-content; border: 2px solid var(--ink); }
+  .sidebar[hidden] { display: none; }
+  .sidebar button { font: inherit; font-weight: 900; font-size: 0.78rem; letter-spacing: .08em; text-transform: uppercase; padding: 7px 18px; border: 0; background: #fff; color: var(--ink); cursor: pointer; -webkit-tap-highlight-color: transparent; }
+  .sidebar button[aria-pressed="true"] { background: var(--ink); color: #fff; }
   .layouts { display: grid; grid-template-columns: repeat(auto-fill, minmax(96px, 1fr)); gap: 10px; }
   .layout-btn { border: 2px solid var(--ink); background: #fff; padding: 6px; cursor: pointer; font: inherit; font-size: 0.72rem; font-weight: 800; letter-spacing: 0.04em; text-transform: uppercase; color: var(--ink); -webkit-tap-highlight-color: transparent; }
   .layout-btn canvas { width: 100%; height: auto; display: block; margin-bottom: 4px; }
@@ -165,6 +169,7 @@
   <div class="grid">
     <div class="preview-col">
       <div class="stage" id="stage"><canvas id="preview" width="700" height="400" aria-label="Preview"></canvas></div>
+      <div class="sidebar" id="sideBar" role="group" aria-label="Which side"><button type="button" data-v="front" aria-pressed="true">Front</button><button type="button" data-v="back" aria-pressed="false">Back</button></div>
       <p class="size-line" id="sizeLine"></p>
       <div class="movebar" id="moveBar" hidden>
         <span id="moveTip">Tap any words on the flyer, then drag them.</span>
@@ -307,8 +312,45 @@
       </div>
     </section>
 
+    <section class="note" data-step="Back">
+      <h2><b>5</b> Back of the card</h2>
+      <p class="meta" id="backFlyerNote" hidden style="margin-top:0">Flyers print on one side, so there is no back. Switch to Business card on step 1 to design a back.</p>
+      <div id="backBox">
+        <div class="chips" id="backOn">
+          <button type="button" class="chip" data-v="on" aria-pressed="true">Front + back</button>
+          <button type="button" class="chip" data-v="off" aria-pressed="false">Front only</button>
+        </div>
+        <div id="backOpts">
+          <p class="meta">The front says who you are. The back says what you do, big.</p>
+          <label class="lbl">Back layout</label>
+          <div class="layouts" id="backLayouts"></div>
+          <label class="lbl" for="bBig">Big words</label>
+          <input type="text" id="bBig" maxlength="40" placeholder="Your local DJ" autocomplete="off">
+          <div class="chips" id="bIdeas" style="margin-top:8px"></div>
+          <label class="lbl" for="bSmall">Small line (optional)</label>
+          <input type="text" id="bSmall" maxlength="60" placeholder="Bookings open. Fridays downtown." autocomplete="off">
+          <label class="lbl">Back colors</label>
+          <div class="chips" id="backColors">
+            <button type="button" class="chip" data-v="flip" aria-pressed="true">Flip the colors</button>
+            <button type="button" class="chip" data-v="same" aria-pressed="false">Same as the front</button>
+          </div>
+          <label class="lbl">Big words font</label>
+          <div class="chips" id="backFont">
+            <button type="button" class="chip" data-v="anton" aria-pressed="true">Tall</button>
+            <button type="button" class="chip" data-v="bagel" aria-pressed="false">Chunky</button>
+            <button type="button" class="chip" data-v="bungee" aria-pressed="false">Block</button>
+            <button type="button" class="chip" data-v="plain" aria-pressed="false">Plain</button>
+          </div>
+          <div class="chips" id="backCredit" style="margin-top:12px">
+            <button type="button" class="chip" data-v="on" aria-pressed="true">Tiny "made with nociv.co"</button>
+            <button type="button" class="chip" data-v="off" aria-pressed="false">No credit</button>
+          </div>
+        </div>
+      </div>
+    </section>
+
     <section class="note" data-step="Save">
-      <h2><b>5</b> Save it</h2>
+      <h2><b>6</b> Save it</h2>
       <div id="cardOut">
         <div class="chips" id="cardMode">
           <button type="button" class="chip" data-v="single" aria-pressed="true">One card (file or print shop)</button>
@@ -491,13 +533,14 @@
   var COMBOS = [['#111111', '#f2ecd6', '#c8412f'], ['#f2ecd6', '#1a1a1a', '#c8412f'], ['#ffffff', '#111111', '#2f7a4b'], ['#c8412f', '#ffffff', '#111111'], ['#d7ff39', '#111111', '#111111'], ['#1d2b64', '#ffffff', '#f8b500'], ['#ec6a2c', '#111111', '#ffffff'], ['#000000', '#ffffff', '#ff4fb4']];
 
   var state = {
+    back: { on: true, layout: 'role', colors: 'flip', font: 'anton', credit: true }, side: 'front',
     kind: 'card', shape: 'rect', layout: 'classic', flyerLayout: 'stack', head: 'anton', border: 'none', off: {}, sel: null,
     bg: '#111111', ink: '#f2ecd6', accent: '#c8412f', font: 'bold',
     qrOn: true, link: '', qrImg: null, qrFromTool: false, pic: null,
     cardMode: 'single', flyerMode: 1, iconsOn: true, iconColor: 'accent', icons: { fPhone: 'phone', fEmail: 'mail', fWeb: 'web', fHandle: 'ig', fFoot: 'none' }
   };
   var F = {};
-  ['fName','fTitle','fPhone','fEmail','fWeb','fHandle','fKick','fHead','fSub','fDetails','fFoot','fLink'].forEach(function (id) { F[id] = ''; });
+  ['fName','fTitle','fPhone','fEmail','fWeb','fHandle','fKick','fHead','fSub','fDetails','fFoot','fLink','bBig','bSmall'].forEach(function (id) { F[id] = ''; });
 
   // ---------- handoff from the QR Maker ----------
   try {
@@ -633,6 +676,97 @@
       var p = fit(g, t, maxW - (ic ? px * 1.5 : 0), px, '500'); g.font = font('500', p); iconText(g, t, x, y, align, color, ic, p); y -= px * (gap || 1.35);
     }
     return y;
+  }
+
+  // ---------- business card BACK ----------
+  var BACK_LAYOUTS = [['role', 'Big role'], ['stack', 'Stacked'], ['logo', 'Logo center'], ['qr', 'QR back']];
+  var BACK_IDEAS = ['Owner of ', 'Your local DJ', 'Artist', 'Photographer', 'Tattoo artist', 'Designer', 'Clothing brand'];
+  function backCols() {
+    if (state.back.colors === 'same') return { bg: state.bg, ink: state.ink, accent: state.accent };
+    var bg = state.accent, far = function (a, b) { return Math.abs(lum(a) - lum(b)) > 0.3; };
+    var ink = far(bg, state.bg) ? state.bg : on(bg), acc = far(bg, state.ink) ? state.ink : on(bg);
+    if (acc === ink) acc = ink;
+    return { bg: bg, ink: ink, accent: acc };
+  }
+  function backWords() { return ((F.bBig || '').trim() || (F.fTitle || '').trim().replace(/^["\u201c]|["\u201d]$/g, '') || 'What you do'); }
+  function drawBack(g, W, H) {
+    var keep = { bg: state.bg, ink: state.ink, accent: state.accent }, c = backCols();
+    state.bg = c.bg; state.ink = c.ink; state.accent = c.accent;
+    try { drawBackNow(g, W, H); } finally { state.bg = keep.bg; state.ink = keep.ink; state.accent = keep.accent; }
+  }
+  function drawBackNow(g, W, H) {
+    var S = Math.min(W, H), pad = S * 0.1, wide = W >= H * 1.3, hd = HEADS[state.back.font] || HEADS.anton;
+    var words = backWords(), small = (F.bSmall || '').trim(), L = state.back.layout;
+    if (hd.up) words = words.toUpperCase();
+    function hf(px) { return (hd.w || '400') + ' ' + Math.max(1, Math.round(px)) + 'px ' + hd.css + ', ' + FONTS.bold; }
+    function wrap(t, maxW, px, maxLines) {
+      g.font = hf(px); var ws = t.split(/\s+/).filter(Boolean), lines = [], cur = '';
+      for (var i = 0; i < ws.length; i++) {
+        if (g.measureText(ws[i]).width > maxW) return null;
+        var tryL = cur ? cur + ' ' + ws[i] : ws[i];
+        if (g.measureText(tryL).width <= maxW) cur = tryL; else { lines.push(cur); cur = ws[i]; }
+      }
+      if (cur) lines.push(cur);
+      return lines.length <= maxLines ? lines : null;
+    }
+    function best(t, maxW, maxH, maxLines, lh) {
+      var px = maxH, lines;
+      while (px > 6) { lines = wrap(t, maxW, px, maxLines); if (lines && lines.length * px * lh - px * (lh - 1) <= maxH) return { px: px, lines: lines }; px *= 0.94; }
+      return { px: 6, lines: [t] };
+    }
+    function drawLines(b, x, yTop, align, color, lh) {
+      g.font = hf(b.px); g.fillStyle = color; g.textAlign = align; g.textBaseline = 'alphabetic';
+      b.lines.forEach(function (l, i) { g.fillText(l, x, yTop + b.px * 0.86 + i * b.px * lh); });
+      g.textAlign = 'left';
+      return yTop + b.px * 0.86 + (b.lines.length - 1) * b.px * lh;
+    }
+    function blockH(b, lh) { return b.px * 0.86 + (b.lines.length - 1) * b.px * lh; }
+    g.fillStyle = state.bg; g.fillRect(0, 0, W, H);
+    var credit = state.back.credit, cpx = S * 0.042, bottom = H - pad - (credit ? cpx * 1.6 : 0);
+    var spx = small ? S * 0.07 : 0;
+    if (L === 'stack') {
+      var ws = words.split(/\s+/).filter(Boolean), rows = [];
+      if (ws.length <= 4) rows = ws; else { var per = Math.ceil(ws.length / 4); for (var i = 0; i < ws.length; i += per) rows.push(ws.slice(i, i + per).join(' ')); }
+      var areaH = bottom - pad - (small ? spx * 1.8 : 0), gap = S * 0.02, rh = (areaH - gap * (rows.length - 1)) / rows.length, y = pad;
+      rows.forEach(function (r) {
+        g.font = hf(100); var k = (W - pad * 2) / Math.max(1, g.measureText(r).width), px = Math.min(rh / 0.86, 100 * k);
+        g.font = hf(px); g.fillStyle = state.ink; g.fillText(r, pad, y + px * 0.86); y += px * 0.86 + gap;
+      });
+      if (small) { var sp = fit(g, small, W - pad * 2, spx, '700'); g.font = font('700', sp); text(g, small, pad, bottom, 'left', state.accent); }
+    } else if (L === 'logo') {
+      var top = pad, avail = bottom - pad;
+      var bw = best(words, W - pad * 2, S * (state.logo ? 0.16 : 0.26), 2, 1.0), wh = blockH(bw, 1.0);
+      var sh = small ? spx * 1.7 : 0;
+      if (state.logo) {
+        var ls = logoSize(W - pad * 2, Math.max(S * 0.2, avail - wh - sh - S * 0.08));
+        var gy = pad + (avail - (ls.h + S * 0.08 + wh + sh)) / 2;
+        drawLogo(g, (W - ls.w) / 2, gy, ls.w, ls.h); top = gy + ls.h + S * 0.08;
+      } else {
+        top = pad + (avail - wh - sh) / 2;
+      }
+      var yEnd = drawLines(bw, W / 2, top, 'center', state.ink, 1.0);
+      if (small) { var sp2 = fit(g, small, W - pad * 2, spx, '700'); g.font = font('700', sp2); text(g, small, W / 2, yEnd + sp2 * 1.6, 'center', state.accent); }
+    } else if (L === 'qr' && hasQr()) {
+      if (wide) {
+        var qs = Math.min(bottom - pad, W * 0.42); drawQr(g, pad, (pad + bottom - qs) / 2, qs);
+        var rx = pad * 2 + qs, rw = W - rx - pad, sc = fit(g, 'SCAN ME', rw, S * 0.09, '900');
+        var bq = best(words, rw, (bottom - pad) * 0.55, 3, 1.0), bh = blockH(bq, 1.0), tot = sc * 1.5 + bh + (small ? spx * 1.7 : 0);
+        var yy = pad + (bottom - pad - tot) / 2; g.font = font('900', sc); text(g, 'SCAN ME', rx, yy + sc, 'left', state.accent);
+        var ye = drawLines(bq, rx, yy + sc * 1.5, 'left', state.ink, 1.0);
+        if (small) { var sp3 = fit(g, small, rw, spx, '700'); g.font = font('700', sp3); text(g, small, rx, ye + sp3 * 1.6, 'left', state.accent); }
+      } else {
+        var bq2 = best(words, W - pad * 2, S * 0.2, 2, 1.0), bh2 = blockH(bq2, 1.0), sh2 = small ? spx * 1.7 : 0;
+        var qs2 = Math.min(W - pad * 2, bottom - pad - bh2 - sh2 - S * 0.08); drawQr(g, (W - qs2) / 2, pad, qs2);
+        var ye2 = drawLines(bq2, W / 2, pad + qs2 + S * 0.08, 'center', state.ink, 1.0);
+        if (small) { var sp4 = fit(g, small, W - pad * 2, spx, '700'); g.font = font('700', sp4); text(g, small, W / 2, ye2 + sp4 * 1.6, 'center', state.accent); }
+      }
+    } else { // big role (also QR back with no QR)
+      var br = best(words, W - pad * 2, (bottom - pad) * (small ? 0.72 : 0.86), wide ? 2 : 3, 0.98), brh = blockH(br, 0.98), shr = small ? spx * 1.8 : 0;
+      var ty = pad + (bottom - pad - brh - shr) / 2;
+      var ye3 = drawLines(br, W / 2, ty, 'center', state.ink, 0.98);
+      if (small) { var sp5 = fit(g, small, W - pad * 2, spx, '700'); g.font = font('700', sp5); text(g, small, W / 2, ye3 + sp5 * 1.8, 'center', state.accent); }
+    }
+    if (credit) { g.save(); g.globalAlpha = 0.7; g.font = font('600', cpx); text(g, 'made with nociv.co', W - pad, H - pad * 0.75, 'right', state.ink); g.restore(); }
   }
 
   // ---------- business card layouts ----------
@@ -952,16 +1086,17 @@
     if (state.flyerMode === 4) return { cols: 2, rows: 2, w: 4.25, h: 5.5, x0: 0, y0: 0 };
     return null;
   }
-  function drawPiece(g, W, H, opt) { if (state.kind === 'card') drawCard(g, W, H); else drawFlyer(g, W, H, opt); }
+  function drawPiece(g, W, H, opt) { if (state.kind === 'card') { if (opt && opt.side === 'back') drawBack(g, W, H); else drawCard(g, W, H); } else drawFlyer(g, W, H, opt); }
+  function hasBack() { return state.kind === 'card' && state.back.on; }
   function pieceCanvas(wIn, hIn, dpi, bleedIn, opt) {
     var b = bleedIn || 0, c = document.createElement('canvas');
     c.width = Math.round((wIn + b * 2) * dpi); c.height = Math.round((hIn + b * 2) * dpi);
     var g = c.getContext('2d');
-    g.fillStyle = state.bg; g.fillRect(0, 0, c.width, c.height);
+    g.fillStyle = (opt && opt.side === 'back' && state.kind === 'card') ? backCols().bg : state.bg; g.fillRect(0, 0, c.width, c.height);
     g.save(); g.translate(Math.round(b * dpi), Math.round(b * dpi)); drawPiece(g, Math.round(wIn * dpi), Math.round(hIn * dpi), opt); g.restore();
     return c;
   }
-  function sheetCanvas(dpi) {
+  function sheetCanvas(dpi, side) {
     var c = document.createElement('canvas'); c.width = Math.round(8.5 * dpi); c.height = Math.round(11 * dpi);
     var g = c.getContext('2d'); g.fillStyle = '#ffffff'; g.fillRect(0, 0, c.width, c.height);
     if (state.kind === 'flyer' && state.flyerMode === 1) { drawPiece(g, c.width, c.height); return c; }
@@ -981,6 +1116,14 @@
       return c;
     }
     var gr = cardGrid();
+    if (side === 'back') {
+      // Backs sit in the same spots (the grid is centered, so a long edge flip lines up), with a little extra color around
+      // the outside so a printer that drifts a hair does not leave a white edge.
+      var ob = pieceCanvas(gr.w, gr.h, dpi, 0, { side: 'back' }), e = 0.0625;
+      g.fillStyle = backCols().bg; g.fillRect(Math.round((gr.x0 - e) * dpi), Math.round((gr.y0 - e) * dpi), Math.round((gr.cols * gr.w + e * 2) * dpi), Math.round((gr.rows * gr.h + e * 2) * dpi));
+      for (var rb = 0; rb < gr.rows; rb++) for (var cb = 0; cb < gr.cols; cb++) g.drawImage(ob, Math.round((gr.x0 + cb * gr.w) * dpi), Math.round((gr.y0 + rb * gr.h) * dpi), Math.round(gr.w * dpi), Math.round(gr.h * dpi));
+      return c;
+    }
     var pw = Math.round(gr.w * dpi), phh = Math.round(gr.h * dpi), one = pieceCanvas(gr.w, gr.h, dpi, 0);
     for (var r = 0; r < gr.rows; r++) for (var col = 0; col < gr.cols; col++) g.drawImage(one, Math.round((gr.x0 + col * gr.w) * dpi), Math.round((gr.y0 + r * gr.h) * dpi), pw, phh);
     // Cut marks in the white margin, on every cut line
@@ -1008,7 +1151,9 @@
     var c;
     previewHits = [];
     if (sheet) c = sheetCanvas(80);
-    else { var p = pieceIn(), dpi = Math.min(220, 900 / Math.max(p[0], p[1])); c = pieceCanvas(p[0], p[1], dpi, 0, fly ? { hits: previewHits } : null); }
+    else { var p = pieceIn(), dpi = Math.min(220, 900 / Math.max(p[0], p[1])); c = pieceCanvas(p[0], p[1], dpi, 0, fly ? { hits: previewHits } : { side: hasBack() && state.side === 'back' ? 'back' : 'front' }); }
+    $('sideBar').hidden = !hasBack();
+    $('sideBar').querySelectorAll('[data-v]').forEach(function (b) { b.setAttribute('aria-pressed', String(b.dataset.v === (hasBack() ? state.side : 'front'))); });
     pv.width = c.width; pv.height = c.height; pg.drawImage(c, 0, 0);
     if (fly && state.sel) {
       previewHits.forEach(function (h) {
@@ -1024,8 +1169,13 @@
       ? (state.cardMode === 'sheet' ? 'One card shown, ' + p2[0] + ' x ' + p2[1] + ' in. Prints ' + count() + ' on a letter page.' : 'Your card, ' + p2[0] + ' x ' + p2[1] + ' in')
       : (state.flyerMode === 1 ? 'Full letter page, 8.5 x 11 in' : 'One flyer shown. Prints ' + state.flyerMode + ' on a letter page, ' + p2[0] + ' x ' + p2[1] + ' in each');
     $('cardModeNote').textContent = state.cardMode === 'sheet'
-      ? 'A letter page of ' + count() + ' cards with cut marks. Print on card stock and cut on the marks.'
-      : 'You get the card as an image to save or text, plus a print shop file (Vistaprint, Staples, any local shop) with the little extra edge they ask for.';
+      ? (hasBack()
+        ? 'Two pages: page 1 is ' + count() + ' fronts with cut marks, page 2 is the backs. In print settings pick "Print on both sides" and "Flip on long edge". No two sided printer? Print page 1, put the sheet back in, print page 2. Print one test on plain paper first and hold it up to a light to check they line up. Cut on the marks.'
+        : 'A letter page of ' + count() + ' cards with cut marks. Print on card stock and cut on the marks.')
+      : (hasBack()
+        ? 'You get the front and back as images, plus one print shop file: page 1 front, page 2 back, each 3.75 x 2.25 in with the 1/8 in extra edge most shops ask for. Check the shop\'s upload preview before you order.'
+        : 'You get the card as an image to save or text, plus a print shop file (Vistaprint, Staples, any local shop) with the little extra edge they ask for.');
+    drawBackThumbs();
     $('flyerModeNote').textContent = state.flyerMode === 1 ? 'One big flyer, edge to edge.' : (state.flyerMode === 2 ? 'Two 5.5 x 8.5 flyers per sheet. Cut on the line.' : 'Four 4.25 x 5.5 flyers per sheet. Cut on the lines. Good for handing out.');
     drawLayoutThumbs();
     clearFiles();
@@ -1072,9 +1222,45 @@
     $('cardOut').hidden = v !== 'card'; $('flyerOut').hidden = v !== 'flyer'; $('dirBox').hidden = v !== 'card'; $('pinBox').hidden = v !== 'flyer';
     $('photoBox').hidden = v !== 'flyer';
     $('starterBox').hidden = v !== 'flyer'; $('flyerStyle').hidden = v !== 'flyer';
+    $('backBox').hidden = v !== 'card'; $('backFlyerNote').hidden = v !== 'flyer';
     buildLayoutButtons();
   });
   chips('shape', function (v) { state.shape = v; });
+  chips('backOn', function (v) { state.back.on = v === 'on'; $('backOpts').hidden = !state.back.on; state.side = state.back.on ? 'back' : 'front'; });
+  chips('backColors', function (v) { state.back.colors = v; });
+  chips('backFont', function (v) { state.back.font = v; });
+  chips('backCredit', function (v) { state.back.credit = v === 'on'; });
+  $('sideBar').addEventListener('click', function (e) { var b = e.target.closest('[data-v]'); if (!b) return; state.side = b.dataset.v; render(); });
+  BACK_IDEAS.forEach(function (t) {
+    var b = document.createElement('button'); b.type = 'button'; b.className = 'chip'; b.textContent = t.trim() === 'Owner of' ? 'Owner of ...' : t;
+    b.onclick = function () { $('bBig').value = t; F.bBig = t; state.side = 'back'; render(); if (/ $/.test(t)) { $('bBig').focus(); var n = t.length; try { $('bBig').setSelectionRange(n, n); } catch (e) {} } };
+    $('bIdeas').appendChild(b);
+  });
+  var backThumbs = [];
+  function buildBackLayouts() {
+    var box = $('backLayouts'); box.innerHTML = ''; backThumbs = [];
+    BACK_LAYOUTS.forEach(function (l) {
+      var b = document.createElement('button'); b.type = 'button'; b.className = 'layout-btn'; b.setAttribute('aria-pressed', String(l[0] === state.back.layout));
+      var cv = document.createElement('canvas'); b.appendChild(cv); b.appendChild(document.createTextNode(l[1]));
+      b.onclick = function () { state.back.layout = l[0]; state.side = 'back'; box.querySelectorAll('.layout-btn').forEach(function (x) { x.setAttribute('aria-pressed', String(x === b)); }); render(); };
+      box.appendChild(b); backThumbs.push([cv, l[0]]);
+    });
+  }
+  function drawBackThumbs() {
+    if (state.kind !== 'card' || !backThumbs.length) return;
+    var p = SHAPES[state.shape], k = 160 / Math.max(p[0], p[1]), keep = state.back.layout;
+    backThumbs.forEach(function (t) {
+      var cv = t[0]; cv.width = Math.round(p[0] * k); cv.height = Math.round(p[1] * k);
+      state.back.layout = t[1]; drawBack(cv.getContext('2d'), cv.width, cv.height);
+    });
+    state.back.layout = keep;
+  }
+  buildBackLayouts();
+  document.addEventListener('nociv-step', function () {
+    var on = document.querySelector('section.note.on'), st = on && on.getAttribute('data-step');
+    if (st === 'Back' && hasBack()) state.side = 'back'; else if (st === 'Info' || st === 'Colors' || st === 'QR code' || st === 'What') state.side = 'front';
+    render();
+  });
   chips('iconsOn', function (v) { state.iconsOn = v === 'on'; });
   chips('iconColor', function (v) { state.iconColor = v; });
   $('iconPick').addEventListener('input', function () { state.iconColor = this.value; $('iconColor').querySelectorAll('[data-v]').forEach(function (b) { b.setAttribute('aria-pressed', 'false'); }); render(); });
@@ -1159,6 +1345,29 @@
     var wIn = c.width / DPI, hIn = c.height / DPI;
     return pdfFromJpeg(jpg, c.width, c.height, +(wIn * 72).toFixed(2), +(hIn * 72).toFixed(2));
   }
+  // Same, but one page per canvas (front, back).
+  async function makePdfPages(cs) {
+    var pages = [];
+    for (var i = 0; i < cs.length; i++) { var jb = await toBlob(cs[i], 'image/jpeg', 0.92); pages.push({ jpg: new Uint8Array(await jb.arrayBuffer()), w: cs[i].width, h: cs[i].height, pw: +(cs[i].width / DPI * 72).toFixed(2), ph: +(cs[i].height / DPI * 72).toFixed(2) }); }
+    var enc = new TextEncoder(), parts = [], offs = [], len = 0, n = pages.length;
+    function add(x) { var b = typeof x === 'string' ? enc.encode(x) : x; parts.push(b); len += b.length; }
+    function obj(k, body) { offs[k] = len; add(k + ' 0 obj\n'); body(); add('\nendobj\n'); }
+    add('%PDF-1.4\n%\xE2\xE3\xCF\xD3\n');
+    obj(1, function () { add('<< /Type /Catalog /Pages 2 0 R >>'); });
+    var kids = []; for (var j = 0; j < n; j++) kids.push((3 + j * 3) + ' 0 R');
+    obj(2, function () { add('<< /Type /Pages /Kids [' + kids.join(' ') + '] /Count ' + n + ' >>'); });
+    pages.forEach(function (pg, j) {
+      var o = 3 + j * 3, content = 'q ' + pg.pw + ' 0 0 ' + pg.ph + ' 0 0 cm /Im0 Do Q';
+      obj(o, function () { add('<< /Type /Page /Parent 2 0 R /MediaBox [0 0 ' + pg.pw + ' ' + pg.ph + '] /Resources << /XObject << /Im0 ' + (o + 1) + ' 0 R >> >> /Contents ' + (o + 2) + ' 0 R >>'); });
+      obj(o + 1, function () { add('<< /Type /XObject /Subtype /Image /Width ' + pg.w + ' /Height ' + pg.h + ' /ColorSpace /DeviceRGB /BitsPerComponent 8 /Filter /DCTDecode /Length ' + pg.jpg.length + ' >>\nstream\n'); add(pg.jpg); add('\nendstream'); });
+      obj(o + 2, function () { add('<< /Length ' + content.length + ' >>\nstream\n' + content + '\nendstream'); });
+    });
+    var total = 3 + n * 3, x = len; add('xref\n0 ' + total + '\n0000000000 65535 f \n');
+    for (var i2 = 1; i2 < total; i2++) add(String(offs[i2]).padStart(10, '0') + ' 00000 n \n');
+    add('trailer\n<< /Size ' + total + ' /Root 1 0 R >>\nstartxref\n' + x + '\n%%EOF');
+    var out = new Uint8Array(len), off = 0; parts.forEach(function (q) { out.set(q, off); off += q.length; });
+    return new Blob([out], { type: 'application/pdf' });
+  }
   function slug() { var n = (state.kind === 'card' ? F.fName : F.fHead) || 'nociv'; return n.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '').slice(0, 30) || 'nociv'; }
   $('make').addEventListener('click', async function () {
     var btn = this; btn.disabled = true; $('working').hidden = false; clearFiles();
@@ -1167,11 +1376,19 @@
     try {
       var base = 'nociv-' + state.kind + '-' + slug(), c, label;
       if (state.kind === 'card' && state.cardMode === 'single') {
-        var p = pieceIn(), c0 = pieceCanvas(p[0], p[1], DPI, 0);
-        files.push({ name: base + '.png', label: 'Card image, ' + p[0] + ' x ' + p[1] + ' in (PNG to save or send)', blob: await toBlob(c0, 'image/png') });
+        var p = pieceIn(), c0 = pieceCanvas(p[0], p[1], DPI, 0), back = hasBack();
+        files.push({ name: base + (back ? '-front' : '') + '.png', label: (back ? 'Front' : 'Card') + ' image, ' + p[0] + ' x ' + p[1] + ' in (PNG to save or send)', blob: await toBlob(c0, 'image/png') });
         c0.width = c0.height = 0;
+        if (back) { var cb0 = pieceCanvas(p[0], p[1], DPI, 0, { side: 'back' }); files.push({ name: base + '-back.png', label: 'Back image, ' + p[0] + ' x ' + p[1] + ' in (PNG)', blob: await toBlob(cb0, 'image/png') }); cb0.width = cb0.height = 0; }
         c = pieceCanvas(p[0], p[1], DPI, 0.125);
-        files.push({ name: base + '-print-shop.pdf', label: 'Print shop file, with the extra edge (PDF)', blob: await makePdf(c) });
+        if (back) { var cbk = pieceCanvas(p[0], p[1], DPI, 0.125, { side: 'back' }); files.push({ name: base + '-print-shop-front-back.pdf', label: 'Print shop file, front + back, with the extra edge (PDF, 2 pages)', blob: await makePdfPages([c, cbk]) }); cbk.width = cbk.height = 0; }
+        else files.push({ name: base + '-print-shop.pdf', label: 'Print shop file, with the extra edge (PDF)', blob: await makePdf(c) });
+      } else if (hasBack()) {
+        c = sheetCanvas(DPI); var csb = sheetCanvas(DPI, 'back');
+        files.push({ name: base + '-sheet-front-back.pdf', label: 'Sheet of ' + count() + ' cards, front + back (PDF, 2 pages, best for printing)', blob: await makePdfPages([c, csb]) });
+        files.push({ name: base + '-sheet-front.png', label: 'Fronts sheet (PNG)', blob: await toBlob(c, 'image/png') });
+        files.push({ name: base + '-sheet-back.png', label: 'Backs sheet (PNG)', blob: await toBlob(csb, 'image/png') });
+        csb.width = csb.height = 0;
       } else {
         c = sheetCanvas(DPI);
         label = state.kind === 'card' ? 'Sheet of ' + count() + ' cards' : (state.flyerMode === 1 ? 'Flyer, full page' : 'Sheet of ' + count() + ' flyers');
@@ -1258,7 +1475,7 @@
   // Exposed for testing only.
   if (window.nocivFocus) window.nocivFocus(document.querySelector('.preview-col'), $('stage'), 'Screen locked. Tap words and drag them. A- and A+ resize.');
   // Remember what you typed and picked on this phone (pictures are not saved).
-  var SAVE_KEYS = ['iconsOn', 'iconColor', 'icons', 'kind', 'shape', 'layout', 'flyerLayout', 'head', 'border', 'off', 'bg', 'ink', 'accent', 'font', 'qrOn', 'cardMode', 'flyerMode'];
+  var SAVE_KEYS = ['back', 'iconsOn', 'iconColor', 'icons', 'kind', 'shape', 'layout', 'flyerLayout', 'head', 'border', 'off', 'bg', 'ink', 'accent', 'font', 'qrOn', 'cardMode', 'flyerMode'];
   function remember() { try { var o = { F: F, st: {} }; SAVE_KEYS.forEach(function (k) { o.st[k] = state[k]; }); localStorage.setItem('nocivCard', JSON.stringify(o)); } catch (e) {} }
   var remT = 0; ['input', 'click', 'pointerup', 'change'].forEach(function (ev) { document.addEventListener(ev, function () { clearTimeout(remT); remT = setTimeout(remember, 300); }, true); });
   (function restore() {
@@ -1270,6 +1487,7 @@
     function setC(id, v) { var box = $(id); if (!box) return; box.querySelectorAll('[data-v]').forEach(function (b) { b.setAttribute('aria-pressed', String(b.dataset.v === String(v))); }); }
     ['fPhone', 'fEmail', 'fWeb', 'fHandle', 'fFoot'].forEach(function (k) { if (state.icons && state.icons[k]) $('ic' + k).value = state.icons[k]; }); setC('iconsOn', state.iconsOn ? 'on' : 'off'); if (state.iconColor === 'accent' || state.iconColor === 'ink') setC('iconColor', state.iconColor); else { setC('iconColor', '-'); }
     setC('shape', state.shape); setC('font', state.font); setC('qrOn', state.qrOn ? 'on' : 'off'); setC('cardMode', state.cardMode); setC('flyerMode', state.flyerMode); setC('headFont', state.head); setC('border', state.border);
+    if (state.back) { setC('backOn', state.back.on ? 'on' : 'off'); setC('backColors', state.back.colors); setC('backFont', state.back.font); setC('backCredit', state.back.credit ? 'on' : 'off'); $('backOpts').hidden = !state.back.on; buildBackLayouts(); }
     var kb = $('kind').querySelector('[data-v="' + state.kind + '"]'); if (kb) kb.click();
   })();
   window.__card = { state: state, F: F, hits: function () { return previewHits; }, sheetCanvas: sheetCanvas, pieceCanvas: pieceCanvas, files: function () { return files; } };
