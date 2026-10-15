@@ -581,6 +581,11 @@
     track(dx, dy, dx + dw, dy + dh);
     g.drawImage(img, dx, dy, dw, dh);
   }
+  // The logo's real size inside a max box (keeps its shape, never cropped).
+  function logoSize(maxW, maxH) {
+    var img = state.logo; if (!img || maxW <= 0 || maxH <= 0) return { w: 0, h: 0 };
+    var k = Math.min(maxW / img.width, maxH / img.height); return { w: img.width * k, h: img.height * k };
+  }
   function details() {
     var out = [];
     ['fPhone', 'fEmail', 'fWeb', 'fHandle'].forEach(function (k) { var v = (F[k] || '').trim(); if (v) out.push({ t: v, ic: state.iconsOn && state.icons[k] !== 'none' ? state.icons[k] : null }); });
@@ -640,24 +645,39 @@
       if (wide) {
         qs = qr ? Math.min(H - pad * 2, W * 0.34) : 0;
         var tw = W - pad * (qr ? 3 : 2) - qs, y = pad;
-        if (state.logo) { drawLogo(g, pad, y, H * 0.26, H * 0.26); y += H * 0.32; }
-        px = fit(g, nm, tw, H * 0.15, '900'); y += px; text(g, nm, pad, y);
-        if (ttl) { var tp = fit(g, ttl, tw, H * 0.075, '600'); y += tp * 1.5; g.font = font('600', tp); text(g, ttl, pad, y, 'left', state.accent); }
-        stackLines(g, d, pad, H - pad, tw, H * 0.068, 'left');
+        var dpx = H * 0.068, dTop = d.length ? H - pad - dpx - (d.length - 1) * dpx * 1.35 - pad * 0.45 : H - pad;
+        px = fit(g, nm, tw, H * 0.15, '900'); var tp = ttl ? fit(g, ttl, tw, H * 0.075, '600') : 0, textH = px * 1.02 + (ttl ? tp * 1.5 : 0);
+        if (state.logo) {
+          var gapL = H * 0.06, room = dTop - pad - textH - gapL, lh = Math.min(H * 0.26, room);
+          if (lh < H * 0.12) { lh = H * 0.12; var k = Math.max(0.5, (dTop - pad - lh - gapL) / textH); px *= Math.min(1, k); tp *= Math.min(1, k); }
+          var ls = logoSize(tw * 0.7, lh); drawLogo(g, pad, y, ls.w, ls.h); y += ls.h + gapL;
+        }
+        y += px; g.font = font('900', px); text(g, nm, pad, y);
+        if (ttl) { y += tp * 1.5; g.font = font('600', tp); text(g, ttl, pad, y, 'left', state.accent); }
+        stackLines(g, d, pad, H - pad, tw, dpx, 'left');
         if (qr) drawQr(g, W - pad - qs, (H - qs) / 2, qs);
       } else {
-        var y2 = pad; qs = qr ? S * 0.4 : 0;
+        var y2 = pad, dpx2 = S * 0.058, dTop2 = d.length ? H - pad - dpx2 - (d.length - 1) * dpx2 * 1.35 - pad * 0.45 : H - pad;
+        px = fit(g, nm, W - pad * 2, S * 0.13, '900'); var tp2 = ttl ? fit(g, ttl, W - pad * 2, S * 0.065, '600') : 0, textH2 = px * 1.02 + (ttl ? tp2 * 1.5 : 0);
+        var room2 = dTop2 - pad - textH2 - pad * 0.6;
+        if (qr || state.logo) { var mn = S * 0.18; if (room2 < mn) { var k2 = Math.max(0.55, (dTop2 - pad - mn - pad * 0.6) / textH2); px *= Math.min(1, k2); tp2 *= Math.min(1, k2); room2 = mn; } }
+        qs = qr ? Math.min(S * 0.4, room2) : 0;
         if (qr) { drawQr(g, (W - qs) / 2, y2, qs); y2 += qs + pad * 0.6; }
-        else if (state.logo) { drawLogo(g, (W - S * 0.4) / 2, y2, S * 0.4, S * 0.4); y2 += S * 0.4 + pad * 0.6; }
-        px = fit(g, nm, W - pad * 2, S * 0.13, '900'); y2 += px; text(g, nm, W / 2, y2, 'center');
-        if (ttl) { var tp2 = fit(g, ttl, W - pad * 2, S * 0.065, '600'); y2 += tp2 * 1.5; g.font = font('600', tp2); text(g, ttl, W / 2, y2, 'center', state.accent); }
-        stackLines(g, d, W / 2, H - pad, W - pad * 2, S * 0.058, 'center');
+        else if (state.logo) { var lt = logoSize(W - pad * 2, Math.min(S * 0.4, room2)); drawLogo(g, (W - lt.w) / 2, y2, lt.w, lt.h); y2 += lt.h + pad * 0.6; }
+        y2 += px; g.font = font('900', px); text(g, nm, W / 2, y2, 'center');
+        if (ttl) { y2 += tp2 * 1.5; g.font = font('600', tp2); text(g, ttl, W / 2, y2, 'center', state.accent); }
+        stackLines(g, d, W / 2, H - pad, W - pad * 2, dpx2, 'center');
       }
     } else if (L === 'center') {
       qs = qr ? S * 0.26 : 0;
       var cy = H * (wide ? 0.42 : 0.4);
-      if (state.logo) { var ps = S * 0.26; drawLogo(g, (W - ps) / 2, cy - S * 0.2 - ps, ps, ps); }
-      px = fit(g, nm, W - pad * 2, S * 0.17, '900'); g.font = font('900', px); text(g, nm, W / 2, cy, 'center');
+      px = fit(g, nm, W - pad * 2, S * 0.17, '900');
+      if (state.logo) {
+        var lBot = cy - px * 0.85 - S * 0.05, lTop = pad * 0.6, lc = logoSize(W - pad * 2, Math.min(S * 0.26, lBot - lTop));
+        if (lc.h < S * 0.1) { cy += S * 0.1 - lc.h; lBot = cy - px * 0.85 - S * 0.05; lc = logoSize(W - pad * 2, Math.min(S * 0.26, lBot - lTop)); }
+        drawLogo(g, (W - lc.w) / 2, lBot - lc.h, lc.w, lc.h);
+      }
+      g.font = font('900', px); text(g, nm, W / 2, cy, 'center');
       if (ttl) { var tp3 = fit(g, ttl, W - pad * 2.4, S * 0.07, '600'); g.font = font('600', tp3); text(g, ttl, W / 2, cy + tp3 * 1.8, 'center', state.accent); }
       g.fillStyle = state.accent; g.fillRect(W / 2 - S * 0.12, cy + S * 0.16, S * 0.24, Math.max(2, S * 0.012));
       var lw = W - pad * 2 - (qr ? qs + pad * 0.5 : 0);
@@ -671,23 +691,24 @@
     } else if (L === 'bar') {
       var bh = H * (wide ? 0.38 : 0.3);
       g.fillStyle = state.accent; g.fillRect(0, 0, W, bh);
-      var barInk = on(state.accent);
-      px = fit(g, nm.toUpperCase(), W - pad * 2, bh * 0.5, '900'); g.font = font('900', px); text(g, nm.toUpperCase(), pad, bh - pad * 0.7, 'left', barInk);
+      var barInk = on(state.accent), lb = state.logo ? logoSize(W * 0.38, bh * 0.66) : { w: 0, h: 0 };
+      px = fit(g, nm.toUpperCase(), W - pad * 2 - (lb.w ? lb.w + pad * 0.5 : 0), bh * 0.5, '900'); g.font = font('900', px); text(g, nm.toUpperCase(), pad, bh - pad * 0.7, 'left', barInk);
       qs = qr ? Math.min(H - bh - pad * 2, W * (wide ? 0.3 : 0.4)) : 0;
       var tw2 = W - pad * (qr ? 3 : 2) - qs, ty = bh + pad;
       if (ttl) { var tp4 = fit(g, ttl, tw2, S * 0.075, '700'); ty += tp4; g.font = font('700', tp4); text(g, ttl, pad, ty); }
       stackLines(g, d, pad, H - pad, tw2, S * 0.062, 'left');
       if (qr) drawQr(g, W - pad - qs, H - pad - qs, qs);
-      if (state.logo) { var lp2 = bh * 0.62; drawLogo(g, W - pad - lp2, (bh - lp2) / 2, lp2, lp2); }
+      if (state.logo) drawLogo(g, W - pad - lb.w, (bh - lb.h) / 2, lb.w, lb.h);
     } else if (L === 'split') {
       if (wide) {
         var sw = W * 0.42; g.fillStyle = state.accent; g.fillRect(0, 0, sw, H);
         var si = on(state.accent), sy = H * 0.5;
-        if (state.logo) { var pz = Math.min(sw - pad * 2, H * 0.36); drawLogo(g, (sw - pz) / 2, pad, pz, pz); sy = pad + pz + pad * 0.8; }
+        if (state.logo) { var pzs = logoSize(sw - pad * 2, H * 0.36); drawLogo(g, (sw - pzs.w) / 2, pad, pzs.w, pzs.h); sy = pad + pzs.h + pad * 0.8 + H * 0.06; }
         px = fit(g, nm, sw - pad * 1.6, H * 0.14, '900'); g.font = font('900', px); text(g, nm, sw / 2, sy + px * 0.35, 'center', si);
         if (ttl) { var tp5 = fit(g, ttl, sw - pad * 1.6, H * 0.065, '600'); g.font = font('600', tp5); text(g, ttl, sw / 2, sy + px * 0.35 + tp5 * 1.7, 'center', si); }
         var rx = sw + pad, rw = W - sw - pad * 2;
-        qs = qr ? Math.min(H * 0.5, rw * 0.62) : 0;
+        var dpx4 = H * 0.068, dTop4 = d.length ? H - pad - dpx4 - (d.length - 1) * dpx4 * 1.35 - pad * 0.45 : H - pad;
+        qs = qr ? Math.max(H * 0.2, Math.min(H * 0.5, rw * 0.62, dTop4 - pad)) : 0;
         if (qr) drawQr(g, W - pad - qs, pad, qs);
         stackLines(g, d, rx, H - pad, rw, H * 0.068, 'left');
       } else {
@@ -710,11 +731,13 @@
         if (ttl) { var tp7 = fit(g, ttl, rw2, H * 0.065, '600'); yy += tp7 * 1.6; g.font = font('600', tp7); text(g, ttl, rx2, yy); }
         stackLines(g, d, rx2, H - pad, rw2, H * 0.062, 'left');
       } else {
-        qs = qr ? S * 0.56 : 0;
-        var y3 = pad;
-        if (qr) { var sc2 = fit(g, 'SCAN ME', W - pad * 2, S * 0.08, '900'); y3 += sc2; g.font = font('900', sc2); text(g, 'SCAN ME', W / 2, y3, 'center', state.accent); y3 += pad * 0.5; drawQr(g, (W - qs) / 2, y3, qs); y3 += qs; }
-        px = fit(g, nm, W - pad * 2, S * 0.12, '900'); y3 += px * 1.35; g.font = font('900', px); text(g, nm, W / 2, y3, 'center');
-        stackLines(g, d, W / 2, H - pad, W - pad * 2, S * 0.055, 'center');
+        var y3 = pad, dpx3 = S * 0.055, dTop3 = d.length ? H - pad - dpx3 - (d.length - 1) * dpx3 * 1.35 - pad * 0.45 : H - pad;
+        px = fit(g, nm, W - pad * 2, S * 0.12, '900');
+        var sc2 = qr ? fit(g, 'SCAN ME', W - pad * 2, S * 0.08, '900') : 0;
+        qs = qr ? Math.max(S * 0.2, Math.min(S * 0.56, dTop3 - pad - sc2 - pad * 0.5 - px * 1.4)) : 0;
+        if (qr) { y3 += sc2; g.font = font('900', sc2); text(g, 'SCAN ME', W / 2, y3, 'center', state.accent); y3 += pad * 0.5; drawQr(g, (W - qs) / 2, y3, qs); y3 += qs; }
+        y3 += px * 1.35; g.font = font('900', px); text(g, nm, W / 2, y3, 'center');
+        stackLines(g, d, W / 2, H - pad, W - pad * 2, dpx3, 'center');
       }
     }
   }
