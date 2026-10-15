@@ -224,7 +224,7 @@
 
 
   /* Landing in the Build page look: taped notes, Anton headline, clear steps from big to small */
-  .land { padding-top: 30px; }
+  .land { padding-top: 30px; background: transparent; }
   .land-kicker { margin: 0 0 18px; font-size: 0.95rem; line-height: 1.45; color: var(--bm); }
   .land .build-title { font-size: clamp(2.9rem, 14vw, 6rem); }
   .land .build-hero { padding: 38px 22px 30px; margin-bottom: 30px; }
@@ -234,6 +234,20 @@
   /* "NOCIV is ART" sits on the page itself, no note */
   .land-art { max-width: 900px; margin: 0 auto 50px; padding: 0 6px; }
   .land-art .land-big { margin-top: 0; }
+  /* Title + her halftone chain face side by side, both sized to fit the note */
+  .land-title-row { display: flex; align-items: center; gap: 12px; }
+  .land-title-row .build-title { flex: 1 1 0; min-width: 0; margin: 0; }
+  .land .land-title-row .build-title img.type-img { width: 100%; height: auto; max-height: calc(clamp(2.9rem, 14vw, 6rem) * 1.72); object-position: left center; }
+  .land-face { flex: 0 0 30%; max-width: 30%; height: auto; max-height: calc(clamp(2.9rem, 14vw, 6rem) * 1.72); object-fit: contain; display: block; }
+  /* Computers: two columns so the page is not one skinny strip in the middle */
+  @media (min-width: 900px) {
+    .land { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); grid-template-areas: "hero note" "banner note" "art note"; column-gap: 40px; align-items: start; max-width: 1180px; margin: 0 auto; padding-left: 32px; padding-right: 32px; }
+    .land > .build-hero { grid-area: hero; margin: 0 0 30px; max-width: none; }
+    .land > .land-banner { grid-area: banner; margin: 0 0 30px; max-width: none; }
+    .land > .land-art { grid-area: art; margin: 0; max-width: none; padding: 0 4px; }
+    .land > .land-note { grid-area: note; margin: 0; max-width: none; }
+    .land .land-title-row .build-title img.type-img, .land .land-face { max-height: 150px; }
+  }
   .land .build-quote { margin: 22px 0 22px; }
   .land .build-points { gap: 10px; margin-bottom: 0; flex-direction: column; }
   .land-big { margin: 30px 0 10px; font-weight: 900; font-size: clamp(1.35rem, 6vw, 1.9rem); line-height: 1.15; }
@@ -285,7 +299,10 @@
 
   <div class="build-hero">
     <p class="land-kicker">If you're here, someone told you.</p>
-    <h1 class="build-title"><img class="type-img" src="img/type/nothing-of-civilization.png" alt="Nothing of Civilization" width="743" height="296"></h1>
+    <div class="land-title-row">
+      <h1 class="build-title"><img class="type-img" src="img/type/nothing-of-civilization.png" alt="Nothing of Civilization" width="743" height="296"></h1>
+      <img class="land-face" src="img/chain-face-halftone.png" alt="" width="520" height="456">
+    </div>
     <p class="build-quote">"Creating new norms. Reclaiming narratives."</p>
     <ul class="build-points"><li>We have no social accounts.</li><li>No paid ads or algorithms.</li><li>Word of mouth only.</li></ul>
   </div>
