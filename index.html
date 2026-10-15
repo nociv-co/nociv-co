@@ -245,6 +245,11 @@
   .land-details div + div { border-top: 1.5px solid #d8d2c3; }
   .land-details span { font-family: "Courier New", ui-monospace, monospace; font-weight: 700; font-size: 0.78rem; text-transform: uppercase; color: var(--bm); }
   .land-details b { font-weight: 900; font-size: 1.05rem; text-align: right; }
+  .land-row { display: flex; align-items: center; justify-content: space-between; gap: 12px; margin: 0 0 18px; }
+  .land-row .land-h { margin: 0; min-width: 0; flex: 1 1 auto; }
+  .land-row .land-h img.type-img { max-width: 100%; }
+  .land-irl { flex: none; flex-direction: column; align-items: flex-end; gap: 4px; font-size: 0.72rem; text-align: right; }
+  .land-irl b { font-size: 0.85rem; padding: 2px 8px; }
   .land-h3 { margin: 34px 0 6px; font-weight: 900; font-size: 1.15rem; letter-spacing: .06em; text-transform: uppercase; }
   .land-p { margin: 0 0 16px; font-size: 0.95rem; line-height: 1.45; color: #3a372f; }
   .land #popupSignupForm { display: grid; gap: 8px; }
@@ -286,7 +291,7 @@
 
   <div class="land-note">
     <img class="popup-card-img" src="pop-up-shop.png" alt="Pop-up shop, posting soon">
-    <h2 class="land-h"><img class="type-img" src="img/type/next-spot.png" alt="Next spot" width="642" height="141"></h2>
+    <div class="land-row"><h2 class="land-h"><img class="type-img" src="img/type/next-spot.png" alt="Next spot" width="642" height="141"></h2><p class="land-label land-irl"><b>IRL</b>Pop-up shop</p></div>
     <div class="land-details" id="popupDetails">
       <div><span>Where</span><b>TBD</b></div>
       <div><span>Date</span><b>TBD</b></div>

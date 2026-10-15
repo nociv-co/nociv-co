@@ -626,4 +626,6 @@ footer.nociv-footer {
 .land-h img.type-img { height: calc(clamp(2.2rem, 11vw, 3.4rem) * 0.95); }
 
 /* --- Shop bar: Clothing is one long button in the regular font, Art and Zines stay small. --- */
+.subnav-secondary { gap: 10px; }
+.subnav-secondary button { flex: 1 1 0; max-width: 300px; padding: 13px 16px !important; font-size: 0.85rem !important; letter-spacing: .1em; font-weight: 900; opacity: 1 !important; }
 .subnav-primary button.long { flex: 1 1 auto; width: 100%; max-width: 620px; padding: 16px 20px; font-size: 1rem; letter-spacing: .12em; font-weight: 900; }
