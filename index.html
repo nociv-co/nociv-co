@@ -227,7 +227,13 @@
   .land { padding-top: 30px; }
   .land-kicker { margin: 0 0 18px; font-size: 0.95rem; line-height: 1.45; color: var(--bm); }
   .land .build-title { font-size: clamp(2.9rem, 14vw, 6rem); }
-  .land .build-hero { padding: 38px 22px 30px; margin-bottom: 44px; }
+  .land .build-hero { padding: 38px 22px 30px; margin-bottom: 30px; }
+  /* Banner between the sections: wall to wall on phones, capped at the page width on bigger screens */
+  .land-banner { margin: 0 -16px 30px; width: auto; }
+  @media (min-width: 932px) { .land-banner { margin: 0 auto 30px; max-width: 900px; } }
+  /* "NOCIV is ART" sits on the page itself, no note */
+  .land-art { max-width: 900px; margin: 0 auto 50px; padding: 0 6px; }
+  .land-art .land-big { margin-top: 0; }
   .land .build-quote { margin: 22px 0 22px; }
   .land .build-points { gap: 10px; margin-bottom: 0; flex-direction: column; }
   .land-big { margin: 30px 0 10px; font-weight: 900; font-size: clamp(1.35rem, 6vw, 1.9rem); line-height: 1.15; }
@@ -282,6 +288,13 @@
     <h1 class="build-title"><img class="type-img" src="img/type/nothing-of-civilization.png" alt="Nothing of Civilization" width="743" height="296"></h1>
     <p class="build-quote">"Creating new norms. Reclaiming narratives."</p>
     <ul class="build-points"><li>We have no social accounts.</li><li>No paid ads or algorithms.</li><li>Word of mouth only.</li></ul>
+  </div>
+
+  <div class="landing-banner-full land-banner">
+  <img src="arizona-based.png" alt="AZ Based. Black-Owned Clothing.">
+</div>
+
+  <div class="land-art">
     <p class="land-big">NOCIV is <b>art</b>, not content.</p>
     <p class="build-lede">Clothing is where we begin. Design, culture and human connection are where we go.</p>
     <a class="land-btn" href="shop.html">Shop clothing</a>
@@ -307,10 +320,7 @@
 
 </section>
 
-<!-- Arizona art at the bottom, balances the page (Jasilyn, Oct 14) -->
-<div class="landing-banner-full">
-  <img src="arizona-based.png" alt="AZ Based. Black-Owned Clothing.">
-</div>
+
 
 <footer class="nociv-footer">NOCIV.CO: Nothing Of Civilization</footer>
 
