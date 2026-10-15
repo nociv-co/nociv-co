@@ -36,6 +36,7 @@
   .note h2 b { background: var(--red); color: #fff; padding: 1px 7px; margin-right: 6px; }
 
   label.lbl { display: block; font-size: 0.72rem; font-weight: 800; letter-spacing: 0.08em; text-transform: uppercase; margin: 14px 0 6px; }
+  input[type="date"], .dirbox select { width: 100%; font: inherit; font-size: 16px; padding: 12px; border: 2px solid var(--ink); border-radius: 0; background: #fff; color: var(--ink); box-sizing: border-box; -webkit-appearance: none; appearance: none; }
   input[type="url"], input[type="text"], input[type="email"], input[type="tel"], textarea {
     width: 100%; font: inherit; font-size: 16px; padding: 12px; border: 2px solid var(--ink); background: #fff; color: var(--ink); border-radius: 0;
   }
@@ -327,6 +328,33 @@
       <p class="working" id="working" hidden>Making it...</p>
       <div class="files" id="files"></div>
       <p class="meta">When you print a sheet, pick <b>Actual size</b> or <b>100%</b> in the print settings, not "Fit", or the cards come out the wrong size.</p>
+      <div class="dirbox" id="pinBox" hidden>
+        <div class="dirhead"><b>FREE</b>Pin it to the Opportunity Board</div>
+        <p class="meta" style="margin-top:6px">Your flyer info goes up on nociv.co, Base, Directory, Opportunity board right away, so locals see it. Optional. Nothing is sent until you tap Pin it.</p>
+        <button type="button" class="chip dirtoggle" id="pinToggle" aria-pressed="false" aria-expanded="false" aria-controls="pinForm">Pin my flyer to the board</button>
+        <div id="pinForm" hidden>
+          <label class="lbl" for="pinKind">What kind of post</label>
+          <select id="pinKind">
+            <option value="popup">Pop-up shop</option>
+            <option value="event">Event or show</option>
+            <option value="workshop">Workshop or class</option>
+            <option value="meetup">Meetup or hangout</option>
+            <option value="call">Call for art, grant or residency</option>
+            <option value="wall">Wall or mural</option>
+            <option value="space">Space to offer</option>
+            <option value="share">Tool or gear share</option>
+          </select>
+          <label class="lbl" for="pinTitle">Title</label>
+          <input type="text" id="pinTitle" maxlength="90">
+          <label class="lbl" for="pinDetails">Details and how to reach you</label>
+          <textarea id="pinDetails" maxlength="800" rows="4"></textarea>
+          <label class="lbl" for="pinDate">Date (optional, puts it on the calendar)</label>
+          <input type="date" id="pinDate">
+          <p class="meta">General area only. Never your home address.</p>
+          <button type="button" class="btn main" id="pinSend">Pin it</button>
+          <p class="meta dirmsg" id="pinMsg" role="status"></p>
+        </div>
+      </div>
       <div class="dirbox" id="dirBox">
         <div class="dirhead"><b>FREE</b>Get found in the Directory</div>
         <p class="meta" style="margin-top:6px">Your card info goes on nociv.co, Base, Directory, so local people can find you. Optional. You pick what shows. We check each one before it goes up.</p>
@@ -1018,7 +1046,7 @@
   chips('kind', function (v) {
     state.kind = v;
     $('cardShapeBox').hidden = v !== 'card'; $('cardFields').hidden = v !== 'card'; $('flyerFields').hidden = v !== 'flyer';
-    $('cardOut').hidden = v !== 'card'; $('flyerOut').hidden = v !== 'flyer'; $('dirBox').hidden = v !== 'card';
+    $('cardOut').hidden = v !== 'card'; $('flyerOut').hidden = v !== 'flyer'; $('dirBox').hidden = v !== 'card'; $('pinBox').hidden = v !== 'flyer';
     $('photoBox').hidden = v !== 'flyer';
     $('starterBox').hidden = v !== 'flyer'; $('flyerStyle').hidden = v !== 'flyer';
     buildLayoutButtons();
@@ -1228,16 +1256,16 @@
 
   // ---------- List me in the Directory (Base, Directory). Opt in only, nothing is sent until they tap Send. ----------
   (function () {
-    var loaded = null;
+    // One shared loader for the database scripts (Directory + Opportunity Board), only loaded when someone opts in.
     function loadSb() {
-      if (loaded) return loaded;
-      loaded = new Promise(function (ok, no) {
-        function add(src, next) { var s = document.createElement('script'); s.src = src; s.onload = next; s.onerror = function () { loaded = null; no(new Error('load')); }; document.head.appendChild(s); }
-        if (window.supabaseClient) return ok();
+      if (window.__nocivSb) return window.__nocivSb;
+      window.__nocivSb = new Promise(function (ok, no) {
+        function add(src, next) { var s = document.createElement('script'); s.src = src; s.onload = next; s.onerror = function () { window.__nocivSb = null; no(new Error('load')); }; document.head.appendChild(s); }
         add('https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2', function () { add('../supabase.js', function () { ok(); }); });
       });
-      return loaded;
+      return window.__nocivSb;
     }
+    window.__nocivLoadSb = loadSb;
     var ROWS = [
       ['name', 'Name', 'fName', true, true],
       ['role', 'What you do', 'fTitle', true, false],
@@ -1295,6 +1323,40 @@
         msg.className = 'meta dirmsg ok'; msg.textContent = 'Sent. You show up in the Directory once we check it.';
         try { localStorage.setItem('nocivDirSent', JSON.stringify({ name: p.name, at: Date.now() })); } catch (e) {}
       }).catch(function () { btn.disabled = false; msg.className = 'meta dirmsg bad'; msg.textContent = "That didn't send. Check your connection and try again."; });
+    };
+  })();
+
+  // ---------- Pin a flyer to the Opportunity Board (Base, Directory). Opt in only. ----------
+  (function () {
+    function fill() {
+      var head = (F.fHead || '').trim(), kick = (F.fKick || '').trim();
+      if (!$('pinTitle').value) $('pinTitle').value = (kick && head ? kick + ': ' + head : head || kick).slice(0, 90);
+      if (!$('pinDetails').value) {
+        var lines = [F.fSub, F.fDetails, F.fFoot, state.link ? state.link.replace(/^https?:\/\//, '') : ''].map(function (x) { return (x || '').trim(); }).filter(Boolean);
+        $('pinDetails').value = lines.join('\n').slice(0, 800);
+      }
+    }
+    $('pinToggle').onclick = function () {
+      var on = this.getAttribute('aria-pressed') !== 'true';
+      this.setAttribute('aria-pressed', String(on)); this.setAttribute('aria-expanded', String(on));
+      $('pinForm').hidden = !on;
+      if (on) fill();
+    };
+    $('pinSend').onclick = function () {
+      var btn = this, msg = $('pinMsg');
+      var title = $('pinTitle').value.trim(), details = $('pinDetails').value.trim(), date = $('pinDate').value || null;
+      msg.className = 'meta dirmsg bad';
+      if (!title || !details) { msg.textContent = 'Add a title and the details first.'; return; }
+      try { var last = JSON.parse(localStorage.getItem('nocivPinSent') || 'null'); if (last && last.title === title && Date.now() - last.at < 600000) { msg.className = 'meta dirmsg ok'; msg.textContent = 'Already pinned. It is on the board.'; return; } } catch (e) {}
+      btn.disabled = true; msg.className = 'meta dirmsg'; msg.textContent = 'Pinning...';
+      window.__nocivLoadSb().then(function () {
+        return supabaseClient.from('board_posts').insert([{ category: $('pinKind').value, discipline: 'General', space_type: null, title: title, details: details, event_date: date, interest_count: 0 }]);
+      }).then(function (r) {
+        btn.disabled = false;
+        if (r.error) { msg.className = 'meta dirmsg bad'; msg.textContent = "That didn't pin. Try again in a minute."; return; }
+        msg.className = 'meta dirmsg ok'; msg.textContent = 'Pinned. It is on the Opportunity Board now.';
+        try { localStorage.setItem('nocivPinSent', JSON.stringify({ title: title, at: Date.now() })); } catch (e) {}
+      }).catch(function () { btn.disabled = false; msg.className = 'meta dirmsg bad'; msg.textContent = "That didn't pin. Check your connection and try again."; });
     };
   })();
 })();

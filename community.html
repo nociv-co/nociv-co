@@ -345,7 +345,7 @@
 
     <div class="build-hero dx-hero">
       <p class="dx-kicker">Base / Directory</p>
-      <h2 class="dx-sign"><img src="directory-ave.png" alt="The Directory (Directory Ave street sign)" width="1822" height="630"></h2>
+      <h2 class="dx-sign"><img src="img/directory-ave-sm.png" alt="The Directory (Directory Ave street sign)" width="1040" height="360"></h2>
       <p class="build-quote">Real people. Real contacts. Made in AZ.</p>
       <div class="dx-tabs" role="tablist">
         <button type="button" class="dir-subtab active" role="tab" data-dirtab="verified">People + places <b id="dxCountTab"></b></button>
@@ -392,6 +392,8 @@
 
         <label for="boardCategory">What kind of post is this?</label>
         <select id="boardCategory">
+          <option value="popup">Pop-up shop</option>
+          <option value="event">Event or show</option>
           <option value="wall">Wall or mural opportunity</option>
           <option value="workshop">Workshop or class</option>
           <option value="share">Tool, equipment or garage share</option>
@@ -843,6 +845,7 @@ function renderDirectory() {
 /* ============ OPPORTUNITY BOARD (table: board_posts) ============ */
 const catLabels = {
   popup: "Pop-up shop",
+  event: "Event / show",
   wall: "Wall + mural",
   workshop: "Workshop / class",
   share: "Tool + gear share",
