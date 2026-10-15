@@ -106,21 +106,22 @@
   .aura-graphic { display: block; width: 100%; max-width: 500px; margin: 40px auto 20px; }
   .vinted-link img { display: block; width: 100%; max-width: 500px; margin: 0 auto; }
 
+  .shop-wrap { padding-top: 16px; }
   /* --- Product Catalog --- */
   .catalog-section { margin-bottom: 50px; }
   /* One slim toolbar: three dropdowns, no pill walls. Size only appears when
      something on screen actually has sizes. */
   .catalog-toolbar {
-    display: flex; gap: 10px; flex-wrap: wrap; align-items: center;
-    border-top: 2px solid #fff; border-bottom: 1px solid #333;
-    padding: 12px 0; margin-bottom: 22px;
+    display: flex; gap: 8px; flex-wrap: nowrap; align-items: center;
+    border-bottom: 1px solid #333;
+    padding: 0 0 10px; margin-bottom: 14px;
   }
   .catalog-toolbar .tb-label {
     font-size: 0.7rem; letter-spacing: 0.14em; text-transform: uppercase; opacity: .55; margin-right: 4px;
   }
   .catalog-toolbar select {
     background: #111; color: #eee; border: 1px solid #444; border-radius: 0;
-    padding: 9px 30px 9px 12px; font-size: 0.8rem; letter-spacing: 0.04em; text-transform: uppercase;
+    padding: 7px 24px 7px 10px; font-size: 0.72rem; letter-spacing: 0.04em; text-transform: uppercase; min-width: 0; flex: 0 1 auto;
     font-family: inherit; cursor: pointer; appearance: none; -webkit-appearance: none;
     background-image: linear-gradient(45deg, transparent 50%, #aaa 50%), linear-gradient(135deg, #aaa 50%, transparent 50%);
     background-position: calc(100% - 15px) 55%, calc(100% - 10px) 55%;
@@ -458,11 +459,8 @@
 </nav>
 
 <!-- SUB-NAV: Clothing leads, Art and Zines are secondary, "also from the collective" -->
-<nav class="subnav subnav-primary">
-  <button data-panel="clothingPanel" class="active long">Clothing</button>
-</nav>
-<p class="shop-secondary-label">Also from the collective</p>
-<nav class="subnav subnav-secondary">
+<nav class="subnav subnav-one" aria-label="Shop sections">
+  <button data-panel="clothingPanel" class="active">Clothing</button>
   <button data-panel="artPanel">Art</button>
   <button data-panel="zinesPanel">Zines</button>
 </nav>
@@ -475,7 +473,7 @@
 
 <!-- ===== CLOTHING ===== -->
 <div class="subpanel show" id="clothingPanel">
-  <div class="wrap">
+  <div class="wrap shop-wrap">
 
     <div class="catalog-mount" id="catalogMount-clothing"></div>
 
@@ -557,7 +555,7 @@
 
 <!-- ===== ZINES ===== -->
 <div class="subpanel" id="zinesPanel">
-  <div class="wrap">
+  <div class="wrap shop-wrap">
     <div class="catalog-mount" id="catalogMount-zines"></div>
     <div class="eyebrow" style="margin-top:30px;">Free zines</div>
     <p style="opacity:.7; max-width:500px; margin-bottom:30px;">
@@ -572,7 +570,7 @@
 
 <!-- ===== ART ===== -->
 <div class="subpanel" id="artPanel">
-  <div class="wrap">
+  <div class="wrap shop-wrap">
     <div class="catalog-mount" id="catalogMount-art"></div>
   </div>
 </div>

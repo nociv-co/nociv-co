@@ -625,7 +625,6 @@ footer.nociv-footer {
 .land .build-title img.type-img { height: calc(clamp(2.9rem, 14vw, 6rem) * 1.72); }
 .land-h img.type-img { height: calc(clamp(2.2rem, 11vw, 3.4rem) * 0.95); }
 
-/* --- Shop bar: Clothing is one long button in the regular font, Art and Zines stay small. --- */
-.subnav-secondary { gap: 10px; }
-.subnav-secondary button { flex: 1 1 0; max-width: 300px; padding: 13px 16px !important; font-size: 0.85rem !important; letter-spacing: .1em; font-weight: 900; opacity: 1 !important; }
-.subnav-primary button.long { flex: 1 1 auto; width: 100%; max-width: 620px; padding: 16px 20px; font-size: 1rem; letter-spacing: .12em; font-weight: 900; }
+/* --- Shop bar: one slim bar split three ways. Clothing is the wide one. --- */
+.subnav.subnav-one { display: grid; grid-template-columns: 2fr 1fr 1fr; gap: 6px; padding: 8px; min-height: 0; overflow: visible; }
+.subnav.subnav-one button { padding: 12px 6px; font-size: 0.82rem; letter-spacing: .1em; font-weight: 900; text-align: center; min-width: 0; }
