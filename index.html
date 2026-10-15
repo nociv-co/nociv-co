@@ -225,25 +225,28 @@
 
   /* Landing in the Build page look: taped notes, Anton headline, clear steps from big to small */
   .land { padding-top: 30px; }
-  .land-kicker { margin: 0 0 12px; font-family: "Courier New", ui-monospace, monospace; font-weight: 700; font-size: 0.85rem; color: var(--bm); }
+  .land-kicker { margin: 0 0 18px; font-size: 0.95rem; line-height: 1.45; color: var(--bm); }
   .land .build-title { font-size: clamp(2.9rem, 14vw, 6rem); }
-  .land-big { margin: 18px 0 6px; font-weight: 900; font-size: clamp(1.35rem, 6vw, 1.9rem); line-height: 1.15; }
+  .land .build-hero { padding: 38px 22px 30px; margin-bottom: 44px; }
+  .land .build-quote { margin: 22px 0 22px; }
+  .land .build-points { gap: 10px; margin-bottom: 0; flex-direction: column; }
+  .land-big { margin: 30px 0 10px; font-weight: 900; font-size: clamp(1.35rem, 6vw, 1.9rem); line-height: 1.15; }
   .land-big b { color: var(--br); text-transform: uppercase; }
-  .land-btn { display: block; margin: 20px 0 0; background: var(--br); color: #fff; text-align: center; text-decoration: none; font-weight: 900; letter-spacing: .1em; text-transform: uppercase; padding: 16px; font-size: 1rem; }
+  .land-btn { display: block; margin: 30px 0 0; background: var(--br); color: #fff; text-align: center; text-decoration: none; font-weight: 900; letter-spacing: .1em; text-transform: uppercase; padding: 16px; font-size: 1rem; }
   .land-btn::after { content: ' \2192'; }
-  .land-note { max-width: 900px; margin: 0 auto; background: var(--bn); position: relative; padding: 30px 20px 24px; box-shadow: 0 6px 16px rgba(0,0,0,0.16); transform: rotate(0.4deg); }
+  .land-note { max-width: 900px; margin: 0 auto; background: var(--bn); position: relative; padding: 38px 22px 30px; box-shadow: 0 6px 16px rgba(0,0,0,0.16); transform: rotate(0.4deg); }
   .land-note::before { content: ''; position: absolute; top: -11px; right: 24px; width: 64px; height: 22px; background: var(--bi); opacity: .85; transform: rotate(3deg); }
-  .land-note .popup-card-img { width: 100%; max-width: 360px; display: block; margin: 0 auto 16px; }
+  .land-note .popup-card-img { width: 100%; max-width: 320px; display: block; margin: 0 auto 28px; }
   .land-label { margin: 0; display: flex; align-items: center; gap: 8px; font-weight: 900; font-size: 0.85rem; letter-spacing: .1em; text-transform: uppercase; }
   .land-label b { background: var(--br); color: #fff; padding: 1px 7px; }
-  .land-h { margin: 6px 0 12px; font-family: NocivAnton, Impact, "Arial Narrow", sans-serif; font-weight: 400; font-size: clamp(2.2rem, 11vw, 3.4rem); line-height: .9; text-transform: uppercase; }
+  .land-h { margin: 10px 0 18px; font-family: NocivAnton, Impact, "Arial Narrow", sans-serif; font-weight: 400; font-size: clamp(2.2rem, 11vw, 3.4rem); line-height: .9; text-transform: uppercase; }
   .land-details { display: grid; border: 2px solid var(--bi); background: #fff; }
   .land-details div { display: flex; justify-content: space-between; align-items: baseline; gap: 12px; padding: 11px 12px; }
   .land-details div + div { border-top: 1.5px solid #d8d2c3; }
   .land-details span { font-family: "Courier New", ui-monospace, monospace; font-weight: 700; font-size: 0.78rem; text-transform: uppercase; color: var(--bm); }
   .land-details b { font-weight: 900; font-size: 1.05rem; text-align: right; }
-  .land-h3 { margin: 22px 0 4px; font-weight: 900; font-size: 1.15rem; letter-spacing: .06em; text-transform: uppercase; }
-  .land-p { margin: 0 0 12px; font-size: 0.95rem; line-height: 1.45; color: #3a372f; }
+  .land-h3 { margin: 34px 0 6px; font-weight: 900; font-size: 1.15rem; letter-spacing: .06em; text-transform: uppercase; }
+  .land-p { margin: 0 0 16px; font-size: 0.95rem; line-height: 1.45; color: #3a372f; }
   .land #popupSignupForm { display: grid; gap: 8px; }
   .land #popupSignupForm input { width: 100%; box-sizing: border-box; font: inherit; font-size: 16px; padding: 14px 12px; border: 2px solid var(--bi); border-radius: 0; background: #fff; color: var(--bi); margin: 0; }
   .land-join { font: inherit; font-weight: 900; letter-spacing: .1em; text-transform: uppercase; font-size: 0.95rem; padding: 14px; border: 2px solid var(--bi); border-radius: 0; background: var(--bi); color: #fff; cursor: pointer; -webkit-tap-highlight-color: transparent; }
@@ -275,7 +278,7 @@
     <p class="land-kicker">If you're here, someone told you.</p>
     <h1 class="build-title"><img class="type-img" src="img/type/nothing-of-civilization.png" alt="Nothing of Civilization" width="743" height="296"></h1>
     <p class="build-quote">"Creating new norms. Reclaiming narratives."</p>
-    <ul class="build-points"><li>No ads</li><li>No algorithm</li><li>Word of mouth only</li></ul>
+    <ul class="build-points"><li>We have no social accounts.</li><li>No paid ads or algorithms.</li><li>Word of mouth only.</li></ul>
     <p class="land-big">NOCIV is <b>art</b>, not content.</p>
     <p class="build-lede">Clothing is where we begin. Design, culture and human connection are where we go.</p>
     <a class="land-btn" href="shop.html">Shop clothing</a>
@@ -283,7 +286,6 @@
 
   <div class="land-note">
     <img class="popup-card-img" src="pop-up-shop.png" alt="Pop-up shop, posting soon">
-    <p class="land-label"><b>IRL</b>Pop-up shop</p>
     <h2 class="land-h"><img class="type-img" src="img/type/next-spot.png" alt="Next spot" width="642" height="141"></h2>
     <div class="land-details" id="popupDetails">
       <div><span>Where</span><b>TBD</b></div>
@@ -300,7 +302,6 @@
     <p id="signupConfirm" style="display:none; color:var(--green); font-weight:800;">You're on the list.</p>
   </div>
 
-  <p class="build-note">No ads here. It only grows when you pass it on.</p>
 </section>
 
 <footer class="nociv-footer">NOCIV.CO: Nothing Of Civilization</footer>
