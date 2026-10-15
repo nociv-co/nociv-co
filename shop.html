@@ -107,6 +107,15 @@
   .vinted-link img { display: block; width: 100%; max-width: 500px; margin: 0 auto; }
 
   .shop-wrap { padding-top: 16px; }
+  /* Free zines on a posted note, same taped note look as the landing page */
+  .free-note { position: relative; max-width: 900px; margin: 34px auto 10px; background: #f2ecd6; color: #1a1a1a; padding: 32px 18px 22px; box-shadow: 0 6px 16px rgba(0,0,0,.28); transform: rotate(-0.4deg); text-align: left; }
+  .free-note::before { content: ''; position: absolute; top: -11px; left: 22px; width: 64px; height: 22px; background: #1a1a1a; opacity: .85; transform: rotate(-3deg); }
+  .free-note::after { content: ''; position: absolute; top: -9px; right: 26px; width: 54px; height: 20px; background: #1a1a1a; opacity: .85; transform: rotate(4deg); }
+  .free-label { margin: 0; display: flex; align-items: center; gap: 8px; font-weight: 900; font-size: 0.82rem; letter-spacing: .1em; text-transform: uppercase; }
+  .free-label b { background: #c8412f; color: #fff; padding: 1px 7px; }
+  .free-h { margin: 10px 0 6px; font-family: NocivAnton, Impact, "Arial Narrow", sans-serif; font-weight: 400; font-size: clamp(1.9rem, 9vw, 3rem); line-height: .95; text-transform: uppercase; letter-spacing: .01em; color: #1a1a1a; }
+  .free-sub { margin: 0 0 20px; font-size: 0.95rem; line-height: 1.45; color: #6b665c; }
+  .free-note .zine-save-note { text-align: center; color: #6b665c; opacity: 1; margin-top: 14px; }
   /* --- Product Catalog --- */
   .catalog-section { margin-bottom: 50px; }
   /* One slim toolbar: three dropdowns, no pill walls. Size only appears when
@@ -557,12 +566,13 @@
 <div class="subpanel" id="zinesPanel">
   <div class="wrap shop-wrap">
     <div class="catalog-mount" id="catalogMount-zines"></div>
-    <div class="eyebrow" style="margin-top:30px;">Free zines</div>
-    <p style="opacity:.7; max-width:500px; margin-bottom:30px;">
-      Free to read, free to keep. No sign-up, no paywall.
-    </p>
-    <div class="zine-grid" id="zineList"></div>
-    <p class="zine-save-note" style="text-align:center;">Tap a zine to read it full screen. Use Open / Save in the reader to keep a copy.</p>
+    <div class="free-note">
+      <p class="free-label"><b>FREE</b>Zines</p>
+      <h2 class="free-h">Read it. Keep it. Pass it on.</h2>
+      <p class="free-sub">Free to read, free to keep. No sign up, no paywall.</p>
+      <div class="zine-grid" id="zineList"></div>
+      <p class="zine-save-note">Tap a zine to read it full screen. Use Open / Save in the reader to keep a copy.</p>
+    </div>
     </div>
     <div class="coming-soon">More issues coming soon.</div>
   </div>

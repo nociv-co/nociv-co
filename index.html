@@ -248,7 +248,8 @@
   .land-row { display: flex; align-items: center; justify-content: space-between; gap: 12px; margin: 0 0 18px; }
   .land-row .land-h { margin: 0; min-width: 0; flex: 1 1 auto; }
   .land-row .land-h img.type-img { max-width: 100%; }
-  .land-irl { flex: none; flex-direction: column; align-items: flex-end; gap: 4px; font-size: 0.72rem; text-align: right; }
+  .land-irl { flex: none; flex-direction: column; align-items: flex-start; gap: 4px; font-size: 0.72rem; text-align: left; }
+  .land-row .land-h img.type-img { margin-left: auto; object-position: right center; }
   .land-irl b { font-size: 0.85rem; padding: 2px 8px; }
   .land-h3 { margin: 34px 0 6px; font-weight: 900; font-size: 1.15rem; letter-spacing: .06em; text-transform: uppercase; }
   .land-p { margin: 0 0 16px; font-size: 0.95rem; line-height: 1.45; color: #3a372f; }
@@ -272,10 +273,7 @@
   <a href="community.html" class="img-tab"><img src="base-button.png" alt="Base"></a>
 </nav>
 
-<!-- Full-Width Arizona Graphic Banner (Wall-to-Wall) -->
-<div class="landing-banner-full">
-  <img src="arizona-based.png" alt="AZ Based. Black-Owned Clothing.">
-</div>
+
 
 <section class="build land">
 
@@ -291,7 +289,7 @@
 
   <div class="land-note">
     <img class="popup-card-img" src="pop-up-shop.png" alt="Pop-up shop, posting soon">
-    <div class="land-row"><h2 class="land-h"><img class="type-img" src="img/type/next-spot.png" alt="Next spot" width="642" height="141"></h2><p class="land-label land-irl"><b>IRL</b>Pop-up shop</p></div>
+    <div class="land-row"><p class="land-label land-irl"><b>IRL</b>Pop-up shop</p><h2 class="land-h"><img class="type-img" src="img/type/next-spot.png" alt="Next spot" width="642" height="141"></h2></div>
     <div class="land-details" id="popupDetails">
       <div><span>Where</span><b>TBD</b></div>
       <div><span>Date</span><b>TBD</b></div>
@@ -308,6 +306,11 @@
   </div>
 
 </section>
+
+<!-- Arizona art at the bottom, balances the page (Jasilyn, Oct 14) -->
+<div class="landing-banner-full">
+  <img src="arizona-based.png" alt="AZ Based. Black-Owned Clothing.">
+</div>
 
 <footer class="nociv-footer">NOCIV.CO: Nothing Of Civilization</footer>
 
