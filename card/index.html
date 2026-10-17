@@ -539,8 +539,8 @@
       f: { fKick: 'DJ NOVA PRESENTS', fHead: 'Late Night', fSub: 'House, disco, and whatever feels right', fDetails: 'Friday, Nov 7\n10pm till close\nThe Back Room, Phoenix\n$10 at the door', fFoot: 'Bring a friend. That is the guest list.' } },
     { n: 'Pop up', layout: 'poster', head: 'bagel', border: 'none', c: ['#f2ecd6', '#1a1a1a', '#c8412f'],
       f: { fKick: 'This Saturday', fHead: 'Pop Up Shop', fSub: 'One of one pieces, made by hand', fDetails: 'Saturday, 8am to noon\nDowntown farmers market\nCash, card, Tap to Pay', fFoot: 'yourshop.com' } },
-    { n: 'Spread the word', layout: 'street', head: 'anton', border: 'none', c: ['#f2ecd6', '#111111', '#c8412f'],
-      f: { fKick: 'Someone told you', fHead: 'No ads. Just us.', fSub: 'Scan it. Pass it on.', fDetails: 'Made by hand in Phoenix\nBuy it, build it, or share it', fFoot: "If you're here, someone told you." } },
+    { n: 'Spread the word', layout: 'stack', head: 'anton', border: 'none', c: ['#f2ecd6', '#111111', '#c8412f'], art: true, ficon: 'web',
+      f: { fKick: 'We are all creators.', fHead: 'Make art not content.', fSub: 'Make a Zine, Flyer, QR code, or Garment', fDetails: 'Free to use. No signup, ads, algorithms or paywall. Just being human.', fFoot: 'nociv.co', fLink: 'https://nociv.co/creator-tools.html' } },
     { n: 'Block party', layout: 'invite', head: 'abril', border: 'double', c: ['#1d2b64', '#f6efe0', '#f2994a'],
       f: { fKick: 'Come through', fHead: 'Block Party', fSub: 'Food, music, neighbors', fDetails: 'Saturday, June 11 | 4pm till dark\nCorner of 5th and Main', fFoot: 'Bring a chair and a friend' } },
     { n: 'Now open', layout: 'retro', head: 'bagel', border: 'none', c: ['#d9643a', '#fff3e2', '#2a1a12'],
@@ -596,8 +596,13 @@
   function hasQr() { return state.qrOn && (state.qrImg || getQr()); }
   // QR always sits on a white tile with black dots, so every phone can read it.
   function drawQr(g, x, y, s) {
+    if (state.qrImg) {
+      // A picture with its own words under the code (like the QR Maker cover art) keeps its shape, centered in the box.
+      var qa = state.qrImg.width / state.qrImg.height;
+      if (Math.abs(qa - 1) > 0.02) { var qw = qa < 1 ? s * qa : s, qh = qa < 1 ? s : s / qa, qx = x + (s - qw) / 2, qy = y + (s - qh) / 2; track(qx, qy, qx + qw, qy + qh); g.drawImage(state.qrImg, qx, qy, qw, qh); return; }
+      track(x, y, x + s, y + s); g.fillStyle = '#fff'; g.fillRect(x, y, s, s); g.drawImage(state.qrImg, x, y, s, s); return;
+    }
     track(x, y, x + s, y + s);
-    if (state.qrImg) { g.fillStyle = '#fff'; g.fillRect(x, y, s, s); g.drawImage(state.qrImg, x, y, s, s); return; }
     var qr = getQr(); if (!qr) return;
     var quiet = 3, n = qr.size + quiet * 2, m = s / n;
     g.fillStyle = '#ffffff'; g.fillRect(x, y, s, s);
@@ -959,127 +964,243 @@
       lines.forEach(function (l, n) { text(g, l, x, yTop + cap * px + n * pitch, align, state.ink); });
       return yTop + cap * px + (lines.length - 1) * pitch + (hd.up ? 0 : px * 0.22);
     }
-    // One word per line, each word as wide as the page (the JOIN US look).
-    function stackHead(x, yTop, maxW, maxH) {
-      var words = head.split(/\s+/).filter(Boolean), lines = words;
-      if (words.length > 4) { var per = Math.ceil(words.length / 4); lines = []; for (var i = 0; i < words.length; i += per) lines.push(words.slice(i, i + per).join(' ')); }
-      g.font = hfont(100);
-      var sizes = lines.map(function (l) { return Math.min(S * 0.6, maxW / Math.max(1, g.measureText(l).width) * 100); });
-      var cap = capOf(100), gap = 0.16, total = 0;
-      sizes.forEach(function (s, n) { total += s * cap + (n ? s * cap * gap : 0); });
-      var k = total > maxH ? maxH / total : 1, yy = yTop;
-      lines.forEach(function (l, n) { var s = sizes[n] * k; if (n) yy += s * cap * gap; yy += s * cap; g.font = hfont(s); text(g, l, x, yy, 'left', state.ink); });
-      return yy;
+    // ---- Text that wraps. Every block is measured first, so nothing runs off the page or into the next block. ----
+    // Biggest size (up to maxPx) where the words fit in maxLines lines. If they never do, it keeps wrapping at the smallest size.
+    function para(t, maxW, maxPx, fn, maxLines) {
+      maxW = Math.max(maxW, 10);
+      var px = maxPx, floor = Math.max(3, maxPx * 0.62), lines = [t], i;
+      function wide() { return lines.some(function (l) { return g.measureText(l).width > maxW + 0.5; }); }
+      for (i = 0; i < 80; i++) {
+        g.font = fn(px); lines = wrap(g, t, maxW);
+        if (lines.length <= maxLines && !wide()) break;
+        if (px <= floor) break;
+        px = Math.max(floor, px * 0.94);
+      }
+      for (i = 0; i < 40 && wide() && px > 3; i++) { px *= 0.94; g.font = fn(px); lines = wrap(g, t, maxW); }
+      var lh = px * 1.2;
+      return { lines: lines, px: px, lh: lh, h: (lines.length - 1) * lh + px * 1.05, fn: fn };
     }
-    function line1(t, x, y, maxW, px, weight, align, color) { var p = fit(g, t, maxW, px, weight); g.font = font(weight, p); text(g, t, x, y + p * 0.8, align, color); return y + p * 1.15; }
-    function list(x, yTop, maxW, px, align, color) { var yy = yTop; det.forEach(function (l) { var p = fit(g, l, maxW, px, '600'); g.font = font('600', p); text(g, l, x, yy + px * 0.85, align, color); yy += px * 1.45; }); return yy; }
-    function listH(px) { return det.length ? det.length * px * 1.45 : 0; }
-    // Ruled boxes for the details (date | time). A "|" splits a line into boxes.
-    function boxes(x0, yTop, w, px) {
-      var rh = px * 2.1, lw = Math.max(1, S * 0.004);
-      g.strokeStyle = state.accent; g.lineWidth = lw;
-      det.forEach(function (l, n) {
-        var cells = l.split('|').map(function (c) { return c.trim(); }).filter(Boolean), cw = w / cells.length, y = yTop + n * rh;
-        g.strokeRect(x0, y, w, rh); track(x0, y, x0 + w, y + rh);
-        cells.forEach(function (c, m) {
-          if (m) { g.beginPath(); g.moveTo(x0 + m * cw, y); g.lineTo(x0 + m * cw, y + rh); g.stroke(); }
-          var p = fit(g, c.toUpperCase(), cw - px, px, '700'); g.font = font('700', p); text(g, c.toUpperCase(), x0 + m * cw + cw / 2, y + rh / 2 + p * 0.36, 'center', state.ink);
-        });
+    function mk(t, maxW, maxPx, weight, maxLines) { return para(t, maxW, maxPx, function (q) { return font(weight, q); }, maxLines); }
+    function pdraw(p, x, yTop, align, color) {
+      g.font = p.fn(p.px);
+      p.lines.forEach(function (l, n) { text(g, l, x, yTop + p.px * 0.82 + n * p.lh, align, color); });
+      return yTop + p.h;
+    }
+    function dparas(maxW, px) { return det.map(function (l) { return mk(l, maxW, px, '600', 2); }); }
+    function dH(ps, px) { var h = 0; ps.forEach(function (q, i) { h += q.h + (i ? px * 0.3 : 0); }); return h; }
+    function dDraw(ps, x, yTop, align, color, px) { var yy = yTop; ps.forEach(function (q, i) { if (i) yy += px * 0.3; yy = pdraw(q, x, yy, align, color); }); return yy; }
+    function mkFoot(maxW, px) { var ic = footIc(), iw = ic ? px * 1.47 : 0, q = mk(foot, maxW - iw, px, '800', 2); q.ic = ic; q.iw = iw; return q; }
+    // The last line sits on yBottom. The icon (if any) goes before the first line.
+    function footDraw(q, x, yBottom, align, color) {
+      var top = yBottom - q.px * 0.82 - (q.lines.length - 1) * q.lh;
+      q.lines.forEach(function (l, n) {
+        var by = top + q.px * 0.82 + n * q.lh; g.font = q.fn(q.px);
+        if (n === 0 && q.ic) iconText(g, l, x, by, align, color, q.ic, q.px);
+        else text(g, l, q.ic ? (align === 'center' ? x + q.iw / 2 : align === 'left' ? x + q.iw : x) : x, by, align, color);
       });
-      return yTop + det.length * rh;
     }
+    // Ruled boxes for the details (date | time). A "|" splits a line into boxes. A box grows taller when its words wrap.
+    function boxRows(w, px) {
+      var tot = 0, rows = det.map(function (l) {
+        var cells = l.split('|').map(function (c) { return c.trim(); }).filter(Boolean), cw = w / Math.max(1, cells.length), mh = 0;
+        var ps = cells.map(function (c) { var q = mk(c.toUpperCase(), cw - px * 0.7, px, '700', 2); mh = Math.max(mh, q.h); return q; });
+        var rh = Math.max(px * 2.1, mh + px * 0.9); tot += rh; return { ps: ps, cw: cw, h: rh };
+      });
+      return { rows: rows, h: tot };
+    }
+    function boxesDraw(br, x0, yTop, w) {
+      var lw = Math.max(1, S * 0.004), y0 = yTop;
+      g.strokeStyle = state.accent; g.lineWidth = lw;
+      br.rows.forEach(function (r) {
+        g.strokeRect(x0, y0, w, r.h); track(x0, y0, x0 + w, y0 + r.h);
+        r.ps.forEach(function (q, m) {
+          if (m) { g.beginPath(); g.moveTo(x0 + m * r.cw, y0); g.lineTo(x0 + m * r.cw, y0 + r.h); g.stroke(); }
+          pdraw(q, x0 + m * r.cw + r.cw / 2, y0 + (r.h - q.h) / 2, 'center', state.ink);
+        });
+        y0 += r.h;
+      });
+      return y0;
+    }
+    // The oval stamp. Long words wrap onto two lines inside it.
     function badge(cx, cy, w, t) {
-      var rx = w / 2, ry = w * 0.2;
+      var rx = w / 2, ry = w * 0.2, sh = HEADS.shrik, px = ry * 1.05, lines = [t], i;
+      function bad() { return lines.length * px * 1.05 > ry * 1.8 || lines.some(function (l) { return g.measureText(l).width > rx * 1.6; }); }
+      for (i = 0; i < 60; i++) { g.font = hfont(px, sh); lines = wrap(g, t, rx * 1.6); if (!bad()) break; px *= 0.93; }
       track(cx - rx, cy - ry * 1.5, cx + rx, cy + ry * 1.5);
       g.save(); g.translate(cx, cy); g.rotate(-0.13);
       g.strokeStyle = state.ink; g.lineWidth = Math.max(1, S * 0.005);
       g.beginPath(); g.ellipse(0, 0, rx, ry, 0, 0, Math.PI * 2); g.stroke();
-      var sh = HEADS.shrik, px = ry * 1.05; g.font = hfont(px, sh);
-      while (px > 6 && g.measureText(t).width > rx * 1.6) { px *= 0.93; g.font = hfont(px, sh); }
-      var prev = bb; bb = null; text(g, t, 0, px * 0.33, 'center', state.ink); bb = prev;
-      g.restore();
+      g.font = hfont(px, sh);
+      var prev = bb; bb = null;
+      lines.forEach(function (l, n) { text(g, l, 0, (n - (lines.length - 1) / 2) * px * 1.05 + px * 0.33, 'center', state.ink); });
+      bb = prev; g.restore();
+    }
+    // Where the logo goes. Words are kept out of that spot.
+    var L = state.flyerLayout, y, qs, f, pl;
+    var footY = H - P;
+    var lgS = !state.logo ? 0 : (L === 'invite' ? S * 0.13 : L === 'street' ? S * 0.12 : S * 0.17), lgG = S * 0.03;
+    var lgBox = (state.logo && (L === 'stack' || L === 'retro' || (L === 'poster' && !state.pic))) ? { x: W - P - lgS, y: P * 0.6, w: lgS, h: lgS } : null;
+    function nearLogo(top, bot) { return lgBox && top < lgBox.y + lgBox.h + lgG && bot > lgBox.y; }
+    // Headline with one word per line, each as wide as it can be, kept clear of the logo.
+    function stackHead(x, yTop, maxW, maxH) {
+      var words = head.split(/\s+/).filter(Boolean), lines = words;
+      if (words.length > 4) {
+        var tot = head.replace(/\s+/g, ' ').length, tgt = tot / 4, cur = '';
+        lines = []; words.forEach(function (w, i) { cur = cur ? cur + ' ' + w : w; if (cur.length >= tgt && lines.length < 3 && i < words.length - 1) { lines.push(cur); cur = ''; } });
+        if (cur) lines.push(cur);
+      }
+      g.font = hfont(100);
+      var cap = capOf(100), gap = 0.16, wlim = lgBox ? maxW - lgBox.w - lgG : maxW, k = 1, sizes, yy, it;
+      var full = lines.map(function (l) { return Math.min(S * 0.6, maxW / Math.max(1, g.measureText(l).width) * 100); });
+      var lim = lines.map(function (l) { return Math.min(S * 0.6, wlim / Math.max(1, g.measureText(l).width) * 100); });
+      maxH = Math.max(maxH, S * 0.1);
+      for (it = 0; it < 6; it++) {
+        yy = yTop; sizes = [];
+        lines.forEach(function (l, n) {
+          var sz = full[n] * k, top = yy + (n ? sz * cap * gap : 0);
+          if (nearLogo(top, top + sz * cap)) sz = Math.min(sz, lim[n] * k);
+          sizes.push(sz); yy = top + sz * cap;
+        });
+        if (yy - yTop <= maxH + 0.5) break;
+        k *= (maxH / (yy - yTop)) * 0.99;
+      }
+      yy = yTop;
+      lines.forEach(function (l, n) { var sz = sizes[n]; if (n) yy += sz * cap * gap; yy += sz * cap; g.font = hfont(sz); text(g, l, x, yy, 'left', state.ink); });
+      return yy;
     }
 
-    var L = state.flyerLayout, y, qs;
-    var footY = H - P, footRes = foot ? S * 0.07 : 0;
-
     if (L === 'stack') {
-      qs = qr ? S * 0.24 : 0;
-      var dpx = S * 0.042, low = Math.max(qs, listH(dpx)) + footRes + S * 0.04;
-      y = P;
-      if (kick) y = blk('kick', P, y, function () { return line1(kick.toUpperCase(), P, y, CW, S * 0.045, '800', 'left', state.accent); }) + S * 0.015;
-      var subRes = sub ? S * 0.08 : 0;
-      y = blk('head', P, y, function () { return stackHead(P, y, CW, H - P - low - y - subRes); });
-      if (sub) blk('sub', P, y + S * 0.03, function () { return line1(sub, P, y + S * 0.03, CW, S * 0.055, '800', 'left', state.accent); });
-      if (det.length) blk('details', P, footY - footRes - listH(dpx), function () { return list(P, footY - footRes - listH(dpx), CW - qs - S * 0.04, dpx, 'left', state.ink); });
+      for (f = 1; f >= 0.55; f -= 0.075) {
+        pl = (function (f) {
+          var q0 = qr ? S * 0.24 : 0, dw = CW - q0 - (q0 ? S * 0.04 : 0), dpx = S * 0.042 * f, dps = dparas(dw, dpx), dh = dH(dps, dpx);
+          var fp = foot ? mkFoot(dw, S * 0.04 * f) : null, fh = fp ? fp.h : 0;
+          var kp = kick ? mk(kick.toUpperCase(), lgBox ? CW - lgBox.w - lgG : CW, S * 0.045 * f, '800', 2) : null, sp = sub ? mk(sub, CW, S * 0.055 * f, '800', 2) : null;
+          var lowH = Math.max(q0, dh + (fh && dh ? S * 0.012 : 0) + fh), top = P + (kp ? kp.h + S * 0.015 : 0);
+          return { q: q0, dps: dps, dpx: dpx, dh: dh, fp: fp, fh: fh, kp: kp, sp: sp, top: top, room: H - P - lowH - S * 0.04 - top - (sp ? sp.h + S * 0.03 : 0) };
+        })(f);
+        if (pl.room >= S * 0.26) break;
+      }
+      qs = pl.q; y = P;
+      if (pl.kp) y = blk('kick', P, y, function () { return pdraw(pl.kp, P, y, 'left', state.accent); }) + S * 0.015;
+      y = blk('head', P, y, function () { return stackHead(P, y, CW, pl.room); });
+      if (pl.sp) blk('sub', P, y + S * 0.03, function () { return pdraw(pl.sp, P, y + S * 0.03, 'left', state.accent); });
+      var dTop = footY - (pl.fh ? pl.fh + S * 0.012 : 0) - pl.dh;
+      if (det.length) blk('details', P, dTop, function () { return dDraw(pl.dps, P, dTop, 'left', state.ink, pl.dpx); });
       if (qr) blk('qr', W - P - qs, H - P - qs, function () { drawQr(g, W - P - qs, H - P - qs, qs); });
-      if (foot) blk('foot', P, footY, function () { var p = fit(g, foot, CW - qs - S * 0.04, S * 0.04, '800'); g.font = font('800', p); iconText(g, foot, P, footY, 'left', state.accent, footIc(), p); });
+      if (pl.fp) blk('foot', P, footY, function () { footDraw(pl.fp, P, footY, 'left', state.accent); });
 
     } else if (L === 'invite') {
-      y = P + S * 0.01;
-      if (kick) y = blk('kick', W / 2, y, function () { return line1(kick.toUpperCase(), W / 2, y, CW, S * 0.042, '700', 'center', state.accent); }) + S * 0.01;
-      y = blk('head', W / 2, y, function () { return headLines(W / 2, y, CW, S * 0.2, 3, 'center', H * 0.34); }) + S * 0.035;
-      if (sub) y = blk('sub', W / 2, y, function () { return line1(sub.toUpperCase(), W / 2, y, CW, S * 0.045, '800', 'center', state.ink); }) + S * 0.02;
-      var bpx = S * 0.034, boxH = det.length * bpx * 2.1, both = state.pic && qr;
-      qs = both ? Math.max(boxH, S * 0.16) : 0;
-      var boxW = CW - (both ? qs + S * 0.03 : 0), boxTop = footY - footRes - Math.max(boxH, qs);
-      if (det.length) blk('details', P, boxTop, function () { return boxes(P, boxTop, boxW, bpx); });
-      var midT = y + S * 0.02, midB = boxTop - S * 0.04, midH = midB - midT;
+      for (f = 1; f >= 0.55; f -= 0.075) {
+        pl = (function (f) {
+          var bpx = S * 0.034 * f, both = state.pic && qr, q0 = both ? S * 0.17 * f : 0;
+          var bw0 = CW - (both ? q0 + S * 0.03 : 0), br = boxRows(bw0, bpx);
+          var fp = foot ? mkFoot(CW, S * 0.04 * f) : null, fh = fp ? fp.h : 0;
+          var boxTop = footY - (fh ? fh + S * 0.02 : 0) - Math.max(br.h, q0);
+          var y0 = P + S * 0.01 + (lgS ? lgS + S * 0.02 : 0);
+          var kp = kick ? mk(kick.toUpperCase(), CW, S * 0.042 * f, '700', 2) : null, sp = sub ? mk(sub.toUpperCase(), CW, S * 0.045 * f, '800', 2) : null;
+          var yk = y0 + (kp ? kp.h + S * 0.01 : 0), subH = sp ? sp.h + S * 0.04 : 0;
+          var hmax = Math.min(H * 0.34, boxTop - S * 0.12 - yk - subH - S * 0.035);
+          return { br: br, bw: bw0, both: both, q: q0, fp: fp, fh: fh, boxTop: boxTop, y0: y0, kp: kp, sp: sp, hmax: hmax };
+        })(f);
+        if (pl.hmax >= S * 0.1) break;
+      }
+      y = pl.y0; qs = pl.q;
+      if (pl.kp) y = blk('kick', W / 2, y, function () { return pdraw(pl.kp, W / 2, y, 'center', state.accent); }) + S * 0.01;
+      y = blk('head', W / 2, y, function () { return headLines(W / 2, y, CW, S * 0.2, 3, 'center', Math.max(S * 0.08, pl.hmax)); }) + S * 0.035;
+      if (pl.sp) y = blk('sub', W / 2, y, function () { return pdraw(pl.sp, W / 2, y, 'center', state.ink); }) + S * 0.02;
+      if (det.length) blk('details', P, pl.boxTop, function () { return boxesDraw(pl.br, P, pl.boxTop, pl.bw); });
+      var midT = y + S * 0.02, midB = pl.boxTop - S * 0.04, midH = midB - midT;
       if (state.pic && midH > S * 0.1) blk('pic', W / 2, midT, function () { drawPic(g, P + CW * 0.1, midT, CW * 0.8, midH, false); });
       if (qr && !state.pic && midH > S * 0.1) { var q1 = Math.min(midH, S * 0.4); blk('qr', W / 2 - q1 / 2, midT + (midH - q1) / 2, function () { drawQr(g, W / 2 - q1 / 2, midT + (midH - q1) / 2, q1); }); }
-      if (both) blk('qr', W - P - qs, boxTop, function () { drawQr(g, W - P - qs, boxTop, qs); });
-      if (foot) blk('foot', W / 2, footY, function () { var p = fit(g, foot, CW, S * 0.04, '700'); g.font = font('700', p); iconText(g, foot, W / 2, footY, 'center', state.accent, footIc(), p); });
+      if (pl.both) blk('qr', W - P - qs, pl.boxTop, function () { drawQr(g, W - P - qs, pl.boxTop, qs); });
+      if (pl.fp) blk('foot', W / 2, footY, function () { footDraw(pl.fp, W / 2, footY, 'center', state.accent); });
 
     } else if (L === 'retro') {
-      y = P;
-      if (kick) y = blk('kick', P, y, function () { return line1(kick.toUpperCase(), P, y, CW, S * 0.04, '700', 'left', state.accent); }) + S * 0.01;
-      y = blk('head', P, y, function () { return headLines(P, y, CW, S * 0.22, 3, 'left', H * 0.36); }) + S * 0.04;
-      if (sub) y = blk('sub', P, y, function () { var p = S * 0.06; g.font = 'italic 400 ' + Math.round(p) + 'px ' + FONTS.classic; while (p > 6 && g.measureText(sub).width > CW) { p *= 0.93; g.font = 'italic 400 ' + Math.round(p) + 'px ' + FONTS.classic; } text(g, sub, P, y + p * 0.8, 'left', state.ink); return y + p * 1.3; }) + S * 0.01;
-      if (det.length) y = blk('details', P, y, function () { return list(P, y, CW * 0.9, S * 0.036, 'left', state.ink); });
-      var bw = CW * 0.64, bh = bw * 0.4, bcy = H - P - bh / 2;
-      qs = qr ? S * 0.2 : 0;
-      var pT = y + S * 0.04, pB = H - P - Math.max(bh, qs) - S * 0.04;
+      var sfn = function (q) { return 'italic 400 ' + Math.round(q) + 'px ' + FONTS.classic; };
+      for (f = 1; f >= 0.55; f -= 0.075) {
+        pl = (function (f) {
+          var bw0 = CW * 0.64, bh0 = foot ? bw0 * 0.4 : 0, q0 = qr ? S * 0.2 : 0, zone = Math.max(bh0, q0), zoneTop = H - P - zone - (zone ? S * 0.04 : 0);
+          var dpx = S * 0.036 * f, dps = dparas(CW * 0.9, dpx), dh = dH(dps, dpx);
+          var kp = kick ? mk(kick.toUpperCase(), lgBox ? CW - lgBox.w - lgG : CW, S * 0.04 * f, '700', 2) : null;
+          var sp = sub ? para(sub, CW, S * 0.06 * f, sfn, 2) : null;
+          var yk = P + (kp ? kp.h + S * 0.01 : 0);
+          var hmax = Math.min(H * 0.36, zoneTop - yk - S * 0.04 - (sp ? sp.h + S * 0.01 : 0) - (dh ? dh + S * 0.01 : 0));
+          return { bw: bw0, bh: bh0, q: q0, zoneTop: zoneTop, dps: dps, dpx: dpx, dh: dh, kp: kp, sp: sp, hmax: hmax };
+        })(f);
+        if (pl.hmax >= S * 0.1) break;
+      }
+      y = P; qs = pl.q;
+      if (pl.kp) y = blk('kick', P, y, function () { return pdraw(pl.kp, P, y, 'left', state.accent); }) + S * 0.01;
+      y = blk('head', P, y, function () { return headLines(P, y, lgBox && nearLogo(y, y + S * 0.1) ? CW - lgBox.w - lgG : CW, S * 0.22, 3, 'left', Math.max(S * 0.08, pl.hmax)); }) + S * 0.04;
+      if (pl.sp) y = blk('sub', P, y, function () { return pdraw(pl.sp, P, y, 'left', state.ink); }) + S * 0.01;
+      if (det.length) y = blk('details', P, y, function () { return dDraw(pl.dps, P, y, 'left', state.ink, pl.dpx); });
+      var bcy = H - P - pl.bh / 2, pT = y + S * 0.04, pB = pl.zoneTop;
       if (state.pic && pB - pT > S * 0.1) blk('pic', P, pT, function () { drawPic(g, P, pT, CW, pB - pT, true); });
-      if (foot) blk('foot', W - P - bw / 2, bcy, function () { badge(W - P - bw / 2, bcy, bw, foot); });
+      if (foot) blk('foot', W - P - pl.bw / 2, bcy, function () { badge(W - P - pl.bw / 2, bcy, pl.bw, foot); });
       if (qr) blk('qr', P, H - P - qs, function () { drawQr(g, P, H - P - qs, qs); });
 
     } else if (L === 'poster') {
       var ph = state.pic ? H * 0.46 : 0;
+      for (f = 1; f >= 0.55; f -= 0.075) {
+        ph = state.pic ? H * Math.max(0.26, 0.46 - (1 - f) * 0.45) : 0;
+        pl = (function (f) {
+          var q0 = qr ? S * 0.22 : 0, fp = foot ? mkFoot(CW - q0 - (q0 ? S * 0.04 : 0), S * 0.04 * f) : null, fh = fp ? fp.h : 0;
+          var zone = Math.max(q0, fh), zoneTop = H - P - zone - (zone ? S * 0.03 : 0), top0 = state.pic ? ph + S * 0.05 : P;
+          var kp = kick ? mk(kick.toUpperCase(), lgBox ? CW - lgBox.w - lgG : CW, S * 0.045 * f, '800', 2) : null, sp = sub ? mk(sub, CW, S * 0.05 * f, '700', 2) : null;
+          var dpx = S * 0.042 * f, dps = dparas(CW, dpx), dh = dH(dps, dpx);
+          var yk = top0 + (kp ? kp.h + S * 0.01 : 0);
+          var hmax = Math.min(H * (state.pic ? 0.2 : 0.42), zoneTop - yk - S * 0.035 - (sp ? sp.h + S * 0.02 : 0) - (dh ? dh + S * 0.01 : 0));
+          return { q: q0, fp: fp, top0: top0, kp: kp, sp: sp, dps: dps, dpx: dpx, hmax: hmax };
+        })(f);
+        if (pl.hmax >= S * (state.pic ? 0.08 : 0.12)) break;
+      }
       if (state.pic) blk('pic', 0, 0, function () { drawPic(g, 0, 0, W, ph, true); });
-      y = state.pic ? ph + S * 0.05 : P;
-      qs = qr ? S * 0.22 : 0;
-      if (kick) y = blk('kick', P, y, function () { return line1(kick.toUpperCase(), P, y, CW, S * 0.045, '800', 'left', state.accent); }) + S * 0.01;
-      y = blk('head', P, y, function () { return headLines(P, y, CW, S * (state.pic ? 0.15 : 0.26), state.pic ? 2 : 3, 'left', H * (state.pic ? 0.2 : 0.42)); }) + S * 0.035;
-      if (sub) y = blk('sub', P, y, function () { return line1(sub, P, y, CW, S * 0.05, '700', 'left', state.accent); }) + S * 0.02;
-      if (det.length) blk('details', P, y, function () { return list(P, y, CW - qs - S * 0.04, S * 0.042, 'left', state.ink); });
+      y = pl.top0; qs = pl.q;
+      if (pl.kp) y = blk('kick', P, y, function () { return pdraw(pl.kp, P, y, 'left', state.accent); }) + S * 0.01;
+      y = blk('head', P, y, function () { return headLines(P, y, lgBox && nearLogo(y, y + S * 0.1) ? CW - lgBox.w - lgG : CW, S * (state.pic ? 0.15 : 0.26), state.pic ? 2 : 3, 'left', Math.max(S * 0.07, pl.hmax)); }) + S * 0.035;
+      if (pl.sp) y = blk('sub', P, y, function () { return pdraw(pl.sp, P, y, 'left', state.accent); }) + S * 0.02;
+      if (det.length) blk('details', P, y, function () { return dDraw(pl.dps, P, y, 'left', state.ink, pl.dpx); });
       if (qr) blk('qr', W - P - qs, H - P - qs, function () { drawQr(g, W - P - qs, H - P - qs, qs); });
-      if (foot) blk('foot', P, footY, function () { var p = fit(g, foot, CW - qs - S * 0.04, S * 0.04, '800'); g.font = font('800', p); iconText(g, foot, P, footY, 'left', state.accent, footIc(), p); });
+      if (pl.fp) blk('foot', P, footY, function () { footDraw(pl.fp, P, footY, 'left', state.accent); });
 
     } else { // street: word of mouth, scan me
-      y = P * 0.7;
+      // With a logo, the words at the bottom shift to the right of it.
+      var zw = CW - (lgS ? lgS + S * 0.03 : 0), zcx = W - P - zw / 2;
+      var ry0 = P * 0.7, rh = S * 0.1;
+      for (f = 1; f >= 0.55; f -= 0.075) {
+        pl = (function (f) {
+          var kp = kick ? mk(kick.toUpperCase(), W * 0.8, rh * 0.52, '900', 1) : null;
+          var y0 = kick ? ry0 + rh + S * 0.06 : P;
+          var sp = sub ? mk(sub.toUpperCase(), zw, S * 0.05 * f, '900', 2) : null, dpx = S * 0.04 * f, dps = dparas(zw, dpx), dh = dH(dps, dpx);
+          var fp = foot ? mkFoot(zw, S * 0.04 * f) : null, fh = fp ? fp.h : 0;
+          var below = (sp ? sp.h + S * 0.012 : 0) + (dh ? dh + S * 0.01 : 0) + (fh ? fh + S * 0.02 : 0);
+          var hmax = Math.min(H * 0.3, H - P - below - y0 - S * 0.05 - S * 0.03 - ((qr ? S * 0.14 : 0)));
+          return { y0: y0, sp: sp, dps: dps, dpx: dpx, dh: dh, fp: fp, fh: fh, below: below, hmax: hmax };
+        })(f);
+        if (pl.hmax >= S * 0.09) break;
+      }
       if (kick) {
-        var rh = S * 0.1, rcy = y + rh / 2;
+        var rcy = ry0 + rh / 2;
         blk('kick', W / 2, rcy, function () {
           g.save(); g.translate(W / 2, rcy); g.rotate(-0.045);
           g.fillStyle = state.accent; g.fillRect(-W * 0.62, -rh / 2, W * 1.24, rh);
-          var p = fit(g, kick.toUpperCase(), W * 0.8, rh * 0.52, '900'); g.font = font('900', p);
-          var prev = bb; bb = null; text(g, kick.toUpperCase(), 0, p * 0.36, 'center', on(state.accent)); bb = prev;
+          var kq = mk(kick.toUpperCase(), W * 0.8, rh * 0.52, '900', 1); g.font = font('900', kq.px);
+          var prev = bb; bb = null; text(g, kick.toUpperCase(), 0, kq.px * 0.36, 'center', on(state.accent)); bb = prev;
           g.restore(); track(0, rcy - rh * 0.9, W, rcy + rh * 0.9);
         });
-        y += rh + S * 0.06;
-      } else y = P;
-      y = blk('head', W / 2, y, function () { return headLines(W / 2, y, CW, S * 0.2, 3, 'center', H * 0.3); }) + S * 0.05;
-      var spx = S * 0.05, dpx2 = S * 0.04, below = (sub ? spx * 1.6 : 0) + listH(dpx2) + footRes;
-      var avail = H - P - below - y - S * 0.03;
+      }
+      y = pl.y0;
+      y = blk('head', W / 2, y, function () { return headLines(W / 2, y, CW, S * 0.2, 3, 'center', Math.max(S * 0.08, pl.hmax)); }) + S * 0.05;
+      var avail = H - P - pl.below - y - S * 0.03;
       qs = qr ? Math.max(S * 0.14, Math.min(S * 0.42, avail)) : 0;
       if (qr) { var qy = y; blk('qr', W / 2 - qs / 2, qy, function () { drawQr(g, W / 2 - qs / 2, qy, qs); }); y += qs + S * 0.03; }
       else if (state.pic && avail > S * 0.1) { var py = y; blk('pic', W / 2, py, function () { drawPic(g, P, py, CW, avail, true); }); y += avail + S * 0.03; }
-      if (sub) y = blk('sub', W / 2, y, function () { return line1(sub.toUpperCase(), W / 2, y, CW, spx, '900', 'center', state.accent); }) + spx * 0.3;
-      if (det.length) blk('details', W / 2, y, function () { return list(W / 2, y, CW, dpx2, 'center', state.ink); });
-      if (foot) blk('foot', W / 2, footY, function () { var p = fit(g, foot, CW, S * 0.04, '800'); g.font = font('800', p); iconText(g, foot, W / 2, footY, 'center', state.ink, footIc(), p); });
+      if (pl.sp) y = blk('sub', zcx, y, function () { return pdraw(pl.sp, zcx, y, 'center', state.accent); }) + S * 0.012;
+      if (det.length) blk('details', zcx, y, function () { return dDraw(pl.dps, zcx, y, 'center', state.ink, pl.dpx); });
+      if (pl.fp) blk('foot', zcx, footY, function () { footDraw(pl.fp, zcx, footY, 'center', state.ink); });
     }
     if (state.logo) {
-      var ls = S * 0.17, lx = L === 'street' ? P : W - P - ls, ly = L === 'street' ? H - P - ls - (foot ? S * 0.07 : 0) : L === 'poster' && state.pic ? H * 0.46 - ls - S * 0.03 : P * 0.6;
+      var ls = lgS, lx = L === 'street' ? P : L === 'invite' ? W / 2 - ls / 2 : W - P - ls, ly = L === 'street' ? H - P - ls : L === 'invite' ? P * 0.6 : L === 'poster' && state.pic ? ph - ls - S * 0.03 : P * 0.6;
       blk('logo', lx, ly, function () { drawLogo(g, lx, ly, ls, ls); });
     }
   }
@@ -1441,11 +1562,30 @@
   }
 
   // ---------- flyer starters ----------
+  // The "Spread the word" starter brings the NOCIV face and the Free Creative Tools QR cover art with it. Other starters take them back out.
+  var starterArt = { qr: null, logo: null };
+  (function () { var a = new Image(); a.onload = function () { starterArt.qr = a; if (state.starterOn && !state.qrImg) { state.qrImg = a; render(); } }; a.src = '../img/qr-free-tools.png';
+    var b = new Image(); b.onload = function () { starterArt.logo = b; if (state.starterOn && !state.logoRaw) { state.logoRaw = logoFrom(b); state.logoClear = false; state.starterLogo = true; applyLogo(); render(); } }; b.src = '../img/chain-face.png'; })();
+  function setStarterArt(on) {
+    state.starterOn = on;
+    if (on) {
+      state.starterLink = 'https://nociv.co/creator-tools.html';
+      if (!state.qrImg && starterArt.qr) { state.qrImg = starterArt.qr; state.qrOn = true; var qb = $('qrOn'); if (qb) setChip('qrOn', 'on'); }
+      if (!state.logoRaw && starterArt.logo) { state.logoRaw = logoFrom(starterArt.logo); state.logoClear = false; state.starterLogo = true; applyLogo(); }
+      if (state.qrImg === starterArt.qr) { $('qrFrom').hidden = false; $('qrFrom').innerHTML = 'Using the Free Creative Tools QR (goes to <b>nociv.co/creator-tools.html</b>). <button type="button" class="linkish" id="qrDrop">Use a plain one instead</button>'; $('qrFrom').querySelector('#qrDrop').onclick = function () { state.qrImg = null; $('qrFrom').hidden = true; render(); }; }
+    } else {
+      if (state.qrImg && state.qrImg === starterArt.qr) { state.qrImg = null; $('qrFrom').hidden = true; }
+      if (state.starterLogo) { state.logoRaw = null; state.starterLogo = false; applyLogo(); }
+    }
+  }
   function setChip(id, v) { $(id).querySelectorAll('[data-v]').forEach(function (o) { o.setAttribute('aria-pressed', String(o.dataset.v === v)); }); }
   STARTERS.forEach(function (st) {
     var b = document.createElement('button'); b.type = 'button'; b.className = 'chip'; b.textContent = st.n;
     b.onclick = function () {
       Object.keys(st.f).forEach(function (k) { F[k] = st.f[k]; $(k).value = st.f[k]; });
+      if (!st.f.fLink && state.starterLink && F.fLink === state.starterLink) { F.fLink = ''; $('fLink').value = ''; }
+      setStarterArt(!!st.art);
+      if (st.ficon || state.starterIcon) { state.icons.fFoot = st.ficon || 'none'; $('icfFoot').value = state.icons.fFoot; state.starterIcon = !!st.ficon; }
       state.flyerLayout = st.layout; state.head = st.head; state.border = st.border; state.off = {}; state.sel = null;
       state.bg = st.c[0]; state.ink = st.c[1]; state.accent = st.c[2]; $('cBg').value = st.c[0]; $('cInk').value = st.c[1]; $('cAccent').value = st.c[2];
       setChip('headFont', st.head); setChip('border', st.border);
