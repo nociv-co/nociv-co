@@ -899,6 +899,16 @@
             <div class="field-hint">One row per size you're stocking, Small, Medium, Large, whatever fits this item, with how many you've got of each. One listing, one set of photos, one price, every size lives inside it. The shop will show a size dropdown instead of a plain Buy button.</div>
           </div>
 
+          <label style="display:flex; align-items:center; gap:8px; margin-top:10px; cursor:pointer;">
+            <input type="checkbox" id="pMade" style="width:auto; margin:0;">
+            Made to order / preorder (no stock limit, you make it after they buy)
+          </label>
+          <div id="pMadeWrap" style="display:none; margin-top:8px;">
+            <label for="pMadeDays">Ships within how many days?</label>
+            <input type="number" id="pMadeDays" min="1" max="180" value="14" inputmode="numeric">
+            <div class="field-hint">14 days is about 2 weeks. The shop shows the button as Pre-order and tells the customer when it ships. Every order for it lands in the made to order queue under Recent Orders with a due date, so you can make them in order.</div>
+          </div>
+
           <div class="admin-form-row">
             <div>
               <label for="pFulfillment">Fulfillment</label>
@@ -996,6 +1006,7 @@
         <p class="field-hint">
           Online sales pull their cost from the product's own cost, shipping, and fee numbers. In-person Tap to Pay sales show up here automatically too, but they need their cost filled in by hand below since there's no product tied to them, that's the only manual step left.
         </p>
+        <div id="mtoQueue"></div>
         <div id="orderList"></div>
       </div>
     </details>
@@ -1129,6 +1140,21 @@
           <input type="file" id="zineCover" accept="image/*">
           <label for="zineCoverUrl" style="margin-top:10px;">...or paste a link to the cover instead, skip the upload above if you use this</label>
           <input type="text" id="zineCoverUrl" placeholder="https://...">
+          <div style="border:1px dashed #555; padding:10px; margin:12px 0;">
+            <label for="zineSpread">Lulu cover file (optional), the one page with back and front together</label>
+            <input type="file" id="zineSpread" accept="application/pdf,image/*">
+            <p class="field-hint" style="margin:6px 0;">Lulu saves the cover as one wide page, back on the left and front on the right. Add that file here and it is split into a front and a back for you. The front becomes the cover on the card. The back shows after the last page when someone reads the zine online.</p>
+            <details>
+              <summary style="cursor:pointer; font-size:.8rem; opacity:.8;">Spine and edge settings (leave alone for a stapled zine)</summary>
+              <label for="zineSpine" style="margin-top:8px;">Spine width in inches (0 for a stapled zine)</label>
+              <input type="number" id="zineSpine" step="0.01" min="0" value="0">
+              <label for="zineBleed" style="margin-top:8px;">Extra edge to trim in inches (Lulu uses 0.125)</label>
+              <input type="number" id="zineBleed" step="0.005" min="0" value="0.125">
+              <p class="field-hint" style="margin:6px 0 0;">A PDF is split exactly. A picture is split down the middle.</p>
+            </details>
+            <label for="zineBack" style="margin-top:10px;">...or add the back cover on its own (picture)</label>
+            <input type="file" id="zineBack" accept="image/*">
+          </div>
           <label style="margin-top:10px;">PDF parts</label>
           <p class="admin-note" style="display:block; opacity:.7;">One PDF? Fill in one row, leave the part name blank. Multi-part zine? Add a row per part (Part 1, Part 2, Part 3). They all live under one cover in the shop.</p>
           <div id="zinePartRows"></div>
@@ -2182,6 +2208,9 @@
   document.getElementById('addSizeRowBtn').addEventListener('click', () => {
     createSizeRow(document.getElementById('sizeVariantRows'));
   });
+  document.getElementById('pMade').addEventListener('change', (e) => {
+    document.getElementById('pMadeWrap').style.display = e.target.checked ? 'block' : 'none';
+  });
 
   document.getElementById('addProductBtn').onclick = async () => {
     const name = document.getElementById('pName').value.trim();
@@ -2264,7 +2293,9 @@
       printify_product_id,
       stripe_price_id,
       image_url,
-      extra_image_urls
+      extra_image_urls,
+      // Only sent when ticked, so adding products still works before the made to order SQL has run.
+      ...(document.getElementById('pMade').checked ? { made_to_order: true, lead_time_days: Math.max(1, parseInt(document.getElementById('pMadeDays').value) || 14) } : {})
     }]).select().single();
 
     if (error) {
@@ -2303,6 +2334,9 @@
     document.getElementById('sizeVariantWrap').style.display = 'none';
     document.getElementById('pInventoryWrap').style.display = 'block';
     document.getElementById('sizeVariantRows').innerHTML = '';
+    document.getElementById('pMade').checked = false;
+    document.getElementById('pMadeDays').value = 14;
+    document.getElementById('pMadeWrap').style.display = 'none';
     confirmEl.style.display = 'block';
     setTimeout(() => { confirmEl.style.display = 'none'; }, 3000);
     updateAddMarginCalc();
@@ -2408,7 +2442,7 @@
       ${imgHtml}
       <div class="info">
         <div class="name">${escapeAttr(p.name)}</div>
-        <div class="meta">${p.shop} · ${escapeAttr(p.category)} · ${p.status === 'for_sale' ? 'For Sale' : 'Coming Soon'} · ${p.price ? '$' + p.price : 'no price set'} · cost $${p.cost ?? '-'} · stock: ${hasVariants ? variants.map(v => escapeAttr(v.size) + ': ' + v.inventory_count).join(', ') : (p.fulfillment_type === 'printify' ? 'unlimited (Printify)' : (p.inventory_count ?? 'not tracked'))} · ${p.fulfillment_type === 'printify' ? 'Printify ID: ' + (escapeAttr(p.printify_product_id) || 'none set') : 'In-House'}${stripeWarning}${marginBit}</div>
+        <div class="meta">${p.shop} · ${escapeAttr(p.category)} · ${p.status === 'for_sale' ? 'For Sale' : 'Coming Soon'} · ${p.price ? '$' + p.price : 'no price set'} · cost $${p.cost ?? '-'} · stock: ${hasVariants ? variants.map(v => escapeAttr(v.size) + ': ' + v.inventory_count).join(', ') : (p.fulfillment_type === 'printify' ? 'unlimited (Printify)' : (p.inventory_count ?? 'not tracked'))} · ${p.fulfillment_type === 'printify' ? 'Printify ID: ' + (escapeAttr(p.printify_product_id) || 'none set') : 'In-House'}${p.made_to_order ? ' · <strong style="color:var(--gold);">MADE TO ORDER, ships in ' + (p.lead_time_days || 14) + ' days</strong>' : ''}${stripeWarning}${marginBit}</div>
         <div class="votes">${voteCount} votes</div>
         <div class="cross-list-row xlist-only">
           <span class="cross-list-label">Listed on:</span>
@@ -2631,6 +2665,9 @@
     const dupSizeRowsEl = document.getElementById('sizeVariantRows');
     dupSizeRowsEl.innerHTML = '';
     if (hasSizes) variants.forEach(v => createSizeRow(dupSizeRowsEl, v.size, v.inventory_count));
+    document.getElementById('pMade').checked = !!p.made_to_order;
+    document.getElementById('pMadeDays').value = p.lead_time_days || 14;
+    document.getElementById('pMadeWrap').style.display = p.made_to_order ? 'block' : 'none';
     document.getElementById('pFulfillment').value = p.fulfillment_type;
     document.getElementById('pFulfillment').dispatchEvent(new Event('change'));
     document.getElementById('pPrintifyProductId').value = '';
@@ -2677,6 +2714,14 @@
         <div class="edit-inventory-wrap" style="display:${hasSizes ? 'none' : 'block'}; margin-bottom:8px;">
           <label style="font-size:0.75rem; opacity:.7; display:block;">Stock</label>
           <input type="number" class="edit-inventory" value="${p.inventory_count ?? ''}" style="width:100%; padding:6px;">
+        </div>
+        <label style="display:flex; align-items:center; gap:8px; margin-bottom:6px; cursor:pointer;">
+          <input type="checkbox" class="edit-made" style="width:auto; margin:0;" ${p.made_to_order ? 'checked' : ''}>
+          Made to order / preorder
+        </label>
+        <div class="edit-made-wrap" style="display:${p.made_to_order ? 'block' : 'none'}; margin-bottom:8px;">
+          <label style="font-size:0.75rem; opacity:.7; display:block;">Ships within how many days?</label>
+          <input type="number" class="edit-made-days" min="1" max="180" value="${p.lead_time_days || 14}" style="width:100%; padding:6px;">
         </div>
         <label style="display:flex; align-items:center; gap:8px; margin-bottom:6px; cursor:pointer;">
           <input type="checkbox" class="edit-has-sizes" style="width:auto; margin:0;" ${hasSizes ? 'checked' : ''}>
@@ -2850,6 +2895,10 @@
     });
     updateEditMarginCalc();
 
+    row.querySelector('.edit-made').addEventListener('change', (e) => {
+      row.querySelector('.edit-made-wrap').style.display = e.target.checked ? 'block' : 'none';
+    });
+
     row.querySelector('.edit-fulfillment').addEventListener('change', (e) => {
       row.querySelector('.edit-printify-wrap').style.display = e.target.value === 'printify' ? 'block' : 'none';
     });
@@ -2932,6 +2981,12 @@
         fulfillment_type: newFulfillment,
         printify_product_id: newFulfillment === 'printify' ? newPrintifyId : null,
       };
+      // Made to order: only sent once the made to order SQL added the columns (they come back with the product).
+      const madeOn = row.querySelector('.edit-made').checked;
+      if ('made_to_order' in p || madeOn) {
+        updated.made_to_order = madeOn;
+        updated.lead_time_days = Math.max(1, parseInt(row.querySelector('.edit-made-days').value) || 14);
+      }
       // Only sent once the shipping-codes SQL added the column (it comes back with the product).
       if ('ship_weight_oz' in p || row.querySelector('.edit-ship-weight').value) {
         const w = row.querySelector('.edit-ship-weight').value;
@@ -2971,6 +3026,55 @@
     return null;
   }
 
+  // ===== MADE TO ORDER QUEUE =====
+  // Orders with something made to order, oldest due date first. Start making, then
+  // Ready to ship (that takes it out of the queue, then make the label like any order).
+  function fmtDue(d) {
+    const dt = new Date(d + 'T00:00:00');
+    return dt.toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' });
+  }
+  function daysLeft(d) {
+    const t = new Date(); t.setHours(0, 0, 0, 0);
+    return Math.round((new Date(d + 'T00:00:00') - t) / 86400000);
+  }
+  function renderMtoQueue(orders) {
+    const el = document.getElementById('mtoQueue');
+    const open = orders.filter(o => o.made_to_order && o.make_status !== 'ready')
+      .sort((a, b) => String(a.due_date || '9999').localeCompare(String(b.due_date || '9999')));
+    if (!open.length) { el.innerHTML = ''; return; }
+    el.innerHTML = '';
+    const box = document.createElement('div');
+    box.style.cssText = 'border:2px solid var(--gold); padding:12px; margin:0 0 16px;';
+    box.innerHTML = `<h3 style="margin:0 0 4px;">Made to order queue (${open.length})</h3>
+      <p class="field-hint" style="margin:0 0 10px;">Make these in order, top first. Tap Start making when you begin, then Ready to ship when it is done. Change the due date if you need more time.</p>`;
+    open.forEach(o => {
+      const dl = o.due_date ? daysLeft(o.due_date) : null;
+      const color = dl === null ? 'inherit' : (dl < 0 ? 'var(--red)' : (dl <= 3 ? 'var(--gold)' : 'inherit'));
+      const dueTxt = dl === null ? 'no due date' : (dl < 0 ? `${-dl} day${dl === -1 ? '' : 's'} LATE` : (dl === 0 ? 'due TODAY' : `due in ${dl} day${dl === 1 ? '' : 's'}`));
+      const line = document.createElement('div');
+      line.style.cssText = 'border-top:1px solid #333; padding:10px 0; display:flex; flex-wrap:wrap; gap:8px; align-items:center;';
+      line.innerHTML = `
+        <div style="flex:1 1 220px;">
+          <div class="name">${escapeAttr(o.description || o.products?.name || 'Order')}</div>
+          <div class="meta">${escapeAttr(o.customer_email || 'no email')} · ordered ${new Date(o.created_at).toLocaleDateString()}${o.shipping_method === 'pickup' ? ' · <strong style="color:var(--red);">PICKUP</strong>' : ''}</div>
+          <div style="font-weight:700; color:${color};">${o.due_date ? fmtDue(o.due_date) + ', ' : ''}${dueTxt}</div>
+        </div>
+        <input type="date" class="mto-date" value="${o.due_date || ''}" style="padding:6px; width:auto;">
+        <button type="button" class="edit-btn mto-start" ${o.make_status === 'making' ? 'disabled' : ''}>${o.make_status === 'making' ? 'Making now' : 'Start making'}</button>
+        <button type="button" class="edit-btn mto-ready" style="background:var(--gold); color:#1a1a1a; font-weight:700;">Ready to ship</button>`;
+      const save = async (upd) => {
+        const { error } = await supabaseClient.from('orders').update(upd).eq('id', o.id);
+        if (error) { alert('Could not save: ' + error.message + ' (Run the made to order SQL in Supabase if you have not yet.)'); return; }
+        await loadOrders();
+      };
+      line.querySelector('.mto-start').onclick = () => save({ make_status: 'making' });
+      line.querySelector('.mto-ready').onclick = () => save({ make_status: 'ready' });
+      line.querySelector('.mto-date').onchange = (e) => { if (e.target.value) save({ due_date: e.target.value }); };
+      box.appendChild(line);
+    });
+    el.appendChild(box);
+  }
+
   async function loadOrders() {
     const orderListEl = document.getElementById('orderList');
     orderListEl.innerHTML = '<p style="opacity:.5;">Loading...</p>';
@@ -2982,6 +3086,7 @@
 
     if (error || !orders || orders.length === 0) {
       orderListEl.innerHTML = '<p style="opacity:.5;">No orders yet.</p>';
+      document.getElementById('mtoQueue').innerHTML = '';
       document.getElementById('revTotalRevenue').textContent = '$0.00';
       document.getElementById('revTotalCost').textContent = '$0.00';
       document.getElementById('revNetProfit').textContent = '$0.00';
@@ -3008,6 +3113,7 @@
       : '';
 
     orderListEl.innerHTML = '';
+    renderMtoQueue(orders);
     orders.forEach(o => {
       const row = document.createElement('div');
       row.className = 'product-row';
@@ -3015,6 +3121,7 @@
         ? ` · Printify #${escapeAttr(o.printify_order_id)} (${escapeAttr(o.printify_status || 'submitted')})`
         : (o.printify_status === 'failed' ? ' · <span class="missing-flag">PRINTIFY ORDER FAILED, check manually</span>' : '');
       const sourceBit = o.source === 'in_person' ? ' · <strong>In-Person</strong>' : '';
+      const mtoBit = o.made_to_order ? ` · <strong style="color:var(--gold);">MADE TO ORDER${o.make_status === 'ready' ? ', ready' : ''}${o.due_date ? ', due ' + fmtDue(o.due_date) : ''}</strong>` : '';
       const sizeBit = (o.size && !(Array.isArray(o.items) && o.items.length > 1)) ? ` · <strong>Size: ${escapeAttr(o.size)}</strong>` : '';
       const methodBit = o.shipping_method === 'pickup'
         ? ' · <strong style="color:var(--red);">LOCAL PICKUP</strong>'
@@ -3043,7 +3150,7 @@
       row.innerHTML = `
         <div class="info">
           <div class="name">${escapeAttr(name)}</div>
-          <div class="meta">$${o.amount_paid ?? '-'} · ${escapeAttr(o.customer_email || 'no email')} · ${new Date(o.created_at).toLocaleString()}${sizeBit}${sourceBit}${methodBit}${printifyBit}</div>
+          <div class="meta">$${o.amount_paid ?? '-'} · ${escapeAttr(o.customer_email || 'no email')} · ${new Date(o.created_at).toLocaleString()}${sizeBit}${sourceBit}${mtoBit}${methodBit}${printifyBit}</div>
           ${itemsHtml}
           ${costInputHtml}
           <details class="ship-details">
@@ -3741,6 +3848,66 @@
     return supabaseClient.storage.from('zine-files').getPublicUrl(fileName).data.publicUrl;
   }
 
+  // Lulu cover spread -> two pictures. Back is the left half, front is the right half.
+  // A PDF is read at 216 dpi and trimmed by the bleed. Spine sits in the middle.
+  let pdfLibAdminP = null;
+  function loadPdfLibAdmin() {
+    if (window.pdfjsLib) return Promise.resolve(window.pdfjsLib);
+    if (pdfLibAdminP) return pdfLibAdminP;
+    pdfLibAdminP = new Promise((res, rej) => {
+      const sc = document.createElement('script');
+      sc.src = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js';
+      sc.onload = () => {
+        pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
+        res(pdfjsLib);
+      };
+      sc.onerror = () => rej(new Error('Could not load the PDF reader. Check your connection and try again.'));
+      document.head.appendChild(sc);
+    });
+    return pdfLibAdminP;
+  }
+  async function splitCoverSpread(file, spineIn, bleedIn) {
+    const isPdf = file.type === 'application/pdf' || /\.pdf$/i.test(file.name);
+    let src, pxPerIn = 0;
+    if (isPdf) {
+      try {
+        const lib = await loadPdfLibAdmin();
+        const pdf = await lib.getDocument({ data: await file.arrayBuffer() }).promise;
+        const page = await pdf.getPage(1);
+        const scale = 3;
+        const vp = page.getViewport({ scale });
+        src = document.createElement('canvas');
+        src.width = Math.round(vp.width); src.height = Math.round(vp.height);
+        await page.render({ canvasContext: src.getContext('2d'), viewport: vp }).promise;
+        pxPerIn = 72 * scale;
+      } catch (e) {
+        throw new Error('Could not read that PDF (' + (e && e.message ? e.message : 'unknown') + '). Export the cover as a picture (PNG or JPG) and add that instead, it gets split down the middle.');
+      }
+    } else {
+      src = await new Promise((res, rej) => {
+        const img = new Image(), u = URL.createObjectURL(file);
+        img.onload = () => { URL.revokeObjectURL(u); res(img); };
+        img.onerror = () => rej(new Error('Could not read that picture.'));
+        img.src = u;
+      });
+    }
+    const W = src.width || src.naturalWidth, H = src.height || src.naturalHeight;
+    const bleed = Math.max(0, (bleedIn || 0) * pxPerIn), spine = Math.max(0, (spineIn || 0) * pxPerIn);
+    const mid = W / 2;
+    const crop = (x0, x1) => new Promise((res, rej) => {
+      const w = Math.round(x1 - x0), h = Math.round(H - bleed * 2);
+      if (w < 50 || h < 50) return rej(new Error('That cover is too small to split. Check the spine and edge settings.'));
+      const c = document.createElement('canvas'); c.width = w; c.height = h;
+      const ctx = c.getContext('2d'); ctx.fillStyle = '#fff'; ctx.fillRect(0, 0, w, h);
+      ctx.drawImage(src, x0, bleed, x1 - x0, H - bleed * 2, 0, 0, w, h);
+      c.toBlob(b => b ? res(b) : rej(new Error('Could not make the cover picture.')), 'image/jpeg', 0.92);
+    });
+    const back = await crop(bleed, mid - spine / 2);
+    const front = await crop(mid + spine / 2, W - bleed);
+    return { front, back };
+  }
+  const blobFile = (blob, name) => new File([blob], name, { type: 'image/jpeg' });
+
   document.getElementById('addZineBtn').onclick = async () => {
     const title = document.getElementById('zineTitle').value.trim();
     const sub = document.getElementById('zineSub').value.trim() || null;
@@ -3784,18 +3951,34 @@
       cover_url = supabaseClient.storage.from('zine-files').getPublicUrl(coverName).data.publicUrl;
     }
 
+    // Back cover: from a Lulu spread (split into front and back) or a picture on its own.
+    let back_cover_url = null;
+    const spreadFile = document.getElementById('zineSpread').files[0];
+    const backFile = document.getElementById('zineBack').files[0];
+    try {
+      if (spreadFile) {
+        const halves = await splitCoverSpread(spreadFile, parseFloat(document.getElementById('zineSpine').value) || 0, parseFloat(document.getElementById('zineBleed').value) || 0);
+        if (!cover_url) cover_url = await uploadZinePdf(blobFile(halves.front, 'cover-front.jpg'), 'image/jpeg');
+        back_cover_url = await uploadZinePdf(blobFile(halves.back, 'cover-back.jpg'), 'image/jpeg');
+      } else if (backFile) {
+        back_cover_url = await uploadZinePdf(backFile, backFile.type || 'image/jpeg');
+      }
+    } catch (e) { return fail('Cover problem: ' + e.message); }
+
     if (!cover_url) cover_url = (parts.find(pt => pt.cover) || {}).cover || null;
     const { data: maxRows } = await supabaseClient
       .from('zines').select('sort_order').order('sort_order', { ascending: false }).limit(1);
     const nextOrder = (maxRows && maxRows[0] && maxRows[0].sort_order != null) ? maxRows[0].sort_order + 1 : 1;
 
-    const { error } = await supabaseClient.from('zines').insert([{ title, sub, file_url, cover_url, parts, sort_order: nextOrder }]);
-    if (error) return fail('Error saving: ' + error.message);
+    const { error } = await supabaseClient.from('zines').insert([{ title, sub, file_url, cover_url, parts, sort_order: nextOrder, ...(back_cover_url ? { back_cover_url } : {}) }]);
+    if (error) return fail('Error saving: ' + error.message + (back_cover_url ? ' (Run the made to order SQL in Supabase first, it adds the back cover column.)' : ''));
 
     document.getElementById('zineTitle').value = '';
     document.getElementById('zineSub').value = '';
     document.getElementById('zineCover').value = '';
     document.getElementById('zineCoverUrl').value = '';
+    document.getElementById('zineSpread').value = '';
+    document.getElementById('zineBack').value = '';
     document.getElementById('zinePartRows').innerHTML = '';
     addZinePartRow();
     confirmEl.style.display = 'block';
@@ -3878,6 +4061,11 @@
         <button class="edit-btn" data-dir="down" ${idx === zineRows.length - 1 ? 'disabled' : ''}>↓</button>
         <button class="edit-btn" data-act="addpart">+ Part</button>
         <input type="file" accept="application/pdf" class="addpart-file" style="display:none;">
+        <button class="edit-btn" data-act="lulucover">Lulu cover</button>
+        <input type="file" accept="application/pdf,image/*" class="lulucover-file" style="display:none;">
+        <button class="edit-btn" data-act="backcover">${z.back_cover_url ? 'Change back' : '+ Back cover'}</button>
+        <input type="file" accept="image/*" class="backcover-file" style="display:none;">
+        ${z.back_cover_url ? `<img src="${escapeAttr(z.back_cover_url)}" alt="back cover" title="Back cover" style="width:40px; height:40px; object-fit:cover; border:1px solid #555;"><button class="del-btn" data-act="rmback" title="Remove back cover">✕ back</button>` : ''}
         <button class="del-btn" data-id="${z.id}">Delete</button>
         <div class="zine-parts-admin" style="flex-basis:100%; margin-top:8px;"></div>
       `;
@@ -3921,6 +4109,42 @@
           next.push({ label: label.trim() || 'Part ' + (next.length + 1), url });
           if (await saveZineParts(z, next)) await loadZineAdminList();
         } catch (e) { alert('Could not add part: ' + e.message); }
+      });
+      // Back cover: either a Lulu spread (split in two, front replaces the cover) or just a back picture.
+      const lcInput = row.querySelector('.lulucover-file');
+      row.querySelector('[data-act="lulucover"]').addEventListener('click', () => lcInput.click());
+      lcInput.addEventListener('change', async () => {
+        const f = lcInput.files[0];
+        if (!f) return;
+        const spineAns = prompt('Spine width in inches. Type 0 for a stapled zine.', '0');
+        if (spineAns === null) return;
+        const btn = row.querySelector('[data-act="lulucover"]'); btn.disabled = true; btn.textContent = 'Splitting...';
+        try {
+          const halves = await splitCoverSpread(f, parseFloat(spineAns) || 0, 0.125);
+          const front = await uploadZinePdf(blobFile(halves.front, 'cover-front.jpg'), 'image/jpeg');
+          const back = await uploadZinePdf(blobFile(halves.back, 'cover-back.jpg'), 'image/jpeg');
+          const { error } = await supabaseClient.from('zines').update({ cover_url: front, back_cover_url: back }).eq('id', z.id);
+          if (error) throw new Error(error.message + ' (Run the made to order SQL in Supabase first, it adds the back cover column.)');
+          await loadZineAdminList();
+        } catch (e) { alert('Could not use that cover: ' + e.message); btn.disabled = false; btn.textContent = 'Lulu cover'; }
+      });
+      const bcInput = row.querySelector('.backcover-file');
+      row.querySelector('[data-act="backcover"]').addEventListener('click', () => bcInput.click());
+      bcInput.addEventListener('change', async () => {
+        const f = bcInput.files[0];
+        if (!f) return;
+        try {
+          const url = await uploadZinePdf(f, f.type || 'image/jpeg');
+          const { error } = await supabaseClient.from('zines').update({ back_cover_url: url }).eq('id', z.id);
+          if (error) throw new Error(error.message + ' (Run the made to order SQL in Supabase first, it adds the back cover column.)');
+          await loadZineAdminList();
+        } catch (e) { alert('Could not add the back cover: ' + e.message); }
+      });
+      const rmBack = row.querySelector('[data-act="rmback"]');
+      if (rmBack) rmBack.addEventListener('click', async () => {
+        if (!confirm('Remove the back cover?')) return;
+        await supabaseClient.from('zines').update({ back_cover_url: null }).eq('id', z.id);
+        await loadZineAdminList();
       });
       row.querySelector('.del-btn[data-id]').addEventListener('click', async () => {
         if (!confirm('Delete this zine?')) return;
