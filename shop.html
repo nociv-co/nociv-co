@@ -1275,7 +1275,7 @@
     const actionEl = document.getElementById('productModalAction');
     actionEl.innerHTML = '';
     if (p.status === 'for_sale' && isSoldOut) {
-      actionEl.innerHTML = `<button class="card-action voted" disabled>Sold Out</button>`;
+      actionEl.innerHTML = `<button class="card-action voted" disabled>${p.made_to_order ? 'Pre-orders full' : 'Sold Out'}</button>`;
     } else if (p.status === 'for_sale' && hasVariants) {
       const priceLine = document.createElement('div');
       priceLine.className = 'product-modal-price';
@@ -1369,9 +1369,16 @@
     try {
       const ids = (list || []).map(p => p.id);
       if (!ids.length) return list;
-      const { data } = await supabaseClient.from('product_made_to_order').select('id, made_to_order, lead_time_days').in('id', ids);
+      let { data, error } = await supabaseClient.from('product_made_to_order').select('id, made_to_order, lead_time_days, made_to_order_limit, open_count').in('id', ids);
+      if (error) ({ data } = await supabaseClient.from('product_made_to_order').select('id, made_to_order, lead_time_days').in('id', ids));
       const m = Object.fromEntries((data || []).map(r => [r.id, r]));
-      list.forEach(p => { const r = m[p.id]; if (r && r.made_to_order) { p.made_to_order = true; p.lead_time_days = Number(r.lead_time_days) || 14; } });
+      list.forEach(p => {
+        const r = m[p.id];
+        if (r && r.made_to_order) {
+          p.made_to_order = true; p.lead_time_days = Number(r.lead_time_days) || 14;
+          if (r.made_to_order_limit != null) p.mto_left = Math.max(0, Number(r.made_to_order_limit) - (Number(r.open_count) || 0));
+        }
+      });
     } catch (e) {}
     return list;
   }
@@ -1381,7 +1388,7 @@
     return d % 7 === 0 ? 'about ' + (d / 7) + (d === 7 ? ' week' : ' weeks') : 'about ' + d + ' days';
   }
   function maxFor(product, variant) {
-    if (product && product.made_to_order) return MAX_QTY;
+    if (product && product.made_to_order) return product.mto_left != null ? Math.min(MAX_QTY, product.mto_left) : MAX_QTY;
     if (variant) return Math.min(MAX_QTY, Math.max(0, Number(variant.inventory_count) || 0));
     if (product && !POD_TYPES.includes(product.fulfillment_type) && product.inventory_count !== null && product.inventory_count !== undefined) {
       return Math.min(MAX_QTY, Math.max(0, Number(product.inventory_count) || 0));
@@ -1800,7 +1807,7 @@
 
         const variants = variantsByProduct[p.id] || [];
         const hasVariants = variants.length > 0;
-        const isSoldOut = p.made_to_order ? false : (hasVariants
+        const isSoldOut = p.made_to_order ? (p.mto_left === 0) : (hasVariants
           ? variants.every(v => v.inventory_count <= 0)
           : (p.inventory_count !== null && p.inventory_count <= 0));
         const alreadyVoted = votedIds.includes(p.id);
@@ -1812,7 +1819,7 @@
 
         let actionHtml = '';
         if (p.status === 'for_sale' && isSoldOut) {
-          actionHtml = `<button class="card-action voted" disabled>Sold Out</button>`;
+          actionHtml = `<button class="card-action voted" disabled>${p.made_to_order ? 'Pre-orders full' : 'Sold Out'}</button>`;
         } else if (p.status === 'for_sale' && hasVariants) {
           actionHtml = `<button class="card-action buy" data-action="select" data-id="${p.id}">Pick a size</button>`;
         } else if (p.status === 'for_sale') {
@@ -1832,7 +1839,7 @@
             <div class="card-name">${escAttr(p.name)}</div>
             <div class="card-meta">${escAttr(p.category || '')}</div>
             ${p.status === 'for_sale' && p.price ? `<div class="card-price">$${p.price}</div>` : ''}
-            ${p.status === 'for_sale' && p.made_to_order ? `<div class="card-made">Made for you. Ships in ${leadText(p)}.</div>` : ''}
+            ${p.status === 'for_sale' && p.made_to_order ? `<div class="card-made">Made for you. Ships in ${leadText(p)}.${p.mto_left != null && p.mto_left > 0 ? ' ' + p.mto_left + (p.mto_left === 1 ? ' spot left.' : ' spots left.') : ''}</div>` : ''}
             ${actionHtml}
           </div>
         `;

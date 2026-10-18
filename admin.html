@@ -906,6 +906,9 @@
           <div id="pMadeWrap" style="display:none; margin-top:8px;">
             <label for="pMadeDays">Ships within how many days?</label>
             <input type="number" id="pMadeDays" min="1" max="180" value="14" inputmode="numeric">
+            <label for="pMadeLimit" style="margin-top:8px;">Stop taking pre-orders after (optional)</label>
+            <input type="number" id="pMadeLimit" min="1" max="9999" placeholder="No limit" inputmode="numeric">
+            <div class="field-hint">Leave empty for no limit. If you can only make 20 at a time, type 20. The shop shows spots left and says Pre-orders full when the queue hits it. Spots free up when you tap Ready to ship.</div>
             <div class="field-hint">14 days is about 2 weeks. The shop shows the button as Pre-order and tells the customer when it ships. Every order for it lands in the made to order queue under Recent Orders with a due date, so you can make them in order.</div>
           </div>
 
@@ -2295,7 +2298,7 @@
       image_url,
       extra_image_urls,
       // Only sent when ticked, so adding products still works before the made to order SQL has run.
-      ...(document.getElementById('pMade').checked ? { made_to_order: true, lead_time_days: Math.max(1, parseInt(document.getElementById('pMadeDays').value) || 14) } : {})
+      ...(document.getElementById('pMade').checked ? { made_to_order: true, lead_time_days: Math.max(1, parseInt(document.getElementById('pMadeDays').value) || 14), ...(parseInt(document.getElementById('pMadeLimit').value) > 0 ? { made_to_order_limit: parseInt(document.getElementById('pMadeLimit').value) } : {}) } : {})
     }]).select().single();
 
     if (error) {
@@ -2336,6 +2339,7 @@
     document.getElementById('sizeVariantRows').innerHTML = '';
     document.getElementById('pMade').checked = false;
     document.getElementById('pMadeDays').value = 14;
+    document.getElementById('pMadeLimit').value = '';
     document.getElementById('pMadeWrap').style.display = 'none';
     confirmEl.style.display = 'block';
     setTimeout(() => { confirmEl.style.display = 'none'; }, 3000);
@@ -2442,7 +2446,7 @@
       ${imgHtml}
       <div class="info">
         <div class="name">${escapeAttr(p.name)}</div>
-        <div class="meta">${p.shop} · ${escapeAttr(p.category)} · ${p.status === 'for_sale' ? 'For Sale' : 'Coming Soon'} · ${p.price ? '$' + p.price : 'no price set'} · cost $${p.cost ?? '-'} · stock: ${hasVariants ? variants.map(v => escapeAttr(v.size) + ': ' + v.inventory_count).join(', ') : (p.fulfillment_type === 'printify' ? 'unlimited (Printify)' : (p.inventory_count ?? 'not tracked'))} · ${p.fulfillment_type === 'printify' ? 'Printify ID: ' + (escapeAttr(p.printify_product_id) || 'none set') : 'In-House'}${p.made_to_order ? ' · <strong style="color:var(--gold);">MADE TO ORDER, ships in ' + (p.lead_time_days || 14) + ' days</strong>' : ''}${stripeWarning}${marginBit}</div>
+        <div class="meta">${p.shop} · ${escapeAttr(p.category)} · ${p.status === 'for_sale' ? 'For Sale' : 'Coming Soon'} · ${p.price ? '$' + p.price : 'no price set'} · cost $${p.cost ?? '-'} · stock: ${hasVariants ? variants.map(v => escapeAttr(v.size) + ': ' + v.inventory_count).join(', ') : (p.fulfillment_type === 'printify' ? 'unlimited (Printify)' : (p.inventory_count ?? 'not tracked'))} · ${p.fulfillment_type === 'printify' ? 'Printify ID: ' + (escapeAttr(p.printify_product_id) || 'none set') : 'In-House'}${p.made_to_order ? ' · <strong style="color:var(--gold);">MADE TO ORDER, ships in ' + (p.lead_time_days || 14) + ' days' + (p.made_to_order_limit ? ', limit ' + p.made_to_order_limit : '') + '</strong>' : ''}${stripeWarning}${marginBit}</div>
         <div class="votes">${voteCount} votes</div>
         <div class="cross-list-row xlist-only">
           <span class="cross-list-label">Listed on:</span>
@@ -2667,6 +2671,7 @@
     if (hasSizes) variants.forEach(v => createSizeRow(dupSizeRowsEl, v.size, v.inventory_count));
     document.getElementById('pMade').checked = !!p.made_to_order;
     document.getElementById('pMadeDays').value = p.lead_time_days || 14;
+    document.getElementById('pMadeLimit').value = p.made_to_order_limit || '';
     document.getElementById('pMadeWrap').style.display = p.made_to_order ? 'block' : 'none';
     document.getElementById('pFulfillment').value = p.fulfillment_type;
     document.getElementById('pFulfillment').dispatchEvent(new Event('change'));
@@ -2722,6 +2727,8 @@
         <div class="edit-made-wrap" style="display:${p.made_to_order ? 'block' : 'none'}; margin-bottom:8px;">
           <label style="font-size:0.75rem; opacity:.7; display:block;">Ships within how many days?</label>
           <input type="number" class="edit-made-days" min="1" max="180" value="${p.lead_time_days || 14}" style="width:100%; padding:6px;">
+          <label style="font-size:0.75rem; opacity:.7; display:block; margin-top:6px;">Stop taking pre-orders after (empty = no limit)</label>
+          <input type="number" class="edit-made-limit" min="1" max="9999" value="${p.made_to_order_limit || ''}" placeholder="No limit" style="width:100%; padding:6px;">
         </div>
         <label style="display:flex; align-items:center; gap:8px; margin-bottom:6px; cursor:pointer;">
           <input type="checkbox" class="edit-has-sizes" style="width:auto; margin:0;" ${hasSizes ? 'checked' : ''}>
@@ -2986,6 +2993,8 @@
       if ('made_to_order' in p || madeOn) {
         updated.made_to_order = madeOn;
         updated.lead_time_days = Math.max(1, parseInt(row.querySelector('.edit-made-days').value) || 14);
+        const lim = parseInt(row.querySelector('.edit-made-limit').value);
+        if (lim > 0) updated.made_to_order_limit = lim; else if ('made_to_order_limit' in p) updated.made_to_order_limit = null;
       }
       // Only sent once the shipping-codes SQL added the column (it comes back with the product).
       if ('ship_weight_oz' in p || row.querySelector('.edit-ship-weight').value) {
@@ -3046,7 +3055,7 @@
     const box = document.createElement('div');
     box.style.cssText = 'border:2px solid var(--gold); padding:12px; margin:0 0 16px;';
     box.innerHTML = `<h3 style="margin:0 0 4px;">Made to order queue (${open.length})</h3>
-      <p class="field-hint" style="margin:0 0 10px;">Make these in order, top first. Tap Start making when you begin, then Ready to ship when it is done. Change the due date if you need more time.</p>`;
+      <p class="field-hint" style="margin:0 0 10px;">Make these in order, top first. Tap Start making when you begin, then Ready to ship when it is done (the customer gets a \"made\" email if you ticked Update on the orders webhook). Change the due date if you need more time.</p>`;
     open.forEach(o => {
       const dl = o.due_date ? daysLeft(o.due_date) : null;
       const color = dl === null ? 'inherit' : (dl < 0 ? 'var(--red)' : (dl <= 3 ? 'var(--gold)' : 'inherit'));
