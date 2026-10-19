@@ -3048,9 +3048,11 @@
   }
   function renderMtoQueue(orders) {
     const el = document.getElementById('mtoQueue');
-    const open = orders.filter(o => o.made_to_order && o.make_status !== 'ready')
+    const open = orders.filter(o => o.made_to_order && o.make_status !== 'ready' && o.make_status !== 'cancelled')
       .sort((a, b) => String(a.due_date || '9999').localeCompare(String(b.due_date || '9999')));
-    if (!open.length) { el.innerHTML = ''; return; }
+    // Marked ready in the last 30 days: shown small with Undo, in case of a mis-tap.
+    const recent = orders.filter(o => o.made_to_order && o.make_status === 'ready' && (Date.now() - new Date(o.created_at)) < 30 * 86400000).slice(0, 5);
+    if (!open.length && !recent.length) { el.innerHTML = ''; return; }
     el.innerHTML = '';
     const box = document.createElement('div');
     box.style.cssText = 'border:2px solid var(--gold); padding:12px; margin:0 0 16px;';
@@ -3070,17 +3072,42 @@
         </div>
         <input type="date" class="mto-date" value="${o.due_date || ''}" style="padding:6px; width:auto;">
         <button type="button" class="edit-btn mto-start" ${o.make_status === 'making' ? 'disabled' : ''}>${o.make_status === 'making' ? 'Making now' : 'Start making'}</button>
-        <button type="button" class="edit-btn mto-ready" style="background:var(--gold); color:#1a1a1a; font-weight:700;">Ready to ship</button>`;
+        <button type="button" class="edit-btn mto-ready" style="background:var(--gold); color:#1a1a1a; font-weight:700;">Ready to ship</button>
+        <button type="button" class="edit-btn mto-cancel" style="color:var(--red);">Cancel</button>`;
       const save = async (upd) => {
         const { error } = await supabaseClient.from('orders').update(upd).eq('id', o.id);
         if (error) { alert('Could not save: ' + error.message + ' (Run the made to order SQL in Supabase if you have not yet.)'); return; }
         await loadOrders();
       };
       line.querySelector('.mto-start').onclick = () => save({ make_status: 'making' });
-      line.querySelector('.mto-ready').onclick = () => save({ make_status: 'ready' });
+      line.querySelector('.mto-ready').onclick = () => {
+        if (o.customer_email && !confirm('Mark ready to ship? This emails ' + o.customer_email + ' that their order is made.')) return;
+        save({ make_status: 'ready' });
+      };
+      line.querySelector('.mto-cancel').onclick = () => {
+        if (confirm('Cancel this made to order order? It leaves the queue and frees the spot. Refund it in Stripe too (Your Tools has the link).')) save({ make_status: 'cancelled' });
+      };
       line.querySelector('.mto-date').onchange = (e) => { if (e.target.value) save({ due_date: e.target.value }); };
       box.appendChild(line);
     });
+    if (!open.length) box.querySelector('p').textContent = 'Nothing waiting to be made.';
+    if (recent.length) {
+      const rec = document.createElement('div');
+      rec.style.cssText = 'border-top:1px solid #333; padding-top:8px; margin-top:6px;';
+      rec.innerHTML = '<div class="field-hint" style="margin:0 0 6px;">Recently marked ready. Tapped by mistake? Undo puts it back in the queue (the customer email already went).</div>';
+      recent.forEach(o => {
+        const row = document.createElement('div');
+        row.style.cssText = 'display:flex; gap:8px; align-items:center; padding:4px 0;';
+        row.innerHTML = `<div class="meta" style="flex:1;">${escapeAttr(o.description || 'Order')} · ${escapeAttr(o.customer_email || 'no email')}</div><button type="button" class="edit-btn">Undo</button>`;
+        row.querySelector('button').onclick = async () => {
+          const { error } = await supabaseClient.from('orders').update({ make_status: 'making' }).eq('id', o.id);
+          if (error) { alert('Could not save: ' + error.message); return; }
+          await loadOrders();
+        };
+        rec.appendChild(row);
+      });
+      box.appendChild(rec);
+    }
     el.appendChild(box);
   }
 
@@ -3130,7 +3157,7 @@
         ? ` · Printify #${escapeAttr(o.printify_order_id)} (${escapeAttr(o.printify_status || 'submitted')})`
         : (o.printify_status === 'failed' ? ' · <span class="missing-flag">PRINTIFY ORDER FAILED, check manually</span>' : '');
       const sourceBit = o.source === 'in_person' ? ' · <strong>In-Person</strong>' : '';
-      const mtoBit = o.made_to_order ? ` · <strong style="color:var(--gold);">MADE TO ORDER${o.make_status === 'ready' ? ', ready' : ''}${o.due_date ? ', due ' + fmtDue(o.due_date) : ''}</strong>` : '';
+      const mtoBit = o.made_to_order ? ` · <strong style="color:var(--gold);">MADE TO ORDER${o.make_status === 'ready' ? ', ready' : (o.make_status === 'cancelled' ? ', cancelled' : '')}${o.due_date ? ', due ' + fmtDue(o.due_date) : ''}</strong>` : '';
       const sizeBit = (o.size && !(Array.isArray(o.items) && o.items.length > 1)) ? ` · <strong>Size: ${escapeAttr(o.size)}</strong>` : '';
       const methodBit = o.shipping_method === 'pickup'
         ? ' · <strong style="color:var(--red);">LOCAL PICKUP</strong>'
