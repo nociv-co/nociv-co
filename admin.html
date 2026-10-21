@@ -412,6 +412,7 @@
       <a href="#sec-goals">Goals</a>
       <a href="#sec-cheatsheet">Pricing Cheat Sheet</a>
       <a href="#sec-products">Products</a>
+      <a href="#sec-pins">Pins</a>
       <a href="#sec-crosslist"><span class="xlist-only">Cross-Listing</span><span class="xlist-off-only">Outside Sales</span></a>
       <a href="#sec-orders">Orders</a>
       <a href="#sec-expenses">Expenses</a>
@@ -964,6 +965,58 @@
       </div>
     </details>
 
+    <details class="admin-section" id="sec-pins">
+      <summary>Pin &amp; Button Sheets <span class="admin-section-hint">print sheets for your button maker, pin mockups, add to stock</span></summary>
+      <div class="admin-section-body">
+        <div class="how-to-box">
+          <strong>What this is for</strong>
+          Upload your pin art, pick how many rows of each, and get print-ready sheets sized for your button maker. Each pin also gets a clean mockup picture for the shop. After you press them, add the count to your stock in one tap.
+        </div>
+        <div class="admin-form">
+          <h3 style="margin-top:0;">1. Your button maker</h3>
+          <label for="pinMachine">Machine</label>
+          <select id="pinMachine">
+            <option value="vevor32">VEVOR 1.25 in (32 mm) quick change</option>
+            <option value="custom">Something else (type the sizes)</option>
+          </select>
+          <p class="field-hint" id="pinMachineNote"></p>
+          <div class="admin-form-row">
+            <div><label for="pinFinish">Finished button (in)</label><input type="number" id="pinFinish" step="0.01" value="1.25" inputmode="decimal"></div>
+            <div><label for="pinCut">Paper circle (in)</label><input type="number" id="pinCut" step="0.01" value="1.73" inputmode="decimal"></div>
+          </div>
+          <div class="admin-form-row">
+            <div><label for="pinMargin">Side space (in)</label><input type="number" id="pinMargin" step="0.05" value="0.2" inputmode="decimal"></div>
+            <div><label for="pinGap">Space between (in)</label><input type="number" id="pinGap" step="0.01" value="0.03" inputmode="decimal"></div>
+          </div>
+          <div class="admin-form-row">
+            <div><label for="pinPaper">Paper</label><select id="pinPaper"><option value="letter">Letter 8.5 x 11</option><option value="a4">A4</option></select></div>
+            <div><label for="pinBg">Behind see-through art</label><input type="color" id="pinBg" value="#ffffff"></div>
+          </div>
+          <label style="display:flex; align-items:center; gap:8px; cursor:pointer;"><input type="checkbox" id="pinOutline" checked style="width:auto; margin:0;"> Thin cut outline just outside each circle (gets cut off with the circle)</label>
+          <p class="field-hint" id="pinFit"></p>
+
+          <h3>2. Your art</h3>
+          <input type="file" id="pinFile" accept="image/*" multiple style="display:none;">
+          <label for="pinFile" class="admin-submit" style="display:block; text-align:center; cursor:pointer;">Add pin art (one or several)</label>
+          <div id="pinDesigns"></div>
+          <button type="button" class="edit-btn" id="pinEven" style="margin-top:8px;">Split evenly across the sheet</button>
+          <p class="admin-note" id="pinSummary" style="display:block;"></p>
+          <div id="pinPreviewWrap" hidden>
+            <div class="field-hint">Preview. The red dashes are the visible face of the pin, keep words inside them. Grey circles are empty spots.</div>
+            <canvas id="pinPreview" style="border:1px solid #444; background:#fff; display:block;"></canvas>
+            <div id="pinPages" style="display:flex; gap:6px; flex-wrap:wrap; margin-top:6px;"></div>
+          </div>
+          <button type="button" class="admin-submit" id="pinMakePdf" style="margin-top:10px;" disabled>Make print sheets (PDF)</button>
+          <div id="pinFiles"></div>
+
+          <h3>3. After you press them</h3>
+          <div id="pinStock"></div>
+          <h4 style="margin:16px 0 4px;">Recently added to stock</h4>
+          <div id="pinLog"></div>
+        </div>
+      </div>
+    </details>
+
     <details class="admin-section" id="sec-crosslist">
       <summary>
         <span class="xlist-only">Cross-Listing &amp; External Sales <span class="admin-section-hint">Vinted, Depop, in-person, all in one place</span></span>
@@ -1352,6 +1405,8 @@
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script src="supabase.js"></script>
+<script src="crop.js"></script>
+<script src="pin-sheets.js"></script>
 <script>
   const loginBox = document.getElementById('loginBox');
   const dashboard = document.getElementById('dashboard');
