@@ -239,9 +239,12 @@
       <h2 id="h4"><b>4</b> Save it</h2>
         <div class="actions">
           <button type="button" class="btn main" id="save" disabled>Save Image</button>
+          <button type="button" class="btn alt" id="shareBtn" disabled>Share what you made</button>
           <a class="btn alt" id="download" href="#" download="qr-code.png" aria-disabled="true">Download PNG</a>
           <a class="btn alt" id="toCard" href="../card/" target="_top">Put it on a card or flyer &rarr;</a>
         </div>
+        <label class="tip" style="display:flex;gap:10px;align-items:center;font-weight:700"><input type="checkbox" id="shareMark" checked style="width:22px;height:22px"> Add "Made with nociv.co" and the link when I share</label>
+        <p class="tip" id="shareMsg" aria-live="polite" style="margin-top:4px"></p>
         <p class="tip"><b>Test it:</b> open your camera and point it at the screen. <b>Printing:</b> stays sharp up to about 5 inches across. Don't go smaller than about 1 inch, or phones struggle.</p>
     </section>
   </div>
@@ -620,7 +623,7 @@
     if (!state.link) {
       preview.hidden = true; $('empty').hidden = false;
       $('meta').textContent = ''; $('check').textContent = '';
-      $('save').disabled = true; $('download').setAttribute('aria-disabled', 'true');
+      $('save').disabled = true; $('shareBtn').disabled = true; $('download').setAttribute('aria-disabled', 'true');
       return;
     }
     var qr;
@@ -628,13 +631,13 @@
     catch (e) {
       preview.hidden = true; $('empty').hidden = false;
       $('empty').textContent = e.message === 'TOO_LONG' ? 'That link is too long for one QR code. Use a shorter link.' : 'Something went wrong drawing that one.';
-      $('save').disabled = true; return;
+      $('save').disabled = true; $('shareBtn').disabled = true; return;
     }
     preview.hidden = false; $('empty').hidden = true; $('empty').textContent = 'Type a link and your code shows up here.';
     var busy = qr.version >= 10;
     $('meta').textContent = (busy ? 'Long link, so the code is busy. A shorter link scans easier from far away. ' : '') +
       (state.img ? 'Extra strong code, so the picture fits.' : '');
-    $('save').disabled = false; $('download').removeAttribute('aria-disabled');
+    $('save').disabled = false; $('shareBtn').disabled = false; $('download').removeAttribute('aria-disabled');
     selfCheck(token);
   }
 
@@ -698,6 +701,28 @@
       $('download').click();
     });
   });
+  // Share what you made: phone share sheet with the QR code, optional "Made with nociv.co" line. Falls back to a download and a copied link.
+  (function () {
+    var KEY = 'nocivShareMark', mk = $('shareMark'), msg = $('shareMsg');
+    try { if (localStorage.getItem(KEY) === '0') mk.checked = false; } catch (e) {}
+    mk.addEventListener('change', function () { try { localStorage.setItem(KEY, mk.checked ? '1' : '0'); } catch (e) {} });
+    $('shareBtn').addEventListener('click', async function () {
+      if (!state.link) return;
+      var btn = this; btn.disabled = true; msg.textContent = 'Getting it ready...';
+      try {
+        var blob = await exportBlob(), file = new File([blob], fileName(), { type: 'image/png' }), text = 'Made with nociv.co https://nociv.co';
+        var data = { files: [file] }; if (mk.checked) data.text = text;
+        if (navigator.canShare && navigator.canShare(data)) { await navigator.share(data).catch(function () {}); msg.textContent = ''; }
+        else if (navigator.canShare && navigator.canShare({ files: [file] })) { await navigator.share({ files: [file] }).catch(function () {}); msg.textContent = ''; }
+        else {
+          var u = URL.createObjectURL(blob), a = document.createElement('a'); a.href = u; a.download = fileName(); document.body.appendChild(a); a.click(); a.remove(); setTimeout(function () { URL.revokeObjectURL(u); }, 4000);
+          var copied = false; if (mk.checked) { try { await navigator.clipboard.writeText(text); copied = true; } catch (e) {} }
+          msg.textContent = 'Saved your picture.' + (copied ? ' The link is copied, paste it where you share.' : '');
+        }
+      } catch (e) { msg.textContent = 'That did not work. Try Save Image instead.'; }
+      btn.disabled = false;
+    });
+  })();
   restore();
 })();
 </script>

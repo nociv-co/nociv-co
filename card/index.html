@@ -369,6 +369,13 @@
       <p class="working" id="working" hidden>Making it...</p>
       <div class="files" id="files"></div>
       <p class="meta">When you print a sheet, pick <b>Actual size</b> or <b>100%</b> in the print settings, not "Fit", or the cards come out the wrong size.</p>
+      <div class="dirbox" id="shareBox">
+        <div class="dirhead"><b>SHARE</b>Share what you made</div>
+        <p class="meta" style="margin-top:6px">Send it to a friend or post it anywhere. No hashtags, no tracking.</p>
+        <label class="meta" style="display:flex;gap:10px;align-items:center;font-weight:700;margin:10px 0"><input type="checkbox" id="shareMark" checked style="width:22px;height:22px"> Add "Made with nociv.co" and the link</label>
+        <button type="button" class="btn" id="shareBtn" style="width:100%">Share it</button>
+        <p class="meta" id="shareMsg" aria-live="polite"></p>
+      </div>
       <div class="dirbox" id="vpBox">
         <div class="dirhead"><b>PRO</b>Get them printed at Vistaprint</div>
         <p class="meta" style="margin-top:6px">No printer, or want thick, clean cut cards? Vistaprint prints them cheap and mails them to you. Starts around 50 cards for $10. Printing the back costs a little extra. Prices change, check at checkout.</p>
@@ -1558,6 +1565,29 @@
     var a = document.createElement('a'); a.href = f.url; a.download = f.name; document.body.appendChild(a); a.click(); a.remove();
   }
 
+  // Share what you made: phone share sheet with the picture, optional "Made with nociv.co" line. Falls back to a download and a copied link.
+  (function () {
+    var KEY = 'nocivShareMark', mk = $('shareMark'), msg = $('shareMsg');
+    try { if (localStorage.getItem(KEY) === '0') mk.checked = false; } catch (e) {}
+    mk.addEventListener('change', function () { try { localStorage.setItem(KEY, mk.checked ? '1' : '0'); } catch (e) {} });
+    $('shareBtn').addEventListener('click', async function () {
+      var btn = this; btn.disabled = true; msg.textContent = 'Getting it ready...';
+      try {
+        await fontsReady;
+        var p = state.kind === 'card' ? pieceIn() : [8.5, 11], c = pieceCanvas(p[0], p[1], state.kind === 'card' ? 300 : 150, 0), blob = await toBlob(c, 'image/png'); c.width = c.height = 0;
+        var name = 'nociv-' + state.kind + '-' + slug() + '.png', file = new File([blob], name, { type: 'image/png' }), text = 'Made with nociv.co https://nociv.co';
+        var data = { files: [file] }; if (mk.checked) data.text = text;
+        if (navigator.canShare && navigator.canShare(data)) { await navigator.share(data).catch(function () {}); msg.textContent = ''; }
+        else if (navigator.canShare && navigator.canShare({ files: [file] })) { await navigator.share({ files: [file] }).catch(function () {}); msg.textContent = ''; }
+        else {
+          var u = URL.createObjectURL(blob), a = document.createElement('a'); a.href = u; a.download = name; document.body.appendChild(a); a.click(); a.remove(); setTimeout(function () { URL.revokeObjectURL(u); }, 4000);
+          var copied = false; if (mk.checked) { try { await navigator.clipboard.writeText(text); copied = true; } catch (e) {} }
+          msg.textContent = 'Saved your picture.' + (copied ? ' The link is copied, paste it where you share.' : '');
+        }
+      } catch (e) { msg.textContent = 'That did not work. Try Make my file instead.'; }
+      btn.disabled = false;
+    });
+  })();
   // ---------- flyer starters ----------
   // The "Spread the word" starter brings the NOCIV face and the Free Creative Tools QR cover art with it. Other starters take them back out.
   var starterArt = { qr: null, logo: null };
