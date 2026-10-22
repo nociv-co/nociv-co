@@ -100,7 +100,6 @@
   @font-face { font-family: 'NocivBungee'; src: url('fonts/bungee.woff') format('woff'); font-display: swap; }
   @font-face { font-family: 'NocivShrik'; src: url('fonts/shrikhand.woff') format('woff'); font-display: swap; }
   @font-face { font-family: 'NocivAbril'; src: url('fonts/abrilfatface.woff') format('woff'); font-display: swap; }
-  @font-face { font-family: 'NocivRye'; src: url('fonts/rye.woff') format('woff'); font-display: swap; }
   /* ===== NOCIV tool shell: step tabs, page zoom lock, big locked artboard ===== */
   html { touch-action: pan-x pan-y; }
   .steps { display: flex; gap: 6px; overflow-x: auto; scrollbar-width: none; padding: 10px 0 2px; }
@@ -281,7 +280,6 @@
           <button type="button" class="chip" data-v="bungee" aria-pressed="false" style="font-family:NocivBungee,sans-serif;font-weight:400;">BLOCK</button>
           <button type="button" class="chip" data-v="shrik" aria-pressed="false" style="font-family:NocivShrik,serif;font-weight:400;">Retro</button>
           <button type="button" class="chip" data-v="abril" aria-pressed="false" style="font-family:NocivAbril,serif;font-weight:400;">FANCY</button>
-          <button type="button" class="chip" data-v="rye" aria-pressed="false" style="font-family:NocivRye,serif;font-weight:400;">WESTERN</button>
           <button type="button" class="chip" data-v="plain" aria-pressed="false">PLAIN</button>
         </div>
         <label class="lbl">Border</label>
@@ -529,7 +527,6 @@
     bungee: { name: 'Block', css: 'NocivBungee', up: true },
     shrik: { name: 'Retro script', css: 'NocivShrik', up: false },
     abril: { name: 'Fancy', css: 'NocivAbril', up: true },
-    rye: { name: 'Western', css: 'NocivRye', up: true },
     plain: { name: 'Plain', css: FONTS.bold, w: '900', up: true }
   };
   var BLOCK_NAMES = { logo: 'Logo', kick: 'Top line', head: 'Headline', sub: 'Small line', details: 'Details', foot: 'Bottom line', qr: 'QR code', pic: 'Photo' };
@@ -541,12 +538,12 @@
       f: { fKick: 'This Saturday', fHead: 'Pop Up Shop', fSub: 'One of one pieces, made by hand', fDetails: 'Saturday, 8am to noon\nDowntown farmers market\nCash, card, Tap to Pay', fFoot: 'yourshop.com' } },
     { n: 'Spread the word', layout: 'stack', head: 'anton', border: 'none', c: ['#f2ecd6', '#111111', '#c8412f'], art: true, ficon: 'web',
       f: { fKick: 'We are all creators.', fHead: 'Make art not content.', fSub: 'Make a Zine, Flyer, QR code, or Garment', fDetails: 'Free to use. No signup, ads, algorithms or paywall. Just being human.', fFoot: 'nociv.co', fLink: 'https://nociv.co/creator-tools.html' } },
-    { n: 'Block party', layout: 'invite', head: 'abril', border: 'double', c: ['#1d2b64', '#f6efe0', '#f2994a'],
+    { n: 'Block party', layout: 'poster', head: 'bagel', border: 'none', c: ['#cfe59a', '#3d4a26', '#e8701a'],
       f: { fKick: 'Come through', fHead: 'Block Party', fSub: 'Food, music, neighbors', fDetails: 'Saturday, June 11 | 4pm till dark\nCorner of 5th and Main', fFoot: 'Bring a chair and a friend' } },
     { n: 'Now open', layout: 'retro', head: 'bagel', border: 'none', c: ['#d9643a', '#fff3e2', '#2a1a12'],
       f: { fKick: 'Hey neighbor', fHead: 'Now Open', fSub: 'come say hi, stay a while', fDetails: 'Fresh pieces every Saturday\n9am to 2pm, downtown', fFoot: 'Your Shop' } }
   ];
-  var COMBOS = [['#111111', '#f2ecd6', '#c8412f'], ['#f2ecd6', '#1a1a1a', '#c8412f'], ['#ffffff', '#111111', '#2f7a4b'], ['#c8412f', '#ffffff', '#111111'], ['#d7ff39', '#111111', '#111111'], ['#1d2b64', '#ffffff', '#f8b500'], ['#ec6a2c', '#111111', '#ffffff'], ['#000000', '#ffffff', '#ff4fb4']];
+  var COMBOS = [['#111111', '#f2ecd6', '#c8412f'], ['#f2ecd6', '#1a1a1a', '#c8412f'], ['#ffffff', '#111111', '#2f7a4b'], ['#c8412f', '#ffffff', '#111111'], ['#d7ff39', '#111111', '#111111'], ['#cfe59a', '#3d4a26', '#e8701a'], ['#ec6a2c', '#111111', '#ffffff'], ['#000000', '#ffffff', '#ff4fb4'], ['#3d4a26', '#f6efe0', '#cfe59a'], ['#f6efe0', '#3d4a26', '#e8701a']];
 
   var state = {
     back: { on: true, layout: 'role', colors: 'flip', font: 'anton', credit: true }, side: 'front',
@@ -929,7 +926,7 @@
 
   function drawFlyer(g, W, H, opt) {
     opt = opt || {};
-    var S = Math.min(W, H), hd = HEADS[state.head], qr = hasQr(), hits = opt.hits;
+    var S = Math.min(W, H), hd = HEADS[state.head] || HEADS.anton, qr = hasQr(), hits = opt.hits;
     var P = S * 0.07 + (state.border === 'ticks' ? S * 0.07 : state.border !== 'none' ? S * 0.03 : 0), CW = W - P * 2;
     var kick = (F.fKick || '').trim(), head = (F.fHead || '').trim() || 'Your headline', sub = (F.fSub || '').trim(), foot = (F.fFoot || '').trim();
     if (hd.up) head = head.toUpperCase();
