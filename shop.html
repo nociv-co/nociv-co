@@ -164,6 +164,9 @@
   .catalog-card .card-name { font-weight: 900; font-size: 0.92rem; line-height: 1.25; cursor: pointer; text-transform: uppercase; letter-spacing: 0.02em; }
   .catalog-card .card-meta { font-size: 0.7rem; opacity: .5; margin: 3px 0 8px; text-transform: uppercase; letter-spacing: 0.08em; }
   .catalog-card .card-price { font-size: 1.05rem; font-weight: 900; margin-bottom: 10px; }
+  .catalog-card .card-price s, .product-modal-price s { font-weight: 400; opacity: .5; margin-right: 6px; }
+  .sale-tag { display: inline-block; background: #c8412f; color: #fff; font-size: .62rem; font-weight: 900; letter-spacing: .08em; padding: 2px 6px; margin-left: 6px; vertical-align: middle; }
+  .free-ship-bar { background: #1d1c1a; color: #fff; text-align: center; font-weight: 900; letter-spacing: .06em; text-transform: uppercase; font-size: .8rem; padding: 9px 14px; }
   .catalog-card .card-price small { font-size: 0.65rem; font-weight: 400; opacity: .55; letter-spacing: 0.06em; text-transform: uppercase; margin-left: 4px; }
   /* Status tag sits on the photo corner instead of eating a row of the card */
   .catalog-card .card-badge {
@@ -478,6 +481,7 @@
   <button data-panel="zinesPanel">Zines</button>
 </nav>
 
+<div class="free-ship-bar" id="freeShipBar" role="status" hidden></div>
 <div class="shop-banner" id="shopBanner" role="status" hidden>
   <button type="button" id="shopBannerClose" aria-label="Close">&times;</button>
   <b id="shopBannerTitle"></b>
@@ -1279,7 +1283,7 @@
     } else if (p.status === 'for_sale' && hasVariants) {
       const priceLine = document.createElement('div');
       priceLine.className = 'product-modal-price';
-      priceLine.textContent = p.price ? '$' + p.price : 'Price TBD';
+      if (p.price) priceLine.innerHTML = priceHtml(p); else priceLine.textContent = 'Price TBD';
       actionEl.appendChild(priceLine);
       if (p.made_to_order) { const ml = document.createElement('div'); ml.className = 'product-modal-made'; ml.textContent = 'Made to order. We make it after you order, so it ships in ' + leadText(p) + '.'; actionEl.appendChild(ml); }
 
@@ -1305,7 +1309,7 @@
     } else if (p.status === 'for_sale') {
       const priceLine = document.createElement('div');
       priceLine.className = 'product-modal-price';
-      priceLine.textContent = p.price ? '$' + p.price : 'Price TBD';
+      if (p.price) priceLine.innerHTML = priceHtml(p); else priceLine.textContent = 'Price TBD';
       actionEl.appendChild(priceLine);
       if (p.made_to_order) { const ml = document.createElement('div'); ml.className = 'product-modal-made'; ml.textContent = 'Made to order. We make it after you order, so it ships in ' + leadText(p) + '.'; actionEl.appendChild(ml); }
       const btn = document.createElement('button');
@@ -1382,6 +1386,18 @@
     } catch (e) {}
     return list;
   }
+  // Sale price: the old price comes from a small public view (product_sale_info). If the SQL has not run, nothing changes.
+  async function addSale(list) {
+    try {
+      const ids = (list || []).map(p => p.id);
+      if (!ids.length) return list;
+      const { data } = await supabaseClient.from('product_sale_info').select('id, compare_at_price').in('id', ids);
+      const m = Object.fromEntries((data || []).map(r => [r.id, Number(r.compare_at_price)]));
+      list.forEach(p => { const was = m[p.id]; if (was && Number(p.price) > 0 && was > Number(p.price)) p.was_price = was; });
+    } catch (e) {}
+    return list;
+  }
+  function priceHtml(p) { return (p.was_price ? '<s>$' + p.was_price + '</s>' : '') + '$' + p.price + (p.was_price ? '<span class="sale-tag">SALE</span>' : ''); }
   function leadText(p) {
     const d = Number(p && p.lead_time_days) || 14;
     if (d === 1) return '1 day';
@@ -1451,10 +1467,19 @@
       rates: parseRates(m.shipping_rates),
       packaging: num(m.packaging_oz) ?? 1,
       freeOver: num(m.free_shipping_over),
+      freeAll: String(m.free_shipping_all ?? 'false').toLowerCase() === 'true',
+      freeNote: (m.free_shipping_note || 'Free shipping on every order.').slice(0, 80),
       pickup: String(m.pickup_enabled ?? 'true').toLowerCase() === 'true',
       pickupLabel: m.pickup_label || 'Local pickup, Phoenix',
     };
     return bagShipping;
+  }
+
+  async function showFreeShipBar() {
+    try {
+      const ship = await loadShippingSettings(), bar = document.getElementById('freeShipBar');
+      if (ship.freeAll) { bar.textContent = ship.freeNote; bar.hidden = false; } else bar.hidden = true;
+    } catch (e) {}
   }
 
   // ===== SALE CODES: typed in the bag, or from a shared link (shop.html?code=XXXX) =====
@@ -1583,7 +1608,7 @@
     const code = readCode();
     const shipCost = ship.byWeight ? rateFor(oz, ship.rates) : ship.flat;
     const codeFree = code && code.kind === 'free_shipping';
-    const free = codeFree || (ship.freeOver !== null && ship.freeOver > 0 && subtotal >= ship.freeOver);
+    const free = codeFree || ship.freeAll || (ship.freeOver !== null && ship.freeOver > 0 && subtotal >= ship.freeOver);
     const shipText = free ? 'Free' : '$' + shipCost.toFixed(2);
     const toFree = (!free && ship.freeOver) ? ship.freeOver - subtotal : 0;
     const belowMin = code && code.min && subtotal < code.min;
@@ -1768,6 +1793,8 @@
       }
 
       await addMto(allProducts);
+      await addSale(allProducts);
+      showFreeShipBar();
 
       // Sizes live in their own table: one fetch for every product on this
       // page, grouped client-side, instead of a query per card.
@@ -1838,7 +1865,7 @@
           <div class="card-body">
             <div class="card-name">${escAttr(p.name)}</div>
             <div class="card-meta">${escAttr(p.category || '')}</div>
-            ${p.status === 'for_sale' && p.price ? `<div class="card-price">$${p.price}</div>` : ''}
+            ${p.status === 'for_sale' && p.price ? `<div class="card-price">${priceHtml(p)}</div>` : ''}
             ${p.status === 'for_sale' && p.made_to_order ? `<div class="card-made">Made for you. Ships in ${leadText(p)}.${p.mto_left != null && p.mto_left > 0 ? ' ' + p.mto_left + (p.mto_left === 1 ? ' spot left.' : ' spots left.') : ''}</div>` : ''}
             ${actionHtml}
           </div>

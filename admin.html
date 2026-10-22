@@ -504,6 +504,14 @@
           What shipping costs the customer. By weight (recommended): checkout adds up the packed weight of everything in the bag (each product's weight in Products, plus the poly mailer) and charges the price from this table. Tanks and tees (up to 8 oz packed) ship for $3.50: a real label is about $5.50 to $6.40, the rest comes out of the item price, so price those items about $2 to $3 higher than you would with free shipping. Compare with a few real Shippo quotes and adjust. Leave Free Shipping Over blank if you never want free shipping. Local pickup off means the bag says "Local pickup: coming soon". Changes apply to the next checkout, nothing to redeploy.
         </div>
         <div class="admin-form">
+          <div style="border:2px solid var(--gold); padding:12px; margin-bottom:14px;">
+            <label style="display:flex; align-items:center; gap:8px; cursor:pointer; margin:0; font-weight:800;">
+              <input type="checkbox" id="shipFreeAll" style="width:auto; margin:0;"> FREE SHIPPING on every order, right now
+            </label>
+            <label for="shipFreeNote" style="margin-top:8px;">What the shop says (shows in a bar at the top of the shop and in the bag)</label>
+            <input type="text" id="shipFreeNote" maxlength="80" placeholder="Free shipping on every order.">
+            <div class="field-hint">Tap Save Shipping below to turn it on or off. Customers pay $0 shipping at checkout while it is on. You still pay the postage, so check the Pricing Cheat Sheet before you run it long.</div>
+          </div>
           <label for="shipMode">How shipping is priced</label>
           <select id="shipMode" style="width:100%; padding:10px; font-size:16px;">
             <option value="weight">By weight (USPS chart below)</option>
@@ -834,6 +842,9 @@
               <input type="number" id="pCost" step="0.01" placeholder="6.00">
             </div>
           </div>
+          <label for="pCompareAt">Was price (optional, puts this on sale)</label>
+          <input type="number" id="pCompareAt" step="0.01" placeholder="e.g. 40.00">
+          <div class="field-hint">Type the old price here and the new price above. The shop crosses the old price out and shows SALE. To end the sale, clear this box and save.</div>
 
           <div class="admin-form-row">
             <div>
@@ -1650,8 +1661,10 @@
   const PICKUP_NOTE_DEFAULT = "Thank you for grabbing something from NOCIV. You chose local pickup in Phoenix, so here's how it works.\n\nSaturday mornings: come through the NOCIV pop-up. The spot and time are posted on nociv.co.\nMondays and Tuesdays: I'm around Phoenix during the day.\n\nJust reply to this email with the day that works for you and I'll send the exact place and time.";
   async function loadShippingSettings() {
     const { data } = await supabaseClient.from('app_settings').select('key, value')
-      .in('key', ['shipping_flat', 'free_shipping_over', 'pickup_enabled', 'pickup_label', 'pickup_instructions', 'shipping_mode', 'shipping_rates', 'packaging_oz']);
+      .in('key', ['shipping_flat', 'free_shipping_over', 'pickup_enabled', 'pickup_label', 'pickup_instructions', 'shipping_mode', 'shipping_rates', 'packaging_oz', 'free_shipping_all', 'free_shipping_note']);
     const m = Object.fromEntries((data || []).map(r => [r.key, r.value]));
+    document.getElementById('shipFreeAll').checked = String(m.free_shipping_all ?? 'false') === 'true';
+    document.getElementById('shipFreeNote').value = m.free_shipping_note ?? 'Free shipping on every order.';
     document.getElementById('shipFlat').value = m.shipping_flat ?? '5.00';
     document.getElementById('shipFreeOver').value = m.free_shipping_over ?? '';
     document.getElementById('shipPickupOn').checked = String(m.pickup_enabled ?? 'true') === 'true';
@@ -1720,6 +1733,8 @@
       { key: 'packaging_oz', value: Number.isFinite(pack) && pack >= 0 ? String(pack) : '1' },
       { key: 'shipping_flat', value: parseFloat(flat).toFixed(2) },
       { key: 'free_shipping_over', value: freeOver === '' ? '' : parseFloat(freeOver).toFixed(2) },
+      { key: 'free_shipping_all', value: document.getElementById('shipFreeAll').checked ? 'true' : 'false' },
+      { key: 'free_shipping_note', value: document.getElementById('shipFreeNote').value.trim() || 'Free shipping on every order.' },
       { key: 'pickup_enabled', value: document.getElementById('shipPickupOn').checked ? 'true' : 'false' },
       { key: 'pickup_label', value: document.getElementById('shipPickupLabel').value.trim() || 'Local pickup, Phoenix' },
       { key: 'pickup_instructions', value: document.getElementById('shipPickupNote').value.trim() || PICKUP_NOTE_DEFAULT },
@@ -2339,6 +2354,7 @@
       name,
       description,
       price: priceVal ? parseFloat(priceVal) : null,
+      ...(parseFloat(document.getElementById('pCompareAt').value) > 0 ? { compare_at_price: parseFloat(document.getElementById('pCompareAt').value) } : {}),
       cost: costVal ? parseFloat(costVal) : null,
       shipping_cost: shippingCostVal ? parseFloat(shippingCostVal) : null,
       platform_fee_pct: platformFeePctVal ? parseFloat(platformFeePctVal) : null,
@@ -2376,6 +2392,7 @@
     document.getElementById('pName').value = '';
     document.getElementById('pDescription').value = '';
     document.getElementById('pPrice').value = '';
+    document.getElementById('pCompareAt').value = '';
     document.getElementById('pCost').value = '';
     document.getElementById('pShippingCost').value = '';
     document.getElementById('pShipWeight').value = '';
@@ -2501,7 +2518,7 @@
       ${imgHtml}
       <div class="info">
         <div class="name">${escapeAttr(p.name)}</div>
-        <div class="meta">${p.shop} · ${escapeAttr(p.category)} · ${p.status === 'for_sale' ? 'For Sale' : 'Coming Soon'} · ${p.price ? '$' + p.price : 'no price set'} · cost $${p.cost ?? '-'} · stock: ${hasVariants ? variants.map(v => escapeAttr(v.size) + ': ' + v.inventory_count).join(', ') : (p.fulfillment_type === 'printify' ? 'unlimited (Printify)' : (p.inventory_count ?? 'not tracked'))} · ${p.fulfillment_type === 'printify' ? 'Printify ID: ' + (escapeAttr(p.printify_product_id) || 'none set') : 'In-House'}${p.made_to_order ? ' · <strong style="color:var(--gold);">MADE TO ORDER, ships in ' + (p.lead_time_days || 14) + ' days' + (p.made_to_order_limit ? ', limit ' + p.made_to_order_limit : '') + '</strong>' : ''}${stripeWarning}${marginBit}</div>
+        <div class="meta">${p.shop} · ${escapeAttr(p.category)} · ${p.status === 'for_sale' ? 'For Sale' : 'Coming Soon'} · ${p.price ? (p.compare_at_price && Number(p.compare_at_price) > Number(p.price) ? '<s>$' + p.compare_at_price + '</s> <strong style="color:var(--gold);">SALE $' + p.price + '</strong>' : '$' + p.price) : 'no price set'} · cost $${p.cost ?? '-'} · stock: ${hasVariants ? variants.map(v => escapeAttr(v.size) + ': ' + v.inventory_count).join(', ') : (p.fulfillment_type === 'printify' ? 'unlimited (Printify)' : (p.inventory_count ?? 'not tracked'))} · ${p.fulfillment_type === 'printify' ? 'Printify ID: ' + (escapeAttr(p.printify_product_id) || 'none set') : 'In-House'}${p.made_to_order ? ' · <strong style="color:var(--gold);">MADE TO ORDER, ships in ' + (p.lead_time_days || 14) + ' days' + (p.made_to_order_limit ? ', limit ' + p.made_to_order_limit : '') + '</strong>' : ''}${stripeWarning}${marginBit}</div>
         <div class="votes">${voteCount} votes</div>
         <div class="cross-list-row xlist-only">
           <span class="cross-list-label">Listed on:</span>
@@ -2711,6 +2728,7 @@
     document.getElementById('pName').value = '';
     document.getElementById('pDescription').value = p.description || '';
     document.getElementById('pPrice').value = p.price ?? '';
+    document.getElementById('pCompareAt').value = '';
     document.getElementById('pCost').value = p.cost ?? '';
     document.getElementById('pShippingCost').value = p.shipping_cost ?? '';
     document.getElementById('pPlatformFeePct').value = p.platform_fee_pct ?? '';
@@ -2769,6 +2787,10 @@
           <div style="flex:1;">
             <label style="font-size:0.75rem; opacity:.7; display:block;">Cost</label>
             <input type="number" step="0.01" class="edit-cost" value="${p.cost ?? ''}" style="width:100%; padding:6px;">
+          </div>
+          <div style="flex:1;">
+            <label style="font-size:0.75rem; opacity:.7; display:block;">Was price (sale)</label>
+            <input type="number" step="0.01" class="edit-compare" value="${p.compare_at_price ?? ''}" placeholder="none" style="width:100%; padding:6px;">
           </div>
         </div>
         <div class="edit-inventory-wrap" style="display:${hasSizes ? 'none' : 'block'}; margin-bottom:8px;">
@@ -3022,6 +3044,27 @@
         alert('This is set to Printify Print-on-Demand but has no Printify Product ID. Add one or switch Fulfillment to something else.');
         return;
       }
+      const compareVal = parseFloat(row.querySelector('.edit-compare').value);
+      const priceNow = parseFloat(row.querySelector('.edit-price').value);
+      if (compareVal > 0 && !(priceNow > 0 && compareVal > priceNow)) {
+        alert('The Was price has to be higher than the Price, or it is not a sale. Clear the Was price or fix the numbers.');
+        return;
+      }
+      // Stripe prices are fixed amounts. If the price changed, make a matching Stripe price so checkout charges what the shop shows.
+      let finalStripePrice = newStripePrice;
+      if (newStripePrice && priceNow > 0 && newStripePrice === (p.stripe_price_id || null) && Number(p.price) !== priceNow) {
+        try {
+          const sess = (await supabaseClient.auth.getSession()).data.session;
+          const res = await fetch('https://vscombrgcdtrfndqyugb.supabase.co/functions/v1/create-stripe-price', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json', ...(sess ? { Authorization: 'Bearer ' + sess.access_token } : {}) },
+            body: JSON.stringify({ name: row.querySelector('.edit-name').value.trim(), price: priceNow }),
+          });
+          const result = await res.json();
+          if (!result.priceId) { alert('The price changed, but I could not make the matching Stripe price: ' + (result.error || 'unknown error') + '. Nothing was saved, so checkout will not charge the wrong amount. Try again.'); return; }
+          finalStripePrice = result.priceId;
+        } catch (err) { alert('The price changed, but I could not reach Stripe to make the matching price. Nothing was saved. Try again in a moment.'); return; }
+      }
       const newHasSizes = row.querySelector('.edit-has-sizes').checked;
       const newVariants = newHasSizes ? collectSizeVariants(row.querySelector('.edit-size-variant-rows')) : [];
       if (newHasSizes && newVariants.length === 0) {
@@ -3036,13 +3079,15 @@
         shipping_cost: row.querySelector('.edit-shipping').value ? parseFloat(row.querySelector('.edit-shipping').value) : null,
         platform_fee_pct: row.querySelector('.edit-platform-fee').value ? parseFloat(row.querySelector('.edit-platform-fee').value) : null,
         inventory_count: newHasSizes ? null : (row.querySelector('.edit-inventory').value ? parseInt(row.querySelector('.edit-inventory').value) : null),
-        stripe_price_id: newStripePrice,
+        stripe_price_id: finalStripePrice,
         shop: row.querySelector('.edit-shop').value,
         category: row.querySelector('.edit-category').value.trim(),
         status: newStatus,
         fulfillment_type: newFulfillment,
         printify_product_id: newFulfillment === 'printify' ? newPrintifyId : null,
       };
+      // Sale price: only sent once the sale SQL added the column (it comes back with the product).
+      if ('compare_at_price' in p || compareVal > 0) updated.compare_at_price = compareVal > 0 ? compareVal : null;
       // Made to order: only sent once the made to order SQL added the columns (they come back with the product).
       const madeOn = row.querySelector('.edit-made').checked;
       if ('made_to_order' in p || madeOn) {
