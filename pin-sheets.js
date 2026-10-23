@@ -13,7 +13,41 @@
     vevor32: { finish: 1.25, cut: 1.73, note: 'VEVOR 1.25 in (32 mm). The 1.73 in (44 mm) paper circle is from the VEVOR listing. Cut one circle with your cutter, press one pin, and check the edge wraps clean before you print a full sheet. If it is off, type your real paper circle size below.' },
     custom: { finish: 1.25, cut: 1.73, note: 'Type the finished size of your button and the size of the paper circle your cutter makes.' }
   };
-  var designs = [], uid = 0, page = 0, products = [], timer = null;
+  var designs = [], uid = 0, page = 0, products = [], timer = null, restored = false, saveT = null;
+  var CFG_IDS = ['pinMachine', 'pinFinish', 'pinCut', 'pinMargin', 'pinGap', 'pinPaper', 'pinOutline', 'pinBg'];
+
+  // ---- keep your work if the page reloads (phone browsers do this a lot). Saved only on this device. ----
+  function idb() {
+    return new Promise(function (res, rej) {
+      var r = indexedDB.open('nociv-pins', 1);
+      r.onupgradeneeded = function () { r.result.createObjectStore('kv'); };
+      r.onsuccess = function () { res(r.result); }; r.onerror = function () { rej(r.error); };
+    });
+  }
+  function idbDo(mode, fn) { return idb().then(function (db) { return new Promise(function (res, rej) { var t = db.transaction('kv', mode), q = fn(t.objectStore('kv')); t.oncomplete = function () { res(q && q.result); db.close(); }; t.onerror = function () { rej(t.error); }; }); }); }
+  function queueSave() {
+    if (!restored) return; clearTimeout(saveT);
+    saveT = setTimeout(async function () {
+      try {
+        var list = [];
+        for (var i = 0; i < designs.length; i++) { var d = designs[i], cv = d.art, c2 = document.createElement('canvas'); c2.width = cv.width; c2.height = cv.height; c2.getContext('2d').drawImage(cv, 0, 0); var b = await toBlob(c2, 'image/png'); c2.width = c2.height = 0; if (b) list.push({ name: d.name, count: d.count, productId: d.productId, added: d.added, art: b }); }
+        var conf = {}; CFG_IDS.forEach(function (id) { conf[id] = $(id).type === 'checkbox' ? $(id).checked : $(id).value; });
+        await idbDo('readwrite', function (st) { return st.put({ list: list, conf: conf, savedAt: Date.now() }, 'state'); });
+      } catch (e) { /* private mode or no space: the tool still works, it just will not remember */ }
+    }, 500);
+  }
+  async function restore() {
+    try {
+      var st = await idbDo('readonly', function (s2) { return s2.get('state'); });
+      if (st && st.conf) CFG_IDS.forEach(function (id) { if (st.conf[id] != null) { if ($(id).type === 'checkbox') $(id).checked = !!st.conf[id]; else $(id).value = st.conf[id]; } });
+      if (st && st.list) for (var i = 0; i < st.list.length; i++) {
+        var it = st.list[i], art = await new Promise(function (res) { var im = new Image(), u = URL.createObjectURL(it.art); im.onload = function () { var c = document.createElement('canvas'); c.width = im.width; c.height = im.height; c.getContext('2d').drawImage(im, 0, 0); URL.revokeObjectURL(u); res(c); }; im.onerror = function () { res(null); }; im.src = u; });
+        if (art) designs.push({ id: ++uid, name: it.name, art: art, count: it.count, productId: it.productId || '', mockUrl: '', added: it.added || 0 });
+      }
+    } catch (e) {}
+    $('pinMachineNote').textContent = (MACHINES[$('pinMachine').value] || MACHINES.vevor32).note;
+    restored = true; renderAll();
+  }
 
   function cfg() {
     var n = function (id, d) { var v = parseFloat($(id).value); return isFinite(v) && v > 0 ? v : d; };
@@ -76,11 +110,15 @@
   function slug(s) { return String(s || 'pin').toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '').slice(0, 40) || 'pin'; }
 
   // ---- PDF: one JPEG per page at exact size so "Actual size" prints right ----
-  async function pdfOf(canvases) {
+  // makeCanvas(i) draws page i. Each page is turned into a JPEG and its canvas freed before the next one, so a phone never holds every big page at once.
+  async function pdfOf(count, makeCanvas) {
     var pages = [];
-    for (var i = 0; i < canvases.length; i++) {
-      var b = await toBlob(canvases[i], 'image/jpeg', 0.93);
-      pages.push({ jpg: new Uint8Array(await b.arrayBuffer()), w: canvases[i].width, h: canvases[i].height, pw: +(canvases[i].width / DPI * 72).toFixed(2), ph: +(canvases[i].height / DPI * 72).toFixed(2) });
+    for (var i = 0; i < count; i++) {
+      var cv = makeCanvas(i), w = cv.width, h = cv.height;
+      var b = await toBlob(cv, 'image/jpeg', 0.93); cv.width = cv.height = 0;
+      if (!b) throw new Error('This phone could not make a page that big. Try a computer, or print fewer sheets at a time.');
+      pages.push({ jpg: new Uint8Array(await b.arrayBuffer()), w: w, h: h, pw: +(w / DPI * 72).toFixed(2), ph: +(h / DPI * 72).toFixed(2) });
+      await new Promise(function (r) { setTimeout(r, 0); });
     }
     var enc = new TextEncoder(), parts = [], offs = [], len = 0, n = pages.length;
     function add(x) { var b = typeof x === 'string' ? enc.encode(x) : x; parts.push(b); len += b.length; }
@@ -125,7 +163,7 @@
   }
 
   // ---- rendering the screen ----
-  function renderAll() { renderFit(); renderDesigns(); renderSummary(); renderStock(); schedulePreview(); }
+  function renderAll() { renderFit(); renderDesigns(); renderSummary(); renderStock(); schedulePreview(); queueSave(); }
   function renderFit() {
     var c = cfg(), el = $('pinFit');
     if (c.cut <= c.finish) { el.innerHTML = '<strong style="color:#b00020;">The paper circle must be bigger than the finished button, so there is paper to wrap around the back.</strong>'; return; }
@@ -169,16 +207,27 @@
     else { var b2 = Math.floor(cap / n), x2 = cap % n; designs.forEach(function (d, i) { d.count = Math.max(1, b2 + (i < x2 ? 1 : 0)); }); }
     renderAll();
   }
-  function link(blob, name, label) {
-    var a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = name; a.textContent = label; a.className = 'edit-btn'; a.style.cssText = 'display:inline-block;margin:4px 6px 0 0;text-decoration:none;'; return a;
+  // Phones: the share sheet has Save to Files and Print. Computers: a normal download. Anything that fails falls back to opening the file.
+  function saveBlob(blob, name) {
+    var type = blob.type || 'application/octet-stream', file = new File([blob], name, { type: type });
+    if (matchMedia('(pointer: coarse)').matches && navigator.canShare && navigator.canShare({ files: [file] })) {
+      return navigator.share({ files: [file] }).catch(function (e) { if (e && e.name === 'AbortError') return; openBlob(blob); });
+    }
+    var a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = name; document.body.appendChild(a); a.click(); a.remove();
+    return Promise.resolve();
+  }
+  function openBlob(blob) { var u = URL.createObjectURL(blob); if (!window.open(u, '_blank')) location.href = u; }
+  function btnFor(label, fn, main) {
+    var b = document.createElement('button'); b.type = 'button'; b.className = main ? 'admin-submit' : 'edit-btn'; b.textContent = label; b.style.cssText = 'margin:6px 6px 0 0;'; b.onclick = fn; return b;
   }
   async function makePdf() {
     var btn = $('pinMakePdf'), c = cfg(), pg = pagesFor(c), out = $('pinFiles');
     btn.disabled = true; btn.textContent = 'Making...'; out.innerHTML = '';
     try {
-      var cs = []; for (var i = 0; i < pg; i++) { var cv = document.createElement('canvas'); drawPage(cv, i, DPI, false); cs.push(cv); await new Promise(function (r) { setTimeout(r, 0); }); }
-      var pdf = await pdfOf(cs);
-      out.appendChild(link(pdf, 'nociv-pin-sheets.pdf', 'Save the print sheets (PDF, ' + pg + ' page' + (pg === 1 ? '' : 's') + ')'));
+      var pdf = await pdfOf(pg, function (i) { var cv = document.createElement('canvas'); drawPage(cv, i, DPI, false); return cv; });
+      var lab = pg + ' page' + (pg === 1 ? '' : 's');
+      out.appendChild(btnFor('Save or print the sheets (PDF, ' + lab + ')', function () { saveBlob(pdf, 'nociv-pin-sheets.pdf'); }, true));
+      out.appendChild(btnFor('Open the PDF', function () { openBlob(pdf); }, false));
       var note = document.createElement('p'); note.className = 'field-hint'; note.textContent = 'Print at 100 percent, Actual size. Do not choose Fit to page, it shrinks the circles. Print one sheet on plain paper first and hold a pressed pin up to it.'; out.appendChild(note);
     } catch (e) { out.textContent = 'Could not make the sheets: ' + e.message; }
     btn.disabled = false; btn.textContent = 'Make print sheets (PDF)'; renderSummary();
@@ -292,7 +341,7 @@
       var cv = document.createElement('canvas'); cv.width = d.art.width; cv.height = d.art.height; cv.getContext('2d').drawImage(d.art, 0, 0);
       var blob = await toBlob(cv, 'image/png'); var n = await getArt(blob, 'Crop your pin art'); if (n) { d.art = n; renderAll(); }
     }
-    else if (e.target.closest('.pin-mock')) { var b = await toBlob(mockup(d.art, 1200, false, c.bg), 'image/png'); var a = link(b, 'pin-mockup-' + slug(d.name) + '.png', ''); document.body.appendChild(a); a.click(); a.remove(); }
+    else if (e.target.closest('.pin-mock')) { var b = await toBlob(mockup(d.art, 1200, false, c.bg), 'image/png'); var mn = 'pin-mockup-' + slug(d.name) + '.png', o2 = $('pinFiles'); o2.appendChild(btnFor('Save mockup: ' + d.name, function () { saveBlob(b, mn); }, true)); o2.scrollIntoView({ block: 'nearest' }); }
   });
   $('pinDesigns').addEventListener('input', function (e) { if (e.target.classList.contains('pin-name')) { var d = byId(e.target); if (d) { d.name = e.target.value; renderStock(); } } });
   $('pinStock').addEventListener('click', function (e) { if (e.target.closest('.pin-add')) { var row = e.target.closest('[data-id]'), d = byId(e.target); if (d) addStock(d, row); } });
@@ -301,5 +350,6 @@
   $('sec-pins').addEventListener('toggle', function () { if (this.open) loadProducts(); });
   $('pinMachineNote').textContent = MACHINES.vevor32.note;
   renderAll();
+  restore();
   window.__pins = { designs: function () { return designs; }, cfg: cfg, drawPage: drawPage, mockup: mockup, addFiles: addFiles, evenSplit: evenSplit, loadProducts: loadProducts };
 })();
