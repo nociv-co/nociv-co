@@ -213,7 +213,10 @@
     if (matchMedia('(pointer: coarse)').matches && navigator.canShare && navigator.canShare({ files: [file] })) {
       return navigator.share({ files: [file] }).catch(function (e) { if (e && e.name === 'AbortError') return; openBlob(blob); });
     }
-    var a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = name; document.body.appendChild(a); a.click(); a.remove();
+    var a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = name; a.style.display = 'none'; document.body.appendChild(a); a.click();
+    setTimeout(function () { a.remove(); }, 1000);
+    var isSafari = /^((?!chrome|android|crios|fxios|edg).)*safari/i.test(navigator.userAgent);
+    var h = $('pinSaveHint'); if (h) h.hidden = !isSafari;
     return Promise.resolve();
   }
   function openBlob(blob) { var u = URL.createObjectURL(blob); if (!window.open(u, '_blank')) location.href = u; }
@@ -228,6 +231,9 @@
       var lab = pg + ' page' + (pg === 1 ? '' : 's');
       out.appendChild(btnFor('Save or print the sheets (PDF, ' + lab + ')', function () { saveBlob(pdf, 'nociv-pin-sheets.pdf'); }, true));
       out.appendChild(btnFor('Open the PDF', function () { openBlob(pdf); }, false));
+      var hint = document.createElement('p'); hint.id = 'pinSaveHint'; hint.className = 'field-hint'; hint.hidden = true;
+      hint.textContent = 'Safari sometimes blocks the download. If nothing saved, tap Open the PDF. It opens in a new tab. Then use File, Print (pick Actual size or 100 percent), or File, Export as PDF to keep a copy.';
+      out.appendChild(hint);
       var note = document.createElement('p'); note.className = 'field-hint'; note.textContent = 'Print at 100 percent, Actual size. Do not choose Fit to page, it shrinks the circles. Print one sheet on plain paper first and hold a pressed pin up to it.'; out.appendChild(note);
     } catch (e) { out.textContent = 'Could not make the sheets: ' + e.message; }
     btn.disabled = false; btn.textContent = 'Make print sheets (PDF)'; renderSummary();
