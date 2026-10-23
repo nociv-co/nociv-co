@@ -108,6 +108,16 @@
 
   .shop-wrap { padding-top: 16px; }
   /* Free zines on a posted note, same taped note look as the landing page */
+  /* Shop goal note, same taped paper look as the free zines note */
+  .goal-note { position: relative; max-width: 560px; margin: 26px auto 0; background: #f2ecd6; color: #1a1a1a; padding: 26px 16px 16px; box-shadow: 0 6px 16px rgba(0,0,0,.28); transform: rotate(0.3deg); text-align: left; }
+  .goal-note::before { content: ''; position: absolute; top: -11px; left: 22px; width: 64px; height: 22px; background: #1a1a1a; opacity: .85; transform: rotate(-3deg); }
+  .goal-label { margin: 0 0 10px; display: flex; align-items: center; gap: 8px; font-weight: 900; font-size: 0.8rem; letter-spacing: .1em; text-transform: uppercase; }
+  .goal-label b { background: #c8412f; color: #fff; padding: 1px 7px; }
+  .goal-row { display: flex; gap: 12px; align-items: baseline; padding: 7px 0; border-top: 1.5px solid rgba(26,26,26,.18); }
+  .goal-k { flex: 0 0 52px; font-weight: 900; font-size: 0.72rem; letter-spacing: .1em; text-transform: uppercase; color: #6b665c; }
+  .goal-v { font-size: 1.05rem; line-height: 1.35; font-weight: 700; overflow-wrap: anywhere; }
+  .goal-to { color: #c8412f; }
+  .goal-until { margin: 8px 0 0; font-size: 0.78rem; color: #6b665c; }
   .free-note { position: relative; max-width: 900px; margin: 34px auto 10px; background: #f2ecd6; color: #1a1a1a; padding: 32px 18px 22px; box-shadow: 0 6px 16px rgba(0,0,0,.28); transform: rotate(-0.4deg); text-align: left; }
   .free-note::before { content: ''; position: absolute; top: -11px; left: 22px; width: 64px; height: 22px; background: #1a1a1a; opacity: .85; transform: rotate(-3deg); }
   .free-note::after { content: ''; position: absolute; top: -9px; right: 26px; width: 54px; height: 20px; background: #1a1a1a; opacity: .85; transform: rotate(4deg); }
@@ -495,6 +505,14 @@
     <div class="catalog-mount" id="catalogMount-clothing"></div>
 
     <!-- PROCESS ALBUM: NOW (this week, story style) on top, the album (everything older) below -->
+    <div id="shopPost">
+    <!-- SHOP GOAL: where I am / where I want to be. Set in Admin, Shop Goal. Hidden when empty, expired or reached. -->
+    <div class="goal-note" id="goalNote" hidden>
+      <p class="goal-label"><b>GOAL</b>Where I am. Where I am going.</p>
+      <div class="goal-row"><span class="goal-k">Here</span><span class="goal-v" id="goalNow"></span></div>
+      <div class="goal-row"><span class="goal-k">Next</span><span class="goal-v goal-to" id="goalTo"></span></div>
+      <p class="goal-until" id="goalUntil"></p>
+    </div>
     <div id="process-album" style="text-align:center; margin-top:20px;">
       <div class="now-wrap" id="nowWrap" hidden>
         <div class="now-head"><span class="now-label">NOW</span><span class="now-sub">on the table this week</span></div>
@@ -508,6 +526,7 @@
         </div>
       </div>
       <div class="album-hint">Tap the album to open it</div>
+    </div>
     </div>
 
     <div class="phone-showcase">
@@ -648,6 +667,30 @@
       document.getElementById(btn.dataset.panel).classList.add('show');
     });
   });
+
+  // The post area (goal + NOW + album) sits under the shopping area on every Shop tab.
+  // Clothing keeps its spot under the catalog. Art and Zines get it at the bottom of their page.
+  function placePost(panel) {
+    const box = document.getElementById('shopPost'); if (!box || !panel) return;
+    const wrap = panel.querySelector('.shop-wrap'); if (!wrap) return;
+    if (panel.id === 'clothingPanel') { const m = wrap.querySelector('.catalog-mount'); if (m) m.after(box); }
+    else wrap.appendChild(box);
+  }
+  document.querySelectorAll('.subnav button').forEach(b => b.addEventListener('click', () => placePost(document.getElementById(b.dataset.panel))));
+
+  // Shop goal note. Read through the shop_goal_public view. If the view is missing or empty the note stays hidden.
+  (async function loadGoal() {
+    try {
+      const { data, error } = await supabaseClient.from('shop_goal_public').select('value').eq('key', 'shop_goal').maybeSingle();
+      if (error || !data || !data.value) return;
+      const g = JSON.parse(data.value);
+      if (!g || !g.now || g.reached || !g.until || !(Date.parse(g.until) > Date.now())) return;
+      document.getElementById('goalNow').textContent = g.now;
+      document.getElementById('goalTo').textContent = g.to || '';
+      document.getElementById('goalUntil').textContent = 'Posted ' + new Date(g.set || Date.now()).toLocaleDateString('en-US', { month: 'short', day: 'numeric' }) + '. I update this when I get there.';
+      document.getElementById('goalNote').hidden = false;
+    } catch (e) {}
+  })();
 
   // =====================================================================
   // PROCESS ALBUM: NOW + ALL

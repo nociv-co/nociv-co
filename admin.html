@@ -417,6 +417,7 @@
       <a href="#sec-orders">Orders</a>
       <a href="#sec-expenses">Expenses</a>
       <a href="#sec-album">Album</a>
+      <a href="#sec-shopgoal">Shop Goal</a>
       <a href="#sec-directory">Directory</a>
       <a href="#sec-zines">Zines</a>
       <a href="#sec-promo">Spread The Word</a>
@@ -1138,6 +1139,30 @@
       </div>
     </details>
 
+    <details class="admin-section" id="sec-shopgoal">
+      <summary>Shop Goal <span class="admin-section-hint">where I am / where I want to be, on every Shop tab</span></summary>
+      <div class="admin-section-body">
+        <div class="how-to-box">
+          <strong>What this is for</strong>
+          A short note on the Shop pages, right above the photo album: where you are now and where you want to be. It shows people the real process and that a human is behind this. It stays up for the number of days you pick (30 is a month) or until you tap "I reached it". Only one goal at a time, a new one replaces the old one.
+        </div>
+        <div class="admin-form">
+          <p class="admin-note" style="display:block; opacity:.7;" id="goalCurrent">Loading...</p>
+          <label for="goalNow">Where I am</label>
+          <input type="text" id="goalNow" maxlength="140" placeholder="e.g. 3 pieces made, 0 sold">
+          <label for="goalTo">Where I want to be</label>
+          <input type="text" id="goalTo" maxlength="140" placeholder="e.g. 10 pieces made and my first pop-up booked">
+          <label for="goalDays">Keep it up for how many days</label>
+          <input type="number" id="goalDays" min="1" max="365" value="30" inputmode="numeric">
+          <button class="admin-submit" id="goalSaveBtn">Put it on the shop</button>
+          <button class="admin-submit" id="goalReachedBtn" type="button" style="background:#2f7a4b; display:none;">I reached it</button>
+          <button class="admin-submit" id="goalDownBtn" type="button" style="background:#555; display:none;">Take it down</button>
+          <p class="admin-note" id="goalConfirm">Saved.</p>
+          <p class="admin-error" id="goalError"></p>
+        </div>
+      </div>
+    </details>
+
     <details class="admin-section" id="sec-directory">
       <summary>Directory Listings <span class="admin-section-hint">shows on Base &rarr; Directory &rarr; Verified</span></summary>
       <div class="admin-section-body">
@@ -1485,6 +1510,7 @@
       loginBox.style.display = 'none';
       dashboard.style.display = 'block';
       loadPopupStatus();
+      loadShopGoal();
       loadProducts();
       loadExternalSales();
       loadOrders();
@@ -1655,6 +1681,45 @@
       listEl.appendChild(row);
     });
   }
+
+  // ===== SHOP GOAL (app_settings key shop_goal, read by the shop through the shop_goal_public view) =====
+  async function loadShopGoal() {
+    const cur = document.getElementById('goalCurrent');
+    const { data, error } = await supabaseClient.from('app_settings').select('value').eq('key', 'shop_goal').maybeSingle();
+    let g = null; try { g = data && data.value ? JSON.parse(data.value) : null; } catch (e) {}
+    const live = g && g.now && !g.reached && g.until && Date.parse(g.until) > Date.now();
+    document.getElementById('goalReachedBtn').style.display = live ? '' : 'none';
+    document.getElementById('goalDownBtn').style.display = live ? '' : 'none';
+    if (error) { cur.textContent = 'Could not load the goal.'; return; }
+    if (live) {
+      document.getElementById('goalNow').value = g.now; document.getElementById('goalTo').value = g.to || '';
+      cur.textContent = 'On the shop now, up until ' + new Date(g.until).toLocaleDateString('en-US', { month: 'short', day: 'numeric' }) + '.';
+    } else {
+      cur.textContent = g && g.reached ? 'You reached the last goal. Nothing is on the shop. Set a new one.' : 'Nothing is on the shop right now.';
+    }
+  }
+  async function writeShopGoal(obj) {
+    const err = document.getElementById('goalError'), ok = document.getElementById('goalConfirm');
+    err.style.display = 'none'; ok.style.display = 'none';
+    const { error } = await supabaseClient.from('app_settings').upsert([{ key: 'shop_goal', value: JSON.stringify(obj) }], { onConflict: 'key' });
+    if (error) { err.textContent = 'Did not save: ' + error.message; err.style.display = 'block'; return false; }
+    ok.style.display = 'block'; await loadShopGoal(); return true;
+  }
+  document.getElementById('goalSaveBtn').addEventListener('click', async () => {
+    const now = document.getElementById('goalNow').value.trim(), to = document.getElementById('goalTo').value.trim();
+    const days = Math.max(1, Math.min(365, parseInt(document.getElementById('goalDays').value, 10) || 30));
+    const err = document.getElementById('goalError');
+    if (!now || !to) { err.textContent = 'Fill in both: where you are and where you want to be.'; err.style.display = 'block'; return; }
+    await writeShopGoal({ now, to, until: new Date(Date.now() + days * 86400000).toISOString(), set: new Date().toISOString(), reached: false });
+  });
+  document.getElementById('goalReachedBtn').addEventListener('click', async () => {
+    if (!confirm('Mark this goal as reached? It comes off the shop.')) return;
+    await writeShopGoal({ now: '', to: '', until: '', set: new Date().toISOString(), reached: true });
+  });
+  document.getElementById('goalDownBtn').addEventListener('click', async () => {
+    if (!confirm('Take this goal off the shop?')) return;
+    await writeShopGoal({ now: '', to: '', until: '', set: new Date().toISOString(), reached: false });
+  });
 
   // ===== SHIPPING SETTINGS (app_settings, read by the checkout function) =====
   // Same default the order-notification function uses if nothing is saved.
