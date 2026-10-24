@@ -843,6 +843,8 @@
               <input type="number" id="pCost" step="0.01" placeholder="6.00">
             </div>
           </div>
+          <label for="pStage">Stage (optional)</label>
+          <select id="pStage"><option value="">No stage</option><option value="one_of_one">Rare 1 of 1 (people can vote for repeats)</option><option value="fancy_blank">Fancy blank</option><option value="manufactured">Manufactured</option></select>
           <label for="pCompareAt">Was price (optional, puts this on sale)</label>
           <input type="number" id="pCompareAt" step="0.01" placeholder="e.g. 40.00">
           <div class="field-hint">Type the old price here and the new price above. The shop crosses the old price out and shows SALE. To end the sale, clear this box and save.</div>
@@ -2422,6 +2424,7 @@
       description,
       price: priceVal ? parseFloat(priceVal) : null,
       ...(parseFloat(document.getElementById('pCompareAt').value) > 0 ? { compare_at_price: parseFloat(document.getElementById('pCompareAt').value) } : {}),
+      ...(document.getElementById('pStage').value ? { stage: document.getElementById('pStage').value } : {}),
       cost: costVal ? parseFloat(costVal) : null,
       shipping_cost: shippingCostVal ? parseFloat(shippingCostVal) : null,
       platform_fee_pct: platformFeePctVal ? parseFloat(platformFeePctVal) : null,
@@ -2460,6 +2463,7 @@
     document.getElementById('pDescription').value = '';
     document.getElementById('pPrice').value = '';
     document.getElementById('pCompareAt').value = '';
+    document.getElementById('pStage').value = '';
     document.getElementById('pCost').value = '';
     document.getElementById('pShippingCost').value = '';
     document.getElementById('pShipWeight').value = '';
@@ -2585,7 +2589,7 @@
       ${imgHtml}
       <div class="info">
         <div class="name">${escapeAttr(p.name)}</div>
-        <div class="meta">${p.shop} · ${escapeAttr(p.category)} · ${p.status === 'for_sale' ? 'For Sale' : 'Coming Soon'} · ${p.price ? (p.compare_at_price && Number(p.compare_at_price) > Number(p.price) ? '<s>$' + p.compare_at_price + '</s> <strong style="color:var(--gold);">SALE $' + p.price + '</strong>' : '$' + p.price) : 'no price set'} · cost $${p.cost ?? '-'} · stock: ${hasVariants ? variants.map(v => escapeAttr(v.size) + ': ' + v.inventory_count).join(', ') : (p.fulfillment_type === 'printify' ? 'unlimited (Printify)' : (p.inventory_count ?? 'not tracked'))} · ${p.fulfillment_type === 'printify' ? 'Printify ID: ' + (escapeAttr(p.printify_product_id) || 'none set') : 'In-House'}${p.made_to_order ? ' · <strong style="color:var(--gold);">MADE TO ORDER, ships in ' + (p.lead_time_days || 14) + ' days' + (p.made_to_order_limit ? ', limit ' + p.made_to_order_limit : '') + '</strong>' : ''}${stripeWarning}${marginBit}</div>
+        <div class="meta">${p.shop} · ${escapeAttr(p.category)} · ${p.status === 'for_sale' ? 'For Sale' : 'Coming Soon'}${p.stage ? ' · ' + ({ one_of_one: '1 of 1', fancy_blank: 'Fancy blank', manufactured: 'Manufactured' }[p.stage] || '') : ''} · ${p.price ? (p.compare_at_price && Number(p.compare_at_price) > Number(p.price) ? '<s>$' + p.compare_at_price + '</s> <strong style="color:var(--gold);">SALE $' + p.price + '</strong>' : '$' + p.price) : 'no price set'} · cost $${p.cost ?? '-'} · stock: ${hasVariants ? variants.map(v => escapeAttr(v.size) + ': ' + v.inventory_count).join(', ') : (p.fulfillment_type === 'printify' ? 'unlimited (Printify)' : (p.inventory_count ?? 'not tracked'))} · ${p.fulfillment_type === 'printify' ? 'Printify ID: ' + (escapeAttr(p.printify_product_id) || 'none set') : 'In-House'}${p.made_to_order ? ' · <strong style="color:var(--gold);">MADE TO ORDER, ships in ' + (p.lead_time_days || 14) + ' days' + (p.made_to_order_limit ? ', limit ' + p.made_to_order_limit : '') + '</strong>' : ''}${stripeWarning}${marginBit}</div>
         <div class="votes">${voteCount} votes</div>
         <div class="cross-list-row xlist-only">
           <span class="cross-list-label">Listed on:</span>
@@ -2796,6 +2800,7 @@
     document.getElementById('pDescription').value = p.description || '';
     document.getElementById('pPrice').value = p.price ?? '';
     document.getElementById('pCompareAt').value = '';
+    document.getElementById('pStage').value = '';
     document.getElementById('pCost').value = p.cost ?? '';
     document.getElementById('pShippingCost').value = p.shipping_cost ?? '';
     document.getElementById('pPlatformFeePct').value = p.platform_fee_pct ?? '';
@@ -2854,6 +2859,10 @@
           <div style="flex:1;">
             <label style="font-size:0.75rem; opacity:.7; display:block;">Cost</label>
             <input type="number" step="0.01" class="edit-cost" value="${p.cost ?? ''}" style="width:100%; padding:6px;">
+          </div>
+          <div style="flex:1;">
+            <label style="font-size:0.75rem; opacity:.7; display:block;">Stage</label>
+            <select class="edit-stage" style="width:100%; padding:6px;"><option value="">No stage</option><option value="one_of_one"${p.stage === 'one_of_one' ? ' selected' : ''}>Rare 1 of 1 (people can vote for repeats)</option><option value="fancy_blank"${p.stage === 'fancy_blank' ? ' selected' : ''}>Fancy blank</option><option value="manufactured"${p.stage === 'manufactured' ? ' selected' : ''}>Manufactured</option></select>
           </div>
           <div style="flex:1;">
             <label style="font-size:0.75rem; opacity:.7; display:block;">Was price (sale)</label>
@@ -3155,6 +3164,9 @@
       };
       // Sale price: only sent once the sale SQL added the column (it comes back with the product).
       if ('compare_at_price' in p || compareVal > 0) updated.compare_at_price = compareVal > 0 ? compareVal : null;
+      // Stage: only sent once the stage SQL added the column.
+      const stageVal = row.querySelector('.edit-stage').value;
+      if ('stage' in p || stageVal) updated.stage = stageVal || null;
       // Made to order: only sent once the made to order SQL added the columns (they come back with the product).
       const madeOn = row.querySelector('.edit-made').checked;
       if ('made_to_order' in p || madeOn) {

@@ -185,6 +185,7 @@
   }
   .catalog-card .card-badge.for-sale { background: #fff; color: #111; }
   .catalog-card .card-badge.coming-soon { background: var(--gold); color: #1a1a1a; }
+  .catalog-card .card-badge.stage { background: #f2ecd6; color: #1a1a1a; border: 1px solid #1a1a1a; }
   .catalog-card .card-badge.made-to-order { background: #111; color: var(--gold); border: 1px solid var(--gold); }
   .card-made { font-size: 0.72rem; opacity: .8; margin: 2px 0 8px; line-height: 1.35; }
   .product-modal-made { font-size: 0.85rem; margin: -8px 0 12px; opacity: .85; line-height: 1.4; }
@@ -1471,6 +1472,17 @@
     } catch (e) {}
     return list;
   }
+  // Stage (1 of 1, fancy blank, manufactured) comes from a small public view. If the SQL has not run, nothing changes.
+  async function addStage(list) {
+    try {
+      const ids = (list || []).map(p => p.id); if (!ids.length) return list;
+      const { data } = await supabaseClient.from('product_stage_info').select('id, stage').in('id', ids);
+      const m = Object.fromEntries((data || []).map(r => [r.id, r.stage]));
+      list.forEach(p => { if (m[p.id]) p.stage = m[p.id]; });
+    } catch (e) {}
+    return list;
+  }
+  const STAGE_BADGE = { one_of_one: '1 of 1', fancy_blank: 'Fancy blank' };
   function priceHtml(p) { return (p.was_price ? '<s>$' + p.was_price + '</s>' : '') + '$' + p.price + (p.was_price ? '<span class="sale-tag">SALE</span>' : ''); }
   function leadText(p) {
     const d = Number(p && p.lead_time_days) || 14;
@@ -1868,6 +1880,7 @@
 
       await addMto(allProducts);
       await addSale(allProducts);
+      await addStage(allProducts);
       showFreeShipBar();
 
       // Sizes live in their own table: one fetch for every product on this
@@ -1931,10 +1944,15 @@
           </button>`;
         }
 
+        // 1 of 1s: anyone can vote for a repeat, so the favorites can be made again.
+        if (p.status === 'for_sale' && p.stage === 'one_of_one') {
+          actionHtml += `<button class="card-action ${alreadyVoted ? 'voted' : 'vote'}" data-action="vote" data-id="${p.id}" style="margin-top:6px" ${alreadyVoted ? 'disabled' : ''}>${alreadyVoted ? 'You asked for more ✓' : 'Make more of this'} (${count})</button>`;
+        }
+
         card.innerHTML = `
           <div class="card-media">
             ${mediaHtml}
-            ${p.status === 'for_sale' ? (p.made_to_order ? '<div class="card-badge made-to-order">Made to order</div>' : '') : '<div class="card-badge coming-soon">Vote to make it</div>'}
+            ${p.status === 'for_sale' ? (p.made_to_order ? '<div class="card-badge made-to-order">Made to order</div>' : (STAGE_BADGE[p.stage] ? '<div class="card-badge stage">' + STAGE_BADGE[p.stage] + '</div>' : '')) : '<div class="card-badge coming-soon">Vote to make it</div>'}
           </div>
           <div class="card-body">
             <div class="card-name">${escAttr(p.name)}</div>
