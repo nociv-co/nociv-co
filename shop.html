@@ -513,6 +513,7 @@
       <div class="goal-row"><span class="goal-k">Next</span><span class="goal-v goal-to" id="goalTo"></span></div>
       <p class="goal-until" id="goalUntil"></p>
     </div>
+    </div>
     <div id="process-album" style="text-align:center; margin-top:20px;">
       <div class="now-wrap" id="nowWrap" hidden>
         <div class="now-head"><span class="now-label">NOW</span><span class="now-sub">on the table this week</span></div>
@@ -526,7 +527,6 @@
         </div>
       </div>
       <div class="album-hint">Tap the album to open it</div>
-    </div>
     </div>
 
     <div class="phone-showcase">
@@ -601,6 +601,10 @@
       <p class="zine-save-note">Tap a zine to read it full screen. Use Open / Save in the reader to keep a copy.</p>
     </div>
     </div>
+    <div class="shop-posts" id="posts-zines" style="text-align:center; margin-top:20px;">
+      <div class="now-wrap" id="nowWrap-zines" hidden><div class="now-head"><span class="now-label">NOW</span><span class="now-sub">what I am working on</span></div><div class="now-row" id="nowRow-zines"></div></div>
+      <div class="past-wrap" id="pastWrap-zines" hidden><div class="now-head"><span class="now-label">EARLIER</span></div><div class="album-gallery past-grid" id="pastGrid-zines"></div></div>
+    </div>
     <div class="coming-soon">More issues coming soon.</div>
   </div>
 </div>
@@ -609,6 +613,10 @@
 <div class="subpanel" id="artPanel">
   <div class="wrap shop-wrap">
     <div class="catalog-mount" id="catalogMount-art"></div>
+    <div class="shop-posts" id="posts-art" style="text-align:center; margin-top:20px;">
+      <div class="now-wrap" id="nowWrap-art" hidden><div class="now-head"><span class="now-label">NOW</span><span class="now-sub">what I am working on</span></div><div class="now-row" id="nowRow-art"></div></div>
+      <div class="past-wrap" id="pastWrap-art" hidden><div class="now-head"><span class="now-label">EARLIER</span></div><div class="album-gallery past-grid" id="pastGrid-art"></div></div>
+    </div>
   </div>
 </div>
 
@@ -674,7 +682,7 @@
     const box = document.getElementById('shopPost'); if (!box || !panel) return;
     const wrap = panel.querySelector('.shop-wrap'); if (!wrap) return;
     if (panel.id === 'clothingPanel') { const m = wrap.querySelector('.catalog-mount'); if (m) m.after(box); }
-    else wrap.appendChild(box);
+    else { const posts = wrap.querySelector('.shop-posts'); if (posts) posts.before(box); else wrap.appendChild(box); }
   }
   document.querySelectorAll('.subnav button').forEach(b => b.addEventListener('click', () => placePost(document.getElementById(b.dataset.panel))));
 
@@ -729,14 +737,21 @@
     albumPosts = (error || !data) ? [] : data.filter(p => mediaOf(p).length);
     return albumPosts;
   }
+  const shopOf = (p) => p.shop || 'clothing';
+  async function postsFor(shop) {
+    return (await getAlbumPosts()).filter(p => shopOf(p) === shop);
+  }
   const nowCutoff = () => Date.now() - NOW_DAYS * 86400000;
   const isNow = (p) => Date.parse(p.created_at) > nowCutoff();
 
   // ---------- NOW row ----------
   async function renderNowRow() {
-    const posts = (await getAlbumPosts()).filter(isNow);
-    const wrap = document.getElementById('nowWrap');
-    const row = document.getElementById('nowRow');
+    return renderNow('clothing', 'nowWrap', 'nowRow');
+  }
+  async function renderNow(shop, wrapId, rowId) {
+    const posts = (await postsFor(shop)).filter(isNow);
+    const wrap = document.getElementById(wrapId);
+    const row = document.getElementById(rowId);
     if (!posts.length) { wrap.hidden = true; return; }
     const seen = seenIds();
     row.innerHTML = '';
@@ -769,7 +784,7 @@
 
   async function loadAlbumGallery(mountId) {
     const galleryEl = document.getElementById(mountId);
-    const all = await getAlbumPosts();
+    const all = await postsFor('clothing');
     const posts = all.filter(p => !isNow(p));
 
     if (!posts.length) {
@@ -1023,6 +1038,22 @@
       document.getElementById('svTalk').textContent = 'Comments (' + commentCounts[p.id] + ')';
     });
   });
+
+  // Art and Zines: NOW story row, then expired posts go to an EARLIER grid (no album).
+  async function renderPast(shop) {
+    const posts = (await postsFor(shop)).filter(p => !isNow(p)), wrap = document.getElementById('pastWrap-' + shop), g = document.getElementById('pastGrid-' + shop);
+    if (!posts.length) { wrap.hidden = true; return; }
+    g.innerHTML = '';
+    posts.forEach(p => {
+      const m = mediaOf(p)[0], item = document.createElement('div'); item.className = 'album-gallery-item';
+      item.innerHTML = (m.type === 'video' ? `<video src="${esc(m.url)}#t=0.1" muted playsinline preload="metadata"></video>` : `<img src="${esc(m.url)}" alt="${esc(p.caption || 'Post')}" loading="lazy" decoding="async">`)
+        + (p.caption ? `<div class="album-gallery-caption">${esc(p.caption)}</div>` : '');
+      item.addEventListener('click', () => openViewer([p], 0, 'one'));
+      g.appendChild(item);
+    });
+    wrap.hidden = false;
+  }
+  ['art', 'zines'].forEach(shop => { renderNow(shop, 'nowWrap-' + shop, 'nowRow-' + shop).then(() => renderPast(shop)).catch(() => {}); });
 
   // Someone texted a link to one post (shop.html#album-123): open it.
   (async function initAlbum() {

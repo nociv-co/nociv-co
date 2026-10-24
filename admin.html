@@ -1122,6 +1122,8 @@
         <div class="admin-form">
           <label for="albumImage">Add a photo</label>
           <input type="file" id="albumImage" accept="image/*">
+          <label for="albumShop">Show it on</label>
+          <select id="albumShop"><option value="clothing">Clothing (NOW + photo album)</option><option value="art">Art (NOW story, then Earlier)</option><option value="zines">Zines (NOW story, then Earlier)</option></select>
           <label for="albumCaption">Caption (optional)</label>
           <input type="text" id="albumCaption" placeholder="e.g. Cutting the first pattern piece">
           <button class="admin-submit" id="addAlbumBtn">Add to Album</button>
@@ -3572,7 +3574,8 @@
 
     const { error } = await supabaseClient.from('album_photos').insert([{
       image_url: urlData.publicUrl,
-      caption
+      caption,
+      ...(document.getElementById('albumShop').value !== 'clothing' ? { shop: document.getElementById('albumShop').value } : {})
     }]);
     if (error) {
       errEl.textContent = 'Error saving: ' + error.message;
