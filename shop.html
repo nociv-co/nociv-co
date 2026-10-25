@@ -1482,6 +1482,41 @@
     } catch (e) {}
     return list;
   }
+  // Bundle deal (pins and patches, e.g. 3 for $6). Comes from small public views. If the SQL has not run, nothing changes.
+  async function addBundle(list) {
+    try {
+      const ids = (list || []).map(p => p.id); if (!ids.length) return list;
+      const { data } = await supabaseClient.from('product_bundle_info').select('id, bundle_kind').in('id', ids);
+      const m = Object.fromEntries((data || []).map(r => [r.id, r.bundle_kind]));
+      list.forEach(p => { if (m[p.id]) p.bundle_kind = m[p.id]; });
+    } catch (e) {}
+    return list;
+  }
+  async function loadBundleDeal() {
+    try {
+      const { data } = await supabaseClient.from('bundle_settings_public').select('key, value');
+      const m = Object.fromEntries((data || []).map(r => [r.key, r.value]));
+      const size = parseInt(m.bundle_size, 10), price = parseFloat(m.bundle_price);
+      return size >= 2 && price >= 0 ? { size, price } : null;
+    } catch (e) { return null; }
+  }
+  // Same math as the checkout function. Each full set of `size` of one kind pays `price`.
+  function bundleOffFor(entries, deal) {
+    if (!deal) return { off: 0, sets: 0, leftover: 0 };
+    let off = 0, sets = 0, leftover = 0;
+    ['pin', 'patch'].forEach(kind => {
+      const u = [];
+      entries.filter(e => e.kind === kind).forEach(e => { for (let i = 0; i < e.qty; i++) u.push(e.price); });
+      u.sort((a, b) => b - a);
+      const n = Math.floor(u.length / deal.size);
+      for (let g = 0; g < n; g++) {
+        const sum = u.slice(g * deal.size, (g + 1) * deal.size).reduce((a, b) => a + b, 0);
+        off += Math.max(0, sum - deal.price); sets++;
+      }
+      leftover = Math.max(leftover, u.length % deal.size);
+    });
+    return { off: Math.round(off * 100) / 100, sets, leftover };
+  }
   const STAGE_BADGE = { one_of_one: '1 of 1', fancy_blank: 'Fancy blank' };
   function priceHtml(p) { return (p.was_price ? '<s>$' + p.was_price + '</s>' : '') + '$' + p.price + (p.was_price ? '<span class="sale-tag">SALE</span>' : ''); }
   function leadText(p) {
@@ -1630,6 +1665,8 @@
       supabaseClient.from('product_ship_weights').select('id, ship_weight_oz').in('id', ids),
     ]);
     await addMto(prods || []);
+    await addBundle(prods || []);
+    const deal = await loadBundleDeal();
     const pById = Object.fromEntries((prods || []).map(p => [p.id, p]));
     ((wRes && wRes.data) || []).forEach(w => { if (pById[w.id]) pById[w.id].ship_weight_oz = w.ship_weight_oz; });
     const varsByProduct = {};
@@ -1639,7 +1676,7 @@
     const gone = bag.filter(l => !pById[l.productId] || pById[l.productId].status !== 'for_sale');
     if (gone.length) { bag = bag.filter(l => !gone.includes(l)); writeBag(bag); }
 
-    let subtotal = 0, ok = true, hasPod = false, oz = ship.packaging, mtoDays = 0, hasStockItem = false;
+    let subtotal = 0, ok = true, hasPod = false, hasFull = false, bundleEntries = [], oz = ship.packaging, mtoDays = 0, hasStockItem = false;
     linesEl.innerHTML = '';
     bag.forEach((l, idx) => {
       const p = pById[l.productId];
@@ -1653,6 +1690,7 @@
       if (POD_TYPES.includes(p.fulfillment_type)) hasPod = true;
       if (p.made_to_order) mtoDays = Math.max(mtoDays, Number(p.lead_time_days) || 14); else hasStockItem = true;
       const price = Number(p.price) || 0;
+      if (p.bundle_kind) bundleEntries.push({ kind: p.bundle_kind, price, qty: l.quantity }); else hasFull = true;
       subtotal += price * l.quantity;
       oz += guessWeightOz(p) * l.quantity;
 
@@ -1691,6 +1729,9 @@
     });
 
     if (!bag.length) { renderBag(); return; }
+    const addOnOnly = !hasFull;
+    if (addOnOnly) ok = false;
+    const bnd = bundleOffFor(bundleEntries, deal);
     const code = readCode();
     const shipCost = ship.byWeight ? rateFor(oz, ship.rates) : ship.flat;
     const codeFree = code && code.kind === 'free_shipping';
@@ -1701,14 +1742,20 @@
     let off = 0;
     if (code && !belowMin && code.kind === 'percent') off = Math.round(subtotal * Number(code.value)) / 100;
     if (code && !belowMin && code.kind === 'amount') off = Math.min(subtotal, Number(code.value));
+    // A code and the bundle deal do not stack. The bigger one wins.
+    const bundleOff = bnd.off > off ? bnd.off : 0;
+    if (bundleOff) off = bundleOff;
+    const offLabel = bundleOff ? 'Bundle deal' : (code ? code.code : '');
     const total = Math.max(0, subtotal - off) + (free ? 0 : shipCost);
     sumEl.innerHTML = `
       <div class="bag-sum">
         <div class="bag-sum-row"><span>Subtotal</span><span>$${subtotal.toFixed(2)}</span></div>
-        ${off > 0 ? `<div class="bag-sum-row"><span>${escAttr(code.code)}</span><span>&minus;$${off.toFixed(2)}</span></div>` : ''}
+        ${off > 0 ? `<div class="bag-sum-row"><span>${escAttr(offLabel)}</span><span>&minus;$${off.toFixed(2)}</span></div>` : ''}
         <div class="bag-sum-row"><span>Shipping${!free && ship.byWeight ? ' <small>(USPS, by weight)</small>' : ''}</span><span>${shipText}</span></div>
         <div class="bag-sum-row total"><span>Total</span><span>$${total.toFixed(2)}</span></div>
         ${mtoDays ? `<p class="bag-note"><b>Made to order.</b> We make it after you order, so it ships in ${leadText({ lead_time_days: mtoDays })}.${hasStockItem ? ' Your whole bag ships together once it is ready.' : ''}</p>` : ''}
+        ${addOnOnly ? `<p class="bag-warn">Pins and patches are add-ons. Put a full piece in your bag to check out.</p>` : ''}
+        ${deal && !bnd.sets && bundleEntries.length && !addOnOnly ? `<p class="bag-note">${deal.size} pins or patches for $${deal.price.toFixed(2)}. Add ${deal.size - bnd.leftover} more.</p>` : ''}
         ${toFree > 0 && !codeFree ? `<p class="bag-note">$${toFree.toFixed(2)} more and shipping's free.</p>` : ''}
         ${ship.pickup && !hasPod ? `<p class="bag-note">Free pickup is an option too: ${escAttr(ship.pickupLabel)}. Pick it at checkout.</p>` : ''}
         ${ship.pickup && hasPod ? `<p class="bag-note">Something in here is printed to order, so this bag ships. No pickup.</p>` : ''}

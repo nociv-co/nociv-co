@@ -418,6 +418,7 @@
       <a href="#sec-expenses">Expenses</a>
       <a href="#sec-album">Album</a>
       <a href="#sec-shopgoal">Shop Goal</a>
+      <a href="#sec-bundles">Bundles</a>
       <a href="#sec-directory">Directory</a>
       <a href="#sec-zines">Zines</a>
       <a href="#sec-promo">Spread The Word</a>
@@ -843,6 +844,8 @@
               <input type="number" id="pCost" step="0.01" placeholder="6.00">
             </div>
           </div>
+          <label for="pBundle">Add-on bundle (optional)</label>
+          <select id="pBundle"><option value="">Not an add-on</option><option value="pin">Pin</option><option value="patch">Patch</option></select>
           <label for="pStage">Stage (optional)</label>
           <select id="pStage"><option value="">No stage</option><option value="one_of_one">Rare 1 of 1 (people can vote for repeats)</option><option value="fancy_blank">Fancy blank</option><option value="manufactured">Manufactured</option></select>
           <label for="pCompareAt">Was price (optional, puts this on sale)</label>
@@ -1163,6 +1166,26 @@
           <button class="admin-submit" id="goalDownBtn" type="button" style="background:#555; display:none;">Take it down</button>
           <p class="admin-note" id="goalConfirm">Saved.</p>
           <p class="admin-error" id="goalError"></p>
+        </div>
+      </div>
+    </details>
+
+    <details class="admin-section" id="sec-bundles">
+      <summary>Bundles <span class="admin-section-hint">pins and patches, e.g. 3 for $6</span></summary>
+      <div class="admin-section-body">
+        <div class="how-to-box">
+          <strong>How this works</strong>
+          Mark a product as a Pin or Patch (in Add Product or Edit, the field "Add-on bundle"). Those can only be bought when the bag also has a full item. Every set of the number below in the bag gets the bundle price. Buy 2, pay the normal price. Buy 3, pay the bundle price. If a promo code gives a bigger discount, the code wins (they do not stack).
+        </div>
+        <div class="admin-form">
+          <label for="bundleSize">How many in a bundle</label>
+          <input type="number" id="bundleSize" min="2" max="20" value="3" inputmode="numeric">
+          <label for="bundlePrice">Bundle price ($)</label>
+          <input type="number" id="bundlePrice" min="0" step="0.01" value="6" inputmode="decimal">
+          <button class="admin-submit" id="bundleSaveBtn">Save bundle deal</button>
+          <button class="admin-submit" id="bundleOffBtn" type="button" style="background:#555;">Turn bundles off</button>
+          <p class="admin-note" id="bundleConfirm">Saved.</p>
+          <p class="admin-error" id="bundleError"></p>
         </div>
       </div>
     </details>
@@ -1515,6 +1538,7 @@
       dashboard.style.display = 'block';
       loadPopupStatus();
       loadShopGoal();
+      loadBundles();
       loadProducts();
       loadExternalSales();
       loadOrders();
@@ -1724,6 +1748,30 @@
     if (!confirm('Take this goal off the shop?')) return;
     await writeShopGoal({ now: '', to: '', until: '', set: new Date().toISOString(), reached: false });
   });
+
+  // ===== BUNDLE DEAL (app_settings keys bundle_size, bundle_price) =====
+  async function loadBundles() {
+    try {
+      const { data } = await supabaseClient.from('app_settings').select('key, value').in('key', ['bundle_size', 'bundle_price']);
+      const m = Object.fromEntries((data || []).map(r => [r.key, r.value]));
+      if (m.bundle_size) document.getElementById('bundleSize').value = m.bundle_size;
+      if (m.bundle_price) document.getElementById('bundlePrice').value = m.bundle_price;
+    } catch (e) {}
+  }
+  async function writeBundles(size, price) {
+    const err = document.getElementById('bundleError'), ok = document.getElementById('bundleConfirm');
+    err.style.display = 'none'; ok.style.display = 'none';
+    const { error } = await supabaseClient.from('app_settings').upsert([{ key: 'bundle_size', value: String(size) }, { key: 'bundle_price', value: String(price) }], { onConflict: 'key' });
+    if (error) { err.textContent = 'Did not save: ' + error.message; err.style.display = 'block'; return; }
+    ok.style.display = 'block';
+  }
+  document.getElementById('bundleSaveBtn').addEventListener('click', () => {
+    const size = parseInt(document.getElementById('bundleSize').value, 10), price = parseFloat(document.getElementById('bundlePrice').value);
+    const err = document.getElementById('bundleError');
+    if (!(size >= 2) || !(price >= 0)) { err.textContent = 'Put a bundle size of 2 or more and a price.'; err.style.display = 'block'; return; }
+    writeBundles(size, price.toFixed(2));
+  });
+  document.getElementById('bundleOffBtn').addEventListener('click', () => { if (confirm('Turn the bundle deal off?')) writeBundles(0, 0); });
 
   // ===== SHIPPING SETTINGS (app_settings, read by the checkout function) =====
   // Same default the order-notification function uses if nothing is saved.
@@ -2425,6 +2473,7 @@
       price: priceVal ? parseFloat(priceVal) : null,
       ...(parseFloat(document.getElementById('pCompareAt').value) > 0 ? { compare_at_price: parseFloat(document.getElementById('pCompareAt').value) } : {}),
       ...(document.getElementById('pStage').value ? { stage: document.getElementById('pStage').value } : {}),
+      ...(document.getElementById('pBundle').value ? { bundle_kind: document.getElementById('pBundle').value } : {}),
       cost: costVal ? parseFloat(costVal) : null,
       shipping_cost: shippingCostVal ? parseFloat(shippingCostVal) : null,
       platform_fee_pct: platformFeePctVal ? parseFloat(platformFeePctVal) : null,
@@ -2464,6 +2513,7 @@
     document.getElementById('pPrice').value = '';
     document.getElementById('pCompareAt').value = '';
     document.getElementById('pStage').value = '';
+    document.getElementById('pBundle').value = '';
     document.getElementById('pCost').value = '';
     document.getElementById('pShippingCost').value = '';
     document.getElementById('pShipWeight').value = '';
@@ -2801,6 +2851,7 @@
     document.getElementById('pPrice').value = p.price ?? '';
     document.getElementById('pCompareAt').value = '';
     document.getElementById('pStage').value = '';
+    document.getElementById('pBundle').value = '';
     document.getElementById('pCost').value = p.cost ?? '';
     document.getElementById('pShippingCost').value = p.shipping_cost ?? '';
     document.getElementById('pPlatformFeePct').value = p.platform_fee_pct ?? '';
@@ -2863,6 +2914,7 @@
           <div style="flex:1;">
             <label style="font-size:0.75rem; opacity:.7; display:block;">Stage</label>
             <select class="edit-stage" style="width:100%; padding:6px;"><option value="">No stage</option><option value="one_of_one"${p.stage === 'one_of_one' ? ' selected' : ''}>Rare 1 of 1 (people can vote for repeats)</option><option value="fancy_blank"${p.stage === 'fancy_blank' ? ' selected' : ''}>Fancy blank</option><option value="manufactured"${p.stage === 'manufactured' ? ' selected' : ''}>Manufactured</option></select>
+            <select class="edit-bundle" style="width:100%; padding:6px; margin-top:6px;"><option value="">Not an add-on</option><option value="pin"${p.bundle_kind === 'pin' ? ' selected' : ''}>Pin (bundle add-on)</option><option value="patch"${p.bundle_kind === 'patch' ? ' selected' : ''}>Patch (bundle add-on)</option></select>
           </div>
           <div style="flex:1;">
             <label style="font-size:0.75rem; opacity:.7; display:block;">Was price (sale)</label>
@@ -3167,6 +3219,9 @@
       // Stage: only sent once the stage SQL added the column.
       const stageVal = row.querySelector('.edit-stage').value;
       if ('stage' in p || stageVal) updated.stage = stageVal || null;
+      // Bundle add-on: only sent once the bundles SQL added the column.
+      const bundleVal = row.querySelector('.edit-bundle').value;
+      if ('bundle_kind' in p || bundleVal) updated.bundle_kind = bundleVal || null;
       // Made to order: only sent once the made to order SQL added the columns (they come back with the product).
       const madeOn = row.querySelector('.edit-made').checked;
       if ('made_to_order' in p || madeOn) {
