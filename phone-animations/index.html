@@ -1,0 +1,746 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<!-- Site Created & Designed by Jasilyn A. Anderson | NOCIV.CO -->
+<meta charset="UTF-8">
+<title>Phone Animations: NOCIV.CO</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, viewport-fit=cover">
+<meta name="description" content="Free stop motion and VHS camcorder maker from NOCIV. Shoot frames with your phone, give it a different era. Nothing tracked, nothing uploaded.">
+<meta property="og:title" content="NOCIV Phone Animations">
+<meta property="og:description" content="Stop motion and VHS camcorder looks on your phone. No sign up. Nothing leaves your phone.">
+<style>
+  :root { --paper: #e9e6df; --note: #f2ecd6; --ink: #1a1a1a; --red: #c8412f; --green: #2f7a4b; --muted: #6b665c; }
+  * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+  html, body { margin: 0; background: var(--paper); color: var(--ink); touch-action: pan-x pan-y; }
+  body { font-family: -apple-system, BlinkMacSystemFont, "Helvetica Neue", Arial, sans-serif; -webkit-text-size-adjust: 100%; }
+  .wrap { max-width: 980px; margin: 0 auto; padding: 18px 14px 60px; }
+  .top h1 { margin: 0; font-size: clamp(26px, 7vw, 42px); font-weight: 900; letter-spacing: 0.04em; line-height: 1; }
+  .top h1 span { background: var(--ink); color: #fff; padding: 2px 10px; display: inline-block; transform: rotate(-1.5deg); }
+  .top p { margin: 12px 0 0; font-size: 0.98rem; line-height: 1.5; max-width: 520px; }
+  .in-frame .top { display: none; }
+  .grid { display: grid; grid-template-columns: 1fr; gap: 14px; margin-top: 14px; }
+  @media (min-width: 820px) { .grid { grid-template-columns: 340px 1fr; align-items: start; } .stage-col { position: sticky; top: 12px; } }
+  .stage-col { min-width: 0; }
+  @media (max-width: 819px) { .stage-col { position: sticky; top: 0; z-index: 5; background: var(--paper); padding: 6px 0 4px; } .stage canvas { max-height: 38svh; } }
+  .stage { background: #111; border-radius: 12px; display: grid; place-items: center; padding: 6px; position: relative; }
+  .stage canvas { display: block; max-width: 100%; max-height: 52svh; width: auto; height: auto; background: #000; touch-action: none; }
+  @media (min-width: 820px) { .stage canvas { max-height: 74vh; } }
+  #stageMsg { position: absolute; left: 10px; right: 10px; bottom: 10px; color: #fff; font-size: 0.8rem; font-weight: 700; text-align: center; text-shadow: 0 1px 3px #000; pointer-events: none; }
+  .bar { display: flex; gap: 8px; align-items: center; margin-top: 8px; }
+  .bar .count { flex: 1; font-weight: 800; font-size: 0.85rem; }
+  button, select, input[type=text], input[type=file] { font: inherit; }
+  .btn { display: block; width: 100%; font-weight: 900; font-size: 0.95rem; letter-spacing: 0.03em; padding: 13px; border-radius: 10px; border: 2px solid var(--ink); background: #fff; color: var(--ink); cursor: pointer; text-align: center; }
+  .btn.red { background: var(--red); color: #fff; border-color: var(--red); }
+  .btn.dark { background: var(--ink); color: #fff; }
+  .btn.small { width: auto; padding: 9px 14px; font-size: 0.82rem; }
+  .btn:disabled { opacity: 0.4; }
+  .bar .btn { flex: none; }
+  .steps { display: flex; gap: 6px; overflow-x: auto; scrollbar-width: none; padding: 2px 0 8px; }
+  .steps::-webkit-scrollbar { display: none; }
+  .steps button { flex: none; font-size: 0.85rem; font-weight: 800; border: 1.5px solid var(--ink); background: #fff; border-radius: 999px; padding: 8px 14px; cursor: pointer; }
+  .steps button[aria-selected="true"] { background: var(--ink); color: #fff; }
+  .panel { display: none; background: var(--note); border: 2px solid var(--ink); border-radius: 12px; padding: 14px; }
+  .panel.on { display: block; }
+  .panel h2 { margin: 0 0 6px; font-size: 1rem; letter-spacing: 0.05em; text-transform: uppercase; }
+  .tip { font-size: 0.85rem; line-height: 1.45; color: var(--muted); margin: 6px 0 10px; }
+  .row { display: flex; gap: 8px; margin-top: 8px; }
+  .row > * { flex: 1; }
+  label.f { display: block; font-weight: 800; font-size: 0.82rem; margin: 12px 0 5px; }
+  input[type=range] { width: 100%; accent-color: var(--red); }
+  input[type=text], select { width: 100%; padding: 10px; border: 1.5px solid var(--ink); border-radius: 8px; background: #fff; font-size: 16px; }
+  input[type=file] { width: 100%; font-size: 16px; }
+  .chips { display: flex; gap: 6px; flex-wrap: wrap; }
+  .chip { border: 1.5px solid var(--ink); background: #fff; border-radius: 999px; padding: 8px 13px; font-weight: 800; font-size: 0.82rem; cursor: pointer; }
+  .chip[aria-pressed="true"] { background: var(--ink); color: #fff; }
+  .chip:disabled { opacity: 0.4; }
+  .shutter { width: 84px; height: 84px; border-radius: 50%; border: 5px solid var(--ink); background: var(--red); margin: 12px auto 4px; display: block; cursor: pointer; box-shadow: 0 0 0 4px #fff inset; }
+  .shutter:disabled { opacity: 0.35; }
+  .strip { display: flex; gap: 6px; overflow-x: auto; padding: 4px 0 10px; }
+  .strip .fr { flex: none; width: 58px; height: 74px; border: 2.5px solid transparent; border-radius: 6px; background: #000 center/cover no-repeat; position: relative; cursor: pointer; }
+  .strip .fr.sel { border-color: var(--red); }
+  .strip .fr i { position: absolute; left: 2px; bottom: 2px; background: rgba(0,0,0,.65); color: #fff; font-style: normal; font-size: 0.65rem; padding: 0 4px; border-radius: 4px; }
+  .check { display: flex; gap: 10px; align-items: center; font-weight: 700; font-size: 0.9rem; margin: 10px 0; }
+  .check input { width: 22px; height: 22px; accent-color: var(--red); }
+  .msg { font-size: 0.85rem; font-weight: 700; margin-top: 8px; min-height: 1.2em; }
+  .msg.err { color: var(--red); }
+  .prog { height: 8px; background: #ddd; border-radius: 4px; overflow: hidden; margin-top: 8px; display: none; }
+  .prog i { display: block; height: 100%; width: 0; background: var(--red); }
+  video.result { width: 100%; max-height: 50svh; background: #000; border-radius: 8px; margin-top: 10px; display: none; }
+  .foot { margin-top: 28px; font-size: 0.8rem; color: var(--muted); text-align: center; }
+  .foot a { color: var(--ink); font-weight: 800; }
+  .hide { display: none !important; }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <div class="top">
+    <h1><span>PHONE</span> ANIMATIONS</h1>
+    <p>Stop motion on your phone, then give it a different era. Shoot frames, put them in order, add the VHS look, save a video. Nothing leaves your phone.</p>
+  </div>
+
+  <div class="grid">
+    <div class="stage-col">
+      <div class="stage"><canvas id="cv" width="540" height="960"></canvas><div id="stageMsg"></div></div>
+      <div class="bar">
+        <span class="count" id="count">0 frames</span>
+        <button type="button" class="btn small" id="playBtn">&#9654; Play</button>
+      </div>
+    </div>
+
+    <div>
+      <nav class="steps" id="steps" role="tablist">
+        <button type="button" role="tab" data-p="shoot" aria-selected="true">1 Shoot</button>
+        <button type="button" role="tab" data-p="frames" aria-selected="false">2 Frames</button>
+        <button type="button" role="tab" data-p="look" aria-selected="false">3 Look</button>
+        <button type="button" role="tab" data-p="save" aria-selected="false">4 Save</button>
+        <button type="button" role="tab" data-p="clip" aria-selected="false">VHS a video</button>
+      </nav>
+
+      <!-- SHOOT -->
+      <section class="panel on" id="p-shoot">
+        <h2>Shoot</h2>
+        <p class="tip">Prop your phone up so it cannot move. Move your subject a tiny bit, tap the red button, repeat. The faded picture on top is your last shot so you can see how far you moved.</p>
+        <label class="f">Shape</label>
+        <div class="chips" id="aspects">
+          <button type="button" class="chip" data-a="tall" aria-pressed="true">Tall 9:16</button>
+          <button type="button" class="chip" data-a="square" aria-pressed="false">Square</button>
+          <button type="button" class="chip" data-a="wide" aria-pressed="false">Wide 16:9</button>
+        </div>
+        <p class="tip" id="aspectNote" style="display:none">The shape is locked once you have a frame. Clear all frames to change it.</p>
+        <div class="row">
+          <button type="button" class="btn dark" id="camBtn">Start camera</button>
+          <button type="button" class="btn" id="flipBtn" disabled>Flip camera</button>
+        </div>
+        <button type="button" class="shutter" id="shutter" aria-label="Take a frame" disabled></button>
+        <label class="f">Ghost of last frame <span id="onionVal"></span></label>
+        <input type="range" id="onion" min="0" max="80" value="40">
+        <div class="row">
+          <button type="button" class="btn" id="undoBtn" disabled>Undo last</button>
+        </div>
+        <label class="f">No camera, or already have photos?</label>
+        <input type="file" id="photoIn" accept="image/*" multiple>
+        <label class="f">Turn a video into frames</label>
+        <div class="row">
+          <select id="everyN">
+            <option value="0.25">A frame every 0.25 s</option>
+            <option value="0.5" selected>A frame every 0.5 s</option>
+            <option value="1">A frame every 1 s</option>
+            <option value="2">A frame every 2 s</option>
+          </select>
+        </div>
+        <input type="file" id="videoIn" accept="video/*" style="margin-top:8px">
+        <div class="prog" id="progA"><i></i></div>
+        <div class="msg" id="shootMsg"></div>
+      </section>
+
+      <!-- FRAMES -->
+      <section class="panel" id="p-frames">
+        <h2>Frames</h2>
+        <p class="tip">Tap a frame to pick it. Move it, copy it, delete it. Copy a frame to make that moment last longer.</p>
+        <div class="strip" id="strip"></div>
+        <div class="row">
+          <button type="button" class="btn" id="mvL">&larr; Earlier</button>
+          <button type="button" class="btn" id="mvR">Later &rarr;</button>
+        </div>
+        <div class="row">
+          <button type="button" class="btn" id="dupBtn">Copy frame</button>
+          <button type="button" class="btn" id="delBtn">Delete frame</button>
+        </div>
+        <div class="row">
+          <button type="button" class="btn" id="revBtn">Flip the order</button>
+          <button type="button" class="btn" id="clearBtn">Clear all</button>
+        </div>
+        <label class="f">Speed <span id="fpsVal"></span></label>
+        <input type="range" id="fps" min="1" max="24" value="8">
+        <label class="f">How it plays</label>
+        <div class="chips" id="modes">
+          <button type="button" class="chip" data-m="loop" aria-pressed="true">Loop</button>
+          <button type="button" class="chip" data-m="pingpong" aria-pressed="false">Back and forth</button>
+        </div>
+      </section>
+
+      <!-- LOOK -->
+      <section class="panel" id="p-look">
+        <h2>Look</h2>
+        <p class="tip">Pick an era. It shows on the picture above and on everything you save.</p>
+        <div class="chips" id="looks">
+          <button type="button" class="chip" data-l="none" aria-pressed="true">Clean</button>
+          <button type="button" class="chip" data-l="vhs" aria-pressed="false">VHS camcorder</button>
+          <button type="button" class="chip" data-l="film" aria-pressed="false">8mm film</button>
+          <button type="button" class="chip" data-l="digicam" aria-pressed="false">90s digicam</button>
+          <button type="button" class="chip" data-l="security" aria-pressed="false">Security cam</button>
+        </div>
+        <label class="f">How strong <span id="strVal"></span></label>
+        <input type="range" id="strength" min="0" max="100" value="70">
+        <label class="check"><input type="checkbox" id="recOn" checked> Camcorder stamp (REC, timer, PLAY)</label>
+        <label class="check"><input type="checkbox" id="dateOn" checked> Date stamp</label>
+        <label class="f">Date text</label>
+        <input type="text" id="dateText" maxlength="24" placeholder="OCT 25 1998">
+        <label class="check"><input type="checkbox" id="glitchOn" checked> Tracking glitches now and then</label>
+      </section>
+
+      <!-- SAVE -->
+      <section class="panel" id="p-save">
+        <h2>Save</h2>
+        <p class="tip">The video is recorded in real time, so a 10 second loop takes about 10 seconds. Keep this page open and your screen on while it records.</p>
+        <label class="f">How many times it repeats</label>
+        <select id="loops"><option value="1">Once</option><option value="3" selected>3 times</option><option value="6">6 times</option><option value="12">12 times</option></select>
+        <button type="button" class="btn red" id="recBtn" style="margin-top:12px">Make the video</button>
+        <div class="prog" id="progB"><i></i></div>
+        <div class="msg" id="saveMsg"></div>
+        <video class="result" id="result" controls playsinline loop></video>
+        <div class="row hide" id="resultBtns">
+          <button type="button" class="btn dark" id="shareBtn">Share or save</button>
+        </div>
+        <label class="check"><input type="checkbox" id="shareMark" checked> Add "Made with nociv.co" and the link when I share</label>
+        <div class="row">
+          <button type="button" class="btn" id="stillsBtn">Save the frames as photos</button>
+        </div>
+      </section>
+
+      <!-- CLIP -->
+      <section class="panel" id="p-clip">
+        <h2>VHS a video</h2>
+        <p class="tip">Pick a regular video from your camera roll, up to 5 minutes. It plays through the look you chose in step 3 and records a new copy. It runs in real time, so a 5 minute video takes 5 minutes. Keep this page open and your screen on.</p>
+        <input type="file" id="clipIn" accept="video/*">
+        <div class="row">
+          <button type="button" class="btn" id="clipPrev" disabled>&#9654; Preview</button>
+          <button type="button" class="btn red" id="clipRec" disabled>Record it</button>
+        </div>
+        <div class="prog" id="progC"><i></i></div>
+        <div class="msg" id="clipMsg"></div>
+        <video class="result" id="clipResult" controls playsinline></video>
+        <div class="row hide" id="clipBtns">
+          <button type="button" class="btn dark" id="clipShare">Share or save</button>
+        </div>
+      </section>
+    </div>
+  </div>
+
+  <p class="foot">A free tool from <a href="https://nociv.co" target="_top">NOCIV.CO</a>. Nothing tracked. Your pictures never leave your phone.</p>
+</div>
+
+<script>
+(function () {
+  if (window.self !== window.top) document.documentElement.classList.add('in-frame');
+  const $ = (id) => document.getElementById(id);
+  const cv = $('cv'), ctx = cv.getContext('2d');
+
+  // ===== state =====
+  const SIZES = { tall: [540, 960], square: [720, 720], wide: [960, 540] };
+  const st = {
+    aspect: 'tall', frames: [], sel: -1, fps: 8, mode: 'loop',
+    look: 'none', strength: 0.7, rec: true, date: true, glitch: true, dateText: '',
+    playing: false, playIdx: 0, playDir: 1, playLast: 0,
+    stream: null, facing: 'environment', camVideo: null,
+    clip: null, clipPlaying: false, exporting: false, recStart: 0, panel: 'shoot',
+  };
+  function size() { return SIZES[st.aspect]; }
+  function applySize(w, h) { if (cv.width !== w || cv.height !== h) { cv.width = w; cv.height = h; } }
+  function msg(id, text, err) { const e = $(id); e.textContent = text || ''; e.className = 'msg' + (err ? ' err' : ''); }
+  function stageMsg(t) { $('stageMsg').textContent = t || ''; }
+
+  // ===== looks =====
+  // res = how small it is drawn before being blown back up (that is what makes it soft).
+  const LOOKS = {
+    vhs:      { res: 0.5,  chroma: 3,   noise: 22, scan: 0.22, sat: 1.25, tint: [1.04, 1.0, 0.98], wobble: 1.4, glitch: 1, vig: 0.15, lift: 12 },
+    film:     { res: 0.75, chroma: 0,   noise: 30, scan: 0,    sat: 0.55, tint: [1.12, 0.97, 0.78], wobble: 0.25, glitch: 0, vig: 0.55, lift: 10, flicker: 1, scratch: 1 },
+    digicam:  { res: 0.4,  chroma: 1,   noise: 10, scan: 0,    sat: 1.35, tint: [1.02, 1.02, 1.0], wobble: 0, glitch: 0, vig: 0.1, lift: 6, dateColor: '#ff9a1f' },
+    security: { res: 0.33, chroma: 0,   noise: 26, scan: 0.28, sat: 0, tint: [0.72, 1.0, 0.76], wobble: 0.5, glitch: 0.6, vig: 0.3, lift: 0, cam: true },
+  };
+  const low = document.createElement('canvas'), lctx = low.getContext('2d', { willReadFrequently: true });
+
+  function stampText(c, text, x, y, size, color, align) {
+    c.font = '700 ' + size + 'px "Courier New", Courier, monospace';
+    c.textAlign = align || 'left'; c.textBaseline = 'top';
+    c.fillStyle = 'rgba(0,0,0,.65)'; c.fillText(text, x + size * 0.07, y + size * 0.07);
+    c.fillStyle = color; c.fillText(text, x, y);
+  }
+  function two(n) { return (n < 10 ? '0' : '') + n; }
+  function clock(sec) { sec = Math.max(0, Math.floor(sec)); return two(Math.floor(sec / 3600)) + ':' + two(Math.floor(sec / 60) % 60) + ':' + two(sec % 60); }
+  function defaultDate() {
+    const d = new Date();
+    return ['JAN','FEB','MAR','APR','MAY','JUN','JUL','AUG','SEP','OCT','NOV','DEC'][d.getMonth()] + ' ' + d.getDate() + ' ' + d.getFullYear();
+  }
+
+  // Draws src (canvas / image / video) onto ctx with the chosen look. t = seconds, used for wobble and the timer.
+  function drawLooked(c, src, sw, sh, W, H, t, opts) {
+    const L = LOOKS[st.look];
+    if (!L || st.look === 'none') { drawCover(c, src, sw, sh, W, H); return; }
+    const k = st.strength;
+    const lw = Math.max(80, Math.round(W * L.res)), lh = Math.max(80, Math.round(H * L.res));
+    if (low.width !== lw || low.height !== lh) { low.width = lw; low.height = lh; }
+    drawCover(lctx, src, sw, sh, lw, lh);
+    const img = lctx.getImageData(0, 0, lw, lh), d = img.data, out = new Uint8ClampedArray(d.length);
+    const ch = Math.round(L.chroma * k * (lw / 270));
+    // a tracking glitch: a band that tears sideways for a moment every few seconds
+    let bandY = -1, bandH = 0, bandX = 0;
+    if (st.glitch && L.glitch) {
+      const cyc = (t % 5);
+      if (cyc < 0.45) { bandY = Math.floor(lh * (0.55 + 0.35 * ((t * 1.7) % 1))); bandH = Math.floor(lh * 0.07); bandX = Math.round(lw * 0.06 * (Math.sin(t * 40) + 1.2) * k * L.glitch); }
+    }
+    const wob = (L.wobble || 0) * k * (lw / 270);
+    const noise = L.noise * k, lift = L.lift * k, sat = 1 + (L.sat - 1) * k;
+    for (let y = 0; y < lh; y++) {
+      let off = wob ? Math.round(Math.sin(y * 0.045 + t * 3.1) * wob + (Math.random() - 0.5) * wob * 0.8) : 0;
+      if (bandY >= 0 && y >= bandY && y < bandY + bandH) off += bandX;
+      // the bottom of a tape is always messy
+      if (L.wobble && y > lh * 0.94) off += Math.round((Math.random() - 0.5) * lw * 0.05 * k);
+      for (let x = 0; x < lw; x++) {
+        const sx = Math.min(lw - 1, Math.max(0, x + off));
+        const i = (y * lw + x) * 4;
+        const ir = (y * lw + Math.min(lw - 1, Math.max(0, sx + ch))) * 4, ib = (y * lw + Math.min(lw - 1, Math.max(0, sx - ch))) * 4, ig = (y * lw + sx) * 4;
+        let r = d[ir], g = d[ig + 1], b = d[ib + 2];
+        const lum = 0.3 * r + 0.59 * g + 0.11 * b;
+        r = lum + (r - lum) * sat; g = lum + (g - lum) * sat; b = lum + (b - lum) * sat;
+        const tk = L.tint;
+        r = r * (1 + (tk[0] - 1) * k) + lift; g = g * (1 + (tk[1] - 1) * k) + lift; b = b * (1 + (tk[2] - 1) * k) + lift;
+        const n = (Math.random() - 0.5) * noise;
+        out[i] = r + n; out[i + 1] = g + n; out[i + 2] = b + n; out[i + 3] = 255;
+      }
+    }
+    lctx.putImageData(new ImageData(out, lw, lh), 0, 0);
+    c.imageSmoothingEnabled = true; c.imageSmoothingQuality = 'low';
+    c.drawImage(low, 0, 0, W, H);
+    if (L.scan) {
+      c.fillStyle = 'rgba(0,0,0,' + (L.scan * k).toFixed(3) + ')';
+      const step = Math.max(2, Math.round(H / 240));
+      for (let y = 0; y < H; y += step) c.fillRect(0, y, W, Math.ceil(step / 2));
+    }
+    if (L.vig) {
+      const g = c.createRadialGradient(W / 2, H / 2, Math.min(W, H) * 0.25, W / 2, H / 2, Math.max(W, H) * 0.75);
+      g.addColorStop(0, 'rgba(0,0,0,0)'); g.addColorStop(1, 'rgba(0,0,0,' + (L.vig * (0.5 + k)).toFixed(3) + ')');
+      c.fillStyle = g; c.fillRect(0, 0, W, H);
+    }
+    if (L.flicker) { c.fillStyle = 'rgba(255,240,200,' + (Math.random() * 0.1 * k).toFixed(3) + ')'; c.fillRect(0, 0, W, H); }
+    if (L.scratch && Math.random() < 0.35) {
+      c.fillStyle = 'rgba(255,255,255,' + (0.25 * k).toFixed(2) + ')';
+      c.fillRect(Math.random() * W, 0, Math.max(1, W / 540), H);
+    }
+    // a bright tracking line crawling up the picture
+    if (st.glitch && L.glitch && bandY >= 0) {
+      c.fillStyle = 'rgba(255,255,255,0.35)';
+      for (let i = 0; i < 40; i++) c.fillRect(Math.random() * W, (bandY + bandH * Math.random()) / lh * H, Math.random() * W * 0.2, 2);
+    }
+  }
+  function drawStamps(c, W, H, t, opts) {
+    const L = LOOKS[st.look]; if (!L || st.look === 'none') return;
+    const s = Math.round(Math.min(W, H) * 0.058);
+    const dateStr = st.dateText || defaultDate();
+    if (st.rec && st.look !== 'film' && st.look !== 'digicam') {
+      if (L.cam) { stampText(c, 'CAM 02', s * 0.6, s * 0.6, s, '#d8ffd8'); }
+      else {
+        const early = t < 1.6 && opts && opts.playOsd;
+        if (early) stampText(c, '▶ PLAY', s * 0.6, s * 0.6, s, '#ffffff');
+        else {
+          if (Math.floor(t * 1.5) % 2 === 0) { c.fillStyle = '#ff2a1f'; c.beginPath(); c.arc(s * 0.6 + s * 0.4, s * 0.6 + s * 0.5, s * 0.34, 0, 6.3); c.fill(); }
+          stampText(c, 'REC', s * 1.4, s * 0.6, s, '#ffffff');
+        }
+      }
+      stampText(c, clock(t), W - s * 0.6, s * 0.6, s, '#ffffff', 'right');
+    }
+    if (st.date) {
+      const col = L.dateColor || (L.cam ? '#d8ffd8' : '#ffffff');
+      stampText(c, dateStr, s * 0.6, H - s * 1.7, s * 0.9, col);
+    }
+  }
+
+  // ===== drawing helpers =====
+  function drawCover(c, src, sw, sh, W, H) {
+    if (!sw || !sh) { c.fillStyle = '#000'; c.fillRect(0, 0, W, H); return; }
+    const r = Math.max(W / sw, H / sh), dw = sw * r, dh = sh * r;
+    c.imageSmoothingEnabled = true;
+    c.drawImage(src, (W - dw) / 2, (H - dh) / 2, dw, dh);
+  }
+  function drawFrame(i, t) {
+    const [W, H] = size(); applySize(W, H);
+    const f = st.frames[i];
+    if (!f) { ctx.fillStyle = '#111'; ctx.fillRect(0, 0, W, H); return; }
+    drawLooked(ctx, f.img, f.img.naturalWidth, f.img.naturalHeight, W, H, t || 0, {});
+    drawStamps(ctx, W, H, t || 0, { playOsd: true });
+  }
+
+  // ===== frames =====
+  function loadImg(blob) {
+    return new Promise((res, rej) => {
+      const url = URL.createObjectURL(blob), img = new Image();
+      img.onload = () => res({ blob, url, img });
+      img.onerror = () => { URL.revokeObjectURL(url); rej(new Error('image')); };
+      img.src = url;
+    });
+  }
+  async function addBlob(blob, at) {
+    const f = await loadImg(blob);
+    if (at === undefined) st.frames.push(f); else st.frames.splice(at, 0, f);
+    lockAspect();
+    return f;
+  }
+  function canvasToBlob(c, type, q) { return new Promise(r => c.toBlob(r, type, q)); }
+  function lockAspect() {
+    const locked = st.frames.length > 0;
+    document.querySelectorAll('#aspects .chip').forEach(b => { b.disabled = locked; });
+    $('aspectNote').style.display = locked ? 'block' : 'none';
+  }
+  function refreshUI() {
+    $('count').textContent = st.frames.length + (st.frames.length === 1 ? ' frame' : ' frames') + (st.frames.length ? ' · ' + (st.frames.length / st.fps).toFixed(1) + ' s' : '');
+    $('undoBtn').disabled = !st.frames.length;
+    $('playBtn').disabled = st.frames.length < 2 && !st.clip;
+    const s = $('strip'); s.innerHTML = '';
+    st.frames.forEach((f, i) => {
+      const d = document.createElement('div'); d.className = 'fr' + (i === st.sel ? ' sel' : '');
+      d.style.backgroundImage = 'url(' + f.url + ')'; d.innerHTML = '<i>' + (i + 1) + '</i>';
+      d.addEventListener('click', () => { st.sel = i; stopPlay(); refreshUI(); renderStill(); });
+      s.appendChild(d);
+    });
+    lockAspect(); queueSave();
+  }
+  function renderStill() {
+    if (st.camVideo && st.panel === 'shoot') return; // live view is drawing
+    if (st.sel >= 0 && st.frames[st.sel]) drawFrame(st.sel, 5);
+    else if (st.frames.length) drawFrame(st.frames.length - 1, 5);
+    else { const [W, H] = size(); applySize(W, H); ctx.fillStyle = '#111'; ctx.fillRect(0, 0, W, H); stageMsg(st.camVideo ? '' : 'Start the camera or add photos'); }
+  }
+
+  // ===== camera =====
+  async function startCam() {
+    stopCam();
+    try {
+      if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) throw new Error('nocam');
+      st.stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: { ideal: st.facing }, width: { ideal: 1280 }, height: { ideal: 1280 } }, audio: false });
+      const v = document.createElement('video'); v.muted = true; v.playsInline = true; v.setAttribute('playsinline', ''); v.srcObject = st.stream;
+      await v.play(); st.camVideo = v;
+      $('camBtn').textContent = 'Stop camera'; $('shutter').disabled = false; $('flipBtn').disabled = false;
+      msg('shootMsg', ''); stageMsg('');
+    } catch (e) {
+      msg('shootMsg', 'The camera would not start. Allow camera access for this page, or add photos below instead.', true);
+    }
+  }
+  function stopCam() {
+    if (st.stream) st.stream.getTracks().forEach(t => t.stop());
+    st.stream = null; st.camVideo = null;
+    $('camBtn').textContent = 'Start camera'; $('shutter').disabled = true; $('flipBtn').disabled = true;
+  }
+  $('camBtn').addEventListener('click', () => { st.camVideo ? (stopCam(), renderStill()) : startCam(); });
+  $('flipBtn').addEventListener('click', () => { st.facing = st.facing === 'environment' ? 'user' : 'environment'; startCam(); });
+  $('shutter').addEventListener('click', async () => {
+    if (!st.camVideo) return;
+    const [W, H] = size(), c = document.createElement('canvas'); c.width = W; c.height = H;
+    const cc = c.getContext('2d');
+    if (st.facing === 'user') { cc.translate(W, 0); cc.scale(-1, 1); }
+    drawCover(cc, st.camVideo, st.camVideo.videoWidth, st.camVideo.videoHeight, W, H);
+    const blob = await canvasToBlob(c, 'image/jpeg', 0.9);
+    await addBlob(blob); st.sel = st.frames.length - 1; refreshUI();
+    if (navigator.vibrate) navigator.vibrate(15);
+  });
+  $('undoBtn').addEventListener('click', () => { const f = st.frames.pop(); if (f) URL.revokeObjectURL(f.url); st.sel = st.frames.length - 1; refreshUI(); renderStill(); });
+  $('onion').addEventListener('input', () => { $('onionVal').textContent = $('onion').value + '%'; });
+  $('onionVal').textContent = '40%';
+
+  document.querySelectorAll('#aspects .chip').forEach(b => b.addEventListener('click', () => {
+    if (st.frames.length) return;
+    st.aspect = b.dataset.a; document.querySelectorAll('#aspects .chip').forEach(x => x.setAttribute('aria-pressed', x === b ? 'true' : 'false'));
+    renderStill();
+  }));
+
+  // ===== import photos / video =====
+  $('photoIn').addEventListener('change', async (e) => {
+    const files = [...e.target.files]; e.target.value = '';
+    if (!files.length) return;
+    try {
+      msg('shootMsg', 'Adding...');
+      const [W, H] = size();
+      for (const file of files) {
+        const f = await loadImg(file), c = document.createElement('canvas'); c.width = W; c.height = H;
+        drawCover(c.getContext('2d'), f.img, f.img.naturalWidth, f.img.naturalHeight, W, H);
+        URL.revokeObjectURL(f.url);
+        await addBlob(await canvasToBlob(c, 'image/jpeg', 0.9));
+      }
+      st.sel = st.frames.length - 1; refreshUI(); renderStill(); msg('shootMsg', 'Added ' + files.length + '.');
+    } catch (err) { msg('shootMsg', 'One of those would not open. Try JPG or PNG.', true); }
+  });
+  function metaOf(v) { return new Promise((res, rej) => { v.onloadedmetadata = () => res(); v.onerror = () => rej(new Error('video')); }); }
+  function seekTo(v, t) { return new Promise(res => { const h = () => { v.removeEventListener('seeked', h); res(); }; v.addEventListener('seeked', h); v.currentTime = t; }); }
+  $('videoIn').addEventListener('change', async (e) => {
+    const file = e.target.files[0]; e.target.value = '';
+    if (!file) return;
+    const step = parseFloat($('everyN').value) || 0.5, MAX = 200;
+    const v = document.createElement('video'); v.muted = true; v.playsInline = true; v.preload = 'auto';
+    const url = URL.createObjectURL(file); v.src = url;
+    try {
+      await metaOf(v);
+      let n = Math.floor(v.duration / step) + 1;
+      if (!isFinite(n) || n < 1) throw new Error('video');
+      let note = '';
+      if (n > MAX) { n = MAX; note = ' Only the first ' + MAX + ' frames were kept. Pick a longer gap to cover the whole video.'; }
+      const [W, H] = size(); const bar = $('progA'); bar.style.display = 'block';
+      for (let i = 0; i < n; i++) {
+        await seekTo(v, Math.min(v.duration - 0.05, i * step));
+        const c = document.createElement('canvas'); c.width = W; c.height = H;
+        drawCover(c.getContext('2d'), v, v.videoWidth, v.videoHeight, W, H);
+        await addBlob(await canvasToBlob(c, 'image/jpeg', 0.88));
+        bar.firstChild.style.width = Math.round((i + 1) / n * 100) + '%';
+        msg('shootMsg', 'Pulling frames ' + (i + 1) + ' of ' + n + '...');
+      }
+      bar.style.display = 'none'; st.sel = st.frames.length - 1; refreshUI(); renderStill();
+      msg('shootMsg', 'Made ' + n + ' frames.' + note);
+    } catch (err) { $('progA').style.display = 'none'; msg('shootMsg', 'That video would not open on this phone.', true); }
+    URL.revokeObjectURL(url);
+  });
+
+  // ===== frames panel =====
+  function need() { if (st.sel < 0 || !st.frames[st.sel]) { msg('shootMsg', 'Tap a frame first.'); return false; } return true; }
+  $('mvL').addEventListener('click', () => { if (!need() || st.sel === 0) return; const a = st.frames; [a[st.sel - 1], a[st.sel]] = [a[st.sel], a[st.sel - 1]]; st.sel--; refreshUI(); renderStill(); });
+  $('mvR').addEventListener('click', () => { if (!need() || st.sel >= st.frames.length - 1) return; const a = st.frames; [a[st.sel + 1], a[st.sel]] = [a[st.sel], a[st.sel + 1]]; st.sel++; refreshUI(); renderStill(); });
+  $('dupBtn').addEventListener('click', async () => { if (!need()) return; const f = st.frames[st.sel]; await addBlob(f.blob, st.sel + 1); st.sel++; refreshUI(); renderStill(); });
+  $('delBtn').addEventListener('click', () => { if (!need()) return; const [f] = st.frames.splice(st.sel, 1); URL.revokeObjectURL(f.url); st.sel = Math.min(st.sel, st.frames.length - 1); refreshUI(); renderStill(); });
+  $('revBtn').addEventListener('click', () => { st.frames.reverse(); if (st.sel >= 0) st.sel = st.frames.length - 1 - st.sel; refreshUI(); renderStill(); });
+  $('clearBtn').addEventListener('click', () => { if (!st.frames.length || !confirm('Delete every frame?')) return; st.frames.forEach(f => URL.revokeObjectURL(f.url)); st.frames = []; st.sel = -1; refreshUI(); renderStill(); });
+  $('fps').addEventListener('input', () => { st.fps = +$('fps').value; $('fpsVal').textContent = st.fps + ' frames a second'; refreshUI(); });
+  $('fpsVal').textContent = '8 frames a second';
+  document.querySelectorAll('#modes .chip').forEach(b => b.addEventListener('click', () => { st.mode = b.dataset.m; document.querySelectorAll('#modes .chip').forEach(x => x.setAttribute('aria-pressed', x === b ? 'true' : 'false')); }));
+
+  // ===== look panel =====
+  document.querySelectorAll('#looks .chip').forEach(b => b.addEventListener('click', () => { st.look = b.dataset.l; document.querySelectorAll('#looks .chip').forEach(x => x.setAttribute('aria-pressed', x === b ? 'true' : 'false')); renderStill(); }));
+  $('strength').addEventListener('input', () => { st.strength = +$('strength').value / 100; $('strVal').textContent = $('strength').value + '%'; renderStill(); });
+  $('strVal').textContent = '70%';
+  $('recOn').addEventListener('change', () => { st.rec = $('recOn').checked; renderStill(); });
+  $('dateOn').addEventListener('change', () => { st.date = $('dateOn').checked; renderStill(); });
+  $('glitchOn').addEventListener('change', () => { st.glitch = $('glitchOn').checked; });
+  $('dateText').addEventListener('input', () => { st.dateText = $('dateText').value.toUpperCase(); renderStill(); });
+  $('dateText').placeholder = defaultDate();
+
+  // ===== tabs =====
+  document.querySelectorAll('#steps button').forEach(b => b.addEventListener('click', () => {
+    st.panel = b.dataset.p;
+    document.querySelectorAll('#steps button').forEach(x => x.setAttribute('aria-selected', x === b ? 'true' : 'false'));
+    document.querySelectorAll('.panel').forEach(p => p.classList.toggle('on', p.id === 'p-' + st.panel));
+    if (st.panel !== 'clip' && st.clipPlaying) clipStop();
+    if (st.panel !== 'shoot') renderStill();
+  }));
+
+  // ===== playing =====
+  function stopPlay() { st.playing = false; $('playBtn').innerHTML = '&#9654; Play'; }
+  function startPlay() {
+    if (st.panel === 'clip' && st.clip) { clipToggle(); return; }
+    if (st.frames.length < 2) return;
+    st.playing = true; st.playIdx = Math.max(0, st.sel); st.playDir = 1; st.playLast = 0; st.playT0 = performance.now();
+    $('playBtn').innerHTML = '&#9632; Stop'; stageMsg('');
+  }
+  $('playBtn').addEventListener('click', () => { st.playing ? stopPlay() : startPlay(); if (!st.playing) renderStill(); });
+  function stepIndex() {
+    const n = st.frames.length;
+    if (st.mode === 'pingpong' && n > 1) {
+      let i = st.playIdx + st.playDir;
+      if (i >= n) { st.playDir = -1; i = n - 2; } else if (i < 0) { st.playDir = 1; i = 1; }
+      st.playIdx = i;
+    } else st.playIdx = (st.playIdx + 1) % n;
+  }
+
+  // ===== main loop =====
+  let lastDraw = 0;
+  function tick(now) {
+    requestAnimationFrame(tick);
+    if (st.exporting && st.exportTick) { st.exportTick(now); return; }
+    if (now - lastDraw < 45) return; // about 22 a second is plenty and easy on the battery
+    lastDraw = now;
+    if (st.panel === 'clip' && st.clip) { drawClipFrame(); return; }
+    if (st.camVideo && st.panel === 'shoot') { drawLive(); return; }
+    if (st.playing) {
+      const interval = 1000 / st.fps;
+      if (!st.playLast || now - st.playLast >= interval) { if (st.playLast) stepIndex(); st.playLast = now; }
+      drawFrame(st.playIdx, (now - st.playT0) / 1000);
+      return;
+    }
+    if (st.look !== 'none' && st.frames.length && !st.camVideo) { // keep the grain alive on a still frame
+      drawFrame(st.sel >= 0 ? st.sel : st.frames.length - 1, (now / 1000) % 600);
+    }
+  }
+  function drawLive() {
+    const [W, H] = size(); applySize(W, H);
+    const v = st.camVideo; ctx.save();
+    if (st.facing === 'user') { ctx.translate(W, 0); ctx.scale(-1, 1); }
+    drawCover(ctx, v, v.videoWidth, v.videoHeight, W, H); ctx.restore();
+    const last = st.frames[st.frames.length - 1], a = (+$('onion').value) / 100;
+    if (last && a > 0) { ctx.globalAlpha = a; drawCover(ctx, last.img, last.img.naturalWidth, last.img.naturalHeight, W, H); ctx.globalAlpha = 1; }
+  }
+  requestAnimationFrame(tick);
+
+  // ===== recording =====
+  function pickMime() {
+    const list = ['video/mp4;codecs=avc1', 'video/mp4', 'video/webm;codecs=vp9', 'video/webm;codecs=vp8', 'video/webm'];
+    if (!window.MediaRecorder) return '';
+    for (const m of list) { try { if (MediaRecorder.isTypeSupported(m)) return m; } catch (e) {} }
+    return '';
+  }
+  let wake = null;
+  async function keepAwake(on) { try { if (on && navigator.wakeLock) wake = await navigator.wakeLock.request('screen'); else if (wake) { await wake.release(); wake = null; } } catch (e) {} }
+  function extOf(mime) { return /mp4/.test(mime) ? 'mp4' : 'webm'; }
+
+  $('recBtn').addEventListener('click', async () => {
+    if (st.frames.length < 2) { msg('saveMsg', 'Add at least 2 frames first.', true); return; }
+    const mime = pickMime();
+    if (!mime) { msg('saveMsg', 'This browser cannot record video. Use "Save the frames as photos" instead.', true); return; }
+    stopPlay(); if (st.camVideo) stopCam();
+    const loops = +$('loops').value, n = st.frames.length;
+    const perLoop = st.mode === 'pingpong' ? Math.max(1, 2 * n - 2) : n;
+    const total = perLoop * loops, dur = total / st.fps * 1000;
+    const stream = cv.captureStream(24), chunks = [];
+    const rec = new MediaRecorder(stream, { mimeType: mime, videoBitsPerSecond: 4000000 });
+    rec.ondataavailable = (e) => { if (e.data && e.data.size) chunks.push(e.data); };
+    const done = new Promise(r => { rec.onstop = r; });
+    st.exporting = true; $('recBtn').disabled = true; $('progB').style.display = 'block'; $('result').style.display = 'none'; $('resultBtns').classList.add('hide');
+    await keepAwake(true);
+    const t0 = performance.now(); let shown = -1; st.playDir = 1; st.playIdx = 0;
+    rec.start(250);
+    st.exportTick = (now) => {
+      const el = now - t0, seq = Math.min(total - 1, Math.floor(el / 1000 * st.fps));
+      let idx;
+      if (st.mode === 'pingpong') { const p = seq % perLoop; idx = p < n ? p : perLoop - p; } else idx = seq % n;
+      drawFrame(idx, el / 1000);
+      $('progB').firstChild.style.width = Math.min(100, Math.round(el / dur * 100)) + '%';
+      msg('saveMsg', 'Recording ' + Math.min(100, Math.round(el / dur * 100)) + '%. Keep this page open.');
+      if (el >= dur) { st.exportTick = null; rec.stop(); }
+    };
+    await done; st.exporting = false; await keepAwake(false);
+    $('recBtn').disabled = false; $('progB').style.display = 'none';
+    const blob = new Blob(chunks, { type: mime.split(';')[0] });
+    showResult(blob, 'result', 'resultBtns', 'saveMsg', 'phone-animation');
+    renderStill();
+  });
+  const results = {};
+  function showResult(blob, vid, btns, msgId, base) {
+    if (results[vid]) URL.revokeObjectURL(results[vid].url);
+    const ext = extOf(blob.type), url = URL.createObjectURL(blob);
+    results[vid] = { blob, url, name: base + '.' + ext };
+    const v = $(vid); v.src = url; v.style.display = 'block'; $(btns).classList.remove('hide');
+    msg(msgId, 'Done. ' + (blob.size / 1048576).toFixed(1) + ' MB. Tap Share or save.');
+  }
+  async function shareOrSave(key, msgId) {
+    const r = results[key]; if (!r) return;
+    const file = new File([r.blob], r.name, { type: r.blob.type });
+    const text = $('shareMark') && $('shareMark').checked ? 'Made with nociv.co https://nociv.co' : '';
+    try { localStorage.setItem('nocivShareMark', $('shareMark').checked ? '1' : '0'); } catch (e) {}
+    try {
+      if (navigator.canShare && navigator.canShare({ files: [file], ...(text ? { text } : {}) })) { await navigator.share({ files: [file], ...(text ? { text } : {}) }); return; }
+      if (navigator.canShare && navigator.canShare({ files: [file] })) { await navigator.share({ files: [file] }); return; }
+    } catch (e) { if (e && e.name === 'AbortError') return; }
+    const a = document.createElement('a'); a.href = r.url; a.download = r.name; document.body.appendChild(a); a.click(); a.remove();
+    if (text && navigator.clipboard) { try { await navigator.clipboard.writeText(text); } catch (e) {} }
+    msg(msgId, 'Saved to your downloads.');
+  }
+  $('shareBtn').addEventListener('click', () => shareOrSave('result', 'saveMsg'));
+  $('clipShare').addEventListener('click', () => shareOrSave('clipResult', 'clipMsg'));
+  try { if (localStorage.getItem('nocivShareMark') === '0') $('shareMark').checked = false; } catch (e) {}
+
+  $('stillsBtn').addEventListener('click', async () => {
+    if (!st.frames.length) { msg('saveMsg', 'No frames yet.', true); return; }
+    const [W, H] = size(), files = [];
+    const c = document.createElement('canvas'); c.width = W; c.height = H; const cc = c.getContext('2d');
+    msg('saveMsg', 'Making photos...');
+    for (let i = 0; i < st.frames.length; i++) {
+      const f = st.frames[i]; drawLooked(cc, f.img, f.img.naturalWidth, f.img.naturalHeight, W, H, i / st.fps, {});
+      files.push(new File([await canvasToBlob(c, 'image/jpeg', 0.92)], 'frame-' + two(i + 1) + '.jpg', { type: 'image/jpeg' }));
+    }
+    try { if (navigator.canShare && navigator.canShare({ files })) { await navigator.share({ files }); msg('saveMsg', ''); return; } } catch (e) { if (e && e.name === 'AbortError') return; }
+    files.forEach((f, i) => setTimeout(() => { const a = document.createElement('a'); a.href = URL.createObjectURL(f); a.download = f.name; document.body.appendChild(a); a.click(); a.remove(); }, i * 250));
+    msg('saveMsg', 'Saved ' + files.length + ' photos to your downloads.');
+  });
+
+  // ===== VHS a video =====
+  const clipV = document.createElement('video'); clipV.playsInline = true; clipV.setAttribute('playsinline', ''); clipV.preload = 'auto';
+  let clipUrl = null, audioCtx = null, audioSrc = null, audioDest = null;
+  $('clipIn').addEventListener('change', async (e) => {
+    const file = e.target.files[0]; e.target.value = ''; if (!file) return;
+    clipStop(); st.clip = null;
+    if (clipUrl) URL.revokeObjectURL(clipUrl);
+    clipUrl = URL.createObjectURL(file); clipV.src = clipUrl;
+    try {
+      await metaOf(clipV);
+      if (clipV.duration > 300.5) { msg('clipMsg', 'That video is ' + Math.ceil(clipV.duration / 60) + ' minutes. The limit is 5. Trim it in your Photos app first.', true); return; }
+      const ar = clipV.videoWidth / clipV.videoHeight, long = 960;
+      st.clip = { w: ar >= 1 ? long : Math.round(long * ar), h: ar >= 1 ? Math.round(long / ar) : long };
+      applySize(st.clip.w & ~1, st.clip.h & ~1);
+      $('clipPrev').disabled = false; $('clipRec').disabled = false;
+      msg('clipMsg', 'Ready. ' + clock(clipV.duration) + ' long. Tap Preview, or Record it.');
+      clipV.currentTime = 0; st.panel = 'clip'; stageMsg(''); $('playBtn').disabled = false;
+    } catch (err) { msg('clipMsg', 'That video would not open on this phone.', true); }
+  });
+  function drawClipFrame() {
+    if (!st.clip) return;
+    const W = st.clip.w & ~1, H = st.clip.h & ~1; applySize(W, H);
+    const t = st.exporting && st.recStart ? (performance.now() - st.recStart) / 1000 : clipV.currentTime;
+    drawLooked(ctx, clipV, clipV.videoWidth, clipV.videoHeight, W, H, t, {});
+    drawStamps(ctx, W, H, t, { playOsd: true });
+  }
+  function ensureAudio() {
+    if (audioCtx) return;
+    try {
+      const AC = window.AudioContext || window.webkitAudioContext; audioCtx = new AC();
+      audioSrc = audioCtx.createMediaElementSource(clipV); audioDest = audioCtx.createMediaStreamDestination();
+      audioSrc.connect(audioCtx.destination); audioSrc.connect(audioDest);
+    } catch (e) { audioCtx = null; }
+  }
+  function clipToggle() {
+    if (!st.clip) return;
+    if (st.clipPlaying) { clipStop(); return; }
+    ensureAudio(); if (audioCtx && audioCtx.resume) audioCtx.resume();
+    clipV.play().then(() => { st.clipPlaying = true; $('clipPrev').innerHTML = '&#9632; Stop'; $('playBtn').innerHTML = '&#9632; Stop'; }).catch(() => msg('clipMsg', 'Tap Preview again to start it.'));
+  }
+  function clipStop() { try { clipV.pause(); } catch (e) {} st.clipPlaying = false; $('clipPrev').innerHTML = '&#9654; Preview'; $('playBtn').innerHTML = '&#9654; Play'; }
+  $('clipPrev').addEventListener('click', clipToggle);
+  clipV.addEventListener('ended', () => { if (!st.exporting) clipStop(); });
+  $('clipRec').addEventListener('click', async () => {
+    if (!st.clip) return;
+    const mime = pickMime(); if (!mime) { msg('clipMsg', 'This browser cannot record video.', true); return; }
+    clipStop(); ensureAudio(); if (audioCtx && audioCtx.resume) await audioCtx.resume();
+    const stream = cv.captureStream(30);
+    if (audioDest) audioDest.stream.getAudioTracks().forEach(t => stream.addTrack(t));
+    const chunks = [], rec = new MediaRecorder(stream, { mimeType: mime, videoBitsPerSecond: 3000000 });
+    rec.ondataavailable = (e) => { if (e.data && e.data.size) chunks.push(e.data); };
+    const stopped = new Promise(r => { rec.onstop = r; });
+    st.exporting = true; $('clipRec').disabled = true; $('clipPrev').disabled = true; $('progC').style.display = 'block'; $('clipResult').style.display = 'none'; $('clipBtns').classList.add('hide');
+    await keepAwake(true);
+    clipV.currentTime = 0; await new Promise(r => setTimeout(r, 200));
+    st.recStart = performance.now(); rec.start(500);
+    let ended = false; clipV.onended = () => { ended = true; };
+    try { await clipV.play(); } catch (e) { msg('clipMsg', 'The phone blocked playback. Tap Record it again.', true); }
+    st.exportTick = (now) => {
+      drawClipFrame();
+      const p = clipV.duration ? clipV.currentTime / clipV.duration : 0;
+      $('progC').firstChild.style.width = Math.round(p * 100) + '%';
+      msg('clipMsg', 'Recording ' + clock(clipV.currentTime) + ' of ' + clock(clipV.duration) + '. Keep this page open.');
+      if (ended || clipV.ended) { st.exportTick = null; rec.stop(); }
+    };
+    await stopped; st.exporting = false; st.recStart = 0; clipV.onended = null; await keepAwake(false);
+    $('clipRec').disabled = false; $('clipPrev').disabled = false; $('progC').style.display = 'none';
+    showResult(new Blob(chunks, { type: mime.split(';')[0] }), 'clipResult', 'clipBtns', 'clipMsg', 'phone-animation-vhs');
+    clipStop();
+  });
+
+  // ===== keep your frames if the page reloads =====
+  const DB = 'nocivPhoneAnim';
+  function openDb() { return new Promise((res, rej) => { try { const r = indexedDB.open(DB, 1); r.onupgradeneeded = () => r.result.createObjectStore('s'); r.onsuccess = () => res(r.result); r.onerror = () => rej(r.error); } catch (e) { rej(e); } }); }
+  let saveTimer = null;
+  function queueSave() { clearTimeout(saveTimer); saveTimer = setTimeout(async () => {
+    try { const db = await openDb(); const tx = db.transaction('s', 'readwrite');
+      tx.objectStore('s').put({ aspect: st.aspect, fps: st.fps, mode: st.mode, look: st.look, strength: st.strength, blobs: st.frames.map(f => f.blob) }, 'main'); } catch (e) {}
+  }, 600); }
+  (async function restore() {
+    try {
+      const db = await openDb(), data = await new Promise((res, rej) => { const q = db.transaction('s').objectStore('s').get('main'); q.onsuccess = () => res(q.result); q.onerror = () => rej(q.error); });
+      if (!data || !data.blobs || !data.blobs.length) return;
+      st.aspect = data.aspect || 'tall'; st.fps = data.fps || 8; st.mode = data.mode || 'loop';
+      document.querySelectorAll('#aspects .chip').forEach(x => x.setAttribute('aria-pressed', x.dataset.a === st.aspect ? 'true' : 'false'));
+      document.querySelectorAll('#modes .chip').forEach(x => x.setAttribute('aria-pressed', x.dataset.m === st.mode ? 'true' : 'false'));
+      $('fps').value = st.fps; $('fpsVal').textContent = st.fps + ' frames a second';
+      for (const b of data.blobs) st.frames.push(await loadImg(b));
+      st.sel = st.frames.length - 1; refreshUI(); renderStill();
+    } catch (e) {}
+  })();
+
+  refreshUI(); renderStill();
+  window.__pa = st; // handy for testing
+})();
+</script>
+</body>
+</html>

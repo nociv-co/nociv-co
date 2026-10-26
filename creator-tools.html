@@ -94,6 +94,14 @@
         <span class="tool-foot"><span class="tool-get">You leave with: Pattern, tech pack, flats</span><span class="tool-open">Open</span></span>
       </span>
     </button>
+    <button type="button" class="tool-card" data-panel="phoneAnimPanel">
+      <span class="tool-art"><svg viewBox="0 0 320 180" xmlns="http://www.w3.org/2000/svg" aria-hidden="true" preserveAspectRatio="xMidYMid slice"><rect width="320" height="180" fill="#1a1a1a"/><g fill="#e9e6df"><rect x="62" y="34" width="52" height="92" rx="4" opacity=".25"/><rect x="92" y="30" width="52" height="92" rx="4" opacity=".5"/><rect x="122" y="26" width="52" height="92" rx="4" opacity=".75"/><rect x="152" y="22" width="52" height="92" rx="4"/></g><circle cx="224" cy="40" r="6" fill="#c8412f"/><text x="236" y="46" font-family="Courier New, monospace" font-size="16" font-weight="700" fill="#fff">REC</text><g fill="#fff" opacity=".35"><rect x="0" y="60" width="320" height="2"/><rect x="0" y="120" width="320" height="2"/><rect x="0" y="150" width="320" height="2"/></g></svg></span>
+      <span class="tool-body">
+        <span class="tool-name"><b>06</b>Phone Animations</span>
+        <span class="tool-desc">Stop motion with your phone camera, then give it a different era. VHS camcorder, 8mm film, 90s digicam. Or run a regular video through the look.</span>
+        <span class="tool-foot"><span class="tool-get">You leave with: A video you can share</span><span class="tool-open">Open</span></span>
+      </span>
+    </button>
   </div>
   <p class="build-note">Made something? Show it at the Base. That is how this spreads.</p>
 </section>
@@ -187,6 +195,30 @@
   </div>
 </div>
 
+<!-- ===== PHONE ANIMATIONS (lives at nociv.co/phone-animations) ===== -->
+<div class="subpanel" id="phoneAnimPanel">
+  <div class="wrap">
+    <span class="hub-back" data-back="buildHub">&larr; Back to The Build</span>
+    <div class="build-header">
+      <div>
+        <h2 style="margin: 0 0 4px; font-size: 1.3rem; letter-spacing: 0.05em;">PHONE ANIMATIONS</h2>
+        <p>Stop motion and VHS camcorder looks. Shoot, order, save a video.</p>
+      </div>
+      <a href="phone-animations/" target="_blank" rel="noopener" class="fullscreen-btn">
+        Full screen &#10530;
+      </a>
+    </div>
+
+    <iframe
+      src="phone-animations/"
+      class="builder-iframe"
+      title="NOCIV Phone Animations"
+      allow="web-share; fullscreen; camera"
+      loading="lazy">
+    </iframe>
+  </div>
+</div>
+
 <!-- ===== CARDS + FLYERS (lives at nociv.co/card) ===== -->
 <div class="subpanel" id="cardBuilderPanel">
   <div class="wrap">
@@ -226,7 +258,7 @@
   });
   // Deep links: creator-tools.html#cards opens Cards + Flyers, and so on.
   (function () {
-    const HASH = { '#zine': 'zineBuilderPanel', '#cutsew': 'clothingBuilderPanel', '#cards': 'cardBuilderPanel', '#qr': 'qrBuilderPanel', '#stencil': 'stencilBuilderPanel' };
+    const HASH = { '#zine': 'zineBuilderPanel', '#cutsew': 'clothingBuilderPanel', '#cards': 'cardBuilderPanel', '#qr': 'qrBuilderPanel', '#stencil': 'stencilBuilderPanel', '#animate': 'phoneAnimPanel' };
     const id = HASH[location.hash];
     const card = id && document.querySelector('#buildHub [data-panel="' + id + '"]');
     if (card) card.click();
