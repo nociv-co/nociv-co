@@ -185,6 +185,7 @@
         <p class="tip">The video is recorded in real time, so a 10 second loop takes about 10 seconds. Keep this page open and your screen on while it records.</p>
         <label class="f">How many times it repeats</label>
         <select id="loops"><option value="1">Once</option><option value="3" selected>3 times</option><option value="6">6 times</option><option value="12">12 times</option></select>
+        <label class="check"><input type="checkbox" id="rewindOn" checked> Tape rewind at the end</label>
         <button type="button" class="btn red" id="recBtn" style="margin-top:12px">Make the video</button>
         <div class="prog" id="progB"><i></i></div>
         <div class="msg" id="saveMsg"></div>
@@ -275,9 +276,9 @@
     const ch = Math.round(L.chroma * k * (lw / 270));
     // a tracking glitch: a band that tears sideways for a moment every few seconds
     let bandY = -1, bandH = 0, bandX = 0;
-    if (st.glitch && L.glitch) {
-      const cyc = (t % 5);
-      if (cyc < 0.45) { bandY = Math.floor(lh * (0.55 + 0.35 * ((t * 1.7) % 1))); bandH = Math.floor(lh * 0.07); bandX = Math.round(lw * 0.06 * (Math.sin(t * 40) + 1.2) * k * L.glitch); }
+    if (st.forceGlitch || (st.glitch && L.glitch)) {
+      const cyc = st.forceGlitch ? 0 : (t % 5);
+      if (cyc < 0.45) { bandY = Math.floor(lh * (0.55 + 0.35 * ((t * 1.7) % 1))); bandH = Math.floor(lh * 0.07); bandX = Math.round(lw * 0.06 * (Math.sin(t * 40) + 1.2) * k * (L.glitch || 1)); }
     }
     const wob = (L.wobble || 0) * k * (lw / 270);
     const noise = L.noise * k, lift = L.lift * k, sat = 1 + (L.sat - 1) * k;
@@ -318,7 +319,7 @@
       c.fillRect(Math.random() * W, 0, Math.max(1, W / 540), H);
     }
     // a bright tracking line crawling up the picture
-    if (st.glitch && L.glitch && bandY >= 0) {
+    if (bandY >= 0) {
       c.fillStyle = 'rgba(255,255,255,0.35)';
       for (let i = 0; i < 40; i++) c.fillRect(Math.random() * W, (bandY + bandH * Math.random()) / lh * H, Math.random() * W * 0.2, 2);
     }
@@ -329,6 +330,7 @@
     const dateStr = st.dateText || defaultDate();
     if (st.rec && st.look !== 'film' && st.look !== 'digicam') {
       if (L.cam) { stampText(c, 'CAM 02', s * 0.6, s * 0.6, s, '#d8ffd8'); }
+      else if (st.osd) { stampText(c, st.osd, s * 0.6, s * 0.6, s, '#ffffff'); }
       else {
         const early = t < 1.6 && opts && opts.playOsd;
         if (early) stampText(c, '▶ PLAY', s * 0.6, s * 0.6, s, '#ffffff');
@@ -483,7 +485,7 @@
       }
       bar.style.display = 'none'; st.sel = st.frames.length - 1; refreshUI(); renderStill();
       msg('shootMsg', 'Made ' + n + ' frames.' + note);
-    } catch (err) { $('progA').style.display = 'none'; msg('shootMsg', 'That video would not open on this phone.', true); }
+    } catch (err) { $('progA').style.display = 'none'; msg('shootMsg', 'That video would not open. If it came from your iPhone, export it as Most Compatible first (Photos, Share, Options).', true); }
     URL.revokeObjectURL(url);
   });
 
@@ -583,7 +585,7 @@
     stopPlay(); if (st.camVideo) stopCam();
     const loops = +$('loops').value, n = st.frames.length;
     const perLoop = st.mode === 'pingpong' ? Math.max(1, 2 * n - 2) : n;
-    const total = perLoop * loops, dur = total / st.fps * 1000;
+    const total = perLoop * loops, playMs = total / st.fps * 1000, rwMs = ($('rewindOn').checked && st.look !== 'none') ? 1600 : 0, dur = playMs + rwMs;
     const stream = cv.captureStream(24), chunks = [];
     const rec = new MediaRecorder(stream, { mimeType: mime, videoBitsPerSecond: 4000000 });
     rec.ondataavailable = (e) => { if (e.data && e.data.size) chunks.push(e.data); };
@@ -593,15 +595,22 @@
     const t0 = performance.now(); let shown = -1; st.playDir = 1; st.playIdx = 0;
     rec.start(250);
     st.exportTick = (now) => {
-      const el = now - t0, seq = Math.min(total - 1, Math.floor(el / 1000 * st.fps));
-      let idx;
-      if (st.mode === 'pingpong') { const p = seq % perLoop; idx = p < n ? p : perLoop - p; } else idx = seq % n;
+      const el = now - t0; let idx;
+      if (el >= playMs) {
+        // rewind: run back through the frames fast, with the tape tearing
+        const rp = (el - playMs) / rwMs; idx = Math.max(0, Math.round((n - 1) * (1 - rp)));
+        st.osd = '\u25C0\u25C0 REWIND'; st.forceGlitch = true;
+      } else {
+        const seq = Math.min(total - 1, Math.floor(el / 1000 * st.fps));
+        if (st.mode === 'pingpong') { const p = seq % perLoop; idx = p < n ? p : perLoop - p; } else idx = seq % n;
+        st.osd = null; st.forceGlitch = false;
+      }
       drawFrame(idx, el / 1000);
       $('progB').firstChild.style.width = Math.min(100, Math.round(el / dur * 100)) + '%';
       msg('saveMsg', 'Recording ' + Math.min(100, Math.round(el / dur * 100)) + '%. Keep this page open.');
       if (el >= dur) { st.exportTick = null; rec.stop(); }
     };
-    await done; st.exporting = false; await keepAwake(false);
+    await done; st.exporting = false; st.osd = null; st.forceGlitch = false; await keepAwake(false);
     $('recBtn').disabled = false; $('progB').style.display = 'none';
     const blob = new Blob(chunks, { type: mime.split(';')[0] });
     showResult(blob, 'result', 'resultBtns', 'saveMsg', 'phone-animation');
@@ -657,13 +666,13 @@
     try {
       await metaOf(clipV);
       if (clipV.duration > 300.5) { msg('clipMsg', 'That video is ' + Math.ceil(clipV.duration / 60) + ' minutes. The limit is 5. Trim it in your Photos app first.', true); return; }
-      const ar = clipV.videoWidth / clipV.videoHeight, long = 960;
+      const ar = clipV.videoWidth / clipV.videoHeight, long = 720;
       st.clip = { w: ar >= 1 ? long : Math.round(long * ar), h: ar >= 1 ? Math.round(long / ar) : long };
       applySize(st.clip.w & ~1, st.clip.h & ~1);
       $('clipPrev').disabled = false; $('clipRec').disabled = false;
       msg('clipMsg', 'Ready. ' + clock(clipV.duration) + ' long. Tap Preview, or Record it.');
       clipV.currentTime = 0; st.panel = 'clip'; stageMsg(''); $('playBtn').disabled = false;
-    } catch (err) { msg('clipMsg', 'That video would not open on this phone.', true); }
+    } catch (err) { msg('clipMsg', 'That video would not open. If it came from your iPhone, export it as Most Compatible first (Photos, Share, Options), or pick a shorter one.', true); }
   });
   function drawClipFrame() {
     if (!st.clip) return;
@@ -704,7 +713,9 @@
     st.recStart = performance.now(); rec.start(500);
     let ended = false; clipV.onended = () => { ended = true; };
     try { await clipV.play(); } catch (e) { msg('clipMsg', 'The phone blocked playback. Tap Record it again.', true); }
+    let lastC = 0;
     st.exportTick = (now) => {
+      if (now - lastC < 33) return; lastC = now; // about 30 a second keeps long videos smooth
       drawClipFrame();
       const p = clipV.duration ? clipV.currentTime / clipV.duration : 0;
       $('progC').firstChild.style.width = Math.round(p * 100) + '%';
