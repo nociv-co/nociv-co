@@ -19,12 +19,9 @@
   .top p { margin: 12px 0 0; font-size: 0.98rem; line-height: 1.5; max-width: 520px; }
   .in-frame .top { display: none; }
   .grid { display: grid; grid-template-columns: 1fr; gap: 14px; margin-top: 14px; }
-  @media (min-width: 820px) { .grid { grid-template-columns: 340px 1fr; align-items: start; } .stage-col { position: sticky; top: 12px; } }
   .stage-col { min-width: 0; }
-  @media (max-width: 819px) { .stage-col { position: sticky; top: 0; z-index: 5; background: var(--paper); padding: 6px 0 4px; } .stage canvas { max-height: 38svh; } }
   .stage { background: #111; border-radius: 12px; display: grid; place-items: center; padding: 6px; position: relative; }
   .stage canvas { display: block; max-width: 100%; max-height: 52svh; width: auto; height: auto; background: #000; touch-action: none; }
-  @media (min-width: 820px) { .stage canvas { max-height: 74vh; } }
   #stageMsg { position: absolute; left: 10px; right: 10px; bottom: 10px; color: #fff; font-size: 0.8rem; font-weight: 700; text-align: center; text-shadow: 0 1px 3px #000; pointer-events: none; }
   .bar { display: flex; gap: 8px; align-items: center; margin-top: 8px; }
   .bar .count { flex: 1; font-weight: 800; font-size: 0.85rem; }
@@ -69,34 +66,77 @@
   .foot { margin-top: 28px; font-size: 0.8rem; color: var(--muted); text-align: center; }
   .foot a { color: var(--ink); font-weight: 800; }
   .hide { display: none !important; }
+  /* ===== app shell: nothing scrolls except the tool panel. The picture and frame strip stay put. ===== */
+  html, body { height: 100%; overflow: hidden; overscroll-behavior: none; position: fixed; inset: 0; width: 100%; }
+  button { touch-action: manipulation; user-select: none; -webkit-user-select: none; -webkit-touch-callout: none; }
+  .start { position: fixed; inset: 0; overflow-y: auto; display: grid; place-items: center; padding: 18px 16px; }
+  .start-in { width: 100%; max-width: 440px; }
+  .start h1 { margin: 0; font-size: clamp(28px, 8vw, 40px); font-weight: 900; letter-spacing: 0.04em; line-height: 1; }
+  .start h1 span { background: var(--ink); color: #fff; padding: 2px 10px; display: inline-block; transform: rotate(-1.5deg); }
+  .start p { margin: 12px 0 18px; font-size: 1rem; }
+  .pick { display: block; width: 100%; text-align: left; border: 2.5px solid var(--ink); background: var(--red); color: #fff; border-radius: 14px; padding: 18px 16px; margin-bottom: 12px; cursor: pointer; }
+  .pick b { display: block; font-size: 1.3rem; font-weight: 900; letter-spacing: 0.02em; }
+  .pick small { display: block; margin-top: 6px; font-size: 0.88rem; line-height: 1.4; font-weight: 600; opacity: 0.92; }
+  .pick.alt { background: var(--ink); }
+  .pick.again { background: #fff; color: var(--ink); }
+  .app { position: fixed; inset: 0; display: flex; flex-direction: column; max-width: 600px; margin: 0 auto; padding-top: env(safe-area-inset-top); background: var(--paper); }
+  .hdr { flex: none; display: flex; align-items: center; gap: 6px; padding: 6px 10px; }
+  .hdr .ttl { flex: 1; text-align: center; font-weight: 900; letter-spacing: 0.04em; font-size: 0.85rem; }
+  .hdr .ttl span { background: var(--ink); color: #fff; padding: 1px 6px; }
+  .in-frame .hdr .ttl { visibility: hidden; }
+  .icon { border: 1.5px solid var(--ink); background: #fff; border-radius: 10px; min-width: 44px; height: 38px; font-weight: 900; font-size: 1.05rem; cursor: pointer; padding: 0 10px; }
+  .icon:disabled { opacity: 0.3; }
+  #homeBtn { font-size: 0.85rem; }
+  .stage-col { flex: none; padding: 0 10px; }
+  .stage canvas { max-height: 36svh; }
+  .tl { flex: none; padding: 0 10px; touch-action: pan-x; }
+  .strip { min-height: 86px; }
+  .strip:empty::before { content: 'Your frames show up here'; display: grid; place-items: center; height: 74px; font-size: 0.8rem; color: var(--muted); border: 1.5px dashed #aaa; border-radius: 8px; }
+  .strip .fr { width: 52px; height: 70px; }
+  .panels { flex: 1; min-height: 0; overflow-y: auto; -webkit-overflow-scrolling: touch; overscroll-behavior: contain; padding: 0 10px 10px; touch-action: pan-y; }
+  .tools { flex: none; display: flex; border-top: 2px solid var(--ink); background: #fff; padding-bottom: env(safe-area-inset-bottom); }
+  .tools button { flex: 1; border: 0; background: transparent; padding: 8px 2px 9px; font-size: 0.72rem; font-weight: 800; cursor: pointer; color: var(--muted); }
+  .tools button i { display: block; font-style: normal; font-size: 1.15rem; line-height: 1.2; }
+  .tools button[aria-selected="true"] { color: var(--ink); box-shadow: inset 0 3px 0 var(--red); }
+  .tools button.gone { display: none; }
+  .look-chip { display: flex; flex-direction: column; align-items: center; gap: 4px; padding: 6px 6px 8px; border-radius: 10px; font-size: 0.72rem; }
+  .look-chip canvas { width: 62px; height: 82px; border-radius: 6px; background: #000; }
+  #looks { flex-wrap: nowrap; overflow-x: auto; touch-action: pan-x; scrollbar-width: none; }
+  #looks .chip { flex: none; }
+
 </style>
 </head>
 <body>
-<div class="wrap">
-  <div class="top">
+<div class="start" id="start">
+  <div class="start-in">
     <h1><span>PHONE</span> ANIMATIONS</h1>
-    <p>Stop motion on your phone, then give it a different era. Shoot frames, put them in order, add the VHS look, save a video. Nothing leaves your phone.</p>
+    <p>Make something move. Nothing leaves your phone.</p>
+    <button type="button" class="pick" id="pickStop"><b>Stop motion</b><small>Shoot frames with your camera, or use photos and a video. Then give it an era.</small></button>
+    <button type="button" class="pick alt" id="pickClip"><b>VHS a video</b><small>Pick a video from your camera roll, up to 5 minutes, and turn it into something from a different era.</small></button>
+    <button type="button" class="pick again hide" id="pickKeep"><b>Keep working</b><small id="keepInfo"></small></button>
+    <p class="foot">A free tool from <a href="https://nociv.co" target="_top">NOCIV.CO</a>. Nothing tracked.</p>
+  </div>
+</div>
+
+<div class="app hide" id="app">
+  <header class="hdr">
+    <button type="button" class="icon" id="homeBtn" aria-label="Back to the start">&lsaquo; Start</button>
+    <span class="ttl"><span>PHONE</span> ANIMATIONS</span>
+    <button type="button" class="icon" id="undoBtn" aria-label="Undo" disabled>&#8630;</button>
+    <button type="button" class="icon" id="redoBtn" aria-label="Redo" disabled>&#8631;</button>
+  </header>
+
+  <div class="stage-col">
+    <div class="stage"><canvas id="cv" width="540" height="960"></canvas><div id="stageMsg"></div></div>
+    <div class="bar">
+      <span class="count" id="count">0 frames</span>
+      <button type="button" class="btn small" id="playBtn">&#9654; Play</button>
+    </div>
   </div>
 
-  <div class="grid">
-    <div class="stage-col">
-      <div class="stage"><canvas id="cv" width="540" height="960"></canvas><div id="stageMsg"></div></div>
-      <div class="bar">
-        <span class="count" id="count">0 frames</span>
-        <button type="button" class="btn small" id="playBtn">&#9654; Play</button>
-      </div>
-    </div>
+  <div class="tl" id="tl"><div class="strip" id="strip"></div></div>
 
-    <div>
-      <nav class="steps" id="steps" role="tablist">
-        <button type="button" role="tab" data-p="shoot" aria-selected="true">1 Shoot</button>
-        <button type="button" role="tab" data-p="frames" aria-selected="false">2 Frames</button>
-        <button type="button" role="tab" data-p="look" aria-selected="false">3 Look</button>
-        <button type="button" role="tab" data-p="save" aria-selected="false">4 Save</button>
-        <button type="button" role="tab" data-p="clip" aria-selected="false">VHS a video</button>
-      </nav>
-
-      <!-- SHOOT -->
+  <div class="panels" id="panels">
       <section class="panel on" id="p-shoot">
         <h2>Shoot</h2>
         <p class="tip">Prop your phone up so it cannot move. Move your subject a tiny bit, tap the red button, repeat. The faded picture on top is your last shot so you can see how far you moved.</p>
@@ -114,30 +154,31 @@
         <button type="button" class="shutter" id="shutter" aria-label="Take a frame" disabled></button>
         <label class="f">Ghost of last frame <span id="onionVal"></span></label>
         <input type="range" id="onion" min="0" max="80" value="40">
-        <div class="row">
-          <button type="button" class="btn" id="undoBtn" disabled>Undo last</button>
-        </div>
         <label class="f">No camera, or already have photos?</label>
         <input type="file" id="photoIn" accept="image/*" multiple>
         <label class="f">Turn a video into frames</label>
-        <div class="row">
+        <input type="file" id="videoIn" accept="video/*">
+        <div id="vidTrim" class="hide">
+          <p class="tip" id="vidInfo"></p>
+          <label class="f">Start at <span id="vFromVal">0 s</span></label>
+          <input type="range" id="vFrom" min="0" max="10" step="0.1" value="0">
+          <label class="f">End at <span id="vToVal"></span></label>
+          <input type="range" id="vTo" min="0" max="10" step="0.1" value="10">
+          <label class="f">How many frames</label>
           <select id="everyN">
             <option value="0.25">A frame every 0.25 s</option>
             <option value="0.5" selected>A frame every 0.5 s</option>
             <option value="1">A frame every 1 s</option>
             <option value="2">A frame every 2 s</option>
           </select>
+          <button type="button" class="btn dark" id="vidGo" style="margin-top:10px">Make frames</button>
         </div>
-        <input type="file" id="videoIn" accept="video/*" style="margin-top:8px">
         <div class="prog" id="progA"><i></i></div>
         <div class="msg" id="shootMsg"></div>
       </section>
-
-      <!-- FRAMES -->
       <section class="panel" id="p-frames">
-        <h2>Frames</h2>
-        <p class="tip">Tap a frame to pick it. Move it, copy it, delete it. Copy a frame to make that moment last longer.</p>
-        <div class="strip" id="strip"></div>
+        <h2>Edit</h2>
+        <p class="tip">Tap a frame in the strip under the picture to pick it. Move it, copy it, delete it. Copy a frame to make that moment last longer.</p>
         <div class="row">
           <button type="button" class="btn" id="mvL">&larr; Earlier</button>
           <button type="button" class="btn" id="mvR">Later &rarr;</button>
@@ -158,11 +199,9 @@
           <button type="button" class="chip" data-m="pingpong" aria-pressed="false">Back and forth</button>
         </div>
       </section>
-
-      <!-- LOOK -->
       <section class="panel" id="p-look">
         <h2>Look</h2>
-        <p class="tip">Pick an era. It shows on the picture above and on everything you save.</p>
+        <p class="tip">Tap an era. You see it on the picture above, and it goes on everything you save.</p>
         <div class="chips" id="looks">
           <button type="button" class="chip" data-l="none" aria-pressed="true">Clean</button>
           <button type="button" class="chip" data-l="vhs" aria-pressed="false">VHS camcorder</button>
@@ -178,8 +217,6 @@
         <input type="text" id="dateText" maxlength="24" placeholder="OCT 25 1998">
         <label class="check"><input type="checkbox" id="glitchOn" checked> Tracking glitches now and then</label>
       </section>
-
-      <!-- SAVE -->
       <section class="panel" id="p-save">
         <h2>Save</h2>
         <p class="tip">The video is recorded in real time, so a 10 second loop takes about 10 seconds. Keep this page open and your screen on while it records.</p>
@@ -198,8 +235,6 @@
           <button type="button" class="btn" id="stillsBtn">Save the frames as photos</button>
         </div>
       </section>
-
-      <!-- CLIP -->
       <section class="panel" id="p-clip">
         <h2>VHS a video</h2>
         <p class="tip">Pick a regular video from your camera roll, up to 5 minutes. It plays through the look you chose in step 3 and records a new copy. It runs in real time, so a 5 minute video takes 5 minutes. Keep this page open and your screen on.</p>
@@ -215,10 +250,15 @@
           <button type="button" class="btn dark" id="clipShare">Share or save</button>
         </div>
       </section>
-    </div>
   </div>
 
-  <p class="foot">A free tool from <a href="https://nociv.co" target="_top">NOCIV.CO</a>. Nothing tracked. Your pictures never leave your phone.</p>
+  <nav class="tools" id="tools">
+    <button type="button" data-p="shoot" data-k="stop" aria-selected="true"><i>&#9679;</i>Shoot</button>
+    <button type="button" data-p="frames" data-k="stop" aria-selected="false"><i>&#9776;</i>Edit</button>
+    <button type="button" data-p="clip" data-k="clip" aria-selected="false"><i>&#9654;</i>Video</button>
+    <button type="button" data-p="look" data-k="both" aria-selected="false"><i>&#10022;</i>Look</button>
+    <button type="button" data-p="save" data-k="stop" aria-selected="false"><i>&#8681;</i>Export</button>
+  </nav>
 </div>
 
 <script>
@@ -232,7 +272,7 @@
   const st = {
     aspect: 'tall', frames: [], sel: -1, fps: 8, mode: 'loop',
     look: 'none', strength: 0.7, rec: true, date: true, glitch: true, dateText: '',
-    playing: false, playIdx: 0, playDir: 1, playLast: 0,
+    kind: null, hist: [], redo: [], playing: false, playIdx: 0, playDir: 1, playLast: 0,
     stream: null, facing: 'environment', camVideo: null,
     clip: null, clipPlaying: false, exporting: false, recStart: 0, panel: 'shoot',
   };
@@ -362,6 +402,16 @@
     drawStamps(ctx, W, H, t || 0, { playOsd: true });
   }
 
+  // ===== undo / redo (every change to the frames can be taken back) =====
+  function snap() { st.hist.push({ frames: st.frames.slice(), sel: st.sel }); if (st.hist.length > 40) st.hist.shift(); st.redo = []; }
+  function restoreSnap(from, to) {
+    const h = from.pop(); if (!h) return;
+    to.push({ frames: st.frames.slice(), sel: st.sel });
+    st.frames = h.frames; st.sel = Math.min(h.sel, st.frames.length - 1); stopPlay(); refreshUI(); renderStill();
+  }
+  $('undoBtn').addEventListener('click', () => restoreSnap(st.hist, st.redo));
+  $('redoBtn').addEventListener('click', () => restoreSnap(st.redo, st.hist));
+
   // ===== frames =====
   function loadImg(blob) {
     return new Promise((res, rej) => {
@@ -385,8 +435,8 @@
   }
   function refreshUI() {
     $('count').textContent = st.frames.length + (st.frames.length === 1 ? ' frame' : ' frames') + (st.frames.length ? ' · ' + (st.frames.length / st.fps).toFixed(1) + ' s' : '');
-    $('undoBtn').disabled = !st.frames.length;
-    $('playBtn').disabled = st.frames.length < 2 && !st.clip;
+    $('undoBtn').disabled = !st.hist.length; $('redoBtn').disabled = !st.redo.length;
+    $('playBtn').disabled = st.kind === 'clip' ? !st.clip : st.frames.length < 2;
     const s = $('strip'); s.innerHTML = '';
     st.frames.forEach((f, i) => {
       const d = document.createElement('div'); d.className = 'fr' + (i === st.sel ? ' sel' : '');
@@ -397,6 +447,7 @@
     lockAspect(); queueSave();
   }
   function renderStill() {
+    if (st.kind === 'clip') { drawClipFrame(); return; }
     if (st.camVideo && st.panel === 'shoot') return; // live view is drawing
     if (st.sel >= 0 && st.frames[st.sel]) drawFrame(st.sel, 5);
     else if (st.frames.length) drawFrame(st.frames.length - 1, 5);
@@ -431,10 +482,9 @@
     if (st.facing === 'user') { cc.translate(W, 0); cc.scale(-1, 1); }
     drawCover(cc, st.camVideo, st.camVideo.videoWidth, st.camVideo.videoHeight, W, H);
     const blob = await canvasToBlob(c, 'image/jpeg', 0.9);
-    await addBlob(blob); st.sel = st.frames.length - 1; refreshUI();
+    snap(); await addBlob(blob); st.sel = st.frames.length - 1; refreshUI();
     if (navigator.vibrate) navigator.vibrate(15);
   });
-  $('undoBtn').addEventListener('click', () => { const f = st.frames.pop(); if (f) URL.revokeObjectURL(f.url); st.sel = st.frames.length - 1; refreshUI(); renderStill(); });
   $('onion').addEventListener('input', () => { $('onionVal').textContent = $('onion').value + '%'; });
   $('onionVal').textContent = '40%';
 
@@ -449,7 +499,7 @@
     const files = [...e.target.files]; e.target.value = '';
     if (!files.length) return;
     try {
-      msg('shootMsg', 'Adding...');
+      msg('shootMsg', 'Adding...'); snap();
       const [W, H] = size();
       for (const file of files) {
         const f = await loadImg(file), c = document.createElement('canvas'); c.width = W; c.height = H;
@@ -462,47 +512,64 @@
   });
   function metaOf(v) { return new Promise((res, rej) => { v.onloadedmetadata = () => res(); v.onerror = () => rej(new Error('video')); }); }
   function seekTo(v, t) { return new Promise(res => { const h = () => { v.removeEventListener('seeked', h); res(); }; v.addEventListener('seeked', h); v.currentTime = t; }); }
+  let pendVid = null;
   $('videoIn').addEventListener('change', async (e) => {
-    const file = e.target.files[0]; e.target.value = '';
-    if (!file) return;
-    const step = parseFloat($('everyN').value) || 0.5, MAX = 200;
+    const file = e.target.files[0]; e.target.value = ''; if (!file) return;
     const v = document.createElement('video'); v.muted = true; v.playsInline = true; v.preload = 'auto';
     const url = URL.createObjectURL(file); v.src = url;
     try {
       await metaOf(v);
-      let n = Math.floor(v.duration / step) + 1;
-      if (!isFinite(n) || n < 1) throw new Error('video');
-      let note = '';
-      if (n > MAX) { n = MAX; note = ' Only the first ' + MAX + ' frames were kept. Pick a longer gap to cover the whole video.'; }
-      const [W, H] = size(); const bar = $('progA'); bar.style.display = 'block';
+      if (!isFinite(v.duration) || v.duration <= 0) throw new Error('video');
+      if (pendVid) URL.revokeObjectURL(pendVid.url);
+      pendVid = { file, url, v, dur: v.duration };
+      ['vFrom', 'vTo'].forEach(id => { $(id).max = v.duration.toFixed(1); });
+      $('vFrom').value = 0; $('vTo').value = v.duration.toFixed(1);
+      $('vidInfo').textContent = 'This video is ' + clock(v.duration) + ' long. Pick the part you want.';
+      $('vidTrim').classList.remove('hide'); updTrim(); msg('shootMsg', '');
+    } catch (err) { URL.revokeObjectURL(url); msg('shootMsg', 'That video would not open. If it came from your iPhone, export it as Most Compatible first (Photos, Share, Options).', true); }
+  });
+  function updTrim() {
+    let a = +$('vFrom').value, b = +$('vTo').value;
+    if (b - a < 0.2) { if (document.activeElement === $('vFrom')) { a = Math.max(0, b - 0.2); $('vFrom').value = a; } else { b = Math.min(pendVid.dur, a + 0.2); $('vTo').value = b; } }
+    $('vFromVal').textContent = a.toFixed(1) + ' s'; $('vToVal').textContent = b.toFixed(1) + ' s';
+    const step = parseFloat($('everyN').value) || 0.5; $('vidGo').textContent = 'Make ' + Math.min(200, Math.floor((b - a) / step) + 1) + ' frames';
+    if (pendVid) { pendVid.v.currentTime = Math.min(pendVid.dur - 0.05, document.activeElement === $('vTo') ? b : a); }
+  }
+  ['vFrom', 'vTo', 'everyN'].forEach(id => $(id).addEventListener('input', () => { if (pendVid) updTrim(); }));
+  $('vidGo').addEventListener('click', async () => {
+    if (!pendVid) return;
+    const from = +$('vFrom').value, to = +$('vTo').value, step = parseFloat($('everyN').value) || 0.5, MAX = 200, v = pendVid.v;
+    let n = Math.floor((to - from) / step) + 1, note = '';
+    if (n > MAX) { n = MAX; note = ' Only the first ' + MAX + ' frames were kept. Pick a longer gap or a shorter part.'; }
+    const [W, H] = size(), bar = $('progA'); bar.style.display = 'block'; $('vidGo').disabled = true; snap();
+    try {
       for (let i = 0; i < n; i++) {
-        await seekTo(v, Math.min(v.duration - 0.05, i * step));
+        await seekTo(v, Math.min(v.duration - 0.05, from + i * step));
         const c = document.createElement('canvas'); c.width = W; c.height = H;
         drawCover(c.getContext('2d'), v, v.videoWidth, v.videoHeight, W, H);
         await addBlob(await canvasToBlob(c, 'image/jpeg', 0.88));
         bar.firstChild.style.width = Math.round((i + 1) / n * 100) + '%';
         msg('shootMsg', 'Pulling frames ' + (i + 1) + ' of ' + n + '...');
       }
-      bar.style.display = 'none'; st.sel = st.frames.length - 1; refreshUI(); renderStill();
-      msg('shootMsg', 'Made ' + n + ' frames.' + note);
-    } catch (err) { $('progA').style.display = 'none'; msg('shootMsg', 'That video would not open. If it came from your iPhone, export it as Most Compatible first (Photos, Share, Options).', true); }
-    URL.revokeObjectURL(url);
+      st.sel = st.frames.length - 1; refreshUI(); renderStill(); msg('shootMsg', 'Made ' + n + ' frames.' + note);
+      $('vidTrim').classList.add('hide'); URL.revokeObjectURL(pendVid.url); pendVid = null;
+    } catch (err) { msg('shootMsg', 'Something went wrong pulling frames.', true); }
+    bar.style.display = 'none'; $('vidGo').disabled = false;
   });
 
   // ===== frames panel =====
   function need() { if (st.sel < 0 || !st.frames[st.sel]) { msg('shootMsg', 'Tap a frame first.'); return false; } return true; }
-  $('mvL').addEventListener('click', () => { if (!need() || st.sel === 0) return; const a = st.frames; [a[st.sel - 1], a[st.sel]] = [a[st.sel], a[st.sel - 1]]; st.sel--; refreshUI(); renderStill(); });
-  $('mvR').addEventListener('click', () => { if (!need() || st.sel >= st.frames.length - 1) return; const a = st.frames; [a[st.sel + 1], a[st.sel]] = [a[st.sel], a[st.sel + 1]]; st.sel++; refreshUI(); renderStill(); });
-  $('dupBtn').addEventListener('click', async () => { if (!need()) return; const f = st.frames[st.sel]; await addBlob(f.blob, st.sel + 1); st.sel++; refreshUI(); renderStill(); });
-  $('delBtn').addEventListener('click', () => { if (!need()) return; const [f] = st.frames.splice(st.sel, 1); URL.revokeObjectURL(f.url); st.sel = Math.min(st.sel, st.frames.length - 1); refreshUI(); renderStill(); });
-  $('revBtn').addEventListener('click', () => { st.frames.reverse(); if (st.sel >= 0) st.sel = st.frames.length - 1 - st.sel; refreshUI(); renderStill(); });
-  $('clearBtn').addEventListener('click', () => { if (!st.frames.length || !confirm('Delete every frame?')) return; st.frames.forEach(f => URL.revokeObjectURL(f.url)); st.frames = []; st.sel = -1; refreshUI(); renderStill(); });
+  $('mvL').addEventListener('click', () => { if (!need() || st.sel === 0) return; snap(); const a = st.frames; [a[st.sel - 1], a[st.sel]] = [a[st.sel], a[st.sel - 1]]; st.sel--; refreshUI(); renderStill(); });
+  $('mvR').addEventListener('click', () => { if (!need() || st.sel >= st.frames.length - 1) return; snap(); const a = st.frames; [a[st.sel + 1], a[st.sel]] = [a[st.sel], a[st.sel + 1]]; st.sel++; refreshUI(); renderStill(); });
+  $('dupBtn').addEventListener('click', async () => { if (!need()) return; snap(); const f = st.frames[st.sel]; await addBlob(f.blob, st.sel + 1); st.sel++; refreshUI(); renderStill(); });
+  $('delBtn').addEventListener('click', () => { if (!need()) return; snap(); st.frames.splice(st.sel, 1); st.sel = Math.min(st.sel, st.frames.length - 1); refreshUI(); renderStill(); });
+  $('revBtn').addEventListener('click', () => { snap(); st.frames.reverse(); if (st.sel >= 0) st.sel = st.frames.length - 1 - st.sel; refreshUI(); renderStill(); });
+  $('clearBtn').addEventListener('click', () => { if (!st.frames.length || !confirm('Delete every frame? You can undo this.')) return; snap(); st.frames = []; st.sel = -1; refreshUI(); renderStill(); });
   $('fps').addEventListener('input', () => { st.fps = +$('fps').value; $('fpsVal').textContent = st.fps + ' frames a second'; refreshUI(); });
   $('fpsVal').textContent = '8 frames a second';
   document.querySelectorAll('#modes .chip').forEach(b => b.addEventListener('click', () => { st.mode = b.dataset.m; document.querySelectorAll('#modes .chip').forEach(x => x.setAttribute('aria-pressed', x === b ? 'true' : 'false')); }));
 
   // ===== look panel =====
-  document.querySelectorAll('#looks .chip').forEach(b => b.addEventListener('click', () => { st.look = b.dataset.l; document.querySelectorAll('#looks .chip').forEach(x => x.setAttribute('aria-pressed', x === b ? 'true' : 'false')); renderStill(); }));
   $('strength').addEventListener('input', () => { st.strength = +$('strength').value / 100; $('strVal').textContent = $('strength').value + '%'; renderStill(); });
   $('strVal').textContent = '70%';
   $('recOn').addEventListener('change', () => { st.rec = $('recOn').checked; renderStill(); });
@@ -510,22 +577,77 @@
   $('glitchOn').addEventListener('change', () => { st.glitch = $('glitchOn').checked; });
   $('dateText').addEventListener('input', () => { st.dateText = $('dateText').value.toUpperCase(); renderStill(); });
   $('dateText').placeholder = defaultDate();
+  // each era shows a little preview of YOUR picture, so you pick by looking
+  const LOOK_NAMES = { none: 'Clean', vhs: 'VHS', film: '8mm film', digicam: '90s digicam', security: 'Security' };
+  function lookSource() {
+    if (st.kind === 'clip' && st.clip && clipV.videoWidth) return { src: clipV, w: clipV.videoWidth, h: clipV.videoHeight };
+    const f = st.frames[st.sel >= 0 ? st.sel : st.frames.length - 1];
+    if (f) return { src: f.img, w: f.img.naturalWidth, h: f.img.naturalHeight };
+    if (st.camVideo && st.camVideo.videoWidth) return { src: st.camVideo, w: st.camVideo.videoWidth, h: st.camVideo.videoHeight };
+    return null;
+  }
+  function renderLookThumbs() {
+    const box = $('looks'), src = lookSource(), keep = st.look, keepGl = st.glitch;
+    box.innerHTML = '';
+    Object.keys(LOOK_NAMES).forEach(key => {
+      const b = document.createElement('button'); b.type = 'button'; b.className = 'chip look-chip'; b.dataset.l = key; b.setAttribute('aria-pressed', keep === key ? 'true' : 'false');
+      const c = document.createElement('canvas'); c.width = 62; c.height = 82;
+      if (src) { const cc = c.getContext('2d'); st.look = key; st.glitch = false; try { drawLooked(cc, src.src, src.w, src.h, 62, 82, 1, {}); } catch (e) {} st.look = keep; st.glitch = keepGl; }
+      b.appendChild(c); b.appendChild(document.createTextNode(LOOK_NAMES[key]));
+      b.addEventListener('click', () => { st.look = key; box.querySelectorAll('.chip').forEach(x => x.setAttribute('aria-pressed', x === b ? 'true' : 'false')); renderStill(); queueSave(); });
+      box.appendChild(b);
+    });
+  }
 
-  // ===== tabs =====
-  document.querySelectorAll('#steps button').forEach(b => b.addEventListener('click', () => {
-    st.panel = b.dataset.p;
-    document.querySelectorAll('#steps button').forEach(x => x.setAttribute('aria-selected', x === b ? 'true' : 'false'));
-    document.querySelectorAll('.panel').forEach(p => p.classList.toggle('on', p.id === 'p-' + st.panel));
-    if (st.panel !== 'clip' && st.clipPlaying) clipStop();
-    if (st.panel !== 'shoot') renderStill();
-  }));
+  // ===== tools along the bottom (the picture and the frame strip never move) =====
+  function showPanel(name) {
+    st.panel = name;
+    document.querySelectorAll('#tools button').forEach(x => x.setAttribute('aria-selected', x.dataset.p === name ? 'true' : 'false'));
+    document.querySelectorAll('.panel').forEach(p => p.classList.toggle('on', p.id === 'p-' + name));
+    $('panels').scrollTop = 0;
+    if (name !== 'clip' && st.kind !== 'clip' && st.clipPlaying) clipStop();
+    if (name === 'look') renderLookThumbs();
+    if (!(name === 'shoot' && st.camVideo)) renderStill();
+  }
+  document.querySelectorAll('#tools button').forEach(b => b.addEventListener('click', () => showPanel(b.dataset.p)));
+
+  // ===== the first page: pick what you are making =====
+  function startKind(kind) {
+    st.kind = kind; stopPlay();
+    $('start').classList.add('hide'); $('app').classList.remove('hide');
+    document.querySelectorAll('#tools button').forEach(b => b.classList.toggle('gone', b.dataset.k !== 'both' && b.dataset.k !== kind));
+    $('tl').classList.toggle('hide', kind === 'clip');
+    $('count').classList.toggle('hide', kind === 'clip');
+    if (kind === 'stop') { st.panel = 'shoot'; if (st.clip) { clipStop(); } renderStill(); }
+    else { stopCam(); showPanel('clip'); applyClipSize(); }
+    showPanel(kind === 'clip' ? 'clip' : 'shoot');
+    refreshUI();
+  }
+  function goHome() {
+    stopPlay(); clipStop(); stopCam(); st.kind = null;
+    $('app').classList.add('hide'); $('start').classList.remove('hide'); updateKeep();
+  }
+  function updateKeep() {
+    const has = st.frames.length > 0;
+    $('pickKeep').classList.toggle('hide', !has);
+    $('keepInfo').textContent = has ? st.frames.length + ' frames saved on this phone. Pick up where you left off.' : '';
+  }
+  $('pickStop').addEventListener('click', () => { startKind('stop'); if (!st.camVideo) startCam(); });
+  $('pickClip').addEventListener('click', () => { startKind('clip'); $('clipIn').click(); });
+  $('pickKeep').addEventListener('click', () => { startKind('stop'); showPanel('frames'); });
+  $('homeBtn').addEventListener('click', goHome);
 
   // ===== playing =====
+  function markPlayhead(i) {
+    const kids = $('strip').children; if (st._ph === i) return; st._ph = i;
+    for (let k = 0; k < kids.length; k++) kids[k].classList.toggle('sel', k === i);
+    const el = kids[i]; if (el && el.scrollIntoView) { const tl = $('strip'); tl.scrollLeft = el.offsetLeft - tl.clientWidth / 2 + el.clientWidth / 2; }
+  }
   function stopPlay() { st.playing = false; $('playBtn').innerHTML = '&#9654; Play'; }
   function startPlay() {
-    if (st.panel === 'clip' && st.clip) { clipToggle(); return; }
+    if (st.kind === 'clip') { clipToggle(); return; }
     if (st.frames.length < 2) return;
-    st.playing = true; st.playIdx = Math.max(0, st.sel); st.playDir = 1; st.playLast = 0; st.playT0 = performance.now();
+    st._ph = -1; st.playing = true; st.playIdx = Math.max(0, st.sel); st.playDir = 1; st.playLast = 0; st.playT0 = performance.now();
     $('playBtn').innerHTML = '&#9632; Stop'; stageMsg('');
   }
   $('playBtn').addEventListener('click', () => { st.playing ? stopPlay() : startPlay(); if (!st.playing) renderStill(); });
@@ -545,12 +667,13 @@
     if (st.exporting && st.exportTick) { st.exportTick(now); return; }
     if (now - lastDraw < 45) return; // about 22 a second is plenty and easy on the battery
     lastDraw = now;
-    if (st.panel === 'clip' && st.clip) { drawClipFrame(); return; }
+    if (st.kind === 'clip') { if (st.clip) drawClipFrame(); return; }
+    if (st.kind !== 'stop') return;
     if (st.camVideo && st.panel === 'shoot') { drawLive(); return; }
     if (st.playing) {
       const interval = 1000 / st.fps;
       if (!st.playLast || now - st.playLast >= interval) { if (st.playLast) stepIndex(); st.playLast = now; }
-      drawFrame(st.playIdx, (now - st.playT0) / 1000);
+      drawFrame(st.playIdx, (now - st.playT0) / 1000); markPlayhead(st.playIdx);
       return;
     }
     if (st.look !== 'none' && st.frames.length && !st.camVideo) { // keep the grain alive on a still frame
@@ -668,12 +791,13 @@
       if (clipV.duration > 300.5) { msg('clipMsg', 'That video is ' + Math.ceil(clipV.duration / 60) + ' minutes. The limit is 5. Trim it in your Photos app first.', true); return; }
       const ar = clipV.videoWidth / clipV.videoHeight, long = 720;
       st.clip = { w: ar >= 1 ? long : Math.round(long * ar), h: ar >= 1 ? Math.round(long / ar) : long };
-      applySize(st.clip.w & ~1, st.clip.h & ~1);
+      applyClipSize();
       $('clipPrev').disabled = false; $('clipRec').disabled = false;
       msg('clipMsg', 'Ready. ' + clock(clipV.duration) + ' long. Tap Preview, or Record it.');
-      clipV.currentTime = 0; st.panel = 'clip'; stageMsg(''); $('playBtn').disabled = false;
+      clipV.currentTime = 0; stageMsg(''); $('playBtn').disabled = false; renderLookThumbs();
     } catch (err) { msg('clipMsg', 'That video would not open. If it came from your iPhone, export it as Most Compatible first (Photos, Share, Options), or pick a shorter one.', true); }
   });
+  function applyClipSize() { if (st.clip) applySize(st.clip.w & ~1, st.clip.h & ~1); }
   function drawClipFrame() {
     if (!st.clip) return;
     const W = st.clip.w & ~1, H = st.clip.h & ~1; applySize(W, H);
@@ -745,11 +869,11 @@
       document.querySelectorAll('#modes .chip').forEach(x => x.setAttribute('aria-pressed', x.dataset.m === st.mode ? 'true' : 'false'));
       $('fps').value = st.fps; $('fpsVal').textContent = st.fps + ' frames a second';
       for (const b of data.blobs) st.frames.push(await loadImg(b));
-      st.sel = st.frames.length - 1; refreshUI(); renderStill();
+      st.sel = st.frames.length - 1; refreshUI(); renderStill(); updateKeep();
     } catch (e) {}
   })();
 
-  refreshUI(); renderStill();
+  refreshUI(); renderStill(); updateKeep();
   window.__pa = st; // handy for testing
 })();
 </script>
