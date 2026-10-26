@@ -28,6 +28,11 @@
   .pick small { display: block; margin-top: 6px; font-size: 0.88rem; line-height: 1.4; font-weight: 600; opacity: 0.92; }
   .pick.alt { background: var(--ink); }
   .pick.again { background: #fff; color: var(--ink); }
+  .pick.board { background: #e8701a; }
+  .boardrow { display: grid; grid-template-columns: repeat(3, 1fr); gap: 7px; }
+  .thm { display: flex; gap: 8px; flex-wrap: wrap; }
+  .thm button { width: 42px; height: 42px; border-radius: 10px; border: 2.5px solid var(--ink); }
+  .thm button[aria-pressed="true"] { outline: 3px solid var(--red); outline-offset: 2px; }
   .foot { margin-top: 22px; font-size: 0.8rem; color: var(--muted); }
   .foot a { color: var(--ink); font-weight: 800; }
 
@@ -128,6 +133,7 @@
     <p>A tape deck for your phone. Nothing leaves your phone.</p>
     <button type="button" class="pick" id="pickStop"><b>Stop motion</b><small>Shoot frames with your camera, or use photos and a video. Then run it through the tape deck.</small></button>
     <button type="button" class="pick alt" id="pickClip"><b>VHS a video</b><small>Pick a video from your camera roll, up to 5 minutes. Rewind it, fast forward it, pause it like a real camcorder tape, and record it.</small></button>
+    <button type="button" class="pick board" id="pickBoard"><b>Billboard</b><small>Put 2 to 5 photos on a spinning trivision sign. Add words like a real ad. Pick the scene behind it.</small></button>
     <button type="button" class="pick again hide" id="pickKeep"><b>Keep working</b><small id="keepInfo"></small></button>
     <p class="foot">A free tool from <a href="https://nociv.co" target="_top">NOCIV.CO</a>. Nothing tracked.</p>
   </div>
@@ -162,6 +168,11 @@
     <div class="sr-r"><div>Ghost of last frame <span id="onionVal">40%</span></div><input type="range" id="onion" min="0" max="80" value="40"></div>
   </div>
 
+  <div class="deck boardrow hide" id="boardRow">
+    <button type="button" class="dk" id="bAdd" aria-label="Add photo">&#43;<small>PHOTO</small></button>
+    <button type="button" class="dk" id="bSpin" aria-label="Spin now">&#8635;<small>SPIN</small></button>
+    <button type="button" class="dk" id="bLoop" aria-pressed="true" aria-label="Loop on or off">&#10074;&#10074;<small>LOOP</small></button>
+  </div>
   <div class="era" id="looks"></div>
   <div class="tl" id="tl"><div class="strip" id="strip"></div></div>
   <div class="editrow" id="editRow">
@@ -207,6 +218,61 @@
       <div class="msg" id="shootMsg"></div>
     </section>
 
+    <section class="panel" id="p-bphotos">
+      <h2>Billboard photos</h2>
+      <p class="tip">Add 2 to 5 photos. Two looks best, like a real sign. Tap a photo in the strip to edit it. Drag the picture on the screen to move it.</p>
+      <input type="file" id="bPhotoIn" accept="image/*" multiple>
+      <div class="msg" id="bMsg"></div>
+      <div id="bEdit" class="hide">
+        <label class="f">Zoom <span id="bZoomVal"></span></label>
+        <input type="range" id="bZoom" min="1" max="3" step="0.01" value="1">
+        <label class="f">Move left or right</label>
+        <input type="range" id="bPx" min="-1" max="1" step="0.01" value="0">
+        <label class="f">Move up or down</label>
+        <input type="range" id="bPy" min="-1" max="1" step="0.01" value="0">
+        <label class="f">Layout</label>
+        <select id="bLayout">
+          <option value="photo">Just the photo</option>
+          <option value="band" selected>Headline band at the bottom</option>
+          <option value="big">Big headline on the photo</option>
+          <option value="split">Photo left, words right</option>
+          <option value="stripe">Bold stripe across the middle</option>
+          <option value="corner">Small label in the corner</option>
+        </select>
+        <label class="f">Headline</label>
+        <input type="text" id="bHead" maxlength="40" placeholder="NOW OPEN">
+        <label class="f">Small line</label>
+        <input type="text" id="bSub" maxlength="60" placeholder="nociv.co">
+        <label class="f">Colors</label>
+        <div class="thm" id="bThemes"></div>
+      </div>
+    </section>
+
+    <section class="panel" id="p-bsign">
+      <h2>The sign</h2>
+      <label class="f">Sign shape</label>
+      <div class="chips" id="bShapes"></div>
+      <label class="f">Scene behind it</label>
+      <div class="chips" id="bScenes"></div>
+      <label class="f">Slats (the spinning strips)</label>
+      <div class="chips" id="bSlats"></div>
+      <label class="f">How the slats turn</label>
+      <div class="chips" id="bStyle">
+        <button type="button" class="chip" data-w="0" aria-pressed="false">All together</button>
+        <button type="button" class="chip" data-w="0.35" aria-pressed="true">Ripple</button>
+      </div>
+      <label class="f">Each photo stays <span id="bHoldVal"></span></label>
+      <input type="range" id="bHold" min="1" max="8" step="0.5" value="3">
+      <label class="f">The spin takes <span id="bSpinVal"></span></label>
+      <input type="range" id="bSpinT" min="0.6" max="3" step="0.1" value="1.2">
+      <label class="f">Picture shape</label>
+      <div class="chips" id="bAspects">
+        <button type="button" class="chip" data-a="tall" aria-pressed="false">Tall 9:16</button>
+        <button type="button" class="chip" data-a="square" aria-pressed="false">Square</button>
+        <button type="button" class="chip" data-a="wide" aria-pressed="true">Wide 16:9</button>
+      </div>
+    </section>
+
     <section class="panel" id="p-clip">
       <h2>Your video</h2>
       <p class="tip">Pick a regular video from your camera roll, up to 5 minutes. Then use the deck buttons under the picture, like a real tape. Hit REC to record what you do.</p>
@@ -245,7 +311,7 @@
       <div id="autoStop">
         <label class="f">How many times it repeats</label>
         <select id="loops"><option value="1">Once</option><option value="3" selected>3 times</option><option value="6">6 times</option><option value="12">12 times</option></select>
-        <label class="check"><input type="checkbox" id="rewindOn" checked> Tape rewind at the end</label>
+        <label class="check" id="rewindRow"><input type="checkbox" id="rewindOn" checked> Tape rewind at the end</label>
       </div>
       <button type="button" class="btn red" id="autoBtn">Record it automatically</button>
       <div class="prog" id="progB"><i></i></div>
@@ -259,6 +325,8 @@
 
   <nav class="tools" id="tools">
     <button type="button" data-p="shoot" data-k="stop" aria-selected="true"><i>&#43;</i>Add</button>
+    <button type="button" data-p="bphotos" data-k="board" aria-selected="false"><i>&#9638;</i>Photos</button>
+    <button type="button" data-p="bsign" data-k="board" aria-selected="false"><i>&#9707;</i>Sign</button>
     <button type="button" data-p="clip" data-k="clip" aria-selected="false"><i>&#9636;</i>Video</button>
     <button type="button" data-p="set" data-k="both" aria-selected="false"><i>&#9881;</i>Settings</button>
     <button type="button" data-p="save" data-k="both" aria-selected="false"><i>&#8681;</i>Save</button>
@@ -279,7 +347,8 @@
   // the tape deck. p is the position: a frame number for stop motion (it can keep counting past the end when looping).
   const deck = { mode: 'pause', p: 0, settle: 0, recording: false, auto: false };
   const fpsOut = () => st.fps;
-  function size() { return SIZES[st.aspect]; }
+  const board = { faces: [], sel: -1, aspect: 'wide', shape: 'wide', slats: 18, wave: 0.35, hold: 3, spin: 1.2, scene: 'day', t: 0, playing: true };
+  function size() { return SIZES[st.kind === 'board' ? board.aspect : st.aspect]; }
   function applySize(w, h) { if (cv.width !== w || cv.height !== h) { cv.width = w; cv.height = h; } }
   function msg(id, text, err) { const e = $(id); e.textContent = text || ''; e.className = 'msg' + (err ? ' err' : ''); }
   function stageMsg(t) { $('stageMsg').textContent = t || ''; }
@@ -377,9 +446,10 @@
     if (st.rec && L.tape) {
       let label;
       if (live) label = performance.now() < st.flashUntil ? '● REC' : 'STBY';
+      else if (st.kind === 'board') label = board.playing ? OSD.play : OSD.pause;
       else label = OSD[deck.mode] || OSD.pause;
       // the pause text blinks like the real thing
-      if (!(deck.mode === 'pause' && !live && !blink)) stampText(c, label, s * 0.6, s * 0.6, s, '#ffffff');
+      if (!(deck.mode === 'pause' && st.kind !== 'board' && !live && !blink)) stampText(c, label, s * 0.6, s * 0.6, s, '#ffffff');
       stampText(c, clock(t), W - s * 0.6, s * 0.6, s, '#ffffff', 'right');
       stampText(c, 'SP', W - s * 0.6, s * 1.75, s * 0.7, '#ffffff', 'right');
       if (deck.recording && blink) { c.fillStyle = '#ff2a1f'; c.beginPath(); c.arc(W - s * 0.6 - s * 1.7, s * 0.6 + s * 0.5, s * 0.3, 0, 6.3); c.fill(); }
@@ -401,6 +471,7 @@
   function idxOf(p) { const n = st.frames.length; if (!n) return -1; const m = ((Math.floor(p) % loopLen()) + loopLen()) % loopLen(); return m < n ? m : loopLen() - m; }
   function lockAspect() { const locked = st.frames.length > 0; document.querySelectorAll('#aspects .chip').forEach(b => { b.disabled = locked; }); $('aspectNote').style.display = locked ? 'block' : 'none'; }
   function refreshUI() {
+    if (st.kind === 'board') { refreshBoardUI(); return; }
     const n = st.frames.length;
     $('undoBtn').disabled = !st.hist.length; $('redoBtn').disabled = !st.redo.length;
     if (st.kind === 'stop') $('info').textContent = n + (n === 1 ? ' frame' : ' frames') + (n ? ' · ' + (n / st.fps).toFixed(1) + ' s' : '');
@@ -420,7 +491,7 @@
   function updateDeckEnabled() {
     const ok = st.kind === 'clip' ? !!st.clip : st.frames.length >= 2;
     document.querySelectorAll('#deck .dk').forEach(b => { b.disabled = b.id === 'dkRec' ? !(ok || st.camVideo) : !ok; });
-    $('autoBtn').disabled = !ok;
+    $('autoBtn').disabled = st.kind === 'board' ? board.faces.length < 2 : !ok;
   }
 
   // ===================== DRAWING =====================
@@ -450,6 +521,7 @@
     drawStamps(ctx, W, H, st.frames.length / st.fps, true);
   }
   function renderStill() {
+    if (st.kind === 'board') { drawBoardView(0); return; }
     if (st.kind === 'clip') { drawClip(); return; }
     if (st.cam && st.camVideo) return;
     const [W, H] = size(); applySize(W, H);
@@ -497,9 +569,11 @@
   function tick(now) {
     requestAnimationFrame(tick);
     const dt = lastAdv ? Math.min(0.1, (now - lastAdv) / 1000) : 0; lastAdv = now;
-    if (st.kind) advance(dt);
+    if (st.kind === 'board') { if (board.playing) board.t += dt; }
+    else if (st.kind) advance(dt);
     if (now - lastDraw < 40) return; lastDraw = now;
-    if (st.kind === 'clip') { drawClip(); if (st.clip) $('info').textContent = clock(clipV.currentTime) + ' of ' + clock(clipV.duration); }
+    if (st.kind === 'board') drawBoardView(dt);
+    else if (st.kind === 'clip') { drawClip(); if (st.clip) $('info').textContent = clock(clipV.currentTime) + ' of ' + clock(clipV.duration); }
     else if (st.kind === 'stop') {
       if (st.cam && st.camVideo) drawLive();
       else if (st.frames.length) drawFrameAt(deck.mode !== 'pause' ? Math.max(0, idxOf(deck.p)) : (st.sel >= 0 ? st.sel : st.frames.length - 1), tapeTime());
@@ -586,10 +660,10 @@
 
   // ===================== EDIT =====================
   function need() { if (st.sel < 0 || !st.frames[st.sel]) { stageMsg('Tap a frame in the strip first'); setTimeout(() => stageMsg(''), 1800); return false; } return true; }
-  $('mvL').addEventListener('click', () => { if (!need() || st.sel === 0) return; snap(); const a = st.frames; [a[st.sel - 1], a[st.sel]] = [a[st.sel], a[st.sel - 1]]; st.sel--; refreshUI(); renderStill(); });
-  $('mvR').addEventListener('click', () => { if (!need() || st.sel >= st.frames.length - 1) return; snap(); const a = st.frames; [a[st.sel + 1], a[st.sel]] = [a[st.sel], a[st.sel + 1]]; st.sel++; refreshUI(); renderStill(); });
-  $('dupBtn').addEventListener('click', async () => { if (!need()) return; snap(); await addBlob(st.frames[st.sel].blob, st.sel + 1); st.sel++; refreshUI(); renderStill(); });
-  $('delBtn').addEventListener('click', () => { if (!need()) return; snap(); st.frames.splice(st.sel, 1); st.sel = Math.min(st.sel, st.frames.length - 1); refreshUI(); renderStill(); });
+  $('mvL').addEventListener('click', () => { if (st.kind === 'board') return boardEdit('l'); if (!need() || st.sel === 0) return; snap(); const a = st.frames; [a[st.sel - 1], a[st.sel]] = [a[st.sel], a[st.sel - 1]]; st.sel--; refreshUI(); renderStill(); });
+  $('mvR').addEventListener('click', () => { if (st.kind === 'board') return boardEdit('r'); if (!need() || st.sel >= st.frames.length - 1) return; snap(); const a = st.frames; [a[st.sel + 1], a[st.sel]] = [a[st.sel], a[st.sel + 1]]; st.sel++; refreshUI(); renderStill(); });
+  $('dupBtn').addEventListener('click', async () => { if (st.kind === 'board') return $('bPhotoIn').click(); if (!need()) return; snap(); await addBlob(st.frames[st.sel].blob, st.sel + 1); st.sel++; refreshUI(); renderStill(); });
+  $('delBtn').addEventListener('click', () => { if (st.kind === 'board') return boardEdit('d'); if (!need()) return; snap(); st.frames.splice(st.sel, 1); st.sel = Math.min(st.sel, st.frames.length - 1); refreshUI(); renderStill(); });
   $('revBtn').addEventListener('click', () => { snap(); st.frames.reverse(); if (st.sel >= 0) st.sel = st.frames.length - 1 - st.sel; refreshUI(); renderStill(); });
   $('clearBtn').addEventListener('click', () => { if (!st.frames.length || !confirm('Delete every frame? You can undo this.')) return; snap(); st.frames = []; st.sel = -1; deck.p = 0; refreshUI(); renderStill(); });
   $('fps').addEventListener('input', () => { st.fps = +$('fps').value; $('fpsVal').textContent = st.fps + ' frames a second'; refreshUI(); });
@@ -615,16 +689,19 @@
 
   // ===================== SCREENS =====================
   function syncRows() {
-    const stop = st.kind === 'stop';
+    const stop = st.kind === 'stop', isBoard = st.kind === 'board';
+    $('boardRow').classList.toggle('hide', !isBoard);
+    $('rewindRow').classList.toggle('hide', isBoard);
+    $('dupBtn').textContent = isBoard ? 'Add photo' : 'Copy';
     $('modeSw').classList.toggle('hide', !stop);
     $('shootRow').classList.toggle('hide', !(stop && st.cam));
-    $('deck').classList.toggle('hide', stop && st.cam);
-    $('editRow').classList.toggle('hide', !stop);
+    $('deck').classList.toggle('hide', (stop && st.cam) || isBoard);
+    $('editRow').classList.toggle('hide', !(stop || isBoard));
     $('stopSet').classList.toggle('hide', !stop);
-    $('autoStop').classList.toggle('hide', !stop);
+    $('autoStop').classList.toggle('hide', st.kind === 'clip');
     $('stillsRow').classList.toggle('hide', !stop);
     $('swCam').setAttribute('aria-pressed', st.cam ? 'true' : 'false'); $('swTape').setAttribute('aria-pressed', st.cam ? 'false' : 'true');
-    $('autoBtn').textContent = stop ? 'Record it automatically' : 'Record the whole video';
+    $('autoBtn').textContent = isBoard ? 'Record the sign' : (stop ? 'Record it automatically' : 'Record the whole video');
   }
   // the camcorder switch: CAMERA shoots frames, TAPE plays them
   function setCam(on) {
@@ -642,15 +719,16 @@
   }
   document.querySelectorAll('#tools button').forEach(b => b.addEventListener('click', () => showPanel(b.dataset.p)));
   function startKind(kind) {
-    st.kind = kind; st.cam = kind === 'stop' && !st.frames.length; setDeck('pause');
+    st.kind = kind; st.cam = kind === 'stop' && !st.frames.length; setDeck('pause'); if (kind === 'board' && board.sel < 0 && board.faces.length) board.sel = 0;
     $('start').classList.add('hide'); $('app').classList.remove('hide');
     document.querySelectorAll('#tools button').forEach(b => b.classList.toggle('gone', b.dataset.k !== 'both' && b.dataset.k !== kind));
     $('tl').classList.toggle('hide', kind === 'clip');
     if (kind === 'clip') { stopCam(); $('info').textContent = ''; if (st.clip) applyClipSize(); } else refreshUI();
-    renderEra(); showPanel(kind === 'clip' ? 'clip' : 'shoot'); updateDeckEnabled();
+    renderEra(); showPanel(kind === 'clip' ? 'clip' : kind === 'board' ? 'bphotos' : 'shoot'); updateDeckEnabled(); if (kind === 'board') { refreshBoardUI(); syncFaceControls(); }
   }
   function goHome() { setDeck('pause'); if (deck.recording) stopRec(); stopCam(); st.kind = null; $('app').classList.add('hide'); $('start').classList.remove('hide'); updateKeep(); }
   function updateKeep() { const has = st.frames.length > 0; $('pickKeep').classList.toggle('hide', !has); $('keepInfo').textContent = has ? st.frames.length + ' frames saved on this phone. Pick up where you left off.' : ''; }
+  $('pickBoard').addEventListener('click', () => startKind('board'));
   $('pickStop').addEventListener('click', () => { startKind('stop'); if (st.cam && !st.camVideo) startCam(); });
   $('pickClip').addEventListener('click', () => { startKind('clip'); $('clipIn').click(); });
   $('pickKeep').addEventListener('click', () => { startKind('stop'); setCam(false); });
@@ -709,7 +787,7 @@
   function showResult(blob) {
     if (result) URL.revokeObjectURL(result.url);
     const ext = /mp4/.test(blob.type) ? 'mp4' : 'webm', url = URL.createObjectURL(blob);
-    result = { blob, url, name: (st.kind === 'clip' ? 'phone-animation-vhs.' : 'phone-animation.') + ext };
+    result = { blob, url, name: (st.kind === 'clip' ? 'phone-animation-vhs.' : st.kind === 'board' ? 'phone-animation-billboard.' : 'phone-animation.') + ext };
     const v = $('result'); v.src = url; v.style.display = 'block'; $('resultBtns').classList.remove('hide');
     $('progB').style.display = 'none'; $('autoBtn').disabled = false;
     msg('saveMsg', 'Done. ' + (blob.size / 1048576).toFixed(1) + ' MB. Tap Share or save.'); showPanel('save'); $('panels').scrollTop = 9999;
@@ -724,6 +802,12 @@
         if (!st.clip) return; clipV.currentTime = 0; await new Promise(r => setTimeout(r, 250));
         if (!(await startRec())) return; setDeck('play');
         await waitUntil(() => { bar.style.width = Math.round(clipV.currentTime / clipV.duration * 100) + '%'; msg('saveMsg', 'Recording ' + clock(clipV.currentTime) + ' of ' + clock(clipV.duration) + '. Keep this page open.'); return clipV.ended || deck.mode === 'pause'; }, 400000);
+      } else if (st.kind === 'board') {
+        const n = board.faces.length; if (n < 2) { msg('saveMsg', 'Add at least 2 photos first.', true); return; }
+        const loops = +$('loops').value, T = board.hold + board.spin, ms = n * T * loops * 1000;
+        board.t = 0; board.playing = true; if (!(await startRec())) return;
+        const t0 = performance.now();
+        await waitUntil(() => { const pr = Math.min(1, (performance.now() - t0) / ms); bar.style.width = Math.round(pr * 100) + '%'; msg('saveMsg', 'Recording ' + Math.round(pr * 100) + '%. Keep this page open.'); return pr >= 1; }, ms + 3000);
       } else {
         const n = st.frames.length; if (n < 2) return;
         const loops = +$('loops').value, total = loopLen() * loops; deck.p = 0; setDeck('play');
@@ -755,6 +839,228 @@
     files.forEach((f, i) => setTimeout(() => { const a = document.createElement('a'); a.href = URL.createObjectURL(f); a.download = f.name; document.body.appendChild(a); a.click(); a.remove(); }, i * 250));
     msg('saveMsg', 'Saved ' + files.length + ' photos to your downloads.');
   });
+
+
+  // ===================== BILLBOARD =====================
+  // A trivision sign: vertical triangular slats that all turn at once, so each strip swaps to the next picture.
+  const SHAPES = { wide: ['Bulletin 14 x 48', 48 / 14], poster: ['Poster 12 x 24', 2], tall: ['Tall 9 x 16', 9 / 16], square: ['Square', 1] };
+  const SCENES = { day: 'Day', dusk: 'Dusk', night: 'Night', desert: 'Desert' };
+  const THEMES = { ink: { bg: '#1a1a1a', fg: '#f2ecd6', ac: '#c8412f' }, lime: { bg: '#cfe59a', fg: '#3d4a26', ac: '#e8701a' }, sun: { bg: '#ffd400', fg: '#111111', ac: '#c8412f' }, white: { bg: '#ffffff', fg: '#111111', ac: '#c8412f' }, red: { bg: '#c8412f', fg: '#ffffff', ac: '#ffd400' } };
+  const HEAD_FONT = 'Impact, Haettenschweiler, "Arial Narrow Bold", "Arial Black", sans-serif';
+  function bRect(W, H) {
+    const ar = SHAPES[board.shape][1], maxW = W * 0.92, maxH = H * (board.shape === 'tall' ? 0.58 : 0.6);
+    const w = Math.min(maxW, maxH * ar), h = w / ar;
+    return { x: Math.round(W / 2 - w / 2), y: Math.round(H * (board.shape === 'tall' ? 0.36 : 0.37) - h / 2), w: Math.round(w), h: Math.round(h) };
+  }
+  function wrapLines(c, text, maxW) {
+    const words = text.split(/\s+/).filter(Boolean), lines = []; let cur = '';
+    words.forEach(w => { const t = cur ? cur + ' ' + w : w; if (c.measureText(t).width <= maxW || !cur) cur = t; else { lines.push(cur); cur = w; } });
+    if (cur) lines.push(cur); return lines;
+  }
+  // fits a headline in a box: the biggest size that holds
+  function fitText(c, text, boxW, boxH, maxLines) {
+    text = text.toUpperCase(); let size = Math.floor(boxH);
+    for (; size > 8; size -= 2) {
+      c.font = '400 ' + size + 'px ' + HEAD_FONT; const lines = wrapLines(c, text, boxW);
+      if (lines.length <= maxLines && lines.length * size * 1.02 <= boxH && lines.every(l => c.measureText(l).width <= boxW)) return { size, lines };
+    }
+    c.font = '400 8px ' + HEAD_FONT; return { size: 8, lines: wrapLines(c, text, boxW).slice(0, maxLines) };
+  }
+  function drawLines(c, fit, x, y, color, align, lh) {
+    c.font = '400 ' + fit.size + 'px ' + HEAD_FONT; c.textAlign = align; c.textBaseline = 'top'; c.fillStyle = color;
+    fit.lines.forEach((l, i) => c.fillText(l, x, y + i * fit.size * (lh || 1.02)));
+  }
+  function photoInto(c, f, x, y, w, h) {
+    const iw = f.img.naturalWidth, ih = f.img.naturalHeight, r = Math.max(w / iw, h / ih) * f.zoom, dw = iw * r, dh = ih * r;
+    const ex = (dw - w) / 2, ey = (dh - h) / 2;
+    c.save(); c.beginPath(); c.rect(x, y, w, h); c.clip(); c.imageSmoothingEnabled = true;
+    c.drawImage(f.img, x + (w - dw) / 2 - f.px * ex, y + (h - dh) / 2 - f.py * ey, dw, dh); c.restore();
+  }
+  function panLimits(f, w, h) { const r = Math.max(w / f.img.naturalWidth, h / f.img.naturalHeight) * f.zoom; return { ex: (f.img.naturalWidth * r - w) / 2, ey: (f.img.naturalHeight * r - h) / 2 }; }
+  // draws one finished poster for the sign (the photo, then the words like a real ad)
+  function faceCanvas(f, w, h) {
+    const key = [w, h, f.zoom, f.px, f.py, f.layout, f.head, f.sub, f.theme].join('|');
+    if (f.cache && f.cacheKey === key) return f.cache;
+    const cc = document.createElement('canvas'); cc.width = w; cc.height = h; const c = cc.getContext('2d'), th = THEMES[f.theme] || THEMES.ink;
+    c.fillStyle = th.bg; c.fillRect(0, 0, w, h);
+    const head = (f.head || '').trim(), sub = (f.sub || '').trim(), pad = Math.round(Math.min(w, h) * 0.05), L = f.layout;
+    if (L === 'split') {
+      const pw = Math.round(w * 0.55); photoInto(c, f, 0, 0, pw, h);
+      if (head) {
+        const fit = fitText(c, head, w - pw - pad * 2, h * (sub ? 0.5 : 0.7), 3), th2 = fit.lines.length * fit.size * 1.02, y0 = (h - th2 - (sub ? fit.size * 0.5 : 0)) / 2;
+        drawLines(c, fit, pw + pad, y0, th.fg, 'left');
+        if (sub) { const sf = fitText(c, sub, w - pw - pad * 2, h * 0.14, 2); drawLines(c, sf, pw + pad, y0 + th2 + pad * 0.4, th.ac, 'left'); }
+      }
+    } else {
+      photoInto(c, f, 0, 0, w, h);
+      if (L === 'band' && head) {
+        const bh = Math.round(h * (sub ? 0.34 : 0.28)); c.fillStyle = th.bg; c.fillRect(0, h - bh, w, bh);
+        const fit = fitText(c, head, w - pad * 2, bh * (sub ? 0.62 : 0.78), 2), th2 = fit.lines.length * fit.size * 1.02;
+        drawLines(c, fit, w / 2, h - bh + (bh - th2 - (sub ? bh * 0.2 : 0)) / 2, th.fg, 'center');
+        if (sub) { const sf = fitText(c, sub, w - pad * 2, bh * 0.2, 1); drawLines(c, sf, w / 2, h - pad - sf.size, th.ac, 'center'); }
+      } else if (L === 'big' && head) {
+        const g = c.createLinearGradient(0, h * 0.3, 0, h); g.addColorStop(0, 'rgba(0,0,0,0)'); g.addColorStop(1, 'rgba(0,0,0,0.72)'); c.fillStyle = g; c.fillRect(0, 0, w, h);
+        const fit = fitText(c, head, w - pad * 2, h * 0.5, 2), th2 = fit.lines.length * fit.size * 1.02, y0 = h - th2 - pad - (sub ? h * 0.1 : 0);
+        c.save(); c.shadowColor = 'rgba(0,0,0,.6)'; c.shadowBlur = fit.size * 0.1; drawLines(c, fit, w / 2, y0, '#ffffff', 'center'); c.restore();
+        if (sub) { const sf = fitText(c, sub, w - pad * 2, h * 0.08, 1); drawLines(c, sf, w / 2, h - pad - sf.size, '#ffd9a8', 'center'); }
+      } else if (L === 'stripe' && head) {
+        const sh = Math.round(h * 0.3), y0 = Math.round((h - sh) / 2), bd = Math.max(2, h * 0.012); c.fillStyle = th.bg; c.fillRect(0, y0, w, sh);
+        c.fillStyle = th.ac; c.fillRect(0, y0, w, bd); c.fillRect(0, y0 + sh - bd, w, bd);
+        const fit = fitText(c, head, w - pad * 2, sh * (sub ? 0.6 : 0.74), 1); drawLines(c, fit, w / 2, y0 + (sh - fit.size - (sub ? sh * 0.2 : 0)) / 2, th.fg, 'center');
+        if (sub) { const sf = fitText(c, sub, w - pad * 2, sh * 0.2, 1); drawLines(c, sf, w / 2, y0 + sh - sf.size - sh * 0.07, th.ac, 'center'); }
+      } else if (L === 'corner' && head) {
+        const fit = fitText(c, head, w * 0.5, h * 0.13, 1), tw = Math.max(...fit.lines.map(l => c.measureText(l).width)) + pad * 1.2;
+        c.fillStyle = th.bg; c.fillRect(pad * 0.6, pad * 0.6, tw, fit.size + pad * 0.9); drawLines(c, fit, pad * 1.2, pad * 0.95, th.fg, 'left');
+      }
+    }
+    f.cache = cc; f.cacheKey = key; return cc;
+  }
+
+  function easeIO(u) { return u < 0.5 ? 4 * u * u * u : 1 - Math.pow(-2 * u + 2, 3) / 2; }
+  // which two faces and how far through the turn, at time t
+  function boardPhase(t) {
+    const n = board.faces.length, T = board.hold + board.spin, k = Math.floor(t / T), u = t - k * T;
+    return { a: k % n, b: (k + 1) % n, p: u < board.hold ? 0 : (u - board.hold) / board.spin };
+  }
+  function drawScene(c, W, H, r) {
+    const sc = board.scene, ground = Math.round(H * 0.9), g = c.createLinearGradient(0, 0, 0, ground);
+    if (sc === 'day') { g.addColorStop(0, '#6fb8f0'); g.addColorStop(1, '#dff1ff'); }
+    else if (sc === 'dusk') { g.addColorStop(0, '#2b1b4d'); g.addColorStop(0.55, '#c9543f'); g.addColorStop(1, '#ffc27a'); }
+    else if (sc === 'night') { g.addColorStop(0, '#04060d'); g.addColorStop(1, '#17204a'); }
+    else { g.addColorStop(0, '#f28a3a'); g.addColorStop(0.6, '#ffc36b'); g.addColorStop(1, '#ffe7b0'); }
+    c.fillStyle = g; c.fillRect(0, 0, W, H);
+    if (sc === 'night') { c.fillStyle = '#fff'; for (let i = 0; i < 70; i++) { const x = (i * 97.3) % W, y = (i * 53.7) % (ground * 0.7); c.globalAlpha = 0.3 + (i % 5) * 0.12; c.fillRect(x, y, 1.6, 1.6); } c.globalAlpha = 1; }
+    if (sc === 'day') { c.fillStyle = 'rgba(255,255,255,.85)'; [[0.15, 0.1, 80], [0.7, 0.16, 100], [0.45, 0.06, 60]].forEach(([x, y, s]) => { const sz = s * W / 540; c.beginPath(); c.ellipse(W * x, H * y, sz, sz * 0.33, 0, 0, 6.3); c.ellipse(W * x + sz * 0.5, H * y + 4, sz * 0.7, sz * 0.28, 0, 0, 6.3); c.fill(); }); }
+    if (sc === 'desert') {
+      c.fillStyle = '#b8552b'; c.beginPath(); c.moveTo(0, ground); [[0, .76], [.12, .7], [.26, .78], [.42, .68], [.58, .8], [.74, .72], [.9, .79], [1, .74]].forEach(([x, y]) => c.lineTo(W * x, H * y)); c.lineTo(W, ground); c.fill();
+      c.fillStyle = '#6e2f1a'; c.beginPath(); c.moveTo(0, ground); [[0, .84], [.2, .8], [.4, .85], [.62, .79], [.82, .84], [1, .81]].forEach(([x, y]) => c.lineTo(W * x, H * y)); c.lineTo(W, ground); c.fill();
+    }
+    c.fillStyle = sc === 'night' ? '#07080d' : sc === 'desert' ? '#8a4a2a' : sc === 'dusk' ? '#1d1220' : '#8e8a7b'; c.fillRect(0, ground, W, H - ground);
+    if (sc === 'desert') { c.fillStyle = '#2b1a10'; [[0.1, 0.9, 1], [0.88, 0.9, 1.3]].forEach(([x, y, k]) => { const bx = W * x, by = H * y, u = W / 540 * k; c.fillRect(bx - 5 * u, by - 110 * u, 10 * u, 110 * u); c.fillRect(bx - 28 * u, by - 80 * u, 8 * u, 40 * u); c.fillRect(bx - 28 * u, by - 46 * u, 26 * u, 8 * u); c.fillRect(bx + 20 * u, by - 90 * u, 8 * u, 50 * u); c.fillRect(bx + 2 * u, by - 56 * u, 26 * u, 8 * u); }); }
+    const pw = Math.max(8, Math.round(W * 0.028));
+    [0.27, 0.73].forEach(f => { const px = r.x + r.w * f - pw / 2, gr = c.createLinearGradient(px, 0, px + pw, 0); gr.addColorStop(0, '#4a4d52'); gr.addColorStop(0.5, '#9aa0a8'); gr.addColorStop(1, '#3a3d42'); c.fillStyle = gr; c.fillRect(px, r.y + r.h, pw, ground - (r.y + r.h) + 4); });
+    const cw = Math.max(6, Math.round(r.h * 0.07)); c.fillStyle = '#2d2f33'; c.fillRect(r.x - 4, r.y + r.h + 2, r.w + 8, cw);
+    c.strokeStyle = '#2d2f33'; c.lineWidth = Math.max(1.5, W / 360); c.beginPath(); c.moveTo(r.x, r.y + r.h + cw + 2); c.lineTo(r.x + r.w, r.y + r.h + cw + 2); c.stroke();
+    const fw = Math.max(5, Math.round(W * 0.014)); c.fillStyle = '#26282c'; c.fillRect(r.x - fw, r.y - fw, r.w + fw * 2, r.h + fw * 2);
+  }
+  function drawSceneFront(c, W, H, r) {
+    const fw = Math.max(5, Math.round(W * 0.014)), night = board.scene === 'night' || board.scene === 'dusk', nl = r.w > W * 0.7 ? 5 : 3;
+    for (let i = 0; i < nl; i++) {
+      const lx = r.x + r.w * (i + 0.5) / nl, ly = r.y - fw, arm = Math.max(10, r.h * 0.12);
+      c.strokeStyle = '#26282c'; c.lineWidth = Math.max(2, W / 270); c.beginPath(); c.moveTo(lx, ly); c.lineTo(lx, ly - arm * 0.8); c.stroke();
+      c.fillStyle = '#d8d8d0'; c.beginPath(); c.moveTo(lx - arm * 0.45, ly - arm * 0.8); c.lineTo(lx + arm * 0.45, ly - arm * 0.8); c.lineTo(lx + arm * 0.3, ly - arm * 1.15); c.lineTo(lx - arm * 0.3, ly - arm * 1.15); c.fill();
+      if (night) {
+        const gr = c.createRadialGradient(lx, ly - arm * 0.8, 2, lx, r.y + r.h * 0.3, r.h * 0.95); gr.addColorStop(0, 'rgba(255,244,200,.38)'); gr.addColorStop(1, 'rgba(255,244,200,0)');
+        c.save(); c.beginPath(); c.rect(r.x, r.y, r.w, r.h); c.clip(); c.fillStyle = gr; c.fillRect(r.x, r.y, r.w, r.h); c.restore();
+        c.fillStyle = 'rgba(255,244,200,.95)'; c.beginPath(); c.arc(lx, ly - arm * 0.8, Math.max(2, arm * 0.1), 0, 6.3); c.fill();
+      }
+    }
+    const sh = c.createLinearGradient(0, r.y, 0, r.y + r.h); sh.addColorStop(0, 'rgba(255,255,255,.07)'); sh.addColorStop(1, 'rgba(0,0,0,.14)'); c.fillStyle = sh; c.fillRect(r.x, r.y, r.w, r.h);
+    c.strokeStyle = '#3b3e44'; c.lineWidth = Math.max(2, W / 270); c.strokeRect(r.x - 0.5, r.y - 0.5, r.w + 1, r.h + 1);
+  }
+  function drawSlats(c, r, t) {
+    const n = board.faces.length; if (!n) return;
+    const N = board.slats, ph = boardPhase(t), fa = faceCanvas(board.faces[ph.a], r.w, r.h), fb = n > 1 ? faceCanvas(board.faces[ph.b], r.w, r.h) : fa;
+    for (let i = 0; i < N; i++) {
+      const x0 = Math.round(r.x + i * r.w / N), x1 = Math.round(r.x + (i + 1) * r.w / N), sx = Math.round(i * r.w / N), sw0 = Math.round((i + 1) * r.w / N) - sx, sw = x1 - x0;
+      let q = ph.p; if (q > 0 && q < 1 && board.wave) q = Math.min(1, Math.max(0, ph.p * (1 + board.wave) - (i / N) * board.wave));
+      const phi = easeIO(q) * 2 * Math.PI / 3, cA = Math.max(0, Math.cos(phi)), cB = Math.max(0, Math.cos(phi - 2 * Math.PI / 3)), sum = cA + cB || 1;
+      const wB = Math.round(sw * cB / sum), wA = sw - wB;
+      if (wB > 0) { c.drawImage(fb, sx, 0, sw0, r.h, x0, r.y, wB, r.h); c.fillStyle = 'rgba(0,0,0,' + (1 - (0.55 + 0.45 * cB)).toFixed(3) + ')'; c.fillRect(x0, r.y, wB, r.h); }
+      if (wA > 0) { c.drawImage(fa, sx, 0, sw0, r.h, x0 + wB, r.y, wA, r.h); c.fillStyle = 'rgba(0,0,0,' + (1 - (0.55 + 0.45 * cA)).toFixed(3) + ')'; c.fillRect(x0 + wB, r.y, wA, r.h); }
+      if (ph.p > 0 && ph.p < 1) { c.fillStyle = 'rgba(0,0,0,.45)'; c.fillRect(x0 + wB - 1, r.y, 2, r.h); }
+      c.fillStyle = 'rgba(0,0,0,.22)'; c.fillRect(x0, r.y, 1, r.h);
+    }
+  }
+  const bTmp = document.createElement('canvas');
+  function drawBoardView() {
+    const [W, H] = size(); applySize(W, H);
+    if (st.panel === 'bphotos' && board.faces[board.sel]) { drawFaceEditor(W, H); return; }
+    if (bTmp.width !== W || bTmp.height !== H) { bTmp.width = W; bTmp.height = H; }
+    const c = bTmp.getContext('2d'), r = bRect(W, H);
+    if (!board.faces.length) { ctx.fillStyle = '#111'; ctx.fillRect(0, 0, W, H); stageMsg('Add 2 to 5 photos to start'); return; }
+    stageMsg(''); drawScene(c, W, H, r); drawSlats(c, r, board.t); drawSceneFront(c, W, H, r);
+    drawLooked(ctx, bTmp, W, H, W, H, board.t, null); drawStamps(ctx, W, H, board.t, false);
+  }
+  // while you edit a photo you see it flat and big, and can drag it
+  function drawFaceEditor(W, H) {
+    const f = board.faces[board.sel], r = bRect(W, H), ar = r.w / r.h, w = Math.round(Math.min(W * 0.94, H * 0.8 * ar)), h = Math.round(w / ar);
+    ctx.fillStyle = '#1c1c1c'; ctx.fillRect(0, 0, W, H); const fc = faceCanvas(f, r.w, r.h);
+    board.editBox = { x: Math.round((W - w) / 2), y: Math.round((H - h) / 2), w, h };
+    ctx.drawImage(fc, board.editBox.x, board.editBox.y, w, h); stageMsg('Drag the picture to move it');
+  }
+  let drag = null;
+  cv.addEventListener('pointerdown', (e) => { if (st.kind !== 'board' || st.panel !== 'bphotos' || !board.faces[board.sel]) return; drag = { x: e.clientX, y: e.clientY }; try { cv.setPointerCapture(e.pointerId); } catch (er) {} });
+  cv.addEventListener('pointermove', (e) => {
+    if (!drag) return; const f = board.faces[board.sel], box = board.editBox; if (!f || !box) return;
+    const r = bRect(cv.width, cv.height), sc = cv.clientWidth / cv.width, dx = (e.clientX - drag.x) / sc * (r.w / box.w), dy = (e.clientY - drag.y) / sc * (r.h / box.h); drag = { x: e.clientX, y: e.clientY };
+    const lim = panLimits(f, r.w, r.h);
+    if (lim.ex > 1) f.px = Math.max(-1, Math.min(1, f.px - dx / lim.ex)); if (lim.ey > 1) f.py = Math.max(-1, Math.min(1, f.py - dy / lim.ey));
+    syncFaceControls(true);
+  });
+  ['pointerup', 'pointercancel'].forEach(ev => cv.addEventListener(ev, () => { drag = null; }));
+  cv.style.touchAction = 'none';
+
+  async function addBoardPhotos(files) {
+    const room = 5 - board.faces.length; if (room <= 0) { msg('bMsg', 'That is 5, the most a sign holds. Delete one first.', true); return; }
+    files = files.slice(0, room); msg('bMsg', 'Adding...');
+    try {
+      for (const file of files) {
+        const f0 = await loadImg(file), k = Math.min(1, 1600 / Math.max(f0.img.naturalWidth, f0.img.naturalHeight)), c = document.createElement('canvas');
+        c.width = Math.round(f0.img.naturalWidth * k); c.height = Math.round(f0.img.naturalHeight * k); c.getContext('2d').drawImage(f0.img, 0, 0, c.width, c.height); URL.revokeObjectURL(f0.url);
+        const f = await loadImg(await canvasToBlob(c, 'image/jpeg', 0.9)), i = board.faces.length;
+        f.zoom = 1; f.px = 0; f.py = 0; f.layout = 'photo'; f.head = ''; f.sub = ''; f.theme = ['ink', 'lime', 'sun', 'white', 'red'][i % 5]; board.faces.push(f);
+      }
+      board.sel = board.faces.length - 1; refreshBoardUI(); syncFaceControls(); board.t = 0;
+      msg('bMsg', board.faces.length < 2 ? 'Add one more so it has something to spin to.' : 'Added. Tap Sign to pick a scene.');
+    } catch (e) { msg('bMsg', 'One of those would not open. Try JPG or PNG.', true); }
+  }
+  $('bPhotoIn').addEventListener('change', (e) => { const files = [...e.target.files]; e.target.value = ''; if (files.length) addBoardPhotos(files); });
+  $('bAdd').addEventListener('click', () => { buzz(8); $('bPhotoIn').click(); });
+  $('bSpin').addEventListener('click', () => { buzz(15); const T = board.hold + board.spin, k = Math.floor(board.t / T); board.t = k * T + board.hold; board.playing = true; $('bLoop').setAttribute('aria-pressed', 'true'); if (st.panel === 'bphotos') showPanel('bsign'); });
+  $('bLoop').addEventListener('click', () => { board.playing = !board.playing; $('bLoop').setAttribute('aria-pressed', board.playing ? 'true' : 'false'); $('bLoop').firstChild.textContent = board.playing ? '❚❚' : '▶'; });
+  function boardEdit(a) {
+    const i = board.sel, fs = board.faces; if (i < 0 || !fs[i]) { stageMsg('Tap a photo in the strip first'); setTimeout(() => stageMsg(''), 1800); return; }
+    if (a === 'l' && i > 0) { [fs[i - 1], fs[i]] = [fs[i], fs[i - 1]]; board.sel--; }
+    else if (a === 'r' && i < fs.length - 1) { [fs[i + 1], fs[i]] = [fs[i], fs[i + 1]]; board.sel++; }
+    else if (a === 'd') { fs.splice(i, 1); board.sel = Math.min(i, fs.length - 1); }
+    refreshBoardUI(); syncFaceControls();
+  }
+  function refreshBoardUI() {
+    const fs = board.faces, s = $('strip'); s.innerHTML = '';
+    fs.forEach((f, i) => { const d = document.createElement('div'); d.className = 'fr' + (i === board.sel ? ' sel' : ''); d.style.backgroundImage = 'url(' + f.url + ')'; d.innerHTML = '<i>' + (i + 1) + '</i>'; d.addEventListener('click', () => { board.sel = i; refreshBoardUI(); syncFaceControls(); }); s.appendChild(d); });
+    $('info').textContent = fs.length + (fs.length === 1 ? ' photo' : ' photos') + (fs.length > 1 ? ' · ' + (fs.length * (board.hold + board.spin)).toFixed(0) + ' s a loop' : '');
+    $('undoBtn').disabled = true; $('redoBtn').disabled = true; updateDeckEnabled();
+  }
+  function syncFaceControls(fromDrag) {
+    const f = board.faces[board.sel]; $('bEdit').classList.toggle('hide', !f); if (!f) return;
+    $('bZoom').value = f.zoom; $('bPx').value = f.px; $('bPy').value = f.py; $('bZoomVal').textContent = f.zoom.toFixed(1) + 'x';
+    if (!fromDrag) { $('bLayout').value = f.layout; $('bHead').value = f.head; $('bSub').value = f.sub; document.querySelectorAll('#bThemes button').forEach(b => b.setAttribute('aria-pressed', b.dataset.t === f.theme ? 'true' : 'false')); }
+  }
+  function onFace(fn) { return () => { const f = board.faces[board.sel]; if (!f) return; fn(f); syncFaceControls(true); }; }
+  $('bZoom').addEventListener('input', onFace(f => { f.zoom = +$('bZoom').value; }));
+  $('bPx').addEventListener('input', onFace(f => { f.px = +$('bPx').value; }));
+  $('bPy').addEventListener('input', onFace(f => { f.py = +$('bPy').value; }));
+  $('bLayout').addEventListener('change', onFace(f => { f.layout = $('bLayout').value; }));
+  $('bHead').addEventListener('input', onFace(f => { f.head = $('bHead').value; if (f.head && f.layout === 'photo') { f.layout = 'band'; $('bLayout').value = 'band'; } }));
+  $('bSub').addEventListener('input', onFace(f => { f.sub = $('bSub').value; }));
+  Object.keys(THEMES).forEach(k => {
+    const b = document.createElement('button'); b.type = 'button'; b.dataset.t = k; b.setAttribute('aria-pressed', 'false'); b.setAttribute('aria-label', k + ' colors');
+    b.style.background = 'linear-gradient(135deg,' + THEMES[k].bg + ' 55%,' + THEMES[k].ac + ' 55%)';
+    b.addEventListener('click', () => { const f = board.faces[board.sel]; if (!f) return; f.theme = k; syncFaceControls(); }); $('bThemes').appendChild(b);
+  });
+  function chipSet(id, items, get, set) {
+    const box = $(id); box.innerHTML = '';
+    items.forEach(([key, label]) => { const b = document.createElement('button'); b.type = 'button'; b.className = 'chip'; b.textContent = label; b.setAttribute('aria-pressed', String(get()) === String(key) ? 'true' : 'false'); b.addEventListener('click', () => { set(key); box.querySelectorAll('.chip').forEach(x => x.setAttribute('aria-pressed', x === b ? 'true' : 'false')); buzz(8); }); box.appendChild(b); });
+  }
+  chipSet('bShapes', Object.keys(SHAPES).map(k => [k, SHAPES[k][0]]), () => board.shape, v => { board.shape = v; board.faces.forEach(f => { f.cache = null; }); });
+  chipSet('bScenes', Object.keys(SCENES).map(k => [k, SCENES[k]]), () => board.scene, v => { board.scene = v; });
+  chipSet('bSlats', [[8, '8'], [12, '12'], [18, '18'], [24, '24']], () => board.slats, v => { board.slats = +v; });
+  document.querySelectorAll('#bStyle .chip').forEach(b => b.addEventListener('click', () => { board.wave = +b.dataset.w; document.querySelectorAll('#bStyle .chip').forEach(x => x.setAttribute('aria-pressed', x === b ? 'true' : 'false')); }));
+  document.querySelectorAll('#bAspects .chip').forEach(b => b.addEventListener('click', () => { board.aspect = b.dataset.a; document.querySelectorAll('#bAspects .chip').forEach(x => x.setAttribute('aria-pressed', x === b ? 'true' : 'false')); board.faces.forEach(f => { f.cache = null; }); }));
+  $('bHold').addEventListener('input', () => { board.hold = +$('bHold').value; $('bHoldVal').textContent = board.hold + ' s'; refreshBoardUI(); });
+  $('bSpinT').addEventListener('input', () => { board.spin = +$('bSpinT').value; $('bSpinVal').textContent = board.spin.toFixed(1) + ' s'; refreshBoardUI(); });
+  $('bHoldVal').textContent = '3 s'; $('bSpinVal').textContent = '1.2 s';
 
   // ===================== KEEP FRAMES IF THE PAGE RELOADS =====================
   const DB = 'nocivPhoneAnim';
