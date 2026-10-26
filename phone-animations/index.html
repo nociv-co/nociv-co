@@ -5,40 +5,88 @@
 <meta charset="UTF-8">
 <title>Phone Animations: NOCIV.CO</title>
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, viewport-fit=cover">
-<meta name="description" content="Free stop motion and VHS camcorder maker from NOCIV. Shoot frames with your phone, give it a different era. Nothing tracked, nothing uploaded.">
+<meta name="description" content="Free stop motion and VHS camcorder maker from NOCIV. Shoot frames or load a video, then run it through a tape deck with real rewind, fast forward and pause glitches. Nothing uploaded.">
 <meta property="og:title" content="NOCIV Phone Animations">
-<meta property="og:description" content="Stop motion and VHS camcorder looks on your phone. No sign up. Nothing leaves your phone.">
+<meta property="og:description" content="Stop motion and a VHS tape deck on your phone. No sign up. Nothing leaves your phone.">
 <style>
   :root { --paper: #e9e6df; --note: #f2ecd6; --ink: #1a1a1a; --red: #c8412f; --green: #2f7a4b; --muted: #6b665c; }
   * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
-  html, body { margin: 0; background: var(--paper); color: var(--ink); touch-action: pan-x pan-y; }
+  html, body { margin: 0; background: var(--paper); color: var(--ink); height: 100%; overflow: hidden; overscroll-behavior: none; position: fixed; inset: 0; width: 100%; }
   body { font-family: -apple-system, BlinkMacSystemFont, "Helvetica Neue", Arial, sans-serif; -webkit-text-size-adjust: 100%; }
-  .wrap { max-width: 980px; margin: 0 auto; padding: 18px 14px 60px; }
-  .top h1 { margin: 0; font-size: clamp(26px, 7vw, 42px); font-weight: 900; letter-spacing: 0.04em; line-height: 1; }
-  .top h1 span { background: var(--ink); color: #fff; padding: 2px 10px; display: inline-block; transform: rotate(-1.5deg); }
-  .top p { margin: 12px 0 0; font-size: 0.98rem; line-height: 1.5; max-width: 520px; }
-  .in-frame .top { display: none; }
-  .grid { display: grid; grid-template-columns: 1fr; gap: 14px; margin-top: 14px; }
-  .stage-col { min-width: 0; }
-  .stage { background: #111; border-radius: 12px; display: grid; place-items: center; padding: 6px; position: relative; }
-  .stage canvas { display: block; max-width: 100%; max-height: 52svh; width: auto; height: auto; background: #000; touch-action: none; }
-  #stageMsg { position: absolute; left: 10px; right: 10px; bottom: 10px; color: #fff; font-size: 0.8rem; font-weight: 700; text-align: center; text-shadow: 0 1px 3px #000; pointer-events: none; }
-  .bar { display: flex; gap: 8px; align-items: center; margin-top: 8px; }
-  .bar .count { flex: 1; font-weight: 800; font-size: 0.85rem; }
   button, select, input[type=text], input[type=file] { font: inherit; }
-  .btn { display: block; width: 100%; font-weight: 900; font-size: 0.95rem; letter-spacing: 0.03em; padding: 13px; border-radius: 10px; border: 2px solid var(--ink); background: #fff; color: var(--ink); cursor: pointer; text-align: center; }
-  .btn.red { background: var(--red); color: #fff; border-color: var(--red); }
-  .btn.dark { background: var(--ink); color: #fff; }
-  .btn.small { width: auto; padding: 9px 14px; font-size: 0.82rem; }
-  .btn:disabled { opacity: 0.4; }
-  .bar .btn { flex: none; }
-  .steps { display: flex; gap: 6px; overflow-x: auto; scrollbar-width: none; padding: 2px 0 8px; }
-  .steps::-webkit-scrollbar { display: none; }
-  .steps button { flex: none; font-size: 0.85rem; font-weight: 800; border: 1.5px solid var(--ink); background: #fff; border-radius: 999px; padding: 8px 14px; cursor: pointer; }
-  .steps button[aria-selected="true"] { background: var(--ink); color: #fff; }
+  button { touch-action: manipulation; user-select: none; -webkit-user-select: none; -webkit-touch-callout: none; cursor: pointer; }
+  .hide { display: none !important; }
+
+  /* ---------- first page ---------- */
+  .start { position: fixed; inset: 0; overflow-y: auto; display: grid; place-items: center; padding: 18px 16px; }
+  .start-in { width: 100%; max-width: 440px; }
+  .start h1 { margin: 0; font-size: clamp(28px, 8vw, 40px); font-weight: 900; letter-spacing: 0.04em; line-height: 1; }
+  .start h1 span, .hdr .ttl span { background: var(--ink); color: #fff; padding: 2px 10px; display: inline-block; transform: rotate(-1.5deg); }
+  .start p { margin: 12px 0 18px; font-size: 1rem; }
+  .pick { display: block; width: 100%; text-align: left; border: 2.5px solid var(--ink); background: var(--red); color: #fff; border-radius: 14px; padding: 18px 16px; margin-bottom: 12px; }
+  .pick b { display: block; font-size: 1.3rem; font-weight: 900; }
+  .pick small { display: block; margin-top: 6px; font-size: 0.88rem; line-height: 1.4; font-weight: 600; opacity: 0.92; }
+  .pick.alt { background: var(--ink); }
+  .pick.again { background: #fff; color: var(--ink); }
+  .foot { margin-top: 22px; font-size: 0.8rem; color: var(--muted); }
+  .foot a { color: var(--ink); font-weight: 800; }
+
+  /* ---------- the machine ---------- */
+  .app { position: fixed; inset: 0; display: flex; flex-direction: column; max-width: 560px; margin: 0 auto; padding-top: env(safe-area-inset-top); background: var(--paper); }
+  .hdr { flex: none; display: flex; align-items: center; gap: 6px; padding: 6px 10px 4px; }
+  .hdr .ttl { flex: 1; text-align: center; font-weight: 900; letter-spacing: 0.04em; font-size: 0.8rem; }
+  .hdr .ttl span { padding: 1px 6px; transform: none; }
+  .in-frame .hdr .ttl { visibility: hidden; }
+  .icon { border: 1.5px solid var(--ink); background: #fff; border-radius: 10px; min-width: 44px; height: 38px; font-weight: 900; font-size: 1.05rem; padding: 0 10px; }
+  .icon:disabled { opacity: 0.3; }
+  #homeBtn { font-size: 0.85rem; }
+  .vf { flex: none; padding: 0 10px; }
+  .vf .stage { background: #111; border-radius: 12px; display: grid; place-items: center; padding: 5px; position: relative; }
+  .vf canvas { display: block; max-width: 100%; max-height: 30svh; width: auto; height: auto; background: #000; }
+  #stageMsg { position: absolute; left: 10px; right: 10px; bottom: 12px; color: #fff; font-size: 0.8rem; font-weight: 700; text-align: center; text-shadow: 0 1px 3px #000; pointer-events: none; }
+
+  .deck, .shootrow { flex: none; padding: 8px 10px 0; }
+  .deck { display: grid; grid-template-columns: repeat(5, 1fr); gap: 7px; }
+  .dk { border: 2px solid var(--ink); background: #fff; border-radius: 12px; height: 54px; display: flex; flex-direction: column; align-items: center; justify-content: center; font-weight: 900; font-size: 1.15rem; line-height: 1; box-shadow: 0 3px 0 var(--ink); transition: transform .05s, box-shadow .05s; }
+  .dk small { font-size: 0.6rem; letter-spacing: 0.06em; margin-top: 4px; font-weight: 800; }
+  .dk:active { transform: translateY(3px); box-shadow: 0 0 0 var(--ink); }
+  .dk[aria-pressed="true"] { background: var(--ink); color: #fff; }
+  .dk.rec { color: var(--red); }
+  .dk.rec[aria-pressed="true"] { background: var(--red); color: #fff; border-color: var(--red); box-shadow: 0 3px 0 #7d2418; animation: blink 1s steps(2) infinite; }
+  .dk:disabled { opacity: 0.35; box-shadow: none; }
+  @keyframes blink { 50% { opacity: 0.55; } }
+  .shootrow { display: grid; grid-template-columns: 1fr auto 1fr; gap: 10px; align-items: center; }
+  .shutter { width: 74px; height: 74px; border-radius: 50%; border: 5px solid var(--ink); background: var(--red); box-shadow: 0 0 0 4px #fff inset, 0 3px 0 var(--ink); }
+  .shutter:active { transform: translateY(3px); box-shadow: 0 0 0 4px #fff inset; }
+  .shutter:disabled { opacity: 0.35; }
+  .sr-l, .sr-r { font-size: 0.72rem; font-weight: 800; }
+  .sr-l button { width: 100%; border: 1.5px solid var(--ink); background: #fff; border-radius: 10px; padding: 10px 6px; font-weight: 800; font-size: 0.8rem; }
+  .sr-r input { width: 100%; accent-color: var(--red); }
+
+  .modesw { flex: none; display: flex; margin: 8px 10px 0; border: 2px solid var(--ink); border-radius: 12px; overflow: hidden; background: #fff; }
+  .modesw button { flex: 1; border: 0; background: transparent; padding: 9px 4px; font-weight: 900; font-size: 0.8rem; letter-spacing: 0.05em; }
+  .modesw button[aria-pressed="true"] { background: var(--ink); color: #fff; }
+  .era { flex: none; display: flex; gap: 6px; overflow-x: auto; padding: 8px 10px 0; scrollbar-width: none; touch-action: pan-x; }
+  .era::-webkit-scrollbar { display: none; }
+  .era .chip { flex: none; padding: 7px 12px; }
+  .era .lbl { flex: none; align-self: center; font-size: 0.68rem; font-weight: 900; letter-spacing: 0.06em; color: var(--muted); }
+  .editrow { flex: none; display: grid; grid-template-columns: repeat(4, 1fr); gap: 6px; padding: 0 10px; }
+  .editrow button { border: 1.5px solid var(--ink); background: #fff; border-radius: 9px; padding: 9px 2px; font-weight: 800; font-size: 0.74rem; }
+  .editrow button:active { background: var(--ink); color: #fff; }
+  .editrow button:disabled { opacity: 0.35; }
+  .tl { flex: none; padding: 8px 10px 0; touch-action: pan-x; }
+  .strip { display: flex; gap: 6px; overflow-x: auto; padding: 2px 0 6px; min-height: 66px; scrollbar-width: none; }
+  .strip::-webkit-scrollbar { display: none; }
+  .strip:empty::before { content: 'Your frames show up here'; flex: 1; display: grid; place-items: center; height: 56px; font-size: 0.8rem; color: var(--muted); border: 1.5px dashed #aaa; border-radius: 8px; }
+  .strip .fr { flex: none; width: 40px; height: 56px; border: 2.5px solid transparent; border-radius: 6px; background: #000 center/cover no-repeat; position: relative; }
+  .strip .fr.sel { border-color: var(--red); }
+  .strip .fr i { position: absolute; left: 2px; bottom: 2px; background: rgba(0,0,0,.65); color: #fff; font-style: normal; font-size: 0.62rem; padding: 0 4px; border-radius: 4px; }
+  .info { font-size: 0.78rem; font-weight: 800; padding: 6px 12px 0; flex: none; }
+
+  .panels { flex: 1; min-height: 0; overflow-y: auto; -webkit-overflow-scrolling: touch; overscroll-behavior: contain; padding: 8px 10px 12px; touch-action: pan-y; }
   .panel { display: none; background: var(--note); border: 2px solid var(--ink); border-radius: 12px; padding: 14px; }
   .panel.on { display: block; }
-  .panel h2 { margin: 0 0 6px; font-size: 1rem; letter-spacing: 0.05em; text-transform: uppercase; }
+  .panel h2 { margin: 0 0 6px; font-size: 0.95rem; letter-spacing: 0.05em; text-transform: uppercase; }
   .tip { font-size: 0.85rem; line-height: 1.45; color: var(--muted); margin: 6px 0 10px; }
   .row { display: flex; gap: 8px; margin-top: 8px; }
   .row > * { flex: 1; }
@@ -46,73 +94,40 @@
   input[type=range] { width: 100%; accent-color: var(--red); }
   input[type=text], select { width: 100%; padding: 10px; border: 1.5px solid var(--ink); border-radius: 8px; background: #fff; font-size: 16px; }
   input[type=file] { width: 100%; font-size: 16px; }
+  .btn { display: block; width: 100%; font-weight: 900; font-size: 0.92rem; padding: 13px; border-radius: 10px; border: 2px solid var(--ink); background: #fff; color: var(--ink); text-align: center; }
+  .btn.red { background: var(--red); color: #fff; border-color: var(--red); }
+  .btn.dark { background: var(--ink); color: #fff; }
+  .btn:disabled { opacity: 0.4; }
   .chips { display: flex; gap: 6px; flex-wrap: wrap; }
-  .chip { border: 1.5px solid var(--ink); background: #fff; border-radius: 999px; padding: 8px 13px; font-weight: 800; font-size: 0.82rem; cursor: pointer; }
+  .chip { border: 1.5px solid var(--ink); background: #fff; border-radius: 999px; padding: 8px 13px; font-weight: 800; font-size: 0.82rem; }
   .chip[aria-pressed="true"] { background: var(--ink); color: #fff; }
   .chip:disabled { opacity: 0.4; }
-  .shutter { width: 84px; height: 84px; border-radius: 50%; border: 5px solid var(--ink); background: var(--red); margin: 12px auto 4px; display: block; cursor: pointer; box-shadow: 0 0 0 4px #fff inset; }
-  .shutter:disabled { opacity: 0.35; }
-  .strip { display: flex; gap: 6px; overflow-x: auto; padding: 4px 0 10px; }
-  .strip .fr { flex: none; width: 58px; height: 74px; border: 2.5px solid transparent; border-radius: 6px; background: #000 center/cover no-repeat; position: relative; cursor: pointer; }
-  .strip .fr.sel { border-color: var(--red); }
-  .strip .fr i { position: absolute; left: 2px; bottom: 2px; background: rgba(0,0,0,.65); color: #fff; font-style: normal; font-size: 0.65rem; padding: 0 4px; border-radius: 4px; }
+  .look-chip { display: flex; flex-direction: column; align-items: center; gap: 4px; padding: 6px 6px 8px; border-radius: 10px; font-size: 0.72rem; flex: none; }
+  .look-chip canvas { width: 62px; height: 82px; border-radius: 6px; background: #000; }
+  #looks { flex-wrap: nowrap; overflow-x: auto; touch-action: pan-x; scrollbar-width: none; }
   .check { display: flex; gap: 10px; align-items: center; font-weight: 700; font-size: 0.9rem; margin: 10px 0; }
   .check input { width: 22px; height: 22px; accent-color: var(--red); }
   .msg { font-size: 0.85rem; font-weight: 700; margin-top: 8px; min-height: 1.2em; }
   .msg.err { color: var(--red); }
   .prog { height: 8px; background: #ddd; border-radius: 4px; overflow: hidden; margin-top: 8px; display: none; }
   .prog i { display: block; height: 100%; width: 0; background: var(--red); }
-  video.result { width: 100%; max-height: 50svh; background: #000; border-radius: 8px; margin-top: 10px; display: none; }
-  .foot { margin-top: 28px; font-size: 0.8rem; color: var(--muted); text-align: center; }
-  .foot a { color: var(--ink); font-weight: 800; }
-  .hide { display: none !important; }
-  /* ===== app shell: nothing scrolls except the tool panel. The picture and frame strip stay put. ===== */
-  html, body { height: 100%; overflow: hidden; overscroll-behavior: none; position: fixed; inset: 0; width: 100%; }
-  button { touch-action: manipulation; user-select: none; -webkit-user-select: none; -webkit-touch-callout: none; }
-  .start { position: fixed; inset: 0; overflow-y: auto; display: grid; place-items: center; padding: 18px 16px; }
-  .start-in { width: 100%; max-width: 440px; }
-  .start h1 { margin: 0; font-size: clamp(28px, 8vw, 40px); font-weight: 900; letter-spacing: 0.04em; line-height: 1; }
-  .start h1 span { background: var(--ink); color: #fff; padding: 2px 10px; display: inline-block; transform: rotate(-1.5deg); }
-  .start p { margin: 12px 0 18px; font-size: 1rem; }
-  .pick { display: block; width: 100%; text-align: left; border: 2.5px solid var(--ink); background: var(--red); color: #fff; border-radius: 14px; padding: 18px 16px; margin-bottom: 12px; cursor: pointer; }
-  .pick b { display: block; font-size: 1.3rem; font-weight: 900; letter-spacing: 0.02em; }
-  .pick small { display: block; margin-top: 6px; font-size: 0.88rem; line-height: 1.4; font-weight: 600; opacity: 0.92; }
-  .pick.alt { background: var(--ink); }
-  .pick.again { background: #fff; color: var(--ink); }
-  .app { position: fixed; inset: 0; display: flex; flex-direction: column; max-width: 600px; margin: 0 auto; padding-top: env(safe-area-inset-top); background: var(--paper); }
-  .hdr { flex: none; display: flex; align-items: center; gap: 6px; padding: 6px 10px; }
-  .hdr .ttl { flex: 1; text-align: center; font-weight: 900; letter-spacing: 0.04em; font-size: 0.85rem; }
-  .hdr .ttl span { background: var(--ink); color: #fff; padding: 1px 6px; }
-  .in-frame .hdr .ttl { visibility: hidden; }
-  .icon { border: 1.5px solid var(--ink); background: #fff; border-radius: 10px; min-width: 44px; height: 38px; font-weight: 900; font-size: 1.05rem; cursor: pointer; padding: 0 10px; }
-  .icon:disabled { opacity: 0.3; }
-  #homeBtn { font-size: 0.85rem; }
-  .stage-col { flex: none; padding: 0 10px; }
-  .stage canvas { max-height: 36svh; }
-  .tl { flex: none; padding: 0 10px; touch-action: pan-x; }
-  .strip { min-height: 86px; }
-  .strip:empty::before { content: 'Your frames show up here'; display: grid; place-items: center; height: 74px; font-size: 0.8rem; color: var(--muted); border: 1.5px dashed #aaa; border-radius: 8px; }
-  .strip .fr { width: 52px; height: 70px; }
-  .panels { flex: 1; min-height: 0; overflow-y: auto; -webkit-overflow-scrolling: touch; overscroll-behavior: contain; padding: 0 10px 10px; touch-action: pan-y; }
+  video.result { width: 100%; max-height: 40svh; background: #000; border-radius: 8px; margin-top: 10px; display: none; }
+
   .tools { flex: none; display: flex; border-top: 2px solid var(--ink); background: #fff; padding-bottom: env(safe-area-inset-bottom); }
-  .tools button { flex: 1; border: 0; background: transparent; padding: 8px 2px 9px; font-size: 0.72rem; font-weight: 800; cursor: pointer; color: var(--muted); }
+  .tools button { flex: 1; border: 0; background: transparent; padding: 8px 2px 9px; font-size: 0.72rem; font-weight: 800; color: var(--muted); }
   .tools button i { display: block; font-style: normal; font-size: 1.15rem; line-height: 1.2; }
   .tools button[aria-selected="true"] { color: var(--ink); box-shadow: inset 0 3px 0 var(--red); }
   .tools button.gone { display: none; }
-  .look-chip { display: flex; flex-direction: column; align-items: center; gap: 4px; padding: 6px 6px 8px; border-radius: 10px; font-size: 0.72rem; }
-  .look-chip canvas { width: 62px; height: 82px; border-radius: 6px; background: #000; }
-  #looks { flex-wrap: nowrap; overflow-x: auto; touch-action: pan-x; scrollbar-width: none; }
-  #looks .chip { flex: none; }
-
 </style>
 </head>
 <body>
+
 <div class="start" id="start">
   <div class="start-in">
     <h1><span>PHONE</span> ANIMATIONS</h1>
-    <p>Make something move. Nothing leaves your phone.</p>
-    <button type="button" class="pick" id="pickStop"><b>Stop motion</b><small>Shoot frames with your camera, or use photos and a video. Then give it an era.</small></button>
-    <button type="button" class="pick alt" id="pickClip"><b>VHS a video</b><small>Pick a video from your camera roll, up to 5 minutes, and turn it into something from a different era.</small></button>
+    <p>A tape deck for your phone. Nothing leaves your phone.</p>
+    <button type="button" class="pick" id="pickStop"><b>Stop motion</b><small>Shoot frames with your camera, or use photos and a video. Then run it through the tape deck.</small></button>
+    <button type="button" class="pick alt" id="pickClip"><b>VHS a video</b><small>Pick a video from your camera roll, up to 5 minutes. Rewind it, fast forward it, pause it like a real camcorder tape, and record it.</small></button>
     <button type="button" class="pick again hide" id="pickKeep"><b>Keep working</b><small id="keepInfo"></small></button>
     <p class="foot">A free tool from <a href="https://nociv.co" target="_top">NOCIV.CO</a>. Nothing tracked.</p>
   </div>
@@ -126,71 +141,89 @@
     <button type="button" class="icon" id="redoBtn" aria-label="Redo" disabled>&#8631;</button>
   </header>
 
-  <div class="stage-col">
-    <div class="stage"><canvas id="cv" width="540" height="960"></canvas><div id="stageMsg"></div></div>
-    <div class="bar">
-      <span class="count" id="count">0 frames</span>
-      <button type="button" class="btn small" id="playBtn">&#9654; Play</button>
-    </div>
+  <div class="vf"><div class="stage"><canvas id="cv" width="540" height="960"></canvas><div id="stageMsg"></div></div></div>
+
+  <div class="modesw hide" id="modeSw">
+    <button type="button" id="swCam" aria-pressed="true">&#9679; CAMERA</button>
+    <button type="button" id="swTape" aria-pressed="false">&#9654; TAPE</button>
+  </div>
+  <!-- the tape deck: these are the buttons a real camcorder has -->
+  <div class="deck" id="deck">
+    <button type="button" class="dk" id="dkRew" data-d="rew" aria-pressed="false" aria-label="Rewind">&#9664;&#9664;<small>REW</small></button>
+    <button type="button" class="dk" id="dkPlay" data-d="play" aria-pressed="false" aria-label="Play">&#9654;<small>PLAY</small></button>
+    <button type="button" class="dk" id="dkFf" data-d="ff" aria-pressed="false" aria-label="Fast forward">&#9654;&#9654;<small>FF</small></button>
+    <button type="button" class="dk" id="dkPause" data-d="pause" aria-pressed="false" aria-label="Pause">&#10074;&#10074;<small>PAUSE</small></button>
+    <button type="button" class="dk rec" id="dkRec" aria-pressed="false" aria-label="Record">&#9679;<small>REC</small></button>
+  </div>
+  <!-- while shooting stop motion the shutter takes the deck's place -->
+  <div class="shootrow hide" id="shootRow">
+    <div class="sr-l"><button type="button" id="flipBtn" disabled>Flip camera</button></div>
+    <button type="button" class="shutter" id="shutter" aria-label="Take a frame" disabled></button>
+    <div class="sr-r"><div>Ghost of last frame <span id="onionVal">40%</span></div><input type="range" id="onion" min="0" max="80" value="40"></div>
   </div>
 
+  <div class="era" id="looks"></div>
   <div class="tl" id="tl"><div class="strip" id="strip"></div></div>
+  <div class="editrow" id="editRow">
+    <button type="button" id="mvL">&#9664; Earlier</button>
+    <button type="button" id="dupBtn">Copy</button>
+    <button type="button" id="delBtn">Delete</button>
+    <button type="button" id="mvR">Later &#9654;</button>
+  </div>
+  <div class="info" id="info"></div>
 
   <div class="panels" id="panels">
-      <section class="panel on" id="p-shoot">
-        <h2>Shoot</h2>
-        <p class="tip">Prop your phone up so it cannot move. Move your subject a tiny bit, tap the red button, repeat. The faded picture on top is your last shot so you can see how far you moved.</p>
-        <label class="f">Shape</label>
-        <div class="chips" id="aspects">
-          <button type="button" class="chip" data-a="tall" aria-pressed="true">Tall 9:16</button>
-          <button type="button" class="chip" data-a="square" aria-pressed="false">Square</button>
-          <button type="button" class="chip" data-a="wide" aria-pressed="false">Wide 16:9</button>
-        </div>
-        <p class="tip" id="aspectNote" style="display:none">The shape is locked once you have a frame. Clear all frames to change it.</p>
-        <div class="row">
-          <button type="button" class="btn dark" id="camBtn">Start camera</button>
-          <button type="button" class="btn" id="flipBtn" disabled>Flip camera</button>
-        </div>
-        <button type="button" class="shutter" id="shutter" aria-label="Take a frame" disabled></button>
-        <label class="f">Ghost of last frame <span id="onionVal"></span></label>
-        <input type="range" id="onion" min="0" max="80" value="40">
-        <label class="f">No camera, or already have photos?</label>
-        <input type="file" id="photoIn" accept="image/*" multiple>
-        <label class="f">Turn a video into frames</label>
-        <input type="file" id="videoIn" accept="video/*">
-        <div id="vidTrim" class="hide">
-          <p class="tip" id="vidInfo"></p>
-          <label class="f">Start at <span id="vFromVal">0 s</span></label>
-          <input type="range" id="vFrom" min="0" max="10" step="0.1" value="0">
-          <label class="f">End at <span id="vToVal"></span></label>
-          <input type="range" id="vTo" min="0" max="10" step="0.1" value="10">
-          <label class="f">How many frames</label>
-          <select id="everyN">
-            <option value="0.25">A frame every 0.25 s</option>
-            <option value="0.5" selected>A frame every 0.5 s</option>
-            <option value="1">A frame every 1 s</option>
-            <option value="2">A frame every 2 s</option>
-          </select>
-          <button type="button" class="btn dark" id="vidGo" style="margin-top:10px">Make frames</button>
-        </div>
-        <div class="prog" id="progA"><i></i></div>
-        <div class="msg" id="shootMsg"></div>
-      </section>
-      <section class="panel" id="p-frames">
-        <h2>Edit</h2>
-        <p class="tip">Tap a frame in the strip under the picture to pick it. Move it, copy it, delete it. Copy a frame to make that moment last longer.</p>
-        <div class="row">
-          <button type="button" class="btn" id="mvL">&larr; Earlier</button>
-          <button type="button" class="btn" id="mvR">Later &rarr;</button>
-        </div>
-        <div class="row">
-          <button type="button" class="btn" id="dupBtn">Copy frame</button>
-          <button type="button" class="btn" id="delBtn">Delete frame</button>
-        </div>
-        <div class="row">
-          <button type="button" class="btn" id="revBtn">Flip the order</button>
-          <button type="button" class="btn" id="clearBtn">Clear all</button>
-        </div>
+    <section class="panel on" id="p-shoot">
+      <h2>Camera</h2>
+      <p class="tip">Prop your phone so it cannot move. Move your subject a tiny bit, tap the red button, repeat.</p>
+      <label class="f">Shape</label>
+      <div class="chips" id="aspects">
+        <button type="button" class="chip" data-a="tall" aria-pressed="true">Tall 9:16</button>
+        <button type="button" class="chip" data-a="square" aria-pressed="false">Square</button>
+        <button type="button" class="chip" data-a="wide" aria-pressed="false">Wide 16:9</button>
+      </div>
+      <p class="tip" id="aspectNote" style="display:none">The shape is locked once you have a frame. Clear all frames to change it.</p>
+      <button type="button" class="btn dark" id="camBtn" style="margin-top:12px">Start camera</button>
+      <label class="f">No camera, or already have photos?</label>
+      <input type="file" id="photoIn" accept="image/*" multiple>
+      <label class="f">Turn a video into frames</label>
+      <input type="file" id="videoIn" accept="video/*">
+      <div id="vidTrim" class="hide">
+        <p class="tip" id="vidInfo"></p>
+        <label class="f">Start at <span id="vFromVal">0 s</span></label>
+        <input type="range" id="vFrom" min="0" max="10" step="0.1" value="0">
+        <label class="f">End at <span id="vToVal"></span></label>
+        <input type="range" id="vTo" min="0" max="10" step="0.1" value="10">
+        <label class="f">How many frames</label>
+        <select id="everyN">
+          <option value="0.25">A frame every 0.25 s</option>
+          <option value="0.5" selected>A frame every 0.5 s</option>
+          <option value="1">A frame every 1 s</option>
+          <option value="2">A frame every 2 s</option>
+        </select>
+        <button type="button" class="btn dark" id="vidGo" style="margin-top:10px">Make frames</button>
+      </div>
+      <div class="prog" id="progA"><i></i></div>
+      <div class="msg" id="shootMsg"></div>
+    </section>
+
+    <section class="panel" id="p-clip">
+      <h2>Your video</h2>
+      <p class="tip">Pick a regular video from your camera roll, up to 5 minutes. Then use the deck buttons under the picture, like a real tape. Hit REC to record what you do.</p>
+      <input type="file" id="clipIn" accept="video/*">
+      <div class="msg" id="clipMsg"></div>
+    </section>
+
+    <section class="panel" id="p-set">
+      <h2>Settings</h2>
+      <label class="f">How strong the era is <span id="strVal"></span></label>
+      <input type="range" id="strength" min="0" max="100" value="70">
+      <label class="check"><input type="checkbox" id="recOn" checked> Show camcorder text (PLAY, REW, FF, PAUSE, timer)</label>
+      <label class="check"><input type="checkbox" id="dateOn" checked> Date stamp</label>
+      <label class="f">Date text</label>
+      <input type="text" id="dateText" maxlength="24" placeholder="OCT 25 1998">
+      <label class="check"><input type="checkbox" id="glitchOn"> Also glitch by itself now and then</label>
+      <div id="stopSet">
         <label class="f">Speed <span id="fpsVal"></span></label>
         <input type="range" id="fps" min="1" max="24" value="8">
         <label class="f">How it plays</label>
@@ -198,66 +231,37 @@
           <button type="button" class="chip" data-m="loop" aria-pressed="true">Loop</button>
           <button type="button" class="chip" data-m="pingpong" aria-pressed="false">Back and forth</button>
         </div>
-      </section>
-      <section class="panel" id="p-look">
-        <h2>Look</h2>
-        <p class="tip">Tap an era. You see it on the picture above, and it goes on everything you save.</p>
-        <div class="chips" id="looks">
-          <button type="button" class="chip" data-l="none" aria-pressed="true">Clean</button>
-          <button type="button" class="chip" data-l="vhs" aria-pressed="false">VHS camcorder</button>
-          <button type="button" class="chip" data-l="film" aria-pressed="false">8mm film</button>
-          <button type="button" class="chip" data-l="digicam" aria-pressed="false">90s digicam</button>
-          <button type="button" class="chip" data-l="security" aria-pressed="false">Security cam</button>
+        <div class="row">
+          <button type="button" class="btn" id="revBtn">Flip the order</button>
+          <button type="button" class="btn" id="clearBtn">Clear all</button>
         </div>
-        <label class="f">How strong <span id="strVal"></span></label>
-        <input type="range" id="strength" min="0" max="100" value="70">
-        <label class="check"><input type="checkbox" id="recOn" checked> Camcorder stamp (REC, timer, PLAY)</label>
-        <label class="check"><input type="checkbox" id="dateOn" checked> Date stamp</label>
-        <label class="f">Date text</label>
-        <input type="text" id="dateText" maxlength="24" placeholder="OCT 25 1998">
-        <label class="check"><input type="checkbox" id="glitchOn" checked> Tracking glitches now and then</label>
-      </section>
-      <section class="panel" id="p-save">
-        <h2>Save</h2>
-        <p class="tip">The video is recorded in real time, so a 10 second loop takes about 10 seconds. Keep this page open and your screen on while it records.</p>
+      </div>
+    </section>
+
+    <section class="panel" id="p-save">
+      <h2>Record and save</h2>
+      <p class="tip"><b>Your way:</b> press the red REC button on the deck, then use PLAY, REW, FF and PAUSE like you are working the tape. Press REC again to finish. What you see is what you get.</p>
+      <p class="tip"><b>Automatic:</b> plays it for you and saves.</p>
+      <div id="autoStop">
         <label class="f">How many times it repeats</label>
         <select id="loops"><option value="1">Once</option><option value="3" selected>3 times</option><option value="6">6 times</option><option value="12">12 times</option></select>
         <label class="check"><input type="checkbox" id="rewindOn" checked> Tape rewind at the end</label>
-        <button type="button" class="btn red" id="recBtn" style="margin-top:12px">Make the video</button>
-        <div class="prog" id="progB"><i></i></div>
-        <div class="msg" id="saveMsg"></div>
-        <video class="result" id="result" controls playsinline loop></video>
-        <div class="row hide" id="resultBtns">
-          <button type="button" class="btn dark" id="shareBtn">Share or save</button>
-        </div>
-        <label class="check"><input type="checkbox" id="shareMark" checked> Add "Made with nociv.co" and the link when I share</label>
-        <div class="row">
-          <button type="button" class="btn" id="stillsBtn">Save the frames as photos</button>
-        </div>
-      </section>
-      <section class="panel" id="p-clip">
-        <h2>VHS a video</h2>
-        <p class="tip">Pick a regular video from your camera roll, up to 5 minutes. It plays through the look you chose in step 3 and records a new copy. It runs in real time, so a 5 minute video takes 5 minutes. Keep this page open and your screen on.</p>
-        <input type="file" id="clipIn" accept="video/*">
-        <div class="row">
-          <button type="button" class="btn" id="clipPrev" disabled>&#9654; Preview</button>
-          <button type="button" class="btn red" id="clipRec" disabled>Record it</button>
-        </div>
-        <div class="prog" id="progC"><i></i></div>
-        <div class="msg" id="clipMsg"></div>
-        <video class="result" id="clipResult" controls playsinline></video>
-        <div class="row hide" id="clipBtns">
-          <button type="button" class="btn dark" id="clipShare">Share or save</button>
-        </div>
-      </section>
+      </div>
+      <button type="button" class="btn red" id="autoBtn">Record it automatically</button>
+      <div class="prog" id="progB"><i></i></div>
+      <div class="msg" id="saveMsg"></div>
+      <video class="result" id="result" controls playsinline loop></video>
+      <div class="row hide" id="resultBtns"><button type="button" class="btn dark" id="shareBtn">Share or save</button></div>
+      <label class="check"><input type="checkbox" id="shareMark" checked> Add "Made with nociv.co" and the link when I share</label>
+      <div class="row" id="stillsRow"><button type="button" class="btn" id="stillsBtn">Save the frames as photos</button></div>
+    </section>
   </div>
 
   <nav class="tools" id="tools">
-    <button type="button" data-p="shoot" data-k="stop" aria-selected="true"><i>&#9679;</i>Shoot</button>
-    <button type="button" data-p="frames" data-k="stop" aria-selected="false"><i>&#9776;</i>Edit</button>
-    <button type="button" data-p="clip" data-k="clip" aria-selected="false"><i>&#9654;</i>Video</button>
-    <button type="button" data-p="look" data-k="both" aria-selected="false"><i>&#10022;</i>Look</button>
-    <button type="button" data-p="save" data-k="stop" aria-selected="false"><i>&#8681;</i>Export</button>
+    <button type="button" data-p="shoot" data-k="stop" aria-selected="true"><i>&#43;</i>Add</button>
+    <button type="button" data-p="clip" data-k="clip" aria-selected="false"><i>&#9636;</i>Video</button>
+    <button type="button" data-p="set" data-k="both" aria-selected="false"><i>&#9881;</i>Settings</button>
+    <button type="button" data-p="save" data-k="both" aria-selected="false"><i>&#8681;</i>Save</button>
   </nav>
 </div>
 
@@ -266,70 +270,82 @@
   if (window.self !== window.top) document.documentElement.classList.add('in-frame');
   const $ = (id) => document.getElementById(id);
   const cv = $('cv'), ctx = cv.getContext('2d');
-
-  // ===== state =====
   const SIZES = { tall: [540, 960], square: [720, 720], wide: [960, 540] };
   const st = {
-    aspect: 'tall', frames: [], sel: -1, fps: 8, mode: 'loop',
-    look: 'none', strength: 0.7, rec: true, date: true, glitch: true, dateText: '',
-    kind: null, hist: [], redo: [], playing: false, playIdx: 0, playDir: 1, playLast: 0,
-    stream: null, facing: 'environment', camVideo: null,
-    clip: null, clipPlaying: false, exporting: false, recStart: 0, panel: 'shoot',
+    kind: null, panel: 'shoot', cam: true, aspect: 'tall', frames: [], sel: -1, fps: 8, mode: 'loop', hist: [], redo: [],
+    look: 'none', strength: 0.7, rec: true, date: true, glitch: false, dateText: '',
+    stream: null, facing: 'environment', camVideo: null, clip: null, flashUntil: 0,
   };
+  // the tape deck. p is the position: a frame number for stop motion (it can keep counting past the end when looping).
+  const deck = { mode: 'pause', p: 0, settle: 0, recording: false, auto: false };
+  const fpsOut = () => st.fps;
   function size() { return SIZES[st.aspect]; }
   function applySize(w, h) { if (cv.width !== w || cv.height !== h) { cv.width = w; cv.height = h; } }
   function msg(id, text, err) { const e = $(id); e.textContent = text || ''; e.className = 'msg' + (err ? ' err' : ''); }
   function stageMsg(t) { $('stageMsg').textContent = t || ''; }
-
-  // ===== looks =====
-  // res = how small it is drawn before being blown back up (that is what makes it soft).
-  const LOOKS = {
-    vhs:      { res: 0.5,  chroma: 3,   noise: 22, scan: 0.22, sat: 1.25, tint: [1.04, 1.0, 0.98], wobble: 1.4, glitch: 1, vig: 0.15, lift: 12 },
-    film:     { res: 0.75, chroma: 0,   noise: 30, scan: 0,    sat: 0.55, tint: [1.12, 0.97, 0.78], wobble: 0.25, glitch: 0, vig: 0.55, lift: 10, flicker: 1, scratch: 1 },
-    digicam:  { res: 0.4,  chroma: 1,   noise: 10, scan: 0,    sat: 1.35, tint: [1.02, 1.02, 1.0], wobble: 0, glitch: 0, vig: 0.1, lift: 6, dateColor: '#ff9a1f' },
-    security: { res: 0.33, chroma: 0,   noise: 26, scan: 0.28, sat: 0, tint: [0.72, 1.0, 0.76], wobble: 0.5, glitch: 0.6, vig: 0.3, lift: 0, cam: true },
-  };
-  const low = document.createElement('canvas'), lctx = low.getContext('2d', { willReadFrequently: true });
-
-  function stampText(c, text, x, y, size, color, align) {
-    c.font = '700 ' + size + 'px "Courier New", Courier, monospace';
-    c.textAlign = align || 'left'; c.textBaseline = 'top';
-    c.fillStyle = 'rgba(0,0,0,.65)'; c.fillText(text, x + size * 0.07, y + size * 0.07);
-    c.fillStyle = color; c.fillText(text, x, y);
-  }
   function two(n) { return (n < 10 ? '0' : '') + n; }
   function clock(sec) { sec = Math.max(0, Math.floor(sec)); return two(Math.floor(sec / 3600)) + ':' + two(Math.floor(sec / 60) % 60) + ':' + two(sec % 60); }
-  function defaultDate() {
-    const d = new Date();
-    return ['JAN','FEB','MAR','APR','MAY','JUN','JUL','AUG','SEP','OCT','NOV','DEC'][d.getMonth()] + ' ' + d.getDate() + ' ' + d.getFullYear();
-  }
+  function defaultDate() { const d = new Date(); return ['JAN','FEB','MAR','APR','MAY','JUN','JUL','AUG','SEP','OCT','NOV','DEC'][d.getMonth()] + ' ' + d.getDate() + ' ' + d.getFullYear(); }
+  function buzz(ms) { try { if (navigator.vibrate) navigator.vibrate(ms || 10); } catch (e) {} }
 
-  // Draws src (canvas / image / video) onto ctx with the chosen look. t = seconds, used for wobble and the timer.
-  function drawLooked(c, src, sw, sh, W, H, t, opts) {
+  // ===================== LOOKS =====================
+  const LOOKS = {
+    vhs:      { res: 0.5,  chroma: 3, noise: 22, scan: 0.22, sat: 1.25, tint: [1.04, 1.0, 0.98], wobble: 1.4, vig: 0.15, lift: 12, tape: true },
+    film:     { res: 0.75, chroma: 0, noise: 30, scan: 0,    sat: 0.55, tint: [1.12, 0.97, 0.78], wobble: 0.25, vig: 0.55, lift: 10, flicker: 1, scratch: 1 },
+    digicam:  { res: 0.4,  chroma: 1, noise: 10, scan: 0,    sat: 1.35, tint: [1.02, 1.02, 1.0], wobble: 0, vig: 0.1, lift: 6, dateColor: '#ff9a1f' },
+    security: { res: 0.33, chroma: 0, noise: 26, scan: 0.28, sat: 0, tint: [0.72, 1.0, 0.76], wobble: 0.5, vig: 0.3, lift: 0, cam: true },
+  };
+  const LOOK_NAMES = { none: 'Clean', vhs: 'VHS', film: '8mm film', digicam: '90s digicam', security: 'Security' };
+  const low = document.createElement('canvas'), lctx = low.getContext('2d', { willReadFrequently: true });
+
+  function drawCover(c, src, sw, sh, W, H, dy) {
+    if (!sw || !sh) { c.fillStyle = '#000'; c.fillRect(0, 0, W, H); return; }
+    const r = Math.max(W / sw, H / sh), dw = sw * r, dh = sh * r;
+    c.imageSmoothingEnabled = true;
+    c.drawImage(src, (W - dw) / 2, (H - dh) / 2 + (dy || 0), dw, dh);
+  }
+  // fx = what the tape deck is doing right now. Real tape only tears when you work the buttons.
+  function tapeBands(lh, t, fx) {
+    const bands = []; let shake = 0, hot = 0;
+    if (!fx) return { bands, shake, hot };
+    if (fx.mode === 'ff' || fx.mode === 'rew') {
+      hot = 1; shake = lh * 0.03; const dir = fx.mode === 'rew' ? -1 : 1;
+      for (let i = 0; i < 3; i++) bands.push({ y: ((t * 0.55 * dir + i / 3) % 1 + 1) % 1 * lh, h: lh * (0.10 + 0.05 * ((i * 7) % 3) / 2), s: 1 });
+    } else if (fx.mode === 'pause') {
+      shake = lh * 0.012; hot = 0.5;
+      bands.push({ y: lh * 0.91, h: lh * 0.09, s: 0.9 });
+      bands.push({ y: ((t * 0.12) % 1) * lh, h: lh * 0.035, s: 0.6 });
+    }
+    if (fx.settle > 0) { // the tape catching again after you let go of FF, REW or PAUSE
+      hot = Math.max(hot, fx.settle); shake = Math.max(shake, lh * 0.02 * fx.settle);
+      bands.push({ y: lh * (1 - fx.settle), h: lh * 0.14, s: fx.settle });
+    }
+    if (st.glitch && (t % 5) < 0.45) bands.push({ y: lh * (0.55 + 0.35 * ((t * 1.7) % 1)), h: lh * 0.07, s: 0.8 });
+    return { bands, shake, hot };
+  }
+  function drawLooked(c, src, sw, sh, W, H, t, fx) {
     const L = LOOKS[st.look];
     if (!L || st.look === 'none') { drawCover(c, src, sw, sh, W, H); return; }
     const k = st.strength;
     const lw = Math.max(80, Math.round(W * L.res)), lh = Math.max(80, Math.round(H * L.res));
     if (low.width !== lw || low.height !== lh) { low.width = lw; low.height = lh; }
-    drawCover(lctx, src, sw, sh, lw, lh);
+    const tp = L.tape ? tapeBands(lh, t, fx) : { bands: [], shake: 0, hot: 0 };
+    drawCover(lctx, src, sw, sh, lw, lh, tp.shake ? (Math.random() - 0.5) * 2 * tp.shake : 0);
     const img = lctx.getImageData(0, 0, lw, lh), d = img.data, out = new Uint8ClampedArray(d.length);
-    const ch = Math.round(L.chroma * k * (lw / 270));
-    // a tracking glitch: a band that tears sideways for a moment every few seconds
-    let bandY = -1, bandH = 0, bandX = 0;
-    if (st.forceGlitch || (st.glitch && L.glitch)) {
-      const cyc = st.forceGlitch ? 0 : (t % 5);
-      if (cyc < 0.45) { bandY = Math.floor(lh * (0.55 + 0.35 * ((t * 1.7) % 1))); bandH = Math.floor(lh * 0.07); bandX = Math.round(lw * 0.06 * (Math.sin(t * 40) + 1.2) * k * (L.glitch || 1)); }
-    }
-    const wob = (L.wobble || 0) * k * (lw / 270);
+    const ch = Math.round(L.chroma * k * (lw / 270)) * (tp.hot ? 2 : 1);
+    const wob = (L.wobble || 0) * k * (lw / 270) * (1 + tp.hot * 1.5);
     const noise = L.noise * k, lift = L.lift * k, sat = 1 + (L.sat - 1) * k;
     for (let y = 0; y < lh; y++) {
       let off = wob ? Math.round(Math.sin(y * 0.045 + t * 3.1) * wob + (Math.random() - 0.5) * wob * 0.8) : 0;
-      if (bandY >= 0 && y >= bandY && y < bandY + bandH) off += bandX;
-      // the bottom of a tape is always messy
-      if (L.wobble && y > lh * 0.94) off += Math.round((Math.random() - 0.5) * lw * 0.05 * k);
+      let stat = 0;
+      for (let b = 0; b < tp.bands.length; b++) {
+        const bd = tp.bands[b]; if (y >= bd.y && y < bd.y + bd.h) { stat = Math.max(stat, bd.s); off += Math.round((Math.random() - 0.5) * lw * 0.28 * bd.s); }
+      }
+      if (L.tape && y > lh * 0.94) off += Math.round((Math.random() - 0.5) * lw * 0.04 * k); // the bottom of a tape is always messy
       for (let x = 0; x < lw; x++) {
-        const sx = Math.min(lw - 1, Math.max(0, x + off));
         const i = (y * lw + x) * 4;
+        if (stat && Math.random() < 0.5 * stat) { const g = 90 + Math.random() * 165; out[i] = g; out[i + 1] = g; out[i + 2] = g * 1.05; out[i + 3] = 255; continue; }
+        const sx = Math.min(lw - 1, Math.max(0, x + off));
         const ir = (y * lw + Math.min(lw - 1, Math.max(0, sx + ch))) * 4, ib = (y * lw + Math.min(lw - 1, Math.max(0, sx - ch))) * 4, ig = (y * lw + sx) * 4;
         let r = d[ir], g = d[ig + 1], b = d[ib + 2];
         const lum = 0.3 * r + 0.59 * g + 0.11 * b;
@@ -343,233 +359,252 @@
     lctx.putImageData(new ImageData(out, lw, lh), 0, 0);
     c.imageSmoothingEnabled = true; c.imageSmoothingQuality = 'low';
     c.drawImage(low, 0, 0, W, H);
-    if (L.scan) {
-      c.fillStyle = 'rgba(0,0,0,' + (L.scan * k).toFixed(3) + ')';
-      const step = Math.max(2, Math.round(H / 240));
-      for (let y = 0; y < H; y += step) c.fillRect(0, y, W, Math.ceil(step / 2));
-    }
-    if (L.vig) {
-      const g = c.createRadialGradient(W / 2, H / 2, Math.min(W, H) * 0.25, W / 2, H / 2, Math.max(W, H) * 0.75);
-      g.addColorStop(0, 'rgba(0,0,0,0)'); g.addColorStop(1, 'rgba(0,0,0,' + (L.vig * (0.5 + k)).toFixed(3) + ')');
-      c.fillStyle = g; c.fillRect(0, 0, W, H);
-    }
+    if (L.scan) { c.fillStyle = 'rgba(0,0,0,' + (L.scan * k).toFixed(3) + ')'; const step = Math.max(2, Math.round(H / 240)); for (let y = 0; y < H; y += step) c.fillRect(0, y, W, Math.ceil(step / 2)); }
+    if (L.vig) { const g = c.createRadialGradient(W / 2, H / 2, Math.min(W, H) * 0.25, W / 2, H / 2, Math.max(W, H) * 0.75); g.addColorStop(0, 'rgba(0,0,0,0)'); g.addColorStop(1, 'rgba(0,0,0,' + (L.vig * (0.5 + k)).toFixed(3) + ')'); c.fillStyle = g; c.fillRect(0, 0, W, H); }
     if (L.flicker) { c.fillStyle = 'rgba(255,240,200,' + (Math.random() * 0.1 * k).toFixed(3) + ')'; c.fillRect(0, 0, W, H); }
-    if (L.scratch && Math.random() < 0.35) {
-      c.fillStyle = 'rgba(255,255,255,' + (0.25 * k).toFixed(2) + ')';
-      c.fillRect(Math.random() * W, 0, Math.max(1, W / 540), H);
-    }
-    // a bright tracking line crawling up the picture
-    if (bandY >= 0) {
-      c.fillStyle = 'rgba(255,255,255,0.35)';
-      for (let i = 0; i < 40; i++) c.fillRect(Math.random() * W, (bandY + bandH * Math.random()) / lh * H, Math.random() * W * 0.2, 2);
-    }
+    if (L.scratch && Math.random() < 0.35) { c.fillStyle = 'rgba(255,255,255,' + (0.25 * k).toFixed(2) + ')'; c.fillRect(Math.random() * W, 0, Math.max(1, W / 540), H); }
   }
-  function drawStamps(c, W, H, t, opts) {
+
+  function stampText(c, text, x, y, size, color, align) {
+    c.font = '700 ' + size + 'px "Courier New", Courier, monospace'; c.textAlign = align || 'left'; c.textBaseline = 'top';
+    c.fillStyle = 'rgba(0,0,0,.7)'; c.fillText(text, x + size * 0.07, y + size * 0.07); c.fillStyle = color; c.fillText(text, x, y);
+  }
+  const OSD = { play: '▶ PLAY', ff: '▶▶ FF', rew: '◀◀ REW', pause: '❚❚ PAUSE' };
+  // what a camcorder prints on the picture. t = tape time in seconds.
+  function drawStamps(c, W, H, t, live) {
     const L = LOOKS[st.look]; if (!L || st.look === 'none') return;
-    const s = Math.round(Math.min(W, H) * 0.058);
-    const dateStr = st.dateText || defaultDate();
-    if (st.rec && st.look !== 'film' && st.look !== 'digicam') {
-      if (L.cam) { stampText(c, 'CAM 02', s * 0.6, s * 0.6, s, '#d8ffd8'); }
-      else if (st.osd) { stampText(c, st.osd, s * 0.6, s * 0.6, s, '#ffffff'); }
-      else {
-        const early = t < 1.6 && opts && opts.playOsd;
-        if (early) stampText(c, '▶ PLAY', s * 0.6, s * 0.6, s, '#ffffff');
-        else {
-          if (Math.floor(t * 1.5) % 2 === 0) { c.fillStyle = '#ff2a1f'; c.beginPath(); c.arc(s * 0.6 + s * 0.4, s * 0.6 + s * 0.5, s * 0.34, 0, 6.3); c.fill(); }
-          stampText(c, 'REC', s * 1.4, s * 0.6, s, '#ffffff');
-        }
-      }
+    const s = Math.round(Math.min(W, H) * 0.058), blink = Math.floor(performance.now() / 600) % 2 === 0;
+    if (st.rec && L.tape) {
+      let label;
+      if (live) label = performance.now() < st.flashUntil ? '● REC' : 'STBY';
+      else label = OSD[deck.mode] || OSD.pause;
+      // the pause text blinks like the real thing
+      if (!(deck.mode === 'pause' && !live && !blink)) stampText(c, label, s * 0.6, s * 0.6, s, '#ffffff');
       stampText(c, clock(t), W - s * 0.6, s * 0.6, s, '#ffffff', 'right');
+      stampText(c, 'SP', W - s * 0.6, s * 1.75, s * 0.7, '#ffffff', 'right');
+      if (deck.recording && blink) { c.fillStyle = '#ff2a1f'; c.beginPath(); c.arc(W - s * 0.6 - s * 1.7, s * 0.6 + s * 0.5, s * 0.3, 0, 6.3); c.fill(); }
+    } else if (st.rec && L.cam) {
+      stampText(c, 'CAM 02', s * 0.6, s * 0.6, s, '#d8ffd8'); stampText(c, clock(t), W - s * 0.6, s * 0.6, s, '#d8ffd8', 'right');
     }
-    if (st.date) {
-      const col = L.dateColor || (L.cam ? '#d8ffd8' : '#ffffff');
-      stampText(c, dateStr, s * 0.6, H - s * 1.7, s * 0.9, col);
-    }
+    if (st.date) stampText(c, st.dateText || defaultDate(), s * 0.6, H - s * 1.7, s * 0.9, L.dateColor || (L.cam ? '#d8ffd8' : '#ffffff'));
   }
 
-  // ===== drawing helpers =====
-  function drawCover(c, src, sw, sh, W, H) {
-    if (!sw || !sh) { c.fillStyle = '#000'; c.fillRect(0, 0, W, H); return; }
-    const r = Math.max(W / sw, H / sh), dw = sw * r, dh = sh * r;
-    c.imageSmoothingEnabled = true;
-    c.drawImage(src, (W - dw) / 2, (H - dh) / 2, dw, dh);
-  }
-  function drawFrame(i, t) {
-    const [W, H] = size(); applySize(W, H);
-    const f = st.frames[i];
-    if (!f) { ctx.fillStyle = '#111'; ctx.fillRect(0, 0, W, H); return; }
-    drawLooked(ctx, f.img, f.img.naturalWidth, f.img.naturalHeight, W, H, t || 0, {});
-    drawStamps(ctx, W, H, t || 0, { playOsd: true });
-  }
-
-  // ===== undo / redo (every change to the frames can be taken back) =====
+  // ===================== FRAMES =====================
+  function loadImg(blob) { return new Promise((res, rej) => { const url = URL.createObjectURL(blob), img = new Image(); img.onload = () => res({ blob, url, img }); img.onerror = () => { URL.revokeObjectURL(url); rej(new Error('image')); }; img.src = url; }); }
+  function canvasToBlob(c, type, q) { return new Promise(r => c.toBlob(r, type, q)); }
+  async function addBlob(blob, at) { const f = await loadImg(blob); if (at === undefined) st.frames.push(f); else st.frames.splice(at, 0, f); return f; }
   function snap() { st.hist.push({ frames: st.frames.slice(), sel: st.sel }); if (st.hist.length > 40) st.hist.shift(); st.redo = []; }
-  function restoreSnap(from, to) {
-    const h = from.pop(); if (!h) return;
-    to.push({ frames: st.frames.slice(), sel: st.sel });
-    st.frames = h.frames; st.sel = Math.min(h.sel, st.frames.length - 1); stopPlay(); refreshUI(); renderStill();
-  }
+  function restoreSnap(from, to) { const h = from.pop(); if (!h) return; to.push({ frames: st.frames.slice(), sel: st.sel }); st.frames = h.frames; st.sel = Math.min(h.sel, st.frames.length - 1); deck.p = 0; refreshUI(); renderStill(); }
   $('undoBtn').addEventListener('click', () => restoreSnap(st.hist, st.redo));
   $('redoBtn').addEventListener('click', () => restoreSnap(st.redo, st.hist));
-
-  // ===== frames =====
-  function loadImg(blob) {
-    return new Promise((res, rej) => {
-      const url = URL.createObjectURL(blob), img = new Image();
-      img.onload = () => res({ blob, url, img });
-      img.onerror = () => { URL.revokeObjectURL(url); rej(new Error('image')); };
-      img.src = url;
-    });
-  }
-  async function addBlob(blob, at) {
-    const f = await loadImg(blob);
-    if (at === undefined) st.frames.push(f); else st.frames.splice(at, 0, f);
-    lockAspect();
-    return f;
-  }
-  function canvasToBlob(c, type, q) { return new Promise(r => c.toBlob(r, type, q)); }
-  function lockAspect() {
-    const locked = st.frames.length > 0;
-    document.querySelectorAll('#aspects .chip').forEach(b => { b.disabled = locked; });
-    $('aspectNote').style.display = locked ? 'block' : 'none';
-  }
+  function loopLen() { const n = st.frames.length; return st.mode === 'pingpong' && n > 2 ? 2 * n - 2 : n; }
+  function idxOf(p) { const n = st.frames.length; if (!n) return -1; const m = ((Math.floor(p) % loopLen()) + loopLen()) % loopLen(); return m < n ? m : loopLen() - m; }
+  function lockAspect() { const locked = st.frames.length > 0; document.querySelectorAll('#aspects .chip').forEach(b => { b.disabled = locked; }); $('aspectNote').style.display = locked ? 'block' : 'none'; }
   function refreshUI() {
-    $('count').textContent = st.frames.length + (st.frames.length === 1 ? ' frame' : ' frames') + (st.frames.length ? ' · ' + (st.frames.length / st.fps).toFixed(1) + ' s' : '');
+    const n = st.frames.length;
     $('undoBtn').disabled = !st.hist.length; $('redoBtn').disabled = !st.redo.length;
-    $('playBtn').disabled = st.kind === 'clip' ? !st.clip : st.frames.length < 2;
+    if (st.kind === 'stop') $('info').textContent = n + (n === 1 ? ' frame' : ' frames') + (n ? ' · ' + (n / st.fps).toFixed(1) + ' s' : '');
     const s = $('strip'); s.innerHTML = '';
     st.frames.forEach((f, i) => {
-      const d = document.createElement('div'); d.className = 'fr' + (i === st.sel ? ' sel' : '');
-      d.style.backgroundImage = 'url(' + f.url + ')'; d.innerHTML = '<i>' + (i + 1) + '</i>';
-      d.addEventListener('click', () => { st.sel = i; stopPlay(); refreshUI(); renderStill(); });
+      const d = document.createElement('div'); d.className = 'fr' + (i === st.sel ? ' sel' : ''); d.style.backgroundImage = 'url(' + f.url + ')'; d.innerHTML = '<i>' + (i + 1) + '</i>';
+      d.addEventListener('click', () => { st.sel = i; deck.p = i; if (deck.mode !== 'pause') setDeck('pause'); refreshUI(); renderStill(); });
       s.appendChild(d);
     });
-    lockAspect(); queueSave();
+    updateDeckEnabled(); lockAspect(); queueSave();
   }
-  function renderStill() {
-    if (st.kind === 'clip') { drawClipFrame(); return; }
-    if (st.camVideo && st.panel === 'shoot') return; // live view is drawing
-    if (st.sel >= 0 && st.frames[st.sel]) drawFrame(st.sel, 5);
-    else if (st.frames.length) drawFrame(st.frames.length - 1, 5);
-    else { const [W, H] = size(); applySize(W, H); ctx.fillStyle = '#111'; ctx.fillRect(0, 0, W, H); stageMsg(st.camVideo ? '' : 'Start the camera or add photos'); }
+  function markPlayhead(i) {
+    if (st._ph === i) return; st._ph = i;
+    const kids = $('strip').children; for (let k = 0; k < kids.length; k++) kids[k].classList.toggle('sel', k === i);
+    const el = kids[i]; if (el) { const tl = $('strip'); tl.scrollLeft = el.offsetLeft - tl.clientWidth / 2 + el.clientWidth / 2; }
+  }
+  function updateDeckEnabled() {
+    const ok = st.kind === 'clip' ? !!st.clip : st.frames.length >= 2;
+    document.querySelectorAll('#deck .dk').forEach(b => { b.disabled = b.id === 'dkRec' ? !(ok || st.camVideo) : !ok; });
+    $('autoBtn').disabled = !ok;
   }
 
-  // ===== camera =====
+  // ===================== DRAWING =====================
+  const clipV = document.createElement('video'); clipV.playsInline = true; clipV.setAttribute('playsinline', ''); clipV.preload = 'auto';
+  function tapeTime() { return st.kind === 'clip' ? clipV.currentTime : Math.max(0, deck.p) / fpsOut(); }
+  function drawFrameAt(i, t) {
+    const [W, H] = size(); applySize(W, H); const f = st.frames[i];
+    if (!f) { ctx.fillStyle = '#111'; ctx.fillRect(0, 0, W, H); return; }
+    drawLooked(ctx, f.img, f.img.naturalWidth, f.img.naturalHeight, W, H, performance.now() / 1000, { mode: deck.mode, settle: deck.settle });
+    drawStamps(ctx, W, H, t, false);
+  }
+  function drawClip() {
+    if (!st.clip) return; const W = st.clip.w & ~1, H = st.clip.h & ~1; applySize(W, H);
+    drawLooked(ctx, clipV, clipV.videoWidth, clipV.videoHeight, W, H, performance.now() / 1000, { mode: deck.mode, settle: deck.settle });
+    drawStamps(ctx, W, H, clipV.currentTime, false);
+  }
+  function drawLive() {
+    const [W, H] = size(); applySize(W, H);
+    const v = st.camVideo, tmp = drawLive.tmp || (drawLive.tmp = document.createElement('canvas'));
+    if (tmp.width !== W || tmp.height !== H) { tmp.width = W; tmp.height = H; }
+    const tc = tmp.getContext('2d'); tc.save();
+    if (st.facing === 'user') { tc.translate(W, 0); tc.scale(-1, 1); }
+    drawCover(tc, v, v.videoWidth, v.videoHeight, W, H); tc.restore();
+    const last = st.frames[st.frames.length - 1], a = (+$('onion').value) / 100;
+    if (last && a > 0) { tc.globalAlpha = a; drawCover(tc, last.img, last.img.naturalWidth, last.img.naturalHeight, W, H); tc.globalAlpha = 1; }
+    drawLooked(ctx, tmp, W, H, W, H, performance.now() / 1000, null);
+    drawStamps(ctx, W, H, st.frames.length / st.fps, true);
+  }
+  function renderStill() {
+    if (st.kind === 'clip') { drawClip(); return; }
+    if (st.cam && st.camVideo) return;
+    const [W, H] = size(); applySize(W, H);
+    const i = st.sel >= 0 ? st.sel : st.frames.length - 1;
+    if (st.frames[i]) { drawFrameAt(i, deck.p / st.fps); stageMsg(''); }
+    else { ctx.fillStyle = '#111'; ctx.fillRect(0, 0, W, H); stageMsg(st.camVideo ? '' : 'Start the camera or add photos'); }
+  }
+
+  // ===================== THE DECK =====================
+  function setDeck(m) {
+    const prev = deck.mode; deck.mode = m;
+    deck.settle = (prev !== 'play' && m === 'play') ? 1 : (m === 'pause' && prev === 'play') ? 0.35 : ((m === 'ff' || m === 'rew') ? 0.25 : 0);
+    if (st.kind === 'clip' && st.clip) {
+      ensureAudio(); if (audioCtx && audioCtx.resume) audioCtx.resume();
+      if (m === 'play') { clipV.muted = false; clipV.playbackRate = 1; clipV.play().catch(() => {}); }
+      else if (m === 'ff') { clipV.muted = true; clipV.playbackRate = 3; clipV.play().catch(() => {}); }
+      else { clipV.pause(); clipV.muted = true; }
+    }
+    document.querySelectorAll('#deck .dk[data-d]').forEach(b => b.setAttribute('aria-pressed', b.dataset.d === m ? 'true' : 'false'));
+  }
+  document.querySelectorAll('#deck .dk[data-d]').forEach(b => b.addEventListener('click', () => {
+    buzz(12); const d = b.dataset.d;
+    // pressing FF or REW again, or PAUSE while paused, goes back to playing, like a real deck
+    if (d === deck.mode && (d === 'ff' || d === 'rew' || d === 'pause')) return setDeck('play');
+    if (st.kind === 'stop' && st.frames.length < 2) return;
+    setDeck(d);
+  }));
+  let lastDraw = 0, lastAdv = 0;
+  function advance(dt) {
+    if (deck.settle > 0) deck.settle = Math.max(0, deck.settle - dt * 2.2);
+    if (st.kind === 'stop') {
+      const n = st.frames.length; if (n < 2) return;
+      const rate = deck.mode === 'play' ? fpsOut() : deck.mode === 'ff' ? fpsOut() * 3 : deck.mode === 'rew' ? -fpsOut() * 3 : 0;
+      deck.p += rate * dt;
+      if (deck.p < 0) { deck.p = 0; if (deck.mode === 'rew') setDeck('pause'); } // the tape ran out going backward
+      if (rate) { const i = idxOf(deck.p); st.sel = i; markPlayhead(i); }
+    } else if (st.kind === 'clip' && st.clip) {
+      if (deck.mode === 'rew') {
+        const t = clipV.currentTime - dt * 3;
+        if (t <= 0) { clipV.currentTime = 0; setDeck('pause'); } else if (!clipV.seeking) clipV.currentTime = t;
+      }
+      if (clipV.ended && (deck.mode === 'play' || deck.mode === 'ff')) setDeck('pause');
+    }
+  }
+  function tick(now) {
+    requestAnimationFrame(tick);
+    const dt = lastAdv ? Math.min(0.1, (now - lastAdv) / 1000) : 0; lastAdv = now;
+    if (st.kind) advance(dt);
+    if (now - lastDraw < 40) return; lastDraw = now;
+    if (st.kind === 'clip') { drawClip(); if (st.clip) $('info').textContent = clock(clipV.currentTime) + ' of ' + clock(clipV.duration); }
+    else if (st.kind === 'stop') {
+      if (st.cam && st.camVideo) drawLive();
+      else if (st.frames.length) drawFrameAt(deck.mode !== 'pause' ? Math.max(0, idxOf(deck.p)) : (st.sel >= 0 ? st.sel : st.frames.length - 1), tapeTime());
+    }
+  }
+  requestAnimationFrame(tick);
+
+  // ===================== CAMERA =====================
   async function startCam() {
     stopCam();
     try {
       if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) throw new Error('nocam');
       st.stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: { ideal: st.facing }, width: { ideal: 1280 }, height: { ideal: 1280 } }, audio: false });
-      const v = document.createElement('video'); v.muted = true; v.playsInline = true; v.setAttribute('playsinline', ''); v.srcObject = st.stream;
-      await v.play(); st.camVideo = v;
-      $('camBtn').textContent = 'Stop camera'; $('shutter').disabled = false; $('flipBtn').disabled = false;
-      msg('shootMsg', ''); stageMsg('');
-    } catch (e) {
-      msg('shootMsg', 'The camera would not start. Allow camera access for this page, or add photos below instead.', true);
-    }
+      const v = document.createElement('video'); v.muted = true; v.playsInline = true; v.setAttribute('playsinline', ''); v.srcObject = st.stream; await v.play(); st.camVideo = v;
+      $('camBtn').textContent = 'Stop camera'; $('shutter').disabled = false; $('flipBtn').disabled = false; msg('shootMsg', ''); stageMsg(''); syncRows(); updateDeckEnabled();
+    } catch (e) { msg('shootMsg', 'The camera would not start. Allow camera access for this page, or add photos below instead.', true); }
   }
-  function stopCam() {
-    if (st.stream) st.stream.getTracks().forEach(t => t.stop());
-    st.stream = null; st.camVideo = null;
-    $('camBtn').textContent = 'Start camera'; $('shutter').disabled = true; $('flipBtn').disabled = true;
-  }
-  $('camBtn').addEventListener('click', () => { st.camVideo ? (stopCam(), renderStill()) : startCam(); });
+  function stopCam() { if (st.stream) st.stream.getTracks().forEach(t => t.stop()); st.stream = null; st.camVideo = null; $('camBtn').textContent = 'Start camera'; $('shutter').disabled = true; $('flipBtn').disabled = true; syncRows(); }
+  $('camBtn').addEventListener('click', () => { if (st.camVideo) { stopCam(); renderStill(); } else { setCam(true); startCam(); } });
   $('flipBtn').addEventListener('click', () => { st.facing = st.facing === 'environment' ? 'user' : 'environment'; startCam(); });
   $('shutter').addEventListener('click', async () => {
-    if (!st.camVideo) return;
-    const [W, H] = size(), c = document.createElement('canvas'); c.width = W; c.height = H;
-    const cc = c.getContext('2d');
+    if (!st.camVideo) return; buzz(15);
+    const [W, H] = size(), c = document.createElement('canvas'); c.width = W; c.height = H; const cc = c.getContext('2d');
     if (st.facing === 'user') { cc.translate(W, 0); cc.scale(-1, 1); }
     drawCover(cc, st.camVideo, st.camVideo.videoWidth, st.camVideo.videoHeight, W, H);
-    const blob = await canvasToBlob(c, 'image/jpeg', 0.9);
-    snap(); await addBlob(blob); st.sel = st.frames.length - 1; refreshUI();
-    if (navigator.vibrate) navigator.vibrate(15);
+    st.flashUntil = performance.now() + 350;
+    const blob = await canvasToBlob(c, 'image/jpeg', 0.9); snap(); await addBlob(blob); st.sel = st.frames.length - 1; deck.p = st.sel; refreshUI();
   });
   $('onion').addEventListener('input', () => { $('onionVal').textContent = $('onion').value + '%'; });
-  $('onionVal').textContent = '40%';
-
   document.querySelectorAll('#aspects .chip').forEach(b => b.addEventListener('click', () => {
-    if (st.frames.length) return;
-    st.aspect = b.dataset.a; document.querySelectorAll('#aspects .chip').forEach(x => x.setAttribute('aria-pressed', x === b ? 'true' : 'false'));
-    renderStill();
+    if (st.frames.length) return; st.aspect = b.dataset.a; document.querySelectorAll('#aspects .chip').forEach(x => x.setAttribute('aria-pressed', x === b ? 'true' : 'false')); renderStill();
   }));
 
-  // ===== import photos / video =====
+  // ===================== IMPORT =====================
   $('photoIn').addEventListener('change', async (e) => {
-    const files = [...e.target.files]; e.target.value = '';
-    if (!files.length) return;
+    const files = [...e.target.files]; e.target.value = ''; if (!files.length) return;
     try {
-      msg('shootMsg', 'Adding...'); snap();
-      const [W, H] = size();
+      msg('shootMsg', 'Adding...'); snap(); const [W, H] = size();
       for (const file of files) {
         const f = await loadImg(file), c = document.createElement('canvas'); c.width = W; c.height = H;
-        drawCover(c.getContext('2d'), f.img, f.img.naturalWidth, f.img.naturalHeight, W, H);
-        URL.revokeObjectURL(f.url);
+        drawCover(c.getContext('2d'), f.img, f.img.naturalWidth, f.img.naturalHeight, W, H); URL.revokeObjectURL(f.url);
         await addBlob(await canvasToBlob(c, 'image/jpeg', 0.9));
       }
-      st.sel = st.frames.length - 1; refreshUI(); renderStill(); msg('shootMsg', 'Added ' + files.length + '.');
+      st.sel = st.frames.length - 1; refreshUI(); setCam(false); msg('shootMsg', 'Added ' + files.length + '. Press PLAY under the picture.');
     } catch (err) { msg('shootMsg', 'One of those would not open. Try JPG or PNG.', true); }
   });
   function metaOf(v) { return new Promise((res, rej) => { v.onloadedmetadata = () => res(); v.onerror = () => rej(new Error('video')); }); }
   function seekTo(v, t) { return new Promise(res => { const h = () => { v.removeEventListener('seeked', h); res(); }; v.addEventListener('seeked', h); v.currentTime = t; }); }
+  const HEVC_MSG = 'That video would not open. If it came from your iPhone, export it as Most Compatible first (Photos, Share, Options).';
   let pendVid = null;
   $('videoIn').addEventListener('change', async (e) => {
     const file = e.target.files[0]; e.target.value = ''; if (!file) return;
-    const v = document.createElement('video'); v.muted = true; v.playsInline = true; v.preload = 'auto';
-    const url = URL.createObjectURL(file); v.src = url;
+    const v = document.createElement('video'); v.muted = true; v.playsInline = true; v.preload = 'auto'; const url = URL.createObjectURL(file); v.src = url;
     try {
-      await metaOf(v);
-      if (!isFinite(v.duration) || v.duration <= 0) throw new Error('video');
-      if (pendVid) URL.revokeObjectURL(pendVid.url);
-      pendVid = { file, url, v, dur: v.duration };
-      ['vFrom', 'vTo'].forEach(id => { $(id).max = v.duration.toFixed(1); });
-      $('vFrom').value = 0; $('vTo').value = v.duration.toFixed(1);
-      $('vidInfo').textContent = 'This video is ' + clock(v.duration) + ' long. Pick the part you want.';
-      $('vidTrim').classList.remove('hide'); updTrim(); msg('shootMsg', '');
-    } catch (err) { URL.revokeObjectURL(url); msg('shootMsg', 'That video would not open. If it came from your iPhone, export it as Most Compatible first (Photos, Share, Options).', true); }
+      await metaOf(v); if (!isFinite(v.duration) || v.duration <= 0) throw new Error('video');
+      if (pendVid) URL.revokeObjectURL(pendVid.url); pendVid = { file, url, v, dur: v.duration };
+      ['vFrom', 'vTo'].forEach(id => { $(id).max = v.duration.toFixed(1); }); $('vFrom').value = 0; $('vTo').value = v.duration.toFixed(1);
+      $('vidInfo').textContent = 'This video is ' + clock(v.duration) + ' long. Pick the part you want.'; $('vidTrim').classList.remove('hide'); updTrim(); msg('shootMsg', '');
+    } catch (err) { URL.revokeObjectURL(url); msg('shootMsg', HEVC_MSG, true); }
   });
   function updTrim() {
     let a = +$('vFrom').value, b = +$('vTo').value;
     if (b - a < 0.2) { if (document.activeElement === $('vFrom')) { a = Math.max(0, b - 0.2); $('vFrom').value = a; } else { b = Math.min(pendVid.dur, a + 0.2); $('vTo').value = b; } }
     $('vFromVal').textContent = a.toFixed(1) + ' s'; $('vToVal').textContent = b.toFixed(1) + ' s';
     const step = parseFloat($('everyN').value) || 0.5; $('vidGo').textContent = 'Make ' + Math.min(200, Math.floor((b - a) / step) + 1) + ' frames';
-    if (pendVid) { pendVid.v.currentTime = Math.min(pendVid.dur - 0.05, document.activeElement === $('vTo') ? b : a); }
   }
   ['vFrom', 'vTo', 'everyN'].forEach(id => $(id).addEventListener('input', () => { if (pendVid) updTrim(); }));
   $('vidGo').addEventListener('click', async () => {
     if (!pendVid) return;
     const from = +$('vFrom').value, to = +$('vTo').value, step = parseFloat($('everyN').value) || 0.5, MAX = 200, v = pendVid.v;
-    let n = Math.floor((to - from) / step) + 1, note = '';
-    if (n > MAX) { n = MAX; note = ' Only the first ' + MAX + ' frames were kept. Pick a longer gap or a shorter part.'; }
+    let n = Math.floor((to - from) / step) + 1, note = ''; if (n > MAX) { n = MAX; note = ' Only the first ' + MAX + ' frames were kept.'; }
     const [W, H] = size(), bar = $('progA'); bar.style.display = 'block'; $('vidGo').disabled = true; snap();
     try {
       for (let i = 0; i < n; i++) {
         await seekTo(v, Math.min(v.duration - 0.05, from + i * step));
-        const c = document.createElement('canvas'); c.width = W; c.height = H;
-        drawCover(c.getContext('2d'), v, v.videoWidth, v.videoHeight, W, H);
-        await addBlob(await canvasToBlob(c, 'image/jpeg', 0.88));
-        bar.firstChild.style.width = Math.round((i + 1) / n * 100) + '%';
-        msg('shootMsg', 'Pulling frames ' + (i + 1) + ' of ' + n + '...');
+        const c = document.createElement('canvas'); c.width = W; c.height = H; drawCover(c.getContext('2d'), v, v.videoWidth, v.videoHeight, W, H);
+        await addBlob(await canvasToBlob(c, 'image/jpeg', 0.88)); bar.firstChild.style.width = Math.round((i + 1) / n * 100) + '%'; msg('shootMsg', 'Pulling frames ' + (i + 1) + ' of ' + n + '...');
       }
-      st.sel = st.frames.length - 1; refreshUI(); renderStill(); msg('shootMsg', 'Made ' + n + ' frames.' + note);
+      st.sel = st.frames.length - 1; refreshUI(); setCam(false); msg('shootMsg', 'Made ' + n + ' frames.' + note + ' Press PLAY under the picture.');
       $('vidTrim').classList.add('hide'); URL.revokeObjectURL(pendVid.url); pendVid = null;
     } catch (err) { msg('shootMsg', 'Something went wrong pulling frames.', true); }
     bar.style.display = 'none'; $('vidGo').disabled = false;
   });
 
-  // ===== frames panel =====
-  function need() { if (st.sel < 0 || !st.frames[st.sel]) { msg('shootMsg', 'Tap a frame first.'); return false; } return true; }
+  // ===================== EDIT =====================
+  function need() { if (st.sel < 0 || !st.frames[st.sel]) { stageMsg('Tap a frame in the strip first'); setTimeout(() => stageMsg(''), 1800); return false; } return true; }
   $('mvL').addEventListener('click', () => { if (!need() || st.sel === 0) return; snap(); const a = st.frames; [a[st.sel - 1], a[st.sel]] = [a[st.sel], a[st.sel - 1]]; st.sel--; refreshUI(); renderStill(); });
   $('mvR').addEventListener('click', () => { if (!need() || st.sel >= st.frames.length - 1) return; snap(); const a = st.frames; [a[st.sel + 1], a[st.sel]] = [a[st.sel], a[st.sel + 1]]; st.sel++; refreshUI(); renderStill(); });
-  $('dupBtn').addEventListener('click', async () => { if (!need()) return; snap(); const f = st.frames[st.sel]; await addBlob(f.blob, st.sel + 1); st.sel++; refreshUI(); renderStill(); });
+  $('dupBtn').addEventListener('click', async () => { if (!need()) return; snap(); await addBlob(st.frames[st.sel].blob, st.sel + 1); st.sel++; refreshUI(); renderStill(); });
   $('delBtn').addEventListener('click', () => { if (!need()) return; snap(); st.frames.splice(st.sel, 1); st.sel = Math.min(st.sel, st.frames.length - 1); refreshUI(); renderStill(); });
   $('revBtn').addEventListener('click', () => { snap(); st.frames.reverse(); if (st.sel >= 0) st.sel = st.frames.length - 1 - st.sel; refreshUI(); renderStill(); });
-  $('clearBtn').addEventListener('click', () => { if (!st.frames.length || !confirm('Delete every frame? You can undo this.')) return; snap(); st.frames = []; st.sel = -1; refreshUI(); renderStill(); });
+  $('clearBtn').addEventListener('click', () => { if (!st.frames.length || !confirm('Delete every frame? You can undo this.')) return; snap(); st.frames = []; st.sel = -1; deck.p = 0; refreshUI(); renderStill(); });
   $('fps').addEventListener('input', () => { st.fps = +$('fps').value; $('fpsVal').textContent = st.fps + ' frames a second'; refreshUI(); });
   $('fpsVal').textContent = '8 frames a second';
   document.querySelectorAll('#modes .chip').forEach(b => b.addEventListener('click', () => { st.mode = b.dataset.m; document.querySelectorAll('#modes .chip').forEach(x => x.setAttribute('aria-pressed', x === b ? 'true' : 'false')); }));
 
-  // ===== look panel =====
+  // ===================== ERA =====================
+  function renderEra() {
+    const box = $('looks'); box.innerHTML = '<span class="lbl">ERA</span>';
+    Object.keys(LOOK_NAMES).forEach(key => {
+      const b = document.createElement('button'); b.type = 'button'; b.className = 'chip'; b.textContent = LOOK_NAMES[key]; b.setAttribute('aria-pressed', st.look === key ? 'true' : 'false');
+      b.addEventListener('click', () => { buzz(8); st.look = key; box.querySelectorAll('.chip').forEach(x => x.setAttribute('aria-pressed', x === b ? 'true' : 'false')); renderStill(); });
+      box.appendChild(b);
+    });
+  }
   $('strength').addEventListener('input', () => { st.strength = +$('strength').value / 100; $('strVal').textContent = $('strength').value + '%'; renderStill(); });
   $('strVal').textContent = '70%';
   $('recOn').addEventListener('change', () => { st.rec = $('recOn').checked; renderStill(); });
@@ -577,289 +612,155 @@
   $('glitchOn').addEventListener('change', () => { st.glitch = $('glitchOn').checked; });
   $('dateText').addEventListener('input', () => { st.dateText = $('dateText').value.toUpperCase(); renderStill(); });
   $('dateText').placeholder = defaultDate();
-  // each era shows a little preview of YOUR picture, so you pick by looking
-  const LOOK_NAMES = { none: 'Clean', vhs: 'VHS', film: '8mm film', digicam: '90s digicam', security: 'Security' };
-  function lookSource() {
-    if (st.kind === 'clip' && st.clip && clipV.videoWidth) return { src: clipV, w: clipV.videoWidth, h: clipV.videoHeight };
-    const f = st.frames[st.sel >= 0 ? st.sel : st.frames.length - 1];
-    if (f) return { src: f.img, w: f.img.naturalWidth, h: f.img.naturalHeight };
-    if (st.camVideo && st.camVideo.videoWidth) return { src: st.camVideo, w: st.camVideo.videoWidth, h: st.camVideo.videoHeight };
-    return null;
-  }
-  function renderLookThumbs() {
-    const box = $('looks'), src = lookSource(), keep = st.look, keepGl = st.glitch;
-    box.innerHTML = '';
-    Object.keys(LOOK_NAMES).forEach(key => {
-      const b = document.createElement('button'); b.type = 'button'; b.className = 'chip look-chip'; b.dataset.l = key; b.setAttribute('aria-pressed', keep === key ? 'true' : 'false');
-      const c = document.createElement('canvas'); c.width = 62; c.height = 82;
-      if (src) { const cc = c.getContext('2d'); st.look = key; st.glitch = false; try { drawLooked(cc, src.src, src.w, src.h, 62, 82, 1, {}); } catch (e) {} st.look = keep; st.glitch = keepGl; }
-      b.appendChild(c); b.appendChild(document.createTextNode(LOOK_NAMES[key]));
-      b.addEventListener('click', () => { st.look = key; box.querySelectorAll('.chip').forEach(x => x.setAttribute('aria-pressed', x === b ? 'true' : 'false')); renderStill(); queueSave(); });
-      box.appendChild(b);
-    });
-  }
 
-  // ===== tools along the bottom (the picture and the frame strip never move) =====
+  // ===================== SCREENS =====================
+  function syncRows() {
+    const stop = st.kind === 'stop';
+    $('modeSw').classList.toggle('hide', !stop);
+    $('shootRow').classList.toggle('hide', !(stop && st.cam));
+    $('deck').classList.toggle('hide', stop && st.cam);
+    $('editRow').classList.toggle('hide', !stop);
+    $('stopSet').classList.toggle('hide', !stop);
+    $('autoStop').classList.toggle('hide', !stop);
+    $('stillsRow').classList.toggle('hide', !stop);
+    $('swCam').setAttribute('aria-pressed', st.cam ? 'true' : 'false'); $('swTape').setAttribute('aria-pressed', st.cam ? 'false' : 'true');
+    $('autoBtn').textContent = stop ? 'Record it automatically' : 'Record the whole video';
+  }
+  // the camcorder switch: CAMERA shoots frames, TAPE plays them
+  function setCam(on) {
+    if (st.kind !== 'stop') return;
+    st.cam = on; if (on) { if (deck.mode !== 'pause') setDeck('pause'); } else { st.sel = Math.max(st.sel, st.frames.length ? 0 : -1); if (st.sel < 0 && st.frames.length) st.sel = 0; }
+    syncRows(); renderStill();
+  }
+  $('swCam').addEventListener('click', () => { buzz(8); setCam(true); if (!st.camVideo) startCam(); });
+  $('swTape').addEventListener('click', () => { buzz(8); setCam(false); });
   function showPanel(name) {
     st.panel = name;
     document.querySelectorAll('#tools button').forEach(x => x.setAttribute('aria-selected', x.dataset.p === name ? 'true' : 'false'));
     document.querySelectorAll('.panel').forEach(p => p.classList.toggle('on', p.id === 'p-' + name));
-    $('panels').scrollTop = 0;
-    if (name !== 'clip' && st.kind !== 'clip' && st.clipPlaying) clipStop();
-    if (name === 'look') renderLookThumbs();
-    if (!(name === 'shoot' && st.camVideo)) renderStill();
+    $('panels').scrollTop = 0; syncRows(); renderStill();
   }
   document.querySelectorAll('#tools button').forEach(b => b.addEventListener('click', () => showPanel(b.dataset.p)));
-
-  // ===== the first page: pick what you are making =====
   function startKind(kind) {
-    st.kind = kind; stopPlay();
+    st.kind = kind; st.cam = kind === 'stop' && !st.frames.length; setDeck('pause');
     $('start').classList.add('hide'); $('app').classList.remove('hide');
     document.querySelectorAll('#tools button').forEach(b => b.classList.toggle('gone', b.dataset.k !== 'both' && b.dataset.k !== kind));
     $('tl').classList.toggle('hide', kind === 'clip');
-    $('count').classList.toggle('hide', kind === 'clip');
-    if (kind === 'stop') { st.panel = 'shoot'; if (st.clip) { clipStop(); } renderStill(); }
-    else { stopCam(); showPanel('clip'); applyClipSize(); }
-    showPanel(kind === 'clip' ? 'clip' : 'shoot');
-    refreshUI();
+    if (kind === 'clip') { stopCam(); $('info').textContent = ''; if (st.clip) applyClipSize(); } else refreshUI();
+    renderEra(); showPanel(kind === 'clip' ? 'clip' : 'shoot'); updateDeckEnabled();
   }
-  function goHome() {
-    stopPlay(); clipStop(); stopCam(); st.kind = null;
-    $('app').classList.add('hide'); $('start').classList.remove('hide'); updateKeep();
-  }
-  function updateKeep() {
-    const has = st.frames.length > 0;
-    $('pickKeep').classList.toggle('hide', !has);
-    $('keepInfo').textContent = has ? st.frames.length + ' frames saved on this phone. Pick up where you left off.' : '';
-  }
-  $('pickStop').addEventListener('click', () => { startKind('stop'); if (!st.camVideo) startCam(); });
+  function goHome() { setDeck('pause'); if (deck.recording) stopRec(); stopCam(); st.kind = null; $('app').classList.add('hide'); $('start').classList.remove('hide'); updateKeep(); }
+  function updateKeep() { const has = st.frames.length > 0; $('pickKeep').classList.toggle('hide', !has); $('keepInfo').textContent = has ? st.frames.length + ' frames saved on this phone. Pick up where you left off.' : ''; }
+  $('pickStop').addEventListener('click', () => { startKind('stop'); if (st.cam && !st.camVideo) startCam(); });
   $('pickClip').addEventListener('click', () => { startKind('clip'); $('clipIn').click(); });
-  $('pickKeep').addEventListener('click', () => { startKind('stop'); showPanel('frames'); });
+  $('pickKeep').addEventListener('click', () => { startKind('stop'); setCam(false); });
   $('homeBtn').addEventListener('click', goHome);
 
-  // ===== playing =====
-  function markPlayhead(i) {
-    const kids = $('strip').children; if (st._ph === i) return; st._ph = i;
-    for (let k = 0; k < kids.length; k++) kids[k].classList.toggle('sel', k === i);
-    const el = kids[i]; if (el && el.scrollIntoView) { const tl = $('strip'); tl.scrollLeft = el.offsetLeft - tl.clientWidth / 2 + el.clientWidth / 2; }
-  }
-  function stopPlay() { st.playing = false; $('playBtn').innerHTML = '&#9654; Play'; }
-  function startPlay() {
-    if (st.kind === 'clip') { clipToggle(); return; }
-    if (st.frames.length < 2) return;
-    st._ph = -1; st.playing = true; st.playIdx = Math.max(0, st.sel); st.playDir = 1; st.playLast = 0; st.playT0 = performance.now();
-    $('playBtn').innerHTML = '&#9632; Stop'; stageMsg('');
-  }
-  $('playBtn').addEventListener('click', () => { st.playing ? stopPlay() : startPlay(); if (!st.playing) renderStill(); });
-  function stepIndex() {
-    const n = st.frames.length;
-    if (st.mode === 'pingpong' && n > 1) {
-      let i = st.playIdx + st.playDir;
-      if (i >= n) { st.playDir = -1; i = n - 2; } else if (i < 0) { st.playDir = 1; i = 1; }
-      st.playIdx = i;
-    } else st.playIdx = (st.playIdx + 1) % n;
+  // ===================== VIDEO IN =====================
+  let clipUrl = null, audioCtx = null, audioSrc = null, audioDest = null;
+  function applyClipSize() { if (st.clip) applySize(st.clip.w & ~1, st.clip.h & ~1); }
+  $('clipIn').addEventListener('change', async (e) => {
+    const file = e.target.files[0]; e.target.value = ''; if (!file) return;
+    setDeck('pause'); st.clip = null; if (clipUrl) URL.revokeObjectURL(clipUrl); clipUrl = URL.createObjectURL(file); clipV.src = clipUrl;
+    try {
+      await metaOf(clipV);
+      if (clipV.duration > 300.5) { msg('clipMsg', 'That video is ' + Math.ceil(clipV.duration / 60) + ' minutes. The limit is 5. Trim it in your Photos app first.', true); updateDeckEnabled(); return; }
+      const ar = clipV.videoWidth / clipV.videoHeight, long = 720;
+      st.clip = { w: ar >= 1 ? long : Math.round(long * ar), h: ar >= 1 ? Math.round(long / ar) : long };
+      applyClipSize(); clipV.currentTime = 0; deck.p = 0; stageMsg(''); updateDeckEnabled(); setDeck('pause');
+      msg('clipMsg', 'Loaded. ' + clock(clipV.duration) + ' long. Press PLAY under the picture. When you are ready, hit REC.');
+    } catch (err) { msg('clipMsg', HEVC_MSG, true); }
+  });
+  clipV.addEventListener('ended', () => { if (!deck.auto && deck.mode !== 'pause') setDeck('pause'); });
+  function ensureAudio() {
+    if (audioCtx) return;
+    try { const AC = window.AudioContext || window.webkitAudioContext; audioCtx = new AC(); audioSrc = audioCtx.createMediaElementSource(clipV); audioDest = audioCtx.createMediaStreamDestination(); audioSrc.connect(audioCtx.destination); audioSrc.connect(audioDest); } catch (e) { audioCtx = null; }
   }
 
-  // ===== main loop =====
-  let lastDraw = 0;
-  function tick(now) {
-    requestAnimationFrame(tick);
-    if (st.exporting && st.exportTick) { st.exportTick(now); return; }
-    if (now - lastDraw < 45) return; // about 22 a second is plenty and easy on the battery
-    lastDraw = now;
-    if (st.kind === 'clip') { if (st.clip) drawClipFrame(); return; }
-    if (st.kind !== 'stop') return;
-    if (st.camVideo && st.panel === 'shoot') { drawLive(); return; }
-    if (st.playing) {
-      const interval = 1000 / st.fps;
-      if (!st.playLast || now - st.playLast >= interval) { if (st.playLast) stepIndex(); st.playLast = now; }
-      drawFrame(st.playIdx, (now - st.playT0) / 1000); markPlayhead(st.playIdx);
-      return;
-    }
-    if (st.look !== 'none' && st.frames.length && !st.camVideo) { // keep the grain alive on a still frame
-      drawFrame(st.sel >= 0 ? st.sel : st.frames.length - 1, (now / 1000) % 600);
-    }
-  }
-  function drawLive() {
-    const [W, H] = size(); applySize(W, H);
-    const v = st.camVideo; ctx.save();
-    if (st.facing === 'user') { ctx.translate(W, 0); ctx.scale(-1, 1); }
-    drawCover(ctx, v, v.videoWidth, v.videoHeight, W, H); ctx.restore();
-    const last = st.frames[st.frames.length - 1], a = (+$('onion').value) / 100;
-    if (last && a > 0) { ctx.globalAlpha = a; drawCover(ctx, last.img, last.img.naturalWidth, last.img.naturalHeight, W, H); ctx.globalAlpha = 1; }
-  }
-  requestAnimationFrame(tick);
-
-  // ===== recording =====
-  function pickMime() {
-    const list = ['video/mp4;codecs=avc1', 'video/mp4', 'video/webm;codecs=vp9', 'video/webm;codecs=vp8', 'video/webm'];
-    if (!window.MediaRecorder) return '';
-    for (const m of list) { try { if (MediaRecorder.isTypeSupported(m)) return m; } catch (e) {} }
-    return '';
-  }
+  // ===================== RECORDING =====================
+  function pickMime() { const list = ['video/mp4;codecs=avc1', 'video/mp4', 'video/webm;codecs=vp9', 'video/webm;codecs=vp8', 'video/webm']; if (!window.MediaRecorder) return ''; for (const m of list) { try { if (MediaRecorder.isTypeSupported(m)) return m; } catch (e) {} } return ''; }
   let wake = null;
   async function keepAwake(on) { try { if (on && navigator.wakeLock) wake = await navigator.wakeLock.request('screen'); else if (wake) { await wake.release(); wake = null; } } catch (e) {} }
-  function extOf(mime) { return /mp4/.test(mime) ? 'mp4' : 'webm'; }
-
-  $('recBtn').addEventListener('click', async () => {
-    if (st.frames.length < 2) { msg('saveMsg', 'Add at least 2 frames first.', true); return; }
-    const mime = pickMime();
-    if (!mime) { msg('saveMsg', 'This browser cannot record video. Use "Save the frames as photos" instead.', true); return; }
-    stopPlay(); if (st.camVideo) stopCam();
-    const loops = +$('loops').value, n = st.frames.length;
-    const perLoop = st.mode === 'pingpong' ? Math.max(1, 2 * n - 2) : n;
-    const total = perLoop * loops, playMs = total / st.fps * 1000, rwMs = ($('rewindOn').checked && st.look !== 'none') ? 1600 : 0, dur = playMs + rwMs;
-    const stream = cv.captureStream(24), chunks = [];
-    const rec = new MediaRecorder(stream, { mimeType: mime, videoBitsPerSecond: 4000000 });
-    rec.ondataavailable = (e) => { if (e.data && e.data.size) chunks.push(e.data); };
-    const done = new Promise(r => { rec.onstop = r; });
-    st.exporting = true; $('recBtn').disabled = true; $('progB').style.display = 'block'; $('result').style.display = 'none'; $('resultBtns').classList.add('hide');
-    await keepAwake(true);
-    const t0 = performance.now(); let shown = -1; st.playDir = 1; st.playIdx = 0;
-    rec.start(250);
-    st.exportTick = (now) => {
-      const el = now - t0; let idx;
-      if (el >= playMs) {
-        // rewind: run back through the frames fast, with the tape tearing
-        const rp = (el - playMs) / rwMs; idx = Math.max(0, Math.round((n - 1) * (1 - rp)));
-        st.osd = '\u25C0\u25C0 REWIND'; st.forceGlitch = true;
-      } else {
-        const seq = Math.min(total - 1, Math.floor(el / 1000 * st.fps));
-        if (st.mode === 'pingpong') { const p = seq % perLoop; idx = p < n ? p : perLoop - p; } else idx = seq % n;
-        st.osd = null; st.forceGlitch = false;
-      }
-      drawFrame(idx, el / 1000);
-      $('progB').firstChild.style.width = Math.min(100, Math.round(el / dur * 100)) + '%';
-      msg('saveMsg', 'Recording ' + Math.min(100, Math.round(el / dur * 100)) + '%. Keep this page open.');
-      if (el >= dur) { st.exportTick = null; rec.stop(); }
-    };
-    await done; st.exporting = false; st.osd = null; st.forceGlitch = false; await keepAwake(false);
-    $('recBtn').disabled = false; $('progB').style.display = 'none';
-    const blob = new Blob(chunks, { type: mime.split(';')[0] });
-    showResult(blob, 'result', 'resultBtns', 'saveMsg', 'phone-animation');
-    renderStill();
-  });
-  const results = {};
-  function showResult(blob, vid, btns, msgId, base) {
-    if (results[vid]) URL.revokeObjectURL(results[vid].url);
-    const ext = extOf(blob.type), url = URL.createObjectURL(blob);
-    results[vid] = { blob, url, name: base + '.' + ext };
-    const v = $(vid); v.src = url; v.style.display = 'block'; $(btns).classList.remove('hide');
-    msg(msgId, 'Done. ' + (blob.size / 1048576).toFixed(1) + ' MB. Tap Share or save.');
+  let recorder = null, chunks = [], recMime = '';
+  async function startRec() {
+    if (deck.recording) return true;
+    const mime = pickMime(); if (!mime) { msg('saveMsg', 'This browser cannot record video. Use "Save the frames as photos" instead.', true); return false; }
+    if (st.kind === 'clip') { ensureAudio(); if (audioCtx && audioCtx.resume) await audioCtx.resume(); }
+    const stream = cv.captureStream(30);
+    if (st.kind === 'clip' && audioDest) audioDest.stream.getAudioTracks().forEach(t => stream.addTrack(t));
+    chunks = []; recMime = mime; recorder = new MediaRecorder(stream, { mimeType: mime, videoBitsPerSecond: 3500000 });
+    recorder.ondataavailable = (e) => { if (e.data && e.data.size) chunks.push(e.data); };
+    recorder.start(500); deck.recording = true; $('dkRec').setAttribute('aria-pressed', 'true'); await keepAwake(true); return true;
   }
-  async function shareOrSave(key, msgId) {
-    const r = results[key]; if (!r) return;
-    const file = new File([r.blob], r.name, { type: r.blob.type });
-    const text = $('shareMark') && $('shareMark').checked ? 'Made with nociv.co https://nociv.co' : '';
-    try { localStorage.setItem('nocivShareMark', $('shareMark').checked ? '1' : '0'); } catch (e) {}
+  function stopRec() {
+    return new Promise(res => {
+      if (!deck.recording || !recorder) return res();
+      recorder.onstop = () => { deck.recording = false; $('dkRec').setAttribute('aria-pressed', 'false'); keepAwake(false); showResult(new Blob(chunks, { type: recMime.split(';')[0] })); res(); };
+      try { recorder.stop(); } catch (e) { deck.recording = false; res(); }
+    });
+  }
+  $('dkRec').addEventListener('click', async () => {
+    buzz(20);
+    if (st.kind === 'stop' && st.cam) return;
+    if (deck.recording) { await stopRec(); return; }
+    if (await startRec()) { stageMsg(''); if (deck.mode === 'pause') setDeck('play'); }
+  });
+  let result = null;
+  function showResult(blob) {
+    if (result) URL.revokeObjectURL(result.url);
+    const ext = /mp4/.test(blob.type) ? 'mp4' : 'webm', url = URL.createObjectURL(blob);
+    result = { blob, url, name: (st.kind === 'clip' ? 'phone-animation-vhs.' : 'phone-animation.') + ext };
+    const v = $('result'); v.src = url; v.style.display = 'block'; $('resultBtns').classList.remove('hide');
+    $('progB').style.display = 'none'; $('autoBtn').disabled = false;
+    msg('saveMsg', 'Done. ' + (blob.size / 1048576).toFixed(1) + ' MB. Tap Share or save.'); showPanel('save'); $('panels').scrollTop = 9999;
+  }
+  function waitUntil(fn, maxMs) { return new Promise(res => { const t0 = performance.now(), id = setInterval(() => { if (fn() || performance.now() - t0 > maxMs) { clearInterval(id); res(); } }, 60); }); }
+  $('autoBtn').addEventListener('click', async () => {
+    if (deck.recording) return;
+    $('autoBtn').disabled = true; $('resultBtns').classList.add('hide'); $('result').style.display = 'none'; $('progB').style.display = 'block';
+    deck.auto = true; const bar = $('progB').firstChild;
+    try {
+      if (st.kind === 'clip') {
+        if (!st.clip) return; clipV.currentTime = 0; await new Promise(r => setTimeout(r, 250));
+        if (!(await startRec())) return; setDeck('play');
+        await waitUntil(() => { bar.style.width = Math.round(clipV.currentTime / clipV.duration * 100) + '%'; msg('saveMsg', 'Recording ' + clock(clipV.currentTime) + ' of ' + clock(clipV.duration) + '. Keep this page open.'); return clipV.ended || deck.mode === 'pause'; }, 400000);
+      } else {
+        const n = st.frames.length; if (n < 2) return;
+        const loops = +$('loops').value, total = loopLen() * loops; deck.p = 0; setDeck('play');
+        if (!(await startRec())) return;
+        const t0 = performance.now(), ms = total / st.fps * 1000;
+        await waitUntil(() => { const pr = Math.min(1, (performance.now() - t0) / ms); bar.style.width = Math.round(pr * 100) + '%'; msg('saveMsg', 'Recording ' + Math.round(pr * 100) + '%. Keep this page open.'); return pr >= 1; }, ms + 3000);
+        if ($('rewindOn').checked && st.look === 'vhs') { deck.p = deck.p % loopLen(); setDeck('rew'); await waitUntil(() => deck.mode !== 'rew', 6000); await new Promise(r => setTimeout(r, 500)); }
+      }
+    } finally { deck.auto = false; await stopRec(); setDeck('pause'); $('autoBtn').disabled = false; }
+  });
+  async function shareOrSave() {
+    if (!result) return; const file = new File([result.blob], result.name, { type: result.blob.type });
+    const text = $('shareMark').checked ? 'Made with nociv.co https://nociv.co' : ''; try { localStorage.setItem('nocivShareMark', $('shareMark').checked ? '1' : '0'); } catch (e) {}
     try {
       if (navigator.canShare && navigator.canShare({ files: [file], ...(text ? { text } : {}) })) { await navigator.share({ files: [file], ...(text ? { text } : {}) }); return; }
       if (navigator.canShare && navigator.canShare({ files: [file] })) { await navigator.share({ files: [file] }); return; }
     } catch (e) { if (e && e.name === 'AbortError') return; }
-    const a = document.createElement('a'); a.href = r.url; a.download = r.name; document.body.appendChild(a); a.click(); a.remove();
+    const a = document.createElement('a'); a.href = result.url; a.download = result.name; document.body.appendChild(a); a.click(); a.remove();
     if (text && navigator.clipboard) { try { await navigator.clipboard.writeText(text); } catch (e) {} }
-    msg(msgId, 'Saved to your downloads.');
+    msg('saveMsg', 'Saved to your downloads.');
   }
-  $('shareBtn').addEventListener('click', () => shareOrSave('result', 'saveMsg'));
-  $('clipShare').addEventListener('click', () => shareOrSave('clipResult', 'clipMsg'));
+  $('shareBtn').addEventListener('click', shareOrSave);
   try { if (localStorage.getItem('nocivShareMark') === '0') $('shareMark').checked = false; } catch (e) {}
-
   $('stillsBtn').addEventListener('click', async () => {
     if (!st.frames.length) { msg('saveMsg', 'No frames yet.', true); return; }
-    const [W, H] = size(), files = [];
-    const c = document.createElement('canvas'); c.width = W; c.height = H; const cc = c.getContext('2d');
-    msg('saveMsg', 'Making photos...');
-    for (let i = 0; i < st.frames.length; i++) {
-      const f = st.frames[i]; drawLooked(cc, f.img, f.img.naturalWidth, f.img.naturalHeight, W, H, i / st.fps, {});
-      files.push(new File([await canvasToBlob(c, 'image/jpeg', 0.92)], 'frame-' + two(i + 1) + '.jpg', { type: 'image/jpeg' }));
-    }
+    const [W, H] = size(), files = [], c = document.createElement('canvas'); c.width = W; c.height = H; const cc = c.getContext('2d'); msg('saveMsg', 'Making photos...');
+    for (let i = 0; i < st.frames.length; i++) { const f = st.frames[i]; drawLooked(cc, f.img, f.img.naturalWidth, f.img.naturalHeight, W, H, i / st.fps, null); files.push(new File([await canvasToBlob(c, 'image/jpeg', 0.92)], 'frame-' + two(i + 1) + '.jpg', { type: 'image/jpeg' })); }
     try { if (navigator.canShare && navigator.canShare({ files })) { await navigator.share({ files }); msg('saveMsg', ''); return; } } catch (e) { if (e && e.name === 'AbortError') return; }
     files.forEach((f, i) => setTimeout(() => { const a = document.createElement('a'); a.href = URL.createObjectURL(f); a.download = f.name; document.body.appendChild(a); a.click(); a.remove(); }, i * 250));
     msg('saveMsg', 'Saved ' + files.length + ' photos to your downloads.');
   });
 
-  // ===== VHS a video =====
-  const clipV = document.createElement('video'); clipV.playsInline = true; clipV.setAttribute('playsinline', ''); clipV.preload = 'auto';
-  let clipUrl = null, audioCtx = null, audioSrc = null, audioDest = null;
-  $('clipIn').addEventListener('change', async (e) => {
-    const file = e.target.files[0]; e.target.value = ''; if (!file) return;
-    clipStop(); st.clip = null;
-    if (clipUrl) URL.revokeObjectURL(clipUrl);
-    clipUrl = URL.createObjectURL(file); clipV.src = clipUrl;
-    try {
-      await metaOf(clipV);
-      if (clipV.duration > 300.5) { msg('clipMsg', 'That video is ' + Math.ceil(clipV.duration / 60) + ' minutes. The limit is 5. Trim it in your Photos app first.', true); return; }
-      const ar = clipV.videoWidth / clipV.videoHeight, long = 720;
-      st.clip = { w: ar >= 1 ? long : Math.round(long * ar), h: ar >= 1 ? Math.round(long / ar) : long };
-      applyClipSize();
-      $('clipPrev').disabled = false; $('clipRec').disabled = false;
-      msg('clipMsg', 'Ready. ' + clock(clipV.duration) + ' long. Tap Preview, or Record it.');
-      clipV.currentTime = 0; stageMsg(''); $('playBtn').disabled = false; renderLookThumbs();
-    } catch (err) { msg('clipMsg', 'That video would not open. If it came from your iPhone, export it as Most Compatible first (Photos, Share, Options), or pick a shorter one.', true); }
-  });
-  function applyClipSize() { if (st.clip) applySize(st.clip.w & ~1, st.clip.h & ~1); }
-  function drawClipFrame() {
-    if (!st.clip) return;
-    const W = st.clip.w & ~1, H = st.clip.h & ~1; applySize(W, H);
-    const t = st.exporting && st.recStart ? (performance.now() - st.recStart) / 1000 : clipV.currentTime;
-    drawLooked(ctx, clipV, clipV.videoWidth, clipV.videoHeight, W, H, t, {});
-    drawStamps(ctx, W, H, t, { playOsd: true });
-  }
-  function ensureAudio() {
-    if (audioCtx) return;
-    try {
-      const AC = window.AudioContext || window.webkitAudioContext; audioCtx = new AC();
-      audioSrc = audioCtx.createMediaElementSource(clipV); audioDest = audioCtx.createMediaStreamDestination();
-      audioSrc.connect(audioCtx.destination); audioSrc.connect(audioDest);
-    } catch (e) { audioCtx = null; }
-  }
-  function clipToggle() {
-    if (!st.clip) return;
-    if (st.clipPlaying) { clipStop(); return; }
-    ensureAudio(); if (audioCtx && audioCtx.resume) audioCtx.resume();
-    clipV.play().then(() => { st.clipPlaying = true; $('clipPrev').innerHTML = '&#9632; Stop'; $('playBtn').innerHTML = '&#9632; Stop'; }).catch(() => msg('clipMsg', 'Tap Preview again to start it.'));
-  }
-  function clipStop() { try { clipV.pause(); } catch (e) {} st.clipPlaying = false; $('clipPrev').innerHTML = '&#9654; Preview'; $('playBtn').innerHTML = '&#9654; Play'; }
-  $('clipPrev').addEventListener('click', clipToggle);
-  clipV.addEventListener('ended', () => { if (!st.exporting) clipStop(); });
-  $('clipRec').addEventListener('click', async () => {
-    if (!st.clip) return;
-    const mime = pickMime(); if (!mime) { msg('clipMsg', 'This browser cannot record video.', true); return; }
-    clipStop(); ensureAudio(); if (audioCtx && audioCtx.resume) await audioCtx.resume();
-    const stream = cv.captureStream(30);
-    if (audioDest) audioDest.stream.getAudioTracks().forEach(t => stream.addTrack(t));
-    const chunks = [], rec = new MediaRecorder(stream, { mimeType: mime, videoBitsPerSecond: 3000000 });
-    rec.ondataavailable = (e) => { if (e.data && e.data.size) chunks.push(e.data); };
-    const stopped = new Promise(r => { rec.onstop = r; });
-    st.exporting = true; $('clipRec').disabled = true; $('clipPrev').disabled = true; $('progC').style.display = 'block'; $('clipResult').style.display = 'none'; $('clipBtns').classList.add('hide');
-    await keepAwake(true);
-    clipV.currentTime = 0; await new Promise(r => setTimeout(r, 200));
-    st.recStart = performance.now(); rec.start(500);
-    let ended = false; clipV.onended = () => { ended = true; };
-    try { await clipV.play(); } catch (e) { msg('clipMsg', 'The phone blocked playback. Tap Record it again.', true); }
-    let lastC = 0;
-    st.exportTick = (now) => {
-      if (now - lastC < 33) return; lastC = now; // about 30 a second keeps long videos smooth
-      drawClipFrame();
-      const p = clipV.duration ? clipV.currentTime / clipV.duration : 0;
-      $('progC').firstChild.style.width = Math.round(p * 100) + '%';
-      msg('clipMsg', 'Recording ' + clock(clipV.currentTime) + ' of ' + clock(clipV.duration) + '. Keep this page open.');
-      if (ended || clipV.ended) { st.exportTick = null; rec.stop(); }
-    };
-    await stopped; st.exporting = false; st.recStart = 0; clipV.onended = null; await keepAwake(false);
-    $('clipRec').disabled = false; $('clipPrev').disabled = false; $('progC').style.display = 'none';
-    showResult(new Blob(chunks, { type: mime.split(';')[0] }), 'clipResult', 'clipBtns', 'clipMsg', 'phone-animation-vhs');
-    clipStop();
-  });
-
-  // ===== keep your frames if the page reloads =====
+  // ===================== KEEP FRAMES IF THE PAGE RELOADS =====================
   const DB = 'nocivPhoneAnim';
   function openDb() { return new Promise((res, rej) => { try { const r = indexedDB.open(DB, 1); r.onupgradeneeded = () => r.result.createObjectStore('s'); r.onsuccess = () => res(r.result); r.onerror = () => rej(r.error); } catch (e) { rej(e); } }); }
   let saveTimer = null;
-  function queueSave() { clearTimeout(saveTimer); saveTimer = setTimeout(async () => {
-    try { const db = await openDb(); const tx = db.transaction('s', 'readwrite');
-      tx.objectStore('s').put({ aspect: st.aspect, fps: st.fps, mode: st.mode, look: st.look, strength: st.strength, blobs: st.frames.map(f => f.blob) }, 'main'); } catch (e) {}
-  }, 600); }
+  function queueSave() { clearTimeout(saveTimer); saveTimer = setTimeout(async () => { try { const db = await openDb(); db.transaction('s', 'readwrite').objectStore('s').put({ aspect: st.aspect, fps: st.fps, mode: st.mode, blobs: st.frames.map(f => f.blob) }, 'main'); } catch (e) {} }, 600); }
   (async function restore() {
     try {
       const db = await openDb(), data = await new Promise((res, rej) => { const q = db.transaction('s').objectStore('s').get('main'); q.onsuccess = () => res(q.result); q.onerror = () => rej(q.error); });
@@ -869,12 +770,11 @@
       document.querySelectorAll('#modes .chip').forEach(x => x.setAttribute('aria-pressed', x.dataset.m === st.mode ? 'true' : 'false'));
       $('fps').value = st.fps; $('fpsVal').textContent = st.fps + ' frames a second';
       for (const b of data.blobs) st.frames.push(await loadImg(b));
-      st.sel = st.frames.length - 1; refreshUI(); renderStill(); updateKeep();
+      st.sel = st.frames.length - 1; refreshUI(); updateKeep();
     } catch (e) {}
   })();
-
-  refreshUI(); renderStill(); updateKeep();
-  window.__pa = st; // handy for testing
+  updateKeep();
+  window.__pa = st; window.__deck = deck;
 })();
 </script>
 </body>
