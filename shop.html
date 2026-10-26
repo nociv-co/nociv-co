@@ -1402,6 +1402,17 @@
       actionEl.appendChild(btn);
     }
 
+    // 1 of 1s: ask for a repeat right from the popup too.
+    if (p.status === 'for_sale' && p.stage === 'one_of_one') {
+      const vb = document.createElement('button');
+      vb.className = 'card-action ' + (alreadyVoted ? 'voted' : 'vote');
+      vb.style.marginTop = '8px';
+      vb.textContent = (alreadyVoted ? 'You asked for more \u2713' : 'Make more of this') + ' (' + (voteCount || 0) + ')';
+      if (alreadyVoted) vb.disabled = true;
+      vb.addEventListener('click', () => onVote(vb));
+      actionEl.appendChild(vb);
+    }
+
     modalOverlay.classList.add('show');
   }
 
