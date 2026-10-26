@@ -1340,7 +1340,7 @@
     badgeEl.className = 'product-modal-badge ' + (p.status === 'for_sale' ? 'for-sale' : 'coming-soon');
 
     document.getElementById('productModalName').textContent = p.name;
-    document.getElementById('productModalMeta').textContent = p.category;
+    document.getElementById('productModalMeta').textContent = p.category + (bundleTag(p) ? ' · ' + bundleTag(p) + ' with any full piece' : '');
 
     const descEl = document.getElementById('productModalDescription');
     if (p.description) {
@@ -1492,6 +1492,8 @@
     } catch (e) {}
     return list;
   }
+  let BUNDLE_DEAL = null;
+  function bundleTag(p) { return (p && p.bundle_kind && BUNDLE_DEAL) ? BUNDLE_DEAL.size + ' for $' + BUNDLE_DEAL.price.toFixed(2) : ''; }
   async function loadBundleDeal() {
     try {
       const { data } = await supabaseClient.from('bundle_settings_public').select('key, value');
@@ -1735,9 +1737,9 @@
     const code = readCode();
     const shipCost = ship.byWeight ? rateFor(oz, ship.rates) : ship.flat;
     const codeFree = code && code.kind === 'free_shipping';
-    const free = codeFree || ship.freeAll || (ship.freeOver !== null && ship.freeOver > 0 && subtotal >= ship.freeOver);
+    const free = codeFree || ship.freeAll || (ship.freeOver !== null && ship.freeOver > 0 && subtotal - bnd.off >= ship.freeOver);
     const shipText = free ? 'Free' : '$' + shipCost.toFixed(2);
-    const toFree = (!free && ship.freeOver) ? ship.freeOver - subtotal : 0;
+    const toFree = (!free && ship.freeOver) ? ship.freeOver - (subtotal - bnd.off) : 0;
     const belowMin = code && code.min && subtotal < code.min;
     let off = 0;
     if (code && !belowMin && code.kind === 'percent') off = Math.round(subtotal * Number(code.value)) / 100;
@@ -1928,6 +1930,8 @@
       await addMto(allProducts);
       await addSale(allProducts);
       await addStage(allProducts);
+      await addBundle(allProducts);
+      BUNDLE_DEAL = await loadBundleDeal();
       showFreeShipBar();
 
       // Sizes live in their own table: one fetch for every product on this
@@ -1999,7 +2003,7 @@
         card.innerHTML = `
           <div class="card-media">
             ${mediaHtml}
-            ${p.status === 'for_sale' ? (p.made_to_order ? '<div class="card-badge made-to-order">Made to order</div>' : (STAGE_BADGE[p.stage] ? '<div class="card-badge stage">' + STAGE_BADGE[p.stage] + '</div>' : '')) : '<div class="card-badge coming-soon">Vote to make it</div>'}
+            ${p.status === 'for_sale' ? (p.made_to_order ? '<div class="card-badge made-to-order">Made to order</div>' : (STAGE_BADGE[p.stage] ? '<div class="card-badge stage">' + STAGE_BADGE[p.stage] + '</div>' : (bundleTag(p) ? '<div class="card-badge stage">' + bundleTag(p) + '</div>' : ''))) : '<div class="card-badge coming-soon">Vote to make it</div>'}
           </div>
           <div class="card-body">
             <div class="card-name">${escAttr(p.name)}</div>
