@@ -133,11 +133,11 @@
   .pvscreen { position: relative; width: min(58vw, 250px); aspect-ratio: 4 / 5; border: 3px solid var(--ink); border-radius: 14px; overflow: hidden; background: #000; box-shadow: 0 4px 0 var(--ink); touch-action: pan-y; cursor: pointer; }
   .pvscreen canvas, .pvscreen video { width: 100%; height: 100%; display: block; object-fit: cover; }
   .pv-num { position: absolute; right: 8px; bottom: 8px; background: var(--red); color: #fff; font-weight: 900; border-radius: 8px; padding: 2px 9px; font-size: 0.9rem; }
-  .mode-name { text-align: center; font-weight: 900; font-size: 1.5rem; letter-spacing: 0.06em; }
+  .mode-name { text-align: center; margin-top: 4px; font-weight: 900; font-size: 1.5rem; letter-spacing: 0.06em; }
   .mode-desc { text-align: center; margin: 6px 4px 12px !important; font-size: 0.9rem !important; line-height: 1.4; min-height: 3.9em; }
   .go { display: block; width: 100%; border: 2.5px solid var(--ink); background: var(--red); color: #fff; border-radius: 14px; padding: 14px; font-weight: 900; font-size: 1.15rem; letter-spacing: 0.08em; box-shadow: 0 3px 0 var(--ink); }
   .go:active { transform: translateY(3px); box-shadow: none; }
-  .mtabs { display: grid; grid-template-columns: repeat(4, 1fr); gap: 7px; margin: 14px 0 12px; }
+  .mtabs { display: grid; grid-template-columns: repeat(4, 1fr); gap: 7px; margin: 18px 0 16px; }
   .mtabs button { border: 2px solid var(--ink); background: #fff; border-radius: 12px; padding: 8px 2px; font-weight: 900; font-size: 0.72rem; letter-spacing: 0.05em; display: flex; flex-direction: column; align-items: center; gap: 2px; }
   .mtabs button i { font-style: normal; font-size: 1.05rem; }
   .mtabs button[aria-pressed="true"] { background: var(--ink); color: #fff; }
@@ -182,15 +182,10 @@
 <div class="start" id="start">
   <div class="start-in">
     <div class="st-top"><h1><span>PHONE</span> ANIMATION</h1><div class="st-sub">BUILD SOMETHING</div></div>
-    <div class="carousel">
-      <button type="button" class="arrow" id="prevMode" aria-label="Previous">&#9664;</button>
-      <div class="pvscreen" id="pvScreen"><canvas id="pv" width="280" height="350"></canvas><video id="pvVid" class="hide" muted loop playsinline></video><span class="pv-num" id="pvNum">1</span></div>
-      <button type="button" class="arrow" id="nextMode" aria-label="Next">&#9654;</button>
-    </div>
+    <div class="mtabs" id="modeTabs"></div>
     <div class="mode-name" id="modeName"></div>
     <p class="mode-desc" id="modeDesc"></p>
     <button type="button" class="go" id="goBtn">START</button>
-    <div class="mtabs" id="modeTabs"></div>
     <button type="button" class="pick again hide" id="pickKeep"><b>Keep working</b><small id="keepInfo"></small></button>
     <p class="foot">A free tool from <a href="https://nociv.co" target="_top">NOCIV.CO</a>. Nothing tracked. Nothing leaves your phone.</p>
   </div>
@@ -1541,63 +1536,25 @@
   function openCharCreator() { chrUI.tab = 'face'; chrUI.cat = 'start'; chr.t = 0; chr.cur = null; renderTabs(); renderRail(); renderGrid(); refreshCharUI(); }
 
   // ===================== FIRST PAGE: flip through what you can build =====================
-  const PREVIEW_VIDEOS = { stop: '', clip: '', board: '', char: '' }; // drop a screen recording path in here and it plays instead of the drawing
   const MODES = [
     { key: 'stop', name: 'STOP MOTION', tab: 'STOP', desc: 'Shoot frames with your camera, or use photos and a video. Then run it through the tape deck.' },
     { key: 'clip', name: 'VHS BUILDER', tab: 'VHS', desc: 'Pick a video from your camera roll. Rewind, fast forward and pause it like a real camcorder tape, then record it.' },
     { key: 'board', name: 'BILLBOARD', tab: 'SIGN', desc: 'Put 2 to 5 photos on a spinning trivision sign. Add words like a real ad. Pick the scene behind it.' },
     { key: 'char', name: 'CHARACTER', tab: 'CHAR', desc: 'Build a blocky character like a Mii. Make it walk, sing or dance as a hologram or a PS1 game.' },
   ];
-  let mi = 0, pvStart = performance.now();
-  const pv = $('pv'), pvx = pv.getContext('2d');
-  function pvStop(t) {
-    const W = pv.width, H = pv.height; pvx.fillStyle = '#1c1c1c'; pvx.fillRect(0, 0, W, H);
-    const i = Math.floor(t * 6) % 8, pos = (k) => [W * 0.14 + k * W * 0.1, H * 0.62 - Math.sin(k / 7 * Math.PI) * H * 0.3];
-    for (let g = 2; g >= 0; g--) { const k = (i - g + 8) % 8, p = pos(k); pvx.globalAlpha = g === 0 ? 1 : 0.22 / g; pvx.fillStyle = '#cfe59a'; pvx.beginPath(); pvx.arc(p[0], p[1], W * 0.07, 0, 6.3); pvx.fill(); }
-    pvx.globalAlpha = 1; pvx.fillStyle = '#444'; pvx.fillRect(0, H * 0.7, W, 2);
-    for (let k = 0; k < 8; k++) { pvx.fillStyle = k === i ? '#c8412f' : '#3a3a3a'; pvx.fillRect(W * 0.06 + k * W * 0.115, H * 0.86, W * 0.09, H * 0.08); }
-    stampText(pvx, '● REC', W * 0.05, H * 0.04, W * 0.07, '#ff5a4a');
-  }
-  function pvClip(t) {
-    const W = pv.width, H = pv.height, g = pvx.createLinearGradient(0, 0, 0, H); g.addColorStop(0, '#e0457b'); g.addColorStop(0.6, '#ffb25a'); g.addColorStop(1, '#2b1b6d'); pvx.fillStyle = g; pvx.fillRect(0, 0, W, H);
-    pvx.fillStyle = '#fff06a'; pvx.beginPath(); pvx.arc(W * (0.2 + (t * 0.05) % 0.6), H * 0.45, W * 0.12, 0, 6.3); pvx.fill(); pvx.fillStyle = '#1a1030'; pvx.beginPath(); pvx.moveTo(0, H); pvx.lineTo(0, H * 0.7); pvx.lineTo(W * 0.3, H * 0.55); pvx.lineTo(W * 0.6, H * 0.72); pvx.lineTo(W, H * 0.6); pvx.lineTo(W, H); pvx.fill();
-    pvx.fillStyle = 'rgba(0,0,0,.22)'; for (let y = 0; y < H; y += 4) pvx.fillRect(0, y, W, 2);
-    const ph = (t % 4) / 4; if (ph < 0.18) { const y = (ph / 0.18) * H; for (let x = 0; x < W; x += 3) { pvx.fillStyle = 'rgba(255,255,255,' + Math.random() * 0.8 + ')'; pvx.fillRect(x, y, 3, H * 0.05); } }
-    stampText(pvx, ph < 0.18 ? '▶▶ FF' : '▶ PLAY', W * 0.05, H * 0.04, W * 0.07, '#fff'); stampText(pvx, clock(t), W * 0.95, H * 0.04, W * 0.07, '#fff', 'right');
-  }
-  const pvPost = [['#1a1a1a', '#f2ecd6', 'NOW OPEN'], ['#ffd400', '#111', 'FRESH'], ['#c8412f', '#fff', 'NOCIV']].map(([bg, fg, tx]) => { const c = document.createElement('canvas'); c.width = 240; c.height = 120; const x = c.getContext('2d'); x.fillStyle = bg; x.fillRect(0, 0, 240, 120); x.fillStyle = fg; x.font = '400 54px ' + HEAD_FONT; x.textAlign = 'center'; x.textBaseline = 'middle'; x.fillText(tx, 120, 62); return c; });
-  function pvBoard(t) {
-    const W = pv.width, H = pv.height, g = pvx.createLinearGradient(0, 0, 0, H); g.addColorStop(0, '#6fb8f0'); g.addColorStop(1, '#dff1ff'); pvx.fillStyle = g; pvx.fillRect(0, 0, W, H);
-    pvx.fillStyle = '#8e8a7b'; pvx.fillRect(0, H * 0.85, W, H * 0.15); pvx.fillStyle = '#4a4d52'; pvx.fillRect(W * 0.3, H * 0.55, W * 0.04, H * 0.3); pvx.fillRect(W * 0.66, H * 0.55, W * 0.04, H * 0.3);
-    const r = { x: W * 0.06, y: H * 0.2, w: W * 0.88, h: W * 0.88 / 2 }, T = 3, k = Math.floor(t / T), u = t - k * T, p = u < 2 ? 0 : (u - 2), a = pvPost[k % 3], b = pvPost[(k + 1) % 3], N = 14;
-    pvx.fillStyle = '#26282c'; pvx.fillRect(r.x - 5, r.y - 5, r.w + 10, r.h + 10);
-    for (let i = 0; i < N; i++) {
-      const x0 = r.x + i * r.w / N, sw = r.w / N, sx = i * 240 / N, q = Math.min(1, Math.max(0, p * 1.35 - i / N * 0.35)), e = q < 0.5 ? 4 * q * q * q : 1 - Math.pow(-2 * q + 2, 3) / 2, phi = e * 2.0944;
-      const cA = Math.max(0, Math.cos(phi)), cB = Math.max(0, Math.cos(phi - 2.0944)), sum = cA + cB || 1, wB = sw * cB / sum, wA = sw - wB;
-      if (wB > 0.2) pvx.drawImage(b, sx, 0, 240 / N, 120, x0, r.y, wB, r.h); if (wA > 0.2) pvx.drawImage(a, sx, 0, 240 / N, 120, x0 + wB, r.y, wA, r.h);
-    }
-  }
-  function pvChar(t) { const W = pv.width, H = pv.height; renderChar(pvx, W, H, chr.A, t, { style: 'holo', holo: 'cyan', bg: 'city', floor: 'grid', pix: 3, move: 'dance', view: { yaw: 18, cy: 2.2, d: 5.6 } }); }
-  const PVF = { stop: pvStop, clip: pvClip, board: pvBoard, char: pvChar };
+  let mi = 0;
   function showMode(i) {
-    mi = (i + MODES.length) % MODES.length; const m = MODES[mi]; pvStart = performance.now();
-    $('modeName').textContent = m.name; $('modeDesc').textContent = m.desc; $('pvNum').textContent = mi + 1;
+    mi = (i + MODES.length) % MODES.length; const m = MODES[mi];
+    $('modeName').textContent = m.name; $('modeDesc').textContent = m.desc;
     document.querySelectorAll('#modeTabs button').forEach((b, k) => b.setAttribute('aria-pressed', k === mi ? 'true' : 'false'));
-    const vid = $('pvVid'), src = PREVIEW_VIDEOS[m.key]; if (src) { vid.src = src; vid.classList.remove('hide'); pv.classList.add('hide'); vid.play().catch(() => {}); } else { vid.classList.add('hide'); pv.classList.remove('hide'); try { vid.pause(); } catch (e) {} }
   }
   MODES.forEach((m, i) => { const b = document.createElement('button'); b.type = 'button'; b.innerHTML = '<i>' + (i + 1) + '</i>' + m.tab; b.addEventListener('click', () => { buzz(8); showMode(i); }); $('modeTabs').appendChild(b); });
-  $('prevMode').addEventListener('click', () => { buzz(8); showMode(mi - 1); });
-  $('nextMode').addEventListener('click', () => { buzz(8); showMode(mi + 1); });
-  let sw0 = null; const scr = $('pvScreen');
-  scr.addEventListener('pointerdown', (e) => { sw0 = e.clientX; });
-  scr.addEventListener('pointerup', (e) => { if (sw0 === null) return; const dx = e.clientX - sw0; sw0 = null; if (Math.abs(dx) > 40) { buzz(8); showMode(mi + (dx < 0 ? 1 : -1)); } else goMode(); });
   function goMode() {
     const k = MODES[mi].key;
     if (k === 'board') startKind('board'); else if (k === 'char') startKind('char');
     else if (k === 'stop') { startKind('stop'); if (st.cam && !st.camVideo) startCam(); } else { startKind('clip'); $('clipIn').click(); }
   }
   $('goBtn').addEventListener('click', goMode);
-  (function pvLoop() { requestAnimationFrame(pvLoop); if (st.kind || $('start').classList.contains('hide') || PREVIEW_VIDEOS[MODES[mi].key]) return; const t = (performance.now() - pvStart) / 1000; if (Math.floor(t * 20) === pvLoop.l) return; pvLoop.l = Math.floor(t * 20); PVF[MODES[mi].key](t); })();
   showMode(0);
 
   // ===================== KEEP FRAMES IF THE PAGE RELOADS =====================

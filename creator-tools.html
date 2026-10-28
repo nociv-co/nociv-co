@@ -40,7 +40,10 @@
   .tool-grid.flip .tool-card.feat .tool-art svg { height: 170px; min-height: 0; }
   .tool-grid.flip .tool-card.feat .tool-body { padding: 14px 16px 16px; justify-content: flex-start; }
   .tool-grid.flip .tool-card.feat .tool-name { font-size: 1.15rem; }
-  .tool-art video { display: block; width: 100%; height: 170px; object-fit: cover; }
+  .flip-preview { max-width: 560px; margin: 16px auto 0; padding: 0 30px; }
+  .flip-preview[hidden] { display: none; }
+  .flip-preview span { display: block; font-weight: 900; letter-spacing: .12em; font-size: 0.72rem; margin-bottom: 6px; }
+  .flip-preview video { display: block; width: 100%; max-height: 50svh; border: 3px solid #1a1a1a; border-radius: 6px; background: #000; }
   @keyframes flipIn { from { opacity: 0; transform: translateX(var(--from, 24px)); } to { opacity: 1; } }
   .flip-arrow { position: absolute; top: 96px; width: 46px; height: 70px; border: 3px solid #1a1a1a; background: #f2ecd6; color: #1a1a1a; font-size: 1.6rem; font-weight: 900; line-height: 1; padding: 0; cursor: pointer; box-shadow: 0 3px 0 #1a1a1a; z-index: 2; border-radius: 6px; }
   .flip-arrow.prev { left: 0; } .flip-arrow.next { right: 0; }
@@ -55,7 +58,7 @@
     .build-points { flex-direction: row; flex-wrap: wrap; gap: 4px 14px; margin: 0; }
     .build-points li { font-size: 0.8rem; }
     .build-lede { display: none; }
-    .tool-grid.flip .tool-art svg, .tool-grid.flip .tool-art img, .tool-art video { height: 130px; }
+    .tool-grid.flip .tool-art svg, .tool-grid.flip .tool-art img { height: 130px; }
     .tool-grid.flip .tool-card.feat .tool-art svg { height: 130px; }
     .flip-arrow { top: 66px; }
     .tool-body { padding: 12px 14px 14px; gap: 6px; }
@@ -149,7 +152,7 @@
   <div class="builder-iframe-container" style="padding-top:0;">
     <iframe
       class="builder-iframe light"
-      src="https://nociv-co.github.io/nociv-clothing-builder/clothing-builder.html"
+      data-src="https://nociv-co.github.io/nociv-clothing-builder/clothing-builder.html"
       title="NOCIV Cut and Sew, clothing patterns"
       allow="web-share; fullscreen">
     </iframe>
@@ -171,7 +174,7 @@
     </div>
 
     <iframe
-      src="https://nociv-co.github.io/nociv-zine-builder/"
+      data-src="https://nociv-co.github.io/nociv-zine-builder/"
       class="builder-iframe light"
       title="NOCIV Zine Builder"
       allow="web-share; clipboard-write; fullscreen">
@@ -194,11 +197,10 @@
     </div>
 
     <iframe
-      src="qr/"
+      data-src="qr/"
       class="builder-iframe light"
       title="NOCIV QR Maker"
-      allow="web-share; clipboard-write; fullscreen"
-      loading="lazy">
+      allow="web-share; clipboard-write; fullscreen">
     </iframe>
   </div>
 </div>
@@ -218,11 +220,10 @@
     </div>
 
     <iframe
-      src="stencil/"
+      data-src="stencil/"
       class="builder-iframe"
       title="NOCIV Stencil and Halftone"
-      allow="web-share; fullscreen"
-      loading="lazy">
+      allow="web-share; fullscreen">
     </iframe>
   </div>
 </div>
@@ -242,11 +243,10 @@
     </div>
 
     <iframe
-      src="phone-animations/"
+      data-src="phone-animations/"
       class="builder-iframe"
       title="NOCIV Phone Animations"
-      allow="web-share; fullscreen; camera"
-      loading="lazy">
+      allow="web-share; fullscreen; camera">
     </iframe>
   </div>
 </div>
@@ -266,11 +266,10 @@
     </div>
 
     <iframe
-      src="card/"
+      data-src="card/"
       class="builder-iframe light"
       title="NOCIV Cards and Flyers"
-      allow="web-share; fullscreen"
-      loading="lazy">
+      allow="web-share; fullscreen">
     </iframe>
   </div>
 </div>
@@ -284,7 +283,8 @@
     card.addEventListener('click', () => {
       hubWrap.style.display = 'none';
       document.querySelectorAll('.subpanel').forEach(p => p.classList.remove('show'));
-      document.getElementById(card.dataset.panel).classList.add('show');
+      const pnl = document.getElementById(card.dataset.panel); pnl.classList.add('show');
+      pnl.querySelectorAll('iframe[data-src]').forEach(f => { f.src = f.dataset.src; f.removeAttribute('data-src'); });
       window.scrollTo({ top: 0, behavior: 'smooth' });
     });
   });
@@ -296,17 +296,16 @@
     const mk = (cls, label, txt) => { const b = document.createElement('button'); b.type = 'button'; b.className = 'flip-arrow ' + cls; b.setAttribute('aria-label', label); b.innerHTML = txt; return b; };
     const prev = mk('prev', 'Previous tool', '&#9664;'), next = mk('next', 'Next tool', '&#9654;'); wrap.appendChild(prev); wrap.appendChild(next);
     const tabs = document.createElement('div'); tabs.className = 'flip-tabs'; wrap.after(tabs);
-    const hint = document.createElement('p'); hint.className = 'flip-hint'; hint.textContent = 'Swipe or tap a number. Tap the card to open it.'; tabs.after(hint);
+    const pvBox = document.createElement('div'); pvBox.className = 'flip-preview'; pvBox.hidden = true; pvBox.innerHTML = '<span>PREVIEW</span>'; tabs.after(pvBox);
+    const hint = document.createElement('p'); hint.className = 'flip-hint'; hint.textContent = 'Swipe or tap a number. Tap the card to open it.'; pvBox.after(hint);
     let cur = 0; try { cur = Math.min(cards.length - 1, Math.max(0, +sessionStorage.getItem('toolIdx') || 0)); } catch (e) {}
-    // a screen recording on a card: add data-preview="path.mp4" and it plays when that number is picked
-    function mount(card, on) {
-      const src = card.dataset.preview, art = card.querySelector('.tool-art'); if (!src || !art) return;
-      let v = art.querySelector('video');
-      if (on && !v) { v = document.createElement('video'); v.src = src; v.muted = true; v.loop = true; v.playsInline = true; v.setAttribute('playsinline', ''); v.autoplay = true; art.appendChild(v); const svg = art.querySelector('svg, img'); if (svg) svg.style.display = 'none'; v.play().catch(() => {}); }
-      else if (!on && v) { v.remove(); const svg = art.querySelector('svg, img'); if (svg) svg.style.display = ''; }
+    // a screen recording for a tool: add data-preview="path.mp4" on its card and it plays under the numbers when that number is picked
+    function preview(card) {
+      const old = pvBox.querySelector('video'); if (old) old.remove(); const src = card.dataset.preview; pvBox.hidden = !src; if (!src) return;
+      const v = document.createElement('video'); v.src = src; v.muted = true; v.loop = true; v.playsInline = true; v.setAttribute('playsinline', ''); v.autoplay = true; pvBox.appendChild(v); v.play().catch(() => {});
     }
     function show(i, dir) {
-      i = (i + cards.length) % cards.length; cards.forEach((c, k) => { c.classList.toggle('on', k === i); mount(c, k === i); });
+      i = (i + cards.length) % cards.length; cards.forEach((c, k) => { c.classList.toggle('on', k === i); }); preview(cards[i]);
       if (dir) cards[i].style.setProperty('--from', (dir > 0 ? 28 : -28) + 'px');
       tabs.querySelectorAll('button').forEach((b, k) => b.setAttribute('aria-pressed', k === i ? 'true' : 'false')); cur = i;
       try { sessionStorage.setItem('toolIdx', i); } catch (e) {}
