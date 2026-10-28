@@ -123,19 +123,76 @@
   .tools button i { display: block; font-style: normal; font-size: 1.15rem; line-height: 1.2; }
   .tools button[aria-selected="true"] { color: var(--ink); box-shadow: inset 0 3px 0 var(--red); }
   .tools button.gone { display: none; }
+
+  /* ---------- first page carousel ---------- */
+  .st-top { text-align: center; }
+  .st-sub { margin-top: 8px; display: inline-block; font-weight: 900; letter-spacing: 0.12em; font-size: 0.78rem; border: 2px solid var(--ink); border-radius: 999px; padding: 3px 12px; background: #fff; transform: rotate(-1deg); }
+  .carousel { display: flex; align-items: center; justify-content: center; gap: 6px; margin: 16px 0 10px; }
+  .arrow { flex: none; width: 46px; height: 74px; border: 2.5px solid var(--ink); background: #fff; border-radius: 14px; font-size: 1.5rem; font-weight: 900; box-shadow: 0 3px 0 var(--ink); }
+  .arrow:active { transform: translateY(3px); box-shadow: none; background: var(--ink); color: #fff; }
+  .pvscreen { position: relative; width: min(58vw, 250px); aspect-ratio: 4 / 5; border: 3px solid var(--ink); border-radius: 14px; overflow: hidden; background: #000; box-shadow: 0 4px 0 var(--ink); touch-action: pan-y; cursor: pointer; }
+  .pvscreen canvas, .pvscreen video { width: 100%; height: 100%; display: block; object-fit: cover; }
+  .pv-num { position: absolute; right: 8px; bottom: 8px; background: var(--red); color: #fff; font-weight: 900; border-radius: 8px; padding: 2px 9px; font-size: 0.9rem; }
+  .mode-name { text-align: center; font-weight: 900; font-size: 1.5rem; letter-spacing: 0.06em; }
+  .mode-desc { text-align: center; margin: 6px 4px 12px !important; font-size: 0.9rem !important; line-height: 1.4; min-height: 3.9em; }
+  .go { display: block; width: 100%; border: 2.5px solid var(--ink); background: var(--red); color: #fff; border-radius: 14px; padding: 14px; font-weight: 900; font-size: 1.15rem; letter-spacing: 0.08em; box-shadow: 0 3px 0 var(--ink); }
+  .go:active { transform: translateY(3px); box-shadow: none; }
+  .mtabs { display: grid; grid-template-columns: repeat(4, 1fr); gap: 7px; margin: 14px 0 12px; }
+  .mtabs button { border: 2px solid var(--ink); background: #fff; border-radius: 12px; padding: 8px 2px; font-weight: 900; font-size: 0.72rem; letter-spacing: 0.05em; display: flex; flex-direction: column; align-items: center; gap: 2px; }
+  .mtabs button i { font-style: normal; font-size: 1.05rem; }
+  .mtabs button[aria-pressed="true"] { background: var(--ink); color: #fff; }
+
+  /* ---------- character creator ---------- */
+  .creator { display: none; }
+  .app.is-char:not(.is-create) .creator { display: none; }
+  .app.is-create { display: grid; grid-template-columns: 40% 1fr; grid-template-rows: auto auto minmax(0, 1fr) auto auto; column-gap: 8px; }
+  .app.is-create .hdr { grid-column: 1 / -1; grid-row: 1; }
+  .app.is-create .vf { grid-column: 1; grid-row: 2; min-height: 0; padding: 0 0 0 10px; }
+  .app.is-create .vf .stage { height: auto; align-self: start; }
+  .app.is-create #looks .chip { padding: 5px 9px; font-size: 0.68rem; }
+  .app.is-create .vf canvas { max-height: 100%; max-width: 100%; }
+  .app.is-create #looks { grid-column: 1; grid-row: 3; align-self: start; flex-wrap: wrap; overflow: visible; padding: 6px 0 0 10px; }
+  .app.is-create #looks .lbl { width: 100%; }
+  .app.is-create .creator { display: flex; flex-direction: column; grid-column: 2; grid-row: 2 / 4; min-height: 0; padding-right: 10px; }
+  .app.is-create .info { grid-column: 1 / -1; grid-row: 4; }
+  .app.is-create .tools { grid-column: 1 / -1; grid-row: 5; }
+  .app.is-create .panels, .app.is-create .tl { display: none; }
+  .ctabs { flex: none; display: grid; grid-template-columns: repeat(4, 1fr); gap: 4px; }
+  .ctabs button { border: 2px solid var(--ink); background: #fff; border-radius: 9px 9px 0 0; padding: 7px 0; font-weight: 900; font-size: 0.62rem; letter-spacing: 0.03em; }
+  .ctabs button[aria-pressed="true"] { background: var(--ink); color: #fff; }
+  .cbody { flex: 1; min-height: 0; display: flex; border: 2px solid var(--ink); background: var(--note); border-radius: 0 0 10px 10px; overflow: hidden; }
+  .crail { flex: none; width: 56px; overflow-y: auto; border-right: 2px solid var(--ink); background: #fff; overscroll-behavior: contain; touch-action: pan-y; }
+  .crail button { display: block; width: 100%; border: 0; border-bottom: 1.5px solid #ccc; background: transparent; padding: 11px 2px; font-weight: 900; font-size: 0.56rem; letter-spacing: 0.02em; line-height: 1.15; }
+  .crail button[aria-pressed="true"] { background: var(--red); color: #fff; }
+  .cgrid { flex: 1; overflow-y: auto; padding: 6px; display: grid; grid-template-columns: repeat(auto-fill, minmax(50px, 1fr)); gap: 6px; align-content: start; overscroll-behavior: contain; touch-action: pan-y; }
+  .cgrid.colors { grid-template-columns: repeat(3, 1fr); }
+  .cgrid .opt { border: 2px solid var(--ink); background: #fff; border-radius: 9px; padding: 0; overflow: hidden; display: flex; flex-direction: column; }
+  .cgrid .opt canvas { width: 100%; aspect-ratio: 1; display: block; }
+  .cgrid .opt span { font-size: 0.54rem; font-weight: 800; padding: 2px 0 3px; background: #fff; }
+  .cgrid .opt[aria-pressed="true"] { border-color: var(--red); box-shadow: 0 0 0 2px var(--red); }
+  .cgrid .sw { aspect-ratio: 1; border: 2px solid var(--ink); border-radius: 9px; }
+  .cgrid .sw[aria-pressed="true"] { outline: 3px solid var(--red); outline-offset: 1px; }
+  .cfoot { flex: none; padding-top: 6px; }
+  .cfoot button { width: 100%; border: 2px solid var(--ink); background: #fff; border-radius: 9px; padding: 8px; font-weight: 900; font-size: 0.74rem; letter-spacing: 0.05em; }
+  .cfoot button:active { background: var(--ink); color: #fff; }
 </style>
 </head>
 <body>
 
 <div class="start" id="start">
   <div class="start-in">
-    <h1><span>PHONE</span> ANIMATIONS</h1>
-    <p>A tape deck for your phone. Nothing leaves your phone.</p>
-    <button type="button" class="pick" id="pickStop"><b>Stop motion</b><small>Shoot frames with your camera, or use photos and a video. Then run it through the tape deck.</small></button>
-    <button type="button" class="pick alt" id="pickClip"><b>VHS a video</b><small>Pick a video from your camera roll, up to 5 minutes. Rewind it, fast forward it, pause it like a real camcorder tape, and record it.</small></button>
-    <button type="button" class="pick board" id="pickBoard"><b>Billboard</b><small>Put 2 to 5 photos on a spinning trivision sign. Add words like a real ad. Pick the scene behind it.</small></button>
+    <div class="st-top"><h1><span>PHONE</span> ANIMATION</h1><div class="st-sub">BUILD SOMETHING</div></div>
+    <div class="carousel">
+      <button type="button" class="arrow" id="prevMode" aria-label="Previous">&#9664;</button>
+      <div class="pvscreen" id="pvScreen"><canvas id="pv" width="280" height="350"></canvas><video id="pvVid" class="hide" muted loop playsinline></video><span class="pv-num" id="pvNum">1</span></div>
+      <button type="button" class="arrow" id="nextMode" aria-label="Next">&#9654;</button>
+    </div>
+    <div class="mode-name" id="modeName"></div>
+    <p class="mode-desc" id="modeDesc"></p>
+    <button type="button" class="go" id="goBtn">START</button>
+    <div class="mtabs" id="modeTabs"></div>
     <button type="button" class="pick again hide" id="pickKeep"><b>Keep working</b><small id="keepInfo"></small></button>
-    <p class="foot">A free tool from <a href="https://nociv.co" target="_top">NOCIV.CO</a>. Nothing tracked.</p>
+    <p class="foot">A free tool from <a href="https://nociv.co" target="_top">NOCIV.CO</a>. Nothing tracked. Nothing leaves your phone.</p>
   </div>
 </div>
 
@@ -148,6 +205,11 @@
   </header>
 
   <div class="vf"><div class="stage"><canvas id="cv" width="540" height="960"></canvas><div id="stageMsg"></div></div></div>
+  <section class="creator" id="creator" aria-label="Character creator">
+    <div class="ctabs" id="cTabs"></div>
+    <div class="cbody"><div class="crail" id="cRail"></div><div class="cgrid" id="cGrid"></div></div>
+    <div class="cfoot"><button type="button" id="cRand">&#127922; RANDOM CHARACTER</button></div>
+  </section>
 
   <div class="modesw hide" id="modeSw">
     <button type="button" id="swCam" aria-pressed="true">&#9679; CAMERA</button>
@@ -273,6 +335,25 @@
       </div>
     </section>
 
+    <section class="panel" id="p-cscene">
+      <h2>The scene</h2>
+      <label class="f">Look</label>
+      <div class="chips" id="cStyle"></div>
+      <label class="f">Hologram color</label>
+      <div class="thm" id="cHolo"></div>
+      <label class="f">Background</label>
+      <div class="chips" id="cBg"></div>
+      <label class="f">Floor</label>
+      <div class="chips" id="cFloor"></div>
+      <label class="f">Camera angle</label>
+      <div class="chips" id="cCam"></div>
+      <label class="f">Pixel size</label>
+      <div class="chips" id="cPix"></div>
+      <label class="f">Zoom</label>
+      <input type="range" id="cZoom" min="0.7" max="1.5" step="0.01" value="1">
+      <label class="check"><input type="checkbox" id="cSpin"> Camera slowly circles</label>
+    </section>
+
     <section class="panel" id="p-clip">
       <h2>Your video</h2>
       <p class="tip">Pick a regular video from your camera roll, up to 5 minutes. Then use the deck buttons under the picture, like a real tape. Hit REC to record what you do.</p>
@@ -313,6 +394,10 @@
         <select id="loops"><option value="1">Once</option><option value="3" selected>3 times</option><option value="6">6 times</option><option value="12">12 times</option></select>
         <label class="check" id="rewindRow"><input type="checkbox" id="rewindOn" checked> Tape rewind at the end</label>
       </div>
+      <div id="autoChar" class="hide">
+        <label class="f">How long</label>
+        <select id="cDur"><option value="5">5 seconds</option><option value="10" selected>10 seconds</option><option value="20">20 seconds</option><option value="30">30 seconds</option></select>
+      </div>
       <button type="button" class="btn red" id="autoBtn">Record it automatically</button>
       <div class="prog" id="progB"><i></i></div>
       <div class="msg" id="saveMsg"></div>
@@ -324,6 +409,8 @@
   </div>
 
   <nav class="tools" id="tools">
+    <button type="button" data-p="create" data-k="char" aria-selected="false"><i>&#9786;</i>Create</button>
+    <button type="button" data-p="cscene" data-k="char" aria-selected="false"><i>&#9707;</i>Scene</button>
     <button type="button" data-p="shoot" data-k="stop" aria-selected="true"><i>&#43;</i>Add</button>
     <button type="button" data-p="bphotos" data-k="board" aria-selected="false"><i>&#9638;</i>Photos</button>
     <button type="button" data-p="bsign" data-k="board" aria-selected="false"><i>&#9707;</i>Sign</button>
@@ -348,7 +435,7 @@
   const deck = { mode: 'pause', p: 0, settle: 0, recording: false, auto: false };
   const fpsOut = () => st.fps;
   const board = { faces: [], sel: -1, aspect: 'wide', shape: 'wide', slats: 18, wave: 0.35, hold: 3, spin: 1.2, scene: 'day', t: 0, playing: true };
-  function size() { return SIZES[st.kind === 'board' ? board.aspect : st.aspect]; }
+  function size() { return SIZES[st.kind === 'board' ? board.aspect : st.kind === 'char' ? 'tall' : st.aspect]; }
   function applySize(w, h) { if (cv.width !== w || cv.height !== h) { cv.width = w; cv.height = h; } }
   function msg(id, text, err) { const e = $(id); e.textContent = text || ''; e.className = 'msg' + (err ? ' err' : ''); }
   function stageMsg(t) { $('stageMsg').textContent = t || ''; }
@@ -447,6 +534,7 @@
       let label;
       if (live) label = performance.now() < st.flashUntil ? '● REC' : 'STBY';
       else if (st.kind === 'board') label = board.playing ? OSD.play : OSD.pause;
+      else if (st.kind === 'char') label = OSD.play;
       else label = OSD[deck.mode] || OSD.pause;
       // the pause text blinks like the real thing
       if (!(deck.mode === 'pause' && st.kind !== 'board' && !live && !blink)) stampText(c, label, s * 0.6, s * 0.6, s, '#ffffff');
@@ -465,13 +553,14 @@
   async function addBlob(blob, at) { const f = await loadImg(blob); if (at === undefined) st.frames.push(f); else st.frames.splice(at, 0, f); return f; }
   function snap() { st.hist.push({ frames: st.frames.slice(), sel: st.sel }); if (st.hist.length > 40) st.hist.shift(); st.redo = []; }
   function restoreSnap(from, to) { const h = from.pop(); if (!h) return; to.push({ frames: st.frames.slice(), sel: st.sel }); st.frames = h.frames; st.sel = Math.min(h.sel, st.frames.length - 1); deck.p = 0; refreshUI(); renderStill(); }
-  $('undoBtn').addEventListener('click', () => restoreSnap(st.hist, st.redo));
-  $('redoBtn').addEventListener('click', () => restoreSnap(st.redo, st.hist));
+  $('undoBtn').addEventListener('click', () => st.kind === 'char' ? undoChar(chr.hist, chr.redo) : restoreSnap(st.hist, st.redo));
+  $('redoBtn').addEventListener('click', () => st.kind === 'char' ? undoChar(chr.redo, chr.hist) : restoreSnap(st.redo, st.hist));
   function loopLen() { const n = st.frames.length; return st.mode === 'pingpong' && n > 2 ? 2 * n - 2 : n; }
   function idxOf(p) { const n = st.frames.length; if (!n) return -1; const m = ((Math.floor(p) % loopLen()) + loopLen()) % loopLen(); return m < n ? m : loopLen() - m; }
   function lockAspect() { const locked = st.frames.length > 0; document.querySelectorAll('#aspects .chip').forEach(b => { b.disabled = locked; }); $('aspectNote').style.display = locked ? 'block' : 'none'; }
   function refreshUI() {
     if (st.kind === 'board') { refreshBoardUI(); return; }
+    if (st.kind === 'char') { refreshCharUI(); return; }
     const n = st.frames.length;
     $('undoBtn').disabled = !st.hist.length; $('redoBtn').disabled = !st.redo.length;
     if (st.kind === 'stop') $('info').textContent = n + (n === 1 ? ' frame' : ' frames') + (n ? ' · ' + (n / st.fps).toFixed(1) + ' s' : '');
@@ -491,7 +580,7 @@
   function updateDeckEnabled() {
     const ok = st.kind === 'clip' ? !!st.clip : st.frames.length >= 2;
     document.querySelectorAll('#deck .dk').forEach(b => { b.disabled = b.id === 'dkRec' ? !(ok || st.camVideo) : !ok; });
-    $('autoBtn').disabled = st.kind === 'board' ? board.faces.length < 2 : !ok;
+    $('autoBtn').disabled = st.kind === 'char' ? false : st.kind === 'board' ? board.faces.length < 2 : !ok;
   }
 
   // ===================== DRAWING =====================
@@ -521,6 +610,7 @@
     drawStamps(ctx, W, H, st.frames.length / st.fps, true);
   }
   function renderStill() {
+    if (st.kind === 'char') { drawCharView(0.016); return; }
     if (st.kind === 'board') { drawBoardView(0); return; }
     if (st.kind === 'clip') { drawClip(); return; }
     if (st.cam && st.camVideo) return;
@@ -569,10 +659,12 @@
   function tick(now) {
     requestAnimationFrame(tick);
     const dt = lastAdv ? Math.min(0.1, (now - lastAdv) / 1000) : 0; lastAdv = now;
-    if (st.kind === 'board') { if (board.playing) board.t += dt; }
+    if (st.kind === 'char') chr.t += dt;
+    else if (st.kind === 'board') { if (board.playing) board.t += dt; }
     else if (st.kind) advance(dt);
     if (now - lastDraw < 40) return; lastDraw = now;
-    if (st.kind === 'board') drawBoardView(dt);
+    if (st.kind === 'char') drawCharView(dt);
+    else if (st.kind === 'board') drawBoardView(dt);
     else if (st.kind === 'clip') { drawClip(); if (st.clip) $('info').textContent = clock(clipV.currentTime) + ' of ' + clock(clipV.duration); }
     else if (st.kind === 'stop') {
       if (st.cam && st.camVideo) drawLive();
@@ -695,13 +787,14 @@
     $('dupBtn').textContent = isBoard ? 'Add photo' : 'Copy';
     $('modeSw').classList.toggle('hide', !stop);
     $('shootRow').classList.toggle('hide', !(stop && st.cam));
-    $('deck').classList.toggle('hide', (stop && st.cam) || isBoard);
+    $('deck').classList.toggle('hide', (stop && st.cam) || isBoard || st.kind === 'char');
     $('editRow').classList.toggle('hide', !(stop || isBoard));
     $('stopSet').classList.toggle('hide', !stop);
-    $('autoStop').classList.toggle('hide', st.kind === 'clip');
+    const isChar = st.kind === 'char'; $('autoStop').classList.toggle('hide', st.kind === 'clip' || isChar); $('autoChar').classList.toggle('hide', !isChar);
+    $('app').classList.toggle('is-char', isChar); $('app').classList.toggle('is-create', isChar && st.panel === 'create');
     $('stillsRow').classList.toggle('hide', !stop);
     $('swCam').setAttribute('aria-pressed', st.cam ? 'true' : 'false'); $('swTape').setAttribute('aria-pressed', st.cam ? 'false' : 'true');
-    $('autoBtn').textContent = isBoard ? 'Record the sign' : (stop ? 'Record it automatically' : 'Record the whole video');
+    $('autoBtn').textContent = isChar ? 'Record my character' : isBoard ? 'Record the sign' : (stop ? 'Record it automatically' : 'Record the whole video');
   }
   // the camcorder switch: CAMERA shoots frames, TAPE plays them
   function setCam(on) {
@@ -722,15 +815,12 @@
     st.kind = kind; st.cam = kind === 'stop' && !st.frames.length; setDeck('pause'); if (kind === 'board' && board.sel < 0 && board.faces.length) board.sel = 0;
     $('start').classList.add('hide'); $('app').classList.remove('hide');
     document.querySelectorAll('#tools button').forEach(b => b.classList.toggle('gone', b.dataset.k !== 'both' && b.dataset.k !== kind));
-    $('tl').classList.toggle('hide', kind === 'clip');
+    $('tl').classList.toggle('hide', kind === 'clip' || kind === 'char');
     if (kind === 'clip') { stopCam(); $('info').textContent = ''; if (st.clip) applyClipSize(); } else refreshUI();
-    renderEra(); showPanel(kind === 'clip' ? 'clip' : kind === 'board' ? 'bphotos' : 'shoot'); updateDeckEnabled(); if (kind === 'board') { refreshBoardUI(); syncFaceControls(); }
+    renderEra(); if (kind === 'char') openCharCreator(); showPanel(kind === 'clip' ? 'clip' : kind === 'board' ? 'bphotos' : kind === 'char' ? 'create' : 'shoot'); updateDeckEnabled(); if (kind === 'board') { refreshBoardUI(); syncFaceControls(); }
   }
-  function goHome() { setDeck('pause'); if (deck.recording) stopRec(); stopCam(); st.kind = null; $('app').classList.add('hide'); $('start').classList.remove('hide'); updateKeep(); }
+  function goHome() { setDeck('pause'); if (deck.recording) stopRec(); stopCam(); st.kind = null; $('app').classList.remove('is-char', 'is-create'); $('app').classList.add('hide'); $('start').classList.remove('hide'); updateKeep(); }
   function updateKeep() { const has = st.frames.length > 0; $('pickKeep').classList.toggle('hide', !has); $('keepInfo').textContent = has ? st.frames.length + ' frames saved on this phone. Pick up where you left off.' : ''; }
-  $('pickBoard').addEventListener('click', () => startKind('board'));
-  $('pickStop').addEventListener('click', () => { startKind('stop'); if (st.cam && !st.camVideo) startCam(); });
-  $('pickClip').addEventListener('click', () => { startKind('clip'); $('clipIn').click(); });
   $('pickKeep').addEventListener('click', () => { startKind('stop'); setCam(false); });
   $('homeBtn').addEventListener('click', goHome);
 
@@ -787,7 +877,7 @@
   function showResult(blob) {
     if (result) URL.revokeObjectURL(result.url);
     const ext = /mp4/.test(blob.type) ? 'mp4' : 'webm', url = URL.createObjectURL(blob);
-    result = { blob, url, name: (st.kind === 'clip' ? 'phone-animation-vhs.' : st.kind === 'board' ? 'phone-animation-billboard.' : 'phone-animation.') + ext };
+    result = { blob, url, name: (st.kind === 'clip' ? 'phone-animation-vhs.' : st.kind === 'board' ? 'phone-animation-billboard.' : st.kind === 'char' ? 'phone-animation-character.' : 'phone-animation.') + ext };
     const v = $('result'); v.src = url; v.style.display = 'block'; $('resultBtns').classList.remove('hide');
     $('progB').style.display = 'none'; $('autoBtn').disabled = false;
     msg('saveMsg', 'Done. ' + (blob.size / 1048576).toFixed(1) + ' MB. Tap Share or save.'); showPanel('save'); $('panels').scrollTop = 9999;
@@ -802,6 +892,9 @@
         if (!st.clip) return; clipV.currentTime = 0; await new Promise(r => setTimeout(r, 250));
         if (!(await startRec())) return; setDeck('play');
         await waitUntil(() => { bar.style.width = Math.round(clipV.currentTime / clipV.duration * 100) + '%'; msg('saveMsg', 'Recording ' + clock(clipV.currentTime) + ' of ' + clock(clipV.duration) + '. Keep this page open.'); return clipV.ended || deck.mode === 'pause'; }, 400000);
+      } else if (st.kind === 'char') {
+        const ms = +$('cDur').value * 1000; chr.t = 0; if (!(await startRec())) return; const t0 = performance.now();
+        await waitUntil(() => { const pr = Math.min(1, (performance.now() - t0) / ms); bar.style.width = Math.round(pr * 100) + '%'; msg('saveMsg', 'Recording ' + Math.round(pr * 100) + '%. Keep this page open.'); return pr >= 1; }, ms + 3000);
       } else if (st.kind === 'board') {
         const n = board.faces.length; if (n < 2) { msg('saveMsg', 'Add at least 2 photos first.', true); return; }
         const loops = +$('loops').value, T = board.hold + board.spin, ms = n * T * loops * 1000;
@@ -1062,6 +1155,451 @@
   $('bSpinT').addEventListener('input', () => { board.spin = +$('bSpinT').value; $('bSpinVal').textContent = board.spin.toFixed(1) + ' s'; refreshBoardUI(); });
   $('bHoldVal').textContent = '3 s'; $('bSpinVal').textContent = '1.2 s';
 
+
+  // ===================== CHARACTER (blocky low-poly, PS1 look, hologram or solid) =====================
+  const HOLO = { cyan: [0, 255, 230], magenta: [255, 60, 220], green: [90, 255, 120], amber: [255, 190, 60] };
+  const SKINS = ['#fbe6d4', '#f1c9a5', '#d9a07a', '#b07a52', '#7a4a2e', '#4a2c1c'];
+  const HAIRS = ['#111111', '#3a2a1c', '#7a3a1c', '#d8b45a', '#9a9a9a', '#f2ecd6', '#33ff99', '#ff3ea5', '#2f6bff', '#c8412f'];
+  const CLOTH = ['#c8412f', '#e8701a', '#ffd400', '#cfe59a', '#2f7a4b', '#2f4a7a', '#7a3dd6', '#ff3ea5', '#1a1a1a', '#f2ecd6', '#8b8b8b', '#6b3a1f'];
+  // every choice in the creator. [id, label]
+  const OPTS = {
+    head: [['round', 'Round'], ['block', 'Block'], ['tall', 'Tall'], ['wide', 'Wide']],
+    eyes: [['dot', 'Dots'], ['big', 'Big'], ['wide', 'Wide'], ['sleepy', 'Sleepy'], ['happy', 'Happy'], ['angry', 'Angry']],
+    brows: [['none', 'None'], ['flat', 'Flat'], ['angry', 'Angry'], ['worried', 'Worried'], ['thick', 'Thick'], ['raised', 'Raised']],
+    nose: [['none', 'None'], ['small', 'Small'], ['long', 'Long'], ['wide', 'Wide'], ['cat', 'Cat']],
+    mouth: [['smile', 'Smile'], ['flat', 'Flat'], ['open', 'Open'], ['dot', 'Tiny'], ['grin', 'Grin'], ['cat', 'Cat']],
+    hair: [['none', 'Bald'], ['short', 'Short'], ['spikes', 'Spikes'], ['mohawk', 'Mohawk'], ['afro', 'Afro'], ['bob', 'Bob'], ['long', 'Long'], ['pony', 'Pony']],
+    build: [['slim', 'Slim'], ['normal', 'Regular'], ['broad', 'Broad']],
+    height: [['short', 'Short'], ['mid', 'Medium'], ['tall', 'Tall']],
+    headsz: [['small', 'Small'], ['normal', 'Regular'], ['big', 'Big']],
+    top: [['tee', 'Tee'], ['long', 'Long sleeve'], ['tank', 'Tank'], ['hoodie', 'Hoodie'], ['puffer', 'Puffer']],
+    bot: [['pants', 'Pants'], ['baggy', 'Baggy'], ['shorts', 'Shorts'], ['skirt', 'Skirt']],
+    shoes: [['sneaker', 'Sneakers'], ['boot', 'Boots'], ['platform', 'Platforms']],
+    hat: [['none', 'None'], ['beanie', 'Beanie'], ['cap', 'Cap'], ['bucket', 'Bucket'], ['phones', 'Headphones'], ['catears', 'Cat ears'], ['crown', 'Crown']],
+    extra: [['none', 'None'], ['glasses', 'Glasses'], ['shades', 'Shades'], ['scarf', 'Scarf'], ['backpack', 'Backpack'], ['tail', 'Cat tail']],
+    move: [['idle', 'Stand'], ['walk', 'Walk'], ['sing', 'Sing'], ['dance', 'Dance'], ['wave', 'Wave']],
+  };
+  const DEF = { head: 'round', skin: SKINS[1], eyes: 'dot', brows: 'flat', nose: 'small', mouth: 'smile', hair: 'short', hairc: HAIRS[1], build: 'normal', height: 'mid', headsz: 'normal', top: 'tee', topc: CLOTH[0], bot: 'pants', botc: CLOTH[5], shoes: 'sneaker', shoec: CLOTH[9], hat: 'none', hatc: CLOTH[2], extra: 'none', move: 'dance' };
+  const STARTERS = [
+    ['skater', 'Skater', { head: 'block', hair: 'short', hairc: HAIRS[1], top: 'hoodie', topc: CLOTH[0], bot: 'baggy', botc: CLOTH[5], shoes: 'sneaker', shoec: CLOTH[9], hat: 'beanie', hatc: CLOTH[8], eyes: 'sleepy', mouth: 'flat', brows: 'flat' }],
+    ['raver', 'Raver', { head: 'round', skin: SKINS[0], hair: 'spikes', hairc: HAIRS[6], top: 'tank', topc: CLOTH[7], bot: 'pants', botc: CLOTH[8], shoes: 'platform', shoec: CLOTH[9], eyes: 'happy', mouth: 'grin', brows: 'raised', extra: 'glasses' }],
+    ['dj', 'DJ', { head: 'wide', skin: SKINS[4], hair: 'afro', hairc: HAIRS[0], top: 'tee', topc: CLOTH[2], bot: 'pants', botc: CLOTH[8], shoes: 'sneaker', shoec: CLOTH[0], hat: 'phones', hatc: CLOTH[8], eyes: 'big', mouth: 'smile', build: 'broad' }],
+    ['bob', 'Bob cut', { head: 'tall', skin: SKINS[2], hair: 'bob', hairc: HAIRS[0], top: 'long', topc: CLOTH[3], bot: 'skirt', botc: CLOTH[4], shoes: 'boot', shoec: CLOTH[8], eyes: 'wide', mouth: 'dot', brows: 'raised', build: 'slim' }],
+    ['cat', 'Cat', { head: 'round', skin: SKINS[0], hair: 'none', hairc: HAIRS[5], top: 'hoodie', topc: CLOTH[6], bot: 'shorts', botc: CLOTH[8], shoes: 'sneaker', shoec: CLOTH[9], hat: 'catears', hatc: HAIRS[5], extra: 'tail', eyes: 'big', nose: 'cat', mouth: 'cat', brows: 'none', headsz: 'big' }],
+  ];
+  // the categories in the creator, by tab. cam is how the camera frames it, kind is what the grid shows
+  const CATS = {
+    face: [['start', 'START', 'full'], ['head', 'HEAD', 'head'], ['skin', 'SKIN', 'head', 'color', SKINS], ['eyes', 'EYES', 'face'], ['brows', 'BROWS', 'face'], ['nose', 'NOSE', 'face'], ['mouth', 'MOUTH', 'face'], ['hair', 'HAIR', 'head'], ['hairc', 'HAIR COLOR', 'head', 'color', HAIRS]],
+    body: [['build', 'BUILD', 'full'], ['height', 'HEIGHT', 'full'], ['headsz', 'HEAD SIZE', 'full']],
+    outfit: [['top', 'TOP', 'full'], ['topc', 'TOP COLOR', 'full', 'color', CLOTH], ['bot', 'BOTTOM', 'full'], ['botc', 'BOTTOM COLOR', 'full', 'color', CLOTH], ['shoes', 'SHOES', 'full'], ['shoec', 'SHOE COLOR', 'full', 'color', CLOTH], ['hat', 'HAT', 'head'], ['hatc', 'HAT COLOR', 'head', 'color', CLOTH], ['extra', 'EXTRAS', 'full']],
+    emote: [['move', 'MOVE', 'full']],
+  };
+  const TAB_NAMES = { face: 'FACE', body: 'BODY', outfit: 'OUTFIT', emote: 'EMOTE' };
+  const THUMB_FOCUS = { head: ['head', 22], face: ['face', 0], full: ['full', 24], torso: ['torso', 24], legs: ['legs', 24], feet: ['feet', 40], upper: ['upper', 20] };
+  const FOCUS = { full: { cy: 2.2, d: 5.5 }, head: { cy: 3.85, d: 2.7 }, face: { cy: 3.85, d: 2.0 }, upper: { cy: 3.3, d: 3.5 }, torso: { cy: 2.9, d: 3.7 }, legs: { cy: 1.2, d: 3.7 }, feet: { cy: 0.35, d: 2.3 } };
+  const chr = { A: Object.assign({}, DEF), style: 'holo', holo: 'cyan', bg: 'city', floor: 'grid', yaw: 24, userYaw: 0, zoom: 1, spin: false, pix: 3, t: 0, cur: null, hist: [], redo: [] };
+  const chrUI = { tab: 'face', cat: 'start' };
+  const hex = (h) => [parseInt(h.slice(1, 3), 16), parseInt(h.slice(3, 5), 16), parseInt(h.slice(5, 7), 16)];
+  (function loadChar() { try { const s = JSON.parse(localStorage.getItem('nocivChar') || 'null'); if (s) Object.keys(DEF).forEach(k => { if (typeof s[k] === 'string' && (!OPTS[k] || OPTS[k].some(o => o[0] === s[k]))) chr.A[k] = s[k]; }); } catch (e) {} })();
+  function saveChar() { try { localStorage.setItem('nocivChar', JSON.stringify(chr.A)); } catch (e) {} }
+
+  // ----- tiny 3D: 4x4 matrices, meshes, painter's algorithm -----
+  function mm(a, b) { const o = new Array(16); for (let r = 0; r < 4; r++) for (let c = 0; c < 4; c++) o[r * 4 + c] = a[r * 4] * b[c] + a[r * 4 + 1] * b[4 + c] + a[r * 4 + 2] * b[8 + c] + a[r * 4 + 3] * b[12 + c]; return o; }
+  const Tm = (x, y, z) => [1, 0, 0, x, 0, 1, 0, y, 0, 0, 1, z, 0, 0, 0, 1];
+  const RX = (a) => { const c = Math.cos(a), s = Math.sin(a); return [1, 0, 0, 0, 0, c, -s, 0, 0, s, c, 0, 0, 0, 0, 1]; };
+  const RY = (a) => { const c = Math.cos(a), s = Math.sin(a); return [c, 0, s, 0, 0, 1, 0, 0, -s, 0, c, 0, 0, 0, 0, 1]; };
+  const RZ = (a) => { const c = Math.cos(a), s = Math.sin(a); return [c, -s, 0, 0, s, c, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1]; };
+  const Sm = (x, y, z) => [x, 0, 0, 0, 0, y, 0, 0, 0, 0, z, 0, 0, 0, 0, 1];
+  const mp = (m, p) => [m[0] * p[0] + m[1] * p[1] + m[2] * p[2] + m[3], m[4] * p[0] + m[5] * p[1] + m[6] * p[2] + m[7], m[8] * p[0] + m[9] * p[1] + m[10] * p[2] + m[11]];
+  const sub3 = (a, b) => [a[0] - b[0], a[1] - b[1], a[2] - b[2]];
+  const cross3 = (a, b) => [a[1] * b[2] - a[2] * b[1], a[2] * b[0] - a[0] * b[2], a[0] * b[1] - a[1] * b[0]];
+  function finish(v, f) { // make every face normal point away from the middle of the shape
+    const c = [0, 0, 0]; v.forEach(p => { c[0] += p[0]; c[1] += p[1]; c[2] += p[2]; }); c[0] /= v.length; c[1] /= v.length; c[2] /= v.length;
+    return { v, f: f.map(face => { const n = cross3(sub3(v[face[1]], v[face[0]]), sub3(v[face[2]], v[face[0]])), m = [0, 0, 0]; face.forEach(i => { m[0] += v[i][0]; m[1] += v[i][1]; m[2] += v[i][2]; }); const d = (m[0] / face.length - c[0]) * n[0] + (m[1] / face.length - c[1]) * n[1] + (m[2] / face.length - c[2]) * n[2]; return d < 0 ? face.slice().reverse() : face; }) };
+  }
+  function boxMesh(w, h, d, y0) { const x = w / 2, z = d / 2, a = y0 === undefined ? -h / 2 : y0, b = a + h; return finish([[-x, a, -z], [x, a, -z], [x, b, -z], [-x, b, -z], [-x, a, z], [x, a, z], [x, b, z], [-x, b, z]], [[0, 1, 2, 3], [4, 5, 6, 7], [0, 1, 5, 4], [3, 2, 6, 7], [0, 3, 7, 4], [1, 2, 6, 5]]); }
+  function cylMesh(seg, rTop, rBot, y0, y1) {
+    const v = [], f = []; for (let i = 0; i < seg; i++) { const a = i / seg * 6.2832; v.push([Math.cos(a) * rBot, y0, Math.sin(a) * rBot]); } for (let i = 0; i < seg; i++) { const a = i / seg * 6.2832; v.push([Math.cos(a) * rTop, y1, Math.sin(a) * rTop]); }
+    for (let i = 0; i < seg; i++) f.push([i, (i + 1) % seg, seg + (i + 1) % seg, seg + i]);
+    f.push([...Array(seg).keys()]); f.push([...Array(seg).keys()].map(i => seg + i)); return finish(v, f);
+  }
+  // a sphere, or just the top of one (a dome) when maxP is under PI
+  function domeMesh(seg, rings, rx, ry, rz, maxP) {
+    const v = [], f = [], mp2 = maxP || Math.PI; for (let r = 0; r <= rings; r++) { const p = r / rings * mp2; for (let i = 0; i < seg; i++) { const a = i / seg * 6.2832; v.push([Math.cos(a) * Math.sin(p) * rx, Math.cos(p) * ry, Math.sin(a) * Math.sin(p) * rz]); } }
+    for (let r = 0; r < rings; r++) for (let i = 0; i < seg; i++) f.push([r * seg + i, r * seg + (i + 1) % seg, (r + 1) * seg + (i + 1) % seg, (r + 1) * seg + i]);
+    return finish(v, f);
+  }
+  const sphereMesh = (seg, rings, rx, ry, rz) => domeMesh(seg, rings, rx, ry, rz, Math.PI);
+  const MESH = {
+    pelvis: boxMesh(0.95, 0.5, 0.55), torso: cylMesh(6, 0.62, 0.5, 0, 1.05), neck: cylMesh(5, 0.1, 0.12, 0, 0.16),
+    headR: sphereMesh(8, 5, 0.42, 0.46, 0.42), headB: boxMesh(0.8, 0.8, 0.78), headT: boxMesh(0.7, 0.92, 0.74), headW: boxMesh(0.92, 0.7, 0.76), feat: boxMesh(1, 1, 1),
+    upper: cylMesh(5, 0.13, 0.14, -0.7, 0), fore: cylMesh(5, 0.11, 0.13, -0.65, 0), hand: sphereMesh(5, 3, 0.13, 0.13, 0.13),
+    thigh: cylMesh(5, 0.2, 0.17, -0.85, 0), thighBag: cylMesh(5, 0.3, 0.27, -0.85, 0), shin: cylMesh(5, 0.16, 0.12, -0.85, 0), shinBag: cylMesh(5, 0.26, 0.22, -0.85, 0),
+    sneaker: boxMesh(0.3, 0.17, 0.55, -0.14), boot: boxMesh(0.32, 0.36, 0.56, -0.14), platform: boxMesh(0.34, 0.3, 0.6, -0.27),
+    skirt: cylMesh(6, 0.52, 0.85, -0.7, 0), spike: cylMesh(4, 0, 0.12, 0, 0.5), band: boxMesh(0.9, 0.07, 0.1), cup: cylMesh(6, 0.17, 0.17, -0.08, 0.08),
+    ball: sphereMesh(5, 3, 0.08, 0.08, 0.08), pom: sphereMesh(5, 3, 0.11, 0.11, 0.11), brim: boxMesh(0.5, 0.05, 0.36), mic: cylMesh(5, 0.05, 0.04, -0.4, 0), micHead: sphereMesh(6, 4, 0.1, 0.1, 0.1),
+    ear: cylMesh(3, 0, 0.15, 0, 0.26), crownBase: cylMesh(6, 0.36, 0.36, 0, 0.12), crownTip: cylMesh(4, 0, 0.07, 0, 0.2), bucket: cylMesh(8, 0.34, 0.4, 0, 0.3), bucketBrim: cylMesh(8, 0.62, 0.62, 0, 0.04),
+    hood: sphereMesh(6, 3, 0.36, 0.3, 0.3), pack: boxMesh(0.8, 0.9, 0.34), scarf: cylMesh(6, 0.3, 0.3, 0, 0.18), tail: cylMesh(4, 0.06, 0.08, 0, 0.5), ponyT: cylMesh(5, 0.05, 0.11, -0.75, 0),
+    hairBack: boxMesh(1, 1, 1),
+  };
+  const DOMES = {};
+  function dome(rx, ry, rz, p) { const k = [rx, ry, rz, p].map(v => v.toFixed(2)).join('_'); return DOMES[k] || (DOMES[k] = domeMesh(8, 3, rx, ry, rz, p)); }
+  const HEADS = {
+    round: { mesh: MESH.headR, w: 0.42, top: 0.46, zAt: (y) => 0.42 * Math.sqrt(Math.max(0, 1 - (y / 0.46) * (y / 0.46))) * 0.95 + 0.02 },
+    block: { mesh: MESH.headB, w: 0.4, top: 0.4, zAt: () => 0.4 },
+    tall: { mesh: MESH.headT, w: 0.35, top: 0.46, zAt: () => 0.38 },
+    wide: { mesh: MESH.headW, w: 0.46, top: 0.35, zAt: () => 0.39 },
+  };
+  // ----- poses. Positive shoulder numbers swing forward, abduction numbers lift sideways. -----
+  function pose(t, a) {
+    const P = { air: 0, x: 0, lean: 0, twist: 0, roll: 0, nod: 0, turn: 0, mouth: 0, lSh: 0, lAb: 0.07, lEl: 0.12, rSh: 0, rAb: 0.07, rEl: 0.12, lHip: 0, lHAb: 0.03, lKn: 0.04, rHip: 0, rHAb: 0.03, rKn: 0.04, mic: false, speed: 0, beat: 0, tail: Math.sin(t * 2.2) };
+    if (a === 'walk') {
+      const ph = t * 2 * Math.PI * 1.0, s = Math.sin(ph);
+      P.lHip = 0.62 * s; P.rHip = -0.62 * s; P.lKn = 0.1 + 0.95 * Math.max(0, Math.cos(ph)); P.rKn = 0.1 + 0.95 * Math.max(0, -Math.cos(ph));
+      P.lSh = -0.55 * s; P.rSh = 0.55 * s; P.lEl = 0.3 + 0.3 * Math.max(0, -s); P.rEl = 0.3 + 0.3 * Math.max(0, s);
+      P.twist = 0.16 * s; P.roll = 0.03 * s; P.lean = 0.06; P.nod = -0.04 * Math.cos(2 * ph); P.speed = 3.4; P.tail = Math.sin(ph);
+    } else if (a === 'sing') {
+      const b = Math.sin(t * 1.7);
+      P.mic = true; P.rSh = 1.7; P.rEl = 1.9; P.rAb = 0.25; P.lSh = 0.2 + 0.5 * Math.sin(t * 1.7); P.lAb = 0.6 + 0.4 * Math.max(0, b); P.lEl = 0.4 + 0.5 * Math.sin(t * 1.7 + 1);
+      P.roll = 0.05 * Math.sin(t * 1.5); P.twist = 0.1 * Math.sin(t * 1.2); P.nod = 0.08 * Math.sin(t * 3.4) - 0.04; P.turn = 0.12 * Math.sin(t * 1.1);
+      P.lHip = 0.1; P.rHip = -0.05; P.lKn = 0.12 + 0.1 * Math.max(0, Math.sin(t * 3.4)); P.rKn = 0.18;
+      P.mouth = Math.abs(Math.sin(t * 11)) * (Math.sin(t * 0.9) > -0.35 ? 1 : 0.15);
+    } else if (a === 'wave') {
+      P.rAb = 2.5; P.rSh = 0.1; P.rEl = 0.55 + 0.6 * Math.sin(t * 8); P.roll = 0.04 * Math.sin(t * 2); P.turn = 0.12 * Math.sin(t * 1.5); P.nod = 0.03; P.mouth = 0.2; P.lKn = 0.06; P.rKn = 0.06;
+    } else if (a === 'dance') { // 120 beats a minute
+      const bt = t * 2, dip = 0.5 + 0.5 * Math.cos(2 * Math.PI * bt), alt = Math.sin(Math.PI * bt), arm = Math.sin(Math.PI * bt / 2);
+      const up = (v) => { const s = Math.max(0, v); return s * s * (3 - 2 * s); };
+      P.x = 0.1 * alt; P.twist = 0.3 * alt; P.roll = 0.08 * alt; P.nod = 0.14 * Math.cos(2 * Math.PI * bt) + 0.06; P.turn = 0.18 * alt; P.air = 0.1 * Math.max(0, Math.sin(2 * Math.PI * bt));
+      P.lKn = 0.15 + 0.6 * dip; P.rKn = 0.15 + 0.6 * dip; P.lHAb = 0.12 + 0.25 * Math.max(0, alt); P.rHAb = 0.12 + 0.25 * Math.max(0, -alt); P.lHip = -0.3 * dip; P.rHip = -0.3 * dip;
+      P.lAb = 0.5 + 1.9 * up(arm); P.lSh = 0.3; P.lEl = 0.2 + 1.0 * (1 - up(arm));
+      P.rAb = 0.5 + 1.9 * up(-arm); P.rSh = 0.3; P.rEl = 0.2 + 1.0 * (1 - up(-arm)); P.beat = dip; P.mouth = 0.25; P.tail = Math.sin(bt * Math.PI);
+    } else { // standing around
+      P.twist = 0.02 * Math.sin(t * 0.8); P.turn = 0.1 * Math.sin(t * 0.6); P.roll = 0.015 * Math.sin(t * 0.9); P.nod = 0.01 * Math.sin(t * 1.3);
+    }
+    return P;
+  }
+  // builds every part of the character for this moment
+  function buildParts(P, A, t) {
+    const out = [], skin = A.skin, hd = HEADS[A.head], bw = ({ slim: 0.86, normal: 1, broad: 1.18 })[A.build], hs = ({ short: 0.86, mid: 1, tall: 1.12 })[A.height], hz = ({ small: 0.86, normal: 1, big: 1.3 })[A.headsz];
+    const root = mm(mm(Tm(P.x, 2.2 + P.air, 0), RY(0)), Sm(hs, hs, hs)), add = (mesh, M, col, o) => out.push(Object.assign({ mesh, M, col }, o || {}));
+    const hoodie = A.top === 'hoodie', puff = A.top === 'puffer', skirt = A.bot === 'skirt', baggy = A.bot === 'baggy', shorts = A.bot === 'shorts';
+    add(MESH.pelvis, mm(root, Sm(bw, 1, 1)), A.botc);
+    if (skirt) add(MESH.skirt, mm(root, Sm(bw, 1, bw)), A.botc);
+    const Tt = mm(mm(mm(root, Tm(0, 0.2, 0)), RX(-P.lean)), mm(RY(P.twist), RZ(P.roll))), tb = bw * (puff ? 1.18 : hoodie ? 1.08 : 1);
+    add(MESH.torso, mm(Tt, Sm(tb, 1, tb)), A.topc);
+    if (hoodie) add(MESH.hood, mm(Tt, Tm(0, 1.02, -0.3)), A.topc);
+    if (A.extra === 'backpack') add(MESH.pack, mm(Tt, Tm(0, 0.55, -0.55 * tb - 0.1)), A.hatc);
+    const Tn = mm(Tt, Tm(0, 1.05, 0)); add(MESH.neck, Tn, skin);
+    if (A.extra === 'scarf') add(MESH.scarf, mm(Tn, Tm(0, -0.06, 0)), A.hatc);
+    const Th = mm(mm(mm(Tn, Tm(0, 0.12, 0)), RX(-P.nod)), RY(P.turn)), Hc = mm(Th, mm(Tm(0, 0.4 * hz, 0), Sm(hz, hz, hz)));
+    add(hd.mesh, Hc, skin);
+    // ---- face. eyes, brows, nose and mouth are bright so they read in a hologram too ----
+    const blink = (t % 3.4) < 0.12 ? 0.15 : 1, ex = hd.w * 0.36, FC = '#101018', F = (x, y, z, w, h, d, rz) => add(MESH.feat, mm(Hc, mm(mm(Tm(x, y, z), RZ(rz || 0)), Sm(w, h, d))), FC, { feat: true });
+    [-1, 1].forEach(sd => {
+      const z = hd.zAt(0.06), x = sd * ex, e = A.eyes;
+      if (e === 'dot') F(x, 0.06, z, 0.075, 0.1 * blink, 0.03); else if (e === 'big') F(x, 0.06, z, 0.12, 0.15 * blink, 0.03); else if (e === 'wide') F(x, 0.06, z, 0.15, 0.09 * blink, 0.03);
+      else if (e === 'sleepy') F(x, 0.05, z, 0.13, 0.035, 0.03); else if (e === 'happy') { F(x - 0.035, 0.05, z, 0.07, 0.035, 0.03, 0.55); F(x + 0.035, 0.05, z, 0.07, 0.035, 0.03, -0.55); } else if (e === 'angry') F(x, 0.05, z, 0.12, 0.05, 0.03, sd * -0.4 * -1);
+      const b = A.brows, bz = hd.zAt(0.18), by = 0.17 + (b === 'raised' ? 0.05 : 0);
+      if (b === 'flat' || b === 'raised') F(x, by, bz, 0.15, 0.03, 0.03); else if (b === 'thick') F(x, by, bz, 0.17, 0.06, 0.03); else if (b === 'angry') F(x, by - 0.01, bz, 0.15, 0.035, 0.03, sd * 0.4); else if (b === 'worried') F(x, by, bz, 0.15, 0.035, 0.03, sd * -0.4);
+    });
+    const nz = hd.zAt(-0.03) + 0.03; if (A.nose === 'small') add(MESH.feat, mm(Hc, mm(Tm(0, -0.04, nz), Sm(0.07, 0.07, 0.07))), skin, { shadeUp: 1 }); else if (A.nose === 'long') add(MESH.feat, mm(Hc, mm(Tm(0, -0.03, nz + 0.01), Sm(0.07, 0.15, 0.09))), skin, { shadeUp: 1 }); else if (A.nose === 'wide') add(MESH.feat, mm(Hc, mm(Tm(0, -0.05, nz), Sm(0.15, 0.07, 0.07))), skin, { shadeUp: 1 }); else if (A.nose === 'cat') add(MESH.feat, mm(Hc, mm(Tm(0, -0.02, nz), Sm(0.07, 0.05, 0.05))), '#ff7aa8', { feat: true });
+    const mz = hd.zAt(-0.17), mo = 0.1 * P.mouth, m = A.mouth;
+    if (m === 'smile') { F(0, -0.17, mz, 0.12, 0.025 + mo, 0.03); F(-0.085, -0.15, mz, 0.03, 0.03, 0.03); F(0.085, -0.15, mz, 0.03, 0.03, 0.03); } else if (m === 'flat') F(0, -0.17, mz, 0.15, 0.025 + mo, 0.03); else if (m === 'open') F(0, -0.17, mz, 0.12, 0.07 + mo * 1.5, 0.03); else if (m === 'dot') F(0, -0.17, mz, 0.04, 0.04 + mo, 0.03); else if (m === 'grin') F(0, -0.16, mz, 0.2, 0.05 + mo, 0.03); else if (m === 'cat') { F(-0.04, -0.17, mz, 0.05, 0.025 + mo * 0.5, 0.03); F(0.04, -0.17, mz, 0.05, 0.025 + mo * 0.5, 0.03); F(0, -0.14, mz, 0.03, 0.04, 0.03); }
+    if (A.extra === 'glasses') { [-1, 1].forEach(sd => { const x = sd * ex, z = hd.zAt(0.06) + 0.02; F(x, 0.15, z, 0.24, 0.025, 0.03); F(x, -0.03, z, 0.24, 0.025, 0.03); F(x - 0.12, 0.06, z, 0.025, 0.18, 0.03); F(x + 0.12, 0.06, z, 0.025, 0.18, 0.03); }); F(0, 0.1, hd.zAt(0.1) + 0.02, 0.1, 0.025, 0.03); }
+    if (A.extra === 'shades') { [-1, 1].forEach(sd => F(sd * ex, 0.06, hd.zAt(0.06) + 0.025, 0.24, 0.13, 0.04)); F(0, 0.09, hd.zAt(0.09) + 0.025, 0.1, 0.03, 0.04); }
+    // ---- hair and hats ----
+    const T = hd.top, W = hd.w, hat = A.hat, hairHidden = hat === 'beanie' || hat === 'cap' || hat === 'bucket', hc = A.hairc, rz = W * 1.12;
+    const hair = A.hair;
+    if (!hairHidden) {
+      if (hair === 'short') add(dome(W * 1.1, T * 1.12, rz, 1.22), mm(Hc, Tm(0, 0.0, -0.02)), hc);
+      else if (hair === 'spikes') { add(dome(W * 1.08, T * 1.08, rz, 1.0), Hc, hc); [[0, 0.46, 0, 0, 0], [-0.2, 0.42, 0, 0.6, 0], [0.2, 0.42, 0, -0.6, 0], [0, 0.42, -0.2, 0, -0.6], [0, 0.42, 0.18, 0, 0.6]].forEach(([x, y, z, a, b]) => add(MESH.spike, mm(Hc, mm(Tm(x, y * T / 0.46 - 0.02, z), mm(RZ(a), RX(b)))), hc)); }
+      else if (hair === 'mohawk') [-0.3, -0.15, 0, 0.15, 0.3].forEach((z, i) => add(MESH.feat, mm(Hc, mm(Tm(0, T + 0.04 + (i === 2 ? 0.06 : i % 2 ? 0 : 0.02), z), Sm(0.1, 0.2 + (i === 2 ? 0.08 : 0), 0.15))), hc));
+      else if (hair === 'afro') add(dome(0.62, 0.6, 0.6, 1.2), mm(Hc, Tm(0, 0.04, -0.03)), hc);
+      else if (hair === 'bob' || hair === 'long') {
+        add(dome(W * 1.1, T * 1.12, rz, 1.22), mm(Hc, Tm(0, 0, -0.02)), hc);
+        const bl = hair === 'long' ? 1.5 : 0.8; add(MESH.hairBack, mm(Hc, mm(Tm(0, T - 0.1 - bl / 2 + 0.05, -W * 0.92), Sm(W * 2.2, bl, 0.18))), hc);
+        [-1, 1].forEach(sd => add(MESH.hairBack, mm(Hc, mm(Tm(sd * (W + 0.04), 0.05 - (hair === 'long' ? 0.3 : 0.1), -0.06), Sm(0.1, hair === 'long' ? 1.0 : 0.62, W * 1.5))), hc));
+      } else if (hair === 'pony') { add(dome(W * 1.1, T * 1.12, rz, 1.22), mm(Hc, Tm(0, 0, -0.02)), hc); add(MESH.ball, mm(Hc, Tm(0, 0.12, -W - 0.04)), A.hatc); add(MESH.ponyT, mm(Hc, mm(Tm(0, 0.14, -W - 0.08), RX(0.25))), hc); }
+    }
+    if (hat === 'beanie') { add(dome(W * 1.16, T * 1.2, rz * 1.04, 1.42), mm(Hc, Tm(0, 0.0, -0.02)), A.hatc); add(MESH.pom, mm(Hc, Tm(0, T * 1.2 + 0.04, 0)), '#f2ecd6'); }
+    else if (hat === 'cap') { add(dome(W * 1.14, T * 1.16, rz * 1.02, 1.32), mm(Hc, Tm(0, 0.02, -0.02)), A.hatc); add(MESH.brim, mm(Hc, Tm(0, 0.2 * T / 0.46, W + 0.22)), A.hatc); }
+    else if (hat === 'bucket') { add(MESH.bucket, mm(Hc, Tm(0, T - 0.12, 0)), A.hatc); add(MESH.bucketBrim, mm(Hc, Tm(0, T - 0.14, 0)), A.hatc); }
+    else if (hat === 'phones') { add(MESH.band, mm(Hc, mm(Tm(0, T + 0.04, 0), Sm(W / 0.42 * 0.95, 1, 1))), '#222222'); [-1, 1].forEach(sd => add(MESH.cup, mm(Hc, mm(Tm(sd * (W + 0.05), 0.02, 0), RZ(1.5708))), A.hatc)); }
+    else if (hat === 'catears') [-1, 1].forEach(sd => add(MESH.ear, mm(Hc, mm(Tm(sd * W * 0.62, T - 0.08, 0), RZ(sd * -0.28))), A.hatc));
+    else if (hat === 'crown') { add(MESH.crownBase, mm(Hc, Tm(0, T - 0.04, 0)), A.hatc); [0, 1, 2, 3, 4].forEach(i => { const a = i / 5 * 6.2832; add(MESH.crownTip, mm(Hc, Tm(Math.cos(a) * 0.3, T + 0.07, Math.sin(a) * 0.3)), A.hatc); }); }
+    // ---- arms ----
+    const sleeveL = A.top !== 'tee' && A.top !== 'tank', sleeveU = A.top !== 'tank', am = puff ? 1.3 : 1;
+    [1, -1].forEach(sd => {
+      const sh = sd === 1 ? [P.lSh, P.lAb, P.lEl] : [P.rSh, P.rAb, P.rEl], Ts = mm(mm(Tt, Tm(sd * 0.66 * tb, 0.9, 0)), mm(RZ(sd * sh[1]), RX(-sh[0])));
+      add(MESH.upper, mm(Ts, Sm(am, 1, am)), sleeveU ? A.topc : skin); const Te = mm(mm(Ts, Tm(0, -0.7, 0)), RX(-sh[2])); add(MESH.fore, mm(Te, Sm(am, 1, am)), sleeveL ? A.topc : skin);
+      const Tw = mm(Te, Tm(0, -0.68, 0)); add(MESH.hand, Tw, skin);
+      if (sd === -1 && P.mic) { const Tmc = mm(Tw, mm(Tm(0, 0.12, 0), RX(-0.6))); add(MESH.mic, Tmc, '#303040'); add(MESH.micHead, mm(Tmc, Tm(0, 0.04, 0)), '#cfcfd8'); }
+    });
+    // ---- legs ----
+    const lm = ({ pants: 1, baggy: 1, shorts: 1, skirt: 1 })[A.bot];
+    [1, -1].forEach(sd => {
+      const hp = sd === 1 ? [P.lHip, P.lHAb, P.lKn] : [P.rHip, P.rHAb, P.rKn], Tp = mm(mm(root, Tm(sd * 0.27 * bw, -0.2, 0)), mm(RZ(sd * hp[1]), RX(-hp[0])));
+      add(baggy ? MESH.thighBag : MESH.thigh, mm(Tp, Sm(lm * (bw > 1 ? 1.1 : bw < 1 ? 0.92 : 1), 1, lm * (bw > 1 ? 1.1 : bw < 1 ? 0.92 : 1))), skirt ? skin : A.botc); const Tk = mm(mm(Tp, Tm(0, -0.85, 0)), RX(hp[2]));
+      add(baggy ? MESH.shinBag : MESH.shin, Tk, skirt || shorts ? skin : A.botc); const Tf = mm(Tk, Tm(0, -0.85, 0));
+      add(MESH[A.shoes], mm(Tf, Tm(0, 0, 0.1)), A.shoec, { foot: true });
+    });
+    if (A.extra === 'tail') { const w = 0.35 * P.tail; add(MESH.tail, mm(root, mm(Tm(0, -0.1, -0.3), mm(RX(-2.2), RZ(w)))), A.hairc === '#111111' ? '#111111' : A.hatc); add(MESH.tail, mm(root, mm(Tm(Math.sin(w) * 0.45, 0.2, -0.75), RX(-0.9 - 0.15 * P.tail))), A.hatc); }
+    // keep the feet on the floor, whatever the legs are doing
+    let minY = 1e9; out.forEach(p => { if (p.foot) p.mesh.v.forEach(v => { const y = mp(p.M, v)[1]; if (y < minY) minY = y; }); });
+    const lift = Tm(0, -minY + P.air, 0); out.forEach(p => { p.M = mm(lift, p.M); });
+    return out;
+  }
+  // ----- camera -----
+  const LIGHT = (() => { const l = [0.4, 0.8, 0.5], m = Math.hypot(...l); return l.map(v => v / m); })();
+  const BAYER = [0, 8, 2, 10, 12, 4, 14, 6, 3, 11, 1, 9, 15, 7, 13, 5];
+  function camFor(lw, lh, v) {
+    const yaw = v.yaw * Math.PI / 180 + Math.PI, pitch = v.pitch === undefined ? 0.1 : v.pitch, f = lh * 0.92, d = v.d, cy = v.cy, mid = v.mid || 0.56;
+    const cA = Math.cos(yaw), sA = Math.sin(yaw), cP = Math.cos(pitch), sP = Math.sin(pitch);
+    const view = (p) => { const x = p[0], y = p[1] - cy, z = p[2], x1 = x * cA + z * sA, z1 = -x * sA + z * cA, y2 = y * cP - z1 * sP, z2 = y * sP + z1 * cP + d; return [x1, y2, z2]; };
+    const scr = (q) => [lw / 2 + q[0] * f / q[2], lh * mid - q[1] * f / q[2]];
+    return { view, scr };
+  }
+  function collectPolys(parts, cam) {
+    const polys = [];
+    parts.forEach(pt => {
+      const wv = pt.mesh.v.map(p => cam.view(mp(pt.M, p))), base = hex(pt.col), lum = pt.feat ? 1 : (0.3 * base[0] + 0.59 * base[1] + 0.11 * base[2]) / 255;
+      pt.mesh.f.forEach(face => {
+        const a = wv[face[0]], b = wv[face[1]], d = wv[face[2]], n = cross3(sub3(b, a), sub3(d, a)), m = [0, 0, 0];
+        face.forEach(i => { m[0] += wv[i][0]; m[1] += wv[i][1]; m[2] += wv[i][2]; }); const k = 1 / face.length; m[0] *= k; m[1] *= k; m[2] *= k;
+        if (n[0] * -m[0] + n[1] * -m[1] + n[2] * -m[2] <= 0) return;
+        const nl = Math.hypot(n[0], n[1], n[2]) || 1, dl = (n[0] * LIGHT[0] + n[1] * LIGHT[1] + n[2] * LIGHT[2]) / nl;
+        polys.push({ z: m[2] - (pt.feat ? 0.05 : 0), pts: face.map(i => cam.scr(wv[i])), base, lum, feat: !!pt.feat, shade: Math.min(1, 0.64 + 0.4 * Math.max(0, dl * 0.8 + 0.3)) });
+      });
+    });
+    return polys.sort((p, q) => q.z - p.z);
+  }
+  function fillPolys(c, polys, holo, hc, flick, t) {
+    if (holo) c.globalCompositeOperation = 'lighter';
+    polys.forEach(p => {
+      c.beginPath(); p.pts.forEach((q, i) => i ? c.lineTo(Math.round(q[0]), Math.round(q[1])) : c.moveTo(Math.round(q[0]), Math.round(q[1]))); c.closePath();
+      if (holo) { const L = p.feat ? 1 : 0.25 + 0.75 * p.lum, s = p.shade; c.fillStyle = 'rgba(' + Math.round(hc[0] * L * s) + ',' + Math.round(hc[1] * L * s) + ',' + Math.round(hc[2] * L * s) + ',' + ((p.feat ? 0.9 : 0.42) * flick).toFixed(3) + ')'; c.fill(); c.strokeStyle = 'rgba(' + hc.join(',') + ',' + (0.55 * flick).toFixed(3) + ')'; c.lineWidth = 1; c.stroke(); }
+      else { const s = p.shade, k = p.feat ? 0.9 : 1; c.fillStyle = 'rgb(' + Math.round(p.base[0] * s * k) + ',' + Math.round(p.base[1] * s * k) + ',' + Math.round(p.base[2] * s * k) + ')'; c.fill(); if (p.feat) { c.strokeStyle = 'rgb(' + Math.round(p.base[0] * s) + ',' + Math.round(p.base[1] * s) + ',' + Math.round(p.base[2] * s) + ')'; c.lineWidth = 1; c.stroke(); } }
+    });
+    c.globalCompositeOperation = 'source-over';
+  }
+  function drawBackground(c, lw, lh, t, P, o) {
+    const bg = o.bg, holo = o.style === 'holo', hc = HOLO[o.holo];
+    const g = c.createLinearGradient(0, 0, 0, lh);
+    if (bg === 'void') { g.addColorStop(0, '#02030a'); g.addColorStop(1, holo ? '#06101a' : '#10081c'); }
+    else if (bg === 'sunset') { g.addColorStop(0, '#2b1b6d'); g.addColorStop(0.5, '#e0457b'); g.addColorStop(1, '#ffb25a'); }
+    else if (bg === 'city') { g.addColorStop(0, '#080a1c'); g.addColorStop(1, '#2a1b4a'); }
+    else { g.addColorStop(0, '#ff7ac8'); g.addColorStop(0.55, '#b06cff'); g.addColorStop(1, '#4de0ff'); }
+    c.fillStyle = g; c.fillRect(0, 0, lw, lh);
+    const hz = lh * 0.55;
+    if (bg === 'void') { c.fillStyle = holo ? 'rgba(' + hc.join(',') + ',.7)' : '#fff'; for (let i = 0; i < 26; i++) { const x = (i * 37.7) % lw, y = ((i * 91.3) % lh - t * (4 + (i % 4))) % lh; c.fillRect(Math.round(x), Math.round((y + lh) % lh), 1, 1); } }
+    if (bg === 'sunset' || bg === 'vapor') {
+      const r = lw * 0.28, cx = lw / 2, cy = hz - r * 0.2; c.save(); c.beginPath(); c.arc(cx, cy, r, 0, 6.3); c.clip();
+      const sg = c.createLinearGradient(0, cy - r, 0, cy + r); sg.addColorStop(0, '#fff06a'); sg.addColorStop(1, bg === 'vapor' ? '#ff3ea5' : '#ff5a3d'); c.fillStyle = sg; c.fillRect(cx - r, cy - r, r * 2, r * 2);
+      c.fillStyle = bg === 'vapor' ? '#b06cff' : '#e0457b'; for (let i = 0; i < 6; i++) c.fillRect(cx - r, cy + r * 0.05 + i * r * 0.16, r * 2, Math.max(1, r * 0.02 * (i + 1))); c.restore();
+      if (bg === 'vapor') { c.strokeStyle = '#4de0ff'; c.lineWidth = 1; c.beginPath(); [[0, 0.55, 0.15, 0.4, 0.3, 0.55], [0.7, 0.55, 0.85, 0.42, 1, 0.55]].forEach(m => { c.moveTo(lw * m[0], lh * m[1]); c.lineTo(lw * m[2], lh * m[3]); c.lineTo(lw * m[4], lh * m[5]); }); c.stroke(); }
+    }
+    if (bg === 'city') {
+      [[0.35, '#120e2a', 0.5], [0.6, '#0b0a1c', 0.9]].forEach(([sp, col, hh], li) => {
+        c.fillStyle = col; let x = -(t * (P.speed ? 3 + li * 3 : 0.6 + li)) % (lw * 1.0); for (let i = 0; i < 40 && x < lw + 20; i++) { const bw = 12 + ((i * 7 + li * 5) % 13), bh = lh * (0.12 + ((i * 13 + li * 7) % 11) * 0.025 * hh); c.fillRect(Math.round(x), Math.round(hz - bh), bw, Math.round(bh + 2)); c.fillStyle = li ? '#ffd78a' : '#7a6bff'; for (let k = 0; k < 6; k++) if ((i * 3 + k * 5 + li) % 4 === 0) c.fillRect(Math.round(x + 2 + (k % 3) * 4), Math.round(hz - bh + 3 + Math.floor(k / 3) * 6), 2, 2); c.fillStyle = col; x += bw + 1 + li; }
+      });
+    }
+    c.fillStyle = bg === 'vapor' ? '#1a0f3a' : holo ? '#02060c' : '#150f24'; c.fillRect(0, Math.round(hz), lw, lh - Math.round(hz));
+  }
+  function drawFloor(c, cam, lw, lh, t, P, o) {
+    const holo = o.style === 'holo', hc = holo ? HOLO[o.holo] : (o.floor === 'checker' ? [255, 255, 255] : [255, 80, 200]), off = (P.speed ? t * P.speed : 0) % 1, pulse = 0.55 + 0.45 * (P.beat || 0);
+    const seg = (a, b, alpha, w) => {
+      let va = cam.view(a), vb = cam.view(b); if (va[2] < 0.3 && vb[2] < 0.3) return; if (va[2] < 0.3) { const k = (0.3 - va[2]) / (vb[2] - va[2]); va = [va[0] + (vb[0] - va[0]) * k, va[1] + (vb[1] - va[1]) * k, 0.3]; } else if (vb[2] < 0.3) { const k = (0.3 - vb[2]) / (va[2] - vb[2]); vb = [vb[0] + (va[0] - vb[0]) * k, vb[1] + (va[1] - vb[1]) * k, 0.3]; }
+      const pa = cam.scr(va), pb = cam.scr(vb), fade = Math.max(0, Math.min(1, 1.4 - Math.min(va[2], vb[2]) / 16)); c.strokeStyle = 'rgba(' + hc.join(',') + ',' + (alpha * fade).toFixed(3) + ')'; c.lineWidth = w; c.beginPath(); c.moveTo(Math.round(pa[0]), Math.round(pa[1])); c.lineTo(Math.round(pb[0]), Math.round(pb[1])); c.stroke();
+    };
+    if (o.floor === 'grid') { for (let k = -14; k <= 14; k++) seg([k, 0, -14], [k, 0, 14], 0.8 * pulse, 1); for (let k = -14; k <= 14; k++) seg([-14, 0, k - off], [14, 0, k - off], 0.8 * pulse, 1); }
+    else if (o.floor === 'checker') {
+      const cols = holo ? ['rgba(' + hc.join(',') + ',.22)', 'rgba(0,0,0,.2)'] : ['#e8e0f0', '#3a2a5a'];
+      for (let zi = 12; zi >= -6; zi--) for (let xi = -8; xi < 8; xi++) { const z0 = zi - off, pts = [[xi, 0, z0], [xi + 1, 0, z0], [xi + 1, 0, z0 + 1], [xi, 0, z0 + 1]].map(q => cam.view(q)); if (pts.some(q => q[2] < 0.4)) continue; c.fillStyle = cols[(xi + zi + 100) & 1]; c.beginPath(); pts.forEach((q, i) => { const s = cam.scr(q); i ? c.lineTo(Math.round(s[0]), Math.round(s[1])) : c.moveTo(Math.round(s[0]), Math.round(s[1])); }); c.closePath(); c.fill(); }
+    } else {
+      const ring = (r, a) => { c.strokeStyle = 'rgba(' + hc.join(',') + ',' + a + ')'; c.lineWidth = 1; c.beginPath(); for (let i = 0; i <= 20; i++) { const q = cam.view([Math.cos(i / 20 * 6.2832) * r, 0, Math.sin(i / 20 * 6.2832) * r]), s = cam.scr(q); i ? c.lineTo(Math.round(s[0]), Math.round(s[1])) : c.moveTo(Math.round(s[0]), Math.round(s[1])); } c.stroke(); };
+      c.fillStyle = 'rgba(' + hc.join(',') + ',.12)'; c.beginPath(); for (let i = 0; i <= 20; i++) { const q = cam.view([Math.cos(i / 20 * 6.2832) * 2, 0, Math.sin(i / 20 * 6.2832) * 2]), s = cam.scr(q); i ? c.lineTo(s[0], s[1]) : c.moveTo(s[0], s[1]); } c.fill();
+      ring(2, 0.9); ring(1.2 + 0.4 * ((t * 0.7) % 1), 0.5);
+    }
+  }
+  function drawNotes(c, lw, lh, t, o) {
+    const hc = o.style === 'holo' ? HOLO[o.holo] : [255, 240, 120];
+    c.fillStyle = 'rgba(' + hc.join(',') + ',.95)'; c.strokeStyle = c.fillStyle; c.lineWidth = 1;
+    for (let i = 0; i < 4; i++) { const u = ((t * 0.5 + i / 4) % 1), x = lw * (0.6 + 0.12 * Math.sin(u * 6 + i * 2)), y = lh * (0.35 - u * 0.28), s = lw * 0.025; c.globalAlpha = 1 - u; c.beginPath(); c.ellipse(Math.round(x), Math.round(y), s, s * 0.7, -0.4, 0, 6.3); c.fill(); c.beginPath(); c.moveTo(Math.round(x + s), Math.round(y)); c.lineTo(Math.round(x + s), Math.round(y - s * 3)); c.lineTo(Math.round(x + s * 2), Math.round(y - s * 2)); c.stroke(); }
+    c.globalAlpha = 1;
+  }
+  // the whole scene, drawn into target context c at W x H. o: style holo/solid, holo color, bg, floor, pix, view, move
+  const lowC = document.createElement('canvas'), lowX = lowC.getContext('2d', { willReadFrequently: true }), cTmp = document.createElement('canvas');
+  function renderChar(c, W, H, A, t, o) {
+    const lw = Math.max(60, Math.round(W / o.pix)), lh = Math.max(60, Math.round(H / o.pix)); if (lowC.width !== lw || lowC.height !== lh) { lowC.width = lw; lowC.height = lh; }
+    const holo = o.style === 'holo', P = pose(t, o.move), cam = camFor(lw, lh, o.view); lowX.imageSmoothingEnabled = false;
+    drawBackground(lowX, lw, lh, t, P, o); drawFloor(lowX, cam, lw, lh, t, P, o);
+    if (!holo) { const s = cam.scr(cam.view([P.x, 0, 0])), r = lw * 0.12; lowX.fillStyle = 'rgba(0,0,0,.35)'; lowX.beginPath(); lowX.ellipse(Math.round(s[0]), Math.round(s[1]), r, r * 0.35, 0, 0, 6.3); lowX.fill(); }
+    const flick = holo ? 0.88 + 0.12 * Math.sin(t * 37) * Math.sin(t * 11) : 1;
+    fillPolys(lowX, collectPolys(buildParts(P, A, t), cam), holo, HOLO[o.holo], flick, t);
+    if (o.move === 'sing') drawNotes(lowX, lw, lh, t, o);
+    const img = lowX.getImageData(0, 0, lw, lh), d = img.data; // the PlayStation look: 15 bit color with ordered dither
+    for (let y = 0; y < lh; y++) for (let x = 0; x < lw; x++) { const i = (y * lw + x) * 4, b = (BAYER[(y & 3) * 4 + (x & 3)] - 7.5) * 0.45; d[i] = Math.max(0, Math.min(255, Math.round((d[i] + b) / 8) * 8)); d[i + 1] = Math.max(0, Math.min(255, Math.round((d[i + 1] + b) / 8) * 8)); d[i + 2] = Math.max(0, Math.min(255, Math.round((d[i + 2] + b) / 8) * 8)); }
+    lowX.putImageData(img, 0, 0);
+    c.imageSmoothingEnabled = false; c.drawImage(lowC, 0, 0, W, H); c.imageSmoothingEnabled = true;
+    if (holo) { // projector scanlines, a rolling bright band, and now and then the picture jumps sideways
+      c.fillStyle = 'rgba(0,0,0,.22)'; for (let y = 0; y < H; y += o.pix) c.fillRect(0, y, W, 1);
+      const by = ((t * 0.35) % 1.2 - 0.1) * H; c.fillStyle = 'rgba(' + HOLO[o.holo].join(',') + ',.07)'; c.fillRect(0, by, W, H * 0.08);
+      if ((t % 4) < 0.14) { const gy = Math.random() * H * 0.7, gh = H * (0.03 + Math.random() * 0.05); if (cTmp.width !== W || cTmp.height !== H) { cTmp.width = W; cTmp.height = H; } const tc = cTmp.getContext('2d'); tc.drawImage(c.canvas, 0, 0); c.drawImage(cTmp, 0, gy, W, gh, (Math.random() - 0.5) * W * 0.08, gy, W, gh); }
+    }
+  }
+  // ----- the view the camera wants right now, and how it eases there -----
+  function charWants() {
+    const rec = deck.recording || deck.auto, inCreate = st.panel === 'create' && !rec;
+    let focus = 'full', move = chr.A.move, yaw = chr.yaw + chr.userYaw + (chr.spin && !inCreate ? chr.t * 25 : 0);
+    if (inCreate) {
+      const cat = (CATS[chrUI.tab] || []).find(c => c[0] === chrUI.cat); focus = cat ? cat[2] : 'full';
+      if (chrUI.tab !== 'emote') move = 'idle';
+      if (focus === 'head' || focus === 'face') yaw = chr.userYaw;
+    }
+    const f = FOCUS[focus]; return { yaw, cy: focus === 'full' ? 2.2 : f.cy, d: focus === 'full' ? 5.5 / chr.zoom : f.d, move, focus };
+  }
+  function drawCharView(dt) {
+    const [W, H] = size(); applySize(W, H); const w = charWants();
+    if (!chr.cur) chr.cur = { yaw: w.yaw, cy: w.cy, d: w.d }; else { const k = Math.min(1, dt * 7); chr.cur.yaw += (w.yaw - chr.cur.yaw) * k; chr.cur.cy += (w.cy - chr.cur.cy) * k; chr.cur.d += (w.d - chr.cur.d) * k; }
+    if (bTmp.width !== W || bTmp.height !== H) { bTmp.width = W; bTmp.height = H; }
+    const c = bTmp.getContext('2d');
+    renderChar(c, W, H, chr.A, chr.t, { style: chr.style, holo: chr.holo, bg: chr.bg, floor: chr.floor, pix: chr.pix, move: w.move, view: { yaw: chr.cur.yaw, cy: chr.cur.cy, d: chr.cur.d } });
+    ctx.drawImage(bTmp, 0, 0); drawLooked(ctx, bTmp, W, H, W, H, chr.t, null); drawStamps(ctx, W, H, chr.t, false);
+  }
+  // ===================== THE CREATOR =====================
+  const thC = document.createElement('canvas');
+  function drawThumb(cv2, A2, focus, yaw, move) {
+    const w = cv2.width, h = cv2.height, c = cv2.getContext('2d'), F = FOCUS[focus] || FOCUS.full, g = c.createLinearGradient(0, 0, 0, h);
+    g.addColorStop(0, '#f4efe0'); g.addColorStop(1, '#d6cfbb'); c.fillStyle = g; c.fillRect(0, 0, w, h);
+    const cam = camFor(w, h, { yaw, cy: F.cy, d: F.d * (focus === 'full' ? 0.82 : 1), mid: 0.5 }); fillPolys(c, collectPolys(buildParts(pose(0.3, move || 'idle'), A2, 0.3), cam), false, null, 1, 0);
+  }
+  function setA(k, v) { if (chr.A[k] === v) return; pushHist(); chr.A[k] = v; saveChar(); refreshCharUI(); }
+  function pushHist() { chr.hist.push(JSON.stringify(chr.A)); if (chr.hist.length > 40) chr.hist.shift(); chr.redo = []; }
+  function undoChar(from, to) { const h = from.pop(); if (!h) return; to.push(JSON.stringify(chr.A)); chr.A = Object.assign({}, DEF, JSON.parse(h)); saveChar(); refreshCharUI(); renderGrid(); }
+  function renderTabs() {
+    const box = $('cTabs'); box.innerHTML = '';
+    Object.keys(TAB_NAMES).forEach(k => { const b = document.createElement('button'); b.type = 'button'; b.textContent = TAB_NAMES[k]; b.setAttribute('aria-pressed', chrUI.tab === k ? 'true' : 'false'); b.addEventListener('click', () => { buzz(8); chrUI.tab = k; chrUI.cat = CATS[k][0][0]; chr.t = chr.t; renderTabs(); renderRail(); renderGrid(); }); box.appendChild(b); });
+  }
+  function renderRail() {
+    const box = $('cRail'); box.innerHTML = '';
+    CATS[chrUI.tab].forEach(cat => { const b = document.createElement('button'); b.type = 'button'; b.textContent = cat[1]; b.setAttribute('aria-pressed', chrUI.cat === cat[0] ? 'true' : 'false'); b.addEventListener('click', () => { buzz(6); chrUI.cat = cat[0]; renderRail(); renderGrid(); }); box.appendChild(b); });
+  }
+  function optFocus(cat, id) { // what to point the little camera at for each choice
+    if (cat === 'extra') return id === 'backpack' || id === 'tail' ? ['full', 150] : id === 'scarf' ? ['upper', 20] : ['face', 0];
+    const c = CATS[chrUI.tab].find(x => x[0] === cat); const f = c ? c[2] : 'full'; return [f, f === 'head' ? (cat === 'hair' || cat === 'hat' ? 24 : 0) : f === 'face' ? 0 : 24];
+  }
+  const GRIDFOCUS = { top: ['torso', 24], bot: ['legs', 24], shoes: ['feet', 40], build: ['full', 20], height: ['full', 20], headsz: ['upper', 20], start: ['full', 20], move: ['full', 20] };
+  function renderGrid() {
+    const box = $('cGrid'); box.innerHTML = ''; const cat = CATS[chrUI.tab].find(c => c[0] === chrUI.cat); if (!cat) return; const id = cat[0];
+    if (cat[3] === 'color') {
+      box.className = 'cgrid colors';
+      cat[4].forEach(col => { const b = document.createElement('button'); b.type = 'button'; b.className = 'sw'; b.style.background = col; b.setAttribute('aria-label', col); b.setAttribute('aria-pressed', chr.A[id] === col ? 'true' : 'false'); b.addEventListener('click', () => { buzz(8); setA(id, col); box.querySelectorAll('.sw').forEach(x => x.setAttribute('aria-pressed', x === b ? 'true' : 'false')); }); box.appendChild(b); });
+      return;
+    }
+    box.className = 'cgrid';
+    const list = id === 'start' ? STARTERS.map(s => [s[0], s[1]]) : OPTS[id];
+    list.forEach(([key, label]) => {
+      const b = document.createElement('button'); b.type = 'button'; b.className = 'opt'; const cvn = document.createElement('canvas'); cvn.width = 76; cvn.height = 76; b.appendChild(cvn);
+      const lab = document.createElement('span'); lab.textContent = label; b.appendChild(lab);
+      let A2, focus, yaw, move = 'idle';
+      if (id === 'start') { A2 = Object.assign({}, DEF, STARTERS.find(s => s[0] === key)[2], { move: 'idle' }); [focus, yaw] = GRIDFOCUS.start; } else { A2 = Object.assign({}, chr.A, { [id]: key }); [focus, yaw] = GRIDFOCUS[id] || optFocus(id, key); if (id === 'move') move = key; }
+      drawThumb(cvn, A2, focus, yaw, move);
+      b.setAttribute('aria-pressed', id !== 'start' && chr.A[id] === key ? 'true' : 'false');
+      b.addEventListener('click', () => {
+        buzz(10);
+        if (id === 'start') { pushHist(); const s = STARTERS.find(x => x[0] === key)[2]; chr.A = Object.assign({}, DEF, s, { move: chr.A.move }); saveChar(); refreshCharUI(); }
+        else { setA(id, key); box.querySelectorAll('.opt').forEach(x => x.setAttribute('aria-pressed', x === b ? 'true' : 'false')); }
+      });
+      box.appendChild(b);
+    });
+  }
+  function randomChar() {
+    pushHist(); const pick = (a) => a[Math.floor(Math.random() * a.length)], A = chr.A;
+    Object.keys(OPTS).forEach(k => { if (k !== 'move') A[k] = pick(OPTS[k])[0]; }); A.skin = pick(SKINS); A.hairc = pick(HAIRS); A.topc = pick(CLOTH); A.botc = pick(CLOTH); A.shoec = pick(CLOTH); A.hatc = pick(CLOTH);
+    if (Math.random() < 0.6) A.hat = 'none'; if (Math.random() < 0.6) A.extra = 'none';
+    saveChar(); refreshCharUI(); renderGrid();
+  }
+  function refreshCharUI() {
+    $('info').textContent = (OPTS.move.find(m => m[0] === chr.A.move) || [0, ''])[1] + ' · tap the picture and drag to turn the character';
+    $('undoBtn').disabled = !chr.hist.length; $('redoBtn').disabled = !chr.redo.length; updateDeckEnabled();
+  }
+  $('cRand').addEventListener('click', () => { buzz(20); randomChar(); });
+  // drag the picture to turn the character
+  let cdrag = null;
+  cv.addEventListener('pointerdown', (e) => { if (st.kind !== 'char') return; cdrag = { x: e.clientX }; try { cv.setPointerCapture(e.pointerId); } catch (er) {} });
+  cv.addEventListener('pointermove', (e) => { if (!cdrag) return; chr.userYaw = (chr.userYaw + (e.clientX - cdrag.x) * 0.9) % 360; cdrag.x = e.clientX; });
+  ['pointerup', 'pointercancel'].forEach(ev => cv.addEventListener(ev, () => { cdrag = null; }));
+  // scene panel
+  chipSet('cStyle', [['holo', 'Hologram'], ['solid', 'Solid PS1']], () => chr.style, v => { chr.style = v; });
+  (function () { const box = $('cHolo'); Object.keys(HOLO).forEach(k => { const b = document.createElement('button'); b.type = 'button'; b.dataset.k = k; b.style.background = 'rgb(' + HOLO[k].join(',') + ')'; b.setAttribute('aria-label', k); b.setAttribute('aria-pressed', chr.holo === k ? 'true' : 'false'); b.addEventListener('click', () => { chr.holo = k; chr.style = 'holo'; box.querySelectorAll('button').forEach(x => x.setAttribute('aria-pressed', x === b ? 'true' : 'false')); buzz(8); document.querySelectorAll('#cStyle .chip').forEach((x, i) => x.setAttribute('aria-pressed', i === 0 ? 'true' : 'false')); }); box.appendChild(b); }); })();
+  chipSet('cBg', [['city', 'City'], ['sunset', 'Sunset'], ['vapor', 'Vapor'], ['void', 'Void']], () => chr.bg, v => { chr.bg = v; });
+  chipSet('cFloor', [['grid', 'Grid'], ['checker', 'Checker'], ['pad', 'Glow pad']], () => chr.floor, v => { chr.floor = v; });
+  chipSet('cCam', [[24, '3/4'], [0, 'Front'], [90, 'Side'], [180, 'Back']], () => chr.yaw, v => { chr.yaw = +v; chr.userYaw = 0; });
+  chipSet('cPix', [[2, 'Fine'], [3, 'PS1'], [4, 'Chunky']], () => chr.pix, v => { chr.pix = +v; });
+  $('cZoom').addEventListener('input', () => { chr.zoom = +$('cZoom').value; });
+  $('cSpin').addEventListener('change', () => { chr.spin = $('cSpin').checked; });
+  function openCharCreator() { chrUI.tab = 'face'; chrUI.cat = 'start'; chr.t = 0; chr.cur = null; renderTabs(); renderRail(); renderGrid(); refreshCharUI(); }
+
+  // ===================== FIRST PAGE: flip through what you can build =====================
+  const PREVIEW_VIDEOS = { stop: '', clip: '', board: '', char: '' }; // drop a screen recording path in here and it plays instead of the drawing
+  const MODES = [
+    { key: 'stop', name: 'STOP MOTION', tab: 'STOP', desc: 'Shoot frames with your camera, or use photos and a video. Then run it through the tape deck.' },
+    { key: 'clip', name: 'VHS BUILDER', tab: 'VHS', desc: 'Pick a video from your camera roll. Rewind, fast forward and pause it like a real camcorder tape, then record it.' },
+    { key: 'board', name: 'BILLBOARD', tab: 'SIGN', desc: 'Put 2 to 5 photos on a spinning trivision sign. Add words like a real ad. Pick the scene behind it.' },
+    { key: 'char', name: 'CHARACTER', tab: 'CHAR', desc: 'Build a blocky character like a Mii. Make it walk, sing or dance as a hologram or a PS1 game.' },
+  ];
+  let mi = 0, pvStart = performance.now();
+  const pv = $('pv'), pvx = pv.getContext('2d');
+  function pvStop(t) {
+    const W = pv.width, H = pv.height; pvx.fillStyle = '#1c1c1c'; pvx.fillRect(0, 0, W, H);
+    const i = Math.floor(t * 6) % 8, pos = (k) => [W * 0.14 + k * W * 0.1, H * 0.62 - Math.sin(k / 7 * Math.PI) * H * 0.3];
+    for (let g = 2; g >= 0; g--) { const k = (i - g + 8) % 8, p = pos(k); pvx.globalAlpha = g === 0 ? 1 : 0.22 / g; pvx.fillStyle = '#cfe59a'; pvx.beginPath(); pvx.arc(p[0], p[1], W * 0.07, 0, 6.3); pvx.fill(); }
+    pvx.globalAlpha = 1; pvx.fillStyle = '#444'; pvx.fillRect(0, H * 0.7, W, 2);
+    for (let k = 0; k < 8; k++) { pvx.fillStyle = k === i ? '#c8412f' : '#3a3a3a'; pvx.fillRect(W * 0.06 + k * W * 0.115, H * 0.86, W * 0.09, H * 0.08); }
+    stampText(pvx, '● REC', W * 0.05, H * 0.04, W * 0.07, '#ff5a4a');
+  }
+  function pvClip(t) {
+    const W = pv.width, H = pv.height, g = pvx.createLinearGradient(0, 0, 0, H); g.addColorStop(0, '#e0457b'); g.addColorStop(0.6, '#ffb25a'); g.addColorStop(1, '#2b1b6d'); pvx.fillStyle = g; pvx.fillRect(0, 0, W, H);
+    pvx.fillStyle = '#fff06a'; pvx.beginPath(); pvx.arc(W * (0.2 + (t * 0.05) % 0.6), H * 0.45, W * 0.12, 0, 6.3); pvx.fill(); pvx.fillStyle = '#1a1030'; pvx.beginPath(); pvx.moveTo(0, H); pvx.lineTo(0, H * 0.7); pvx.lineTo(W * 0.3, H * 0.55); pvx.lineTo(W * 0.6, H * 0.72); pvx.lineTo(W, H * 0.6); pvx.lineTo(W, H); pvx.fill();
+    pvx.fillStyle = 'rgba(0,0,0,.22)'; for (let y = 0; y < H; y += 4) pvx.fillRect(0, y, W, 2);
+    const ph = (t % 4) / 4; if (ph < 0.18) { const y = (ph / 0.18) * H; for (let x = 0; x < W; x += 3) { pvx.fillStyle = 'rgba(255,255,255,' + Math.random() * 0.8 + ')'; pvx.fillRect(x, y, 3, H * 0.05); } }
+    stampText(pvx, ph < 0.18 ? '▶▶ FF' : '▶ PLAY', W * 0.05, H * 0.04, W * 0.07, '#fff'); stampText(pvx, clock(t), W * 0.95, H * 0.04, W * 0.07, '#fff', 'right');
+  }
+  const pvPost = [['#1a1a1a', '#f2ecd6', 'NOW OPEN'], ['#ffd400', '#111', 'FRESH'], ['#c8412f', '#fff', 'NOCIV']].map(([bg, fg, tx]) => { const c = document.createElement('canvas'); c.width = 240; c.height = 120; const x = c.getContext('2d'); x.fillStyle = bg; x.fillRect(0, 0, 240, 120); x.fillStyle = fg; x.font = '400 54px ' + HEAD_FONT; x.textAlign = 'center'; x.textBaseline = 'middle'; x.fillText(tx, 120, 62); return c; });
+  function pvBoard(t) {
+    const W = pv.width, H = pv.height, g = pvx.createLinearGradient(0, 0, 0, H); g.addColorStop(0, '#6fb8f0'); g.addColorStop(1, '#dff1ff'); pvx.fillStyle = g; pvx.fillRect(0, 0, W, H);
+    pvx.fillStyle = '#8e8a7b'; pvx.fillRect(0, H * 0.85, W, H * 0.15); pvx.fillStyle = '#4a4d52'; pvx.fillRect(W * 0.3, H * 0.55, W * 0.04, H * 0.3); pvx.fillRect(W * 0.66, H * 0.55, W * 0.04, H * 0.3);
+    const r = { x: W * 0.06, y: H * 0.2, w: W * 0.88, h: W * 0.88 / 2 }, T = 3, k = Math.floor(t / T), u = t - k * T, p = u < 2 ? 0 : (u - 2), a = pvPost[k % 3], b = pvPost[(k + 1) % 3], N = 14;
+    pvx.fillStyle = '#26282c'; pvx.fillRect(r.x - 5, r.y - 5, r.w + 10, r.h + 10);
+    for (let i = 0; i < N; i++) {
+      const x0 = r.x + i * r.w / N, sw = r.w / N, sx = i * 240 / N, q = Math.min(1, Math.max(0, p * 1.35 - i / N * 0.35)), e = q < 0.5 ? 4 * q * q * q : 1 - Math.pow(-2 * q + 2, 3) / 2, phi = e * 2.0944;
+      const cA = Math.max(0, Math.cos(phi)), cB = Math.max(0, Math.cos(phi - 2.0944)), sum = cA + cB || 1, wB = sw * cB / sum, wA = sw - wB;
+      if (wB > 0.2) pvx.drawImage(b, sx, 0, 240 / N, 120, x0, r.y, wB, r.h); if (wA > 0.2) pvx.drawImage(a, sx, 0, 240 / N, 120, x0 + wB, r.y, wA, r.h);
+    }
+  }
+  function pvChar(t) { const W = pv.width, H = pv.height; renderChar(pvx, W, H, chr.A, t, { style: 'holo', holo: 'cyan', bg: 'city', floor: 'grid', pix: 3, move: 'dance', view: { yaw: 18, cy: 2.2, d: 5.6 } }); }
+  const PVF = { stop: pvStop, clip: pvClip, board: pvBoard, char: pvChar };
+  function showMode(i) {
+    mi = (i + MODES.length) % MODES.length; const m = MODES[mi]; pvStart = performance.now();
+    $('modeName').textContent = m.name; $('modeDesc').textContent = m.desc; $('pvNum').textContent = mi + 1;
+    document.querySelectorAll('#modeTabs button').forEach((b, k) => b.setAttribute('aria-pressed', k === mi ? 'true' : 'false'));
+    const vid = $('pvVid'), src = PREVIEW_VIDEOS[m.key]; if (src) { vid.src = src; vid.classList.remove('hide'); pv.classList.add('hide'); vid.play().catch(() => {}); } else { vid.classList.add('hide'); pv.classList.remove('hide'); try { vid.pause(); } catch (e) {} }
+  }
+  MODES.forEach((m, i) => { const b = document.createElement('button'); b.type = 'button'; b.innerHTML = '<i>' + (i + 1) + '</i>' + m.tab; b.addEventListener('click', () => { buzz(8); showMode(i); }); $('modeTabs').appendChild(b); });
+  $('prevMode').addEventListener('click', () => { buzz(8); showMode(mi - 1); });
+  $('nextMode').addEventListener('click', () => { buzz(8); showMode(mi + 1); });
+  let sw0 = null; const scr = $('pvScreen');
+  scr.addEventListener('pointerdown', (e) => { sw0 = e.clientX; });
+  scr.addEventListener('pointerup', (e) => { if (sw0 === null) return; const dx = e.clientX - sw0; sw0 = null; if (Math.abs(dx) > 40) { buzz(8); showMode(mi + (dx < 0 ? 1 : -1)); } else goMode(); });
+  function goMode() {
+    const k = MODES[mi].key;
+    if (k === 'board') startKind('board'); else if (k === 'char') startKind('char');
+    else if (k === 'stop') { startKind('stop'); if (st.cam && !st.camVideo) startCam(); } else { startKind('clip'); $('clipIn').click(); }
+  }
+  $('goBtn').addEventListener('click', goMode);
+  (function pvLoop() { requestAnimationFrame(pvLoop); if (st.kind || $('start').classList.contains('hide') || PREVIEW_VIDEOS[MODES[mi].key]) return; const t = (performance.now() - pvStart) / 1000; if (Math.floor(t * 20) === pvLoop.l) return; pvLoop.l = Math.floor(t * 20); PVF[MODES[mi].key](t); })();
+  showMode(0);
+
   // ===================== KEEP FRAMES IF THE PAGE RELOADS =====================
   const DB = 'nocivPhoneAnim';
   function openDb() { return new Promise((res, rej) => { try { const r = indexedDB.open(DB, 1); r.onupgradeneeded = () => r.result.createObjectStore('s'); r.onsuccess = () => res(r.result); r.onerror = () => rej(r.error); } catch (e) { rej(e); } }); }
@@ -1080,7 +1618,7 @@
     } catch (e) {}
   })();
   updateKeep();
-  window.__pa = st; window.__deck = deck;
+  window.__pa = st; window.__deck = deck; window.__chr = chr; window.__chrUI = chrUI;
 })();
 </script>
 </body>
