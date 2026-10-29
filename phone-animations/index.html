@@ -1151,54 +1151,60 @@
   $('bHoldVal').textContent = '3 s'; $('bSpinVal').textContent = '1.2 s';
 
 
-  // ===================== CHARACTER (blocky low-poly, PS1 look, hologram or solid) =====================
+  // ===================== CHARACTER (PS2 era low poly people: smooth lit bodies, painted faces and clothes) =====================
+  // ===================== CHARACTER (PS2 era 3D, solid, with an optional hologram look) =====================
+  // Original low poly characters in the style of early 2000s console games: shaped bodies, smooth shading, a painted face.
   const HOLO = { cyan: [0, 255, 230], magenta: [255, 60, 220], green: [90, 255, 120], amber: [255, 190, 60] };
-  const SKINS = ['#fbe6d4', '#f1c9a5', '#d9a07a', '#b07a52', '#7a4a2e', '#4a2c1c'];
+  const SKINS = ['#fbe0cb', '#efc29b', '#d09a6c', '#a8704a', '#7a4a2e', '#4a2c1c'];
   const HAIRS = ['#111111', '#3a2a1c', '#7a3a1c', '#d8b45a', '#9a9a9a', '#f2ecd6', '#33ff99', '#ff3ea5', '#2f6bff', '#c8412f'];
   const CLOTH = ['#c8412f', '#e8701a', '#ffd400', '#cfe59a', '#2f7a4b', '#2f4a7a', '#7a3dd6', '#ff3ea5', '#1a1a1a', '#f2ecd6', '#8b8b8b', '#6b3a1f'];
   // every choice in the creator. [id, label]
   const OPTS = {
-    head: [['round', 'Round'], ['block', 'Block'], ['tall', 'Tall'], ['wide', 'Wide']],
-    eyes: [['dot', 'Dots'], ['big', 'Big'], ['wide', 'Wide'], ['sleepy', 'Sleepy'], ['happy', 'Happy'], ['angry', 'Angry']],
+    head: [['oval', 'Oval'], ['square', 'Square jaw'], ['long', 'Long'], ['round', 'Round']],
+    eyes: [['normal', 'Regular'], ['big', 'Big'], ['wide', 'Wide'], ['sleepy', 'Sleepy'], ['happy', 'Happy'], ['angry', 'Angry']],
     brows: [['none', 'None'], ['flat', 'Flat'], ['angry', 'Angry'], ['worried', 'Worried'], ['thick', 'Thick'], ['raised', 'Raised']],
     nose: [['none', 'None'], ['small', 'Small'], ['long', 'Long'], ['wide', 'Wide'], ['cat', 'Cat']],
     mouth: [['smile', 'Smile'], ['flat', 'Flat'], ['open', 'Open'], ['dot', 'Tiny'], ['grin', 'Grin'], ['cat', 'Cat']],
-    hair: [['none', 'Bald'], ['short', 'Short'], ['spikes', 'Spikes'], ['mohawk', 'Mohawk'], ['afro', 'Afro'], ['bob', 'Bob'], ['long', 'Long'], ['pony', 'Pony']],
+    beard: [['none', 'None'], ['stubble', 'Stubble'], ['stache', 'Mustache'], ['goatee', 'Goatee'], ['full', 'Full beard']],
+    hair: [['none', 'Bald'], ['fade', 'Fade'], ['short', 'Short'], ['spikes', 'Spikes'], ['mohawk', 'Mohawk'], ['afro', 'Afro'], ['braids', 'Braids'], ['bob', 'Bob'], ['long', 'Long'], ['pony', 'Pony']],
     build: [['slim', 'Slim'], ['normal', 'Regular'], ['broad', 'Broad']],
     height: [['short', 'Short'], ['mid', 'Medium'], ['tall', 'Tall']],
     headsz: [['small', 'Small'], ['normal', 'Regular'], ['big', 'Big']],
     top: [['tee', 'Tee'], ['long', 'Long sleeve'], ['tank', 'Tank'], ['hoodie', 'Hoodie'], ['puffer', 'Puffer']],
-    bot: [['pants', 'Pants'], ['baggy', 'Baggy'], ['shorts', 'Shorts'], ['skirt', 'Skirt']],
+    bot: [['pants', 'Jeans'], ['baggy', 'Baggy'], ['shorts', 'Shorts'], ['skirt', 'Skirt']],
     shoes: [['sneaker', 'Sneakers'], ['boot', 'Boots'], ['platform', 'Platforms']],
-    hat: [['none', 'None'], ['beanie', 'Beanie'], ['cap', 'Cap'], ['bucket', 'Bucket'], ['phones', 'Headphones'], ['catears', 'Cat ears'], ['crown', 'Crown']],
-    extra: [['none', 'None'], ['glasses', 'Glasses'], ['shades', 'Shades'], ['scarf', 'Scarf'], ['backpack', 'Backpack'], ['tail', 'Cat tail']],
+    hat: [['none', 'None'], ['beanie', 'Beanie'], ['cap', 'Cap'], ['bucket', 'Bucket'], ['bandana', 'Bandana'], ['phones', 'Headphones'], ['catears', 'Cat ears'], ['crown', 'Crown']],
+    extra: [['none', 'None'], ['glasses', 'Glasses'], ['shades', 'Shades'], ['chain', 'Chain'], ['scarf', 'Scarf'], ['backpack', 'Backpack'], ['tail', 'Cat tail']],
     move: [['idle', 'Stand'], ['walk', 'Walk'], ['sing', 'Sing'], ['dance', 'Dance'], ['wave', 'Wave']],
   };
-  const DEF = { head: 'round', skin: SKINS[1], eyes: 'dot', brows: 'flat', nose: 'small', mouth: 'smile', hair: 'short', hairc: HAIRS[1], build: 'normal', height: 'mid', headsz: 'normal', top: 'tee', topc: CLOTH[0], bot: 'pants', botc: CLOTH[5], shoes: 'sneaker', shoec: CLOTH[9], hat: 'none', hatc: CLOTH[2], extra: 'none', move: 'dance' };
+  const DEF = { head: 'oval', skin: SKINS[2], eyes: 'normal', brows: 'flat', nose: 'small', mouth: 'smile', beard: 'none', hair: 'short', hairc: HAIRS[0], build: 'normal', height: 'mid', headsz: 'normal', top: 'tee', topc: CLOTH[0], bot: 'pants', botc: CLOTH[5], shoes: 'sneaker', shoec: CLOTH[9], hat: 'none', hatc: CLOTH[2], extra: 'none', move: 'dance' };
   const STARTERS = [
-    ['skater', 'Skater', { head: 'block', hair: 'short', hairc: HAIRS[1], top: 'hoodie', topc: CLOTH[0], bot: 'baggy', botc: CLOTH[5], shoes: 'sneaker', shoec: CLOTH[9], hat: 'beanie', hatc: CLOTH[8], eyes: 'sleepy', mouth: 'flat', brows: 'flat' }],
-    ['raver', 'Raver', { head: 'round', skin: SKINS[0], hair: 'spikes', hairc: HAIRS[6], top: 'tank', topc: CLOTH[7], bot: 'pants', botc: CLOTH[8], shoes: 'platform', shoec: CLOTH[9], eyes: 'happy', mouth: 'grin', brows: 'raised', extra: 'glasses' }],
-    ['dj', 'DJ', { head: 'wide', skin: SKINS[4], hair: 'afro', hairc: HAIRS[0], top: 'tee', topc: CLOTH[2], bot: 'pants', botc: CLOTH[8], shoes: 'sneaker', shoec: CLOTH[0], hat: 'phones', hatc: CLOTH[8], eyes: 'big', mouth: 'smile', build: 'broad' }],
-    ['bob', 'Bob cut', { head: 'tall', skin: SKINS[2], hair: 'bob', hairc: HAIRS[0], top: 'long', topc: CLOTH[3], bot: 'skirt', botc: CLOTH[4], shoes: 'boot', shoec: CLOTH[8], eyes: 'wide', mouth: 'dot', brows: 'raised', build: 'slim' }],
+    ['skater', 'Skater', { head: 'square', skin: SKINS[1], hair: 'short', hairc: HAIRS[1], top: 'hoodie', topc: CLOTH[0], bot: 'baggy', botc: CLOTH[5], shoes: 'sneaker', shoec: CLOTH[9], hat: 'beanie', hatc: CLOTH[8], eyes: 'sleepy', mouth: 'flat' }],
+    ['og', 'OG', { head: 'square', skin: SKINS[3], hair: 'fade', hairc: HAIRS[0], top: 'tank', topc: CLOTH[9], bot: 'baggy', botc: CLOTH[5], shoes: 'boot', shoec: CLOTH[11], hat: 'bandana', hatc: CLOTH[0], extra: 'chain', beard: 'goatee', eyes: 'sleepy', mouth: 'flat', build: 'broad' }],
+    ['dj', 'DJ', { head: 'round', skin: SKINS[4], hair: 'afro', hairc: HAIRS[0], top: 'tee', topc: CLOTH[2], bot: 'pants', botc: CLOTH[8], shoes: 'sneaker', shoec: CLOTH[0], hat: 'phones', hatc: CLOTH[8], eyes: 'big', mouth: 'smile', beard: 'stache' }],
+    ['raver', 'Raver', { head: 'oval', skin: SKINS[0], hair: 'spikes', hairc: HAIRS[6], top: 'tank', topc: CLOTH[7], bot: 'pants', botc: CLOTH[8], shoes: 'platform', shoec: CLOTH[9], eyes: 'happy', mouth: 'grin', brows: 'raised', extra: 'shades', build: 'slim' }],
+    ['bob', 'Bob cut', { head: 'long', skin: SKINS[2], hair: 'bob', hairc: HAIRS[0], top: 'long', topc: CLOTH[3], bot: 'skirt', botc: CLOTH[4], shoes: 'boot', shoec: CLOTH[8], eyes: 'wide', mouth: 'dot', brows: 'raised', build: 'slim' }],
     ['cat', 'Cat', { head: 'round', skin: SKINS[0], hair: 'none', hairc: HAIRS[5], top: 'hoodie', topc: CLOTH[6], bot: 'shorts', botc: CLOTH[8], shoes: 'sneaker', shoec: CLOTH[9], hat: 'catears', hatc: HAIRS[5], extra: 'tail', eyes: 'big', nose: 'cat', mouth: 'cat', brows: 'none', headsz: 'big' }],
   ];
-  // the categories in the creator, by tab. cam is how the camera frames it, kind is what the grid shows
+  // the categories in the creator, by tab: [id, label, camera, kind, colors]
   const CATS = {
-    face: [['start', 'START', 'full'], ['head', 'HEAD', 'head'], ['skin', 'SKIN', 'head', 'color', SKINS], ['eyes', 'EYES', 'face'], ['brows', 'BROWS', 'face'], ['nose', 'NOSE', 'face'], ['mouth', 'MOUTH', 'face'], ['hair', 'HAIR', 'head'], ['hairc', 'HAIR COLOR', 'head', 'color', HAIRS]],
+    face: [['start', 'START', 'full'], ['head', 'HEAD', 'head'], ['skin', 'SKIN', 'head', 'color', SKINS], ['eyes', 'EYES', 'face'], ['brows', 'BROWS', 'face'], ['nose', 'NOSE', 'face'], ['mouth', 'MOUTH', 'face'], ['beard', 'BEARD', 'face'], ['hair', 'HAIR', 'head'], ['hairc', 'HAIR COLOR', 'head', 'color', HAIRS]],
     body: [['build', 'BUILD', 'full'], ['height', 'HEIGHT', 'full'], ['headsz', 'HEAD SIZE', 'full']],
     outfit: [['top', 'TOP', 'full'], ['topc', 'TOP COLOR', 'full', 'color', CLOTH], ['bot', 'BOTTOM', 'full'], ['botc', 'BOTTOM COLOR', 'full', 'color', CLOTH], ['shoes', 'SHOES', 'full'], ['shoec', 'SHOE COLOR', 'full', 'color', CLOTH], ['hat', 'HAT', 'head'], ['hatc', 'HAT COLOR', 'head', 'color', CLOTH], ['extra', 'EXTRAS', 'full']],
     emote: [['move', 'MOVE', 'full']],
   };
   const TAB_NAMES = { face: 'FACE', body: 'BODY', outfit: 'OUTFIT', emote: 'EMOTE' };
-  const THUMB_FOCUS = { head: ['head', 22], face: ['face', 0], full: ['full', 24], torso: ['torso', 24], legs: ['legs', 24], feet: ['feet', 40], upper: ['upper', 20] };
-  const FOCUS = { full: { cy: 2.2, d: 5.5 }, head: { cy: 3.85, d: 2.7 }, face: { cy: 3.85, d: 2.0 }, upper: { cy: 3.3, d: 3.5 }, torso: { cy: 2.9, d: 3.7 }, legs: { cy: 1.2, d: 3.7 }, feet: { cy: 0.35, d: 2.3 } };
-  const chr = { A: Object.assign({}, DEF), style: 'holo', holo: 'cyan', bg: 'city', floor: 'grid', yaw: 24, userYaw: 0, zoom: 1, spin: false, pix: 3, t: 0, cur: null, hist: [], redo: [] };
+  // camera targets in meters. cy is the height it looks at, d how far back it stands
+  const FOCUS = { full: { cy: 0.93, d: 3.5 }, head: { cy: 1.66, d: 1.25 }, face: { cy: 1.66, d: 0.8 }, upper: { cy: 1.38, d: 1.8 }, torso: { cy: 1.2, d: 1.8 }, legs: { cy: 0.5, d: 1.8 }, feet: { cy: 0.12, d: 1.1 } };
+  const chr = { A: Object.assign({}, DEF), style: 'solid', holo: 'cyan', bg: 'street', floor: 'asphalt', yaw: 24, userYaw: 0, zoom: 1, spin: false, pix: 2, t: 0, cur: null, hist: [], redo: [] };
   const chrUI = { tab: 'face', cat: 'start' };
   const hex = (h) => [parseInt(h.slice(1, 3), 16), parseInt(h.slice(3, 5), 16), parseInt(h.slice(5, 7), 16)];
-  (function loadChar() { try { const s = JSON.parse(localStorage.getItem('nocivChar') || 'null'); if (s) Object.keys(DEF).forEach(k => { if (typeof s[k] === 'string' && (!OPTS[k] || OPTS[k].some(o => o[0] === s[k]))) chr.A[k] = s[k]; }); } catch (e) {} })();
-  function saveChar() { try { localStorage.setItem('nocivChar', JSON.stringify(chr.A)); } catch (e) {} }
+  const mix = (a, b, k) => [a[0] + (b[0] - a[0]) * k, a[1] + (b[1] - a[1]) * k, a[2] + (b[2] - a[2]) * k];
+  const rgbCss = (c, a) => 'rgba(' + Math.round(c[0]) + ',' + Math.round(c[1]) + ',' + Math.round(c[2]) + ',' + (a === undefined ? 1 : a) + ')';
+  (function loadChar() { try { const s = JSON.parse(localStorage.getItem('nocivChar2') || 'null'); if (s) Object.keys(DEF).forEach(k => { if (typeof s[k] === 'string' && (!OPTS[k] || OPTS[k].some(o => o[0] === s[k]))) chr.A[k] = s[k]; }); } catch (e) {} })();
+  function saveChar() { try { localStorage.setItem('nocivChar2', JSON.stringify(chr.A)); } catch (e) {} }
 
-  // ----- tiny 3D: 4x4 matrices, meshes, painter's algorithm -----
+  // ----- matrices -----
   function mm(a, b) { const o = new Array(16); for (let r = 0; r < 4; r++) for (let c = 0; c < 4; c++) o[r * 4 + c] = a[r * 4] * b[c] + a[r * 4 + 1] * b[4 + c] + a[r * 4 + 2] * b[8 + c] + a[r * 4 + 3] * b[12 + c]; return o; }
   const Tm = (x, y, z) => [1, 0, 0, x, 0, 1, 0, y, 0, 0, 1, z, 0, 0, 0, 1];
   const RX = (a) => { const c = Math.cos(a), s = Math.sin(a); return [1, 0, 0, 0, 0, c, -s, 0, 0, s, c, 0, 0, 0, 0, 1]; };
@@ -1206,46 +1212,170 @@
   const RZ = (a) => { const c = Math.cos(a), s = Math.sin(a); return [c, -s, 0, 0, s, c, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1]; };
   const Sm = (x, y, z) => [x, 0, 0, 0, 0, y, 0, 0, 0, 0, z, 0, 0, 0, 0, 1];
   const mp = (m, p) => [m[0] * p[0] + m[1] * p[1] + m[2] * p[2] + m[3], m[4] * p[0] + m[5] * p[1] + m[6] * p[2] + m[7], m[8] * p[0] + m[9] * p[1] + m[10] * p[2] + m[11]];
-  const sub3 = (a, b) => [a[0] - b[0], a[1] - b[1], a[2] - b[2]];
+  // ----- meshes: lofted shapes (a stack of rings), smooth normals, UVs, optional color per ring -----
   const cross3 = (a, b) => [a[1] * b[2] - a[2] * b[1], a[2] * b[0] - a[0] * b[2], a[0] * b[1] - a[1] * b[0]];
-  function finish(v, f) { // make every face normal point away from the middle of the shape
-    const c = [0, 0, 0]; v.forEach(p => { c[0] += p[0]; c[1] += p[1]; c[2] += p[2]; }); c[0] /= v.length; c[1] /= v.length; c[2] /= v.length;
-    return { v, f: f.map(face => { const n = cross3(sub3(v[face[1]], v[face[0]]), sub3(v[face[2]], v[face[0]])), m = [0, 0, 0]; face.forEach(i => { m[0] += v[i][0]; m[1] += v[i][1]; m[2] += v[i][2]; }); const d = (m[0] / face.length - c[0]) * n[0] + (m[1] / face.length - c[1]) * n[1] + (m[2] / face.length - c[2]) * n[2]; return d < 0 ? face.slice().reverse() : face; }) };
+  const sub3 = (a, b) => [a[0] - b[0], a[1] - b[1], a[2] - b[2]];
+  function addTri(m, a, b, c, hint) { // keep the face pointing the way the hint says
+    const n = cross3(sub3(m.v[b], m.v[a]), sub3(m.v[c], m.v[a])); if (n[0] * hint[0] + n[1] * hint[1] + n[2] * hint[2] < 0) m.f.push([a, c, b]); else m.f.push([a, b, c]);
   }
-  function boxMesh(w, h, d, y0) { const x = w / 2, z = d / 2, a = y0 === undefined ? -h / 2 : y0, b = a + h; return finish([[-x, a, -z], [x, a, -z], [x, b, -z], [-x, b, -z], [-x, a, z], [x, a, z], [x, b, z], [-x, b, z]], [[0, 1, 2, 3], [4, 5, 6, 7], [0, 1, 5, 4], [3, 2, 6, 7], [0, 3, 7, 4], [1, 2, 6, 5]]); }
-  function cylMesh(seg, rTop, rBot, y0, y1) {
-    const v = [], f = []; for (let i = 0; i < seg; i++) { const a = i / seg * 6.2832; v.push([Math.cos(a) * rBot, y0, Math.sin(a) * rBot]); } for (let i = 0; i < seg; i++) { const a = i / seg * 6.2832; v.push([Math.cos(a) * rTop, y1, Math.sin(a) * rTop]); }
-    for (let i = 0; i < seg; i++) f.push([i, (i + 1) % seg, seg + (i + 1) % seg, seg + i]);
-    f.push([...Array(seg).keys()]); f.push([...Array(seg).keys()].map(i => seg + i)); return finish(v, f);
+  function normals(m) {
+    const acc = m.v.map(() => [0, 0, 0]);
+    m.f.forEach(t => { const n = cross3(sub3(m.v[t[1]], m.v[t[0]]), sub3(m.v[t[2]], m.v[t[0]])); t.forEach(i => { acc[i][0] += n[0]; acc[i][1] += n[1]; acc[i][2] += n[2]; }); });
+    if (m.seam) m.seam.forEach(([a, b]) => { const s = [acc[a][0] + acc[b][0], acc[a][1] + acc[b][1], acc[a][2] + acc[b][2]]; acc[a] = s.slice(); acc[b] = s.slice(); });
+    m.n = acc.map(n => { const l = Math.hypot(n[0], n[1], n[2]) || 1; return [n[0] / l, n[1] / l, n[2] / l]; }); return m;
   }
-  // a sphere, or just the top of one (a dome) when maxP is under PI
-  function domeMesh(seg, rings, rx, ry, rz, maxP) {
-    const v = [], f = [], mp2 = maxP || Math.PI; for (let r = 0; r <= rings; r++) { const p = r / rings * mp2; for (let i = 0; i < seg; i++) { const a = i / seg * 6.2832; v.push([Math.cos(a) * Math.sin(p) * rx, Math.cos(p) * ry, Math.sin(a) * Math.sin(p) * rz]); } }
-    for (let r = 0; r < rings; r++) for (let i = 0; i < seg; i++) f.push([r * seg + i, r * seg + (i + 1) % seg, (r + 1) * seg + (i + 1) % seg, (r + 1) * seg + i]);
-    return finish(v, f);
+  // rings: [y, rx, rz, ox, oz]. o: seg, n (squareness), cols (hex per ring), capTop, capBot
+  function loft(rings, o) {
+    o = o || {}; const seg = o.seg || 10, ex = 2 / (o.n || 2), R = rings.length, m = { v: [], uv: [], c: [], f: [], seam: [] };
+    for (let r = 0; r < R; r++) {
+      const [y, rx, rz, ox, oz] = rings[r], cc0 = o.cols && o.cols[r], col = cc0 ? (cc0.length === 1 ? cc0 : hex(cc0)) : null;
+      for (let i = 0; i <= seg; i++) { const a = i / seg * 6.28318, ca = Math.cos(a), sa = Math.sin(a); m.v.push([(ox || 0) + Math.sign(ca) * Math.pow(Math.abs(ca), ex) * rx, y, (oz || 0) + Math.sign(sa) * Math.pow(Math.abs(sa), ex) * rz]); m.uv.push([i / seg, R > 1 ? r / (R - 1) : 0]); m.c.push(col); }
+      m.seam.push([r * (seg + 1), r * (seg + 1) + seg]);
+    }
+    for (let r = 0; r < R - 1; r++) for (let i = 0; i < seg; i++) {
+      const a = r * (seg + 1) + i, b = a + 1, c = a + seg + 1, d = c + 1, cx = (m.v[a][0] + m.v[d][0]) / 2 - (rings[r][3] || 0), cz = (m.v[a][2] + m.v[d][2]) / 2 - (rings[r][4] || 0), h = [cx, 0, cz];
+      addTri(m, a, c, b, h); addTri(m, b, c, d, h);
+    }
+    const cap = (r, up) => { const [y, rx, rz, ox, oz] = rings[r], base = m.v.length, cc1 = o.cols && o.cols[r], col = cc1 ? (cc1.length === 1 ? cc1 : hex(cc1)) : null; m.v.push([ox || 0, y, oz || 0]); m.uv.push([0.5, r ? 1 : 0]); m.c.push(col); const ring0 = m.v.length; for (let i = 0; i <= seg; i++) { m.v.push(m.v[r * (seg + 1) + i].slice()); m.uv.push([i / seg, r ? 1 : 0]); m.c.push(col); } for (let i = 0; i < seg; i++) addTri(m, base, ring0 + i, ring0 + i + 1, [0, up, 0]); };
+    if (o.capTop) cap(R - 1, 1); if (o.capBot) cap(0, -1);
+    normals(m);
+    if (o.capTop || o.capBot) { // caps keep a flat normal
+      const nv = R * (seg + 1); for (let k = nv; k < m.v.length; k++) m.n[k] = [0, k < nv + seg + 2 && o.capTop ? 1 : -1, 0];
+    }
+    return m;
   }
-  const sphereMesh = (seg, rings, rx, ry, rz) => domeMesh(seg, rings, rx, ry, rz, Math.PI);
-  const MESH = {
-    pelvis: boxMesh(0.95, 0.5, 0.55), torso: cylMesh(6, 0.62, 0.5, 0, 1.05), neck: cylMesh(5, 0.1, 0.12, 0, 0.16),
-    headR: sphereMesh(8, 5, 0.42, 0.46, 0.42), headB: boxMesh(0.8, 0.8, 0.78), headT: boxMesh(0.7, 0.92, 0.74), headW: boxMesh(0.92, 0.7, 0.76), feat: boxMesh(1, 1, 1),
-    upper: cylMesh(5, 0.13, 0.14, -0.7, 0), fore: cylMesh(5, 0.11, 0.13, -0.65, 0), hand: sphereMesh(5, 3, 0.13, 0.13, 0.13),
-    thigh: cylMesh(5, 0.2, 0.17, -0.85, 0), thighBag: cylMesh(5, 0.3, 0.27, -0.85, 0), shin: cylMesh(5, 0.16, 0.12, -0.85, 0), shinBag: cylMesh(5, 0.26, 0.22, -0.85, 0),
-    sneaker: boxMesh(0.3, 0.17, 0.55, -0.14), boot: boxMesh(0.32, 0.36, 0.56, -0.14), platform: boxMesh(0.34, 0.3, 0.6, -0.27),
-    skirt: cylMesh(6, 0.52, 0.85, -0.7, 0), spike: cylMesh(4, 0, 0.12, 0, 0.5), band: boxMesh(0.9, 0.07, 0.1), cup: cylMesh(6, 0.17, 0.17, -0.08, 0.08),
-    ball: sphereMesh(5, 3, 0.08, 0.08, 0.08), pom: sphereMesh(5, 3, 0.11, 0.11, 0.11), brim: boxMesh(0.5, 0.05, 0.36), mic: cylMesh(5, 0.05, 0.04, -0.4, 0), micHead: sphereMesh(6, 4, 0.1, 0.1, 0.1),
-    ear: cylMesh(3, 0, 0.15, 0, 0.26), crownBase: cylMesh(6, 0.36, 0.36, 0, 0.12), crownTip: cylMesh(4, 0, 0.07, 0, 0.2), bucket: cylMesh(8, 0.34, 0.4, 0, 0.3), bucketBrim: cylMesh(8, 0.62, 0.62, 0, 0.04),
-    hood: sphereMesh(6, 3, 0.36, 0.3, 0.3), pack: boxMesh(0.8, 0.9, 0.34), scarf: cylMesh(6, 0.3, 0.3, 0, 0.18), tail: cylMesh(4, 0.06, 0.08, 0, 0.5), ponyT: cylMesh(5, 0.05, 0.11, -0.75, 0),
-    hairBack: boxMesh(1, 1, 1),
+  // a tube along a path of [x, y, z, radius] points
+  function tube(path, o) {
+    o = o || {}; const seg = o.seg || 6, m = { v: [], uv: [], c: [], f: [], seam: [] }, P = path.length;
+    for (let p = 0; p < P; p++) {
+      const a = path[Math.max(0, p - 1)], b = path[Math.min(P - 1, p + 1)]; let t = [b[0] - a[0], b[1] - a[1], b[2] - a[2]]; const tl = Math.hypot(...t) || 1; t = t.map(v => v / tl);
+      let up = Math.abs(t[1]) > 0.9 ? [0, 0, 1] : [0, 1, 0]; let s = cross3(t, up); const sl = Math.hypot(...s) || 1; s = s.map(v => v / sl); const u = cross3(s, t);
+      for (let i = 0; i <= seg; i++) { const an = i / seg * 6.28318, c = Math.cos(an) * path[p][3], d = Math.sin(an) * path[p][3]; m.v.push([path[p][0] + s[0] * c + u[0] * d, path[p][1] + s[1] * c + u[1] * d, path[p][2] + s[2] * c + u[2] * d]); m.uv.push([i / seg, p / (P - 1)]); m.c.push(null); }
+      m.seam.push([p * (seg + 1), p * (seg + 1) + seg]);
+    }
+    for (let p = 0; p < P - 1; p++) for (let i = 0; i < seg; i++) {
+      const a = p * (seg + 1) + i, b = a + 1, c = a + seg + 1, d = c + 1, ctr = [(path[p][0] + path[p + 1][0]) / 2, (path[p][1] + path[p + 1][1]) / 2, (path[p][2] + path[p + 1][2]) / 2], mid = [(m.v[a][0] + m.v[d][0]) / 2 - ctr[0], (m.v[a][1] + m.v[d][1]) / 2 - ctr[1], (m.v[a][2] + m.v[d][2]) / 2 - ctr[2]];
+      addTri(m, a, c, b, mid); addTri(m, b, c, d, mid);
+    }
+    return normals(m);
+  }
+  const MC = {}; const memo = (k, f) => MC[k] || (MC[k] = f());
+  const ringsEllipse = (cx, cy, cz, rx, ry, rz, n, a0, a1) => { const out = []; for (let i = 0; i <= n; i++) { const p = a0 + (a1 - a0) * i / n; out.push([cy + Math.cos(p) * ry, Math.sin(p) * rx, Math.sin(p) * rz, cx, cz]); } return out; };
+
+  // ----- body parts -----
+  const HEAD_P = [[0, .025, .04], [.025, .062, .075], [.06, .09, .098], [.11, .106, .112], [.16, .111, .115], [.205, .102, .106], [.235, .075, .08], [.254, .04, .045], [.26, 0, 0]];
+  const HEADV = { oval: { w: 1, h: 1, d: 1, n: 2.2, jaw: 1 }, square: { w: 1.04, h: 0.97, d: 1, n: 3.2, jaw: 1.28 }, long: { w: 0.92, h: 1.14, d: 0.96, n: 2.1, jaw: 0.92 }, round: { w: 1.1, h: 0.95, d: 1.06, n: 2.05, jaw: 1.12 } };
+  function headProfile(k) { const v = HEADV[k], H = 0.26; return HEAD_P.map(([y, rx, rz], i) => { const lowK = i < 4 ? v.jaw : 1; return [y * v.h, rx * v.w * (i === 0 ? 1 : lowK), rz * v.d * (i === 0 ? 1 : (i < 4 ? 1 + (lowK - 1) * 0.5 : 1)), 0, 0.004]; }); }
+  function headRad(k, y) { const pr = headProfile(k); for (let i = 0; i < pr.length - 1; i++) if (y <= pr[i + 1][0]) { const t = (y - pr[i][0]) / ((pr[i + 1][0] - pr[i][0]) || 1); return [pr[i][1] + (pr[i + 1][1] - pr[i][1]) * t, pr[i][2] + (pr[i + 1][2] - pr[i][2]) * t]; } return [0, 0]; }
+  const headTop = (k) => 0.26 * HEADV[k].h;
+  function headMesh(k) {
+    return memo('head' + k, () => { const m = loft(headProfile(k), { seg: 18, n: HEADV[k].n, capBot: false });
+      const top = headTop(k); m.uv = m.v.map(p => [Math.max(0, Math.min(1, 0.5 + p[0] / 0.26)), Math.max(0, Math.min(1, 1 - p[1] / (top * 1.04)))]); m.w = m.v.map(p => Math.max(0, Math.min(1, p[2] / 0.035))); return m; });
+  }
+  // a cap of hair or a hat that follows the head. y0 is where it starts, grow how far it floats off the skull
+  function capMesh(k, y0, grow, cols) {
+    return memo('cap' + [k, y0, grow, (cols || []).join('')].join('_'), () => {
+      const top = headTop(k), ys = []; for (let i = 0; i <= 6; i++) ys.push(y0 + (top - y0) * i / 6);
+      const rings = ys.map(y => { const [rx, rz] = headRad(k, Math.min(y, top - 0.002)); return [y, rx + grow, rz + grow, 0, 0.004]; }); rings.push([top + grow * 0.8, 0.001, 0.001, 0, 0.004]);
+      return loft(rings, { seg: 16, n: HEADV[k].n, capTop: true, cols: cols });
+    });
+  }
+  const discMesh = (rx, rz, h) => memo('disc' + [rx, rz, h].join('_'), () => loft([[0, rx, rz], [h, rx, rz]], { seg: 14, capTop: true, capBot: true }));
+  const coneMesh = (r, h, rz) => memo('cone' + [r, h, rz].join('_'), () => loft([[0, r, rz || r], [h * 0.6, r * 0.55, (rz || r) * 0.55], [h, 0.001, 0.001]], { seg: 6 }));
+  const cylMesh = (r0, r1, h, n) => memo('cyl' + [r0, r1, h, n].join('_'), () => loft([[0, r0, r0], [h, r1, r1]], { seg: n || 10, capTop: true, capBot: true }));
+  const ballMesh = (r) => memo('ball' + r, () => loft(ringsEllipse(0, 0, 0, r, r, r, 6, 3.1416, 0), { seg: 8, capTop: true, capBot: true }));
+  const TORSO_P = [[0, .145, .095], [.07, .152, .1], [.17, .172, .112], [.28, .195, .118], [.37, .21, .108], [.43, .2, .09], [.47, .12, .07], [.49, .06, .055]];
+  const BODY = {
+    torso: () => memo('torso', () => { const m = loft(TORSO_P, { seg: 16, capTop: true }); m.uv = m.uv.map(a => [a[0], 1 - a[1]]); return m; }),
+    pelvis: () => memo('pelvis', () => loft([[-.1, .13, .095], [-.02, .17, .115], [.075, .155, .105]], { seg: 14, capBot: true })),
+    neck: () => memo('neck', () => loft([[-.02, .052, .052], [.075, .045, .045]], { seg: 8 })),
+    hand: () => memo('hand', () => loft([[0.01, .028, .018], [-.03, .038, .022], [-.07, .04, .022], [-.1, .03, .015], [-.125, .012, .008]], { seg: 8, capBot: true })),
+    skirt: () => memo('skirt', () => loft([[.05, .165, .12], [-.1, .2, .15], [-.3, .27, .22]], { seg: 14 })),
   };
-  const DOMES = {};
-  function dome(rx, ry, rz, p) { const k = [rx, ry, rz, p].map(v => v.toFixed(2)).join('_'); return DOMES[k] || (DOMES[k] = domeMesh(8, 3, rx, ry, rz, p)); }
-  const HEADS = {
-    round: { mesh: MESH.headR, w: 0.42, top: 0.46, zAt: (y) => 0.42 * Math.sqrt(Math.max(0, 1 - (y / 0.46) * (y / 0.46))) * 0.95 + 0.02 },
-    block: { mesh: MESH.headB, w: 0.4, top: 0.4, zAt: () => 0.4 },
-    tall: { mesh: MESH.headT, w: 0.35, top: 0.46, zAt: () => 0.38 },
-    wide: { mesh: MESH.headW, w: 0.46, top: 0.35, zAt: () => 0.39 },
-  };
-  // ----- poses. Positive shoulder numbers swing forward, abduction numbers lift sideways. -----
+  function armMesh(top, which) { // top: the cloth style. which 0 upper, 1 fore
+    const key = 'arm' + top + which; return memo(key, () => {
+      const cloth = top !== 'tank', long = top !== 'tee' && top !== 'tank';
+      if (which === 0) return loft([[.03, .052, .052], [0, .056, .056], [-.12, .05, .05], [-.155, .048, .048], [-.157, .048, .048], [-.29, .04, .04]], { seg: 8, cols: cloth ? (long ? 'aaaaaa'.split('') : ['a', 'a', 'a', 'a', 's', 's']) : 'ssssss'.split('') });
+      return loft([[0, .04, .04], [-.08, .043, .043], [-.2, .033, .033], [-.27, .028, .028]], { seg: 8, cols: long ? ['a', 'a', 'a', 'a'] : ['s', 's', 's', 's'] });
+    });
+  }
+  function legMesh(bot, which) {
+    return memo('leg' + bot + which, () => {
+      const cloth = bot === 'pants' || bot === 'baggy'; const th = bot === 'shorts' ? ['a', 'a', 'a', 'a', 's', 's'] : cloth ? 'aaaaaa'.split('') : 'ssssss'.split('');
+      if (which === 0) return loft([[.02, .092, .092], [-.06, .095, .095], [-.22, .082, .082], [-.30, .072, .072], [-.301, .072, .072], [-.44, .062, .062]], { seg: 10, cols: th });
+      return loft([[0, .062, .062], [-.08, .066, .07], [-.2, .056, .058], [-.35, .042, .042], [-.43, .038, .038]], { seg: 10, cols: cloth ? 'aaaaa'.split('') : 'sssss'.split('') });
+    });
+  }
+  const FOOT_P = [[0, .04, .04], [.06, .047, .052], [.15, .05, .045], [.22, .045, .03], [.27, .028, .017]];
+  const footUpper = (kind) => memo('foot' + kind, () => { const s = kind === 'boot' ? 1.05 : 1, pl = kind === 'platform' ? 1 : 0; return loft(FOOT_P.map(([y, rx, rz]) => [y, rx * s, rz * (pl ? 0.9 : 1), 0, -rz * (pl ? 0.9 : 1)]), { seg: 10, capBot: true, capTop: true, n: 2.6 }); });
+  const footSole = (kind) => memo('sole' + kind, () => { const h = kind === 'platform' ? 0.07 : 0.024; return loft(FOOT_P.map(([y, rx]) => [y - (y === 0 ? 0.004 : 0), rx * 1.08 + 0.003, h / 2, 0, -h / 2]), { seg: 10, capBot: true, capTop: true, n: 3 }); });
+  // ----- textures: small canvases painted in code, read back as pixels -----
+  const TEXC = {};
+  function getTex(key, w, h, paint) {
+    if (TEXC[key]) return TEXC[key]; const c = document.createElement('canvas'); c.width = w; c.height = h; const x = c.getContext('2d'); paint(x, w, h); const d = x.getImageData(0, 0, w, h).data; const t = { w, h, d }; const ks = Object.keys(TEXC); if (ks.length > 160) delete TEXC[ks[0]]; return (TEXC[key] = t);
+  }
+  const shade = (hexc, k) => { const c = hex(hexc); return rgbCss(c.map(v => Math.max(0, Math.min(255, v * k)))); };
+  const TORSO_V = TORSO_P.map((r, i) => i / (TORSO_P.length - 1)), tv = (y) => { for (let i = 0; i < TORSO_P.length - 1; i++) if (y <= TORSO_P[i + 1][0]) return (i + (y - TORSO_P[i][0]) / (TORSO_P[i + 1][0] - TORSO_P[i][0])) / (TORSO_P.length - 1); return 1; };
+  function torsoTex(A) {
+    return getTex('torso' + [A.top, A.topc, A.skin].join('_'), 96, 96, (x, W, H) => {
+      const cloth = A.topc, skin = A.skin, V = (y) => (1 - tv(y)) * H; x.fillStyle = cloth; x.fillRect(0, 0, W, H);
+      // soft fabric folds
+      for (let i = 0; i < 40; i++) { x.fillStyle = 'rgba(' + (i % 2 ? '0,0,0' : '255,255,255') + ',0.045)'; x.fillRect(Math.random() * W, 0, 2 + Math.random() * 4, H); }
+      const Ux = (u) => u * W, fc = 0.25, bc = 0.75;
+      // neckline: skin shows above it
+      x.fillStyle = skin; const hole = (cu, dy, wd) => { x.beginPath(); x.moveTo(Ux(cu - wd), V(.5)); x.lineTo(Ux(cu - wd), V(.455)); x.quadraticCurveTo(Ux(cu), V(.455 - dy), Ux(cu + wd), V(.455)); x.lineTo(Ux(cu + wd), V(.5)); x.closePath(); x.fill(); };
+      if (A.top === 'tank') { hole(fc, 0.13, 0.17); hole(bc, 0.03, 0.17); x.fillStyle = skin; x.fillRect(0, 0, 0, 0); // arm holes: skin on the sides at the top
+        x.fillRect(Ux(0), V(.5), Ux(.1), V(.34) - V(.5)); x.fillRect(Ux(.4), V(.5), Ux(.2), V(.34) - V(.5)); x.fillRect(Ux(.9), V(.5), Ux(.1), V(.34) - V(.5)); }
+      else { hole(fc, 0.045, 0.1); hole(bc, 0.015, 0.1); x.strokeStyle = shade(cloth, 0.7); x.lineWidth = 2; x.beginPath(); x.moveTo(Ux(fc - 0.1), V(.455)); x.quadraticCurveTo(Ux(fc), V(.41), Ux(fc + 0.1), V(.455)); x.stroke(); }
+      if (A.top === 'hoodie') { x.fillStyle = shade(cloth, 0.82); x.fillRect(Ux(fc - 0.11), V(.17), Ux(0.22), V(.04) - V(.17)); x.strokeStyle = shade(cloth, 0.6); x.lineWidth = 1.5; x.strokeRect(Ux(fc - 0.11), V(.17), Ux(0.22), V(.04) - V(.17)); x.fillStyle = shade(cloth, 1.35); x.fillRect(Ux(fc - 0.03), V(.44), 2, V(.3) - V(.44)); x.fillRect(Ux(fc + 0.03), V(.44), 2, V(.3) - V(.44)); }
+      if (A.top === 'puffer') { x.strokeStyle = shade(cloth, 0.6); x.lineWidth = 2; [.09, .2, .31, .4].forEach(y => { x.beginPath(); x.moveTo(0, V(y)); x.lineTo(W, V(y)); x.stroke(); }); }
+      if (A.top === 'tee') { x.fillStyle = 'rgba(255,255,255,.85)'; x.font = '900 ' + Math.round(H * 0.075) + 'px Impact, Arial Black, sans-serif'; x.textAlign = 'center'; x.fillText('N', Ux(fc), V(.27)); }
+      x.fillStyle = shade(cloth, 0.8); x.fillRect(0, V(.02), W, V(0) - V(.02)); // hem
+    });
+  }
+  // the painted face. mouth open level 0 to 3, blink 0 or 1
+  function faceTex(A, ml, blink) {
+    return getTex('face' + [A.skin, A.eyes, A.brows, A.mouth, A.beard, A.hairc, A.extra, A.nose, A.head, ml, blink].join('_'), 128, 128, (x, S) => {
+      const top = headTop(A.head) * 1.04, X = (m) => (m / 0.26 + 0.5) * S, Y = (m) => (1 - m / top) * S, sk = hex(A.skin), hv = HEADV[A.head];
+      x.fillStyle = A.skin; x.fillRect(0, 0, S, S);
+      // cheeks, brow shadow, soft chin shade
+      const g = x.createRadialGradient(X(0), Y(.1), 0, X(0), Y(.1), S * 0.3); g.addColorStop(0, rgbCss(mix(sk, [255, 140, 120], 0.12), 0.45)); g.addColorStop(1, rgbCss(sk, 0)); x.fillStyle = g; x.fillRect(0, 0, S, S);
+      const ey = 0.145 * hv.h, ex = 0.043 * hv.w, dark = '#14100e', hc = hex(A.hairc), browC = rgbCss(mix(hc, [20, 15, 12], hc[0] + hc[1] + hc[2] > 450 ? 0.75 : 0.2));
+      const e = A.eyes, sc = e === 'big' ? 1.35 : e === 'wide' ? 1.25 : 1, sy = e === 'sleepy' ? 0.5 : e === 'wide' ? 0.8 : 1;
+      [-1, 1].forEach(sd => {
+        const cx = X(sd * ex), cy = Y(ey);
+        if (e === 'happy' || blink) { x.strokeStyle = dark; x.lineWidth = S * 0.016; x.beginPath(); x.arc(cx, cy + S * 0.012, S * 0.05, Math.PI * (e === 'happy' ? 1.12 : 0.1), Math.PI * (e === 'happy' ? 1.88 : 0.9), false); x.stroke(); }
+        else { const rx = S * 0.05 * sc, ry = S * 0.032 * sc * sy; x.fillStyle = '#f4efe6'; x.beginPath(); x.ellipse(cx, cy, rx, ry, 0, 0, 6.3); x.fill(); x.strokeStyle = rgbCss(sk.map(v => v * 0.55)); x.lineWidth = 1.4; x.stroke(); x.fillStyle = '#3a2418'; x.beginPath(); x.arc(cx, cy, Math.min(ry * 0.95, S * 0.032 * sc), 0, 6.3); x.fill(); x.fillStyle = dark; x.beginPath(); x.arc(cx, cy, Math.min(ry * 0.5, S * 0.016 * sc), 0, 6.3); x.fill(); x.fillStyle = 'rgba(255,255,255,.9)'; x.fillRect(cx + rx * 0.12, cy - ry * 0.55, 2, 2);
+          x.strokeStyle = dark; x.lineWidth = 2; x.beginPath(); x.ellipse(cx, cy - ry * 0.15, rx, ry * (e === 'sleepy' ? 0.3 : 0.9), 0, Math.PI * 1.05, Math.PI * 1.95); x.stroke();
+          if (e === 'sleepy') { x.fillStyle = rgbCss(sk.map(v => v * 0.9)); x.fillRect(cx - rx, cy - ry * 1.2, rx * 2, ry * 1.2); x.strokeStyle = dark; x.lineWidth = 2; x.beginPath(); x.moveTo(cx - rx, cy - ry * 0.1); x.lineTo(cx + rx, cy - ry * 0.1); x.stroke(); }
+          if (e === 'angry') { x.fillStyle = A.skin; x.beginPath(); x.moveTo(cx - rx * 1.2, cy - ry * 1.4); x.lineTo(cx + rx * 1.2, cy - ry * 1.4); x.lineTo(cx + sd * rx * 1.2, cy - ry * 0.1 - sd * 0); x.lineTo(cx - sd * rx * 1.2, cy - ry * 0.9); x.closePath(); x.globalAlpha = 0.9; x.fill(); x.globalAlpha = 1; } }
+        // brows
+        const b = A.brows, by = Y(ey + 0.038 + (b === 'raised' ? 0.014 : 0)), bw = S * 0.062; if (b !== 'none') { x.strokeStyle = browC; x.lineCap = 'round'; x.lineWidth = b === 'thick' ? S * 0.03 : S * 0.016; const ang = b === 'angry' ? sd * 0.4 : b === 'worried' ? -sd * 0.4 : 0; x.beginPath(); x.moveTo(cx - bw * Math.cos(ang) * -1 * -1, by - Math.sin(ang) * bw * -1 * -1); x.lineTo(cx + bw * Math.cos(ang), by + Math.sin(ang) * bw); x.stroke(); }
+        // glasses
+        if (A.extra === 'glasses') { x.strokeStyle = '#222'; x.lineWidth = 2.2; x.strokeRect(cx - S * 0.075, cy - S * 0.05, S * 0.15, S * 0.1); }
+        if (A.extra === 'shades') { x.fillStyle = 'rgba(15,15,20,.94)'; x.beginPath(); x.roundRect ? x.roundRect(cx - S * 0.08, cy - S * 0.05, S * 0.16, S * 0.105, 5) : x.rect(cx - S * 0.08, cy - S * 0.05, S * 0.16, S * 0.105); x.fill(); x.fillStyle = 'rgba(255,255,255,.18)'; x.fillRect(cx - S * 0.06, cy - S * 0.04, S * 0.05, 3); }
+      });
+      if (A.extra === 'glasses' || A.extra === 'shades') { x.strokeStyle = '#222'; x.lineWidth = 2.2; x.beginPath(); x.moveTo(X(-ex) + S * 0.08, Y(ey)); x.lineTo(X(ex) - S * 0.08, Y(ey)); x.stroke(); x.beginPath(); x.moveTo(0, Y(ey)); x.lineTo(X(-ex) - S * 0.08, Y(ey)); x.moveTo(S, Y(ey)); x.lineTo(X(ex) + S * 0.08, Y(ey)); x.stroke(); }
+      // nose shading and nostrils
+      x.fillStyle = rgbCss(sk.map(v => v * 0.72), 0.5); const ny = Y(0.09 * hv.h); if (A.nose !== 'none') { x.beginPath(); x.ellipse(X(-0.011), ny, 2.2, 1.6, 0, 0, 6.3); x.ellipse(X(0.011), ny, 2.2, 1.6, 0, 0, 6.3); x.fill(); }
+      // beard
+      const bd = A.beard; if (bd !== 'none') { x.fillStyle = rgbCss(hc, bd === 'stubble' ? 0.38 : 0.95);
+        if (bd === 'stubble' || bd === 'full') { x.beginPath(); x.moveTo(X(-0.1), Y(0.12)); x.quadraticCurveTo(X(-0.1), Y(0.0), X(0), Y(-0.005)); x.quadraticCurveTo(X(0.1), Y(0.0), X(0.1), Y(0.12)); x.lineTo(X(0.07), Y(0.085)); x.lineTo(X(-0.07), Y(0.085)); x.closePath(); x.fill(); }
+        if (bd === 'stache' || bd === 'full') { x.beginPath(); x.moveTo(X(-0.05), Y(0.08)); x.quadraticCurveTo(X(0), Y(0.095), X(0.05), Y(0.08)); x.lineTo(X(0.055), Y(0.07)); x.quadraticCurveTo(X(0), Y(0.077), X(-0.055), Y(0.07)); x.closePath(); x.fill(); }
+        if (bd === 'goatee') { x.beginPath(); x.moveTo(X(-0.035), Y(0.04)); x.lineTo(X(0.035), Y(0.04)); x.lineTo(X(0.025), Y(0.003)); x.lineTo(X(-0.025), Y(0.003)); x.closePath(); x.fill(); x.fillRect(X(-0.05), Y(0.078), X(0.05) - X(-0.05), 3); } }
+      // mouth
+      const my = Y(0.052 * hv.h), mw = S * (A.mouth === 'dot' ? 0.018 : A.mouth === 'grin' ? 0.09 : A.mouth === 'open' ? 0.052 : 0.06), lip = rgbCss(mix(sk, [150, 50, 60], 0.6)), op = ml / 3;
+      x.lineCap = 'round'; x.lineWidth = S * 0.014;
+      if (A.mouth === 'smile') { x.strokeStyle = rgbCss(sk.map(v => v * 0.45)); x.beginPath(); x.moveTo(X(0) - mw, my - S * 0.004); x.quadraticCurveTo(X(0), my + S * (0.03 + 0.03 * op), X(0) + mw, my - S * 0.004); x.stroke(); if (ml) { x.fillStyle = '#2a0f10'; x.beginPath(); x.ellipse(X(0), my + S * 0.012, mw * 0.7, S * 0.012 * ml, 0, 0, 6.3); x.fill(); } }
+      else if (A.mouth === 'flat') { x.strokeStyle = rgbCss(sk.map(v => v * 0.45)); x.beginPath(); x.moveTo(X(0) - mw, my); x.lineTo(X(0) + mw, my); x.stroke(); if (ml) { x.fillStyle = '#2a0f10'; x.fillRect(X(0) - mw * 0.7, my, mw * 1.4, S * 0.012 * ml); } }
+      else if (A.mouth === 'open') { x.fillStyle = '#2a0f10'; x.beginPath(); x.ellipse(X(0), my + S * 0.01, mw, S * (0.026 + 0.012 * ml), 0, 0, 6.3); x.fill(); x.fillStyle = '#f4efe6'; x.fillRect(X(0) - mw * 0.7, my - S * 0.012, mw * 1.4, S * 0.012); x.fillStyle = lip; x.fillRect(X(0) - mw * 0.55, my + S * 0.03, mw * 1.1, S * 0.008); }
+      else if (A.mouth === 'dot') { x.fillStyle = lip; x.beginPath(); x.ellipse(X(0), my, mw, mw * (1 + ml * 0.4), 0, 0, 6.3); x.fill(); }
+      else if (A.mouth === 'grin') { x.fillStyle = '#2a0f10'; x.beginPath(); x.moveTo(X(0) - mw, my - S * 0.006); x.quadraticCurveTo(X(0), my + S * (0.06 + 0.02 * ml), X(0) + mw, my - S * 0.006); x.closePath(); x.fill(); x.fillStyle = '#f4efe6'; x.beginPath(); x.moveTo(X(0) - mw * 0.9, my - S * 0.004); x.lineTo(X(0) + mw * 0.9, my - S * 0.004); x.lineTo(X(0) + mw * 0.75, my + S * 0.014); x.lineTo(X(0) - mw * 0.75, my + S * 0.014); x.closePath(); x.fill(); }
+      else { x.strokeStyle = rgbCss(sk.map(v => v * 0.45)); x.beginPath(); x.moveTo(X(0) - mw, my + S * 0.008); x.quadraticCurveTo(X(-0.015), my + S * 0.03, X(0), my); x.quadraticCurveTo(X(0.015), my + S * 0.03, X(0) + mw, my + S * 0.008); x.stroke(); x.fillStyle = '#e57a90'; x.beginPath(); x.arc(X(0), my - S * 0.012, 2.4, 0, 6.3); x.fill(); }
+    });
+  }
+
+  // ----- the moves (same timing as before) -----
   function pose(t, a) {
     const P = { air: 0, x: 0, lean: 0, twist: 0, roll: 0, nod: 0, turn: 0, mouth: 0, lSh: 0, lAb: 0.07, lEl: 0.12, rSh: 0, rAb: 0.07, rEl: 0.12, lHip: 0, lHAb: 0.03, lKn: 0.04, rHip: 0, rHAb: 0.03, rKn: 0.04, mic: false, speed: 0, beat: 0, tail: Math.sin(t * 2.2) };
     if (a === 'walk') {
@@ -1274,199 +1404,225 @@
     return P;
   }
   // builds every part of the character for this moment
-  function buildParts(P, A, t) {
-    const out = [], skin = A.skin, hd = HEADS[A.head], bw = ({ slim: 0.86, normal: 1, broad: 1.18 })[A.build], hs = ({ short: 0.86, mid: 1, tall: 1.12 })[A.height], hz = ({ small: 0.86, normal: 1, big: 1.3 })[A.headsz];
-    const root = mm(mm(Tm(P.x, 2.2 + P.air, 0), RY(0)), Sm(hs, hs, hs)), add = (mesh, M, col, o) => out.push(Object.assign({ mesh, M, col }, o || {}));
-    const hoodie = A.top === 'hoodie', puff = A.top === 'puffer', skirt = A.bot === 'skirt', baggy = A.bot === 'baggy', shorts = A.bot === 'shorts';
-    add(MESH.pelvis, mm(root, Sm(bw, 1, 1)), A.botc);
-    if (skirt) add(MESH.skirt, mm(root, Sm(bw, 1, bw)), A.botc);
-    const Tt = mm(mm(mm(root, Tm(0, 0.2, 0)), RX(-P.lean)), mm(RY(P.twist), RZ(P.roll))), tb = bw * (puff ? 1.18 : hoodie ? 1.08 : 1);
-    add(MESH.torso, mm(Tt, Sm(tb, 1, tb)), A.topc);
-    if (hoodie) add(MESH.hood, mm(Tt, Tm(0, 1.02, -0.3)), A.topc);
-    if (A.extra === 'backpack') add(MESH.pack, mm(Tt, Tm(0, 0.55, -0.55 * tb - 0.1)), A.hatc);
-    const Tn = mm(Tt, Tm(0, 1.05, 0)); add(MESH.neck, Tn, skin);
-    if (A.extra === 'scarf') add(MESH.scarf, mm(Tn, Tm(0, -0.06, 0)), A.hatc);
-    const Th = mm(mm(mm(Tn, Tm(0, 0.12, 0)), RX(-P.nod)), RY(P.turn)), Hc = mm(Th, mm(Tm(0, 0.4 * hz, 0), Sm(hz, hz, hz)));
-    add(hd.mesh, Hc, skin);
-    // ---- face. eyes, brows, nose and mouth are bright so they read in a hologram too ----
-    const blink = (t % 3.4) < 0.12 ? 0.15 : 1, ex = hd.w * 0.36, FC = '#101018', F = (x, y, z, w, h, d, rz) => add(MESH.feat, mm(Hc, mm(mm(Tm(x, y, z), RZ(rz || 0)), Sm(w, h, d))), FC, { feat: true });
-    [-1, 1].forEach(sd => {
-      const z = hd.zAt(0.06), x = sd * ex, e = A.eyes;
-      if (e === 'dot') F(x, 0.06, z, 0.075, 0.1 * blink, 0.03); else if (e === 'big') F(x, 0.06, z, 0.12, 0.15 * blink, 0.03); else if (e === 'wide') F(x, 0.06, z, 0.15, 0.09 * blink, 0.03);
-      else if (e === 'sleepy') F(x, 0.05, z, 0.13, 0.035, 0.03); else if (e === 'happy') { F(x - 0.035, 0.05, z, 0.07, 0.035, 0.03, 0.55); F(x + 0.035, 0.05, z, 0.07, 0.035, 0.03, -0.55); } else if (e === 'angry') F(x, 0.05, z, 0.12, 0.05, 0.03, sd * -0.4 * -1);
-      const b = A.brows, bz = hd.zAt(0.18), by = 0.17 + (b === 'raised' ? 0.05 : 0);
-      if (b === 'flat' || b === 'raised') F(x, by, bz, 0.15, 0.03, 0.03); else if (b === 'thick') F(x, by, bz, 0.17, 0.06, 0.03); else if (b === 'angry') F(x, by - 0.01, bz, 0.15, 0.035, 0.03, sd * 0.4); else if (b === 'worried') F(x, by, bz, 0.15, 0.035, 0.03, sd * -0.4);
-    });
-    const nz = hd.zAt(-0.03) + 0.03; if (A.nose === 'small') add(MESH.feat, mm(Hc, mm(Tm(0, -0.04, nz), Sm(0.07, 0.07, 0.07))), skin, { shadeUp: 1 }); else if (A.nose === 'long') add(MESH.feat, mm(Hc, mm(Tm(0, -0.03, nz + 0.01), Sm(0.07, 0.15, 0.09))), skin, { shadeUp: 1 }); else if (A.nose === 'wide') add(MESH.feat, mm(Hc, mm(Tm(0, -0.05, nz), Sm(0.15, 0.07, 0.07))), skin, { shadeUp: 1 }); else if (A.nose === 'cat') add(MESH.feat, mm(Hc, mm(Tm(0, -0.02, nz), Sm(0.07, 0.05, 0.05))), '#ff7aa8', { feat: true });
-    const mz = hd.zAt(-0.17), mo = 0.1 * P.mouth, m = A.mouth;
-    if (m === 'smile') { F(0, -0.17, mz, 0.12, 0.025 + mo, 0.03); F(-0.085, -0.15, mz, 0.03, 0.03, 0.03); F(0.085, -0.15, mz, 0.03, 0.03, 0.03); } else if (m === 'flat') F(0, -0.17, mz, 0.15, 0.025 + mo, 0.03); else if (m === 'open') F(0, -0.17, mz, 0.12, 0.07 + mo * 1.5, 0.03); else if (m === 'dot') F(0, -0.17, mz, 0.04, 0.04 + mo, 0.03); else if (m === 'grin') F(0, -0.16, mz, 0.2, 0.05 + mo, 0.03); else if (m === 'cat') { F(-0.04, -0.17, mz, 0.05, 0.025 + mo * 0.5, 0.03); F(0.04, -0.17, mz, 0.05, 0.025 + mo * 0.5, 0.03); F(0, -0.14, mz, 0.03, 0.04, 0.03); }
-    if (A.extra === 'glasses') { [-1, 1].forEach(sd => { const x = sd * ex, z = hd.zAt(0.06) + 0.02; F(x, 0.15, z, 0.24, 0.025, 0.03); F(x, -0.03, z, 0.24, 0.025, 0.03); F(x - 0.12, 0.06, z, 0.025, 0.18, 0.03); F(x + 0.12, 0.06, z, 0.025, 0.18, 0.03); }); F(0, 0.1, hd.zAt(0.1) + 0.02, 0.1, 0.025, 0.03); }
-    if (A.extra === 'shades') { [-1, 1].forEach(sd => F(sd * ex, 0.06, hd.zAt(0.06) + 0.025, 0.24, 0.13, 0.04)); F(0, 0.09, hd.zAt(0.09) + 0.025, 0.1, 0.03, 0.04); }
-    // ---- hair and hats ----
-    const T = hd.top, W = hd.w, hat = A.hat, hairHidden = hat === 'beanie' || hat === 'cap' || hat === 'bucket', hc = A.hairc, rz = W * 1.12;
-    const hair = A.hair;
-    if (!hairHidden) {
-      if (hair === 'short') add(dome(W * 1.1, T * 1.12, rz, 1.22), mm(Hc, Tm(0, 0.0, -0.02)), hc);
-      else if (hair === 'spikes') { add(dome(W * 1.08, T * 1.08, rz, 1.0), Hc, hc); [[0, 0.46, 0, 0, 0], [-0.2, 0.42, 0, 0.6, 0], [0.2, 0.42, 0, -0.6, 0], [0, 0.42, -0.2, 0, -0.6], [0, 0.42, 0.18, 0, 0.6]].forEach(([x, y, z, a, b]) => add(MESH.spike, mm(Hc, mm(Tm(x, y * T / 0.46 - 0.02, z), mm(RZ(a), RX(b)))), hc)); }
-      else if (hair === 'mohawk') [-0.3, -0.15, 0, 0.15, 0.3].forEach((z, i) => add(MESH.feat, mm(Hc, mm(Tm(0, T + 0.04 + (i === 2 ? 0.06 : i % 2 ? 0 : 0.02), z), Sm(0.1, 0.2 + (i === 2 ? 0.08 : 0), 0.15))), hc));
-      else if (hair === 'afro') add(dome(0.62, 0.6, 0.6, 1.2), mm(Hc, Tm(0, 0.04, -0.03)), hc);
-      else if (hair === 'bob' || hair === 'long') {
-        add(dome(W * 1.1, T * 1.12, rz, 1.22), mm(Hc, Tm(0, 0, -0.02)), hc);
-        const bl = hair === 'long' ? 1.5 : 0.8; add(MESH.hairBack, mm(Hc, mm(Tm(0, T - 0.1 - bl / 2 + 0.05, -W * 0.92), Sm(W * 2.2, bl, 0.18))), hc);
-        [-1, 1].forEach(sd => add(MESH.hairBack, mm(Hc, mm(Tm(sd * (W + 0.04), 0.05 - (hair === 'long' ? 0.3 : 0.1), -0.06), Sm(0.1, hair === 'long' ? 1.0 : 0.62, W * 1.5))), hc));
-      } else if (hair === 'pony') { add(dome(W * 1.1, T * 1.12, rz, 1.22), mm(Hc, Tm(0, 0, -0.02)), hc); add(MESH.ball, mm(Hc, Tm(0, 0.12, -W - 0.04)), A.hatc); add(MESH.ponyT, mm(Hc, mm(Tm(0, 0.14, -W - 0.08), RX(0.25))), hc); }
-    }
-    if (hat === 'beanie') { add(dome(W * 1.16, T * 1.2, rz * 1.04, 1.42), mm(Hc, Tm(0, 0.0, -0.02)), A.hatc); add(MESH.pom, mm(Hc, Tm(0, T * 1.2 + 0.04, 0)), '#f2ecd6'); }
-    else if (hat === 'cap') { add(dome(W * 1.14, T * 1.16, rz * 1.02, 1.32), mm(Hc, Tm(0, 0.02, -0.02)), A.hatc); add(MESH.brim, mm(Hc, Tm(0, 0.2 * T / 0.46, W + 0.22)), A.hatc); }
-    else if (hat === 'bucket') { add(MESH.bucket, mm(Hc, Tm(0, T - 0.12, 0)), A.hatc); add(MESH.bucketBrim, mm(Hc, Tm(0, T - 0.14, 0)), A.hatc); }
-    else if (hat === 'phones') { add(MESH.band, mm(Hc, mm(Tm(0, T + 0.04, 0), Sm(W / 0.42 * 0.95, 1, 1))), '#222222'); [-1, 1].forEach(sd => add(MESH.cup, mm(Hc, mm(Tm(sd * (W + 0.05), 0.02, 0), RZ(1.5708))), A.hatc)); }
-    else if (hat === 'catears') [-1, 1].forEach(sd => add(MESH.ear, mm(Hc, mm(Tm(sd * W * 0.62, T - 0.08, 0), RZ(sd * -0.28))), A.hatc));
-    else if (hat === 'crown') { add(MESH.crownBase, mm(Hc, Tm(0, T - 0.04, 0)), A.hatc); [0, 1, 2, 3, 4].forEach(i => { const a = i / 5 * 6.2832; add(MESH.crownTip, mm(Hc, Tm(Math.cos(a) * 0.3, T + 0.07, Math.sin(a) * 0.3)), A.hatc); }); }
-    // ---- arms ----
-    const sleeveL = A.top !== 'tee' && A.top !== 'tank', sleeveU = A.top !== 'tank', am = puff ? 1.3 : 1;
-    [1, -1].forEach(sd => {
-      const sh = sd === 1 ? [P.lSh, P.lAb, P.lEl] : [P.rSh, P.rAb, P.rEl], Ts = mm(mm(Tt, Tm(sd * 0.66 * tb, 0.9, 0)), mm(RZ(sd * sh[1]), RX(-sh[0])));
-      add(MESH.upper, mm(Ts, Sm(am, 1, am)), sleeveU ? A.topc : skin); const Te = mm(mm(Ts, Tm(0, -0.7, 0)), RX(-sh[2])); add(MESH.fore, mm(Te, Sm(am, 1, am)), sleeveL ? A.topc : skin);
-      const Tw = mm(Te, Tm(0, -0.68, 0)); add(MESH.hand, Tw, skin);
-      if (sd === -1 && P.mic) { const Tmc = mm(Tw, mm(Tm(0, 0.12, 0), RX(-0.6))); add(MESH.mic, Tmc, '#303040'); add(MESH.micHead, mm(Tmc, Tm(0, 0.04, 0)), '#cfcfd8'); }
-    });
-    // ---- legs ----
-    const lm = ({ pants: 1, baggy: 1, shorts: 1, skirt: 1 })[A.bot];
-    [1, -1].forEach(sd => {
-      const hp = sd === 1 ? [P.lHip, P.lHAb, P.lKn] : [P.rHip, P.rHAb, P.rKn], Tp = mm(mm(root, Tm(sd * 0.27 * bw, -0.2, 0)), mm(RZ(sd * hp[1]), RX(-hp[0])));
-      add(baggy ? MESH.thighBag : MESH.thigh, mm(Tp, Sm(lm * (bw > 1 ? 1.1 : bw < 1 ? 0.92 : 1), 1, lm * (bw > 1 ? 1.1 : bw < 1 ? 0.92 : 1))), skirt ? skin : A.botc); const Tk = mm(mm(Tp, Tm(0, -0.85, 0)), RX(hp[2]));
-      add(baggy ? MESH.shinBag : MESH.shin, Tk, skirt || shorts ? skin : A.botc); const Tf = mm(Tk, Tm(0, -0.85, 0));
-      add(MESH[A.shoes], mm(Tf, Tm(0, 0, 0.1)), A.shoec, { foot: true });
-    });
-    if (A.extra === 'tail') { const w = 0.35 * P.tail; add(MESH.tail, mm(root, mm(Tm(0, -0.1, -0.3), mm(RX(-2.2), RZ(w)))), A.hairc === '#111111' ? '#111111' : A.hatc); add(MESH.tail, mm(root, mm(Tm(Math.sin(w) * 0.45, 0.2, -0.75), RX(-0.9 - 0.15 * P.tail))), A.hatc); }
-    // keep the feet on the floor, whatever the legs are doing
-    let minY = 1e9; out.forEach(p => { if (p.foot) p.mesh.v.forEach(v => { const y = mp(p.M, v)[1]; if (y < minY) minY = y; }); });
-    const lift = Tm(0, -minY + P.air, 0); out.forEach(p => { p.M = mm(lift, p.M); });
-    return out;
-  }
-  // ----- camera -----
-  const LIGHT = (() => { const l = [0.4, 0.8, 0.5], m = Math.hypot(...l); return l.map(v => v / m); })();
-  const BAYER = [0, 8, 2, 10, 12, 4, 14, 6, 3, 11, 1, 9, 15, 7, 13, 5];
-  function camFor(lw, lh, v) {
-    const yaw = v.yaw * Math.PI / 180 + Math.PI, pitch = v.pitch === undefined ? 0.1 : v.pitch, f = lh * 0.92, d = v.d, cy = v.cy, mid = v.mid || 0.56;
-    const cA = Math.cos(yaw), sA = Math.sin(yaw), cP = Math.cos(pitch), sP = Math.sin(pitch);
-    const view = (p) => { const x = p[0], y = p[1] - cy, z = p[2], x1 = x * cA + z * sA, z1 = -x * sA + z * cA, y2 = y * cP - z1 * sP, z2 = y * sP + z1 * cP + d; return [x1, y2, z2]; };
-    const scr = (q) => [lw / 2 + q[0] * f / q[2], lh * mid - q[1] * f / q[2]];
-    return { view, scr };
-  }
-  function collectPolys(parts, cam) {
-    const polys = [];
-    parts.forEach(pt => {
-      const wv = pt.mesh.v.map(p => cam.view(mp(pt.M, p))), base = hex(pt.col), lum = pt.feat ? 1 : (0.3 * base[0] + 0.59 * base[1] + 0.11 * base[2]) / 255;
-      pt.mesh.f.forEach(face => {
-        const a = wv[face[0]], b = wv[face[1]], d = wv[face[2]], n = cross3(sub3(b, a), sub3(d, a)), m = [0, 0, 0];
-        face.forEach(i => { m[0] += wv[i][0]; m[1] += wv[i][1]; m[2] += wv[i][2]; }); const k = 1 / face.length; m[0] *= k; m[1] *= k; m[2] *= k;
-        if (n[0] * -m[0] + n[1] * -m[1] + n[2] * -m[2] <= 0) return;
-        const nl = Math.hypot(n[0], n[1], n[2]) || 1, dl = (n[0] * LIGHT[0] + n[1] * LIGHT[1] + n[2] * LIGHT[2]) / nl;
-        polys.push({ z: m[2] - (pt.feat ? 0.05 : 0), pts: face.map(i => cam.scr(wv[i])), base, lum, feat: !!pt.feat, shade: Math.min(1, 0.64 + 0.4 * Math.max(0, dl * 0.8 + 0.3)) });
-      });
-    });
-    return polys.sort((p, q) => q.z - p.z);
-  }
-  function fillPolys(c, polys, holo, hc, flick, t) {
-    if (holo) c.globalCompositeOperation = 'lighter';
-    polys.forEach(p => {
-      c.beginPath(); p.pts.forEach((q, i) => i ? c.lineTo(Math.round(q[0]), Math.round(q[1])) : c.moveTo(Math.round(q[0]), Math.round(q[1]))); c.closePath();
-      if (holo) { const L = p.feat ? 1 : 0.25 + 0.75 * p.lum, s = p.shade; c.fillStyle = 'rgba(' + Math.round(hc[0] * L * s) + ',' + Math.round(hc[1] * L * s) + ',' + Math.round(hc[2] * L * s) + ',' + ((p.feat ? 0.9 : 0.42) * flick).toFixed(3) + ')'; c.fill(); c.strokeStyle = 'rgba(' + hc.join(',') + ',' + (0.55 * flick).toFixed(3) + ')'; c.lineWidth = 1; c.stroke(); }
-      else { const s = p.shade, k = p.feat ? 0.9 : 1; c.fillStyle = 'rgb(' + Math.round(p.base[0] * s * k) + ',' + Math.round(p.base[1] * s * k) + ',' + Math.round(p.base[2] * s * k) + ')'; c.fill(); if (p.feat) { c.strokeStyle = 'rgb(' + Math.round(p.base[0] * s) + ',' + Math.round(p.base[1] * s) + ',' + Math.round(p.base[2] * s) + ')'; c.lineWidth = 1; c.stroke(); } }
-    });
-    c.globalCompositeOperation = 'source-over';
-  }
-  function drawBackground(c, lw, lh, t, P, o) {
-    const bg = o.bg, holo = o.style === 'holo', hc = HOLO[o.holo];
-    const g = c.createLinearGradient(0, 0, 0, lh);
-    if (bg === 'void') { g.addColorStop(0, '#02030a'); g.addColorStop(1, holo ? '#06101a' : '#10081c'); }
-    else if (bg === 'sunset') { g.addColorStop(0, '#2b1b6d'); g.addColorStop(0.5, '#e0457b'); g.addColorStop(1, '#ffb25a'); }
-    else if (bg === 'city') { g.addColorStop(0, '#080a1c'); g.addColorStop(1, '#2a1b4a'); }
-    else { g.addColorStop(0, '#ff7ac8'); g.addColorStop(0.55, '#b06cff'); g.addColorStop(1, '#4de0ff'); }
-    c.fillStyle = g; c.fillRect(0, 0, lw, lh);
-    const hz = lh * 0.55;
-    if (bg === 'void') { c.fillStyle = holo ? 'rgba(' + hc.join(',') + ',.7)' : '#fff'; for (let i = 0; i < 26; i++) { const x = (i * 37.7) % lw, y = ((i * 91.3) % lh - t * (4 + (i % 4))) % lh; c.fillRect(Math.round(x), Math.round((y + lh) % lh), 1, 1); } }
-    if (bg === 'sunset' || bg === 'vapor') {
-      const r = lw * 0.28, cx = lw / 2, cy = hz - r * 0.2; c.save(); c.beginPath(); c.arc(cx, cy, r, 0, 6.3); c.clip();
-      const sg = c.createLinearGradient(0, cy - r, 0, cy + r); sg.addColorStop(0, '#fff06a'); sg.addColorStop(1, bg === 'vapor' ? '#ff3ea5' : '#ff5a3d'); c.fillStyle = sg; c.fillRect(cx - r, cy - r, r * 2, r * 2);
-      c.fillStyle = bg === 'vapor' ? '#b06cff' : '#e0457b'; for (let i = 0; i < 6; i++) c.fillRect(cx - r, cy + r * 0.05 + i * r * 0.16, r * 2, Math.max(1, r * 0.02 * (i + 1))); c.restore();
-      if (bg === 'vapor') { c.strokeStyle = '#4de0ff'; c.lineWidth = 1; c.beginPath(); [[0, 0.55, 0.15, 0.4, 0.3, 0.55], [0.7, 0.55, 0.85, 0.42, 1, 0.55]].forEach(m => { c.moveTo(lw * m[0], lh * m[1]); c.lineTo(lw * m[2], lh * m[3]); c.lineTo(lw * m[4], lh * m[5]); }); c.stroke(); }
-    }
-    if (bg === 'city') {
-      [[0.35, '#120e2a', 0.5], [0.6, '#0b0a1c', 0.9]].forEach(([sp, col, hh], li) => {
-        c.fillStyle = col; let x = -(t * (P.speed ? 3 + li * 3 : 0.6 + li)) % (lw * 1.0); for (let i = 0; i < 40 && x < lw + 20; i++) { const bw = 12 + ((i * 7 + li * 5) % 13), bh = lh * (0.12 + ((i * 13 + li * 7) % 11) * 0.025 * hh); c.fillRect(Math.round(x), Math.round(hz - bh), bw, Math.round(bh + 2)); c.fillStyle = li ? '#ffd78a' : '#7a6bff'; for (let k = 0; k < 6; k++) if ((i * 3 + k * 5 + li) % 4 === 0) c.fillRect(Math.round(x + 2 + (k % 3) * 4), Math.round(hz - bh + 3 + Math.floor(k / 3) * 6), 2, 2); c.fillStyle = col; x += bw + 1 + li; }
-      });
-    }
-    c.fillStyle = bg === 'vapor' ? '#1a0f3a' : holo ? '#02060c' : '#150f24'; c.fillRect(0, Math.round(hz), lw, lh - Math.round(hz));
-  }
-  function drawFloor(c, cam, lw, lh, t, P, o) {
-    const holo = o.style === 'holo', hc = holo ? HOLO[o.holo] : (o.floor === 'checker' ? [255, 255, 255] : [255, 80, 200]), off = (P.speed ? t * P.speed : 0) % 1, pulse = 0.55 + 0.45 * (P.beat || 0);
-    const seg = (a, b, alpha, w) => {
-      let va = cam.view(a), vb = cam.view(b); if (va[2] < 0.3 && vb[2] < 0.3) return; if (va[2] < 0.3) { const k = (0.3 - va[2]) / (vb[2] - va[2]); va = [va[0] + (vb[0] - va[0]) * k, va[1] + (vb[1] - va[1]) * k, 0.3]; } else if (vb[2] < 0.3) { const k = (0.3 - vb[2]) / (va[2] - vb[2]); vb = [vb[0] + (va[0] - vb[0]) * k, vb[1] + (va[1] - vb[1]) * k, 0.3]; }
-      const pa = cam.scr(va), pb = cam.scr(vb), fade = Math.max(0, Math.min(1, 1.4 - Math.min(va[2], vb[2]) / 16)); c.strokeStyle = 'rgba(' + hc.join(',') + ',' + (alpha * fade).toFixed(3) + ')'; c.lineWidth = w; c.beginPath(); c.moveTo(Math.round(pa[0]), Math.round(pa[1])); c.lineTo(Math.round(pb[0]), Math.round(pb[1])); c.stroke();
+  // ----- put the whole person together for this moment -----
+  const SCALE_H = { short: 0.93, mid: 1, tall: 1.07 }, SCALE_B = { slim: 0.88, normal: 1, broad: 1.14 }, SCALE_HD = { small: 0.86, normal: 1, big: 1.22 };
+  const GOLD = '#e8c33a';
+  function buildParts(P, A, t, root) {
+    const parts = [], skin = hex(A.skin), bw = SCALE_B[A.build] || 1, hs = SCALE_H[A.height] || 1, hz = SCALE_HD[A.headsz] || 1, ts = 0.55 + 0.45 * bw, top = A.top, bot = A.bot;
+    const push = (m, M, acc, o) => parts.push(Object.assign({ m: m, M: mm(root, M), acc: acc ? (typeof acc === 'string' ? hex(acc) : acc) : skin, skin: skin }, o || {}));
+    const soleH = A.shoes === 'platform' ? 0.07 : 0.024, legUp = 0.44, legLo = 0.43;
+    // the legs first so the feet can be set on the ground
+    const hipX = 0.09 * ts;
+    const leg = (sd, hipsY) => {
+      const hip = sd > 0 ? P.rHip : P.lHip, kn = sd > 0 ? P.rKn : P.lKn, hab = sd > 0 ? P.rHAb : P.lHAb;
+      const th = mm(Tm(sd * hipX, hipsY, 0), mm(RZ(sd * hab), RX(-hip))), sh = mm(th, mm(Tm(0, -legUp, 0), RX(kn)));
+      const ft = mm(mm(sh, Tm(0, -(legLo + 0.07 + soleH), -0.05)), RX(Math.PI / 2)); return { th: th, sh: sh, ft: ft };
     };
-    if (o.floor === 'grid') { for (let k = -14; k <= 14; k++) seg([k, 0, -14], [k, 0, 14], 0.8 * pulse, 1); for (let k = -14; k <= 14; k++) seg([-14, 0, k - off], [14, 0, k - off], 0.8 * pulse, 1); }
-    else if (o.floor === 'checker') {
-      const cols = holo ? ['rgba(' + hc.join(',') + ',.22)', 'rgba(0,0,0,.2)'] : ['#e8e0f0', '#3a2a5a'];
-      for (let zi = 12; zi >= -6; zi--) for (let xi = -8; xi < 8; xi++) { const z0 = zi - off, pts = [[xi, 0, z0], [xi + 1, 0, z0], [xi + 1, 0, z0 + 1], [xi, 0, z0 + 1]].map(q => cam.view(q)); if (pts.some(q => q[2] < 0.4)) continue; c.fillStyle = cols[(xi + zi + 100) & 1]; c.beginPath(); pts.forEach((q, i) => { const s = cam.scr(q); i ? c.lineTo(Math.round(s[0]), Math.round(s[1])) : c.moveTo(Math.round(s[0]), Math.round(s[1])); }); c.closePath(); c.fill(); }
-    } else {
-      const ring = (r, a) => { c.strokeStyle = 'rgba(' + hc.join(',') + ',' + a + ')'; c.lineWidth = 1; c.beginPath(); for (let i = 0; i <= 20; i++) { const q = cam.view([Math.cos(i / 20 * 6.2832) * r, 0, Math.sin(i / 20 * 6.2832) * r]), s = cam.scr(q); i ? c.lineTo(Math.round(s[0]), Math.round(s[1])) : c.moveTo(Math.round(s[0]), Math.round(s[1])); } c.stroke(); };
-      c.fillStyle = 'rgba(' + hc.join(',') + ',.12)'; c.beginPath(); for (let i = 0; i <= 20; i++) { const q = cam.view([Math.cos(i / 20 * 6.2832) * 2, 0, Math.sin(i / 20 * 6.2832) * 2]), s = cam.scr(q); i ? c.lineTo(s[0], s[1]) : c.moveTo(s[0], s[1]); } c.fill();
-      ring(2, 0.9); ring(1.2 + 0.4 * ((t * 0.7) % 1), 0.5);
+    const l0 = leg(-1, 0), r0 = leg(1, 0), hipsY = -Math.min(mp(l0.ft, [0, 0, 0])[1], mp(r0.ft, [0, 0, 0])[1]);
+    const L = leg(-1, hipsY), R = leg(1, hipsY);
+    const tm = mm(Tm(0, hipsY + 0.02, 0), mm(RY(P.twist), mm(RZ(P.roll), RX(P.lean)))); // torso frame
+    const thick = top === 'puffer' ? 1.13 : top === 'hoodie' ? 1.05 : 1;
+    // pelvis and legs
+    const botCol = A.botc, baggy = bot === 'baggy' ? 1.3 : 1;
+    push(BODY.pelvis(), mm(Tm(0, hipsY, 0), Sm(ts, 1, ts)), botCol, { skinPelvis: bot === 'skirt' });
+    [[L, -1], [R, 1]].forEach(([c, sd]) => {
+      push(ballMesh(0.066), mm(mm(c.th, Tm(0, -legUp, 0)), Sm(ts * baggy, ts * baggy, ts * baggy)), bot === 'pants' || bot === 'baggy' ? botCol : null);
+      push(legMesh(bot, 0), mm(c.th, Sm(ts * baggy, 1, ts * baggy)), botCol);
+      push(legMesh(bot, 1), mm(mm(c.th, Tm(0, -legUp, 0)), mm(RX(sd > 0 ? P.rKn : P.lKn), Sm(ts * baggy, 1, ts * baggy))), botCol);
+      push(footUpper(A.shoes), mm(c.ft, Tm(0, 0, -soleH)), A.shoec);
+      push(footSole(A.shoes), c.ft, A.shoes === 'boot' ? '#2a1a10' : '#f2ecd6');
+      if (A.shoes === 'boot') push(cylMesh(0.05, 0.056, 0.15, 10), mm(mm(c.sh, Tm(0, -legLo - 0.07 + 0.08, 0)), Sm(1, 1, 1)), A.shoec);
+    });
+    if (bot === 'skirt') push(BODY.skirt(), mm(Tm(0, hipsY + 0.03, 0), Sm(ts, 1, ts)), botCol);
+    // torso with the painted shirt
+    push(BODY.torso(), mm(tm, Sm(bw * thick, 1, (0.9 + 0.1 * bw) * thick)), A.topc, { tex: torsoTex(A), texW: false });
+    if (top === 'hoodie') push(loft([[0, 0.1, 0.05], [0.09, 0.115, 0.07], [0.15, 0.1, 0.06]], { seg: 10 }), mm(tm, mm(Tm(0, 0.38, -0.085), RX(-0.35))), A.topc);
+    // arms
+    const shX = 0.215 * bw + (thick - 1) * 0.1, armS = ts * (top === 'puffer' ? 1.25 : top === 'hoodie' ? 1.1 : 1);
+    const hands = [];
+    [[-1, P.lSh, P.lAb, P.lEl], [1, P.rSh, P.rAb, P.rEl]].forEach(([sd, sh, ab, el]) => {
+      const up = mm(tm, mm(Tm(sd * shX, 0.4, 0), mm(RZ(sd * ab), RX(-sh)))), fo = mm(up, mm(Tm(0, -0.29, 0), RX(-el)));
+      push(ballMesh(0.056), mm(up, Sm(armS, armS, armS)), top === 'tank' ? null : A.topc); push(ballMesh(0.042), mm(fo, Sm(armS, armS, armS)), top === 'tee' || top === 'tank' ? null : A.topc);
+      push(armMesh(top, 0), mm(up, Sm(armS, 1, armS)), A.topc);
+      push(armMesh(top, 1), mm(fo, Sm(armS, 1, armS)), A.topc);
+      const hm = mm(fo, Tm(0, -0.27, 0)); push(BODY.hand(), hm, null); hands.push(hm);
+    });
+    if (P.mic) { const mmx = mm(mm(hands[1], Tm(0, -0.07, 0.03)), RX(-1.1)); push(cylMesh(0.012, 0.017, 0.13, 8), mmx, '#2a2a2e'); push(ballMesh(0.03), mm(mmx, Tm(0, 0.13, 0)), '#3a3a40'); }
+    // neck and head
+    const hm0 = mm(tm, Tm(0, 0.47, 0)); push(BODY.neck(), hm0, null);
+    const hd = mm(mm(hm0, Tm(0, 0.06, 0)), mm(RY(P.turn), mm(RX(P.nod), Sm(hz, hz, hz)))); // chin is the origin
+    const k = A.head, hv = HEADV[k], top0 = headTop(k), ml = Math.round((P.mouth || 0) * 3), blink = (t % 3.3) < 0.13 ? 1 : 0;
+    push(headMesh(k), hd, null, { tex: faceTex(A, ml, blink), texW: true });
+    // ears and nose
+    [-1, 1].forEach(sd => push(ballMesh(0.032), mm(hd, mm(Tm(sd * headRad(k, 0.12)[0] * 0.98, 0.125 * hv.h, -0.005), Sm(0.32, 0.95, 0.62))), null));
+    const nz = headRad(k, 0.085 * hv.h)[1], nose = A.nose;
+    if (nose !== 'none') { const sz = nose === 'long' ? [1, 1.3, 1.8] : nose === 'wide' ? [1.7, 0.9, 1.1] : nose === 'cat' ? [0.65, 0.6, 0.7] : [1, 1, 1]; push(ballMesh(0.024), mm(hd, mm(Tm(0, 0.093 * hv.h, nz * 0.93), Sm(sz[0], sz[1], sz[2]))), nose === 'cat' ? '#e57a90' : null); }
+    // hair
+    const hc = A.hairc, hr = A.hair;
+    if (hr === 'fade') push(capMesh(k, 0.205 * hv.h, 0.006), hd, hc);
+    else if (hr !== 'none' && hr !== 'afro') { push(capMesh(k, 0.19 * hv.h, 0.012), hd, hc); push(loft([[0.2, 0.116, 0.07, 0, -0.045], [0.13, 0.121, 0.088, 0, -0.04], [0.085, 0.108, 0.08, 0, -0.035]], { seg: 12, n: 2.4 }), hd, hc); }
+    if (hr === 'spikes') for (let i = 0; i < 7; i++) { const an = i / 7 * 6.28, rr = 0.075; push(coneMesh(0.034, 0.09, 0.034), mm(hd, mm(Tm(Math.cos(an) * rr, top0 - 0.02, Math.sin(an) * rr * 0.9), mm(RZ(-Math.cos(an) * 0.5), RX(Math.sin(an) * 0.5)))), hc); }
+    if (hr === 'spikes') push(coneMesh(0.04, 0.11, 0.04), mm(hd, Tm(0, top0 - 0.02, 0)), hc);
+    if (hr === 'mohawk') for (let i = 0; i < 7; i++) { const z = 0.09 - i * 0.03, y = top0 - 0.005 - Math.abs(i - 3) * 0.008 - (i > 4 ? (i - 4) * 0.018 : 0); push(coneMesh(0.022, 0.085 - Math.abs(i - 3) * 0.008, 0.045), mm(hd, Tm(0, y, z)), hc); }
+    if (hr === 'afro') push(ballMesh(1), mm(hd, mm(Tm(0, 0.15 * hv.h, -0.015), Sm(0.2, 0.19, 0.19))), hc);
+    if (hr === 'bob') push(loft([[0.19, 0.12, 0.09, 0, -0.045], [0.08, 0.135, 0.1, 0, -0.045], [-0.07, 0.14, 0.105, 0, -0.04]], { seg: 12, n: 2.4 }), hd, hc);
+    if (hr === 'long') push(loft([[0.19, 0.12, 0.09, 0, -0.045], [0.06, 0.14, 0.1, 0, -0.045], [-0.15, 0.15, 0.1, 0, -0.05], [-0.34, 0.13, 0.08, 0, -0.06]], { seg: 12, n: 2.4 }), mm(hd, Sm(1, 1, 1)), hc);
+    if (hr === 'pony') push(tube([[0, 0.2, -0.105, 0.032], [0, 0.15, -0.17, 0.034], [Math.sin(t * 3) * 0.02, 0.05, -0.2, 0.03], [Math.sin(t * 3 + 1) * 0.04, -0.07, -0.19, 0.014]], { seg: 6 }), hd, hc);
+    if (hr === 'braids') [-1, 1].forEach(sd => push(tube([[sd * 0.1, 0.12, -0.03, 0.02], [sd * 0.115, 0.0, -0.04, 0.022], [sd * 0.12 + Math.sin(t * 2.5) * 0.01, -0.12, -0.03, 0.02], [sd * 0.12, -0.24, -0.02, 0.012]], { seg: 6 }), hd, hc));
+    // hat
+    const hat = A.hat, hcol = A.hatc;
+    if (hat === 'beanie') { push(capMesh(k, 0.17 * hv.h, 0.024), hd, hcol); push(ballMesh(0.03), mm(hd, Tm(0, top0 + 0.025, 0)), hcol); }
+    if (hat === 'cap') { push(capMesh(k, 0.175 * hv.h, 0.02), hd, hcol); push(loft([[0, 0.075, 0.065, 0, 0.13], [0.01, 0.07, 0.06, 0, 0.13]], { seg: 12, capTop: true, capBot: true }), mm(hd, mm(Tm(0, 0.15 * hv.h, 0), RX(-0.12))), hcol); }
+    if (hat === 'bucket') { push(capMesh(k, 0.17 * hv.h, 0.022), hd, hcol); push(discMesh(0.17, 0.17, 0.012), mm(hd, mm(Tm(0, 0.17 * hv.h, 0), RX(0.06))), hcol); }
+    if (hat === 'bandana') { push(capMesh(k, 0.19 * hv.h, 0.014), hd, hcol); push(ballMesh(0.032), mm(hd, Tm(0.02, 0.19 * hv.h, -0.105)), hcol); push(coneMesh(0.03, 0.09, 0.012), mm(hd, mm(Tm(0.05, 0.18 * hv.h, -0.11), RZ(2.3))), hcol); }
+    if (hat === 'phones') { const pa = []; for (let i = 0; i <= 8; i++) { const a = i / 8 * Math.PI; pa.push([Math.cos(a) * 0.128, 0.125 * hv.h + Math.sin(a) * (top0 - 0.125 * hv.h + 0.02), 0, 0.01]); } push(tube(pa, { seg: 5 }), hd, hcol); [-1, 1].forEach(sd => push(cylMesh(0.045, 0.045, 0.035, 12), mm(hd, mm(Tm(sd * 0.125, 0.125 * hv.h, 0), RZ(Math.PI / 2))), hcol)); }
+    if (hat === 'catears') [-1, 1].forEach(sd => push(coneMesh(0.05, 0.1, 0.022), mm(hd, mm(Tm(sd * 0.08, top0 - 0.035, 0.0), RZ(-sd * 0.35))), hcol));
+    if (hat === 'crown') { push(loft([[0.2 * hv.h, 0.118, 0.112], [0.235 * hv.h, 0.12, 0.114]], { seg: 14 }), hd, GOLD); for (let i = 0; i < 6; i++) { const an = i / 6 * 6.28; push(coneMesh(0.025, 0.06, 0.012), mm(hd, Tm(Math.cos(an) * 0.1, 0.23 * hv.h, Math.sin(an) * 0.095)), GOLD); } }
+    // extras
+    const ex = A.extra;
+    if (ex === 'chain') { const pa = []; for (let i = -5; i <= 5; i++) { const u = i / 5; pa.push([u * 0.115, 0.43 - 0.15 * (1 - u * u), 0.1 + 0.025 * (1 - u * u)]); } push(tube(pa, { seg: 4 }), tm, GOLD); push(ballMesh(0.022), mm(tm, Tm(0, 0.275, 0.12)), GOLD); }
+    if (ex === 'scarf') { push(loft([[0.405, 0.145, 0.12], [0.46, 0.098, 0.09], [0.52, 0.075, 0.07]], { seg: 12, capBot: false }), mm(tm, Sm(bw, 1, 1)), A.hatc); push(loft([[0, 0.03, 0.012], [-0.16, 0.034, 0.012]], { seg: 6, capBot: true, capTop: true }), mm(tm, Tm(0.08, 0.44, 0.115)), A.hatc); }
+    if (ex === 'backpack') push(loft([[0, 0.115, 0.06, 0, -0.17], [0.34, 0.125, 0.07, 0, -0.17]], { seg: 12, n: 4, capTop: true, capBot: true }), mm(tm, Tm(0, 0.06, 0)), A.hatc);
+    if (ex === 'tail') { const pa = []; for (let i = 0; i < 7; i++) { const u = i / 6; pa.push([Math.sin(P.tail * 1.6 + u * 3) * 0.12 * u, hipsY - 0.02 + u * 0.12 + Math.sin(u * 3.1) * 0.13, -0.1 - u * 0.1, 0.03 - u * 0.012]); } push(tube(pa, { seg: 6 }), 0 ? null : mm(Tm(0, 0, 0), Sm(1, 1, 1)), A.hatc); }
+    return { parts: parts, ground: hipsY };
+  }
+
+  // ----- the renderer: a small software 3D engine with a depth buffer, smooth lighting and textures -----
+  const LIT = { l1: (() => { const l = [0.5, 0.72, 0.55], m = Math.hypot(...l); return l.map(v => v / m); })(), l2: (() => { const l = [-0.7, 0.15, 0.5], m = Math.hypot(...l); return l.map(v => v / m); })() };
+  const SC = { n: 3000, sx: new Float32Array(3000), sy: new Float32Array(3000), iz: new Float32Array(3000), vr: new Float32Array(9000), vl: new Float32Array(9000), uu: new Float32Array(3000), vv: new Float32Array(3000), ww: new Float32Array(3000) };
+  const RB = { w: 0, h: 0, col: null, z: null, img: null, c: null, x: null };
+  const bgC = document.createElement('canvas'), bgCache = { key: '', data: null };
+  function rbEnsure(w, h) {
+    if (RB.w === w && RB.h === h) return;
+    RB.w = w; RB.h = h; RB.c = document.createElement('canvas'); RB.c.width = w; RB.c.height = h; RB.x = RB.c.getContext('2d'); RB.img = RB.x.createImageData(w, h); RB.z = new Float32Array(w * h);
+  }
+  const hash = (a, b) => { let h = (a * 374761393 + b * 668265263) | 0; h = (h ^ (h >>> 13)) * 1274126177; return ((h ^ (h >>> 16)) >>> 0) / 4294967295; };
+  function paintBg(id, w, h, hy) {
+    const key = id + w + 'x' + h + '@' + Math.round(hy); if (bgCache.key === key) return bgCache.data;
+    bgC.width = w; bgC.height = h; const x = bgC.getContext('2d'); x.imageSmoothingEnabled = false;
+    const sky = (stops) => { const g = x.createLinearGradient(0, 0, 0, Math.max(10, hy)); stops.forEach(s => g.addColorStop(s[0], s[1])); x.fillStyle = g; x.fillRect(0, 0, w, h); };
+    const city = (col, win, minH, maxH, seed, neon) => { let px = 0, i = 0; while (px < w) { const bw = 10 + hash(i, seed) * 22, bh = (minH + hash(i, seed + 7) * (maxH - minH)) * h; x.fillStyle = col; x.fillRect(px, hy - bh, bw + 1, bh + 2); if (win) { for (let wy = hy - bh + 4; wy < hy - 4; wy += 6) for (let wx = px + 3; wx < px + bw - 3; wx += 5) if (hash(wx, wy) > 0.55) { x.fillStyle = win; x.fillRect(wx, wy, 2, 3); } } if (neon && hash(i, 99) > 0.5) { x.fillStyle = neon[i % neon.length]; x.fillRect(px, hy - bh, bw + 1, 2); } px += bw + 1 + hash(i, 3) * 3; i++; } };
+    if (id === 'street') { sky([[0, '#3a2f6b'], [0.45, '#c8506a'], [0.8, '#ff9a5a'], [1, '#ffd08a']]); x.fillStyle = 'rgba(255,230,170,.9)'; x.beginPath(); x.arc(w * 0.72, hy - h * 0.1, w * 0.1, 0, 6.3); x.fill(); city('#3a2a4e', '', 0.05, 0.2, 5); city('#1f1730', '#ffd36a', 0.08, 0.3, 11); }
+    else if (id === 'neon') { sky([[0, '#05030f'], [0.6, '#2a0a45'], [1, '#7a1a6a']]); for (let i = 0; i < 40; i++) { x.fillStyle = 'rgba(255,255,255,' + (0.3 + hash(i, 1) * 0.5) + ')'; x.fillRect(hash(i, 2) * w, hash(i, 3) * hy * 0.6, 1, 1); } city('#150a26', '#7ffcff', 0.1, 0.42, 21, ['#ff2fb5', '#27f0ff', '#ffd400']); x.strokeStyle = '#ff2fb5'; x.lineWidth = 2; x.beginPath(); x.arc(w * 0.3, hy - h * 0.22, w * 0.1, 0, 6.3); x.stroke(); }
+    else if (id === 'vapor') { sky([[0, '#ff6ad5'], [0.55, '#c874ff'], [1, '#7ad7ff']]); x.fillStyle = '#ffe86a'; x.beginPath(); x.arc(w * 0.5, hy - h * 0.09, w * 0.24, 0, 6.3); x.fill(); x.fillStyle = '#c874ff'; for (let i = 0; i < 6; i++) x.fillRect(w * 0.2, hy - h * 0.09 + i * 6 + 2, w * 0.6, 2 + i * 0.6); x.fillStyle = '#2b0b5a'; x.beginPath(); x.moveTo(0, hy); x.lineTo(w * 0.15, hy - h * 0.07); x.lineTo(w * 0.3, hy - h * 0.02); x.lineTo(w * 0.55, hy - h * 0.1); x.lineTo(w * 0.8, hy - h * 0.03); x.lineTo(w, hy - h * 0.08); x.lineTo(w, hy); x.fill(); }
+    else { sky([[0, '#cfcac0'], [1, '#f2eee4']]); } // studio
+    const d = x.getImageData(0, 0, w, h).data; bgCache.key = key; bgCache.data = d; return d;
+  }
+  // ground colors at a world point
+  function floorColor(id, X, Z, o) {
+    if (id === 'checker') { const k = (Math.floor(X * 2) + Math.floor(Z * 2)) & 1; return k ? [232, 226, 206] : [58, 50, 56]; }
+    if (id === 'grid') { const gx = Math.abs(((X * 2) % 1 + 1) % 1 - 0.5), gz = Math.abs(((Z * 2) % 1 + 1) % 1 - 0.5), ln = Math.min(0.5 - gx, 0.5 - gz); if (ln < 0.03) return [255, 60, 200]; return [22, 10, 44]; }
+    if (id === 'studio') { return [214, 208, 196]; }
+    // asphalt
+    const n = hash(Math.floor(X * 40), Math.floor(Z * 40)) * 14; let c = [62 + n, 60 + n, 66 + n];
+    if (X < -1.7) c = [150 + n, 146 + n, 138 + n]; else if (X < -1.62) c = [210, 205, 190];
+    else if (Math.abs(X - 1.1) < 0.045 && ((Z + o) % 1.2 + 1.2) % 1.2 < 0.7) c = [236, 190, 40]; else if (Math.abs(X + 1.1) < 0.03) c = [225, 225, 220];
+    return c;
+  }
+  function charCam(lw, lh, v) {
+    const p = Math.atan(0.14), cp = Math.cos(p), sp = Math.sin(p), f = (lh / 2) / Math.tan(0.30), ey = v.cy + 0.14 * v.d;
+    return { f: f, cp: cp, sp: sp, ey: ey, ez: v.d, lw: lw, lh: lh, hy: lh / 2 - f * Math.tan(p) };
+  }
+  function drawScene(cam, o, t) {
+    const lw = cam.lw, lh = cam.lh, d = RB.img.data, bg = paintBg(o.bg, lw, lh, cam.hy), holo = o.style === 'holo', hc = holo ? HOLO[o.holo] : null;
+    const scroll = o.move === 'walk' ? t * 1.25 : 0, sx = o.shadowX || 0, f = cam.f;
+    for (let y = 0; y < lh; y++) {
+      const ray = -(y + 0.5 - lh / 2) / f, Dy = ray * cam.cp - cam.sp, Dz = -ray * cam.sp - cam.cp;
+      for (let x = 0; x < lw; x++) {
+        const i = (y * lw + x) * 4; let r, g, b;
+        if (Dy < -0.0005) {
+          const tt = -cam.ey / Dy, Dx = (x + 0.5 - lw / 2) / f, X = tt * Dx, Z = cam.ez + tt * Dz, c = floorColor(o.floor, X, Z, scroll), fog = Math.min(1, tt * 0.045), hz = bg[(Math.min(lh - 1, Math.max(0, Math.round(cam.hy))) * lw + x) * 4];
+          r = c[0]; g = c[1]; b = c[2];
+          const dx = X - sx, dz = Z * 1.1, sd = Math.sqrt(dx * dx + dz * dz) / 0.5; if (sd < 1) { const k = 1 - 0.5 * (1 - sd) * (1 - sd) * 1.6; r *= k; g *= k; b *= k; }
+          if (o.bg !== 'studio') { r = r + (bg[((Math.max(0, Math.round(cam.hy) - 1)) * lw + x) * 4] - r) * fog; g = g + (bg[((Math.max(0, Math.round(cam.hy) - 1)) * lw + x) * 4 + 1] - g) * fog; b = b + (bg[((Math.max(0, Math.round(cam.hy) - 1)) * lw + x) * 4 + 2] - b) * fog; }
+          else { r += (242 - r) * fog; g += (238 - g) * fog; b += (228 - b) * fog; }
+        } else { r = bg[i]; g = bg[i + 1]; b = bg[i + 2]; }
+        if (holo) { r *= 0.45; g *= 0.45; b *= 0.55; }
+        d[i] = r; d[i + 1] = g; d[i + 2] = b; d[i + 3] = 255;
+      }
     }
   }
-  function drawNotes(c, lw, lh, t, o) {
-    const hc = o.style === 'holo' ? HOLO[o.holo] : [255, 240, 120];
-    c.fillStyle = 'rgba(' + hc.join(',') + ',.95)'; c.strokeStyle = c.fillStyle; c.lineWidth = 1;
-    for (let i = 0; i < 4; i++) { const u = ((t * 0.5 + i / 4) % 1), x = lw * (0.6 + 0.12 * Math.sin(u * 6 + i * 2)), y = lh * (0.35 - u * 0.28), s = lw * 0.025; c.globalAlpha = 1 - u; c.beginPath(); c.ellipse(Math.round(x), Math.round(y), s, s * 0.7, -0.4, 0, 6.3); c.fill(); c.beginPath(); c.moveTo(Math.round(x + s), Math.round(y)); c.lineTo(Math.round(x + s), Math.round(y - s * 3)); c.lineTo(Math.round(x + s * 2), Math.round(y - s * 2)); c.stroke(); }
-    c.globalAlpha = 1;
+  // draw every triangle of every part with the depth buffer. holo tints instead of coloring
+  function rasterParts(parts, cam, o, t) {
+    const lw = cam.lw, lh = cam.lh, D = RB.img.data, Z = RB.z, f = cam.f, cp = cam.cp, sp = cam.sp, holo = o.style === 'holo', hc = holo ? HOLO[o.holo] : null, flick = holo ? 0.9 + 0.1 * Math.sin(t * 37) * Math.sin(t * 11) : 1;
+    const ex = 0, ey = cam.ey, ez = cam.ez, l1 = LIT.l1, l2 = LIT.l2;
+    for (let pi = 0; pi < parts.length; pi++) {
+      const P = parts[pi], m = P.m, M = P.M, nv = m.v.length, ac = P.acc, sk = P.skin, tex = P.tex;
+      if (nv > SC.n) continue; const SX = SC.sx, SY = SC.sy, IZ = SC.iz, VR = SC.vr, VL = SC.vl, UU = SC.uu, VV = SC.vv, WW = SC.ww;
+      for (let i = 0; i < nv; i++) {
+        const v = m.v[i], wx = M[0] * v[0] + M[1] * v[1] + M[2] * v[2] + M[3], wy = M[4] * v[0] + M[5] * v[1] + M[6] * v[2] + M[7], wz = M[8] * v[0] + M[9] * v[1] + M[10] * v[2] + M[11];
+        const px = wx - ex, py = wy - ey, pz = wz - ez, vy = py * cp - pz * sp, vz = py * sp + pz * cp, dep = -vz; if (dep < 0.05) { IZ[i] = -1; continue; }
+        SX[i] = lw / 2 + f * px / dep; SY[i] = lh / 2 - f * vy / dep; IZ[i] = 1 / dep;
+        const n = m.n[i], nx = M[0] * n[0] + M[1] * n[1] + M[2] * n[2], ny = M[4] * n[0] + M[5] * n[1] + M[6] * n[2], nz = M[8] * n[0] + M[9] * n[1] + M[10] * n[2], nl = Math.hypot(nx, ny, nz) || 1, ax = nx / nl, ay = ny / nl, az = nz / nl;
+        const d1 = Math.max(0, ax * l1[0] + ay * l1[1] + az * l1[2]), d2 = Math.max(0, ax * l2[0] + ay * l2[1] + az * l2[2]), sky = 0.5 + 0.5 * ay;
+        VL[i * 3] = 0.34 + 0.16 * sky + 0.72 * d1 + 0.14 * d2; VL[i * 3 + 1] = 0.34 + 0.17 * sky + 0.66 * d1 + 0.2 * d2; VL[i * 3 + 2] = 0.38 + 0.2 * sky + 0.55 * d1 + 0.36 * d2;
+        const c = m.c[i], cc = c ? (c === 'a' ? ac : c === 's' ? sk : c) : ac; VR[i * 3] = cc[0]; VR[i * 3 + 1] = cc[1]; VR[i * 3 + 2] = cc[2];
+        if (m.uv) { UU[i] = m.uv[i][0] * IZ[i]; VV[i] = m.uv[i][1] * IZ[i]; } WW[i] = m.w ? m.w[i] : 1;
+        if (P.skinPelvis) { }
+      }
+      const tw = tex ? tex.w : 0, th = tex ? tex.h : 0, td = tex ? tex.d : null, texW = P.texW;
+      for (let fi = 0; fi < m.f.length; fi++) {
+        const tr = m.f[fi], a = tr[0], b = tr[1], c = tr[2]; if (IZ[a] < 0 || IZ[b] < 0 || IZ[c] < 0) continue;
+        const ax = SX[a], ay = SY[a], bx = SX[b], by = SY[b], cx = SX[c], cy = SY[c], area = (bx - ax) * (cy - ay) - (by - ay) * (cx - ax);
+        if (area >= 0) continue; // faces turned away
+        let x0 = Math.max(0, Math.floor(Math.min(ax, bx, cx))), x1 = Math.min(lw - 1, Math.ceil(Math.max(ax, bx, cx))), y0 = Math.max(0, Math.floor(Math.min(ay, by, cy))), y1 = Math.min(lh - 1, Math.ceil(Math.max(ay, by, cy))); if (x0 > x1 || y0 > y1) continue;
+        const inv = 1 / area, izA = IZ[a], izB = IZ[b], izC = IZ[c];
+        for (let y = y0; y <= y1; y++) for (let x = x0; x <= x1; x++) {
+          const pxx = x + 0.5, pyy = y + 0.5, w0 = ((bx - pxx) * (cy - pyy) - (by - pyy) * (cx - pxx)) * inv, w1 = ((cx - pxx) * (ay - pyy) - (cy - pyy) * (ax - pxx)) * inv, w2 = 1 - w0 - w1;
+          if (w0 < -0.0005 || w1 < -0.0005 || w2 < -0.0005) continue;
+          const iz = w0 * izA + w1 * izB + w2 * izC, zi = y * lw + x; if (iz <= Z[zi]) continue;
+          const a3 = a * 3, b3 = b * 3, c3 = c * 3;
+          let r = w0 * VR[a3] + w1 * VR[b3] + w2 * VR[c3], g = w0 * VR[a3 + 1] + w1 * VR[b3 + 1] + w2 * VR[c3 + 1], bl = w0 * VR[a3 + 2] + w1 * VR[b3 + 2] + w2 * VR[c3 + 2];
+          if (tex) {
+            const u = (w0 * UU[a] + w1 * UU[b] + w2 * UU[c]) / iz, v = (w0 * VV[a] + w1 * VV[b] + w2 * VV[c]) / iz, tx = Math.max(0, Math.min(tw - 1.001, u * tw - 0.5)), ty = Math.max(0, Math.min(th - 1.001, v * th - 0.5)), x0t = tx | 0, y0t = ty | 0, fx = tx - x0t, fy = ty - y0t, i00 = (y0t * tw + x0t) * 4, i10 = i00 + 4, i01 = i00 + tw * 4, i11 = i01 + 4;
+            const tr_ = (td[i00] * (1 - fx) + td[i10] * fx) * (1 - fy) + (td[i01] * (1 - fx) + td[i11] * fx) * fy, tg = (td[i00 + 1] * (1 - fx) + td[i10 + 1] * fx) * (1 - fy) + (td[i01 + 1] * (1 - fx) + td[i11 + 1] * fx) * fy, tb = (td[i00 + 2] * (1 - fx) + td[i10 + 2] * fx) * (1 - fy) + (td[i01 + 2] * (1 - fx) + td[i11 + 2] * fx) * fy;
+            if (texW) { const wt = w0 * WW[a] + w1 * WW[b] + w2 * WW[c]; r += (tr_ - r) * wt; g += (tg - g) * wt; bl += (tb - bl) * wt; } else { r = tr_; g = tg; bl = tb; }
+          }
+          let lr = w0 * VL[a3] + w1 * VL[b3] + w2 * VL[c3], lg = w0 * VL[a3 + 1] + w1 * VL[b3 + 1] + w2 * VL[c3 + 1], lb = w0 * VL[a3 + 2] + w1 * VL[b3 + 2] + w2 * VL[c3 + 2];
+          r *= lr; g *= lg; bl *= lb; Z[zi] = iz; const di = zi * 4;
+          if (holo) { const lum = Math.min(1, (0.3 * r + 0.59 * g + 0.11 * bl) / 255 * 1.1), k = (0.3 + 0.8 * lum) * flick * ((y & 1) ? 0.78 : 1); D[di] = D[di] * 0.14 + hc[0] * k * 0.86; D[di + 1] = D[di + 1] * 0.14 + hc[1] * k * 0.86; D[di + 2] = D[di + 2] * 0.14 + hc[2] * k * 0.86; }
+          else { D[di] = r > 255 ? 255 : r; D[di + 1] = g > 255 ? 255 : g; D[di + 2] = bl > 255 ? 255 : bl; }
+        }
+      }
+    }
   }
-  // the whole scene, drawn into target context c at W x H. o: style holo/solid, holo color, bg, floor, pix, view, move
-  const lowC = document.createElement('canvas'), lowX = lowC.getContext('2d', { willReadFrequently: true }), cTmp = document.createElement('canvas');
+  const BAYER = [0, 8, 2, 10, 12, 4, 14, 6, 3, 11, 1, 9, 15, 7, 13, 5];
+  // the finished picture: renderChar draws the scene and the person into c at size W x H
   function renderChar(c, W, H, A, t, o) {
-    const lw = Math.max(60, Math.round(W / o.pix)), lh = Math.max(60, Math.round(H / o.pix)); if (lowC.width !== lw || lowC.height !== lh) { lowC.width = lw; lowC.height = lh; }
-    const holo = o.style === 'holo', P = pose(t, o.move), cam = camFor(lw, lh, o.view); lowX.imageSmoothingEnabled = false;
-    drawBackground(lowX, lw, lh, t, P, o); drawFloor(lowX, cam, lw, lh, t, P, o);
-    if (!holo) { const s = cam.scr(cam.view([P.x, 0, 0])), r = lw * 0.12; lowX.fillStyle = 'rgba(0,0,0,.35)'; lowX.beginPath(); lowX.ellipse(Math.round(s[0]), Math.round(s[1]), r, r * 0.35, 0, 0, 6.3); lowX.fill(); }
-    const flick = holo ? 0.88 + 0.12 * Math.sin(t * 37) * Math.sin(t * 11) : 1;
-    fillPolys(lowX, collectPolys(buildParts(P, A, t), cam), holo, HOLO[o.holo], flick, t);
-    if (o.move === 'sing') drawNotes(lowX, lw, lh, t, o);
-    const img = lowX.getImageData(0, 0, lw, lh), d = img.data; // the PlayStation look: 15 bit color with ordered dither
-    for (let y = 0; y < lh; y++) for (let x = 0; x < lw; x++) { const i = (y * lw + x) * 4, b = (BAYER[(y & 3) * 4 + (x & 3)] - 7.5) * 0.45; d[i] = Math.max(0, Math.min(255, Math.round((d[i] + b) / 8) * 8)); d[i + 1] = Math.max(0, Math.min(255, Math.round((d[i + 1] + b) / 8) * 8)); d[i + 2] = Math.max(0, Math.min(255, Math.round((d[i + 2] + b) / 8) * 8)); }
-    lowX.putImageData(img, 0, 0);
-    c.imageSmoothingEnabled = false; c.drawImage(lowC, 0, 0, W, H); c.imageSmoothingEnabled = true;
-    if (holo) { // projector scanlines, a rolling bright band, and now and then the picture jumps sideways
-      c.fillStyle = 'rgba(0,0,0,.22)'; for (let y = 0; y < H; y += o.pix) c.fillRect(0, y, W, 1);
-      const by = ((t * 0.35) % 1.2 - 0.1) * H; c.fillStyle = 'rgba(' + HOLO[o.holo].join(',') + ',.07)'; c.fillRect(0, by, W, H * 0.08);
-      if ((t % 4) < 0.14) { const gy = Math.random() * H * 0.7, gh = H * (0.03 + Math.random() * 0.05); if (cTmp.width !== W || cTmp.height !== H) { cTmp.width = W; cTmp.height = H; } const tc = cTmp.getContext('2d'); tc.drawImage(c.canvas, 0, 0); c.drawImage(cTmp, 0, gy, W, gh, (Math.random() - 0.5) * W * 0.08, gy, W, gh); }
-    }
+    const pix = o.pix || 2, lw = Math.max(48, Math.round(W / pix)), lh = Math.max(48, Math.round(H / pix)); rbEnsure(lw, lh);
+    const cam = charCam(lw, lh, o.view), P = pose(t, o.move), hsc = SCALE_H[A.height] || 1;
+    const rootM = mm(Tm(P.x * hsc, P.air, 0), mm(RY(o.view.yaw * Math.PI / 180), Sm(hsc, hsc, hsc)));
+    o.shadowX = P.x * hsc; drawScene(cam, o, t); RB.z.fill(0);
+    const built = buildParts(P, A, t, mm(RY(o.view.yaw * Math.PI / 180), mm(Tm(P.x * hsc, P.air, 0), Sm(hsc, hsc, hsc))));
+    rasterParts(built.parts, cam, o, t);
+    const d = RB.img.data; // the PS2 grade: a touch of warm haze and contrast with a light dither
+    if (!o.noGrade) for (let y = 0; y < lh; y++) for (let x = 0; x < lw; x++) { const i = (y * lw + x) * 4, bd = (BAYER[(y & 3) * 4 + (x & 3)] - 7.5) * 0.35; for (let k = 0; k < 3; k++) { let v = d[i + k]; v = (v - 128) * 1.06 + 128 + bd + (k === 0 ? 3 : k === 2 ? -3 : 0); d[i + k] = v < 0 ? 0 : v > 255 ? 255 : v; } }
+    RB.x.putImageData(RB.img, 0, 0);
+    c.imageSmoothingEnabled = pix < 2.5; c.drawImage(RB.c, 0, 0, W, H); c.imageSmoothingEnabled = true;
+    if (o.style === 'holo') { c.fillStyle = 'rgba(0,0,0,.18)'; for (let y = 0; y < H; y += Math.max(2, pix)) c.fillRect(0, y, W, 1); }
+    if (o.move === 'sing') { c.save(); c.font = '900 ' + Math.round(H * 0.05) + 'px Arial'; c.textAlign = 'center'; for (let i = 0; i < 4; i++) { const ph = (t * 0.5 + i / 4) % 1; c.globalAlpha = Math.sin(ph * 3.14); c.fillStyle = i % 2 ? '#ffd400' : '#ffffff'; c.shadowColor = 'rgba(0,0,0,.6)'; c.shadowBlur = 4; c.fillText(i % 2 ? '♫' : '♪', W * (0.74 + 0.16 * ((i * 0.37 + ph * 0.3) % 1)), H * (0.5 - ph * 0.3)); } c.restore(); }
   }
   // ----- the view the camera wants right now, and how it eases there -----
   function charWants() {
     const rec = deck.recording || deck.auto, inCreate = st.panel === 'create' && !rec;
     let focus = 'full', move = chr.A.move, yaw = chr.yaw + chr.userYaw + (chr.spin && !inCreate ? chr.t * 25 : 0);
-    if (inCreate) {
-      const cat = (CATS[chrUI.tab] || []).find(c => c[0] === chrUI.cat); focus = cat ? cat[2] : 'full';
-      if (chrUI.tab !== 'emote') move = 'idle';
-      if (focus === 'head' || focus === 'face') yaw = chr.userYaw;
-    }
-    const f = FOCUS[focus]; return { yaw, cy: focus === 'full' ? 2.2 : f.cy, d: focus === 'full' ? 5.5 / chr.zoom : f.d, move, focus };
+    if (inCreate) { const cat = (CATS[chrUI.tab] || []).find(c => c[0] === chrUI.cat); focus = cat ? cat[2] : 'full'; if (chrUI.tab !== 'emote') move = 'idle'; if (focus === 'head' || focus === 'face') yaw = chr.userYaw; }
+    const f = FOCUS[focus]; return { yaw: yaw, cy: f.cy, d: focus === 'full' ? f.d / chr.zoom : f.d, move: move, focus: focus, create: inCreate };
   }
   function drawCharView(dt) {
     const [W, H] = size(); applySize(W, H); const w = charWants();
     if (!chr.cur) chr.cur = { yaw: w.yaw, cy: w.cy, d: w.d }; else { const k = Math.min(1, dt * 7); chr.cur.yaw += (w.yaw - chr.cur.yaw) * k; chr.cur.cy += (w.cy - chr.cur.cy) * k; chr.cur.d += (w.d - chr.cur.d) * k; }
     if (bTmp.width !== W || bTmp.height !== H) { bTmp.width = W; bTmp.height = H; }
     const c = bTmp.getContext('2d');
-    renderChar(c, W, H, chr.A, chr.t, { style: chr.style, holo: chr.holo, bg: chr.bg, floor: chr.floor, pix: chr.pix, move: w.move, view: { yaw: chr.cur.yaw, cy: chr.cur.cy, d: chr.cur.d } });
+    // while you are building, the person is always solid and in the studio so you see exactly what you pick
+    renderChar(c, W, H, chr.A, chr.t, { style: w.create ? 'solid' : chr.style, holo: chr.holo, bg: w.create ? 'studio' : chr.bg, floor: w.create ? 'studio' : chr.floor, pix: w.create ? 1.5 : chr.pix, move: w.move, view: { yaw: chr.cur.yaw, cy: chr.cur.cy, d: chr.cur.d } });
     ctx.drawImage(bTmp, 0, 0); drawLooked(ctx, bTmp, W, H, W, H, chr.t, null); drawStamps(ctx, W, H, chr.t, false);
   }
   // ===================== THE CREATOR =====================
   const thC = document.createElement('canvas');
   function drawThumb(cv2, A2, focus, yaw, move) {
-    const w = cv2.width, h = cv2.height, c = cv2.getContext('2d'), F = FOCUS[focus] || FOCUS.full, g = c.createLinearGradient(0, 0, 0, h);
-    g.addColorStop(0, '#f4efe0'); g.addColorStop(1, '#d6cfbb'); c.fillStyle = g; c.fillRect(0, 0, w, h);
-    const cam = camFor(w, h, { yaw, cy: F.cy, d: F.d * (focus === 'full' ? 0.82 : 1), mid: 0.5 }); fillPolys(c, collectPolys(buildParts(pose(0.3, move || 'idle'), A2, 0.3), cam), false, null, 1, 0);
+    const w = cv2.width, h = cv2.height, c = cv2.getContext('2d'), F = FOCUS[focus] || FOCUS.full;
+    renderChar(c, w, h, A2, 0.3, { style: 'solid', bg: 'studio', floor: 'studio', pix: 1, noGrade: false, move: move || 'idle', view: { yaw: yaw, cy: F.cy, d: F.d * (focus === 'full' ? 0.92 : 1) } });
   }
   function setA(k, v) { if (chr.A[k] === v) return; pushHist(); chr.A[k] = v; saveChar(); refreshCharUI(); }
   function pushHist() { chr.hist.push(JSON.stringify(chr.A)); if (chr.hist.length > 40) chr.hist.shift(); chr.redo = []; }
@@ -1525,12 +1681,12 @@
   cv.addEventListener('pointermove', (e) => { if (!cdrag) return; chr.userYaw = (chr.userYaw + (e.clientX - cdrag.x) * 0.9) % 360; cdrag.x = e.clientX; });
   ['pointerup', 'pointercancel'].forEach(ev => cv.addEventListener(ev, () => { cdrag = null; }));
   // scene panel
-  chipSet('cStyle', [['holo', 'Hologram'], ['solid', 'Solid PS1']], () => chr.style, v => { chr.style = v; });
+  chipSet('cStyle', [['solid', 'Solid'], ['holo', 'Hologram']], () => chr.style, v => { chr.style = v; });
   (function () { const box = $('cHolo'); Object.keys(HOLO).forEach(k => { const b = document.createElement('button'); b.type = 'button'; b.dataset.k = k; b.style.background = 'rgb(' + HOLO[k].join(',') + ')'; b.setAttribute('aria-label', k); b.setAttribute('aria-pressed', chr.holo === k ? 'true' : 'false'); b.addEventListener('click', () => { chr.holo = k; chr.style = 'holo'; box.querySelectorAll('button').forEach(x => x.setAttribute('aria-pressed', x === b ? 'true' : 'false')); buzz(8); document.querySelectorAll('#cStyle .chip').forEach((x, i) => x.setAttribute('aria-pressed', i === 0 ? 'true' : 'false')); }); box.appendChild(b); }); })();
-  chipSet('cBg', [['city', 'City'], ['sunset', 'Sunset'], ['vapor', 'Vapor'], ['void', 'Void']], () => chr.bg, v => { chr.bg = v; });
-  chipSet('cFloor', [['grid', 'Grid'], ['checker', 'Checker'], ['pad', 'Glow pad']], () => chr.floor, v => { chr.floor = v; });
+  chipSet('cBg', [['street', 'Street'], ['neon', 'Neon'], ['vapor', 'Vapor'], ['studio', 'Studio']], () => chr.bg, v => { chr.bg = v; });
+  chipSet('cFloor', [['asphalt', 'Asphalt'], ['checker', 'Checker'], ['grid', 'Grid'], ['studio', 'Plain']], () => chr.floor, v => { chr.floor = v; });
   chipSet('cCam', [[24, '3/4'], [0, 'Front'], [90, 'Side'], [180, 'Back']], () => chr.yaw, v => { chr.yaw = +v; chr.userYaw = 0; });
-  chipSet('cPix', [[2, 'Fine'], [3, 'PS1'], [4, 'Chunky']], () => chr.pix, v => { chr.pix = +v; });
+  chipSet('cPix', [[1.5, 'Fine'], [2, 'PS2'], [3, 'Chunky']], () => chr.pix, v => { chr.pix = +v; });
   $('cZoom').addEventListener('input', () => { chr.zoom = +$('cZoom').value; });
   $('cSpin').addEventListener('change', () => { chr.spin = $('cSpin').checked; });
   function openCharCreator() { chrUI.tab = 'face'; chrUI.cat = 'start'; chr.t = 0; chr.cur = null; renderTabs(); renderRail(); renderGrid(); refreshCharUI(); }
@@ -1540,7 +1696,7 @@
     { key: 'stop', name: 'STOP MOTION', tab: 'STOP', desc: 'Shoot frames with your camera, or use photos and a video. Then run it through the tape deck.' },
     { key: 'clip', name: 'VHS BUILDER', tab: 'VHS', desc: 'Pick a video from your camera roll. Rewind, fast forward and pause it like a real camcorder tape, then record it.' },
     { key: 'board', name: 'BILLBOARD', tab: 'SIGN', desc: 'Put 2 to 5 photos on a spinning trivision sign. Add words like a real ad. Pick the scene behind it.' },
-    { key: 'char', name: 'CHARACTER', tab: 'CHAR', desc: 'Build a blocky character like a Mii. Make it walk, sing or dance as a hologram or a PS1 game.' },
+    { key: 'char', name: 'CHARACTER', tab: 'CHAR', desc: 'Build a character like a Mii with a PS2 game look. Make it walk, sing or dance, solid or as a hologram.' },
   ];
   let mi = 0;
   function showMode(i) {
