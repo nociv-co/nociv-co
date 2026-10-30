@@ -408,6 +408,7 @@
       <a href="#sec-codes">Codes</a>
       <a href="#sec-popup">Pop-Up</a>
       <a href="#sec-mailing">Mailing List</a>
+      <a href="#sec-design">Design Clients</a>
       <a href="#sec-time">Time Tracker</a>
       <a href="#sec-goals">Goals</a>
       <a href="#sec-cheatsheet">Pricing Cheat Sheet</a>
@@ -656,6 +657,17 @@
             Want one-click sending built in, just say so and I'll wire up an email service for it.
           </div>
         </div>
+      </div>
+    </details>
+
+    <details class="admin-section" id="sec-design">
+      <summary>Design Clients <span class="admin-section-hint">hours by step, Friday payments, locked files, invoices, his private page</span></summary>
+      <div class="admin-section-body">
+        <div class="how-to-box">
+          <strong>What this is for</strong>
+          Your graphic design clients. Clock in on a project and pick which of the 7 steps you are on. He gets a private page that shows every hour, every step, what his weekly payment covers, what is unpaid, and his files (finals stay locked until you release them). Log his Friday payment here when it lands. Make an invoice any time from the hours not billed yet.
+        </div>
+        <div id="designMount"><p style="opacity:.5;">Loading...</p></div>
       </div>
     </details>
 
@@ -1470,6 +1482,7 @@
 <script src="supabase.js"></script>
 <script src="crop.js"></script>
 <script src="pin-sheets.js?v=3"></script>
+<script src="design-admin.js?v=1"></script>
 <script>
   const loginBox = document.getElementById('loginBox');
   const dashboard = document.getElementById('dashboard');
@@ -1546,6 +1559,7 @@
       loadAlbum();
       renderGoalsCalendar();
       loadGoals();
+      if (window.loadDesignAdmin) loadDesignAdmin();
       checkActiveTimeEntry();
       loadTimeEntries();
       loadDisciplineOptions();

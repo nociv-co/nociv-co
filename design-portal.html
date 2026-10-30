@@ -1,0 +1,203 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="robots" content="noindex, nofollow">
+<title>Design Work | NOCIV</title>
+<style>
+  :root { --paper:#f1ead8; --ink:#1b1b1b; --red:#c8281e; --line:#1b1b1b; --soft:rgba(27,27,27,.55); --ok:#2f6b2f; --warn:#b36a00; }
+  * { box-sizing: border-box; }
+  body { margin:0; background:var(--paper); color:var(--ink); font:16px/1.45 -apple-system, "Helvetica Neue", Arial, sans-serif; padding:0 16px 60px; }
+  .wrap { max-width:720px; margin:0 auto; }
+  header { padding:22px 0 8px; }
+  .brand { font-size:.72rem; font-weight:800; letter-spacing:.14em; text-transform:uppercase; color:var(--soft); }
+  h1 { margin:6px 0 2px; font-size:1.9rem; line-height:1.1; text-transform:uppercase; letter-spacing:.01em; }
+  .sub { color:var(--soft); font-size:.9rem; }
+  .card { background:#fbf7ea; border:2px solid var(--line); padding:14px 14px 16px; margin:14px 0; position:relative; }
+  .card::before { content:""; position:absolute; top:-9px; left:50%; width:84px; height:16px; margin-left:-42px; background:var(--ink); opacity:.85; }
+  h2 { margin:6px 0 10px; font-size:1rem; text-transform:uppercase; letter-spacing:.06em; }
+  .grid { display:grid; grid-template-columns:1fr 1fr; gap:8px; }
+  .stat { border:2px solid var(--line); padding:10px; background:#fff; }
+  .stat .l { font-size:.68rem; font-weight:800; letter-spacing:.06em; text-transform:uppercase; color:var(--soft); }
+  .stat .v { font-size:1.45rem; font-weight:800; margin-top:2px; }
+  .stat .s { font-size:.78rem; color:var(--soft); }
+  .red { color:var(--red); } .ok { color:var(--ok); } .warn { color:var(--warn); }
+  .live { background:var(--red); color:#fff; padding:10px 12px; font-weight:800; margin:14px 0 0; border:2px solid var(--line); }
+  .bar { height:16px; border:2px solid var(--line); background:#fff; margin:6px 0 4px; position:relative; overflow:hidden; }
+  .bar i { display:block; height:100%; background:var(--ink); }
+  .bar.over i { background:var(--red); }
+  .stepsrow { display:flex; align-items:center; gap:8px; margin:6px 0; font-size:.88rem; }
+  .stepsrow .n { flex:0 0 26px; height:26px; background:var(--red); color:#fff; font-weight:800; display:flex; align-items:center; justify-content:center; }
+  .stepsrow .name { flex:0 0 118px; }
+  .stepsrow .bar { flex:1; margin:0; height:14px; }
+  .stepsrow .h { flex:0 0 52px; text-align:right; font-weight:700; }
+  .proj { border-top:2px dashed var(--soft); padding-top:10px; margin-top:10px; }
+  .proj:first-of-type { border-top:0; margin-top:0; padding-top:0; }
+  .pname { font-weight:800; font-size:1.02rem; }
+  .dots { display:flex; gap:4px; margin:8px 0 2px; }
+  .dot { flex:1; height:26px; border:2px solid var(--line); background:#fff; font-size:.72rem; font-weight:800; display:flex; align-items:center; justify-content:center; }
+  .dot.done { background:var(--ink); color:#fff; }
+  .dot.now { background:var(--red); color:#fff; }
+  .files { display:grid; grid-template-columns:1fr 1fr; gap:8px; }
+  .file { border:2px solid var(--line); background:#fff; padding:6px; font-size:.74rem; word-break:break-all; }
+  .file img { width:100%; aspect-ratio:1; object-fit:contain; background:repeating-conic-gradient(#e6dfcb 0 25%, #f4efe0 0 50%) 50%/16px 16px; display:block; margin-bottom:6px; }
+  .file .lock { aspect-ratio:1; display:flex; align-items:center; justify-content:center; text-align:center; background:var(--ink); color:#fff; font-weight:800; letter-spacing:.08em; margin-bottom:6px; padding:6px; }
+  .btn { display:inline-block; border:2px solid var(--line); background:var(--ink); color:#fff; padding:10px 14px; font-weight:800; text-transform:uppercase; letter-spacing:.05em; font-size:.8rem; text-decoration:none; cursor:pointer; font-family:inherit; }
+  .btn.alt { background:#fff; color:var(--ink); }
+  table { width:100%; border-collapse:collapse; font-size:.86rem; }
+  td, th { padding:7px 4px; border-bottom:1px solid rgba(27,27,27,.2); text-align:left; vertical-align:top; }
+  th { font-size:.68rem; text-transform:uppercase; letter-spacing:.06em; color:var(--soft); }
+  td.r, th.r { text-align:right; }
+  .tag { display:inline-block; padding:2px 7px; font-size:.68rem; font-weight:800; letter-spacing:.06em; text-transform:uppercase; border:2px solid var(--line); background:#fff; }
+  .tag.paid { background:var(--ok); color:#fff; border-color:var(--ok); }
+  .tag.late { background:var(--red); color:#fff; border-color:var(--red); }
+  details.inv { border-top:2px dashed var(--soft); padding:8px 0; }
+  details.inv summary { cursor:pointer; font-weight:800; display:flex; gap:8px; justify-content:space-between; flex-wrap:wrap; }
+  .muted { color:var(--soft); font-size:.86rem; }
+  .err { padding:40px 0; text-align:center; font-weight:800; }
+  .note { font-size:.78rem; color:var(--soft); margin-top:8px; }
+  @media print {
+    body { background:#fff; padding:0; }
+    .noprint, .card::before { display:none !important; }
+    .card { border:1px solid #000; break-inside:avoid; }
+    details.inv { display:none; }
+    details.inv.printme { display:block; }
+    details.inv.printme > summary ~ * { display:block; }
+    body.printing-one .card:not(.invcard) { display:none; }
+  }
+</style>
+</head>
+<body>
+<div class="wrap" id="app"><p class="err">Loading...</p></div>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="supabase.js"></script>
+<script>
+  const STEPS = ['Gather inspo','Draw it','Vector base','Mockup','Refine','Finish PNGs','Send + invoice'];
+  const app = document.getElementById('app');
+  const token = new URLSearchParams(location.search).get('c') || '';
+  const BUCKET_URL = SUPABASE_URL + '/storage/v1/object/public/design-files/';
+
+  function esc(s) { return String(s == null ? '' : s).replace(/[&<>"']/g, ch => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[ch])); }
+  function money(n) { const v = Number(n) || 0; return (v < 0 ? '-$' : '$') + Math.abs(v).toFixed(2); }
+  function hrs(min) { return ((Number(min) || 0) / 60).toFixed(2); }
+  function hm(min) { min = Math.round(Number(min) || 0); return Math.floor(min / 60) + 'h ' + (min % 60) + 'm'; }
+  function dateOnly(d) { if (!d) return ''; const p = String(d).slice(0, 10).split('-'); return new Date(p[0], p[1] - 1, p[2]).toLocaleDateString(undefined, { month:'short', day:'numeric', year:'numeric' }); }
+  const DOW = ['Sunday','Monday','Tuesday','Wednesday','Thursday','Friday','Saturday'];
+  function isImg(name) { return /\.(png|jpe?g|webp|gif)$/i.test(name || ''); }
+
+  async function load() {
+    if (!token) { app.innerHTML = '<p class="err">This link is missing its code. Ask Jasilyn for your link.</p>'; return; }
+    const { data, error } = await supabaseClient.rpc('design_portal', { p_token: token });
+    if (error || !data) { app.innerHTML = '<p class="err">We could not find this page. Ask Jasilyn for a fresh link.</p>'; return; }
+    render(data);
+  }
+
+  function render(d) {
+    const c = d.client, s = d.summary;
+    const stepMin = {}; (d.steps || []).forEach(x => stepMin[x.step] = Number(x.minutes) || 0);
+    const maxStep = Math.max(1, ...Object.values(stepMin));
+    const running = (d.time || []).find(t => t.running);
+    const covered = Number(s.covered_hours_per_week) || 0;
+    const wkHours = (Number(s.week_minutes) || 0) / 60;
+    const over = Math.max(0, wkHours - covered);
+    const pct = covered ? Math.min(100, wkHours / covered * 100) : 0;
+    const behind = Number(s.behind) || 0;
+    const bal = Number(s.balance) || 0;
+    let h = '';
+    h += `<header><div class="brand">NOCIV design work</div><h1>${esc(c.business || c.name)}</h1><div class="sub">Every hour, every step, every payment. Updated live.</div></header>`;
+    if (running) h += `<div class="live">Working now: step ${running.step}, ${esc(STEPS[running.step - 1] || '')}${running.project ? ' on ' + esc(running.project) : ''}${running.note ? ' (' + esc(running.note) + ')' : ''}</div>`;
+
+    h += `<div class="card"><h2>The money</h2><div class="grid">
+      <div class="stat"><div class="l">Hours worked</div><div class="v">${hrs(s.minutes)}</div><div class="s">at ${money(c.rate)} an hour</div></div>
+      <div class="stat"><div class="l">Work value</div><div class="v">${money(s.earned)}</div><div class="s">all time</div></div>
+      <div class="stat"><div class="l">Paid so far</div><div class="v ok">${money(s.paid)}</div><div class="s">${(d.payments || []).length} payment${(d.payments || []).length === 1 ? '' : 's'}</div></div>
+      <div class="stat"><div class="l">Balance owed</div><div class="v ${bal > 0 ? 'red' : 'ok'}">${money(bal)}</div><div class="s">${bal > 0 ? 'work done, not paid yet' : 'all caught up'}</div></div>
+    </div>`;
+    if (Number(c.past_hours) > 0) h += `<p class="note">Includes ${esc(c.past_hours)} hours of earlier work${c.past_note ? ' (' + esc(c.past_note) + ')' : ''}, billed at the same rate.</p>`;
+    h += `</div>`;
+
+    h += `<div class="card"><h2>This week</h2>
+      <div><strong>${hm(s.week_minutes)}</strong> logged since Monday. Your ${DOW[c.pay_dow]} ${money(c.weekly_payment)} covers <strong>${covered.toFixed(1)} hours</strong>.</div>
+      <div class="bar ${over > 0 ? 'over' : ''}"><i style="width:${pct}%"></i></div>
+      <div class="muted">${over > 0 ? `<span class="red"><strong>${over.toFixed(1)} hours over</strong></span> what the weekly payment covers. Those hours add to the balance.` : `${Math.max(0, covered - wkHours).toFixed(1)} covered hours left this week.`}</div>
+      <p class="note">${DOW[c.pay_dow]} payments since ${dateOnly(c.start_date)}: ${s.pay_days} due (${money(s.expected_paid)}), ${money(s.paid)} received.${behind > 0 ? ` <span class="red"><strong>${money(behind)} behind the weekly schedule.</strong></span>` : ' On schedule.'}</p></div>`;
+
+    h += `<div class="card"><h2>Hours by step</h2>`;
+    STEPS.forEach((n, i) => {
+      const m = stepMin[i + 1] || 0;
+      h += `<div class="stepsrow"><div class="n">${i + 1}</div><div class="name">${esc(n)}</div><div class="bar"><i style="width:${m / maxStep * 100}%"></i></div><div class="h">${hrs(m)}</div></div>`;
+    });
+    h += `</div>`;
+
+    h += `<div class="card"><h2>Projects</h2>`;
+    if (!(d.projects || []).length) h += `<p class="muted">No projects yet.</p>`;
+    (d.projects || []).forEach(p => {
+      const done = p.done_steps || [];
+      h += `<div class="proj"><div class="pname">${esc(p.name)} <span class="tag">${esc(p.status)}</span></div><div class="dots">`;
+      for (let i = 1; i <= 7; i++) h += `<div class="dot ${done.includes(i) ? 'done' : (p.current_step === i && p.status === 'active' ? 'now' : '')}" title="${esc(STEPS[i - 1])}">${i}</div>`;
+      h += `</div><div class="muted">${p.status === 'done' ? 'Finished.' : 'Now on step ' + p.current_step + ': ' + esc(STEPS[p.current_step - 1])}</div></div>`;
+    });
+    h += `</div>`;
+
+    h += `<div class="card"><h2>Files</h2>`;
+    if (!(d.files || []).length) h += `<p class="muted">No files yet.</p>`;
+    else {
+      h += `<div class="files">`;
+      d.files.forEach(f => {
+        if (f.locked) h += `<div class="file"><div class="lock">FINAL FILE LOCKED<br>until paid</div>${esc(f.file_name)}</div>`;
+        else {
+          const url = BUCKET_URL + encodeURI(f.path);
+          h += `<div class="file">${isImg(f.file_name) ? `<img loading="lazy" src="${esc(url)}" alt="${esc(f.file_name)}">` : ''}${esc(f.file_name)}<br><span class="tag ${f.stage === 'Final' ? 'paid' : ''}">${esc(f.stage)} v${f.version}</span> <a href="${esc(url)}" download="${esc(f.file_name)}" target="_blank" rel="noopener">Open</a></div>`;
+        }
+      });
+      h += `</div>`;
+    }
+    h += `</div>`;
+
+    h += `<div class="card"><h2>Invoices</h2>`;
+    if (!(d.invoices || []).length) h += `<p class="muted">No invoices yet.</p>`;
+    (d.invoices || []).forEach(inv => {
+      h += `<details class="inv" data-id="${esc(inv.id)}"><summary><span>${esc(inv.number)} &middot; ${dateOnly(inv.issued_on)}</span><span>${money(inv.total_due)} <span class="tag ${inv.status === 'paid' ? 'paid' : 'late'}">${inv.status === 'paid' ? 'Paid' : 'Due'}</span></span></summary>
+        <table><tr><th>What</th><th class="r">Hours</th><th class="r">Amount</th></tr>`;
+      (inv.lines || []).forEach(l => { h += `<tr><td>${esc(l.label)}</td><td class="r">${l.hours != null ? Number(l.hours).toFixed(2) : ''}</td><td class="r">${money(l.amount)}</td></tr>`; });
+      h += `<tr><td colspan="2" class="r"><strong>Subtotal</strong></td><td class="r">${money(inv.subtotal)}</td></tr>
+        ${Number(inv.credits) ? `<tr><td colspan="2" class="r">Payments received</td><td class="r">-${money(inv.credits).replace('-', '')}</td></tr>` : ''}
+        <tr><td colspan="2" class="r"><strong>Due</strong></td><td class="r"><strong>${money(inv.total_due)}</strong></td></tr></table>
+        ${inv.note ? `<p class="note">${esc(inv.note)}</p>` : ''}
+        <p class="noprint"><button class="btn alt" type="button" data-print="${esc(inv.id)}">Print or save PDF</button></p></details>`;
+    });
+    h += `</div>`;
+
+    h += `<div class="card"><h2>Payments received</h2>`;
+    if (!(d.payments || []).length) h += `<p class="muted">None logged yet.</p>`;
+    else { h += `<table>`; d.payments.forEach(p => { h += `<tr><td>${dateOnly(p.paid_on)}</td><td>${esc(p.method || '')}${p.note ? ' ' + esc(p.note) : ''}</td><td class="r">${money(p.amount)}</td></tr>`; }); h += `</table>`; }
+    h += `</div>`;
+
+    h += `<div class="card"><h2>Time log</h2>`;
+    if (!(d.time || []).length) h += `<p class="muted">Nothing logged yet.</p>`;
+    else {
+      h += `<table><tr><th>Date</th><th>Step</th><th class="r">Time</th></tr>`;
+      d.time.forEach(t => {
+        h += `<tr><td>${dateOnly(t.work_date)}</td><td>${t.step}. ${esc(STEPS[t.step - 1] || '')}${t.project ? '<br><span class="muted">' + esc(t.project) + '</span>' : ''}${t.note ? '<br><span class="muted">' + esc(t.note) + '</span>' : ''}</td><td class="r">${t.running ? '<span class="tag late">NOW</span>' : hm(t.minutes)}</td></tr>`;
+      });
+      h += `</table>`;
+    }
+    h += `</div><p class="note noprint" style="text-align:center;">Private page for ${esc(c.name)}. Only people with this link can see it.</p>`;
+    app.innerHTML = h;
+
+    app.querySelectorAll('[data-print]').forEach(b => b.addEventListener('click', () => {
+      document.querySelectorAll('details.inv').forEach(x => { x.classList.remove('printme'); });
+      const det = b.closest('details'); det.classList.add('printme'); det.open = true;
+      document.body.classList.add('printing-one');
+      const card = det.closest('.card'); card.classList.add('invcard');
+      window.print();
+      document.body.classList.remove('printing-one'); card.classList.remove('invcard'); det.classList.remove('printme');
+    }));
+  }
+
+  load();
+  setInterval(() => { if (!document.querySelector('details.inv[open]')) load(); }, 60000);
+</script>
+</body>
+</html>
