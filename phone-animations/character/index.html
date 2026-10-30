@@ -1,0 +1,552 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Character Maker: NOCIV.CO</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, viewport-fit=cover">
+<meta name="description" content="Build a creator character: artist, DJ, curator, skater. Flat 2D with a punk print look. Save a sticker or a GIF. Free, nothing uploaded.">
+<style>
+  @font-face { font-family: NocivAnton; src: url('../../fonts/anton.woff') format('woff'); font-display: swap; }
+  :root { --paper: #e9e6df; --note: #f2ecd6; --ink: #1a1a1a; --red: #c8412f; --gold: #f2c230; --muted: #6b665c; }
+  * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+  html, body { margin: 0; height: 100%; background: var(--paper); color: var(--ink); font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Inter, Arial, sans-serif; overflow: hidden; overscroll-behavior: none; position: fixed; inset: 0; width: 100%; }
+  button { font: inherit; color: inherit; cursor: pointer; }
+  .app { height: 100%; display: flex; flex-direction: column; }
+  .hdr { flex: none; display: flex; align-items: center; gap: 8px; padding: calc(8px + env(safe-area-inset-top)) 12px 6px; }
+  .hdr a, .hdr button { all: unset; box-sizing: border-box; height: 36px; padding: 0 12px; display: flex; align-items: center; gap: 6px; border: 2px solid var(--ink); border-radius: 11px; background: var(--note); font-weight: 900; font-size: .72rem; letter-spacing: .1em; text-transform: uppercase; box-shadow: 0 3px 8px rgba(0,0,0,.14); cursor: pointer; }
+  .hdr a:active, .hdr button:active { transform: translateY(1px); box-shadow: none; }
+  .hdr .ttl { flex: 1; text-align: center; font-family: NocivAnton, Impact, "Arial Narrow", sans-serif; font-size: 1.25rem; letter-spacing: .06em; text-transform: uppercase; line-height: 1; }
+  .hdr .ttl span { display: inline-block; background: var(--ink); color: #fff; padding: 3px 10px 2px; transform: rotate(-1.5deg); }
+  .hdr svg { width: 16px; height: 16px; fill: none; stroke: currentColor; stroke-width: 2.2; stroke-linecap: round; stroke-linejoin: round; }
+  .stage { flex: 0 0 auto; height: 36%; min-height: 200px; position: relative; margin: 0 12px; border: 2.5px solid var(--ink); border-radius: 16px; overflow: hidden; background: #d6dccf; touch-action: none; box-shadow: 4px 4px 0 var(--ink); }
+  .stage.chk { background: repeating-conic-gradient(#e4e1d8 0 25%, #f4f1e8 0 50%) 0 0 / 22px 22px; }
+  .stage canvas { position: absolute; inset: 0; width: 100%; height: 100%; display: block; }
+  .stage .tag { position: absolute; left: 10px; bottom: 10px; padding: 4px 10px 3px; background: var(--note); border: 2px solid var(--ink); font-family: NocivAnton, Impact, sans-serif; letter-spacing: .05em; font-size: 1rem; text-transform: uppercase; line-height: 1; }
+  .stage .play { position: absolute; right: 10px; bottom: 10px; width: 40px; height: 40px; border-radius: 12px; border: 2px solid var(--ink); background: var(--note); display: grid; place-items: center; box-shadow: 0 3px 8px rgba(0,0,0,.2); }
+  .stage .play svg { width: 18px; height: 18px; fill: var(--ink); }
+  .tabs { flex: none; display: flex; gap: 8px; overflow-x: auto; padding: 14px 12px 10px; scroll-snap-type: x proximity; scrollbar-width: none; }
+  .tabs::-webkit-scrollbar { display: none; }
+  .tabs button { all: unset; box-sizing: border-box; flex: none; scroll-snap-align: start; width: 62px; height: 56px; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 3px; border: 2px solid var(--ink); border-radius: 13px; background: var(--note); box-shadow: 0 4px 10px rgba(0,0,0,.14); font-weight: 900; font-size: .56rem; letter-spacing: .1em; text-transform: uppercase; cursor: pointer; transition: background .15s, color .15s; }
+  .tabs button svg { width: 22px; height: 22px; fill: none; stroke: currentColor; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
+  .tabs button[aria-selected="true"] { background: var(--ink); color: var(--note); box-shadow: inset 0 2px 6px rgba(0,0,0,.5); }
+  .panel { flex: 1 1 0; min-height: 0; overflow-y: auto; padding: 2px 12px calc(16px + env(safe-area-inset-bottom)); -webkit-overflow-scrolling: touch; }
+  .chips { display: flex; flex-wrap: wrap; gap: 7px; margin: 4px 0 10px; }
+  .chip { all: unset; box-sizing: border-box; height: 34px; padding: 0 13px; display: flex; align-items: center; border: 2px solid var(--ink); border-radius: 10px; background: var(--note); font-weight: 900; font-size: .68rem; letter-spacing: .09em; text-transform: uppercase; box-shadow: 0 3px 8px rgba(0,0,0,.12); cursor: pointer; }
+  .chip[aria-pressed="true"] { background: var(--ink); color: var(--note); box-shadow: inset 0 2px 5px rgba(0,0,0,.5); }
+  .grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(72px, 1fr)); gap: 10px; }
+  .opt { all: unset; box-sizing: border-box; position: relative; aspect-ratio: 1; border: 2px solid rgba(26,26,26,.28); border-radius: 12px; background: var(--note); display: grid; place-items: center; cursor: pointer; overflow: hidden; }
+  .opt canvas { width: 100%; height: 100%; display: block; }
+  .opt[aria-pressed="true"] { border: 3px solid var(--ink); box-shadow: 0 4px 10px rgba(0,0,0,.2); }
+  .opt .nm { position: absolute; left: 0; right: 0; bottom: 0; text-align: center; font-size: .5rem; font-weight: 900; letter-spacing: .08em; text-transform: uppercase; padding: 2px 0; background: rgba(242,236,214,.92); }
+  .grid.big { grid-template-columns: repeat(2, 1fr); } .grid.big .opt { aspect-ratio: 4/5; }
+  .sw { display: flex; flex-wrap: wrap; gap: 9px; margin: 12px 0 2px; }
+  .sw button { all: unset; box-sizing: border-box; width: 34px; height: 34px; border-radius: 50%; border: 2px solid var(--ink); box-shadow: 0 3px 7px rgba(0,0,0,.18); cursor: pointer; }
+  .sw button[aria-pressed="true"] { outline: 3px solid var(--ink); outline-offset: 2px; }
+  .lbl { margin: 14px 0 4px; font-weight: 900; font-size: .62rem; letter-spacing: .14em; text-transform: uppercase; color: var(--muted); }
+  .note { margin: 8px 0 0; font-size: .8rem; line-height: 1.4; color: var(--muted); }
+  .btn { all: unset; box-sizing: border-box; display: grid; place-items: center; width: 100%; height: 50px; margin-top: 10px; background: var(--red); color: #fff; border: 2.5px solid var(--ink); border-radius: 12px; box-shadow: 3px 3px 0 var(--ink); font-weight: 900; letter-spacing: .14em; font-size: .85rem; text-transform: uppercase; cursor: pointer; }
+  .btn.alt { background: var(--note); color: var(--ink); }
+  .btn:active { transform: translate(3px, 3px); box-shadow: none; }
+  .btn[disabled] { opacity: .5; }
+  .modal { position: fixed; inset: 0; z-index: 20; background: rgba(26,26,26,.72); display: none; align-items: center; justify-content: center; padding: 16px; }
+  .modal.on { display: flex; }
+  .card { width: 100%; max-width: 420px; max-height: 100%; overflow: auto; background: var(--note); border: 2.5px solid var(--ink); border-radius: 16px; padding: 14px; box-shadow: 5px 5px 0 var(--ink); }
+  .card img { display: block; width: 100%; max-height: 52vh; object-fit: contain; border: 2px solid var(--ink); border-radius: 10px; background: repeating-conic-gradient(#e4e1d8 0 25%, #f4f1e8 0 50%) 0 0 / 18px 18px; }
+  .card h3 { margin: 0 0 8px; font-family: NocivAnton, Impact, sans-serif; letter-spacing: .06em; font-weight: 400; font-size: 1.4rem; text-transform: uppercase; }
+  .hide { display: none !important; }
+</style>
+</head>
+<body>
+<div class="app">
+  <div class="hdr">
+    <a href="../?m=avatar" id="back"><svg viewBox="0 0 24 24"><path d="M15 5l-7 7 7 7"/></svg>Menu</a>
+    <div class="ttl"><span>CHARACTER</span></div>
+    <button type="button" id="rand"><svg viewBox="0 0 24 24"><rect x="3" y="3" width="18" height="18" rx="4"/><circle cx="8.5" cy="8.5" r="1.3" fill="currentColor"/><circle cx="15.5" cy="15.5" r="1.3" fill="currentColor"/><circle cx="15.5" cy="8.5" r="1.3" fill="currentColor"/><circle cx="8.5" cy="15.5" r="1.3" fill="currentColor"/></svg>Mix</button>
+  </div>
+  <div class="stage" id="stage">
+    <canvas id="cv"></canvas>
+    <div class="tag" id="tag"></div>
+    <button type="button" class="play" id="play" aria-label="Play or pause"></button>
+  </div>
+  <div class="tabs" id="tabs" role="tablist"></div>
+  <div class="panel" id="panel"></div>
+</div>
+<div class="modal" id="modal"><div class="card" id="mcard"></div></div>
+<script>
+(function () {
+'use strict';
+const TAU = Math.PI * 2, R = d => d * Math.PI / 180, INK = '#1a1a1a', $ = id => document.getElementById(id);
+let ctx = null, PX = 1, PAT = null, DOT = null, LW = 4.2;
+
+// ---------- color + path helpers ----------
+function hex2(h) { h = h.replace('#', ''); return [parseInt(h.slice(0, 2), 16), parseInt(h.slice(2, 4), 16), parseInt(h.slice(4, 6), 16)]; }
+function mix(a, b, t) { const A = hex2(a), B = hex2(b); return '#' + A.map((v, i) => Math.round(v + (B[i] - v) * t).toString(16).padStart(2, '0')).join(''); }
+const dk = (h, t) => mix(h, '#000000', t == null ? .25 : t), lt = (h, t) => mix(h, '#ffffff', t == null ? .3 : t);
+function mkDot() { DOT = document.createElement('canvas'); DOT.width = DOT.height = 32; const g = DOT.getContext('2d'); g.fillStyle = 'rgba(26,26,26,.36)'; [[8, 8], [24, 24]].forEach(([x, y]) => { g.beginPath(); g.arc(x, y, 5, 0, TAU); g.fill(); }); }
+mkDot();
+function shOff(k) { const m = ctx.getTransform(), v = m.inverse(), wx = -k * PX * .8, wy = -k * PX * .9; return { x: v.a * wx + v.c * wy, y: v.b * wx + v.d * wy }; }
+function paint(p, fill, o) {
+  o = o || {};
+  if (fill) { ctx.fillStyle = fill; ctx.fill(p); }
+  if (fill && !o.ns) {
+    ctx.save(); ctx.clip(p); const off = shOff(o.sh || 5), r = new Path2D(); r.rect(-500, -600, 1000, 900); r.addPath(p, new DOMMatrix().translate(off.x, off.y));
+    ctx.fillStyle = PAT; ctx.fill(r, 'evenodd'); ctx.restore();
+  }
+  if (!o.no) { ctx.lineWidth = o.lw || LW; ctx.strokeStyle = INK; ctx.lineJoin = 'round'; ctx.lineCap = 'round'; ctx.stroke(p); }
+}
+function line(pts, w, col, closed) { const p = new Path2D(); pts.forEach((q, i) => i ? p.lineTo(q[0], q[1]) : p.moveTo(q[0], q[1])); if (closed) p.closePath(); ctx.lineWidth = w; ctx.strokeStyle = col || INK; ctx.lineCap = 'round'; ctx.lineJoin = 'round'; ctx.stroke(p); }
+function qline(x0, y0, cx, cy, x1, y1, w, col) { const p = new Path2D(); p.moveTo(x0, y0); p.quadraticCurveTo(cx, cy, x1, y1); ctx.lineWidth = w; ctx.strokeStyle = col || INK; ctx.lineCap = 'round'; ctx.stroke(p); }
+function ell(cx, cy, rx, ry, rot) { const p = new Path2D(); p.ellipse(cx, cy, rx, ry, rot || 0, 0, TAU); return p; }
+function rr(x, y, w, h, r) { const p = new Path2D(); r = Math.min(r, w / 2, h / 2); p.moveTo(x + r, y); p.lineTo(x + w - r, y); p.arcTo(x + w, y, x + w, y + r, r); p.lineTo(x + w, y + h - r); p.arcTo(x + w, y + h, x + w - r, y + h, r); p.lineTo(x + r, y + h); p.arcTo(x, y + h, x, y + h - r, r); p.lineTo(x, y + r); p.arcTo(x, y, x + r, y, r); p.closePath(); return p; }
+function cap(x0, y0, x1, y1, w0, w1) {
+  const dx = x1 - x0, dy = y1 - y0, L = Math.hypot(dx, dy) || 1, nx = -dy / L, ny = dx / L, a = Math.atan2(dy, dx), p = new Path2D();
+  p.moveTo(x0 + nx * w0, y0 + ny * w0); p.lineTo(x1 + nx * w1, y1 + ny * w1); p.arc(x1, y1, w1, a + Math.PI / 2, a - Math.PI / 2, true);
+  p.lineTo(x0 - nx * w0, y0 - ny * w0); p.arc(x0, y0, w0, a - Math.PI / 2, a + Math.PI / 2, true); p.closePath(); return p;
+}
+function star(cx, cy, r, n) { const p = new Path2D(); for (let i = 0; i < n * 2; i++) { const a = -Math.PI / 2 + i * Math.PI / n, rr_ = i % 2 ? r * .45 : r; i ? p.lineTo(cx + Math.cos(a) * rr_, cy + Math.sin(a) * rr_) : p.moveTo(cx + Math.cos(a) * rr_, cy + Math.sin(a) * rr_); } p.closePath(); return p; }
+
+// ---------- data ----------
+const BODIES = { slim: { sw: 30, hw: 22, arm: 10.5, leg: 14, neck: 9 }, mid: { sw: 36, hw: 27, arm: 13, leg: 18, neck: 11 }, broad: { sw: 45, hw: 34, arm: 16.5, leg: 23, neck: 14 } };
+const SKINS = ['#f6d3b5', '#e8b98f', '#d9a273', '#c08552', '#a06a3f', '#7d4e2d', '#5a3520', '#3b2316'];
+const HAIRC = ['#1a1a1a', '#3a2616', '#6b4423', '#d8b25a', '#a8422a', '#9a9a9a', '#f2ecd6', '#2f5d9e', '#e46fa6', '#4a8a52'];
+const CLR = ['#1a1a1a', '#f2ecd6', '#c8412f', '#f2c230', '#d6dccf', '#8a6a4a', '#ffffff', '#2f5d9e', '#e3a3a0', '#3d4a26', '#8a8a8a', '#6a4c93'];
+const EYEC = ['#1a1a1a', '#4a2e1a', '#7a5a2a', '#3f6b4a', '#2f5d9e', '#8a8a8a'];
+const OPTS = {
+  head: ['round', 'square', 'long'], eyes: ['round', 'almond', 'sleepy', 'wide', 'sharp', 'dot'], brow: ['flat', 'arch', 'angry', 'soft', 'none'], nose: ['line', 'round', 'wide'], mouth: ['smile', 'flat', 'smirk', 'open', 'shout'],
+  beard: ['none', 'stubble', 'mustache', 'goatee', 'beard'], glasses: ['none', 'round', 'aviator', 'square', 'shades'],
+  hair: ['bald', 'buzz', 'fade', 'afro', 'curls', 'mohawk', 'locs', 'long', 'bun', 'puffs'], hat: ['none', 'cap', 'beanie', 'bucket', 'phones', 'bandana'],
+  top: ['tee', 'hoodie', 'jacket', 'tank', 'vest', 'apron'], bottom: ['jeans', 'joggers', 'cargo', 'shorts', 'skirt', 'slacks'], shoes: ['sneaker', 'skate', 'boot', 'hightop'],
+  prop: ['none', 'spray', 'brush', 'record', 'camera', 'clipboard', 'frame', 'board', 'mic', 'scissors'],
+  pose: ['idle', 'wave', 'walk', 'dance', 'hype', 'spray', 'scratch', 'point', 'ollie']
+};
+const TYPES = {
+  artist: { name: 'Artist', top: 'apron', topC: '#e8e2cc', bottom: 'cargo', botC: '#3d4a26', shoes: 'sneaker', shoeC: '#c8412f', hat: 'beanie', hatC: '#f2c230', prop: 'spray', pose: 'spray', chain: false, lanyard: false, scarf: false, glasses: 'none' },
+  dj: { name: 'DJ', top: 'hoodie', topC: '#c8412f', bottom: 'jeans', botC: '#1a1a1a', shoes: 'hightop', shoeC: '#f2ecd6', hat: 'phones', hatC: '#1a1a1a', prop: 'record', pose: 'scratch', chain: true, lanyard: false, scarf: false, glasses: 'shades' },
+  curator: { name: 'Curator', top: 'vest', topC: '#3d4a26', bottom: 'slacks', botC: '#1a1a1a', shoes: 'boot', shoeC: '#8a6a4a', hat: 'none', hatC: '#1a1a1a', prop: 'clipboard', pose: 'point', chain: false, lanyard: true, scarf: false, glasses: 'round' },
+  skater: { name: 'Skater', top: 'tee', topC: '#f2c230', bottom: 'jeans', botC: '#2f5d9e', shoes: 'skate', shoeC: '#f2ecd6', hat: 'cap', hatC: '#c8412f', prop: 'board', pose: 'ollie', chain: false, lanyard: false, scarf: false, glasses: 'none' }
+};
+const DEF = Object.assign({ type: 'artist', body: 'mid', skin: '#c08552', head: 'round', eyes: 'round', eyeC: '#1a1a1a', brow: 'flat', nose: 'line', mouth: 'smile', beard: 'none', hair: 'curls', hairC: '#1a1a1a', earrings: false, bg: 'sage', grit: true }, TYPES.artist);
+
+// ---------- poses: every pose loops in T seconds ----------
+const POSES = {
+  idle: { T: 2.4, f: w => ({ bob: Math.sin(w) * 1.6, lean: Math.sin(w) * 1, head: Math.sin(w) * 1.5, aR: [9, 14], aL: [9, 14] }) },
+  wave: { T: 1.2, f: w => ({ bob: Math.sin(w * 2) * 1, lean: -3, head: 5, aR: [128, 176 + Math.sin(w * 3) * 24], aL: [9, 14] }) },
+  walk: { T: .9, f: w => { const s = Math.sin(w); return { bob: -Math.abs(Math.cos(w)) * 4, lean: s * 2.5, head: -s * 2, aR: [16 + s * 14, 22 + s * 18], aL: [16 - s * 14, 22 - s * 18], lR: { a: 3, lift: Math.max(0, s) }, lL: { a: 3, lift: Math.max(0, -s) } }; } },
+  dance: { T: 1.6, f: w => { const b = Math.sin(w * 4), k = Math.sin(w * 2) > 0 ? 1 : -1; return { bob: -Math.abs(b) * 9, lean: Math.sin(w * 2) * 6, head: Math.sin(w * 2) * 7, aR: k > 0 ? [150 + b * 10, 168] : [60 + b * 8, 110], aL: k > 0 ? [60 + b * 8, 110] : [150 + b * 10, 168], lR: { a: 11, lift: k > 0 ? .25 : 0 }, lL: { a: 11, lift: k < 0 ? .25 : 0 } }; } },
+  hype: { T: 1, f: w => { const b = Math.sin(w * 2); return { bob: -Math.abs(b) * 12, lean: 0, head: Math.sin(w) * 4, aR: [156 + b * 8, 162], aL: [156 + b * 8, 162], lR: { a: 8, lift: Math.abs(b) * .5 }, lL: { a: 8, lift: Math.abs(b) * .5 } }; } },
+  spray: { T: 1.6, f: w => ({ bob: Math.sin(w * 2) * 1, lean: 5 + Math.sin(w) * 3, head: 6, aR: [86 + Math.sin(w * 6) * 2.5, 90 + Math.sin(w * 6) * 3], aL: [24, 46], lR: { a: 8, lift: 0 }, lL: { a: 10, lift: 0 } }) },
+  scratch: { T: 1.2, f: w => { const s = Math.sin(w * 2); return { bob: Math.abs(Math.sin(w * 2)) * 2.4, lean: 0, head: s * 5, hy: Math.abs(s) * 2, aR: [20, -48 + s * 20], aL: [20, -48 - s * 20], lR: { a: 7, lift: 0 }, lL: { a: 7, lift: 0 } }; } },
+  point: { T: 2, f: w => ({ bob: Math.sin(w) * 1.2, lean: -3, head: 6 + Math.sin(w) * 2, aR: [102, 100 + Math.sin(w) * 4], aL: [40, -42], lR: { a: 4, lift: 0 }, lL: { a: 7, lift: 0 } }) },
+  ollie: { T: 1.4, f: w => { const u = (w / TAU) % 1, h = u < .6 ? Math.sin(u / .6 * Math.PI) : 0, c = u >= .6 ? Math.sin((u - .6) / .4 * Math.PI) * 5 : 0; return { bob: -h * 42 + c, lean: Math.sin(w) * 3, head: 0, aR: [62 + h * 14, 74 + h * 10], aL: [62 + h * 14, 74 + h * 10], lR: { a: 6 + h * 4, lift: h * .8 }, lL: { a: 6 + h * 4, lift: h * .8 }, board: { y: -h * 30, rot: Math.sin(u * TAU * 1) * .0 + h * -.22 * (u < .3 ? 1 : -1) } }; } }
+};
+function poseAt(name, t) {
+  const d = POSES[name] || POSES.idle, base = { bob: 0, lean: 0, head: 0, hy: 0, aR: [9, 14], aL: [9, 14], lR: { a: 4, lift: 0 }, lL: { a: 4, lift: 0 }, board: null };
+  return Object.assign(base, d.f(TAU * t / d.T));
+}
+
+// ---------- the draw ----------
+function dirv(side, deg) { const a = R(deg); return { x: side * Math.sin(a), y: Math.cos(a) }; }
+function drawChar(c, S, P, view, o) {
+  o = o || {}; ctx = c; PX = c.canvas.width / view.w;
+  PAT = ctx.createPattern(DOT, 'repeat'); try { PAT.setTransform(new DOMMatrix().scale(.25)); } catch (e) {}
+  const B = BODIES[S.body] || BODIES.mid, hairC = S.hairC, skin = S.skin, sD = dk(skin, .12);
+  ctx.save(); ctx.translate(c.canvas.width / 2, c.canvas.height / 2); ctx.scale(PX, PX); ctx.translate(-view.cx, -view.cy);
+  LW = Math.max(3.2, 4.4 * (view.w > 200 ? 1 : view.w / 220 + .3));
+  // ground shadow
+  if (!o.noShadow) { ctx.fillStyle = 'rgba(26,26,26,.22)'; ctx.beginPath(); ctx.ellipse(0, 8, 58, 8, 0, 0, TAU); ctx.fill(); }
+  const hipY = -110 + (P.bob || 0);
+  // skateboard under feet
+  if (S.pose === 'ollie' || (P.board && S.prop === 'board')) drawBoard(0, P.board ? P.board.y + 2 : 0, P.board ? P.board.rot : 0, S);
+  ctx.save(); ctx.translate(0, hipY);
+  // legs
+  const legs = [1, -1].map(side => legGeom(side, B, side > 0 ? P.lR : P.lL));
+  legs.forEach(g => drawLeg(g, B, S, skin));
+  ctx.save(); ctx.rotate(R(P.lean || 0));
+  const arms = [1, -1].map(side => armGeom(side, B, side > 0 ? P.aR : P.aL));
+  drawHairBack(S, B, P);
+  drawTorso(S, B, skin);
+  drawExtrasTorso(S, B);
+  // arms (left behind prop, right with prop)
+  arms.forEach((g, i) => drawArm(g, i ? -1 : 1, B, S, skin));
+  // head
+  ctx.save(); ctx.translate(0, -134 + (P.hy || 0)); ctx.rotate(R(P.head || 0)); drawHead(S, B, P, o); ctx.restore();
+  // props in the right hand
+  drawProp(arms[0], S, P, o);
+  ctx.restore(); ctx.restore(); ctx.restore();
+}
+function legGeom(side, B, lg) {
+  lg = lg || { a: 4, lift: 0 }; const hx = side * B.hw * .5, a = R(lg.a), L = 100, ax = hx + side * Math.sin(a) * L + side * lg.lift * 4, ay = Math.cos(a) * L - lg.lift * 36;
+  const dx = ax - hx, dy = ay, d = Math.hypot(dx, dy), h = Math.sqrt(Math.max(0, 2500 - d * d / 4)) + 1.5; let px = dy / d, py = -dx / d; if (px * side < 0) { px = -px; py = -py; }
+  return { side, hx, hy: 0, kx: hx + dx / 2 + px * h, ky: dy / 2 + py * h, ax, ay, lift: lg.lift };
+}
+function drawLeg(g, B, S, skin) {
+  const t = S.bottom, w = B.leg, bc = S.botC, PK = { jeans: 1.3, joggers: 1.12, cargo: 1.32, shorts: 1.16, skirt: 1, slacks: 1.08 }[t] || 1.2, hem = { jeans: 1.55, joggers: 1.05, cargo: 1.5, shorts: 1.16, skirt: 1, slacks: 1.2 }[t] || 1.3;
+  const short = t === 'shorts', skirt = t === 'skirt', fx = g.ax + g.side * 3, fy = g.ay + 4;
+  // bare leg
+  paint(cap(g.hx, g.hy, g.kx, g.ky, w * .95, w * .88), skin); paint(cap(g.kx, g.ky, g.ax, g.ay, w * .88, w * .8), skin);
+  if (!skirt) {
+    if (short) { const tx = g.hx + (g.kx - g.hx) * .92, ty = g.hy + (g.ky - g.hy) * .92; paint(cap(g.hx, g.hy, tx, ty, w * PK, w * PK * 1.04), bc); }
+    else { paint(cap(g.hx, g.hy, g.kx, g.ky, w * PK, w * PK * 1.02), bc); paint(cap(g.kx, g.ky, g.ax, g.ay - 3, w * PK * 1.02, w * hem), bc); if (t === 'cargo') { const px = g.kx + g.side * w * .7, py = g.ky - 4; paint(rr(px - 6, py - 7, 12, 14, 2), dk(bc, .12), { ns: 1, lw: 2.4 }); } if (t === 'jeans') line([[g.kx - 4, g.ky + 6], [g.kx + 4, g.ky + 6]], 2, 'rgba(26,26,26,.5)'); }
+  }
+  drawShoe(fx, fy, g.side, B, S);
+}
+function drawShoe(x, y, side, B, S) {
+  const w = B.leg * 1.4, c = S.shoeC, sole = S.shoes === 'boot' ? INK : '#f2ecd6'; ctx.save(); ctx.translate(x, y);
+  if (S.shoes === 'boot' || S.shoes === 'hightop') { const hgt = S.shoes === 'boot' ? 22 : 18; paint(rr(-w * .8 + side * -1, -hgt - 4, w * 1.6, hgt + 6, 5), c); }
+  const rx = w * (S.shoes === 'skate' ? 1.12 : 1), upper = ell(side * 3, 3, rx, 10);
+  paint(rr(side * 3 - rx - 1, 6, rx * 2 + 2, S.shoes === 'skate' ? 9 : 7, 4), sole); paint(upper, c);
+  qline(side * 3 - rx * .5, 0, side * 3, -3, side * 3 + rx * .5, 0, 2, 'rgba(26,26,26,.55)');
+  if (S.shoes !== 'boot') { line([[side * 3 - 3, -4], [side * 3 + 3, -6]], 2, INK); line([[side * 3 - 3, -8], [side * 3 + 3, -10]], 2, INK); }
+  ctx.restore();
+}
+function armGeom(side, B, aa) {
+  aa = aa || [9, 14]; const S_ = { x: side * (B.sw - 5), y: -70 }, d1 = dirv(side, aa[0]), E = { x: S_.x + d1.x * 44, y: S_.y + d1.y * 44 }, d2 = dirv(side, aa[1]), H = { x: E.x + d2.x * 41, y: E.y + d2.y * 41 };
+  return { side, S: S_, E, H, d2, ang: Math.atan2(d2.y, d2.x) };
+}
+function sleeveInfo(S) { return { tee: [.6, S.topC], hoodie: [2, S.topC], jacket: [2, S.topC], tank: [0, S.topC], vest: [2, '#f2ecd6'], apron: [.6, '#f2ecd6'] }[S.top] || [.6, S.topC]; }
+function drawArm(g, side, B, S, skin) {
+  const w = B.arm, [sl, sc] = sleeveInfo(S);
+  paint(cap(g.S.x, g.S.y, g.E.x, g.E.y, w, w * .9), skin); paint(cap(g.E.x, g.E.y, g.H.x, g.H.y, w * .9, w * .78), skin);
+  if (sl > 0) {
+    const f = Math.min(sl, 1), ex = g.S.x + (g.E.x - g.S.x) * f, ey = g.S.y + (g.E.y - g.S.y) * f; paint(cap(g.S.x, g.S.y, ex, ey, w * 1.22, w * (f < 1 ? 1.18 : 1.1)), sc);
+    if (sl > 1) { const f2 = Math.min(sl - 1, 1), hx = g.E.x + (g.H.x - g.E.x) * f2 * .9, hy = g.E.y + (g.H.y - g.E.y) * f2 * .9; paint(cap(g.E.x, g.E.y, hx, hy, w * 1.1, w * .98), sc); if (S.top === 'hoodie' || S.top === 'jacket') { const cx = g.E.x + (g.H.x - g.E.x) * .86, cy = g.E.y + (g.H.y - g.E.y) * .86; line([[cx - g.d2.y * w * .95, cy + g.d2.x * w * .95], [cx + g.d2.y * w * .95, cy - g.d2.x * w * .95]], 3, 'rgba(26,26,26,.7)'); } }
+  }
+  // hand
+  const hx = g.H.x + g.d2.x * 5, hy = g.H.y + g.d2.y * 5; ctx.save(); ctx.translate(hx, hy); ctx.rotate(Math.atan2(g.d2.y, g.d2.x) - Math.PI / 2);
+  paint(ell(0, 4, w * .95, w * 1.15), skin); paint(ell(-side * w * .95, 0, w * .38, w * .7, side * .5), skin, { sh: 3 });
+  line([[-w * .25, w * 1.0], [-w * .25, w * 1.9]], 2, 'rgba(26,26,26,.0)'); ctx.restore();
+}
+function torsoPath(B, ex, hem, sc) {
+  const sw = B.sw + ex, hw = B.hw + ex, s = sc || 1, p = new Path2D();
+  p.moveTo(-sw * s, -66); p.quadraticCurveTo(-sw * s, -80, -sw * .5 * s, -82); p.quadraticCurveTo(0, -87, sw * .5 * s, -82); p.quadraticCurveTo(sw * s, -80, sw * s, -66);
+  p.quadraticCurveTo(sw * .95, -30, hw + ex * .3, hem); p.lineTo(-hw - ex * .3, hem); p.quadraticCurveTo(-sw * .95, -30, -sw * s, -66); p.closePath(); return p;
+}
+function drawTorso(S, B, skin) {
+  const t = S.top, c = S.topC; paint(torsoPath(B, 0, 6), skin);
+  if (t === 'tee') { paint(torsoPath(B, 3, 8), c); } else if (t === 'tank') { paint(torsoPath(B, 2, 8, .62), c); } else if (t === 'hoodie') {
+    paint(torsoPath(B, 6, 14), c); paint(rr(-B.sw * .55, -22, B.sw * 1.1, 24, 8), dk(c, .1), { ns: 1, lw: 2.6 }); line([[-5, -82], [-5, -60]], 2.4, lt(c, .5)); line([[5, -82], [5, -62]], 2.4, lt(c, .5));
+  } else if (t === 'jacket') {
+    paint(torsoPath(B, 2, 8), '#f2ecd6'); const L = new Path2D(), Rr = new Path2D(), sw = B.sw + 5, hw = B.hw + 5;
+    L.moveTo(-sw, -66); L.quadraticCurveTo(-sw, -80, -sw * .5, -82); L.lineTo(-8, -82); L.lineTo(-7, 12); L.lineTo(-hw, 12); L.quadraticCurveTo(-sw * .95, -30, -sw, -66); L.closePath();
+    Rr.moveTo(sw, -66); Rr.quadraticCurveTo(sw, -80, sw * .5, -82); Rr.lineTo(8, -82); Rr.lineTo(7, 12); Rr.lineTo(hw, 12); Rr.quadraticCurveTo(sw * .95, -30, sw, -66); Rr.closePath(); paint(L, c); paint(Rr, c);
+  } else if (t === 'vest') {
+    paint(torsoPath(B, 2, 6), '#f2ecd6'); const v = new Path2D(), sw = B.sw + 1, hw = B.hw + 3; v.moveTo(-sw * .86, -78); v.lineTo(-10, -82); v.lineTo(0, -48); v.lineTo(10, -82); v.lineTo(sw * .86, -78); v.lineTo(sw * .93, -40); v.quadraticCurveTo(hw + 3, -10, hw, 8); v.lineTo(-hw, 8); v.quadraticCurveTo(-hw - 3, -10, -sw * .93, -40); v.closePath(); paint(v, c);
+    [-30, -14].forEach(y => { ctx.fillStyle = INK; ctx.beginPath(); ctx.arc(0, y, 2, 0, TAU); ctx.fill(); }); line([[-sw * .5, -6], [-sw * .5 + 10, -6]], 2.4, 'rgba(26,26,26,.6)');
+  } else if (t === 'apron') {
+    paint(torsoPath(B, 3, 8), '#f2ecd6'); const a = new Path2D(), sw = B.sw * .62, hw = B.hw + 5; a.moveTo(-sw, -76); a.lineTo(sw, -76); a.lineTo(sw + 4, -34); a.lineTo(hw, 16); a.lineTo(-hw, 16); a.lineTo(-sw - 4, -34); a.closePath(); paint(a, c);
+    paint(rr(-14, -20, 28, 16, 3), dk(c, .08), { ns: 1, lw: 2.4 }); line([[-sw, -76], [-B.sw * .9, -84]], 3.4, INK); line([[sw, -76], [B.sw * .9, -84]], 3.4, INK);
+    [['#c8412f', -16, -52, 4], ['#f2c230', 12, -38, 3.4], ['#2f5d9e', -6, -28, 3], ['#c8412f', 18, -56, 2.6], ['#1a1a1a', -22, -34, 2.4]].forEach(([k, x, y, r]) => { ctx.fillStyle = k; ctx.beginPath(); ctx.arc(x, y, r, 0, TAU); ctx.fill(); });
+  }
+  // collar
+  if (t !== 'tank') { const n = B.neck + 4; ctx.beginPath(); ctx.moveTo(-n - 2, -83); ctx.quadraticCurveTo(0, -70, n + 2, -83); ctx.quadraticCurveTo(0, -90, -n - 2, -83); ctx.fillStyle = skin; ctx.fill(); ctx.lineWidth = 3.2; ctx.strokeStyle = INK; ctx.stroke(); }
+}
+function drawExtrasTorso(S, B) {
+  if (S.chain) { const p = new Path2D(); p.moveTo(-B.neck - 3, -82); p.quadraticCurveTo(0, -42, B.neck + 3, -82); ctx.lineWidth = 3; ctx.strokeStyle = INK; ctx.stroke(p); ctx.lineWidth = 1.6; ctx.strokeStyle = '#f2c230'; ctx.stroke(p); paint(star(0, -52, 7.5, 5), '#f2c230', { ns: 1, lw: 2.2 }); }
+  if (S.lanyard) { const a = new Path2D(); a.moveTo(-B.neck - 2, -83); a.lineTo(-3, -34); a.lineTo(3, -34); a.lineTo(B.neck + 2, -83); a.closePath(); paint(a, '#c8412f', { ns: 1, lw: 2.4 }); paint(rr(-9, -34, 18, 22, 3), '#fff', { ns: 1, lw: 2.4 }); ctx.fillStyle = INK; ctx.fillRect(-5, -29, 10, 3); ctx.fillRect(-5, -23, 7, 2); }
+  if (S.scarf) { const p = new Path2D(); p.moveTo(-B.neck - 6, -84); p.quadraticCurveTo(0, -66, B.neck + 6, -84); p.lineTo(B.neck + 2, -92); p.quadraticCurveTo(0, -86, -B.neck - 2, -92); p.closePath(); paint(p, '#c8412f', { ns: 1 }); const k = new Path2D(); k.moveTo(6, -72); k.lineTo(18, -58); k.lineTo(8, -56); k.closePath(); paint(k, '#c8412f', { ns: 1, lw: 2.4 }); }
+}
+// ---------- head ----------
+const HEADS = { round: { hw: 46, j: .62, cy: 50, cx: 0 }, square: { hw: 47, j: .92, cy: 49, cx: 1 }, long: { hw: 42, j: .6, cy: 57, cx: 0 } };
+function headPath(S) {
+  const H = HEADS[S.head] || HEADS.round, p = new Path2D(), hw = H.hw; p.moveTo(-hw, -5);
+  p.bezierCurveTo(-hw, -40, -28, -52, 0, -52); p.bezierCurveTo(28, -52, hw, -40, hw, -5);
+  p.bezierCurveTo(hw, 26 + (H.cx ? 8 : 0), hw * H.j, H.cy, 0, H.cy); p.bezierCurveTo(-hw * H.j, H.cy, -hw, 26 + (H.cx ? 8 : 0), -hw, -5); p.closePath(); return p;
+}
+function hairCap(S, vol, line, flat) {
+  const hw = (HEADS[S.head] || HEADS.round).hw, p = new Path2D(), t = flat ? 40 : 28;
+  p.moveTo(-hw - 2, -4); p.bezierCurveTo(-hw - 4 - vol * .4, -40 - vol * .5, -t, -52 - vol, 0, -52 - vol); p.bezierCurveTo(t, -52 - vol, hw + 4 + vol * .4, -40 - vol * .5, hw + 2, -4);
+  p.bezierCurveTo(hw * .9, -14, hw * .5, line - 2, 0, line); p.bezierCurveTo(-hw * .5, line - 2, -hw * .9, -14, -hw - 2, -4); p.closePath(); return p;
+}
+function drawHairBack(S, B, P) {
+  const hc = S.hairC, hw = (HEADS[S.head] || HEADS.round).hw; if (S.hat === 'bandana' && false) return;
+  ctx.save(); ctx.translate(0, -134 + (P.hy || 0)); ctx.rotate(R(P.head || 0));
+  if (S.hair === 'afro') paint(ell(0, -16, hw + 24, 66), hc, { sh: 8 });
+  else if (S.hair === 'long') { const p = new Path2D(); p.moveTo(-hw - 5, -6); p.bezierCurveTo(-hw - 12, 30, -hw - 14, 60, -hw + 2, 78); p.lineTo(hw - 2, 78); p.bezierCurveTo(hw + 14, 60, hw + 12, 30, hw + 5, -6); p.closePath(); paint(p, hc); }
+  else if (S.hair === 'locs') { [-1, 1].forEach(sd => [0, 1, 2, 3].forEach(i => { const x = sd * (hw - 2 - i * 11), x2 = sd * (hw + 6 - i * 7 + 2), len = 78 + (i % 2) * 14 - i * 2; paint(cap(x, -10 + i * 3, x2, len, 6, 5.4), hc, { sh: 3 }); })); }
+  else if (S.hair === 'puffs') { [-1, 1].forEach(sd => paint(ell(sd * 36, -60, 21, 21), hc, { sh: 6 })); }
+  ctx.restore();
+}
+function eyeSpot(side) { return { x: side * 19, y: -1 }; }
+function drawHead(S, B, P, o) {
+  const skin = S.skin, hc = S.hairC, H = HEADS[S.head] || HEADS.round, hw = H.hw;
+  paint(cap(0, 38, 0, 52, B.neck, B.neck + 1), dk(skin, .12), { sh: 4 });
+  // ears
+  [-1, 1].forEach(sd => { paint(ell(sd * (hw + 1), 2, 8, 12), skin, { sh: 3 }); qline(sd * (hw + 2), -2, sd * (hw + 6), 3, sd * (hw + 1), 8, 2, 'rgba(26,26,26,.6)'); if (S.earrings) { ctx.lineWidth = 2.6; ctx.strokeStyle = INK; ctx.beginPath(); ctx.arc(sd * (hw + 1), 20, 5, 0, TAU); ctx.stroke(); ctx.lineWidth = 1.2; ctx.strokeStyle = '#f2c230'; ctx.stroke(); } });
+  const face = headPath(S); paint(face, skin, { sh: 7 });
+  // beard
+  if (S.beard === 'beard' || S.beard === 'goatee') drawBeard(S, hc, H);
+  if (S.beard === 'mustache' || S.beard === 'beard') { const m = new Path2D(); m.moveTo(-16, 21); m.quadraticCurveTo(-8, 15, 0, 19); m.quadraticCurveTo(8, 15, 16, 21); m.quadraticCurveTo(9, 27, 0, 23); m.quadraticCurveTo(-9, 27, -16, 21); m.closePath(); paint(m, hc, { ns: 1, lw: 2.6 }); }
+  if (S.beard === 'stubble') { ctx.save(); ctx.clip(face); const g = new Path2D(); g.rect(-60, 12, 120, 60); g.addPath(ell(0, 6, 34, 22)); ctx.fillStyle = PAT; ctx.globalAlpha = .9; ctx.fill(g, 'evenodd'); ctx.restore(); }
+  drawFeatures(S, P, o, H);
+  drawGlasses(S, P);
+  drawHairFront(S, H);
+  drawHat(S, H);
+}
+function drawBeard(S, hc, H) {
+  const hw = H.hw, p = new Path2D(), g = S.beard === 'goatee';
+  if (g) { p.moveTo(-15, 31); p.quadraticCurveTo(0, 28, 15, 31); p.quadraticCurveTo(18, 52, 0, H.cy + 8); p.quadraticCurveTo(-18, 52, -15, 31); p.closePath(); }
+  else { p.moveTo(-hw + 1, 0); p.bezierCurveTo(-hw - 1, 26, -hw * H.j * .6, H.cy + 8, 0, H.cy + 8); p.bezierCurveTo(hw * H.j * .6, H.cy + 8, hw + 1, 26, hw - 1, 0); p.lineTo(hw * .78, 14); p.bezierCurveTo(hw * .6, 24, 20, 26, 14, 24); p.quadraticCurveTo(0, 18, -14, 24); p.bezierCurveTo(-20, 26, -hw * .6, 24, -hw * .78, 14); p.closePath(); }
+  paint(p, hc, { sh: 6 });
+}
+function drawFeatures(S, P, o, H) {
+  const skin = S.skin, hc = S.hairC, gz = o.gaze || { x: 0, y: 0 }, bl = o.blink ? .12 : 1;
+  // brows
+  const bw = S.beard === 'none' || true ? 4.4 : 4;
+  [-1, 1].forEach(sd => {
+    const x = sd * 19, y = -19, k = S.brow; if (k === 'none') return;
+    const pts = { flat: [[-10, 0], [10, 0], 0], arch: [[-10, 2], [10, 2], -6], angry: [[-10, -3], [10, 4], -1], soft: [[-10, 3], [10, -1], -2] }[k] || [[-10, 0], [10, 0], 0];
+    const a = pts[0], b = pts[1]; const ax = sd > 0 ? a[0] : -b[0], ay = sd > 0 ? a[1] : b[1], bx = sd > 0 ? b[0] : -a[0], by = sd > 0 ? b[1] : a[1];
+    ctx.lineCap = 'round'; ctx.strokeStyle = hc === '#f2ecd6' ? '#9a9a9a' : hc; ctx.lineWidth = bw; const q = new Path2D(); q.moveTo(x + ax, y + ay); q.quadraticCurveTo(x, y + pts[2] * .5 - 1, x + bx, y + by); ctx.stroke(q); ctx.lineWidth = bw + 2.6; ctx.strokeStyle = 'rgba(26,26,26,.0)';
+  });
+  // eyes
+  [-1, 1].forEach(sd => {
+    const e = eyeSpot(sd); ctx.save(); ctx.translate(e.x, e.y); const st = S.eyes, ic = S.eyeC;
+    if (st === 'dot') { ctx.fillStyle = INK; ctx.beginPath(); ctx.ellipse(0, 0, 4.6, 5.4 * bl + .6, 0, 0, TAU); ctx.fill(); ctx.restore(); return; }
+    const cfg = { round: [9.5, 9.5], almond: [10.5, 6.6], sleepy: [9.5, 7.4], wide: [10.5, 11.5], sharp: [10.5, 6.4] }[st] || [9.5, 9.5];
+    if (st === 'sharp') ctx.rotate(sd * -.16); if (st === 'almond') ctx.rotate(sd * .06);
+    ctx.scale(1, bl); const w = cfg[0], h = cfg[1], p = new Path2D();
+    if (st === 'almond' || st === 'sharp') { p.moveTo(-w, 1); p.quadraticCurveTo(0, -h * 1.5, w, 0); p.quadraticCurveTo(0, h * 1.2, -w, 1); p.closePath(); } else p.ellipse(0, 0, w, h, 0, 0, TAU);
+    ctx.fillStyle = '#fff'; ctx.fill(p); ctx.save(); ctx.clip(p);
+    const ix = Math.max(-3, Math.min(3, gz.x * 3)), iy = Math.max(-2, Math.min(2, gz.y * 2)); ctx.fillStyle = ic; ctx.beginPath(); ctx.arc(ix, iy, h > 8 ? 5.6 : 4.8, 0, TAU); ctx.fill(); ctx.fillStyle = INK; ctx.beginPath(); ctx.arc(ix, iy, 2.6, 0, TAU); ctx.fill(); ctx.fillStyle = '#fff'; ctx.beginPath(); ctx.arc(ix - 1.8, iy - 2, 1.5, 0, TAU); ctx.fill();
+    if (st === 'sleepy') { ctx.fillStyle = dk(S.skin, .08); ctx.fillRect(-w - 1, -h - 1, w * 2 + 2, h * .85); }
+    ctx.restore(); ctx.lineWidth = 3; ctx.strokeStyle = INK; ctx.stroke(p);
+    if (st === 'sleepy') line([[-w - 1, -h * .15], [w + 1, -h * .15]], 3.2, INK);
+    ctx.restore();
+  });
+  // nose
+  if (S.nose === 'line') { line([[-1, 6], [-4, 14], [2, 14]], 2.8, 'rgba(26,26,26,.8)'); }
+  else if (S.nose === 'round') { paint(ell(0, 13, 6, 5), dk(skin, .08), { ns: 1, lw: 2.8 }); }
+  else { qline(-9, 14, -5, 18, 0, 14, 2.8); qline(9, 14, 5, 18, 0, 14, 2.8); }
+  // mouth
+  const my = 31, hasB = S.beard === 'beard' || S.beard === 'goatee';
+  if (hasB) { paint(ell(0, my, 17, 8), lt(skin, .1), { ns: 1, no: 1 }); }
+  const m = S.mouth; ctx.lineCap = 'round';
+  if (m === 'smile') { qline(-12, my - 2, 0, my + 9, 12, my - 2, 3.4); }
+  else if (m === 'flat') { qline(-10, my + 1, 0, my + 2, 10, my + 1, 3.4); }
+  else if (m === 'smirk') { qline(-10, my + 3, 2, my + 4, 12, my - 3, 3.4); line([[12, my - 3], [14, my - 6]], 2.6); }
+  else if (m === 'open') { const p = new Path2D(); p.moveTo(-13, my - 3); p.quadraticCurveTo(0, my + 20, 13, my - 3); p.quadraticCurveTo(0, my, -13, my - 3); p.closePath(); ctx.fillStyle = '#6b1f1a'; ctx.fill(); ctx.save(); ctx.clip(p); ctx.fillStyle = '#fff'; ctx.fillRect(-14, my - 4, 28, 5); ctx.restore(); ctx.lineWidth = 3; ctx.strokeStyle = INK; ctx.stroke(p); }
+  else { const p = ell(0, my + 3, 8, 9); ctx.fillStyle = '#6b1f1a'; ctx.fill(p); ctx.lineWidth = 3; ctx.strokeStyle = INK; ctx.stroke(p); }
+}
+function drawGlasses(S) {
+  const g = S.glasses; if (g === 'none') return; const L = [-19, 19], lw = 3.4;
+  if (g === 'round') L.forEach(x => { ctx.beginPath(); ctx.arc(x, -1, 14, 0, TAU); ctx.lineWidth = lw; ctx.strokeStyle = INK; ctx.stroke(); ctx.fillStyle = 'rgba(255,255,255,.18)'; ctx.fill(); });
+  else if (g === 'square') L.forEach(x => { const p = rr(x - 14, -12, 28, 22, 5); ctx.lineWidth = lw; ctx.strokeStyle = INK; ctx.stroke(p); ctx.fillStyle = 'rgba(255,255,255,.18)'; ctx.fill(p); });
+  else if (g === 'aviator') L.forEach(x => { const p = new Path2D(); p.moveTo(x - 15, -10); p.lineTo(x + 15, -10); p.quadraticCurveTo(x + 14, 14, x, 15); p.quadraticCurveTo(x - 14, 14, x - 15, -10); p.closePath(); ctx.lineWidth = lw; ctx.strokeStyle = INK; ctx.stroke(p); ctx.fillStyle = 'rgba(80,80,60,.28)'; ctx.fill(p); });
+  else L.forEach(x => { const p = rr(x - 15, -10, 30, 18, 6); ctx.fillStyle = INK; ctx.fill(p); ctx.lineWidth = 2.4; ctx.strokeStyle = INK; ctx.stroke(p); line([[x - 8, -6], [x - 3, -6]], 2.4, 'rgba(255,255,255,.7)'); });
+  line([[-5, -2], [5, -2]], lw, INK); const hw = (HEADS[S.head] || HEADS.round).hw; line([[-33, -2], [-hw, 0]], lw, INK); line([[33, -2], [hw, 0]], lw, INK);
+}
+function drawHairFront(S, H) {
+  const hc = S.hairC, st = S.hair, hw = H.hw; if (st === 'bald') return;
+  if (st === 'buzz') paint(hairCap(S, 2.5, -27), hc, { sh: 3 });
+  else if (st === 'fade') { paint(hairCap(S, 10, -31, true), hc); }
+  else if (st === 'afro') paint(hairCap(S, 2, -29), hc, { sh: 4 });
+  else if (st === 'curls') { for (let i = 0; i < 9; i++) { const a = Math.PI + (i / 8) * Math.PI, x = Math.cos(a) * (hw + 6), y = -8 + Math.sin(a) * 54; paint(ell(x, y, 15, 15), hc, { sh: 4 }); } paint(hairCap(S, 6, -29), hc, { sh: 4 }); }
+  else if (st === 'mohawk') { paint(hairCap(S, 1.5, -26), mix(hc, S.skin, .35), { sh: 2, ns: 1 }); const p = new Path2D(); p.moveTo(-10, -40); p.lineTo(-13, -70); p.lineTo(-6, -62); p.lineTo(-5, -90); p.lineTo(1, -70); p.lineTo(6, -94); p.lineTo(8, -66); p.lineTo(14, -80); p.lineTo(11, -42); p.quadraticCurveTo(0, -34, -10, -40); p.closePath(); paint(p, hc, { sh: 3 }); }
+  else if (st === 'locs') paint(hairCap(S, 9, -30), hc, { sh: 4 });
+  else if (st === 'long') { paint(hairCap(S, 8, -30), hc, { sh: 4 }); }
+  else if (st === 'bun') { paint(ell(0, -66, 18, 17), hc, { sh: 4 }); paint(hairCap(S, 6, -30), hc, { sh: 4 }); }
+  else if (st === 'puffs') paint(hairCap(S, 4, -29), hc, { sh: 4 });
+}
+function drawHat(S, H) {
+  const k = S.hat, c = S.hatC, hw = H.hw; if (k === 'none') return;
+  if (k === 'cap') { const d = new Path2D(); d.moveTo(-hw - 3, -12); d.bezierCurveTo(-hw - 5, -62, -26, -72, 0, -72); d.bezierCurveTo(26, -72, hw + 5, -62, hw + 3, -12); d.quadraticCurveTo(0, -20, -hw - 3, -12); d.closePath(); paint(d, c, { sh: 6 }); line([[0, -72], [0, -26]], 2.2, 'rgba(26,26,26,.45)'); paint(star(0, -46, 9, 5), lt(c, .75), { ns: 1, lw: 2.2 }); const b = new Path2D(); b.moveTo(-hw - 9, -12); b.quadraticCurveTo(0, 2, hw + 9, -12); b.quadraticCurveTo(hw + 4, -22, 0, -20); b.quadraticCurveTo(-hw - 4, -22, -hw - 9, -12); b.closePath(); paint(b, dk(c, .18), { sh: 4 }); }
+  else if (k === 'beanie') { const d = new Path2D(); d.moveTo(-hw - 3, -22); d.bezierCurveTo(-hw - 6, -66, -24, -74, 0, -74); d.bezierCurveTo(24, -74, hw + 6, -66, hw + 3, -22); d.closePath(); paint(d, c, { sh: 6 }); paint(rr(-hw - 5, -36, (hw + 5) * 2, 22, 8), dk(c, .08), { sh: 4 }); for (let x = -hw + 4; x < hw; x += 9) line([[x, -34], [x, -16]], 1.8, 'rgba(26,26,26,.4)'); }
+  else if (k === 'bucket') { const d = new Path2D(); d.moveTo(-hw + 2, -22); d.lineTo(-hw + 8, -62); d.quadraticCurveTo(0, -70, hw - 8, -62); d.lineTo(hw - 2, -22); d.closePath(); paint(d, c, { sh: 6 }); paint(ell(0, -22, hw + 18, 12), dk(c, .1), { sh: 4 }); }
+  else if (k === 'phones') { ctx.lineWidth = 9; ctx.strokeStyle = INK; ctx.beginPath(); ctx.arc(0, -4, hw + 9, Math.PI * 1.02, Math.PI * 1.98); ctx.stroke(); ctx.lineWidth = 4; ctx.strokeStyle = c === '#1a1a1a' ? '#c8412f' : c; ctx.stroke(); [-1, 1].forEach(sd => { paint(rr(sd * (hw + 10) - 9, -14, 18, 34, 7), c === '#1a1a1a' ? '#3a3a3a' : c, { sh: 4 }); paint(rr(sd * (hw + 10) - 4, -6, 8, 18, 3), '#c8412f', { ns: 1, lw: 2 }); }); }
+  else if (k === 'bandana') { paint(hairCap(S, 3, -37), c, { sh: 4 }); const kn = new Path2D(); kn.moveTo(hw, -22); kn.lineTo(hw + 24, -30); kn.lineTo(hw + 18, -12); kn.lineTo(hw + 26, 0); kn.lineTo(hw + 2, -8); kn.closePath(); paint(kn, c, { sh: 3 }); for (let i = 0; i < 5; i++) { ctx.fillStyle = 'rgba(255,255,255,.7)'; ctx.beginPath(); ctx.arc(-30 + i * 15, -40 - (i % 2) * 6, 2.2, 0, TAU); ctx.fill(); } }
+}
+// ---------- props ----------
+function drawBoard(x, y, rot, S) {
+  ctx.save(); ctx.translate(x, y - 4); ctx.rotate(rot); const d = rr(-46, -4, 92, 10, 5); paint(d, S.hatC === '#c8412f' ? '#c8412f' : '#f2c230', { sh: 3 }); [-28, 28].forEach(wx => { paint(ell(wx, 10, 7, 7), '#f2ecd6', { ns: 1, lw: 2.6 }); line([[wx, 6], [wx, 0]], 2.6); }); ctx.restore();
+}
+function drawProp(g, S, P, o) {
+  const k = S.prop; if (k === 'none' || (k === 'board' && S.pose === 'ollie')) return; const hx = g.H.x + g.d2.x * 7, hy = g.H.y + g.d2.y * 7, a = g.ang;
+  ctx.save(); ctx.translate(hx, hy);
+  if (k === 'board') { ctx.rotate(R(-8)); paint(rr(-7, -58, 14, 100, 7), '#f2c230', { sh: 3 }); [-34, 24].forEach(wy => { paint(ell(-12, wy, 5, 7), '#f2ecd6', { ns: 1, lw: 2.4 }); paint(ell(12, wy, 5, 7), '#f2ecd6', { ns: 1, lw: 2.4 }); }); ctx.restore(); return; }
+  ctx.rotate(a);
+  if (k === 'spray') { paint(rr(-8, -10, 30, 20, 5), '#c8412f', { sh: 4 }); paint(rr(22, -6, 8, 12, 2), '#d9d9d9', { ns: 1, lw: 2.4 }); paint(rr(30, -3, 6, 6, 2), INK, { ns: 1, lw: 2 }); paint(rr(-10, -4, 6, 8, 2), '#f2c230', { ns: 1, lw: 2 }); if (S.pose === 'spray') { for (let i = 0; i < 9; i++) { const t = (((o.t || 0) * 3 + i * .11) % 1), dx = 38 + t * 46, dy = (i % 3 - 1) * t * 12; ctx.fillStyle = 'rgba(200,65,47,' + (.9 - t * .8) + ')'; ctx.beginPath(); ctx.arc(dx, dy, 1.6 + t * 3.4, 0, TAU); ctx.fill(); } } }
+  else if (k === 'brush') { paint(rr(-8, -3, 38, 6, 3), '#8a6a4a', { sh: 3 }); paint(rr(30, -5, 10, 10, 2), '#d9d9d9', { ns: 1, lw: 2.4 }); const t = new Path2D(); t.moveTo(40, -5); t.quadraticCurveTo(54, -6, 56, 0); t.quadraticCurveTo(54, 6, 40, 5); t.closePath(); paint(t, '#c8412f', { sh: 3 }); }
+  else if (k === 'record') { paint(ell(20, 0, 24, 24), INK, { sh: 5 }); ctx.lineWidth = 1.2; ctx.strokeStyle = 'rgba(255,255,255,.35)'; [10, 16].forEach(r => { ctx.beginPath(); ctx.arc(20, 0, r, 0, TAU); ctx.stroke(); }); paint(ell(20, 0, 7, 7), '#c8412f', { ns: 1, lw: 2 }); ctx.fillStyle = '#fff'; ctx.beginPath(); ctx.arc(20, 0, 1.6, 0, TAU); ctx.fill(); }
+  else if (k === 'camera') { paint(rr(-2, -13, 34, 26, 4), '#3a3a3a', { sh: 4 }); paint(rr(4, -18, 12, 7, 2), '#8a8a8a', { ns: 1, lw: 2.4 }); paint(ell(20, 1, 9, 9), '#d9d9d9', { ns: 1 }); paint(ell(20, 1, 5, 5), '#2f5d9e', { ns: 1, lw: 2.2 }); }
+  else if (k === 'clipboard') { ctx.rotate(-a + R(-8)); paint(rr(-2, -48, 44, 58, 4), '#8a6a4a', { sh: 4 }); paint(rr(4, -42, 32, 46, 2), '#fff', { ns: 1, lw: 2.4 }); [-34, -26, -18, -10].forEach(y => line([[8, y], [31, y]], 2, 'rgba(26,26,26,.55)')); paint(rr(12, -52, 16, 9, 3), '#d9d9d9', { ns: 1, lw: 2.4 }); }
+  else if (k === 'frame') { ctx.rotate(-a + R(-6)); paint(rr(-2, -52, 48, 60, 3), '#8a6a4a', { sh: 4 }); paint(rr(5, -45, 34, 46, 1), '#f2ecd6', { ns: 1, lw: 2.2 }); paint(ell(22, -26, 9, 9), '#f2c230', { ns: 1, lw: 2.2 }); const t = new Path2D(); t.moveTo(5, 1); t.lineTo(19, -14); t.lineTo(39, 1); t.closePath(); paint(t, '#c8412f', { ns: 1, lw: 2.2 }); }
+  else if (k === 'mic') { paint(rr(-6, -4, 32, 8, 4), '#3a3a3a', { sh: 3 }); paint(ell(32, 0, 12, 12), '#9a9a9a', { sh: 4 }); ctx.lineWidth = 1.4; ctx.strokeStyle = 'rgba(26,26,26,.55)'; ctx.beginPath(); ctx.moveTo(24, -6); ctx.lineTo(40, 6); ctx.moveTo(24, 0); ctx.lineTo(42, 0); ctx.moveTo(24, 6); ctx.lineTo(40, -6); ctx.stroke(); }
+  else if (k === 'scissors') { ctx.rotate(R(-90) - a * 0 + 0); paint(rr(-2, -3, 20, 6, 3), '#c8412f', { sh: 3 }); const b = new Path2D(); b.moveTo(18, -2); b.lineTo(54, -10); b.lineTo(18, 2); b.closePath(); paint(b, '#d9d9d9', { sh: 2 }); const b2 = new Path2D(); b2.moveTo(18, 2); b2.lineTo(54, 10); b2.lineTo(18, -2); b2.closePath(); paint(b2, '#bdbdbd', { sh: 2 }); }
+  ctx.restore();
+}
+window.CH = { drawChar, poseAt, POSES, OPTS, TYPES, DEF, SKINS, HAIRC, CLR, EYEC, BODIES, mix };
+})();
+(function () {
+'use strict';
+const CH = window.CH, $ = id => document.getElementById(id), OPT = CH.OPTS, TAU = Math.PI * 2;
+const KEY = 'nocivChar3';
+let S = Object.assign({}, CH.DEF);
+try { const s = JSON.parse(localStorage.getItem(KEY) || 'null'); if (s) Object.keys(CH.DEF).forEach(k => { if (typeof s[k] === typeof CH.DEF[k]) S[k] = s[k]; }); } catch (e) {}
+function save() { try { localStorage.setItem(KEY, JSON.stringify(S)); } catch (e) {} }
+const BGS = { none: null, sage: '#d6dccf', tan: '#e8dfc4', kraft: '#a8845a', red: '#c8412f', gold: '#f2c230', ink: '#2b2b2b' };
+const ICON = {
+  type: '<path d="M12 3l2.7 5.6 6.1.9-4.4 4.3 1 6.1L12 17l-5.4 2.9 1-6.1L3.2 9.5l6.1-.9z"/>',
+  body: '<circle cx="12" cy="6.5" r="3"/><path d="M5.5 21v-5.5a6.5 6.5 0 0113 0V21z"/>',
+  face: '<circle cx="12" cy="12" r="9"/><circle cx="9" cy="10" r=".9" fill="currentColor"/><circle cx="15" cy="10" r=".9" fill="currentColor"/><path d="M8.5 14.5c1 1.6 2.2 2.3 3.5 2.3s2.5-.7 3.5-2.3"/>',
+  hair: '<path d="M7 17a4 4 0 01-.8-7.8A4.5 4.5 0 0112 4.5a4.5 4.5 0 015.8 4.7A4 4 0 0117 17"/><path d="M8 17v3h8v-3"/>',
+  hat: '<path d="M5 15a7 7 0 0114 0"/><path d="M3 15h13l5 2.5H3z"/>',
+  outfit: '<path d="M8 4l-5 3 2 4 3-1v10h8V10l3 1 2-4-5-3a4 4 0 01-8 0z"/>',
+  extras: '<path d="M12 3v6M12 15v6M3 12h6M15 12h6"/><circle cx="12" cy="12" r="2"/>',
+  move: '<path d="M13 2L5 13h6l-1 9 8-11h-6z"/>',
+  save: '<path d="M12 4v11M7 11l5 5 5-5"/><path d="M5 20h14"/>'
+};
+const TABS = [['type', 'Type'], ['body', 'Body'], ['face', 'Face'], ['hair', 'Hair'], ['hat', 'Hat'], ['outfit', 'Outfit'], ['extras', 'Extras'], ['move', 'Move'], ['save', 'Save']];
+let tab = 'type', sub = { face: 'eyes', outfit: 'top' }, playing = true, thumbs = [], t0 = performance.now(), frozen = 0.35;
+const cv = $('cv'), c2 = cv.getContext('2d'), layer = document.createElement('canvas'), lg = layer.getContext('2d'), stage = $('stage');
+const grit = document.createElement('canvas'); grit.width = grit.height = 128; (function () { const g = grit.getContext('2d'); for (let i = 0; i < 520; i++) { g.fillStyle = 'rgba(0,0,0,' + (.35 + Math.random() * .5) + ')'; const r = Math.random() * 1.6 + .4; g.beginPath(); g.arc(Math.random() * 128, Math.random() * 128, r, 0, TAU); g.fill(); } })();
+const NAMES = { artist: 'Artist', dj: 'DJ', curator: 'Curator', skater: 'Skater' };
+
+function viewFor(w, h) { const vw = Math.max(310, 372 * (w / h)); return { cx: 0, cy: -158, w: vw }; }
+function drawBg(g, w, h) {
+  const col = BGS[S.bg]; if (!col) return; g.fillStyle = col; g.fillRect(0, 0, w, h);
+  g.save(); g.fillStyle = 'rgba(255,255,255,.16)'; g.beginPath(); g.arc(w / 2, h * .52, w * .42, 0, TAU); g.fill();
+  g.fillStyle = 'rgba(26,26,26,.13)'; for (let y = 0; y < 9; y++) for (let x = 0; x < 14; x++) { const r = (y / 9) * (w / 56); g.beginPath(); g.arc((x + (y % 2) * .5) * (w / 13), h * .62 + y * (h * .045), r, 0, TAU); g.fill(); } g.restore();
+}
+function gritLayer(g, w, h) { if (!S.grit) return; g.save(); g.globalCompositeOperation = 'destination-out'; g.globalAlpha = .38; const p = g.createPattern(grit, 'repeat'); g.fillStyle = p; g.fillRect(0, 0, w, h); g.restore(); }
+function renderTo(canvas, t, o) {
+  o = o || {}; const w = canvas.width, h = canvas.height, g = canvas.getContext('2d'); layer.width = w; layer.height = h;
+  CH.drawChar(lg, S, CH.poseAt(S.pose, t), o.view || viewFor(w, h), { t: t, gaze: o.gaze, blink: o.blink, noShadow: o.sticker });
+  gritLayer(lg, w, h); g.clearRect(0, 0, w, h);
+  if (!o.noBg) drawBg(g, w, h);
+  if (o.sticker) { const r = Math.round(w * .02); [[r + Math.round(w * .006), '#1a1a1a'], [r, '#ffffff']].forEach(([rad, col]) => { const s = document.createElement('canvas'); s.width = w; s.height = h; const sg = s.getContext('2d'); for (let a = 0; a < 360; a += 12) sg.drawImage(layer, Math.cos(a * Math.PI / 180) * rad, Math.sin(a * Math.PI / 180) * rad); sg.globalCompositeOperation = 'source-in'; sg.fillStyle = col; sg.fillRect(0, 0, w, h); g.drawImage(s, 0, 0); }); }
+  g.drawImage(layer, 0, 0);
+}
+// ---------- main loop ----------
+let gaze = { x: 0, y: 0 };
+stage.addEventListener('pointermove', e => { const r = stage.getBoundingClientRect(); gaze = { x: (e.clientX - r.left) / r.width * 2 - 1, y: (e.clientY - r.top) / r.height * 2 - 1 }; });
+function sizeStage() { const r = stage.getBoundingClientRect(), d = Math.min(2, window.devicePixelRatio || 1); const w = Math.round(r.width * d), h = Math.round(r.height * d); if (cv.width !== w || cv.height !== h) { cv.width = w; cv.height = h; } stage.classList.toggle('chk', S.bg === 'none'); }
+function frame(now) {
+  sizeStage(); const t = playing ? (now - t0) / 1000 : frozen, bl = (now % 3600) < 130;
+  renderTo(cv, t, { gaze, blink: bl }); requestAnimationFrame(frame);
+}
+$('play').innerHTML = '<svg viewBox="0 0 24 24"><path d="M7 4l13 8-13 8z"/></svg>';
+function playIcon() { $('play').innerHTML = playing ? '<svg viewBox="0 0 24 24"><rect x="6" y="4" width="4.5" height="16"/><rect x="13.5" y="4" width="4.5" height="16"/></svg>' : '<svg viewBox="0 0 24 24"><path d="M7 4l13 8-13 8z"/></svg>'; }
+$('play').addEventListener('click', () => { if (playing) { frozen = ((performance.now() - t0) / 1000); } else { t0 = performance.now() - frozen * 1000; } playing = !playing; playIcon(); });
+playIcon();
+// ---------- thumbnails ----------
+const REG = { face: { cx: 0, cy: -246, w: 118 }, head: { cx: 0, cy: -246, w: 160 }, top: { cx: 0, cy: -150, w: 150 }, bot: { cx: 0, cy: -58, w: 160 }, shoe: { cx: 0, cy: -16, w: 120 }, full: { cx: 0, cy: -158, w: 372 }, mid: { cx: 0, cy: -150, w: 260 } };
+function thumbTime(S2) { const d = CH.POSES[S2.pose] || CH.POSES.idle; return d.T * .3; }
+function drawThumb(cvs, patch, reg, o) { const S0 = S; S = Object.assign({}, S, patch); const g = cvs.getContext('2d'); g.clearRect(0, 0, cvs.width, cvs.height); const bgS = S.bg; CH.drawChar(g, S, CH.poseAt(S.pose, o && o.t != null ? o.t : thumbTime(S)), REG[reg], { noShadow: reg !== 'full' && reg !== 'mid', t: .3 }); S = S0; }
+function refreshThumbs() { thumbs.forEach(t => drawThumb(t.cv, t.patch, t.reg, t.o)); }
+function addThumb(btn, patch, reg, o) { const cvs = document.createElement('canvas'); cvs.width = cvs.height = 130; btn.appendChild(cvs); thumbs.push({ cv: cvs, patch, reg, o }); }
+// ---------- panel building ----------
+const panel = $('panel');
+function el(tag, cls, html) { const e = document.createElement(tag); if (cls) e.className = cls; if (html != null) e.innerHTML = html; return e; }
+function grid(attr, list, reg, o) {
+  o = o || {}; const g = el('div', 'grid' + (o.big ? ' big' : ''));
+  list.forEach(v => { const b = el('button', 'opt'); b.type = 'button'; b.setAttribute('aria-pressed', S[attr] === v ? 'true' : 'false'); b.setAttribute('aria-label', o.name ? o.name(v) : v);
+    const patch = {}; patch[attr] = v; if (o.patch) Object.assign(patch, o.patch(v)); addThumb(b, patch, reg, o.tOpt); if (o.label !== false) b.appendChild(el('span', 'nm', o.name ? o.name(v) : v));
+    b.addEventListener('click', () => { S[attr] = v; if (o.after) o.after(v); save(); sync(); }); g.appendChild(b); });
+  return g;
+}
+function swatches(attr, list) { const w = el('div', 'sw'); list.forEach(c => { const b = el('button'); b.type = 'button'; b.style.background = c; b.setAttribute('aria-label', c); b.setAttribute('aria-pressed', S[attr] === c ? 'true' : 'false'); b.addEventListener('click', () => { S[attr] = c; save(); sync(); }); w.appendChild(b); }); return w; }
+function chips(list, cur, fn) { const w = el('div', 'chips'); list.forEach(([k, n]) => { const b = el('button', 'chip', n); b.type = 'button'; b.setAttribute('aria-pressed', k === cur ? 'true' : 'false'); b.addEventListener('click', () => fn(k)); w.appendChild(b); }); return w; }
+function toggle(attr, name) { const b = el('button', 'chip', name); b.type = 'button'; b.setAttribute('aria-pressed', S[attr] ? 'true' : 'false'); b.addEventListener('click', () => { S[attr] = !S[attr]; save(); sync(); }); return b; }
+const cap1 = s => s.charAt(0).toUpperCase() + s.slice(1);
+function build() {
+  thumbs = []; panel.innerHTML = '';
+  if (tab === 'type') {
+    panel.appendChild(el('p', 'note', 'Pick who you are. It sets the outfit, the prop and a signature move. Then change anything.'));
+    panel.appendChild(grid('type', Object.keys(CH.TYPES), 'full', { big: true, name: v => CH.TYPES[v].name, patch: v => CH.TYPES[v], tOpt: null, after: v => { Object.assign(S, CH.TYPES[v]); S.type = v; frozen = .35; t0 = performance.now(); } }));
+  } else if (tab === 'body') {
+    panel.appendChild(el('div', 'lbl', 'Build')); panel.appendChild(grid('body', ['slim', 'mid', 'broad'], 'full', { name: cap1 }));
+    panel.appendChild(el('div', 'lbl', 'Skin')); panel.appendChild(swatches('skin', CH.SKINS));
+    panel.appendChild(el('div', 'lbl', 'Head shape')); panel.appendChild(grid('head', OPT.head, 'head', { name: cap1, patch: () => ({ hat: 'none' }) }));
+  } else if (tab === 'face') {
+    const subs = [['eyes', 'Eyes'], ['brow', 'Brows'], ['nose', 'Nose'], ['mouth', 'Mouth'], ['beard', 'Beard'], ['glasses', 'Glasses']];
+    panel.appendChild(chips(subs, sub.face, k => { sub.face = k; build(); }));
+    const a = sub.face; panel.appendChild(grid(a, OPT[a], 'face', { name: cap1, patch: () => ({ hat: 'none' }) })); if (a === 'eyes') panel.appendChild(swatches('eyeC', CH.EYEC)); if (a === 'beard') panel.appendChild(el('p', 'note', 'Beard and brows use your hair color. Change it in Hair.'));
+  } else if (tab === 'hair') {
+    panel.appendChild(grid('hair', OPT.hair, 'head', { name: cap1, patch: () => ({ hat: 'none' }) })); panel.appendChild(el('div', 'lbl', 'Hair color')); panel.appendChild(swatches('hairC', CH.HAIRC));
+  } else if (tab === 'hat') {
+    panel.appendChild(grid('hat', OPT.hat, 'head', { name: v => v === 'phones' ? 'Headphones' : cap1(v) })); panel.appendChild(el('div', 'lbl', 'Color')); panel.appendChild(swatches('hatC', CH.CLR));
+  } else if (tab === 'outfit') {
+    panel.appendChild(chips([['top', 'Top'], ['bottom', 'Bottom'], ['shoes', 'Shoes']], sub.outfit, k => { sub.outfit = k; build(); }));
+    const a = sub.outfit, reg = a === 'top' ? 'top' : a === 'bottom' ? 'bot' : 'shoe', cattr = { top: 'topC', bottom: 'botC', shoes: 'shoeC' }[a];
+    panel.appendChild(grid(a, OPT[a], reg, { name: cap1 })); panel.appendChild(el('div', 'lbl', 'Color')); panel.appendChild(swatches(cattr, CH.CLR));
+  } else if (tab === 'extras') {
+    panel.appendChild(el('div', 'lbl', 'Wear')); const w = el('div', 'chips'); [['chain', 'Chain'], ['lanyard', 'Lanyard'], ['scarf', 'Scarf'], ['earrings', 'Earrings']].forEach(([a, n]) => w.appendChild(toggle(a, n))); panel.appendChild(w);
+    panel.appendChild(el('div', 'lbl', 'Hold')); panel.appendChild(grid('prop', OPT.prop, 'mid', { name: cap1 }));
+  } else if (tab === 'move') {
+    panel.appendChild(el('p', 'note', 'Pick a move. It loops. Your type has a signature move.'));
+    panel.appendChild(grid('pose', OPT.pose, 'full', { name: cap1, after: () => { frozen = .35; t0 = performance.now(); } }));
+  } else if (tab === 'save') {
+    panel.appendChild(el('div', 'lbl', 'Background')); panel.appendChild(chips(Object.keys(BGS).map(k => [k, cap1(k)]), S.bg, k => { S.bg = k; save(); build(); }));
+    const g = el('div', 'chips'); g.appendChild(toggle('grit', 'Print grit')); panel.appendChild(g);
+    const b1 = el('button', 'btn', 'Sticker PNG'), b2 = el('button', 'btn alt', 'Poster PNG'), b3 = el('button', 'btn alt', 'Animated GIF'); [b1, b2, b3].forEach(b => b.type = 'button');
+    b1.addEventListener('click', () => exportPng('sticker')); b2.addEventListener('click', () => exportPng('poster')); b3.addEventListener('click', () => exportGif(b3));
+    panel.appendChild(b1); panel.appendChild(b2); panel.appendChild(b3);
+    panel.appendChild(el('p', 'note', 'Sticker has a white die cut edge and a clear background. The GIF plays the move you picked. Nothing leaves your phone.'));
+  }
+  refreshThumbs();
+}
+function sync() { // update pressed states without rebuilding everything, refresh thumbs
+  if (tab === 'save') { build(); } else {
+    const keep = panel.scrollTop; build(); panel.scrollTop = keep;
+  }
+}
+const tabsEl = $('tabs');
+TABS.forEach(([k, n]) => { const b = el('button', null, '<svg viewBox="0 0 24 24" aria-hidden="true">' + ICON[k] + '</svg>' + n); b.type = 'button'; b.setAttribute('role', 'tab'); b.setAttribute('aria-selected', k === tab ? 'true' : 'false'); b.addEventListener('click', () => { tab = k; tabsEl.querySelectorAll('button').forEach(x => x.setAttribute('aria-selected', x === b ? 'true' : 'false')); panel.scrollTop = 0; build(); }); tabsEl.appendChild(b); });
+function tag() { $('tag').textContent = NAMES[S.type] || 'Creator'; }
+const _sync = sync; sync = function () { _sync(); tag(); };
+// ---------- random ----------
+$('rand').addEventListener('click', () => {
+  const pick = a => a[Math.floor(Math.random() * a.length)], t = pick(Object.keys(CH.TYPES));
+  Object.assign(S, CH.TYPES[t], { type: t, body: pick(['slim', 'mid', 'broad']), skin: pick(CH.SKINS), head: pick(OPT.head), eyes: pick(OPT.eyes), eyeC: pick(CH.EYEC), brow: pick(OPT.brow), nose: pick(OPT.nose), mouth: pick(OPT.mouth), beard: Math.random() < .4 ? pick(OPT.beard) : 'none', hair: pick(OPT.hair), hairC: pick(CH.HAIRC), topC: pick(CH.CLR.slice(1)), botC: pick(CH.CLR), shoeC: pick(CH.CLR.slice(1)), hatC: pick(CH.CLR), earrings: Math.random() < .3, hat: Math.random() < .55 ? pick(OPT.hat) : 'none', glasses: Math.random() < .3 ? pick(OPT.glasses) : 'none' });
+  if (S.hat !== 'none' && (S.hair === 'afro' || S.hair === 'puffs' || S.hair === 'bun')) S.hair = 'curls'; frozen = .35; t0 = performance.now(); save(); sync();
+});
+// ---------- export ----------
+function mk(w, h) { const c = document.createElement('canvas'); c.width = w; c.height = h; return c; }
+function showFile(blob, name, title) {
+  const url = URL.createObjectURL(blob), card = $('mcard'); card.innerHTML = '';
+  card.appendChild(el('h3', null, title)); const img = el('img'); img.src = url; img.alt = title; card.appendChild(img);
+  const row = el('div'); const share = el('button', 'btn', 'Share or save'), dl = el('a', 'btn alt', 'Download'), close = el('button', 'btn alt', 'Close'); share.type = close.type = 'button'; dl.href = url; dl.download = name; dl.style.textDecoration = 'none';
+  share.addEventListener('click', async () => { try { const f = new File([blob], name, { type: blob.type }); if (navigator.canShare && navigator.canShare({ files: [f] })) await navigator.share({ files: [f], title: 'My NOCIV character' }); else dl.click(); } catch (e) {} });
+  close.addEventListener('click', () => { $('modal').classList.remove('on'); setTimeout(() => URL.revokeObjectURL(url), 500); });
+  row.appendChild(share); row.appendChild(dl); row.appendChild(close); card.appendChild(row); card.appendChild(el('p', 'note', 'On iPhone: press and hold the picture to save it to Photos.')); $('modal').classList.add('on');
+}
+function exportPng(mode) {
+  const w = 1000, h = 1250, c = mk(w, h), t = thumbTime(S) * 0 + (CH.POSES[S.pose] || CH.POSES.idle).T * .3; renderTo(c, t, { sticker: mode === 'sticker', noBg: mode === 'sticker', view: { cx: 0, cy: -150, w: 430 } });
+  c.toBlob(b => showFile(b, 'nociv-' + mode + '-' + (S.type || 'creator') + '.png', mode === 'sticker' ? 'Your sticker' : 'Your poster'), 'image/png');
+}
+function lzw(minCode, idx) {
+  const clear = 1 << minCode, eoi = clear + 1, out = []; let size = minCode + 1, next = eoi + 1, dict = new Map(), cur = 0, bits = 0;
+  function emit(code, isClear) { cur |= code << bits; bits += size; while (bits >= 8) { out.push(cur & 255); cur >>>= 8; bits -= 8; } if (isClear) size = minCode + 1; else if (next > (1 << size) - 1 && size < 12) size++; }
+  emit(clear, true); let prefix = idx[0];
+  for (let i = 1; i < idx.length; i++) { const k = idx[i], key = (prefix << 8) | k, f = dict.get(key); if (f !== undefined) { prefix = f; continue; } emit(prefix, false); if (next < 4096) { dict.set(key, next++); } else { emit(clear, true); dict = new Map(); next = eoi + 1; } prefix = k; }
+  emit(prefix, false); emit(eoi, false); if (bits > 0) out.push(cur & 255); return out;
+}
+function buildPalette(frames) {
+  const sums = new Map(); frames.forEach(d => { for (let i = 0; i < d.length; i += 4) { const k = ((d[i] >> 3) << 10) | ((d[i + 1] >> 3) << 5) | (d[i + 2] >> 3); let s = sums.get(k); if (!s) sums.set(k, s = [0, 0, 0, 0]); s[0] += d[i]; s[1] += d[i + 1]; s[2] += d[i + 2]; s[3]++; } });
+  const top = [...sums.entries()].sort((a, b) => b[1][3] - a[1][3]).slice(0, 256), pal = top.map(([k, s]) => [Math.round(s[0] / s[3]), Math.round(s[1] / s[3]), Math.round(s[2] / s[3])]), map = new Map(); top.forEach(([k], i) => map.set(k, i)); return { pal, map };
+}
+function makeGifBytes(frames, w, h, delay) {
+  const { pal, map } = buildPalette(frames), cache = new Map(), out = [], P = (...a) => a.forEach(v => out.push(v & 255)), W = v => P(v, v >> 8);
+  function idxOf(r, g, b) { const k = ((r >> 3) << 10) | ((g >> 3) << 5) | (b >> 3); let v = map.get(k); if (v !== undefined) return v; v = cache.get(k); if (v !== undefined) return v; let best = 0, bd = 1e9; for (let i = 0; i < pal.length; i++) { const dr = pal[i][0] - r, dg = pal[i][1] - g, db = pal[i][2] - b, d = dr * dr + dg * dg + db * db; if (d < bd) { bd = d; best = i; } } cache.set(k, best); return best; }
+  'GIF89a'.split('').forEach(ch => P(ch.charCodeAt(0))); W(w); W(h); P(0xF7, 0, 0); for (let i = 0; i < 256; i++) { const c = pal[i] || [0, 0, 0]; P(c[0], c[1], c[2]); }
+  P(0x21, 0xFF, 0x0B); 'NETSCAPE2.0'.split('').forEach(ch => P(ch.charCodeAt(0))); P(3, 1, 0, 0, 0);
+  frames.forEach(d => {
+    P(0x21, 0xF9, 4, 0x08); W(delay); P(0, 0); P(0x2C); W(0); W(0); W(w); W(h); P(0); P(8);
+    const idx = new Uint8Array(w * h); for (let i = 0, p = 0; i < d.length; i += 4, p++) idx[p] = idxOf(d[i], d[i + 1], d[i + 2]);
+    const data = lzw(8, idx); for (let i = 0; i < data.length; i += 255) { const n = Math.min(255, data.length - i); P(n); for (let j = 0; j < n; j++) out.push(data[i + j]); } P(0);
+  });
+  P(0x3B); return new Uint8Array(out);
+}
+async function exportGif(btn) {
+  const old = btn.textContent; btn.disabled = true; const T = (CH.POSES[S.pose] || CH.POSES.idle).T, n = Math.max(8, Math.min(44, Math.round(T * 100 / 7))), w = 320, h = 400, frames = [], c = mk(w, h), g = c.getContext('2d'), prevBg = S.bg; if (S.bg === 'none') S.bg = 'tan';
+  try { for (let i = 0; i < n; i++) { btn.textContent = 'Making GIF ' + Math.round(i / n * 100) + '%'; await new Promise(r => setTimeout(r, 0)); renderTo(c, T * i / n, { view: { cx: 0, cy: -150, w: 430 } }); frames.push(g.getImageData(0, 0, w, h).data); }
+    btn.textContent = 'Packing...'; await new Promise(r => setTimeout(r, 0)); const bytes = makeGifBytes(frames, w, h, 7); showFile(new Blob([bytes], { type: 'image/gif' }), 'nociv-' + (S.type || 'creator') + '.gif', 'Your GIF'); } catch (e) { btn.textContent = 'Could not make the GIF'; await new Promise(r => setTimeout(r, 1500)); }
+  S.bg = prevBg; btn.textContent = old; btn.disabled = false;
+}
+$('modal').addEventListener('click', e => { if (e.target === $('modal')) $('modal').classList.remove('on'); });
+window.__ch = { S: () => S, makeGifBytes, lzw, renderTo, setS: o => { Object.assign(S, o); save(); build(); tag(); }, setTab: k => { tab = k; build(); } };
+build(); tag(); requestAnimationFrame(frame);
+})();
+</script>
+</body>
+</html>

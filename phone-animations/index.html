@@ -1725,7 +1725,7 @@
 
   // ===================== FIRST PAGE: flip through what you can build =====================
   const MODES = [
-    { key: 'char', name: 'AVATAR MAKER', tab: 'AVATAR', desc: 'Build a person like a Mii with a PS2 game look. Make them walk, sing or dance, solid or as a hologram.' },
+    { key: 'char', name: 'AVATAR MAKER', tab: 'AVATAR', desc: 'Build a creator: artist, DJ, curator or skater. Flat 2D with a punk print look. Make them move, then save a sticker or a GIF.' },
     { key: 'stop', name: 'STOP MOTION', tab: 'STOP', desc: 'Shoot frames with your camera, or use photos and a video. Then run it through the tape deck.' },
     { key: 'clip', name: 'VHS BUILDER', tab: 'VHS', desc: 'Pick a video from your camera roll. Rewind, fast forward and pause it like a real camcorder tape, then record it.' },
     { key: 'board', name: 'BILLBOARD', tab: 'SIGN', desc: 'Put 2 to 5 photos on a spinning trivision sign. Add words like a real ad. Pick the scene behind it.' },
@@ -1751,7 +1751,7 @@
   MODES.forEach((m, i) => { const b = document.createElement('button'); b.type = 'button'; b.innerHTML = '<i>' + (i + 1) + '</i>' + m.tab; b.addEventListener('click', () => { buzz(8); showMode(i); }); $('modeTabs').appendChild(b); });
   function goMode() {
     const k = MODES[mi].key;
-    if (k === 'board') startKind('board'); else if (k === 'char') startKind('char');
+    if (k === 'board') startKind('board'); else if (k === 'char') { location.href = 'character/'; return; }
     else if (k === 'stop') { startKind('stop'); if (st.cam && !st.camVideo) startCam(); } else { startKind('clip'); $('clipIn').click(); }
   }
   $('goBtn').addEventListener('click', goMode);
