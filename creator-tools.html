@@ -31,23 +31,47 @@
     text-decoration: none; border-radius: 4px; display: inline-block;
   }
 
-  /* --- Tools on a phone: one card at a time, swipe left or right, numbers jump to a card. Wide screens keep the grid. --- */
-  .tool-card::before { display: none; }
-  .flip-tabs, .flip-preview, .flip-hint { display: none; }
-  @media (max-width: 679px) {
-    .tool-grid.flip { display: block; touch-action: pan-y; }
-    .tool-grid.flip .tool-card { display: none; width: 100%; }
-    .tool-grid.flip .tool-card.on { display: flex; animation: flipIn .22s ease-out; }
-    .flip-tabs { display: flex; max-width: 900px; margin: 22px auto 0; gap: 10px; justify-content: center; }
-    .flip-tabs button { flex: 1; max-width: 56px; height: 44px; border: 1.5px solid #1a1a1a; background: transparent; color: #1a1a1a; font: inherit; font-weight: 800; font-size: 1rem; letter-spacing: .04em; cursor: pointer; padding: 0; border-radius: 2px; transition: background .15s, color .15s; }
-    .flip-tabs button[aria-pressed="true"] { background: #1a1a1a; color: #f2ecd6; }
-    .flip-preview { display: block; max-width: 900px; margin: 18px auto 0; }
-    .flip-preview[hidden] { display: none; }
-    .flip-preview span { display: block; font-weight: 900; letter-spacing: .12em; font-size: 0.72rem; margin-bottom: 6px; }
-    .flip-preview video { display: block; width: 100%; max-height: 50svh; border: 2px solid #1a1a1a; background: #000; }
-    .flip-hint { display: block; text-align: center; font-size: 0.8rem; font-weight: 700; margin: 12px 0 0; opacity: .6; }
+
+  /* --- THE BUILD: binder tabs, caption, card, numbers, and a real finished piece --- */
+  .binder { --ink: #1a1a1a; --paper: #e9e6df; --note: #f2ecd6; max-width: 980px; margin: 0 auto; display: grid; grid-template-columns: 50px minmax(0, 1fr); gap: 0; align-items: start; }
+  @media (max-width: 1010px) { .binder { margin-left: -16px; margin-right: -2px; } }
+  .b-tabs { display: flex; flex-direction: column; gap: 10px; padding-top: 52px; position: relative; z-index: 2; }
+  .b-tabs button { all: unset; box-sizing: border-box; width: 44px; height: 64px; border: 2.5px solid var(--ink); border-left: 0; border-radius: 0 16px 16px 0; background: var(--note); color: var(--ink); display: grid; place-items: center; cursor: pointer; -webkit-tap-highlight-color: transparent; transition: width .16s ease, background .16s ease, color .16s ease; margin-left: 0; }
+  .b-tabs button svg { width: 26px; height: 26px; fill: none; stroke: currentColor; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
+  .b-tabs button[aria-selected="true"] { width: 54px; background: var(--c); color: var(--ci, var(--ink)); }
+  .b-tabs button:focus-visible { outline: 3px solid #c8412f; outline-offset: 2px; }
+  .b-main { border: 3px solid var(--ink); border-left-width: 4px; background: var(--note); padding: 16px 14px 18px 14px; margin-left: -4px; box-shadow: 0 6px 16px rgba(0,0,0,.16); min-width: 0; display: grid; grid-template-columns: minmax(0, 1fr); gap: 16px; }
+  .b-bubble { position: relative; display: inline-flex; flex-direction: column; align-self: start; justify-self: start; background: #fff; border: 2.5px solid var(--ink); border-radius: 22px; padding: 8px 18px 8px; margin: 0 0 0 6px; }
+  .b-bubble::before { content: ''; position: absolute; left: -13px; top: 22px; width: 14px; height: 14px; background: #fff; border-left: 2.5px solid var(--ink); border-bottom: 2.5px solid var(--ink); transform: rotate(45deg); }
+  .b-sec { font-family: NocivAnton, Impact, "Arial Narrow", sans-serif; font-size: clamp(2.2rem, 11vw, 3.4rem); line-height: .95; letter-spacing: .02em; text-transform: uppercase; }
+  .b-tool { font-weight: 900; font-size: .72rem; letter-spacing: .16em; text-transform: uppercase; margin-top: 2px; }
+  .b-card { all: unset; display: block; box-sizing: border-box; border: 3px solid var(--ink); background: #1a1a1a; line-height: 0; cursor: pointer; overflow: hidden; -webkit-tap-highlight-color: transparent; aspect-ratio: 16 / 9; width: 100%; }
+  .b-card svg { width: 100%; height: 100%; display: block; }
+  .b-card:focus-visible { outline: 3px solid #c8412f; outline-offset: 3px; }
+  .b-cap { margin: 8px 2px 0; font-weight: 800; font-size: .82rem; line-height: 1.35; color: #6b665c; }
+  .b-strip { display: flex; gap: 10px; align-items: stretch; margin-top: 12px; border: 2.5px solid var(--ink); background: #fff; }
+  .b-strip p { margin: 0; padding: 10px 12px; font-size: .9rem; line-height: 1.4; flex: 1; min-width: 0; }
+  .b-open { all: unset; box-sizing: border-box; flex: none; width: 76px; display: grid; place-items: center; background: #c8412f; color: #fff; font-weight: 900; letter-spacing: .1em; font-size: .85rem; cursor: pointer; border-left: 2.5px solid var(--ink); -webkit-tap-highlight-color: transparent; }
+  .b-open:active { background: var(--ink); }
+  .b-open:focus-visible { outline: 3px solid #c8412f; outline-offset: 2px; }
+  .b-nums { display: flex; gap: 10px; margin-top: 14px; }
+  .b-nums button { all: unset; box-sizing: border-box; width: 52px; height: 48px; border: 2.5px solid var(--ink); background: #fff; display: grid; place-items: center; font-weight: 900; font-size: 1.1rem; cursor: pointer; -webkit-tap-highlight-color: transparent; transform: rotate(-1deg); }
+  .b-nums button:nth-child(even) { transform: rotate(1deg); }
+  .b-nums button[aria-selected="true"] { background: var(--ink); color: var(--note); }
+  .b-nums button:focus-visible { outline: 3px solid #c8412f; outline-offset: 2px; }
+  .b-made { margin: 0 0 8px; font-size: .78rem; font-weight: 700; color: #6b665c; letter-spacing: .02em; }
+  .b-made b { color: var(--ink); font-weight: 900; }
+  .b-poster { margin: 0; border: 3px solid var(--ink); background: #fff; aspect-ratio: 4 / 5; width: 100%; box-shadow: 4px 4px 0 var(--ink); overflow: hidden; position: relative; }
+  .b-poster img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: contain; display: block; }
+  .b-swap { animation: bSwap .2s ease-out; }
+  @keyframes bSwap { from { opacity: 0; transform: translateX(var(--from, 14px)); } to { opacity: 1; transform: none; } }
+  @media (min-width: 820px) {
+    .binder { grid-template-columns: 58px minmax(0, 1fr); }
+    .b-tabs button { width: 58px; height: 74px; } .b-tabs button[aria-selected="true"] { width: 72px; }
+    .b-main { grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 28px; padding: 24px 26px 26px; align-items: start; }
+    .b-poster { max-height: 640px; }
   }
-  @keyframes flipIn { from { opacity: 0; transform: translateX(var(--from, 24px)); } to { opacity: 1; } }
+  @media (prefers-reduced-motion: reduce) { .b-swap { animation: none; } }
 </style>
 </head>
 <body>
@@ -71,53 +95,85 @@
     <ul class="build-points"><li>Free</li><li>No sign up</li><li>No paywall</li><li>Works on your phone</li></ul>
     <p class="build-lede">Pick a tool. Come out with a finished thing you can print, wear or pass on.</p>
   </div>
-  <div class="tool-grid" id="buildHub">
-    <button type="button" class="tool-card feat" data-panel="zineBuilderPanel">
+  <div class="binder" id="buildHub">
+    <div class="b-tabs" id="bTabs" role="tablist" aria-label="Sections"></div>
+    <div class="b-main">
+      <div class="b-left">
+        <div class="b-bubble" id="bBubble"><span class="b-sec" id="bSec"></span><span class="b-tool" id="bTool"></span></div>
+        <button type="button" class="b-card" id="bCard" aria-label="Open this tool"></button>
+        <p class="b-cap" id="bCap"></p>
+        <div class="b-strip"><p id="bDesc"></p><button type="button" class="b-open" id="bOpen">OPEN</button></div>
+        <div class="b-nums" id="bNums" role="tablist" aria-label="Tools in this section"></div>
+      </div>
+      <div class="b-right">
+        <p class="b-made">Made with <b id="bMade"></b></p>
+        <figure class="b-poster"><img id="bPoster" alt="" width="800" height="1000"></figure>
+      </div>
+    </div>
+  </div>
+  <div id="toolData" hidden>
+    <button type="button" class="tool-card" data-sec="paper" data-key="zine" data-poster="img/tools/zine.webp" data-made="the Zine Builder" data-panel="zineBuilderPanel">
       <span class="tool-art"><svg viewBox="0 0 320 180" xmlns="http://www.w3.org/2000/svg" aria-hidden="true" preserveAspectRatio="xMidYMid slice"><rect width="320" height="180" fill="#d9cfb8"/><g transform="translate(92 26) rotate(-9)"><rect width="80" height="124" fill="#fff" stroke="#1a1a1a" stroke-width="2.5"/><rect x="10" y="12" width="60" height="44" fill="#1a1a1a"/><path d="M10 70h60M10 80h48M10 90h56M10 100h36" stroke="#1a1a1a" stroke-width="3"/></g><g transform="translate(150 22) rotate(6)"><rect width="80" height="124" fill="#fff" stroke="#1a1a1a" stroke-width="2.5"/><circle cx="40" cy="44" r="24" fill="#c8412f"/><path d="M14 84h52M14 94h40M14 104h46" stroke="#1a1a1a" stroke-width="3"/><rect x="48" y="-6" width="34" height="13" fill="#f2c230" opacity=".9" transform="rotate(14 60 0)"/></g><g transform="translate(116 26) rotate(-1)"><image href="img/zine-cover.jpg" width="88" height="137" preserveAspectRatio="xMidYMid slice"/><rect width="88" height="137" fill="none" stroke="#1a1a1a" stroke-width="2.5"/></g></svg></span>
       <span class="tool-body">
-        <span class="tool-name"><b>01</b>Zine Builder</span>
+        <span class="tool-name">Zine Builder</span>
         <span class="tool-desc">Camera roll, notes app, that trip, your poems. That is a zine. Make it on your phone, pick your layout, print it, pass it on. Or just make a physical photo album.</span>
         <span class="tool-foot"><span class="tool-get">You leave with: Print PDF, page files, Lulu ready</span><span class="tool-open">Open</span></span>
       </span>
     </button>
-    <button type="button" class="tool-card" data-panel="qrBuilderPanel">
+    <button type="button" class="tool-card" data-sec="paper" data-key="qr" data-poster="img/tools/qr.webp" data-made="the QR Maker" data-panel="qrBuilderPanel">
       <span class="tool-art"><svg viewBox="0 0 320 180" xmlns="http://www.w3.org/2000/svg" aria-hidden="true" preserveAspectRatio="xMidYMid slice"><rect width="320" height="180" fill="#cfd8cf"/><g transform="translate(96 12) rotate(-2)"><rect width="134" height="156" fill="#f2ecd6" stroke="#1a1a1a" stroke-width="2.5"/><image href="img/qr-art.png" x="3" y="3" width="128" height="150" preserveAspectRatio="xMidYMid meet"/></g></svg></span>
       <span class="tool-body">
-        <span class="tool-name"><b>02</b>QR Maker</span>
+        <span class="tool-name">QR Maker</span>
         <span class="tool-desc">Your link with your picture in the middle. For flyers, stickers, your table at the market.</span>
         <span class="tool-foot"><span class="tool-get">You leave with: A sharp QR code, ready to print</span><span class="tool-open">Open</span></span>
       </span>
     </button>
-    <button type="button" class="tool-card" data-panel="cardBuilderPanel">
+    <button type="button" class="tool-card" data-sec="paper" data-key="cards" data-poster="img/tools/cards.webp" data-made="Cards + Flyers" data-panel="cardBuilderPanel">
       <span class="tool-art"><svg viewBox="0 0 320 180" xmlns="http://www.w3.org/2000/svg" aria-hidden="true" preserveAspectRatio="xMidYMid slice"><rect width="320" height="180" fill="#e4d9c4"/><g transform="translate(188 16) rotate(5)"><rect width="104" height="144" fill="#f2c230" stroke="#1a1a1a" stroke-width="2.5"/><image href="img/chain-face.png" x="14" y="8" width="84" height="73" preserveAspectRatio="xMidYMid meet"/><path d="M16 84h72M16 94h52" stroke="#1a1a1a" stroke-width="3"/><rect x="34" y="104" width="34" height="34" fill="#fff" stroke="#1a1a1a" stroke-width="2"/><rect x="38" y="108" width="10" height="10" fill="#1a1a1a"/><rect x="54" y="108" width="10" height="10" fill="#1a1a1a"/><rect x="38" y="124" width="10" height="10" fill="#1a1a1a"/><rect x="56" y="126" width="5" height="5" fill="#1a1a1a"/></g><g transform="translate(28 64) rotate(-6)"><rect width="150" height="86" fill="#fff" stroke="#1a1a1a" stroke-width="2.5"/><rect x="12" y="12" width="26" height="26" fill="#c8412f"/><text x="46" y="30" font-family="Arial Black,Arial,sans-serif" font-weight="900" font-size="14" fill="#1a1a1a" textLength="86" lengthAdjust="spacingAndGlyphs">YOUR NAME</text><text x="46" y="44" font-family="Arial,sans-serif" font-size="9" fill="#6b665c">maker / dj / artist</text><circle cx="18" cy="56" r="4" fill="#c8412f"/><path d="M28 56h60" stroke="#1a1a1a" stroke-width="2.5"/><circle cx="18" cy="68" r="4" fill="#c8412f"/><path d="M28 68h46" stroke="#1a1a1a" stroke-width="2.5"/><rect x="112" y="48" width="28" height="28" fill="#1a1a1a"/><rect x="116" y="52" width="8" height="8" fill="#fff"/><rect x="128" y="52" width="8" height="8" fill="#fff"/><rect x="116" y="64" width="8" height="8" fill="#fff"/></g></svg></span>
       <span class="tool-body">
-        <span class="tool-name"><b>03</b>Cards + Flyers</span>
+        <span class="tool-name">Cards + Flyers</span>
         <span class="tool-desc">Business cards and flyers with your logo, icons and QR code. DJ night, pop up, or just spreading the word.</span>
         <span class="tool-foot"><span class="tool-get">You leave with: A card file + a print shop PDF</span><span class="tool-open">Open</span></span>
       </span>
     </button>
-    <button type="button" class="tool-card" data-panel="stencilBuilderPanel">
+    <button type="button" class="tool-card" data-sec="digital" data-key="animate" data-poster="img/tools/animate.webp" data-made="Animate + Edit" data-panel="phoneAnimPanel">
+      <span class="tool-art"><svg viewBox="0 0 320 180" xmlns="http://www.w3.org/2000/svg" aria-hidden="true" preserveAspectRatio="xMidYMid slice"><defs><linearGradient id="avs" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#3a2f6b"/><stop offset=".6" stop-color="#c8506a"/><stop offset="1" stop-color="#ff9a5a"/></linearGradient></defs><rect width="320" height="180" fill="url(#avs)"/><g fill="#1f1730"><rect x="10" y="80" width="30" height="100"/><rect x="44" y="60" width="26" height="120"/><rect x="250" y="70" width="34" height="110"/><rect x="288" y="95" width="30" height="85"/></g><rect y="140" width="320" height="40" fill="#3c3a44"/><rect x="150" y="150" width="20" height="4" fill="#ecbe28"/><g><circle cx="160" cy="52" r="15" fill="#d09a6c"/><path d="M146 48c2-12 26-12 28 0z" fill="#111"/><rect x="146" y="68" width="28" height="36" rx="6" fill="#c8412f"/><rect x="138" y="70" width="9" height="30" rx="4" fill="#c8412f" transform="rotate(25 142 70)"/><rect x="173" y="70" width="9" height="30" rx="4" fill="#c8412f" transform="rotate(-40 178 70)"/><rect x="147" y="102" width="12" height="38" rx="5" fill="#2f4a7a"/><rect x="162" y="102" width="12" height="38" rx="5" fill="#2f4a7a" transform="rotate(-10 168 102)"/></g></svg></span>
+      <span class="tool-body">
+        <span class="tool-name">Animate + Edit</span>
+        <span class="tool-desc">Build a person like a Mii with a PS2 game look and make them walk, sing or dance. Or spin your photos on a billboard sign.</span>
+        <span class="tool-foot"><span class="tool-get">You leave with: A video you can share</span><span class="tool-open">Open</span></span>
+      </span>
+    </button>
+    <button type="button" class="tool-card" data-sec="digital" data-key="stop" data-poster="img/tools/stop.webp" data-made="Stop Motion" data-panel="stopMotionPanel">
+      <span class="tool-art"><svg viewBox="0 0 320 180" xmlns="http://www.w3.org/2000/svg" aria-hidden="true" preserveAspectRatio="xMidYMid slice"><rect width="320" height="180" fill="#1a1a1a"/><g fill="#e9e6df"><rect x="62" y="34" width="52" height="92" rx="4" opacity=".25"/><rect x="92" y="30" width="52" height="92" rx="4" opacity=".5"/><rect x="122" y="26" width="52" height="92" rx="4" opacity=".75"/><rect x="152" y="22" width="52" height="92" rx="4"/></g><circle cx="224" cy="40" r="6" fill="#c8412f"/><text x="236" y="46" font-family="Courier New, monospace" font-size="16" font-weight="700" fill="#fff">REC</text><g fill="#fff" opacity=".35"><rect x="0" y="60" width="320" height="2"/><rect x="0" y="120" width="320" height="2"/><rect x="0" y="150" width="320" height="2"/></g></svg></span>
+      <span class="tool-body">
+        <span class="tool-name">Stop Motion</span>
+        <span class="tool-desc">Shoot frames with your phone, or use photos and a video. Move, copy and reorder frames, then play it as a loop.</span>
+        <span class="tool-foot"><span class="tool-get">You leave with: A looping video or the frames</span><span class="tool-open">Open</span></span>
+      </span>
+    </button>
+    <button type="button" class="tool-card" data-sec="digital" data-key="vhs" data-poster="img/tools/vhs.webp" data-made="VHS" data-panel="vhsPanel">
+      <span class="tool-art"><svg viewBox="0 0 320 180" xmlns="http://www.w3.org/2000/svg" aria-hidden="true" preserveAspectRatio="xMidYMid slice"><rect width="320" height="180" fill="#1a1a1a"/><g fill="none" stroke="#e9e6df" stroke-width="3"><rect x="70" y="40" width="180" height="100" rx="6"/><rect x="92" y="58" width="136" height="40" rx="3"/><circle cx="128" cy="78" r="13"/><circle cx="192" cy="78" r="13"/><path d="M104 140l10-22h92l10 22"/></g><rect x="70" y="40" width="180" height="100" rx="6" fill="#c8412f" opacity=".18"/><g fill="#fff" opacity=".3"><rect x="0" y="30" width="320" height="2"/><rect x="0" y="100" width="320" height="2"/><rect x="0" y="152" width="320" height="2"/></g><text x="92" y="130" font-family="Courier New, monospace" font-size="13" font-weight="700" fill="#e9e6df">SP  PLAY</text></svg></span>
+      <span class="tool-body">
+        <span class="tool-name">VHS</span>
+        <span class="tool-desc">Pick any video from your camera roll. Rewind, fast forward and pause it like a real camcorder tape. VHS, 8mm film, 90s digicam or security cam.</span>
+        <span class="tool-foot"><span class="tool-get">You leave with: Your video in another era</span><span class="tool-open">Open</span></span>
+      </span>
+    </button>
+    <button type="button" class="tool-card" data-sec="projects" data-key="stencil" data-poster="img/tools/stencil.webp" data-made="Stencil + Halftone" data-panel="stencilBuilderPanel">
       <span class="tool-art"><svg viewBox="0 0 320 180" xmlns="http://www.w3.org/2000/svg" aria-hidden="true" preserveAspectRatio="xMidYMid slice"><rect width="320" height="180" fill="#ece6d6"/><circle cx="78" cy="37" r="1.9" fill="#1a1a1a"/><circle cx="87" cy="37" r="1.9" fill="#1a1a1a"/><circle cx="96" cy="37" r="2.1" fill="#1a1a1a"/><circle cx="105" cy="37" r="2.3" fill="#1a1a1a"/><circle cx="114" cy="37" r="2.6" fill="#1a1a1a"/><circle cx="123" cy="37" r="2.9" fill="#1a1a1a"/><circle cx="132" cy="37" r="3.2" fill="#1a1a1a"/><circle cx="69" cy="46" r="1.6" fill="#1a1a1a"/><circle cx="78" cy="46" r="1.5" fill="#1a1a1a"/><circle cx="87" cy="46" r="1.5" fill="#1a1a1a"/><circle cx="96" cy="46" r="1.7" fill="#1a1a1a"/><circle cx="105" cy="46" r="2.0" fill="#1a1a1a"/><circle cx="114" cy="46" r="2.3" fill="#1a1a1a"/><circle cx="123" cy="46" r="2.7" fill="#1a1a1a"/><circle cx="132" cy="46" r="3.1" fill="#1a1a1a"/><circle cx="141" cy="46" r="3.4" fill="#1a1a1a"/><circle cx="60" cy="55" r="1.6" fill="#1a1a1a"/><circle cx="69" cy="55" r="1.3" fill="#1a1a1a"/><circle cx="78" cy="55" r="1.1" fill="#1a1a1a"/><circle cx="87" cy="55" r="1.2" fill="#1a1a1a"/><circle cx="96" cy="55" r="1.5" fill="#1a1a1a"/><circle cx="105" cy="55" r="1.8" fill="#1a1a1a"/><circle cx="114" cy="55" r="2.2" fill="#1a1a1a"/><circle cx="123" cy="55" r="2.6" fill="#1a1a1a"/><circle cx="132" cy="55" r="2.9" fill="#1a1a1a"/><circle cx="141" cy="55" r="3.3" fill="#1a1a1a"/><circle cx="150" cy="55" r="3.7" fill="#1a1a1a"/><circle cx="51" cy="64" r="1.9" fill="#1a1a1a"/><circle cx="60" cy="64" r="1.5" fill="#1a1a1a"/><circle cx="69" cy="64" r="1.1" fill="#1a1a1a"/><circle cx="78" cy="64" r="0.7" fill="#1a1a1a"/><circle cx="87" cy="64" r="0.9" fill="#1a1a1a"/><circle cx="96" cy="64" r="1.3" fill="#1a1a1a"/><circle cx="105" cy="64" r="1.7" fill="#1a1a1a"/><circle cx="114" cy="64" r="2.1" fill="#1a1a1a"/><circle cx="123" cy="64" r="2.5" fill="#1a1a1a"/><circle cx="132" cy="64" r="2.9" fill="#1a1a1a"/><circle cx="141" cy="64" r="3.3" fill="#1a1a1a"/><circle cx="150" cy="64" r="3.7" fill="#1a1a1a"/><circle cx="159" cy="64" r="4.1" fill="#1a1a1a"/><circle cx="51" cy="73" r="1.9" fill="#1a1a1a"/><circle cx="60" cy="73" r="1.5" fill="#1a1a1a"/><circle cx="69" cy="73" r="1.2" fill="#1a1a1a"/><circle cx="78" cy="73" r="0.9" fill="#1a1a1a"/><circle cx="87" cy="73" r="1.0" fill="#1a1a1a"/><circle cx="96" cy="73" r="1.4" fill="#1a1a1a"/><circle cx="105" cy="73" r="1.7" fill="#1a1a1a"/><circle cx="114" cy="73" r="2.1" fill="#1a1a1a"/><circle cx="123" cy="73" r="2.5" fill="#1a1a1a"/><circle cx="132" cy="73" r="2.9" fill="#1a1a1a"/><circle cx="141" cy="73" r="3.3" fill="#1a1a1a"/><circle cx="150" cy="73" r="3.7" fill="#1a1a1a"/><circle cx="159" cy="73" r="4.1" fill="#1a1a1a"/><circle cx="51" cy="82" r="2.1" fill="#1a1a1a"/><circle cx="60" cy="82" r="1.7" fill="#1a1a1a"/><circle cx="69" cy="82" r="1.5" fill="#1a1a1a"/><circle cx="78" cy="82" r="1.3" fill="#1a1a1a"/><circle cx="87" cy="82" r="1.4" fill="#1a1a1a"/><circle cx="96" cy="82" r="1.6" fill="#1a1a1a"/><circle cx="105" cy="82" r="1.9" fill="#1a1a1a"/><circle cx="114" cy="82" r="2.3" fill="#1a1a1a"/><circle cx="123" cy="82" r="2.6" fill="#1a1a1a"/><circle cx="132" cy="82" r="3.0" fill="#1a1a1a"/><circle cx="141" cy="82" r="3.4" fill="#1a1a1a"/><circle cx="150" cy="82" r="3.8" fill="#1a1a1a"/><circle cx="159" cy="82" r="4.2" fill="#1a1a1a"/><circle cx="51" cy="91" r="2.3" fill="#1a1a1a"/><circle cx="60" cy="91" r="2.0" fill="#1a1a1a"/><circle cx="69" cy="91" r="1.8" fill="#1a1a1a"/><circle cx="78" cy="91" r="1.7" fill="#1a1a1a"/><circle cx="87" cy="91" r="1.7" fill="#1a1a1a"/><circle cx="96" cy="91" r="1.9" fill="#1a1a1a"/><circle cx="105" cy="91" r="2.2" fill="#1a1a1a"/><circle cx="114" cy="91" r="2.5" fill="#1a1a1a"/><circle cx="123" cy="91" r="2.8" fill="#1a1a1a"/><circle cx="132" cy="91" r="3.1" fill="#1a1a1a"/><circle cx="141" cy="91" r="3.5" fill="#1a1a1a"/><circle cx="150" cy="91" r="3.9" fill="#1a1a1a"/><circle cx="159" cy="91" r="4.3" fill="#1a1a1a"/><circle cx="51" cy="100" r="2.6" fill="#1a1a1a"/><circle cx="60" cy="100" r="2.3" fill="#1a1a1a"/><circle cx="69" cy="100" r="2.2" fill="#1a1a1a"/><circle cx="78" cy="100" r="2.1" fill="#1a1a1a"/><circle cx="87" cy="100" r="2.1" fill="#1a1a1a"/><circle cx="96" cy="100" r="2.3" fill="#1a1a1a"/><circle cx="105" cy="100" r="2.5" fill="#1a1a1a"/><circle cx="114" cy="100" r="2.7" fill="#1a1a1a"/><circle cx="123" cy="100" r="3.0" fill="#1a1a1a"/><circle cx="132" cy="100" r="3.3" fill="#1a1a1a"/><circle cx="141" cy="100" r="3.7" fill="#1a1a1a"/><circle cx="150" cy="100" r="4.0" fill="#1a1a1a"/><circle cx="159" cy="100" r="4.4" fill="#1a1a1a"/><circle cx="51" cy="109" r="2.9" fill="#1a1a1a"/><circle cx="60" cy="109" r="2.7" fill="#1a1a1a"/><circle cx="69" cy="109" r="2.6" fill="#1a1a1a"/><circle cx="78" cy="109" r="2.5" fill="#1a1a1a"/><circle cx="87" cy="109" r="2.5" fill="#1a1a1a"/><circle cx="96" cy="109" r="2.6" fill="#1a1a1a"/><circle cx="105" cy="109" r="2.8" fill="#1a1a1a"/><circle cx="114" cy="109" r="3.0" fill="#1a1a1a"/><circle cx="123" cy="109" r="3.3" fill="#1a1a1a"/><circle cx="132" cy="109" r="3.6" fill="#1a1a1a"/><circle cx="141" cy="109" r="3.9" fill="#1a1a1a"/><circle cx="150" cy="109" r="4.2" fill="#1a1a1a"/><circle cx="159" cy="109" r="4.6" fill="#1a1a1a"/><circle cx="51" cy="118" r="3.2" fill="#1a1a1a"/><circle cx="60" cy="118" r="3.1" fill="#1a1a1a"/><circle cx="69" cy="118" r="2.9" fill="#1a1a1a"/><circle cx="78" cy="118" r="2.9" fill="#1a1a1a"/><circle cx="87" cy="118" r="2.9" fill="#1a1a1a"/><circle cx="96" cy="118" r="3.0" fill="#1a1a1a"/><circle cx="105" cy="118" r="3.1" fill="#1a1a1a"/><circle cx="114" cy="118" r="3.3" fill="#1a1a1a"/><circle cx="123" cy="118" r="3.6" fill="#1a1a1a"/><circle cx="132" cy="118" r="3.8" fill="#1a1a1a"/><circle cx="141" cy="118" r="4.1" fill="#1a1a1a"/><circle cx="150" cy="118" r="4.4" fill="#1a1a1a"/><circle cx="159" cy="118" r="4.7" fill="#1a1a1a"/><circle cx="60" cy="127" r="3.4" fill="#1a1a1a"/><circle cx="69" cy="127" r="3.3" fill="#1a1a1a"/><circle cx="78" cy="127" r="3.3" fill="#1a1a1a"/><circle cx="87" cy="127" r="3.3" fill="#1a1a1a"/><circle cx="96" cy="127" r="3.4" fill="#1a1a1a"/><circle cx="105" cy="127" r="3.5" fill="#1a1a1a"/><circle cx="114" cy="127" r="3.7" fill="#1a1a1a"/><circle cx="123" cy="127" r="3.9" fill="#1a1a1a"/><circle cx="132" cy="127" r="4.1" fill="#1a1a1a"/><circle cx="141" cy="127" r="4.4" fill="#1a1a1a"/><circle cx="150" cy="127" r="4.7" fill="#1a1a1a"/><circle cx="69" cy="136" r="3.7" fill="#1a1a1a"/><circle cx="78" cy="136" r="3.7" fill="#1a1a1a"/><circle cx="87" cy="136" r="3.7" fill="#1a1a1a"/><circle cx="96" cy="136" r="3.8" fill="#1a1a1a"/><circle cx="105" cy="136" r="3.9" fill="#1a1a1a"/><circle cx="114" cy="136" r="4.0" fill="#1a1a1a"/><circle cx="123" cy="136" r="4.2" fill="#1a1a1a"/><circle cx="132" cy="136" r="4.4" fill="#1a1a1a"/><circle cx="141" cy="136" r="4.7" fill="#1a1a1a"/><circle cx="78" cy="145" r="4.1" fill="#1a1a1a"/><circle cx="87" cy="145" r="4.1" fill="#1a1a1a"/><circle cx="96" cy="145" r="4.2" fill="#1a1a1a"/><circle cx="105" cy="145" r="4.3" fill="#1a1a1a"/><circle cx="114" cy="145" r="4.4" fill="#1a1a1a"/><circle cx="123" cy="145" r="4.6" fill="#1a1a1a"/><circle cx="132" cy="145" r="4.7" fill="#1a1a1a"/><g transform="translate(156 38) rotate(-3)"><rect width="152" height="104" fill="#fff" stroke="#1a1a1a" stroke-width="2.5"/><image href="img/stencil-art.png" x="6" y="24" width="140" height="56" preserveAspectRatio="xMidYMid meet"/></g></svg></span>
       <span class="tool-body">
-        <span class="tool-name"><b>04</b>Stencil + Halftone</span>
+        <span class="tool-name">Stencil + Halftone</span>
         <span class="tool-desc">Turn a photo into a cut stencil or halftone dots. Sized for a tee, a tote, a stamp or a poster.</span>
         <span class="tool-foot"><span class="tool-get">You leave with: Cut files + ink layers to print</span><span class="tool-open">Open</span></span>
       </span>
     </button>
-    <button type="button" class="tool-card" data-panel="clothingBuilderPanel">
+    <button type="button" class="tool-card" data-sec="projects" data-key="cutsew" data-poster="img/tools/cutsew.webp" data-made="Cut &amp; Sew" data-panel="clothingBuilderPanel">
       <span class="tool-art"><svg viewBox="0 0 320 180" xmlns="http://www.w3.org/2000/svg" aria-hidden="true" preserveAspectRatio="xMidYMid slice"><rect width="320" height="180" fill="#eef1f6"/><path d="M0 0V180" stroke="#cdd6e4" stroke-width="1.4"/><path d="M12 0V180" stroke="#cdd6e4" stroke-width="0.7"/><path d="M24 0V180" stroke="#cdd6e4" stroke-width="0.7"/><path d="M36 0V180" stroke="#cdd6e4" stroke-width="0.7"/><path d="M48 0V180" stroke="#cdd6e4" stroke-width="0.7"/><path d="M60 0V180" stroke="#cdd6e4" stroke-width="0.7"/><path d="M72 0V180" stroke="#cdd6e4" stroke-width="1.4"/><path d="M84 0V180" stroke="#cdd6e4" stroke-width="0.7"/><path d="M96 0V180" stroke="#cdd6e4" stroke-width="0.7"/><path d="M108 0V180" stroke="#cdd6e4" stroke-width="0.7"/><path d="M120 0V180" stroke="#cdd6e4" stroke-width="0.7"/><path d="M132 0V180" stroke="#cdd6e4" stroke-width="0.7"/><path d="M144 0V180" stroke="#cdd6e4" stroke-width="1.4"/><path d="M156 0V180" stroke="#cdd6e4" stroke-width="0.7"/><path d="M168 0V180" stroke="#cdd6e4" stroke-width="0.7"/><path d="M180 0V180" stroke="#cdd6e4" stroke-width="0.7"/><path d="M192 0V180" stroke="#cdd6e4" stroke-width="0.7"/><path d="M204 0V180" stroke="#cdd6e4" stroke-width="0.7"/><path d="M216 0V180" stroke="#cdd6e4" stroke-width="1.4"/><path d="M228 0V180" stroke="#cdd6e4" stroke-width="0.7"/><path d="M240 0V180" stroke="#cdd6e4" stroke-width="0.7"/><path d="M252 0V180" stroke="#cdd6e4" stroke-width="0.7"/><path d="M264 0V180" stroke="#cdd6e4" stroke-width="0.7"/><path d="M276 0V180" stroke="#cdd6e4" stroke-width="0.7"/><path d="M288 0V180" stroke="#cdd6e4" stroke-width="1.4"/><path d="M300 0V180" stroke="#cdd6e4" stroke-width="0.7"/><path d="M312 0V180" stroke="#cdd6e4" stroke-width="0.7"/><path d="M0 0H320" stroke="#cdd6e4" stroke-width="1.4"/><path d="M0 12H320" stroke="#cdd6e4" stroke-width="0.7"/><path d="M0 24H320" stroke="#cdd6e4" stroke-width="0.7"/><path d="M0 36H320" stroke="#cdd6e4" stroke-width="0.7"/><path d="M0 48H320" stroke="#cdd6e4" stroke-width="0.7"/><path d="M0 60H320" stroke="#cdd6e4" stroke-width="0.7"/><path d="M0 72H320" stroke="#cdd6e4" stroke-width="1.4"/><path d="M0 84H320" stroke="#cdd6e4" stroke-width="0.7"/><path d="M0 96H320" stroke="#cdd6e4" stroke-width="0.7"/><path d="M0 108H320" stroke="#cdd6e4" stroke-width="0.7"/><path d="M0 120H320" stroke="#cdd6e4" stroke-width="0.7"/><path d="M0 132H320" stroke="#cdd6e4" stroke-width="0.7"/><path d="M0 144H320" stroke="#cdd6e4" stroke-width="1.4"/><path d="M0 156H320" stroke="#cdd6e4" stroke-width="0.7"/><path d="M0 168H320" stroke="#cdd6e4" stroke-width="0.7"/><path d="M0 180H320" stroke="#cdd6e4" stroke-width="0.7"/><path d="M110 30 L140 22 Q160 38 180 22 L210 30 L238 62 L218 78 L204 66 L204 156 L116 156 L116 66 L102 78 L82 62 Z" fill="#fff" stroke="#1a1a1a" stroke-width="2.5" stroke-linejoin="round"/><path d="M110 30 L140 22 Q160 38 180 22 L210 30 L238 62 L218 78 L204 66 L204 156 L116 156 L116 66 L102 78 L82 62 Z" fill="none" stroke="#c8412f" stroke-width="1.8" stroke-dasharray="6 4" transform="translate(160 90) scale(.9) translate(-160 -90)"/><path d="M160 60V136M154 68l6-8 6 8M154 128l6 8 6-8" stroke="#2563eb" stroke-width="2.2" fill="none" stroke-linecap="round"/><text x="160" y="104" font-family="Courier New,monospace" font-size="8" font-weight="700" text-anchor="middle" fill="#1a1a1a" transform="rotate(-90 172 100)">FRONT  CUT 1</text><g transform="translate(250 128) rotate(-30)" stroke="#1a1a1a" stroke-width="2.5" fill="none"><circle cx="0" cy="0" r="8"/><circle cx="0" cy="22" r="8"/><path d="M6 5L40 18M6 17L40 4"/></g></svg></span>
       <span class="tool-body">
-        <span class="tool-name"><b>05</b>Cut &amp; Sew</span>
+        <span class="tool-name">Cut &amp; Sew</span>
         <span class="tool-desc">Your measurements or a piece you already own. Print the pattern life size, sew it, or send a full tech pack to a factory.</span>
         <span class="tool-foot"><span class="tool-get">You leave with: Pattern, tech pack, flats</span><span class="tool-open">Open</span></span>
-      </span>
-    </button>
-    <button type="button" class="tool-card" data-panel="phoneAnimPanel">
-      <span class="tool-art"><svg viewBox="0 0 320 180" xmlns="http://www.w3.org/2000/svg" aria-hidden="true" preserveAspectRatio="xMidYMid slice"><rect width="320" height="180" fill="#1a1a1a"/><g fill="#e9e6df"><rect x="62" y="34" width="52" height="92" rx="4" opacity=".25"/><rect x="92" y="30" width="52" height="92" rx="4" opacity=".5"/><rect x="122" y="26" width="52" height="92" rx="4" opacity=".75"/><rect x="152" y="22" width="52" height="92" rx="4"/></g><circle cx="224" cy="40" r="6" fill="#c8412f"/><text x="236" y="46" font-family="Courier New, monospace" font-size="16" font-weight="700" fill="#fff">REC</text><g fill="#fff" opacity=".35"><rect x="0" y="60" width="320" height="2"/><rect x="0" y="120" width="320" height="2"/><rect x="0" y="150" width="320" height="2"/></g></svg></span>
-      <span class="tool-body">
-        <span class="tool-name"><b>06</b>Animate + Edit</span>
-        <span class="tool-desc">Stop motion, a spinning billboard, or any video, run through a real tape deck. VHS camcorder, 8mm film, 90s digicam. Rewind and fast forward like the real thing.</span>
-        <span class="tool-foot"><span class="tool-get">You leave with: A video you can share</span><span class="tool-open">Open</span></span>
       </span>
     </button>
   </div>
@@ -211,24 +267,68 @@
   </div>
 </div>
 
-<!-- ===== PHONE ANIMATIONS (lives at nociv.co/phone-animations) ===== -->
+<!-- ===== ANIMATE + EDIT, STOP MOTION, VHS (one codebase at nociv.co/phone-animations, chosen by ?m=) ===== -->
 <div class="subpanel" id="phoneAnimPanel">
   <div class="wrap">
     <span class="hub-back" data-back="buildHub">&larr; Back to The Build</span>
     <div class="build-header">
       <div>
-        <h2 style="margin: 0 0 4px; font-size: 1.3rem; letter-spacing: 0.05em;">PHONE ANIMATIONS</h2>
-        <p>Stop motion, a spinning billboard and a VHS tape deck. Make it, save a video.</p>
+        <h2 style="margin: 0 0 4px; font-size: 1.3rem; letter-spacing: 0.05em;">ANIMATE + EDIT</h2>
+        <p>Build an avatar that walks, sings and dances, or spin your photos on a billboard sign.</p>
       </div>
-      <a href="phone-animations/" target="_blank" rel="noopener" class="fullscreen-btn">
+      <a href="phone-animations/?m=avatar" target="_blank" rel="noopener" class="fullscreen-btn">
         Full screen &#10530;
       </a>
     </div>
 
     <iframe
-      data-src="phone-animations/"
+      data-src="phone-animations/?m=avatar"
       class="builder-iframe"
       title="NOCIV Animate + Edit"
+      allow="web-share; fullscreen; camera">
+    </iframe>
+  </div>
+</div>
+
+<div class="subpanel" id="stopMotionPanel">
+  <div class="wrap">
+    <span class="hub-back" data-back="buildHub">&larr; Back to The Build</span>
+    <div class="build-header">
+      <div>
+        <h2 style="margin: 0 0 4px; font-size: 1.3rem; letter-spacing: 0.05em;">STOP MOTION</h2>
+        <p>Shoot frames, play them back as a loop, save a video.</p>
+      </div>
+      <a href="phone-animations/?m=stop" target="_blank" rel="noopener" class="fullscreen-btn">
+        Full screen &#10530;
+      </a>
+    </div>
+
+    <iframe
+      data-src="phone-animations/?m=stop"
+      class="builder-iframe"
+      title="NOCIV Stop Motion"
+      allow="web-share; fullscreen; camera">
+    </iframe>
+  </div>
+</div>
+
+<div class="subpanel" id="vhsPanel">
+  <div class="wrap">
+    <span class="hub-back" data-back="buildHub">&larr; Back to The Build</span>
+    <div class="build-header">
+      <div>
+        <h2 style="margin: 0 0 4px; font-size: 1.3rem; letter-spacing: 0.05em;">VHS</h2>
+        <p>Run any video through a real tape deck. Rewind, fast forward, pause, record.</p>
+      </div>
+      <a href="phone-animations/?m=vhs" target="_blank" rel="noopener" class="fullscreen-btn">
+        Full screen &#10530;
+      </a>
+    </div>
+
+    <iframe
+      data-src="phone-animations/?m=vhs"
+      class="builder-iframe"
+      title="NOCIV VHS"
       allow="web-share; fullscreen; camera">
     </iframe>
   </div>
@@ -260,53 +360,52 @@
 <footer class="nociv-footer">NOCIV.CO: Nothing Of Civilization</footer>
 
 <script>
-  // ===== THE BUILD HUB: pick a tool by reading its description first =====
+  // ===== THE BUILD: binder tabs pick a section, numbers pick a tool, the big picture is real work made with it =====
   const hubWrap = document.getElementById('buildWrap');
-  document.querySelectorAll('#buildHub .tool-card').forEach(card => {
-    card.addEventListener('click', () => {
-      hubWrap.style.display = 'none';
-      document.querySelectorAll('.subpanel').forEach(p => p.classList.remove('show'));
-      const pnl = document.getElementById(card.dataset.panel); pnl.classList.add('show');
-      pnl.querySelectorAll('iframe[data-src]').forEach(f => { f.src = f.dataset.src; f.removeAttribute('data-src'); });
-      window.scrollTo({ top: 0, behavior: 'smooth' });
-    });
-  });
-
-  // ===== FLIP THROUGH THE TOOLS: arrows, swipe, numbered tabs. Cards stay as they are. =====
+  function openPanel(id) {
+    hubWrap.style.display = 'none';
+    document.querySelectorAll('.subpanel').forEach(p => p.classList.remove('show'));
+    const pnl = document.getElementById(id); pnl.classList.add('show');
+    pnl.querySelectorAll('iframe[data-src]').forEach(f => { f.src = f.dataset.src; f.removeAttribute('data-src'); });
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  }
   (function () {
-    const grid = document.getElementById('buildHub'), cards = [...grid.querySelectorAll('.tool-card')]; if (!cards.length) return;
-    const wrap = document.createElement('div'); wrap.className = 'flip-wrap'; grid.parentNode.insertBefore(wrap, grid); wrap.appendChild(grid); grid.classList.add('flip');
-    const tabs = document.createElement('div'); tabs.className = 'flip-tabs'; wrap.after(tabs);
-    const pvBox = document.createElement('div'); pvBox.className = 'flip-preview'; pvBox.hidden = true; pvBox.innerHTML = '<span>PREVIEW</span>'; tabs.after(pvBox);
-    const hint = document.createElement('p'); hint.className = 'flip-hint'; hint.textContent = 'Swipe the card, or tap a number. Tap the card to open it.'; pvBox.after(hint);
-    let cur = 0; try { cur = Math.min(cards.length - 1, Math.max(0, +sessionStorage.getItem('toolIdx') || 0)); } catch (e) {}
-    // a screen recording for a tool: add data-preview="path.mp4" on its card and it plays under the numbers when that number is picked
-    function preview(card) {
-      const old = pvBox.querySelector('video'); if (old) old.remove(); const src = card.dataset.preview; pvBox.hidden = !src; if (!src) return;
-      const v = document.createElement('video'); v.src = src; v.muted = true; v.loop = true; v.playsInline = true; v.setAttribute('playsinline', ''); v.autoplay = true; pvBox.appendChild(v); v.play().catch(() => {});
+    const SECS = [
+      { id: 'paper', name: 'Paper', color: '#cfe59a', ci: '#1a1a1a', icon: '<path d="M6 3h8l4 4v14H6z"/><path d="M14 3v4h4"/><path d="M9 12h6M9 16h6"/>' },
+      { id: 'digital', name: 'Digital', color: '#e8701a', ci: '#1a1a1a', icon: '<rect x="3" y="7" width="12" height="10" rx="2"/><path d="M15 11l6-3v8l-6-3z"/>' },
+      { id: 'projects', name: 'Projects', color: '#3d4a26', ci: '#f2ecd6', icon: '<path d="M4 20V4l16 16z"/><path d="M4 14h3M4 9h2M10 20v-3M15 20v-2"/>' }
+    ];
+    const ORDER = { paper: ['zine', 'cards', 'qr'], digital: ['animate', 'stop', 'vhs'], projects: ['stencil', 'cutsew'] };
+    const el = id => document.getElementById(id), data = {};
+    document.querySelectorAll('#toolData .tool-card').forEach(c => { data[c.dataset.key] = { key: c.dataset.key, sec: c.dataset.sec, panel: c.dataset.panel, poster: c.dataset.poster, made: c.dataset.made, art: c.querySelector('.tool-art').innerHTML, name: c.querySelector('.tool-name').textContent.trim(), desc: c.querySelector('.tool-desc').textContent.trim(), get: c.querySelector('.tool-get').textContent.trim() }; });
+    let sec = 0, idx = 0;
+    try { sec = Math.min(SECS.length - 1, Math.max(0, +sessionStorage.getItem('toolSec') || 0)); idx = Math.max(0, +sessionStorage.getItem('toolIdx') || 0); } catch (e) {}
+    const tabs = el('bTabs'), nums = el('bNums');
+    SECS.forEach((S, i) => { const b = document.createElement('button'); b.type = 'button'; b.setAttribute('role', 'tab'); b.setAttribute('aria-label', S.name); b.style.setProperty('--c', S.color); b.style.setProperty('--ci', S.ci); b.innerHTML = '<svg viewBox="0 0 24 24" aria-hidden="true">' + S.icon + '</svg>'; b.addEventListener('click', () => { show(i, 0, i > sec ? 1 : -1); }); tabs.appendChild(b); });
+    function cur() { return data[ORDER[SECS[sec].id][idx]]; }
+    function show(si, ti, dir) {
+      sec = si; const list = ORDER[SECS[sec].id]; idx = Math.min(list.length - 1, Math.max(0, ti)); const T = cur(), S = SECS[sec];
+      tabs.querySelectorAll('button').forEach((b, k) => b.setAttribute('aria-selected', k === sec ? 'true' : 'false'));
+      nums.innerHTML = ''; list.forEach((k, i) => { const b = document.createElement('button'); b.type = 'button'; b.setAttribute('role', 'tab'); b.setAttribute('aria-label', data[k].name); b.setAttribute('aria-selected', i === idx ? 'true' : 'false'); b.textContent = i + 1; b.addEventListener('click', () => show(sec, i, i > idx ? 1 : -1)); nums.appendChild(b); });
+      el('bSec').textContent = S.name; el('bTool').textContent = T.name; el('bCard').innerHTML = T.art; el('bCap').textContent = T.get; el('bDesc').textContent = T.desc;
+      el('bMade').innerHTML = T.made; const img = el('bPoster'); img.alt = 'A finished piece made with ' + T.name; img.src = T.poster;
+      if (dir) ['bCard', 'bBubble', 'bPoster'].forEach(id => { const n = el(id); n.style.setProperty('--from', (dir > 0 ? 16 : -16) + 'px'); n.classList.remove('b-swap'); void n.offsetWidth; n.classList.add('b-swap'); });
+      try { sessionStorage.setItem('toolSec', sec); sessionStorage.setItem('toolIdx', idx); } catch (e) {}
     }
-    function show(i, dir) {
-      i = (i + cards.length) % cards.length; cards.forEach((c, k) => { c.classList.toggle('on', k === i); }); preview(cards[i]);
-      if (dir) cards[i].style.setProperty('--from', (dir > 0 ? 28 : -28) + 'px');
-      tabs.querySelectorAll('button').forEach((b, k) => b.setAttribute('aria-pressed', k === i ? 'true' : 'false')); cur = i;
-      try { sessionStorage.setItem('toolIdx', i); } catch (e) {}
-    }
-    cards.forEach((c, i) => { const b = document.createElement('button'); b.type = 'button'; b.textContent = i + 1; b.setAttribute('aria-label', 'Tool ' + (i + 1)); b.addEventListener('click', () => show(i, i > cur ? 1 : -1)); tabs.appendChild(b); });
-    let x0 = null, y0 = 0, swiped = false;
-    grid.addEventListener('touchstart', e => { x0 = e.touches[0].clientX; y0 = e.touches[0].clientY; swiped = false; }, { passive: true });
-    grid.addEventListener('touchend', e => { if (x0 === null) return; const dx = e.changedTouches[0].clientX - x0, dy = e.changedTouches[0].clientY - y0; x0 = null; if (Math.abs(dx) > 50 && Math.abs(dx) > Math.abs(dy) * 1.5) { swiped = true; show(cur + (dx < 0 ? 1 : -1), dx < 0 ? 1 : -1); } }, { passive: true });
-    grid.addEventListener('click', e => { if (swiped) { e.stopImmediatePropagation(); e.preventDefault(); swiped = false; } }, true);
-    document.addEventListener('keydown', e => { if (hubWrap.style.display === 'none' || /INPUT|TEXTAREA|SELECT/.test((e.target || {}).tagName || '')) return; if (e.key === 'ArrowLeft') show(cur - 1, -1); else if (e.key === 'ArrowRight') show(cur + 1, 1); });
-    show(cur);
-    // a deep link like #animate should land on that tool's number when you come back to the hub
-    cards.forEach((c, i) => c.addEventListener('click', () => { cur = i; try { sessionStorage.setItem('toolIdx', i); } catch (er) {} }));
+    el('bOpen').addEventListener('click', () => openPanel(cur().panel));
+    el('bCard').addEventListener('click', () => { if (!swiped) openPanel(cur().panel); swiped = false; });
+    // swipe the card left or right to move through the tools in this section
+    let x0 = null, y0 = 0, swiped = false; const card = el('bCard');
+    card.addEventListener('touchstart', e => { x0 = e.touches[0].clientX; y0 = e.touches[0].clientY; swiped = false; }, { passive: true });
+    card.addEventListener('touchend', e => { if (x0 === null) return; const dx = e.changedTouches[0].clientX - x0, dy = e.changedTouches[0].clientY - y0; x0 = null; if (Math.abs(dx) > 50 && Math.abs(dx) > Math.abs(dy) * 1.5) { swiped = true; const n = ORDER[SECS[sec].id].length, ni = (idx + (dx < 0 ? 1 : -1) + n) % n; show(sec, ni, dx < 0 ? 1 : -1); } }, { passive: true });
+    document.addEventListener('keydown', e => { if (hubWrap.style.display === 'none' || /INPUT|TEXTAREA|SELECT/.test((e.target || {}).tagName || '')) return; const n = ORDER[SECS[sec].id].length; if (e.key === 'ArrowLeft') show(sec, (idx - 1 + n) % n, -1); else if (e.key === 'ArrowRight') show(sec, (idx + 1) % n, 1); });
+    show(sec, idx);
+    window.__goTool = function (key) { for (let i = 0; i < SECS.length; i++) { const k = ORDER[SECS[i].id].indexOf(key); if (k >= 0) { show(i, k); return data[key].panel; } } return null; };
   })();
   // Deep links: creator-tools.html#cards opens Cards + Flyers, and so on.
   (function () {
-    const HASH = { '#zine': 'zineBuilderPanel', '#cutsew': 'clothingBuilderPanel', '#cards': 'cardBuilderPanel', '#qr': 'qrBuilderPanel', '#stencil': 'stencilBuilderPanel', '#animate': 'phoneAnimPanel' };
-    const id = HASH[location.hash];
-    const card = id && document.querySelector('#buildHub [data-panel="' + id + '"]');
-    if (card) card.click();
+    const HASH = { '#zine': 'zine', '#cutsew': 'cutsew', '#cards': 'cards', '#qr': 'qr', '#stencil': 'stencil', '#animate': 'animate', '#stop': 'stop', '#vhs': 'vhs' };
+    const key = HASH[location.hash]; if (!key) return; const id = window.__goTool(key); if (id) openPanel(id);
   })();
   // ===== Full screen in place: same frame, same work, just bigger =====
   document.querySelectorAll('.fullscreen-btn').forEach(btn => {

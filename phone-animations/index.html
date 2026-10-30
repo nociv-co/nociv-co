@@ -137,7 +137,7 @@
   .mode-desc { text-align: center; margin: 6px 4px 12px !important; font-size: 0.9rem !important; line-height: 1.4; min-height: 3.9em; }
   .go { display: block; width: 100%; border: 2.5px solid var(--ink); background: var(--red); color: #fff; border-radius: 14px; padding: 14px; font-weight: 900; font-size: 1.15rem; letter-spacing: 0.08em; box-shadow: 0 3px 0 var(--ink); }
   .go:active { transform: translateY(3px); box-shadow: none; }
-  .mtabs { display: grid; grid-template-columns: repeat(4, 1fr); gap: 7px; margin: 18px 0 16px; }
+  .mtabs { display: grid; grid-template-columns: repeat(auto-fit, minmax(60px, 1fr)); gap: 7px; margin: 18px 0 16px; }
   .mtabs button { border: 2px solid var(--ink); background: #fff; border-radius: 12px; padding: 8px 2px; font-weight: 900; font-size: 0.72rem; letter-spacing: 0.05em; display: flex; flex-direction: column; align-items: center; gap: 2px; }
   .mtabs button i { font-style: normal; font-size: 1.05rem; }
   .mtabs button[aria-pressed="true"] { background: var(--ink); color: #fff; }
@@ -829,8 +829,8 @@
     renderEra(); if (kind === 'char') openCharCreator(); showPanel(kind === 'clip' ? 'clip' : kind === 'board' ? 'bphotos' : kind === 'char' ? 'create' : 'shoot'); updateDeckEnabled(); if (kind === 'board') { refreshBoardUI(); syncFaceControls(); }
   }
   function goHome() { setDeck('pause'); if (deck.recording) stopRec(); stopCam(); st.kind = null; $('app').classList.remove('is-char', 'is-create'); $('app').classList.add('hide'); $('start').classList.remove('hide'); updateKeep(); }
-  function updateKeep() { const has = st.frames.length > 0; $('pickKeep').classList.toggle('hide', !has); $('keepInfo').textContent = has ? st.frames.length + ' frames saved on this phone. Pick up where you left off.' : ''; }
-  $('pickKeep').addEventListener('click', () => { startKind('stop'); setCam(false); });
+  function updateKeep() { if (!$('pickKeep')) return; const has = st.frames.length > 0; $('pickKeep').classList.toggle('hide', !has); $('keepInfo').textContent = has ? st.frames.length + ' frames saved on this phone. Pick up where you left off.' : ''; }
+  if ($('pickKeep')) $('pickKeep').addEventListener('click', () => { startKind('stop'); setCam(false); });
   $('homeBtn').addEventListener('click', goHome);
 
   // ===================== VIDEO IN =====================
@@ -1730,6 +1730,18 @@
     { key: 'clip', name: 'VHS BUILDER', tab: 'VHS', desc: 'Pick a video from your camera roll. Rewind, fast forward and pause it like a real camcorder tape, then record it.' },
     { key: 'board', name: 'BILLBOARD', tab: 'SIGN', desc: 'Put 2 to 5 photos on a spinning trivision sign. Add words like a real ad. Pick the scene behind it.' },
   ];
+  // three apps share this file: ?m=avatar (Animate + Edit), ?m=stop (Stop Motion), ?m=vhs (VHS). No parameter shows everything.
+  const APPS = { avatar: { t: ['ANIMATE', '+ EDIT'], keys: ['char', 'board'] }, stop: { t: ['STOP', 'MOTION'], keys: ['stop'] }, vhs: { t: ['VHS', ''], keys: ['clip'] } };
+  const APP = APPS[new URLSearchParams(location.search).get('m')] || null;
+  if (APP) {
+    for (let k = MODES.length - 1; k >= 0; k--) if (APP.keys.indexOf(MODES[k].key) < 0) MODES.splice(k, 1);
+    const nm = APP.t.join(' ').replace(' +', ' +').trim();
+    document.title = nm + ': NOCIV.CO';
+    $('start').querySelector('h1').innerHTML = '<span>' + APP.t[0] + '</span>' + (APP.t[1] ? ' ' + APP.t[1] : '');
+    document.querySelector('.hdr .ttl').innerHTML = '<span>' + APP.t[0] + '</span>' + (APP.t[1] ? ' ' + APP.t[1] : '');
+    if (MODES.length === 1) $('modeTabs').classList.add('hide');
+    if (APP.keys.indexOf('stop') < 0) { const pk = $('pickKeep'); pk.remove(); }
+  }
   let mi = 0;
   function showMode(i) {
     mi = (i + MODES.length) % MODES.length; const m = MODES[mi];
