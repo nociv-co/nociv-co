@@ -391,7 +391,7 @@ function drawProp(g, S, P, o) {
   else if (k === 'scissors') { ctx.rotate(R(-90) - a * 0 + 0); paint(rr(-2, -3, 20, 6, 3), '#c8412f', { sh: 3 }); const b = new Path2D(); b.moveTo(18, -2); b.lineTo(54, -10); b.lineTo(18, 2); b.closePath(); paint(b, '#d9d9d9', { sh: 2 }); const b2 = new Path2D(); b2.moveTo(18, 2); b2.lineTo(54, 10); b2.lineTo(18, -2); b2.closePath(); paint(b2, '#bdbdbd', { sh: 2 }); }
   ctx.restore();
 }
-window.CH = { drawChar, poseAt, POSES, OPTS, TYPES, DEF, SKINS, HAIRC, CLR, EYEC, BODIES, mix };
+window.CH = { ready: () => ATL_OK && FIL_OK, drawChar, poseAt, POSES, OPTS, TYPES, DEF, SKINS, HAIRC, CLR, EYEC, BODIES, mix };
 })();
 (function () {
 'use strict';
@@ -574,10 +574,11 @@ function showBases() {
   card.appendChild(g); $('modal').classList.add('on');
 }
 $('modal').addEventListener('click', e => { if (e.target === $('modal')) $('modal').classList.remove('on'); });
-window.__ch = { S: () => S, makeGifBytes, lzw, renderTo, setS: o => { Object.assign(S, o); save(); build(); tag(); }, setTab: k => { tab = k; build(); } };
+function stopFrames(w, h, n, pose, noBgOverride) { const old = S.pose; if (pose && CH.POSES[pose]) S.pose = pose; const T = (CH.POSES[S.pose] || CH.POSES.idle).T, out = []; for (let i = 0; i < n; i++) { const c = mk(w, h); renderTo(c, T * i / n, {}); out.push(c); } S.pose = old; return out; }
+window.__ch = { frames: stopFrames, poses: () => Object.keys(CH.POSES), S: () => S, makeGifBytes, lzw, renderTo, setS: o => { Object.assign(S, o); save(); build(); tag(); }, setTab: k => { tab = k; build(); } };
 build(); tag(); requestAnimationFrame(frame);
 window.__atlasReady = () => { try { refreshThumbs(); } catch (e) {} }; setTimeout(window.__atlasReady, 250);
-setTimeout(() => { try { if (!localStorage.getItem(KEY)) showBases(); } catch (e) {} }, 350);
+setTimeout(() => { try { if (!/embed=1/.test(location.search) && !localStorage.getItem(KEY)) showBases(); } catch (e) {} }, 350);
 })();
 </script>
 </body>
