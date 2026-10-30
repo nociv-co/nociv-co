@@ -106,7 +106,7 @@ function cap(x0, y0, x1, y1, w0, w1) {
 function star(cx, cy, r, n) { const p = new Path2D(); for (let i = 0; i < n * 2; i++) { const a = -Math.PI / 2 + i * Math.PI / n, rr_ = i % 2 ? r * .45 : r; i ? p.lineTo(cx + Math.cos(a) * rr_, cy + Math.sin(a) * rr_) : p.moveTo(cx + Math.cos(a) * rr_, cy + Math.sin(a) * rr_); } p.closePath(); return p; }
 
 // ---------- data ----------
-const BODIES = { slim: { sw: 30, hw: 22, arm: 10.5, leg: 14, neck: 9 }, mid: { sw: 36, hw: 27, arm: 13, leg: 18, neck: 11 }, broad: { sw: 45, hw: 34, arm: 16.5, leg: 23, neck: 14 } };
+const BODIES = { slim: { sw: 30, hw: 22, arm: 10.5, leg: 14, neck: 9, wst: 28 }, mid: { sw: 36, hw: 27, arm: 13, leg: 18, neck: 11, wst: 34 }, broad: { sw: 45, hw: 34, arm: 16.5, leg: 23, neck: 14, wst: 42 }, curvy: { sw: 33, hw: 35, arm: 12, leg: 20, neck: 9.5, wst: 23 }, athletic: { sw: 45, hw: 26, arm: 15, leg: 17, neck: 13, wst: 31 }, round: { sw: 38, hw: 37, arm: 14.5, leg: 21, neck: 12, wst: 41 } };
 const SKINS = ['#f6d3b5', '#e8b98f', '#d9a273', '#c08552', '#a06a3f', '#7d4e2d', '#5a3520', '#3b2316'];
 const HAIRC = ['#1a1a1a', '#3a2616', '#6b4423', '#d8b25a', '#a8422a', '#9a9a9a', '#f2ecd6', '#2f5d9e', '#e46fa6', '#4a8a52'];
 const CLR = ['#1a1a1a', '#f2ecd6', '#c8412f', '#f2c230', '#d6dccf', '#8a6a4a', '#ffffff', '#2f5d9e', '#e3a3a0', '#3d4a26', '#8a8a8a', '#6a4c93'];
@@ -114,7 +114,7 @@ const EYEC = ['#1a1a1a', '#4a2e1a', '#7a5a2a', '#3f6b4a', '#2f5d9e', '#8a8a8a'];
 const OPTS = {
   head: ['round', 'square', 'long'], eyes: ['round', 'almond', 'sleepy', 'wide', 'sharp', 'dot'], brow: ['flat', 'arch', 'angry', 'soft', 'none'], nose: ['line', 'round', 'wide'], mouth: ['smile', 'flat', 'smirk', 'open', 'shout'],
   beard: ['none', 'stubble', 'mustache', 'goatee', 'beard'], glasses: ['none', 'round', 'aviator', 'square', 'shades'],
-  hair: ['bald', 'buzz', 'fade', 'afro', 'curls', 'mohawk', 'locs', 'long', 'bun', 'puffs'], hat: ['none', 'cap', 'beanie', 'bucket', 'phones', 'bandana'],
+  hair: ['bald', 'buzz', 'fade', 'highfade', 'waves', 'coily', 'afro', 'puff', 'curls', 'cornrows', 'fulani', 'braidbun', 'boxbraids', 'bobbraids', 'twists', 'locs', 'shortlocs', 'locbun', 'bantu', 'puffs', 'mohawk', 'long', 'bun'], hat: ['none', 'cap', 'beanie', 'bucket', 'phones', 'bandana'],
   top: ['tee', 'hoodie', 'jacket', 'tank', 'vest', 'apron'], bottom: ['jeans', 'joggers', 'cargo', 'shorts', 'skirt', 'slacks'], shoes: ['sneaker', 'skate', 'boot', 'hightop'],
   prop: ['none', 'spray', 'brush', 'record', 'camera', 'clipboard', 'frame', 'board', 'mic', 'scissors'],
   pose: ['idle', 'wave', 'walk', 'dance', 'hype', 'spray', 'scratch', 'point', 'ollie']
@@ -125,7 +125,7 @@ const TYPES = {
   curator: { name: 'Curator', top: 'vest', topC: '#3d4a26', bottom: 'slacks', botC: '#1a1a1a', shoes: 'boot', shoeC: '#8a6a4a', hat: 'none', hatC: '#1a1a1a', prop: 'clipboard', pose: 'point', chain: false, lanyard: true, scarf: false, glasses: 'round' },
   skater: { name: 'Skater', top: 'tee', topC: '#f2c230', bottom: 'jeans', botC: '#2f5d9e', shoes: 'skate', shoeC: '#f2ecd6', hat: 'cap', hatC: '#c8412f', prop: 'board', pose: 'ollie', chain: false, lanyard: false, scarf: false, glasses: 'none' }
 };
-const DEF = Object.assign({ type: 'artist', body: 'mid', skin: '#c08552', head: 'round', eyes: 'round', eyeC: '#1a1a1a', brow: 'flat', nose: 'line', mouth: 'smile', beard: 'none', hair: 'curls', hairC: '#1a1a1a', earrings: false, bg: 'sage', grit: true }, TYPES.artist);
+const DEF = Object.assign({ type: 'artist', body: 'mid', skin: '#c08552', head: 'round', eyes: 'round', eyeC: '#1a1a1a', brow: 'flat', nose: 'line', mouth: 'smile', beard: 'none', hair: 'coily', hairC: '#1a1a1a', earrings: false, lashes: false, lipC: '', bg: 'sage', grit: true }, TYPES.artist);
 
 // ---------- poses: every pose loops in T seconds ----------
 const POSES = {
@@ -219,7 +219,7 @@ function drawArm(g, side, B, S, skin) {
 function torsoPath(B, ex, hem, sc) {
   const sw = B.sw + ex, hw = B.hw + ex, s = sc || 1, p = new Path2D();
   p.moveTo(-sw * s, -66); p.quadraticCurveTo(-sw * s, -80, -sw * .5 * s, -82); p.quadraticCurveTo(0, -87, sw * .5 * s, -82); p.quadraticCurveTo(sw * s, -80, sw * s, -66);
-  p.quadraticCurveTo(sw * .95, -30, hw + ex * .3, hem); p.lineTo(-hw - ex * .3, hem); p.quadraticCurveTo(-sw * .95, -30, -sw * s, -66); p.closePath(); return p;
+  p.quadraticCurveTo(B.wst + ex, -30, hw + ex * .3, hem); p.lineTo(-hw - ex * .3, hem); p.quadraticCurveTo(-B.wst - ex, -30, -sw * s, -66); p.closePath(); return p;
 }
 function drawTorso(S, B, skin) {
   const t = S.top, c = S.topC; paint(torsoPath(B, 0, 6), skin);
@@ -257,14 +257,56 @@ function hairCap(S, vol, line, flat) {
   p.moveTo(-hw - 2, -4); p.bezierCurveTo(-hw - 4 - vol * .4, -40 - vol * .5, -t, -52 - vol, 0, -52 - vol); p.bezierCurveTo(t, -52 - vol, hw + 4 + vol * .4, -40 - vol * .5, hw + 2, -4);
   p.bezierCurveTo(hw * .9, -14, hw * .5, line - 2, 0, line); p.bezierCurveTo(-hw * .5, line - 2, -hw * .9, -14, -hw - 2, -4); p.closePath(); return p;
 }
+
+function strand(x0, y0, x1, y1, w, hc, o) {
+  o = o || {}; paint(cap(x0, y0, x1, y1, w, w * .92), hc, { sh: 3 });
+  const L = Math.hypot(x1 - x0, y1 - y0), n = Math.floor(L / (o.step || 7)), dx = (x1 - x0) / L, dy = (y1 - y0) / L, lc = o.lc || mix(hc, '#ffffff', .28);
+  for (let i = 1; i < n; i++) { const t = i / n, cx = x0 + (x1 - x0) * t, cy = y0 + (y1 - y0) * t, k = o.kind === 'twist' ? (i % 2 ? 1 : -1) : 0; if (o.kind === 'twist') line([[cx - dy * w * .7 + dx * 2 * k, cy + dx * w * .7 + dy * 2 * k], [cx + dy * w * .7 - dx * 2 * k, cy - dx * w * .7 - dy * 2 * k]], 1.6, lc); else if (o.kind === 'plait') { line([[cx - w * .7, cy - 2], [cx, cy + 2], [cx + w * .7, cy - 2]], 1.5, lc); } }
+  if (o.curl) paint(ell(x1, y1 + w * .4, w * 1.25, w * 1.25), hc, { sh: 2, lw: 3 });
+  if (o.bead) { ctx.fillStyle = '#f2c230'; ctx.strokeStyle = INK; ctx.lineWidth = 1.6; ctx.beginPath(); ctx.arc(x1, y1 + w * .4, w * .7, 0, TAU); ctx.fill(); ctx.stroke(); }
+}
+function sides(S, hc, n, len, w, o) {
+  const hw = (HEADS[S.head] || HEADS.round).hw; [-1, 1].forEach(sd => { for (let i = 0; i < n; i++) { const x = sd * (hw - 3 - i * (hw * 1.05 / n)), x2 = sd * (hw + 8 - i * (hw * 0.7 / n)), l = len - (i % 2) * 10; strand(x, -12 + i * 2, x2, l, w, hc, o); } });
+}
+function scalp(S, fn) { ctx.save(); ctx.clip(hairCap(S, 3, -27)); fn(); ctx.restore(); }
 function drawHairBack(S, B, P) {
-  const hc = S.hairC, hw = (HEADS[S.head] || HEADS.round).hw; if (S.hat === 'bandana' && false) return;
+  const hc = S.hairC, hw = (HEADS[S.head] || HEADS.round).hw, st = S.hair;
   ctx.save(); ctx.translate(0, -134 + (P.hy || 0)); ctx.rotate(R(P.head || 0));
-  if (S.hair === 'afro') paint(ell(0, -16, hw + 24, 66), hc, { sh: 8 });
-  else if (S.hair === 'long') { const p = new Path2D(); p.moveTo(-hw - 5, -6); p.bezierCurveTo(-hw - 12, 30, -hw - 14, 60, -hw + 2, 78); p.lineTo(hw - 2, 78); p.bezierCurveTo(hw + 14, 60, hw + 12, 30, hw + 5, -6); p.closePath(); paint(p, hc); }
-  else if (S.hair === 'locs') { [-1, 1].forEach(sd => [0, 1, 2, 3].forEach(i => { const x = sd * (hw - 2 - i * 11), x2 = sd * (hw + 6 - i * 7 + 2), len = 78 + (i % 2) * 14 - i * 2; paint(cap(x, -10 + i * 3, x2, len, 6, 5.4), hc, { sh: 3 }); })); }
-  else if (S.hair === 'puffs') { [-1, 1].forEach(sd => paint(ell(sd * 36, -60, 21, 21), hc, { sh: 6 })); }
+  if (st === 'afro') paint(ell(0, -16, hw + 24, 66), hc, { sh: 8 });
+  else if (st === 'long') { const p = new Path2D(); p.moveTo(-hw - 5, -6); p.bezierCurveTo(-hw - 12, 30, -hw - 14, 60, -hw + 2, 78); p.lineTo(hw - 2, 78); p.bezierCurveTo(hw + 14, 60, hw + 12, 30, hw + 5, -6); p.closePath(); paint(p, hc); }
+  else if (st === 'locs') sides(S, hc, 4, 82, 5.6, { step: 99 });
+  else if (st === 'boxbraids') sides(S, hc, 5, 112, 4.2, { kind: 'plait', step: 6 });
+  else if (st === 'bobbraids') sides(S, hc, 5, 62, 4.2, { kind: 'plait', step: 6, curl: true });
+  else if (st === 'twists') sides(S, hc, 4, 74, 6, { kind: 'twist', step: 5 });
+  else if (st === 'shortlocs') sides(S, hc, 3, 30, 5.4, { step: 99 });
+  else if (st === 'fulani') sides(S, hc, 2, 96, 4.4, { kind: 'plait', step: 6, bead: true });
   ctx.restore();
+}
+function drawHairFront(S, H) {
+  const hc = S.hairC, st = S.hair, hw = H.hw, lt3 = mix(hc, '#ffffff', .3), sk = dk(S.skin, .1); if (st === 'bald') return;
+  const sideFade = () => { ctx.save(); ctx.clip(hairCap(S, 14, -31, true)); ctx.fillStyle = mix(hc, S.skin, .55); ctx.fillRect(-hw - 6, -34, 17, 44); ctx.fillRect(hw - 11, -34, 17, 44); ctx.restore(); };
+  if (st === 'buzz') paint(hairCap(S, 2.5, -27), hc, { sh: 3 });
+  else if (st === 'fade') { paint(hairCap(S, 10, -31, true), hc); sideFade(); }
+  else if (st === 'highfade') { paint(hairCap(S, 20, -33, true), hc); sideFade(); line([[-24, -64], [-24, -48]], 1.5, lt3); line([[0, -70], [0, -50]], 1.5, lt3); line([[24, -64], [24, -48]], 1.5, lt3); }
+  else if (st === 'waves') { paint(hairCap(S, 3, -27), hc, { sh: 3 }); scalp(S, () => { for (let r = 14; r < 62; r += 7) { ctx.beginPath(); ctx.ellipse(0, -16, r * .98, r * .88, 0, Math.PI, TAU); ctx.lineWidth = 1.4; ctx.strokeStyle = lt3; ctx.stroke(); } }); }
+  else if (st === 'coily') { for (let i = 0; i < 13; i++) { const a = Math.PI + i / 12 * Math.PI; paint(ell(Math.cos(a) * (hw + 2), -10 + Math.sin(a) * 52, 8.5, 8.5), hc, { sh: 2, lw: 3 }); } for (let i = 0; i < 9; i++) { const a = Math.PI + (i + .5) / 9 * Math.PI; paint(ell(Math.cos(a) * (hw - 12), -16 + Math.sin(a) * 40, 8, 8), hc, { sh: 2, lw: 3 }); } paint(hairCap(S, 4, -29), hc, { sh: 3, no: 1 }); ctx.save(); ctx.clip(hairCap(S, 4, -29)); ctx.fillStyle = mix(hc, S.skin, .5); ctx.fillRect(-hw - 6, -26, 14, 30); ctx.fillRect(hw - 8, -26, 14, 30); ctx.restore(); }
+  else if (st === 'afro') paint(hairCap(S, 2, -29), hc, { sh: 4 });
+  else if (st === 'puff') { paint(ell(0, -74, 30, 24), hc, { sh: 5 }); paint(hairCap(S, 3, -28), hc, { sh: 3 }); paint(rr(-17, -62, 34, 8, 3), '#c8412f', { ns: 1, lw: 2.4 }); }
+  else if (st === 'curls') { for (let i = 0; i < 9; i++) { const a = Math.PI + (i / 8) * Math.PI, x = Math.cos(a) * (hw + 6), y = -8 + Math.sin(a) * 54; paint(ell(x, y, 15, 15), hc, { sh: 4 }); } paint(hairCap(S, 6, -29), hc, { sh: 4 }); }
+  else if (st === 'cornrows' || st === 'fulani' || st === 'braidbun') {
+    paint(hairCap(S, 3, -26), hc, { sh: 3 });
+    scalp(S, () => { for (let i = 0; i < 8; i++) { const x = -37 + i * 10.6; ctx.beginPath(); ctx.moveTo(x * 1.04, -24); ctx.quadraticCurveTo(x * .9, -46, x * .46, -58); ctx.lineWidth = 3.4; ctx.strokeStyle = lt3; ctx.stroke(); } for (let i = 0; i < 7; i++) { const x = -32 + i * 10.6; ctx.beginPath(); ctx.moveTo(x * 1.04, -24); ctx.quadraticCurveTo(x * .9, -46, x * .46, -58); ctx.lineWidth = 1.6; ctx.strokeStyle = sk; ctx.stroke(); } });
+    if (st === 'braidbun') { paint(ell(0, -68, 17, 16), hc, { sh: 4 }); for (let i = -1; i <= 1; i++) line([[i * 6 - 3, -78], [i * 6 + 3, -58]], 1.6, lt3); }
+  }
+  else if (st === 'boxbraids' || st === 'bobbraids') { paint(hairCap(S, 9, -31), hc, { sh: 4 }); scalp(S, () => { for (let i = -3; i <= 3; i++) line([[i * 12, -26], [i * 10, -56]], 1.7, sk); line([[-44, -40], [44, -40]], 1.7, sk); line([[-40, -52], [40, -52]], 1.7, sk); }); }
+  else if (st === 'twists') { paint(hairCap(S, 9, -30), hc, { sh: 4 }); scalp(S, () => { for (let i = -3; i <= 3; i++) line([[i * 12, -26], [i * 10, -56]], 1.7, sk); }); }
+  else if (st === 'locs' || st === 'shortlocs') paint(hairCap(S, 9, -30), hc, { sh: 4 });
+  else if (st === 'locbun') { paint(hairCap(S, 6, -29), hc, { sh: 4 }); paint(ell(0, -72, 25, 20), hc, { sh: 5 }); ctx.lineWidth = 2; ctx.strokeStyle = lt3; [[-12, -76, 8], [4, -70, 9], [-2, -82, 6]].forEach(([x, y, r]) => { ctx.beginPath(); ctx.arc(x, y, r, 0.4, 4.4); ctx.stroke(); }); }
+  else if (st === 'bantu') { paint(hairCap(S, 3, -27), hc, { sh: 3 }); [[-34, -50], [-17, -58], [0, -60], [17, -58], [34, -50]].forEach(([x, y], i) => { paint(ell(x, y, 12, 12), hc, { sh: 3 }); ctx.beginPath(); ctx.arc(x, y, 5.5, .6, 4.6); ctx.lineWidth = 1.8; ctx.strokeStyle = lt3; ctx.stroke(); }); }
+  else if (st === 'puffs') { [-1, 1].forEach(sd => { paint(ell(sd * 36, -60, 21, 21), hc, { sh: 6 }); ctx.beginPath(); ctx.arc(sd * 36, -60, 9, .5, 4.7); ctx.lineWidth = 1.8; ctx.strokeStyle = lt3; ctx.stroke(); }); paint(hairCap(S, 4, -29), hc, { sh: 4 }); }
+  else if (st === 'mohawk') { paint(hairCap(S, 1.5, -26), mix(hc, S.skin, .35), { sh: 2, ns: 1 }); const p = new Path2D(); p.moveTo(-10, -40); p.lineTo(-13, -70); p.lineTo(-6, -62); p.lineTo(-5, -90); p.lineTo(1, -70); p.lineTo(6, -94); p.lineTo(8, -66); p.lineTo(14, -80); p.lineTo(11, -42); p.quadraticCurveTo(0, -34, -10, -40); p.closePath(); paint(p, hc, { sh: 3 }); }
+  else if (st === 'long') paint(hairCap(S, 8, -30), hc, { sh: 4 });
+  else if (st === 'bun') { paint(ell(0, -66, 18, 17), hc, { sh: 4 }); paint(hairCap(S, 6, -30), hc, { sh: 4 }); }
 }
 function eyeSpot(side) { return { x: side * 19, y: -1 }; }
 function drawHead(S, B, P, o) {
@@ -310,6 +352,7 @@ function drawFeatures(S, P, o, H) {
     const ix = Math.max(-3, Math.min(3, gz.x * 3)), iy = Math.max(-2, Math.min(2, gz.y * 2)); ctx.fillStyle = ic; ctx.beginPath(); ctx.arc(ix, iy, h > 8 ? 5.6 : 4.8, 0, TAU); ctx.fill(); ctx.fillStyle = INK; ctx.beginPath(); ctx.arc(ix, iy, 2.6, 0, TAU); ctx.fill(); ctx.fillStyle = '#fff'; ctx.beginPath(); ctx.arc(ix - 1.8, iy - 2, 1.5, 0, TAU); ctx.fill();
     if (st === 'sleepy') { ctx.fillStyle = dk(S.skin, .08); ctx.fillRect(-w - 1, -h - 1, w * 2 + 2, h * .85); }
     ctx.restore(); ctx.lineWidth = 3; ctx.strokeStyle = INK; ctx.stroke(p);
+    if (S.lashes) { [[-w * .55, -h * .85, -w * .7, -h * 1.5], [-w * .05, -h * 1.05, -w * .05, -h * 1.75], [w * .5, -h * .95, w * .75, -h * 1.55]].forEach(q => line([[q[0] * sd, q[1]], [q[2] * sd, q[3]]], 2.6, INK)); }
     if (st === 'sleepy') line([[-w - 1, -h * .15], [w + 1, -h * .15]], 3.2, INK);
     ctx.restore();
   });
@@ -320,10 +363,9 @@ function drawFeatures(S, P, o, H) {
   // mouth
   const my = 31, hasB = S.beard === 'beard' || S.beard === 'goatee';
   if (hasB) { paint(ell(0, my, 17, 8), lt(skin, .1), { ns: 1, no: 1 }); }
-  const m = S.mouth; ctx.lineCap = 'round';
-  if (m === 'smile') { qline(-12, my - 2, 0, my + 9, 12, my - 2, 3.4); }
-  else if (m === 'flat') { qline(-10, my + 1, 0, my + 2, 10, my + 1, 3.4); }
-  else if (m === 'smirk') { qline(-10, my + 3, 2, my + 4, 12, my - 3, 3.4); line([[12, my - 3], [14, my - 6]], 2.6); }
+  const m = S.mouth; ctx.lineCap = 'round'; const mp = { smile: (w, k) => qline(-12, my - 2, 0, my + 9, 12, my - 2, w, k), flat: (w, k) => qline(-10, my + 1, 0, my + 2, 10, my + 1, w, k), smirk: (w, k) => qline(-10, my + 3, 2, my + 4, 12, my - 3, w, k) };
+  if (S.lipC && mp[m]) mp[m](8.2, S.lipC);
+  if (mp[m]) { mp[m](3.4); if (m === 'smirk') line([[12, my - 3], [14, my - 6]], 2.6); }
   else if (m === 'open') { const p = new Path2D(); p.moveTo(-13, my - 3); p.quadraticCurveTo(0, my + 20, 13, my - 3); p.quadraticCurveTo(0, my, -13, my - 3); p.closePath(); ctx.fillStyle = '#6b1f1a'; ctx.fill(); ctx.save(); ctx.clip(p); ctx.fillStyle = '#fff'; ctx.fillRect(-14, my - 4, 28, 5); ctx.restore(); ctx.lineWidth = 3; ctx.strokeStyle = INK; ctx.stroke(p); }
   else { const p = ell(0, my + 3, 8, 9); ctx.fillStyle = '#6b1f1a'; ctx.fill(p); ctx.lineWidth = 3; ctx.strokeStyle = INK; ctx.stroke(p); }
 }
@@ -334,18 +376,6 @@ function drawGlasses(S) {
   else if (g === 'aviator') L.forEach(x => { const p = new Path2D(); p.moveTo(x - 15, -10); p.lineTo(x + 15, -10); p.quadraticCurveTo(x + 14, 14, x, 15); p.quadraticCurveTo(x - 14, 14, x - 15, -10); p.closePath(); ctx.lineWidth = lw; ctx.strokeStyle = INK; ctx.stroke(p); ctx.fillStyle = 'rgba(80,80,60,.28)'; ctx.fill(p); });
   else L.forEach(x => { const p = rr(x - 15, -10, 30, 18, 6); ctx.fillStyle = INK; ctx.fill(p); ctx.lineWidth = 2.4; ctx.strokeStyle = INK; ctx.stroke(p); line([[x - 8, -6], [x - 3, -6]], 2.4, 'rgba(255,255,255,.7)'); });
   line([[-5, -2], [5, -2]], lw, INK); const hw = (HEADS[S.head] || HEADS.round).hw; line([[-33, -2], [-hw, 0]], lw, INK); line([[33, -2], [hw, 0]], lw, INK);
-}
-function drawHairFront(S, H) {
-  const hc = S.hairC, st = S.hair, hw = H.hw; if (st === 'bald') return;
-  if (st === 'buzz') paint(hairCap(S, 2.5, -27), hc, { sh: 3 });
-  else if (st === 'fade') { paint(hairCap(S, 10, -31, true), hc); }
-  else if (st === 'afro') paint(hairCap(S, 2, -29), hc, { sh: 4 });
-  else if (st === 'curls') { for (let i = 0; i < 9; i++) { const a = Math.PI + (i / 8) * Math.PI, x = Math.cos(a) * (hw + 6), y = -8 + Math.sin(a) * 54; paint(ell(x, y, 15, 15), hc, { sh: 4 }); } paint(hairCap(S, 6, -29), hc, { sh: 4 }); }
-  else if (st === 'mohawk') { paint(hairCap(S, 1.5, -26), mix(hc, S.skin, .35), { sh: 2, ns: 1 }); const p = new Path2D(); p.moveTo(-10, -40); p.lineTo(-13, -70); p.lineTo(-6, -62); p.lineTo(-5, -90); p.lineTo(1, -70); p.lineTo(6, -94); p.lineTo(8, -66); p.lineTo(14, -80); p.lineTo(11, -42); p.quadraticCurveTo(0, -34, -10, -40); p.closePath(); paint(p, hc, { sh: 3 }); }
-  else if (st === 'locs') paint(hairCap(S, 9, -30), hc, { sh: 4 });
-  else if (st === 'long') { paint(hairCap(S, 8, -30), hc, { sh: 4 }); }
-  else if (st === 'bun') { paint(ell(0, -66, 18, 17), hc, { sh: 4 }); paint(hairCap(S, 6, -30), hc, { sh: 4 }); }
-  else if (st === 'puffs') paint(hairCap(S, 4, -29), hc, { sh: 4 });
 }
 function drawHat(S, H) {
   const k = S.hat, c = S.hatC, hw = H.hw; if (k === 'none') return;
@@ -429,9 +459,9 @@ function playIcon() { $('play').innerHTML = playing ? '<svg viewBox="0 0 24 24">
 $('play').addEventListener('click', () => { if (playing) { frozen = ((performance.now() - t0) / 1000); } else { t0 = performance.now() - frozen * 1000; } playing = !playing; playIcon(); });
 playIcon();
 // ---------- thumbnails ----------
-const REG = { face: { cx: 0, cy: -246, w: 118 }, head: { cx: 0, cy: -246, w: 160 }, top: { cx: 0, cy: -150, w: 150 }, bot: { cx: 0, cy: -58, w: 160 }, shoe: { cx: 0, cy: -16, w: 120 }, full: { cx: 0, cy: -158, w: 372 }, mid: { cx: 0, cy: -150, w: 260 } };
+const REG = { hair: { cx: 0, cy: -222, w: 200 }, face: { cx: 0, cy: -246, w: 118 }, head: { cx: 0, cy: -246, w: 160 }, top: { cx: 0, cy: -150, w: 150 }, bot: { cx: 0, cy: -58, w: 160 }, shoe: { cx: 0, cy: -16, w: 120 }, full: { cx: 0, cy: -158, w: 372 }, mid: { cx: 0, cy: -150, w: 260 } };
 function thumbTime(S2) { const d = CH.POSES[S2.pose] || CH.POSES.idle; return d.T * .3; }
-function drawThumb(cvs, patch, reg, o) { const S0 = S; S = Object.assign({}, S, patch); const g = cvs.getContext('2d'); g.clearRect(0, 0, cvs.width, cvs.height); const bgS = S.bg; CH.drawChar(g, S, CH.poseAt(S.pose, o && o.t != null ? o.t : thumbTime(S)), REG[reg], { noShadow: reg !== 'full' && reg !== 'mid', t: .3 }); S = S0; }
+function drawThumb(cvs, patch, reg, o) { const S0 = S; S = Object.assign({}, S, patch); if (reg === 'face' || reg === 'head' || reg === 'hair') S.pose = 'idle'; const g = cvs.getContext('2d'); g.clearRect(0, 0, cvs.width, cvs.height); const bgS = S.bg; CH.drawChar(g, S, CH.poseAt(S.pose, o && o.t != null ? o.t : thumbTime(S)), REG[reg], { noShadow: reg !== 'full' && reg !== 'mid', t: .3 }); S = S0; }
 function refreshThumbs() { thumbs.forEach(t => drawThumb(t.cv, t.patch, t.reg, t.o)); }
 function addThumb(btn, patch, reg, o) { const cvs = document.createElement('canvas'); cvs.width = cvs.height = 130; btn.appendChild(cvs); thumbs.push({ cv: cvs, patch, reg, o }); }
 // ---------- panel building ----------
@@ -444,25 +474,29 @@ function grid(attr, list, reg, o) {
     b.addEventListener('click', () => { S[attr] = v; if (o.after) o.after(v); save(); sync(); }); g.appendChild(b); });
   return g;
 }
-function swatches(attr, list) { const w = el('div', 'sw'); list.forEach(c => { const b = el('button'); b.type = 'button'; b.style.background = c; b.setAttribute('aria-label', c); b.setAttribute('aria-pressed', S[attr] === c ? 'true' : 'false'); b.addEventListener('click', () => { S[attr] = c; save(); sync(); }); w.appendChild(b); }); return w; }
+function swatches(attr, list) { const w = el('div', 'sw'); list.forEach(c => { const b = el('button'); b.type = 'button'; b.style.background = c || 'repeating-linear-gradient(45deg,#f2ecd6 0 5px,#c9c3b0 5px 10px)'; b.setAttribute('aria-label', c || 'none'); b.setAttribute('aria-pressed', S[attr] === c ? 'true' : 'false'); b.addEventListener('click', () => { S[attr] = c; save(); sync(); }); w.appendChild(b); }); return w; }
 function chips(list, cur, fn) { const w = el('div', 'chips'); list.forEach(([k, n]) => { const b = el('button', 'chip', n); b.type = 'button'; b.setAttribute('aria-pressed', k === cur ? 'true' : 'false'); b.addEventListener('click', () => fn(k)); w.appendChild(b); }); return w; }
 function toggle(attr, name) { const b = el('button', 'chip', name); b.type = 'button'; b.setAttribute('aria-pressed', S[attr] ? 'true' : 'false'); b.addEventListener('click', () => { S[attr] = !S[attr]; save(); sync(); }); return b; }
 const cap1 = s => s.charAt(0).toUpperCase() + s.slice(1);
+const HN = { highfade: 'High top', coily: 'Coily', puff: 'Afro puff', cornrows: 'Cornrows', fulani: 'Fulani', braidbun: 'Braid bun', boxbraids: 'Box braids', bobbraids: 'Bob braids', twists: 'Twists', shortlocs: 'Short locs', locbun: 'Loc bun', bantu: 'Bantu knots', puffs: 'Twist puffs', long: 'Straight' };
+const BN = { slim: 'Lean', mid: 'Mid', broad: 'Broad', curvy: 'Curvy', athletic: 'Athletic', round: 'Round' };
 function build() {
   thumbs = []; panel.innerHTML = '';
   if (tab === 'type') {
     panel.appendChild(el('p', 'note', 'Pick who you are. It sets the outfit, the prop and a signature move. Then change anything.'));
     panel.appendChild(grid('type', Object.keys(CH.TYPES), 'full', { big: true, name: v => CH.TYPES[v].name, patch: v => CH.TYPES[v], tOpt: null, after: v => { Object.assign(S, CH.TYPES[v]); S.type = v; frozen = .35; t0 = performance.now(); } }));
   } else if (tab === 'body') {
-    panel.appendChild(el('div', 'lbl', 'Build')); panel.appendChild(grid('body', ['slim', 'mid', 'broad'], 'full', { name: cap1 }));
+    panel.appendChild(el('div', 'lbl', 'Build')); panel.appendChild(grid('body', ['slim', 'mid', 'broad', 'curvy', 'athletic', 'round'], 'full', { name: v => BN[v] }));
     panel.appendChild(el('div', 'lbl', 'Skin')); panel.appendChild(swatches('skin', CH.SKINS));
     panel.appendChild(el('div', 'lbl', 'Head shape')); panel.appendChild(grid('head', OPT.head, 'head', { name: cap1, patch: () => ({ hat: 'none' }) }));
   } else if (tab === 'face') {
     const subs = [['eyes', 'Eyes'], ['brow', 'Brows'], ['nose', 'Nose'], ['mouth', 'Mouth'], ['beard', 'Beard'], ['glasses', 'Glasses']];
     panel.appendChild(chips(subs, sub.face, k => { sub.face = k; build(); }));
-    const a = sub.face; panel.appendChild(grid(a, OPT[a], 'face', { name: cap1, patch: () => ({ hat: 'none' }) })); if (a === 'eyes') panel.appendChild(swatches('eyeC', CH.EYEC)); if (a === 'beard') panel.appendChild(el('p', 'note', 'Beard and brows use your hair color. Change it in Hair.'));
+    const a = sub.face; panel.appendChild(grid(a, OPT[a], 'face', { name: cap1, patch: () => (a === 'glasses' ? { hat: 'none' } : { hat: 'none', glasses: 'none' }) }));
+    if (a === 'eyes') { const w = el('div', 'chips'); w.appendChild(toggle('lashes', 'Lashes')); panel.appendChild(w); }
+    if (a === 'mouth') { panel.appendChild(el('div', 'lbl', 'Lip color')); panel.appendChild(swatches('lipC', ['', '#c8412f', '#6b1f1a', '#e46fa6', '#6a4c93', '#f2c230']));} if (a === 'eyes') panel.appendChild(swatches('eyeC', CH.EYEC)); if (a === 'beard') panel.appendChild(el('p', 'note', 'Beard and brows use your hair color. Change it in Hair.'));
   } else if (tab === 'hair') {
-    panel.appendChild(grid('hair', OPT.hair, 'head', { name: cap1, patch: () => ({ hat: 'none' }) })); panel.appendChild(el('div', 'lbl', 'Hair color')); panel.appendChild(swatches('hairC', CH.HAIRC));
+    panel.appendChild(grid('hair', OPT.hair, 'hair', { name: v => HN[v] || cap1(v), patch: () => ({ hat: 'none' }) })); panel.appendChild(el('div', 'lbl', 'Hair color')); panel.appendChild(swatches('hairC', CH.HAIRC));
   } else if (tab === 'hat') {
     panel.appendChild(grid('hat', OPT.hat, 'head', { name: v => v === 'phones' ? 'Headphones' : cap1(v) })); panel.appendChild(el('div', 'lbl', 'Color')); panel.appendChild(swatches('hatC', CH.CLR));
   } else if (tab === 'outfit') {
@@ -543,9 +577,19 @@ async function exportGif(btn) {
     btn.textContent = 'Packing...'; await new Promise(r => setTimeout(r, 0)); const bytes = makeGifBytes(frames, w, h, 7); showFile(new Blob([bytes], { type: 'image/gif' }), 'nociv-' + (S.type || 'creator') + '.gif', 'Your GIF'); } catch (e) { btn.textContent = 'Could not make the GIF'; await new Promise(r => setTimeout(r, 1500)); }
   S.bg = prevBg; btn.textContent = old; btn.disabled = false;
 }
+
+const BASES = { slim: { body: 'slim', hair: 'cornrows', head: 'round' }, curvy: { body: 'curvy', hair: 'boxbraids', lashes: true, brow: 'arch', head: 'round', lipC: '#6b1f1a' }, broad: { body: 'broad', hair: 'locs', head: 'square', beard: 'beard' }, athletic: { body: 'athletic', hair: 'waves', head: 'square' }, round: { body: 'round', hair: 'puff', head: 'round', lashes: true }, mid: { body: 'mid', hair: 'coily', head: 'round' } };
+function showBases() {
+  const card = $('mcard'); card.innerHTML = ''; card.appendChild(el('h3', null, 'Start with a build')); card.appendChild(el('p', 'note', 'Pick the one closest to you. You can change every part after.'));
+  const g = el('div', 'grid'); g.style.marginTop = '10px'; g.style.gridTemplateColumns = 'repeat(3, 1fr)';
+  Object.keys(BASES).forEach(k => { const b = el('button', 'opt'); b.type = 'button'; b.style.aspectRatio = '3/4'; const cvs = document.createElement('canvas'); cvs.width = 150; cvs.height = 200; b.appendChild(cvs); drawThumb(cvs, Object.assign({ hat: 'none', pose: 'idle' }, BASES[k]), 'mid', { t: .5 }); b.appendChild(el('span', 'nm', BN[k] || k));
+    b.addEventListener('click', () => { Object.assign(S, BASES[k]); save(); $('modal').classList.remove('on'); build(); tag(); }); g.appendChild(b); });
+  card.appendChild(g); $('modal').classList.add('on');
+}
 $('modal').addEventListener('click', e => { if (e.target === $('modal')) $('modal').classList.remove('on'); });
 window.__ch = { S: () => S, makeGifBytes, lzw, renderTo, setS: o => { Object.assign(S, o); save(); build(); tag(); }, setTab: k => { tab = k; build(); } };
 build(); tag(); requestAnimationFrame(frame);
+try { if (!localStorage.getItem(KEY)) showBases(); } catch (e) {}
 })();
 </script>
 </body>
