@@ -155,7 +155,8 @@
     $('dzTop').innerHTML =
       '<div class="dz-row"><button class="dz-btn" id="dzCopyLink" type="button">Copy his link</button>' +
       '<button class="dz-btn alt" id="dzOpenLink" type="button">Open his page</button>' +
-      '<button class="dz-btn alt" id="dzCopyUpdate" type="button">Copy Friday text</button></div>' +
+      '<button class="dz-btn alt" id="dzCopyUpdate" type="button">Copy Friday text</button>' +
+      '<button class="dz-btn alt" id="dzEmailUpdate" type="button">Email him</button></div>' +
       '<p class="field-hint">His page is private. Only someone with the link sees it. It updates live as you log hours.</p>' +
       '<div class="dz-stats">' +
       '<div class="dz-stat"><span>Hours logged</span><b>' + hrs(s.minutes) + '</b></div>' +
@@ -169,6 +170,16 @@
     $('dzCopyLink').onclick = function () { copy(link(c), 'Link copied. Text it to him.'); };
     $('dzOpenLink').onclick = function () { window.open(link(c), '_blank'); };
     $('dzCopyUpdate').onclick = function () { copy(fridayText(), 'Friday text copied.'); };
+    $('dzEmailUpdate').onclick = function () { emailHim('Design update, ' + dfmt(today()), fridayText() + '\n\nJasilyn\nNOCIV'); };
+  }
+  async function emailHim(subject, text) {
+    var c = cur();
+    if (!c.email) { alert('Add his email under Client settings first.'); return; }
+    if (!confirm('Email this to ' + c.email + ' from hello@nociv.co?\n\n' + text)) return;
+    var r = await supabaseClient.functions.invoke('design-send', { body: { client_id: c.id, subject: subject, text: text } });
+    var msg = r.error ? r.error.message : (r.data && r.data.error);
+    if (msg) { alert('Email did not send: ' + msg + '\n\nIs the design-send function deployed?'); return; }
+    toast('Emailed to ' + c.email);
   }
   function fridayText() {
     var c = cur(), s = summary(), over = Math.max(0, s.wkMin / 60 - s.covered);
@@ -419,12 +430,15 @@
       '<button class="dz-btn" id="dzMakeInv" type="button" style="width:100%"' + (newMin || pastOpen ? '' : ' disabled') + '>Make invoice from unbilled hours</button>' +
       '<div style="margin-top:10px">' + (S.invs.map(function (i) {
         return '<div class="dz-line"><span><b>' + esc(i.number) + '</b> ' + money(i.total_due) + ' <span class="dz-tag">' + (i.status === 'paid' ? 'Paid' : 'Due') + '</span><small>' + dfmt(i.issued_on) + ' &middot; ' + (i.lines || []).length + ' lines</small></span>' +
-          '<span style="display:flex;gap:4px"><button class="dz-btn alt sm" type="button" data-ip="' + i.id + '">' + (i.status === 'paid' ? 'Mark due' : 'Mark paid') + '</button><button class="dz-btn alt sm" type="button" data-id="' + i.id + '">Delete</button></span></div>';
+          '<span style="display:flex;gap:4px"><button class="dz-btn alt sm" type="button" data-ie="' + i.id + '">Email</button><button class="dz-btn alt sm" type="button" data-ip="' + i.id + '">' + (i.status === 'paid' ? 'Mark due' : 'Mark paid') + '</button><button class="dz-btn alt sm" type="button" data-id="' + i.id + '">Delete</button></span></div>';
       }).join('') || '<p class="field-hint">No invoices yet.</p>') + '</div>';
     $('dzMakeInv').onclick = makeInvoice;
     box.onclick = async function (e) {
-      var p = e.target.closest('[data-ip]'), d = e.target.closest('[data-id]');
-      if (p) {
+      var p = e.target.closest('[data-ip]'), d = e.target.closest('[data-id]'), em = e.target.closest('[data-ie]');
+      if (em) {
+        var iv0 = S.invs.find(function (x) { return x.id === em.dataset.ie; });
+        emailHim('Invoice ' + iv0.number + ' from NOCIV', 'Hey ' + (cur().name || '').split(' ')[0] + ',\n\nInvoice ' + iv0.number + ' is ' + money(iv0.total_due) + '. Every hour and step is on your page:\n' + link(cur()) + '\n\nJasilyn\nNOCIV');
+      } else if (p) {
         var inv = S.invs.find(function (x) { return x.id === p.dataset.ip; }), paid = inv.status !== 'paid';
         var r = await supabaseClient.from('design_invoices').update({ status: paid ? 'paid' : 'sent', paid_on: paid ? today() : null }).eq('id', inv.id);
         if (r.error) { fail(r.error); return; } await loadClient();
@@ -495,10 +509,11 @@
       '<div><label class="field-hint">Pays each Friday $</label><input id="dsWeekly" type="number" value="' + c.weekly_payment + '"></div></div>' +
       '<div class="dz-row"><div><label class="field-hint">Payments start</label><input id="dsStart" type="date" value="' + String(c.start_date).slice(0, 10) + '"></div><div><label class="field-hint">Earlier unpaid hours</label><input id="dsPast" type="number" step="0.25" value="' + c.past_hours + '"></div></div>' +
       '<input id="dsPastNote" placeholder="What the earlier work was" value="' + esc(c.past_note || '') + '">' +
+      '<label class="field-hint">His email (for Email him)</label><input id="dsEmail" type="email" value="' + esc(c.email || '') + '">' +
       '<div class="dz-row" style="margin-top:8px"><button class="dz-btn" id="dsSave" type="button">Save settings</button><button class="dz-btn alt" id="dsNew" type="button">New private link</button><button class="dz-btn alt" id="dsDel" type="button">Delete client</button></div>' +
       '<p class="field-hint">New private link kills the old one. Use it if the link got shared by mistake.</p>';
     $('dsSave').onclick = async function () {
-      var row = { name: $('dsName').value.trim() || c.name, business: $('dsBiz').value.trim() || null, code: ($('dsCode').value.trim().toUpperCase().replace(/[^A-Z0-9]/g, '') || 'CL'), rate: Number($('dsRate').value) || 45, weekly_payment: Number($('dsWeekly').value) || 0, start_date: $('dsStart').value || c.start_date, past_hours: Number($('dsPast').value) || 0, past_note: $('dsPastNote').value.trim() || null };
+      var row = { name: $('dsName').value.trim() || c.name, business: $('dsBiz').value.trim() || null, code: ($('dsCode').value.trim().toUpperCase().replace(/[^A-Z0-9]/g, '') || 'CL'), rate: Number($('dsRate').value) || 45, weekly_payment: Number($('dsWeekly').value) || 0, start_date: $('dsStart').value || c.start_date, past_hours: Number($('dsPast').value) || 0, past_note: $('dsPastNote').value.trim() || null, email: $('dsEmail').value.trim() || null };
       var r = await supabaseClient.from('design_clients').update(row).eq('id', c.id);
       if (r.error) { fail(r.error); return; }
       Object.assign(c, row); toast('Saved.'); shell(); await loadClient();
