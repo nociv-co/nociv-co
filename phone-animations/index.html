@@ -48,6 +48,16 @@
   .vf { flex: none; padding: 0 10px; }
   .vf .stage { background: #111; border-radius: 12px; display: grid; place-items: center; padding: 5px; position: relative; }
   .vf canvas { display: block; max-width: 100%; max-height: 30svh; width: auto; height: auto; background: #000; }
+  #fsBtn, #fsX { position: absolute; top: 10px; right: 10px; z-index: 5; background: rgba(0,0,0,.6); color: #f2ecd6; border: 1.5px solid #f2ecd6; border-radius: 10px; padding: 8px 12px; font: 900 .8rem/1 inherit; text-transform: uppercase; letter-spacing: .06em; }
+  #fsBtn.hide, #fsX.hide, #fsHint.hide { display: none; }
+  #fsHint { position: absolute; left: 0; right: 0; top: 14px; text-align: center; color: #f2ecd6; font-weight: 800; font-size: .85rem; pointer-events: none; z-index: 4; opacity: .8; }
+  body.fs { overflow: hidden; }
+  body.fs .vf { position: fixed; inset: 0; z-index: 9999; padding: 0; background: #000; }
+  body.fs .vf .stage { width: 100%; height: 100%; border-radius: 0; padding: 0; background: #050506; }
+  body.fs .vf canvas { max-width: 100vw; max-height: 100vh; max-height: 100dvh; }
+  body.fs #stageMsg { display: none; }
+  body.fs #fsX { position: fixed; top: calc(10px + env(safe-area-inset-top)); right: 10px; transition: opacity .4s; }
+  body.fs #fsX.dim { opacity: 0; pointer-events: none; }
   #stageMsg { position: absolute; left: 10px; right: 10px; bottom: 12px; color: #fff; font-size: 0.8rem; font-weight: 700; text-align: center; text-shadow: 0 1px 3px #000; pointer-events: none; }
 
   .deck, .shootrow { flex: none; padding: 8px 10px 0; }
@@ -245,7 +255,7 @@
     <button type="button" class="icon" id="redoBtn" aria-label="Redo" disabled>&#8631;</button>
   </header>
 
-  <div class="vf"><div class="stage"><canvas id="cv" width="540" height="960"></canvas><div id="stageMsg"></div></div></div>
+  <div class="vf"><div class="stage"><canvas id="cv" width="540" height="960"></canvas><button type="button" id="fsBtn" class="hide" aria-label="Go fullscreen">Fullscreen</button><button type="button" id="fsX" class="hide" aria-label="Exit fullscreen">Close</button><div id="fsHint" class="hide">Turn your phone sideways</div><div id="stageMsg"></div></div></div>
   <section class="creator" id="creator" aria-label="Character creator">
     <div class="ctabs" id="cTabs"></div>
     <div class="cbody"><div class="crail" id="cRail"></div><div class="cgrid" id="cGrid"></div></div>
@@ -362,15 +372,22 @@
       <div class="chips" id="bScenes"></div>
       <label class="f">Slats (the spinning strips)</label>
       <div class="chips" id="bSlats"></div>
+      <label class="f">Tempo</label>
+      <div class="chips" id="bTempo">
+        <button type="button" class="chip" data-h="3" data-s="1.2" data-w="0.35">Quick</button>
+        <button type="button" class="chip" data-h="5" data-s="3" data-w="0.35" aria-pressed="true">Groove</button>
+        <button type="button" class="chip" data-h="10" data-s="9" data-w="0.7">DJ slow</button>
+      </div>
       <label class="f">How the slats turn</label>
       <div class="chips" id="bStyle">
         <button type="button" class="chip" data-w="0" aria-pressed="false">All together</button>
         <button type="button" class="chip" data-w="0.35" aria-pressed="true">Ripple</button>
+        <button type="button" class="chip" data-w="0.7">Slow wave</button>
       </div>
       <label class="f">Each photo stays <span id="bHoldVal"></span></label>
-      <input type="range" id="bHold" min="1" max="8" step="0.5" value="3">
+      <input type="range" id="bHold" min="1" max="20" step="0.5" value="5">
       <label class="f">The spin takes <span id="bSpinVal"></span></label>
-      <input type="range" id="bSpinT" min="0.6" max="3" step="0.1" value="1.2">
+      <input type="range" id="bSpinT" min="0.6" max="12" step="0.1" value="3">
       <label class="f">Picture shape</label>
       <div class="chips" id="bAspects">
         <button type="button" class="chip" data-a="tall" aria-pressed="false">Tall 9:16</button>
@@ -472,8 +489,8 @@
   // the tape deck. p is the position: a frame number for stop motion (it can keep counting past the end when looping).
   const deck = { mode: 'pause', p: 0, settle: 0, recording: false, auto: false };
   const fpsOut = () => st.fps;
-  const board = { faces: [], sel: -1, aspect: 'wide', shape: 'wide', slats: 18, wave: 0.35, hold: 3, spin: 1.2, scene: 'day', t: 0, playing: true };
-  function size() { return SIZES[st.kind === 'board' ? board.aspect : st.kind === 'char' ? 'tall' : st.aspect]; }
+  const board = { faces: [], sel: -1, aspect: 'wide', shape: 'wide', slats: 18, wave: 0.35, hold: 5, spin: 3, scene: 'float', t: 0, playing: true };
+  function size() { return SIZES[st.kind === 'board' ? (fsOn() ? (innerHeight > innerWidth ? 'tall' : 'wide') : board.aspect) : st.kind === 'char' ? 'tall' : st.aspect]; }
   function applySize(w, h) { if (cv.width !== w || cv.height !== h) { cv.width = w; cv.height = h; } }
   function msg(id, text, err) { const e = $(id); e.textContent = text || ''; e.className = 'msg' + (err ? ' err' : ''); }
   function stageMsg(t) { $('stageMsg').textContent = t || ''; }
@@ -989,10 +1006,14 @@
   // ===================== BILLBOARD =====================
   // A trivision sign: vertical triangular slats that all turn at once, so each strip swaps to the next picture.
   const SHAPES = { wide: ['Bulletin 14 x 48', 48 / 14], poster: ['Poster 12 x 24', 2], tall: ['Tall 9 x 16', 9 / 16], square: ['Square', 1] };
-  const SCENES = { day: 'Day', dusk: 'Dusk', night: 'Night', desert: 'Desert' };
+  const SCENES = { float: 'Float', day: 'Day', dusk: 'Dusk', night: 'Night', desert: 'Desert' };
   const THEMES = { ink: { bg: '#1a1a1a', fg: '#f2ecd6', ac: '#c8412f' }, lime: { bg: '#cfe59a', fg: '#3d4a26', ac: '#e8701a' }, sun: { bg: '#ffd400', fg: '#111111', ac: '#c8412f' }, white: { bg: '#ffffff', fg: '#111111', ac: '#c8412f' }, red: { bg: '#c8412f', fg: '#ffffff', ac: '#ffd400' } };
   const HEAD_FONT = 'Impact, Haettenschweiler, "Arial Narrow Bold", "Arial Black", sans-serif';
   function bRect(W, H) {
+    if (board.scene === 'float') {
+      const ar0 = SHAPES[board.shape][1], w0 = Math.min(W * 0.96, H * 0.84 * ar0), h0 = w0 / ar0;
+      return { x: Math.round(W / 2 - w0 / 2), y: Math.round(H / 2 - h0 / 2), w: Math.round(w0), h: Math.round(h0) };
+    }
     const ar = SHAPES[board.shape][1], maxW = W * 0.92, maxH = H * (board.shape === 'tall' ? 0.58 : 0.6);
     const w = Math.min(maxW, maxH * ar), h = w / ar;
     return { x: Math.round(W / 2 - w / 2), y: Math.round(H * (board.shape === 'tall' ? 0.36 : 0.37) - h / 2), w: Math.round(w), h: Math.round(h) };
@@ -1067,7 +1088,17 @@
     const n = board.faces.length, T = board.hold + board.spin, k = Math.floor(t / T), u = t - k * T;
     return { a: k % n, b: (k + 1) % n, p: u < board.hold ? 0 : (u - board.hold) / board.spin };
   }
-  function drawScene(c, W, H, r) {
+  function drawBoardScene(c, W, H, r) {
+    if (board.scene === 'float') {
+      c.fillStyle = '#050506'; c.fillRect(0, 0, W, H);
+      const cx = r.x + r.w / 2, cy = r.y + r.h / 2, g0 = c.createRadialGradient(cx, cy, Math.min(r.w, r.h) * 0.2, cx, cy, Math.max(r.w, r.h) * 0.85);
+      g0.addColorStop(0, 'rgba(200,65,47,.30)'); g0.addColorStop(0.5, 'rgba(242,194,48,.07)'); g0.addColorStop(1, 'rgba(0,0,0,0)');
+      c.fillStyle = g0; c.fillRect(0, 0, W, H);
+      const sd = c.createRadialGradient(cx, r.y + r.h + r.h * 0.35, 2, cx, r.y + r.h + r.h * 0.35, r.w * 0.5);
+      sd.addColorStop(0, 'rgba(0,0,0,.55)'); sd.addColorStop(1, 'rgba(0,0,0,0)');
+      c.save(); c.translate(0, 0); c.fillStyle = sd; c.beginPath(); c.ellipse(cx, r.y + r.h + r.h * 0.38, r.w * 0.42, r.h * 0.09, 0, 0, 6.3); c.fill(); c.restore();
+      return;
+    }
     const sc = board.scene, ground = Math.round(H * 0.9), g = c.createLinearGradient(0, 0, 0, ground);
     if (sc === 'day') { g.addColorStop(0, '#6fb8f0'); g.addColorStop(1, '#dff1ff'); }
     else if (sc === 'dusk') { g.addColorStop(0, '#2b1b4d'); g.addColorStop(0.55, '#c9543f'); g.addColorStop(1, '#ffc27a'); }
@@ -1089,6 +1120,12 @@
     const fw = Math.max(5, Math.round(W * 0.014)); c.fillStyle = '#26282c'; c.fillRect(r.x - fw, r.y - fw, r.w + fw * 2, r.h + fw * 2);
   }
   function drawSceneFront(c, W, H, r) {
+    if (board.scene === 'float') {
+      const sh0 = c.createLinearGradient(0, r.y, 0, r.y + r.h); sh0.addColorStop(0, 'rgba(255,255,255,.06)'); sh0.addColorStop(1, 'rgba(0,0,0,.18)'); c.fillStyle = sh0; c.fillRect(r.x, r.y, r.w, r.h);
+      c.strokeStyle = 'rgba(255,255,255,.18)'; c.lineWidth = Math.max(1.5, W / 400); c.strokeRect(r.x - 0.5, r.y - 0.5, r.w + 1, r.h + 1);
+      const vg = c.createRadialGradient(W / 2, H / 2, Math.min(W, H) * 0.45, W / 2, H / 2, Math.max(W, H) * 0.75); vg.addColorStop(0, 'rgba(0,0,0,0)'); vg.addColorStop(1, 'rgba(0,0,0,.55)'); c.fillStyle = vg; c.fillRect(0, 0, W, H);
+      return;
+    }
     const fw = Math.max(5, Math.round(W * 0.014)), night = board.scene === 'night' || board.scene === 'dusk', nl = r.w > W * 0.7 ? 5 : 3;
     for (let i = 0; i < nl; i++) {
       const lx = r.x + r.w * (i + 0.5) / nl, ly = r.y - fw, arm = Math.max(10, r.h * 0.12);
@@ -1120,11 +1157,13 @@
   const bTmp = document.createElement('canvas');
   function drawBoardView() {
     const [W, H] = size(); applySize(W, H);
-    if (st.panel === 'bphotos' && board.faces[board.sel]) { drawFaceEditor(W, H); return; }
+    if (!fsOn()) $('fsBtn').classList.remove('hide');
+    if (!fsOn() && st.panel === 'bphotos' && board.faces[board.sel]) { drawFaceEditor(W, H); return; }
     if (bTmp.width !== W || bTmp.height !== H) { bTmp.width = W; bTmp.height = H; }
     const c = bTmp.getContext('2d'), r = bRect(W, H);
+    if (board.scene === 'float') r.y += Math.round(Math.sin(board.t * 0.9) * H * 0.012);
     if (!board.faces.length) { ctx.fillStyle = '#111'; ctx.fillRect(0, 0, W, H); stageMsg('Add 2 to 5 photos to start'); return; }
-    stageMsg(''); drawScene(c, W, H, r); drawSlats(c, r, board.t); drawSceneFront(c, W, H, r);
+    stageMsg(fsOn() && !board.faces.length ? '' : ''); drawBoardScene(c, W, H, r); drawSlats(c, r, board.t); drawSceneFront(c, W, H, r);
     drawLooked(ctx, bTmp, W, H, W, H, board.t, null); drawStamps(ctx, W, H, board.t, false);
   }
   // while you edit a photo you see it flat and big, and can drag it
@@ -1205,7 +1244,37 @@
   document.querySelectorAll('#bAspects .chip').forEach(b => b.addEventListener('click', () => { board.aspect = b.dataset.a; document.querySelectorAll('#bAspects .chip').forEach(x => x.setAttribute('aria-pressed', x === b ? 'true' : 'false')); board.faces.forEach(f => { f.cache = null; }); }));
   $('bHold').addEventListener('input', () => { board.hold = +$('bHold').value; $('bHoldVal').textContent = board.hold + ' s'; refreshBoardUI(); });
   $('bSpinT').addEventListener('input', () => { board.spin = +$('bSpinT').value; $('bSpinVal').textContent = board.spin.toFixed(1) + ' s'; refreshBoardUI(); });
-  $('bHoldVal').textContent = '3 s'; $('bSpinVal').textContent = '1.2 s';
+
+  // fullscreen: iOS Safari cannot fullscreen an element, so we fill the whole screen with CSS and also ask the browser when it can
+  function fsOn() { return document.body.classList.contains('fs'); }
+  let fsTimer = 0, wakeLock = null;
+  function fsSetX(show) { const x = $('fsX'); x.classList.toggle('dim', !show); clearTimeout(fsTimer); if (show) fsTimer = setTimeout(() => x.classList.add('dim'), 2500); }
+  function fsHintUpdate() { const h = $('fsHint'); const show = fsOn() && innerHeight > innerWidth && SHAPES[board.shape][1] > 1.4; h.classList.toggle('hide', !show); }
+  async function fsEnter() {
+    document.body.classList.add('fs'); $('fsX').classList.remove('hide'); $('fsBtn').classList.add('hide'); fsSetX(true); fsHintUpdate();
+    try { const el = document.documentElement; if (el.requestFullscreen) await el.requestFullscreen({ navigationUI: 'hide' }); } catch (e) {}
+    try { if (navigator.wakeLock) wakeLock = await navigator.wakeLock.request('screen'); } catch (e) {}
+    try { if (screen.orientation && screen.orientation.unlock) screen.orientation.unlock(); } catch (e) {}
+  }
+  function fsExit() {
+    document.body.classList.remove('fs'); $('fsX').classList.add('hide'); $('fsBtn').classList.remove('hide'); $('fsHint').classList.add('hide');
+    try { if (document.fullscreenElement && document.exitFullscreen) document.exitFullscreen(); } catch (e) {}
+    try { if (wakeLock) { wakeLock.release(); wakeLock = null; } } catch (e) {}
+  }
+  $('fsBtn').addEventListener('click', fsEnter);
+  $('fsX').addEventListener('click', e => { e.stopPropagation(); fsExit(); });
+  $('cv').addEventListener('pointerdown', () => { if (fsOn()) fsSetX(true); });
+  document.addEventListener('fullscreenchange', () => { if (!document.fullscreenElement && fsOn()) fsExit(); });
+  addEventListener('resize', fsHintUpdate);
+  document.querySelectorAll('#bTempo .chip').forEach(b => b.addEventListener('click', () => {
+    board.hold = +b.dataset.h; board.spin = +b.dataset.s; board.wave = +b.dataset.w;
+    $('bHold').value = board.hold; $('bSpinT').value = board.spin; $('bHoldVal').textContent = board.hold + ' s'; $('bSpinVal').textContent = board.spin.toFixed(1) + ' s';
+    document.querySelectorAll('#bTempo .chip').forEach(x => x.setAttribute('aria-pressed', x === b ? 'true' : 'false'));
+    document.querySelectorAll('#bStyle .chip').forEach(x => x.setAttribute('aria-pressed', +x.dataset.w === board.wave ? 'true' : 'false'));
+    refreshBoardUI();
+  }));
+  ['bHold', 'bSpinT'].forEach(id => $(id).addEventListener('input', () => document.querySelectorAll('#bTempo .chip').forEach(x => x.setAttribute('aria-pressed', 'false'))));
+  $('bHoldVal').textContent = '5 s'; $('bSpinVal').textContent = '3.0 s';
 
 
   // ===================== CHARACTER (PS2 era low poly people: smooth lit bodies, painted faces and clothes) =====================
