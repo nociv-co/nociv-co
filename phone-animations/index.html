@@ -833,7 +833,7 @@
   // ===================== SCREENS =====================
   function syncRows() {
     const stop = st.kind === 'stop', isBoard = st.kind === 'board';
-    $('looks').classList.toggle('hide', st.kind !== 'clip'); $('eraSet').classList.toggle('hide', st.kind !== 'clip');
+    $('looks').classList.toggle('hide', st.kind !== 'clip' && st.kind !== 'stop'); $('eraSet').classList.toggle('hide', st.kind !== 'clip' && st.kind !== 'stop');
     $('boardRow').classList.toggle('hide', !isBoard);
     $('rewindRow').classList.toggle('hide', isBoard);
     $('dupBtn').textContent = isBoard ? 'Add photo' : 'Copy';
@@ -864,7 +864,7 @@
   }
   document.querySelectorAll('#tools button').forEach(b => b.addEventListener('click', () => showPanel(b.dataset.p)));
   function startKind(kind) {
-    st.kind = kind; if (kind !== 'clip') st.look = 'none'; else if (st.look === 'none') st.look = 'vhs'; st.cam = kind === 'stop' && !st.frames.length; setDeck('pause'); if (kind === 'board' && board.sel < 0 && board.faces.length) board.sel = 0;
+    st.kind = kind; if (kind === 'clip') { if (st.look === 'none') st.look = 'vhs'; } else if (kind !== 'stop') st.look = 'none'; st.cam = kind === 'stop' && !st.frames.length; setDeck('pause'); if (kind === 'board' && board.sel < 0 && board.faces.length) board.sel = 0;
     $('start').classList.add('hide'); $('app').classList.remove('hide');
     document.querySelectorAll('#tools button').forEach(b => b.classList.toggle('gone', b.dataset.k !== 'both' && b.dataset.k !== kind));
     $('tl').classList.toggle('hide', kind === 'clip' || kind === 'char');
@@ -1774,7 +1774,7 @@
     { key: 'board', name: 'BILLBOARD', tab: 'SIGN', desc: 'Put 2 to 5 photos on a spinning trivision sign. Add words like a real ad. Pick the scene behind it.' },
   ];
   // three apps share this file: ?m=avatar (Animate + Edit), ?m=stop (Stop Motion), ?m=vhs (VHS). No parameter shows everything.
-  const APPS = { avatar: { t: ['ANIMATE', '+ EDIT'], keys: ['char', 'board'] }, stop: { t: ['STOP', 'MOTION'], keys: ['stop'] }, vhs: { t: ['VHS', ''], keys: ['clip'] } };
+  const APPS = { studio: { t: ['NOCIV', 'STUDIO'], keys: ['char', 'stop', 'clip'] }, sign: { t: ['SIGN', ''], keys: ['board'] }, avatar: { t: ['ANIMATE', '+ EDIT'], keys: ['char', 'board'] }, stop: { t: ['STOP', 'MOTION'], keys: ['stop'] }, vhs: { t: ['VHS', ''], keys: ['clip'] } };
   const APP = APPS[new URLSearchParams(location.search).get('m')] || null;
   if (APP) {
     for (let k = MODES.length - 1; k >= 0; k--) if (APP.keys.indexOf(MODES[k].key) < 0) MODES.splice(k, 1);
@@ -1782,6 +1782,10 @@
     document.title = nm + ': NOCIV.CO';
     $('start').querySelector('h1').innerHTML = '<span>' + APP.t[0] + '</span>' + (APP.t[1] ? ' ' + APP.t[1] : '');
     document.querySelector('.hdr .ttl').innerHTML = '<span>' + APP.t[0] + '</span>' + (APP.t[1] ? ' ' + APP.t[1] : '');
+    if (new URLSearchParams(location.search).get('m') === 'studio') {
+      const O = { char: ['BUILD A CREATOR', 'BUILD', 'Pick a look, an outfit and a move. Artist, DJ, curator or skater. Then take them to step 2.'], stop: ['MAKE IT MOVE', 'MOVE', 'Shoot frames with your camera, or use photos, a video, or the character you built. Play it as a loop.'], clip: ['PUT IT ON TAPE', 'TAPE', 'Pick any video. Rewind, fast forward and pause it like a camcorder. VHS, 8mm film, 90s digicam or security cam.'] };
+      MODES.forEach(m => { const o = O[m.key]; if (o) { m.name = o[0]; m.tab = o[1]; m.desc = o[2]; } });
+    }
     if (MODES.length === 1) $('modeTabs').classList.add('hide');
     if (APP.keys.indexOf('stop') < 0) { const pk = $('pickKeep'); pk.remove(); }
   }
@@ -1807,6 +1811,7 @@
   }
   $('goBtn').addEventListener('click', goMode);
   showMode(0);
+  (function () { const q = new URLSearchParams(location.search); if (q.get('go') !== 'stop') return; setTimeout(() => { startKind('stop'); if (q.get('char') === '1') { st.cam = false; syncRows(); $('chBtn').click(); } }, 500); })();
 
   // ===================== KEEP FRAMES IF THE PAGE RELOADS =====================
   const DB = 'nocivPhoneAnim';
