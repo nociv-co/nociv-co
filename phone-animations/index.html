@@ -3,10 +3,10 @@
 <head>
 <!-- Site Created & Designed by Jasilyn A. Anderson | NOCIV.CO -->
 <meta charset="UTF-8">
-<title>Phone Animations: NOCIV.CO</title>
+<title>Animate + Edit: NOCIV.CO</title>
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, viewport-fit=cover">
 <meta name="description" content="Free stop motion and VHS camcorder maker from NOCIV. Shoot frames or load a video, then run it through a tape deck with real rewind, fast forward and pause glitches. Nothing uploaded.">
-<meta property="og:title" content="NOCIV Phone Animations">
+<meta property="og:title" content="NOCIV Animate + Edit">
 <meta property="og:description" content="Stop motion and a VHS tape deck on your phone. No sign up. Nothing leaves your phone.">
 <style>
   :root { --paper: #e9e6df; --note: #f2ecd6; --ink: #1a1a1a; --red: #c8412f; --green: #2f7a4b; --muted: #6b665c; }
@@ -142,46 +142,65 @@
   .mtabs button i { font-style: normal; font-size: 1.05rem; }
   .mtabs button[aria-pressed="true"] { background: var(--ink); color: #fff; }
 
+  /* ---------- icons ---------- */
+  .ic { width: 0.95em; height: 0.95em; fill: currentColor; vertical-align: -0.1em; }
+  .ic.wide { width: 1.5em; }
+  .dk .ic { width: 1.1em; height: 1.1em; display: block; } .dk .ic.wide { width: 1.7em; } .dk .ico { display: block; line-height: 1; }
+  .dk .ico .ic { margin: 0 auto; }
+  .tools button svg { width: 22px; height: 22px; display: block; margin: 0 auto 3px; fill: none; stroke: currentColor; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
+  /* ---------- scene drop downs ---------- */
+  #p-cscene { background: transparent; border: 0; padding: 0; }
+  .acc { display: flex; flex-direction: column; gap: 7px; }
+  .ar { border: 2px solid var(--ink); border-radius: 12px; background: #fff; overflow: hidden; }
+  .ah { width: 100%; display: flex; align-items: center; gap: 8px; padding: 13px 12px; border: 0; background: transparent; font-weight: 900; font-size: 0.84rem; letter-spacing: 0.03em; text-align: left; }
+  .ah .av { flex: 1; text-align: right; font-weight: 700; color: var(--muted); font-size: 0.8rem; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .ah .chev { flex: none; width: 8px; height: 8px; border-right: 2.5px solid currentColor; border-bottom: 2.5px solid currentColor; transform: rotate(45deg); margin: 0 5px 3px 2px; transition: transform 0.18s; }
+  .ar.open .ah { background: var(--ink); color: #fff; } .ar.open .ah .av { color: #ccc; } .ar.open .chev { transform: rotate(-135deg); margin-top: 5px; }
+  .ab { display: none; padding: 12px; background: var(--note); border-top: 2px solid var(--ink); }
+  .ar.open .ab { display: block; }
+  .ab label.f:first-child { margin-top: 0; }
   /* ---------- character creator ---------- */
   .creator { display: none; }
-  .app.is-char:not(.is-create) .creator { display: none; }
-  .app.is-create { display: grid; grid-template-columns: 40% 1fr; grid-template-rows: auto auto minmax(0, 1fr) auto auto; column-gap: 8px; }
+  .app.is-char:not(.is-create) .creator, .cside { display: none; }
+  .app.is-char #looks { display: none; }
+  .app.is-char:not(.is-create) .vf canvas { max-height: 40svh; }
+  .app.is-create { display: grid; grid-template-columns: 44% 1fr; grid-template-rows: auto auto minmax(0, 1fr) auto auto; column-gap: 8px; }
   .app.is-create .hdr { grid-column: 1 / -1; grid-row: 1; }
   .app.is-create .vf { grid-column: 1; grid-row: 2; min-height: 0; padding: 0 0 0 10px; }
-  .app.is-create .vf .stage { height: auto; align-self: start; }
-  .app.is-create #looks .chip { padding: 5px 9px; font-size: 0.68rem; }
-  .app.is-create .vf canvas { max-height: 100%; max-width: 100%; }
-  .app.is-create #looks { grid-column: 1; grid-row: 3; align-self: start; flex-wrap: wrap; overflow: visible; padding: 6px 0 0 10px; }
-  .app.is-create #looks .lbl { width: 100%; }
-  .app.is-create .creator { display: flex; flex-direction: column; grid-column: 2; grid-row: 2 / 4; min-height: 0; padding-right: 10px; }
+  .app.is-create .vf .stage { height: auto; align-self: start; padding: 0; overflow: hidden; }
+  .app.is-create .vf canvas { width: 100%; height: auto; max-height: none; }
+  .app.is-create .cside { display: grid; grid-column: 1; grid-row: 3; grid-template-columns: 1fr 1fr; grid-auto-rows: minmax(36px, 1fr); gap: 6px; padding: 8px 0 8px 10px; min-height: 0; }
+  .cside button { border: 2px solid var(--ink); background: #fff; border-radius: 10px; font-weight: 900; font-size: 0.74rem; letter-spacing: 0.03em; padding: 0 4px; }
+  .cside button[aria-pressed="true"] { background: var(--ink); color: #fff; }
+  .cside button.act { background: var(--red); color: #fff; border-color: var(--red); }
+  .cside button:active { transform: scale(0.97); }
+  .app.is-create .creator { display: flex; flex-direction: column; grid-column: 2; grid-row: 2 / 4; min-height: 0; padding: 0 10px 8px 0; }
   .app.is-create .info { grid-column: 1 / -1; grid-row: 4; }
   .app.is-create .tools { grid-column: 1 / -1; grid-row: 5; }
   .app.is-create .panels, .app.is-create .tl { display: none; }
   .ctabs { flex: none; display: grid; grid-template-columns: repeat(4, 1fr); gap: 4px; }
-  .ctabs button { border: 2px solid var(--ink); background: #fff; border-radius: 9px 9px 0 0; padding: 7px 0; font-weight: 900; font-size: 0.62rem; letter-spacing: 0.03em; }
+  .ctabs button { border: 2px solid var(--ink); background: #fff; border-radius: 10px 10px 0 0; padding: 9px 0; font-weight: 900; font-size: 0.66rem; letter-spacing: 0.02em; border-bottom: 0; }
   .ctabs button[aria-pressed="true"] { background: var(--ink); color: #fff; }
   .cbody { flex: 1; min-height: 0; display: flex; border: 2px solid var(--ink); background: var(--note); border-radius: 0 0 10px 10px; overflow: hidden; }
-  .crail { flex: none; width: 56px; overflow-y: auto; border-right: 2px solid var(--ink); background: #fff; overscroll-behavior: contain; touch-action: pan-y; }
-  .crail button { display: block; width: 100%; border: 0; border-bottom: 1.5px solid #ccc; background: transparent; padding: 11px 2px; font-weight: 900; font-size: 0.56rem; letter-spacing: 0.02em; line-height: 1.15; }
+  .crail { flex: none; width: 60px; overflow-y: auto; border-right: 2px solid var(--ink); background: #fff; overscroll-behavior: contain; touch-action: pan-y; }
+  .crail button { display: block; width: 100%; border: 0; border-bottom: 1.5px solid #ccc; background: transparent; padding: 13px 2px; font-weight: 900; font-size: 0.6rem; letter-spacing: 0.02em; line-height: 1.15; }
   .crail button[aria-pressed="true"] { background: var(--red); color: #fff; }
-  .cgrid { flex: 1; overflow-y: auto; padding: 6px; display: grid; grid-template-columns: repeat(auto-fill, minmax(50px, 1fr)); gap: 6px; align-content: start; overscroll-behavior: contain; touch-action: pan-y; }
-  .cgrid.colors { grid-template-columns: repeat(3, 1fr); }
+  .cgrid { flex: 1; overflow-y: auto; padding: 6px; display: grid; grid-template-columns: repeat(auto-fill, minmax(62px, 1fr)); gap: 7px; align-content: start; grid-auto-rows: max-content; overscroll-behavior: contain; touch-action: pan-y; }
+  .cgrid.colors { grid-template-columns: repeat(auto-fill, minmax(38px, 1fr)); }
   .cgrid .opt { border: 2px solid var(--ink); background: #fff; border-radius: 9px; padding: 0; overflow: hidden; display: flex; flex-direction: column; }
-  .cgrid .opt canvas { width: 100%; aspect-ratio: 1; display: block; }
-  .cgrid .opt span { font-size: 0.54rem; font-weight: 800; padding: 2px 0 3px; background: #fff; }
+  .cgrid .opt canvas { width: 100%; aspect-ratio: 1; display: block; flex: none; }
+  .cgrid .opt span { flex: none; }
+  .cgrid .opt span { font-size: 0.62rem; font-weight: 800; padding: 2px 0 3px; background: #fff; }
   .cgrid .opt[aria-pressed="true"] { border-color: var(--red); box-shadow: 0 0 0 2px var(--red); }
   .cgrid .sw { aspect-ratio: 1; border: 2px solid var(--ink); border-radius: 9px; }
   .cgrid .sw[aria-pressed="true"] { outline: 3px solid var(--red); outline-offset: 1px; }
-  .cfoot { flex: none; padding-top: 6px; }
-  .cfoot button { width: 100%; border: 2px solid var(--ink); background: #fff; border-radius: 9px; padding: 8px; font-weight: 900; font-size: 0.74rem; letter-spacing: 0.05em; }
-  .cfoot button:active { background: var(--ink); color: #fff; }
 </style>
 </head>
 <body>
 
 <div class="start" id="start">
   <div class="start-in">
-    <div class="st-top"><h1><span>PHONE</span> ANIMATION</h1><div class="st-sub">BUILD SOMETHING</div></div>
+    <div class="st-top"><h1><span>ANIMATE</span> + EDIT</h1><div class="st-sub">BUILD SOMETHING</div></div>
     <div class="mtabs" id="modeTabs"></div>
     <div class="mode-name" id="modeName"></div>
     <p class="mode-desc" id="modeDesc"></p>
@@ -194,7 +213,7 @@
 <div class="app hide" id="app">
   <header class="hdr">
     <button type="button" class="icon" id="homeBtn" aria-label="Back to the start">&lsaquo; Start</button>
-    <span class="ttl"><span>PHONE</span> ANIMATIONS</span>
+    <span class="ttl"><span>ANIMATE</span> + EDIT</span>
     <button type="button" class="icon" id="undoBtn" aria-label="Undo" disabled>&#8630;</button>
     <button type="button" class="icon" id="redoBtn" aria-label="Redo" disabled>&#8631;</button>
   </header>
@@ -203,20 +222,20 @@
   <section class="creator" id="creator" aria-label="Character creator">
     <div class="ctabs" id="cTabs"></div>
     <div class="cbody"><div class="crail" id="cRail"></div><div class="cgrid" id="cGrid"></div></div>
-    <div class="cfoot"><button type="button" id="cRand">&#127922; RANDOM CHARACTER</button></div>
   </section>
+  <div class="cside" id="cSide"></div>
 
   <div class="modesw hide" id="modeSw">
-    <button type="button" id="swCam" aria-pressed="true">&#9679; CAMERA</button>
-    <button type="button" id="swTape" aria-pressed="false">&#9654; TAPE</button>
+    <button type="button" id="swCam" aria-pressed="true"><svg class="ic" viewBox="0 0 10 10" aria-hidden="true"><circle cx="5" cy="5" r="3.6"/></svg> CAMERA</button>
+    <button type="button" id="swTape" aria-pressed="false"><svg class="ic" viewBox="0 0 10 10" aria-hidden="true"><path d="M2 1v8l7-4z"/></svg> TAPE</button>
   </div>
   <!-- the tape deck: these are the buttons a real camcorder has -->
   <div class="deck" id="deck">
-    <button type="button" class="dk" id="dkRew" data-d="rew" aria-pressed="false" aria-label="Rewind">&#9664;&#9664;<small>REW</small></button>
-    <button type="button" class="dk" id="dkPlay" data-d="play" aria-pressed="false" aria-label="Play">&#9654;<small>PLAY</small></button>
-    <button type="button" class="dk" id="dkFf" data-d="ff" aria-pressed="false" aria-label="Fast forward">&#9654;&#9654;<small>FF</small></button>
-    <button type="button" class="dk" id="dkPause" data-d="pause" aria-pressed="false" aria-label="Pause">&#10074;&#10074;<small>PAUSE</small></button>
-    <button type="button" class="dk rec" id="dkRec" aria-pressed="false" aria-label="Record">&#9679;<small>REC</small></button>
+    <button type="button" class="dk" id="dkRew" data-d="rew" aria-pressed="false" aria-label="Rewind"><svg class="ic wide" viewBox="0 0 20 10" aria-hidden="true"><path d="M10 1v8L2 5zM19 1v8l-8-4z"/></svg><small>REW</small></button>
+    <button type="button" class="dk" id="dkPlay" data-d="play" aria-pressed="false" aria-label="Play"><svg class="ic" viewBox="0 0 10 10" aria-hidden="true"><path d="M2 1v8l7-4z"/></svg><small>PLAY</small></button>
+    <button type="button" class="dk" id="dkFf" data-d="ff" aria-pressed="false" aria-label="Fast forward"><svg class="ic wide" viewBox="0 0 20 10" aria-hidden="true"><path d="M1 1v8l8-4zM10 1v8l8-4z"/></svg><small>FF</small></button>
+    <button type="button" class="dk" id="dkPause" data-d="pause" aria-pressed="false" aria-label="Pause"><svg class="ic" viewBox="0 0 10 10" aria-hidden="true"><path d="M2 1h2.2v8H2zM5.8 1H8v8H5.8z"/></svg><small>PAUSE</small></button>
+    <button type="button" class="dk rec" id="dkRec" aria-pressed="false" aria-label="Record"><svg class="ic" viewBox="0 0 10 10" aria-hidden="true"><circle cx="5" cy="5" r="3.6"/></svg><small>REC</small></button>
   </div>
   <!-- while shooting stop motion the shutter takes the deck's place -->
   <div class="shootrow hide" id="shootRow">
@@ -228,15 +247,15 @@
   <div class="deck boardrow hide" id="boardRow">
     <button type="button" class="dk" id="bAdd" aria-label="Add photo">&#43;<small>PHOTO</small></button>
     <button type="button" class="dk" id="bSpin" aria-label="Spin now">&#8635;<small>SPIN</small></button>
-    <button type="button" class="dk" id="bLoop" aria-pressed="true" aria-label="Loop on or off">&#10074;&#10074;<small>LOOP</small></button>
+    <button type="button" class="dk" id="bLoop" aria-pressed="true" aria-label="Loop on or off"><span class="ico"><svg class="ic" viewBox="0 0 10 10" aria-hidden="true"><path d="M2 1h2.2v8H2zM5.8 1H8v8H5.8z"/></svg></span><small>LOOP</small></button>
   </div>
   <div class="era" id="looks"></div>
   <div class="tl" id="tl"><div class="strip" id="strip"></div></div>
   <div class="editrow" id="editRow">
-    <button type="button" id="mvL">&#9664; Earlier</button>
+    <button type="button" id="mvL"><svg class="ic" viewBox="0 0 10 10" aria-hidden="true"><path d="M8 1v8L1 5z"/></svg> Earlier</button>
     <button type="button" id="dupBtn">Copy</button>
     <button type="button" id="delBtn">Delete</button>
-    <button type="button" id="mvR">Later &#9654;</button>
+    <button type="button" id="mvR">Later <svg class="ic" viewBox="0 0 10 10" aria-hidden="true"><path d="M2 1v8l7-4z"/></svg></button>
   </div>
   <div class="info" id="info"></div>
 
@@ -331,22 +350,14 @@
     </section>
 
     <section class="panel" id="p-cscene">
-      <h2>The scene</h2>
-      <label class="f">Look</label>
-      <div class="chips" id="cStyle"></div>
-      <label class="f">Hologram color</label>
-      <div class="thm" id="cHolo"></div>
-      <label class="f">Background</label>
-      <div class="chips" id="cBg"></div>
-      <label class="f">Floor</label>
-      <div class="chips" id="cFloor"></div>
-      <label class="f">Camera angle</label>
-      <div class="chips" id="cCam"></div>
-      <label class="f">Pixel size</label>
-      <div class="chips" id="cPix"></div>
-      <label class="f">Zoom</label>
-      <input type="range" id="cZoom" min="0.7" max="1.5" step="0.01" value="1">
-      <label class="check"><input type="checkbox" id="cSpin"> Camera slowly circles</label>
+    <div class="acc" id="cAcc">
+      <div class="ar open" data-k="bg"><button type="button" class="ah"><b>Background</b><span class="av"></span><i class="chev"></i></button><div class="ab"><div class="chips" id="cBg"></div></div></div>
+      <div class="ar" data-k="floor"><button type="button" class="ah"><b>Floor</b><span class="av"></span><i class="chev"></i></button><div class="ab"><div class="chips" id="cFloor"></div></div></div>
+      <div class="ar" data-k="cam"><button type="button" class="ah"><b>Camera angle</b><span class="av"></span><i class="chev"></i></button><div class="ab"><div class="chips" id="cCam"></div><label class="check"><input type="checkbox" id="cSpin"> Camera slowly circles</label></div></div>
+      <div class="ar" data-k="look"><button type="button" class="ah"><b>Look</b><span class="av"></span><i class="chev"></i></button><div class="ab"><div class="chips" id="cStyle"></div><label class="f">Hologram color</label><div class="thm" id="cHolo"></div></div></div>
+      <div class="ar" data-k="zoom"><button type="button" class="ah"><b>Zoom</b><span class="av"></span><i class="chev"></i></button><div class="ab"><input type="range" id="cZoom" min="0.7" max="1.5" step="0.01" value="1"></div></div>
+      <div class="ar" data-k="pix"><button type="button" class="ah"><b>Pixel size</b><span class="av"></span><i class="chev"></i></button><div class="ab"><div class="chips" id="cPix"></div></div></div>
+    </div>
     </section>
 
     <section class="panel" id="p-clip">
@@ -358,6 +369,7 @@
 
     <section class="panel" id="p-set">
       <h2>Settings</h2>
+      <div id="eraSet">
       <label class="f">How strong the era is <span id="strVal"></span></label>
       <input type="range" id="strength" min="0" max="100" value="70">
       <label class="check"><input type="checkbox" id="recOn" checked> Show camcorder text (PLAY, REW, FF, PAUSE, timer)</label>
@@ -365,6 +377,7 @@
       <label class="f">Date text</label>
       <input type="text" id="dateText" maxlength="24" placeholder="OCT 25 1998">
       <label class="check"><input type="checkbox" id="glitchOn"> Also glitch by itself now and then</label>
+      </div>
       <div id="stopSet">
         <label class="f">Speed <span id="fpsVal"></span></label>
         <input type="range" id="fps" min="1" max="24" value="8">
@@ -404,14 +417,14 @@
   </div>
 
   <nav class="tools" id="tools">
-    <button type="button" data-p="create" data-k="char" aria-selected="false"><i>&#9786;</i>Create</button>
-    <button type="button" data-p="cscene" data-k="char" aria-selected="false"><i>&#9707;</i>Scene</button>
-    <button type="button" data-p="shoot" data-k="stop" aria-selected="true"><i>&#43;</i>Add</button>
-    <button type="button" data-p="bphotos" data-k="board" aria-selected="false"><i>&#9638;</i>Photos</button>
-    <button type="button" data-p="bsign" data-k="board" aria-selected="false"><i>&#9707;</i>Sign</button>
-    <button type="button" data-p="clip" data-k="clip" aria-selected="false"><i>&#9636;</i>Video</button>
-    <button type="button" data-p="set" data-k="both" aria-selected="false"><i>&#9881;</i>Settings</button>
-    <button type="button" data-p="save" data-k="both" aria-selected="false"><i>&#8681;</i>Save</button>
+    <button type="button" data-p="create" data-k="char" aria-selected="false"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="8" r="4"/><path d="M4 21c0-5 4-8 8-8s8 3 8 8"/></svg>Create</button>
+    <button type="button" data-p="cscene" data-k="char" aria-selected="false"><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="5" width="18" height="14" rx="2"/><path d="M3 16l5-4 4 3 3-2 6 4"/></svg>Scene</button>
+    <button type="button" data-p="shoot" data-k="stop" aria-selected="true"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 5v14M5 12h14"/></svg>Add</button>
+    <button type="button" data-p="bphotos" data-k="board" aria-selected="false"><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="3" width="8" height="8"/><rect x="13" y="3" width="8" height="8"/><rect x="3" y="13" width="8" height="8"/><rect x="13" y="13" width="8" height="8"/></svg>Photos</button>
+    <button type="button" data-p="bsign" data-k="board" aria-selected="false"><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="4" width="18" height="10"/><path d="M8 14v7M16 14v7"/></svg>Sign</button>
+    <button type="button" data-p="clip" data-k="clip" aria-selected="false"><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="6" width="18" height="12" rx="2"/><path d="M10 9.5v5l4.5-2.5z"/></svg>Video</button>
+    <button type="button" data-p="set" data-k="both" aria-selected="false"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 7h9M18 7h2M4 17h2M11 17h9"/><circle cx="15.5" cy="7" r="2.3"/><circle cx="8.5" cy="17" r="2.3"/></svg>Settings</button>
+    <button type="button" data-p="save" data-k="both" aria-selected="false"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 4v11M7 11l5 5 5-5M5 20h14"/></svg>Save</button>
   </nav>
 </div>
 
@@ -520,14 +533,14 @@
     c.font = '700 ' + size + 'px "Courier New", Courier, monospace'; c.textAlign = align || 'left'; c.textBaseline = 'top';
     c.fillStyle = 'rgba(0,0,0,.7)'; c.fillText(text, x + size * 0.07, y + size * 0.07); c.fillStyle = color; c.fillText(text, x, y);
   }
-  const OSD = { play: '▶ PLAY', ff: '▶▶ FF', rew: '◀◀ REW', pause: '❚❚ PAUSE' };
+  const OSD = { play: 'PLAY', ff: 'FF >>', rew: '<< REW', pause: '|| PAUSE' };
   // what a camcorder prints on the picture. t = tape time in seconds.
   function drawStamps(c, W, H, t, live) {
     const L = LOOKS[st.look]; if (!L || st.look === 'none') return;
     const s = Math.round(Math.min(W, H) * 0.058), blink = Math.floor(performance.now() / 600) % 2 === 0;
     if (st.rec && L.tape) {
       let label;
-      if (live) label = performance.now() < st.flashUntil ? '● REC' : 'STBY';
+      if (live) label = performance.now() < st.flashUntil ? 'REC' : 'STBY';
       else if (st.kind === 'board') label = board.playing ? OSD.play : OSD.pause;
       else if (st.kind === 'char') label = OSD.play;
       else label = OSD[deck.mode] || OSD.pause;
@@ -777,6 +790,7 @@
   // ===================== SCREENS =====================
   function syncRows() {
     const stop = st.kind === 'stop', isBoard = st.kind === 'board';
+    $('looks').classList.toggle('hide', st.kind !== 'clip'); $('eraSet').classList.toggle('hide', st.kind !== 'clip');
     $('boardRow').classList.toggle('hide', !isBoard);
     $('rewindRow').classList.toggle('hide', isBoard);
     $('dupBtn').textContent = isBoard ? 'Add photo' : 'Copy';
@@ -807,7 +821,7 @@
   }
   document.querySelectorAll('#tools button').forEach(b => b.addEventListener('click', () => showPanel(b.dataset.p)));
   function startKind(kind) {
-    st.kind = kind; st.cam = kind === 'stop' && !st.frames.length; setDeck('pause'); if (kind === 'board' && board.sel < 0 && board.faces.length) board.sel = 0;
+    st.kind = kind; if (kind !== 'clip') st.look = 'none'; else if (st.look === 'none') st.look = 'vhs'; st.cam = kind === 'stop' && !st.frames.length; setDeck('pause'); if (kind === 'board' && board.sel < 0 && board.faces.length) board.sel = 0;
     $('start').classList.add('hide'); $('app').classList.remove('hide');
     document.querySelectorAll('#tools button').forEach(b => b.classList.toggle('gone', b.dataset.k !== 'both' && b.dataset.k !== kind));
     $('tl').classList.toggle('hide', kind === 'clip' || kind === 'char');
@@ -1106,7 +1120,7 @@
   $('bPhotoIn').addEventListener('change', (e) => { const files = [...e.target.files]; e.target.value = ''; if (files.length) addBoardPhotos(files); });
   $('bAdd').addEventListener('click', () => { buzz(8); $('bPhotoIn').click(); });
   $('bSpin').addEventListener('click', () => { buzz(15); const T = board.hold + board.spin, k = Math.floor(board.t / T); board.t = k * T + board.hold; board.playing = true; $('bLoop').setAttribute('aria-pressed', 'true'); if (st.panel === 'bphotos') showPanel('bsign'); });
-  $('bLoop').addEventListener('click', () => { board.playing = !board.playing; $('bLoop').setAttribute('aria-pressed', board.playing ? 'true' : 'false'); $('bLoop').firstChild.textContent = board.playing ? '❚❚' : '▶'; });
+  $('bLoop').addEventListener('click', () => { board.playing = !board.playing; $('bLoop').setAttribute('aria-pressed', board.playing ? 'true' : 'false'); $('bLoop').querySelector('.ico').innerHTML = board.playing ? '<svg class="ic" viewBox="0 0 10 10" aria-hidden="true"><path d="M2 1h2.2v8H2zM5.8 1H8v8H5.8z"/></svg>' : '<svg class="ic" viewBox="0 0 10 10" aria-hidden="true"><path d="M2 1v8l7-4z"/></svg>'; });
   function boardEdit(a) {
     const i = board.sel, fs = board.faces; if (i < 0 || !fs[i]) { stageMsg('Tap a photo in the strip first'); setTimeout(() => stageMsg(''), 1800); return; }
     if (a === 'l' && i > 0) { [fs[i - 1], fs[i]] = [fs[i], fs[i - 1]]; board.sel--; }
@@ -1183,7 +1197,7 @@
     ['og', 'OG', { head: 'square', skin: SKINS[3], hair: 'fade', hairc: HAIRS[0], top: 'tank', topc: CLOTH[9], bot: 'baggy', botc: CLOTH[5], shoes: 'boot', shoec: CLOTH[11], hat: 'bandana', hatc: CLOTH[0], extra: 'chain', beard: 'goatee', eyes: 'sleepy', mouth: 'flat', build: 'broad' }],
     ['dj', 'DJ', { head: 'round', skin: SKINS[4], hair: 'afro', hairc: HAIRS[0], top: 'tee', topc: CLOTH[2], bot: 'pants', botc: CLOTH[8], shoes: 'sneaker', shoec: CLOTH[0], hat: 'phones', hatc: CLOTH[8], eyes: 'big', mouth: 'smile', beard: 'stache' }],
     ['raver', 'Raver', { head: 'oval', skin: SKINS[0], hair: 'spikes', hairc: HAIRS[6], top: 'tank', topc: CLOTH[7], bot: 'pants', botc: CLOTH[8], shoes: 'platform', shoec: CLOTH[9], eyes: 'happy', mouth: 'grin', brows: 'raised', extra: 'shades', build: 'slim' }],
-    ['bob', 'Bob cut', { head: 'long', skin: SKINS[2], hair: 'bob', hairc: HAIRS[0], top: 'long', topc: CLOTH[3], bot: 'skirt', botc: CLOTH[4], shoes: 'boot', shoec: CLOTH[8], eyes: 'wide', mouth: 'dot', brows: 'raised', build: 'slim' }],
+    ['artist', 'Artist', { head: 'oval', skin: SKINS[2], hair: 'pony', hairc: HAIRS[2], top: 'tee', topc: CLOTH[9], bot: 'baggy', botc: CLOTH[11], shoes: 'sneaker', shoec: CLOTH[8], hat: 'bandana', hatc: CLOTH[3], extra: 'glasses', eyes: 'happy', mouth: 'smile', brows: 'raised', beard: 'stubble' }],
     ['cat', 'Cat', { head: 'round', skin: SKINS[0], hair: 'none', hairc: HAIRS[5], top: 'hoodie', topc: CLOTH[6], bot: 'shorts', botc: CLOTH[8], shoes: 'sneaker', shoec: CLOTH[9], hat: 'catears', hatc: HAIRS[5], extra: 'tail', eyes: 'big', nose: 'cat', mouth: 'cat', brows: 'none', headsz: 'big' }],
   ];
   // the categories in the creator, by tab: [id, label, camera, kind, colors]
@@ -1460,10 +1474,11 @@
     // hair
     const hc = A.hairc, hr = A.hair;
     if (hr === 'fade') push(capMesh(k, 0.205 * hv.h, 0.006), hd, hc);
+    else if (hr === 'mohawk') push(capMesh(k, 0.215 * hv.h, 0.004), hd, hc);
     else if (hr !== 'none' && hr !== 'afro') { push(capMesh(k, 0.19 * hv.h, 0.012), hd, hc); push(loft([[0.2, 0.116, 0.07, 0, -0.045], [0.13, 0.121, 0.088, 0, -0.04], [0.085, 0.108, 0.08, 0, -0.035]], { seg: 12, n: 2.4 }), hd, hc); }
     if (hr === 'spikes') for (let i = 0; i < 7; i++) { const an = i / 7 * 6.28, rr = 0.075; push(coneMesh(0.034, 0.09, 0.034), mm(hd, mm(Tm(Math.cos(an) * rr, top0 - 0.02, Math.sin(an) * rr * 0.9), mm(RZ(-Math.cos(an) * 0.5), RX(Math.sin(an) * 0.5)))), hc); }
     if (hr === 'spikes') push(coneMesh(0.04, 0.11, 0.04), mm(hd, Tm(0, top0 - 0.02, 0)), hc);
-    if (hr === 'mohawk') for (let i = 0; i < 7; i++) { const z = 0.09 - i * 0.03, y = top0 - 0.005 - Math.abs(i - 3) * 0.008 - (i > 4 ? (i - 4) * 0.018 : 0); push(coneMesh(0.022, 0.085 - Math.abs(i - 3) * 0.008, 0.045), mm(hd, Tm(0, y, z)), hc); }
+    if (hr === 'mohawk') for (let i = 0; i < 9; i++) { const z = 0.105 - i * 0.026, u = z / 0.115, y = top0 - 0.012 - 0.07 * u * u, hh = 0.13 - 0.05 * Math.abs(i - 4) / 4; push(coneMesh(0.02, hh, 0.034), mm(hd, mm(Tm(0, y, z), RX(-u * 0.5))), hc); }
     if (hr === 'afro') push(ballMesh(1), mm(hd, mm(Tm(0, 0.15 * hv.h, -0.015), Sm(0.2, 0.19, 0.19))), hc);
     if (hr === 'bob') push(loft([[0.19, 0.12, 0.09, 0, -0.045], [0.08, 0.135, 0.1, 0, -0.045], [-0.07, 0.14, 0.105, 0, -0.04]], { seg: 12, n: 2.4 }), hd, hc);
     if (hr === 'long') push(loft([[0.19, 0.12, 0.09, 0, -0.045], [0.06, 0.14, 0.1, 0, -0.045], [-0.15, 0.15, 0.1, 0, -0.05], [-0.34, 0.13, 0.08, 0, -0.06]], { seg: 12, n: 2.4 }), mm(hd, Sm(1, 1, 1)), hc);
@@ -1600,12 +1615,12 @@
     RB.x.putImageData(RB.img, 0, 0);
     c.imageSmoothingEnabled = pix < 2.5; c.drawImage(RB.c, 0, 0, W, H); c.imageSmoothingEnabled = true;
     if (o.style === 'holo') { c.fillStyle = 'rgba(0,0,0,.18)'; for (let y = 0; y < H; y += Math.max(2, pix)) c.fillRect(0, y, W, 1); }
-    if (o.move === 'sing') { c.save(); c.font = '900 ' + Math.round(H * 0.05) + 'px Arial'; c.textAlign = 'center'; for (let i = 0; i < 4; i++) { const ph = (t * 0.5 + i / 4) % 1; c.globalAlpha = Math.sin(ph * 3.14); c.fillStyle = i % 2 ? '#ffd400' : '#ffffff'; c.shadowColor = 'rgba(0,0,0,.6)'; c.shadowBlur = 4; c.fillText(i % 2 ? '♫' : '♪', W * (0.74 + 0.16 * ((i * 0.37 + ph * 0.3) % 1)), H * (0.5 - ph * 0.3)); } c.restore(); }
+    if (o.move === 'sing') { c.save(); c.fillStyle = '#fff'; for (let i = 0; i < 4; i++) { const ph = (t * 0.5 + i / 4) % 1, nx = W * (0.74 + 0.16 * ((i * 0.37 + ph * 0.3) % 1)), ny = H * (0.5 - ph * 0.3), n = H * 0.016; c.globalAlpha = Math.sin(ph * 3.14); c.fillStyle = i % 2 ? '#ffd400' : '#ffffff'; c.shadowColor = 'rgba(0,0,0,.6)'; c.shadowBlur = 4; c.beginPath(); c.ellipse(nx, ny, n * 1.3, n * 0.9, -0.4, 0, 6.3); c.fill(); c.fillRect(nx + n * 1.0, ny - n * 4.2, n * 0.38, n * 4.2); c.fillRect(nx + n * 1.0, ny - n * 4.2, n * 1.6, n * 0.7); } c.restore(); }
   }
   // ----- the view the camera wants right now, and how it eases there -----
   function charWants() {
     const rec = deck.recording || deck.auto, inCreate = st.panel === 'create' && !rec;
-    let focus = 'full', move = chr.A.move, yaw = chr.yaw + chr.userYaw + (chr.spin && !inCreate ? chr.t * 25 : 0);
+    let focus = 'full', move = chr.A.move, yaw = chr.yaw + chr.userYaw + (chr.spin ? chr.t * 25 : 0);
     if (inCreate) { const cat = (CATS[chrUI.tab] || []).find(c => c[0] === chrUI.cat); focus = cat ? cat[2] : 'full'; if (chrUI.tab !== 'emote') move = 'idle'; if (focus === 'head' || focus === 'face') yaw = chr.userYaw; }
     const f = FOCUS[focus]; return { yaw: yaw, cy: f.cy, d: focus === 'full' ? f.d / chr.zoom : f.d, move: move, focus: focus, create: inCreate };
   }
@@ -1622,7 +1637,7 @@
   const thC = document.createElement('canvas');
   function drawThumb(cv2, A2, focus, yaw, move) {
     const w = cv2.width, h = cv2.height, c = cv2.getContext('2d'), F = FOCUS[focus] || FOCUS.full;
-    renderChar(c, w, h, A2, 0.3, { style: 'solid', bg: 'studio', floor: 'studio', pix: 1, noGrade: false, move: move || 'idle', view: { yaw: yaw, cy: F.cy, d: F.d * (focus === 'full' ? 0.92 : 1) } });
+    renderChar(c, w, h, A2, 0.3, { style: 'solid', bg: 'studio', floor: 'studio', pix: 1, noGrade: false, move: move || 'idle', view: { yaw: yaw, cy: F.cy, d: F.d * (focus === 'full' ? 0.92 : focus === 'head' ? 0.8 : 1) } });
   }
   function setA(k, v) { if (chr.A[k] === v) return; pushHist(); chr.A[k] = v; saveChar(); refreshCharUI(); }
   function pushHist() { chr.hist.push(JSON.stringify(chr.A)); if (chr.hist.length > 40) chr.hist.shift(); chr.redo = []; }
@@ -1674,7 +1689,6 @@
     $('info').textContent = (OPTS.move.find(m => m[0] === chr.A.move) || [0, ''])[1] + ' · tap the picture and drag to turn the character';
     $('undoBtn').disabled = !chr.hist.length; $('redoBtn').disabled = !chr.redo.length; updateDeckEnabled();
   }
-  $('cRand').addEventListener('click', () => { buzz(20); randomChar(); });
   // drag the picture to turn the character
   let cdrag = null;
   cv.addEventListener('pointerdown', (e) => { if (st.kind !== 'char') return; cdrag = { x: e.clientX }; try { cv.setPointerCapture(e.pointerId); } catch (er) {} });
@@ -1689,14 +1703,32 @@
   chipSet('cPix', [[1.5, 'Fine'], [2, 'PS2'], [3, 'Chunky']], () => chr.pix, v => { chr.pix = +v; });
   $('cZoom').addEventListener('input', () => { chr.zoom = +$('cZoom').value; });
   $('cSpin').addEventListener('change', () => { chr.spin = $('cSpin').checked; });
+  // scene drop downs: one open at a time, each shows what is picked
+  const ACC = { bg: () => (OPTS_BG[chr.bg] || chr.bg), floor: () => (OPTS_FL[chr.floor] || chr.floor), cam: () => (chr.yaw === 24 ? '3/4' : chr.yaw === 0 ? 'Front' : chr.yaw === 90 ? 'Side' : chr.yaw === 180 ? 'Back' : 'Custom'), look: () => (chr.style === 'holo' ? 'Hologram' : 'Solid'), zoom: () => Math.round(chr.zoom * 100) + '%', pix: () => ({ 1.5: 'Fine', 2: 'PS2', 3: 'Chunky' }[chr.pix] || '') };
+  const OPTS_BG = { street: 'Street', neon: 'Neon', vapor: 'Vapor', studio: 'Studio' }, OPTS_FL = { asphalt: 'Asphalt', checker: 'Checker', grid: 'Grid', studio: 'Plain' };
+  function accSync() { document.querySelectorAll('#cAcc .ar').forEach(r => { const f = ACC[r.dataset.k]; r.querySelector('.av').textContent = f ? f() : ''; }); }
+  document.querySelectorAll('#cAcc .ah').forEach(h => h.addEventListener('click', () => { buzz(6); const r = h.parentNode, was = r.classList.contains('open'); document.querySelectorAll('#cAcc .ar').forEach(x => x.classList.remove('open')); if (!was) r.classList.add('open'); accSync(); }));
+  document.querySelectorAll('#p-cscene .chips, #p-cscene input, #p-cscene .thm').forEach(e => e.addEventListener('click', () => setTimeout(accSync, 0)));
+  $('cZoom').addEventListener('input', accSync);
+  accSync();
+  // the buttons under the figure
+  (function () {
+    const box = $('cSide'), mk = (label, cls, fn) => { const b = document.createElement('button'); b.type = 'button'; b.textContent = label; if (cls) b.className = cls; b.addEventListener('click', () => { buzz(10); fn(b); }); box.appendChild(b); return b; };
+    mk('RANDOM', '', () => { randomChar(); });
+    mk('RESET', '', () => { pushHist(); chr.A = Object.assign({}, DEF); saveChar(); refreshCharUI(); renderGrid(); });
+    const sp = mk('TURN', '', (b) => { chr.spin = !chr.spin; b.setAttribute('aria-pressed', String(chr.spin)); $('cSpin').checked = chr.spin; chr.userYaw = 0; });
+    sp.setAttribute('aria-pressed', 'false');
+    mk('SCENE', '', () => showPanel('cscene'));
+    mk('RECORD', 'act', () => showPanel('save'));
+  })();
   function openCharCreator() { chrUI.tab = 'face'; chrUI.cat = 'start'; chr.t = 0; chr.cur = null; renderTabs(); renderRail(); renderGrid(); refreshCharUI(); }
 
   // ===================== FIRST PAGE: flip through what you can build =====================
   const MODES = [
+    { key: 'char', name: 'AVATAR MAKER', tab: 'AVATAR', desc: 'Build a person like a Mii with a PS2 game look. Make them walk, sing or dance, solid or as a hologram.' },
     { key: 'stop', name: 'STOP MOTION', tab: 'STOP', desc: 'Shoot frames with your camera, or use photos and a video. Then run it through the tape deck.' },
     { key: 'clip', name: 'VHS BUILDER', tab: 'VHS', desc: 'Pick a video from your camera roll. Rewind, fast forward and pause it like a real camcorder tape, then record it.' },
     { key: 'board', name: 'BILLBOARD', tab: 'SIGN', desc: 'Put 2 to 5 photos on a spinning trivision sign. Add words like a real ad. Pick the scene behind it.' },
-    { key: 'char', name: 'CHARACTER', tab: 'CHAR', desc: 'Build a character like a Mii with a PS2 game look. Make it walk, sing or dance, solid or as a hologram.' },
   ];
   let mi = 0;
   function showMode(i) {
