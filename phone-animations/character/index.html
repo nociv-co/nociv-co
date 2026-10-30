@@ -54,6 +54,7 @@
   .card img { display: block; width: 100%; max-height: 52vh; object-fit: contain; border: 2px solid var(--ink); border-radius: 10px; background: repeating-conic-gradient(#e4e1d8 0 25%, #f4f1e8 0 50%) 0 0 / 18px 18px; }
   .card h3 { margin: 0 0 8px; font-family: NocivAnton, Impact, sans-serif; letter-spacing: .06em; font-weight: 400; font-size: 1.4rem; text-transform: uppercase; }
   .hide { display: none !important; }
+.note a { color: inherit; font-weight: 800; text-decoration: underline; }
 </style>
 </head>
 <body>
@@ -128,18 +129,18 @@ const EYEC = ['#1a1a1a', '#4a2e1a', '#7a5a2a', '#3f6b4a', '#2f5d9e', '#8a8a8a'];
 const OPTS = {
   head: ['round', 'square', 'long'], eyes: ['e15', 'e18', 'e20', 'e28', 'e31', 'e36', 'e37'], brow: ['b129', 'b134', 'b39', 'b145', 'none'], nose: ['n100', 'n112', 'n113', 'n116', 'n121', 'n123', 'n126', 'n131'], mouth: ['m7', 'm10', 'm16', 'm30', 'm40', 'm45', 'm21', 'm29', 'm33', 'm11', 'm3'],
   beard: ['none', 'stubble', 'mustache', 'goatee', 'beard'], glasses: ['none', 'round', 'aviator', 'square', 'shades'],
-  hair: ['bald', 'buzz', 'fade', 'highfade', 'waves', 'coily', 'afro', 'puff', 'curls', 'cornrows', 'fulani', 'braidbun', 'boxbraids', 'bobbraids', 'twists', 'locs', 'shortlocs', 'locbun', 'bantu', 'puffs', 'mohawk', 'long', 'bun'], hat: ['none', 'cap', 'beanie', 'bucket', 'phones', 'bandana'],
-  top: ['tee', 'hoodie', 'jacket', 'tank', 'vest', 'apron'], bottom: ['jeans', 'joggers', 'cargo', 'shorts', 'skirt', 'slacks'], shoes: ['sneaker', 'skate', 'boot', 'hightop'],
+  hair: ['bald', 'buzz', 'fade', 'highfade', 'waves', 'coily', 'afro', 'puff', 'curls', 'cornrows', 'fulani', 'braidbun', 'boxbraids', 'bobbraids', 'twists', 'locs', 'shortlocs', 'locbun', 'bantu', 'puffs', 'mohawk', 'long', 'bun'], hat: ['none', 'beanie', 'cadet', 'phones'],
+  top: ['tee', 'boxy', 'crop', 'polo', 'tank', 'muscle'], bottom: ['straight', 'wide', 'xwide', 'carpenter', 'army'], bag: ['none', 'tote', 'minitote', 'fanny', 'backpack'], shoes: ['sneaker', 'skate', 'boot', 'hightop'],
   prop: ['none', 'spray', 'brush', 'record', 'camera', 'clipboard', 'frame', 'board', 'mic', 'scissors'],
   pose: ['idle', 'wave', 'walk', 'dance', 'hype', 'spray', 'scratch', 'point', 'ollie']
 };
 const TYPES = {
-  artist: { name: 'Artist', top: 'apron', topC: '#e8e2cc', bottom: 'cargo', botC: '#3d4a26', shoes: 'sneaker', shoeC: '#c8412f', hat: 'beanie', hatC: '#f2c230', prop: 'spray', pose: 'spray', chain: false, lanyard: false, scarf: false, glasses: 'none' },
-  dj: { name: 'DJ', top: 'hoodie', topC: '#c8412f', bottom: 'jeans', botC: '#1a1a1a', shoes: 'hightop', shoeC: '#f2ecd6', hat: 'phones', hatC: '#1a1a1a', prop: 'record', pose: 'scratch', chain: true, lanyard: false, scarf: false, glasses: 'shades' },
-  curator: { name: 'Curator', top: 'vest', topC: '#3d4a26', bottom: 'slacks', botC: '#1a1a1a', shoes: 'boot', shoeC: '#8a6a4a', hat: 'none', hatC: '#1a1a1a', prop: 'clipboard', pose: 'point', chain: false, lanyard: true, scarf: false, glasses: 'round' },
-  skater: { name: 'Skater', top: 'tee', topC: '#f2c230', bottom: 'jeans', botC: '#2f5d9e', shoes: 'skate', shoeC: '#f2ecd6', hat: 'cap', hatC: '#c8412f', prop: 'board', pose: 'ollie', chain: false, lanyard: false, scarf: false, glasses: 'none' }
+  artist: { name: 'Artist', bag: 'tote', bagC: '#8a6a4a', top: 'boxy', topC: '#e8e2cc', bottom: 'carpenter', botC: '#3d4a26', shoes: 'sneaker', shoeC: '#c8412f', hat: 'beanie', hatC: '#f2c230', prop: 'spray', pose: 'spray', chain: false, lanyard: false, scarf: false, glasses: 'none' },
+  dj: { name: 'DJ', bag: 'fanny', bagC: '#f2c230', top: 'boxy', topC: '#c8412f', bottom: 'xwide', botC: '#1a1a1a', shoes: 'hightop', shoeC: '#f2ecd6', hat: 'phones', hatC: '#1a1a1a', prop: 'record', pose: 'scratch', chain: true, lanyard: false, scarf: false, glasses: 'shades' },
+  curator: { name: 'Curator', bag: 'none', bagC: '#8a6a4a', top: 'polo', topC: '#3d4a26', bottom: 'straight', botC: '#1a1a1a', shoes: 'boot', shoeC: '#8a6a4a', hat: 'none', hatC: '#1a1a1a', prop: 'clipboard', pose: 'point', chain: false, lanyard: true, scarf: false, glasses: 'round' },
+  skater: { name: 'Skater', bag: 'backpack', bagC: '#c8412f', top: 'tee', topC: '#f2c230', bottom: 'wide', botC: '#2f5d9e', shoes: 'skate', shoeC: '#f2ecd6', hat: 'cadet', hatC: '#c8412f', prop: 'board', pose: 'ollie', chain: false, lanyard: false, scarf: false, glasses: 'none' }
 };
-const DEF = Object.assign({ type: 'artist', body: 'mid', skin: '#c08552', head: 'round', eyes: 'e18', eyeC: '#5a3a1e', brow: 'b129', nose: 'n100', mouth: 'm16', beard: 'none', hair: 'coily', hairC: '#1a1a1a', earrings: false, lashes: false, lipC: '', bg: 'sage', grit: true }, TYPES.artist);
+const DEF = Object.assign({ type: 'artist', body: 'mid', skin: '#c08552', head: 'round', eyes: 'e18', eyeC: '#5a3a1e', brow: 'b129', nose: 'n100', mouth: 'm16', beard: 'none', hair: 'coily', hairC: '#1a1a1a', earrings: false, bag: 'none', bagC: '#8a6a4a', lashes: false, lipC: '', bg: 'sage', grit: true }, TYPES.artist);
 
 // ---------- poses: every pose loops in T seconds ----------
 const POSES = {
@@ -178,6 +179,7 @@ function drawChar(c, S, P, view, o) {
   ctx.save(); ctx.rotate(R(P.lean || 0));
   const arms = [1, -1].map(side => armGeom(side, B, side > 0 ? P.aR : P.aL));
   drawHairBack(S, B, P);
+  drawBagBack(S, B);
   drawTorso(S, B, skin);
   drawExtrasTorso(S, B);
   // arms (left behind prop, right with prop)
@@ -194,13 +196,13 @@ function legGeom(side, B, lg) {
   return { side, hx, hy: 0, kx: hx + dx / 2 + px * h, ky: dy / 2 + py * h, ax, ay, lift: lg.lift };
 }
 function drawLeg(g, B, S, skin) {
-  const t = S.bottom, w = B.leg, bc = S.botC, PK = { jeans: 1.3, joggers: 1.12, cargo: 1.32, shorts: 1.16, skirt: 1, slacks: 1.08 }[t] || 1.2, hem = { jeans: 1.55, joggers: 1.05, cargo: 1.5, shorts: 1.16, skirt: 1, slacks: 1.2 }[t] || 1.3;
+  const t = S.bottom, w = B.leg, bc = S.botC, PK = { straight: 1.3, wide: 1.5, xwide: 1.72, carpenter: 1.38, army: 1.36, jeans: 1.3, joggers: 1.12, cargo: 1.32, shorts: 1.16, skirt: 1, slacks: 1.08 }[t] || 1.2, hem = { straight: 1.3, wide: 1.75, xwide: 2.05, carpenter: 1.45, army: 1.45, jeans: 1.55, joggers: 1.05, cargo: 1.5, shorts: 1.16, skirt: 1, slacks: 1.2 }[t] || 1.3;
   const short = t === 'shorts', skirt = t === 'skirt', fx = g.ax + g.side * 3, fy = g.ay + 4;
   // bare leg
   paint(cap(g.hx, g.hy, g.kx, g.ky, w * .95, w * .88), skin); paint(cap(g.kx, g.ky, g.ax, g.ay, w * .88, w * .8), skin);
   if (!skirt) {
     if (short) { const tx = g.hx + (g.kx - g.hx) * .92, ty = g.hy + (g.ky - g.hy) * .92; paint(cap(g.hx, g.hy, tx, ty, w * PK, w * PK * 1.04), bc); }
-    else { paint(cap(g.hx, g.hy, g.kx, g.ky, w * PK, w * PK * 1.02), bc); paint(cap(g.kx, g.ky, g.ax, g.ay - 3, w * PK * 1.02, w * hem), bc); if (t === 'cargo') { const px = g.kx + g.side * w * .7, py = g.ky - 4; paint(rr(px - 6, py - 7, 12, 14, 2), dk(bc, .12), { ns: 1, lw: 2.4 }); } if (t === 'jeans') line([[g.kx - 4, g.ky + 6], [g.kx + 4, g.ky + 6]], 2, 'rgba(26,26,26,.5)'); }
+    else { paint(cap(g.hx, g.hy, g.kx, g.ky, w * PK, w * PK * 1.02), bc); paint(cap(g.kx, g.ky, g.ax, g.ay - 3, w * PK * 1.02, w * hem), bc); if (t === 'cargo' || t === 'army') { const px = g.kx + g.side * w * .7, py = g.ky - 4; paint(rr(px - 6, py - 7, 12, 14, 2), dk(bc, .12), { ns: 1, lw: 2.4 }); } if (t === 'army') { const px = g.kx + g.side * w * .7, py = g.ky - 4; line([[px - 6, py - 3], [px + 6, py - 3]], 2.2, 'rgba(26,26,26,.7)'); const cy = g.ay - 9, cw = w * hem * .95; line([[g.ax - cw, cy], [g.ax + cw, cy]], 2.4, 'rgba(26,26,26,.6)'); } if (t === 'carpenter') { paint(rr(g.kx - 8, g.ky - 9, 16, 18, 3), dk(bc, .14), { ns: 1, lw: 2.4 }); const tx = g.hx + (g.kx - g.hx) * .5 + g.side * w * .95, ty = g.hy + (g.ky - g.hy) * .5; if (g.side > 0) paint(rr(tx - 5, ty - 8, 10, 18, 2), dk(bc, .12), { ns: 1, lw: 2.2 }); else line([[tx - 2, ty - 6], [tx - 2, ty + 8]], 2.4, 'rgba(26,26,26,.7)'); } if (t === 'jeans' || t === 'straight') line([[g.kx - 4, g.ky + 6], [g.kx + 4, g.ky + 6]], 2, 'rgba(26,26,26,.5)'); }
   }
   drawShoe(fx, fy, g.side, B, S);
 }
@@ -217,7 +219,7 @@ function armGeom(side, B, aa) {
   aa = aa || [9, 14]; const S_ = { x: side * (B.sw - 5), y: -70 }, d1 = dirv(side, aa[0]), E = { x: S_.x + d1.x * 44, y: S_.y + d1.y * 44 }, d2 = dirv(side, aa[1]), H = { x: E.x + d2.x * 41, y: E.y + d2.y * 41 };
   return { side, S: S_, E, H, d2, ang: Math.atan2(d2.y, d2.x) };
 }
-function sleeveInfo(S) { return { tee: [.6, S.topC], hoodie: [2, S.topC], jacket: [2, S.topC], tank: [0, S.topC], vest: [2, '#f2ecd6'], apron: [.6, '#f2ecd6'] }[S.top] || [.6, S.topC]; }
+function sleeveInfo(S) { return { tee: [.6, S.topC], boxy: [.85, S.topC], crop: [.6, S.topC], polo: [.6, S.topC], muscle: [0, S.topC], hoodie: [2, S.topC], jacket: [2, S.topC], tank: [0, S.topC], vest: [2, '#f2ecd6'], apron: [.6, '#f2ecd6'] }[S.top] || [.6, S.topC]; }
 function drawArm(g, side, B, S, skin) {
   const w = B.arm, [sl, sc] = sleeveInfo(S);
   paint(cap(g.S.x, g.S.y, g.E.x, g.E.y, w, w * .9), skin); paint(cap(g.E.x, g.E.y, g.H.x, g.H.y, w * .9, w * .78), skin);
@@ -237,7 +239,7 @@ function torsoPath(B, ex, hem, sc) {
 }
 function drawTorso(S, B, skin) {
   const t = S.top, c = S.topC; paint(torsoPath(B, 0, 6), skin);
-  if (t === 'tee') { paint(torsoPath(B, 3, 8), c); } else if (t === 'tank') { paint(torsoPath(B, 2, 8, .62), c); } else if (t === 'hoodie') {
+  if (t === 'tee') { paint(torsoPath(B, 3, 8), c); } else if (t === 'boxy') { paint(torsoPath(B, 8, 8), c); line([[-B.hw - 6, 6], [B.hw + 6, 6]], 2, 'rgba(26,26,26,.35)'); } else if (t === 'crop') { paint(torsoPath(B, 3, -20), c); } else if (t === 'polo') { paint(torsoPath(B, 3, 8), c); line([[0, -78], [0, -46]], 2.4, 'rgba(26,26,26,.7)'); [-68, -56].forEach(y => { ctx.fillStyle = lt(c, .6); ctx.strokeStyle = INK; ctx.lineWidth = 1.8; ctx.beginPath(); ctx.arc(0, y, 2.2, 0, TAU); ctx.fill(); ctx.stroke(); }); } else if (t === 'muscle') { paint(torsoPath(B, 2, 8, .74), c); } else if (t === 'tank') { paint(torsoPath(B, 2, 8, .62), c); } else if (t === 'hoodie') {
     paint(torsoPath(B, 6, 14), c); paint(rr(-B.sw * .55, -22, B.sw * 1.1, 24, 8), dk(c, .1), { ns: 1, lw: 2.6 }); line([[-5, -82], [-5, -60]], 2.4, lt(c, .5)); line([[5, -82], [5, -62]], 2.4, lt(c, .5));
   } else if (t === 'jacket') {
     paint(torsoPath(B, 2, 8), '#f2ecd6'); const L = new Path2D(), Rr = new Path2D(), sw = B.sw + 5, hw = B.hw + 5;
@@ -252,9 +254,21 @@ function drawTorso(S, B, skin) {
     [['#c8412f', -16, -52, 4], ['#f2c230', 12, -38, 3.4], ['#2f5d9e', -6, -28, 3], ['#c8412f', 18, -56, 2.6], ['#1a1a1a', -22, -34, 2.4]].forEach(([k, x, y, r]) => { ctx.fillStyle = k; ctx.beginPath(); ctx.arc(x, y, r, 0, TAU); ctx.fill(); });
   }
   // collar
-  if (t !== 'tank') { const n = B.neck + 4; ctx.beginPath(); ctx.moveTo(-n - 2, -83); ctx.quadraticCurveTo(0, -70, n + 2, -83); ctx.quadraticCurveTo(0, -90, -n - 2, -83); ctx.fillStyle = skin; ctx.fill(); ctx.lineWidth = 3.2; ctx.strokeStyle = INK; ctx.stroke(); }
+  if (t === 'polo') { const n = B.neck + 4; [-1, 1].forEach(sd => { const f = new Path2D(); f.moveTo(sd * 2, -84); f.lineTo(sd * (n + 7), -86); f.lineTo(sd * (n + 2), -70); f.closePath(); paint(f, dk(c, .08), { ns: 1, lw: 2.4 }); }); }
+  if (t !== 'tank' && t !== 'muscle') { const n = B.neck + 4; ctx.beginPath(); ctx.moveTo(-n - 2, -83); ctx.quadraticCurveTo(0, -70, n + 2, -83); ctx.quadraticCurveTo(0, -90, -n - 2, -83); ctx.fillStyle = skin; ctx.fill(); ctx.lineWidth = 3.2; ctx.strokeStyle = INK; ctx.stroke(); }
+}
+
+function drawBagBack(S, B) {
+  if (S.bag !== 'backpack') return; const c = S.bagC; paint(rr(-B.sw * 1.38, -94, B.sw * 2.76, 92, 16), c, { sh: 4 }); line([[-B.sw * .3, -94], [-B.sw * .3, -102], [B.sw * .3, -102], [B.sw * .3, -94]], 3.4, INK); paint(rr(-B.sw * .6, -30, B.sw * 1.2, 22, 6), dk(c, .14), { ns: 1, lw: 2.4 });
+}
+function drawBagFront(S, B) {
+  const k = S.bag, c = S.bagC; if (!k || k === 'none') return;
+  if (k === 'backpack') { [-1, 1].forEach(sd => { const p = new Path2D(); p.moveTo(sd * (B.neck + 2), -84); p.quadraticCurveTo(sd * B.sw * .9, -62, sd * B.sw * .74, -22); p.lineTo(sd * (B.sw * .74 - 7), -22); p.quadraticCurveTo(sd * (B.sw * .8), -62, sd * (B.neck - 4), -82); p.closePath(); paint(p, dk(c, .15), { ns: 1, lw: 2.6 }); }); }
+  else if (k === 'fanny') { const hw = B.hw + 5; line([[-hw, -2], [hw, -2]], 6.5, INK); line([[-hw, -2], [hw, -2]], 3.2, dk(c, .2)); paint(rr(4, -14, 34, 22, 7), c, { sh: 3 }); line([[8, -6], [34, -6]], 2.2, 'rgba(26,26,26,.7)'); ctx.fillStyle = INK; ctx.beginPath(); ctx.arc(32, -6, 2.2, 0, TAU); ctx.fill(); }
+  else { const big = k === 'tote', bw = big ? 42 : 30, bh = big ? 46 : 30, bx = -B.sw - bw - 6, by = big ? -8 : 2; const sx = -B.sw * .8; [[bx + bw * .25], [bx + bw * .75]].forEach(([hx]) => { line([[sx, -80], [hx, by]], 5.2, INK); line([[sx, -80], [hx, by]], 2.4, dk(c, .3)); }); paint(rr(bx, by, bw, bh, 3), c, { sh: 4 }); line([[bx + 2, by + 6], [bx + bw - 2, by + 6]], 2, 'rgba(26,26,26,.4)'); if (big) { ctx.fillStyle = 'rgba(26,26,26,.5)'; ctx.font = '700 12px sans-serif'; } }
 }
 function drawExtrasTorso(S, B) {
+  drawBagFront(S, B);
   if (S.chain) { const p = new Path2D(); p.moveTo(-B.neck - 3, -82); p.quadraticCurveTo(0, -42, B.neck + 3, -82); ctx.lineWidth = 3; ctx.strokeStyle = INK; ctx.stroke(p); ctx.lineWidth = 1.6; ctx.strokeStyle = '#f2c230'; ctx.stroke(p); paint(star(0, -52, 7.5, 5), '#f2c230', { ns: 1, lw: 2.2 }); }
   if (S.lanyard) { const a = new Path2D(); a.moveTo(-B.neck - 2, -83); a.lineTo(-3, -34); a.lineTo(3, -34); a.lineTo(B.neck + 2, -83); a.closePath(); paint(a, '#c8412f', { ns: 1, lw: 2.4 }); paint(rr(-9, -34, 18, 22, 3), '#fff', { ns: 1, lw: 2.4 }); ctx.fillStyle = INK; ctx.fillRect(-5, -29, 10, 3); ctx.fillRect(-5, -23, 7, 2); }
   if (S.scarf) { const p = new Path2D(); p.moveTo(-B.neck - 6, -84); p.quadraticCurveTo(0, -66, B.neck + 6, -84); p.lineTo(B.neck + 2, -92); p.quadraticCurveTo(0, -86, -B.neck - 2, -92); p.closePath(); paint(p, '#c8412f', { ns: 1 }); const k = new Path2D(); k.moveTo(6, -72); k.lineTo(18, -58); k.lineTo(8, -56); k.closePath(); paint(k, '#c8412f', { ns: 1, lw: 2.4 }); }
@@ -367,6 +381,7 @@ function drawGlasses(S) {
 function drawHat(S, H) {
   const k = S.hat, c = S.hatC, hw = H.hw; if (k === 'none') return;
   if (k === 'cap') { const d = new Path2D(); d.moveTo(-hw - 3, -12); d.bezierCurveTo(-hw - 5, -62, -26, -72, 0, -72); d.bezierCurveTo(26, -72, hw + 5, -62, hw + 3, -12); d.quadraticCurveTo(0, -20, -hw - 3, -12); d.closePath(); paint(d, c, { sh: 6 }); line([[0, -72], [0, -26]], 2.2, 'rgba(26,26,26,.45)'); paint(star(0, -46, 9, 5), lt(c, .75), { ns: 1, lw: 2.2 }); const b = new Path2D(); b.moveTo(-hw - 9, -12); b.quadraticCurveTo(0, 2, hw + 9, -12); b.quadraticCurveTo(hw + 4, -22, 0, -20); b.quadraticCurveTo(-hw - 4, -22, -hw - 9, -12); b.closePath(); paint(b, dk(c, .18), { sh: 4 }); }
+  else if (k === 'cadet') { const d = new Path2D(); d.moveTo(-hw - 2, -22); d.lineTo(-hw + 3, -56); d.quadraticCurveTo(0, -66, hw - 3, -56); d.lineTo(hw + 2, -22); d.closePath(); paint(d, c, { sh: 6 }); paint(rr(-hw - 4, -36, (hw + 4) * 2, 15, 4), dk(c, .12), { sh: 3 }); ctx.fillStyle = dk(c, .3); ctx.beginPath(); ctx.arc(0, -59, 3.2, 0, TAU); ctx.fill(); const br = new Path2D(); br.moveTo(-hw - 5, -22); br.quadraticCurveTo(0, -2, hw + 5, -22); br.quadraticCurveTo(0, -14, -hw - 5, -22); br.closePath(); paint(br, dk(c, .22), { sh: 4 }); }
   else if (k === 'beanie') { const d = new Path2D(); d.moveTo(-hw - 3, -22); d.bezierCurveTo(-hw - 6, -66, -24, -74, 0, -74); d.bezierCurveTo(24, -74, hw + 6, -66, hw + 3, -22); d.closePath(); paint(d, c, { sh: 6 }); paint(rr(-hw - 5, -36, (hw + 5) * 2, 22, 8), dk(c, .08), { sh: 4 }); for (let x = -hw + 4; x < hw; x += 9) line([[x, -34], [x, -16]], 1.8, 'rgba(26,26,26,.4)'); }
   else if (k === 'bucket') { const d = new Path2D(); d.moveTo(-hw + 2, -22); d.lineTo(-hw + 8, -62); d.quadraticCurveTo(0, -70, hw - 8, -62); d.lineTo(hw - 2, -22); d.closePath(); paint(d, c, { sh: 6 }); paint(ell(0, -22, hw + 18, 12), dk(c, .1), { sh: 4 }); }
   else if (k === 'phones') { ctx.lineWidth = 9; ctx.strokeStyle = INK; ctx.beginPath(); ctx.arc(0, -4, hw + 9, Math.PI * 1.02, Math.PI * 1.98); ctx.stroke(); ctx.lineWidth = 4; ctx.strokeStyle = c === '#1a1a1a' ? '#c8412f' : c; ctx.stroke(); [-1, 1].forEach(sd => { paint(rr(sd * (hw + 10) - 9, -14, 18, 34, 7), c === '#1a1a1a' ? '#3a3a3a' : c, { sh: 4 }); paint(rr(sd * (hw + 10) - 4, -6, 8, 18, 3), '#c8412f', { ns: 1, lw: 2 }); }); }
@@ -465,6 +480,7 @@ function swatches(attr, list) { const w = el('div', 'sw'); list.forEach(c => { c
 function chips(list, cur, fn) { const w = el('div', 'chips'); list.forEach(([k, n]) => { const b = el('button', 'chip', n); b.type = 'button'; b.setAttribute('aria-pressed', k === cur ? 'true' : 'false'); b.addEventListener('click', () => fn(k)); w.appendChild(b); }); return w; }
 function toggle(attr, name) { const b = el('button', 'chip', name); b.type = 'button'; b.setAttribute('aria-pressed', S[attr] ? 'true' : 'false'); b.addEventListener('click', () => { S[attr] = !S[attr]; save(); sync(); }); return b; }
 const cap1 = s => s.charAt(0).toUpperCase() + s.slice(1);
+const GN = { tee: 'Tee', boxy: 'Boxy tee', crop: 'Cropped tee', polo: 'Polo', tank: 'Tank', muscle: 'Muscle tee', straight: 'Straight', wide: 'Wide leg', xwide: 'Extra wide', carpenter: 'Carpenter', army: 'Army fatigue', beanie: 'Beanie', cadet: 'Cadet hat', phones: 'Headphones', none: 'None', tote: 'Tote', minitote: 'Mini tote', fanny: 'Fanny pack', backpack: 'Backpack', sneaker: 'Sneaker', skate: 'Skate', boot: 'Boot', hightop: 'High top' };
 const HN = { highfade: 'High top', coily: 'Coily', puff: 'Afro puff', cornrows: 'Cornrows', fulani: 'Fulani', braidbun: 'Braid bun', boxbraids: 'Box braids', bobbraids: 'Bob braids', twists: 'Twists', shortlocs: 'Short locs', locbun: 'Loc bun', bantu: 'Bantu knots', puffs: 'Twist puffs', long: 'Straight' };
 const BN = { slim: 'Lean', mid: 'Mid', broad: 'Broad', curvy: 'Curvy', athletic: 'Athletic', round: 'Round' };
 function build() {
@@ -485,11 +501,12 @@ function build() {
   } else if (tab === 'hair') {
     panel.appendChild(grid('hair', OPT.hair, 'hair', { name: v => HN[v] || cap1(v), patch: () => ({ hat: 'none' }) })); panel.appendChild(el('div', 'lbl', 'Hair color')); panel.appendChild(swatches('hairC', CH.HAIRC));
   } else if (tab === 'hat') {
-    panel.appendChild(grid('hat', OPT.hat, 'head', { name: v => v === 'phones' ? 'Headphones' : cap1(v) })); panel.appendChild(el('div', 'lbl', 'Color')); panel.appendChild(swatches('hatC', CH.CLR));
+    panel.appendChild(grid('hat', OPT.hat, 'head', { name: v => GN[v] || cap1(v) })); panel.appendChild(el('div', 'lbl', 'Color')); panel.appendChild(swatches('hatC', CH.CLR));
   } else if (tab === 'outfit') {
-    panel.appendChild(chips([['top', 'Top'], ['bottom', 'Bottom'], ['shoes', 'Shoes']], sub.outfit, k => { sub.outfit = k; build(); }));
-    const a = sub.outfit, reg = a === 'top' ? 'top' : a === 'bottom' ? 'bot' : 'shoe', cattr = { top: 'topC', bottom: 'botC', shoes: 'shoeC' }[a];
-    panel.appendChild(grid(a, OPT[a], reg, { name: cap1 })); panel.appendChild(el('div', 'lbl', 'Color')); panel.appendChild(swatches(cattr, CH.CLR));
+    panel.appendChild(el('p', 'note', 'Every top, bottom, hat and bag here is a pattern you can make in <a href="../../creator-tools.html" target="_top">Cut and Sew</a>.'));
+    panel.appendChild(chips([['top', 'Top'], ['bottom', 'Bottom'], ['bag', 'Bag'], ['shoes', 'Shoes']], sub.outfit, k => { sub.outfit = k; build(); }));
+    const a = sub.outfit, reg = a === 'top' ? 'top' : a === 'bottom' ? 'bot' : a === 'bag' ? 'mid' : 'shoe', cattr = { top: 'topC', bottom: 'botC', shoes: 'shoeC', bag: 'bagC' }[a];
+    panel.appendChild(grid(a, OPT[a], reg, { name: v => GN[v] || cap1(v), patch: () => (a === 'bag' ? {} : { bag: 'none' }) })); panel.appendChild(el('div', 'lbl', 'Color')); panel.appendChild(swatches(cattr, CH.CLR));
   } else if (tab === 'extras') {
     panel.appendChild(el('div', 'lbl', 'Wear')); const w = el('div', 'chips'); [['chain', 'Chain'], ['lanyard', 'Lanyard'], ['scarf', 'Scarf'], ['earrings', 'Earrings']].forEach(([a, n]) => w.appendChild(toggle(a, n))); panel.appendChild(w);
     panel.appendChild(el('div', 'lbl', 'Hold')); panel.appendChild(grid('prop', OPT.prop, 'mid', { name: cap1 }));
@@ -518,7 +535,7 @@ const _sync = sync; sync = function () { _sync(); tag(); };
 // ---------- random ----------
 $('rand').addEventListener('click', () => {
   const pick = a => a[Math.floor(Math.random() * a.length)], t = pick(Object.keys(CH.TYPES));
-  Object.assign(S, CH.TYPES[t], { type: t, body: pick(['slim', 'mid', 'broad']), skin: pick(CH.SKINS), head: pick(OPT.head), eyes: pick(OPT.eyes), eyeC: pick(CH.EYEC), brow: pick(OPT.brow), nose: pick(OPT.nose), mouth: pick(OPT.mouth), beard: Math.random() < .4 ? pick(OPT.beard) : 'none', hair: pick(OPT.hair), hairC: pick(CH.HAIRC), topC: pick(CH.CLR.slice(1)), botC: pick(CH.CLR), shoeC: pick(CH.CLR.slice(1)), hatC: pick(CH.CLR), earrings: Math.random() < .3, hat: Math.random() < .55 ? pick(OPT.hat) : 'none', glasses: Math.random() < .3 ? pick(OPT.glasses) : 'none' });
+  Object.assign(S, CH.TYPES[t], { type: t, body: pick(['slim', 'mid', 'broad']), skin: pick(CH.SKINS), head: pick(OPT.head), eyes: pick(OPT.eyes), eyeC: pick(CH.EYEC), brow: pick(OPT.brow), nose: pick(OPT.nose), mouth: pick(OPT.mouth), beard: Math.random() < .4 ? pick(OPT.beard) : 'none', hair: pick(OPT.hair), hairC: pick(CH.HAIRC), topC: pick(CH.CLR.slice(1)), botC: pick(CH.CLR), shoeC: pick(CH.CLR.slice(1)), hatC: pick(CH.CLR), bag: Math.random() < .5 ? pick(OPT.bag) : 'none', bagC: pick(CH.CLR.slice(1)), earrings: Math.random() < .3, hat: Math.random() < .55 ? pick(OPT.hat) : 'none', glasses: Math.random() < .3 ? pick(OPT.glasses) : 'none' });
   if (S.hat !== 'none' && (S.hair === 'afro' || S.hair === 'puffs' || S.hair === 'bun')) S.hair = 'curls'; frozen = .35; t0 = performance.now(); save(); sync();
 });
 // ---------- export ----------
