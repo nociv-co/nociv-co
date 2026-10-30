@@ -37,53 +37,53 @@
   .build-hero .build-points { display: grid; grid-template-columns: max-content max-content; justify-content: start; gap: 8px 22px; margin: 0; }
   .build-hero .build-points li { white-space: normal; }
   @media (max-width: 359px) { .build-hero .build-points { grid-template-columns: 1fr 1fr; gap: 8px 10px; font-size: 14px; } }
-  /* --- THE BUILD: binder. section tabs left, app tabs right, one tan page between, arrows say what to do --- */
-  .binder { --ink: #1a1a1a; --note: #f2ecd6; --sel: #b9b6ab; position: relative; max-width: 760px; margin: 58px auto 70px; display: grid; grid-template-columns: 16px 46px minmax(0, 1fr) 36px 16px; align-items: start; }
-  @media (max-width: 790px) { .binder { margin-left: -14px; margin-right: -14px; } }
-  .b-tabs, .b-apps { display: flex; flex-direction: column; gap: 10px; padding-top: 70px; position: relative; z-index: 2; }
-  .b-tabs { grid-column: 2; } .b-apps { grid-column: 4; align-items: flex-end; }
-  .b-tabs button { all: unset; box-sizing: border-box; width: 42px; height: 62px; border: 2.5px solid var(--ink); border-left: 0; border-radius: 0 16px 16px 0; background: var(--c); color: var(--ci, var(--ink)); display: grid; place-items: center; cursor: pointer; -webkit-tap-highlight-color: transparent; transition: width .16s ease, background .16s ease; }
-  .b-tabs button svg { width: 24px; height: 24px; fill: none; stroke: currentColor; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
-  .b-tabs button[aria-selected="true"] { width: 50px; background: var(--sel); color: var(--ink); }
-  .b-apps button { all: unset; box-sizing: border-box; width: 32px; min-height: 84px; padding: 12px 0; border: 2.5px solid var(--ink); border-right: 0; border-radius: 14px 0 0 14px; background: var(--c); color: var(--ci, var(--ink)); display: grid; place-items: center; cursor: pointer; -webkit-tap-highlight-color: transparent; transition: width .16s ease, background .16s ease; font-weight: 900; font-size: .68rem; letter-spacing: .14em; text-transform: uppercase; writing-mode: vertical-rl; white-space: nowrap; }
-  .b-apps button[aria-selected="true"] { width: 40px; margin-left: -8px; background: var(--sel); color: var(--ink); }
+  /* --- THE BUILD: pieces float on the page. Tabs overlay the card edges. Arrows say what to do. --- */
+  .binder { --ink: #1a1a1a; --note: #f2ecd6; --sel: #b9b6ab; position: relative; max-width: 740px; margin: 60px 24px 74px; }
+  @media (min-width: 790px) { .binder { margin-left: auto; margin-right: auto; } }
+  .b-tabs, .b-apps { position: absolute; top: 44px; display: flex; flex-direction: column; gap: 10px; z-index: 4; }
+  .b-tabs { left: -22px; } .b-apps { right: -22px; align-items: flex-end; }
+  .b-tabs button { all: unset; box-sizing: border-box; width: 40px; height: 58px; border: 2.5px solid var(--ink); border-radius: 14px; background: var(--c); color: var(--ci, var(--ink)); display: grid; place-items: center; cursor: pointer; -webkit-tap-highlight-color: transparent; transition: width .16s ease, background .16s ease; box-shadow: 2px 2px 0 var(--ink); }
+  .b-tabs button svg { width: 22px; height: 22px; fill: none; stroke: currentColor; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
+  .b-tabs button[aria-selected="true"] { width: 48px; background: var(--sel); color: var(--ink); }
+  .b-apps button { all: unset; box-sizing: border-box; width: 32px; min-height: 80px; padding: 12px 0; border: 2.5px solid var(--ink); border-radius: 14px; background: var(--c); color: var(--ci, var(--ink)); display: grid; place-items: center; cursor: pointer; -webkit-tap-highlight-color: transparent; transition: width .16s ease, background .16s ease; font-weight: 900; font-size: .66rem; letter-spacing: .14em; text-transform: uppercase; writing-mode: vertical-rl; white-space: nowrap; box-shadow: -2px 2px 0 var(--ink); }
+  .b-apps button[aria-selected="true"] { width: 40px; background: var(--sel); color: var(--ink); }
   .b-tabs button:focus-visible, .b-apps button:focus-visible { outline: 3px solid #c8412f; outline-offset: 2px; }
-  .b-main { grid-column: 3; border: 3px solid var(--ink); background: var(--note); padding: 18px 14px 20px; margin: 0 -4px; box-shadow: 0 6px 16px rgba(0,0,0,.16); min-width: 0; display: grid; grid-template-columns: minmax(0, 1fr); gap: 18px; position: relative; z-index: 1; }
+  .b-main { display: grid; grid-template-columns: minmax(0, 1fr); gap: 16px; min-width: 0; }
   .b-hero { position: relative; }
-  .b-card { all: unset; display: block; box-sizing: border-box; border: 2.5px solid var(--ink); background: #1a1a1a; line-height: 0; cursor: pointer; overflow: hidden; -webkit-tap-highlight-color: transparent; aspect-ratio: 4 / 3; width: 100%; }
+  .b-card { all: unset; display: block; box-sizing: border-box; border: 2.5px solid var(--ink); background: #1a1a1a; line-height: 0; cursor: pointer; overflow: hidden; -webkit-tap-highlight-color: transparent; aspect-ratio: 16 / 10; width: 100%; box-shadow: 5px 5px 0 var(--ink); }
   .b-card svg { width: 100%; height: 100%; display: block; }
   .b-card:focus-visible { outline: 3px solid #c8412f; outline-offset: 3px; }
-  #bTool { position: absolute; top: 10px; left: 10px; padding: 5px 12px 4px; background: var(--note); border: 2px solid var(--ink); font-family: NocivAnton, Impact, "Arial Narrow", sans-serif; font-size: clamp(1.3rem, 6vw, 1.9rem); line-height: 1; letter-spacing: .03em; text-transform: uppercase; pointer-events: none; }
-  .b-prev { position: relative; border: 1.5px solid var(--ink); box-shadow: inset 0 0 0 5px var(--note), inset 0 0 0 6.5px var(--ink); padding: 28px 18px 20px; margin: 8px auto 0; width: 80%; max-width: 300px; text-align: center; }
-  .b-prev-l { position: absolute; top: -.8em; left: 50%; transform: translateX(-50%); background: var(--note); padding: 0 10px; font-family: NocivAnton, Impact, "Arial Narrow", sans-serif; font-size: 1.05rem; letter-spacing: .12em; text-transform: uppercase; line-height: 1.6; }
-  .b-made { margin: 0 0 10px; font-size: .74rem; font-weight: 700; color: #6b665c; letter-spacing: .02em; }
-  .b-made b { color: var(--ink); font-weight: 900; }
-  .b-poster { margin: 0 auto; border: 2px solid var(--ink); background: #fff; aspect-ratio: 4 / 5; width: min(100%, 190px); box-shadow: 3px 3px 0 var(--ink); overflow: hidden; position: relative; transform: rotate(-1.2deg); }
-  .b-poster::after { content: ''; position: absolute; top: -2px; left: 50%; width: 52px; height: 15px; margin-left: -26px; background: rgba(242,194,48,.7); transform: rotate(2deg); }
+  #bTool { position: absolute; bottom: 12px; left: 12px; padding: 5px 12px 4px; background: var(--note); border: 2px solid var(--ink); font-family: NocivAnton, Impact, "Arial Narrow", sans-serif; font-size: clamp(1.2rem, 5.4vw, 1.7rem); line-height: 1; letter-spacing: .03em; text-transform: uppercase; pointer-events: none; }
+  .b-rule { width: 56px; height: 3px; background: var(--ink); margin: 6px auto 2px; }
+  .b-row { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 40%); gap: 20px; align-items: start; }
+  .b-prev { text-align: center; min-width: 0; padding-right: 14px; }
+  .b-prev-l { display: block; margin-bottom: 8px; font-family: NocivAnton, Impact, "Arial Narrow", sans-serif; font-size: 1rem; letter-spacing: .14em; text-transform: uppercase; line-height: 1; }
+  .b-poster { margin: 0; border: 2px solid var(--ink); background: #fff; aspect-ratio: 4 / 5; width: 100%; box-shadow: 3px 3px 0 var(--ink); overflow: hidden; position: relative; transform: rotate(-1.5deg); }
+  .b-poster::after { content: ''; position: absolute; top: -2px; left: 50%; width: 46px; height: 14px; margin-left: -23px; background: rgba(242,194,48,.75); transform: rotate(2deg); }
   .b-poster img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: contain; display: block; }
-  .b-rule { width: 56px; height: 3px; background: var(--ink); margin: 2px auto 0; }
-  .b-foot { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 14px; align-items: end; }
-  .b-foot p { margin: 0; font-size: .92rem; line-height: 1.45; }
-  .b-cap { margin-top: 8px !important; font-weight: 800; font-size: .76rem !important; color: #6b665c; line-height: 1.35 !important; }
-  .b-open { all: unset; box-sizing: border-box; display: grid; place-items: center; min-width: 84px; height: 44px; padding: 0 14px; background: #c8412f; color: #fff; border: 2.5px solid var(--ink); box-shadow: 3px 3px 0 var(--ink); font-weight: 900; letter-spacing: .14em; font-size: .82rem; cursor: pointer; -webkit-tap-highlight-color: transparent; }
+  .b-made { margin: 10px 0 0; font-size: .7rem; font-weight: 700; color: #6b665c; line-height: 1.3; }
+  .b-made b { color: var(--ink); font-weight: 900; }
+  .b-foot { display: flex; flex-direction: column; gap: 10px; min-width: 0; padding: 2px 0 0 14px; }
+  .b-foot p { margin: 0; font-size: .92rem; line-height: 1.42; }
+  .b-cap { font-weight: 800; font-size: .74rem !important; color: #6b665c; line-height: 1.35 !important; border-top: 1.5px solid var(--ink); padding-top: 8px; }
+  .b-open { all: unset; box-sizing: border-box; display: grid; place-items: center; height: 46px; margin-top: 2px; background: #c8412f; color: #fff; border: 2.5px solid var(--ink); box-shadow: 3px 3px 0 var(--ink); font-weight: 900; letter-spacing: .16em; font-size: .85rem; cursor: pointer; -webkit-tap-highlight-color: transparent; }
   .b-open:active { background: var(--ink); box-shadow: none; transform: translate(3px, 3px); }
   .b-open:focus-visible { outline: 3px solid #c8412f; outline-offset: 3px; }
   .b-arrows { position: absolute; left: 0; top: 0; width: 100%; height: 100%; overflow: visible; pointer-events: none; z-index: 3; }
   .b-arrows path { fill: none; stroke: var(--ink); stroke-width: 2.5; stroke-linecap: round; stroke-linejoin: round; }
   .b-say { position: absolute; z-index: 3; font-family: NocivAnton, Impact, "Arial Narrow", sans-serif; font-size: 1.05rem; letter-spacing: .1em; text-transform: uppercase; line-height: 1; white-space: nowrap; pointer-events: none; }
-  #bSay1 { left: 76px; top: -34px; } #bSay2 { left: 76px; bottom: -40px; }
+  #bSay1 { left: 28px; top: -34px; } #bSay2 { right: 28px; bottom: -40px; }
   .b-apps.b-in button { animation: bTabIn .22s ease-out backwards; }
   .b-apps.b-in button:nth-child(2) { animation-delay: .04s; } .b-apps.b-in button:nth-child(3) { animation-delay: .08s; }
   @keyframes bTabIn { from { opacity: 0; transform: translateX(14px); } to { opacity: 1; transform: none; } }
   .b-swap { animation: bSwap .2s ease-out; }
   @keyframes bSwap { from { opacity: 0; transform: translateX(var(--from, 14px)); } to { opacity: 1; transform: none; } }
   @media (min-width: 820px) {
-    .binder { grid-template-columns: 22px 58px minmax(0, 1fr) 46px 22px; }
-    .b-tabs button { width: 54px; height: 72px; } .b-tabs button[aria-selected="true"] { width: 66px; }
-    .b-apps button { width: 40px; min-height: 100px; font-size: .74rem; } .b-apps button[aria-selected="true"] { width: 50px; }
-    .b-main { padding: 26px 30px 30px; gap: 22px; }
-    .b-foot p { font-size: 1rem; }
+    .b-tabs button { width: 48px; height: 66px; } .b-tabs button[aria-selected="true"] { width: 58px; }
+    .b-apps button { width: 38px; min-height: 96px; font-size: .74rem; } .b-apps button[aria-selected="true"] { width: 48px; }
+    .b-foot p { font-size: 1rem; } .b-row { grid-template-columns: minmax(0, 1fr) minmax(0, 34%); gap: 32px; }
   }
+  @media (max-width: 370px) { .b-foot { padding-left: 30px; } }
   @media (prefers-reduced-motion: reduce) { .b-swap, .b-apps.b-in button { animation: none; } }
 </style>
 </head>
@@ -116,15 +116,17 @@
         <button type="button" class="b-card" id="bCard" aria-label="Open this tool"></button>
         <span id="bTool"></span>
       </div>
-      <div class="b-prev">
-        <span class="b-prev-l">Preview</span>
-        <p class="b-made">Made with <b id="bMade"></b></p>
-        <figure class="b-poster"><img id="bPoster" alt="" width="800" height="1000"></figure>
-      </div>
       <div class="b-rule"></div>
-      <div class="b-foot">
-        <div><p id="bDesc"></p><p class="b-cap" id="bCap"></p></div>
-        <button type="button" class="b-open" id="bOpen">OPEN</button>
+      <div class="b-row">
+        <div class="b-foot">
+          <p id="bDesc"></p><p class="b-cap" id="bCap"></p>
+          <button type="button" class="b-open" id="bOpen">OPEN</button>
+        </div>
+        <div class="b-prev">
+          <span class="b-prev-l">Preview</span>
+          <figure class="b-poster"><img id="bPoster" alt="" width="800" height="1000"></figure>
+          <p class="b-made">Made with <b id="bMade"></b></p>
+        </div>
       </div>
     </div>
     <div class="b-apps" id="bNums" role="tablist" aria-label="Tools in this section"></div>
@@ -405,7 +407,7 @@
     function show(si, ti, dir) {
       sec = si; const list = ORDER[SECS[sec].id]; idx = Math.min(list.length - 1, Math.max(0, ti)); const T = cur(), S = SECS[sec];
       tabs.querySelectorAll('button').forEach((b, k) => b.setAttribute('aria-selected', k === sec ? 'true' : 'false'));
-      nums.style.paddingTop = ((matchMedia('(min-width: 820px)').matches ? 82 : 72) * sec + 70) + 'px'; nums.classList.remove('b-in'); void nums.offsetWidth; nums.classList.add('b-in');
+      nums.style.top = (44 + (matchMedia('(min-width: 820px)').matches ? 76 : 68) * sec) + 'px'; nums.classList.remove('b-in'); void nums.offsetWidth; nums.classList.add('b-in');
       nums.innerHTML = ''; list.forEach((k, i) => { const b = document.createElement('button'); b.type = 'button'; b.setAttribute('role', 'tab'); b.setAttribute('aria-label', data[k].name); b.setAttribute('aria-selected', i === idx ? 'true' : 'false'); b.style.setProperty('--c', S.color); b.style.setProperty('--ci', S.ci); b.textContent = SHORT[k] || data[k].name; b.addEventListener('click', () => show(sec, i, i > idx ? 1 : -1)); nums.appendChild(b); });
       el('bSay1').textContent = S.name + ' selected'; el('bTool').textContent = T.name; el('bCard').innerHTML = T.art; el('bCap').textContent = T.get; el('bDesc').textContent = T.desc;
       el('bMade').innerHTML = T.made; const img = el('bPoster'); img.alt = 'A finished piece made with ' + T.name; img.src = T.poster;
@@ -415,11 +417,11 @@
     }
     function drawArrows() {
       const B = el('buildHub').getBoundingClientRect(); if (!B.width) return;
-      const t = tabs.children[sec].getBoundingClientRect(), say1 = el('bSay1').getBoundingClientRect(), say2 = el('bSay2').getBoundingClientRect();
+      const t = tabs.children[sec].getBoundingClientRect(), s1 = el('bSay1').getBoundingClientRect(), s2 = el('bSay2').getBoundingClientRect();
       const last = nums.lastElementChild ? nums.lastElementChild.getBoundingClientRect() : null;
-      const ty = t.top + t.height / 2 - B.top, tx = t.left - B.left - 3, y1 = say1.top + say1.height / 2 - B.top, gx = 8;
-      el('bArrL').setAttribute('d', 'M' + (say1.left - B.left - 8) + ' ' + y1 + ' H' + gx + ' V' + ty + ' H' + tx + ' M' + (tx - 9) + ' ' + (ty - 7) + ' L' + tx + ' ' + ty + ' L' + (tx - 9) + ' ' + (ty + 7));
-      if (last) { const ax = last.right - B.left - 16, ay = last.bottom - B.top + 6, y2 = say2.top + say2.height / 2 - B.top; el('bArrR').setAttribute('d', 'M' + (say2.right - B.left + 8) + ' ' + y2 + ' H' + ax + ' V' + ay + ' M' + (ax - 7) + ' ' + (ay + 9) + ' L' + ax + ' ' + ay + ' L' + (ax + 7) + ' ' + (ay + 9)); }
+      const ty = t.top + t.height / 2 - B.top, tx = t.left - B.left - 3, y1 = s1.top + s1.height / 2 - B.top, gx = tx - 10;
+      el('bArrL').setAttribute('d', 'M' + (s1.left - B.left - 8) + ' ' + y1 + ' H' + gx + ' V' + ty + ' H' + tx + ' M' + (tx - 8) + ' ' + (ty - 7) + ' L' + tx + ' ' + ty + ' L' + (tx - 8) + ' ' + (ty + 7));
+      if (last) { const ax = last.right - B.left + 3, ay = last.top + last.height / 2 - B.top, y2 = s2.top + s2.height / 2 - B.top, gx2 = ax + 10; el('bArrR').setAttribute('d', 'M' + (s2.right - B.left + 8) + ' ' + y2 + ' H' + gx2 + ' V' + ay + ' H' + ax + ' M' + (ax + 8) + ' ' + (ay - 7) + ' L' + ax + ' ' + ay + ' L' + (ax + 8) + ' ' + (ay + 7)); }
     }
     window.addEventListener('resize', drawArrows); if (document.fonts && document.fonts.ready) document.fonts.ready.then(drawArrows);
     el('bOpen').addEventListener('click', () => openPanel(cur().panel));
