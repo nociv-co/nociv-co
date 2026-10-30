@@ -37,55 +37,54 @@
   .build-hero .build-points { display: grid; grid-template-columns: max-content max-content; justify-content: start; gap: 8px 22px; margin: 0; }
   .build-hero .build-points li { white-space: normal; }
   @media (max-width: 359px) { .build-hero .build-points { grid-template-columns: 1fr 1fr; gap: 8px 10px; font-size: 14px; } }
-  /* --- THE BUILD: binder. section tabs on the left, app tabs on the right, one tan page between --- */
-  .binder { --ink: #1a1a1a; --note: #f2ecd6; max-width: 980px; margin: 0 auto; display: grid; grid-template-columns: 46px minmax(0, 1fr) 36px; align-items: start; }
-  @media (max-width: 1010px) { .binder { margin-left: -14px; margin-right: -14px; } }
+  /* --- THE BUILD: binder. section tabs left, app tabs right, one tan page between, arrows say what to do --- */
+  .binder { --ink: #1a1a1a; --note: #f2ecd6; --sel: #b9b6ab; position: relative; max-width: 760px; margin: 58px auto 70px; display: grid; grid-template-columns: 16px 46px minmax(0, 1fr) 36px 16px; align-items: start; }
+  @media (max-width: 790px) { .binder { margin-left: -14px; margin-right: -14px; } }
   .b-tabs, .b-apps { display: flex; flex-direction: column; gap: 10px; padding-top: 70px; position: relative; z-index: 2; }
-  .b-apps { align-items: flex-end; }
-  .b-tabs button { all: unset; box-sizing: border-box; width: 42px; height: 62px; border: 2.5px solid var(--ink); border-left: 0; border-radius: 0 16px 16px 0; background: var(--note); color: var(--ink); display: grid; place-items: center; cursor: pointer; -webkit-tap-highlight-color: transparent; transition: width .16s ease, background .16s ease; }
+  .b-tabs { grid-column: 2; } .b-apps { grid-column: 4; align-items: flex-end; }
+  .b-tabs button { all: unset; box-sizing: border-box; width: 42px; height: 62px; border: 2.5px solid var(--ink); border-left: 0; border-radius: 0 16px 16px 0; background: var(--c); color: var(--ci, var(--ink)); display: grid; place-items: center; cursor: pointer; -webkit-tap-highlight-color: transparent; transition: width .16s ease, background .16s ease; }
   .b-tabs button svg { width: 24px; height: 24px; fill: none; stroke: currentColor; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
-  .b-tabs button[aria-selected="true"] { width: 50px; background: var(--c); color: var(--ci, var(--ink)); }
-  .b-apps button { all: unset; box-sizing: border-box; width: 32px; min-height: 84px; padding: 12px 0; border: 2.5px solid var(--ink); border-right: 0; border-radius: 14px 0 0 14px; background: color-mix(in srgb, var(--c) 38%, var(--note)); color: var(--ink); display: grid; place-items: center; cursor: pointer; -webkit-tap-highlight-color: transparent; transition: width .16s ease, background .16s ease; font-weight: 900; font-size: .68rem; letter-spacing: .14em; text-transform: uppercase; writing-mode: vertical-rl; white-space: nowrap; }
-  .b-apps button[aria-selected="true"] { width: 40px; margin-left: -8px; background: var(--c); color: var(--ci, var(--ink)); }
+  .b-tabs button[aria-selected="true"] { width: 50px; background: var(--sel); color: var(--ink); }
+  .b-apps button { all: unset; box-sizing: border-box; width: 32px; min-height: 84px; padding: 12px 0; border: 2.5px solid var(--ink); border-right: 0; border-radius: 14px 0 0 14px; background: var(--c); color: var(--ci, var(--ink)); display: grid; place-items: center; cursor: pointer; -webkit-tap-highlight-color: transparent; transition: width .16s ease, background .16s ease; font-weight: 900; font-size: .68rem; letter-spacing: .14em; text-transform: uppercase; writing-mode: vertical-rl; white-space: nowrap; }
+  .b-apps button[aria-selected="true"] { width: 40px; margin-left: -8px; background: var(--sel); color: var(--ink); }
   .b-tabs button:focus-visible, .b-apps button:focus-visible { outline: 3px solid #c8412f; outline-offset: 2px; }
-  .b-main { border: 3px solid var(--ink); background: var(--note); padding: 18px 14px 22px; margin: 0 -4px; box-shadow: 0 6px 16px rgba(0,0,0,.16); min-width: 0; display: grid; grid-template-columns: minmax(0, 1fr); gap: 20px; position: relative; z-index: 1; }
-  .b-bubble { position: relative; background: #fff; border: 2.5px solid var(--ink); border-radius: 22px; padding: 10px 62px 12px 20px; margin: 0 0 0 12px; text-align: center; }
-  .b-bubble::before { content: ''; position: absolute; left: -13px; top: 24px; width: 14px; height: 14px; background: #fff; border-left: 2.5px solid var(--ink); border-bottom: 2.5px solid var(--ink); transform: rotate(45deg); }
-  #bTool { display: block; font-family: NocivAnton, Impact, "Arial Narrow", sans-serif; font-size: clamp(1.9rem, 9vw, 2.9rem); line-height: 1; letter-spacing: .02em; text-transform: uppercase; }
-  #bSec { position: absolute; top: -2.5px; right: -2.5px; padding: 4px 10px 5px 12px; background: var(--ink); color: var(--note); border-radius: 0 22px 0 14px; font-weight: 900; font-size: .64rem; letter-spacing: .16em; text-transform: uppercase; }
-  .b-pair { display: grid; grid-template-columns: minmax(0, 1.1fr) minmax(0, 1fr); gap: 12px; align-items: stretch; }
-  .b-card { all: unset; display: block; box-sizing: border-box; border: 1.5px solid var(--ink); background: #1a1a1a; line-height: 0; cursor: pointer; overflow: hidden; -webkit-tap-highlight-color: transparent; min-height: 190px; width: 100%; }
+  .b-main { grid-column: 3; border: 3px solid var(--ink); background: var(--note); padding: 18px 14px 20px; margin: 0 -4px; box-shadow: 0 6px 16px rgba(0,0,0,.16); min-width: 0; display: grid; grid-template-columns: minmax(0, 1fr); gap: 18px; position: relative; z-index: 1; }
+  .b-hero { position: relative; }
+  .b-card { all: unset; display: block; box-sizing: border-box; border: 2.5px solid var(--ink); background: #1a1a1a; line-height: 0; cursor: pointer; overflow: hidden; -webkit-tap-highlight-color: transparent; aspect-ratio: 4 / 3; width: 100%; }
   .b-card svg { width: 100%; height: 100%; display: block; }
   .b-card:focus-visible { outline: 3px solid #c8412f; outline-offset: 3px; }
-  .b-words { display: flex; flex-direction: column; border: 1.5px solid var(--ink); background: #fff; min-width: 0; }
-  .b-words p { margin: 0; padding: 10px 10px 12px; font-size: .8rem; line-height: 1.4; flex: 1; }
-  .b-open { all: unset; box-sizing: border-box; display: grid; place-items: center; height: 40px; background: #c8412f; color: #fff; font-weight: 900; letter-spacing: .14em; font-size: .8rem; cursor: pointer; border-top: 1.5px solid var(--ink); -webkit-tap-highlight-color: transparent; }
-  .b-open:active { background: var(--ink); }
-  .b-open:focus-visible { outline: 3px solid #c8412f; outline-offset: 2px; }
-  .b-cap { margin: 10px 2px 0; font-weight: 800; font-size: .78rem; line-height: 1.35; color: #6b665c; }
-  .b-prev { position: relative; border: 1.5px solid var(--ink); padding: 26px 14px 18px; margin-top: 6px; text-align: center; }
-  .b-prev-l { position: absolute; top: -.8em; left: 50%; transform: translateX(-50%); background: var(--note); padding: 0 12px; font-family: NocivAnton, Impact, "Arial Narrow", sans-serif; font-size: 1.15rem; letter-spacing: .12em; text-transform: uppercase; line-height: 1.6; }
-  .b-made { margin: 0 0 12px; font-size: .78rem; font-weight: 700; color: #6b665c; letter-spacing: .02em; }
+  #bTool { position: absolute; top: 10px; left: 10px; padding: 5px 12px 4px; background: var(--note); border: 2px solid var(--ink); font-family: NocivAnton, Impact, "Arial Narrow", sans-serif; font-size: clamp(1.3rem, 6vw, 1.9rem); line-height: 1; letter-spacing: .03em; text-transform: uppercase; pointer-events: none; }
+  .b-prev { position: relative; border: 1.5px solid var(--ink); box-shadow: inset 0 0 0 5px var(--note), inset 0 0 0 6.5px var(--ink); padding: 28px 18px 20px; margin: 8px auto 0; width: 80%; max-width: 300px; text-align: center; }
+  .b-prev-l { position: absolute; top: -.8em; left: 50%; transform: translateX(-50%); background: var(--note); padding: 0 10px; font-family: NocivAnton, Impact, "Arial Narrow", sans-serif; font-size: 1.05rem; letter-spacing: .12em; text-transform: uppercase; line-height: 1.6; }
+  .b-made { margin: 0 0 10px; font-size: .74rem; font-weight: 700; color: #6b665c; letter-spacing: .02em; }
   .b-made b { color: var(--ink); font-weight: 900; }
-  .b-poster { margin: 0 auto; border: 2px solid var(--ink); background: #fff; aspect-ratio: 4 / 5; width: min(100%, 300px); box-shadow: 4px 4px 0 var(--ink); overflow: hidden; position: relative; transform: rotate(-1.2deg); }
-  .b-poster::after { content: ''; position: absolute; top: -2px; left: 50%; width: 64px; height: 18px; margin-left: -32px; background: rgba(232,112,26,.55); transform: rotate(2deg); }
+  .b-poster { margin: 0 auto; border: 2px solid var(--ink); background: #fff; aspect-ratio: 4 / 5; width: min(100%, 190px); box-shadow: 3px 3px 0 var(--ink); overflow: hidden; position: relative; transform: rotate(-1.2deg); }
+  .b-poster::after { content: ''; position: absolute; top: -2px; left: 50%; width: 52px; height: 15px; margin-left: -26px; background: rgba(242,194,48,.7); transform: rotate(2deg); }
   .b-poster img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: contain; display: block; }
-  .b-apps { transition: padding-top .22s ease; }
+  .b-rule { width: 56px; height: 3px; background: var(--ink); margin: 2px auto 0; }
+  .b-foot { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 14px; align-items: end; }
+  .b-foot p { margin: 0; font-size: .92rem; line-height: 1.45; }
+  .b-cap { margin-top: 8px !important; font-weight: 800; font-size: .76rem !important; color: #6b665c; line-height: 1.35 !important; }
+  .b-open { all: unset; box-sizing: border-box; display: grid; place-items: center; min-width: 84px; height: 44px; padding: 0 14px; background: #c8412f; color: #fff; border: 2.5px solid var(--ink); box-shadow: 3px 3px 0 var(--ink); font-weight: 900; letter-spacing: .14em; font-size: .82rem; cursor: pointer; -webkit-tap-highlight-color: transparent; }
+  .b-open:active { background: var(--ink); box-shadow: none; transform: translate(3px, 3px); }
+  .b-open:focus-visible { outline: 3px solid #c8412f; outline-offset: 3px; }
+  .b-arrows { position: absolute; left: 0; top: 0; width: 100%; height: 100%; overflow: visible; pointer-events: none; z-index: 3; }
+  .b-arrows path { fill: none; stroke: var(--ink); stroke-width: 2.5; stroke-linecap: round; stroke-linejoin: round; }
+  .b-say { position: absolute; z-index: 3; font-family: NocivAnton, Impact, "Arial Narrow", sans-serif; font-size: 1.05rem; letter-spacing: .1em; text-transform: uppercase; line-height: 1; white-space: nowrap; pointer-events: none; }
+  #bSay1 { left: 76px; top: -34px; } #bSay2 { left: 76px; bottom: -40px; }
   .b-apps.b-in button { animation: bTabIn .22s ease-out backwards; }
   .b-apps.b-in button:nth-child(2) { animation-delay: .04s; } .b-apps.b-in button:nth-child(3) { animation-delay: .08s; }
   @keyframes bTabIn { from { opacity: 0; transform: translateX(14px); } to { opacity: 1; transform: none; } }
   .b-swap { animation: bSwap .2s ease-out; }
   @keyframes bSwap { from { opacity: 0; transform: translateX(var(--from, 14px)); } to { opacity: 1; transform: none; } }
   @media (min-width: 820px) {
-    .binder { grid-template-columns: 58px minmax(0, 1fr) 46px; }
+    .binder { grid-template-columns: 22px 58px minmax(0, 1fr) 46px 22px; }
     .b-tabs button { width: 54px; height: 72px; } .b-tabs button[aria-selected="true"] { width: 66px; }
     .b-apps button { width: 40px; min-height: 100px; font-size: .74rem; } .b-apps button[aria-selected="true"] { width: 50px; }
-    .b-main { grid-template-columns: minmax(0, 1fr) minmax(0, .9fr); gap: 28px 32px; padding: 26px 30px 30px; align-items: start; }
-    .b-bubble { grid-column: 1 / -1; justify-self: center; min-width: 55%; }
-    .b-card { min-height: 260px; } .b-words p { font-size: .92rem; padding: 14px; }
-    .b-prev { margin-top: 0; }
+    .b-main { padding: 26px 30px 30px; gap: 22px; }
+    .b-foot p { font-size: 1rem; }
   }
-  @media (prefers-reduced-motion: reduce) { .b-swap, .b-apps.b-in button { animation: none; } .b-apps { transition: none; } }
+  @media (prefers-reduced-motion: reduce) { .b-swap, .b-apps.b-in button { animation: none; } }
 </style>
 </head>
 <body>
@@ -109,20 +108,23 @@
     <ul class="build-points"><li>Free</li><li>No sign up</li><li>No paywall</li><li>Works on your phone</li></ul>
   </div>
   <div class="binder" id="buildHub">
+    <svg class="b-arrows" id="bArrows" aria-hidden="true"><path id="bArrL"/><path id="bArrR"/></svg>
+    <span class="b-say" id="bSay1"></span><span class="b-say" id="bSay2">Select application</span>
     <div class="b-tabs" id="bTabs" role="tablist" aria-label="Sections"></div>
     <div class="b-main">
-      <div class="b-bubble" id="bBubble"><span id="bSec"></span><span id="bTool"></span></div>
-      <div class="b-left">
-        <div class="b-pair">
-          <button type="button" class="b-card" id="bCard" aria-label="Open this tool"></button>
-          <div class="b-words"><p id="bDesc"></p><button type="button" class="b-open" id="bOpen">OPEN</button></div>
-        </div>
-        <p class="b-cap" id="bCap"></p>
+      <div class="b-hero" id="bHero">
+        <button type="button" class="b-card" id="bCard" aria-label="Open this tool"></button>
+        <span id="bTool"></span>
       </div>
       <div class="b-prev">
         <span class="b-prev-l">Preview</span>
         <p class="b-made">Made with <b id="bMade"></b></p>
         <figure class="b-poster"><img id="bPoster" alt="" width="800" height="1000"></figure>
+      </div>
+      <div class="b-rule"></div>
+      <div class="b-foot">
+        <div><p id="bDesc"></p><p class="b-cap" id="bCap"></p></div>
+        <button type="button" class="b-open" id="bOpen">OPEN</button>
       </div>
     </div>
     <div class="b-apps" id="bNums" role="tablist" aria-label="Tools in this section"></div>
@@ -387,9 +389,9 @@
   }
   (function () {
     const SECS = [
-      { id: 'paper', name: 'Paper', color: '#cfe59a', ci: '#1a1a1a', icon: '<path d="M6 3h8l4 4v14H6z"/><path d="M14 3v4h4"/><path d="M9 12h6M9 16h6"/>' },
-      { id: 'digital', name: 'Digital', color: '#e8701a', ci: '#1a1a1a', icon: '<rect x="3" y="7" width="12" height="10" rx="2"/><path d="M15 11l6-3v8l-6-3z"/>' },
-      { id: 'projects', name: 'Projects', color: '#3d4a26', ci: '#f2ecd6', icon: '<path d="M4 20V4l16 16z"/><path d="M4 14h3M4 9h2M10 20v-3M15 20v-2"/>' }
+      { id: 'paper', name: 'Paper', color: '#f2c230', ci: '#1a1a1a', icon: '<path d="M6 3h8l4 4v14H6z"/><path d="M14 3v4h4"/><path d="M9 12h6M9 16h6"/>' },
+      { id: 'digital', name: 'Digital', color: '#c8412f', ci: '#ffffff', icon: '<rect x="3" y="7" width="12" height="10" rx="2"/><path d="M15 11l6-3v8l-6-3z"/>' },
+      { id: 'projects', name: 'Projects', color: '#8a6a4a', ci: '#ffffff', icon: '<path d="M4 20V4l16 16z"/><path d="M4 14h3M4 9h2M10 20v-3M15 20v-2"/>' }
     ];
     const ORDER = { paper: ['zine', 'cards', 'qr'], digital: ['animate', 'stop', 'vhs'], projects: ['stencil', 'cutsew'] };
     const SHORT = { zine: 'Zine', cards: 'Cards', qr: 'QR', animate: 'Animate', stop: 'Stop Motion', vhs: 'VHS', stencil: 'Stencil', cutsew: 'Cut & Sew' };
@@ -405,11 +407,21 @@
       tabs.querySelectorAll('button').forEach((b, k) => b.setAttribute('aria-selected', k === sec ? 'true' : 'false'));
       nums.style.paddingTop = ((matchMedia('(min-width: 820px)').matches ? 82 : 72) * sec + 70) + 'px'; nums.classList.remove('b-in'); void nums.offsetWidth; nums.classList.add('b-in');
       nums.innerHTML = ''; list.forEach((k, i) => { const b = document.createElement('button'); b.type = 'button'; b.setAttribute('role', 'tab'); b.setAttribute('aria-label', data[k].name); b.setAttribute('aria-selected', i === idx ? 'true' : 'false'); b.style.setProperty('--c', S.color); b.style.setProperty('--ci', S.ci); b.textContent = SHORT[k] || data[k].name; b.addEventListener('click', () => show(sec, i, i > idx ? 1 : -1)); nums.appendChild(b); });
-      el('bSec').textContent = S.name; el('bTool').textContent = T.name; el('bCard').innerHTML = T.art; el('bCap').textContent = T.get; el('bDesc').textContent = T.desc;
+      el('bSay1').textContent = S.name + ' selected'; el('bTool').textContent = T.name; el('bCard').innerHTML = T.art; el('bCap').textContent = T.get; el('bDesc').textContent = T.desc;
       el('bMade').innerHTML = T.made; const img = el('bPoster'); img.alt = 'A finished piece made with ' + T.name; img.src = T.poster;
-      if (dir) ['bCard', 'bBubble', 'bPoster'].forEach(id => { const n = el(id); n.style.setProperty('--from', (dir > 0 ? 16 : -16) + 'px'); n.classList.remove('b-swap'); void n.offsetWidth; n.classList.add('b-swap'); });
+      if (dir) ['bHero', 'bPoster'].forEach(id => { const n = el(id); n.style.setProperty('--from', (dir > 0 ? 16 : -16) + 'px'); n.classList.remove('b-swap'); void n.offsetWidth; n.classList.add('b-swap'); });
+      requestAnimationFrame(drawArrows);
       try { sessionStorage.setItem('toolSec', sec); sessionStorage.setItem('toolIdx', idx); } catch (e) {}
     }
+    function drawArrows() {
+      const B = el('buildHub').getBoundingClientRect(); if (!B.width) return;
+      const t = tabs.children[sec].getBoundingClientRect(), say1 = el('bSay1').getBoundingClientRect(), say2 = el('bSay2').getBoundingClientRect();
+      const last = nums.lastElementChild ? nums.lastElementChild.getBoundingClientRect() : null;
+      const ty = t.top + t.height / 2 - B.top, tx = t.left - B.left - 3, y1 = say1.top + say1.height / 2 - B.top, gx = 8;
+      el('bArrL').setAttribute('d', 'M' + (say1.left - B.left - 8) + ' ' + y1 + ' H' + gx + ' V' + ty + ' H' + tx + ' M' + (tx - 9) + ' ' + (ty - 7) + ' L' + tx + ' ' + ty + ' L' + (tx - 9) + ' ' + (ty + 7));
+      if (last) { const ax = last.right - B.left - 16, ay = last.bottom - B.top + 6, y2 = say2.top + say2.height / 2 - B.top; el('bArrR').setAttribute('d', 'M' + (say2.right - B.left + 8) + ' ' + y2 + ' H' + ax + ' V' + ay + ' M' + (ax - 7) + ' ' + (ay + 9) + ' L' + ax + ' ' + ay + ' L' + (ax + 7) + ' ' + (ay + 9)); }
+    }
+    window.addEventListener('resize', drawArrows); if (document.fonts && document.fonts.ready) document.fonts.ready.then(drawArrows);
     el('bOpen').addEventListener('click', () => openPanel(cur().panel));
     el('bCard').addEventListener('click', () => { if (!swiped) openPanel(cur().panel); swiped = false; });
     // swipe the card left or right to move through the tools in this section
