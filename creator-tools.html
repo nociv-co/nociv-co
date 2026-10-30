@@ -32,6 +32,11 @@
   }
 
 
+  /* hero: title, one line, then the four promises in two stacked rows */
+  .build-hero .build-lede { margin: 12px 0 14px; max-width: none; }
+  .build-hero .build-points { display: grid; grid-template-columns: max-content max-content; justify-content: start; gap: 8px 22px; margin: 0; }
+  .build-hero .build-points li { white-space: normal; }
+  @media (max-width: 359px) { .build-hero .build-points { grid-template-columns: 1fr 1fr; gap: 8px 10px; font-size: 14px; } }
   /* --- THE BUILD: binder tabs, caption, card, numbers, and a real finished piece --- */
   .binder { --ink: #1a1a1a; --paper: #e9e6df; --note: #f2ecd6; max-width: 980px; margin: 0 auto; display: grid; grid-template-columns: 50px minmax(0, 1fr); gap: 0; align-items: start; }
   @media (max-width: 1010px) { .binder { margin-left: -16px; margin-right: -2px; } }
@@ -91,9 +96,8 @@
 <section class="build" id="buildWrap">
   <div class="build-hero">
     <h2 class="build-title"><img class="type-img" src="img/type/build-something.png" alt="Build something." width="712" height="298"></h2>
-    <p class="build-quote">"We are, you are, I am, Creators."</p>
-    <ul class="build-points"><li>Free</li><li>No sign up</li><li>No paywall</li><li>Works on your phone</li></ul>
     <p class="build-lede">Pick a tool. Come out with a finished thing you can print, wear or pass on.</p>
+    <ul class="build-points"><li>Free</li><li>No sign up</li><li>No paywall</li><li>Works on your phone</li></ul>
   </div>
   <div class="binder" id="buildHub">
     <div class="b-tabs" id="bTabs" role="tablist" aria-label="Sections"></div>
