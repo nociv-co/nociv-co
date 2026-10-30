@@ -147,8 +147,9 @@
       d.files.forEach(f => {
         if (f.locked) h += `<div class="file"><div class="lock">FINAL FILE LOCKED<br>until paid</div>${esc(f.file_name)}</div>`;
         else {
-          const url = BUCKET_URL + encodeURI(f.path);
-          h += `<div class="file">${isImg(f.file_name) ? `<img loading="lazy" src="${esc(url)}" alt="${esc(f.file_name)}">` : ''}${esc(f.file_name)}<br><span class="tag ${f.stage === 'Final' ? 'paid' : ''}">${esc(f.stage)} v${f.version}</span> <a href="${esc(url)}" download="${esc(f.file_name)}" target="_blank" rel="noopener">Open</a></div>`;
+          const ext = /^https?:\/\//i.test(f.path);
+          const url = ext ? f.path : BUCKET_URL + encodeURI(f.path);
+          h += `<div class="file">${isImg(f.file_name) && !ext ? `<img loading="lazy" src="${esc(url)}" alt="${esc(f.file_name)}">` : ''}${esc(f.file_name)}<br><span class="tag ${f.stage === 'Final' ? 'paid' : ''}">${esc(f.stage)} v${f.version}</span> <a href="${esc(url)}" download="${esc(f.file_name)}" target="_blank" rel="noopener">Open</a></div>`;
         }
       });
       h += `</div>`;

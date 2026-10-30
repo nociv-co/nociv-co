@@ -329,6 +329,8 @@
 
   // ---------- files ----------
   function slug(s) { return String(s || '').toUpperCase().replace(/[^A-Z0-9]+/g, '').slice(0, 14) || 'PROJECT'; }
+  function isLink(path) { return /^https?:\/\//i.test(path || ''); }
+  function fileUrl(path) { return isLink(path) ? path : bucketUrl(path); }
   function bucketUrl(path) { return SUPABASE_URL + '/storage/v1/object/public/design-files/' + encodeURI(path); }
   function fileName(proj, stage, ver, ext) {
     var c = cur(), d = today().replace(/-/g, '');
@@ -341,6 +343,8 @@
       '<select id="dzFStage"><option>Concept</option><option>Mockup</option><option selected>Final</option></select>' +
       '<input id="dzFVer" type="number" min="1" value="1"></div>' +
       '<input id="dzFile" type="file" accept="image/*,.pdf">' +
+      '<input id="dzFLink" type="url" placeholder="Or paste a Google Drive, iCloud or Dropbox link instead">' +
+      '<p class="field-hint">A link uses no storage here. Make the Drive file "Anyone with the link can view", then paste it. On his page a Final link stays hidden until you Release it.</p>' +
       '<label class="field-hint"><input id="dzFMark" type="checkbox" checked style="width:auto"> Concept and Mockup: shrink and stamp PREVIEW so he can see it but not use it</label>' +
       '<p class="field-hint" id="dzFName">Name: pick a project and a file.</p>' +
       '<button class="dz-btn" id="dzFUp" type="button" style="width:100%">Upload</button>' +
@@ -350,7 +354,7 @@
         return '<div class="dz-line"><span style="min-width:0;word-break:break-all"><b>' + esc(f.file_name) + '</b><small>' + (proj ? esc(proj.name) + ' &middot; ' : '') + f.stage + ' v' + f.version + (f.stage === 'Final' ? (f.released ? ' &middot; RELEASED' : ' &middot; LOCKED') : '') + '</small></span>' +
           '<span style="display:flex;gap:4px;flex-wrap:wrap;justify-content:flex-end">' +
           (f.stage === 'Final' ? '<button class="dz-btn ' + (f.released ? 'alt' : 'red') + ' sm" type="button" data-fr="' + f.id + '">' + (f.released ? 'Lock' : 'Release') + '</button>' : '') +
-          '<a class="dz-btn alt sm" href="' + esc(bucketUrl(f.path)) + '" target="_blank" rel="noopener" style="text-decoration:none">Open</a>' +
+          '<a class="dz-btn alt sm" href="' + esc(fileUrl(f.path)) + '" target="_blank" rel="noopener" style="text-decoration:none">Open</a>' +
           '<button class="dz-btn alt sm" type="button" data-fd="' + f.id + '">Delete</button></span></div>';
       }).join('') || '<p class="field-hint">No files yet.</p>') + '</div>';
     var upd = function () {
@@ -358,7 +362,7 @@
       var ext = fl ? (fl.name.split('.').pop() || 'png').toLowerCase() : 'png';
       $('dzFName').textContent = 'Name: ' + fileName(p, $('dzFStage').value, $('dzFVer').value || 1, $('dzFStage').value !== 'Final' && fl && /^image\//.test(fl.type) ? 'png' : ext);
     };
-    ['dzFProj', 'dzFStage', 'dzFVer', 'dzFile'].forEach(function (id) { $(id).onchange = upd; $(id).oninput = upd; });
+    ['dzFProj', 'dzFStage', 'dzFVer', 'dzFile', 'dzFLink'].forEach(function (id) { $(id).onchange = upd; $(id).oninput = upd; });
     upd();
     $('dzFUp').onclick = uploadFile;
     $('dzFList').onclick = async function (e) {
@@ -404,8 +408,16 @@
   async function uploadFile() {
     var pid = $('dzFProj').value, stage = $('dzFStage').value, ver = Number($('dzFVer').value) || 1, fl = $('dzFile').files[0];
     if (!pid) { alert('Pick the project.'); return; }
-    if (!fl) { alert('Choose a file.'); return; }
+    var lk = ($('dzFLink').value || '').trim();
     var proj = S.projects.find(function (p) { return p.id === pid; });
+    if (lk) {
+      if (!isLink(lk)) { alert('The link must start with https://'); return; }
+      var ext0 = fl ? (fl.name.split('.').pop() || 'png').toLowerCase() : 'png';
+      var ins0 = await supabaseClient.from('design_files').insert([{ client_id: S.cid, project_id: pid, stage: stage, version: ver, file_name: fileName(proj, stage, ver, ext0), path: lk, released: false }]);
+      if (ins0.error) { fail(ins0.error); return; }
+      await loadClient(); toast('Link saved.'); return;
+    }
+    if (!fl) { alert('Choose a file or paste a link.'); return; }
     var isImg = /^image\//.test(fl.type), body = fl, ext = (fl.name.split('.').pop() || 'png').toLowerCase(), ctype = fl.type || 'application/octet-stream';
     var btn = $('dzFUp'); btn.disabled = true; btn.textContent = 'Uploading...';
     try {
