@@ -394,12 +394,14 @@
   <!-- DASHBOARD (hidden until logged in) -->
   <div id="dashboard" style="display:none;">
     <div class="admin-header">
-      <h2 style="margin:0;">Product Dashboard</h2>
+      <h2 style="margin:0;" id="adminTitle">NOCIV Admin</h2>
       <div>
         <button class="help-btn" id="helpBtn" type="button">? Help</button>
         <button class="logout-btn" id="logoutBtn">Log Out</button>
       </div>
     </div>
+
+    <div id="adminHome"></div>
 
     <nav class="admin-jumpnav" id="adminJumpNav">
       <a href="post.html">Post To Album</a>
@@ -1483,6 +1485,7 @@
 <script src="crop.js"></script>
 <script src="pin-sheets.js?v=3"></script>
 <script src="design-admin.js?v=1"></script>
+<script src="admin-home.js?v=1"></script>
 <script>
   const loginBox = document.getElementById('loginBox');
   const dashboard = document.getElementById('dashboard');
