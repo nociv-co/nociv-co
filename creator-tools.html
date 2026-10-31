@@ -48,6 +48,7 @@
   .b-say { font-family: NocivAnton, Impact, "Arial Narrow", sans-serif; font-size: 1.05rem; letter-spacing: .1em; text-transform: uppercase; line-height: 1; white-space: nowrap; }
   .b-tabs, .b-apps { display: flex; gap: 8px; width: 100%; }
   .b-tabs button, .b-apps button { all: unset; box-sizing: border-box; flex: 1 1 0; min-width: 0; height: 46px; border: 2px solid var(--ink); border-radius: 12px; background: var(--note); color: var(--ink); display: flex; align-items: center; justify-content: center; gap: 7px; cursor: pointer; -webkit-tap-highlight-color: transparent; transition: background .16s ease, color .16s ease, box-shadow .16s ease, transform .16s ease; box-shadow: 0 4px 10px rgba(0,0,0,.16); font-weight: 900; font-size: .72rem; letter-spacing: .1em; text-transform: uppercase; white-space: nowrap; }
+  @media (max-width: 480px) { .b-tabs button svg { display: none; } }
   .b-tabs button svg { width: 20px; height: 20px; flex: none; fill: none; stroke: currentColor; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
   .b-tabs button[aria-selected="true"], .b-apps button[aria-selected="true"] { background: var(--ink); color: var(--note); box-shadow: inset 0 2px 6px rgba(0,0,0,.5); transform: translateY(1px); }
   .b-tabs button:focus-visible, .b-apps button:focus-visible { outline: 3px solid #c8412f; outline-offset: 2px; }
@@ -149,7 +150,7 @@
         <span class="tool-foot"><span class="tool-get">You leave with: A card file + a print shop PDF</span><span class="tool-open">Open</span></span>
       </span>
     </button>
-    <button type="button" class="tool-card" data-sec="digital" data-key="toon" data-poster="img/tools/animate.webp" data-made="Cartoon" data-panel="toonPanel">
+    <button type="button" class="tool-card" data-sec="fiction" data-key="toon" data-poster="img/tools/animate.webp" data-made="Cartoon" data-panel="toonPanel">
       <span class="tool-art"><svg viewBox="0 0 320 180" xmlns="http://www.w3.org/2000/svg" aria-hidden="true" preserveAspectRatio="xMidYMid slice"><image href="img/tools/animate-hero.webp?v=4" width="320" height="180"/></svg></span>
       <span class="tool-body">
         <span class="tool-name">Cartoon</span>
@@ -157,7 +158,7 @@
         <span class="tool-foot"><span class="tool-get">You leave with: A sticker or a GIF</span><span class="tool-open">Open</span></span>
       </span>
     </button>
-    <button type="button" class="tool-card" data-sec="digital" data-key="video" data-poster="img/tools/video.webp" data-made="Video" data-panel="videoPanel">
+    <button type="button" class="tool-card" data-sec="real" data-key="video" data-poster="img/tools/video.webp" data-made="Video" data-panel="videoPanel">
       <span class="tool-art"><svg viewBox="0 0 320 180" xmlns="http://www.w3.org/2000/svg" aria-hidden="true" preserveAspectRatio="xMidYMid slice"><image href="img/tools/video-hero.webp" width="320" height="180"/></svg></span>
       <span class="tool-body">
         <span class="tool-name">Video</span>
@@ -165,7 +166,7 @@
         <span class="tool-foot"><span class="tool-get">You leave with: A GIF or a video</span><span class="tool-open">Open</span></span>
       </span>
     </button>
-    <button type="button" class="tool-card" data-sec="digital" data-key="sign" data-poster="img/tools/sign.webp" data-made="Sign" data-panel="signPanel">
+    <button type="button" class="tool-card" data-sec="real" data-key="sign" data-poster="img/tools/sign.webp" data-made="Sign" data-panel="signPanel">
       <span class="tool-art"><svg viewBox="0 0 320 180" xmlns="http://www.w3.org/2000/svg" aria-hidden="true" preserveAspectRatio="xMidYMid slice"><image href="img/tools/sign-hero.webp" width="320" height="180"/></svg></span>
       <span class="tool-body">
         <span class="tool-name">Sign</span>
@@ -386,9 +387,10 @@
     const SECS = [
       { id: 'paper', name: 'Paper', color: '#f2c230', ci: '#1a1a1a', icon: '<path d="M6 3h8l4 4v14H6z"/><path d="M14 3v4h4"/><path d="M9 12h6M9 16h6"/>' },
       { id: 'projects', name: 'Projects', color: '#8a6a4a', ci: '#ffffff', icon: '<path d="M4 20V4l16 16z"/><path d="M4 14h3M4 9h2M10 20v-3M15 20v-2"/>' },
-      { id: 'digital', name: 'Digital', color: '#c8412f', ci: '#ffffff', icon: '<rect x="3" y="7" width="12" height="10" rx="2"/><path d="M15 11l6-3v8l-6-3z"/>' }
+      { id: 'real', name: 'Real life', color: '#c8412f', ci: '#ffffff', icon: '<rect x="3" y="7" width="12" height="10" rx="2"/><path d="M15 11l6-3v8l-6-3z"/>' },
+      { id: 'fiction', name: 'Fiction', color: '#2f5d9e', ci: '#ffffff', icon: '<circle cx="12" cy="8" r="4"/><path d="M4 21c0-5 4-8 8-8s8 3 8 8"/>' }
     ];
-    const ORDER = { paper: ['cards', 'zine', 'qr'], projects: ['stencil', 'cutsew'], digital: ['video', 'toon', 'sign'] };
+    const ORDER = { paper: ['cards', 'zine', 'qr'], projects: ['stencil', 'cutsew'], real: ['video', 'sign'], fiction: ['toon'] };
     const SHORT = { zine: 'Zine', cards: 'Cards', qr: 'QR', toon: 'Cartoon', video: 'Video', sign: 'Sign', stencil: 'Stencil', cutsew: 'Cut & Sew' };
     const el = id => document.getElementById(id), data = {};
     document.querySelectorAll('#toolData .tool-card').forEach(c => { data[c.dataset.key] = { key: c.dataset.key, sec: c.dataset.sec, panel: c.dataset.panel, poster: c.dataset.poster, made: c.dataset.made, art: c.querySelector('.tool-art').innerHTML, name: c.querySelector('.tool-name').textContent.trim(), desc: c.querySelector('.tool-desc').textContent.trim(), get: c.querySelector('.tool-get').textContent.trim() }; });

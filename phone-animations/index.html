@@ -451,10 +451,31 @@
     </section>
 
     <section class="panel" id="p-clip">
-      <h2>Your video</h2>
-      <p class="tip">Pick a regular video from your camera roll, up to 5 minutes. Then use the deck buttons under the picture, like a real tape. Hit REC to record what you do.</p>
+      <h2>Edit your video</h2>
+      <p class="tip">Pick a regular video from your camera roll, up to 5 minutes. Cut it, change the speed, add words, then use the deck buttons under the picture. Hit REC to record your edit.</p>
       <input type="file" id="clipIn" accept="video/*">
       <div class="msg" id="clipMsg"></div>
+      <div id="clipEd" class="hide">
+        <label class="f">Cut the start <span id="edAV"></span></label>
+        <input type="range" id="edA" min="0" max="10" step="0.1" value="0">
+        <label class="f">Cut the end <span id="edBV"></span></label>
+        <input type="range" id="edB" min="0" max="10" step="0.1" value="10">
+        <label class="f">Speed</label>
+        <div class="chips" id="edRate">
+          <button type="button" class="chip" data-r="0.5" aria-pressed="false">Half</button>
+          <button type="button" class="chip" data-r="1" aria-pressed="true">Normal</button>
+          <button type="button" class="chip" data-r="1.5" aria-pressed="false">1.5x</button>
+          <button type="button" class="chip" data-r="2" aria-pressed="false">2x</button>
+        </div>
+        <label class="f">Words on the video</label>
+        <input type="text" id="edCap" maxlength="60" placeholder="Type a caption">
+        <div class="chips" id="edPos">
+          <button type="button" class="chip" data-p="top" aria-pressed="false">Top</button>
+          <button type="button" class="chip" data-p="mid" aria-pressed="false">Middle</button>
+          <button type="button" class="chip" data-p="bot" aria-pressed="true">Bottom</button>
+        </div>
+        <label class="check"><input type="checkbox" id="edMute"> Mute the sound</label>
+      </div>
     </section>
 
     <section class="panel" id="p-set">
@@ -695,7 +716,7 @@
   function drawClip() {
     if (!st.clip) return; const W = st.clip.w & ~1, H = st.clip.h & ~1; applySize(W, H);
     drawLooked(ctx, clipV, clipV.videoWidth, clipV.videoHeight, W, H, performance.now() / 1000, { mode: deck.mode, settle: deck.settle });
-    drawStamps(ctx, W, H, clipV.currentTime, false);
+    drawStamps(ctx, W, H, clipV.currentTime, false); drawCaption(ctx, W, H);
   }
   function drawLive() {
     const [W, H] = size(); applySize(W, H);
@@ -727,7 +748,7 @@
     deck.settle = (prev !== 'play' && m === 'play') ? 1 : (m === 'pause' && prev === 'play') ? 0.35 : ((m === 'ff' || m === 'rew') ? 0.25 : 0);
     if (st.kind === 'clip' && st.clip) {
       ensureAudio(); if (audioCtx && audioCtx.resume) audioCtx.resume();
-      if (m === 'play') { clipV.muted = false; clipV.playbackRate = 1; clipV.play().catch(() => {}); }
+      if (m === 'play') { if (ed.b > 0 && !edInRange()) { try { clipV.currentTime = ed.a; } catch (e) {} } clipV.muted = ed.mute; clipV.playbackRate = ed.rate; clipV.play().catch(() => {}); }
       else if (m === 'ff') { clipV.muted = true; clipV.playbackRate = 3; clipV.play().catch(() => {}); }
       else { clipV.pause(); clipV.muted = true; }
     }
@@ -752,8 +773,9 @@
     } else if (st.kind === 'clip' && st.clip) {
       if (deck.mode === 'rew') {
         const t = clipV.currentTime - dt * 3;
-        if (t <= 0) { clipV.currentTime = 0; setDeck('pause'); } else if (!clipV.seeking) clipV.currentTime = t;
+        if (t <= ed.a) { clipV.currentTime = ed.a; setDeck('pause'); } else if (!clipV.seeking) clipV.currentTime = t;
       }
+      if (ed.b > 0 && (deck.mode === 'play' || deck.mode === 'ff') && clipV.currentTime >= ed.b - 0.03) { if (deck.recording) stopRec(); setDeck('pause'); try { clipV.currentTime = ed.a; } catch (e) {} }
       if (clipV.ended && (deck.mode === 'play' || deck.mode === 'ff')) setDeck('pause');
     }
   }
@@ -1023,6 +1045,23 @@
   // ===================== VIDEO IN =====================
   let clipUrl = null, audioCtx = null, audioSrc = null, audioDest = null;
   function applyClipSize() { if (st.clip) applySize(st.clip.w & ~1, st.clip.h & ~1); }
+  const ed = { a: 0, b: 0, rate: 1, cap: '', pos: 'bot', mute: false };
+  function edSync() { $('edAV').textContent = ed.a.toFixed(1) + ' s'; $('edBV').textContent = ed.b.toFixed(1) + ' s'; }
+  function edInRange() { return ed.b > 0 && clipV.currentTime >= ed.a - 0.05 && clipV.currentTime < ed.b - 0.03; }
+  $('edA').addEventListener('input', () => { ed.a = +$('edA').value; if (ed.b - ed.a < 0.5) { ed.b = Math.min(clipV.duration, ed.a + 0.5); $('edB').value = ed.b; } edSync(); try { clipV.currentTime = ed.a; } catch (e) {} });
+  $('edB').addEventListener('input', () => { ed.b = +$('edB').value; if (ed.b - ed.a < 0.5) { ed.a = Math.max(0, ed.b - 0.5); $('edA').value = ed.a; } edSync(); try { clipV.currentTime = Math.max(ed.a, ed.b - 0.1); } catch (e) {} });
+  document.querySelectorAll('#edRate .chip').forEach(b => b.addEventListener('click', () => { ed.rate = +b.dataset.r; document.querySelectorAll('#edRate .chip').forEach(x => x.setAttribute('aria-pressed', x === b ? 'true' : 'false')); if (deck.mode === 'play') clipV.playbackRate = ed.rate; }));
+  document.querySelectorAll('#edPos .chip').forEach(b => b.addEventListener('click', () => { ed.pos = b.dataset.p; document.querySelectorAll('#edPos .chip').forEach(x => x.setAttribute('aria-pressed', x === b ? 'true' : 'false')); }));
+  $('edCap').addEventListener('input', () => { ed.cap = $('edCap').value; });
+  $('edMute').addEventListener('change', () => { ed.mute = $('edMute').checked; if (deck.mode === 'play') clipV.muted = ed.mute; });
+  function drawCaption(c, W, H) {
+    const t = (ed.cap || '').trim(); if (!t) return; const size = Math.round(Math.min(W, H) * 0.085); c.save(); c.font = '400 ' + size + 'px NocivAnton, Impact, "Arial Narrow Bold", sans-serif'; c.textAlign = 'center'; c.textBaseline = 'middle';
+    const words = t.toUpperCase().split(' '), lines = []; let cur = ''; words.forEach(w => { const test = cur ? cur + ' ' + w : w; if (c.measureText(test).width > W * 0.88 && cur) { lines.push(cur); cur = w; } else cur = test; }); if (cur) lines.push(cur);
+    const lh = size * 1.12, total = lh * lines.length, y0 = ed.pos === 'top' ? size * 1.2 + (H * 0.04) : ed.pos === 'mid' ? H / 2 - total / 2 + lh / 2 : H - total - H * 0.07 + lh / 2;
+    lines.forEach((ln, i) => { const y = y0 + i * lh; c.lineJoin = 'round'; c.lineWidth = size * 0.2; c.strokeStyle = '#1a1a1a'; c.strokeText(ln, W / 2, y); c.fillStyle = '#f2ecd6'; c.fillText(ln, W / 2, y); });
+    c.restore();
+  }
+  window.__drawCaption = drawCaption;
   $('clipIn').addEventListener('change', async (e) => {
     const file = e.target.files[0]; e.target.value = ''; if (!file) return;
     setDeck('pause'); st.clip = null; if (clipUrl) URL.revokeObjectURL(clipUrl); clipUrl = URL.createObjectURL(file); clipV.src = clipUrl;
@@ -1031,6 +1070,7 @@
       if (clipV.duration > 300.5) { msg('clipMsg', 'That video is ' + Math.ceil(clipV.duration / 60) + ' minutes. The limit is 5. Trim it in your Photos app first.', true); updateDeckEnabled(); return; }
       const ar = clipV.videoWidth / clipV.videoHeight, long = 720;
       st.clip = { w: ar >= 1 ? long : Math.round(long * ar), h: ar >= 1 ? Math.round(long / ar) : long };
+      ed.a = 0; ed.b = clipV.duration; ed.rate = 1; ['edA', 'edB'].forEach(id => { $(id).max = clipV.duration.toFixed(1); }); $('edA').value = 0; $('edB').value = clipV.duration.toFixed(1); edSync(); document.querySelectorAll('#edRate .chip').forEach(x => x.setAttribute('aria-pressed', x.dataset.r === '1' ? 'true' : 'false')); $('clipEd').classList.remove('hide');
       applyClipSize(); clipV.currentTime = 0; deck.p = 0; stageMsg(''); updateDeckEnabled(); setDeck('pause');
       msg('clipMsg', 'Loaded. ' + clock(clipV.duration) + ' long. Press PLAY under the picture. When you are ready, hit REC.');
     } catch (err) { msg('clipMsg', HEVC_MSG, true); }
