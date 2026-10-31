@@ -67,7 +67,8 @@
   .pc-knobs.pv { display: flex; flex-direction: column; gap: 6px; align-items: stretch; justify-content: center; }
   .pc-knobs.pv.hide { display: none; }
   .pv-h { font: 400 clamp(.8rem, 2.2svh, 1rem)/1 NocivAnton, Anton, Impact, sans-serif; letter-spacing: .1em; text-transform: uppercase; color: #1a1a1a; padding-left: 4px; }
-  .pv-row { display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); gap: 4px; align-items: start; }
+  .pv-row { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 8px 6px; align-items: start; }
+  .pv-row .vbox.sq { max-width: 74px; }
   .pv-row.k2 { grid-template-columns: repeat(2, minmax(0, 1fr)); }
   .pv-cols { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
   .pv-col { display: flex; flex-direction: column; align-items: center; gap: 4px; min-width: 0; }
@@ -593,7 +594,6 @@ body { animation: nvIn .3s ease both; }
       </div>
       <button type="button" class="btn dark" id="sceneNext" style="margin-top:14px">Next: Animate</button>
       <button type="button" class="btn" id="scFresh" style="margin-top:10px">Start fresh</button>
-      <button type="button" class="btn" id="clearScene" style="margin-top:12px">Start this animation over</button>
       </div>
       <div class="rl">
       <label class="f">No camera, or already have photos?</label>
@@ -885,6 +885,7 @@ body { animation: nvIn .3s ease both; }
         <select id="cDur"><option value="5">5 seconds</option><option value="10" selected>10 seconds</option><option value="20">20 seconds</option><option value="30">30 seconds</option></select>
       </div>
       <button type="button" class="btn red" id="autoBtn">Record it automatically</button>
+      <p class="tip" id="autoNeed" style="display:none;margin:6px 0 0">Make at least 2 frames to record.</p>
       <div class="prog" id="progB"><i></i></div>
       <div class="msg" id="saveMsg"></div>
       <video class="result" id="result" controls playsinline loop></video>
@@ -1099,7 +1100,7 @@ body { animation: nvIn .3s ease both; }
   function updateDeckEnabled() {
     const ok = st.kind === 'clip' ? !!st.clip : st.frames.length >= 2;
     document.querySelectorAll('#deck .dk').forEach(b => { b.disabled = b.id === 'dkRec' ? !(ok || st.camVideo) : !ok; });
-    $('autoBtn').disabled = st.kind === 'char' ? false : st.kind === 'board' ? !boardMoves() : !ok;
+    $('autoBtn').disabled = st.kind === 'char' ? false : st.kind === 'board' ? !boardMoves() : !ok; if ($('autoNeed')) $('autoNeed').style.display = $('autoBtn').disabled && st.kind === 'stop' ? 'block' : 'none';
   }
 
   // ===================== DRAWING =====================
@@ -1450,7 +1451,7 @@ body { animation: nvIn .3s ease both; }
       if (pup.prev && pup.prev.width === W) { c.globalAlpha = PAN.ghost; c.drawImage(pup.prev, 0, 0); c.globalAlpha = 1; }
       c.drawImage(pupChar(W, H), 0, 0); scFront(c, W, H, SCE.cur); pup.dirty = false; pup.zt = null;
     }
-    const zc = pupZoomStep(W, H), z = zc.z; if (z > 1.004) { const sw = W / z, sh = H / z, cx = Math.min(W - sw / 2, Math.max(sw / 2, zc.x * W)), cy = Math.min(H - sh / 2, Math.max(sh / 2, (pup.y - zc.f * 0.925 * pup.sz) * H)); ctx.drawImage(pup.out, cx - sw / 2, cy - sh / 2, sw, sh, 0, 0, W, H); } else ctx.drawImage(pup.out, 0, 0); stageMsg('Frame ' + (pup.n + 1) + (pup.n ? '' : '. Drag to move your character'));
+    const zc = pupZoomStep(W, H), z = zc.z; if (z > 1.004) { const sw = W / z, sh = H / z, cx = Math.min(W - sw / 2, Math.max(sw / 2, zc.x * W)), cy = Math.min(H - sh / 2, Math.max(sh / 2, (pup.y - zc.f * 0.925 * pup.sz) * H)); ctx.drawImage(pup.out, cx - sw / 2, cy - sh / 2, sw, sh, 0, 0, W, H); } else ctx.drawImage(pup.out, 0, 0); stageMsg('Frame ' + (pup.n + 1) + (PAN.dir !== 'off' ? '   Pan ' + Math.min(Math.max(0, st.frames.length - PAN.base), PAN.frames) + ' of ' + PAN.frames : '') + (pup.n ? '' : '. Drag to move your character'));
   }
   async function pupLoadBg(file) {
     const f = await loadImg(file), k = Math.min(1, 1600 / Math.max(f.img.naturalWidth, f.img.naturalHeight)), c = document.createElement('canvas');
@@ -1477,7 +1478,7 @@ body { animation: nvIn .3s ease both; }
   $('pupBtn').addEventListener('click', () => $('pupBg').click());
 
   $('sceneNext').addEventListener('click', goAnimate);
-  $('clearScene').addEventListener('click', () => { if (!confirm('Start over? This clears every frame of this animation.')) return; st.frames = []; st.sel = -1; pup.n = 0; refreshUI(); queueSave(); updateKeep(); renderStill(); msg('shootMsg', 'Cleared.'); });
+  ($('clearScene') || document.createElement('i')).addEventListener('click', () => { if (!confirm('Start over? This clears every frame of this animation.')) return; st.frames = []; st.sel = -1; pup.n = 0; refreshUI(); queueSave(); updateKeep(); renderStill(); msg('shootMsg', 'Cleared.'); });
   $('pupBgBtn').addEventListener('click', () => $('pupBg').click());
   $('pupBg').addEventListener('change', async e => {
     const file = e.target.files[0]; e.target.value = ''; if (!file) return;
@@ -1580,7 +1581,7 @@ body { animation: nvIn .3s ease both; }
     fbox('eyes', 'EYES', () => F().eyes ? 'SHUT' : 'OPEN', () => $('swEyes').click());
     fbox('look', 'LOOK', () => LOOKN[F().gx + 1], () => $('swLook').click());
     fbox('turn', 'TURN', () => TURNN[$('pupTurn').selectedIndex], () => cycSel('pupTurn'));
-    const r2 = document.createElement('div'); r2.className = 'pv-row k2'; head.appendChild(r2);
+    const r2 = row;
     addK(r2, 'knBrw', 'BROWS', () => +$('pupBr').value, v => { $('pupBr').value = Math.round(v * 20) / 20; $('pupBr').dispatchEvent(new Event('input')); }, -1, 1, v => (v > 0 ? '+' : '') + Math.round(v * 100));
     addK(r2, 'knSqn', 'SQUINT', () => +$('pupLid').value, v => { $('pupLid').value = Math.round(v * 20) / 20; $('pupLid').dispatchEvent(new Event('input')); }, -1, 1, v => v < -0.05 ? 'SQUINT' : v > 0.05 ? 'WIDE' : 'NORMAL');
     // arms and legs: two picture buttons side by side, each with its own knobs
@@ -1599,7 +1600,7 @@ body { animation: nvIn .3s ease both; }
     addK(bk, 'knBd4', 'SIZE', () => pup.sz, v => { pup.sz = Math.round(v * 100) / 100; }, 0.3, 1, v => Math.round(v * 100) + '%');
     // drawing
     const OFF = document.createElement('canvas'); OFF.width = 300; OFF.height = 444;
-    const REG = { aR: [0.30, 0.08, 1.0, 0.08 + 210 / 444], aL: [0, 0.08, 0.70, 0.08 + 210 / 444], lR: [0.44, 0.58, 0.92, 0.58 + 173 / 444], lL: [0.08, 0.58, 0.56, 0.58 + 173 / 444], body: [0.14, 0.14, 0.86, 0.14 + 270 / 444] };
+    const REG = { aR: [0.36, 0.06, 1.0, 0.06 + 192 / 444], aL: [0, 0.06, 0.64, 0.06 + 192 / 444], lR: [0.36, 0.48, 0.88, 0.48 + 187 / 444], lL: [0.12, 0.48, 0.64, 0.48 + 187 / 444], body: [0.1, 0.1, 0.9, 0.1 + 300 / 444] };
     pvDraw = function () {
       if (!pup.w || !pup.w.CH || !pup.w.__ch) return; const vis = id => !$(id).classList.contains('hide');
       if (vis('vpHead')) {
@@ -1608,7 +1609,7 @@ body { animation: nvIn .3s ease both; }
         Object.keys(spec).forEach(k => { const cv = $('fb_' + k); vbFace(cv, Object.assign({}, neutral, spec[k][0]), spec[k][1], spec[k][2]); $('fbb_' + k).textContent = FB[k](); });
       }
       if (vis('vpArms') || vis('vpLegs') || vis('vpBody')) {
-        try { pup.w.__ch.puppet(OFF, pup.P, OFF.width / 2, OFF.height * 0.95, 0.84, $('pupProp').value || null, {}); } catch (e) { return; }
+        try { pup.w.__ch.puppet(OFF, pup.P, OFF.width / 2, OFF.height * 0.9, 0.66, $('pupProp').value || null, {}); } catch (e) { return; }
         const put = (id, r) => { const cv = $(id); if (!cv) return; const g = cv.getContext('2d'); g.clearRect(0, 0, cv.width, cv.height); g.drawImage(OFF, r[0] * OFF.width, r[1] * OFF.height, (r[2] - r[0]) * OFF.width, (r[3] - r[1]) * OFF.height, 0, 0, cv.width, cv.height); };
         if (vis('vpArms')) { put('lb_aR', REG.aR); put('lb_aL', REG.aL); } if (vis('vpLegs')) { put('lb_lR', REG.lR); put('lb_lL', REG.lL); } if (vis('vpBody')) put('lb_body', REG.body);
       }
