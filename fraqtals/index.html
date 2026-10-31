@@ -72,6 +72,18 @@ svg.i{width:24px;height:24px;fill:none;stroke:currentColor;stroke-width:2;stroke
 .fab{position:absolute;width:44px;height:44px;border-radius:15px;background:var(--card);color:var(--icon);display:grid;place-items:center;box-shadow:0 2px 10px rgba(28,29,43,.10);transition:transform .2s var(--spring)}
 .fab:active{transform:scale(.88)}
 #zoomBtn{right:12px;bottom:4px;width:40px;height:40px;border-radius:13px}
+#rail{position:absolute;right:8px;top:58px;display:flex;flex-direction:column;gap:4px;padding:5px;background:var(--card);border-radius:18px;box-shadow:0 8px 24px rgba(28,29,43,.12),0 1px 2px rgba(28,29,43,.08);
+  transform:translateX(80px);opacity:0;pointer-events:none;transition:transform .38s var(--spring),opacity .2s}
+#rail.on{transform:none;opacity:1;pointer-events:auto}
+#rail button{width:48px;height:48px;border-radius:13px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:1px;color:var(--icon);transition:background .2s,color .2s,transform .18s var(--spring)}
+#rail button svg{width:21px;height:21px}
+#rail button small{font-size:9px;font-weight:700;color:var(--sub)}
+#rail button .tx{font-size:17px;font-weight:700;line-height:21px;color:inherit}
+#rail button.on{background:var(--ink);color:#fff}
+#rail button.on small{color:#fff}
+#rail button:active{transform:scale(.9)}
+body.editing #panel, body.editing #dock, body.editing #rail, body.editing #ctx, body.editing #sizePill, body.editing #zoomBtn{display:none}
+body.editing #app{height:var(--vvh,100%);top:var(--vvt,0)}
 #sizePill{position:absolute;left:12px;bottom:9px;height:30px;padding:0 10px;border-radius:12px;background:rgba(255,255,255,.9);color:var(--sub);display:flex;align-items:center;gap:6px;font-size:12px;font-weight:600;pointer-events:none}
 #sizePill svg{width:16px;height:16px}
 #warnDot{position:absolute;left:50%;transform:translateX(-50%);bottom:9px;height:30px;padding:0 10px;border-radius:12px;background:#fff6c7;color:#7a5b00;display:none;align-items:center;gap:6px;font-size:12px;font-weight:600}
@@ -193,6 +205,7 @@ input[type=range]::-moz-range-thumb{width:28px;height:28px;border:0;border-radiu
 #mockColors{display:flex;gap:10px;flex-wrap:wrap;justify-content:center;max-width:92vw}
 
 #editBar{position:fixed;left:0;right:0;top:0;z-index:70;background:var(--card);padding:10px 12px;display:flex;gap:10px;align-items:flex-end;transform:translateY(-120%);transition:transform .3s var(--ease);box-shadow:0 -6px 24px rgba(28,29,43,.10);border-radius:20px 20px 0 0}
+#editBar:not(.on){display:none}
 #editBar.on{transform:none}
 #editTxt{flex:1;min-height:48px;max-height:120px;border-radius:14px;border:0;background:var(--tile);color:var(--ink);padding:12px;font:650 18px/1.25 -apple-system,system-ui,sans-serif;resize:none;outline:none;-webkit-user-select:text;user-select:text}
 #editDone{width:48px;height:48px;border-radius:14px;background:var(--ink);color:#fff;display:grid;place-items:center}
@@ -235,6 +248,7 @@ input[type=range]::-moz-range-thumb{width:28px;height:28px;border:0;border-radiu
     <canvas id="fade"></canvas>
     <div id="ctx"></div>
     <div id="nudge"></div>
+    <div id="rail"></div>
     <div id="pickHint"></div>
     <div id="sizePill"></div>
     <div id="warnDot"></div>
@@ -636,8 +650,11 @@ const cv=$('cv'), cx=cv.getContext('2d');
 let V={z:1,px:0,py:0}, SW=0, SH=0, DPR=1;
 const TOPR=54;
 const BOTR=50;
-function base(){ return Math.min((SW-28)/PW(), (SH-TOPR-BOTR-8)/PH()); }
-function view(){ const k=base()*V.z; return {k, ox:SW/2-PW()*k/2+V.px, oy:(SH+TOPR-BOTR)/2-PH()*k/2+V.py}; }
+const RAILW=62;
+const editing=()=>document.body.classList.contains('editing');
+function gutter(){ return editing()?0:RAILW; }
+function base(){ return Math.min((SW-28-gutter())/PW(), (SH-(editing()?16:TOPR+BOTR+8))/PH()); }
+function view(){ const k=base()*V.z; const top=editing()?0:TOPR, bot=editing()?0:BOTR; return {k, ox:(SW-gutter())/2-PW()*k/2+V.px, oy:(SH+top-bot)/2-PH()*k/2+V.py}; }
 function resize(){ const r=$('stage').getBoundingClientRect(); SW=r.width; SH=r.height; DPR=Math.min(window.devicePixelRatio||1,2.5);
   cv.width=Math.round(SW*DPR); cv.height=Math.round(SH*DPR); const f=$('fade'); f.width=cv.width; f.height=cv.height; clampPan(); dirty(); }
 function clampPan(){ const {k}=view(); const mx=Math.max(0,(PW()*k-SW)/2+40), my=Math.max(0,(PH()*k-SH)/2+40); V.px=Math.max(-mx,Math.min(mx,V.px)); V.py=Math.max(-my,Math.min(my,V.py)); }
@@ -710,6 +727,7 @@ cv.addEventListener('pointerdown', e=>{
   try{ cv.setPointerCapture(e.pointerId); }catch(_){}
   ptrs.set(e.pointerId,{x:e.clientX,y:e.clientY,x0:e.clientX,y0:e.clientY}); moved=false;
   if (pickMode){ samplePick(e.clientX,e.clientY); G=null; return; }
+  if (editing()){ ptrs.delete(e.pointerId); closeEdit(); G=null; return; }
   closeNudge();
   if (ptrs.size===2){ multi={t:performance.now(),n:2,moved:false}; }
   if (ptrs.size===1){
@@ -754,7 +772,7 @@ function endPtr(e){
   if (ptrs.size>0){ if(G && /pinch|vzoom|cropz/.test(G.mode)) G=null; return; }
   guides=[]; sizeLabel=null;
   if (G){
-    if (G.mode==='pan' && G.empty && !moved){ if(cropMode){ cropMode=false; buildCtx(); } else select(null); }
+    if (G.mode==='pan' && G.empty && !moved){ if(cropMode){ cropMode=false; buildCtx(); renderPanel(); } else { select(null); setTab('layout'); } }
     else if (G.mode==='move' && !moved) tapObject(G);
     if (moved && !/pan|vzoom/.test(G.mode)){ S.touched=true; commit(); }
   }
@@ -782,7 +800,7 @@ function updZoom(){ $('zoomBtn').innerHTML=ic(V.z>1.05?'zoomOut':'zoomIn'); }
 $('zoomBtn').onclick=()=>{ if(V.z>1.05) zoomTo(1); else { const o=selObj(); zoomTo(2.4,o?{x:o.x,y:o.y}:{x:PW()/2,y:PH()/2}); } };
 
 /* ---------- selection, context bar, nudge ---------- */
-function select(id){ sel=id; cropMode=false; closeNudge(); const o=selObj();
+function select(id){ if(id!==sel){ sub.text='words'; sub.photo='look'; } sel=id; cropMode=false; closeNudge(); const o=selObj();
   if (o){ if(o.type==='text') setTab('text'); else if(o.type==='img') setTab('photo'); else setTab('layout'); } else renderPanel();
   buildCtx(); updWarn(); dirty(false); }
 function buildCtx(){ const o=selObj(), el=$('ctx'); if(!o){ el.classList.remove('on'); return; }
@@ -808,20 +826,24 @@ function centerSel(){ const o=selObj(); if(!o||o.lock) return; const x0=o.x,y0=o
 /* ---------- dock + panel ---------- */
 const TABS=[['layout','layout','Layout'],['text','text','Text'],['photo','photo','Photo'],['done','bag','Done']];
 function buildDock(){ const d=$('dock'); TABS.forEach(([id,icon,label])=>{ const b=document.createElement('button'); b.dataset.t=id; b.innerHTML=ic(icon)+`<small>${label}</small>`;
-  b.onclick=()=>{ const o=selObj(); if(o && ((id==='text'&&o.type!=='text')||(id==='photo'&&o.type!=='img')||id==='layout'||id==='done')){ sel=null; cropMode=false; buildCtx(); updWarn(); dirty(false); } setTab(id); }; d.append(b); }); }
+  b.onclick=()=>{ const o=selObj(); if(o && ((id==='text'&&o.type!=='text')||(id==='photo'&&o.type!=='img')||id==='layout'||id==='done')){ sel=null; cropMode=false; closeNudge(); buildCtx(); updWarn(); dirty(false); } setTab(id); }; d.append(b); }); }
 function setTab(t){ tab=t; const bs=[...$('dock').querySelectorAll('button')]; bs.forEach(b=>b.classList.toggle('on',b.dataset.t===t));
   const b=bs.find(b=>b.dataset.t===t), bar=$('dockBar'); if(b){ bar.style.width=(b.offsetWidth*.42)+'px'; bar.style.transform=`translateX(${b.offsetLeft+b.offsetWidth*.29}px)`; }
   renderPanel(); }
 const panelEl=$('panel'); let curView=null;
 function renderPanel(){ const v=document.createElement('div'); v.className='pv';
   ({layout:panelLayout,text:panelText,photo:panelPhoto,done:panelDone})[tab](v);
+  if(!v.dataset.rail) $('rail').classList.remove('on');
   panelEl.append(v); const old=curView; curView=v;
   requestAnimationFrame(()=>{ v.classList.add('on'); if(old){ old.classList.remove('on'); setTimeout(()=>old.remove(),320); } }); }
 const el=(tag,cls,html)=>{ const e=document.createElement(tag); if(cls) e.className=cls; if(html!=null) e.innerHTML=html; return e; };
-function subs(v,list,key){ const r=el('div','subs');
-  list.forEach(([id,icon,txt])=>{ const b=el('button','sb'+(sub[key]===id?' on':'')); b.innerHTML=txt?`<span class="tx" style="${txt.style||''}">${txt.t}</span>`:ic(icon); b.setAttribute('aria-label',id);
-    b.onclick=()=>{ sub[key]=id; r.querySelectorAll('.sb').forEach(x=>x.classList.toggle('on',x===b)); v.querySelectorAll('.sec').forEach(s=>s.classList.toggle('on',s.dataset.s===id)); }; r.append(b); });
-  v.append(r); const body=el('div','body'); v.append(body); return body; }
+function subs(v,list,key){ const r=$('rail'); r.innerHTML='';
+  const LABEL={words:'Words',font:'Font',color:'Color',style:'Style',curve:'Curve',align:'Align',look:'Look',ink:'Ink',fix:'Fix',shape:'Shape',crop:'Crop',swap:'Swap'};
+  if(!list.some(l=>l[0]===sub[key])) sub[key]=list[0][0];
+  list.forEach(([id,icon,txt])=>{ const b=el('button',sub[key]===id?'on':''); b.innerHTML=(txt?`<span class="tx" style="${txt.style||''}">${txt.t}</span>`:ic(icon))+`<small>${LABEL[id]||id}</small>`; b.setAttribute('aria-label',id); b.dataset.s=id;
+    b.onclick=()=>{ sub[key]=id; r.querySelectorAll('button').forEach(x=>x.classList.toggle('on',x===b)); v.querySelectorAll('.sec').forEach(s=>s.classList.toggle('on',s.dataset.s===id)); }; r.append(b); });
+  r.classList.add('on'); v.dataset.rail='1';
+  const body=el('div','body'); v.append(body); return body; }
 function sec(body,id,cur){ const s=el('div','sec'+(id===cur?' on':'')); s.dataset.s=id; body.append(s); return s; }
 function only(v){ const b=el('div','body'); v.append(b); const s=el('div','sec on'); b.append(s); return s; }
 function slider(parent,iconL,iconR,min,max,val,oninput,step){ const w=el('div','slide'); w.innerHTML=ic(iconL);
@@ -885,7 +907,7 @@ function panelText(v){
   // font: 12 in a 6 x 2 grid, no scrolling
   const f=sec(body,'font',sub.text); const fg=el('div','grid g6'); f.append(fg);
   FONT_ORDER.forEach(id=>{ const b=el('button','fontT'+(o.font===id?' on':'')); b.style.fontFamily=FONTS[id].css; b.textContent='Aa'; b.setAttribute('aria-label',id);
-    b.onclick=()=>{ selObj().font=id; commit(); fg.querySelectorAll('.fontT').forEach(x=>x.classList.toggle('on',x===b)); const t=v.querySelector('.sb .tx'); if(t) t.style.fontFamily=FONTS[id].css; dirty(); }; fg.append(b); });
+    b.onclick=()=>{ selObj().font=id; commit(); fg.querySelectorAll('.fontT').forEach(x=>x.classList.toggle('on',x===b)); const t=$('rail').querySelector('.tx'); if(t) t.style.fontFamily=FONTS[id].css; dirty(); }; fg.append(b); });
   // color
   const c=sec(body,'color',sub.text); colorDots(c,o.color||null,hex=>{ const s=selObj(); s.color=hex; commit(); dirty(); });
   // style: outline, hollow, spacing
@@ -1199,20 +1221,33 @@ $('mockBtn').onclick=()=>{ drawMockBig(); const r=$('mockColors'); r.innerHTML='
 $('mockClose').onclick=()=>{ $('mockSheet').classList.remove('on'); renderPanel(); };
 $('mockSheet').addEventListener('click',e=>{ if(e.target.id==='mockSheet'){ $('mockSheet').classList.remove('on'); renderPanel(); } });
 
-/* ---------- edit words (bar rides on top of the keyboard) ---------- */
-let editPan=null;
-function openEdit(selectAll){ const o=selObj(); if(!o||o.type!=='text') return; const t=$('editTxt'); t.value=o.text; t.style.textTransform='none';
-  $('editBar').classList.add('on'); t.focus({preventScroll:true}); if(selectAll) t.select(); placeEditBar();
-  // slide the canvas so the words sit in the visible top part of the screen
-  editPan={px:V.px,py:V.py}; const {k,oy}=view(); const sy=oy+o.y*k; const want=SH*0.32; V.py+= (want-sy); dirty(false); }
-function placeEditBar(){ const vv=window.visualViewport; const b=$('editBar'); if(!vv){ b.style.top=''; b.style.bottom='0'; return; } b.style.top=(vv.offsetTop+vv.height-b.offsetHeight)+'px'; }
-if(window.visualViewport){ visualViewport.addEventListener('resize',()=>{ if($('editBar').classList.contains('on')) placeEditBar(); window.scrollTo(0,0); }); visualViewport.addEventListener('scroll',()=>{ if($('editBar').classList.contains('on')) placeEditBar(); }); }
-$('editTxt').oninput=()=>{ const o=selObj(); if(o){ o.text=$('editTxt').value||' '; o.edited=true; dirty(); } };
+/* ---------- edit words: the keyboard never hides what you are typing ---------- */
+let editPrevV=null;
+function openEdit(selectAll){ const o=selObj(); if(!o||o.type!=='text') return; const t=$('editTxt'); t.value=o.text;
+  editPrevV={...V}; document.body.classList.add('editing'); $('editBar').classList.add('on');
+  t.focus({preventScroll:true}); if(selectAll) t.select(); fitEditView(); setTimeout(fitEditView,350); setTimeout(fitEditView,700); }
+function fitEditView(){
+  if(!editing()) return; const vv=window.visualViewport; const bar=$('editBar');
+  const vh = vv ? vv.height : innerHeight, vt = vv ? vv.offsetTop : 0;
+  document.documentElement.style.setProperty('--vvh', Math.max(200, vh - bar.offsetHeight)+'px');
+  document.documentElement.style.setProperty('--vvt', vt+'px');
+  bar.style.top=(vt+vh-bar.offsetHeight)+'px';
+  resize();
+  // zoom so the words being edited fill the visible space
+  const o=selObj(); if(!o) return; const b=bounds(o); const k0=base();
+  const z=Math.max(1,Math.min(4, Math.min((SW-32)/(b.bw*k0), (SH-24)/(b.bh*k0))*0.9));
+  const k1=k0*z; V.z=z; V.px=-(o.x-PW()/2)*k1; V.py=-(o.y-PH()/2)*k1; dirty(false); }
+if(window.visualViewport){ visualViewport.addEventListener('resize',()=>{ fitEditView(); window.scrollTo(0,0); }); visualViewport.addEventListener('scroll',fitEditView); }
+$('editTxt').oninput=()=>{ const o=selObj(); if(o){ o.text=$('editTxt').value||' '; o.edited=true; fitEditView(); } };
 $('editTxt').onkeydown=e=>{ if(e.key==='Enter'&&!e.shiftKey){ e.preventDefault(); closeEdit(); } };
-function closeEdit(){ $('editBar').classList.remove('on'); $('editTxt').blur(); window.scrollTo(0,0); const o=selObj(); if(o&&!o.text.trim()) o.text='TEXT';
-  if(editPan){ const st={...V}, to=editPan; editPan=null; tween(300,e=>{ V.px=st.px+(to.px-st.px)*e; V.py=st.py+(to.py-st.py)*e; dirty(false); }); }
-  commit(); renderPanel(); dirty(); }
+function closeEdit(){ if(!editing()) return; $('editBar').classList.remove('on'); $('editBar').style.top=''; $('editTxt').blur(); window.scrollTo(0,0);
+  document.body.classList.remove('editing'); document.documentElement.style.removeProperty('--vvh'); document.documentElement.style.removeProperty('--vvt');
+  const o=selObj(); if(o&&!o.text.trim()) o.text='TEXT';
+  if(editPrevV){ V={...editPrevV}; editPrevV=null; }
+  resize(); commit(); renderPanel(); buildCtx(); dirty(); }
 $('editDone').onclick=closeEdit;
+// tap anywhere outside the words box closes the editor
+document.addEventListener('pointerdown',e=>{ if(editing() && !$('editBar').contains(e.target) && e.target!==cv) closeEdit(); },true);
 
 /* ---------- toast / busy ---------- */
 let _tt=0;
@@ -1273,7 +1308,8 @@ const TEMPLATES=[
 function buildTemplate(t, preview){
   const W=PW(), Hh=PH(); const wide = W/Hh > 1.3;
   const myPhotos=S.objs.filter(o=>o.type==='img'&&o.src).map(o=>o.src);
-  const myWords=S.objs.filter(o=>o.type==='text'&&o.edited).map(o=>o.text);
+  const sameCat = (TEMPLATES.find(x=>x.id===S.tpl)||{}).cat===t.cat;
+  const myWords=sameCat?S.objs.filter(o=>o.type==='text'&&o.edited).map(o=>o.text):[];
   let pi=0, wi=0;
   let objs=t.objs.map(src=>{ const o=JSON.parse(JSON.stringify(src)); o.id=preview?'p'+Math.random():nid(); o.rot=o.rot||0; o.scale=1;
     if(o.type==='text' && wi<myWords.length && !o.hollow){ o.text=myWords[wi++]; o.edited=true; }
