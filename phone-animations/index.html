@@ -2558,7 +2558,7 @@
   }
   $('goBtn').addEventListener('click', goMode);
   showMode(0);
-  (function () { const q = new URLSearchParams(location.search); if (q.get('go') !== 'stop' && q.get('go') !== 'puppet') return; setTimeout(() => { startKind('stop'); if (q.get('go') === 'puppet') { st.cam = false; syncRows(); pupOpen(); return; } if (q.get('char') === '1') { st.cam = false; syncRows(); $('chBtn').click(); } }, 500); })();
+  (function () { const q = new URLSearchParams(location.search); if (q.get('go') !== 'stop' && q.get('go') !== 'puppet' && q.get('go') !== 'scene') return; setTimeout(() => { startKind('stop'); if (q.get('go') === 'scene') { st.cam = false; syncRows(); renderStill(); return; } if (q.get('go') === 'puppet') { st.cam = false; syncRows(); pupOpen(); return; } if (q.get('char') === '1') { st.cam = false; syncRows(); $('chBtn').click(); } }, 500); })();
 
   // ===================== KEEP FRAMES IF THE PAGE RELOADS =====================
   const DB = 'nocivPhoneAnim';
