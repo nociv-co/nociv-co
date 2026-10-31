@@ -994,7 +994,7 @@
     if (st.kind === 'stop') $('info').textContent = n + (n === 1 ? ' frame' : ' frames') + (n ? ' · ' + (n / st.fps).toFixed(1) + ' s' : '');
     const s = $('strip'); s.innerHTML = '';
     st.frames.forEach((f, i) => {
-      const d = document.createElement('div'); d.className = 'fr' + (i === st.sel ? ' sel' : ''); d.style.backgroundImage = 'url(' + f.url + ')'; d.style.backgroundColor = (THEMES[f.theme] || THEMES.ink).bg; d.innerHTML = '<i>' + (i + 1) + '</i>';
+      const d = document.createElement('div'); d.className = 'fr' + (i === st.sel ? ' sel' : ''); d.style.backgroundImage = 'url(' + f.url + ')'; d.innerHTML = '<i>' + (i + 1) + '</i>';
       d.addEventListener('click', () => { st.sel = i; deck.p = i; if (deck.mode !== 'pause') setDeck('pause'); refreshUI(); renderStill(); });
       s.appendChild(d);
     });
@@ -2014,7 +2014,7 @@
   function pickPanel(i) { board.pi = i; board.sel = board.faces.length ? 0 : -1; board.selL = -1; refreshBoardUI(); syncFaceControls(); }
   function refreshBoardUI() {
     const fs = board.faces, s = $('strip'); s.innerHTML = '';
-    fs.forEach((f, i) => { const d = document.createElement('div'); d.className = 'fr' + (i === board.sel ? ' sel' : ''); d.style.backgroundImage = 'url(' + f.url + ')'; d.innerHTML = '<i>' + (i + 1) + '</i>'; d.addEventListener('click', () => { board.sel = i; board.selL = -1; refreshBoardUI(); syncFaceControls(); }); s.appendChild(d); });
+    fs.forEach((f, i) => { const d = document.createElement('div'); d.className = 'fr' + (i === board.sel ? ' sel' : ''); d.style.backgroundImage = 'url(' + f.url + ')'; d.style.backgroundColor = (THEMES[f.theme] || THEMES.ink).bg; d.innerHTML = '<i>' + (i + 1) + '</i>'; d.addEventListener('click', () => { board.sel = i; board.selL = -1; refreshBoardUI(); syncFaceControls(); }); s.appendChild(d); });
     const pb = $('bPanels'), nv = nVis(); pb.classList.toggle('hide', nv < 2 || st.kind !== 'board'); pb.innerHTML = '';
     if (nv > 1) for (let i = 0; i < nv; i++) { const b = document.createElement('button'); b.type = 'button'; b.className = 'chip'; b.textContent = 'Panel ' + (i + 1) + (board.panels[i].faces.length ? ' (' + board.panels[i].faces.length + ')' : ''); b.setAttribute('aria-pressed', i === board.pi ? 'true' : 'false'); b.addEventListener('click', () => { buzz(8); pickPanel(i); }); pb.appendChild(b); }
     const tot = visPanels().reduce((a, p) => a + p.faces.length, 0);
@@ -2724,7 +2724,7 @@
     { key: 'board', name: 'SIGNIFIER', tab: 'SIGNIFIER', desc: 'Pick a billboard. Put your photos on every panel, crop and zoom each one, add words, and let them switch at different times.' },
   ];
   // three apps share this file: ?m=avatar (Animate + Edit), ?m=stop (Stop Motion), ?m=vhs (VHS). No parameter shows everything.
-  const APPS = { video: { t: ['REAL', 'VIDEO'], keys: ['stop', 'clip'] }, studio: { t: ['REAL', 'VIDEO'], keys: ['stop', 'clip'] }, char: { t: ['CHARACTER', 'MAKER'], keys: ['char'] }, toon: { t: ['NOCIV', 'ANIMATION'], keys: ['char', 'stop'] }, sign: { t: ['SIGNIFIER', ''], keys: ['board'] }, avatar: { t: ['ANIMATE', '+ EDIT'], keys: ['char', 'board'] }, stop: { t: ['STOP', 'MOTION'], keys: ['stop'] }, vhs: { t: ['VHS', ''], keys: ['clip'] } };
+  const APPS = { video: { t: ['REAL', 'CAMERA'], keys: ['stop', 'clip'] }, studio: { t: ['REAL', 'CAMERA'], keys: ['stop', 'clip'] }, char: { t: ['CHARACTER', 'MAKER'], keys: ['char'] }, toon: { t: ['NOCIV', 'ANIMATION'], keys: ['char', 'stop'] }, sign: { t: ['SIGNIFIER', ''], keys: ['board'] }, avatar: { t: ['ANIMATE', '+ EDIT'], keys: ['char', 'board'] }, stop: { t: ['STOP', 'MOTION'], keys: ['stop'] }, vhs: { t: ['VHS', ''], keys: ['clip'] } };
   const APP = APPS[new URLSearchParams(location.search).get('m')] || null;
   // the cartoon app keeps its own frames so they never mix into Real Video
   const SKEY = ['toon', 'char'].indexOf(new URLSearchParams(location.search).get('m')) >= 0 ? 'toon' : 'main';
