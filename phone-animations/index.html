@@ -49,6 +49,9 @@
   .vf .stage { background: #111; border-radius: 12px; display: grid; place-items: center; padding: 5px; position: relative; }
   .vf canvas { display: block; max-width: 100%; max-height: 30svh; width: auto; height: auto; background: #000; }
   #cv { touch-action: none; }
+  #pupFloat { position: absolute; right: 10px; bottom: 10px; z-index: 5; background: #c8412f; color: #fff; border: 2px solid #1a1a1a; border-radius: 12px; padding: 10px 14px; font: 900 .85rem/1 inherit; text-transform: uppercase; letter-spacing: .06em; box-shadow: 0 3px 0 #1a1a1a; }
+  #pupFloat.hide { display: none; }
+  body.pupmode #stageMsg { top: 10px; bottom: auto; left: 10px; right: 10px; text-align: left; }
   #fsBtn, #fsX { position: absolute; top: 10px; right: 10px; z-index: 5; background: rgba(0,0,0,.6); color: #f2ecd6; border: 1.5px solid #f2ecd6; border-radius: 10px; padding: 8px 12px; font: 900 .8rem/1 inherit; text-transform: uppercase; letter-spacing: .06em; }
   #fsBtn.hide, #fsX.hide, #fsHint.hide { display: none; }
   #fsHint { position: absolute; left: 0; right: 0; top: 14px; text-align: center; color: #f2ecd6; font-weight: 800; font-size: .85rem; pointer-events: none; z-index: 4; opacity: .8; }
@@ -256,7 +259,7 @@
     <button type="button" class="icon" id="redoBtn" aria-label="Redo" disabled>&#8631;</button>
   </header>
 
-  <div class="vf"><div class="stage"><canvas id="cv" width="540" height="960"></canvas><button type="button" id="fsBtn" class="hide" aria-label="Go fullscreen">Fullscreen</button><button type="button" id="fsX" class="hide" aria-label="Exit fullscreen">Close</button><div id="fsHint" class="hide">Turn your phone sideways</div><div id="stageMsg"></div></div></div>
+  <div class="vf"><div class="stage"><canvas id="cv" width="540" height="960"></canvas><button type="button" id="pupFloat" class="hide" aria-label="Take frame">Take frame</button><button type="button" id="fsBtn" class="hide" aria-label="Go fullscreen">Fullscreen</button><button type="button" id="fsX" class="hide" aria-label="Exit fullscreen">Close</button><div id="fsHint" class="hide">Turn your phone sideways</div><div id="stageMsg"></div></div></div>
   <section class="creator" id="creator" aria-label="Character creator">
     <div class="ctabs" id="cTabs"></div>
     <div class="cbody"><div class="crail" id="cRail"></div><div class="cgrid" id="cGrid"></div></div>
@@ -385,10 +388,13 @@
       <input type="range" id="pupS2" min="-60" max="190" step="1" value="14">
       <label class="f" id="pupL3w">Jump <span id="pupV3"></span></label>
       <input type="range" id="pupS3" min="0" max="70" step="1" value="0">
+      <label class="f">Holding</label>
+      <select id="pupProp" aria-label="What they hold"><option value="">What they were saved with</option><option value="none">Nothing</option><option value="spray">Spray can</option><option value="brush">Brush</option><option value="record">Record</option><option value="camera">Camera</option><option value="clipboard">Clipboard</option><option value="frame">Frame</option><option value="mic">Mic</option><option value="scissors">Scissors</option></select>
       <label class="f">Size <span id="pupVz"></span></label>
       <input type="range" id="pupSz" min="0.3" max="1" step="0.01" value="0.6">
       <button type="button" class="btn dark" id="pupSnap" style="margin-top:12px">Take frame</button>
       <div class="row" style="margin-top:8px"><button type="button" class="btn" id="pupBgBtn">Change photo</button><button type="button" class="btn" id="pupReset">Reset pose</button></div>
+      <button type="button" class="btn" id="pupFlip" style="margin-top:8px">Face the other way</button>
       <button type="button" class="btn" id="pupDone" style="margin-top:8px">Done, play it back</button>
       <div class="msg" id="pupMsg"></div>
     </section>
@@ -827,7 +833,9 @@
     c.fillStyle = '#222'; c.fillRect(0, 0, W, H); const im = pup.bg; if (!im) return;
     const k = Math.max(W / im.naturalWidth, H / im.naturalHeight), w = im.naturalWidth * k, h = im.naturalHeight * k; c.drawImage(im, (W - w) / 2, (H - h) / 2, w, h);
   }
-  function pupChar(W, H) { const cc = pup.chc; if (cc.width !== W || cc.height !== H) { cc.width = W; cc.height = H; } try { pup.w.__ch.puppet(cc, pup.P, pup.x * W, pup.y * H, pup.sz); } catch (e) {} return cc; }
+  function pupChar(W, H) { const cc = pup.chc; if (cc.width !== W || cc.height !== H) { cc.width = W; cc.height = H; } try { pup.w.__ch.puppet(cc, pup.P, pup.x * W, pup.y * H, pup.sz, $('pupProp').value || null); } catch (e) {}
+    if (!pup.flip) return cc;
+    const fc = pup.fc || (pup.fc = document.createElement('canvas')); fc.width = W; fc.height = H; const g = fc.getContext('2d'); g.clearRect(0, 0, W, H); g.save(); g.translate(2 * pup.x * W, 0); g.scale(-1, 1); g.drawImage(cc, 0, 0); g.restore(); return fc; }
   function drawPuppet() {
     const [W, H] = size(); applySize(W, H);
     if (!pup.w) { ctx.fillStyle = '#111'; ctx.fillRect(0, 0, W, H); stageMsg('Loading your character...'); return; }
@@ -836,7 +844,7 @@
       if (pup.prev && pup.prev.width === W) { c.globalAlpha = 0.28; c.drawImage(pup.prev, 0, 0); c.globalAlpha = 1; }
       c.drawImage(pupChar(W, H), 0, 0); pup.dirty = false;
     }
-    ctx.drawImage(pup.out, 0, 0); stageMsg('Frame ' + (pup.n + 1) + '. Drag to move your character.');
+    ctx.drawImage(pup.out, 0, 0); stageMsg('Frame ' + (pup.n + 1) + (pup.n ? '' : '. Drag to move your character'));
   }
   async function pupLoadBg(file) {
     const f = await loadImg(file), k = Math.min(1, 1600 / Math.max(f.img.naturalWidth, f.img.naturalHeight)), c = document.createElement('canvas');
@@ -844,7 +852,7 @@
     const im = new Image(); await new Promise((res, rej) => { im.onload = res; im.onerror = rej; im.src = c.toDataURL('image/jpeg', 0.9); }); pup.bg = im; pup.dirty = true;
   }
   async function pupOpen() {
-    pup.on = true; st.cam = false; if (st.camVideo) { try { setCam(false); } catch (e) {} }
+    pup.on = true; document.body.classList.add('pupmode'); $('pupFloat').classList.remove('hide'); st.cam = false; if (st.camVideo) { try { setCam(false); } catch (e) {} }
     showPanel('pup'); pupSync(); pup.dirty = true; msg('pupMsg', '');
     if (!pup.fr) {
       const fr = document.createElement('iframe'); fr.src = 'character/?embed=1'; fr.setAttribute('aria-hidden', 'true'); fr.style.cssText = 'position:fixed;left:0;top:0;width:10px;height:10px;opacity:0;pointer-events:none;border:0'; document.body.appendChild(fr); pup.fr = fr;
@@ -852,25 +860,29 @@
         await new Promise((res, rej) => { fr.onload = res; setTimeout(() => rej(new Error('slow')), 10000); });
         const w = fr.contentWindow; for (let i = 0; i < 80 && !(w.__ch && w.CH && w.CH.ready && w.CH.ready()); i++) await new Promise(r => setTimeout(r, 100));
         if (!(w.__ch && w.CH.ready())) throw new Error('slow'); pup.w = w;
-      } catch (e) { fr.remove(); pup.fr = null; pup.on = false; msg('shootMsg', 'Could not load your character. Open Character Maker once, then try again.', true); showPanel('shoot'); return; }
+      } catch (e) { fr.remove(); pup.fr = null; pup.on = false; document.body.classList.remove('pupmode'); $('pupFloat').classList.add('hide'); msg('shootMsg', 'Could not load your character. Open Character Maker once, then try again.', true); showPanel('shoot'); return; }
     }
     pup.dirty = true;
   }
-  function pupClose() { pup.on = false; if (pup.fr) { pup.fr.remove(); pup.fr = null; pup.w = null; } pup.prev = null; pup.n = 0; st.cam = false; refreshUI(); showPanel('shoot'); }
+  function pupClose() { pup.on = false; document.body.classList.remove('pupmode'); $('pupFloat').classList.add('hide'); const had = pup.n; if (pup.fr) { pup.fr.remove(); pup.fr = null; pup.w = null; } pup.prev = null; pup.n = 0; st.cam = false; refreshUI(); showPanel('shoot'); if (had && st.frames.length > 1) { try { $('swTape').click(); setDeck('play'); } catch (e) {} } }
   $('pupBtn').addEventListener('click', () => { if (pup.bg) pupOpen(); else $('pupBg').click(); });
   $('pupBgBtn').addEventListener('click', () => $('pupBg').click());
   $('pupBg').addEventListener('change', async e => {
     const file = e.target.files[0]; e.target.value = ''; if (!file) return;
     try { await pupLoadBg(file); if (!pup.on) await pupOpen(); else pup.dirty = true; } catch (err) { msg('shootMsg', 'That photo would not open. Try JPG or PNG.', true); msg('pupMsg', 'That photo would not open. Try JPG or PNG.', true); }
   });
+  $('pupProp').addEventListener('change', () => { pup.dirty = true; });
+  $('pupFlip').addEventListener('click', () => { pup.flip = !pup.flip; pup.dirty = true; });
+  $('pupFloat').addEventListener('click', () => $('pupSnap').click());
   $('pupReset').addEventListener('click', () => { pup.P = pupFresh(); pupSync(); pup.dirty = true; });
   $('pupSnap').addEventListener('click', async () => {
     const [W, H] = size(), c = document.createElement('canvas'); c.width = W; c.height = H; const g = c.getContext('2d'); pupDrawBg(g, W, H); g.drawImage(pupChar(W, H), 0, 0);
-    const ghost = document.createElement('canvas'); ghost.width = W; ghost.height = H; ghost.getContext('2d').drawImage(pup.chc, 0, 0);
+    const ghost = document.createElement('canvas'); ghost.width = W; ghost.height = H; ghost.getContext('2d').drawImage(pup.flip ? pup.fc : pup.chc, 0, 0);
     snap(); await addBlob(await canvasToBlob(c, 'image/jpeg', 0.92)); pup.prev = ghost; pup.n++; st.sel = st.frames.length - 1; pup.dirty = true; buzz(15);
     refreshUI(); msg('pupMsg', pup.n + (pup.n === 1 ? ' frame' : ' frames') + ' taken. Change a limb a little, take the next one.');
   });
   $('pupDone').addEventListener('click', pupClose);
+  $('homeBtn').addEventListener('click', () => { if (pup.on) { pup.on = false; document.body.classList.remove('pupmode'); $('pupFloat').classList.add('hide'); if (pup.fr) { pup.fr.remove(); pup.fr = null; pup.w = null; } pup.prev = null; pup.n = 0; } }, true);
   $('cv').addEventListener('pointerdown', e => { if (!pup.on) return; const r = cv.getBoundingClientRect(); pup.drag = { id: e.pointerId, x: e.clientX, y: e.clientY, px: pup.x, py: pup.y, r }; try { cv.setPointerCapture(e.pointerId); } catch (x) {} });
   $('cv').addEventListener('pointermove', e => { const d = pup.drag; if (!pup.on || !d || d.id !== e.pointerId) return; pup.x = Math.min(1.1, Math.max(-0.1, d.px + (e.clientX - d.x) / d.r.width)); pup.y = Math.min(1.3, Math.max(0.2, d.py + (e.clientY - d.y) / d.r.height)); pup.dirty = true; });
   ['pointerup', 'pointercancel'].forEach(t => $('cv').addEventListener(t, () => { pup.drag = null; }));

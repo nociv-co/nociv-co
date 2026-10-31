@@ -593,12 +593,12 @@ function showBases() {
 }
 $('modal').addEventListener('click', e => { if (e.target === $('modal')) $('modal').classList.remove('on'); });
 function stopFrames(w, h, n, pose, noBgOverride) { const old = S.pose; if (pose && CH.POSES[pose]) S.pose = pose; const T = (CH.POSES[S.pose] || CH.POSES.idle).T, out = []; for (let i = 0; i < n; i++) { const c = mk(w, h); renderTo(c, T * i / n, {}); out.push(c); } S.pose = old; return out; }
-function puppet(canvas, P, px, py, sz) {
+function puppet(canvas, P, px, py, sz, prop) {
   const w = canvas.width, h = canvas.height, g = canvas.getContext('2d'); layer.width = w; layer.height = h;
-  const PXs = Math.max(0.2, sz) * h / 270, view = { cx: -(px - w / 2) / PXs, cy: -(py - h / 2) / PXs, w: w / PXs }, old = S.pose; S.pose = 'idle';
+  const PXs = Math.max(0.2, sz) * h / 270, view = { cx: -(px - w / 2) / PXs, cy: -(py - h / 2) / PXs, w: w / PXs }, old = S.pose, oldProp = S.prop; S.pose = 'idle'; if (prop) S.prop = prop === 'none' ? 'none' : prop;
   const Pf = Object.assign({ bob: 0, lean: 0, head: 0, hy: 0, aR: [9, 14], aL: [9, 14], lR: { a: 4, lift: 0 }, lL: { a: 4, lift: 0 }, board: null }, P || {});
   CH.drawChar(lg, S, Pf, view, { t: 0, gaze: { x: 0, y: 0 }, blink: false });
-  S.pose = old; gritLayer(lg, w, h); g.clearRect(0, 0, w, h); g.drawImage(layer, 0, 0);
+  S.pose = old; S.prop = oldProp; gritLayer(lg, w, h); g.clearRect(0, 0, w, h); g.drawImage(layer, 0, 0);
 }
 window.__ch = { puppet, frames: stopFrames, poses: () => Object.keys(CH.POSES), S: () => S, makeGifBytes, lzw, renderTo, setS: o => { Object.assign(S, o); save(); build(); tag(); }, setTab: k => { tab = k; build(); } };
 build(); tag(); requestAnimationFrame(frame);
