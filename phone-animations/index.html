@@ -50,6 +50,11 @@
   .vf canvas { display: block; max-width: 100%; max-height: 30svh; width: auto; height: auto; background: #000; }
   #cv { touch-action: none; }
   body.real .ct, body.toon .rl { display: none !important; }
+  .toonbar { display: none; flex: none; gap: 12px; align-items: center; padding: 8px 10px 0; }
+  .toonbar .btn { flex: none; width: auto; min-width: 104px; margin: 0; }
+  .tbf { flex: 1; font-weight: 800; font-size: .82rem; display: flex; flex-direction: column; gap: 2px; }
+  body.toon .toonbar { display: flex; }
+  body.toon #deck, body.toon #rewindRow { display: none !important; }
   body.toon #modeSw, body.toon #looks, body.toon #eraSet { display: none !important; }
   #pupFloat { position: absolute; right: 10px; bottom: 10px; z-index: 5; background: #c8412f; color: #fff; border: 2px solid #1a1a1a; border-radius: 12px; padding: 10px 14px; font: 900 .85rem/1 inherit; text-transform: uppercase; letter-spacing: .06em; box-shadow: 0 3px 0 #1a1a1a; }
   #pupFloat.hide { display: none; }
@@ -280,6 +285,10 @@
     <button type="button" class="dk" id="dkPause" data-d="pause" aria-pressed="false" aria-label="Pause"><svg class="ic" viewBox="0 0 10 10" aria-hidden="true"><path d="M2 1h2.2v8H2zM5.8 1H8v8H5.8z"/></svg><small>PAUSE</small></button>
     <button type="button" class="dk rec" id="dkRec" aria-pressed="false" aria-label="Record"><svg class="ic" viewBox="0 0 10 10" aria-hidden="true"><circle cx="5" cy="5" r="3.6"/></svg><small>REC</small></button>
   </div>
+  <div class="toonbar" id="toonBar">
+    <button type="button" id="tbPlay" class="btn dark" aria-pressed="false">Play it</button>
+    <label class="tbf">Speed <span id="tbFpsV"></span><input type="range" id="toonFps" min="1" max="24" value="8"></label>
+  </div>
   <!-- while shooting stop motion the shutter takes the deck's place -->
   <div class="shootrow hide" id="shootRow">
     <div class="sr-l"><button type="button" id="flipBtn" disabled>Flip camera</button></div>
@@ -389,13 +398,29 @@
         <button type="button" class="chip" data-l="lR" aria-pressed="false">Right leg</button>
         <button type="button" class="chip" data-l="lL" aria-pressed="false">Left leg</button>
         <button type="button" class="chip" data-l="body" aria-pressed="false">Head and body</button>
+        <button type="button" class="chip" data-l="face" aria-pressed="false">Eyes and mouth</button>
       </div>
+      <div id="pupFace" class="hide">
+        <label class="f">Eyes</label>
+        <div class="chips" id="pfEyes"><button type="button" class="chip" data-v="0" aria-pressed="true">Open</button><button type="button" class="chip" data-v="1" aria-pressed="false">Closed</button></div>
+        <label class="f">Looking</label>
+        <div class="chips" id="pfGaze"><button type="button" class="chip" data-v="-1" aria-pressed="false">Left</button><button type="button" class="chip" data-v="0" aria-pressed="true">Straight</button><button type="button" class="chip" data-v="1" aria-pressed="false">Right</button></div>
+        <label class="f">Mouth, when you set it yourself</label>
+        <div class="chips" id="pfMouth"><button type="button" class="chip" data-v="0" aria-pressed="true">Closed</button><button type="button" class="chip" data-v="1" aria-pressed="false">Small</button><button type="button" class="chip" data-v="2" aria-pressed="false">Wide</button><button type="button" class="chip" data-v="3" aria-pressed="false">Oh</button></div>
+        <label class="f">Blink on its own</label>
+        <select id="pfBlink" aria-label="Blink"><option value="0">Never, I will do it myself</option><option value="2">Every 2nd frame</option><option value="3">Every 3rd frame</option><option value="4" selected>Every 4th frame</option><option value="6">Every 6th frame</option><option value="8">Every 8th frame</option></select>
+        <label class="f">Talking</label>
+        <select id="pfTalk" aria-label="Talking"><option value="0" selected>Off, I will set the mouth</option><option value="1">Chatty: mouth changes every frame</option><option value="2">Normal: changes every 2nd frame</option><option value="3">Slow: changes every 3rd frame</option></select>
+        <p class="tip">The picture shows what the next frame will look like. Talking cycles through closed, small, wide and oh.</p>
+      </div>
+      <div id="pupLimbCtl">
       <label class="f"><span id="pupL1"></span> <span id="pupV1"></span></label>
       <input type="range" id="pupS1" min="-30" max="180" step="1" value="9">
       <label class="f"><span id="pupL2"></span> <span id="pupV2"></span></label>
       <input type="range" id="pupS2" min="-60" max="190" step="1" value="14">
       <label class="f" id="pupL3w">Jump up, or bend the knees (minus) <span id="pupV3"></span></label>
       <input type="range" id="pupS3" min="-40" max="70" step="1" value="0">
+      </div>
       <label class="f">Holding</label>
       <select id="pupProp" aria-label="What they hold"><option value="">What they were saved with</option><option value="none">Nothing</option><option value="spray">Spray can</option><option value="brush">Brush</option><option value="record">Record</option><option value="camera">Camera</option><option value="clipboard">Clipboard</option><option value="frame">Frame</option><option value="mic">Mic</option><option value="scissors">Scissors</option></select>
       <label class="f">Size <span id="pupVz"></span></label>
@@ -506,12 +531,13 @@
 
     <section class="panel" id="p-save">
       <h2>Record and save</h2>
-      <p class="tip"><b>Your way:</b> press the red REC button on the deck, then use PLAY, REW, FF and PAUSE like you are working the tape. Press REC again to finish. What you see is what you get.</p>
-      <p class="tip"><b>Automatic:</b> plays it for you and saves.</p>
+      <p class="tip rl"><b>Your way:</b> press the red REC button on the deck, then use PLAY, REW, FF and PAUSE like you are working the tape. Press REC again to finish. What you see is what you get.</p>
+      <p class="tip rl"><b>Automatic:</b> plays it for you and saves.</p>
+      <p class="tip ct">Your animation plays through once per loop and saves as a video. Pick how many loops, then record.</p>
       <div id="autoStop">
         <label class="f">How many times it repeats</label>
         <select id="loops"><option value="1">Once</option><option value="3" selected>3 times</option><option value="6">6 times</option><option value="12">12 times</option></select>
-        <label class="check" id="rewindRow"><input type="checkbox" id="rewindOn" checked> Tape rewind at the end</label>
+        <label class="check rl" id="rewindRow"><input type="checkbox" id="rewindOn" checked> Tape rewind at the end</label>
       </div>
       <div id="autoChar" class="hide">
         <label class="f">How long</label>
@@ -734,7 +760,7 @@
     if (st.kind === 'char') { drawCharView(0.016); return; }
     if (st.kind === 'board') { drawBoardView(0); return; }
     if (st.kind === 'clip') { drawClip(); return; }
-    if (pup.on) { drawPuppet(); return; }
+    if (pup.on && deck.mode === 'pause') { drawPuppet(); return; }
     if (st.cam && st.camVideo) return;
     const [W, H] = size(); applySize(W, H);
     const i = st.sel >= 0 ? st.sel : st.frames.length - 1;
@@ -790,7 +816,8 @@
     else if (st.kind === 'board') drawBoardView(dt);
     else if (st.kind === 'clip') { drawClip(); if (st.clip) $('info').textContent = clock(clipV.currentTime) + ' of ' + clock(clipV.duration); }
     else if (st.kind === 'stop') {
-      if (pup.on) drawPuppet();
+      if (pup.on && deck.mode === 'pause') drawPuppet();
+      else if (pup.on) { stageMsg(''); if (st.frames.length) drawFrameAt(Math.max(0, idxOf(deck.p)), tapeTime()); }
       else if (st.cam && st.camVideo) drawLive();
       else if (st.frames.length) drawFrameAt(deck.mode !== 'pause' ? Math.max(0, idxOf(deck.p)) : (st.sel >= 0 ? st.sel : st.frames.length - 1), tapeTime());
     }
@@ -843,7 +870,8 @@
   pup.P = pupFresh();
   const PL = { aR: ['Right shoulder', 'Right elbow', -30, 180, -60, 190], aL: ['Left shoulder', 'Left elbow', -30, 180, -60, 190], lR: ['Right leg out', 'Right leg lift', 0, 40, 0, 100], lL: ['Left leg out', 'Left leg lift', 0, 40, 0, 100], body: ['Lean', 'Head tilt', -20, 20, -25, 25] };
   function pupSync() {
-    const k = pup.limb, d = PL[k], P = pup.P; $('pupL1').textContent = d[0]; $('pupL2').textContent = d[1];
+    const k = pup.limb, d = PL[k] || PL.aR, P = pup.P; $('pupFace').classList.toggle('hide', k !== 'face'); $('pupLimbCtl').classList.toggle('hide', k === 'face');
+    if (k === 'face') { document.querySelectorAll('#pupLimb .chip').forEach(x => x.setAttribute('aria-pressed', x.dataset.l === k ? 'true' : 'false')); return; } $('pupL1').textContent = d[0]; $('pupL2').textContent = d[1];
     const s1 = $('pupS1'), s2 = $('pupS2'); s1.min = d[2]; s1.max = d[3]; s2.min = d[4]; s2.max = d[5];
     let v1, v2; if (k === 'aR' || k === 'aL') { v1 = P[k][0]; v2 = P[k][1]; } else if (k === 'lR' || k === 'lL') { v1 = P[k].a; v2 = Math.round(P[k].lift * 100); } else { v1 = P.lean; v2 = P.head; }
     s1.value = v1; s2.value = v2; $('pupV1').textContent = Math.round(v1); $('pupV2').textContent = Math.round(v2);
@@ -863,7 +891,18 @@
     c.fillStyle = '#222'; c.fillRect(0, 0, W, H); const im = pup.bg; if (!im) return;
     const k = Math.max(W / im.naturalWidth, H / im.naturalHeight), w = im.naturalWidth * k, h = im.naturalHeight * k; c.drawImage(im, (W - w) / 2, (H - h) / 2, w, h);
   }
-  function pupChar(W, H) { const cc = pup.chc; if (cc.width !== W || cc.height !== H) { cc.width = W; cc.height = H; } try { pup.w.__ch.puppet(cc, pup.P, pup.x * W, pup.y * H, pup.sz, $('pupProp').value || null); } catch (e) {}
+  pup.face = { eyes: 0, gx: 0, mouth: 0, blinkEvery: 4, talkRate: 0 };
+  const TALK = [1, 2, 0, 3, 2, 1, 0, 2];
+  function pupFaceFor(n) {
+    const f = pup.face; let talk = f.mouth;
+    if (f.talkRate > 0) talk = TALK[Math.floor(n / f.talkRate) % TALK.length];
+    const blink = f.eyes === 1 || (f.blinkEvery > 0 && n % f.blinkEvery === f.blinkEvery - 1);
+    return { blink, talk, gx: f.gx, gy: 0 };
+  }
+  [['pfEyes', v => { pup.face.eyes = v; }], ['pfGaze', v => { pup.face.gx = v; }], ['pfMouth', v => { pup.face.mouth = v; }]].forEach(([id, fn]) => document.querySelectorAll('#' + id + ' .chip').forEach(b => b.addEventListener('click', () => { fn(+b.dataset.v); document.querySelectorAll('#' + id + ' .chip').forEach(x => x.setAttribute('aria-pressed', x === b ? 'true' : 'false')); pup.dirty = true; })));
+  $('pfBlink').addEventListener('change', () => { pup.face.blinkEvery = +$('pfBlink').value; pup.dirty = true; });
+  $('pfTalk').addEventListener('change', () => { pup.face.talkRate = +$('pfTalk').value; pup.dirty = true; });
+  function pupChar(W, H) { const cc = pup.chc; if (cc.width !== W || cc.height !== H) { cc.width = W; cc.height = H; } try { pup.w.__ch.puppet(cc, pup.P, pup.x * W, pup.y * H, pup.sz, $('pupProp').value || null, pupFaceFor(pup.n)); } catch (e) {}
     if (!pup.flip) return cc;
     const fc = pup.fc || (pup.fc = document.createElement('canvas')); fc.width = W; fc.height = H; const g = fc.getContext('2d'); g.clearRect(0, 0, W, H); g.save(); g.translate(2 * pup.x * W, 0); g.scale(-1, 1); g.drawImage(cc, 0, 0); g.restore(); return fc; }
   function drawPuppet() {
@@ -916,6 +955,10 @@
   $('cv').addEventListener('pointerdown', e => { if (!pup.on) return; const r = cv.getBoundingClientRect(); pup.drag = { id: e.pointerId, x: e.clientX, y: e.clientY, px: pup.x, py: pup.y, r }; try { cv.setPointerCapture(e.pointerId); } catch (x) {} });
   $('cv').addEventListener('pointermove', e => { const d = pup.drag; if (!pup.on || !d || d.id !== e.pointerId) return; pup.x = Math.min(1.1, Math.max(-0.1, d.px + (e.clientX - d.x) / d.r.width)); pup.y = Math.min(1.3, Math.max(0.2, d.py + (e.clientY - d.y) / d.r.height)); pup.dirty = true; });
   ['pointerup', 'pointercancel'].forEach(t => $('cv').addEventListener(t, () => { pup.drag = null; }));
+  function tbSync() { const pl = deck.mode === 'play'; $('tbPlay').textContent = pl ? 'Stop playing' : 'Play it'; $('tbPlay').setAttribute('aria-pressed', pl ? 'true' : 'false'); $('tbPlay').disabled = st.frames.length < 2 && !pl; $('tbFpsV').textContent = $('fps').value + ' frames a second'; if (document.activeElement !== $('toonFps')) $('toonFps').value = $('fps').value; }
+  $('tbPlay').addEventListener('click', () => { buzz(12); if (deck.mode === 'play') { setDeck('pause'); pup.dirty = true; } else if (st.frames.length > 1) { deck.p = 0; setDeck('play'); } tbSync(); });
+  $('toonFps').addEventListener('input', () => { $('fps').value = $('toonFps').value; $('fps').dispatchEvent(new Event('input')); tbSync(); });
+  setInterval(() => { if (document.body.classList.contains('toon')) tbSync(); }, 400);
   $('chBtn').addEventListener('click', async () => {
     const btn = $('chBtn'); btn.disabled = true; msg('shootMsg', 'Posing your character...');
     const fr = document.createElement('iframe'); fr.src = 'character/?embed=1'; fr.setAttribute('aria-hidden', 'true'); fr.style.cssText = 'position:fixed;left:0;top:0;width:10px;height:10px;opacity:0;pointer-events:none;border:0'; document.body.appendChild(fr);

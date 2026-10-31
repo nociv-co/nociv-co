@@ -368,7 +368,11 @@ function drawFeatures(S, P, o, H) {
   spr('noses', S.nose, 0, 14, 26, false);
   const my = 33, hasB = S.beard === 'beard' || S.beard === 'goatee';
   if (hasB) { paint(ell(0, my, 17, 8), lt(skin, .1), { ns: 1, no: 1 }); }
-  sprc('mouths', S.mouth, 0, my, 36, false, 1, { fill: S.lipC || dk(skin, .3) });
+  if (o.talk) {
+    const T = { 1: [9, 4.2], 2: [11, 8.5], 3: [6, 7.5] }[o.talk] || [9, 4], lipc = S.lipC || dk(skin, .3);
+    paint(ell(0, my + 1, T[0] + 3.2, T[1] + 3.2), lipc); paint(ell(0, my + 1, T[0], T[1]), '#4a1618');
+    if (o.talk === 2) { ctx.save(); ctx.beginPath(); ctx.ellipse(0, my + 1, T[0], T[1], 0, 0, TAU); ctx.clip(); ctx.fillStyle = '#c8412f'; ctx.beginPath(); ctx.ellipse(0, my + T[1] + 1, 6.5, 4.5, 0, 0, TAU); ctx.fill(); ctx.restore(); }
+  } else sprc('mouths', S.mouth, 0, my, 36, false, 1, { fill: S.lipC || dk(skin, .3) });
 }
 function drawGlasses(S) {
   const g = S.glasses; if (g === 'none') return; const L = [-19, 19], lw = 3.4;
@@ -594,11 +598,11 @@ function showBases() {
 }
 $('modal').addEventListener('click', e => { if (e.target === $('modal')) $('modal').classList.remove('on'); });
 function stopFrames(w, h, n, pose, noBgOverride) { const old = S.pose; if (pose && CH.POSES[pose]) S.pose = pose; const T = (CH.POSES[S.pose] || CH.POSES.idle).T, out = []; for (let i = 0; i < n; i++) { const c = mk(w, h); renderTo(c, T * i / n, {}); out.push(c); } S.pose = old; return out; }
-function puppet(canvas, P, px, py, sz, prop) {
+function puppet(canvas, P, px, py, sz, prop, face) {
   const w = canvas.width, h = canvas.height, g = canvas.getContext('2d'); layer.width = w; layer.height = h;
   const PXs = Math.max(0.2, sz) * h / 270, view = { cx: -(px - w / 2) / PXs, cy: -(py - h / 2) / PXs, w: w / PXs }, old = S.pose, oldProp = S.prop; S.pose = 'idle'; if (prop) S.prop = prop === 'none' ? 'none' : prop;
   const Pf = Object.assign({ bob: 0, lean: 0, head: 0, hy: 0, aR: [9, 14], aL: [9, 14], lR: { a: 4, lift: 0 }, lL: { a: 4, lift: 0 }, board: null }, P || {});
-  if (Pf.crouch) Pf.bob = (Pf.bob || 0) + Pf.crouch; CH.drawChar(lg, S, Pf, view, { t: 0, gaze: { x: 0, y: 0 }, blink: false });
+  if (Pf.crouch) Pf.bob = (Pf.bob || 0) + Pf.crouch; face = face || {}; CH.drawChar(lg, S, Pf, view, { t: 0, gaze: { x: face.gx || 0, y: face.gy || 0 }, blink: !!face.blink, talk: face.talk || 0 });
   S.pose = old; S.prop = oldProp; gritLayer(lg, w, h); g.clearRect(0, 0, w, h); g.drawImage(layer, 0, 0);
 }
 window.__ch = { puppet, frames: stopFrames, poses: () => Object.keys(CH.POSES), S: () => S, makeGifBytes, lzw, renderTo, setS: o => { Object.assign(S, o); save(); build(); tag(); }, setTab: k => { tab = k; build(); } };
