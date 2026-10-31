@@ -55,6 +55,8 @@
   .card h3 { margin: 0 0 8px; font-family: NocivAnton, Impact, sans-serif; letter-spacing: .06em; font-weight: 400; font-size: 1.4rem; text-transform: uppercase; }
   .hide { display: none !important; }
 .note a { color: inherit; font-weight: 800; text-decoration: underline; }
+@keyframes nvIn { from { opacity: 0; } to { opacity: 1; } }
+body { animation: nvIn .3s ease both; }
 </style>
 </head>
 <body>
@@ -233,7 +235,9 @@ function drawLeg(g, B, S, skin) {
   drawShoe(fx, fy, g.side, B, S);
 }
 function drawShoe(x, y, side, B, S) {
-  if (S.shoes === 'bare' && XOK >= 2) { ctx.save(); ctx.translate(x, y - 6); const w = B.leg * 3.4; if (side > 0) xspr('f1', w, S.skin, .28, .0); else xspr('f2', w * 1.18, S.skin, .81, .0); ctx.restore(); return; }
+  if (S.shoes === 'bare') { ctx.save(); ctx.translate(x, y - 4); if (side < 0) ctx.scale(-1, 1); const F = B.leg * 1.5, ink = 'rgba(26,26,26,.55)';
+    paint(rr(-.36 * F, 0, .72 * F, .75 * F, .24 * F), S.skin); paint(cap(-.1 * F, .6 * F, 1.2 * F, .74 * F, .42 * F, .34 * F), S.skin);
+    [[1.4, .6, .15], [1.52, .73, .14], [1.5, .87, .12]].forEach(t => paint(ell(t[0] * F, t[1] * F, t[2] * F, t[2] * F), S.skin, { sh: 1 })); ctx.restore(); return; }
   const w = B.leg * 1.4, c = S.shoeC, sole = S.shoes === 'boot' ? INK : '#f2ecd6'; ctx.save(); ctx.translate(x, y);
   if (S.shoes === 'boot' || S.shoes === 'hightop') { const hgt = S.shoes === 'boot' ? 22 : 18; paint(rr(-w * .8 + side * -1, -hgt - 4, w * 1.6, hgt + 6, 5), c); }
   const rx = w * (S.shoes === 'skate' ? 1.12 : 1), upper = ell(side * 3, 3, rx, 10);
@@ -257,11 +261,16 @@ function drawArm(g, side, B, S, skin) {
   // hand
   const hx = g.H.x + g.d2.x * 5, hy = g.H.y + g.d2.y * 5; ctx.save(); ctx.translate(hx, hy); ctx.rotate(Math.atan2(g.d2.y, g.d2.x) - Math.PI / 2);
   const HS = S.hands || 'round';
-  if (HS !== 'round' && XOK >= 2) {
-    if (HS === 'thumb') { const mir = Math.abs(g.d2.x) < .3 ? side < 0 : g.d2.x > 0; ctx.rotate(-(Math.atan2(g.d2.y, g.d2.x) - Math.PI / 2)); ctx.scale(mir ? -1 : 1, 1); xspr('thumb', w * 5.2, skin, .9, .62); }
-    else { ctx.rotate(Math.PI); if (side > 0) ctx.scale(-1, 1); xspr(HS === 'open' ? (side > 0 ? 'o1' : 'o2') : 'fist', w * (HS === 'fist' ? 3.1 : 3.3), skin, .5, .8); }
+  if (HS !== 'round') {
+    const u = w, ink = 'rgba(26,26,26,.55)';
+    if (HS === 'thumb') { const mir = Math.abs(g.d2.x) < .3 ? side < 0 : g.d2.x > 0; ctx.rotate(-(Math.atan2(g.d2.y, g.d2.x) - Math.PI / 2)); ctx.scale(mir ? -1 : 1, 1);
+      paint(cap(-1.25 * u, -.4 * u, -1.25 * u, -1.75 * u, .36 * u, .32 * u), skin); paint(rr(-2.15 * u, -.7 * u, 2.15 * u, 1.45 * u, .55 * u), skin);
+      [-.2, .2, .6].forEach(y => line([[-2.0 * u, y * u], [-1.35 * u, y * u]], 1.6, ink)); }
+    else { if (side > 0) ctx.scale(-1, 1);
+      if (HS === 'open') { [[-.68, 1.05], [-.23, 1.3], [.23, 1.2], [.68, .95]].forEach(f => paint(cap(f[0] * u, 1.2 * u, f[0] * u, (1.2 + f[1]) * u, .25 * u, .22 * u), skin)); paint(cap(-.85 * u, .55 * u, -1.55 * u, 1.25 * u, .3 * u, .26 * u), skin); paint(rr(-.98 * u, -.1 * u, 1.96 * u, 1.6 * u, .5 * u), skin); }
+      else { paint(rr(-.95 * u, 0, 1.9 * u, 1.6 * u, .6 * u), skin); [-.32, .32].forEach(x => line([[x * u, .95 * u], [x * u, 1.5 * u]], 1.6, ink)); paint(cap(-.55 * u, .95 * u, .55 * u, 1.05 * u, .3 * u, .3 * u), skin); } }
   } else {
-  paint(ell(0, 4, w * .95, w * 1.15), skin); paint(ell(-side * w * .95, 0, w * .38, w * .7, side * .5), skin, { sh: 3 });
+  paint(cap(-side * w * .8, .2 * w, -side * w * 1.35, 1.2 * w, .34 * w, .3 * w), skin); paint(rr(-w * .95, -.1 * w, w * 1.9, w * 1.8, w * .8), skin);
   }
   line([[-w * .25, w * 1.0], [-w * .25, w * 1.9]], 2, 'rgba(26,26,26,.0)'); ctx.restore();
 }
@@ -691,5 +700,6 @@ window.__atlasReady = () => { try { refreshThumbs(); } catch (e) {} }; setTimeou
 setTimeout(() => { try { if (!/embed=1/.test(location.search) && !localStorage.getItem(KEY)) showBases(); } catch (e) {} }, 350);
 })();
 </script>
+<script>/*nvBack*/(function(){var b=document.getElementById('back');if(!b)return;b.addEventListener('click',function(e){if(/embed=1/.test(location.search))return;e.preventDefault();document.body.style.transition='opacity .18s';document.body.style.opacity='0';setTimeout(function(){location.href=b.href},180);});})();</script>
 </body>
 </html>

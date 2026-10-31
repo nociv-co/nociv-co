@@ -423,6 +423,26 @@
   body.real .start .go { background: var(--red); color: #fff; border: 0; border-radius: 12px; box-shadow: none; }
   body.real .start .go:active { transform: none; opacity: .85; }
 body.sg #undoBtn, body.sg #redoBtn { display: none; }
+
+/* Cartoon opens on picture options, no text page */
+body.toon #stArt, body.toon #modeTabs, body.toon #modeName, body.toon #modeDesc, body.toon #goBtn, body.toon #pickKeep, body.toon #pickNew { display: none !important; }
+.tn { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin: 14px 0 18px; }
+.tcard { display: flex; flex-direction: column; border: 2.5px solid var(--ink); border-radius: 16px; background: var(--note); padding: 0; overflow: hidden; text-align: left; color: var(--ink); box-shadow: 3px 3px 0 var(--ink); }
+.tcard .tp { aspect-ratio: 3 / 4; background: #e9e1c8 center / cover no-repeat; display: flex; align-items: center; justify-content: center; }
+.tcard .tp svg { width: 46%; height: 46%; }
+.tcard b { display: block; padding: 10px 12px 0; font-size: 1.05rem; font-weight: 900; letter-spacing: .02em; }
+.tcard small { display: block; padding: 2px 12px 12px; font-size: .82rem; line-height: 1.3; font-weight: 600; color: #4a463d; }
+.tn .tcard:last-child:nth-child(odd) { grid-column: 1 / -1; } .tn .tcard:last-child:nth-child(odd) .tp { aspect-ratio: 3 / 1; }
+.tcard:active { transform: translate(2px, 2px); box-shadow: 1px 1px 0 var(--ink); }
+.tcard.dark { background: var(--ink); color: #fff; } .tcard.dark small { color: #ddd; } .tcard.dark .tp { background: #2b2b2b; }
+@keyframes nvIn { from { opacity: 0; } to { opacity: 1; } }
+body { animation: nvIn .3s ease both; }
+.nv-sheet { position: fixed; inset: 0; z-index: 99; background: rgba(26,26,26,.55); display: flex; align-items: flex-end; justify-content: center; padding: 16px; animation: nvIn .2s ease both; }
+.nv-sheet > div { width: 100%; max-width: 420px; background: var(--note); border: 2.5px solid var(--ink); border-radius: 18px; padding: 18px 16px; }
+.nv-sheet h3 { margin: 0 0 6px; font-size: 1.3rem; font-weight: 900; }
+.nv-sheet p { margin: 0 0 14px; line-height: 1.4; }
+.nv-sheet button { display: block; width: 100%; margin-top: 8px; padding: 14px; border: 2.5px solid var(--ink); border-radius: 12px; font-weight: 900; font-size: 1rem; background: #fff; color: var(--ink); }
+.nv-sheet button.dark { background: var(--ink); color: #fff; }
 </style>
 </head>
 <body>
@@ -434,8 +454,10 @@ body.sg #undoBtn, body.sg #redoBtn { display: none; }
     <div class="mtabs" id="modeTabs"></div>
     <div class="mode-name" id="modeName"></div>
     <p class="mode-desc" id="modeDesc"></p>
+    <div class="tn hide" id="tnGrid"></div>
     <button type="button" class="go" id="goBtn">START</button>
     <button type="button" class="pick again hide" id="pickKeep"><b>Keep working</b><small id="keepInfo"></small></button>
+    <button type="button" class="pick alt hide" id="pickNew"><b>Start new</b><small id="newInfo">Clear the frames and the scene. Your character stays.</small></button>
     <p class="foot">A free tool from <a href="https://nociv.co" target="_top">NOCIV.CO</a>. Nothing tracked. Nothing leaves your phone.</p>
   </div>
 </div>
@@ -499,7 +521,6 @@ body.sg #undoBtn, body.sg #redoBtn { display: none; }
       <h2 class="rl">Camera</h2>
       <p class="tip rl">Prop your phone so it cannot move. Move your subject a tiny bit, tap the red button, repeat.</p>
       <h2 class="ct">Scene</h2>
-      <p class="tip ct">Pick a background, a floor and props. You can change the scene any time, even after you have frames.</p>
       <label class="f">Shape</label>
       <div class="chips" id="aspects">
         <button type="button" class="chip" data-a="tall" aria-pressed="true">Tall 9:16</button>
@@ -1273,9 +1294,7 @@ body.sg #undoBtn, body.sg #redoBtn { display: none; }
     try { for (let i = 0; i < st.frames.length; i++) { if (sc === 'one' && i !== sel) continue; if (sc === 'from' && i < sel) continue; st.frames[i] = await scRecomp(st.frames[i], s); } } catch (e) {}
     $('scApply').disabled = false; refreshUI(); queueSave(); renderStill(); if (scRecomp.skipped) { msg('shootMsg', scRecomp.skipped + (scRecomp.skipped === 1 ? ' frame has a photo behind it and' : ' frames have a photo behind them and') + ' can not change. Retake ' + (scRecomp.skipped === 1 ? 'it' : 'them') + ' to use this scene.'); return; } msg('shootMsg', sc === 'all' ? 'Scene applied to every frame.' : sc === 'from' ? 'Scene applied from frame ' + (sel + 1) + ' on.' : 'Scene applied to frame ' + (sel + 1) + '.');
   });
-  $('scFresh').addEventListener('click', () => { if (!confirm('Start fresh? This clears every frame and the scene. Your character stays.')) return;
-    snap(); st.frames = []; st.sel = -1; pup.n = 0; pup.bg = null; pup.bgBlob = null; SCE.cur.color = null; SCE.cur.floor = { on: false, color: SCE.cur.floor.color }; SCE.cur.st = []; SCE.sel = -1; SCE.frozen = null;
-    pupBgSave(); scSave(); scSync(); refreshUI(); queueSave(); updateKeep(); renderStill(); msg('shootMsg', 'Fresh start. Pick a scene, then animate.'); });
+  $('scFresh').addEventListener('click', async () => { if (!confirm('Start fresh? This clears every frame and the scene. Your character stays.')) return; await startNew(); msg('shootMsg', 'Fresh start. Pick a scene, then animate.'); });
   pup.face = { eyes: 0, gx: 0, mouth: 0, blinkEvery: 4, talkRate: 0, mood: 'neutral', turn: 0, head: '', brow: 0, lid: 0 };
   const TALK = [1, 2, 0, 3, 2, 1, 0, 2];
   function pupFaceFor(n) {
@@ -1425,7 +1444,7 @@ body.sg #undoBtn, body.sg #redoBtn { display: none; }
   let pupTake; $('pupSnap').addEventListener('click', pupTake = async () => {
     const [W, H] = size(), c = document.createElement('canvas'); c.width = W; c.height = H; const g = c.getContext('2d'); scBack(g, W, H, SCE.cur, false); g.drawImage(pupChar(W, H), 0, 0); scFront(g, W, H, SCE.cur);
     const ghost = document.createElement('canvas'); ghost.width = W; ghost.height = H; ghost.getContext('2d').drawImage(pup.flip ? pup.fc : pup.chc, 0, 0);
-    snap(); const chb = await canvasToBlob(ghost, 'image/png'); const nf = await addBlob(await canvasToBlob(c, 'image/jpeg', 0.92)); try { const ci = await loadImg(chb); nf.chb = chb; nf.ch = ci.img; nf.chUrl = ci.url; nf.sc = scFreeze(); } catch (e) {} pup.prev = ghost; pup.n++; st.sel = st.frames.length - 1; pup.dirty = true; buzz(15); pupEmStep();
+    snap(); const chb = await canvasToBlob(ghost, 'image/png'); const nf = await addBlob(await canvasToBlob(c, 'image/jpeg', 0.92)); try { const ci = await loadImg(chb); nf.chb = chb; nf.ch = ci.img; nf.chUrl = ci.url; nf.sc = scFreeze(); } catch (e) {} pup.prev = ghost; pup.n++; st.csig = charSig(); st.sel = st.frames.length - 1; pup.dirty = true; buzz(15); pupEmStep();
     const sg = document.querySelector('.vf .stage'); sg.classList.remove('flash'); void sg.offsetWidth; sg.classList.add('flash'); $('strip').scrollLeft = 99999;
     refreshUI(); $('strip').scrollLeft = 99999; msg('pupMsg', pup.n + (pup.n === 1 ? ' frame' : ' frames') + ' taken. Nudge a knob, take the next one.');
   });
@@ -1567,7 +1586,24 @@ body.sg #undoBtn, body.sg #redoBtn { display: none; }
     renderEra(); if (kind === 'char') openCharCreator(); showPanel(kind === 'clip' ? 'clip' : kind === 'board' ? 'bphotos' : kind === 'char' ? 'create' : 'shoot'); updateDeckEnabled(); if (kind === 'board') { refreshBoardUI(); syncFaceControls(); sgSet('photo'); }
   }
   function goHome() { document.body.classList.remove('sg'); cv.style.width = ''; cv.style.height = ''; setDeck('pause'); if (deck.recording) stopRec(); stopCam(); st.kind = null; $('app').classList.remove('is-char', 'is-create'); $('app').classList.add('hide'); $('start').classList.remove('hide'); updateKeep(); }
-  function updateKeep() { if (!$('pickKeep')) return; const has = st.frames.length > 0; $('pickKeep').classList.toggle('hide', !has); $('keepInfo').textContent = has ? st.frames.length + ' frames saved on this phone. Pick up where you left off.' : ''; }
+  const charSig = () => { try { return localStorage.getItem('nocivChar3') || ''; } catch (e) { return ''; } };
+  const charChanged = () => !!(st.csig && st.csig !== charSig());
+  function updateKeep() { if (!$('pickKeep')) return; const has = st.frames.length > 0; $('pickKeep').classList.toggle('hide', !has); if ($('pickNew')) $('pickNew').classList.toggle('hide', !has); $('keepInfo').textContent = has ? st.frames.length + (charChanged() ? ' frames saved, made with your old character.' : ' frames saved on this phone. Pick up where you left off.') : ''; renderTn(); if ($('newInfo')) $('newInfo').textContent = charChanged() ? 'You made a new character. Start fresh with them.' : 'Clear the frames and the scene. Your character stays.'; }
+  function renderTn() {
+    const g = $('tnGrid'); if (!g || !document.body.classList.contains('toon')) return; g.classList.remove('hide'); g.innerHTML = '';
+    const bi = MODES.findIndex(m => m.key === 'char'), ai = MODES.findIndex(m => m.key === 'stop'), n = st.frames.length, last = n ? st.frames[n - 1] : null;
+    const add = (cls, img, svg, name, info, fn) => { const b = document.createElement('button'); b.type = 'button'; b.className = 'tcard ' + cls; b.innerHTML = '<span class="tp"></span><b></b><small></small>'; const tp = b.querySelector('.tp'); if (img) tp.style.backgroundImage = 'url("' + img + '")'; if (svg) tp.innerHTML = svg; b.querySelector('b').textContent = name; b.querySelector('small').textContent = info; b.addEventListener('click', () => { buzz(8); fn(); }); g.appendChild(b); };
+    add('', '../img/tools/animate-hero.webp?v=6', '', 'Build', 'Make your cartoon. Face, hair, outfit, piercings.', () => { showMode(bi); goMode(); });
+    if (n) {
+      add('', last.url, '', 'Keep working', n + (n === 1 ? ' frame' : ' frames') + (charChanged() ? ', old character' : ' saved'), () => { showMode(ai); goMode(); });
+      add('dark', '', '<svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2.4" stroke-linecap="round"><path d="M12 5v14M5 12h14"/></svg>', 'Start new', charChanged() ? 'You made a new character. Start fresh.' : 'Clear frames and scene. Your character stays.', async () => { await startNew(); showMode(ai); goMode(); });
+    } else add('', '../img/tools/animate-card.webp?v=1', '', 'Animate', 'Stand them in a photo. Move each arm and leg.', () => { showMode(ai); goMode(); });
+  }
+  async function startNew() {
+    snap(); st.frames = []; st.sel = -1; st.csig = ''; pup.n = 0; pup.bg = null; pup.bgBlob = null; SCE.cur.color = null; SCE.cur.floor = { on: false, color: SCE.cur.floor.color }; SCE.cur.st = []; SCE.sel = -1; SCE.frozen = null;
+    pupBgSave(); scSave(); scSync(); refreshUI(); queueSave(); updateKeep(); renderStill();
+  }
+  if ($('pickNew')) $('pickNew').addEventListener('click', async () => { await startNew(); document.body.classList.contains('toon') ? goMode() : startKind('stop'); });
   if ($('pickKeep')) $('pickKeep').addEventListener('click', () => { startKind('stop'); setCam(false); });
   $('homeBtn').addEventListener('click', goHome);
 
@@ -2783,13 +2819,21 @@ body.sg #undoBtn, body.sg #redoBtn { display: none; }
     document.querySelectorAll('#modeTabs button').forEach((b, k) => b.setAttribute('aria-pressed', k === mi ? 'true' : 'false'));
   }
   MODES.forEach((m, i) => { const b = document.createElement('button'); b.type = 'button'; b.innerHTML = '<i>' + (i + 1) + '</i>' + m.tab; b.addEventListener('click', () => { buzz(8); showMode(i); }); $('modeTabs').appendChild(b); });
+  function askNew() {
+    const w = document.createElement('div'); w.className = 'nv-sheet'; w.innerHTML = '<div><h3>New character?</h3><p>Your saved frames were made with your old character. Start fresh with the new one, or keep working on the old frames.</p><button type="button" class="dark" id="nvNew">Start new with my new character</button><button type="button" id="nvKeep">Keep the old frames</button></div>';
+    const x = () => w.remove(); w.addEventListener('click', e => { if (e.target === w) x(); });
+    w.querySelector('#nvNew').onclick = async () => { x(); await startNew(); goMode.ok = true; goMode(); goMode.ok = false; };
+    w.querySelector('#nvKeep').onclick = () => { x(); goMode.ok = true; goMode(); goMode.ok = false; };
+    document.body.appendChild(w);
+  }
   function goMode() {
     const k = MODES[mi].key;
-    if (k === 'board') startKind('board'); else if (k === 'char') { location.href = 'character/'; return; }
+    if (k === 'board') startKind('board'); else if (k === 'char') { document.body.style.transition = 'opacity .18s'; document.body.style.opacity = '0'; setTimeout(() => { location.href = 'character/'; }, 180); return; }
+    else if (k === 'stop' && st.frames.length && charChanged() && !goMode.ok) { askNew(); return; }
     else if (k === 'stop') { startKind('stop'); if (document.body.classList.contains('toon')) { st.cam = false; syncRows(); renderStill(); } else if (st.cam && !st.camVideo) startCam(); } else { startKind('clip'); $('clipIn').click(); }
   }
   $('goBtn').addEventListener('click', goMode);
-  showMode(0);
+  showMode(0); renderTn();
   // one-tool apps (Signifier) skip the landing page and open on the tool itself
   if (APP && MODES.length === 1 && MODES[0].key !== 'char') { $('homeBtn').style.visibility = 'hidden'; $('homeBtn').disabled = true; setTimeout(goMode, 0); }
   (function () { const q = new URLSearchParams(location.search); if (q.get('go') !== 'stop' && q.get('go') !== 'puppet' && q.get('go') !== 'scene') return; setTimeout(() => { startKind('stop'); if (q.get('go') === 'scene') { st.cam = false; syncRows(); renderStill(); return; } if (q.get('go') === 'puppet') { st.cam = false; syncRows(); pupOpen(); return; } if (q.get('char') === '1') { st.cam = false; syncRows(); $('chBtn').click(); } }, 500); })();
@@ -2800,7 +2844,7 @@ body.sg #undoBtn, body.sg #redoBtn { display: none; }
   let saveTimer = null;
   function scRec() {
     const sl = [], sg = []; const idx = st.frames.map(f => { if (!f.sc) return -1; let k = sg.indexOf(f.sc.sig); if (k < 0) { k = sg.length; sg.push(f.sc.sig); sl.push({ color: f.sc.color, floor: f.sc.floor, st: f.sc.st, bgBlob: f.sc.bgBlob || null }); } return k; });
-    return { aspect: st.aspect, fps: st.fps, mode: st.mode, blobs: st.frames.map(f => f.blob), chs: st.frames.map(f => f.chb || null), scs: idx, scenes: sl };
+    return { csig: st.csig || '', aspect: st.aspect, fps: st.fps, mode: st.mode, blobs: st.frames.map(f => f.blob), chs: st.frames.map(f => f.chb || null), scs: idx, scenes: sl };
   }
   function queueSave() { clearTimeout(saveTimer); saveTimer = setTimeout(async () => { try { const db = await openDb(); db.transaction('s', 'readwrite').objectStore('s').put(scRec(), SKEY); } catch (e) {} }, 600); }
   async function pupBgRestore() { if (SKEY !== 'toon') return; try { const db = await openDb(), b = await new Promise((res, rej) => { const q = db.transaction('s').objectStore('s').get('toonbg'); q.onsuccess = () => res(q.result); q.onerror = () => rej(q.error); }); if (!b) return; const im = new Image(); await new Promise((res, rej) => { im.onload = res; im.onerror = rej; im.src = URL.createObjectURL(b); }); pup.bg = im; pup.bgBlob = b; pup.dirty = true; renderStill(); } catch (e) {} }
@@ -2810,7 +2854,7 @@ body.sg #undoBtn, body.sg #redoBtn { display: none; }
     try {
       const db = await openDb(), data = await new Promise((res, rej) => { const q = db.transaction('s').objectStore('s').get(SKEY); q.onsuccess = () => res(q.result); q.onerror = () => rej(q.error); });
       if (!data || !data.blobs || !data.blobs.length) return;
-      st.aspect = data.aspect || 'tall'; st.fps = data.fps || 8; st.mode = data.mode || 'loop';
+      st.csig = data.csig || ''; st.aspect = data.aspect || 'tall'; st.fps = data.fps || 8; st.mode = data.mode || 'loop';
       document.querySelectorAll('#aspects .chip').forEach(x => x.setAttribute('aria-pressed', x.dataset.a === st.aspect ? 'true' : 'false'));
       document.querySelectorAll('#modes .chip').forEach(x => x.setAttribute('aria-pressed', x.dataset.m === st.mode ? 'true' : 'false'));
       $('fps').value = st.fps; $('fpsVal').textContent = st.fps + ' frames a second';
