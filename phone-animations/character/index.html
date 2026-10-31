@@ -60,7 +60,7 @@
 <body>
 <div class="app">
   <div class="hdr">
-    <a href="../?m=avatar" id="back"><svg viewBox="0 0 24 24"><path d="M15 5l-7 7 7 7"/></svg>Menu</a>
+    <a href="../?m=char" id="back"><svg viewBox="0 0 24 24"><path d="M15 5l-7 7 7 7"/></svg>Menu</a>
     <div class="ttl"><span>CHARACTER</span></div>
     <button type="button" id="rand"><svg viewBox="0 0 24 24"><rect x="3" y="3" width="18" height="18" rx="4"/><circle cx="8.5" cy="8.5" r="1.3" fill="currentColor"/><circle cx="15.5" cy="15.5" r="1.3" fill="currentColor"/><circle cx="15.5" cy="8.5" r="1.3" fill="currentColor"/><circle cx="8.5" cy="15.5" r="1.3" fill="currentColor"/></svg>Mix</button>
   </div>
@@ -514,7 +514,7 @@ function build() {
     panel.appendChild(el('p', 'note', 'Pick a move. It loops. Your type has a signature move.'));
     panel.appendChild(grid('pose', OPT.pose, 'full', { name: cap1, after: () => { frozen = .35; t0 = performance.now(); } }));
   } else if (tab === 'save') {
-    { const nx = el('a', 'btn', 'Next: make it move'); nx.href = '../?m=studio&go=stop&char=1'; nx.style.cssText = 'display:block;text-align:center;text-decoration:none;margin-bottom:6px'; panel.appendChild(nx); panel.appendChild(el('p', 'note', 'Takes your character into Stop Motion as frames, then you can put it on tape.')); }
+    { const nx = el('a', 'btn', 'Next: make it move'); nx.href = '../?m=video&go=stop&char=1'; nx.style.cssText = 'display:block;text-align:center;text-decoration:none;margin-bottom:6px'; panel.appendChild(nx); panel.appendChild(el('p', 'note', 'Takes your character into Stop Motion as frames, then you can put it on tape.')); }
     panel.appendChild(el('div', 'lbl', 'Background')); panel.appendChild(chips(Object.keys(BGS).map(k => [k, cap1(k)]), S.bg, k => { S.bg = k; save(); build(); }));
     const g = el('div', 'chips'); g.appendChild(toggle('grit', 'Print grit')); panel.appendChild(g);
     const b1 = el('button', 'btn', 'Sticker PNG'), b2 = el('button', 'btn alt', 'Poster PNG'), b3 = el('button', 'btn alt', 'Animated GIF'); [b1, b2, b3].forEach(b => b.type = 'button');
