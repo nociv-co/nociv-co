@@ -166,7 +166,7 @@ const TYPES = {
   curator: { name: 'Curator', bag: 'none', bagC: '#8a6a4a', top: 'polo', topC: '#3d4a26', bottom: 'straight', botC: '#1a1a1a', shoes: 'boot', shoeC: '#8a6a4a', hat: 'none', hatC: '#1a1a1a', prop: 'clipboard', pose: 'point', chain: false, lanyard: true, scarf: false, glasses: 'round' },
   skater: { name: 'Skater', bag: 'backpack', bagC: '#c8412f', top: 'tee', topC: '#f2c230', bottom: 'wide', botC: '#2f5d9e', shoes: 'skate', shoeC: '#f2ecd6', hat: 'cadet', hatC: '#c8412f', prop: 'board', pose: 'ollie', chain: false, lanyard: false, scarf: false, glasses: 'none' }
 };
-const DEF = Object.assign({ type: 'artist', body: 'mid', skin: '#c08552', head: 'round', eyes: 'e18', eyeC: '#5a3a1e', brow: 'b129', nose: 'n100', mouth: 'm16', beard: 'none', hair: 'coily', hairC: '#1a1a1a', earrings: false, bag: 'none', bagC: '#8a6a4a', lashes: false, hands: 'round', lipC: '', bg: 'sage', grain: false }, TYPES.artist);
+const DEF = Object.assign({ type: 'artist', body: 'mid', skin: '#c08552', head: 'round', eyes: 'e18', eyeC: '#5a3a1e', brow: 'b129', nose: 'n100', mouth: 'm16', beard: 'none', hair: 'coily', hairC: '#1a1a1a', earrings: false, pEar: false, pBrow: false, pNose: false, pSept: false, pLip: false, pSnake: false, pierceC: '#cfd4da', bag: 'none', bagC: '#8a6a4a', lashes: false, hands: 'round', lipC: '', bg: 'sage', grain: false }, TYPES.artist);
 
 // ---------- poses: every pose loops in T seconds ----------
 const POSES = {
@@ -378,7 +378,7 @@ function drawHead(S, B, P, o) {
   paint(cap(0, 38, 0, 52, B.neck, B.neck + 1), dk(skin, .12), { sh: 4 });
   ctx.save(); ctx.scale(1 - .24 * at, 1);
   // ears: with a turn the far ear slides in and the near ear ends up in the middle of the head
-  const earAt = (x, sd) => { paint(ell(x, 2, 8, 12), skin, { sh: 3 }); qline(x, -2, x + sd * 4, 3, x - sd * 1, 8, 2, 'rgba(26,26,26,.6)'); if (S.earrings) { ctx.lineWidth = 2.6; ctx.strokeStyle = INK; ctx.beginPath(); ctx.arc(x, 20, 5, 0, TAU); ctx.stroke(); ctx.lineWidth = 1.2; ctx.strokeStyle = '#f2c230'; ctx.stroke(); } };
+  const earAt = (x, sd) => { paint(ell(x, 2, 8, 12), skin, { sh: 3 }); qline(x, -2, x + sd * 4, 3, x - sd * 1, 8, 2, 'rgba(26,26,26,.6)'); if (S.pEar) { PC = S.pierceC || '#cfd4da'; [[5, -6], [6.7, -1], [6.7, 5]].forEach(q => pStud(x + sd * q[0], q[1], 2.6)); pStud(x, 15, 2.8); } if (S.earrings) { ctx.lineWidth = 2.6; ctx.strokeStyle = INK; ctx.beginPath(); ctx.arc(x, 20, 5, 0, TAU); ctx.stroke(); ctx.lineWidth = 1.2; ctx.strokeStyle = '#f2c230'; ctx.stroke(); } };
   const earX = sd => sd === d ? sd * (hw + 1) * (1 - at * 1.2) : sd * (hw + 1) * (1 - at * .92);
   if (!H.noEar) [-1, 1].forEach(sd => { if (sd === d && at > .5) return; if (sd !== d && at > .5) return; earAt(earX(sd), sd); });
   const face = headPath(S); paint(face, skin, { sh: 7 });
@@ -416,7 +416,12 @@ function moodMouth(k, my, lipc) {
   else if (k === 'wobble') { ctx.moveTo(-12, my + 1); ctx.quadraticCurveTo(-6, my - 4, 0, my + 1); ctx.quadraticCurveTo(6, my + 6, 12, my + 1); ctx.stroke(); }
   ctx.restore();
 }
+// punk piercings: flat metal studs and rings with the same ink outline as everything else
+let PC = '#cfd4da';
+function pStud(x, y, r) { const c = PC; ctx.save(); ctx.lineWidth = 1.3; ctx.strokeStyle = INK; ctx.fillStyle = c; ctx.beginPath(); ctx.arc(x, y, r, 0, TAU); ctx.fill(); ctx.stroke(); ctx.fillStyle = 'rgba(255,255,255,.75)'; ctx.beginPath(); ctx.arc(x - r * .3, y - r * .3, r * .28, 0, TAU); ctx.fill(); ctx.restore(); }
+function pRing(x, y, r, a0, a1) { const c = PC; ctx.save(); ctx.lineCap = 'round'; ctx.beginPath(); ctx.arc(x, y, r, a0, a1); ctx.lineWidth = 4.2; ctx.strokeStyle = INK; ctx.stroke(); ctx.lineWidth = 2.2; ctx.strokeStyle = c; ctx.stroke(); ctx.restore(); }
 function drawFeatures(S, P, o, H) {
+  PC = S.pierceC || '#cfd4da';
   const skin = S.skin, m = MOODS[o.mood] || null, t = o.turn || 0, at = Math.abs(t), d = t < 0 ? -1 : 1, shift = t * 22, hw = H.hw;
   const bl = o.blink ? .12 : Math.max(.12, (m ? m.eye : 1) * (1 + (o.lid || 0) * .6)), gy = ((o.gaze || {}).y || 0) + (m && m.gy || 0);
   [-1, 1].forEach(sd => {
@@ -436,6 +441,14 @@ function drawFeatures(S, P, o, H) {
   } else if (m && m.mouth) moodMouth(m.mouth, my, dk(S.lipC || skin, .45));
   else sprc('mouths', S.mouth, 0, my, 36, false, 1, { fill: S.lipC || dk(skin, .3) });
   ctx.restore();
+  if (at < .85) {
+    const nx = t * hw * .8, mx = t * hw * .55, sq = 1 - .4 * at;
+    if (S.pBrow) { const sd = 1, bx = sd * 19 * (1 - .3 * at) + shift + sd * 9 * (1 - .3 * at), by = -14 + (m ? m.brY : 0) - (o.brow || 0) * 6; ctx.save(); ctx.lineCap = 'round'; ctx.beginPath(); ctx.moveTo(bx - 1.5, by - 6); ctx.lineTo(bx + 1.5, by + 4); ctx.lineWidth = 4.2; ctx.strokeStyle = INK; ctx.stroke(); ctx.lineWidth = 2.2; ctx.strokeStyle = PC; ctx.stroke(); ctx.restore(); pStud(bx - 1.5, by - 6, 2.7); pStud(bx + 1.5, by + 4, 2.7); }
+    if (S.pNose) pStud(nx + 9 * (1 - .3 * at), 17, 2.5);
+    if (S.pSept) pRing(nx, 24, 5.2, .1 * Math.PI, .9 * Math.PI);
+    if (S.pLip) pRing(mx + 7 * sq, my + 5, 4.6, 0, TAU * .8);
+    if (S.pSnake) { pStud(mx - 8 * sq, my + 9, 2.6); pStud(mx + 8 * sq, my + 9, 2.6); }
+  }
 }
 function drawGlasses(S) {
   const g = S.glasses; if (g === 'none') return; const L = [-19, 19], lw = 3.4;
@@ -577,6 +590,8 @@ function build() {
     panel.appendChild(grid(a, OPT[a], reg, { name: v => GN[v] || cap1(v), patch: () => (a === 'bag' ? {} : { bag: 'none' }) })); panel.appendChild(el('div', 'lbl', 'Color')); panel.appendChild(swatches(cattr, CH.CLR));
   } else if (tab === 'extras') {
     panel.appendChild(el('div', 'lbl', 'Wear')); const w = el('div', 'chips'); [['chain', 'Chain'], ['lanyard', 'Lanyard'], ['scarf', 'Scarf'], ['earrings', 'Earrings']].forEach(([a, n]) => w.appendChild(toggle(a, n))); panel.appendChild(w);
+    panel.appendChild(el('div', 'lbl', 'Piercings')); const pw = el('div', 'chips'); [['pEar', 'Ear studs'], ['pBrow', 'Eyebrow'], ['pNose', 'Nose stud'], ['pSept', 'Septum'], ['pLip', 'Lip ring'], ['pSnake', 'Snakebites']].forEach(([a, n]) => pw.appendChild(toggle(a, n))); panel.appendChild(pw);
+    panel.appendChild(el('div', 'lbl', 'Metal')); panel.appendChild(swatches('pierceC', ['#cfd4da', '#f2c230', '#1a1a1a', '#c8412f', '#ff3ea5']));
     panel.appendChild(el('div', 'lbl', 'Hands')); panel.appendChild(grid('hands', OPT.hands, 'mid', { name: v => GN[v] || cap1(v) }));
     panel.appendChild(el('div', 'lbl', 'Hold')); panel.appendChild(grid('prop', OPT.prop, 'mid', { name: cap1 }));
   } else if (tab === 'move') {
