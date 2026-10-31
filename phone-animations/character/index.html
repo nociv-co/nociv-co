@@ -144,19 +144,19 @@ const DEF = Object.assign({ type: 'artist', body: 'mid', skin: '#c08552', head: 
 
 // ---------- poses: every pose loops in T seconds ----------
 const POSES = {
-  idle: { T: 2.4, f: w => ({ bob: Math.sin(w) * 1.6, lean: Math.sin(w) * 1, head: Math.sin(w) * 1.5, aR: [9, 14], aL: [9, 14] }) },
-  wave: { T: 1.2, f: w => ({ bob: Math.sin(w * 2) * 1, lean: -3, head: 5, aR: [128, 176 + Math.sin(w * 3) * 24], aL: [9, 14] }) },
-  walk: { T: .9, f: w => { const s = Math.sin(w); return { bob: -Math.abs(Math.cos(w)) * 4, lean: s * 2.5, head: -s * 2, aR: [16 + s * 14, 22 + s * 18], aL: [16 - s * 14, 22 - s * 18], lR: { a: 3, lift: Math.max(0, s) }, lL: { a: 3, lift: Math.max(0, -s) } }; } },
-  dance: { T: 1.6, f: w => { const b = Math.sin(w * 4), k = Math.sin(w * 2) > 0 ? 1 : -1; return { bob: -Math.abs(b) * 9, lean: Math.sin(w * 2) * 6, head: Math.sin(w * 2) * 7, aR: k > 0 ? [150 + b * 10, 168] : [60 + b * 8, 110], aL: k > 0 ? [60 + b * 8, 110] : [150 + b * 10, 168], lR: { a: 11, lift: k > 0 ? .25 : 0 }, lL: { a: 11, lift: k < 0 ? .25 : 0 } }; } },
-  hype: { T: 1, f: w => { const b = Math.sin(w * 2); return { bob: -Math.abs(b) * 12, lean: 0, head: Math.sin(w) * 4, aR: [156 + b * 8, 162], aL: [156 + b * 8, 162], lR: { a: 8, lift: Math.abs(b) * .5 }, lL: { a: 8, lift: Math.abs(b) * .5 } }; } },
-  spray: { T: 1.6, f: w => ({ bob: Math.sin(w * 2) * 1, lean: 5 + Math.sin(w) * 3, head: 6, aR: [86 + Math.sin(w * 6) * 2.5, 90 + Math.sin(w * 6) * 3], aL: [24, 46], lR: { a: 8, lift: 0 }, lL: { a: 10, lift: 0 } }) },
-  scratch: { T: 1.2, f: w => { const s = Math.sin(w * 2); return { bob: Math.abs(Math.sin(w * 2)) * 2.4, lean: 0, head: s * 5, hy: Math.abs(s) * 2, aR: [20, -48 + s * 20], aL: [20, -48 - s * 20], lR: { a: 7, lift: 0 }, lL: { a: 7, lift: 0 } }; } },
-  point: { T: 2, f: w => ({ bob: Math.sin(w) * 1.2, lean: -3, head: 6 + Math.sin(w) * 2, aR: [102, 100 + Math.sin(w) * 4], aL: [40, -42], lR: { a: 4, lift: 0 }, lL: { a: 7, lift: 0 } }) },
+  idle: { T: 2.4, f: w => { const s = Math.sin(w), b = Math.sin(w * 2); return { crouch: 2 + b * 1.6, hx: s * 3.5, lean: s * 1.4, head: -s * 2.2, hy: b * .8, aR: [9 + s * 2, 14 + s * 4 + b * 1.5], aL: [9 - s * 2, 14 - s * 4 - b * 1.5], lR: { a: 4 + s * 1.6, lift: 0 }, lL: { a: 4 - s * 1.6, lift: 0 } }; } },
+  wave: { T: 1.2, f: w => { const s = Math.sin(w), b = Math.sin(w * 2); return { crouch: 2 + b * 1.2, hx: s * 3, lean: -3 + s * 1.5, head: 5 - s * 2, aR: [128 + s * 3, 176 + Math.sin(w * 3) * 24], aL: [9 - s * 2, 14 - s * 3], lR: { a: 4 + s, lift: 0 }, lL: { a: 4 - s, lift: 0 } }; } },
+  walk: { T: .9, f: w => { const s = Math.sin(w), c = Math.cos(w); return { crouch: 3 + Math.abs(c) * 3, hx: -s * 6, lean: s * 3, head: -s * 2.4, hy: -Math.abs(c) * 1.4, aR: [16 + s * 18, 22 + s * 22], aL: [16 - s * 18, 22 - s * 22], lR: { a: 5, lift: Math.max(0, s) * 1.15 }, lL: { a: 5, lift: Math.max(0, -s) * 1.15 } }; } },
+  dance: { T: 1.6, f: w => { const b = Math.sin(w * 4), k = Math.sin(w * 2) > 0 ? 1 : -1, s = Math.sin(w * 2); return { crouch: 7 + b * 7, hx: s * 9, lean: s * 7, head: s * 8, aR: k > 0 ? [150 + b * 10, 168] : [60 + b * 8, 110], aL: k > 0 ? [60 + b * 8, 110] : [150 + b * 10, 168], lR: { a: 11, lift: k > 0 ? .45 : 0 }, lL: { a: 11, lift: k < 0 ? .45 : 0 } }; } },
+  hype: { T: 1, f: w => { const b = Math.sin(w * 2); return { crouch: b < 0 ? -b * 9 : 0, bob: b > 0 ? -b * 14 : 0, hx: Math.sin(w) * 3, lean: Math.sin(w) * 2, head: Math.sin(w) * 5, aR: [156 + b * 8, 162], aL: [156 + b * 8, 162], lR: { a: 8, lift: Math.max(0, b) * .6 }, lL: { a: 8, lift: Math.max(0, b) * .6 } }; } },
+  spray: { T: 1.6, f: w => { const s = Math.sin(w), b = Math.sin(w * 2); return { crouch: 5 + b * 2, hx: s * 4, bob: 0, lean: 5 + s * 3, head: 6 + s * 1.5, aR: [86 + Math.sin(w * 6) * 2.5, 90 + Math.sin(w * 6) * 3 + s * 2], aL: [24 + s * 3, 46 - s * 4], lR: { a: 8 + s, lift: 0 }, lL: { a: 10 - s, lift: 0 } }; } },
+  scratch: { T: 1.2, f: w => { const s = Math.sin(w * 2); return { crouch: 6 + Math.abs(s) * 3, hx: Math.sin(w) * 3, lean: Math.sin(w) * 2, head: s * 5, hy: Math.abs(s) * 2, aR: [20, -48 + s * 20], aL: [20, -48 - s * 20], lR: { a: 7, lift: 0 }, lL: { a: 7, lift: 0 } }; } },
+  point: { T: 2, f: w => { const s = Math.sin(w); return { crouch: 2 + Math.sin(w * 2), hx: s * 3, lean: -3 + s, head: 6 + s * 2, aR: [102, 100 + s * 4], aL: [40 + s * 2, -42], lR: { a: 4 + s, lift: 0 }, lL: { a: 7 - s, lift: 0 } }; } },
   ollie: { T: 1.4, f: w => { const u = (w / TAU) % 1, h = u < .6 ? Math.sin(u / .6 * Math.PI) : 0, c = u >= .6 ? Math.sin((u - .6) / .4 * Math.PI) * 5 : 0; return { bob: -h * 42 + c, lean: Math.sin(w) * 3, head: 0, aR: [62 + h * 14, 74 + h * 10], aL: [62 + h * 14, 74 + h * 10], lR: { a: 6 + h * 4, lift: h * .8 }, lL: { a: 6 + h * 4, lift: h * .8 }, board: { y: -h * 30, rot: Math.sin(u * TAU * 1) * .0 + h * -.22 * (u < .3 ? 1 : -1) } }; } }
 };
 function poseAt(name, t) {
   const d = POSES[name] || POSES.idle, base = { bob: 0, lean: 0, head: 0, hy: 0, aR: [9, 14], aL: [9, 14], lR: { a: 4, lift: 0 }, lL: { a: 4, lift: 0 }, board: null };
-  return Object.assign(base, d.f(TAU * t / d.T));
+  const P = Object.assign(base, d.f(TAU * t / d.T)); if (P.crouch) P.bob = (P.bob || 0) + P.crouch; return P;
 }
 
 // ---------- the draw ----------
@@ -169,12 +169,12 @@ function drawChar(c, S, P, view, o) {
   LW = Math.max(3.2, 4.4 * (view.w > 200 ? 1 : view.w / 220 + .3));
   // ground shadow
   if (!o.noShadow) { ctx.fillStyle = 'rgba(26,26,26,.22)'; ctx.beginPath(); ctx.ellipse(0, 8, 58, 8, 0, 0, TAU); ctx.fill(); }
-  const hipY = -110 + (P.bob || 0);
+  const hipY = -122 + (P.bob || 0);
   // skateboard under feet
   if (S.pose === 'ollie' || (P.board && S.prop === 'board')) drawBoard(0, P.board ? P.board.y + 2 : 0, P.board ? P.board.rot : 0, S);
-  ctx.save(); ctx.translate(0, hipY);
+  ctx.save(); ctx.translate(P.hx || 0, hipY);
   // legs
-  const legs = [1, -1].map(side => legGeom(side, B, side > 0 ? P.lR : P.lL));
+  const legs = [1, -1].map(side => legGeom(side, B, Object.assign({}, side > 0 ? P.lR : P.lL, { c: P.crouch || 0 }), P.hx || 0));
   legs.forEach(g => drawLeg(g, B, S, skin));
   ctx.save(); ctx.rotate(R(P.lean || 0));
   const arms = [1, -1].map(side => armGeom(side, B, side > 0 ? P.aR : P.aL));
@@ -190,13 +190,13 @@ function drawChar(c, S, P, view, o) {
   drawProp(arms[0], S, P, o);
   ctx.restore(); ctx.restore(); ctx.restore();
 }
-function legGeom(side, B, lg) {
-  lg = lg || { a: 4, lift: 0 }; const hx = side * B.hw * .5, a = R(lg.a), L = 100, ax = hx + side * Math.sin(a) * L + side * lg.lift * 4, ay = Math.cos(a) * L - lg.lift * 36;
-  const dx = ax - hx, dy = ay, d = Math.hypot(dx, dy), h = Math.sqrt(Math.max(0, 2500 - d * d / 4)) + 1.5; let px = dy / d, py = -dx / d; if (px * side < 0) { px = -px; py = -py; }
+function legGeom(side, B, lg, hs) {
+  lg = lg || { a: 4, lift: 0 }; hs = hs || 0; const hx = side * B.hw * .62, a = R(lg.a), L = 112 - (lg.c || 0), ax = hx + side * Math.sin(a) * 112 + side * lg.lift * 4 - hs, ay = Math.cos(a) * L - lg.lift * 36;
+  const dx = ax - hx, dy = ay, d = Math.hypot(dx, dy), h = Math.sqrt(Math.max(0, 3136 - d * d / 4)) + 1.5; let px = dy / d, py = -dx / d; if (px * side < 0) { px = -px; py = -py; }
   return { side, hx, hy: 0, kx: hx + dx / 2 + px * h, ky: dy / 2 + py * h, ax, ay, lift: lg.lift };
 }
 function drawLeg(g, B, S, skin) {
-  const t = S.bottom, w = B.leg, bc = S.botC, PK = { straight: 1.3, wide: 1.5, xwide: 1.72, carpenter: 1.38, army: 1.36, jeans: 1.3, joggers: 1.12, cargo: 1.32, shorts: 1.16, skirt: 1, slacks: 1.08 }[t] || 1.2, hem = { straight: 1.3, wide: 1.75, xwide: 2.05, carpenter: 1.45, army: 1.45, jeans: 1.55, joggers: 1.05, cargo: 1.5, shorts: 1.16, skirt: 1, slacks: 1.2 }[t] || 1.3;
+  const t = S.bottom, w = B.leg, bc = S.botC, PK = { straight: 1.12, wide: 1.24, xwide: 1.34, carpenter: 1.2, army: 1.2, jeans: 1.12, joggers: 1.02, cargo: 1.2, shorts: 1.08, skirt: 1, slacks: 1 }[t] || 1.2, hem = { straight: 1.12, wide: 1.45, xwide: 1.6, carpenter: 1.3, army: 1.3, jeans: 1.35, joggers: 1, cargo: 1.3, shorts: 1.08, skirt: 1, slacks: 1.1 }[t] || 1.3;
   const short = t === 'shorts', skirt = t === 'skirt', fx = g.ax + g.side * 3, fy = g.ay + 4;
   // bare leg
   paint(cap(g.hx, g.hy, g.kx, g.ky, w * .95, w * .88), skin); paint(cap(g.kx, g.ky, g.ax, g.ay, w * .88, w * .8), skin);
@@ -514,7 +514,8 @@ function build() {
     panel.appendChild(el('p', 'note', 'Pick a move. It loops. Your type has a signature move.'));
     panel.appendChild(grid('pose', OPT.pose, 'full', { name: cap1, after: () => { frozen = .35; t0 = performance.now(); } }));
   } else if (tab === 'save') {
-    { const nx = el('a', 'btn', 'Next: make it move'); nx.href = '../?m=video&go=stop&char=1'; nx.style.cssText = 'display:block;text-align:center;text-decoration:none;margin-bottom:6px'; panel.appendChild(nx); panel.appendChild(el('p', 'note', 'Takes your character into Stop Motion as frames, then you can put it on tape.')); }
+    { const nx = el('a', 'btn', 'Next: animate it on your photo'); nx.href = '../?m=video&go=puppet'; nx.style.cssText = 'display:block;text-align:center;text-decoration:none;margin-bottom:6px'; panel.appendChild(nx); panel.appendChild(el('p', 'note', 'Pick a photo from your phone. Your character stands in it and you move each arm and leg, one frame at a time.'));
+      const n2 = el('a', 'btn', 'Or add it as frames'); n2.href = '../?m=video&go=stop&char=1'; n2.style.cssText = 'display:block;text-align:center;text-decoration:none;margin:8px 0 6px'; panel.appendChild(n2); panel.appendChild(el('p', 'note', 'Drops a ready-made move into Stop Motion, then you can put it on tape.')); }
     panel.appendChild(el('div', 'lbl', 'Background')); panel.appendChild(chips(Object.keys(BGS).map(k => [k, cap1(k)]), S.bg, k => { S.bg = k; save(); build(); }));
     const g = el('div', 'chips'); g.appendChild(toggle('grit', 'Print grit')); panel.appendChild(g);
     const b1 = el('button', 'btn', 'Sticker PNG'), b2 = el('button', 'btn alt', 'Poster PNG'), b3 = el('button', 'btn alt', 'Animated GIF'); [b1, b2, b3].forEach(b => b.type = 'button');
@@ -597,7 +598,7 @@ function puppet(canvas, P, px, py, sz, prop) {
   const w = canvas.width, h = canvas.height, g = canvas.getContext('2d'); layer.width = w; layer.height = h;
   const PXs = Math.max(0.2, sz) * h / 270, view = { cx: -(px - w / 2) / PXs, cy: -(py - h / 2) / PXs, w: w / PXs }, old = S.pose, oldProp = S.prop; S.pose = 'idle'; if (prop) S.prop = prop === 'none' ? 'none' : prop;
   const Pf = Object.assign({ bob: 0, lean: 0, head: 0, hy: 0, aR: [9, 14], aL: [9, 14], lR: { a: 4, lift: 0 }, lL: { a: 4, lift: 0 }, board: null }, P || {});
-  CH.drawChar(lg, S, Pf, view, { t: 0, gaze: { x: 0, y: 0 }, blink: false });
+  if (Pf.crouch) Pf.bob = (Pf.bob || 0) + Pf.crouch; CH.drawChar(lg, S, Pf, view, { t: 0, gaze: { x: 0, y: 0 }, blink: false });
   S.pose = old; S.prop = oldProp; gritLayer(lg, w, h); g.clearRect(0, 0, w, h); g.drawImage(layer, 0, 0);
 }
 window.__ch = { puppet, frames: stopFrames, poses: () => Object.keys(CH.POSES), S: () => S, makeGifBytes, lzw, renderTo, setS: o => { Object.assign(S, o); save(); build(); tag(); }, setTab: k => { tab = k; build(); } };
