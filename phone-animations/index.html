@@ -435,6 +435,9 @@ body.toon #stArt, body.toon #modeTabs, body.toon #modeName, body.toon #modeDesc,
 .tn .tcard:last-child:nth-child(odd) { grid-column: 1 / -1; } .tn .tcard:last-child:nth-child(odd) .tp { aspect-ratio: 3 / 1; }
 .tcard:active { transform: translate(2px, 2px); box-shadow: 1px 1px 0 var(--ink); }
 .tcard.dark { background: var(--ink); color: #fff; } .tcard.dark small { color: #ddd; } .tcard.dark .tp { background: #2b2b2b; }
+body.aspw.pupmode #pupZoom { right: 6px; gap: 4px; }
+body.aspw.pupmode #pupZoom button { min-width: 0; padding: 6px 9px; font-size: .62rem; background: rgba(26,26,26,.7); }
+body.aspw.pupmode #pupZoom button[aria-pressed="true"] { background: #c8412f; }
 @keyframes nvIn { from { opacity: 0; } to { opacity: 1; } }
 body { animation: nvIn .3s ease both; }
 .nv-sheet { position: fixed; inset: 0; z-index: 99; background: rgba(26,26,26,.55); display: flex; align-items: flex-end; justify-content: center; padding: 16px; animation: nvIn .2s ease both; }
@@ -1155,7 +1158,7 @@ body { animation: nvIn .3s ease both; }
   });
   $('onion').addEventListener('input', () => { $('onionVal').textContent = $('onion').value + '%'; });
   document.querySelectorAll('#aspects .chip').forEach(b => b.addEventListener('click', () => {
-    if (st.frames.length) return; st.aspect = b.dataset.a; document.querySelectorAll('#aspects .chip').forEach(x => x.setAttribute('aria-pressed', x === b ? 'true' : 'false')); renderStill();
+    if (st.frames.length) return; st.aspect = b.dataset.a; document.querySelectorAll('#aspects .chip').forEach(x => x.setAttribute('aria-pressed', x === b ? 'true' : 'false')); shapeSync(); pup.dirty = true; renderStill();
   }));
 
   // ===================== IMPORT =====================
@@ -1245,7 +1248,7 @@ body { animation: nvIn .3s ease both; }
   }
   function scAfter() { pup.dirty = true; scSync(); scSave(); renderStill(); }
   function scSync() {
-    scSwatches(); const o = SCE.cur.st[SCE.sel]; $('scSel').classList.toggle('hide', !o);
+    shapeSync(); scSwatches(); const o = SCE.cur.st[SCE.sel]; $('scSel').classList.toggle('hide', !o);
     if (o) { $('scZ').textContent = o.z === 'f' ? 'In front of them' : 'Behind them'; $('scZ').setAttribute('aria-pressed', o.z === 'f' ? 'true' : 'false'); }
     $('scApplyBox').classList.toggle('hide', !st.frames.length); if (st.sel !== scSync.last) { scSync.last = st.sel; $('scScope').value = st.sel >= 0 ? 'one' : 'all'; }
     document.body.classList.toggle('scn', sceneEditing());
@@ -1432,9 +1435,9 @@ body { animation: nvIn .3s ease both; }
   $('pupFlip').addEventListener('click', () => { pup.flip = !pup.flip; pup.dirty = true; buzz(8); swDraw(); });
   document.body.classList.add('pupmini');
   const SHP = ['tall', 'square', 'wide'], SHN = { tall: 'TALL', square: 'SQUARE', wide: 'WIDE' };
-  function shapeSync() { $('pcShape').textContent = SHN[st.aspect] || 'TALL'; $('pcShape').classList.toggle('dim', st.frames.length > 0); }
+  function shapeSync() { $('pcShape').textContent = SHN[st.aspect] || 'TALL'; $('pcShape').classList.toggle('dim', st.frames.length > 0); document.body.classList.toggle('aspw', st.aspect === 'wide'); document.querySelectorAll('#aspects .chip').forEach(x => x.setAttribute('aria-pressed', x.dataset.a === st.aspect ? 'true' : 'false')); }
   $('pcShape').addEventListener('click', () => { if (st.frames.length) { msg('pupMsg', 'Clear your frames to change the shape', true); return; } st.aspect = SHP[(SHP.indexOf(st.aspect) + 1) % 3]; document.querySelectorAll('#aspects .chip').forEach(x => x.setAttribute('aria-pressed', x.dataset.a === st.aspect ? 'true' : 'false')); buzz(8); shapeSync(); pup.dirty = true; });
-  const landMQ = window.matchMedia('(orientation: landscape) and (max-height: 620px)'); const landSync = () => { document.body.classList.toggle('pupland', landMQ.matches); if (!pup.on || st.frames.length) return; const want = landMQ.matches ? 'wide' : 'tall'; if (st.aspect !== want && (st.aspect === 'tall' || st.aspect === 'wide')) { st.aspect = want; document.querySelectorAll('#aspects .chip').forEach(x => x.setAttribute('aria-pressed', x.dataset.a === want ? 'true' : 'false')); try { shapeSync(); } catch (e) {} pup.dirty = true; } }; landSync(); try { landMQ.addEventListener('change', landSync); } catch (e) { landMQ.addListener(landSync); }
+  const landMQ = window.matchMedia('(orientation: landscape) and (max-height: 620px)'); const landSync = (rot) => { document.body.classList.toggle('pupland', landMQ.matches); if (rot !== true || document.body.classList.contains('toon') || !pup.on || st.frames.length) return; const want = landMQ.matches ? 'wide' : 'tall'; if (st.aspect !== want && (st.aspect === 'tall' || st.aspect === 'wide')) { st.aspect = want; document.querySelectorAll('#aspects .chip').forEach(x => x.setAttribute('aria-pressed', x.dataset.a === want ? 'true' : 'false')); try { shapeSync(); } catch (e) {} pup.dirty = true; } }; landSync(); try { landMQ.addEventListener('change', () => landSync(true)); } catch (e) { landMQ.addListener(() => landSync(true)); }
   $('pcMini').addEventListener('click', () => { const on = !document.body.classList.contains('pupmini'); document.body.classList.toggle('pupmini', on); $('pcMini').setAttribute('aria-pressed', on ? 'true' : 'false'); $('pcMini').textContent = on ? 'FULL CONSOLE' : 'MORE ROOM'; pup.dirty = true; buzz(8); });
   const PICK = { all: ['emote', []], head: ['face', [['face', 'FACE'], ['mood', 'MOOD']]], upper: ['aR', [['aR', 'R ARM'], ['aL', 'L ARM']]], mid: ['body', []], legs: ['lR', [['lR', 'R LEG'], ['lL', 'L LEG']]] };
   function pupPick(z) { const P = PICK[z] || PICK.all, sub = $('pupSub'); sub.innerHTML = ''; P[1].forEach(s => { const b = document.createElement('button'); b.type = 'button'; b.className = 'pad'; b.dataset.l = s[0]; b.textContent = s[1]; b.addEventListener('click', () => { pup.limb = s[0]; buzz(8); pupSync(); }); sub.appendChild(b); }); if (!P[1].some(s => s[0] === pup.limb) && pup.limb !== P[0]) pup.limb = P[0]; else if (!P[1].length) pup.limb = P[0]; pupSync(); }
@@ -1600,7 +1603,7 @@ body { animation: nvIn .3s ease both; }
     } else add('', '../img/tools/animate-card.webp?v=1', '', 'Animate', 'Stand them in a photo. Move each arm and leg.', () => { showMode(ai); goMode(); });
   }
   async function startNew() {
-    snap(); st.frames = []; st.sel = -1; st.csig = ''; pup.n = 0; pup.bg = null; pup.bgBlob = null; SCE.cur.color = null; SCE.cur.floor = { on: false, color: SCE.cur.floor.color }; SCE.cur.st = []; SCE.sel = -1; SCE.frozen = null;
+    snap(); st.frames = []; st.sel = -1; st.csig = ''; if (document.body.classList.contains('toon')) st.aspect = 'wide'; shapeSync(); pup.n = 0; pup.bg = null; pup.bgBlob = null; SCE.cur.color = null; SCE.cur.floor = { on: false, color: SCE.cur.floor.color }; SCE.cur.st = []; SCE.sel = -1; SCE.frozen = null;
     pupBgSave(); scSave(); scSync(); refreshUI(); queueSave(); updateKeep(); renderStill();
   }
   if ($('pickNew')) $('pickNew').addEventListener('click', async () => { await startNew(); document.body.classList.contains('toon') ? goMode() : startKind('stop'); });
@@ -2787,7 +2790,7 @@ body { animation: nvIn .3s ease both; }
   const SKEY = ['toon', 'char'].indexOf(new URLSearchParams(location.search).get('m')) >= 0 ? 'toon' : 'main';
   if (APP) {
     for (let k = MODES.length - 1; k >= 0; k--) if (APP.keys.indexOf(MODES[k].key) < 0) MODES.splice(k, 1);
-    const mq = new URLSearchParams(location.search).get('m'); document.body.classList.add(mq === 'toon' || mq === 'char' ? 'toon' : mq === 'avatar' ? 'both' : 'real');
+    const mq = new URLSearchParams(location.search).get('m'); document.body.classList.add(mq === 'toon' || mq === 'char' ? 'toon' : mq === 'avatar' ? 'both' : 'real'); if (mq === 'toon' || mq === 'char') st.aspect = 'wide';
     const nm = APP.t.join(' ').replace(' +', ' +').trim();
     document.title = nm + ': NOCIV.CO';
     $('start').querySelector('h1').innerHTML = '<span>' + APP.t[0] + '</span>' + (APP.t[1] ? ' ' + APP.t[1] : '');
