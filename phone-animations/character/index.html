@@ -337,21 +337,33 @@ function drawHairFront(S, H) {
   else if (st === 'bun') { paint(ell(0, -66, 18, 17), hc, { sh: 4 }); paint(hairCap(S, 6, -30), hc, { sh: 4 }); }
 }
 function eyeSpot(side) { return { x: side * 19, y: -1 }; }
+const MOODS = { neutral: null, happy: { brY: -2, rot: -3, eye: .75, mouth: 'grin' }, sad: { brY: -1, rot: -15, eye: .8, gy: .6, mouth: 'frown' }, angry: { brY: 3, rot: 17, eye: .72, mouth: 'grit' }, shocked: { brY: -9, rot: 0, eye: 1.2, mouth: 'oh' }, sleepy: { brY: 3, rot: -4, eye: .28, mouth: 'small' }, smug: { brY: -1, brY2: -6, rot: 4, eye: .62, mouth: 'smirk' }, worried: { brY: -3, rot: -12, eye: 1, mouth: 'wobble' } };
 function drawHead(S, B, P, o) {
-  const skin = S.skin, hc = S.hairC, H = HEADS[S.head] || HEADS.round, hw = H.hw;
+  const skin = S.skin, hc = S.hairC, H = HEADS[S.head] || HEADS.round, hw = H.hw, t = o.turn || 0, at = Math.abs(t), d = t < 0 ? -1 : 1, m = MOODS[o.mood] || null, shift = t * 22;
   paint(cap(0, 38, 0, 52, B.neck, B.neck + 1), dk(skin, .12), { sh: 4 });
-  // ears
-  [-1, 1].forEach(sd => { paint(ell(sd * (hw + 1), 2, 8, 12), skin, { sh: 3 }); qline(sd * (hw + 2), -2, sd * (hw + 6), 3, sd * (hw + 1), 8, 2, 'rgba(26,26,26,.6)'); if (S.earrings) { ctx.lineWidth = 2.6; ctx.strokeStyle = INK; ctx.beginPath(); ctx.arc(sd * (hw + 1), 20, 5, 0, TAU); ctx.stroke(); ctx.lineWidth = 1.2; ctx.strokeStyle = '#f2c230'; ctx.stroke(); } });
+  ctx.save(); ctx.scale(1 - .24 * at, 1);
+  // ears: with a turn the far ear slides in and the near ear ends up in the middle of the head
+  const earAt = (x, sd) => { paint(ell(x, 2, 8, 12), skin, { sh: 3 }); qline(x, -2, x + sd * 4, 3, x - sd * 1, 8, 2, 'rgba(26,26,26,.6)'); if (S.earrings) { ctx.lineWidth = 2.6; ctx.strokeStyle = INK; ctx.beginPath(); ctx.arc(x, 20, 5, 0, TAU); ctx.stroke(); ctx.lineWidth = 1.2; ctx.strokeStyle = '#f2c230'; ctx.stroke(); } };
+  const earX = sd => sd === d ? sd * (hw + 1) * (1 - at * 1.2) : sd * (hw + 1) * (1 - at * .92);
+  [-1, 1].forEach(sd => { if (sd === d && at > .5) return; if (sd !== d && at > .5) return; earAt(earX(sd), sd); });
   const face = headPath(S); paint(face, skin, { sh: 7 });
+  if (at > .5) { const u = (at - .5) / .5; earAt(-d * ((hw + 1) * .54 * (1 - u) + hw * .28 * u), -d); }
   // beard
   if (S.beard === 'beard' || S.beard === 'goatee') drawBeard(S, hc, H);
-  if (S.beard === 'mustache' || S.beard === 'beard') { const m = new Path2D(); m.moveTo(-16, 21); m.quadraticCurveTo(-8, 15, 0, 19); m.quadraticCurveTo(8, 15, 16, 21); m.quadraticCurveTo(9, 27, 0, 23); m.quadraticCurveTo(-9, 27, -16, 21); m.closePath(); paint(m, hc, { ns: 1, lw: 2.6 }); }
+  if (S.beard === 'mustache' || S.beard === 'beard') { const mm = new Path2D(); mm.moveTo(-16, 21); mm.quadraticCurveTo(-8, 15, 0, 19); mm.quadraticCurveTo(8, 15, 16, 21); mm.quadraticCurveTo(9, 27, 0, 23); mm.quadraticCurveTo(-9, 27, -16, 21); mm.closePath(); ctx.save(); ctx.translate(t * hw * .55, 0); ctx.scale(1 - .4 * at, 1); paint(mm, hc, { ns: 1, lw: 2.6 }); ctx.restore(); }
   if (S.beard === 'stubble') { ctx.save(); ctx.clip(face); const g = new Path2D(); g.rect(-60, 12, 120, 60); g.addPath(ell(0, 6, 34, 22)); ctx.fillStyle = PAT; ctx.globalAlpha = .9; ctx.fill(g, 'evenodd'); ctx.restore(); }
   drawFeatures(S, P, o, H);
-  drawGlasses(S, P);
+  ctx.save(); ctx.translate(shift * .9, 0); ctx.scale(1 - .25 * at, 1); drawGlasses(S, P); ctx.restore();
   drawHairFront(S, H);
-  [-1, 1].forEach(sd => { if (S.brow !== 'none') spr('brows', S.brow, sd * 19, -14, 30, sd < 0); });
+  [-1, 1].forEach(sd => {
+    if (S.brow === 'none' && !m) return; if (at > .85 && sd === -d) return;
+    const by = -14 + (m ? (sd > 0 && m.brY2 != null ? m.brY2 : m.brY) : 0) - (o.brow || 0) * 6;
+    ctx.save(); ctx.translate(sd * 19 * (1 - .3 * at) + shift, by); ctx.rotate(R(-sd * (m ? m.rot : 0)));
+    if (S.brow === 'none') line([[-11, 0], [11, 0]], 4, hc); else spr('brows', S.brow, 0, 0, 30, sd < 0);
+    ctx.restore();
+  });
   drawHat(S, H);
+  ctx.restore();
 }
 function drawBeard(S, hc, H) {
   const hw = H.hw, p = new Path2D(), g = S.beard === 'goatee';
@@ -359,20 +371,36 @@ function drawBeard(S, hc, H) {
   else { p.moveTo(-hw + 1, 0); p.bezierCurveTo(-hw - 1, 26, -hw * H.j * .6, H.cy + 8, 0, H.cy + 8); p.bezierCurveTo(hw * H.j * .6, H.cy + 8, hw + 1, 26, hw - 1, 0); p.lineTo(hw * .78, 14); p.bezierCurveTo(hw * .6, 24, 20, 26, 14, 24); p.quadraticCurveTo(0, 18, -14, 24); p.bezierCurveTo(-20, 26, -hw * .6, 24, -hw * .78, 14); p.closePath(); }
   paint(p, hc, { sh: 6 });
 }
+function moodMouth(k, my, lipc) {
+  ctx.save(); ctx.lineCap = 'round'; ctx.lineJoin = 'round'; ctx.strokeStyle = lipc; ctx.lineWidth = 3.4; ctx.fillStyle = '#4a1618'; ctx.beginPath();
+  if (k === 'grin') { ctx.moveTo(-13, my - 1); ctx.quadraticCurveTo(0, my + 4, 13, my - 1); ctx.quadraticCurveTo(0, my + 21, -13, my - 1); ctx.closePath(); ctx.fill(); ctx.stroke(); ctx.fillStyle = '#f7f2e2'; ctx.beginPath(); ctx.moveTo(-9, my + 1); ctx.quadraticCurveTo(0, my + 5, 9, my + 1); ctx.lineTo(8, my + 4.5); ctx.quadraticCurveTo(0, my + 8, -8, my + 4.5); ctx.closePath(); ctx.fill(); }
+  else if (k === 'frown') { ctx.moveTo(-11, my + 4); ctx.quadraticCurveTo(0, my - 6, 11, my + 4); ctx.stroke(); }
+  else if (k === 'grit') { ctx.rect(-12, my - 3, 24, 8); ctx.fill(); ctx.stroke(); ctx.beginPath(); ctx.strokeStyle = '#f7f2e2'; ctx.lineWidth = 1.8; ctx.moveTo(-10, my + 1); ctx.lineTo(10, my + 1); ctx.stroke(); }
+  else if (k === 'small') { ctx.ellipse(0, my + 1, 4.5, 2.8, 0, 0, TAU); ctx.fill(); ctx.stroke(); }
+  else if (k === 'smirk') { ctx.moveTo(-9, my + 2); ctx.quadraticCurveTo(3, my + 5, 12, my - 4); ctx.stroke(); }
+  else if (k === 'wobble') { ctx.moveTo(-12, my + 1); ctx.quadraticCurveTo(-6, my - 4, 0, my + 1); ctx.quadraticCurveTo(6, my + 6, 12, my + 1); ctx.stroke(); }
+  ctx.restore();
+}
 function drawFeatures(S, P, o, H) {
-  const skin = S.skin, bl = o.blink ? .12 : 1;
+  const skin = S.skin, m = MOODS[o.mood] || null, t = o.turn || 0, at = Math.abs(t), d = t < 0 ? -1 : 1, shift = t * 22, hw = H.hw;
+  const bl = o.blink ? .12 : Math.max(.12, (m ? m.eye : 1) * (1 + (o.lid || 0) * .6)), gy = ((o.gaze || {}).y || 0) + (m && m.gy || 0);
   [-1, 1].forEach(sd => {
-    const e = eyeSpot(sd); sprc('eyes', S.eyes, e.x, e.y + 1, 33, sd < 0, bl, { fill: '#fff', iris: S.eyeC, gx: (o.gaze || {}).x, gy: (o.gaze || {}).y });
+    if (at > .85 && sd === -d) return;
+    const e = { x: sd * 19 * (1 - .3 * at) + shift, y: -1 }; sprc('eyes', S.eyes, e.x, e.y + 1, 33, sd < 0, bl, { fill: '#fff', iris: S.eyeC, gx: (o.gaze || {}).x, gy: gy });
     if (S.lashes) { const w = 12, h = 6; ctx.save(); ctx.translate(e.x, e.y); [[-w * .55, -h * .85, -w * .7, -h * 1.5], [-w * .05, -h * 1.05, -w * .05, -h * 1.75], [w * .5, -h * .95, w * .75, -h * 1.55]].forEach(q => line([[q[0] * sd, q[1] - 4], [q[2] * sd, q[3] - 5]], 2.6, INK)); ctx.restore(); }
   });
-  spr('noses', S.nose, 0, 14, 26, false);
-  const my = 33, hasB = S.beard === 'beard' || S.beard === 'goatee';
+  if (at > .6) paint(ell(d * (hw - 1), 17, 4.5, 5.5), skin, { sh: 3 });
+  spr('noses', S.nose, t * hw * .8, 14, 26 * (1 - .2 * at), false);
+  const my = 33, hasB = S.beard === 'beard' || S.beard === 'goatee', tk = o.talk || (m && m.mouth === 'oh' ? 3 : 0);
+  ctx.save(); ctx.translate(t * hw * .55, 0); ctx.scale(1 - .4 * at, 1);
   if (hasB) { paint(ell(0, my, 17, 8), lt(skin, .1), { ns: 1, no: 1 }); }
-  if (o.talk) {
-    const T = { 1: [9, 4.2], 2: [11, 8.5], 3: [6, 7.5] }[o.talk] || [9, 4], lipc = S.lipC || dk(skin, .3);
+  if (tk) {
+    const T = { 1: [9, 4.2], 2: [11, 8.5], 3: [6, 7.5] }[tk] || [9, 4], lipc = S.lipC || dk(skin, .3);
     paint(ell(0, my + 1, T[0] + 3.2, T[1] + 3.2), lipc); paint(ell(0, my + 1, T[0], T[1]), '#4a1618');
-    if (o.talk === 2) { ctx.save(); ctx.beginPath(); ctx.ellipse(0, my + 1, T[0], T[1], 0, 0, TAU); ctx.clip(); ctx.fillStyle = '#c8412f'; ctx.beginPath(); ctx.ellipse(0, my + T[1] + 1, 6.5, 4.5, 0, 0, TAU); ctx.fill(); ctx.restore(); }
-  } else sprc('mouths', S.mouth, 0, my, 36, false, 1, { fill: S.lipC || dk(skin, .3) });
+    if (tk === 2) { ctx.save(); ctx.beginPath(); ctx.ellipse(0, my + 1, T[0], T[1], 0, 0, TAU); ctx.clip(); ctx.fillStyle = '#c8412f'; ctx.beginPath(); ctx.ellipse(0, my + T[1] + 1, 6.5, 4.5, 0, 0, TAU); ctx.fill(); ctx.restore(); }
+  } else if (m && m.mouth) moodMouth(m.mouth, my, dk(S.lipC || skin, .45));
+  else sprc('mouths', S.mouth, 0, my, 36, false, 1, { fill: S.lipC || dk(skin, .3) });
+  ctx.restore();
 }
 function drawGlasses(S) {
   const g = S.glasses; if (g === 'none') return; const L = [-19, 19], lw = 3.4;
@@ -600,10 +628,10 @@ $('modal').addEventListener('click', e => { if (e.target === $('modal')) $('moda
 function stopFrames(w, h, n, pose, noBgOverride) { const old = S.pose; if (pose && CH.POSES[pose]) S.pose = pose; const T = (CH.POSES[S.pose] || CH.POSES.idle).T, out = []; for (let i = 0; i < n; i++) { const c = mk(w, h); renderTo(c, T * i / n, {}); out.push(c); } S.pose = old; return out; }
 function puppet(canvas, P, px, py, sz, prop, face) {
   const w = canvas.width, h = canvas.height, g = canvas.getContext('2d'); layer.width = w; layer.height = h;
-  const PXs = Math.max(0.2, sz) * h / 270, view = { cx: -(px - w / 2) / PXs, cy: -(py - h / 2) / PXs, w: w / PXs }, old = S.pose, oldProp = S.prop; S.pose = 'idle'; if (prop) S.prop = prop === 'none' ? 'none' : prop;
+  const PXs = Math.max(0.2, sz) * h / 270, view = { cx: -(px - w / 2) / PXs, cy: -(py - h / 2) / PXs, w: w / PXs }, old = S.pose, oldProp = S.prop; S.pose = 'idle'; if (prop) S.prop = prop === 'none' ? 'none' : prop; const oldHead = S.head; if (face && face.head) S.head = face.head;
   const Pf = Object.assign({ bob: 0, lean: 0, head: 0, hy: 0, aR: [9, 14], aL: [9, 14], lR: { a: 4, lift: 0 }, lL: { a: 4, lift: 0 }, board: null }, P || {});
-  if (Pf.crouch) Pf.bob = (Pf.bob || 0) + Pf.crouch; face = face || {}; CH.drawChar(lg, S, Pf, view, { t: 0, gaze: { x: face.gx || 0, y: face.gy || 0 }, blink: !!face.blink, talk: face.talk || 0 });
-  S.pose = old; S.prop = oldProp; gritLayer(lg, w, h); g.clearRect(0, 0, w, h); g.drawImage(layer, 0, 0);
+  if (Pf.crouch) Pf.bob = (Pf.bob || 0) + Pf.crouch; face = face || {}; CH.drawChar(lg, S, Pf, view, { t: 0, gaze: { x: face.gx || 0, y: face.gy || 0 }, blink: !!face.blink, talk: face.talk || 0, mood: face.mood, turn: face.turn || 0, brow: face.brow || 0, lid: face.lid || 0 });
+  S.pose = old; S.prop = oldProp; S.head = oldHead; gritLayer(lg, w, h); g.clearRect(0, 0, w, h); g.drawImage(layer, 0, 0);
 }
 window.__ch = { puppet, frames: stopFrames, poses: () => Object.keys(CH.POSES), S: () => S, makeGifBytes, lzw, renderTo, setS: o => { Object.assign(S, o); save(); build(); tag(); }, setTab: k => { tab = k; build(); } };
 build(); tag(); requestAnimationFrame(frame);

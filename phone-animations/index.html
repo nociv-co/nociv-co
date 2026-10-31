@@ -67,6 +67,7 @@
   body.pupmode #toonBar, body.pupmode #editRow, body.pupmode #info, body.pupmode #tools, body.pupmode #looks { display: none !important; }
   body.pupmode .tl { padding-top: 6px; }
   body.pupmode #pupFloat { display: none; }
+  @media (orientation: portrait) and (max-height: 700px) { body.pupmode.pupmini .vf canvas { max-height: 33svh; } }
   @media (orientation: landscape) and (max-height: 620px) {
     body.pupmode .app { max-width: none; display: grid; grid-template-columns: minmax(0, 1fr) minmax(300px, 47%); grid-template-rows: auto auto minmax(0, 1fr); }
     body.pupmode .vf { grid-column: 1; grid-row: 1 / -1; min-height: 0; padding: 6px 0 6px 8px; display: flex; }
@@ -89,11 +90,12 @@
   .pc-top .pc-lcd { flex: 1; min-width: 0; }
   .tb.tb-mini { flex: none; width: auto; height: 28px; padding: 0 11px; font-size: .72rem; }
   body.pupmini .pc-row:not(.pc-go), body.pupland .pc-row:not(.pc-go) { display: none; }
-  body.pupmini .pc-pads, body.pupland .pc-pads { grid-template-columns: repeat(7, minmax(0, 1fr)); gap: 4px; }
-  body.pupmini .pad, body.pupland .pad { height: clamp(28px, 4.4svh, 36px); padding: 0; font-size: clamp(.6rem, 1.8svh, .74rem); letter-spacing: .02em; text-align: center; }
+  body.pupmini .pc-pads, body.pupland .pc-pads { gap: 5px; }
+  body.pupmini .pad, body.pupland .pad { height: clamp(28px, 4.4svh, 36px); padding: 0; font-size: clamp(.7rem, 2svh, .85rem); letter-spacing: .04em; text-align: center; }
   body.pupmini .pad i, body.pupland .pad i { display: none; }
   body.pupmini .p-e, body.pupland .p-e { grid-column: span 1; }
   body.pupmini .vf canvas { max-height: 42svh; }
+  #pupFace .kb { width: clamp(36px, 8.4svh, 56px); height: clamp(36px, 8.4svh, 56px); } #pupFace .sw { width: clamp(38px, 11vw, 52px); } #pupFace .kl { font-size: clamp(.55rem, 1.6svh, .7rem); } #pupFace .kv { min-width: 0; padding: 2px 3px; font-size: .58rem; }
   .pc-lcd.err { color: #f2c230; }
   .pc-lcd:empty::before { content: "Pick a move. Hit MAKE IT."; opacity: .7; }
   .pc > * { min-width: 0; max-width: 100%; }
@@ -105,7 +107,7 @@
   .pad i { position: absolute; left: 8px; top: 50%; width: 7px; height: 7px; margin-top: -3.5px; border-radius: 50%; background: rgba(0,0,0,.35); }
   .pad[aria-pressed="true"] { transform: translateY(3px); box-shadow: 0 1px 0 #1a1a1a, inset 0 0 0 3px rgba(255,255,255,.75); }
   .pad[aria-pressed="true"] i { background: #fff; box-shadow: 0 0 6px 2px #fff; }
-  .p-e { background: #d9692b; grid-column: span 2; } .p-r { background: #c8412f; } .p-b { background: #2f5d9e; } .p-g { background: #4f7a52; } .p-t { background: #8a6a4a; } .p-m { background: #7a4f8a; } .p-k { background: #1a1a1a; }
+  .p-e { background: #d9692b; } .p-r { background: #c8412f; } .p-b { background: #2f5d9e; } .p-g { background: #4f7a52; } .p-t { background: #8a6a4a; } .p-m { background: #7a4f8a; } .p-k { background: #1a1a1a; } .p-o { background: #1a1a1a; }
   .pc-knobs { display: grid; grid-auto-flow: column; grid-auto-columns: minmax(0, 1fr); gap: 4px; align-items: start; background: #f2ecd6; border: 2.5px solid #1a1a1a; border-radius: 14px; padding: clamp(5px, 1.2svh, 10px) 4px; }
   .pc-knobs.hide { display: none; }
   .kc { display: flex; flex-direction: column; align-items: center; gap: 2px; min-width: 0; }
@@ -140,7 +142,7 @@
   .take:active { transform: translateY(4px); box-shadow: 0 1px 0 #1a1a1a, inset 0 3px 0 rgba(255,255,255,.28); }
   /* soft pass: three colors (ink, tan, red), soft shadows instead of hard offsets */
   body.pupmode .pc { background: #ece6d2; border: 1.5px solid #1a1a1a; box-shadow: 0 10px 28px rgba(26,26,26,.18), inset 0 1px 0 rgba(255,255,255,.6); }
-  .pad, .p-r, .p-b, .p-g, .p-t, .p-m, .p-k, .p-e { background: #1a1a1a; border: 0; color: #f2ecd6; text-shadow: none; box-shadow: 0 6px 14px rgba(26,26,26,.28), inset 0 1px 0 rgba(255,255,255,.12); }
+  .pad, .p-r, .p-b, .p-g, .p-t, .p-m, .p-k, .p-e, .p-o { background: #1a1a1a; border: 0; color: #f2ecd6; text-shadow: none; box-shadow: 0 6px 14px rgba(26,26,26,.28), inset 0 1px 0 rgba(255,255,255,.12); }
   .pad i { background: rgba(242,236,214,.25); }
   .pad[aria-pressed="true"] { background: #c8412f; color: #fff; transform: translateY(1px); box-shadow: 0 3px 8px rgba(200,65,47,.45), inset 0 0 0 2px rgba(255,255,255,.5); }
   .pc-knobs { background: #f7f2e2; border: 0; box-shadow: inset 0 2px 7px rgba(26,26,26,.14); }
@@ -505,6 +507,11 @@
         <input type="range" id="pupS3" min="-40" max="70" step="1" value="0" tabindex="-1">
         <input type="range" id="pupSz" min="0.3" max="1" step="0.01" value="0.6" tabindex="-1">
         <select id="pupEm" tabindex="-1"><option value="idle">idle</option><option value="wave">wave</option><option value="walk">walk</option><option value="dance">dance</option><option value="hype">hype</option><option value="spray">spray</option><option value="scratch">scratch</option><option value="point">point</option><option value="ollie">ollie</option></select>
+        <select id="pupMood" tabindex="-1"><option value="neutral">neutral</option><option value="happy">happy</option><option value="sad">sad</option><option value="angry">angry</option><option value="shocked">shocked</option><option value="sleepy">sleepy</option><option value="smug">smug</option><option value="worried">worried</option></select>
+        <select id="pupTurn" tabindex="-1"><option value="-1">side left</option><option value="-0.5">three quarter left</option><option value="0" selected>front</option><option value="0.5">three quarter right</option><option value="1">side right</option></select>
+        <select id="pupHead" tabindex="-1"><option value="">saved</option><option value="round">round</option><option value="square">square</option><option value="long">long</option></select>
+        <input type="range" id="pupBr" min="-1" max="1" step="0.05" value="0" tabindex="-1">
+        <input type="range" id="pupLid" min="-1" max="1" step="0.05" value="0" tabindex="-1">
         <select id="pupSt" tabindex="-1"><option value="4">4</option><option value="6">6</option><option value="8" selected>8</option><option value="12">12</option></select>
         <input type="range" id="pupPh" min="0" max="0.99" step="0.01" value="0" tabindex="-1">
         <select id="pupProp" tabindex="-1"><option value="">Saved</option><option value="none">None</option><option value="spray">Spray</option><option value="brush">Brush</option><option value="record">Record</option><option value="camera">Camera</option><option value="clipboard">Clipboard</option><option value="frame">Frame</option><option value="mic">Mic</option><option value="scissors">Scissors</option></select>
@@ -518,6 +525,7 @@
           <button type="button" class="pad p-t" data-l="lL" aria-pressed="false"><i></i>L LEG</button>
           <button type="button" class="pad p-m" data-l="body" aria-pressed="false"><i></i>BODY</button>
           <button type="button" class="pad p-k" data-l="face" aria-pressed="false"><i></i>FACE</button>
+          <button type="button" class="pad p-o" data-l="mood" aria-pressed="false"><i></i>MOOD</button>
           <button type="button" class="pad p-e" data-l="emote" aria-pressed="false"><i></i>EMOTE</button>
         </div>
         <div class="pc-knobs" id="pupLimbCtl">
@@ -527,11 +535,18 @@
           <div class="kc"><div class="kb" id="kn4" role="slider" tabindex="0" aria-label="Size"></div><b class="kl">SIZE</b><span class="kv" id="pupVz"></span></div>
         </div>
         <div class="pc-knobs hide" id="pupFace">
+          <div class="kc"><div class="kb" id="knH" role="slider" tabindex="0" aria-label="Head shape"></div><b class="kl">HEAD</b><span class="kv" id="vHd"></span></div>
           <div class="kc"><div class="kb" id="knM" role="slider" tabindex="0" aria-label="Mouth"></div><b class="kl">MOUTH</b><span class="kv" id="vM"></span></div>
           <div class="kc"><div class="kb" id="knB" role="slider" tabindex="0" aria-label="Blink"></div><b class="kl">BLINK</b><span class="kv" id="vB"></span></div>
           <div class="kc"><div class="kb" id="knT" role="slider" tabindex="0" aria-label="Talk"></div><b class="kl">TALK</b><span class="kv" id="vT"></span></div>
           <div class="kc kc-sw"><button type="button" class="sw" id="swEyes" data-n="2" aria-label="Eyes open or shut"><i></i></button><b class="kl">EYES</b><span class="kv" id="vE"></span></div>
           <div class="kc kc-sw"><button type="button" class="sw" id="swLook" data-n="3" aria-label="Where they look"><i></i></button><b class="kl">LOOK</b><span class="kv" id="vL"></span></div>
+        </div>
+        <div class="pc-knobs hide" id="pupMoodRow">
+          <div class="kc"><div class="kb" id="knMo" role="slider" tabindex="0" aria-label="Mood"></div><b class="kl">MOOD</b><span class="kv" id="vMo"></span></div>
+          <div class="kc"><div class="kb" id="knTu" role="slider" tabindex="0" aria-label="Turn the head"></div><b class="kl">TURN</b><span class="kv" id="vTu"></span></div>
+          <div class="kc"><div class="kb" id="knBr" role="slider" tabindex="0" aria-label="Brows up or down"></div><b class="kl">BROWS</b><span class="kv" id="vBr"></span></div>
+          <div class="kc"><div class="kb" id="knLd" role="slider" tabindex="0" aria-label="Eyes squint or wide"></div><b class="kl">EYES</b><span class="kv" id="vLd"></span></div>
         </div>
         <div class="pc-knobs hide" id="pupEmote">
           <div class="kc"><div class="kb" id="knE" role="slider" tabindex="0" aria-label="Emote"></div><b class="kl">EMOTE</b><span class="kv" id="vEm"></span></div>
@@ -996,9 +1011,9 @@
   const PL = { aR: ['Shoulder', 'Elbow', -30, 180, -60, 190], aL: ['Shoulder', 'Elbow', -30, 180, -60, 190], lR: ['Leg out', 'Leg lift', 0, 40, 0, 100], lL: ['Leg out', 'Leg lift', 0, 40, 0, 100], body: ['Lean', 'Head tilt', -20, 20, -25, 25] };
   const KN = []; function knobsDraw() { KN.forEach(f => f()); swDraw(); }
   function pupSync() {
-    const k = pup.limb, d = PL[k] || PL.aR, P = pup.P; $('pupFace').classList.toggle('hide', k !== 'face'); $('pupEmote').classList.toggle('hide', k !== 'emote'); $('pupLimbCtl').classList.toggle('hide', k === 'face' || k === 'emote');
+    const k = pup.limb, d = PL[k] || PL.aR, P = pup.P; $('pupFace').classList.toggle('hide', k !== 'face'); $('pupEmote').classList.toggle('hide', k !== 'emote'); $('pupMoodRow').classList.toggle('hide', k !== 'mood'); $('pupLimbCtl').classList.toggle('hide', k === 'face' || k === 'emote' || k === 'mood');
     document.querySelectorAll('#pupLimb [data-l]').forEach(x => x.setAttribute('aria-pressed', x.dataset.l === k ? 'true' : 'false'));
-    if (k === 'face' || k === 'emote') { knobsDraw(); return; } $('pupL1').textContent = d[0]; $('pupL2').textContent = d[1];
+    if (k === 'face' || k === 'emote' || k === 'mood') { knobsDraw(); return; } $('pupL1').textContent = d[0]; $('pupL2').textContent = d[1];
     const s1 = $('pupS1'), s2 = $('pupS2'); s1.min = d[2]; s1.max = d[3]; s2.min = d[4]; s2.max = d[5];
     let v1, v2; if (k === 'aR' || k === 'aL') { v1 = P[k][0]; v2 = P[k][1]; } else if (k === 'lR' || k === 'lL') { v1 = P[k].a; v2 = Math.round(P[k].lift * 100); } else { v1 = P.lean; v2 = P.head; }
     s1.value = v1; s2.value = v2; $('pupV1').textContent = Math.round(v1); $('pupV2').textContent = Math.round(v2);
@@ -1018,16 +1033,21 @@
     const im = pup.bg; if (!im) { pupChecker(c, W, H); return; } c.fillStyle = '#222'; c.fillRect(0, 0, W, H);
     const k = Math.max(W / im.naturalWidth, H / im.naturalHeight), w = im.naturalWidth * k, h = im.naturalHeight * k; c.drawImage(im, (W - w) / 2, (H - h) / 2, w, h);
   }
-  pup.face = { eyes: 0, gx: 0, mouth: 0, blinkEvery: 4, talkRate: 0 };
+  pup.face = { eyes: 0, gx: 0, mouth: 0, blinkEvery: 4, talkRate: 0, mood: 'neutral', turn: 0, head: '', brow: 0, lid: 0 };
   const TALK = [1, 2, 0, 3, 2, 1, 0, 2];
   function pupFaceFor(n) {
     const f = pup.face; let talk = f.mouth;
     if (f.talkRate > 0) talk = TALK[Math.floor(n / f.talkRate) % TALK.length];
     const blink = f.eyes === 1 || (f.blinkEvery > 0 && n % f.blinkEvery === f.blinkEvery - 1);
-    return { blink, talk, gx: f.gx, gy: 0 };
+    return { blink, talk, gx: f.gx, gy: 0, mood: f.mood, turn: f.turn, head: f.head, brow: f.brow, lid: f.lid };
   }
   [['pfEyes', v => { pup.face.eyes = v; }], ['pfGaze', v => { pup.face.gx = v; }], ['pfMouth', v => { pup.face.mouth = v; }]].forEach(([id, fn]) => document.querySelectorAll('#' + id + ' .chip').forEach(b => b.addEventListener('click', () => { fn(+b.dataset.v); document.querySelectorAll('#' + id + ' .chip').forEach(x => x.setAttribute('aria-pressed', x === b ? 'true' : 'false')); pup.dirty = true; })));
   $('pfBlink').addEventListener('change', () => { pup.face.blinkEvery = +$('pfBlink').value; pup.dirty = true; });
+  $('pupMood').addEventListener('change', () => { pup.face.mood = $('pupMood').value; pup.dirty = true; });
+  $('pupTurn').addEventListener('change', () => { pup.face.turn = +$('pupTurn').value; pup.dirty = true; });
+  $('pupHead').addEventListener('change', () => { pup.face.head = $('pupHead').value; pup.dirty = true; });
+  $('pupBr').addEventListener('input', () => { pup.face.brow = +$('pupBr').value; pup.dirty = true; });
+  $('pupLid').addEventListener('input', () => { pup.face.lid = +$('pupLid').value; pup.dirty = true; });
   $('pfTalk').addEventListener('change', () => { pup.face.talkRate = +$('pfTalk').value; pup.dirty = true; });
   function pupChar(W, H) { const cc = pup.chc; if (cc.width !== W || cc.height !== H) { cc.width = W; cc.height = H; } try { pup.w.__ch.puppet(cc, pup.P, pup.x * W, pup.y * H, pup.sz, $('pupProp').value || null, pupFaceFor(pup.n)); } catch (e) {}
     if (!pup.flip) return cc;
@@ -1109,6 +1129,11 @@
   const selAd = (id, out, names) => ({ n: $(id).options.length, out: out, read: () => names[$(id).selectedIndex], get: () => $(id).selectedIndex / ($(id).options.length - 1), set: v => { $(id).selectedIndex = Math.round(v * ($(id).options.length - 1)); $(id).dispatchEvent(new Event('change')); } });
   const chipAd = (id, out, names) => { const bs = () => [...document.querySelectorAll('#' + id + ' .chip')], cur = () => bs().findIndex(x => x.getAttribute('aria-pressed') === 'true'); return { n: bs().length, out: out, read: () => names[cur()], get: () => cur() / (bs().length - 1), set: v => bs()[Math.round(v * (bs().length - 1))].click() }; };
   mkKnob($('kn1'), rangeAd('pupS1')); mkKnob($('kn2'), rangeAd('pupS2')); mkKnob($('kn3'), rangeAd('pupS3')); mkKnob($('kn4'), rangeAd('pupSz'));
+  mkKnob($('knH'), selAd('pupHead', 'vHd', ['SAVED', 'ROUND', 'SQUARE', 'LONG']));
+  mkKnob($('knMo'), selAd('pupMood', 'vMo', ['NEUTRAL', 'HAPPY', 'SAD', 'ANGRY', 'SHOCKED', 'SLEEPY', 'SMUG', 'WORRIED']));
+  mkKnob($('knTu'), selAd('pupTurn', 'vTu', ['SIDE L', '3/4 L', 'FRONT', '3/4 R', 'SIDE R']));
+  mkKnob($('knBr'), rangeAd('pupBr', 'vBr', () => { const v = Math.round(+$('pupBr').value * 100); return (v > 0 ? '+' : '') + v; }));
+  mkKnob($('knLd'), rangeAd('pupLid', 'vLd', () => { const v = +$('pupLid').value; return v < -0.05 ? 'SQUINT' : v > 0.05 ? 'WIDE' : 'NORMAL'; }));
   mkKnob($('knE'), selAd('pupEm', 'vEm', ['IDLE', 'WAVE', 'WALK', 'DANCE', 'HYPE', 'SPRAY', 'SCRATCH', 'POINT', 'OLLIE']));
   mkKnob($('knP'), rangeAd('pupPh', 'vPh', () => Math.round(+$('pupPh').value * 100) + '%'));
   mkKnob($('knS'), selAd('pupSt', 'vSt', ['4 FRAMES', '6 FRAMES', '8 FRAMES', '12 FRAMES']));
