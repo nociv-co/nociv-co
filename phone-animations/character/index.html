@@ -552,9 +552,9 @@ function build() {
     panel.appendChild(el('p', 'note', 'Pick who you are. It sets the outfit, the prop and a signature move. Then change anything.'));
     panel.appendChild(grid('type', Object.keys(CH.TYPES), 'full', { big: true, name: v => CH.TYPES[v].name, patch: v => CH.TYPES[v], tOpt: null, after: v => { Object.assign(S, CH.TYPES[v]); S.type = v; frozen = .35; t0 = performance.now(); } }));
   } else if (tab === 'body') {
+    panel.appendChild(el('div', 'lbl', 'Head shape')); panel.appendChild(grid('head', OPT.head, 'head', { name: cap1, patch: () => ({ hat: 'none' }) }));
     panel.appendChild(el('div', 'lbl', 'Build')); panel.appendChild(grid('body', ['slim', 'mid', 'broad', 'curvy', 'athletic', 'round'], 'full', { name: v => BN[v] }));
     panel.appendChild(el('div', 'lbl', 'Skin')); panel.appendChild(swatches('skin', CH.SKINS));
-    panel.appendChild(el('div', 'lbl', 'Head shape')); panel.appendChild(grid('head', OPT.head, 'head', { name: cap1, patch: () => ({ hat: 'none' }) }));
   } else if (tab === 'face') {
     const subs = [['eyes', 'Eyes'], ['brow', 'Brows'], ['nose', 'Nose'], ['mouth', 'Mouth'], ['beard', 'Beard'], ['glasses', 'Glasses']];
     panel.appendChild(chips(subs, sub.face, k => { sub.face = k; build(); }));
