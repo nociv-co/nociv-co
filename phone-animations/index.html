@@ -223,6 +223,7 @@
   .row > * { flex: 1; }
   label.f { display: block; font-weight: 800; font-size: 0.82rem; margin: 12px 0 5px; }
   input[type=range] { width: 100%; accent-color: var(--red); }
+  textarea { width: 100%; padding: 10px; border: 1.5px solid var(--ink); border-radius: 8px; background: #fff; font-size: 16px; font-family: inherit; resize: none; }
   input[type=text], select { width: 100%; padding: 10px; border: 1.5px solid var(--ink); border-radius: 8px; background: #fff; font-size: 16px; }
   input[type=file] { width: 100%; font-size: 16px; }
   .btn { display: block; width: 100%; font-weight: 900; font-size: 0.92rem; padding: 13px; border-radius: 10px; border: 2px solid var(--ink); background: #fff; color: var(--ink); text-align: center; }
@@ -470,12 +471,37 @@
       <input type="file" id="bPhotoIn" accept="image/*" multiple>
       <div class="msg" id="bMsg"></div>
       <div id="bEdit" class="hide">
-        <label class="f">Zoom <span id="bZoomVal"></span></label>
-        <input type="range" id="bZoom" min="1" max="3" step="0.01" value="1">
-        <label class="f">Move left or right</label>
-        <input type="range" id="bPx" min="-1" max="1" step="0.01" value="0">
-        <label class="f">Move up or down</label>
-        <input type="range" id="bPy" min="-1" max="1" step="0.01" value="0">
+        <label class="f">Layers on this poster</label>
+        <p class="tip" style="margin-top:0">On the picture: drag to move, pinch to resize, twist two fingers to turn.</p>
+        <div class="chips" id="bLayers"></div>
+        <div class="row"><button type="button" class="btn" id="bAddPhotoL">+ Photo</button><button type="button" class="btn" id="bAddText">+ Text</button></div>
+        <input type="file" id="bLayerIn" accept="image/*" multiple class="hide">
+        <div id="bLayerCtl" class="hide">
+          <div id="bTextCtl">
+            <label class="f">Words</label>
+            <textarea id="bLText" rows="2" maxlength="80" placeholder="Type here"></textarea>
+            <label class="f">Font</label>
+            <div class="chips" id="bLFonts"></div>
+            <label class="f">Color</label>
+            <div class="thm" id="bLColors"></div>
+            <label class="check"><input type="checkbox" id="bLOut" checked> Outline</label>
+          </div>
+          <label class="f">Size <span id="bLSizeV"></span></label>
+          <input type="range" id="bLSize" min="0.03" max="1.5" step="0.005" value="0.3">
+          <label class="f">Turn <span id="bLRotV"></span></label>
+          <input type="range" id="bLRot" min="-180" max="180" step="1" value="0">
+          <div class="row"><button type="button" class="btn" id="bLBack">Send back</button><button type="button" class="btn" id="bLFwd">Bring forward</button></div>
+          <button type="button" class="btn" id="bLDel" style="margin-top:8px">Delete layer</button>
+        </div>
+        <div id="bBaseCtl">
+          <label class="f">Main photo zoom <span id="bZoomVal"></span></label>
+          <input type="range" id="bZoom" min="1" max="5" step="0.01" value="1">
+          <label class="f">Move left or right</label>
+          <input type="range" id="bPx" min="-1" max="1" step="0.01" value="0">
+          <label class="f">Move up or down</label>
+          <input type="range" id="bPy" min="-1" max="1" step="0.01" value="0">
+          <label class="check"><input type="checkbox" id="bFit"> Show the whole photo, no crop</label>
+        </div>
         <label class="f">Layout</label>
         <select id="bLayout">
           <option value="photo">Just the photo</option>
@@ -576,6 +602,11 @@
       <div class="chips" id="bShapes"></div>
       <label class="f">Scene behind it</label>
       <div class="chips" id="bScenes"></div>
+      <label class="f">Your own background photo</label>
+      <input type="file" id="bBgIn" accept="image/*">
+      <button type="button" class="btn hide" id="bBgDel" style="margin-top:8px">Remove my background</button>
+      <label class="f">Poles</label>
+      <div class="chips" id="bPoles"></div>
       <label class="f">Slats (the spinning strips)</label>
       <div class="chips" id="bSlats"></div>
       <label class="f">Tempo</label>
@@ -600,6 +631,9 @@
         <button type="button" class="chip" data-a="square" aria-pressed="false">Square</button>
         <button type="button" class="chip" data-a="wide" aria-pressed="true">Wide 16:9</button>
       </div>
+      <p class="tip" style="margin-top:12px">Your sign is kept on this phone only. Nothing is uploaded. Save the finished video to your phone to keep it for good.</p>
+      <button type="button" class="btn" id="bClear">Clear my saved sign</button>
+      <div class="msg" id="bMsg2"></div>
     </section>
 
     <section class="panel" id="p-cscene">
@@ -719,7 +753,7 @@
   const fpsOut = () => st.fps;
   const pup = { on: false, bg: null, fr: null, w: null, x: 0.5, y: 0.9, sz: 0.6, limb: 'aR', dirty: true, out: document.createElement('canvas'), chc: document.createElement('canvas'), prev: null, n: 0,
     P: null, drag: null };
-  const board = { faces: [], sel: -1, aspect: 'wide', shape: 'wide', slats: 18, wave: 0.35, hold: 5, spin: 3, scene: 'float', t: 0, playing: true };
+  const board = { faces: [], sel: -1, selL: -1, poles: true, bg: null, aspect: 'wide', shape: 'wide', slats: 18, wave: 0.35, hold: 5, spin: 3, scene: 'float', t: 0, playing: true };
   function size() { return SIZES[st.kind === 'board' ? (fsOn() ? (innerHeight > innerWidth ? 'tall' : 'wide') : board.aspect) : st.kind === 'char' ? 'tall' : st.aspect]; }
   function applySize(w, h) { if (cv.width !== w || cv.height !== h) { cv.width = w; cv.height = h; } }
   function msg(id, text, err) { const e = $(id); e.textContent = text || ''; e.className = (e.classList.contains('pc-lcd') ? 'pc-lcd ' : '') + 'msg' + (err ? ' err' : ''); }
@@ -1445,7 +1479,7 @@
   // ===================== BILLBOARD =====================
   // A trivision sign: vertical triangular slats that all turn at once, so each strip swaps to the next picture.
   const SHAPES = { wide: ['Bulletin 14 x 48', 48 / 14], poster: ['Poster 12 x 24', 2], tall: ['Tall 9 x 16', 9 / 16], square: ['Square', 1] };
-  const SCENES = { float: 'Float', day: 'Day', dusk: 'Dusk', night: 'Night', desert: 'Desert' };
+  const SCENES = { float: 'Float', day: 'Day', dusk: 'Dusk', night: 'Night', desert: 'Desert', photo: 'My photo' };
   const THEMES = { ink: { bg: '#1a1a1a', fg: '#f2ecd6', ac: '#c8412f' }, lime: { bg: '#cfe59a', fg: '#3d4a26', ac: '#e8701a' }, sun: { bg: '#ffd400', fg: '#111111', ac: '#c8412f' }, white: { bg: '#ffffff', fg: '#111111', ac: '#c8412f' }, red: { bg: '#c8412f', fg: '#ffffff', ac: '#ffd400' } };
   const HEAD_FONT = 'Impact, Haettenschweiler, "Arial Narrow Bold", "Arial Black", sans-serif';
   function bRect(W, H) {
@@ -1476,15 +1510,33 @@
     fit.lines.forEach((l, i) => c.fillText(l, x, y + i * fit.size * (lh || 1.02)));
   }
   function photoInto(c, f, x, y, w, h) {
-    const iw = f.img.naturalWidth, ih = f.img.naturalHeight, r = Math.max(w / iw, h / ih) * f.zoom, dw = iw * r, dh = ih * r;
-    const ex = (dw - w) / 2, ey = (dh - h) / 2;
+    const iw = f.img.naturalWidth, ih = f.img.naturalHeight, r = (f.fit ? Math.min : Math.max)(w / iw, h / ih) * f.zoom, dw = iw * r, dh = ih * r;
+    const ex = Math.abs(dw - w) / 2, ey = Math.abs(dh - h) / 2;
     c.save(); c.beginPath(); c.rect(x, y, w, h); c.clip(); c.imageSmoothingEnabled = true;
     c.drawImage(f.img, x + (w - dw) / 2 - f.px * ex, y + (h - dh) / 2 - f.py * ey, dw, dh); c.restore();
   }
-  function panLimits(f, w, h) { const r = Math.max(w / f.img.naturalWidth, h / f.img.naturalHeight) * f.zoom; return { ex: (f.img.naturalWidth * r - w) / 2, ey: (f.img.naturalHeight * r - h) / 2 }; }
+  function panLimits(f, w, h) { const r = (f.fit ? Math.min : Math.max)(w / f.img.naturalWidth, h / f.img.naturalHeight) * f.zoom; return { ex: Math.abs(f.img.naturalWidth * r - w) / 2, ey: Math.abs(f.img.naturalHeight * r - h) / 2 }; }
+  // ----- layers: extra photos and words that sit on top of a poster
+  let lid = 0; const LFONTS = { a: '"NocivAnton", Impact, sans-serif', b: '"Arial Black", Arial, sans-serif', t: '"Courier New", monospace' }, LFN = { a: 'Poster', b: 'Bold', t: 'Typewriter' }, LCOLORS = ['#ffffff', '#1a1a1a', '#c8412f', '#f2c230', '#2f5d9e', '#4f7a52'];
+  const scratch = document.createElement('canvas').getContext('2d');
+  function layersSig(f) { return (f.layers || []).map(L => [L.id, L.k, L.x.toFixed(3), L.y.toFixed(3), L.s.toFixed(3), (L.r || 0).toFixed(3), L.text || '', L.c || '', L.f || '', L.o ? 1 : 0].join(',')).join(';'); }
+  function layerBox(L, w, h) {
+    if (L.k === 'p') { const bw = L.s * w; return { w: bw, h: bw * L.img.naturalHeight / L.img.naturalWidth }; }
+    const size = L.s * h, lines = (L.text || ' ').split('\n'); scratch.font = '400 ' + size + 'px ' + LFONTS[L.f || 'a'];
+    return { w: Math.max(size * 0.6, ...lines.map(l => scratch.measureText(l).width)) + size * 0.3, h: lines.length * size * 1.1 + size * 0.2 };
+  }
+  function drawLayer(c, L, w, h) {
+    c.save(); c.translate(L.x * w, L.y * h); c.rotate(L.r || 0);
+    if (L.k === 'p') { const b = layerBox(L, w, h); c.shadowColor = 'rgba(0,0,0,.35)'; c.shadowBlur = b.w * 0.03; c.drawImage(L.img, -b.w / 2, -b.h / 2, b.w, b.h); }
+    else {
+      const size = L.s * h, lines = (L.text || '').split('\n'); c.font = '400 ' + size + 'px ' + LFONTS[L.f || 'a']; c.textAlign = 'center'; c.textBaseline = 'middle'; c.lineJoin = 'round';
+      lines.forEach((ln, i) => { const y = (i - (lines.length - 1) / 2) * size * 1.1; if (L.o) { c.lineWidth = size * 0.14; c.strokeStyle = L.c === '#1a1a1a' ? '#ffffff' : '#1a1a1a'; c.strokeText(ln, 0, y); } c.fillStyle = L.c || '#ffffff'; c.fillText(ln, 0, y); });
+    }
+    c.restore();
+  }
   // draws one finished poster for the sign (the photo, then the words like a real ad)
   function faceCanvas(f, w, h) {
-    const key = [w, h, f.zoom, f.px, f.py, f.layout, f.head, f.sub, f.theme].join('|');
+    const key = [w, h, f.zoom, f.px, f.py, f.fit ? 1 : 0, f.layout, f.head, f.sub, f.theme, layersSig(f)].join('|');
     if (f.cache && f.cacheKey === key) return f.cache;
     const cc = document.createElement('canvas'); cc.width = w; cc.height = h; const c = cc.getContext('2d'), th = THEMES[f.theme] || THEMES.ink;
     c.fillStyle = th.bg; c.fillRect(0, 0, w, h);
@@ -1518,6 +1570,7 @@
         c.fillStyle = th.bg; c.fillRect(pad * 0.6, pad * 0.6, tw, fit.size + pad * 0.9); drawLines(c, fit, pad * 1.2, pad * 0.95, th.fg, 'left');
       }
     }
+    (f.layers || []).forEach(L => drawLayer(c, L, w, h));
     f.cache = cc; f.cacheKey = key; return cc;
   }
 
@@ -1526,6 +1579,57 @@
   function boardPhase(t) {
     const n = board.faces.length, T = board.hold + board.spin, k = Math.floor(t / T), u = t - k * T;
     return { a: k % n, b: (k + 1) % n, p: u < board.hold ? 0 : (u - board.hold) / board.spin };
+  }
+  // steel poles, catwalk and footing. Drawn once, then reused until the size or scene changes.
+  let poleCv = null, poleKey = '';
+  function buildPoles(W, H, r, ground, sc) {
+    const cv2 = document.createElement('canvas'); cv2.width = W; cv2.height = H; const c = cv2.getContext('2d'), u = W / 540;
+    const two = board.shape === 'wide' || board.shape === 'poster', xs = two ? [0.24, 0.76] : [0.5], top = r.y + r.h * 0.55, pw = Math.max(10, Math.round(W * (two ? 0.034 : 0.05)));
+    const tint = { night: 'rgba(8,16,60,.55)', dusk: 'rgba(190,70,50,.30)', desert: 'rgba(210,120,40,.28)', day: 'rgba(0,0,0,0)', photo: 'rgba(0,0,0,0)' }[sc] || 'rgba(0,0,0,0)';
+    // catwalk and truss under the sign
+    const cw = Math.max(8, Math.round(r.h * 0.075)), cy = r.y + r.h;
+    c.fillStyle = '#17191c'; c.fillRect(r.x - 6 * u, cy, r.w + 12 * u, cw);
+    const gr0 = c.createLinearGradient(0, cy, 0, cy + cw); gr0.addColorStop(0, '#8d949c'); gr0.addColorStop(0.18, '#3b4046'); gr0.addColorStop(1, '#202327'); c.fillStyle = gr0; c.fillRect(r.x - 6 * u, cy, r.w + 12 * u, cw);
+    c.fillStyle = 'rgba(0,0,0,.55)'; for (let x = r.x - 6 * u; x < r.x + r.w + 6 * u; x += 5 * u) c.fillRect(x, cy + cw * 0.3, 2 * u, cw * 0.55);
+    c.strokeStyle = '#2a2d31'; c.lineWidth = Math.max(1.5, 2 * u); const by = cy + cw + 3 * u, bh = Math.max(10, cw * 1.3);
+    c.beginPath(); c.moveTo(r.x, by); c.lineTo(r.x + r.w, by); c.moveTo(r.x, by + bh); c.lineTo(r.x + r.w, by + bh); c.stroke();
+    c.lineWidth = Math.max(1, 1.4 * u); c.beginPath(); const st0 = bh * 1.3; for (let x = r.x, k = 0; x < r.x + r.w; x += st0, k++) { c.moveTo(x, k % 2 ? by + bh : by); c.lineTo(x + st0, k % 2 ? by : by + bh); } c.stroke();
+    // railing
+    c.strokeStyle = '#4a4f55'; c.lineWidth = Math.max(1, 1.6 * u); const rh = Math.max(8, r.h * 0.07); c.beginPath(); c.moveTo(r.x - 6 * u, cy - 2 * u); c.lineTo(r.x - 6 * u, cy - rh); c.moveTo(r.x + r.w + 6 * u, cy - 2 * u); c.lineTo(r.x + r.w + 6 * u, cy - rh); c.stroke();
+    // poles
+    xs.forEach((f, pi) => {
+      const cx = r.x + r.w * f, wB = pw * 1.18, wT = pw, y0 = top, y1 = ground;
+      // shadow on ground
+      const sh = c.createRadialGradient(cx, y1 + 4 * u, 1, cx, y1 + 4 * u, pw * 2.4); sh.addColorStop(0, 'rgba(0,0,0,.5)'); sh.addColorStop(1, 'rgba(0,0,0,0)'); c.save(); c.translate(0, 0); c.fillStyle = sh; c.beginPath(); c.ellipse(cx, y1 + 4 * u, pw * 2.4, pw * 0.7, 0, 0, 6.3); c.fill(); c.restore();
+      // footing
+      const fw2 = pw * 2.3; const fg = c.createLinearGradient(0, y1 - 2 * u, 0, y1 + 16 * u); fg.addColorStop(0, '#9b9a94'); fg.addColorStop(1, '#5c5b57'); c.fillStyle = fg; c.beginPath(); c.moveTo(cx - fw2 * 0.5, y1 - 3 * u); c.lineTo(cx + fw2 * 0.5, y1 - 3 * u); c.lineTo(cx + fw2 * 0.58, y1 + 12 * u); c.lineTo(cx - fw2 * 0.58, y1 + 12 * u); c.fill();
+      c.fillStyle = 'rgba(0,0,0,.18)'; for (let i = 0; i < 14; i++) c.fillRect(cx - fw2 * 0.5 + ((i * 37) % 100) / 100 * fw2, y1 - 2 * u + ((i * 53) % 100) / 100 * 12 * u, 1.5 * u, 1.5 * u);
+      // shaft, slightly tapered
+      const g2 = c.createLinearGradient(cx - wB / 2, 0, cx + wB / 2, 0); g2.addColorStop(0, '#26292d'); g2.addColorStop(0.16, '#6a7078'); g2.addColorStop(0.34, '#c9ced4'); g2.addColorStop(0.5, '#9aa0a8'); g2.addColorStop(0.8, '#4d5258'); g2.addColorStop(1, '#1f2226');
+      c.fillStyle = g2; c.beginPath(); c.moveTo(cx - wT / 2, y0); c.lineTo(cx + wT / 2, y0); c.lineTo(cx + wB / 2, y1); c.lineTo(cx - wB / 2, y1); c.fill();
+      // weld seams and rust streaks
+      const seg = Math.max(30, (y1 - y0) / 3.2);
+      for (let y = y0 + seg; y < y1 - 10; y += seg) { const wd = wT + (wB - wT) * (y - y0) / (y1 - y0); c.fillStyle = 'rgba(20,22,25,.55)'; c.fillRect(cx - wd / 2, y, wd, 2 * u); c.fillStyle = 'rgba(255,255,255,.18)'; c.fillRect(cx - wd / 2, y + 2 * u, wd, 1 * u);
+        for (let k = 0; k < 4; k++) { const rx = cx - wd / 2 + wd * (0.12 + ((k * 29 + pi * 11) % 70) / 100), len = seg * (0.25 + ((k * 17 + pi * 7) % 50) / 100); const rg = c.createLinearGradient(0, y, 0, y + len); rg.addColorStop(0, 'rgba(120,58,28,.55)'); rg.addColorStop(1, 'rgba(120,58,28,0)'); c.fillStyle = rg; c.fillRect(rx, y + 2 * u, Math.max(1, 1.8 * u), len); } }
+      // ladder on the outer side of each pole
+      const side = f < 0.5 ? -1 : 1, lx = cx + side * (wB / 2 + 5 * u), lw = Math.max(6, 9 * u);
+      c.strokeStyle = '#2a2d31'; c.lineWidth = Math.max(1, 1.4 * u); c.beginPath(); c.moveTo(lx, cy + cw); c.lineTo(lx, y1 - 6 * u); c.moveTo(lx + side * lw, cy + cw); c.lineTo(lx + side * lw, y1 - 6 * u); for (let y = cy + cw + 8 * u; y < y1 - 8 * u; y += 9 * u) { c.moveTo(lx, y); c.lineTo(lx + side * lw, y); } c.stroke();
+      c.strokeStyle = '#2a2d31'; c.beginPath(); c.moveTo(lx, cy + cw + 14 * u); c.lineTo(cx + side * wB / 2, cy + cw + 14 * u); c.moveTo(lx, y1 - 18 * u); c.lineTo(cx + side * wB / 2, y1 - 18 * u); c.stroke();
+      // base plate and bolts
+      const bp = pw * 1.9; c.fillStyle = '#3a3e43'; c.fillRect(cx - bp / 2, y1 - 7 * u, bp, 7 * u); c.fillStyle = 'rgba(255,255,255,.22)'; c.fillRect(cx - bp / 2, y1 - 7 * u, bp, 1.5 * u);
+      c.fillStyle = '#16181b'; [-0.4, -0.15, 0.15, 0.4].forEach(q => c.fillRect(cx + bp * q - 1.5 * u, y1 - 9 * u, 3 * u, 4 * u));
+      // top bracket where the pole meets the catwalk
+      c.fillStyle = '#2a2d31'; c.fillRect(cx - pw * 0.85, cy - 1, pw * 1.7, cw + 3 * u);
+    });
+    // weather and light tint over everything drawn so far
+    c.globalCompositeOperation = 'source-atop'; c.fillStyle = tint; c.fillRect(0, 0, W, H); c.globalCompositeOperation = 'source-over';
+    return cv2;
+  }
+  function drawPoles(c, W, H, r, ground, sc) {
+    if (board.poles === false) { const cw = Math.max(6, Math.round(r.h * 0.07)); c.fillStyle = 'rgba(30,32,36,.9)'; c.fillRect(r.x - 4, r.y + r.h + 2, r.w + 8, cw * 0.6); return; }
+    const key = [W, H, r.x, r.y, r.w, r.h, ground, sc, board.shape].join('|');
+    if (key !== poleKey || !poleCv) { poleCv = buildPoles(W, H, r, ground, sc); poleKey = key; }
+    c.drawImage(poleCv, 0, 0);
   }
   function drawBoardScene(c, W, H, r) {
     if (board.scene === 'float') {
@@ -1539,6 +1643,10 @@
       return;
     }
     const sc = board.scene, ground = Math.round(H * 0.9), g = c.createLinearGradient(0, 0, 0, ground);
+    if (sc === 'photo' && board.bg) {
+      const im = board.bg.img, k = Math.max(W / im.naturalWidth, H / im.naturalHeight), dw = im.naturalWidth * k, dh = im.naturalHeight * k; c.drawImage(im, (W - dw) / 2, (H - dh) / 2, dw, dh);
+      drawPoles(c, W, H, r, ground, 'photo'); const fw0 = Math.max(5, Math.round(W * 0.014)); c.fillStyle = '#26282c'; c.fillRect(r.x - fw0, r.y - fw0, r.w + fw0 * 2, r.h + fw0 * 2); return;
+    }
     if (sc === 'day') { g.addColorStop(0, '#6fb8f0'); g.addColorStop(1, '#dff1ff'); }
     else if (sc === 'dusk') { g.addColorStop(0, '#2b1b4d'); g.addColorStop(0.55, '#c9543f'); g.addColorStop(1, '#ffc27a'); }
     else if (sc === 'night') { g.addColorStop(0, '#04060d'); g.addColorStop(1, '#17204a'); }
@@ -1552,10 +1660,7 @@
     }
     c.fillStyle = sc === 'night' ? '#07080d' : sc === 'desert' ? '#8a4a2a' : sc === 'dusk' ? '#1d1220' : '#8e8a7b'; c.fillRect(0, ground, W, H - ground);
     if (sc === 'desert') { c.fillStyle = '#2b1a10'; [[0.1, 0.9, 1], [0.88, 0.9, 1.3]].forEach(([x, y, k]) => { const bx = W * x, by = H * y, u = W / 540 * k; c.fillRect(bx - 5 * u, by - 110 * u, 10 * u, 110 * u); c.fillRect(bx - 28 * u, by - 80 * u, 8 * u, 40 * u); c.fillRect(bx - 28 * u, by - 46 * u, 26 * u, 8 * u); c.fillRect(bx + 20 * u, by - 90 * u, 8 * u, 50 * u); c.fillRect(bx + 2 * u, by - 56 * u, 26 * u, 8 * u); }); }
-    const pw = Math.max(8, Math.round(W * 0.028));
-    [0.27, 0.73].forEach(f => { const px = r.x + r.w * f - pw / 2, gr = c.createLinearGradient(px, 0, px + pw, 0); gr.addColorStop(0, '#4a4d52'); gr.addColorStop(0.5, '#9aa0a8'); gr.addColorStop(1, '#3a3d42'); c.fillStyle = gr; c.fillRect(px, r.y + r.h, pw, ground - (r.y + r.h) + 4); });
-    const cw = Math.max(6, Math.round(r.h * 0.07)); c.fillStyle = '#2d2f33'; c.fillRect(r.x - 4, r.y + r.h + 2, r.w + 8, cw);
-    c.strokeStyle = '#2d2f33'; c.lineWidth = Math.max(1.5, W / 360); c.beginPath(); c.moveTo(r.x, r.y + r.h + cw + 2); c.lineTo(r.x + r.w, r.y + r.h + cw + 2); c.stroke();
+    drawPoles(c, W, H, r, ground, sc);
     const fw = Math.max(5, Math.round(W * 0.014)); c.fillStyle = '#26282c'; c.fillRect(r.x - fw, r.y - fw, r.w + fw * 2, r.h + fw * 2);
   }
   function drawSceneFront(c, W, H, r) {
@@ -1610,18 +1715,43 @@
     const f = board.faces[board.sel], r = bRect(W, H), ar = r.w / r.h, w = Math.round(Math.min(W * 0.94, H * 0.8 * ar)), h = Math.round(w / ar);
     ctx.fillStyle = '#1c1c1c'; ctx.fillRect(0, 0, W, H); const fc = faceCanvas(f, r.w, r.h);
     board.editBox = { x: Math.round((W - w) / 2), y: Math.round((H - h) / 2), w, h };
-    ctx.drawImage(fc, board.editBox.x, board.editBox.y, w, h); stageMsg('Drag the picture to move it');
+    ctx.drawImage(fc, board.editBox.x, board.editBox.y, w, h); stageMsg(f.layers.length ? '' : 'Drag to move. Pinch to resize.');
+    const L = board.selL >= 0 ? f.layers[board.selL] : null, k = w / r.w; ctx.save(); ctx.translate(board.editBox.x, board.editBox.y); ctx.scale(k, k); ctx.setLineDash([12 / k, 8 / k]); ctx.lineWidth = 3 / k; ctx.strokeStyle = '#ffffff'; ctx.shadowColor = 'rgba(0,0,0,.7)'; ctx.shadowBlur = 4;
+    if (L) { const b = layerBox(L, r.w, r.h); ctx.translate(L.x * r.w, L.y * r.h); ctx.rotate(L.r || 0); ctx.strokeRect(-b.w / 2, -b.h / 2, b.w, b.h); ctx.setLineDash([]); ctx.fillStyle = '#ffffff'; [[-1, -1], [1, -1], [1, 1], [-1, 1]].forEach(q => ctx.fillRect(q[0] * b.w / 2 - 5 / k, q[1] * b.h / 2 - 5 / k, 10 / k, 10 / k)); }
+    else ctx.strokeRect(2 / k, 2 / k, r.w - 4 / k, r.h - 4 / k);
+    ctx.restore();
   }
-  let drag = null;
-  cv.addEventListener('pointerdown', (e) => { if (st.kind !== 'board' || st.panel !== 'bphotos' || !board.faces[board.sel]) return; drag = { x: e.clientX, y: e.clientY }; try { cv.setPointerCapture(e.pointerId); } catch (er) {} });
+  // one finger moves, two fingers resize and turn. It works on the main photo and on every layer.
+  const ptrs = new Map(); let gest = null;
+  const editing = () => st.kind === 'board' && !fsOn() && st.panel === 'bphotos' && board.faces[board.sel] && board.editBox;
+  function faceXY(e) { const rc = cv.getBoundingClientRect(), box = board.editBox, r = bRect(cv.width, cv.height); return { x: ((e.clientX - rc.left) * cv.width / rc.width - box.x) / box.w * r.w, y: ((e.clientY - rc.top) * cv.height / rc.height - box.y) / box.h * r.h, w: r.w, h: r.h }; }
+  function hitLayer(f, pt) { for (let i = f.layers.length - 1; i >= 0; i--) { const L = f.layers[i], b = layerBox(L, pt.w, pt.h), dx = pt.x - L.x * pt.w, dy = pt.y - L.y * pt.h, cs = Math.cos(-(L.r || 0)), sn = Math.sin(-(L.r || 0)), lx = dx * cs - dy * sn, ly = dx * sn + dy * cs; if (Math.abs(lx) <= b.w / 2 + 16 && Math.abs(ly) <= b.h / 2 + 16) return i; } return -1; }
+  const pd = () => { const [a, b] = [...ptrs.values()]; return { d: Math.hypot(a.x - b.x, a.y - b.y) || 1, a: Math.atan2(b.y - a.y, b.x - a.x) }; };
+  function gestStart() {
+    const f = board.faces[board.sel], L = board.selL >= 0 ? f.layers[board.selL] : null;
+    if (ptrs.size >= 2) { const q = pd(); gest = { m: 'pinch', d0: q.d, a0: q.a, z0: f.zoom, s0: L ? L.s : 0, r0: L ? (L.r || 0) : 0 }; } else { const v = [...ptrs.values()][0]; gest = v ? { m: 'drag', x: v.x, y: v.y } : null; }
+  }
+  cv.addEventListener('pointerdown', (e) => {
+    if (!editing()) return; try { cv.setPointerCapture(e.pointerId); } catch (er) {} ptrs.set(e.pointerId, { x: e.clientX, y: e.clientY });
+    if (ptrs.size === 1) { const f = board.faces[board.sel], hi = hitLayer(f, faceXY(e)); if (hi !== board.selL) { board.selL = hi; syncFaceControls(true); } }
+    gestStart();
+  });
   cv.addEventListener('pointermove', (e) => {
-    if (!drag) return; const f = board.faces[board.sel], box = board.editBox; if (!f || !box) return;
-    const r = bRect(cv.width, cv.height), sc = cv.clientWidth / cv.width, dx = (e.clientX - drag.x) / sc * (r.w / box.w), dy = (e.clientY - drag.y) / sc * (r.h / box.h); drag = { x: e.clientX, y: e.clientY };
-    const lim = panLimits(f, r.w, r.h);
-    if (lim.ex > 1) f.px = Math.max(-1, Math.min(1, f.px - dx / lim.ex)); if (lim.ey > 1) f.py = Math.max(-1, Math.min(1, f.py - dy / lim.ey));
+    if (!ptrs.has(e.pointerId) || !gest) return; ptrs.set(e.pointerId, { x: e.clientX, y: e.clientY });
+    const f = board.faces[board.sel], box = board.editBox; if (!f || !box) return; const r = bRect(cv.width, cv.height), L = board.selL >= 0 ? f.layers[board.selL] : null;
+    if (gest.m === 'drag' && ptrs.size === 1) {
+      const sc = cv.clientWidth / cv.width, dx = (e.clientX - gest.x) / sc * (r.w / box.w), dy = (e.clientY - gest.y) / sc * (r.h / box.h); gest.x = e.clientX; gest.y = e.clientY;
+      if (L) { L.x = Math.max(-0.2, Math.min(1.2, L.x + dx / r.w)); L.y = Math.max(-0.2, Math.min(1.2, L.y + dy / r.h)); }
+      else { const lim = panLimits(f, r.w, r.h); if (lim.ex > 1) f.px = Math.max(-1, Math.min(1, f.px - dx / lim.ex)); if (lim.ey > 1) f.py = Math.max(-1, Math.min(1, f.py - dy / lim.ey)); }
+    } else if (gest.m === 'pinch' && ptrs.size >= 2) {
+      const q = pd(), ratio = q.d / gest.d0;
+      if (L) { L.s = Math.max(0.02, Math.min(L.k === 'p' ? 3 : 1.5, gest.s0 * ratio)); L.r = gest.r0 + (q.a - gest.a0); }
+      else f.zoom = Math.max(f.fit ? 0.3 : 1, Math.min(5, gest.z0 * ratio));
+    }
     syncFaceControls(true);
   });
-  ['pointerup', 'pointercancel'].forEach(ev => cv.addEventListener(ev, () => { drag = null; }));
+  const gEnd = (e) => { ptrs.delete(e.pointerId); gestStart(); };
+  ['pointerup', 'pointercancel'].forEach(ev => cv.addEventListener(ev, gEnd));
   cv.style.touchAction = 'none';
 
   async function addBoardPhotos(files) {
@@ -1632,9 +1762,9 @@
         const f0 = await loadImg(file), k = Math.min(1, 1600 / Math.max(f0.img.naturalWidth, f0.img.naturalHeight)), c = document.createElement('canvas');
         c.width = Math.round(f0.img.naturalWidth * k); c.height = Math.round(f0.img.naturalHeight * k); c.getContext('2d').drawImage(f0.img, 0, 0, c.width, c.height); URL.revokeObjectURL(f0.url);
         const f = await loadImg(await canvasToBlob(c, 'image/jpeg', 0.9)), i = board.faces.length;
-        f.zoom = 1; f.px = 0; f.py = 0; f.layout = 'photo'; f.head = ''; f.sub = ''; f.theme = ['ink', 'lime', 'sun', 'white', 'red'][i % 5]; board.faces.push(f);
+        f.id = ++lid; f.layers = []; f.fit = false; f.zoom = 1; f.px = 0; f.py = 0; f.layout = 'photo'; f.head = ''; f.sub = ''; f.theme = ['ink', 'lime', 'sun', 'white', 'red'][i % 5]; board.faces.push(f);
       }
-      board.sel = board.faces.length - 1; refreshBoardUI(); syncFaceControls(); board.t = 0;
+      board.sel = board.faces.length - 1; board.selL = -1; refreshBoardUI(); syncFaceControls(); board.t = 0;
       msg('bMsg', board.faces.length < 2 ? 'Add one more so it has something to spin to.' : 'Added. Tap Sign to pick a scene.');
     } catch (e) { msg('bMsg', 'One of those would not open. Try JPG or PNG.', true); }
   }
@@ -1651,15 +1781,49 @@
   }
   function refreshBoardUI() {
     const fs = board.faces, s = $('strip'); s.innerHTML = '';
-    fs.forEach((f, i) => { const d = document.createElement('div'); d.className = 'fr' + (i === board.sel ? ' sel' : ''); d.style.backgroundImage = 'url(' + f.url + ')'; d.innerHTML = '<i>' + (i + 1) + '</i>'; d.addEventListener('click', () => { board.sel = i; refreshBoardUI(); syncFaceControls(); }); s.appendChild(d); });
+    fs.forEach((f, i) => { const d = document.createElement('div'); d.className = 'fr' + (i === board.sel ? ' sel' : ''); d.style.backgroundImage = 'url(' + f.url + ')'; d.innerHTML = '<i>' + (i + 1) + '</i>'; d.addEventListener('click', () => { board.sel = i; board.selL = -1; refreshBoardUI(); syncFaceControls(); }); s.appendChild(d); });
     $('info').textContent = fs.length + (fs.length === 1 ? ' photo' : ' photos') + (fs.length > 1 ? ' · ' + (fs.length * (board.hold + board.spin)).toFixed(0) + ' s a loop' : '');
     $('undoBtn').disabled = true; $('redoBtn').disabled = true; updateDeckEnabled();
   }
   function syncFaceControls(fromDrag) {
     const f = board.faces[board.sel]; $('bEdit').classList.toggle('hide', !f); if (!f) return;
-    $('bZoom').value = f.zoom; $('bPx').value = f.px; $('bPy').value = f.py; $('bZoomVal').textContent = f.zoom.toFixed(1) + 'x';
+    if (!f.layers) { f.layers = []; f.fit = false; f.id = f.id || ++lid; }
+    const bz = $('bZoom'); bz.min = f.fit ? 0.3 : 1; bz.value = f.zoom; $('bPx').value = f.px; $('bPy').value = f.py; $('bZoomVal').textContent = f.zoom.toFixed(1) + 'x'; $('bFit').checked = !!f.fit;
     if (!fromDrag) { $('bLayout').value = f.layout; $('bHead').value = f.head; $('bSub').value = f.sub; document.querySelectorAll('#bThemes button').forEach(b => b.setAttribute('aria-pressed', b.dataset.t === f.theme ? 'true' : 'false')); }
+    layerUI(fromDrag);
   }
+  function layerUI(fromDrag) {
+    const f = board.faces[board.sel]; if (!f) return; if (board.selL >= f.layers.length) board.selL = -1; const L = board.selL >= 0 ? f.layers[board.selL] : null;
+    const box = $('bLayers'), sig = f.layers.map(x => x.id + (x.k === 't' ? x.text.slice(0, 8) : '')).join('|') + '#' + board.selL;
+    if (box.dataset.sig !== sig) {
+      box.dataset.sig = sig; box.innerHTML = '';
+      [['Main photo', -1]].concat(f.layers.map((x, i) => [x.k === 'p' ? 'Photo ' + (i + 1) : (x.text || 'Text').replace(/\n/g, ' ').slice(0, 10), i])).forEach(([name, i]) => { const b = document.createElement('button'); b.type = 'button'; b.className = 'chip'; b.textContent = name; b.setAttribute('aria-pressed', i === board.selL ? 'true' : 'false'); b.addEventListener('click', () => { board.selL = i; syncFaceControls(); }); box.appendChild(b); });
+    }
+    $('bBaseCtl').classList.toggle('hide', !!L); $('bLayerCtl').classList.toggle('hide', !L); $('bTextCtl').classList.toggle('hide', !L || L.k !== 't');
+    if (!L) return; const isT = L.k === 't';
+    $('bLSize').min = isT ? 0.03 : 0.05; $('bLSize').max = isT ? 0.6 : 1.5; $('bLSize').value = L.s; $('bLSizeV').textContent = Math.round(L.s * 100) + '%'; $('bLRot').value = Math.round((L.r || 0) * 180 / Math.PI); $('bLRotV').textContent = Math.round((L.r || 0) * 180 / Math.PI) + ' deg';
+    if (isT && !fromDrag) { if (document.activeElement !== $('bLText')) $('bLText').value = L.text; $('bLOut').checked = !!L.o; document.querySelectorAll('#bLFonts .chip').forEach(b => b.setAttribute('aria-pressed', b.dataset.f === (L.f || 'a') ? 'true' : 'false')); document.querySelectorAll('#bLColors button').forEach(b => b.setAttribute('aria-pressed', b.dataset.c === L.c ? 'true' : 'false')); }
+  }
+  const selLayer = () => { const f = board.faces[board.sel]; return f && board.selL >= 0 ? f.layers[board.selL] : null; };
+  $('bFit').addEventListener('change', () => { const f = board.faces[board.sel]; if (!f) return; f.fit = $('bFit').checked; f.zoom = 1; f.px = 0; f.py = 0; syncFaceControls(true); });
+  $('bAddText').addEventListener('click', () => { const f = board.faces[board.sel]; if (!f) return; buzz(8); f.layers.push({ id: ++lid, k: 't', text: 'YOUR WORDS', x: 0.5, y: 0.5, s: 0.14, c: '#ffffff', f: 'a', o: true, r: 0 }); board.selL = f.layers.length - 1; syncFaceControls(); setTimeout(() => { try { $('bLText').focus(); $('bLText').select(); } catch (e) {} }, 50); });
+  $('bAddPhotoL').addEventListener('click', () => { if (!board.faces[board.sel]) return; buzz(8); $('bLayerIn').click(); });
+  $('bLayerIn').addEventListener('change', async (e) => {
+    const files = [...e.target.files]; e.target.value = ''; const f = board.faces[board.sel]; if (!f || !files.length) return; msg('bMsg', 'Adding...');
+    try { for (const file of files.slice(0, 6)) { const sm = await shrinkToBlob(file, 1200), it = await loadImg(sm); f.layers.push({ id: ++lid, k: 'p', img: it.img, blob: sm, url: it.url, x: 0.5, y: 0.5, s: 0.5, r: 0 }); } board.selL = f.layers.length - 1; syncFaceControls(); msg('bMsg', 'Layer added. Drag it, pinch to resize.'); }
+    catch (er) { msg('bMsg', 'That photo would not open. Try JPG or PNG.', true); }
+  });
+  async function shrinkToBlob(file, max) { const f0 = await loadImg(file), k = Math.min(1, max / Math.max(f0.img.naturalWidth, f0.img.naturalHeight)), c = document.createElement('canvas'); c.width = Math.round(f0.img.naturalWidth * k); c.height = Math.round(f0.img.naturalHeight * k); c.getContext('2d').drawImage(f0.img, 0, 0, c.width, c.height); URL.revokeObjectURL(f0.url); return canvasToBlob(c, 'image/jpeg', 0.9); }
+  $('bLText').addEventListener('input', () => { const L = selLayer(); if (!L || L.k !== 't') return; L.text = $('bLText').value; layerUI(true); });
+  $('bLOut').addEventListener('change', () => { const L = selLayer(); if (L) L.o = $('bLOut').checked; });
+  $('bLSize').addEventListener('input', () => { const L = selLayer(); if (L) { L.s = +$('bLSize').value; layerUI(true); } });
+  $('bLRot').addEventListener('input', () => { const L = selLayer(); if (L) { L.r = +$('bLRot').value * Math.PI / 180; layerUI(true); } });
+  $('bLDel').addEventListener('click', () => { const f = board.faces[board.sel]; if (!f || board.selL < 0) return; f.layers.splice(board.selL, 1); board.selL = -1; buzz(8); syncFaceControls(); });
+  $('bLFwd').addEventListener('click', () => { const f = board.faces[board.sel], i = board.selL; if (!f || i < 0 || i >= f.layers.length - 1) return; [f.layers[i], f.layers[i + 1]] = [f.layers[i + 1], f.layers[i]]; board.selL++; syncFaceControls(); });
+  $('bLBack').addEventListener('click', () => { const f = board.faces[board.sel], i = board.selL; if (!f || i < 1) return; [f.layers[i], f.layers[i - 1]] = [f.layers[i - 1], f.layers[i]]; board.selL--; syncFaceControls(); });
+  Object.keys(LFN).forEach(k => { const b = document.createElement('button'); b.type = 'button'; b.className = 'chip'; b.dataset.f = k; b.textContent = LFN[k]; b.style.fontFamily = LFONTS[k]; b.addEventListener('click', () => { const L = selLayer(); if (L) { L.f = k; layerUI(); } }); $('bLFonts').appendChild(b); });
+  LCOLORS.forEach(c => { const b = document.createElement('button'); b.type = 'button'; b.dataset.c = c; b.style.background = c; b.setAttribute('aria-label', 'Color ' + c); b.addEventListener('click', () => { const L = selLayer(); if (L) { L.c = c; layerUI(); } }); $('bLColors').appendChild(b); });
+  try { document.fonts.load('400 40px NocivAnton').then(() => board.faces.forEach(f => { f.cache = null; })); } catch (e) {}
   function onFace(fn) { return () => { const f = board.faces[board.sel]; if (!f) return; fn(f); syncFaceControls(true); }; }
   $('bZoom').addEventListener('input', onFace(f => { f.zoom = +$('bZoom').value; }));
   $('bPx').addEventListener('input', onFace(f => { f.px = +$('bPx').value; }));
@@ -1677,7 +1841,16 @@
     items.forEach(([key, label]) => { const b = document.createElement('button'); b.type = 'button'; b.className = 'chip'; b.textContent = label; b.setAttribute('aria-pressed', String(get()) === String(key) ? 'true' : 'false'); b.addEventListener('click', () => { set(key); box.querySelectorAll('.chip').forEach(x => x.setAttribute('aria-pressed', x === b ? 'true' : 'false')); buzz(8); }); box.appendChild(b); });
   }
   chipSet('bShapes', Object.keys(SHAPES).map(k => [k, SHAPES[k][0]]), () => board.shape, v => { board.shape = v; board.faces.forEach(f => { f.cache = null; }); });
-  chipSet('bScenes', Object.keys(SCENES).map(k => [k, SCENES[k]]), () => board.scene, v => { board.scene = v; });
+  chipSet('bScenes', Object.keys(SCENES).map(k => [k, SCENES[k]]), () => board.scene, v => { if (v === 'photo' && !board.bg) { $('bBgIn').click(); return; } board.scene = v; });
+  chipSet('bPoles', [[1, 'Poles on'], [0, 'Poles off']], () => board.poles === false ? 0 : 1, v => { board.poles = +v === 1; });
+  function bgUI() { $('bBgDel').classList.toggle('hide', !board.bg); }
+  $('bBgIn').addEventListener('change', async (e) => {
+    const file = e.target.files[0]; e.target.value = ''; if (!file) return;
+    try { const sm = await shrinkToBlob(file, 1600), it = await loadImg(sm); if (board.bg) URL.revokeObjectURL(board.bg.url); board.bg = { blob: sm, url: it.url, img: it.img }; board.scene = 'photo'; bgUI();
+      document.querySelectorAll('#bScenes .chip').forEach(x => x.setAttribute('aria-pressed', x.textContent === 'My photo' ? 'true' : 'false')); msg('bMsg2', 'Your photo is behind the sign now.'); }
+    catch (er) { msg('bMsg2', 'That photo would not open. Try JPG or PNG.', true); }
+  });
+  $('bBgDel').addEventListener('click', () => { if (board.bg) URL.revokeObjectURL(board.bg.url); board.bg = null; if (board.scene === 'photo') { board.scene = 'day'; document.querySelectorAll('#bScenes .chip').forEach(x => x.setAttribute('aria-pressed', x.textContent === 'Day' ? 'true' : 'false')); } bgUI(); });
   chipSet('bSlats', [[8, '8'], [12, '12'], [18, '18'], [24, '24']], () => board.slats, v => { board.slats = +v; });
   document.querySelectorAll('#bStyle .chip').forEach(b => b.addEventListener('click', () => { board.wave = +b.dataset.w; document.querySelectorAll('#bStyle .chip').forEach(x => x.setAttribute('aria-pressed', x === b ? 'true' : 'false')); }));
   document.querySelectorAll('#bAspects .chip').forEach(b => b.addEventListener('click', () => { board.aspect = b.dataset.a; document.querySelectorAll('#bAspects .chip').forEach(x => x.setAttribute('aria-pressed', x === b ? 'true' : 'false')); board.faces.forEach(f => { f.cache = null; }); }));
@@ -2343,6 +2516,44 @@
       st.sel = st.frames.length - 1; refreshUI(); updateKeep();
     } catch (e) {}
   })();
+  // the sign is kept on this phone only (IndexedDB). Nothing is sent anywhere.
+  let signSig = '', signBusy = false;
+  const signNow = () => JSON.stringify({ sh: board.shape, sc: board.scene, sl: board.slats, w: board.wave, h: board.hold, sp: board.spin, po: board.poles, bg: board.bg ? 1 : 0, f: board.faces.map(f => [f.id, f.layout, f.head, f.sub, f.theme, f.zoom, f.px, f.py, f.fit ? 1 : 0, layersSig(f)]) });
+  async function saveSign() {
+    if (signBusy) return; const sig = signNow(); if (sig === signSig) return; signBusy = true;
+    try {
+      const rec = { shape: board.shape, scene: board.scene, slats: board.slats, wave: board.wave, hold: board.hold, spin: board.spin, poles: board.poles !== false, bg: board.bg ? board.bg.blob : null,
+        faces: board.faces.map(f => ({ blob: f.blob, layout: f.layout, head: f.head, sub: f.sub, theme: f.theme, zoom: f.zoom, px: f.px, py: f.py, fit: !!f.fit, layers: f.layers.map(L => L.k === 'p' ? { k: 'p', blob: L.blob, x: L.x, y: L.y, s: L.s, r: L.r || 0 } : { k: 't', text: L.text, c: L.c, f: L.f, o: !!L.o, x: L.x, y: L.y, s: L.s, r: L.r || 0 }) })) };
+      const db = await openDb(); await new Promise((res, rej) => { const tx = db.transaction('s', 'readwrite'); if (rec.faces.length || rec.bg) tx.objectStore('s').put(rec, 'sign'); else tx.objectStore('s').delete('sign'); tx.oncomplete = res; tx.onerror = () => rej(tx.error); });
+      signSig = sig;
+    } catch (e) {} signBusy = false;
+  }
+  setInterval(saveSign, 1500); document.addEventListener('visibilitychange', () => { if (document.hidden) saveSign(); });
+  try { if (navigator.storage && navigator.storage.persist) navigator.storage.persist(); } catch (e) {}
+  (async function restoreSign() {
+    try {
+      const db = await openDb(), d = await new Promise((res, rej) => { const q = db.transaction('s').objectStore('s').get('sign'); q.onsuccess = () => res(q.result); q.onerror = () => rej(q.error); });
+      if (!d) return;
+      board.shape = SHAPES[d.shape] ? d.shape : 'wide'; board.scene = SCENES[d.scene] ? d.scene : 'float'; board.slats = d.slats || 18; board.wave = d.wave == null ? 0.35 : d.wave; board.hold = d.hold || 5; board.spin = d.spin || 3; board.poles = d.poles !== false;
+      if (d.bg) { const it = await loadImg(d.bg); board.bg = { blob: d.bg, url: it.url, img: it.img }; } else if (board.scene === 'photo') board.scene = 'day';
+      for (const q of (d.faces || []).slice(0, 5)) {
+        const f = await loadImg(q.blob); Object.assign(f, { id: ++lid, layout: q.layout, head: q.head, sub: q.sub, theme: q.theme, zoom: q.zoom, px: q.px, py: q.py, fit: !!q.fit, layers: [] });
+        for (const l of (q.layers || [])) { if (l.k === 'p') { const it = await loadImg(l.blob); f.layers.push({ id: ++lid, k: 'p', img: it.img, blob: l.blob, url: it.url, x: l.x, y: l.y, s: l.s, r: l.r }); } else f.layers.push(Object.assign({ id: ++lid }, l)); }
+        board.faces.push(f);
+      }
+      board.sel = board.faces.length ? 0 : -1; board.selL = -1;
+      chipSet('bScenes', Object.keys(SCENES).map(k => [k, SCENES[k]]), () => board.scene, v => { if (v === 'photo' && !board.bg) { $('bBgIn').click(); return; } board.scene = v; });
+      chipSet('bPoles', [[1, 'Poles on'], [0, 'Poles off']], () => board.poles === false ? 0 : 1, v => { board.poles = +v === 1; });
+      chipSet('bShapes', Object.keys(SHAPES).map(k => [k, SHAPES[k][0]]), () => board.shape, v => { board.shape = v; board.faces.forEach(f => { f.cache = null; }); });
+      chipSet('bSlats', [[8, '8'], [12, '12'], [18, '18'], [24, '24']], () => board.slats, v => { board.slats = +v; });
+      bgUI(); refreshBoardUI(); syncFaceControls(); signSig = signNow();
+    } catch (e) {}
+  })();
+  $('bClear').addEventListener('click', async () => {
+    if (!confirm('Clear the sign saved on this phone? This cannot be undone.')) return;
+    board.faces.forEach(f => { f.layers.forEach(L => L.url && URL.revokeObjectURL(L.url)); }); board.faces = []; board.sel = -1; board.selL = -1; if (board.bg) URL.revokeObjectURL(board.bg.url); board.bg = null; if (board.scene === 'photo') board.scene = 'day'; bgUI();
+    try { const db = await openDb(); db.transaction('s', 'readwrite').objectStore('s').delete('sign'); } catch (e) {} signSig = ''; refreshBoardUI(); syncFaceControls(); msg('bMsg2', 'Cleared.');
+  });
   updateKeep();
   window.__pa = st; window.__deck = deck; window.__chr = chr; window.__chrUI = chrUI;
 })();
