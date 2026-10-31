@@ -75,7 +75,7 @@
   .pc button { -webkit-tap-highlight-color: transparent; touch-action: manipulation; }
   .pc-lcd { flex: none; background: #1a1a1a; color: #d6dccf; border-radius: 8px; padding: 4px 10px; font: 700 .72rem/1.3 ui-monospace, Menlo, monospace; letter-spacing: .04em; text-transform: uppercase; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; min-height: 1.6em; margin: 0; }
   .pc-lcd.err { color: #f2c230; }
-  .pc-lcd:empty::before { content: "Pick a pad. Turn a knob. Take a frame."; opacity: .7; }
+  .pc-lcd:empty::before { content: "Pick a move. Hit MAKE IT."; opacity: .7; }
   .pc > * { min-width: 0; max-width: 100%; }
   .pc-pads { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: clamp(5px, 1svh, 8px); }
   .stage.flash::after { content: ''; position: absolute; inset: 0; background: #fff; border-radius: 12px; pointer-events: none; animation: shot .22s ease-out forwards; }
@@ -111,6 +111,7 @@
   .tb-prop small { font: 700 .55rem/1 ui-monospace, Menlo, monospace; opacity: .7; }
   .tb-prop span { font-size: clamp(.7rem, 2svh, .85rem); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 100%; }
   .tb-play { background: #d6dccf; } .tb-play[aria-pressed="true"] { background: #4f7a52; color: #fff; }
+  .tb-make { background: #c8412f; color: #fff; flex: none; width: 100%; height: clamp(40px, 7svh, 56px); font-size: clamp(.85rem, 2.4svh, 1.05rem); }
   .tb-done { background: #1a1a1a; color: #f2ecd6; }
   .pc-go { align-items: flex-end; }
   .pc-go .tb, .pc-go .take { height: clamp(40px, 7.4svh, 60px); }
@@ -494,6 +495,7 @@
           <div class="kc"><div class="kb" id="knP" role="slider" tabindex="0" aria-label="Where in the emote"></div><b class="kl">POSITION</b><span class="kv" id="vPh"></span></div>
           <div class="kc"><div class="kb" id="knS" role="slider" tabindex="0" aria-label="Frames per loop"></div><b class="kl">STEPS</b><span class="kv" id="vSt"></span></div>
           <div class="kc kc-sw"><button type="button" class="sw" id="swAuto" data-n="2" aria-label="Move on by itself after every frame"><i></i></button><b class="kl">AUTO STEP</b><span class="kv" id="vAu"></span></div>
+          <div class="kc kc-sw"><button type="button" class="tb tb-make" id="pcMake">MAKE IT</button></div>
         </div>
         <div class="pc-row">
           <div class="kc kc-sw"><button type="button" class="sw" id="pupFlip" data-n="2" aria-label="Face the other way"><i></i></button><b class="kl">FLIP</b></div>
@@ -1002,7 +1004,7 @@
     const im = new Image(); await new Promise((res, rej) => { im.onload = res; im.onerror = rej; im.src = c.toDataURL('image/jpeg', 0.9); }); pup.bg = im; pup.dirty = true;
   }
   async function pupOpen() {
-    pup.on = true; document.body.classList.add('pupmode'); $('pupFloat').classList.remove('hide'); st.cam = false; if (st.camVideo) { try { setCam(false); } catch (e) {} }
+    pup.on = true; pup.limb = 'emote'; document.body.classList.add('pupmode'); $('pupFloat').classList.remove('hide'); st.cam = false; if (st.camVideo) { try { setCam(false); } catch (e) {} }
     showPanel('pup'); pupSync(); pup.dirty = true; msg('pupMsg', '');
     if (!pup.fr) {
       const fr = document.createElement('iframe'); fr.src = 'character/?embed=1'; fr.setAttribute('aria-hidden', 'true'); fr.style.cssText = 'position:fixed;left:0;top:0;width:10px;height:10px;opacity:0;pointer-events:none;border:0'; document.body.appendChild(fr); pup.fr = fr;
@@ -1058,6 +1060,12 @@
   }
   ['pupEm', 'pupSt'].forEach(id => $(id).addEventListener('change', pupEmApply)); $('pupPh').addEventListener('input', pupEmApply);
   $('swAuto').addEventListener('click', () => { pup.em.auto = !pup.em.auto; buzz(8); swDraw(); });
+  $('pcMake').addEventListener('click', async () => {
+    if (pup.busy || !pup.w) return; pup.busy = true; const n = +$('pupSt').value, was = pup.em.auto; pup.em.auto = false; $('pcMake').disabled = true;
+    try { for (let i = 0; i < n; i++) { $('pupPh').value = i / n; pupEmApply(); msg('pupMsg', 'Frame ' + (i + 1) + ' of ' + n); await pupTake(); }
+      $('pupPh').value = 0; pupEmApply(); msg('pupMsg', 'Done. Playing it'); if (st.frames.length > 1) { deck.p = 0; setDeck('play'); tbSync(); } }
+    finally { pup.em.auto = was; pup.busy = false; $('pcMake').disabled = false; swDraw(); }
+  });
   function pupEmStep() { if (!pup.em.auto) return; const n = +$('pupSt').value, ph = $('pupPh'); ph.value = ((Math.round(+ph.value * n) + 1) % n) / n; pupEmApply(); }
   mkKnob($('knM'), chipAd('pfMouth', 'vM', ['CLOSED', 'SMALL', 'WIDE', 'OH']));
   mkKnob($('knB'), selAd('pfBlink', 'vB', ['NEVER', '1 IN 2', '1 IN 3', '1 IN 4', '1 IN 6', '1 IN 8']));
@@ -1072,7 +1080,7 @@
   $('pupFlip').addEventListener('click', () => { pup.flip = !pup.flip; pup.dirty = true; buzz(8); swDraw(); });
   $('pupFloat').addEventListener('click', () => $('pupSnap').click());
   $('pupReset').addEventListener('click', () => { pup.P = pupFresh(); pupSync(); pup.dirty = true; });
-  $('pupSnap').addEventListener('click', async () => {
+  let pupTake; $('pupSnap').addEventListener('click', pupTake = async () => {
     const [W, H] = size(), c = document.createElement('canvas'); c.width = W; c.height = H; const g = c.getContext('2d'); pupDrawBg(g, W, H); g.drawImage(pupChar(W, H), 0, 0);
     const ghost = document.createElement('canvas'); ghost.width = W; ghost.height = H; ghost.getContext('2d').drawImage(pup.flip ? pup.fc : pup.chc, 0, 0);
     snap(); await addBlob(await canvasToBlob(c, 'image/jpeg', 0.92)); pup.prev = ghost; pup.n++; st.sel = st.frames.length - 1; pup.dirty = true; buzz(15); pupEmStep();
