@@ -23,7 +23,14 @@
 
   /* full screen exit lives in its own bar, so it never covers a tool's buttons */
   .fs-bar { position: fixed; top: 0; left: 0; right: 0; z-index: 1001; height: calc(38px + env(safe-area-inset-top)); padding-top: env(safe-area-inset-top); background: #1a1a1a; display: flex; align-items: center; justify-content: space-between; padding-left: 12px; padding-right: 6px; color: #fff; font-weight: 900; font-size: 0.72rem; letter-spacing: .14em; text-transform: uppercase; }
-  .fs-bar button { border: 0; background: #c8412f; color: #fff; font: inherit; padding: 7px 12px; cursor: pointer; letter-spacing: .1em; }
+  .fs-bar .fs-help { background: #f1ead6; color: #1a1a1a; border-radius: 50%; width: 28px; height: 28px; padding: 0; margin: 0 8px 0 auto; font-weight: 900; letter-spacing: 0; font-size: 1rem; line-height: 1; }
+  .help-wrap { position: fixed; inset: 0; z-index: 1100; background: rgba(26,26,26,.55); display: flex; align-items: flex-end; justify-content: center; }
+  .help-sheet { background: #f1ead6; width: 100%; max-width: 520px; max-height: 82vh; overflow-y: auto; border-radius: 18px 18px 0 0; padding: 20px 20px calc(24px + env(safe-area-inset-bottom)); border-top: 3px solid #1a1a1a; }
+  .help-sheet h3 { margin: 0 0 4px; font-size: 1.35rem; letter-spacing: .04em; text-transform: uppercase; }
+  .help-sheet .help-sub { margin: 0 0 14px; color: #5a564b; }
+  .help-sheet ol { margin: 0 0 16px; padding-left: 1.3em; } .help-sheet li { margin: 0 0 10px; line-height: 1.4; }
+  .help-sheet button { width: 100%; border: 0; background: #c8412f; color: #fff; font-weight: 900; letter-spacing: .12em; padding: 14px; border-radius: 12px; text-transform: uppercase; }
+  .fs-bar button { background: #c8412f; color: #fff; font: inherit; padding: 7px 12px; cursor: pointer; letter-spacing: .1em; }
   html.fs-open, html.fs-open body { overflow: hidden; }
   @media (max-width: 700px) { .subpanel .fullscreen-btn, .subpanel .build-header { display: none; } }
   .fullscreen-btn {
@@ -440,13 +447,31 @@
   // ===== Full screen in place: same frame, same work, just bigger. On a phone every tool opens this way, so there is only one thing to scroll. =====
   const isPhone = () => window.matchMedia('(max-width: 700px)').matches;
   function exitFs() { const p = document.querySelector('.subpanel.fs'); if (p) p.classList.remove('fs'); document.documentElement.classList.remove('fs-open'); document.querySelectorAll('.fs-bar').forEach(b => b.remove()); return p; }
+  const GUIDE = {
+    zineBuilderPanel: ['Zine Builder', ['Pick a page size and a layout. You can change it any time.', 'Add your photos, notes and writing, page by page.', 'Drag pages around until the order feels right.', 'Look through it once, then save the PDF.', 'Print it, fold it, staple it, pass it on.']],
+    cardBuilderPanel: ['Cards + Flyers', ['Pick a card or a flyer shape.', 'Add your photo, your words and your colors.', 'Check the front and the back.', 'Save it and print it at home or at a shop.']],
+    qrBuilderPanel: ['QR Maker', ['Type or paste the link you want people to scan.', 'Pick a style and a color.', 'Test it with your own phone camera.', 'Save it and put it on anything you print.']],
+    stencilBuilderPanel: ['Stencil + Halftone', ['Pick a photo with strong shapes.', 'Slide the settings until you see the stencil you want.', 'Fix small spots by hand if you need to.', 'Save the stencil and cut it or burn it on a screen.']],
+    clothingBuilderPanel: ['Cut & Sew', ['Pick the piece of clothing you want to make.', 'Add your art and your measurements.', 'Check the pieces on screen.', 'Save the pattern and take it to your fabric.']],
+    videoPanel: ['Camera', ['Stop is for stop motion. Prop your phone so it cannot move.', 'Move your subject a tiny bit, tap the red button, repeat.', 'Press play to see it move. Add or delete frames until it feels right.', 'Tape is for a video you already have. Rewind, fast forward and pause it like a camcorder, then record it.']],
+    toonPanel: ['Cartoon', ['Build: pick the face, hair, outfit and a move.', 'Scene: pick a background or a color, add a floor and props. You can change it later, even after you have frames.', 'Animate: tap WHOLE, HEAD, ARMS, BODY or LEGS, turn the dials, then tap Take Frame.', 'Press play to watch it. Save a sticker or a GIF.']],
+    signPanel: ['Billboard', ['Tap + to add your photos. One per panel.', 'See-through logo? Open Backdrop and pick white or black behind it.', 'Words lets you add text. Sign shows it on the billboard.', 'Timing is how long each photo stays up.', 'Save makes the video.']]
+  };
+  function showHelp(panel) {
+    const g = GUIDE[panel.id] || ['Help', ['Take your time. Nothing leaves your phone until you save it.']];
+    const w = document.createElement('div'); w.className = 'help-wrap'; const s = document.createElement('div'); s.className = 'help-sheet';
+    s.innerHTML = '<h3></h3><p class="help-sub">Take your time. Nothing leaves your phone.</p><ol></ol><button type="button">Got it</button>';
+    s.querySelector('h3').textContent = g[0]; g[1].forEach(x => { const li = document.createElement('li'); li.textContent = x; s.querySelector('ol').appendChild(li); });
+    const close = () => w.remove(); s.querySelector('button').onclick = close; w.addEventListener('click', e => { if (e.target === w) close(); }); w.appendChild(s); document.body.appendChild(w);
+  }
   function enterFs(panel) {
     if (!panel || panel.classList.contains('fs')) return;
     panel.classList.add('fs'); document.documentElement.classList.add('fs-open');
     const name = (panel.querySelector('h2') || {}).textContent || 'NOCIV', phone = isPhone();
     const bar = document.createElement('div'); bar.className = 'fs-bar';
     bar.innerHTML = '<span></span><button type="button"></button>'; bar.firstChild.textContent = name;
-    const btn = bar.querySelector('button'); btn.innerHTML = phone ? '&lsaquo; Back to tools' : '&#10005; Exit full screen';
+    const hb = document.createElement('button'); hb.type = 'button'; hb.className = 'fs-help'; hb.setAttribute('aria-label', 'How to use this'); hb.textContent = '?'; hb.onclick = () => showHelp(panel); bar.insertBefore(hb, bar.querySelector('button'));
+    const btn = bar.querySelector('button:last-child'); btn.innerHTML = phone ? '&lsaquo; Back to tools' : '&#10005; Exit full screen';
     btn.onclick = () => { const p = exitFs(); if (phone && p) { const back = p.querySelector('.hub-back'); if (back) back.click(); } };
     document.body.appendChild(bar);
   }

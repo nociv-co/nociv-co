@@ -43,7 +43,8 @@
   .hdr .ttl span { padding: 1px 6px; transform: none; }
   .in-frame .hdr .ttl { visibility: hidden; }
   .icon { border: 1.5px solid var(--ink); background: #fff; border-radius: 10px; min-width: 44px; height: 38px; font-weight: 900; font-size: 1.05rem; padding: 0 10px; }
-  .icon:disabled { opacity: 0.3; }
+  .icon:disabled { opacity: 1; color: #8a8579; background: #e4dfd2; border-color: #b9b4a6; }
+  .icon svg { display: block; margin: 0 auto; }
   #homeBtn { font-size: 0.85rem; }
   .vf { flex: none; padding: 0 10px; }
   .vf .stage { background: #111; border-radius: 12px; display: grid; place-items: center; padding: 5px; position: relative; }
@@ -442,8 +443,8 @@
   <header class="hdr">
     <button type="button" class="icon" id="homeBtn" aria-label="Back to the start">&lsaquo; Start</button>
     <span class="ttl"><span>ANIMATE</span> + EDIT</span>
-    <button type="button" class="icon" id="undoBtn" aria-label="Undo" disabled>&#8630;</button>
-    <button type="button" class="icon" id="redoBtn" aria-label="Redo" disabled>&#8631;</button>
+    <button type="button" class="icon" id="undoBtn" aria-label="Undo" disabled><svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 14L4 9l5-5"/><path d="M4 9h10a6 6 0 010 12h-3"/></svg></button>
+    <button type="button" class="icon" id="redoBtn" aria-label="Redo" disabled><svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M15 14l5-5-5-5"/><path d="M20 9H10a6 6 0 000 12h3"/></svg></button>
   </header>
 
   <div class="vf"><div class="stage"><canvas id="cv" width="540" height="960"></canvas><div id="pupZoom" role="group" aria-label="Zoom"><button type="button" data-z="all" aria-pressed="true">WHOLE</button><button type="button" data-z="head" aria-pressed="false">HEAD</button><button type="button" data-z="upper" aria-pressed="false">ARMS</button><button type="button" data-z="mid" aria-pressed="false">BODY</button><button type="button" data-z="legs" aria-pressed="false">LEGS</button></div><button type="button" id="pupFloat" class="hide" aria-label="Take frame">Take frame</button><button type="button" id="fsBtn" class="hide" aria-label="Go fullscreen">Fullscreen</button><button type="button" id="fsX" class="hide" aria-label="Exit fullscreen">Close</button><div id="fsHint" class="hide">Turn your phone sideways</div><div id="stageMsg"></div></div></div>
