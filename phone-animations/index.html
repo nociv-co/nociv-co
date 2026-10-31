@@ -164,6 +164,13 @@
   .tb-make, .take { background: #c8412f; color: #fff; border: 0; text-shadow: none; box-shadow: 0 8px 18px rgba(200,65,47,.4), inset 0 1px 0 rgba(255,255,255,.3); }
   .take:active, .tb-make:active { transform: translateY(1px); box-shadow: 0 3px 8px rgba(200,65,47,.4); }
   body.pupmode #pupLimb { display: none !important; }
+  body.scn #cv { touch-action: none; }
+  body.scn.scrollapp .app .vf canvas { max-height: 40svh !important; }
+  .swrow { display: flex; flex-wrap: wrap; gap: 8px; margin: 2px 0 6px; }
+  .swrow button { width: 40px; height: 40px; border-radius: 50%; border: 2px solid var(--ink); padding: 0; position: relative; }
+  .swrow button[aria-pressed="true"] { outline: 3px solid var(--red); outline-offset: 2px; }
+  .swrow button.none { background: repeating-conic-gradient(#d9d5cb 0 25%, #f4f1ea 0 50%) 0 0 / 14px 14px; }
+  .scsel { display: flex; gap: 8px; flex-wrap: wrap; margin: 8px 0; } .scsel.hide { display: none; }
   #pupSub { display: grid; grid-template-columns: repeat(2, 1fr); gap: 8px; flex: none; } #pupSub.hide { display: none; }
   #pupSub .pad { height: clamp(34px, 5.2svh, 46px); font-size: clamp(.8rem, 2.2svh, 1rem); text-align: center; padding: 0; } #pupSub .pad i { display: none; }
   body.pupmode #pupZoom button { font-size: clamp(.78rem, 2.1svh, .95rem); padding: clamp(8px, 1.7svh, 12px) 13px; min-width: 66px; }
@@ -489,7 +496,7 @@
       <h2 class="rl">Camera</h2>
       <p class="tip rl">Prop your phone so it cannot move. Move your subject a tiny bit, tap the red button, repeat.</p>
       <h2 class="ct">Scene</h2>
-      <p class="tip ct">Step 1. Pick the shape and a background photo from your phone. Then tap Animate.</p>
+      <p class="tip ct">Pick a background, a floor and props. You can change the scene any time, even after you have frames.</p>
       <label class="f">Shape</label>
       <div class="chips" id="aspects">
         <button type="button" class="chip" data-a="tall" aria-pressed="true">Tall 9:16</button>
@@ -501,8 +508,20 @@
       <div class="ct">
       <label class="f">Background</label>
       <button type="button" class="btn" id="pupBtn">Choose a background photo</button>
-      <button type="button" class="btn" id="pupPlain" style="margin-top:8px">Use a plain background</button>
+      <p class="tip" style="margin:10px 0 2px">Or pick a plain color</p>
+      <div class="swrow" id="scColors"></div>
       <input type="file" id="pupBg" accept="image/*" class="hide">
+      <label class="f" style="margin-top:14px">Floor</label>
+      <div class="swrow" id="scFloor"></div>
+      <label class="f" style="margin-top:10px">Props</label>
+      <select id="scProp" aria-label="Add a prop"><option value="">Add a prop...</option><option value="tree">Tree</option><option value="bush">Bush</option><option value="grass">Grass</option><option value="sun">Sun</option><option value="cloud">Cloud</option><option value="house">House</option><option value="lamp">Street lamp</option><option value="rocks">Rocks</option></select>
+      <p class="tip" id="scTip" style="margin:6px 0 0">Tap a prop to move it. Two fingers to resize and twist.</p>
+      <div class="scsel hide" id="scSel"><button type="button" class="chip" id="scZ" aria-pressed="false">Behind them</button><button type="button" class="chip" id="scBig">Bigger</button><button type="button" class="chip" id="scSmall">Smaller</button><button type="button" class="chip" id="scDel">Delete</button></div>
+      <div id="scApplyBox" class="hide" style="margin-top:12px;padding:10px;border:1.5px dashed var(--ink);border-radius:12px">
+        <label class="f" style="margin-top:0">Use this scene on</label>
+        <select id="scScope" aria-label="Which frames"><option value="all">Every frame</option><option value="from">This frame and after</option><option value="one">Only this frame</option><option value="next">Only new frames I take</option></select>
+        <button type="button" class="btn" id="scApply" style="margin-top:8px">Apply</button>
+      </div>
       <button type="button" class="btn dark" id="sceneNext" style="margin-top:14px">Next: Animate</button>
       <label class="f" style="margin-top:18px">Quick start: add a ready made move</label>
       <div class="row"><select id="chPose" aria-label="Move"><option value="">Their saved move</option><option value="idle">Idle</option><option value="wave">Wave</option><option value="walk">Walk</option><option value="dance">Dance</option><option value="hype">Hype</option><option value="spray">Spray</option><option value="scratch">Scratch</option><option value="point">Point</option><option value="ollie">Ollie</option></select><select id="chN" aria-label="Frames"><option value="8">8 frames</option><option value="12" selected>12 frames</option><option value="16">16 frames</option></select></div>
@@ -1023,6 +1042,7 @@
     if (st.kind === 'board') { drawBoardView(0); return; }
     if (st.kind === 'clip') { drawClip(); return; }
     if (pup.on && deck.mode === 'pause') { drawPuppet(); return; }
+    if (sceneEditing()) { drawSceneEdit(); return; }
     if (st.cam && st.camVideo) return;
     const [W, H] = size(); applySize(W, H);
     const i = st.sel >= 0 ? st.sel : st.frames.length - 1;
@@ -1152,10 +1172,89 @@
   ['pupS1', 'pupS2', 'pupS3', 'pupSz'].forEach(id => $(id).addEventListener('input', () => pupSet(id === 'pupS3')));
   document.querySelectorAll('#pupLimb [data-l]').forEach(b => b.addEventListener('click', () => { pup.limb = b.dataset.l; buzz(8); pupSync(); }));
   function pupChecker(c, W, H) { const q = Math.max(10, Math.round(W / 24)); c.fillStyle = '#f4f1ea'; c.fillRect(0, 0, W, H); c.fillStyle = '#d9d5cb'; for (let y = 0; y * q < H; y++) for (let x = (y & 1); x * q < W; x += 2) c.fillRect(x * q, y * q, q, q); }
-  function pupDrawBg(c, W, H) {
-    const im = pup.bg; if (!im) { pupChecker(c, W, H); return; } c.fillStyle = '#222'; c.fillRect(0, 0, W, H);
-    const k = Math.max(W / im.naturalWidth, H / im.naturalHeight), w = im.naturalWidth * k, h = im.naturalHeight * k; c.drawImage(im, (W - w) / 2, (H - h) / 2, w, h);
+  // ---- scene: background, floor and flat props. Frames remember their own scene so it can change later ----
+  const SKS = {
+    tree: '<rect x="88" y="115" width="24" height="75" fill="#8a6a4a"/><circle cx="68" cy="108" r="34" fill="#4f8a4a"/><circle cx="132" cy="108" r="34" fill="#4f8a4a"/><circle cx="100" cy="76" r="48" fill="#5d9a4e"/>',
+    bush: '<circle cx="58" cy="140" r="38" fill="#4f8a4a"/><circle cx="142" cy="140" r="38" fill="#4f8a4a"/><circle cx="100" cy="124" r="46" fill="#5d9a4e"/>',
+    grass: '<path d="M18 190 L34 112 L52 190Z M52 190 L78 88 L102 190Z M96 190 L124 104 L146 190Z M138 190 L166 124 L184 190Z" fill="#6fa35a"/>',
+    sun: '<g stroke="#1a1a1a" stroke-width="8" stroke-linecap="round"><path d="M100 12v26M100 162v26M12 100h26M162 100h26M38 38l18 18M144 144l18 18M162 38l-18 18M56 144l-18 18"/></g><circle cx="100" cy="100" r="44" fill="#f2c230"/>',
+    cloud: '<path d="M44 150 A30 30 0 0 1 50 92 A42 42 0 0 1 130 82 A34 34 0 0 1 152 150 Z" fill="#ffffff"/>',
+    house: '<rect x="38" y="88" width="124" height="94" fill="#e8d9b0"/><path d="M22 96 L100 32 L178 96Z" fill="#c8412f"/><rect x="88" y="128" width="30" height="54" fill="#8a6a4a"/><rect x="52" y="108" width="26" height="26" fill="#cfe3d8"/><rect x="126" y="108" width="26" height="26" fill="#cfe3d8"/>',
+    lamp: '<rect x="94" y="52" width="12" height="136" fill="#3a3a3a"/><rect x="76" y="178" width="48" height="12" fill="#3a3a3a"/><path d="M68 56 L132 56 L120 28 L80 28Z" fill="#f2c230"/>',
+    rocks: '<path d="M16 186 L42 126 L90 114 L118 186Z" fill="#9a968c"/><path d="M92 186 L116 96 L152 90 L184 186Z" fill="#b9b4a8"/><path d="M56 186 L70 150 L102 148 L124 186Z" fill="#847f74"/>'
+  };
+  const SKI = {};
+  Object.keys(SKS).forEach(k => { const im = new Image(); im.onload = () => { pup.dirty = true; try { renderStill(); } catch (e) {} }; im.src = 'data:image/svg+xml;utf8,' + encodeURIComponent('<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 200" stroke="#1a1a1a" stroke-width="6" stroke-linejoin="round" stroke-linecap="round">' + SKS[k] + '</svg>'); SKI[k] = im; });
+  const SCE = { cur: { color: null, bg: null, bgBlob: null, bgv: 0, floor: { on: false, color: '#9b9a94' }, st: [] }, frozen: null, sel: -1 };
+  Object.defineProperty(pup, 'bg', { get() { return SCE.cur.bg; }, set(v) { SCE.cur.bg = v; SCE.cur.bgv++; } });
+  Object.defineProperty(pup, 'bgBlob', { get() { return SCE.cur.bgBlob; }, set(v) { SCE.cur.bgBlob = v; } });
+  const scSig = s => JSON.stringify([s.color, s.bgv, s.floor, s.st]);
+  function scFreeze() { const s = SCE.cur, sig = scSig(s); if (SCE.frozen && SCE.frozen.sig === sig) return SCE.frozen; return (SCE.frozen = { color: s.color, bg: s.bg, bgBlob: s.bgBlob, bgv: s.bgv, floor: Object.assign({}, s.floor), st: s.st.map(o => Object.assign({}, o)), sig: sig }); }
+  function scDrawSticker(c, W, H, o) { const im = SKI[o.k]; if (!im || !im.complete || !im.naturalWidth) return; const w = o.s * W; c.save(); c.translate(o.x * W, o.y * H); c.rotate(o.r || 0); c.drawImage(im, -w / 2, -w / 2, w, w); c.restore(); }
+  function scBack(c, W, H, s, preview) {
+    if (s.bg) { c.fillStyle = '#222'; c.fillRect(0, 0, W, H); const im = s.bg, k = Math.max(W / im.naturalWidth, H / im.naturalHeight), w = im.naturalWidth * k, h = im.naturalHeight * k; c.drawImage(im, (W - w) / 2, (H - h) / 2, w, h); }
+    else if (s.color) { c.fillStyle = s.color; c.fillRect(0, 0, W, H); }
+    else if (preview) pupChecker(c, W, H); else { c.fillStyle = '#f2ecd6'; c.fillRect(0, 0, W, H); }
+    if (s.floor && s.floor.on) { const y = Math.round(H * 0.8); c.fillStyle = s.floor.color; c.fillRect(0, y, W, H - y); c.fillStyle = '#1a1a1a'; c.fillRect(0, y, W, Math.max(3, Math.round(W / 140))); }
+    s.st.forEach(o => { if (o.z !== 'f') scDrawSticker(c, W, H, o); });
   }
+  function scFront(c, W, H, s) { s.st.forEach(o => { if (o.z === 'f') scDrawSticker(c, W, H, o); }); }
+  function pupDrawBg(c, W, H) { scBack(c, W, H, SCE.cur, true); }
+  function sceneEditing() { const b = document.body; return b.classList.contains('toon') && st.kind === 'stop' && st.panel === 'shoot' && !pup.on && deck.mode === 'pause' && !st.cam; }
+  function drawSceneEdit() {
+    const [W, H] = size(); applySize(W, H); const i = st.sel >= 0 ? st.sel : st.frames.length - 1, f = st.frames[i];
+    scBack(ctx, W, H, SCE.cur, true); if (f && f.ch) ctx.drawImage(f.ch, 0, 0, W, H); scFront(ctx, W, H, SCE.cur);
+    const o = SCE.cur.st[SCE.sel]; if (o) { const w = o.s * W; ctx.save(); ctx.translate(o.x * W, o.y * H); ctx.rotate(o.r || 0); ctx.strokeStyle = '#c8412f'; ctx.lineWidth = Math.max(3, W / 160); ctx.setLineDash([W / 50, W / 70]); ctx.strokeRect(-w / 2, -w / 2, w, w); ctx.restore(); }
+    stageMsg(SCE.cur.st.length || SCE.cur.bg || SCE.cur.color || SCE.cur.floor.on ? '' : 'Pick a background, add a floor or a prop');
+  }
+  // ---- scene panel controls ----
+  const SC_COLORS = [['#f2ecd6', 'Cream'], ['#ffffff', 'White'], ['#cfe3d8', 'Mint'], ['#9fc3e0', 'Sky'], ['#f2c230', 'Yellow'], ['#c8412f', 'Red'], ['#2f5d9e', 'Blue'], ['#1a1a1a', 'Black']];
+  const SC_FLOORS = [['#9b9a94', 'Street'], ['#6fa35a', 'Grass'], ['#d8c79a', 'Sand'], ['#a0724a', 'Wood'], ['#1a1a1a', 'Black'], ['#ffffff', 'White']];
+  function scSwatches() {
+    const a = $('scColors'), b = $('scFloor'); a.innerHTML = ''; b.innerHTML = '';
+    const mk = (box, col, name, on, fn, cls) => { const x = document.createElement('button'); x.type = 'button'; x.setAttribute('aria-label', name); x.setAttribute('aria-pressed', on ? 'true' : 'false'); if (col) x.style.background = col; if (cls) x.className = cls; x.addEventListener('click', () => { buzz(8); fn(); scAfter(); }); box.appendChild(x); };
+    mk(a, '', 'No background', !SCE.cur.bg && !SCE.cur.color, () => { SCE.cur.color = null; pup.bg = null; pup.bgBlob = null; pupBgSave(); }, 'none');
+    SC_COLORS.forEach(c => mk(a, c[0], c[1], !SCE.cur.bg && SCE.cur.color === c[0], () => { SCE.cur.color = c[0]; pup.bg = null; pup.bgBlob = null; pupBgSave(); }));
+    mk(b, '', 'No floor', !SCE.cur.floor.on, () => { SCE.cur.floor.on = false; }, 'none');
+    SC_FLOORS.forEach(c => mk(b, c[0], c[1], SCE.cur.floor.on && SCE.cur.floor.color === c[0], () => { SCE.cur.floor.on = true; SCE.cur.floor.color = c[0]; }));
+  }
+  function scAfter() { pup.dirty = true; scSync(); scSave(); renderStill(); }
+  function scSync() {
+    scSwatches(); const o = SCE.cur.st[SCE.sel]; $('scSel').classList.toggle('hide', !o);
+    if (o) { $('scZ').textContent = o.z === 'f' ? 'In front of them' : 'Behind them'; $('scZ').setAttribute('aria-pressed', o.z === 'f' ? 'true' : 'false'); }
+    $('scApplyBox').classList.toggle('hide', !st.frames.some(f => f.ch));
+    document.body.classList.toggle('scn', sceneEditing());
+  }
+  async function scSave() { try { const db = await openDb(); db.transaction('s', 'readwrite').objectStore('s').put({ color: SCE.cur.color, floor: SCE.cur.floor, st: SCE.cur.st }, 'toonscn'); } catch (e) {} }
+  $('scProp').addEventListener('change', () => { const k = $('scProp').value; $('scProp').value = ''; if (!k) return; const n = SCE.cur.st.length; SCE.cur.st.push({ k: k, x: 0.3 + (n % 4) * 0.13, y: k === 'sun' || k === 'cloud' ? 0.18 : 0.66, s: k === 'grass' ? 0.3 : 0.4, r: 0, z: 'b' }); SCE.sel = SCE.cur.st.length - 1; buzz(8); scAfter(); });
+  $('scZ').addEventListener('click', () => { const o = SCE.cur.st[SCE.sel]; if (!o) return; o.z = o.z === 'f' ? 'b' : 'f'; scAfter(); });
+  $('scBig').addEventListener('click', () => { const o = SCE.cur.st[SCE.sel]; if (!o) return; o.s = Math.min(1.6, o.s * 1.2); scAfter(); });
+  $('scSmall').addEventListener('click', () => { const o = SCE.cur.st[SCE.sel]; if (!o) return; o.s = Math.max(0.06, o.s / 1.2); scAfter(); });
+  $('scDel').addEventListener('click', () => { if (SCE.sel < 0) return; SCE.cur.st.splice(SCE.sel, 1); SCE.sel = -1; scAfter(); });
+  // drag with one finger, resize and twist with two
+  const scP = new Map(); let scG = null;
+  const scXY = e => { const r = cv.getBoundingClientRect(); return { u: (e.clientX - r.left) / r.width, v: (e.clientY - r.top) / r.height, cx: e.clientX, cy: e.clientY }; };
+  function scHit(u, v) { const W = cv.width, H = cv.height, S = SCE.cur.st, order = []; for (let i = S.length - 1; i >= 0; i--) if (S[i].z === 'f') order.push(i); for (let i = S.length - 1; i >= 0; i--) if (S[i].z !== 'f') order.push(i);
+    for (const i of order) { const o = S[i], dx = u * W - o.x * W, dy = v * H - o.y * H, c = Math.cos(-(o.r || 0)), s = Math.sin(-(o.r || 0)), x = dx * c - dy * s, y = dx * s + dy * c, h = o.s * W / 2; if (Math.abs(x) <= h && Math.abs(y) <= h) return i; } return -1; }
+  function scGStart() { const o = SCE.cur.st[SCE.sel]; if (!o) { scG = null; return; } const pts = [...scP.values()]; if (pts.length >= 2) { const a = pts[0], b = pts[1]; scG = { m: 'pinch', d0: Math.hypot(a.cx - b.cx, a.cy - b.cy) || 1, a0: Math.atan2(b.cy - a.cy, b.cx - a.cx), s0: o.s, r0: o.r || 0 }; } else if (pts[0]) scG = { m: 'drag', u: pts[0].u, v: pts[0].v, x0: o.x, y0: o.y }; }
+  cv.addEventListener('pointerdown', e => { if (!sceneEditing()) return; const q = scXY(e); scP.set(e.pointerId, q); try { cv.setPointerCapture(e.pointerId); } catch (x) {}
+    if (scP.size === 1) { const h = scHit(q.u, q.v); SCE.sel = h; scSync(); renderStill(); } scGStart(); });
+  cv.addEventListener('pointermove', e => { if (!scP.has(e.pointerId) || !sceneEditing()) return; scP.set(e.pointerId, scXY(e)); const o = SCE.cur.st[SCE.sel]; if (!o || !scG) return; const pts = [...scP.values()];
+    if (scG.m === 'pinch' && pts.length >= 2) { const a = pts[0], b = pts[1], d = Math.hypot(a.cx - b.cx, a.cy - b.cy) || 1, an = Math.atan2(b.cy - a.cy, b.cx - a.cx); o.s = Math.min(1.6, Math.max(0.06, scG.s0 * d / scG.d0)); o.r = scG.r0 + (an - scG.a0); }
+    else if (scG.m === 'drag') { const q = pts[0]; o.x = Math.min(1.2, Math.max(-0.2, scG.x0 + q.u - scG.u)); o.y = Math.min(1.2, Math.max(-0.2, scG.y0 + q.v - scG.v)); }
+    renderStill(); });
+  ['pointerup', 'pointercancel'].forEach(tp => cv.addEventListener(tp, e => { if (!scP.has(e.pointerId)) return; scP.delete(e.pointerId); if (scP.size) scGStart(); else { scG = null; scSave(); } }));
+  // change the scene on frames already taken
+  async function scRecomp(f, s) {
+    if (!f.ch) return f; const W = f.ch.naturalWidth, H = f.ch.naturalHeight, c = document.createElement('canvas'); c.width = W; c.height = H; const g = c.getContext('2d');
+    scBack(g, W, H, s, false); g.drawImage(f.ch, 0, 0); scFront(g, W, H, s); const nf = await loadImg(await canvasToBlob(c, 'image/jpeg', 0.92)); return Object.assign(nf, { chb: f.chb, ch: f.ch, chUrl: f.chUrl, sc: s });
+  }
+  $('scApply').addEventListener('click', async () => {
+    const sc = $('scScope').value; if (sc === 'next') { msg('shootMsg', 'Done. New frames use this scene.'); return; }
+    const s = scFreeze(), sel = st.sel >= 0 ? st.sel : st.frames.length - 1; $('scApply').disabled = true; snap();
+    try { for (let i = 0; i < st.frames.length; i++) { if (sc === 'one' && i !== sel) continue; if (sc === 'from' && i < sel) continue; st.frames[i] = await scRecomp(st.frames[i], s); } } catch (e) {}
+    $('scApply').disabled = false; refreshUI(); queueSave(); renderStill(); msg('shootMsg', sc === 'all' ? 'Scene applied to every frame.' : sc === 'from' ? 'Scene applied from frame ' + (sel + 1) + ' on.' : 'Scene applied to frame ' + (sel + 1) + '.');
+  });
   pup.face = { eyes: 0, gx: 0, mouth: 0, blinkEvery: 4, talkRate: 0, mood: 'neutral', turn: 0, head: '', brow: 0, lid: 0 };
   const TALK = [1, 2, 0, 3, 2, 1, 0, 2];
   function pupFaceFor(n) {
@@ -1196,7 +1295,7 @@
     if (pup.dirty || pup.out.width !== W || pup.out.height !== H) {
       const o = pup.out; o.width = W; o.height = H; const c = o.getContext('2d'); pupDrawBg(c, W, H);
       if (pup.prev && pup.prev.width === W) { c.globalAlpha = 0.28; c.drawImage(pup.prev, 0, 0); c.globalAlpha = 1; }
-      c.drawImage(pupChar(W, H), 0, 0); pup.dirty = false; pup.zt = null;
+      c.drawImage(pupChar(W, H), 0, 0); scFront(c, W, H, SCE.cur); pup.dirty = false; pup.zt = null;
     }
     const zc = pupZoomStep(W, H), z = zc.z; if (z > 1.004) { const sw = W / z, sh = H / z, cx = Math.min(W - sw / 2, Math.max(sw / 2, zc.x * W)), cy = Math.min(H - sh / 2, Math.max(sh / 2, (pup.y - zc.f * 0.925 * pup.sz) * H)); ctx.drawImage(pup.out, cx - sw / 2, cy - sh / 2, sw, sh, 0, 0, W, H); } else ctx.drawImage(pup.out, 0, 0); stageMsg('Frame ' + (pup.n + 1) + (pup.n ? '' : '. Drag to move your character'));
   }
@@ -1223,13 +1322,13 @@
   function pupZoomReset() { pup.zm = 'all'; pup.zt = null; document.body.classList.remove('pupzoomed'); document.querySelectorAll('#pupZoom button').forEach(x => x.setAttribute('aria-pressed', x.dataset.z === 'all' ? 'true' : 'false')); }
   function pupClose() { pupZoomReset(); pup.on = false; document.body.classList.remove('pupmode'); $('pupFloat').classList.add('hide'); const had = pup.n; if (pup.fr) { pup.fr.remove(); pup.fr = null; pup.w = null; } pup.prev = null; pup.n = 0; st.cam = false; refreshUI(); showPanel('shoot'); if (had && st.frames.length > 1) { try { $('swTape').click(); setDeck('play'); } catch (e) {} } }
   $('pupBtn').addEventListener('click', () => $('pupBg').click());
-  $('pupPlain').addEventListener('click', () => { pup.bg = null; pup.bgBlob = null; pupBgSave(); pup.dirty = true; renderStill(); msg('shootMsg', 'Plain background. Tap Animate when you are ready.'); });
+
   $('sceneNext').addEventListener('click', goAnimate);
   $('clearScene').addEventListener('click', () => { if (!confirm('Start over? This clears every frame of this animation.')) return; st.frames = []; st.sel = -1; pup.n = 0; refreshUI(); queueSave(); updateKeep(); renderStill(); msg('shootMsg', 'Cleared.'); });
   $('pupBgBtn').addEventListener('click', () => $('pupBg').click());
   $('pupBg').addEventListener('change', async e => {
     const file = e.target.files[0]; e.target.value = ''; if (!file) return;
-    try { await pupLoadBg(file); pup.dirty = true; if (!pup.on) { renderStill(); msg('shootMsg', 'Background set. Tap Animate when you are ready.'); } } catch (err) { msg('shootMsg', 'That photo would not open. Try JPG or PNG.', true); msg('pupMsg', 'That photo would not open. Try JPG or PNG.', true); }
+    try { await pupLoadBg(file); pup.dirty = true; SCE.cur.color = null; scSync(); scSave(); if (!pup.on) { renderStill(); msg('shootMsg', 'Background set. Tap Animate when you are ready.'); } } catch (err) { msg('shootMsg', 'That photo would not open. Try JPG or PNG.', true); msg('pupMsg', 'That photo would not open. Try JPG or PNG.', true); }
   });
   $('pupProp').addEventListener('change', () => { pup.dirty = true; swDraw(); });
   $('pcProp').addEventListener('click', () => { const sl = $('pupProp'); sl.selectedIndex = (sl.selectedIndex + 1) % sl.options.length; buzz(8); sl.dispatchEvent(new Event('change')); });
@@ -1303,9 +1402,9 @@
   $('pupFloat').addEventListener('click', () => $('pupSnap').click());
   $('pupReset').addEventListener('click', () => { pup.P = pupFresh(); pupSync(); pup.dirty = true; });
   let pupTake; $('pupSnap').addEventListener('click', pupTake = async () => {
-    const [W, H] = size(), c = document.createElement('canvas'); c.width = W; c.height = H; const g = c.getContext('2d'); if (pup.bg) pupDrawBg(g, W, H); else { g.fillStyle = '#f2ecd6'; g.fillRect(0, 0, W, H); } g.drawImage(pupChar(W, H), 0, 0);
+    const [W, H] = size(), c = document.createElement('canvas'); c.width = W; c.height = H; const g = c.getContext('2d'); scBack(g, W, H, SCE.cur, false); g.drawImage(pupChar(W, H), 0, 0); scFront(g, W, H, SCE.cur);
     const ghost = document.createElement('canvas'); ghost.width = W; ghost.height = H; ghost.getContext('2d').drawImage(pup.flip ? pup.fc : pup.chc, 0, 0);
-    snap(); await addBlob(await canvasToBlob(c, 'image/jpeg', 0.92)); pup.prev = ghost; pup.n++; st.sel = st.frames.length - 1; pup.dirty = true; buzz(15); pupEmStep();
+    snap(); const chb = await canvasToBlob(ghost, 'image/png'); const nf = await addBlob(await canvasToBlob(c, 'image/jpeg', 0.92)); try { const ci = await loadImg(chb); nf.chb = chb; nf.ch = ci.img; nf.chUrl = ci.url; nf.sc = scFreeze(); } catch (e) {} pup.prev = ghost; pup.n++; st.sel = st.frames.length - 1; pup.dirty = true; buzz(15); pupEmStep();
     const sg = document.querySelector('.vf .stage'); sg.classList.remove('flash'); void sg.offsetWidth; sg.classList.add('flash'); $('strip').scrollLeft = 99999;
     refreshUI(); $('strip').scrollLeft = 99999; msg('pupMsg', pup.n + (pup.n === 1 ? ' frame' : ' frames') + ' taken. Nudge a knob, take the next one.');
   });
@@ -1429,7 +1528,7 @@
     st.panel = name;
     document.querySelectorAll('#tools button').forEach(x => x.setAttribute('aria-selected', x.dataset.p === name ? 'true' : 'false'));
     document.querySelectorAll('.panel').forEach(p => p.classList.toggle('on', p.id === 'p-' + name));
-    $('panels').scrollTop = 0; syncRows(); renderStill(); scrollToControls();
+    $('panels').scrollTop = 0; syncRows(); renderStill(); scrollToControls(); try { scSync(); } catch (e) {}
   }
   function scrollToControls() {
     const A = document.querySelector('.app'); if (!document.body.classList.contains('scrollapp') || document.body.classList.contains('sg') || document.body.classList.contains('pupmode') || A.classList.contains('is-create')) return;
@@ -2678,9 +2777,14 @@
   const DB = 'nocivPhoneAnim';
   function openDb() { return new Promise((res, rej) => { try { const r = indexedDB.open(DB, 1); r.onupgradeneeded = () => r.result.createObjectStore('s'); r.onsuccess = () => res(r.result); r.onerror = () => rej(r.error); } catch (e) { rej(e); } }); }
   let saveTimer = null;
-  function queueSave() { clearTimeout(saveTimer); saveTimer = setTimeout(async () => { try { const db = await openDb(); db.transaction('s', 'readwrite').objectStore('s').put({ aspect: st.aspect, fps: st.fps, mode: st.mode, blobs: st.frames.map(f => f.blob) }, SKEY); } catch (e) {} }, 600); }
+  function scRec() {
+    const sl = [], sg = []; const idx = st.frames.map(f => { if (!f.sc) return -1; let k = sg.indexOf(f.sc.sig); if (k < 0) { k = sg.length; sg.push(f.sc.sig); sl.push({ color: f.sc.color, floor: f.sc.floor, st: f.sc.st, bgBlob: f.sc.bgBlob || null }); } return k; });
+    return { aspect: st.aspect, fps: st.fps, mode: st.mode, blobs: st.frames.map(f => f.blob), chs: st.frames.map(f => f.chb || null), scs: idx, scenes: sl };
+  }
+  function queueSave() { clearTimeout(saveTimer); saveTimer = setTimeout(async () => { try { const db = await openDb(); db.transaction('s', 'readwrite').objectStore('s').put(scRec(), SKEY); } catch (e) {} }, 600); }
   async function pupBgRestore() { if (SKEY !== 'toon') return; try { const db = await openDb(), b = await new Promise((res, rej) => { const q = db.transaction('s').objectStore('s').get('toonbg'); q.onsuccess = () => res(q.result); q.onerror = () => rej(q.error); }); if (!b) return; const im = new Image(); await new Promise((res, rej) => { im.onload = res; im.onerror = rej; im.src = URL.createObjectURL(b); }); pup.bg = im; pup.bgBlob = b; pup.dirty = true; renderStill(); } catch (e) {} }
-  pupBgRestore();
+  async function scRestore() { if (SKEY !== 'toon') return; try { const db = await openDb(), d = await new Promise((res, rej) => { const q = db.transaction('s').objectStore('s').get('toonscn'); q.onsuccess = () => res(q.result); q.onerror = () => rej(q.error); }); if (!d) return; SCE.cur.color = SCE.cur.bg ? null : (d.color || null); if (d.floor) SCE.cur.floor = d.floor; SCE.cur.st = d.st || []; pup.dirty = true; scSync(); renderStill(); } catch (e) {} }
+  pupBgRestore().then(scRestore);
   (async function restore() {
     try {
       const db = await openDb(), data = await new Promise((res, rej) => { const q = db.transaction('s').objectStore('s').get(SKEY); q.onsuccess = () => res(q.result); q.onerror = () => rej(q.error); });
@@ -2689,7 +2793,8 @@
       document.querySelectorAll('#aspects .chip').forEach(x => x.setAttribute('aria-pressed', x.dataset.a === st.aspect ? 'true' : 'false'));
       document.querySelectorAll('#modes .chip').forEach(x => x.setAttribute('aria-pressed', x.dataset.m === st.mode ? 'true' : 'false'));
       $('fps').value = st.fps; $('fpsVal').textContent = st.fps + ' frames a second';
-      for (const b of data.blobs) st.frames.push(await loadImg(b));
+      const scl = []; for (const d of (data.scenes || [])) { const s = { color: d.color, floor: d.floor || { on: false, color: '#9b9a94' }, st: d.st || [], bgBlob: d.bgBlob || null, bg: null, bgv: 0 }; if (s.bgBlob) { try { s.bg = (await loadImg(s.bgBlob)).img; } catch (e) {} } s.sig = scSig(s); scl.push(s); }
+      let bi = 0; for (const b of data.blobs) { const f = await loadImg(b); const cb = data.chs && data.chs[bi]; if (cb) { try { const ci = await loadImg(cb); f.chb = cb; f.ch = ci.img; f.chUrl = ci.url; const si = data.scs ? data.scs[bi] : -1; if (si >= 0 && scl[si]) f.sc = scl[si]; } catch (e) {} } st.frames.push(f); bi++; }
       st.sel = st.frames.length - 1; refreshUI(); updateKeep();
     } catch (e) {}
   })();
