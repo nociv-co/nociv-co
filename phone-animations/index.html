@@ -601,6 +601,24 @@ body { animation: nvIn .3s ease both; }
       <div class="msg" id="shootMsg"></div>
     </section>
 
+    <section class="panel" id="p-pan">
+      <h2>Pan</h2>
+      <p class="tip">Move the camera while they walk. Pick a direction, then make your frames. The background slides a bit more with every frame, and anything in front slides faster.</p>
+      <label class="f">Direction</label>
+      <div class="chips" id="panDir"><button type="button" class="chip" data-v="off" aria-pressed="true">Off</button><button type="button" class="chip" data-v="left" aria-pressed="false">Left</button><button type="button" class="chip" data-v="right" aria-pressed="false">Right</button><button type="button" class="chip" data-v="in" aria-pressed="false">In</button><button type="button" class="chip" data-v="out" aria-pressed="false">Out</button></div>
+      <label class="f">Speed</label>
+      <div class="chips" id="panSpd"><button type="button" class="chip" data-v="0" aria-pressed="false">Slow</button><button type="button" class="chip" data-v="1" aria-pressed="true">Medium</button><button type="button" class="chip" data-v="2" aria-pressed="false">Fast</button></div>
+      <label class="f">Ghost of the last frame</label>
+      <div class="chips" id="panGh"><button type="button" class="chip" data-v="0" aria-pressed="false">Off</button><button type="button" class="chip" data-v="0.25" aria-pressed="false">Light</button><button type="button" class="chip" data-v="0.42" aria-pressed="true">Medium</button><button type="button" class="chip" data-v="0.62" aria-pressed="false">Strong</button></div>
+      <label class="f">Shift the background <span id="panShiftV">0</span></label>
+      <input type="range" id="panShift" min="-50" max="50" value="0" aria-label="Shift the background">
+      <label class="f">Zoom the background <span id="panZoomV">100%</span></label>
+      <input type="range" id="panZoom" min="100" max="170" value="100" aria-label="Zoom the background">
+      <button type="button" class="btn" id="panRestart" style="margin-top:12px">Start the pan at my next frame</button>
+      <p class="tip" id="panInfo" style="margin-top:8px"></p>
+      <button type="button" class="btn dark" id="panNext" style="margin-top:10px">Next: Animate</button>
+    </section>
+
     <section class="panel" id="p-bphotos">
       <h2>Billboard photos</h2>
       <p class="tip">Pick a billboard on the Sign tab first. Add 2 to 5 photos to each panel, then tap a photo in the strip to crop it. Drag to move, pinch to zoom.</p>
@@ -877,6 +895,7 @@ body { animation: nvIn .3s ease both; }
     <button type="button" data-p="cscene" data-k="char" aria-selected="false"><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="5" width="18" height="14" rx="2"/><path d="M3 16l5-4 4 3 3-2 6 4"/></svg>Scene</button>
     <button type="button" data-p="shoot" data-k="stop" aria-selected="true"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 5v14M5 12h14"/></svg><span id="tabShoot">Add</span></button>
     <button type="button" data-p="animate" data-k="stop" class="toononly" aria-selected="false"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="5" r="2.2"/><path d="M12 8v6M7 10l5 2 5-2M9 21l3-7 3 7"/></svg>Animate</button>
+    <button type="button" data-p="pan" data-k="stop" class="toononly" aria-selected="false"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 12h18M7 8l-4 4 4 4M17 8l4 4-4 4"/></svg>Pan</button>
     <button type="button" data-p="bphotos" data-k="board" aria-selected="false"><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="3" width="8" height="8"/><rect x="13" y="3" width="8" height="8"/><rect x="3" y="13" width="8" height="8"/><rect x="13" y="13" width="8" height="8"/></svg>Photos</button>
     <button type="button" data-p="bsign" data-k="board" aria-selected="false"><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="4" width="18" height="10"/><path d="M8 14v7M16 14v7"/></svg>Sign</button>
     <button type="button" data-p="clip" data-k="clip" aria-selected="false"><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="6" width="18" height="12" rx="2"/><path d="M10 9.5v5l4.5-2.5z"/></svg>Video</button>
@@ -1041,6 +1060,7 @@ body { animation: nvIn .3s ease both; }
   function idxOf(p) { const n = st.frames.length; if (!n) return -1; const m = ((Math.floor(p) % loopLen()) + loopLen()) % loopLen(); return m < n ? m : loopLen() - m; }
   function lockAspect() { const locked = st.frames.length > 0; document.querySelectorAll('#aspects .chip').forEach(b => { b.disabled = locked; }); $('aspectNote').style.display = locked ? 'block' : 'none'; }
   function refreshUI() {
+    try { panApply(); } catch (e) {}
     if (st.kind === 'board') { refreshBoardUI(); return; }
     if (st.kind === 'char') { refreshCharUI(); return; }
     const n = st.frames.length;
@@ -1098,6 +1118,7 @@ body { animation: nvIn .3s ease both; }
     if (st.kind === 'clip') { drawClip(); return; }
     if (pup.on && deck.mode === 'pause') { drawPuppet(); return; }
     if (sceneEditing()) { drawSceneEdit(); return; }
+    if (panPreview()) { drawPanPrev(); return; }
     if (st.cam && st.camVideo) return;
     const [W, H] = size(); applySize(W, H);
     const i = st.sel >= 0 ? st.sel : st.frames.length - 1;
@@ -1240,25 +1261,38 @@ body { animation: nvIn .3s ease both; }
   };
   const SKI = {};
   Object.keys(SKS).forEach(k => { const im = new Image(); im.onload = () => { pup.dirty = true; try { renderStill(); } catch (e) {} }; im.src = 'data:image/svg+xml;utf8,' + encodeURIComponent('<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 200" stroke="#1a1a1a" stroke-width="6" stroke-linejoin="round" stroke-linecap="round">' + SKS[k] + '</svg>'); SKI[k] = im; });
-  const SCE = { cur: { color: null, bg: null, bgBlob: null, bgv: 0, floor: { on: false, color: '#9b9a94' }, st: [] }, frozen: null, sel: -1 };
+  const SCE = { cur: { color: null, bg: null, bgBlob: null, bgv: 0, floor: { on: false, color: '#9b9a94' }, st: [], cx: 0, cz: 1, px: 0, pz: 1 }, frozen: null, sel: -1 };
   Object.defineProperty(pup, 'bg', { get() { return SCE.cur.bg; }, set(v) { SCE.cur.bg = v; SCE.cur.bgv++; } });
   Object.defineProperty(pup, 'bgBlob', { get() { return SCE.cur.bgBlob; }, set(v) { SCE.cur.bgBlob = v; } });
-  const scSig = s => JSON.stringify([s.color, s.bgv, s.floor, s.st]);
-  function scFreeze() { const s = SCE.cur, sig = scSig(s); if (SCE.frozen && SCE.frozen.sig === sig) return SCE.frozen; return (SCE.frozen = { color: s.color, bg: s.bg, bgBlob: s.bgBlob, bgv: s.bgv, floor: Object.assign({}, s.floor), st: s.st.map(o => Object.assign({}, o)), sig: sig }); }
+  const scSig = s => JSON.stringify([s.color, s.bgv, s.floor, s.st, s.cx || 0, s.cz || 1, s.px || 0, s.pz || 1]);
+  function scFreeze() { const s = SCE.cur, sig = scSig(s); if (SCE.frozen && SCE.frozen.sig === sig) return SCE.frozen; return (SCE.frozen = { color: s.color, bg: s.bg, bgBlob: s.bgBlob, bgv: s.bgv, floor: Object.assign({}, s.floor), st: s.st.map(o => Object.assign({}, o)), cx: s.cx || 0, cz: s.cz || 1, px: s.px || 0, pz: s.pz || 1, sig: sig }); }
   function scDrawSticker(c, W, H, o) { const im = SKI[o.k]; if (!im || !im.complete || !im.naturalWidth) return; const w = o.s * W; c.save(); c.translate(o.x * W, o.y * H); c.rotate(o.r || 0); c.drawImage(im, -w / 2, -w / 2, w, w); c.restore(); }
-  function scBack(c, W, H, s, preview) {
-    if (s.bg) { c.fillStyle = '#222'; c.fillRect(0, 0, W, H); const im = s.bg, k = Math.max(W / im.naturalWidth, H / im.naturalHeight), w = im.naturalWidth * k, h = im.naturalHeight * k; c.drawImage(im, (W - w) / 2, (H - h) / 2, w, h); }
+  // camera: the background slides one way, props nearer the camera slide a bit faster, the floor line stays put
+  const scCam = (s, raw) => raw ? { x: 0, z: 1 } : { x: (s.cx || 0) + (s.px || 0), z: (s.cz || 1) * (s.pz || 1) };
+  const scProp = (o, cm) => cm.x === 0 && cm.z === 1 ? o : { k: o.k, r: o.r, z: o.z, x: (o.x - 0.5) * cm.z + 0.5 - cm.x * 1.5, y: 0.8 + (o.y - 0.8) * cm.z, s: o.s * cm.z };
+  function scBack(c, W, H, s, preview, raw) {
+    const cm = scCam(s, raw);
+    if (s.bg) {
+      c.fillStyle = '#222'; c.fillRect(0, 0, W, H); const im = s.bg, k = Math.max(W / im.naturalWidth, H / im.naturalHeight) * cm.z, w = im.naturalWidth * k, h = im.naturalHeight * k, y = (H - h) / 2;
+      const x0 = (W - w) / 2 - cm.x * W, j0 = Math.floor((0 - x0) / w), j1 = Math.ceil((W - x0) / w);
+      for (let j = j0; j < j1; j++) { const x = x0 + j * w; if (x + w < 0 || x > W) continue; if (((j % 2) + 2) % 2 === 0) c.drawImage(im, x, y, w, h); else { c.save(); c.translate(x + w, y); c.scale(-1, 1); c.drawImage(im, 0, 0, w, h); c.restore(); } }
+    }
     else if (s.color) { c.fillStyle = s.color; c.fillRect(0, 0, W, H); }
     else if (preview) pupChecker(c, W, H); else { c.fillStyle = '#f2ecd6'; c.fillRect(0, 0, W, H); }
     if (s.floor && s.floor.on) { const y = Math.round(H * 0.8); c.fillStyle = s.floor.color; c.fillRect(0, y, W, H - y); c.fillStyle = '#1a1a1a'; c.fillRect(0, y, W, Math.max(3, Math.round(W / 140))); }
-    s.st.forEach(o => { if (o.z !== 'f') scDrawSticker(c, W, H, o); });
+    s.st.forEach(o => { if (o.z !== 'f') scDrawSticker(c, W, H, scProp(o, cm)); });
   }
-  function scFront(c, W, H, s) { s.st.forEach(o => { if (o.z === 'f') scDrawSticker(c, W, H, o); }); }
+  function scFront(c, W, H, s, raw) { const cm = scCam(s, raw); s.st.forEach(o => { if (o.z === 'f') scDrawSticker(c, W, H, scProp(o, cm)); }); }
   function pupDrawBg(c, W, H) { scBack(c, W, H, SCE.cur, true); }
   function sceneEditing() { const b = document.body; return b.classList.contains('toon') && st.kind === 'stop' && st.panel === 'shoot' && !pup.on && deck.mode === 'pause' && !st.cam; }
+  function panPreview() { return document.body.classList.contains('toon') && st.kind === 'stop' && st.panel === 'pan' && !pup.on && deck.mode === 'pause' && !st.cam; }
+  function drawPanPrev() {
+    const [W, H] = size(); applySize(W, H); const i = st.sel >= 0 ? st.sel : st.frames.length - 1, f = st.frames[i];
+    scBack(ctx, W, H, SCE.cur, true); if (f && f.ch) ctx.drawImage(f.ch, 0, 0, W, H); scFront(ctx, W, H, SCE.cur); stageMsg('');
+  }
   function drawSceneEdit() {
     const [W, H] = size(); applySize(W, H); const i = st.sel >= 0 ? st.sel : st.frames.length - 1, f = st.frames[i];
-    scBack(ctx, W, H, SCE.cur, true); if (f && f.ch) ctx.drawImage(f.ch, 0, 0, W, H); scFront(ctx, W, H, SCE.cur);
+    scBack(ctx, W, H, SCE.cur, true, true); if (f && f.ch) ctx.drawImage(f.ch, 0, 0, W, H); scFront(ctx, W, H, SCE.cur, true);
     const o = SCE.cur.st[SCE.sel]; if (o) { const w = o.s * W; ctx.save(); ctx.translate(o.x * W, o.y * H); ctx.rotate(o.r || 0); ctx.strokeStyle = '#c8412f'; ctx.lineWidth = Math.max(3, W / 160); ctx.setLineDash([W / 50, W / 70]); ctx.strokeRect(-w / 2, -w / 2, w, w); ctx.restore(); }
     stageMsg(SCE.cur.st.length || SCE.cur.bg || SCE.cur.color || SCE.cur.floor.on ? '' : 'Pick a background, add a floor or a prop');
   }
@@ -1280,7 +1314,33 @@ body { animation: nvIn .3s ease both; }
     $('scApplyBox').classList.toggle('hide', !st.frames.length); if (st.sel !== scSync.last) { scSync.last = st.sel; $('scScope').value = st.sel >= 0 ? 'one' : 'all'; }
     document.body.classList.toggle('scn', sceneEditing());
   }
-  async function scSave() { try { const db = await openDb(); db.transaction('s', 'readwrite').objectStore('s').put({ color: SCE.cur.color, floor: SCE.cur.floor, st: SCE.cur.st }, 'toonscn'); } catch (e) {} }
+  // ---- pan: the camera moves a little more with every frame you make ----
+  const PAN = { dir: 'off', spd: 1, ghost: 0.42, base: 0 };
+  try { const q = JSON.parse(localStorage.getItem('nocivPan') || 'null'); if (q) { PAN.dir = q.dir || 'off'; PAN.spd = q.spd == null ? 1 : q.spd; PAN.ghost = q.ghost == null ? 0.42 : q.ghost; } } catch (e) {}
+  const PAN_STEP = [0.012, 0.025, 0.05], PAN_ZSTEP = [0.012, 0.025, 0.05];
+  function panApply() {
+    const i = Math.max(0, st.frames.length - PAN.base), s = SCE.cur; let px = 0, pz = 1;
+    if (PAN.dir === 'left') px = -i * PAN_STEP[PAN.spd]; else if (PAN.dir === 'right') px = i * PAN_STEP[PAN.spd];
+    else if (PAN.dir === 'in') pz = Math.min(2.2, 1 + i * PAN_ZSTEP[PAN.spd]); else if (PAN.dir === 'out') pz = Math.max(1, 1.6 - i * PAN_ZSTEP[PAN.spd]);
+    if (Math.abs(px - (s.px || 0)) > 1e-6 || Math.abs(pz - (s.pz || 1)) > 1e-6) { s.px = px; s.pz = pz; pup.dirty = true; }
+  }
+  function panSync() {
+    document.querySelectorAll('#panDir .chip').forEach(x => x.setAttribute('aria-pressed', x.dataset.v === PAN.dir ? 'true' : 'false'));
+    document.querySelectorAll('#panSpd .chip').forEach(x => x.setAttribute('aria-pressed', +x.dataset.v === PAN.spd ? 'true' : 'false'));
+    document.querySelectorAll('#panGh .chip').forEach(x => x.setAttribute('aria-pressed', Math.abs(+x.dataset.v - PAN.ghost) < 0.01 ? 'true' : 'false'));
+    $('panShift').value = Math.round((SCE.cur.cx || 0) * 100); $('panShiftV').textContent = $('panShift').value; $('panZoom').value = Math.round((SCE.cur.cz || 1) * 100); $('panZoomV').textContent = $('panZoom').value + '%';
+    const n = Math.max(0, st.frames.length - PAN.base);
+    $('panInfo').textContent = PAN.dir === 'off' ? 'Pan is off. Use the shift and zoom to set where the background sits.' : 'Panning ' + PAN.dir + '. ' + n + (n === 1 ? ' frame' : ' frames') + ' into the pan. Your next frame lands further along.';
+  }
+  function panSave() { try { localStorage.setItem('nocivPan', JSON.stringify({ dir: PAN.dir, spd: PAN.spd, ghost: PAN.ghost })); } catch (e) {} }
+  document.querySelectorAll('#panDir .chip').forEach(b => b.addEventListener('click', () => { PAN.dir = b.dataset.v; PAN.base = st.frames.length; buzz(8); panSave(); panApply(); panSync(); renderStill(); }));
+  document.querySelectorAll('#panSpd .chip').forEach(b => b.addEventListener('click', () => { PAN.spd = +b.dataset.v; buzz(8); panSave(); panApply(); panSync(); renderStill(); }));
+  document.querySelectorAll('#panGh .chip').forEach(b => b.addEventListener('click', () => { PAN.ghost = +b.dataset.v; buzz(8); panSave(); pup.dirty = true; panSync(); }));
+  $('panShift').addEventListener('input', () => { SCE.cur.cx = +$('panShift').value / 100; pup.dirty = true; panSync(); scSave(); renderStill(); });
+  $('panZoom').addEventListener('input', () => { SCE.cur.cz = +$('panZoom').value / 100; pup.dirty = true; panSync(); scSave(); renderStill(); });
+  $('panRestart').addEventListener('click', () => { PAN.base = st.frames.length; buzz(8); panApply(); panSync(); renderStill(); });
+  $('panNext').addEventListener('click', () => { if (!pup.on) goAnimate(); });
+  async function scSave() { try { const db = await openDb(); db.transaction('s', 'readwrite').objectStore('s').put({ color: SCE.cur.color, floor: SCE.cur.floor, st: SCE.cur.st, cx: SCE.cur.cx || 0, cz: SCE.cur.cz || 1 }, 'toonscn'); } catch (e) {} }
   const PROPL = [['tree', 'Tree'], ['bush', 'Bush'], ['grass', 'Grass'], ['sun', 'Sun'], ['cloud', 'Cloud'], ['house', 'House'], ['lamp', 'Street lamp'], ['rocks', 'Rocks']];
   PROPL.forEach(pl => { const k = pl[0], b = document.createElement('button'); b.type = 'button'; b.className = 'propbtn'; b.setAttribute('aria-label', 'Add ' + pl[1]); b.innerHTML = '<svg viewBox="0 0 200 200" aria-hidden="true">' + (SKS[k] || '') + '</svg><span>' + pl[1] + '</span>'; b.addEventListener('click', () => { const n = SCE.cur.st.length; SCE.cur.st.push({ k: k, x: 0.3 + (n % 4) * 0.13, y: k === 'sun' || k === 'cloud' ? 0.18 : 0.66, s: k === 'grass' ? 0.3 : 0.4, r: 0, z: 'b' }); SCE.sel = SCE.cur.st.length - 1; buzz(8); scAfter(); }); $('scProp').appendChild(b); });
   $('scZ').addEventListener('click', () => { const o = SCE.cur.st[SCE.sel]; if (!o) return; o.z = o.z === 'f' ? 'b' : 'f'; scAfter(); });
@@ -1317,6 +1377,7 @@ body { animation: nvIn .3s ease both; }
   }
   async function scRecomp(f, s) {
     if (!f.ch) { let u = null; try { u = await scCut(f); } catch (e) {} if (!u) { scRecomp.skipped = (scRecomp.skipped || 0) + 1; return f; } Object.assign(f, u); } const W = f.ch.naturalWidth, H = f.ch.naturalHeight, c = document.createElement('canvas'); c.width = W; c.height = H; const g = c.getContext('2d');
+    s = Object.assign({}, s, { cx: f.sc ? f.sc.cx || 0 : 0, cz: f.sc ? f.sc.cz || 1 : 1, px: f.sc ? f.sc.px || 0 : 0, pz: f.sc ? f.sc.pz || 1 : 1 }); s.sig = scSig(s);
     scBack(g, W, H, s, false); g.drawImage(f.ch, 0, 0); scFront(g, W, H, s); const nf = await loadImg(await canvasToBlob(c, 'image/jpeg', 0.92)); return Object.assign(nf, { chb: f.chb, ch: f.ch, chUrl: f.chUrl, sc: s });
   }
   $('scApply').addEventListener('click', async () => {
@@ -1365,7 +1426,7 @@ body { animation: nvIn .3s ease both; }
     if (!pup.w) { ctx.fillStyle = '#111'; ctx.fillRect(0, 0, W, H); stageMsg('Loading your character...'); return; }
     if (pup.dirty || pup.out.width !== W || pup.out.height !== H) {
       const o = pup.out; o.width = W; o.height = H; const c = o.getContext('2d'); pupDrawBg(c, W, H);
-      if (pup.prev && pup.prev.width === W) { c.globalAlpha = 0.28; c.drawImage(pup.prev, 0, 0); c.globalAlpha = 1; }
+      if (pup.prev && pup.prev.width === W) { c.globalAlpha = PAN.ghost; c.drawImage(pup.prev, 0, 0); c.globalAlpha = 1; }
       c.drawImage(pupChar(W, H), 0, 0); scFront(c, W, H, SCE.cur); pup.dirty = false; pup.zt = null;
     }
     const zc = pupZoomStep(W, H), z = zc.z; if (z > 1.004) { const sw = W / z, sh = H / z, cx = Math.min(W - sw / 2, Math.max(sw / 2, zc.x * W)), cy = Math.min(H - sh / 2, Math.max(sh / 2, (pup.y - zc.f * 0.925 * pup.sz) * H)); ctx.drawImage(pup.out, cx - sw / 2, cy - sh / 2, sw, sh, 0, 0, W, H); } else ctx.drawImage(pup.out, 0, 0); stageMsg('Frame ' + (pup.n + 1) + (pup.n ? '' : '. Drag to move your character'));
@@ -1491,7 +1552,7 @@ body { animation: nvIn .3s ease both; }
   let pupTake; $('pupSnap').addEventListener('click', pupTake = async () => {
     const [W, H] = size(), c = document.createElement('canvas'); c.width = W; c.height = H; const g = c.getContext('2d'); scBack(g, W, H, SCE.cur, false); g.drawImage(pupChar(W, H), 0, 0); scFront(g, W, H, SCE.cur);
     const ghost = document.createElement('canvas'); ghost.width = W; ghost.height = H; ghost.getContext('2d').drawImage(pup.flip ? pup.fc : pup.chc, 0, 0);
-    snap(); const chb = await canvasToBlob(ghost, 'image/png'); const nf = await addBlob(await canvasToBlob(c, 'image/jpeg', 0.92)); try { const ci = await loadImg(chb); nf.chb = chb; nf.ch = ci.img; nf.chUrl = ci.url; nf.sc = scFreeze(); } catch (e) {} pup.prev = ghost; pup.n++; st.csig = charSig(); st.sel = st.frames.length - 1; pup.dirty = true; buzz(15); pupEmStep();
+    snap(); const chb = await canvasToBlob(ghost, 'image/png'); const nf = await addBlob(await canvasToBlob(c, 'image/jpeg', 0.92)); try { const ci = await loadImg(chb); nf.chb = chb; nf.ch = ci.img; nf.chUrl = ci.url; nf.sc = scFreeze(); } catch (e) {} pup.prev = ghost; pup.n++; st.csig = charSig(); st.sel = st.frames.length - 1; pup.dirty = true; buzz(15); pupEmStep(); try { panApply(); panSync(); } catch (e) {}
     const sg = document.querySelector('.vf .stage'); sg.classList.remove('flash'); void sg.offsetWidth; sg.classList.add('flash'); $('strip').scrollLeft = 99999;
     refreshUI(); $('strip').scrollLeft = 99999; msg('pupMsg', pup.n + (pup.n === 1 ? ' frame' : ' frames') + ' taken. Nudge a knob, take the next one.');
   });
@@ -1621,7 +1682,7 @@ body { animation: nvIn .3s ease both; }
     const A = document.querySelector('.app'); if (!document.body.classList.contains('scrollapp') || document.body.classList.contains('sg') || document.body.classList.contains('pupmode') || A.classList.contains('is-create')) return;
     const tl = $('tl').getBoundingClientRect(), vf = document.querySelector('.vf').getBoundingClientRect(), pn = $('panels').getBoundingClientRect(); A.scrollTop += pn.top - Math.max(tl.bottom, vf.bottom) - 6;
   }
-  document.querySelectorAll('#tools button').forEach(b => b.addEventListener('click', () => { if (b.dataset.p === 'animate') { if (!pup.on) goAnimate(); } else { if (pup.on) pupLeave(); showPanel(b.dataset.p); } }));
+  document.querySelectorAll('#tools button').forEach(b => b.addEventListener('click', () => { if (b.dataset.p === 'animate') { if (!pup.on) goAnimate(); } else { if (pup.on) pupLeave(); showPanel(b.dataset.p); try { panSync(); } catch (e) {} } }));
   async function goAnimate() { try { await pupOpen(); } catch (e) {} }
   function startKind(kind) {
     document.body.classList.toggle('sg', kind === 'board'); if (kind !== 'board') { cv.style.width = ''; cv.style.height = ''; }
@@ -1649,7 +1710,7 @@ body { animation: nvIn .3s ease both; }
     const cards = g.querySelectorAll('.tcard'); if (cards.length % 2) cards[cards.length - 1].classList.add('wide1');
   }
   async function startNew() {
-    snap(); st.frames = []; st.sel = -1; st.csig = ''; if (document.body.classList.contains('toon')) st.aspect = 'wide'; shapeSync(); pup.n = 0; pup.bg = null; pup.bgBlob = null; SCE.cur.color = null; SCE.cur.floor = { on: false, color: SCE.cur.floor.color }; SCE.cur.st = []; SCE.sel = -1; SCE.frozen = null;
+    snap(); st.frames = []; st.sel = -1; st.csig = ''; try { PAN.base = 0; SCE.cur.cx = 0; SCE.cur.cz = 1; SCE.cur.px = 0; SCE.cur.pz = 1; } catch (e) {} if (document.body.classList.contains('toon')) st.aspect = 'wide'; shapeSync(); pup.n = 0; pup.bg = null; pup.bgBlob = null; SCE.cur.color = null; SCE.cur.floor = { on: false, color: SCE.cur.floor.color }; SCE.cur.st = []; SCE.sel = -1; SCE.frozen = null;
     pupBgSave(); scSave(); scSync(); refreshUI(); queueSave(); updateKeep(); renderStill();
   }
   if ($('pickNew')) $('pickNew').addEventListener('click', async () => { await startNew(); document.body.classList.contains('toon') ? goMode() : startKind('stop'); });
@@ -2904,12 +2965,12 @@ body { animation: nvIn .3s ease both; }
   function openDb() { return new Promise((res, rej) => { try { const r = indexedDB.open(DB, 1); r.onupgradeneeded = () => r.result.createObjectStore('s'); r.onsuccess = () => res(r.result); r.onerror = () => rej(r.error); } catch (e) { rej(e); } }); }
   let saveTimer = null;
   function scRec() {
-    const sl = [], sg = []; const idx = st.frames.map(f => { if (!f.sc) return -1; let k = sg.indexOf(f.sc.sig); if (k < 0) { k = sg.length; sg.push(f.sc.sig); sl.push({ color: f.sc.color, floor: f.sc.floor, st: f.sc.st, bgBlob: f.sc.bgBlob || null }); } return k; });
+    const sl = [], sg = []; const idx = st.frames.map(f => { if (!f.sc) return -1; let k = sg.indexOf(f.sc.sig); if (k < 0) { k = sg.length; sg.push(f.sc.sig); sl.push({ color: f.sc.color, floor: f.sc.floor, st: f.sc.st, cx: f.sc.cx || 0, cz: f.sc.cz || 1, px: f.sc.px || 0, pz: f.sc.pz || 1, bgBlob: f.sc.bgBlob || null }); } return k; });
     return { csig: st.csig || '', aspect: st.aspect, fps: st.fps, mode: st.mode, blobs: st.frames.map(f => f.blob), chs: st.frames.map(f => f.chb || null), scs: idx, scenes: sl };
   }
   function queueSave() { clearTimeout(saveTimer); saveTimer = setTimeout(async () => { try { const db = await openDb(); db.transaction('s', 'readwrite').objectStore('s').put(scRec(), SKEY); } catch (e) {} }, 600); }
   async function pupBgRestore() { if (SKEY !== 'toon') return; try { const db = await openDb(), b = await new Promise((res, rej) => { const q = db.transaction('s').objectStore('s').get('toonbg'); q.onsuccess = () => res(q.result); q.onerror = () => rej(q.error); }); if (!b) return; const im = new Image(); await new Promise((res, rej) => { im.onload = res; im.onerror = rej; im.src = URL.createObjectURL(b); }); pup.bg = im; pup.bgBlob = b; pup.dirty = true; renderStill(); } catch (e) {} }
-  async function scRestore() { if (SKEY !== 'toon') return; try { const db = await openDb(), d = await new Promise((res, rej) => { const q = db.transaction('s').objectStore('s').get('toonscn'); q.onsuccess = () => res(q.result); q.onerror = () => rej(q.error); }); if (!d) return; SCE.cur.color = SCE.cur.bg ? null : (d.color || null); if (d.floor) SCE.cur.floor = d.floor; SCE.cur.st = d.st || []; pup.dirty = true; scSync(); renderStill(); } catch (e) {} }
+  async function scRestore() { if (SKEY !== 'toon') return; try { const db = await openDb(), d = await new Promise((res, rej) => { const q = db.transaction('s').objectStore('s').get('toonscn'); q.onsuccess = () => res(q.result); q.onerror = () => rej(q.error); }); if (!d) return; SCE.cur.color = SCE.cur.bg ? null : (d.color || null); if (d.floor) SCE.cur.floor = d.floor; SCE.cur.st = d.st || []; SCE.cur.cx = d.cx || 0; SCE.cur.cz = d.cz || 1; pup.dirty = true; scSync(); renderStill(); try { panSync(); } catch (e) {} } catch (e) {} }
   pupBgRestore().then(scRestore);
   (async function restore() {
     try {
@@ -2919,7 +2980,7 @@ body { animation: nvIn .3s ease both; }
       document.querySelectorAll('#aspects .chip').forEach(x => x.setAttribute('aria-pressed', x.dataset.a === st.aspect ? 'true' : 'false'));
       document.querySelectorAll('#modes .chip').forEach(x => x.setAttribute('aria-pressed', x.dataset.m === st.mode ? 'true' : 'false'));
       $('fps').value = st.fps; $('fpsVal').textContent = st.fps + ' frames a second';
-      const scl = []; for (const d of (data.scenes || [])) { const s = { color: d.color, floor: d.floor || { on: false, color: '#9b9a94' }, st: d.st || [], bgBlob: d.bgBlob || null, bg: null, bgv: 0 }; if (s.bgBlob) { try { s.bg = (await loadImg(s.bgBlob)).img; } catch (e) {} } s.sig = scSig(s); scl.push(s); }
+      const scl = []; for (const d of (data.scenes || [])) { const s = { color: d.color, floor: d.floor || { on: false, color: '#9b9a94' }, st: d.st || [], cx: d.cx || 0, cz: d.cz || 1, px: d.px || 0, pz: d.pz || 1, bgBlob: d.bgBlob || null, bg: null, bgv: 0 }; if (s.bgBlob) { try { s.bg = (await loadImg(s.bgBlob)).img; } catch (e) {} } s.sig = scSig(s); scl.push(s); }
       let bi = 0; for (const b of data.blobs) { const f = await loadImg(b); const cb = data.chs && data.chs[bi]; if (cb) { try { const ci = await loadImg(cb); f.chb = cb; f.ch = ci.img; f.chUrl = ci.url; const si = data.scs ? data.scs[bi] : -1; if (si >= 0 && scl[si]) f.sc = scl[si]; } catch (e) {} } st.frames.push(f); bi++; }
       st.sel = st.frames.length - 1; refreshUI(); updateKeep();
     } catch (e) {}
