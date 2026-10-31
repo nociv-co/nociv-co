@@ -2721,10 +2721,10 @@
     { key: 'char', name: 'CHARACTER MAKER', tab: 'CHARACTER', desc: 'Build a creator: artist, DJ, curator or skater. Flat 2D with a punk print look. Make them move, then save a sticker or a GIF.' },
     { key: 'stop', name: 'STOP MOTION', tab: 'STOP', desc: 'Shoot frames with your camera, or use photos and a video. Then run it through the tape deck.' },
     { key: 'clip', name: 'VHS BUILDER', tab: 'VHS', desc: 'Pick a video from your camera roll. Rewind, fast forward and pause it like a real camcorder tape, then record it.' },
-    { key: 'board', name: 'SIGNIFIER', tab: 'SIGNIFIER', desc: 'Make a trivision billboard, the kind with spinning slats that flip between ads. Put your photos on every panel, crop and zoom each one, add words, and let them switch at different times.' },
+    { key: 'board', name: 'BILLBOARD', tab: 'BILLBOARD', desc: 'Make a trivision billboard, the kind with spinning slats that flip between ads. Put your photos on every panel, crop and zoom each one, add words, and let them switch at different times.' },
   ];
   // three apps share this file: ?m=avatar (Animate + Edit), ?m=stop (Stop Motion), ?m=vhs (VHS). No parameter shows everything.
-  const APPS = { video: { t: ['REAL', 'CAMERA'], keys: ['stop', 'clip'] }, studio: { t: ['REAL', 'CAMERA'], keys: ['stop', 'clip'] }, char: { t: ['CHARACTER', 'MAKER'], keys: ['char'] }, toon: { t: ['NOCIV', 'ANIMATION'], keys: ['char', 'stop'] }, sign: { t: ['SIGNIFIER', ''], keys: ['board'] }, avatar: { t: ['ANIMATE', '+ EDIT'], keys: ['char', 'board'] }, stop: { t: ['STOP', 'MOTION'], keys: ['stop'] }, vhs: { t: ['VHS', ''], keys: ['clip'] } };
+  const APPS = { video: { t: ['CAMERA', ''], keys: ['stop', 'clip'] }, studio: { t: ['CAMERA', ''], keys: ['stop', 'clip'] }, char: { t: ['CHARACTER', 'MAKER'], keys: ['char'] }, toon: { t: ['CARTOON', ''], keys: ['char', 'stop'] }, sign: { t: ['BILLBOARD', ''], keys: ['board'] }, avatar: { t: ['ANIMATE', '+ EDIT'], keys: ['char', 'board'] }, stop: { t: ['STOP', 'MOTION'], keys: ['stop'] }, vhs: { t: ['VHS', ''], keys: ['clip'] } };
   const APP = APPS[new URLSearchParams(location.search).get('m')] || null;
   // the cartoon app keeps its own frames so they never mix into Real Video
   const SKEY = ['toon', 'char'].indexOf(new URLSearchParams(location.search).get('m')) >= 0 ? 'toon' : 'main';
