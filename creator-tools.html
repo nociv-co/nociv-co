@@ -448,11 +448,9 @@
   const isPhone = () => window.matchMedia('(max-width: 700px)').matches;
   function exitFs() { const p = document.querySelector('.subpanel.fs'); if (p) p.classList.remove('fs'); document.documentElement.classList.remove('fs-open'); document.querySelectorAll('.fs-bar').forEach(b => b.remove()); return p; }
   const GUIDE = {
-    zineBuilderPanel: ['Zine Builder', ['Pick a page size and a layout. You can change it any time.', 'Add your photos, notes and writing, page by page.', 'Drag pages around until the order feels right.', 'Look through it once, then save the PDF.', 'Print it, fold it, staple it, pass it on.']],
-    cardBuilderPanel: ['Cards + Flyers', ['Pick a card or a flyer shape.', 'Add your photo, your words and your colors.', 'Check the front and the back.', 'Save it and print it at home or at a shop.']],
-    qrBuilderPanel: ['QR Maker', ['Type or paste the link you want people to scan.', 'Pick a style and a color.', 'Test it with your own phone camera.', 'Save it and put it on anything you print.']],
-    stencilBuilderPanel: ['Stencil + Halftone', ['Pick a photo with strong shapes.', 'Slide the settings until you see the stencil you want.', 'Fix small spots by hand if you need to.', 'Save the stencil and cut it or burn it on a screen.']],
-    clothingBuilderPanel: ['Cut & Sew', ['Pick the piece of clothing you want to make.', 'Add your art and your measurements.', 'Check the pieces on screen.', 'Save the pattern and take it to your fabric.']],
+    cardBuilderPanel: ['Cards + Flyers', ['Pick Business card or Flyer, then pick the Card shape.', 'Start from an idea, or pick a Layout.', 'Add your logo, your name, what you do and a big headline.', 'Check the Front, then the Back.', 'Save it and print it at home or at a shop.']],
+    qrBuilderPanel: ['QR Maker', ['Type or paste the link you want people to scan.', 'Pick a Shape and a Size.', 'Frame it: add a picture and use Zoom to place it.', 'Pick the Code color and a Style. Add Words under it if you want.', 'Test it with your own phone camera, then Save Image.']],
+    stencilBuilderPanel: ['Stencil + Halftone', ['Pick Stencil or Halftone.', 'Choose a photo with strong shapes.', 'Move the Light and dark slider until it looks right.', 'Tap Add bridges for me so the pieces hold together, or Fix it by hand.', 'Save it, then cut it or burn it on a screen.']],
     videoPanel: ['Camera', ['Stop is for stop motion. Prop your phone so it cannot move.', 'Move your subject a tiny bit, tap the red button, repeat.', 'Press play to see it move. Add or delete frames until it feels right.', 'Tape is for a video you already have. Rewind, fast forward and pause it like a camcorder, then record it.']],
     toonPanel: ['Cartoon', ['Build: pick the face, hair, outfit and a move.', 'Scene: pick a background or a color, add a floor and props. You can change it later, even after you have frames.', 'Animate: tap WHOLE, HEAD, ARMS, BODY or LEGS, turn the dials, then tap Take Frame.', 'Press play to watch it. Save a sticker or a GIF.']],
     signPanel: ['Billboard', ['Tap + to add your photos. One per panel.', 'See-through logo? Open Backdrop and pick white or black behind it.', 'Words lets you add text. Sign shows it on the billboard.', 'Timing is how long each photo stays up.', 'Save makes the video.']]
@@ -470,7 +468,7 @@
     const name = (panel.querySelector('h2') || {}).textContent || 'NOCIV', phone = isPhone();
     const bar = document.createElement('div'); bar.className = 'fs-bar';
     bar.innerHTML = '<span></span><button type="button"></button>'; bar.firstChild.textContent = name;
-    const hb = document.createElement('button'); hb.type = 'button'; hb.className = 'fs-help'; hb.setAttribute('aria-label', 'How to use this'); hb.textContent = '?'; hb.onclick = () => showHelp(panel); bar.insertBefore(hb, bar.querySelector('button'));
+    const hb = GUIDE[panel.id] ? document.createElement('button') : null; if (hb) { hb.type = 'button'; hb.className = 'fs-help'; hb.setAttribute('aria-label', 'How to use this'); hb.textContent = '?'; hb.onclick = () => showHelp(panel); bar.insertBefore(hb, bar.querySelector('button')); }
     const btn = bar.querySelector('button:last-child'); btn.innerHTML = phone ? '&lsaquo; Back to tools' : '&#10005; Exit full screen';
     btn.onclick = () => { const p = exitFs(); if (phone && p) { const back = p.querySelector('.hub-back'); if (back) back.click(); } };
     document.body.appendChild(bar);
