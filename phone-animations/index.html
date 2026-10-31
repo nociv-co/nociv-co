@@ -171,7 +171,9 @@
   body.scrollapp:not(.fs):not(.pupmode) .app:not(.is-create) { overflow-y: auto; overflow-x: hidden; -webkit-overflow-scrolling: touch; overscroll-behavior: contain; padding-top: 0; }
   body.scrollapp:not(.fs):not(.pupmode) .app:not(.is-create) .hdr { height: calc(48px + env(safe-area-inset-top)); box-sizing: border-box; padding-top: calc(6px + env(safe-area-inset-top)); }
   body.scrollapp:not(.fs):not(.pupmode) .app:not(.is-create) .vf { position: sticky; top: env(safe-area-inset-top); z-index: 25; background: var(--paper); padding-top: 4px; padding-bottom: 8px; }
-  body.scrollapp:not(.fs):not(.pupmode) .app:not(.is-create) .vf canvas { max-height: 32svh; }
+  body.scrollapp:not(.fs):not(.pupmode) .app:not(.is-create) .vf canvas { max-height: 28svh; }
+  body.scrollapp:not(.fs):not(.pupmode) .app:not(.is-create) .tl { position: sticky; top: calc(env(safe-area-inset-top) + var(--vfh, 0px)); z-index: 24; background: var(--paper); padding-bottom: 6px; }
+  body.scrollapp:not(.fs):not(.pupmode) .app:not(.is-create) .strip:empty::before { height: 34px; }
   body.scrollapp:not(.fs):not(.pupmode) .app:not(.is-create) .panels { flex: 1 0 auto; min-height: 0; overflow: visible; touch-action: auto; padding-bottom: 18px; }
   body.scrollapp:not(.fs):not(.pupmode) .app:not(.is-create) .tools { position: sticky; bottom: 0; z-index: 30; margin-top: auto; }
   body.fs { overflow: hidden; }
@@ -757,6 +759,7 @@
   const pup = { on: false, bg: null, fr: null, w: null, x: 0.5, y: 0.9, sz: 0.6, limb: 'aR', dirty: true, out: document.createElement('canvas'), chc: document.createElement('canvas'), prev: null, n: 0,
     P: null, drag: null };
   document.body.classList.add('scrollapp');
+  try { const vfEl = document.querySelector('.vf'), appEl = document.querySelector('.app'); new ResizeObserver(() => appEl.style.setProperty('--vfh', vfEl.offsetHeight + 'px')).observe(vfEl); } catch (e) {}
   const board = { tpl: 'pole', panels: [], pi: 0, sel: -1, selL: -1, aspect: 'square', slats: 18, wave: 0.35, spin: 3, stag: true, t: 0, playing: true };
   const newPanel = (i) => ({ faces: [], hold: 5, off: board.stag ? i * 2.2 : 0 });
   for (let i = 0; i < 6; i++) board.panels.push(newPanel(i));
@@ -1344,11 +1347,11 @@
   }
   function scrollToControls() {
     const A = document.querySelector('.app'); if (!document.body.classList.contains('scrollapp') || document.body.classList.contains('pupmode') || A.classList.contains('is-create')) return;
-    const vf = document.querySelector('.vf').getBoundingClientRect(), pn = $('panels').getBoundingClientRect(); A.scrollTop += pn.top - vf.bottom - 6;
+    const tl = $('tl').getBoundingClientRect(), vf = document.querySelector('.vf').getBoundingClientRect(), pn = $('panels').getBoundingClientRect(); A.scrollTop += pn.top - Math.max(tl.bottom, vf.bottom) - 6;
   }
   document.querySelectorAll('#tools button').forEach(b => b.addEventListener('click', () => showPanel(b.dataset.p)));
   function startKind(kind) {
-    st.kind = kind; if (kind === 'clip') { if (st.look === 'none') st.look = 'vhs'; } else if (kind !== 'stop') st.look = 'none'; st.cam = kind === 'stop' && !st.frames.length; setDeck('pause'); if (kind === 'board' && board.sel < 0 && board.faces.length) board.sel = 0;
+    st.kind = kind; if (kind === 'clip') { if (st.look === 'none') st.look = 'vhs'; } else if (kind !== 'stop') st.look = 'none'; st.cam = kind === 'stop' && !st.frames.length; setDeck('pause'); if (kind === 'board' && board.sel < 0 && board.faces.length) board.sel = 0; setTimeout(scrollToControls, 120);
     $('start').classList.add('hide'); $('app').classList.remove('hide');
     document.querySelectorAll('#tools button').forEach(b => b.classList.toggle('gone', b.dataset.k !== 'both' && b.dataset.k !== kind));
     $('tl').classList.toggle('hide', kind === 'clip' || kind === 'char');
