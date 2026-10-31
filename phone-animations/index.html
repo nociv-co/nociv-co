@@ -1597,11 +1597,11 @@ body { animation: nvIn .3s ease both; }
     const g = $('tnGrid'); if (!g || !document.body.classList.contains('toon')) return; g.classList.remove('hide'); g.innerHTML = '';
     const bi = MODES.findIndex(m => m.key === 'char'), ai = MODES.findIndex(m => m.key === 'stop'), n = st.frames.length, last = n ? st.frames[n - 1] : null;
     const add = (cls, img, svg, name, info, fn) => { const b = document.createElement('button'); b.type = 'button'; b.className = 'tcard ' + cls; b.innerHTML = '<span class="tp"></span><b></b><small></small>'; const tp = b.querySelector('.tp'); if (img) tp.style.backgroundImage = 'url("' + img + '")'; if (svg) tp.innerHTML = svg; b.querySelector('b').textContent = name; b.querySelector('small').textContent = info; b.addEventListener('click', () => { buzz(8); fn(); }); g.appendChild(b); };
-    add('', '../img/tools/animate-hero.webp?v=6', '', 'Build', 'Make your cartoon. Face, hair, outfit, piercings.', () => { showMode(bi); goMode(); });
+    add('', '../img/tools/cartoon-strip.webp?v=1', '', 'Build', 'Make your cartoon. Face, hair, outfit, piercings.', () => { showMode(bi); goMode(); });
     if (n) {
       add('', last.url, '', 'Keep working', n + (n === 1 ? ' frame' : ' frames') + (charChanged() ? ', old character' : ' saved'), () => { showMode(ai); goMode(); });
       add('dark', '', '<svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2.4" stroke-linecap="round"><path d="M12 5v14M5 12h14"/></svg>', 'Start new', charChanged() ? 'You made a new character. Start fresh.' : 'Clear frames and scene. Your character stays.', async () => { await startNew(); showMode(ai); goMode(); });
-    } else add('', '../img/tools/animate-card.webp?v=1', '', 'Animate', 'Stand them in a photo. Move each arm and leg.', () => { showMode(ai); goMode(); });
+    } else add('', '../img/tools/cartoon-card.webp?v=1', '', 'Animate', 'Stand them in a photo. Move each arm and leg.', () => { showMode(ai); goMode(); });
   }
   async function startNew() {
     snap(); st.frames = []; st.sel = -1; st.csig = ''; if (document.body.classList.contains('toon')) st.aspect = 'wide'; shapeSync(); pup.n = 0; pup.bg = null; pup.bgBlob = null; SCE.cur.color = null; SCE.cur.floor = { on: false, color: SCE.cur.floor.color }; SCE.cur.st = []; SCE.sel = -1; SCE.frozen = null;
@@ -2811,7 +2811,7 @@ body { animation: nvIn .3s ease both; }
   let mi = 0;
 
   const ART = {
-    char: '<img src="../img/tools/animate-hero.webp?v=6" alt="">',
+    char: '<img src="../img/tools/cartoon-strip.webp?v=1" alt="">',
     stop: '<img src="../img/tools/stop-hero.webp?v=2" alt="">',
     clip: '<img src="../img/tools/vhs.webp" alt="">',
     board: '<svg viewBox="0 0 320 200" preserveAspectRatio="xMidYMid slice" aria-hidden="true"><rect width="320" height="200" fill="#cfe3d8"/><circle cx="268" cy="34" r="16" fill="#f2c230" stroke="#1a1a1a" stroke-width="3"/><path d="M-5 150 L40 118 L100 138 L170 112 L240 136 L325 118 L325 205 L-5 205Z" fill="#b9d1c0" stroke="#1a1a1a" stroke-width="3"/><rect x="-5" y="152" width="330" height="50" fill="#d8c9a8" stroke="#1a1a1a" stroke-width="3"/><rect x="152" y="104" width="16" height="48" fill="#f2ecd6" stroke="#1a1a1a" stroke-width="3"/><rect x="28" y="26" width="264" height="80" fill="#1a1a1a"/><g stroke="#1a1a1a" stroke-width="3"><rect x="36" y="34" width="80" height="64" fill="#c8412f"/><rect x="120" y="34" width="80" height="64" fill="#f2c230"/><rect x="204" y="34" width="80" height="64" fill="#f2ecd6"/></g><g font-family="NocivAnton,Impact,sans-serif" font-size="22" text-anchor="middle"><text x="76" y="76" fill="#fff">YOUR</text><text x="160" y="76" fill="#1a1a1a">PHOTO</text><text x="244" y="76" fill="#c8412f">HERE</text></g><rect x="26" y="106" width="268" height="8" fill="#1a1a1a"/></svg>'
