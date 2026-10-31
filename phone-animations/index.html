@@ -49,6 +49,8 @@
   .vf .stage { background: #111; border-radius: 12px; display: grid; place-items: center; padding: 5px; position: relative; }
   .vf canvas { display: block; max-width: 100%; max-height: 30svh; width: auto; height: auto; background: #000; }
   #cv { touch-action: none; }
+  body.real .ct, body.toon .rl { display: none !important; }
+  body.toon #modeSw, body.toon #looks, body.toon #eraSet { display: none !important; }
   #pupFloat { position: absolute; right: 10px; bottom: 10px; z-index: 5; background: #c8412f; color: #fff; border: 2px solid #1a1a1a; border-radius: 12px; padding: 10px 14px; font: 900 .85rem/1 inherit; text-transform: uppercase; letter-spacing: .06em; box-shadow: 0 3px 0 #1a1a1a; }
   #pupFloat.hide { display: none; }
   body.pupmode #stageMsg { top: 10px; bottom: auto; left: 10px; right: 10px; text-align: left; }
@@ -302,8 +304,10 @@
 
   <div class="panels" id="panels">
     <section class="panel on" id="p-shoot">
-      <h2>Camera</h2>
-      <p class="tip">Prop your phone so it cannot move. Move your subject a tiny bit, tap the red button, repeat.</p>
+      <h2 class="rl">Camera</h2>
+      <p class="tip rl">Prop your phone so it cannot move. Move your subject a tiny bit, tap the red button, repeat.</p>
+      <h2 class="ct">Animate</h2>
+      <p class="tip ct">Your cartoon stands in a photo from your phone. Move each arm and leg a little, take a frame, repeat.</p>
       <label class="f">Shape</label>
       <div class="chips" id="aspects">
         <button type="button" class="chip" data-a="tall" aria-pressed="true">Tall 9:16</button>
@@ -311,7 +315,8 @@
         <button type="button" class="chip" data-a="wide" aria-pressed="false">Wide 16:9</button>
       </div>
       <p class="tip" id="aspectNote" style="display:none">The shape is locked once you have a frame. Clear all frames to change it.</p>
-      <button type="button" class="btn dark" id="camBtn" style="margin-top:12px">Start camera</button>
+      <button type="button" class="btn dark rl" id="camBtn" style="margin-top:12px">Start camera</button>
+      <div class="ct">
       <label class="f">Use the character you built</label>
       <div class="row"><select id="chPose" aria-label="Move"><option value="">Their saved move</option><option value="idle">Idle</option><option value="wave">Wave</option><option value="walk">Walk</option><option value="dance">Dance</option><option value="hype">Hype</option><option value="spray">Spray</option><option value="scratch">Scratch</option><option value="point">Point</option><option value="ollie">Ollie</option></select><select id="chN" aria-label="Frames"><option value="8">8 frames</option><option value="12" selected>12 frames</option><option value="16">16 frames</option></select></div>
       <button type="button" class="btn" id="chBtn" style="margin-top:8px">Add my character</button>
@@ -319,6 +324,8 @@
       <p class="tip">Pick a photo from your phone for the background. Your character stands in it and you move each arm, leg and the head, one frame at a time.</p>
       <button type="button" class="btn" id="pupBtn">Pose my character on a photo</button>
       <input type="file" id="pupBg" accept="image/*" class="hide">
+      </div>
+      <div class="rl">
       <label class="f">No camera, or already have photos?</label>
       <input type="file" id="photoIn" accept="image/*" multiple>
       <label class="f">Turn a video into frames</label>
@@ -337,6 +344,7 @@
           <option value="2">A frame every 2 s</option>
         </select>
         <button type="button" class="btn dark" id="vidGo" style="margin-top:10px">Make frames</button>
+      </div>
       </div>
       <div class="prog" id="progA"><i></i></div>
       <div class="msg" id="shootMsg"></div>
@@ -710,7 +718,7 @@
     const [W, H] = size(); applySize(W, H);
     const i = st.sel >= 0 ? st.sel : st.frames.length - 1;
     if (st.frames[i]) { drawFrameAt(i, deck.p / st.fps); stageMsg(''); }
-    else { ctx.fillStyle = '#111'; ctx.fillRect(0, 0, W, H); stageMsg(st.camVideo ? '' : 'Start the camera or add photos'); }
+    else { ctx.fillStyle = '#111'; ctx.fillRect(0, 0, W, H); stageMsg(st.camVideo ? '' : document.body.classList.contains('toon') ? 'Tap Add, then pose your cartoon' : 'Start the camera or add photos'); }
   }
 
   // ===================== THE DECK =====================
@@ -1962,10 +1970,11 @@
     { key: 'board', name: 'BILLBOARD', tab: 'SIGN', desc: 'Put 2 to 5 photos on a spinning trivision sign. Add words like a real ad. Pick the scene behind it.' },
   ];
   // three apps share this file: ?m=avatar (Animate + Edit), ?m=stop (Stop Motion), ?m=vhs (VHS). No parameter shows everything.
-  const APPS = { video: { t: ['NOCIV', 'VIDEO'], keys: ['stop', 'clip'] }, studio: { t: ['NOCIV', 'VIDEO'], keys: ['stop', 'clip'] }, char: { t: ['CHARACTER', 'MAKER'], keys: ['char'] }, sign: { t: ['SIGN', ''], keys: ['board'] }, avatar: { t: ['ANIMATE', '+ EDIT'], keys: ['char', 'board'] }, stop: { t: ['STOP', 'MOTION'], keys: ['stop'] }, vhs: { t: ['VHS', ''], keys: ['clip'] } };
+  const APPS = { video: { t: ['NOCIV', 'VIDEO'], keys: ['stop', 'clip'] }, studio: { t: ['NOCIV', 'VIDEO'], keys: ['stop', 'clip'] }, char: { t: ['CHARACTER', 'MAKER'], keys: ['char'] }, toon: { t: ['NOCIV', 'CARTOON'], keys: ['char', 'stop'] }, sign: { t: ['SIGN', ''], keys: ['board'] }, avatar: { t: ['ANIMATE', '+ EDIT'], keys: ['char', 'board'] }, stop: { t: ['STOP', 'MOTION'], keys: ['stop'] }, vhs: { t: ['VHS', ''], keys: ['clip'] } };
   const APP = APPS[new URLSearchParams(location.search).get('m')] || null;
   if (APP) {
     for (let k = MODES.length - 1; k >= 0; k--) if (APP.keys.indexOf(MODES[k].key) < 0) MODES.splice(k, 1);
+    const mq = new URLSearchParams(location.search).get('m'); document.body.classList.add(mq === 'toon' || mq === 'char' ? 'toon' : mq === 'avatar' ? 'both' : 'real');
     const nm = APP.t.join(' ').replace(' +', ' +').trim();
     document.title = nm + ': NOCIV.CO';
     $('start').querySelector('h1').innerHTML = '<span>' + APP.t[0] + '</span>' + (APP.t[1] ? ' ' + APP.t[1] : '');
@@ -1973,6 +1982,10 @@
     if (['video', 'studio'].indexOf(new URLSearchParams(location.search).get('m')) >= 0) {
       const O = { stop: ['STOP MOTION', 'STOP', 'Shoot frames with your camera, use photos, a video, or pose your built character on your own photo. Play it as a loop.'], clip: ['VHS TAPE', 'TAPE', 'Pick any video. Rewind, fast forward and pause it like a camcorder. VHS, 8mm film, 90s digicam or security cam.'] };
       MODES.forEach(m => { const o = O[m.key]; if (o) { m.name = o[0]; m.tab = o[1]; m.desc = o[2]; } });
+    }
+    if (mq === 'toon') {
+      const OT = { char: ['BUILD A CARTOON', 'BUILD', 'Pick the face, hair, outfit and a move. Artist, DJ, curator or skater. Then animate it.'], stop: ['ANIMATE IT', 'ANIMATE', 'Pick a photo from your phone. Your cartoon stands in it. Move each arm and leg, one frame at a time.'] };
+      MODES.forEach(m => { const o = OT[m.key]; if (o) { m.name = o[0]; m.tab = o[1]; m.desc = o[2]; } });
     }
     if (MODES.length === 1) $('modeTabs').classList.add('hide');
     if (APP.keys.indexOf('stop') < 0) { const pk = $('pickKeep'); pk.remove(); }
@@ -1995,7 +2008,7 @@
   function goMode() {
     const k = MODES[mi].key;
     if (k === 'board') startKind('board'); else if (k === 'char') { location.href = 'character/'; return; }
-    else if (k === 'stop') { startKind('stop'); if (st.cam && !st.camVideo) startCam(); } else { startKind('clip'); $('clipIn').click(); }
+    else if (k === 'stop') { startKind('stop'); if (document.body.classList.contains('toon')) { st.cam = false; syncRows(); pupOpen(); } else if (st.cam && !st.camVideo) startCam(); } else { startKind('clip'); $('clipIn').click(); }
   }
   $('goBtn').addEventListener('click', goMode);
   showMode(0);

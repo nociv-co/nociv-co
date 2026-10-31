@@ -149,11 +149,11 @@
         <span class="tool-foot"><span class="tool-get">You leave with: A card file + a print shop PDF</span><span class="tool-open">Open</span></span>
       </span>
     </button>
-    <button type="button" class="tool-card" data-sec="digital" data-key="char" data-poster="img/tools/animate.webp" data-made="the Character Maker" data-panel="charPanel">
+    <button type="button" class="tool-card" data-sec="digital" data-key="toon" data-poster="img/tools/animate.webp" data-made="Cartoon" data-panel="toonPanel">
       <span class="tool-art"><svg viewBox="0 0 320 180" xmlns="http://www.w3.org/2000/svg" aria-hidden="true" preserveAspectRatio="xMidYMid slice"><image href="img/tools/animate-hero.webp?v=4" width="320" height="180"/></svg></span>
       <span class="tool-body">
-        <span class="tool-name">Character</span>
-        <span class="tool-desc">Build a creator character that looks like you. Pick the hair, face, outfit and a move. Start as an artist, DJ, curator or skater. Save it as a sticker or a GIF.</span>
+        <span class="tool-name">Cartoon</span>
+        <span class="tool-desc">Build a cartoon creator that looks like you, then animate it. Stand it in a photo from your phone and move each arm and leg, one frame at a time. Save a sticker or a GIF.</span>
         <span class="tool-foot"><span class="tool-get">You leave with: A sticker or a GIF</span><span class="tool-open">Open</span></span>
       </span>
     </button>
@@ -161,7 +161,7 @@
       <span class="tool-art"><svg viewBox="0 0 320 180" xmlns="http://www.w3.org/2000/svg" aria-hidden="true" preserveAspectRatio="xMidYMid slice"><image href="img/tools/video-hero.webp" width="320" height="180"/></svg></span>
       <span class="tool-body">
         <span class="tool-name">Video</span>
-        <span class="tool-desc">Make a short video frame by frame. Shoot it, use photos, or pose your character on your own photo. Then run it through a tape deck: VHS, 8mm film, 90s digicam or security cam.</span>
+        <span class="tool-desc">Real footage. Shoot stop motion with your camera or photos, or pick a video and run it through a tape deck: VHS, 8mm film, 90s digicam or security cam.</span>
         <span class="tool-foot"><span class="tool-get">You leave with: A GIF or a video</span><span class="tool-open">Open</span></span>
       </span>
     </button>
@@ -281,23 +281,23 @@
 </div>
 
 <!-- ===== CHARACTER, VIDEO and SIGN (one codebase at nociv.co/phone-animations, chosen by ?m=) ===== -->
-<div class="subpanel" id="charPanel">
+<div class="subpanel" id="toonPanel">
   <div class="wrap">
     <span class="hub-back" data-back="buildHub">&larr; Back to The Build</span>
     <div class="build-header">
       <div>
-        <h2 style="margin: 0 0 4px; font-size: 1.3rem; letter-spacing: 0.05em;">CHARACTER</h2>
-        <p>Build a creator that looks like you.</p>
+        <h2 style="margin: 0 0 4px; font-size: 1.3rem; letter-spacing: 0.05em;">CARTOON</h2>
+        <p>Build a cartoon, then animate it.</p>
       </div>
-      <a href="phone-animations/?m=char" target="_blank" rel="noopener" class="fullscreen-btn">
+      <a href="phone-animations/?m=toon" target="_blank" rel="noopener" class="fullscreen-btn">
         Full screen &#10530;
       </a>
     </div>
 
     <iframe
-      data-src="phone-animations/?m=char"
+      data-src="phone-animations/?m=toon"
       class="builder-iframe"
-      title="NOCIV Character"
+      title="NOCIV Cartoon"
       allow="web-share; fullscreen; camera">
     </iframe>
   </div>
@@ -388,8 +388,8 @@
       { id: 'projects', name: 'Projects', color: '#8a6a4a', ci: '#ffffff', icon: '<path d="M4 20V4l16 16z"/><path d="M4 14h3M4 9h2M10 20v-3M15 20v-2"/>' },
       { id: 'digital', name: 'Digital', color: '#c8412f', ci: '#ffffff', icon: '<rect x="3" y="7" width="12" height="10" rx="2"/><path d="M15 11l6-3v8l-6-3z"/>' }
     ];
-    const ORDER = { paper: ['cards', 'zine', 'qr'], projects: ['stencil', 'cutsew'], digital: ['char', 'video', 'sign'] };
-    const SHORT = { zine: 'Zine', cards: 'Cards', qr: 'QR', char: 'Character', video: 'Video', sign: 'Sign', stencil: 'Stencil', cutsew: 'Cut & Sew' };
+    const ORDER = { paper: ['cards', 'zine', 'qr'], projects: ['stencil', 'cutsew'], digital: ['video', 'toon', 'sign'] };
+    const SHORT = { zine: 'Zine', cards: 'Cards', qr: 'QR', toon: 'Cartoon', video: 'Video', sign: 'Sign', stencil: 'Stencil', cutsew: 'Cut & Sew' };
     const el = id => document.getElementById(id), data = {};
     document.querySelectorAll('#toolData .tool-card').forEach(c => { data[c.dataset.key] = { key: c.dataset.key, sec: c.dataset.sec, panel: c.dataset.panel, poster: c.dataset.poster, made: c.dataset.made, art: c.querySelector('.tool-art').innerHTML, name: c.querySelector('.tool-name').textContent.trim(), desc: c.querySelector('.tool-desc').textContent.trim(), get: c.querySelector('.tool-get').textContent.trim() }; });
     let sec = 0, idx = 0;
@@ -431,7 +431,7 @@
   })();
   // Deep links: creator-tools.html#cards opens Cards + Flyers, and so on.
   (function () {
-    const HASH = { '#zine': 'zine', '#cutsew': 'cutsew', '#cards': 'cards', '#qr': 'qr', '#stencil': 'stencil', '#studio': 'video', '#character': 'char', '#video': 'video', '#sign': 'sign', '#animate': 'char', '#stop': 'video', '#vhs': 'video' };
+    const HASH = { '#zine': 'zine', '#cutsew': 'cutsew', '#cards': 'cards', '#qr': 'qr', '#stencil': 'stencil', '#studio': 'video', '#character': 'toon', '#cartoon': 'toon', '#video': 'video', '#sign': 'sign', '#animate': 'toon', '#stop': 'video', '#vhs': 'video' };
     const key = HASH[location.hash]; if (!key) return; const id = window.__goTool(key); if (id) openPanel(id);
   })();
   // ===== Full screen in place: same frame, same work, just bigger =====
