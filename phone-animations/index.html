@@ -526,6 +526,7 @@ body.sg #undoBtn, body.sg #redoBtn { display: none; }
         <button type="button" class="btn" id="scApply" style="margin-top:8px">Apply</button>
       </div>
       <button type="button" class="btn dark" id="sceneNext" style="margin-top:14px">Next: Animate</button>
+      <button type="button" class="btn" id="scFresh" style="margin-top:10px">Start fresh</button>
       <label class="f" style="margin-top:18px">Quick start: add a ready made move</label>
       <div class="row"><select id="chPose" aria-label="Move"><option value="">Their saved move</option><option value="idle">Idle</option><option value="wave">Wave</option><option value="walk">Walk</option><option value="dance">Dance</option><option value="hype">Hype</option><option value="spray">Spray</option><option value="scratch">Scratch</option><option value="point">Point</option><option value="ollie">Ollie</option></select><select id="chN" aria-label="Frames"><option value="8">8 frames</option><option value="12" selected>12 frames</option><option value="16">16 frames</option></select></div>
       <button type="button" class="btn" id="chBtn" style="margin-top:8px">Add my character</button>
@@ -1225,7 +1226,7 @@ body.sg #undoBtn, body.sg #redoBtn { display: none; }
   function scSync() {
     scSwatches(); const o = SCE.cur.st[SCE.sel]; $('scSel').classList.toggle('hide', !o);
     if (o) { $('scZ').textContent = o.z === 'f' ? 'In front of them' : 'Behind them'; $('scZ').setAttribute('aria-pressed', o.z === 'f' ? 'true' : 'false'); }
-    $('scApplyBox').classList.toggle('hide', !st.frames.some(f => f.ch));
+    $('scApplyBox').classList.toggle('hide', !st.frames.length); if (st.sel !== scSync.last) { scSync.last = st.sel; $('scScope').value = st.sel >= 0 ? 'one' : 'all'; }
     document.body.classList.toggle('scn', sceneEditing());
   }
   async function scSave() { try { const db = await openDb(); db.transaction('s', 'readwrite').objectStore('s').put({ color: SCE.cur.color, floor: SCE.cur.floor, st: SCE.cur.st }, 'toonscn'); } catch (e) {} }
@@ -1248,16 +1249,33 @@ body.sg #undoBtn, body.sg #redoBtn { display: none; }
     renderStill(); });
   ['pointerup', 'pointercancel'].forEach(tp => cv.addEventListener(tp, e => { if (!scP.has(e.pointerId)) return; scP.delete(e.pointerId); if (scP.size) scGStart(); else { scG = null; scSave(); } }));
   // change the scene on frames already taken
+  // frames taken before scenes have no loose character layer. If the old backdrop was one flat color, lift the character out of it.
+  async function scCut(f) {
+    const W = f.img.naturalWidth, H = f.img.naturalHeight, c = document.createElement('canvas'); c.width = W; c.height = H; const g = c.getContext('2d', { willReadFrequently: true }); g.drawImage(f.img, 0, 0);
+    const im = g.getImageData(0, 0, W, H), d = im.data, px = (x, y) => (y * W + x) * 4;
+    const cs = [px(2, 2), px(W - 3, 2), px(2, H - 3), px(W - 3, H - 3)], b = [d[cs[0]], d[cs[0] + 1], d[cs[0] + 2]];
+    for (const k of cs) if (Math.abs(d[k] - b[0]) + Math.abs(d[k + 1] - b[1]) + Math.abs(d[k + 2] - b[2]) > 40) return null;
+    const near = i => Math.abs(d[i] - b[0]) + Math.abs(d[i + 1] - b[1]) + Math.abs(d[i + 2] - b[2]) <= 54, seen = new Uint8Array(W * H), q = new Int32Array(W * H); let h = 0, t = 0;
+    const push = (x, y) => { const n = y * W + x; if (!seen[n] && near(n * 4)) { seen[n] = 1; q[t++] = n; } };
+    for (let x = 0; x < W; x++) { push(x, 0); push(x, H - 1); } for (let y = 0; y < H; y++) { push(0, y); push(W - 1, y); }
+    while (h < t) { const n = q[h++], x = n % W, y = (n / W) | 0; if (x > 0) push(x - 1, y); if (x < W - 1) push(x + 1, y); if (y > 0) push(x, y - 1); if (y < H - 1) push(x, y + 1); }
+    if (t < W * H * 0.15) return null;
+    for (let n = 0; n < W * H; n++) if (seen[n]) d[n * 4 + 3] = 0;
+    g.putImageData(im, 0, 0); const chb = await canvasToBlob(c, 'image/png'), ci = await loadImg(chb); return { chb, ch: ci.img, chUrl: ci.url };
+  }
   async function scRecomp(f, s) {
-    if (!f.ch) return f; const W = f.ch.naturalWidth, H = f.ch.naturalHeight, c = document.createElement('canvas'); c.width = W; c.height = H; const g = c.getContext('2d');
+    if (!f.ch) { let u = null; try { u = await scCut(f); } catch (e) {} if (!u) { scRecomp.skipped = (scRecomp.skipped || 0) + 1; return f; } Object.assign(f, u); } const W = f.ch.naturalWidth, H = f.ch.naturalHeight, c = document.createElement('canvas'); c.width = W; c.height = H; const g = c.getContext('2d');
     scBack(g, W, H, s, false); g.drawImage(f.ch, 0, 0); scFront(g, W, H, s); const nf = await loadImg(await canvasToBlob(c, 'image/jpeg', 0.92)); return Object.assign(nf, { chb: f.chb, ch: f.ch, chUrl: f.chUrl, sc: s });
   }
   $('scApply').addEventListener('click', async () => {
     const sc = $('scScope').value; if (sc === 'next') { msg('shootMsg', 'Done. New frames use this scene.'); return; }
-    const s = scFreeze(), sel = st.sel >= 0 ? st.sel : st.frames.length - 1; $('scApply').disabled = true; snap();
+    const s = scFreeze(), sel = st.sel >= 0 ? st.sel : st.frames.length - 1; $('scApply').disabled = true; scRecomp.skipped = 0; snap();
     try { for (let i = 0; i < st.frames.length; i++) { if (sc === 'one' && i !== sel) continue; if (sc === 'from' && i < sel) continue; st.frames[i] = await scRecomp(st.frames[i], s); } } catch (e) {}
-    $('scApply').disabled = false; refreshUI(); queueSave(); renderStill(); msg('shootMsg', sc === 'all' ? 'Scene applied to every frame.' : sc === 'from' ? 'Scene applied from frame ' + (sel + 1) + ' on.' : 'Scene applied to frame ' + (sel + 1) + '.');
+    $('scApply').disabled = false; refreshUI(); queueSave(); renderStill(); if (scRecomp.skipped) { msg('shootMsg', scRecomp.skipped + (scRecomp.skipped === 1 ? ' frame has a photo behind it and' : ' frames have a photo behind them and') + ' can not change. Retake ' + (scRecomp.skipped === 1 ? 'it' : 'them') + ' to use this scene.'); return; } msg('shootMsg', sc === 'all' ? 'Scene applied to every frame.' : sc === 'from' ? 'Scene applied from frame ' + (sel + 1) + ' on.' : 'Scene applied to frame ' + (sel + 1) + '.');
   });
+  $('scFresh').addEventListener('click', () => { if (!confirm('Start fresh? This clears every frame and the scene. Your character stays.')) return;
+    snap(); st.frames = []; st.sel = -1; pup.n = 0; pup.bg = null; pup.bgBlob = null; SCE.cur.color = null; SCE.cur.floor = { on: false, color: SCE.cur.floor.color }; SCE.cur.st = []; SCE.sel = -1; SCE.frozen = null;
+    pupBgSave(); scSave(); scSync(); refreshUI(); queueSave(); updateKeep(); renderStill(); msg('shootMsg', 'Fresh start. Pick a scene, then animate.'); });
   pup.face = { eyes: 0, gx: 0, mouth: 0, blinkEvery: 4, talkRate: 0, mood: 'neutral', turn: 0, head: '', brow: 0, lid: 0 };
   const TALK = [1, 2, 0, 3, 2, 1, 0, 2];
   function pupFaceFor(n) {
