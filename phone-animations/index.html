@@ -768,7 +768,7 @@
     P: null, drag: null };
   document.body.classList.add('scrollapp');
   try { const vfEl = document.querySelector('.vf'), appEl = document.querySelector('.app'); new ResizeObserver(() => appEl.style.setProperty('--vfh', vfEl.offsetHeight + 'px')).observe(vfEl); } catch (e) {}
-  const board = { tpl: 'pole', panels: [], pi: 0, sel: -1, selL: -1, aspect: 'square', slats: 18, wave: 0.35, spin: 3, stag: true, t: 0, playing: true };
+  const board = { tpl: 'mural', panels: [], pi: 0, sel: -1, selL: -1, aspect: 'square', slats: 18, wave: 0.35, spin: 3, stag: true, t: 0, playing: true };
   const newPanel = (i) => ({ faces: [], hold: 5, off: board.stag ? i * 2.2 : 0 });
   for (let i = 0; i < 6; i++) board.panels.push(newPanel(i));
   Object.defineProperty(board, 'faces', { get() { return this.panels[this.pi].faces; }, set(v) { this.panels[this.pi].faces = v; } });
@@ -1512,6 +1512,7 @@
   // ---- flat art scenes. Everything is drawn once into a picture, then reused. Ink outlines, flat fills, dotted line art, print shifted fills.
   const INK = '#1a1a1a';
   const TPL = {
+    mural: { name: 'My building', dw: 1000, dh: 771, asp: 'square', sky: '#e8dfc4', ground: 771, panels: [[355, 300, 362, 300]], quad: [[354.6, 242.6], [717.3, 362.7], [712.4, 648.7], [356.2, 557.2]] },
     pole: { name: 'Highway', dw: 1000, dh: 800, asp: 'square', sky: '#cfe3d8', ground: 700, panels: [[100, 140, 800, 260]] },
     wall: { name: 'City wall', dw: 1000, dh: 1000, asp: 'square', sky: '#f2d27a', ground: 930, panels: [[250, 235, 500, 330]] },
     hoard: { name: 'Hoarding', dw: 1000, dh: 620, asp: 'wide', sky: '#e8d9c4', ground: 540, panels: [[70, 285, 270, 200], [365, 285, 270, 200], [660, 285, 270, 200]] },
@@ -1603,6 +1604,34 @@
     sceneCv = document.createElement('canvas'); sceneCv.width = W; sceneCv.height = H; sceneKey = key;
     const c = sceneCv.getContext('2d'), q = sceneXf(W, H), ext = { x0: -q.ox / q.k, x1: (W - q.ox) / q.k, y0: -q.oy / q.k, y1: (H - q.oy) / q.k };
     c.save(); c.translate(q.ox, q.oy); c.scale(q.k, q.k); SCN[board.tpl](c, q.T, ext); c.restore(); return sceneCv;
+  }
+  // the drawn building: your picture with the sign opening cut out. The sign is drawn flat, then bent to fit the opening.
+  const MURAL = { img: new Image(), ok: false };
+  MURAL.img.onload = () => { MURAL.ok = true; sceneKey = ''; try { renderStill(); } catch (e) {} };
+  MURAL.img.src = '../img/signifier-mural.webp?v=1';
+  SCN.mural = (c, T) => { if (MURAL.ok) c.drawImage(MURAL.img, 0, 0, T.dw, T.dh); };
+  const pCv = document.createElement('canvas');
+  function panelCtx(w, h) { if (pCv.width !== w || pCv.height !== h) { pCv.width = w; pCv.height = h; } const g = pCv.getContext('2d'); g.clearRect(0, 0, w, h); return g; }
+  function warpQuad(dst, src, TQ, W, H) {
+    const q = sceneXf(W, H), cx = TQ.reduce((s, p) => s + p[0], 0) / 4, cy = TQ.reduce((s, p) => s + p[1], 0) / 4;
+    const P = TQ.map(p => [q.ox + (cx + (p[0] - cx) * 1.035) * q.k, q.oy + (cy + (p[1] - cy) * 1.035) * q.k]); // a hair bigger so it tucks under the ink
+    const [x0, y0] = P[0], [x1, y1] = P[1], [x2, y2] = P[2], [x3, y3] = P[3];
+    const dx1 = x1 - x2, dx2 = x3 - x2, dx3 = x0 - x1 + x2 - x3, dy1 = y1 - y2, dy2 = y3 - y2, dy3 = y0 - y1 + y2 - y3, den = dx1 * dy2 - dy1 * dx2;
+    const g = den ? (dx3 * dy2 - dy3 * dx2) / den : 0, h = den ? (dx1 * dy3 - dy1 * dx3) / den : 0, a = x1 - x0 + g * x1, b = x3 - x0 + h * x3, d = y1 - y0 + g * y1, e = y3 - y0 + h * y3;
+    const map = (u, v) => { const z = g * u + h * v + 1; return [(a * u + b * v + x0) / z, (d * u + e * v + y0) / z]; };
+    const NX = 18, NY = 14, sw = src.width, sh = src.height;
+    function tri(s0, s1, s2, d0, d1, d2) {
+      const det = (s1[0] - s0[0]) * (s2[1] - s0[1]) - (s2[0] - s0[0]) * (s1[1] - s0[1]); if (!det) return;
+      const A = ((d1[0] - d0[0]) * (s2[1] - s0[1]) - (d2[0] - d0[0]) * (s1[1] - s0[1])) / det, C = ((d2[0] - d0[0]) * (s1[0] - s0[0]) - (d1[0] - d0[0]) * (s2[0] - s0[0])) / det, E = d0[0] - A * s0[0] - C * s0[1];
+      const B = ((d1[1] - d0[1]) * (s2[1] - s0[1]) - (d2[1] - d0[1]) * (s1[1] - s0[1])) / det, D = ((d2[1] - d0[1]) * (s1[0] - s0[0]) - (d1[1] - d0[1]) * (s2[0] - s0[0])) / det, F = d0[1] - B * s0[0] - D * s0[1];
+      const mx = (d0[0] + d1[0] + d2[0]) / 3, my = (d0[1] + d1[1] + d2[1]) / 3, ex = p => [p[0] + Math.sign(p[0] - mx) * 0.7, p[1] + Math.sign(p[1] - my) * 0.7];
+      dst.save(); dst.beginPath(); const e0 = ex(d0), e1 = ex(d1), e2 = ex(d2); dst.moveTo(e0[0], e0[1]); dst.lineTo(e1[0], e1[1]); dst.lineTo(e2[0], e2[1]); dst.closePath(); dst.clip(); dst.transform(A, B, C, D, E, F); dst.drawImage(src, 0, 0); dst.restore();
+    }
+    for (let j = 0; j < NY; j++) for (let i = 0; i < NX; i++) {
+      const u0 = i / NX, u1 = (i + 1) / NX, v0 = j / NY, v1 = (j + 1) / NY, s = (u, v) => [u * sw, v * sh];
+      tri(s(u0, v0), s(u1, v0), s(u0, v1), map(u0, v0), map(u1, v0), map(u0, v1));
+      tri(s(u1, v0), s(u1, v1), s(u0, v1), map(u1, v0), map(u1, v1), map(u0, v1));
+    }
   }
   const THEMES = { ink: { bg: '#1a1a1a', fg: '#f2ecd6', ac: '#c8412f' }, lime: { bg: '#cfe59a', fg: '#3d4a26', ac: '#e8701a' }, sun: { bg: '#ffd400', fg: '#111111', ac: '#c8412f' }, white: { bg: '#ffffff', fg: '#111111', ac: '#c8412f' }, red: { bg: '#c8412f', fg: '#ffffff', ac: '#ffd400' } };
   const HEAD_FONT = 'Impact, Haettenschweiler, "Arial Narrow Bold", "Arial Black", sans-serif';
@@ -1716,13 +1745,15 @@
     if (!fsOn()) $('fsBtn').classList.remove('hide');
     if (!fsOn() && st.panel === 'bphotos' && board.faces[board.sel]) { drawFaceEditor(W, H); return; }
     if (bTmp.width !== W || bTmp.height !== H) { bTmp.width = W; bTmp.height = H; }
-    const c = bTmp.getContext('2d'), rs = panelRects(W, H); c.drawImage(sceneFor(W, H), 0, 0);
+    const c = bTmp.getContext('2d'), cc = c, rs = panelRects(W, H), TQ = TPL[board.tpl].quad; if (TQ) { c.fillStyle = '#e8dfc4'; c.fillRect(0, 0, W, H); } else c.drawImage(sceneFor(W, H), 0, 0);
     const none = !visPanels().some(p => p.faces.length);
     visPanels().forEach((pn, i) => {
-      const r = rs[i];
+      const r = TQ ? { x: 0, y: 0, w: rs[i].w, h: rs[i].h } : rs[i], c = TQ ? panelCtx(rs[i].w, rs[i].h) : cc;
       if (pn.faces.length) drawSlats(c, r, board.t + pn.off, pn);
       else { c.fillStyle = '#f2ecd6'; c.fillRect(r.x, r.y, r.w, r.h); c.strokeStyle = 'rgba(26,26,26,.18)'; c.lineWidth = Math.max(2, W / 200); c.beginPath(); for (let x = -r.h; x < r.w; x += Math.max(14, W / 40)) { c.moveTo(r.x + x, r.y + r.h); c.lineTo(r.x + x + r.h, r.y); } c.save(); c.beginPath(); c.rect(r.x, r.y, r.w, r.h); c.clip(); c.stroke(); c.restore(); c.fillStyle = INK; c.font = '400 ' + Math.round(Math.min(r.w, r.h) * 0.4) + 'px NocivAnton, Impact, sans-serif'; c.textAlign = 'center'; c.textBaseline = 'middle'; c.fillText(String(i + 1), r.x + r.w / 2, r.y + r.h / 2); }
+      if (TQ) warpQuad(cc, c.canvas, TQ, W, H);
     });
+    if (TQ) cc.drawImage(sceneFor(W, H), 0, 0);
     stageMsg(none ? 'Pick a billboard, then add photos' : '');
     if (!deck.recording && !fsOn() && nVis() > 1 && (st.panel === 'bphotos' || st.panel === 'bsign')) { const r = rs[Math.min(board.pi, rs.length - 1)]; c.save(); c.setLineDash([14, 9]); c.lineWidth = Math.max(3, W / 150); c.strokeStyle = '#ffffff'; c.shadowColor = 'rgba(0,0,0,.8)'; c.shadowBlur = 5; c.strokeRect(r.x - 3, r.y - 3, r.w + 6, r.h + 6); c.restore(); }
     drawLooked(ctx, bTmp, W, H, W, H, board.t, null); drawStamps(ctx, W, H, board.t, false);
@@ -2573,7 +2604,7 @@
       const db = await openDb(), d = await new Promise((res, rej) => { const q = db.transaction('s').objectStore('s').get('sign'); q.onsuccess = () => res(q.result); q.onerror = () => rej(q.error); });
       if (!d) return;
       const pans = d.panels || [{ hold: d.hold || 5, off: 0, faces: d.faces || [] }];
-      board.tpl = TPL[d.tpl] ? d.tpl : 'pole'; board.aspect = d.aspect || TPL[board.tpl].asp; board.slats = d.slats || 18; board.wave = d.wave == null ? 0.35 : d.wave; board.spin = d.spin || 3; board.stag = d.stag !== false;
+      board.tpl = TPL[d.tpl] ? d.tpl : 'mural'; board.aspect = d.aspect || TPL[board.tpl].asp; board.slats = d.slats || 18; board.wave = d.wave == null ? 0.35 : d.wave; board.spin = d.spin || 3; board.stag = d.stag !== false;
       for (let i = 0; i < pans.length && i < 6; i++) { const P = board.panels[i]; P.hold = pans[i].hold || 5; P.off = pans[i].off || 0; P.faces = []; for (const q of (pans[i].faces || []).slice(0, 5)) P.faces.push(await loadFace(q)); }
       board.pi = 0; board.sel = board.faces.length ? 0 : -1; board.selL = -1;
       chipSet('bShapes', Object.keys(TPL).map(k => [k, TPL[k].name]), () => board.tpl, setTpl);
