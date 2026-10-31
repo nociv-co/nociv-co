@@ -892,9 +892,8 @@ function subs(v,list,key){ const r=$('rail'); r.innerHTML='';
 function homeRail(){ const r=$('rail'); r.innerHTML='';
   [['text','Add text',()=>{ setConsole(true); addText({font:'anton',size:.11}); }],
    ['photo','Add photo',()=>pickPhoto()],
-   ['layout','Templates',()=>openTemplates()],
-   ['tee','See it',()=>$('mockBtn').click()]].forEach(([icn,lab,fn])=>{ const b=el('button','',ic(icn)+`<small>${lab}</small>`); b.setAttribute('aria-label',lab); b.onclick=fn; r.append(b); });
-  fitRail(4); r.classList.add('on'); }
+   ['layout','Templates',()=>openTemplates()]].forEach(([icn,lab,fn])=>{ const b=el('button','',ic(icn)+`<small>${lab}</small>`); b.setAttribute('aria-label',lab); b.onclick=fn; r.append(b); });
+  fitRail(3); r.classList.add('on'); }
 function fitRail(n){ const r=$('rail'); const avail=(SH||$('stage').clientHeight)-58-10-10; const per=Math.floor((avail-(n-1)*4)/n);
   const h=Math.max(34,Math.min(48,per)); r.style.setProperty('--rb',h+'px'); r.classList.toggle('tight',h<44);
   const railH=n*h+(n-1)*4+10; $('stage').style.setProperty('--tabTop',(58+railH+6)+'px'); $('stage').style.setProperty('--tabTopH',(58+railH/2-26)+'px'); }
