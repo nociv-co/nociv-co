@@ -113,15 +113,19 @@
   .pc-lcd:empty { display: none; }
   .pc-top { justify-content: flex-end; }
   .pc > * { min-width: 0; max-width: 100%; }
-  .pc-mid { display: grid; grid-template-columns: minmax(0, 1fr) auto; align-items: stretch; }
+  body.pupmode .pc { position: relative; }
+  body.pupmode .pc-top { position: absolute; top: 6px; right: 9px; left: 9px; z-index: 3; pointer-events: none; } body.pupmode .pc-top > * { pointer-events: auto; }
+  .pc-mid { display: grid; grid-template-columns: minmax(0, 1fr) auto; align-items: stretch; align-content: stretch; grid-template-rows: minmax(0, 1fr); flex: 1 1 auto; min-height: 0; padding-top: 30px; }
+  .pc-mid > .pc-knobs { align-items: start; align-content: center; min-height: 0; }
+  .pc-mid > #pupSub { grid-row: 1; align-self: center; }
   .pc-mid > * { grid-column: 1; }
-  .pc-mid > #pupSub { grid-column: 2; grid-row: 1 / span 6; display: flex; flex-direction: column; justify-content: center; gap: 6px; margin-left: 6px; }
+  .pc-mid > #pupSub { grid-column: 2; display: flex; flex-direction: column; justify-content: center; gap: 6px; margin-left: 6px; }
   .pc-mid > #pupSub.hide { display: none; }
   .pc-mid > #pupSub .pad { width: 62px; height: 32px; font-size: .72rem; padding: 0; }
   .kc-vis { gap: 4px; }
   .vbox { display: block; background: #efe6c8; border: 2.5px solid #1a1a1a; border-radius: 10px; }
-  .vbox.sq { width: 100%; max-width: 56px; height: auto; aspect-ratio: 1; }
-  .vbox.tall { width: 100%; max-width: 70px; height: auto; aspect-ratio: 140 / 208; }
+  .vbox.sq { width: 100%; max-width: 58px; height: auto; aspect-ratio: 1; }
+  .vbox.tall { width: auto; max-width: 100%; height: clamp(92px, 15svh, 140px); aspect-ratio: 140 / 208; }
   .tb.vbtn { width: 100%; min-width: 0; height: auto; padding: 5px 1px; font-size: .62rem; line-height: 1.1; white-space: nowrap; }
   .kc-vis .kl { margin-top: 1px; }
   .pc-pads { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: clamp(5px, 1svh, 8px); }
@@ -718,10 +722,7 @@ body { animation: nvIn .3s ease both; }
           <div class="kc"><div class="kb" id="kn4" role="slider" tabindex="0" aria-label="Size"></div><b class="kl">SIZE</b><span class="kv" id="pupVz"></span></div>
         </div>
         <div class="pc-knobs hide" id="pupFace">
-          <div class="kc"><div class="kb" id="knH" role="slider" tabindex="0" aria-label="Head shape"></div><b class="kl">HEAD</b><span class="kv" id="vHd"></span></div>
           <div class="kc"><div class="kb" id="knM" role="slider" tabindex="0" aria-label="Mouth"></div><b class="kl">MOUTH</b><span class="kv" id="vM"></span></div>
-          <div class="kc kc-vis"><canvas class="vbox sq" id="blinkBox" width="112" height="112" aria-label="Preview of blinking"></canvas><button type="button" class="tb vbtn" id="blinkBtn" aria-label="Change blink">1 IN 4</button><b class="kl">BLINK</b></div>
-          <div class="kc kc-vis"><canvas class="vbox sq" id="talkBox" width="112" height="112" aria-label="Preview of talking"></canvas><button type="button" class="tb vbtn" id="talkBtn" aria-label="Change talk">OFF</button><b class="kl">TALK</b></div>
           <div class="kc kc-sw"><button type="button" class="sw" id="swEyes" data-n="2" aria-label="Eyes open or shut"><i></i></button><b class="kl">EYES</b><span class="kv" id="vE"></span></div>
           <div class="kc kc-sw"><button type="button" class="sw" id="swLook" data-n="3" aria-label="Where they look"><i></i></button><b class="kl">LOOK</b><span class="kv" id="vL"></span></div>
         </div>
@@ -733,9 +734,10 @@ body { animation: nvIn .3s ease both; }
         </div>
         <div class="pc-knobs hide" id="pupEmote">
           <div class="kc kc-vis"><canvas class="vbox tall" id="emBox" width="140" height="208" aria-label="Preview of the emote"></canvas><button type="button" class="tb vbtn" id="emBtn" aria-label="Change emote">IDLE</button></div>
+          <div class="kc kc-vis"><canvas class="vbox sq" id="blinkBox" width="112" height="112" aria-label="Preview of blinking"></canvas><button type="button" class="tb vbtn" id="blinkBtn" aria-label="Change blink">1 IN 4</button><b class="kl">BLINK</b></div>
+          <div class="kc kc-vis"><canvas class="vbox sq" id="talkBox" width="112" height="112" aria-label="Preview of talking"></canvas><button type="button" class="tb vbtn" id="talkBtn" aria-label="Change talk">OFF</button><b class="kl">TALK</b></div>
           <div class="kc"><div class="kb" id="knP" role="slider" tabindex="0" aria-label="Where in the emote"></div><b class="kl">POSITION</b><span class="kv" id="vPh"></span></div>
           <div class="kc"><div class="kb" id="knS" role="slider" tabindex="0" aria-label="Frames per loop"></div><b class="kl">STEPS</b><span class="kv" id="vSt"></span></div>
-          <div class="kc kc-sw"><button type="button" class="sw" id="swAuto" data-n="2" aria-label="Move on by itself after every frame"><i></i></button><b class="kl">AUTO STEP</b><span class="kv" id="vAu"></span></div>
           <div class="kc kc-sw"><button type="button" class="tb tb-make" id="pcMake">MAKE IT</button></div>
         </div>
         </div>
@@ -1488,7 +1490,6 @@ body { animation: nvIn .3s ease both; }
   const selAd = (id, out, names) => ({ n: $(id).options.length, out: out, read: () => names[$(id).selectedIndex], get: () => $(id).selectedIndex / ($(id).options.length - 1), set: v => { $(id).selectedIndex = Math.round(v * ($(id).options.length - 1)); $(id).dispatchEvent(new Event('change')); } });
   const chipAd = (id, out, names) => { const bs = () => [...document.querySelectorAll('#' + id + ' .chip')], cur = () => bs().findIndex(x => x.getAttribute('aria-pressed') === 'true'); return { n: bs().length, out: out, read: () => names[cur()], get: () => cur() / (bs().length - 1), set: v => bs()[Math.round(v * (bs().length - 1))].click() }; };
   mkKnob($('kn1'), rangeAd('pupS1')); mkKnob($('kn2'), rangeAd('pupS2')); mkKnob($('kn3'), rangeAd('pupS3')); mkKnob($('kn4'), rangeAd('pupSz'));
-  mkKnob($('knH'), selAd('pupHead', 'vHd', ['SAVED', 'ROUND', 'SQUARE', 'LONG']));
   mkKnob($('knMo'), selAd('pupMood', 'vMo', ['NEUTRAL', 'HAPPY', 'SAD', 'ANGRY', 'SHOCKED', 'SLEEPY', 'SMUG', 'WORRIED']));
   mkKnob($('knTu'), selAd('pupTurn', 'vTu', ['SIDE L', '3/4 L', 'FRONT', '3/4 R', 'SIDE R']));
   mkKnob($('knBr'), rangeAd('pupBr', 'vBr', () => { const v = Math.round(+$('pupBr').value * 100); return (v > 0 ? '+' : '') + v; }));
@@ -1496,13 +1497,12 @@ body { animation: nvIn .3s ease both; }
   mkKnob($('knP'), rangeAd('pupPh', 'vPh', () => Math.round(+$('pupPh').value * 100) + '%'));
   mkKnob($('knS'), selAd('pupSt', 'vSt', ['4 FRAMES', '6 FRAMES', '8 FRAMES', '12 FRAMES']));
   // emote base: the character maker's own moves become the starting pose, then you tweak limbs from there
-  pup.em = { auto: false };
+  pup.em = { auto: true };
   function pupEmApply() {
     const C = pup.w && pup.w.CH; if (!C) return; const name = $('pupEm').value, T = (C.POSES[name] || C.POSES.idle).T, P = C.poseAt(name, +$('pupPh').value * T);
     if (P.crouch) P.bob = (P.bob || 0) - P.crouch; P.board = null; pup.P = P; pup.dirty = true; pupSync();
   }
   ['pupEm', 'pupSt'].forEach(id => $(id).addEventListener('change', pupEmApply)); $('pupPh').addEventListener('input', pupEmApply);
-  $('swAuto').addEventListener('click', () => { pup.em.auto = !pup.em.auto; buzz(8); swDraw(); });
   $('pcMake').addEventListener('click', async () => {
     if (pup.busy || !pup.w) return; pup.busy = true; const n = +$('pupSt').value, was = pup.em.auto; pup.em.auto = false; $('pcMake').disabled = true;
     try { for (let i = 0; i < n; i++) { $('pupPh').value = i / n; pupEmApply(); msg('pupMsg', 'Frame ' + (i + 1) + ' of ' + n); await pupTake(); }
@@ -1521,7 +1521,7 @@ body { animation: nvIn .3s ease both; }
     $('emBtn').textContent = EMN[$('pupEm').selectedIndex] || ''; $('blinkBtn').textContent = BLN[$('pfBlink').selectedIndex] || ''; $('talkBtn').textContent = TKN[$('pfTalk').selectedIndex] || '';
     if (!pup.w || !pup.w.CH || !pup.w.__ch) return; const C = pup.w.CH, F = pup.face;
     if (!$('pupEmote').classList.contains('hide')) { const name = $('pupEm').value, T = (C.POSES[name] || C.POSES.idle).T, P = C.poseAt(name, +$('pupPh').value * T); if (P.crouch) P.bob = (P.bob || 0) - P.crouch; P.board = null; const cv = $('emBox'); try { pup.w.__ch.puppet(cv, P, cv.width / 2, cv.height * 0.95, 0.84, $('pupProp').value || null, {}); } catch (e) {} }
-    if (!$('pupFace').classList.contains('hide')) {
+    if (!$('pupEmote').classList.contains('hide')) {
       const ev = +$('pfBlink').value, rate = +$('pfTalk').value, base = { gx: 0, gy: 0, mood: F.mood, head: F.head, brow: F.brow, lid: F.lid };
       vbFace($('blinkBox'), Object.assign({}, base, { blink: F.eyes === 1 || (ev > 0 && vbN % ev === ev - 1), talk: F.mouth }));
       vbFace($('talkBox'), Object.assign({}, base, { blink: false, talk: rate > 0 ? TALK[Math.floor(vbN / rate) % TALK.length] : F.mouth }));
@@ -1533,7 +1533,7 @@ body { animation: nvIn .3s ease both; }
   const PROPN = ['SAVED', 'NONE', 'SPRAY CAN', 'BRUSH', 'RECORD', 'CAMERA', 'CLIPBOARD', 'FRAME', 'MIC', 'SCISSORS'];
   function swDraw() {
     const set = (id, i, n) => { $(id).style.setProperty('--p', n > 1 ? i / (n - 1) : 0); };
-    set('swAuto', pup.em && pup.em.auto ? 1 : 0, 2); $('vAu').textContent = pup.em && pup.em.auto ? 'ON' : 'OFF'; set('swEyes', pup.face.eyes, 2); $('vE').textContent = pup.face.eyes ? 'SHUT' : 'OPEN'; set('swLook', pup.face.gx + 1, 3); $('vL').textContent = ['LEFT', 'AHEAD', 'RIGHT'][pup.face.gx + 1];
+    set('swEyes', pup.face.eyes, 2); $('vE').textContent = pup.face.eyes ? 'SHUT' : 'OPEN'; set('swLook', pup.face.gx + 1, 3); $('vL').textContent = ['LEFT', 'AHEAD', 'RIGHT'][pup.face.gx + 1];
     set('pupFlip', pup.flip ? 1 : 0, 2); const fp = +$('fps').value, si = SPD.reduce((bi, v, i) => Math.abs(v - fp) < Math.abs(SPD[bi] - fp) ? i : bi, 0); set('swSpeed', si, 3); $('vS').textContent = fp + ' FPS';
     $('pcPropV').textContent = PROPN[$('pupProp').selectedIndex] || 'SAVED';
   }
