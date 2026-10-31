@@ -77,7 +77,10 @@
   .pc-lcd.err { color: #f2c230; }
   .pc-lcd:empty::before { content: "Pick a pad. Turn a knob. Take a frame."; opacity: .7; }
   .pc-pads { display: grid; grid-template-columns: repeat(3, 1fr); gap: clamp(5px, 1svh, 8px); }
-  .pad { position: relative; height: clamp(34px, 5.4svh, 46px); border: 2.5px solid #1a1a1a; border-radius: 12px; font: 400 clamp(.85rem, 2.4svh, 1.05rem)/1 NocivAnton, Anton, Impact, sans-serif; letter-spacing: .06em; color: #fff; box-shadow: 0 4px 0 #1a1a1a; transition: transform .05s, box-shadow .05s; padding: 0 0 0 12px; text-shadow: 0 1px 0 rgba(0,0,0,.35); }
+  .stage.flash::after { content: ''; position: absolute; inset: 0; background: #fff; border-radius: 12px; pointer-events: none; animation: shot .22s ease-out forwards; }
+  @keyframes shot { from { opacity: .85; } to { opacity: 0; } }
+  .tb.dim { opacity: .55; }
+  .pad { position: relative; height: clamp(32px, 5.2svh, 46px); border: 2.5px solid #1a1a1a; border-radius: 12px; font: 400 clamp(.85rem, 2.4svh, 1.05rem)/1 NocivAnton, Anton, Impact, sans-serif; letter-spacing: .06em; color: #fff; box-shadow: 0 4px 0 #1a1a1a; transition: transform .05s, box-shadow .05s; padding: 0 0 0 12px; text-shadow: 0 1px 0 rgba(0,0,0,.35); }
   .pad i { position: absolute; left: 8px; top: 50%; width: 7px; height: 7px; margin-top: -3.5px; border-radius: 50%; background: rgba(0,0,0,.35); }
   .pad[aria-pressed="true"] { transform: translateY(3px); box-shadow: 0 1px 0 #1a1a1a, inset 0 0 0 3px rgba(255,255,255,.75); }
   .pad[aria-pressed="true"] i { background: #fff; box-shadow: 0 0 6px 2px #fff; }
@@ -653,7 +656,9 @@
   function two(n) { return (n < 10 ? '0' : '') + n; }
   function clock(sec) { sec = Math.max(0, Math.floor(sec)); return two(Math.floor(sec / 3600)) + ':' + two(Math.floor(sec / 60) % 60) + ':' + two(sec % 60); }
   function defaultDate() { const d = new Date(); return ['JAN','FEB','MAR','APR','MAY','JUN','JUL','AUG','SEP','OCT','NOV','DEC'][d.getMonth()] + ' ' + d.getDate() + ' ' + d.getFullYear(); }
-  function buzz(ms) { try { if (navigator.vibrate) navigator.vibrate(ms || 10); } catch (e) {} }
+  let _ac = null;
+  function tick(ms) { try { _ac = _ac || new (window.AudioContext || window.webkitAudioContext)(); if (_ac.state === 'suspended') _ac.resume(); const o = _ac.createOscillator(), g = _ac.createGain(), t = _ac.currentTime, big = ms >= 15; o.type = big ? 'triangle' : 'square'; o.frequency.setValueAtTime(big ? 220 : 880, t); o.frequency.exponentialRampToValueAtTime(big ? 90 : 520, t + 0.05); g.gain.setValueAtTime(big ? 0.18 : 0.05, t); g.gain.exponentialRampToValueAtTime(0.0001, t + (big ? 0.09 : 0.03)); o.connect(g); g.connect(_ac.destination); o.start(t); o.stop(t + 0.1); } catch (e) {} }
+  function buzz(ms) { try { if (navigator.vibrate) navigator.vibrate(ms || 10); } catch (e) {} try { if (pup.on) tick(ms || 10); } catch (e) {} }
 
   // ===================== LOOKS =====================
   const LOOKS = {
@@ -1007,7 +1012,7 @@
   });
   $('pupProp').addEventListener('change', () => { pup.dirty = true; swDraw(); });
   $('pcProp').addEventListener('click', () => { const sl = $('pupProp'); sl.selectedIndex = (sl.selectedIndex + 1) % sl.options.length; buzz(8); sl.dispatchEvent(new Event('change')); });
-  $('pcPlay').addEventListener('click', () => $('tbPlay').click());
+  $('pcPlay').addEventListener('click', () => { if ($('tbPlay').disabled) { buzz(8); msg('pupMsg', 'Take 2 frames first, then play'); return; } $('tbPlay').click(); });
   const SPD = [4, 8, 14];
   $('swSpeed').addEventListener('click', () => { const cur = SPD.reduce((bi, v, i) => Math.abs(v - +$('fps').value) < Math.abs(SPD[bi] - +$('fps').value) ? i : bi, 0); $('toonFps').value = SPD[(cur + 1) % 3]; buzz(8); $('toonFps').dispatchEvent(new Event('input')); });
   $('swEyes').addEventListener('click', () => { buzz(8); document.querySelector('#pfEyes .chip[data-v="' + (pup.face.eyes ? 0 : 1) + '"]').click(); swDraw(); });
@@ -1048,14 +1053,15 @@
     const [W, H] = size(), c = document.createElement('canvas'); c.width = W; c.height = H; const g = c.getContext('2d'); pupDrawBg(g, W, H); g.drawImage(pupChar(W, H), 0, 0);
     const ghost = document.createElement('canvas'); ghost.width = W; ghost.height = H; ghost.getContext('2d').drawImage(pup.flip ? pup.fc : pup.chc, 0, 0);
     snap(); await addBlob(await canvasToBlob(c, 'image/jpeg', 0.92)); pup.prev = ghost; pup.n++; st.sel = st.frames.length - 1; pup.dirty = true; buzz(15);
-    refreshUI(); msg('pupMsg', pup.n + (pup.n === 1 ? ' frame' : ' frames') + ' taken. Nudge a knob, take the next one.');
+    const sg = document.querySelector('.vf .stage'); sg.classList.remove('flash'); void sg.offsetWidth; sg.classList.add('flash'); $('strip').scrollLeft = 99999;
+    refreshUI(); $('strip').scrollLeft = 99999; msg('pupMsg', pup.n + (pup.n === 1 ? ' frame' : ' frames') + ' taken. Nudge a knob, take the next one.');
   });
   $('pupDone').addEventListener('click', pupClose);
   $('homeBtn').addEventListener('click', () => { if (pup.on) { pup.on = false; document.body.classList.remove('pupmode'); $('pupFloat').classList.add('hide'); if (pup.fr) { pup.fr.remove(); pup.fr = null; pup.w = null; } pup.prev = null; pup.n = 0; } }, true);
   $('cv').addEventListener('pointerdown', e => { if (!pup.on) return; const r = cv.getBoundingClientRect(); pup.drag = { id: e.pointerId, x: e.clientX, y: e.clientY, px: pup.x, py: pup.y, r }; try { cv.setPointerCapture(e.pointerId); } catch (x) {} });
   $('cv').addEventListener('pointermove', e => { const d = pup.drag; if (!pup.on || !d || d.id !== e.pointerId) return; pup.x = Math.min(1.1, Math.max(-0.1, d.px + (e.clientX - d.x) / d.r.width)); pup.y = Math.min(1.3, Math.max(0.2, d.py + (e.clientY - d.y) / d.r.height)); pup.dirty = true; });
   ['pointerup', 'pointercancel'].forEach(t => $('cv').addEventListener(t, () => { pup.drag = null; }));
-  function tbSync() { const pl = deck.mode === 'play'; $('tbPlay').textContent = pl ? 'Stop playing' : 'Play it'; $('tbPlay').setAttribute('aria-pressed', pl ? 'true' : 'false'); $('tbPlay').disabled = st.frames.length < 2 && !pl; $('tbFpsV').textContent = $('fps').value + ' frames a second'; $('pcPlay').textContent = pl ? 'STOP' : 'PLAY'; $('pcPlay').setAttribute('aria-pressed', pl ? 'true' : 'false'); $('pcPlay').disabled = $('tbPlay').disabled; try { swDraw(); } catch (e) {} if (document.activeElement !== $('toonFps')) $('toonFps').value = $('fps').value; }
+  function tbSync() { const pl = deck.mode === 'play'; $('tbPlay').textContent = pl ? 'Stop playing' : 'Play it'; $('tbPlay').setAttribute('aria-pressed', pl ? 'true' : 'false'); $('tbPlay').disabled = st.frames.length < 2 && !pl; $('tbFpsV').textContent = $('fps').value + ' frames a second'; $('pcPlay').textContent = pl ? 'STOP' : 'PLAY'; $('pcPlay').setAttribute('aria-pressed', pl ? 'true' : 'false'); $('pcPlay').classList.toggle('dim', $('tbPlay').disabled); try { swDraw(); } catch (e) {} if (document.activeElement !== $('toonFps')) $('toonFps').value = $('fps').value; }
   $('tbPlay').addEventListener('click', () => { buzz(12); if (deck.mode === 'play') { setDeck('pause'); pup.dirty = true; } else if (st.frames.length > 1) { deck.p = 0; setDeck('play'); } tbSync(); });
   $('toonFps').addEventListener('input', () => { $('fps').value = $('toonFps').value; $('fps').dispatchEvent(new Event('input')); tbSync(); });
   setInterval(() => { if (document.body.classList.contains('toon')) tbSync(); }, 400);
