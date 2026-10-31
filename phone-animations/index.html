@@ -62,30 +62,31 @@
   #pupLegacy { display: none; }
   .pc { display: none; }
   body.pupmode .panels { overflow: hidden; touch-action: manipulation; padding: 6px 8px 8px; display: flex; }
-  body.pupmode .panel.on { flex: 1; min-height: 0; display: flex; flex-direction: column; background: none; border: 0; padding: 0; }
+  body.pupmode .panel.on { flex: 1; min-height: 0; min-width: 0; width: 100%; display: flex; flex-direction: column; background: none; border: 0; padding: 0; }
   body.pupmode .panel > h2 { display: none; }
   body.pupmode #toonBar, body.pupmode #editRow, body.pupmode #info, body.pupmode #tools, body.pupmode #looks { display: none !important; }
   body.pupmode .tl { padding-top: 6px; }
   body.pupmode #pupFloat { display: none; }
-  body.pupmode .vf canvas { max-height: 27svh; }
+  body.pupmode .vf canvas { max-height: 25svh; }
   body.pupmode .strip { min-height: 0; padding-bottom: 2px; }
   body.pupmode .strip:empty::before { height: clamp(30px, 5svh, 56px); }
   body.pupmode .strip .fr { height: clamp(34px, 5.5svh, 56px); width: clamp(24px, 3.9svh, 40px); }
-  body.pupmode .pc { display: flex; flex: 1; min-height: 0; flex-direction: column; gap: clamp(3px, 0.9svh, 9px); justify-content: space-between; background: #f2c230; border: 3px solid #1a1a1a; border-radius: 18px; padding: clamp(4px, 1svh, 11px) 9px; box-shadow: 0 4px 0 #1a1a1a, inset 0 -5px 0 rgba(0,0,0,.14); user-select: none; -webkit-user-select: none; -webkit-touch-callout: none; }
+  body.pupmode .pc { overflow: hidden; display: flex; flex: 1; min-height: 0; flex-direction: column; gap: clamp(3px, 0.9svh, 9px); justify-content: space-between; background: #f2c230; border: 3px solid #1a1a1a; border-radius: 18px; padding: clamp(4px, 1svh, 11px) 9px; box-shadow: 0 4px 0 #1a1a1a, inset 0 -5px 0 rgba(0,0,0,.14); user-select: none; -webkit-user-select: none; -webkit-touch-callout: none; }
   .pc button { -webkit-tap-highlight-color: transparent; touch-action: manipulation; }
   .pc-lcd { flex: none; background: #1a1a1a; color: #d6dccf; border-radius: 8px; padding: 4px 10px; font: 700 .72rem/1.3 ui-monospace, Menlo, monospace; letter-spacing: .04em; text-transform: uppercase; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; min-height: 1.6em; margin: 0; }
   .pc-lcd.err { color: #f2c230; }
   .pc-lcd:empty::before { content: "Pick a pad. Turn a knob. Take a frame."; opacity: .7; }
-  .pc-pads { display: grid; grid-template-columns: repeat(3, 1fr); gap: clamp(5px, 1svh, 8px); }
+  .pc > * { min-width: 0; max-width: 100%; }
+  .pc-pads { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: clamp(5px, 1svh, 8px); }
   .stage.flash::after { content: ''; position: absolute; inset: 0; background: #fff; border-radius: 12px; pointer-events: none; animation: shot .22s ease-out forwards; }
   @keyframes shot { from { opacity: .85; } to { opacity: 0; } }
   .tb.dim { opacity: .55; }
-  .pad { position: relative; height: clamp(32px, 5.2svh, 46px); border: 2.5px solid #1a1a1a; border-radius: 12px; font: 400 clamp(.85rem, 2.4svh, 1.05rem)/1 NocivAnton, Anton, Impact, sans-serif; letter-spacing: .06em; color: #fff; box-shadow: 0 4px 0 #1a1a1a; transition: transform .05s, box-shadow .05s; padding: 0 0 0 12px; text-shadow: 0 1px 0 rgba(0,0,0,.35); }
+  .pad { position: relative; height: clamp(30px, 5.2svh, 46px); border: 2.5px solid #1a1a1a; border-radius: 12px; font: 400 clamp(.85rem, 2.4svh, 1.05rem)/1 NocivAnton, Anton, Impact, sans-serif; letter-spacing: .06em; color: #fff; box-shadow: 0 4px 0 #1a1a1a; transition: transform .05s, box-shadow .05s; padding: 0 0 0 12px; text-shadow: 0 1px 0 rgba(0,0,0,.35); }
   .pad i { position: absolute; left: 8px; top: 50%; width: 7px; height: 7px; margin-top: -3.5px; border-radius: 50%; background: rgba(0,0,0,.35); }
   .pad[aria-pressed="true"] { transform: translateY(3px); box-shadow: 0 1px 0 #1a1a1a, inset 0 0 0 3px rgba(255,255,255,.75); }
   .pad[aria-pressed="true"] i { background: #fff; box-shadow: 0 0 6px 2px #fff; }
-  .p-r { background: #c8412f; } .p-b { background: #2f5d9e; } .p-g { background: #4f7a52; } .p-t { background: #8a6a4a; } .p-m { background: #7a4f8a; } .p-k { background: #1a1a1a; }
-  .pc-knobs { display: grid; grid-auto-flow: column; grid-auto-columns: 1fr; gap: 4px; align-items: start; background: #f2ecd6; border: 2.5px solid #1a1a1a; border-radius: 14px; padding: clamp(5px, 1.2svh, 10px) 4px; }
+  .p-e { background: #d9692b; grid-column: span 2; } .p-r { background: #c8412f; } .p-b { background: #2f5d9e; } .p-g { background: #4f7a52; } .p-t { background: #8a6a4a; } .p-m { background: #7a4f8a; } .p-k { background: #1a1a1a; }
+  .pc-knobs { display: grid; grid-auto-flow: column; grid-auto-columns: minmax(0, 1fr); gap: 4px; align-items: start; background: #f2ecd6; border: 2.5px solid #1a1a1a; border-radius: 14px; padding: clamp(5px, 1.2svh, 10px) 4px; }
   .pc-knobs.hide { display: none; }
   .kc { display: flex; flex-direction: column; align-items: center; gap: 2px; min-width: 0; }
   .kl { font: 400 clamp(.62rem, 1.8svh, .78rem)/1 NocivAnton, Anton, Impact, sans-serif; letter-spacing: .05em; text-align: center; color: #1a1a1a; text-transform: uppercase; white-space: nowrap; }
@@ -103,7 +104,7 @@
   .sw[aria-pressed="true"] i { background: #4f7a52; }
   .kc-sw { justify-content: flex-end; height: 100%; }
   .pc-row { display: flex; gap: clamp(5px, 1.2svh, 8px); align-items: flex-end; }
-  .tb { flex: 1; min-width: 0; height: clamp(34px, 5.6svh, 46px); border: 2.5px solid #1a1a1a; border-radius: 12px; background: #f2ecd6; color: #1a1a1a; font: 400 clamp(.78rem, 2.2svh, .95rem)/1 NocivAnton, Anton, Impact, sans-serif; letter-spacing: .06em; box-shadow: 0 4px 0 #1a1a1a; padding: 0 4px; }
+  .tb { flex: 1; min-width: 0; height: clamp(30px, 5.6svh, 46px); border: 2.5px solid #1a1a1a; border-radius: 12px; background: #f2ecd6; color: #1a1a1a; font: 400 clamp(.78rem, 2.2svh, .95rem)/1 NocivAnton, Anton, Impact, sans-serif; letter-spacing: .06em; box-shadow: 0 4px 0 #1a1a1a; padding: 0 4px; }
   .tb:active { transform: translateY(3px); box-shadow: 0 1px 0 #1a1a1a; }
   .tb:disabled { opacity: .45; }
   .tb-prop { display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 2px; flex: 1.5; }
@@ -112,7 +113,7 @@
   .tb-play { background: #d6dccf; } .tb-play[aria-pressed="true"] { background: #4f7a52; color: #fff; }
   .tb-done { background: #1a1a1a; color: #f2ecd6; }
   .pc-go { align-items: flex-end; }
-  .pc-go .tb, .pc-go .take { height: clamp(44px, 7.4svh, 60px); }
+  .pc-go .tb, .pc-go .take { height: clamp(40px, 7.4svh, 60px); }
   .pc-go .kc-sw { flex: 1.1; height: auto; }
   .take { flex: 2.4; min-width: 0; border: 3px solid #1a1a1a; border-radius: 16px; background: #c8412f; color: #fff; font: 400 clamp(1rem, 3svh, 1.3rem)/1 NocivAnton, Anton, Impact, sans-serif; letter-spacing: .07em; box-shadow: 0 5px 0 #1a1a1a, inset 0 3px 0 rgba(255,255,255,.28); text-shadow: 0 2px 0 rgba(0,0,0,.3); }
   .take:active { transform: translateY(4px); box-shadow: 0 1px 0 #1a1a1a, inset 0 3px 0 rgba(255,255,255,.28); }
@@ -459,6 +460,9 @@
         <input type="range" id="pupS2" min="-60" max="190" step="1" value="14" tabindex="-1">
         <input type="range" id="pupS3" min="-40" max="70" step="1" value="0" tabindex="-1">
         <input type="range" id="pupSz" min="0.3" max="1" step="0.01" value="0.6" tabindex="-1">
+        <select id="pupEm" tabindex="-1"><option value="idle">idle</option><option value="wave">wave</option><option value="walk">walk</option><option value="dance">dance</option><option value="hype">hype</option><option value="spray">spray</option><option value="scratch">scratch</option><option value="point">point</option><option value="ollie">ollie</option></select>
+        <select id="pupSt" tabindex="-1"><option value="4">4</option><option value="6">6</option><option value="8" selected>8</option><option value="12">12</option></select>
+        <input type="range" id="pupPh" min="0" max="0.99" step="0.01" value="0" tabindex="-1">
         <select id="pupProp" tabindex="-1"><option value="">Saved</option><option value="none">None</option><option value="spray">Spray</option><option value="brush">Brush</option><option value="record">Record</option><option value="camera">Camera</option><option value="clipboard">Clipboard</option><option value="frame">Frame</option><option value="mic">Mic</option><option value="scissors">Scissors</option></select>
       </div>
       <div class="pc" id="pupConsole">
@@ -470,6 +474,7 @@
           <button type="button" class="pad p-t" data-l="lL" aria-pressed="false"><i></i>L LEG</button>
           <button type="button" class="pad p-m" data-l="body" aria-pressed="false"><i></i>BODY</button>
           <button type="button" class="pad p-k" data-l="face" aria-pressed="false"><i></i>FACE</button>
+          <button type="button" class="pad p-e" data-l="emote" aria-pressed="false"><i></i>EMOTE</button>
         </div>
         <div class="pc-knobs" id="pupLimbCtl">
           <div class="kc"><div class="kb" id="kn1" role="slider" tabindex="0" aria-label="First joint"></div><b class="kl" id="pupL1"></b><span class="kv" id="pupV1"></span></div>
@@ -483,6 +488,12 @@
           <div class="kc"><div class="kb" id="knT" role="slider" tabindex="0" aria-label="Talk"></div><b class="kl">TALK</b><span class="kv" id="vT"></span></div>
           <div class="kc kc-sw"><button type="button" class="sw" id="swEyes" data-n="2" aria-label="Eyes open or shut"><i></i></button><b class="kl">EYES</b><span class="kv" id="vE"></span></div>
           <div class="kc kc-sw"><button type="button" class="sw" id="swLook" data-n="3" aria-label="Where they look"><i></i></button><b class="kl">LOOK</b><span class="kv" id="vL"></span></div>
+        </div>
+        <div class="pc-knobs hide" id="pupEmote">
+          <div class="kc"><div class="kb" id="knE" role="slider" tabindex="0" aria-label="Emote"></div><b class="kl">EMOTE</b><span class="kv" id="vEm"></span></div>
+          <div class="kc"><div class="kb" id="knP" role="slider" tabindex="0" aria-label="Where in the emote"></div><b class="kl">POSITION</b><span class="kv" id="vPh"></span></div>
+          <div class="kc"><div class="kb" id="knS" role="slider" tabindex="0" aria-label="Frames per loop"></div><b class="kl">STEPS</b><span class="kv" id="vSt"></span></div>
+          <div class="kc kc-sw"><button type="button" class="sw" id="swAuto" data-n="2" aria-label="Move on by itself after every frame"><i></i></button><b class="kl">AUTO STEP</b><span class="kv" id="vAu"></span></div>
         </div>
         <div class="pc-row">
           <div class="kc kc-sw"><button type="button" class="sw" id="pupFlip" data-n="2" aria-label="Face the other way"><i></i></button><b class="kl">FLIP</b></div>
@@ -940,22 +951,22 @@
   const PL = { aR: ['Shoulder', 'Elbow', -30, 180, -60, 190], aL: ['Shoulder', 'Elbow', -30, 180, -60, 190], lR: ['Leg out', 'Leg lift', 0, 40, 0, 100], lL: ['Leg out', 'Leg lift', 0, 40, 0, 100], body: ['Lean', 'Head tilt', -20, 20, -25, 25] };
   const KN = []; function knobsDraw() { KN.forEach(f => f()); swDraw(); }
   function pupSync() {
-    const k = pup.limb, d = PL[k] || PL.aR, P = pup.P; $('pupFace').classList.toggle('hide', k !== 'face'); $('pupLimbCtl').classList.toggle('hide', k === 'face');
+    const k = pup.limb, d = PL[k] || PL.aR, P = pup.P; $('pupFace').classList.toggle('hide', k !== 'face'); $('pupEmote').classList.toggle('hide', k !== 'emote'); $('pupLimbCtl').classList.toggle('hide', k === 'face' || k === 'emote');
     document.querySelectorAll('#pupLimb [data-l]').forEach(x => x.setAttribute('aria-pressed', x.dataset.l === k ? 'true' : 'false'));
-    if (k === 'face') { knobsDraw(); return; } $('pupL1').textContent = d[0]; $('pupL2').textContent = d[1];
+    if (k === 'face' || k === 'emote') { knobsDraw(); return; } $('pupL1').textContent = d[0]; $('pupL2').textContent = d[1];
     const s1 = $('pupS1'), s2 = $('pupS2'); s1.min = d[2]; s1.max = d[3]; s2.min = d[4]; s2.max = d[5];
     let v1, v2; if (k === 'aR' || k === 'aL') { v1 = P[k][0]; v2 = P[k][1]; } else if (k === 'lR' || k === 'lL') { v1 = P[k].a; v2 = Math.round(P[k].lift * 100); } else { v1 = P.lean; v2 = P.head; }
     s1.value = v1; s2.value = v2; $('pupV1').textContent = Math.round(v1); $('pupV2').textContent = Math.round(v2);
     const jv = P.bob < 0 ? -P.bob : -(P.crouch || 0); $('pupS3').value = jv; $('pupV3').textContent = Math.round(jv); $('pupSz').value = pup.sz; $('pupVz').textContent = Math.round(pup.sz * 100) + '%';
     knobsDraw();
   }
-  function pupSet() {
+  function pupSet(jumpEdit) {
     const k = pup.limb, P = pup.P, a = +$('pupS1').value, b = +$('pupS2').value;
-    if (k === 'aR' || k === 'aL') P[k] = [a, b]; else if (k === 'lR' || k === 'lL') P[k] = { a: a, lift: b / 100 }; else { P.lean = a; P.head = b; } const jv = +$('pupS3').value; P.bob = jv > 0 ? -jv : 0; P.crouch = jv < 0 ? -jv : 0;
+    if (k === 'aR' || k === 'aL') P[k] = [a, b]; else if (k === 'lR' || k === 'lL') P[k] = { a: a, lift: b / 100 }; else { P.lean = a; P.head = b; } if (jumpEdit) { const jv = +$('pupS3').value; P.bob = jv > 0 ? -jv : 0; P.crouch = jv < 0 ? -jv : 0; }
     $('pupV1').textContent = Math.round(a); $('pupV2').textContent = Math.round(b); $('pupV3').textContent = Math.round(P.bob < 0 ? -P.bob : -(P.crouch || 0));
     pup.sz = +$('pupSz').value; $('pupVz').textContent = Math.round(pup.sz * 100) + '%'; pup.dirty = true;
   }
-  ['pupS1', 'pupS2', 'pupS3', 'pupSz'].forEach(id => $(id).addEventListener('input', pupSet));
+  ['pupS1', 'pupS2', 'pupS3', 'pupSz'].forEach(id => $(id).addEventListener('input', () => pupSet(id === 'pupS3')));
   document.querySelectorAll('#pupLimb [data-l]').forEach(b => b.addEventListener('click', () => { pup.limb = b.dataset.l; buzz(8); pupSync(); }));
   function pupDrawBg(c, W, H) {
     c.fillStyle = '#222'; c.fillRect(0, 0, W, H); const im = pup.bg; if (!im) return;
@@ -1032,17 +1043,29 @@
     el.addEventListener('keydown', e => { const up = e.key === 'ArrowUp' || e.key === 'ArrowRight', dn = e.key === 'ArrowDown' || e.key === 'ArrowLeft'; if (!up && !dn) return; e.preventDefault(); put(f + (up ? 1 : -1) * (ad.n ? 1 / (ad.n - 1) : 0.04)); });
     KN.push(draw); draw();
   }
-  const rangeAd = id => ({ get: () => { const i = $(id); return (i.value - i.min) / (i.max - i.min); }, set: v => { const i = $(id); i.value = +i.min + v * (i.max - i.min); i.dispatchEvent(new Event('input')); } });
+  const rangeAd = (id, out, read) => ({ out: out, read: read, get: () => { const i = $(id); return (i.value - i.min) / (i.max - i.min); }, set: v => { const i = $(id); i.value = +i.min + v * (i.max - i.min); i.dispatchEvent(new Event('input')); } });
   const selAd = (id, out, names) => ({ n: $(id).options.length, out: out, read: () => names[$(id).selectedIndex], get: () => $(id).selectedIndex / ($(id).options.length - 1), set: v => { $(id).selectedIndex = Math.round(v * ($(id).options.length - 1)); $(id).dispatchEvent(new Event('change')); } });
   const chipAd = (id, out, names) => { const bs = () => [...document.querySelectorAll('#' + id + ' .chip')], cur = () => bs().findIndex(x => x.getAttribute('aria-pressed') === 'true'); return { n: bs().length, out: out, read: () => names[cur()], get: () => cur() / (bs().length - 1), set: v => bs()[Math.round(v * (bs().length - 1))].click() }; };
   mkKnob($('kn1'), rangeAd('pupS1')); mkKnob($('kn2'), rangeAd('pupS2')); mkKnob($('kn3'), rangeAd('pupS3')); mkKnob($('kn4'), rangeAd('pupSz'));
+  mkKnob($('knE'), selAd('pupEm', 'vEm', ['IDLE', 'WAVE', 'WALK', 'DANCE', 'HYPE', 'SPRAY', 'SCRATCH', 'POINT', 'OLLIE']));
+  mkKnob($('knP'), rangeAd('pupPh', 'vPh', () => Math.round(+$('pupPh').value * 100) + '%'));
+  mkKnob($('knS'), selAd('pupSt', 'vSt', ['4 FRAMES', '6 FRAMES', '8 FRAMES', '12 FRAMES']));
+  // emote base: the character maker's own moves become the starting pose, then you tweak limbs from there
+  pup.em = { auto: false };
+  function pupEmApply() {
+    const C = pup.w && pup.w.CH; if (!C) return; const name = $('pupEm').value, T = (C.POSES[name] || C.POSES.idle).T, P = C.poseAt(name, +$('pupPh').value * T);
+    if (P.crouch) P.bob = (P.bob || 0) - P.crouch; P.board = null; pup.P = P; pup.dirty = true; pupSync();
+  }
+  ['pupEm', 'pupSt'].forEach(id => $(id).addEventListener('change', pupEmApply)); $('pupPh').addEventListener('input', pupEmApply);
+  $('swAuto').addEventListener('click', () => { pup.em.auto = !pup.em.auto; buzz(8); swDraw(); });
+  function pupEmStep() { if (!pup.em.auto) return; const n = +$('pupSt').value, ph = $('pupPh'); ph.value = ((Math.round(+ph.value * n) + 1) % n) / n; pupEmApply(); }
   mkKnob($('knM'), chipAd('pfMouth', 'vM', ['CLOSED', 'SMALL', 'WIDE', 'OH']));
   mkKnob($('knB'), selAd('pfBlink', 'vB', ['NEVER', '1 IN 2', '1 IN 3', '1 IN 4', '1 IN 6', '1 IN 8']));
   mkKnob($('knT'), selAd('pfTalk', 'vT', ['OFF', 'FAST', 'MEDIUM', 'SLOW']));
   const PROPN = ['SAVED', 'NONE', 'SPRAY CAN', 'BRUSH', 'RECORD', 'CAMERA', 'CLIPBOARD', 'FRAME', 'MIC', 'SCISSORS'];
   function swDraw() {
     const set = (id, i, n) => { $(id).style.setProperty('--p', n > 1 ? i / (n - 1) : 0); };
-    set('swEyes', pup.face.eyes, 2); $('vE').textContent = pup.face.eyes ? 'SHUT' : 'OPEN'; set('swLook', pup.face.gx + 1, 3); $('vL').textContent = ['LEFT', 'AHEAD', 'RIGHT'][pup.face.gx + 1];
+    set('swAuto', pup.em && pup.em.auto ? 1 : 0, 2); $('vAu').textContent = pup.em && pup.em.auto ? 'ON' : 'OFF'; set('swEyes', pup.face.eyes, 2); $('vE').textContent = pup.face.eyes ? 'SHUT' : 'OPEN'; set('swLook', pup.face.gx + 1, 3); $('vL').textContent = ['LEFT', 'AHEAD', 'RIGHT'][pup.face.gx + 1];
     set('pupFlip', pup.flip ? 1 : 0, 2); const fp = +$('fps').value, si = SPD.reduce((bi, v, i) => Math.abs(v - fp) < Math.abs(SPD[bi] - fp) ? i : bi, 0); set('swSpeed', si, 3); $('vS').textContent = fp + ' FPS';
     $('pcPropV').textContent = PROPN[$('pupProp').selectedIndex] || 'SAVED';
   }
@@ -1052,7 +1075,7 @@
   $('pupSnap').addEventListener('click', async () => {
     const [W, H] = size(), c = document.createElement('canvas'); c.width = W; c.height = H; const g = c.getContext('2d'); pupDrawBg(g, W, H); g.drawImage(pupChar(W, H), 0, 0);
     const ghost = document.createElement('canvas'); ghost.width = W; ghost.height = H; ghost.getContext('2d').drawImage(pup.flip ? pup.fc : pup.chc, 0, 0);
-    snap(); await addBlob(await canvasToBlob(c, 'image/jpeg', 0.92)); pup.prev = ghost; pup.n++; st.sel = st.frames.length - 1; pup.dirty = true; buzz(15);
+    snap(); await addBlob(await canvasToBlob(c, 'image/jpeg', 0.92)); pup.prev = ghost; pup.n++; st.sel = st.frames.length - 1; pup.dirty = true; buzz(15); pupEmStep();
     const sg = document.querySelector('.vf .stage'); sg.classList.remove('flash'); void sg.offsetWidth; sg.classList.add('flash'); $('strip').scrollLeft = 99999;
     refreshUI(); $('strip').scrollLeft = 99999; msg('pupMsg', pup.n + (pup.n === 1 ? ' frame' : ' frames') + ' taken. Nudge a knob, take the next one.');
   });
