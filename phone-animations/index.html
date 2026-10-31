@@ -48,6 +48,7 @@
   .vf { flex: none; padding: 0 10px; }
   .vf .stage { background: #111; border-radius: 12px; display: grid; place-items: center; padding: 5px; position: relative; }
   .vf canvas { display: block; max-width: 100%; max-height: 30svh; width: auto; height: auto; background: #000; }
+  #cv { touch-action: none; }
   #fsBtn, #fsX { position: absolute; top: 10px; right: 10px; z-index: 5; background: rgba(0,0,0,.6); color: #f2ecd6; border: 1.5px solid #f2ecd6; border-radius: 10px; padding: 8px 12px; font: 900 .8rem/1 inherit; text-transform: uppercase; letter-spacing: .06em; }
   #fsBtn.hide, #fsX.hide, #fsHint.hide { display: none; }
   #fsHint { position: absolute; left: 0; right: 0; top: 14px; text-align: center; color: #f2ecd6; font-weight: 800; font-size: .85rem; pointer-events: none; z-index: 4; opacity: .8; }
@@ -311,6 +312,10 @@
       <label class="f">Use the character you built</label>
       <div class="row"><select id="chPose" aria-label="Move"><option value="">Their saved move</option><option value="idle">Idle</option><option value="wave">Wave</option><option value="walk">Walk</option><option value="dance">Dance</option><option value="hype">Hype</option><option value="spray">Spray</option><option value="scratch">Scratch</option><option value="point">Point</option><option value="ollie">Ollie</option></select><select id="chN" aria-label="Frames"><option value="8">8 frames</option><option value="12" selected>12 frames</option><option value="16">16 frames</option></select></div>
       <button type="button" class="btn" id="chBtn" style="margin-top:8px">Add my character</button>
+      <label class="f">Pose a puppet on your own photo</label>
+      <p class="tip">Pick a photo from your phone for the background. Your character stands in it and you move each arm, leg and the head, one frame at a time.</p>
+      <button type="button" class="btn" id="pupBtn">Pose my character on a photo</button>
+      <input type="file" id="pupBg" accept="image/*" class="hide">
       <label class="f">No camera, or already have photos?</label>
       <input type="file" id="photoIn" accept="image/*" multiple>
       <label class="f">Turn a video into frames</label>
@@ -362,6 +367,30 @@
         <label class="f">Colors</label>
         <div class="thm" id="bThemes"></div>
       </div>
+    </section>
+
+    <section class="panel" id="p-pup">
+      <h2>Puppet</h2>
+      <p class="tip" id="pupTip">Drag the picture to move your character. Pick a limb, set it, then take a frame. Change it a little and take the next one.</p>
+      <div class="chips" id="pupLimb">
+        <button type="button" class="chip" data-l="aR" aria-pressed="true">Right arm</button>
+        <button type="button" class="chip" data-l="aL" aria-pressed="false">Left arm</button>
+        <button type="button" class="chip" data-l="lR" aria-pressed="false">Right leg</button>
+        <button type="button" class="chip" data-l="lL" aria-pressed="false">Left leg</button>
+        <button type="button" class="chip" data-l="body" aria-pressed="false">Head and body</button>
+      </div>
+      <label class="f"><span id="pupL1"></span> <span id="pupV1"></span></label>
+      <input type="range" id="pupS1" min="-30" max="180" step="1" value="9">
+      <label class="f"><span id="pupL2"></span> <span id="pupV2"></span></label>
+      <input type="range" id="pupS2" min="-60" max="190" step="1" value="14">
+      <label class="f" id="pupL3w">Jump <span id="pupV3"></span></label>
+      <input type="range" id="pupS3" min="0" max="70" step="1" value="0">
+      <label class="f">Size <span id="pupVz"></span></label>
+      <input type="range" id="pupSz" min="0.3" max="1" step="0.01" value="0.6">
+      <button type="button" class="btn dark" id="pupSnap" style="margin-top:12px">Take frame</button>
+      <div class="row" style="margin-top:8px"><button type="button" class="btn" id="pupBgBtn">Change photo</button><button type="button" class="btn" id="pupReset">Reset pose</button></div>
+      <button type="button" class="btn" id="pupDone" style="margin-top:8px">Done, play it back</button>
+      <div class="msg" id="pupMsg"></div>
     </section>
 
     <section class="panel" id="p-bsign">
@@ -489,6 +518,8 @@
   // the tape deck. p is the position: a frame number for stop motion (it can keep counting past the end when looping).
   const deck = { mode: 'pause', p: 0, settle: 0, recording: false, auto: false };
   const fpsOut = () => st.fps;
+  const pup = { on: false, bg: null, fr: null, w: null, x: 0.5, y: 0.9, sz: 0.6, limb: 'aR', dirty: true, out: document.createElement('canvas'), chc: document.createElement('canvas'), prev: null, n: 0,
+    P: null, drag: null };
   const board = { faces: [], sel: -1, aspect: 'wide', shape: 'wide', slats: 18, wave: 0.35, hold: 5, spin: 3, scene: 'float', t: 0, playing: true };
   function size() { return SIZES[st.kind === 'board' ? (fsOn() ? (innerHeight > innerWidth ? 'tall' : 'wide') : board.aspect) : st.kind === 'char' ? 'tall' : st.aspect]; }
   function applySize(w, h) { if (cv.width !== w || cv.height !== h) { cv.width = w; cv.height = h; } }
@@ -668,6 +699,7 @@
     if (st.kind === 'char') { drawCharView(0.016); return; }
     if (st.kind === 'board') { drawBoardView(0); return; }
     if (st.kind === 'clip') { drawClip(); return; }
+    if (pup.on) { drawPuppet(); return; }
     if (st.cam && st.camVideo) return;
     const [W, H] = size(); applySize(W, H);
     const i = st.sel >= 0 ? st.sel : st.frames.length - 1;
@@ -722,7 +754,8 @@
     else if (st.kind === 'board') drawBoardView(dt);
     else if (st.kind === 'clip') { drawClip(); if (st.clip) $('info').textContent = clock(clipV.currentTime) + ' of ' + clock(clipV.duration); }
     else if (st.kind === 'stop') {
-      if (st.cam && st.camVideo) drawLive();
+      if (pup.on) drawPuppet();
+      else if (st.cam && st.camVideo) drawLive();
       else if (st.frames.length) drawFrameAt(deck.mode !== 'pause' ? Math.max(0, idxOf(deck.p)) : (st.sel >= 0 ? st.sel : st.frames.length - 1), tapeTime());
     }
   }
@@ -767,6 +800,80 @@
       st.sel = st.frames.length - 1; refreshUI(); setCam(false); msg('shootMsg', 'Added ' + files.length + '. Press PLAY under the picture.');
     } catch (err) { msg('shootMsg', 'One of those would not open. Try JPG or PNG.', true); }
   });
+
+  // ---- puppet: your photo behind, your character in front, move each limb, take a frame ----
+
+  function pupFresh() { return { bob: 0, lean: 0, head: 0, hy: 0, aR: [9, 14], aL: [9, 14], lR: { a: 4, lift: 0 }, lL: { a: 4, lift: 0 } }; }
+  pup.P = pupFresh();
+  const PL = { aR: ['Right shoulder', 'Right elbow', -30, 180, -60, 190], aL: ['Left shoulder', 'Left elbow', -30, 180, -60, 190], lR: ['Right leg out', 'Right leg lift', 0, 40, 0, 100], lL: ['Left leg out', 'Left leg lift', 0, 40, 0, 100], body: ['Lean', 'Head tilt', -20, 20, -25, 25] };
+  function pupSync() {
+    const k = pup.limb, d = PL[k], P = pup.P; $('pupL1').textContent = d[0]; $('pupL2').textContent = d[1];
+    const s1 = $('pupS1'), s2 = $('pupS2'); s1.min = d[2]; s1.max = d[3]; s2.min = d[4]; s2.max = d[5];
+    let v1, v2; if (k === 'aR' || k === 'aL') { v1 = P[k][0]; v2 = P[k][1]; } else if (k === 'lR' || k === 'lL') { v1 = P[k].a; v2 = Math.round(P[k].lift * 100); } else { v1 = P.lean; v2 = P.head; }
+    s1.value = v1; s2.value = v2; $('pupV1').textContent = Math.round(v1); $('pupV2').textContent = Math.round(v2);
+    $('pupS3').value = -P.bob; $('pupV3').textContent = Math.round(-P.bob); $('pupSz').value = pup.sz; $('pupVz').textContent = Math.round(pup.sz * 100) + '%';
+    $('pupL3w').classList.toggle('hide', k !== 'body'); $('pupS3').classList.toggle('hide', k !== 'body');
+    document.querySelectorAll('#pupLimb .chip').forEach(x => x.setAttribute('aria-pressed', x.dataset.l === k ? 'true' : 'false'));
+  }
+  function pupSet() {
+    const k = pup.limb, P = pup.P, a = +$('pupS1').value, b = +$('pupS2').value;
+    if (k === 'aR' || k === 'aL') P[k] = [a, b]; else if (k === 'lR' || k === 'lL') P[k] = { a: a, lift: b / 100 }; else { P.lean = a; P.head = b; P.bob = -(+$('pupS3').value); }
+    $('pupV1').textContent = Math.round(a); $('pupV2').textContent = Math.round(b); $('pupV3').textContent = Math.round(-P.bob);
+    pup.sz = +$('pupSz').value; $('pupVz').textContent = Math.round(pup.sz * 100) + '%'; pup.dirty = true;
+  }
+  ['pupS1', 'pupS2', 'pupS3', 'pupSz'].forEach(id => $(id).addEventListener('input', pupSet));
+  document.querySelectorAll('#pupLimb .chip').forEach(b => b.addEventListener('click', () => { pup.limb = b.dataset.l; pupSync(); }));
+  function pupDrawBg(c, W, H) {
+    c.fillStyle = '#222'; c.fillRect(0, 0, W, H); const im = pup.bg; if (!im) return;
+    const k = Math.max(W / im.naturalWidth, H / im.naturalHeight), w = im.naturalWidth * k, h = im.naturalHeight * k; c.drawImage(im, (W - w) / 2, (H - h) / 2, w, h);
+  }
+  function pupChar(W, H) { const cc = pup.chc; if (cc.width !== W || cc.height !== H) { cc.width = W; cc.height = H; } try { pup.w.__ch.puppet(cc, pup.P, pup.x * W, pup.y * H, pup.sz); } catch (e) {} return cc; }
+  function drawPuppet() {
+    const [W, H] = size(); applySize(W, H);
+    if (!pup.w) { ctx.fillStyle = '#111'; ctx.fillRect(0, 0, W, H); stageMsg('Loading your character...'); return; }
+    if (pup.dirty || pup.out.width !== W || pup.out.height !== H) {
+      const o = pup.out; o.width = W; o.height = H; const c = o.getContext('2d'); pupDrawBg(c, W, H);
+      if (pup.prev && pup.prev.width === W) { c.globalAlpha = 0.28; c.drawImage(pup.prev, 0, 0); c.globalAlpha = 1; }
+      c.drawImage(pupChar(W, H), 0, 0); pup.dirty = false;
+    }
+    ctx.drawImage(pup.out, 0, 0); stageMsg('Frame ' + (pup.n + 1) + '. Drag to move your character.');
+  }
+  async function pupLoadBg(file) {
+    const f = await loadImg(file), k = Math.min(1, 1600 / Math.max(f.img.naturalWidth, f.img.naturalHeight)), c = document.createElement('canvas');
+    c.width = Math.round(f.img.naturalWidth * k); c.height = Math.round(f.img.naturalHeight * k); c.getContext('2d').drawImage(f.img, 0, 0, c.width, c.height); URL.revokeObjectURL(f.url);
+    const im = new Image(); await new Promise((res, rej) => { im.onload = res; im.onerror = rej; im.src = c.toDataURL('image/jpeg', 0.9); }); pup.bg = im; pup.dirty = true;
+  }
+  async function pupOpen() {
+    pup.on = true; st.cam = false; if (st.camVideo) { try { setCam(false); } catch (e) {} }
+    showPanel('pup'); pupSync(); pup.dirty = true; msg('pupMsg', '');
+    if (!pup.fr) {
+      const fr = document.createElement('iframe'); fr.src = 'character/?embed=1'; fr.setAttribute('aria-hidden', 'true'); fr.style.cssText = 'position:fixed;left:0;top:0;width:10px;height:10px;opacity:0;pointer-events:none;border:0'; document.body.appendChild(fr); pup.fr = fr;
+      try {
+        await new Promise((res, rej) => { fr.onload = res; setTimeout(() => rej(new Error('slow')), 10000); });
+        const w = fr.contentWindow; for (let i = 0; i < 80 && !(w.__ch && w.CH && w.CH.ready && w.CH.ready()); i++) await new Promise(r => setTimeout(r, 100));
+        if (!(w.__ch && w.CH.ready())) throw new Error('slow'); pup.w = w;
+      } catch (e) { fr.remove(); pup.fr = null; pup.on = false; msg('shootMsg', 'Could not load your character. Open Character Maker once, then try again.', true); showPanel('shoot'); return; }
+    }
+    pup.dirty = true;
+  }
+  function pupClose() { pup.on = false; if (pup.fr) { pup.fr.remove(); pup.fr = null; pup.w = null; } pup.prev = null; pup.n = 0; st.cam = false; refreshUI(); showPanel('shoot'); }
+  $('pupBtn').addEventListener('click', () => { if (pup.bg) pupOpen(); else $('pupBg').click(); });
+  $('pupBgBtn').addEventListener('click', () => $('pupBg').click());
+  $('pupBg').addEventListener('change', async e => {
+    const file = e.target.files[0]; e.target.value = ''; if (!file) return;
+    try { await pupLoadBg(file); if (!pup.on) await pupOpen(); else pup.dirty = true; } catch (err) { msg('shootMsg', 'That photo would not open. Try JPG or PNG.', true); msg('pupMsg', 'That photo would not open. Try JPG or PNG.', true); }
+  });
+  $('pupReset').addEventListener('click', () => { pup.P = pupFresh(); pupSync(); pup.dirty = true; });
+  $('pupSnap').addEventListener('click', async () => {
+    const [W, H] = size(), c = document.createElement('canvas'); c.width = W; c.height = H; const g = c.getContext('2d'); pupDrawBg(g, W, H); g.drawImage(pupChar(W, H), 0, 0);
+    const ghost = document.createElement('canvas'); ghost.width = W; ghost.height = H; ghost.getContext('2d').drawImage(pup.chc, 0, 0);
+    snap(); await addBlob(await canvasToBlob(c, 'image/jpeg', 0.92)); pup.prev = ghost; pup.n++; st.sel = st.frames.length - 1; pup.dirty = true; buzz(15);
+    refreshUI(); msg('pupMsg', pup.n + (pup.n === 1 ? ' frame' : ' frames') + ' taken. Change a limb a little, take the next one.');
+  });
+  $('pupDone').addEventListener('click', pupClose);
+  $('cv').addEventListener('pointerdown', e => { if (!pup.on) return; const r = cv.getBoundingClientRect(); pup.drag = { id: e.pointerId, x: e.clientX, y: e.clientY, px: pup.x, py: pup.y, r }; try { cv.setPointerCapture(e.pointerId); } catch (x) {} });
+  $('cv').addEventListener('pointermove', e => { const d = pup.drag; if (!pup.on || !d || d.id !== e.pointerId) return; pup.x = Math.min(1.1, Math.max(-0.1, d.px + (e.clientX - d.x) / d.r.width)); pup.y = Math.min(1.3, Math.max(0.2, d.py + (e.clientY - d.y) / d.r.height)); pup.dirty = true; });
+  ['pointerup', 'pointercancel'].forEach(t => $('cv').addEventListener(t, () => { pup.drag = null; }));
   $('chBtn').addEventListener('click', async () => {
     const btn = $('chBtn'); btn.disabled = true; msg('shootMsg', 'Posing your character...');
     const fr = document.createElement('iframe'); fr.src = 'character/?embed=1'; fr.setAttribute('aria-hidden', 'true'); fr.style.cssText = 'position:fixed;left:0;top:0;width:10px;height:10px;opacity:0;pointer-events:none;border:0'; document.body.appendChild(fr);
@@ -856,7 +963,7 @@
     $('dupBtn').textContent = isBoard ? 'Add photo' : 'Copy';
     $('modeSw').classList.toggle('hide', !stop);
     $('shootRow').classList.toggle('hide', !(stop && st.cam));
-    $('deck').classList.toggle('hide', (stop && st.cam) || isBoard || st.kind === 'char');
+    $('deck').classList.toggle('hide', (stop && st.cam) || isBoard || st.kind === 'char' || pup.on);
     $('editRow').classList.toggle('hide', !(stop || isBoard));
     $('stopSet').classList.toggle('hide', !stop);
     const isChar = st.kind === 'char'; $('autoStop').classList.toggle('hide', st.kind === 'clip' || isChar); $('autoChar').classList.toggle('hide', !isChar);
