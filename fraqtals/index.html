@@ -883,7 +883,7 @@ function renderPanel(){ const v=document.createElement('div'); v.className='pv';
   requestAnimationFrame(()=>{ v.classList.add('on'); if(old){ old.classList.remove('on'); setTimeout(()=>old.remove(),320); } }); }
 const el=(tag,cls,html)=>{ const e=document.createElement(tag); if(cls) e.className=cls; if(html!=null) e.innerHTML=html; return e; };
 function subs(v,list,key){ const r=$('rail'); r.innerHTML='';
-  const LABEL={words:'Words',font:'Font',color:'Color',style:'Style',curve:'Curve',align:'Align',look:'Look',ink:'Ink',fix:'Fix',shape:'Shape',crop:'Crop',swap:'Swap'};
+  const LABEL={words:'Words',font:'Font',color:'Color',style:'Style',curve:'Curve',align:'Align',look:'Look',ink:'Ink',shape:'Shape',crop:'Crop',swap:'Swap'};
   if(!list.some(l=>l[0]===sub[key])) sub[key]=list[0][0];
   list.forEach(([id,icon,txt])=>{ const b=el('button',sub[key]===id?'on':''); b.innerHTML=(txt?`<span class="tx" style="${txt.style||''}">${txt.t}</span>`:ic(icon))+`<small>${LABEL[id]||id}</small>`; b.setAttribute('aria-label',id); b.dataset.s=id;
     b.onclick=()=>{ setConsole(true); sub[key]=id; r.querySelectorAll('button').forEach(x=>x.classList.toggle('on',x===b)); v.querySelectorAll('.sec').forEach(s=>s.classList.toggle('on',s.dataset.s===id)); }; r.append(b); });
@@ -984,10 +984,10 @@ function addText(st){ const o=Object.assign({id:nid(),type:'text',text:st.hollow
   S.objs.push(o); commit(); select(o.id); sub.text='words'; renderPanel(); openEdit(true); }
 
 /* PHOTO */
-const LOOKS=[['orig','Original'],['bw','B and W'],['tone','Dots'],['stencil','Stencil'],['duo','Duo']];
+const LOOKS=[['orig','Original'],['bw','Copy'],['tone','Dots'],['stencil','Ink'],['duo','Duo']];
 function photoGrid(s,onpick,cur){ const g=el('div','grid g5'); s.append(g);
   const add=el('button','tile cta',ic('plus')+'<small>New</small>'); add.onclick=()=>pickPhoto(true); g.append(add);
-  [...IMGS.keys()].filter(id=>!IMGS.get(id).derived).reverse().slice(0,4).forEach(id=>{ const im=IMGS.get(id); const b=el('button','tile'+(cur===id?' on':'')); const c=document.createElement('canvas'); c.width=96;c.height=96; c.style.width='48px';c.style.height='48px'; coverDraw(c,im.small||im.img,im.w,im.h); b.append(c); b.onclick=()=>onpick(id); g.append(b); });
+  [...IMGS.keys()].reverse().slice(0,4).forEach(id=>{ const im=IMGS.get(id); const b=el('button','tile'+(cur===id?' on':'')); const c=document.createElement('canvas'); c.width=96;c.height=96; c.style.width='48px';c.style.height='48px'; coverDraw(c,im.small||im.img,im.w,im.h); b.append(c); b.onclick=()=>onpick(id); g.append(b); });
   return g; }
 function panelPhoto(v){
   const o=selObj();
@@ -995,23 +995,23 @@ function panelPhoto(v){
     const s=only(v);
     const add=el('button','tile big cta', ic('photo')+`<div style="text-align:left"><b>${o&&o.type==='img'?'Fill this spot':'Add a photo'}</b><br><small>From your camera roll</small></div>`); add.onclick=()=>pickPhoto(); s.append(add);
     if (IMGS.size){ const g=el('div','grid g4'); s.append(g);
-      [...IMGS.keys()].filter(id=>!IMGS.get(id).derived).reverse().slice(0,4).forEach(id=>{ const im=IMGS.get(id); const b=el('button','tile'); const c=document.createElement('canvas'); c.width=96;c.height=96; c.style.width='48px';c.style.height='48px'; coverDraw(c,im.small||im.img,im.w,im.h); b.append(c);
+      [...IMGS.keys()].reverse().slice(0,4).forEach(id=>{ const im=IMGS.get(id); const b=el('button','tile'); const c=document.createElement('canvas'); c.width=96;c.height=96; c.style.width='48px';c.style.height='48px'; coverDraw(c,im.small||im.img,im.w,im.h); b.append(c);
         b.onclick=()=>{ const s2=selObj(); if(s2&&s2.type==='img'){ s2.src=id; s2.cz=1;s2.cx=0;s2.cy=0; commit(); renderPanel(); buildCtx(); updWarn(); dirty(); } else addPhotoObj(id); }; g.append(b); }); }
     return;
   }
-  const body=subs(v,[['look','dots'],['ink','drop'],['fix','wand'],['shape','rounded'],['crop','crop'],['swap','swap']],'photo');
+  const body=subs(v,[['look','dots'],['ink','drop'],['shape','rounded'],['crop','crop'],['swap','swap']],'photo');
   const lk=sec(body,'look',sub.photo); const lg=el('div','grid g5'); lk.append(lg);
-  LOOKS.forEach(([id,name])=>{ const b=el('button','tile'+((o.look||'orig')===id?' on':'')); const c=document.createElement('canvas'); c.width=96;c.height=96; c.style.width='46px';c.style.height='46px'; b.append(c); b.setAttribute('aria-label',name); lg.append(b);
+  LOOKS.forEach(([id,name])=>{ const b=el('button','tile'+((o.look||'orig')===id?' on':'')); b.style.height='72px'; const c=document.createElement('canvas'); c.width=84;c.height=84; c.style.width='40px';c.style.height='40px'; b.append(c); b.insertAdjacentHTML('beforeend',`<small>${name}</small>`); b.setAttribute('aria-label',name); lg.append(b);
     requestAnimationFrame(()=>lookThumb(c,o,id)); b.onclick=()=>{ selObj().look=id; commit(); lg.querySelectorAll('.tile').forEach(x=>x.classList.toggle('on',x===b)); dirty(); }; });
   slider(lk,'contrast','contrast',0,1,o.amt??.5,val=>{ selObj().amt=val; dirty(); },.02);
   const ik=sec(body,'ink',sub.photo); colorDots(ik,o.ink||'INK',hex=>{ const s=selObj(); s.ink=hex; if(!s.look||s.look==='orig'||s.look==='bw') s.look='tone'; commit(); dirty(); });
-  const fx=sec(body,'fix',sub.photo); const fg=el('div','grid g3'); fx.append(fg);
-  const au=el('button','tog'+(o.auto?' on':''), ic('wand')+'<span>Auto fix</span>'); au.onclick=()=>{ const s=selObj(); s.auto=!s.auto; commit(); au.classList.toggle('on',s.auto); dirty(); }; fg.append(au);
-  const cp=el('button','tog'+(IMGS.get(o.src)?.derived?' on':''), ic('person')+'<span>Cut out</span>'); cp.onclick=()=>cutOutPerson(cp); fg.append(cp);
-  const kw=el('button','tog'+(o.knock?' on':''), ic('scissors')+'<span>No white</span>'); kw.onclick=()=>{ const s=selObj(); s.knock=!s.knock; commit(); kw.classList.toggle('on',s.knock); dirty(); }; fg.append(kw);
-  const sh=sec(body,'shape',sub.photo); const sg=el('div','grid g5'); sh.append(sg);
-  [['rect','square'],['round','rounded'],['circle','circle'],['heart','heart']].forEach(([id,icn])=>{ const b=el('button','tile'+((o.mask||'rect')===id?' on':''),ic(icn)); b.onclick=()=>{ const s=selObj(); s.mask=id; if((id==='circle'||id==='heart')&&Math.abs(s.fw-s.fh)>2){ const m=Math.min(s.fw,s.fh); s.fw=s.fh=m; } commit(); sg.querySelectorAll('.tile').forEach(x=>x.classList.toggle('on',x===b&&!x.dataset.ring)); dirty(); }; sg.append(b); });
-  const rb=el('button','tile'+(o.ring?' on':''),ic('ring')); rb.dataset.ring=1; rb.onclick=()=>{ const s=selObj(); s.ring=s.ring?0:Math.round(PW()*.012); commit(); rb.classList.toggle('on',!!s.ring); dirty(); }; sg.append(rb);
+  const sh=sec(body,'shape',sub.photo); const sg=el('div','grid g4'); sh.append(sg);
+  [['rect','square','Square'],['round','rounded','Rounded'],['circle','circle','Circle'],['heart','heart','Heart']].forEach(([id,icn,lab])=>{ const b=el('button','tile'+((o.mask||'rect')===id?' on':''),ic(icn)+`<small>${lab}</small>`); b.onclick=()=>{ const s=selObj(); s.mask=id; if((id==='circle'||id==='heart')&&Math.abs(s.fw-s.fh)>2){ const m=Math.min(s.fw,s.fh); s.fw=s.fh=m; } commit(); sg.querySelectorAll('.tile').forEach(x=>x.classList.toggle('on',x===b)); dirty(); }; sg.append(b); });
+  const og=el('div','grid g2'); sh.append(og);
+  const rOff=el('button','tog'+(!o.ring?' on':''),`<span>No outline</span>`), rOn=el('button','tog'+(o.ring?' on':''),ic('ring')+`<span>Outline</span>`);
+  rOff.onclick=()=>{ const s=selObj(); s.ring=0; commit(); rOff.classList.add('on'); rOn.classList.remove('on'); dirty(); };
+  rOn.onclick=()=>{ const s=selObj(); if(!s.ring) s.ring=Math.round(PW()*.012); commit(); rOn.classList.add('on'); rOff.classList.remove('on'); dirty(); };
+  og.append(rOff,rOn);
   const cr=sec(body,'crop',sub.photo); const cg=el('div','grid g2'); cr.append(cg);
   const mv=el('button','tog'+(cropMode?' on':''), ic('move')+'<span>Move inside</span>'); mv.onclick=toggleCrop; cg.append(mv);
   const ft=el('button','tog'+(o.fit==='contain'?' on':''), ic('fit')+'<span>Show all</span>'); ft.onclick=()=>{ const s=selObj(); s.fit=s.fit==='contain'?'cover':'contain'; s.cz=1; commit(); ft.classList.toggle('on',s.fit==='contain'); dirty(); }; cg.append(ft);
@@ -1057,36 +1057,6 @@ function makeSmall(src,w,h){ const f=Math.min(1,1000/Math.max(w,h)); const c=doc
 function addPhotoObj(id){ const im=IMGS.get(id), W=PW(), Hh=PH(), f=Math.min(W*.8/im.w,Hh*.7/im.h);
   const o={id:nid(),type:'img',src:id,fw:Math.round(im.w*f),fh:Math.round(im.h*f),x:W/2,y:Hh/2,rot:0,scale:1,look:'orig',mask:'rect',cz:1,cx:0,cy:0};
   S.objs.push(o); commit(); select(o.id); }
-
-/* ---------- cut out a person (MediaPipe selfie segmenter, loads only when tapped) ---------- */
-const MP_VER='0.10.14';
-let segmenter=null;
-async function cutOutPerson(btn){
-  const o=selObj(); if(!o||!o.src) return;
-  const im=IMGS.get(o.src);
-  if (im.derived){ o.src=im.derived; commit(); renderPanel(); dirty(); return; } // tap again to undo the cut
-  btn.classList.add('busy'); busy(true,'Finding the person');
-  try{
-    if(!segmenter){
-      const mp=await import(`https://cdn.jsdelivr.net/npm/@mediapipe/tasks-vision@${MP_VER}/vision_bundle.mjs`);
-      const fs=await mp.FilesetResolver.forVisionTasks(`https://cdn.jsdelivr.net/npm/@mediapipe/tasks-vision@${MP_VER}/wasm`);
-      segmenter=await mp.ImageSegmenter.createFromOptions(fs,{baseOptions:{modelAssetPath:'https://storage.googleapis.com/mediapipe-models/image_segmenter/selfie_segmenter/float16/latest/selfie_segmenter.tflite'},runningMode:'IMAGE',outputCategoryMask:false,outputConfidenceMasks:true});
-    }
-    const src=im.img; const w=im.w,h=im.h;
-    // run on a reduced copy, then scale the mask up with smoothing
-    const f=Math.min(1,1024/Math.max(w,h)); const sc=document.createElement('canvas'); sc.width=Math.round(w*f); sc.height=Math.round(h*f); sc.getContext('2d').drawImage(src,0,0,sc.width,sc.height);
-    const res=segmenter.segment(sc); const m=res.confidenceMasks[0]; const mw=m.width, mh=m.height, arr=m.getAsFloat32Array();
-    const mc=document.createElement('canvas'); mc.width=mw; mc.height=mh; const mx=mc.getContext('2d'); const md=mx.createImageData(mw,mh);
-    for(let i=0;i<arr.length;i++){ const a=Math.max(0,Math.min(1,(arr[i]-.35)/.3)); md.data[i*4+3]=a*255; }
-    mx.putImageData(md,0,0); res.close&&res.close();
-    const out=document.createElement('canvas'); out.width=w; out.height=h; const ox=out.getContext('2d');
-    ox.imageSmoothingQuality='high'; ox.drawImage(mc,0,0,w,h); ox.globalCompositeOperation='source-in'; ox.drawImage(src,0,0);
-    const blob=await new Promise(r=>out.toBlob(r,'image/png'));
-    const id='c'+Date.now().toString(36); IMGS.set(id,{img:out,small:makeSmall(out,w,h),w,h,blob,derived:o.src}); saveImage(id,blob);
-    o.src=id; commit(); renderPanel(); dirty(); toast('person','Background removed');
-  }catch(err){ console.error(err); toast('warn','Cut out needs an internet connection. Try again.'); }
-  btn.classList.remove('busy'); busy(false);
-}
 
 /* ---------- warnings ---------- */
 function updWarn(){ const w=$('warnDot'), o=selObj();
