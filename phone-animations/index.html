@@ -169,8 +169,8 @@
   #fsHint { position: absolute; left: 0; right: 0; top: 14px; text-align: center; color: #f2ecd6; font-weight: 800; font-size: .85rem; pointer-events: none; z-index: 4; opacity: .8; }
   /* one scrolling page: top bar and preview stay put, the controls scroll under them, tabs stay at the bottom */
   body.scrollapp:not(.fs):not(.pupmode) .app:not(.is-create) { overflow-y: auto; overflow-x: hidden; -webkit-overflow-scrolling: touch; overscroll-behavior: contain; padding-top: 0; }
-  body.scrollapp:not(.fs):not(.pupmode) .app:not(.is-create) .hdr { position: sticky; top: 0; z-index: 30; height: calc(48px + env(safe-area-inset-top)); box-sizing: border-box; padding-top: calc(6px + env(safe-area-inset-top)); background: var(--paper); }
-  body.scrollapp:not(.fs):not(.pupmode) .app:not(.is-create) .vf { position: sticky; top: calc(48px + env(safe-area-inset-top)); z-index: 25; background: var(--paper); padding-bottom: 8px; }
+  body.scrollapp:not(.fs):not(.pupmode) .app:not(.is-create) .hdr { height: calc(48px + env(safe-area-inset-top)); box-sizing: border-box; padding-top: calc(6px + env(safe-area-inset-top)); }
+  body.scrollapp:not(.fs):not(.pupmode) .app:not(.is-create) .vf { position: sticky; top: env(safe-area-inset-top); z-index: 25; background: var(--paper); padding-top: 4px; padding-bottom: 8px; }
   body.scrollapp:not(.fs):not(.pupmode) .app:not(.is-create) .vf canvas { max-height: 32svh; }
   body.scrollapp:not(.fs):not(.pupmode) .app:not(.is-create) .panels { flex: 1 0 auto; min-height: 0; overflow: visible; touch-action: auto; padding-bottom: 18px; }
   body.scrollapp:not(.fs):not(.pupmode) .app:not(.is-create) .tools { position: sticky; bottom: 0; z-index: 30; margin-top: auto; }

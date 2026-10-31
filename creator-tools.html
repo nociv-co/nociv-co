@@ -381,7 +381,7 @@
     hubWrap.style.display = 'none';
     document.querySelectorAll('.subpanel').forEach(p => p.classList.remove('show'));
     const pnl = document.getElementById(id); pnl.classList.add('show');
-    pnl.querySelectorAll('iframe[data-src]').forEach(f => { f.src = f.dataset.src; f.removeAttribute('data-src'); });
+    pnl.querySelectorAll('iframe[data-src]').forEach(f => { const u = f.dataset.src; f.src = u + (u.indexOf('?') < 0 ? '?' : '&') + 'v=' + Math.floor(Date.now() / 3600000); f.removeAttribute('data-src'); });
     window.scrollTo({ top: 0, behavior: 'smooth' });
     if (window.matchMedia('(max-width: 700px)').matches && window.__enterFs) window.__enterFs(pnl);
   }
