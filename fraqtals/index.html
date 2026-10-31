@@ -38,17 +38,18 @@ svg.i{width:24px;height:24px;fill:none;stroke:currentColor;stroke-width:2;stroke
 .press:active{transform:scale(.9)}
 
 /* top */
-#top{height:var(--top);flex:0 0 auto;display:flex;align-items:center;gap:8px;padding:0 12px;padding-top:env(safe-area-inset-top,0px);box-sizing:content-box}
-.ib{width:42px;height:42px;border-radius:14px;display:grid;place-items:center;background:var(--card);color:var(--icon);box-shadow:0 1px 2px rgba(28,29,43,.06);transition:transform .18s var(--spring),opacity .2s}
+#top{height:var(--top);flex:0 0 auto;display:flex;align-items:center;gap:6px;padding:0 10px;padding-top:env(safe-area-inset-top,0px);box-sizing:content-box}
+.ib{width:40px;height:40px;border-radius:14px;display:grid;place-items:center;background:var(--card);color:var(--icon);box-shadow:0 1px 2px rgba(28,29,43,.06);transition:transform .18s var(--spring),opacity .2s}
 .ib:active{transform:scale(.88)}
 .ib[disabled]{opacity:.35;pointer-events:none}
-#itemChip{height:42px;border-radius:21px;background:var(--card);display:flex;align-items:center;gap:8px;padding:0 12px 0 6px;margin:0 auto;box-shadow:0 1px 2px rgba(28,29,43,.06);transition:transform .18s var(--spring)}
+#itemChip{height:40px;border-radius:20px;background:var(--card);display:flex;align-items:center;gap:6px;padding:0 10px 0 5px;margin:0 auto;box-shadow:0 1px 2px rgba(28,29,43,.06);transition:transform .18s var(--spring)}
 #itemChip:active{transform:scale(.94)}
-#itemChip .sw{width:30px;height:30px;border-radius:50%;display:grid;place-items:center;box-shadow:inset 0 0 0 1px rgba(0,0,0,.08)}
+#itemChip .sw{width:28px;height:28px;border-radius:50%;display:grid;place-items:center;box-shadow:inset 0 0 0 1px rgba(0,0,0,.08)}
 #itemChip .sw svg{width:18px;height:18px}
 #itemChip b{font-size:14px;font-weight:650}
 #itemChip svg.chev{width:16px;height:16px;color:var(--sub)}
-#mockBtn{width:50px;height:50px;border-radius:15px;background:var(--card);overflow:hidden;position:relative;box-shadow:0 1px 2px rgba(28,29,43,.06),0 0 0 1px var(--line);transition:transform .2s var(--spring)}
+#resetBtn.armed{background:#ffe1e1;color:#a11d22}
+#mockBtn{width:46px;height:46px;border-radius:15px;background:var(--card);overflow:hidden;position:relative;box-shadow:0 1px 2px rgba(28,29,43,.06),0 0 0 1px var(--line);transition:transform .2s var(--spring)}
 #mockBtn:active{transform:scale(.9)}
 #mockBtn canvas{width:100%;height:100%;display:block}
 
@@ -213,6 +214,12 @@ input[type=range]::-moz-range-thumb{width:28px;height:28px;border:0;border-radiu
 #toast{position:fixed;left:50%;bottom:calc(var(--panelH) + var(--dock) + var(--sb) + 14px);transform:translate(-50%,16px);opacity:0;z-index:80;background:var(--ink);color:#fff;border-radius:16px;padding:10px 14px;display:flex;align-items:center;gap:8px;font-size:13px;font-weight:600;transition:opacity .25s,transform .35s var(--spring);pointer-events:none;max-width:90vw;box-shadow:0 8px 24px rgba(28,29,43,.25)}
 #toast.on{opacity:1;transform:translate(-50%,0)}
 #toast svg{width:18px;height:18px;flex:0 0 auto}
+.hrow{display:flex;align-items:center;gap:12px;padding:6px 2px;border-bottom:1px solid var(--line)}
+.hrow:last-child{border-bottom:0}
+.hrow .hi{width:40px;height:40px;border-radius:13px;background:var(--tile);color:var(--icon);display:grid;place-items:center;flex:0 0 auto}
+.hrow .hi svg{width:21px;height:21px}
+.hrow b{display:block;font-size:14px;font-weight:700}
+.hrow span{display:block;font-size:12.5px;color:var(--sub);font-weight:500;margin-top:1px}
 .issue{display:flex;align-items:center;gap:12px;background:var(--tile);border-radius:16px;padding:12px;color:var(--icon);margin-bottom:8px}
 .issue span{flex:1;font-size:13.5px;color:var(--ink);font-weight:600}
 .issue button{background:var(--ink);color:#fff;border-radius:12px;padding:10px 12px;font-weight:700;font-size:12px}
@@ -241,6 +248,8 @@ input[type=range]::-moz-range-thumb{width:28px;height:28px;border:0;border-radiu
     <button class="ib" id="undo" aria-label="Undo"></button>
     <button class="ib" id="redo" aria-label="Redo"></button>
     <button id="itemChip" aria-label="Choose item"><span class="sw" id="itemSw"></span><b id="itemName">Tee</b></button>
+    <button class="ib" id="resetBtn" aria-label="Start over"></button>
+    <button class="ib" id="helpBtn" aria-label="How it works"></button>
     <button id="mockBtn" aria-label="See it on the item"><canvas id="mockMini" width="100" height="100"></canvas></button>
   </div>
   <div id="stage">
@@ -292,6 +301,13 @@ input[type=range]::-moz-range-thumb{width:28px;height:28px;border:0;border-radiu
   <canvas id="mockBig" width="900" height="900"></canvas>
   <div id="mockColors"></div>
 </div>
+
+<div class="sheet" id="helpSheet"><div class="scrim"></div><div class="card">
+  <div class="grab"></div>
+  <div class="shead"><h3>How it works</h3><button class="ib" id="helpClose" aria-label="Close"></button></div>
+  <div id="helpList"></div>
+  <button class="cta" id="helpGo" style="margin-top:12px"></button>
+</div></div>
 
 <div class="sheet" id="doneSheet"><div class="scrim"></div><div class="card">
   <div class="grab"></div>
@@ -1119,7 +1135,7 @@ async function sharePicture(){ busy(true,'Making your picture'); const mc=await 
 async function savePrintFile(){ busy(true,'Making the print file'); const pc=await renderPrint(); const b=await toBlob(pc); busy(false); await shareFiles([file(b,`print-${gift().id}-${gift().w}x${gift().h}in.png`)]); }
 function showSent(){ const s=$('sent'); s.querySelector('.ring').innerHTML=ic('check'); s.classList.add('on'); setTimeout(()=>s.classList.remove('on'),1500); }
 window.addEventListener('message',e=>{ const d=e.data; if(!d||d.type!=='fraqtals-set') return; if(PARENT_ORIGIN!=='*'&&e.origin!==PARENT_ORIGIN) return; if(d.item) setGift(d.item,true); if(d.colorHex) setColor(d.colorHex); });
-function startOver(){ S=Object.assign(freshState(),{gift:S.gift,color:S.color,custom:S.custom,recent:S.recent}); sel=null; commit(); V={z:1,px:0,py:0}; refreshAll(); toast('restart'); }
+function startOver(){ closeEdit(); S=Object.assign(freshState(),{gift:S.gift,color:S.color,custom:S.custom,recent:S.recent}); sel=null; tab='layout'; commit(); V={z:1,px:0,py:0}; refreshAll(); toast('restart','Fresh start'); }
 
 /* ---------- item + garment color ---------- */
 function setGift(id,force){ const g=GIFTS.find(x=>x.id===id); if(!g||(g.id===S.gift&&!force)) return;
@@ -1251,6 +1267,8 @@ function closeEdit(){ if(!editing()) return; $('editBar').classList.remove('on')
   if(editPrevV){ V={...editPrevV}; editPrevV=null; }
   resize(); commit(); renderPanel(); buildCtx(); dirty(); }
 $('editDone').onclick=closeEdit;
+$('editDone').addEventListener('pointerdown',e=>{ e.preventDefault(); closeEdit(); });
+$('editTxt').addEventListener('blur',()=>{ setTimeout(()=>{ if(editing() && document.activeElement!==$('editTxt')) closeEdit(); },120); });
 // tap anywhere outside the words box closes the editor
 document.addEventListener('pointerdown',e=>{ if(editing() && !$('editBar').contains(e.target) && e.target!==cv) closeEdit(); },true);
 
@@ -1390,12 +1408,30 @@ async function restore(){ await idb(); const raw=await get('kv','state2'); if(!r
     st.objs.forEach(o=>{ if(o.type==='img'&&o.src&&!IMGS.has(o.src)) o.src=null; }); S=fixFonts(Object.assign(freshState(),st)); return true; }catch(e){ return false; } }
 
 
+/* ---------- help guide (uses the real button names) ---------- */
+const HELP=[
+  ['tee','Pick your item','Tap the item at the top to change item and color.'],
+  ['layout','Pick a template','Tap the yellow button. No layout starts blank.'],
+  ['text','Change the words','Tap the words, then Edit words.'],
+  ['photo','Add your photo','Tap an empty photo spot.'],
+  ['move','Move and size','Drag to move. Pinch to resize and turn.'],
+  ['zoomIn','See it for real','Tap the shirt in the top right.'],
+  ['bag','Finish','Tap Done, then Add to order.'],
+];
+function openHelp(){ const l=$('helpList'); l.innerHTML=''; HELP.forEach(([icn,t,d])=>{ l.append(el('div','hrow',`<div class="hi">${ic(icn)}</div><div><b>${t}</b><span>${d}</span></div>`)); });
+  $('helpGo').innerHTML=ic('check')+'<span>Got it</span>'; $('helpGo').onclick=()=>closeSheet('helpSheet'); openSheet('helpSheet'); }
+function armReset(){ const b=$('resetBtn'); if(b.classList.contains('armed')){ b.classList.remove('armed'); startOver(); return; }
+  b.classList.add('armed'); toast('restart','Tap again to start over'); setTimeout(()=>b.classList.remove('armed'),2600); }
+
 /* ---------- boot ---------- */
 function refreshAll(){ updItem(); buildCtx(); setTab(tab); updWarn(); resize(); drawMockMini(); }
 async function boot(){
   $('undo').innerHTML=ic('undo'); $('redo').innerHTML=ic('redo'); $('mockClose').innerHTML=ic('close'); $('editDone').innerHTML=ic('check');
   $('tplBack').innerHTML=ic('chevL'); $('tplClose').innerHTML=ic('close'); $('cpDrop').innerHTML=ic('picker'); $('cpMore').innerHTML=ic('more'); $('cpUse').innerHTML=ic('check')+'<span>Use this color</span>';
   $('undo').onclick=undo; $('redo').onclick=redo;
+  $('resetBtn').innerHTML=ic('restart'); $('helpBtn').innerHTML='<span style="font-size:19px;font-weight:800;line-height:1">?</span>'; $('helpClose').innerHTML=ic('close');
+  $('resetBtn').onclick=armReset; $('helpBtn').onclick=openHelp;
+  try{ if(!localStorage.getItem('fqHelpSeen')){ localStorage.setItem('fqHelpSeen','1'); setTimeout(openHelp,700); } }catch(e){}
   buildDock(); updZoom();
   const had=await restore();
   if(params.get('item')){ const g=GIFTS.find(x=>x.id===params.get('item')); if(g){ S.gift=g.id; if(!g.colors.some(c=>c[1]===S.color)) S.color=g.colors[0][1]; } }
