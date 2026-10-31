@@ -61,6 +61,8 @@
   .propbtn:active { transform: translateY(1px); background: var(--ink); color: #fff; }
   #stickerBox { display: none; margin-top: 16px; }
   body.toon #stickerBox { display: block; }
+  .panrow { margin-top: 10px; } .panrow .kc { padding: 2px 0; }
+  .panbtns { display: flex; gap: 8px; margin-top: 12px; } .panbtns .tb { height: 48px; flex: 1; }
   .toononly { display: none; }
   body.toon.noframes:not(.pupmode) #editRow, body.toon.noframes:not(.pupmode) #deck, body.toon.noframes:not(.pupmode) #rewindRow, body.toon.noframes:not(.pupmode) #info, body.toon.noframes:not(.pupmode) #tl { display: none !important; }
   body.toon .toononly { display: block; }
@@ -607,20 +609,19 @@ body { animation: nvIn .3s ease both; }
 
     <section class="panel" id="p-pan">
       <h2>Pan</h2>
-      <p class="tip">Move the camera while they walk. Pick a direction, then make your frames. The background slides a bit more with every frame, and anything in front slides faster.</p>
-      <label class="f">Direction</label>
-      <div class="chips" id="panDir"><button type="button" class="chip" data-v="off" aria-pressed="true">Off</button><button type="button" class="chip" data-v="left" aria-pressed="false">Left</button><button type="button" class="chip" data-v="right" aria-pressed="false">Right</button><button type="button" class="chip" data-v="in" aria-pressed="false">In</button><button type="button" class="chip" data-v="out" aria-pressed="false">Out</button></div>
-      <label class="f">Speed</label>
-      <div class="chips" id="panSpd"><button type="button" class="chip" data-v="0" aria-pressed="false">Slow</button><button type="button" class="chip" data-v="1" aria-pressed="true">Medium</button><button type="button" class="chip" data-v="2" aria-pressed="false">Fast</button></div>
-      <label class="f">Ghost of the last frame</label>
-      <div class="chips" id="panGh"><button type="button" class="chip" data-v="0" aria-pressed="false">Off</button><button type="button" class="chip" data-v="0.25" aria-pressed="false">Light</button><button type="button" class="chip" data-v="0.42" aria-pressed="true">Medium</button><button type="button" class="chip" data-v="0.62" aria-pressed="false">Strong</button></div>
-      <label class="f">Shift the background <span id="panShiftV">0</span></label>
-      <input type="range" id="panShift" min="-50" max="50" value="0" aria-label="Shift the background">
-      <label class="f">Zoom the background <span id="panZoomV">100%</span></label>
-      <input type="range" id="panZoom" min="100" max="170" value="100" aria-label="Zoom the background">
-      <button type="button" class="btn" id="panRestart" style="margin-top:12px">Start the pan at my next frame</button>
+      <p class="tip">Move the camera while they walk. Pick a direction and how many frames the pan lasts, then make your frames.</p>
+      <div class="pc-knobs panrow">
+        <div class="kc kc-vis"><canvas class="vbox sq" id="panBox" width="112" height="112" aria-label="Pan direction"></canvas><button type="button" class="tb vbtn" id="panDirBtn" aria-label="Change direction">OFF</button><b class="kl">DIRECTION</b></div>
+        <div class="kc"><div class="kb" id="knPF" role="slider" tabindex="0" aria-label="How many frames the pan lasts"></div><b class="kl">FRAMES</b><span class="kv" id="vPF"></span></div>
+        <div class="kc"><div class="kb" id="knPD" role="slider" tabindex="0" aria-label="How far the pan goes"></div><b class="kl">DISTANCE</b><span class="kv" id="vPD"></span></div>
+      </div>
+      <div class="pc-knobs panrow">
+        <div class="kc"><div class="kb" id="knPG" role="slider" tabindex="0" aria-label="Ghost of the last frame"></div><b class="kl">GHOST</b><span class="kv" id="vPG"></span></div>
+        <div class="kc"><div class="kb" id="knPS" role="slider" tabindex="0" aria-label="Shift the background"></div><b class="kl">SHIFT</b><span class="kv" id="vPS"></span></div>
+        <div class="kc"><div class="kb" id="knPZ" role="slider" tabindex="0" aria-label="Zoom the background"></div><b class="kl">ZOOM</b><span class="kv" id="vPZ"></span></div>
+      </div>
+      <div class="panbtns"><button type="button" class="tb" id="panRestart">START HERE</button><button type="button" class="tb tb-done" id="panNext">NEXT: ANIMATE</button></div>
       <p class="tip" id="panInfo" style="margin-top:8px"></p>
-      <button type="button" class="btn dark" id="panNext" style="margin-top:10px">Next: Animate</button>
     </section>
 
     <section class="panel" id="p-bphotos">
@@ -1317,29 +1318,33 @@ body { animation: nvIn .3s ease both; }
     document.body.classList.toggle('scn', sceneEditing());
   }
   // ---- pan: the camera moves a little more with every frame you make ----
-  const PAN = { dir: 'off', spd: 1, ghost: 0.42, base: 0 };
-  try { const q = JSON.parse(localStorage.getItem('nocivPan') || 'null'); if (q) { PAN.dir = q.dir || 'off'; PAN.spd = q.spd == null ? 1 : q.spd; PAN.ghost = q.ghost == null ? 0.42 : q.ghost; } } catch (e) {}
-  const PAN_STEP = [0.012, 0.025, 0.05], PAN_ZSTEP = [0.012, 0.025, 0.05];
+  const PAN = { dir: 'off', frames: 8, dist: 1, ghost: 0.42, base: 0 };
+  const PAN_DIRS = ['off', 'left', 'right', 'in', 'out'], PAN_FR = [4, 6, 8, 12], PAN_DIST = [0.15, 0.3, 0.55], PAN_Z = [0.3, 0.6, 1.0], PAN_GH = [0, 0.25, 0.42, 0.62];
+  try { const q = JSON.parse(localStorage.getItem('nocivPan') || 'null'); if (q) { if (PAN_DIRS.indexOf(q.dir) >= 0) PAN.dir = q.dir; if (PAN_FR.indexOf(q.frames) >= 0) PAN.frames = q.frames; if (q.dist >= 0 && q.dist < 3) PAN.dist = q.dist; if (q.ghost != null) PAN.ghost = q.ghost; } } catch (e) {}
   function panApply() {
-    const i = Math.max(0, st.frames.length - PAN.base), s = SCE.cur; let px = 0, pz = 1;
-    if (PAN.dir === 'left') px = -i * PAN_STEP[PAN.spd]; else if (PAN.dir === 'right') px = i * PAN_STEP[PAN.spd];
-    else if (PAN.dir === 'in') pz = Math.min(2.2, 1 + i * PAN_ZSTEP[PAN.spd]); else if (PAN.dir === 'out') pz = Math.max(1, 1.6 - i * PAN_ZSTEP[PAN.spd]);
+    const i = Math.max(0, st.frames.length - PAN.base), t = Math.min(1, i / PAN.frames), s = SCE.cur; let px = 0, pz = 1;
+    if (PAN.dir === 'left') px = -t * PAN_DIST[PAN.dist]; else if (PAN.dir === 'right') px = t * PAN_DIST[PAN.dist];
+    else if (PAN.dir === 'in') pz = 1 + t * PAN_Z[PAN.dist]; else if (PAN.dir === 'out') pz = 1 + (1 - t) * PAN_Z[PAN.dist];
     if (Math.abs(px - (s.px || 0)) > 1e-6 || Math.abs(pz - (s.pz || 1)) > 1e-6) { s.px = px; s.pz = pz; pup.dirty = true; }
   }
-  function panSync() {
-    document.querySelectorAll('#panDir .chip').forEach(x => x.setAttribute('aria-pressed', x.dataset.v === PAN.dir ? 'true' : 'false'));
-    document.querySelectorAll('#panSpd .chip').forEach(x => x.setAttribute('aria-pressed', +x.dataset.v === PAN.spd ? 'true' : 'false'));
-    document.querySelectorAll('#panGh .chip').forEach(x => x.setAttribute('aria-pressed', Math.abs(+x.dataset.v - PAN.ghost) < 0.01 ? 'true' : 'false'));
-    $('panShift').value = Math.round((SCE.cur.cx || 0) * 100); $('panShiftV').textContent = $('panShift').value; $('panZoom').value = Math.round((SCE.cur.cz || 1) * 100); $('panZoomV').textContent = $('panZoom').value + '%';
-    const n = Math.max(0, st.frames.length - PAN.base);
-    $('panInfo').textContent = PAN.dir === 'off' ? 'Pan is off. Use the shift and zoom to set where the background sits.' : 'Panning ' + PAN.dir + '. ' + n + (n === 1 ? ' frame' : ' frames') + ' into the pan. Your next frame lands further along.';
+  function panBoxDraw() {
+    const cv = $('panBox'), g = cv.getContext('2d'), W = cv.width, H = cv.height, d = PAN.dir; g.clearRect(0, 0, W, H);
+    g.fillStyle = '#a9cbe4'; g.fillRect(0, 0, W, H); g.fillStyle = '#9b9a94'; g.fillRect(0, H * 0.78, W, H * 0.22); g.fillStyle = '#1a1a1a'; g.fillRect(0, H * 0.78, W, 3);
+    g.fillStyle = '#e8d9b0'; g.fillRect(W * 0.14, H * 0.5, W * 0.26, H * 0.28); g.fillStyle = '#c8412f'; g.beginPath(); g.moveTo(W * 0.1, H * 0.5); g.lineTo(W * 0.27, H * 0.32); g.lineTo(W * 0.44, H * 0.5); g.closePath(); g.fill(); g.fillStyle = '#4f8a4a'; g.beginPath(); g.arc(W * 0.78, H * 0.68, W * 0.13, 0, 6.3); g.fill();
+    g.strokeStyle = '#1a1a1a'; g.lineWidth = 3; g.lineCap = 'round'; g.lineJoin = 'round';
+    const arrow = (x0, y0, x1, y1, w) => { const a = Math.atan2(y1 - y0, x1 - x0), h = w || 11; g.beginPath(); g.moveTo(x0, y0); g.lineTo(x1, y1); g.stroke(); g.beginPath(); g.moveTo(x1 - h * Math.cos(a - 0.5), y1 - h * Math.sin(a - 0.5)); g.lineTo(x1, y1); g.lineTo(x1 - h * Math.cos(a + 0.5), y1 - h * Math.sin(a + 0.5)); g.stroke(); };
+    g.save(); g.strokeStyle = '#f2ecd6'; g.lineWidth = 11; g.globalAlpha = 0.9;
+    const draw = () => { if (d === 'left') arrow(W * 0.82, H * 0.3, W * 0.18, H * 0.3, 20); else if (d === 'right') arrow(W * 0.18, H * 0.3, W * 0.82, H * 0.3, 20); else if (d === 'in') { arrow(W * 0.12, H * 0.12, W * 0.38, H * 0.34, 15); arrow(W * 0.88, H * 0.12, W * 0.62, H * 0.34, 15); } else if (d === 'out') { arrow(W * 0.38, H * 0.34, W * 0.12, H * 0.12, 15); arrow(W * 0.62, H * 0.34, W * 0.88, H * 0.12, 15); } else { g.beginPath(); g.arc(W / 2, H * 0.3, W * 0.16, 0, 6.3); g.stroke(); g.beginPath(); g.moveTo(W * 0.4, H * 0.4); g.lineTo(W * 0.6, H * 0.2); g.stroke(); } };
+    draw(); g.restore(); g.strokeStyle = '#1a1a1a'; g.lineWidth = 5; draw();
   }
-  function panSave() { try { localStorage.setItem('nocivPan', JSON.stringify({ dir: PAN.dir, spd: PAN.spd, ghost: PAN.ghost })); } catch (e) {} }
-  document.querySelectorAll('#panDir .chip').forEach(b => b.addEventListener('click', () => { PAN.dir = b.dataset.v; PAN.base = st.frames.length; buzz(8); panSave(); panApply(); panSync(); renderStill(); }));
-  document.querySelectorAll('#panSpd .chip').forEach(b => b.addEventListener('click', () => { PAN.spd = +b.dataset.v; buzz(8); panSave(); panApply(); panSync(); renderStill(); }));
-  document.querySelectorAll('#panGh .chip').forEach(b => b.addEventListener('click', () => { PAN.ghost = +b.dataset.v; buzz(8); panSave(); pup.dirty = true; panSync(); }));
-  $('panShift').addEventListener('input', () => { SCE.cur.cx = +$('panShift').value / 100; pup.dirty = true; panSync(); scSave(); renderStill(); });
-  $('panZoom').addEventListener('input', () => { SCE.cur.cz = +$('panZoom').value / 100; pup.dirty = true; panSync(); scSave(); renderStill(); });
+  const PAN_DN = { off: 'OFF', left: 'LEFT', right: 'RIGHT', in: 'IN', out: 'OUT' };
+  function panSync() {
+    $('panDirBtn').textContent = PAN_DN[PAN.dir]; panBoxDraw(); KN.forEach(f => f());
+    const n = Math.max(0, st.frames.length - PAN.base);
+    $('panInfo').textContent = PAN.dir === 'off' ? 'Pan is off. Use shift and zoom to set where the background sits.' : 'Panning ' + PAN.dir + ' over ' + PAN.frames + ' frames. ' + Math.min(n, PAN.frames) + ' of ' + PAN.frames + ' done. Your next frame lands further along.';
+  }
+  function panSave() { try { localStorage.setItem('nocivPan', JSON.stringify({ dir: PAN.dir, frames: PAN.frames, dist: PAN.dist, ghost: PAN.ghost })); } catch (e) {} }
+  $('panDirBtn').addEventListener('click', () => { PAN.dir = PAN_DIRS[(PAN_DIRS.indexOf(PAN.dir) + 1) % PAN_DIRS.length]; PAN.base = st.frames.length; buzz(8); panSave(); panApply(); panSync(); renderStill(); });
   $('panRestart').addEventListener('click', () => { PAN.base = st.frames.length; buzz(8); panApply(); panSync(); renderStill(); });
   $('panNext').addEventListener('click', () => { if (!pup.on) goAnimate(); });
   async function scSave() { try { const db = await openDb(); db.transaction('s', 'readwrite').objectStore('s').put({ color: SCE.cur.color, floor: SCE.cur.floor, st: SCE.cur.st, cx: SCE.cur.cx || 0, cz: SCE.cur.cz || 1 }, 'toonscn'); } catch (e) {} }
@@ -1529,6 +1534,14 @@ body { animation: nvIn .3s ease both; }
   }
   KN.push(vbDraw); ['pupEm', 'pupSt'].forEach(id => $(id).addEventListener('change', vbDraw)); $('pupPh').addEventListener('input', vbDraw);
   setInterval(() => { if (!pup.on || document.hidden) return; vbN++; vbDraw(); }, 180);
+  // pan knobs: same console feel as everything else
+  const panAd = (n, get, set, read, out) => ({ n: n, out: out, read: read, get: get, set: set });
+  mkKnob($('knPF'), panAd(4, () => PAN_FR.indexOf(PAN.frames) / 3, v => { PAN.frames = PAN_FR[Math.round(v * 3)]; panSave(); panApply(); panSync(); renderStill(); }, () => PAN.frames + ' FRAMES', 'vPF'));
+  mkKnob($('knPD'), panAd(3, () => PAN.dist / 2, v => { PAN.dist = Math.round(v * 2); panSave(); panApply(); panSync(); renderStill(); }, () => ['SHORT', 'MEDIUM', 'LONG'][PAN.dist], 'vPD'));
+  mkKnob($('knPG'), panAd(4, () => PAN_GH.reduce((bi, v, i) => Math.abs(v - PAN.ghost) < Math.abs(PAN_GH[bi] - PAN.ghost) ? i : bi, 0) / 3, v => { PAN.ghost = PAN_GH[Math.round(v * 3)]; panSave(); pup.dirty = true; }, () => ['OFF', 'LIGHT', 'MEDIUM', 'STRONG'][PAN_GH.reduce((bi, v, i) => Math.abs(v - PAN.ghost) < Math.abs(PAN_GH[bi] - PAN.ghost) ? i : bi, 0)], 'vPG'));
+  mkKnob($('knPS'), { out: 'vPS', read: () => { const v = Math.round((SCE.cur.cx || 0) * 100); return (v > 0 ? '+' : '') + v; }, get: () => ((SCE.cur.cx || 0) + 0.5), set: v => { SCE.cur.cx = Math.round((v - 0.5) * 50) / 50; pup.dirty = true; scSave(); renderStill(); } });
+  mkKnob($('knPZ'), { out: 'vPZ', read: () => Math.round((SCE.cur.cz || 1) * 100) + '%', get: () => ((SCE.cur.cz || 1) - 1) / 0.7, set: v => { SCE.cur.cz = 1 + Math.round(v * 14) / 20; pup.dirty = true; scSave(); renderStill(); } });
+  panBoxDraw();
   mkKnob($('knM'), chipAd('pfMouth', 'vM', ['CLOSED', 'SMALL', 'WIDE', 'OH']));
   const PROPN = ['SAVED', 'NONE', 'SPRAY CAN', 'BRUSH', 'RECORD', 'CAMERA', 'CLIPBOARD', 'FRAME', 'MIC', 'SCISSORS'];
   function swDraw() {
