@@ -110,8 +110,20 @@
   body.pupmini .vf canvas { max-height: 42svh; }
   #pupFace .kb { width: clamp(36px, 8.4svh, 56px); height: clamp(36px, 8.4svh, 56px); } #pupFace .sw { width: clamp(38px, 11vw, 52px); } #pupFace .kl { font-size: clamp(.55rem, 1.6svh, .7rem); } #pupFace .kv { min-width: 0; padding: 2px 3px; font-size: .58rem; }
   .pc-lcd.err { color: #f2c230; }
-  .pc-lcd:empty::before { content: "Pick a move. Hit MAKE IT."; opacity: .7; }
+  .pc-lcd:empty { display: none; }
+  .pc-top { justify-content: flex-end; }
   .pc > * { min-width: 0; max-width: 100%; }
+  .pc-mid { display: grid; grid-template-columns: minmax(0, 1fr) auto; align-items: stretch; }
+  .pc-mid > * { grid-column: 1; }
+  .pc-mid > #pupSub { grid-column: 2; grid-row: 1 / span 6; display: flex; flex-direction: column; justify-content: center; gap: 6px; margin-left: 6px; }
+  .pc-mid > #pupSub.hide { display: none; }
+  .pc-mid > #pupSub .pad { width: 62px; height: 32px; font-size: .72rem; padding: 0; }
+  .kc-vis { gap: 4px; }
+  .vbox { display: block; background: #efe6c8; border: 2.5px solid #1a1a1a; border-radius: 10px; }
+  .vbox.sq { width: 100%; max-width: 56px; height: auto; aspect-ratio: 1; }
+  .vbox.tall { width: 100%; max-width: 70px; height: auto; aspect-ratio: 140 / 208; }
+  .tb.vbtn { width: 100%; min-width: 0; height: auto; padding: 5px 1px; font-size: .62rem; line-height: 1.1; white-space: nowrap; }
+  .kc-vis .kl { margin-top: 1px; }
   .pc-pads { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: clamp(5px, 1svh, 8px); }
   .stage.flash::after { content: ''; position: absolute; inset: 0; background: #fff; border-radius: 12px; pointer-events: none; animation: shot .22s ease-out forwards; }
   @keyframes shot { from { opacity: .85; } to { opacity: 0; } }
@@ -669,6 +681,7 @@ body { animation: nvIn .3s ease both; }
       </div>
       <div class="pc" id="pupConsole">
         <div class="pc-top"><div class="pc-lcd msg" id="pupMsg"></div><button type="button" class="tb tb-mini" id="pcShape" aria-label="Shape of the picture">TALL</button><button type="button" class="tb tb-mini" id="pcMini" aria-pressed="true">FULL CONSOLE</button></div>
+        <div class="pc-mid">
         <div class="pc-pads hide" id="pupSub"></div>
         <div class="pc-pads" id="pupLimb">
           <button type="button" class="pad p-r" data-l="aR" aria-pressed="true"><i></i>R ARM</button>
@@ -689,8 +702,8 @@ body { animation: nvIn .3s ease both; }
         <div class="pc-knobs hide" id="pupFace">
           <div class="kc"><div class="kb" id="knH" role="slider" tabindex="0" aria-label="Head shape"></div><b class="kl">HEAD</b><span class="kv" id="vHd"></span></div>
           <div class="kc"><div class="kb" id="knM" role="slider" tabindex="0" aria-label="Mouth"></div><b class="kl">MOUTH</b><span class="kv" id="vM"></span></div>
-          <div class="kc"><div class="kb" id="knB" role="slider" tabindex="0" aria-label="Blink"></div><b class="kl">BLINK</b><span class="kv" id="vB"></span></div>
-          <div class="kc"><div class="kb" id="knT" role="slider" tabindex="0" aria-label="Talk"></div><b class="kl">TALK</b><span class="kv" id="vT"></span></div>
+          <div class="kc kc-vis"><canvas class="vbox sq" id="blinkBox" width="112" height="112" aria-label="Preview of blinking"></canvas><button type="button" class="tb vbtn" id="blinkBtn" aria-label="Change blink">1 IN 4</button><b class="kl">BLINK</b></div>
+          <div class="kc kc-vis"><canvas class="vbox sq" id="talkBox" width="112" height="112" aria-label="Preview of talking"></canvas><button type="button" class="tb vbtn" id="talkBtn" aria-label="Change talk">OFF</button><b class="kl">TALK</b></div>
           <div class="kc kc-sw"><button type="button" class="sw" id="swEyes" data-n="2" aria-label="Eyes open or shut"><i></i></button><b class="kl">EYES</b><span class="kv" id="vE"></span></div>
           <div class="kc kc-sw"><button type="button" class="sw" id="swLook" data-n="3" aria-label="Where they look"><i></i></button><b class="kl">LOOK</b><span class="kv" id="vL"></span></div>
         </div>
@@ -701,11 +714,12 @@ body { animation: nvIn .3s ease both; }
           <div class="kc"><div class="kb" id="knLd" role="slider" tabindex="0" aria-label="Eyes squint or wide"></div><b class="kl">EYES</b><span class="kv" id="vLd"></span></div>
         </div>
         <div class="pc-knobs hide" id="pupEmote">
-          <div class="kc"><div class="kb" id="knE" role="slider" tabindex="0" aria-label="Emote"></div><b class="kl">EMOTE</b><span class="kv" id="vEm"></span></div>
+          <div class="kc kc-vis"><canvas class="vbox tall" id="emBox" width="140" height="208" aria-label="Preview of the emote"></canvas><button type="button" class="tb vbtn" id="emBtn" aria-label="Change emote">IDLE</button></div>
           <div class="kc"><div class="kb" id="knP" role="slider" tabindex="0" aria-label="Where in the emote"></div><b class="kl">POSITION</b><span class="kv" id="vPh"></span></div>
           <div class="kc"><div class="kb" id="knS" role="slider" tabindex="0" aria-label="Frames per loop"></div><b class="kl">STEPS</b><span class="kv" id="vSt"></span></div>
           <div class="kc kc-sw"><button type="button" class="sw" id="swAuto" data-n="2" aria-label="Move on by itself after every frame"><i></i></button><b class="kl">AUTO STEP</b><span class="kv" id="vAu"></span></div>
           <div class="kc kc-sw"><button type="button" class="tb tb-make" id="pcMake">MAKE IT</button></div>
+        </div>
         </div>
         <div class="pc-row">
           <div class="kc kc-sw"><button type="button" class="sw" id="pupFlip" data-n="2" aria-label="Face the other way"><i></i></button><b class="kl">FLIP</b></div>
@@ -896,7 +910,8 @@ body { animation: nvIn .3s ease both; }
   Object.defineProperty(board, 'hold', { get() { return this.panels[this.pi].hold; }, set(v) { this.panels[this.pi].hold = v; } });
   function size() { return SIZES[st.kind === 'board' ? (fsOn() ? (innerHeight > innerWidth ? 'tall' : 'wide') : board.aspect) : st.kind === 'char' ? 'tall' : st.aspect]; }
   function applySize(w, h) { if (cv.width !== w || cv.height !== h) { cv.width = w; cv.height = h; if (document.body.classList.contains('sg')) sgFit(); } }
-  function msg(id, text, err) { const e = $(id); e.textContent = text || ''; e.className = (e.classList.contains('pc-lcd') ? 'pc-lcd ' : '') + 'msg' + (err ? ' err' : ''); }
+  let pmT = 0;
+  function msg(id, text, err) { const e = $(id); if (id === 'pupMsg') { clearTimeout(pmT); if (text) pmT = setTimeout(() => { e.textContent = ''; }, 3500); } e.textContent = text || ''; e.className = (e.classList.contains('pc-lcd') ? 'pc-lcd ' : '') + 'msg' + (err ? ' err' : ''); }
   function stageMsg(t) { $('stageMsg').textContent = t || ''; }
   function two(n) { return (n < 10 ? '0' : '') + n; }
   function clock(sec) { sec = Math.max(0, Math.floor(sec)); return two(Math.floor(sec / 3600)) + ':' + two(Math.floor(sec / 60) % 60) + ':' + two(sec % 60); }
@@ -1417,7 +1432,6 @@ body { animation: nvIn .3s ease both; }
   mkKnob($('knTu'), selAd('pupTurn', 'vTu', ['SIDE L', '3/4 L', 'FRONT', '3/4 R', 'SIDE R']));
   mkKnob($('knBr'), rangeAd('pupBr', 'vBr', () => { const v = Math.round(+$('pupBr').value * 100); return (v > 0 ? '+' : '') + v; }));
   mkKnob($('knLd'), rangeAd('pupLid', 'vLd', () => { const v = +$('pupLid').value; return v < -0.05 ? 'SQUINT' : v > 0.05 ? 'WIDE' : 'NORMAL'; }));
-  mkKnob($('knE'), selAd('pupEm', 'vEm', ['IDLE', 'WAVE', 'WALK', 'DANCE', 'HYPE', 'SPRAY', 'SCRATCH', 'POINT', 'OLLIE']));
   mkKnob($('knP'), rangeAd('pupPh', 'vPh', () => Math.round(+$('pupPh').value * 100) + '%'));
   mkKnob($('knS'), selAd('pupSt', 'vSt', ['4 FRAMES', '6 FRAMES', '8 FRAMES', '12 FRAMES']));
   // emote base: the character maker's own moves become the starting pose, then you tweak limbs from there
@@ -1435,9 +1449,26 @@ body { animation: nvIn .3s ease both; }
     finally { pup.em.auto = was; pup.busy = false; $('pcMake').disabled = false; swDraw(); }
   });
   function pupEmStep() { if (!pup.em.auto) return; const n = +$('pupSt').value, ph = $('pupPh'); ph.value = ((Math.round(+ph.value * n) + 1) % n) / n; pupEmApply(); }
+  // picture boxes: the emote, the blink and the talk show what they do instead of a knob
+  const EMN = ['IDLE', 'WAVE', 'WALK', 'DANCE', 'HYPE', 'SPRAY', 'SCRATCH', 'POINT', 'OLLIE'], BLN = ['NEVER', '1 IN 2', '1 IN 3', '1 IN 4', '1 IN 6', '1 IN 8'], TKN = ['OFF', 'FAST', 'MEDIUM', 'SLOW'];
+  const cycSel = id => { const e = $(id); e.selectedIndex = (e.selectedIndex + 1) % e.options.length; e.dispatchEvent(new Event('change')); buzz(8); vbDraw(); };
+  $('emBtn').addEventListener('click', () => cycSel('pupEm')); $('blinkBtn').addEventListener('click', () => cycSel('pfBlink')); $('talkBtn').addEventListener('click', () => cycSel('pfTalk'));
+  $('emBox').addEventListener('click', () => cycSel('pupEm'));
+  let vbN = 0;
+  function vbFace(cv, f) { try { pup.w.__ch.puppet(cv, pupFresh(), cv.width / 2, cv.height * 2.8, 2.3, 'none', f); } catch (e) {} }
+  function vbDraw() {
+    $('emBtn').textContent = EMN[$('pupEm').selectedIndex] || ''; $('blinkBtn').textContent = BLN[$('pfBlink').selectedIndex] || ''; $('talkBtn').textContent = TKN[$('pfTalk').selectedIndex] || '';
+    if (!pup.w || !pup.w.CH || !pup.w.__ch) return; const C = pup.w.CH, F = pup.face;
+    if (!$('pupEmote').classList.contains('hide')) { const name = $('pupEm').value, T = (C.POSES[name] || C.POSES.idle).T, P = C.poseAt(name, +$('pupPh').value * T); if (P.crouch) P.bob = (P.bob || 0) - P.crouch; P.board = null; const cv = $('emBox'); try { pup.w.__ch.puppet(cv, P, cv.width / 2, cv.height * 0.95, 0.84, $('pupProp').value || null, {}); } catch (e) {} }
+    if (!$('pupFace').classList.contains('hide')) {
+      const ev = +$('pfBlink').value, rate = +$('pfTalk').value, base = { gx: 0, gy: 0, mood: F.mood, head: F.head, brow: F.brow, lid: F.lid };
+      vbFace($('blinkBox'), Object.assign({}, base, { blink: F.eyes === 1 || (ev > 0 && vbN % ev === ev - 1), talk: F.mouth }));
+      vbFace($('talkBox'), Object.assign({}, base, { blink: false, talk: rate > 0 ? TALK[Math.floor(vbN / rate) % TALK.length] : F.mouth }));
+    }
+  }
+  KN.push(vbDraw); ['pupEm', 'pupSt'].forEach(id => $(id).addEventListener('change', vbDraw)); $('pupPh').addEventListener('input', vbDraw);
+  setInterval(() => { if (!pup.on || document.hidden) return; vbN++; vbDraw(); }, 180);
   mkKnob($('knM'), chipAd('pfMouth', 'vM', ['CLOSED', 'SMALL', 'WIDE', 'OH']));
-  mkKnob($('knB'), selAd('pfBlink', 'vB', ['NEVER', '1 IN 2', '1 IN 3', '1 IN 4', '1 IN 6', '1 IN 8']));
-  mkKnob($('knT'), selAd('pfTalk', 'vT', ['OFF', 'FAST', 'MEDIUM', 'SLOW']));
   const PROPN = ['SAVED', 'NONE', 'SPRAY CAN', 'BRUSH', 'RECORD', 'CAMERA', 'CLIPBOARD', 'FRAME', 'MIC', 'SCISSORS'];
   function swDraw() {
     const set = (id, i, n) => { $(id).style.setProperty('--p', n > 1 ? i / (n - 1) : 0); };
