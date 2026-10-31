@@ -577,9 +577,6 @@ body { animation: nvIn .3s ease both; }
       </div>
       <button type="button" class="btn dark" id="sceneNext" style="margin-top:14px">Next: Animate</button>
       <button type="button" class="btn" id="scFresh" style="margin-top:10px">Start fresh</button>
-      <label class="f" style="margin-top:18px">Quick start: add a ready made move</label>
-      <div class="row"><select id="chPose" aria-label="Move"><option value="">Their saved move</option><option value="idle">Idle</option><option value="wave">Wave</option><option value="walk">Walk</option><option value="dance">Dance</option><option value="hype">Hype</option><option value="spray">Spray</option><option value="scratch">Scratch</option><option value="point">Point</option><option value="ollie">Ollie</option></select><select id="chN" aria-label="Frames"><option value="8">8 frames</option><option value="12" selected>12 frames</option><option value="16">16 frames</option></select></div>
-      <button type="button" class="btn" id="chBtn" style="margin-top:8px">Add my character</button>
       <button type="button" class="btn" id="clearScene" style="margin-top:12px">Start this animation over</button>
       </div>
       <div class="rl">
@@ -698,7 +695,7 @@ body { animation: nvIn .3s ease both; }
         <select id="pupHead" tabindex="-1"><option value="">saved</option><option value="round">round</option><option value="square">square</option><option value="long">long</option></select>
         <input type="range" id="pupBr" min="-1" max="1" step="0.05" value="0" tabindex="-1">
         <input type="range" id="pupLid" min="-1" max="1" step="0.05" value="0" tabindex="-1">
-        <select id="pupSt" tabindex="-1"><option value="4">4</option><option value="6">6</option><option value="8" selected>8</option><option value="12">12</option></select>
+        <select id="pupSt" tabindex="-1"><option value="4" selected>4</option><option value="6">6</option><option value="8">8</option><option value="12">12</option></select>
         <input type="range" id="pupPh" min="0" max="0.99" step="0.01" value="0" tabindex="-1">
         <select id="pupProp" tabindex="-1"><option value="">Saved</option><option value="none">None</option><option value="spray">Spray</option><option value="brush">Brush</option><option value="record">Record</option><option value="camera">Camera</option><option value="clipboard">Clipboard</option><option value="frame">Frame</option><option value="mic">Mic</option><option value="scissors">Scissors</option></select>
       </div>
@@ -1578,7 +1575,7 @@ body { animation: nvIn .3s ease both; }
   $('tbPlay').addEventListener('click', () => { buzz(12); if (deck.mode === 'play') { setDeck('pause'); pup.dirty = true; } else if (st.frames.length > 1) { deck.p = 0; setDeck('play'); } tbSync(); });
   $('toonFps').addEventListener('input', () => { $('fps').value = $('toonFps').value; $('fps').dispatchEvent(new Event('input')); tbSync(); });
   setInterval(() => { if (document.body.classList.contains('toon')) tbSync(); }, 400);
-  $('chBtn').addEventListener('click', async () => {
+  ($('chBtn') || document.createElement('i')).addEventListener('click', async () => {
     const btn = $('chBtn'); btn.disabled = true; msg('shootMsg', 'Posing your character...');
     const fr = document.createElement('iframe'); fr.src = 'character/?embed=1'; fr.setAttribute('aria-hidden', 'true'); fr.style.cssText = 'position:fixed;left:0;top:0;width:10px;height:10px;opacity:0;pointer-events:none;border:0'; document.body.appendChild(fr);
     try {
