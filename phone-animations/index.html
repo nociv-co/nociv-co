@@ -55,6 +55,12 @@
   .toonbar .btn { flex: none; width: auto; min-width: 104px; margin: 0; }
   .tbf { flex: 1; font-weight: 800; font-size: .82rem; display: flex; flex-direction: column; gap: 2px; }
   body.toon .toonbar { display: flex; }
+  .propgrid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; }
+  .propbtn { display: flex; flex-direction: column; align-items: center; gap: 4px; padding: 6px 2px 5px; background: #fff; border: 2px solid var(--ink); border-radius: 12px; font: 700 11px/1.1 inherit; color: var(--ink); cursor: pointer; }
+  .propbtn svg { width: 100%; max-width: 54px; height: 44px; background: #efe9d8; border-radius: 8px; }
+  .propbtn:active { transform: translateY(1px); background: var(--ink); color: #fff; }
+  #stickerBox { display: none; margin-top: 16px; }
+  body.toon #stickerBox { display: block; }
   .toononly { display: none; }
   body.toon.noframes:not(.pupmode) #editRow, body.toon.noframes:not(.pupmode) #deck, body.toon.noframes:not(.pupmode) #rewindRow, body.toon.noframes:not(.pupmode) #info, body.toon.noframes:not(.pupmode) #tl { display: none !important; }
   body.toon .toononly { display: block; }
@@ -543,7 +549,7 @@ body { animation: nvIn .3s ease both; }
       <label class="f" style="margin-top:14px">Floor</label>
       <div class="swrow" id="scFloor"></div>
       <label class="f" style="margin-top:10px">Props</label>
-      <select id="scProp" aria-label="Add a prop"><option value="">Add a prop...</option><option value="tree">Tree</option><option value="bush">Bush</option><option value="grass">Grass</option><option value="sun">Sun</option><option value="cloud">Cloud</option><option value="house">House</option><option value="lamp">Street lamp</option><option value="rocks">Rocks</option></select>
+      <div class="propgrid" id="scProp" role="group" aria-label="Add a prop"></div>
       <p class="tip" id="scTip" style="margin:6px 0 0">Tap a prop to move it. Two fingers to resize and twist.</p>
       <div class="scsel hide" id="scSel"><button type="button" class="chip" id="scZ" aria-pressed="false">Behind them</button><button type="button" class="chip" id="scBig">Bigger</button><button type="button" class="chip" id="scSmall">Smaller</button><button type="button" class="chip" id="scDel">Delete</button></div>
       <div id="scApplyBox" class="hide" style="margin-top:12px;padding:10px;border:1.5px dashed var(--ink);border-radius:12px">
@@ -817,7 +823,7 @@ body { animation: nvIn .3s ease both; }
     </section>
 
     <section class="panel" id="p-save">
-      <h2>Record and save</h2>
+      <h2><span class="rl">Record and save</span><span class="ct">Save your animation</span></h2>
       <p class="tip rl"><b>Your way:</b> press the red REC button on the deck, then use PLAY, REW, FF and PAUSE like you are working the tape. Press REC again to finish. What you see is what you get.</p>
       <p class="tip rl"><b>Automatic:</b> plays it for you and saves.</p>
       <p class="tip ct">Your animation plays through once per loop and saves as a video. Pick how many loops, then record.</p>
@@ -836,6 +842,10 @@ body { animation: nvIn .3s ease both; }
       <video class="result" id="result" controls playsinline loop></video>
       <div class="row hide" id="resultBtns"><button type="button" class="btn dark" id="shareBtn">Share or save</button></div>
       <label class="check"><input type="checkbox" id="shareMark" checked> Add "Made with nociv.co" and the link when I share</label>
+      <div id="stickerBox"><label class="f">Sticker</label><p class="tip" style="margin:0 0 8px">Your character on a clear background, no scene behind them.</p>
+        <button type="button" class="btn" id="stkOne">Save this frame as a sticker</button>
+        <button type="button" class="btn" id="stkAll" style="margin-top:8px">Save every frame as stickers</button>
+        <div class="msg" id="stkMsg"></div></div>
       <div class="row" id="stillsRow"><button type="button" class="btn" id="stillsBtn">Save the frames as photos</button></div>
     </section>
   </div>
@@ -1256,7 +1266,8 @@ body { animation: nvIn .3s ease both; }
     document.body.classList.toggle('scn', sceneEditing());
   }
   async function scSave() { try { const db = await openDb(); db.transaction('s', 'readwrite').objectStore('s').put({ color: SCE.cur.color, floor: SCE.cur.floor, st: SCE.cur.st }, 'toonscn'); } catch (e) {} }
-  $('scProp').addEventListener('change', () => { const k = $('scProp').value; $('scProp').value = ''; if (!k) return; const n = SCE.cur.st.length; SCE.cur.st.push({ k: k, x: 0.3 + (n % 4) * 0.13, y: k === 'sun' || k === 'cloud' ? 0.18 : 0.66, s: k === 'grass' ? 0.3 : 0.4, r: 0, z: 'b' }); SCE.sel = SCE.cur.st.length - 1; buzz(8); scAfter(); });
+  const PROPL = [['tree', 'Tree'], ['bush', 'Bush'], ['grass', 'Grass'], ['sun', 'Sun'], ['cloud', 'Cloud'], ['house', 'House'], ['lamp', 'Street lamp'], ['rocks', 'Rocks']];
+  PROPL.forEach(pl => { const k = pl[0], b = document.createElement('button'); b.type = 'button'; b.className = 'propbtn'; b.setAttribute('aria-label', 'Add ' + pl[1]); b.innerHTML = '<svg viewBox="0 0 200 200" aria-hidden="true">' + (SKS[k] || '') + '</svg><span>' + pl[1] + '</span>'; b.addEventListener('click', () => { const n = SCE.cur.st.length; SCE.cur.st.push({ k: k, x: 0.3 + (n % 4) * 0.13, y: k === 'sun' || k === 'cloud' ? 0.18 : 0.66, s: k === 'grass' ? 0.3 : 0.4, r: 0, z: 'b' }); SCE.sel = SCE.cur.st.length - 1; buzz(8); scAfter(); }); $('scProp').appendChild(b); });
   $('scZ').addEventListener('click', () => { const o = SCE.cur.st[SCE.sel]; if (!o) return; o.z = o.z === 'f' ? 'b' : 'f'; scAfter(); });
   $('scBig').addEventListener('click', () => { const o = SCE.cur.st[SCE.sel]; if (!o) return; o.s = Math.min(1.6, o.s * 1.2); scAfter(); });
   $('scSmall').addEventListener('click', () => { const o = SCE.cur.st[SCE.sel]; if (!o) return; o.s = Math.max(0.06, o.s / 1.2); scAfter(); });
@@ -1732,6 +1743,18 @@ body { animation: nvIn .3s ease both; }
   }
   $('shareBtn').addEventListener('click', shareOrSave);
   try { if (localStorage.getItem('nocivShareMark') === '0') $('shareMark').checked = false; } catch (e) {}
+  async function stkShare(files) {
+    try { if (navigator.canShare && navigator.canShare({ files })) { await navigator.share({ files }); return 'shared'; } } catch (e) { if (e && e.name === 'AbortError') return 'cancel'; }
+    files.forEach((f, i) => setTimeout(() => { const a = document.createElement('a'); a.href = URL.createObjectURL(f); a.download = f.name; document.body.appendChild(a); a.click(); a.remove(); }, i * 250)); return 'saved';
+  }
+  async function stkGo(all) {
+    const m = $('stkMsg'); const idx = all ? st.frames.map((f, i) => i) : [st.sel >= 0 ? st.sel : st.frames.length - 1];
+    const fr = idx.map(i => st.frames[i]).filter(f => f && f.chb);
+    if (!fr.length) { msg('stkMsg', 'No sticker yet. Make a frame with your character first. Old frames without a clear background can not become stickers.', true); return; }
+    const files = idx.filter(i => st.frames[i] && st.frames[i].chb).map(i => new File([st.frames[i].chb], 'sticker-' + two(i + 1) + '.png', { type: 'image/png' }));
+    const r = await stkShare(files); msg('stkMsg', r === 'cancel' ? '' : r === 'saved' ? 'Saved ' + files.length + (files.length === 1 ? ' sticker' : ' stickers') + ' to your downloads.' : 'Done.');
+  }
+  $('stkOne').addEventListener('click', () => stkGo(false)); $('stkAll').addEventListener('click', () => stkGo(true));
   $('stillsBtn').addEventListener('click', async () => {
     if (!st.frames.length) { msg('saveMsg', 'No frames yet.', true); return; }
     const [W, H] = size(), files = [], c = document.createElement('canvas'); c.width = W; c.height = H; const cc = c.getContext('2d'); msg('saveMsg', 'Making photos...');
