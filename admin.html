@@ -1547,6 +1547,7 @@
   }
 
   // ===== AUTH =====
+  async function authHeader() { try { const sess = (await supabaseClient.auth.getSession()).data.session; return sess ? { Authorization: 'Bearer ' + sess.access_token } : {}; } catch (e) { return {}; } }
   async function checkSession() {
     const { data } = await supabaseClient.auth.getSession();
     if (data.session) {
@@ -2367,7 +2368,7 @@
     try {
       const res = await fetch('https://vscombrgcdtrfndqyugb.supabase.co/functions/v1/create-stripe-price', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: { 'Content-Type': 'application/json', ...(await authHeader()) },
         body: JSON.stringify({ name, price }),
       });
       const result = await res.json();
@@ -3156,7 +3157,7 @@
       try {
         const res = await fetch('https://vscombrgcdtrfndqyugb.supabase.co/functions/v1/create-stripe-price', {
           method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
+          headers: { 'Content-Type': 'application/json', ...(await authHeader()) },
           body: JSON.stringify({ name, price }),
         });
         const result = await res.json();
