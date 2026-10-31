@@ -396,6 +396,25 @@
   .start .go { height: 58px; display: grid; place-items: center; padding: 0; background: var(--red); border: 3px solid var(--ink); border-radius: 12px; box-shadow: 5px 5px 0 var(--ink); font-family: NocivAnton, Impact, sans-serif; font-weight: 400; font-size: 1.5rem; letter-spacing: .2em; }
   .start .go:active { transform: translate(5px, 5px); box-shadow: none; }
   .start .foot { text-align: center; margin-top: 20px; }
+  /* Real Video landing: its own look. Dark camcorder, film edges, no dots */
+  body.real .start { background: #141311; color: #f1ead6; }
+  body.real .start::before { content: ''; position: absolute; inset: 0; pointer-events: none; -webkit-mask-image: none; mask-image: none; background: repeating-linear-gradient(90deg, #f1ead6 0 10px, transparent 10px 24px) 0 10px / 100% 10px no-repeat, repeating-linear-gradient(90deg, #f1ead6 0 10px, transparent 10px 24px) 0 calc(100% - 20px) / 100% 10px no-repeat; opacity: .55; }
+  body.real .start-in { padding-top: 22px; }
+  body.real .start h1 { color: #f1ead6; font-size: clamp(2.4rem, 12vw, 3.3rem); }
+  body.real .start h1 span { background: var(--red); color: #fff; box-shadow: none; transform: none; border-radius: 3px; }
+  body.real .start .st-sub { color: #f1ead6; font-family: ui-monospace, Menlo, monospace; font-size: .8rem; letter-spacing: .22em; }
+  body.real .start .st-sub::before { content: ''; display: inline-block; width: 10px; height: 10px; border-radius: 50%; background: var(--red); margin-right: 8px; animation: recb 1.2s steps(2) infinite; }
+  @keyframes recb { 50% { opacity: 0; } }
+  body.real .st-art { background: #000; border: 3px solid #f1ead6; box-shadow: none; transform: none; border-radius: 4px; }
+  body.real .st-art::before, body.real .st-art::after { display: none; }
+  body.real .st-art.swap { animation: none; }
+  body.real .start .mtabs button { background: transparent; color: #f1ead6; border-color: #f1ead6; box-shadow: none; border-radius: 4px; font-family: ui-monospace, Menlo, monospace; }
+  body.real .start .mtabs button[aria-pressed="true"] { background: #f1ead6; color: #141311; box-shadow: none; }
+  body.real .start .mode-name { color: #f1ead6; font-family: ui-monospace, Menlo, monospace; font-weight: 900; font-size: clamp(1.5rem, 7vw, 2rem); letter-spacing: .04em; }
+  body.real .start .mode-desc { color: #cfc8b4; }
+  body.real .start .go { border-color: #f1ead6; box-shadow: none; border-radius: 4px; }
+  body.real .start .go:active { transform: none; opacity: .8; }
+  body.real .start .foot { color: #9b9684; } body.real .start .foot a { color: #f1ead6; }
 </style>
 </head>
 <body>
@@ -2649,6 +2668,8 @@
   }
   $('goBtn').addEventListener('click', goMode);
   showMode(0);
+  // one-tool apps (Signifier) skip the landing page and open on the tool itself
+  if (APP && MODES.length === 1 && MODES[0].key !== 'char') { $('homeBtn').style.visibility = 'hidden'; $('homeBtn').disabled = true; setTimeout(goMode, 0); }
   (function () { const q = new URLSearchParams(location.search); if (q.get('go') !== 'stop' && q.get('go') !== 'puppet' && q.get('go') !== 'scene') return; setTimeout(() => { startKind('stop'); if (q.get('go') === 'scene') { st.cam = false; syncRows(); renderStill(); return; } if (q.get('go') === 'puppet') { st.cam = false; syncRows(); pupOpen(); return; } if (q.get('char') === '1') { st.cam = false; syncRows(); $('chBtn').click(); } }, 500); })();
 
   // ===================== KEEP FRAMES IF THE PAGE RELOADS =====================
