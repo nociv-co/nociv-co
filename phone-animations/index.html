@@ -396,7 +396,7 @@
   .st-art { position: relative; margin: 6px 0 24px; aspect-ratio: 16 / 10; border: 3px solid var(--ink); background: #d6dccf; box-shadow: 6px 6px 0 var(--ink); transform: rotate(-.8deg); overflow: visible; }
   .st-art::before, .st-art::after { content: ''; position: absolute; z-index: 2; width: 74px; height: 22px; background: rgba(242,194,48,.82); top: -13px; left: 14px; transform: rotate(-5deg); box-shadow: 0 1px 3px rgba(0,0,0,.2); }
   .st-art::after { left: auto; right: 14px; transform: rotate(4deg); background: rgba(26,26,26,.72); }
-  .st-art > div, .st-art > img, .st-art > svg { position: absolute; inset: 0; width: 100%; height: 100%; display: block; object-fit: cover; }
+  .st-art > div, .st-art > img, .st-art > svg, .st-art > video { position: absolute; inset: 0; width: 100%; height: 100%; display: block; object-fit: cover; }
   .st-art .clip { overflow: hidden; }
   .st-art.swap { animation: stSwap .22s ease-out; }
   @keyframes stSwap { from { opacity: 0; transform: translateX(16px) rotate(-.8deg); } to { opacity: 1; transform: rotate(-.8deg); } }
@@ -426,13 +426,14 @@ body.sg #undoBtn, body.sg #redoBtn { display: none; }
 
 /* Cartoon opens on picture options, no text page */
 body.toon #stArt, body.toon #modeTabs, body.toon #modeName, body.toon #modeDesc, body.toon #goBtn, body.toon #pickKeep, body.toon #pickNew { display: none !important; }
+.tn .tvid { grid-column: 1 / -1; display: block; width: 100%; border: 2.5px solid var(--ink); border-radius: 16px; background: #1a1a1a; box-shadow: 3px 3px 0 var(--ink); }
 .tn { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin: 14px 0 18px; }
 .tcard { display: flex; flex-direction: column; border: 2.5px solid var(--ink); border-radius: 16px; background: var(--note); padding: 0; overflow: hidden; text-align: left; color: var(--ink); box-shadow: 3px 3px 0 var(--ink); }
 .tcard .tp { aspect-ratio: 3 / 4; background: #e9e1c8 center / cover no-repeat; display: flex; align-items: center; justify-content: center; }
 .tcard .tp svg { width: 46%; height: 46%; }
 .tcard b { display: block; padding: 10px 12px 0; font-size: 1.05rem; font-weight: 900; letter-spacing: .02em; }
 .tcard small { display: block; padding: 2px 12px 12px; font-size: .82rem; line-height: 1.3; font-weight: 600; color: #4a463d; }
-.tn .tcard:last-child:nth-child(odd) { grid-column: 1 / -1; } .tn .tcard:last-child:nth-child(odd) .tp { aspect-ratio: 3 / 1; }
+.tn .tcard.wide1 { grid-column: 1 / -1; } .tn .tcard.wide1 .tp { aspect-ratio: 3 / 1; }
 .tcard:active { transform: translate(2px, 2px); box-shadow: 1px 1px 0 var(--ink); }
 .tcard.dark { background: var(--ink); color: #fff; } .tcard.dark small { color: #ddd; } .tcard.dark .tp { background: #2b2b2b; }
 body.aspw.pupmode #pupZoom { right: 6px; gap: 4px; }
@@ -1595,13 +1596,15 @@ body { animation: nvIn .3s ease both; }
   function updateKeep() { if (!$('pickKeep')) return; const has = st.frames.length > 0; $('pickKeep').classList.toggle('hide', !has); if ($('pickNew')) $('pickNew').classList.toggle('hide', !has); $('keepInfo').textContent = has ? st.frames.length + (charChanged() ? ' frames saved, made with your old character.' : ' frames saved on this phone. Pick up where you left off.') : ''; renderTn(); if ($('newInfo')) $('newInfo').textContent = charChanged() ? 'You made a new character. Start fresh with them.' : 'Clear the frames and the scene. Your character stays.'; }
   function renderTn() {
     const g = $('tnGrid'); if (!g || !document.body.classList.contains('toon')) return; g.classList.remove('hide'); g.innerHTML = '';
+    { const v = document.createElement('video'); v.className = 'tvid'; v.src = '../img/tools/cartoon.mp4?v=1'; v.poster = '../img/tools/cartoon-card.webp?v=1'; v.muted = true; v.loop = true; v.autoplay = true; v.setAttribute('playsinline', ''); v.setAttribute('muted', ''); g.appendChild(v); try { const pr = v.play(); if (pr && pr.catch) pr.catch(() => {}); } catch (e) {} }
     const bi = MODES.findIndex(m => m.key === 'char'), ai = MODES.findIndex(m => m.key === 'stop'), n = st.frames.length, last = n ? st.frames[n - 1] : null;
-    const add = (cls, img, svg, name, info, fn) => { const b = document.createElement('button'); b.type = 'button'; b.className = 'tcard ' + cls; b.innerHTML = '<span class="tp"></span><b></b><small></small>'; const tp = b.querySelector('.tp'); if (img) tp.style.backgroundImage = 'url("' + img + '")'; if (svg) tp.innerHTML = svg; b.querySelector('b').textContent = name; b.querySelector('small').textContent = info; b.addEventListener('click', () => { buzz(8); fn(); }); g.appendChild(b); };
+    const add = (cls, img, svg, name, info, fn) => { const b = document.createElement('button'); b.type = 'button'; b.className = 'tcard ' + cls; b.innerHTML = '<span class="tp"></span><b></b><small></small>'; const tp = b.querySelector('.tp'); if (img) tp.style.backgroundImage = 'url("' + img + '")'; if (svg) tp.innerHTML = svg; b.querySelector('b').textContent = name; b.querySelector('small').textContent = info; b.addEventListener('click', () => { buzz(8); fn(); }); g.appendChild(b); return b; };
     add('', '../img/tools/cartoon-strip.webp?v=1', '', 'Build', 'Make your cartoon. Face, hair, outfit, piercings.', () => { showMode(bi); goMode(); });
     if (n) {
       add('', last.url, '', 'Keep working', n + (n === 1 ? ' frame' : ' frames') + (charChanged() ? ', old character' : ' saved'), () => { showMode(ai); goMode(); });
       add('dark', '', '<svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2.4" stroke-linecap="round"><path d="M12 5v14M5 12h14"/></svg>', 'Start new', charChanged() ? 'You made a new character. Start fresh.' : 'Clear frames and scene. Your character stays.', async () => { await startNew(); showMode(ai); goMode(); });
     } else add('', '../img/tools/cartoon-card.webp?v=1', '', 'Animate', 'Stand them in a photo. Move each arm and leg.', () => { showMode(ai); goMode(); });
+    const cards = g.querySelectorAll('.tcard'); if (cards.length % 2) cards[cards.length - 1].classList.add('wide1');
   }
   async function startNew() {
     snap(); st.frames = []; st.sel = -1; st.csig = ''; if (document.body.classList.contains('toon')) st.aspect = 'wide'; shapeSync(); pup.n = 0; pup.bg = null; pup.bgBlob = null; SCE.cur.color = null; SCE.cur.floor = { on: false, color: SCE.cur.floor.color }; SCE.cur.st = []; SCE.sel = -1; SCE.frozen = null;
@@ -2816,7 +2819,7 @@ body { animation: nvIn .3s ease both; }
     clip: '<img src="../img/tools/vhs.webp" alt="">',
     board: '<svg viewBox="0 0 320 200" preserveAspectRatio="xMidYMid slice" aria-hidden="true"><rect width="320" height="200" fill="#cfe3d8"/><circle cx="268" cy="34" r="16" fill="#f2c230" stroke="#1a1a1a" stroke-width="3"/><path d="M-5 150 L40 118 L100 138 L170 112 L240 136 L325 118 L325 205 L-5 205Z" fill="#b9d1c0" stroke="#1a1a1a" stroke-width="3"/><rect x="-5" y="152" width="330" height="50" fill="#d8c9a8" stroke="#1a1a1a" stroke-width="3"/><rect x="152" y="104" width="16" height="48" fill="#f2ecd6" stroke="#1a1a1a" stroke-width="3"/><rect x="28" y="26" width="264" height="80" fill="#1a1a1a"/><g stroke="#1a1a1a" stroke-width="3"><rect x="36" y="34" width="80" height="64" fill="#c8412f"/><rect x="120" y="34" width="80" height="64" fill="#f2c230"/><rect x="204" y="34" width="80" height="64" fill="#f2ecd6"/></g><g font-family="NocivAnton,Impact,sans-serif" font-size="22" text-anchor="middle"><text x="76" y="76" fill="#fff">YOUR</text><text x="160" y="76" fill="#1a1a1a">PHOTO</text><text x="244" y="76" fill="#c8412f">HERE</text></g><rect x="26" y="106" width="268" height="8" fill="#1a1a1a"/></svg>'
   };
-  function setArt(k) { const a = $('stArt'); a.innerHTML = (k === 'stop' && !document.body.classList.contains('toon') && !document.body.classList.contains('both')) ? '<img src="../img/tools/video-hero.webp?v=2" alt="">' : (ART[k] || ''); a.classList.remove('swap'); void a.offsetWidth; a.classList.add('swap'); }
+  function setArt(k) { const a = $('stArt'); a.innerHTML = ((k === 'stop' || k === 'clip') && document.body.classList.contains('real')) ? '<video src="../img/tools/camera.mp4?v=1" poster="../img/tools/video-hero.webp?v=2" muted loop playsinline autoplay preload="metadata"></video>' : (ART[k] || ''); { const vv = a.querySelector('video'); if (vv) { vv.muted = true; try { const pr = vv.play(); if (pr && pr.catch) pr.catch(() => {}); } catch (e) {} } } a.classList.remove('swap'); void a.offsetWidth; a.classList.add('swap'); }
   function showMode(i) {
     mi = (i + MODES.length) % MODES.length; const m = MODES[mi];
     $('modeName').textContent = m.name; $('modeDesc').textContent = m.desc; setArt(m.key);
