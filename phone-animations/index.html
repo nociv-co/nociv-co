@@ -63,6 +63,22 @@
   body.toon #stickerBox { display: block; }
   .panrow { margin-top: 10px; } .panrow .kc { padding: 2px 0; }
   .panbtns { display: flex; gap: 8px; margin-top: 12px; } .panbtns .tb { height: 48px; flex: 1; }
+  #pupSub, #pupFace, #pupMoodRow, #pupLimbCtl { display: none !important; }
+  .pc-knobs.pv { display: flex; flex-direction: column; gap: 6px; align-items: stretch; justify-content: center; }
+  .pc-knobs.pv.hide { display: none; }
+  .pv-h { font: 400 clamp(.8rem, 2.2svh, 1rem)/1 NocivAnton, Anton, Impact, sans-serif; letter-spacing: .1em; text-transform: uppercase; color: #1a1a1a; padding-left: 4px; }
+  .pv-row { display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); gap: 4px; align-items: start; }
+  .pv-row.k2 { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .pv-cols { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+  .pv-col { display: flex; flex-direction: column; align-items: center; gap: 4px; min-width: 0; }
+  .pv-kn { display: grid; grid-template-columns: 1fr 1fr; gap: 4px; width: 100%; }
+  .pv-body { display: grid; grid-template-columns: minmax(0, 0.8fr) minmax(0, 1.4fr); gap: 8px; align-items: center; }
+  .pv-body .pv-kn { gap: 6px 4px; }
+  .pv .kb { width: clamp(34px, 6.6svh, 50px); height: clamp(34px, 6.6svh, 50px); }
+  .pv .kv { min-width: 0; font-size: .58rem; padding: 2px 3px; }
+  .vbox.arm { width: 100%; max-width: 150px; height: auto; aspect-ratio: 1; }
+  .vbox.leg { width: 100%; max-width: 110px; height: auto; aspect-ratio: 5 / 6; }
+  .vbox.bod { width: 100%; max-width: 110px; height: auto; aspect-ratio: 4 / 5; }
   .toononly { display: none; }
   body.toon.noframes:not(.pupmode) #editRow, body.toon.noframes:not(.pupmode) #deck, body.toon.noframes:not(.pupmode) #rewindRow, body.toon.noframes:not(.pupmode) #info, body.toon.noframes:not(.pupmode) #tl { display: none !important; }
   body.toon .toononly { display: block; }
@@ -1230,6 +1246,7 @@ body { animation: nvIn .3s ease both; }
   const PL = { aR: ['Shoulder', 'Elbow', -30, 180, -60, 190], aL: ['Shoulder', 'Elbow', -30, 180, -60, 190], lR: ['Leg out', 'Leg lift', 0, 40, 0, 100], lL: ['Leg out', 'Leg lift', 0, 40, 0, 100], body: ['Lean', 'Head tilt', -20, 20, -25, 25] };
   const KN = []; function knobsDraw() { KN.forEach(f => f()); swDraw(); }
   function pupSync() {
+    try { pvToggle(); } catch (e) {}
     const k = pup.limb, d = PL[k] || PL.aR, P = pup.P; $('pupFace').classList.toggle('hide', k !== 'face'); $('pupEmote').classList.toggle('hide', k !== 'emote'); $('pupMoodRow').classList.toggle('hide', k !== 'mood'); $('pupLimbCtl').classList.toggle('hide', k === 'face' || k === 'emote' || k === 'mood');
     document.querySelectorAll('#pupLimb [data-l], #pupSub [data-l]').forEach(x => x.setAttribute('aria-pressed', x.dataset.l === k ? 'true' : 'false')); $('pupSub').classList.toggle('hide', ['head', 'upper', 'legs'].indexOf(pup.zm) < 0);
     if (k === 'face' || k === 'emote' || k === 'mood') { knobsDraw(); return; } $('pupL1').textContent = d[0]; $('pupL2').textContent = d[1];
@@ -1518,10 +1535,11 @@ body { animation: nvIn .3s ease both; }
   $('emBtn').addEventListener('click', () => cycSel('pupEm')); $('blinkBtn').addEventListener('click', () => cycSel('pfBlink')); $('talkBtn').addEventListener('click', () => cycSel('pfTalk'));
   $('emBox').addEventListener('click', () => cycSel('pupEm'));
   let vbN = 0;
-  function vbFace(cv, f) { try { pup.w.__ch.puppet(cv, pupFresh(), cv.width / 2, cv.height * 2.8, 2.3, 'none', f); } catch (e) {} }
+  let pvDraw = null;
+  function vbFace(cv, f, k, fy) { k = k || 1; fy = fy == null ? 0.42 : fy; try { pup.w.__ch.puppet(cv, pupFresh(), cv.width / 2, cv.height * (fy + (2.8 - fy) * k), 2.3 * k, 'none', f); } catch (e) {} }
   function vbDraw() {
     $('emBtn').textContent = EMN[$('pupEm').selectedIndex] || ''; $('blinkBtn').textContent = BLN[$('pfBlink').selectedIndex] || ''; $('talkBtn').textContent = TKN[$('pfTalk').selectedIndex] || '';
-    if (!pup.w || !pup.w.CH || !pup.w.__ch) return; const C = pup.w.CH, F = pup.face;
+    if (!pup.w || !pup.w.CH || !pup.w.__ch) return; if (pvDraw) pvDraw(); const C = pup.w.CH, F = pup.face;
     if (!$('pupEmote').classList.contains('hide')) { const name = $('pupEm').value, T = (C.POSES[name] || C.POSES.idle).T, P = C.poseAt(name, +$('pupPh').value * T); if (P.crouch) P.bob = (P.bob || 0) - P.crouch; P.board = null; const cv = $('emBox'); try { pup.w.__ch.puppet(cv, P, cv.width / 2, cv.height * 0.95, 0.84, $('pupProp').value || null, {}); } catch (e) {} }
     if (!$('pupEmote').classList.contains('hide')) {
       const ev = +$('pfBlink').value, rate = +$('pfTalk').value, base = { gx: 0, gy: 0, mood: F.mood, head: F.head, brow: F.brow, lid: F.lid };
@@ -1539,6 +1557,63 @@ body { animation: nvIn .3s ease both; }
   mkKnob($('knPS'), { out: 'vPS', read: () => { const v = Math.round((SCE.cur.cx || 0) * 100); return (v > 0 ? '+' : '') + v; }, get: () => ((SCE.cur.cx || 0) + 0.5), set: v => { SCE.cur.cx = Math.round((v - 0.5) * 50) / 50; pup.dirty = true; scSave(); renderStill(); } });
   mkKnob($('knPZ'), { out: 'vPZ', read: () => Math.round((SCE.cur.cz || 1) * 100) + '%', get: () => ((SCE.cur.cz || 1) - 1) / 0.7, set: v => { SCE.cur.cz = 1 + Math.round(v * 14) / 20; pup.dirty = true; scSave(); renderStill(); } });
   panBoxDraw();
+  // ---- body parts as picture buttons: each part shows itself and its knobs sit right under it ----
+  function pvToggle() {
+    if (!$('vpHead')) return; const z = pup.zm;
+    $('vpHead').classList.toggle('hide', z !== 'head'); $('vpArms').classList.toggle('hide', z !== 'upper'); $('vpBody').classList.toggle('hide', z !== 'mid'); $('vpLegs').classList.toggle('hide', z !== 'legs'); vbDraw();
+  }
+  (function () {
+    const mid = document.querySelector('.pc-mid'), P = () => pup.P, F = () => pup.face;
+    const mkPanel = (id, title) => { const d = document.createElement('div'); d.className = 'pc-knobs pv hide'; d.id = id; d.innerHTML = '<b class="pv-h">' + title + '</b>'; mid.appendChild(d); return d; };
+    const addK = (par, id, label, get, set, min, max, fmt) => {
+      const k = document.createElement('div'); k.className = 'kc'; k.innerHTML = '<div class="kb" id="' + id + '" role="slider" tabindex="0" aria-label="' + label + '"></div><b class="kl">' + label + '</b><span class="kv" id="v' + id + '"></span>'; par.appendChild(k);
+      mkKnob($(id), { out: 'v' + id, read: () => fmt(get()), get: () => Math.max(0, Math.min(1, (get() - min) / (max - min))), set: v => { set(min + v * (max - min)); pup.dirty = true; vbDraw(); } });
+    };
+    const deg = n => Math.round(n) + '\u00b0';
+    // face: five picture buttons plus brows and squint
+    const head = mkPanel('vpHead', 'FACE'), row = document.createElement('div'); row.className = 'pv-row'; head.appendChild(row);
+    const MOODN = ['NEUTRAL', 'HAPPY', 'SAD', 'ANGRY', 'SHOCKED', 'SLEEPY', 'SMUG', 'WORRIED'], MOUTHN = ['CLOSED', 'SMALL', 'WIDE', 'OH'], LOOKN = ['LEFT', 'AHEAD', 'RIGHT'], TURNN = ['SIDE L', '3/4 L', 'FRONT', '3/4 R', 'SIDE R'];
+    const FB = {};
+    const fbox = (key, label, name, click) => { const k = document.createElement('div'); k.className = 'kc kc-vis'; k.innerHTML = '<canvas class="vbox sq" id="fb_' + key + '" width="112" height="112"></canvas><button type="button" class="tb vbtn" id="fbb_' + key + '"></button><b class="kl">' + label + '</b>'; row.appendChild(k); $('fbb_' + key).addEventListener('click', () => { buzz(8); click(); setTimeout(vbDraw, 30); }); $('fb_' + key).addEventListener('click', () => $('fbb_' + key).click()); FB[key] = name; };
+    fbox('mood', 'MOOD', () => MOODN[$('pupMood').selectedIndex], () => cycSel('pupMood'));
+    fbox('mouth', 'MOUTH', () => MOUTHN[F().mouth], () => document.querySelectorAll('#pfMouth .chip')[(F().mouth + 1) % 4].click());
+    fbox('eyes', 'EYES', () => F().eyes ? 'SHUT' : 'OPEN', () => $('swEyes').click());
+    fbox('look', 'LOOK', () => LOOKN[F().gx + 1], () => $('swLook').click());
+    fbox('turn', 'TURN', () => TURNN[$('pupTurn').selectedIndex], () => cycSel('pupTurn'));
+    const r2 = document.createElement('div'); r2.className = 'pv-row k2'; head.appendChild(r2);
+    addK(r2, 'knBrw', 'BROWS', () => +$('pupBr').value, v => { $('pupBr').value = Math.round(v * 20) / 20; $('pupBr').dispatchEvent(new Event('input')); }, -1, 1, v => (v > 0 ? '+' : '') + Math.round(v * 100));
+    addK(r2, 'knSqn', 'SQUINT', () => +$('pupLid').value, v => { $('pupLid').value = Math.round(v * 20) / 20; $('pupLid').dispatchEvent(new Event('input')); }, -1, 1, v => v < -0.05 ? 'SQUINT' : v > 0.05 ? 'WIDE' : 'NORMAL');
+    // arms and legs: two picture buttons side by side, each with its own knobs
+    const limbPanel = (id, title, defs) => {
+      const pn = mkPanel(id, title), cols = document.createElement('div'); cols.className = 'pv-cols'; pn.appendChild(cols);
+      defs.forEach(d => { const col = document.createElement('div'); col.className = 'pv-col'; col.innerHTML = '<b class="kl">' + d.t + '</b><canvas class="vbox ' + d.cls + '" id="lb_' + d.k + '" width="' + d.w + '" height="' + d.h + '"></canvas><div class="pv-kn"></div>'; cols.appendChild(col); const kn = col.querySelector('.pv-kn'); d.knobs.forEach(a => addK(kn, 'kn_' + d.k + a[0], a[1], a[2], a[3], a[4], a[5], a[6])); });
+    };
+    const arm = (k, i) => ({ get: () => (P()[k] || [9, 14])[i], set: v => { const a = (P()[k] || [9, 14]).slice(); a[i] = v; P()[k] = a; } });
+    const leg = (k, f) => ({ get: () => { const l = P()[k] || { a: 4, lift: 0 }; return f === 'a' ? l.a : l.lift * 100; }, set: v => { const l = Object.assign({ a: 4, lift: 0 }, P()[k]); if (f === 'a') l.a = v; else l.lift = v / 100; P()[k] = l; } });
+    limbPanel('vpArms', 'ARMS', [['aR', 'R ARM'], ['aL', 'L ARM']].map(([k, t]) => ({ k: k, t: t, cls: 'arm', w: 130, h: 130, knobs: [['1', 'SHOULDER', arm(k, 0).get, arm(k, 0).set, -30, 180, deg], ['2', 'ELBOW', arm(k, 1).get, arm(k, 1).set, -60, 190, deg]] })));
+    limbPanel('vpLegs', 'LEGS', [['lR', 'R LEG'], ['lL', 'L LEG']].map(([k, t]) => ({ k: k, t: t, cls: 'leg', w: 120, h: 144, knobs: [['1', 'LEG OUT', leg(k, 'a').get, leg(k, 'a').set, 0, 40, deg], ['2', 'LEG LIFT', leg(k, 'l').get, leg(k, 'l').set, 0, 100, v => Math.round(v) + '%']] })));
+    const body = mkPanel('vpBody', 'BODY'), bw = document.createElement('div'); bw.className = 'pv-body'; bw.innerHTML = '<canvas class="vbox bod" id="lb_body" width="120" height="150"></canvas><div class="pv-kn"></div>'; body.appendChild(bw); const bk = bw.querySelector('.pv-kn');
+    addK(bk, 'knBd1', 'LEAN', () => P().lean || 0, v => { P().lean = v; }, -20, 20, deg);
+    addK(bk, 'knBd2', 'TILT', () => P().head || 0, v => { P().head = v; }, -25, 25, deg);
+    addK(bk, 'knBd3', 'JUMP', () => { const q = P(); return q.bob < 0 ? -q.bob : -(q.crouch || 0); }, v => { const q = P(); q.bob = v > 0 ? -v : 0; q.crouch = v < 0 ? -v : 0; }, -40, 70, v => v >= 0 ? 'UP ' + Math.round(v) : 'DOWN ' + Math.round(-v));
+    addK(bk, 'knBd4', 'SIZE', () => pup.sz, v => { pup.sz = Math.round(v * 100) / 100; }, 0.3, 1, v => Math.round(v * 100) + '%');
+    // drawing
+    const OFF = document.createElement('canvas'); OFF.width = 300; OFF.height = 444;
+    const REG = { aR: [0.30, 0.08, 1.0, 0.08 + 210 / 444], aL: [0, 0.08, 0.70, 0.08 + 210 / 444], lR: [0.44, 0.58, 0.92, 0.58 + 173 / 444], lL: [0.08, 0.58, 0.56, 0.58 + 173 / 444], body: [0.14, 0.14, 0.86, 0.14 + 270 / 444] };
+    pvDraw = function () {
+      if (!pup.w || !pup.w.CH || !pup.w.__ch) return; const vis = id => !$(id).classList.contains('hide');
+      if (vis('vpHead')) {
+        const f = F(), neutral = { gx: 0, gy: 0, mood: 'neutral', head: f.head, brow: 0, lid: 0, turn: 0, blink: false, talk: 0 };
+        const spec = { mood: [{ mood: f.mood }, 1, 0.42], mouth: [{ talk: f.mouth }, 1.7, 0.72], eyes: [{ blink: f.eyes === 1 }, 1.7, 0.42], look: [{ gx: f.gx }, 1.7, 0.42], turn: [{ turn: f.turn }, 1, 0.42] };
+        Object.keys(spec).forEach(k => { const cv = $('fb_' + k); vbFace(cv, Object.assign({}, neutral, spec[k][0]), spec[k][1], spec[k][2]); $('fbb_' + k).textContent = FB[k](); });
+      }
+      if (vis('vpArms') || vis('vpLegs') || vis('vpBody')) {
+        try { pup.w.__ch.puppet(OFF, pup.P, OFF.width / 2, OFF.height * 0.95, 0.84, $('pupProp').value || null, {}); } catch (e) { return; }
+        const put = (id, r) => { const cv = $(id); if (!cv) return; const g = cv.getContext('2d'); g.clearRect(0, 0, cv.width, cv.height); g.drawImage(OFF, r[0] * OFF.width, r[1] * OFF.height, (r[2] - r[0]) * OFF.width, (r[3] - r[1]) * OFF.height, 0, 0, cv.width, cv.height); };
+        if (vis('vpArms')) { put('lb_aR', REG.aR); put('lb_aL', REG.aL); } if (vis('vpLegs')) { put('lb_lR', REG.lR); put('lb_lL', REG.lL); } if (vis('vpBody')) put('lb_body', REG.body);
+      }
+    };
+  })();
   mkKnob($('knM'), chipAd('pfMouth', 'vM', ['CLOSED', 'SMALL', 'WIDE', 'OH']));
   const PROPN = ['SAVED', 'NONE', 'SPRAY CAN', 'BRUSH', 'RECORD', 'CAMERA', 'CLIPBOARD', 'FRAME', 'MIC', 'SCISSORS'];
   function swDraw() {
