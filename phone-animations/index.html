@@ -74,6 +74,15 @@
   body.pupmode .pc { overflow: hidden; display: flex; flex: 1; min-height: 0; flex-direction: column; gap: clamp(3px, 0.9svh, 9px); justify-content: space-between; background: #f2c230; border: 3px solid #1a1a1a; border-radius: 18px; padding: clamp(4px, 1svh, 11px) 9px; box-shadow: 0 4px 0 #1a1a1a, inset 0 -5px 0 rgba(0,0,0,.14); user-select: none; -webkit-user-select: none; -webkit-touch-callout: none; }
   .pc button { -webkit-tap-highlight-color: transparent; touch-action: manipulation; }
   .pc-lcd { flex: none; background: #1a1a1a; color: #d6dccf; border-radius: 8px; padding: 4px 10px; font: 700 .72rem/1.3 ui-monospace, Menlo, monospace; letter-spacing: .04em; text-transform: uppercase; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; min-height: 1.6em; margin: 0; }
+  .pc-top { display: flex; gap: 6px; align-items: center; flex: none; }
+  .pc-top .pc-lcd { flex: 1; min-width: 0; }
+  .tb.tb-mini { flex: none; width: auto; height: 28px; padding: 0 11px; font-size: .72rem; }
+  body.pupmini .pc-row:not(.pc-go) { display: none; }
+  body.pupmini .pc-pads { grid-template-columns: repeat(7, minmax(0, 1fr)); gap: 4px; }
+  body.pupmini .pad { height: clamp(28px, 4.4svh, 36px); padding: 0; font-size: clamp(.6rem, 1.8svh, .74rem); letter-spacing: .02em; text-align: center; }
+  body.pupmini .pad i { display: none; }
+  body.pupmini .p-e { grid-column: span 1; }
+  body.pupmini .vf canvas { max-height: 42svh; }
   .pc-lcd.err { color: #f2c230; }
   .pc-lcd:empty::before { content: "Pick a move. Hit MAKE IT."; opacity: .7; }
   .pc > * { min-width: 0; max-width: 100%; }
@@ -488,7 +497,7 @@
         <select id="pupProp" tabindex="-1"><option value="">Saved</option><option value="none">None</option><option value="spray">Spray</option><option value="brush">Brush</option><option value="record">Record</option><option value="camera">Camera</option><option value="clipboard">Clipboard</option><option value="frame">Frame</option><option value="mic">Mic</option><option value="scissors">Scissors</option></select>
       </div>
       <div class="pc" id="pupConsole">
-        <div class="pc-lcd msg" id="pupMsg"></div>
+        <div class="pc-top"><div class="pc-lcd msg" id="pupMsg"></div><button type="button" class="tb tb-mini" id="pcMini" aria-pressed="false">MORE ROOM</button></div>
         <div class="pc-pads" id="pupLimb">
           <button type="button" class="pad p-r" data-l="aR" aria-pressed="true"><i></i>R ARM</button>
           <button type="button" class="pad p-b" data-l="aL" aria-pressed="false"><i></i>L ARM</button>
@@ -1103,6 +1112,7 @@
     $('pcPropV').textContent = PROPN[$('pupProp').selectedIndex] || 'SAVED';
   }
   $('pupFlip').addEventListener('click', () => { pup.flip = !pup.flip; pup.dirty = true; buzz(8); swDraw(); });
+  $('pcMini').addEventListener('click', () => { const on = !document.body.classList.contains('pupmini'); document.body.classList.toggle('pupmini', on); $('pcMini').setAttribute('aria-pressed', on ? 'true' : 'false'); $('pcMini').textContent = on ? 'FULL CONSOLE' : 'MORE ROOM'; buzz(8); });
   document.querySelectorAll('#pupZoom button').forEach(bt => bt.addEventListener('click', () => { pup.zm = bt.dataset.z; buzz(8); document.querySelectorAll('#pupZoom button').forEach(x => x.setAttribute('aria-pressed', x === bt ? 'true' : 'false')); }));
   $('pupFloat').addEventListener('click', () => $('pupSnap').click());
   $('pupReset').addEventListener('click', () => { pup.P = pupFresh(); pupSync(); pup.dirty = true; });
