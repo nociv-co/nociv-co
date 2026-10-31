@@ -118,6 +118,25 @@
   .pc-go .kc-sw { flex: 1.1; height: auto; }
   .take { flex: 2.4; min-width: 0; border: 3px solid #1a1a1a; border-radius: 16px; background: #c8412f; color: #fff; font: 400 clamp(1rem, 3svh, 1.3rem)/1 NocivAnton, Anton, Impact, sans-serif; letter-spacing: .07em; box-shadow: 0 5px 0 #1a1a1a, inset 0 3px 0 rgba(255,255,255,.28); text-shadow: 0 2px 0 rgba(0,0,0,.3); }
   .take:active { transform: translateY(4px); box-shadow: 0 1px 0 #1a1a1a, inset 0 3px 0 rgba(255,255,255,.28); }
+  /* soft pass: three colors (ink, tan, red), soft shadows instead of hard offsets */
+  body.pupmode .pc { background: #ece6d2; border: 1.5px solid #1a1a1a; box-shadow: 0 10px 28px rgba(26,26,26,.18), inset 0 1px 0 rgba(255,255,255,.6); }
+  .pad, .p-r, .p-b, .p-g, .p-t, .p-m, .p-k, .p-e { background: #1a1a1a; border: 0; color: #f2ecd6; text-shadow: none; box-shadow: 0 6px 14px rgba(26,26,26,.28), inset 0 1px 0 rgba(255,255,255,.12); }
+  .pad i { background: rgba(242,236,214,.25); }
+  .pad[aria-pressed="true"] { background: #c8412f; color: #fff; transform: translateY(1px); box-shadow: 0 3px 8px rgba(200,65,47,.45), inset 0 0 0 2px rgba(255,255,255,.5); }
+  .pc-knobs { background: #f7f2e2; border: 0; box-shadow: inset 0 2px 7px rgba(26,26,26,.14); }
+  .kb { filter: drop-shadow(0 5px 6px rgba(26,26,26,.3)); }
+  .kb .rim { fill: #d9d2b9; } .kb .cap, .kc:nth-child(n) .kb .cap { fill: #1a1a1a; stroke: none; } .kb .grip { stroke: rgba(255,255,255,.16); } .kb .ptr, .kc:nth-child(n) .kb .ptr { stroke: #f2ecd6; }
+  .kv { color: #f2ecd6; } .pc-lcd { color: #f2ecd6; }
+  .sw { box-shadow: 0 5px 10px rgba(26,26,26,.25), inset 0 1px 0 rgba(255,255,255,.12); }
+  .sw i, .sw[data-n="3"] i { background: #f2ecd6; border: 0; box-shadow: 0 2px 4px rgba(0,0,0,.35); }
+  .tb { background: #f7f2e2; border: 0; box-shadow: 0 5px 12px rgba(26,26,26,.2), inset 0 1px 0 rgba(255,255,255,.7); }
+  .tb:active { transform: translateY(1px); box-shadow: 0 2px 5px rgba(26,26,26,.2); }
+  .tb-play, .tb-play.dim { background: #f7f2e2; } .tb-play[aria-pressed="true"] { background: #1a1a1a; color: #f2ecd6; }
+  .tb-done { background: #1a1a1a; color: #f2ecd6; }
+  .tb-make, .take { background: #c8412f; color: #fff; border: 0; text-shadow: none; box-shadow: 0 8px 18px rgba(200,65,47,.4), inset 0 1px 0 rgba(255,255,255,.3); }
+  .take:active, .tb-make:active { transform: translateY(1px); box-shadow: 0 3px 8px rgba(200,65,47,.4); }
+  #pupZoom { display: none; position: absolute; right: 10px; bottom: 10px; z-index: 5; background: rgba(26,26,26,.78); color: #f2ecd6; border: 0; border-radius: 999px; padding: 9px 14px; font: 400 .8rem/1 NocivAnton, Anton, Impact, sans-serif; letter-spacing: .07em; box-shadow: 0 6px 14px rgba(0,0,0,.3); }
+  body.pupmode #pupZoom { display: block; }
   body.pupmode #stageMsg { top: 10px; bottom: auto; left: 10px; right: 10px; text-align: left; }
   #fsBtn, #fsX { position: absolute; top: 10px; right: 10px; z-index: 5; background: rgba(0,0,0,.6); color: #f2ecd6; border: 1.5px solid #f2ecd6; border-radius: 10px; padding: 8px 12px; font: 900 .8rem/1 inherit; text-transform: uppercase; letter-spacing: .06em; }
   #fsBtn.hide, #fsX.hide, #fsHint.hide { display: none; }
@@ -326,7 +345,7 @@
     <button type="button" class="icon" id="redoBtn" aria-label="Redo" disabled>&#8631;</button>
   </header>
 
-  <div class="vf"><div class="stage"><canvas id="cv" width="540" height="960"></canvas><button type="button" id="pupFloat" class="hide" aria-label="Take frame">Take frame</button><button type="button" id="fsBtn" class="hide" aria-label="Go fullscreen">Fullscreen</button><button type="button" id="fsX" class="hide" aria-label="Exit fullscreen">Close</button><div id="fsHint" class="hide">Turn your phone sideways</div><div id="stageMsg"></div></div></div>
+  <div class="vf"><div class="stage"><canvas id="cv" width="540" height="960"></canvas><button type="button" id="pupZoom">ZOOM IN</button><button type="button" id="pupFloat" class="hide" aria-label="Take frame">Take frame</button><button type="button" id="fsBtn" class="hide" aria-label="Go fullscreen">Fullscreen</button><button type="button" id="fsX" class="hide" aria-label="Exit fullscreen">Close</button><div id="fsHint" class="hide">Turn your phone sideways</div><div id="stageMsg"></div></div></div>
   <section class="creator" id="creator" aria-label="Character creator">
     <div class="ctabs" id="cTabs"></div>
     <div class="cbody"><div class="crail" id="cRail"></div><div class="cgrid" id="cGrid"></div></div>
@@ -970,8 +989,9 @@
   }
   ['pupS1', 'pupS2', 'pupS3', 'pupSz'].forEach(id => $(id).addEventListener('input', () => pupSet(id === 'pupS3')));
   document.querySelectorAll('#pupLimb [data-l]').forEach(b => b.addEventListener('click', () => { pup.limb = b.dataset.l; buzz(8); pupSync(); }));
+  function pupChecker(c, W, H) { const q = Math.max(10, Math.round(W / 24)); c.fillStyle = '#f4f1ea'; c.fillRect(0, 0, W, H); c.fillStyle = '#d9d5cb'; for (let y = 0; y * q < H; y++) for (let x = (y & 1); x * q < W; x += 2) c.fillRect(x * q, y * q, q, q); }
   function pupDrawBg(c, W, H) {
-    c.fillStyle = '#222'; c.fillRect(0, 0, W, H); const im = pup.bg; if (!im) return;
+    const im = pup.bg; if (!im) { pupChecker(c, W, H); return; } c.fillStyle = '#222'; c.fillRect(0, 0, W, H);
     const k = Math.max(W / im.naturalWidth, H / im.naturalHeight), w = im.naturalWidth * k, h = im.naturalHeight * k; c.drawImage(im, (W - w) / 2, (H - h) / 2, w, h);
   }
   pup.face = { eyes: 0, gx: 0, mouth: 0, blinkEvery: 4, talkRate: 0 };
@@ -996,7 +1016,7 @@
       if (pup.prev && pup.prev.width === W) { c.globalAlpha = 0.28; c.drawImage(pup.prev, 0, 0); c.globalAlpha = 1; }
       c.drawImage(pupChar(W, H), 0, 0); pup.dirty = false;
     }
-    ctx.drawImage(pup.out, 0, 0); stageMsg('Frame ' + (pup.n + 1) + (pup.n ? '' : '. Drag to move your character'));
+    if (pup.zoom) { const z = 1.5, sw = W / z, sh = H / z, cx = Math.min(W - sw / 2, Math.max(sw / 2, pup.x * W)), cy = Math.min(H - sh / 2, Math.max(sh / 2, (pup.y - 0.47 * pup.sz) * H)); ctx.drawImage(pup.out, cx - sw / 2, cy - sh / 2, sw, sh, 0, 0, W, H); } else ctx.drawImage(pup.out, 0, 0); stageMsg('Frame ' + (pup.n + 1) + (pup.n ? '' : '. Drag to move your character'));
   }
   async function pupLoadBg(file) {
     const f = await loadImg(file), k = Math.min(1, 1600 / Math.max(f.img.naturalWidth, f.img.naturalHeight)), c = document.createElement('canvas');
@@ -1078,19 +1098,20 @@
     $('pcPropV').textContent = PROPN[$('pupProp').selectedIndex] || 'SAVED';
   }
   $('pupFlip').addEventListener('click', () => { pup.flip = !pup.flip; pup.dirty = true; buzz(8); swDraw(); });
+  $('pupZoom').addEventListener('click', () => { pup.zoom = !pup.zoom; $('pupZoom').textContent = pup.zoom ? 'ZOOM OUT' : 'ZOOM IN'; buzz(8); pup.dirty = true; });
   $('pupFloat').addEventListener('click', () => $('pupSnap').click());
   $('pupReset').addEventListener('click', () => { pup.P = pupFresh(); pupSync(); pup.dirty = true; });
   let pupTake; $('pupSnap').addEventListener('click', pupTake = async () => {
-    const [W, H] = size(), c = document.createElement('canvas'); c.width = W; c.height = H; const g = c.getContext('2d'); pupDrawBg(g, W, H); g.drawImage(pupChar(W, H), 0, 0);
+    const [W, H] = size(), c = document.createElement('canvas'); c.width = W; c.height = H; const g = c.getContext('2d'); if (pup.bg) pupDrawBg(g, W, H); g.drawImage(pupChar(W, H), 0, 0);
     const ghost = document.createElement('canvas'); ghost.width = W; ghost.height = H; ghost.getContext('2d').drawImage(pup.flip ? pup.fc : pup.chc, 0, 0);
-    snap(); await addBlob(await canvasToBlob(c, 'image/jpeg', 0.92)); pup.prev = ghost; pup.n++; st.sel = st.frames.length - 1; pup.dirty = true; buzz(15); pupEmStep();
+    snap(); await addBlob(pup.bg ? await canvasToBlob(c, 'image/jpeg', 0.92) : await canvasToBlob(c, 'image/png')); pup.prev = ghost; pup.n++; st.sel = st.frames.length - 1; pup.dirty = true; buzz(15); pupEmStep();
     const sg = document.querySelector('.vf .stage'); sg.classList.remove('flash'); void sg.offsetWidth; sg.classList.add('flash'); $('strip').scrollLeft = 99999;
     refreshUI(); $('strip').scrollLeft = 99999; msg('pupMsg', pup.n + (pup.n === 1 ? ' frame' : ' frames') + ' taken. Nudge a knob, take the next one.');
   });
   $('pupDone').addEventListener('click', pupClose);
   $('homeBtn').addEventListener('click', () => { if (pup.on) { pup.on = false; document.body.classList.remove('pupmode'); $('pupFloat').classList.add('hide'); if (pup.fr) { pup.fr.remove(); pup.fr = null; pup.w = null; } pup.prev = null; pup.n = 0; } }, true);
-  $('cv').addEventListener('pointerdown', e => { if (!pup.on) return; const r = cv.getBoundingClientRect(); pup.drag = { id: e.pointerId, x: e.clientX, y: e.clientY, px: pup.x, py: pup.y, r }; try { cv.setPointerCapture(e.pointerId); } catch (x) {} });
-  $('cv').addEventListener('pointermove', e => { const d = pup.drag; if (!pup.on || !d || d.id !== e.pointerId) return; pup.x = Math.min(1.1, Math.max(-0.1, d.px + (e.clientX - d.x) / d.r.width)); pup.y = Math.min(1.3, Math.max(0.2, d.py + (e.clientY - d.y) / d.r.height)); pup.dirty = true; });
+  $('cv').addEventListener('pointerdown', e => { if (!pup.on) return; const r = cv.getBoundingClientRect(); pup.drag = { id: e.pointerId, x: e.clientX, y: e.clientY, px: pup.x, py: pup.y, r, z: pup.zoom ? 1.5 : 1 }; try { cv.setPointerCapture(e.pointerId); } catch (x) {} });
+  $('cv').addEventListener('pointermove', e => { const d = pup.drag; if (!pup.on || !d || d.id !== e.pointerId) return; pup.x = Math.min(1.1, Math.max(-0.1, d.px + (e.clientX - d.x) / d.r.width / d.z)); pup.y = Math.min(1.3, Math.max(0.2, d.py + (e.clientY - d.y) / d.r.height / d.z)); pup.dirty = true; });
   ['pointerup', 'pointercancel'].forEach(t => $('cv').addEventListener(t, () => { pup.drag = null; }));
   function tbSync() { const pl = deck.mode === 'play'; $('tbPlay').textContent = pl ? 'Stop playing' : 'Play it'; $('tbPlay').setAttribute('aria-pressed', pl ? 'true' : 'false'); $('tbPlay').disabled = st.frames.length < 2 && !pl; $('tbFpsV').textContent = $('fps').value + ' frames a second'; $('pcPlay').textContent = pl ? 'STOP' : 'PLAY'; $('pcPlay').setAttribute('aria-pressed', pl ? 'true' : 'false'); $('pcPlay').classList.toggle('dim', $('tbPlay').disabled); try { swDraw(); } catch (e) {} if (document.activeElement !== $('toonFps')) $('toonFps').value = $('fps').value; }
   $('tbPlay').addEventListener('click', () => { buzz(12); if (deck.mode === 'play') { setDeck('pause'); pup.dirty = true; } else if (st.frames.length > 1) { deck.p = 0; setDeck('play'); } tbSync(); });
