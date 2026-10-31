@@ -135,8 +135,10 @@
   .tb-done { background: #1a1a1a; color: #f2ecd6; }
   .tb-make, .take { background: #c8412f; color: #fff; border: 0; text-shadow: none; box-shadow: 0 8px 18px rgba(200,65,47,.4), inset 0 1px 0 rgba(255,255,255,.3); }
   .take:active, .tb-make:active { transform: translateY(1px); box-shadow: 0 3px 8px rgba(200,65,47,.4); }
-  #pupZoom { display: none; position: absolute; right: 10px; bottom: 10px; z-index: 5; background: rgba(26,26,26,.78); color: #f2ecd6; border: 0; border-radius: 999px; padding: 9px 14px; font: 400 .8rem/1 NocivAnton, Anton, Impact, sans-serif; letter-spacing: .07em; box-shadow: 0 6px 14px rgba(0,0,0,.3); }
-  body.pupmode #pupZoom { display: block; }
+  #pupZoom { display: none; position: absolute; right: 8px; top: 50%; transform: translateY(-50%); z-index: 5; flex-direction: column; gap: 5px; }
+  body.pupmode #pupZoom { display: flex; }
+  #pupZoom button { background: rgba(26,26,26,.78); color: #f2ecd6; border: 0; border-radius: 999px; padding: clamp(6px, 1.3svh, 9px) 11px; font: 400 clamp(.62rem, 1.7svh, .75rem)/1 NocivAnton, Anton, Impact, sans-serif; letter-spacing: .07em; box-shadow: 0 5px 12px rgba(0,0,0,.3); }
+  #pupZoom button[aria-pressed="true"] { background: #c8412f; color: #fff; }
   body.pupmode #stageMsg { top: 10px; bottom: auto; left: 10px; right: 10px; text-align: left; }
   #fsBtn, #fsX { position: absolute; top: 10px; right: 10px; z-index: 5; background: rgba(0,0,0,.6); color: #f2ecd6; border: 1.5px solid #f2ecd6; border-radius: 10px; padding: 8px 12px; font: 900 .8rem/1 inherit; text-transform: uppercase; letter-spacing: .06em; }
   #fsBtn.hide, #fsX.hide, #fsHint.hide { display: none; }
@@ -345,7 +347,7 @@
     <button type="button" class="icon" id="redoBtn" aria-label="Redo" disabled>&#8631;</button>
   </header>
 
-  <div class="vf"><div class="stage"><canvas id="cv" width="540" height="960"></canvas><button type="button" id="pupZoom">ZOOM IN</button><button type="button" id="pupFloat" class="hide" aria-label="Take frame">Take frame</button><button type="button" id="fsBtn" class="hide" aria-label="Go fullscreen">Fullscreen</button><button type="button" id="fsX" class="hide" aria-label="Exit fullscreen">Close</button><div id="fsHint" class="hide">Turn your phone sideways</div><div id="stageMsg"></div></div></div>
+  <div class="vf"><div class="stage"><canvas id="cv" width="540" height="960"></canvas><div id="pupZoom" role="group" aria-label="Zoom"><button type="button" data-z="all" aria-pressed="true">ALL</button><button type="button" data-z="head" aria-pressed="false">HEAD</button><button type="button" data-z="upper" aria-pressed="false">UPPER</button><button type="button" data-z="mid" aria-pressed="false">MID</button><button type="button" data-z="legs" aria-pressed="false">LEGS</button></div><button type="button" id="pupFloat" class="hide" aria-label="Take frame">Take frame</button><button type="button" id="fsBtn" class="hide" aria-label="Go fullscreen">Fullscreen</button><button type="button" id="fsX" class="hide" aria-label="Exit fullscreen">Close</button><div id="fsHint" class="hide">Turn your phone sideways</div><div id="stageMsg"></div></div></div>
   <section class="creator" id="creator" aria-label="Character creator">
     <div class="ctabs" id="cTabs"></div>
     <div class="cbody"><div class="crail" id="cRail"></div><div class="cgrid" id="cGrid"></div></div>
@@ -1008,6 +1010,9 @@
   function pupChar(W, H) { const cc = pup.chc; if (cc.width !== W || cc.height !== H) { cc.width = W; cc.height = H; } try { pup.w.__ch.puppet(cc, pup.P, pup.x * W, pup.y * H, pup.sz, $('pupProp').value || null, pupFaceFor(pup.n)); } catch (e) {}
     if (!pup.flip) return cc;
     const fc = pup.fc || (pup.fc = document.createElement('canvas')); fc.width = W; fc.height = H; const g = fc.getContext('2d'); g.clearRect(0, 0, W, H); g.save(); g.translate(2 * pup.x * W, 0); g.scale(-1, 1); g.drawImage(cc, 0, 0); g.restore(); return fc; }
+  const ZV = { all: { z: 1, f: 0.5 }, head: { z: 2.7, f: 0.93 }, upper: { z: 2.3, f: 0.7 }, mid: { z: 2.3, f: 0.46 }, legs: { z: 2.3, f: 0.14 } };
+  pup.zm = 'all'; pup.zc = { z: 1, f: 0.5, t: 0 };
+  function pupZoomStep() { const c = pup.zc, T = ZV[pup.zm], now = performance.now(), dt = Math.min(0.1, (now - (c.t || now)) / 1000); c.t = now; const k = 1 - Math.exp(-dt * 9); c.z += (T.z - c.z) * k; c.f += (T.f - c.f) * k; if (Math.abs(T.z - c.z) < 0.003) { c.z = T.z; c.f = T.f; } return c; }
   function drawPuppet() {
     const [W, H] = size(); applySize(W, H);
     if (!pup.w) { ctx.fillStyle = '#111'; ctx.fillRect(0, 0, W, H); stageMsg('Loading your character...'); return; }
@@ -1016,7 +1021,7 @@
       if (pup.prev && pup.prev.width === W) { c.globalAlpha = 0.28; c.drawImage(pup.prev, 0, 0); c.globalAlpha = 1; }
       c.drawImage(pupChar(W, H), 0, 0); pup.dirty = false;
     }
-    if (pup.zoom) { const z = 1.5, sw = W / z, sh = H / z, cx = Math.min(W - sw / 2, Math.max(sw / 2, pup.x * W)), cy = Math.min(H - sh / 2, Math.max(sh / 2, (pup.y - 0.47 * pup.sz) * H)); ctx.drawImage(pup.out, cx - sw / 2, cy - sh / 2, sw, sh, 0, 0, W, H); } else ctx.drawImage(pup.out, 0, 0); stageMsg('Frame ' + (pup.n + 1) + (pup.n ? '' : '. Drag to move your character'));
+    const zc = pupZoomStep(), z = zc.z; if (z > 1.004) { const sw = W / z, sh = H / z, cx = Math.min(W - sw / 2, Math.max(sw / 2, pup.x * W)), cy = Math.min(H - sh / 2, Math.max(sh / 2, (pup.y - zc.f * 0.925 * pup.sz) * H)); ctx.drawImage(pup.out, cx - sw / 2, cy - sh / 2, sw, sh, 0, 0, W, H); } else ctx.drawImage(pup.out, 0, 0); stageMsg('Frame ' + (pup.n + 1) + (pup.n ? '' : '. Drag to move your character'));
   }
   async function pupLoadBg(file) {
     const f = await loadImg(file), k = Math.min(1, 1600 / Math.max(f.img.naturalWidth, f.img.naturalHeight)), c = document.createElement('canvas');
@@ -1098,7 +1103,7 @@
     $('pcPropV').textContent = PROPN[$('pupProp').selectedIndex] || 'SAVED';
   }
   $('pupFlip').addEventListener('click', () => { pup.flip = !pup.flip; pup.dirty = true; buzz(8); swDraw(); });
-  $('pupZoom').addEventListener('click', () => { pup.zoom = !pup.zoom; $('pupZoom').textContent = pup.zoom ? 'ZOOM OUT' : 'ZOOM IN'; buzz(8); pup.dirty = true; });
+  document.querySelectorAll('#pupZoom button').forEach(bt => bt.addEventListener('click', () => { pup.zm = bt.dataset.z; buzz(8); document.querySelectorAll('#pupZoom button').forEach(x => x.setAttribute('aria-pressed', x === bt ? 'true' : 'false')); }));
   $('pupFloat').addEventListener('click', () => $('pupSnap').click());
   $('pupReset').addEventListener('click', () => { pup.P = pupFresh(); pupSync(); pup.dirty = true; });
   let pupTake; $('pupSnap').addEventListener('click', pupTake = async () => {
@@ -1110,7 +1115,7 @@
   });
   $('pupDone').addEventListener('click', pupClose);
   $('homeBtn').addEventListener('click', () => { if (pup.on) { pup.on = false; document.body.classList.remove('pupmode'); $('pupFloat').classList.add('hide'); if (pup.fr) { pup.fr.remove(); pup.fr = null; pup.w = null; } pup.prev = null; pup.n = 0; } }, true);
-  $('cv').addEventListener('pointerdown', e => { if (!pup.on) return; const r = cv.getBoundingClientRect(); pup.drag = { id: e.pointerId, x: e.clientX, y: e.clientY, px: pup.x, py: pup.y, r, z: pup.zoom ? 1.5 : 1 }; try { cv.setPointerCapture(e.pointerId); } catch (x) {} });
+  $('cv').addEventListener('pointerdown', e => { if (!pup.on) return; const r = cv.getBoundingClientRect(); pup.drag = { id: e.pointerId, x: e.clientX, y: e.clientY, px: pup.x, py: pup.y, r, z: Math.max(1, pup.zc.z) }; try { cv.setPointerCapture(e.pointerId); } catch (x) {} });
   $('cv').addEventListener('pointermove', e => { const d = pup.drag; if (!pup.on || !d || d.id !== e.pointerId) return; pup.x = Math.min(1.1, Math.max(-0.1, d.px + (e.clientX - d.x) / d.r.width / d.z)); pup.y = Math.min(1.3, Math.max(0.2, d.py + (e.clientY - d.y) / d.r.height / d.z)); pup.dirty = true; });
   ['pointerup', 'pointercancel'].forEach(t => $('cv').addEventListener(t, () => { pup.drag = null; }));
   function tbSync() { const pl = deck.mode === 'play'; $('tbPlay').textContent = pl ? 'Stop playing' : 'Play it'; $('tbPlay').setAttribute('aria-pressed', pl ? 'true' : 'false'); $('tbPlay').disabled = st.frames.length < 2 && !pl; $('tbFpsV').textContent = $('fps').value + ' frames a second'; $('pcPlay').textContent = pl ? 'STOP' : 'PLAY'; $('pcPlay').setAttribute('aria-pressed', pl ? 'true' : 'false'); $('pcPlay').classList.toggle('dim', $('tbPlay').disabled); try { swDraw(); } catch (e) {} if (document.activeElement !== $('toonFps')) $('toonFps').value = $('fps').value; }
