@@ -151,26 +151,26 @@
         <span class="tool-foot"><span class="tool-get">You leave with: A card file + a print shop PDF</span><span class="tool-open">Open</span></span>
       </span>
     </button>
-    <button type="button" class="tool-card" data-sec="fiction" data-key="toon" data-poster="img/tools/animate.webp?v=2" data-made="Animation" data-panel="toonPanel">
+    <button type="button" class="tool-card" data-sec="real" data-key="toon" data-poster="img/tools/animate.webp?v=2" data-made="Cartoon" data-panel="toonPanel">
       <span class="tool-art"><svg viewBox="0 0 320 180" xmlns="http://www.w3.org/2000/svg" aria-hidden="true" preserveAspectRatio="xMidYMid slice"><image href="img/tools/animate-hero.webp?v=5" width="320" height="180"/></svg></span>
       <span class="tool-body">
-        <span class="tool-name">Animation</span>
+        <span class="tool-name">Cartoon</span>
         <span class="tool-desc">Build a cartoon creator that looks like you, then animate it. Stand it in a photo from your phone and move each arm and leg, one frame at a time. Save a sticker or a GIF.</span>
         <span class="tool-foot"><span class="tool-get">You leave with: A sticker or a GIF</span><span class="tool-open">Open</span></span>
       </span>
     </button>
-    <button type="button" class="tool-card" data-sec="real" data-key="video" data-poster="img/tools/video.webp?v=2" data-made="Real Video" data-panel="videoPanel">
+    <button type="button" class="tool-card" data-sec="real" data-key="video" data-poster="img/tools/video.webp?v=2" data-made="Camera" data-panel="videoPanel">
       <span class="tool-art"><svg viewBox="0 0 320 180" xmlns="http://www.w3.org/2000/svg" aria-hidden="true" preserveAspectRatio="xMidYMid slice"><image href="img/tools/video-hero.webp?v=2" width="320" height="180"/></svg></span>
       <span class="tool-body">
-        <span class="tool-name">Real Video</span>
+        <span class="tool-name">Camera</span>
         <span class="tool-desc">Real footage. Shoot stop motion with your camera or photos, or pick a video and run it through a tape deck: VHS, 8mm film, 90s digicam or security cam.</span>
         <span class="tool-foot"><span class="tool-get">You leave with: A GIF or a video</span><span class="tool-open">Open</span></span>
       </span>
     </button>
-    <button type="button" class="tool-card" data-sec="real" data-key="sign" data-poster="img/tools/sign.webp" data-made="Signifier" data-panel="signPanel">
+    <button type="button" class="tool-card" data-sec="real" data-key="sign" data-poster="img/tools/sign.webp" data-made="Billboard" data-panel="signPanel">
       <span class="tool-art"><svg viewBox="0 0 320 180" xmlns="http://www.w3.org/2000/svg" aria-hidden="true" preserveAspectRatio="xMidYMid slice"><image href="img/tools/sign-hero.webp" width="320" height="180"/></svg></span>
       <span class="tool-body">
-        <span class="tool-name">Signifier</span>
+        <span class="tool-name">Billboard</span>
         <span class="tool-desc">Pick a billboard, put your photos on every panel, crop and zoom each one, add words, and let the panels switch at different times. Save the video.</span>
         <span class="tool-foot"><span class="tool-get">You leave with: A billboard video</span><span class="tool-open">Open</span></span>
       </span>
@@ -388,12 +388,11 @@
   (function () {
     const SECS = [
       { id: 'paper', name: 'Paper', color: '#f2c230', ci: '#1a1a1a', icon: '<path d="M6 3h8l4 4v14H6z"/><path d="M14 3v4h4"/><path d="M9 12h6M9 16h6"/>' },
-      { id: 'projects', name: 'Projects', color: '#8a6a4a', ci: '#ffffff', icon: '<path d="M4 20V4l16 16z"/><path d="M4 14h3M4 9h2M10 20v-3M15 20v-2"/>' },
-      { id: 'real', name: 'Real life', color: '#c8412f', ci: '#ffffff', icon: '<rect x="3" y="7" width="12" height="10" rx="2"/><path d="M15 11l6-3v8l-6-3z"/>' },
-      { id: 'fiction', name: 'Cartoon', color: '#2f5d9e', ci: '#ffffff', icon: '<circle cx="12" cy="8" r="4"/><path d="M4 21c0-5 4-8 8-8s8 3 8 8"/>' }
+      { id: 'projects', name: 'Wear', color: '#8a6a4a', ci: '#ffffff', icon: '<path d="M4 20V4l16 16z"/><path d="M4 14h3M4 9h2M10 20v-3M15 20v-2"/>' },
+      { id: 'real', name: 'Video', color: '#c8412f', ci: '#ffffff', icon: '<rect x="3" y="7" width="12" height="10" rx="2"/><path d="M15 11l6-3v8l-6-3z"/>' }
     ];
-    const ORDER = { paper: ['zine', 'cards', 'qr'], projects: ['stencil', 'cutsew'], real: ['video', 'sign'], fiction: ['toon'] };
-    const SHORT = { zine: 'Zine', cards: 'Cards', qr: 'QR', toon: 'Animation', video: 'Video', sign: 'Sign', stencil: 'Stencil', cutsew: 'Cut & Sew' };
+    const ORDER = { paper: ['zine', 'cards', 'qr'], projects: ['stencil', 'cutsew'], real: ['video', 'toon', 'sign'] };
+    const SHORT = { zine: 'Zine', cards: 'Cards', qr: 'QR', toon: 'Cartoon', video: 'Camera', sign: 'Billboard', stencil: 'Stencil', cutsew: 'Cut & Sew' };
     const el = id => document.getElementById(id), data = {};
     document.querySelectorAll('#toolData .tool-card').forEach(c => { data[c.dataset.key] = { key: c.dataset.key, sec: c.dataset.sec, panel: c.dataset.panel, poster: c.dataset.poster, made: c.dataset.made, art: c.querySelector('.tool-art').innerHTML, name: c.querySelector('.tool-name').textContent.trim(), desc: c.querySelector('.tool-desc').textContent.trim(), get: c.querySelector('.tool-get').textContent.trim() }; });
     let sec = 0, idx = 0;
