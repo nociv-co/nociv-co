@@ -396,25 +396,22 @@
   .start .go { height: 58px; display: grid; place-items: center; padding: 0; background: var(--red); border: 3px solid var(--ink); border-radius: 12px; box-shadow: 5px 5px 0 var(--ink); font-family: NocivAnton, Impact, sans-serif; font-weight: 400; font-size: 1.5rem; letter-spacing: .2em; }
   .start .go:active { transform: translate(5px, 5px); box-shadow: none; }
   .start .foot { text-align: center; margin-top: 20px; }
-  /* Real Video landing: its own look. Dark camcorder, film edges, no dots */
-  body.real .start { background: #141311; color: #f1ead6; }
-  body.real .start::before { content: ''; position: absolute; inset: 0; pointer-events: none; -webkit-mask-image: none; mask-image: none; background: repeating-linear-gradient(90deg, #f1ead6 0 10px, transparent 10px 24px) 0 10px / 100% 10px no-repeat, repeating-linear-gradient(90deg, #f1ead6 0 10px, transparent 10px 24px) 0 calc(100% - 20px) / 100% 10px no-repeat; opacity: .55; }
+  /* Camera landing: line drawn camcorder look on the normal paper color. No dots */
+  body.real .start::before { content: ''; position: absolute; inset: 0; pointer-events: none; -webkit-mask-image: none; mask-image: none; background: repeating-linear-gradient(90deg, transparent 0 4px, var(--ink) 4px 6px, transparent 6px 16px, var(--ink) 16px 18px, transparent 18px 28px) 0 12px / 100% 3px no-repeat, repeating-linear-gradient(90deg, transparent 0 4px, var(--ink) 4px 6px, transparent 6px 16px, var(--ink) 16px 18px, transparent 18px 28px) 0 calc(100% - 15px) / 100% 3px no-repeat; opacity: 0; }
   body.real .start-in { padding-top: 22px; }
-  body.real .start h1 { color: #f1ead6; font-size: clamp(2.4rem, 12vw, 3.3rem); }
-  body.real .start h1 span { background: var(--red); color: #fff; box-shadow: none; transform: none; border-radius: 3px; }
-  body.real .start .st-sub { color: #f1ead6; font-family: ui-monospace, Menlo, monospace; font-size: .8rem; letter-spacing: .22em; }
-  body.real .start .st-sub::before { content: ''; display: inline-block; width: 10px; height: 10px; border-radius: 50%; background: var(--red); margin-right: 8px; animation: recb 1.2s steps(2) infinite; }
-  @keyframes recb { 50% { opacity: 0; } }
-  body.real .st-art { background: #000; border: 3px solid #f1ead6; box-shadow: none; transform: none; border-radius: 4px; }
+  body.real .start h1 span { background: none; color: var(--ink); box-shadow: none; transform: none; padding: 4px 12px 2px; border: 3px solid var(--ink); border-radius: 4px; }
+  body.real .start .st-sub { font-family: ui-monospace, Menlo, monospace; font-weight: 900; font-size: .8rem; letter-spacing: .22em; color: var(--ink); }
+  body.real .start .st-sub::before { content: ''; display: inline-block; width: 11px; height: 11px; border-radius: 50%; border: 2.5px solid var(--red); background: var(--red); margin-right: 8px; animation: recb 1.2s steps(2) infinite; }
+  @keyframes recb { 50% { background: transparent; } }
+  body.real .st-art { background: #fff; box-shadow: none; transform: none; border-width: 3px; border-radius: 4px; }
   body.real .st-art::before, body.real .st-art::after { display: none; }
   body.real .st-art.swap { animation: none; }
-  body.real .start .mtabs button { background: transparent; color: #f1ead6; border-color: #f1ead6; box-shadow: none; border-radius: 4px; font-family: ui-monospace, Menlo, monospace; }
-  body.real .start .mtabs button[aria-pressed="true"] { background: #f1ead6; color: #141311; box-shadow: none; }
-  body.real .start .mode-name { color: #f1ead6; font-family: ui-monospace, Menlo, monospace; font-weight: 900; font-size: clamp(1.5rem, 7vw, 2rem); letter-spacing: .04em; }
-  body.real .start .mode-desc { color: #cfc8b4; }
-  body.real .start .go { border-color: #f1ead6; box-shadow: none; border-radius: 4px; }
-  body.real .start .go:active { transform: none; opacity: .8; }
-  body.real .start .foot { color: #9b9684; } body.real .start .foot a { color: #f1ead6; }
+  body.real .start .mtabs button { background: transparent; box-shadow: none; border-radius: 4px; font-family: ui-monospace, Menlo, monospace; }
+  body.real .start .mtabs button[aria-pressed="true"] { background: transparent; color: var(--ink); box-shadow: inset 0 -5px 0 var(--red); }
+  body.real .start .mode-name { font-family: ui-monospace, Menlo, monospace; font-weight: 900; font-size: clamp(1.5rem, 7vw, 2rem); letter-spacing: .04em; }
+  body.real .start .go { background: transparent; color: var(--ink); box-shadow: none; border-radius: 4px; position: relative; }
+  body.real .start .go::before { content: ''; position: absolute; left: 18px; top: 50%; width: 16px; height: 16px; margin-top: -8px; border-radius: 50%; background: var(--red); border: 2.5px solid var(--ink); }
+  body.real .start .go:active { transform: none; background: var(--red); color: #fff; }
 </style>
 </head>
 <body>
