@@ -25,6 +25,7 @@
   .fs-bar { position: fixed; top: 0; left: 0; right: 0; z-index: 1001; height: calc(38px + env(safe-area-inset-top)); padding-top: env(safe-area-inset-top); background: #1a1a1a; display: flex; align-items: center; justify-content: space-between; padding-left: 12px; padding-right: 6px; color: #fff; font-weight: 900; font-size: 0.72rem; letter-spacing: .14em; text-transform: uppercase; }
   .fs-bar button { border: 0; background: #c8412f; color: #fff; font: inherit; padding: 7px 12px; cursor: pointer; letter-spacing: .1em; }
   html.fs-open, html.fs-open body { overflow: hidden; }
+  @media (max-width: 700px) { .subpanel .fullscreen-btn, .subpanel .build-header { display: none; } }
   .fullscreen-btn {
     background: var(--gold); color: #1a1a1a; border: none; padding: 10px 18px;
     font-size: 0.8rem; font-weight: 800; letter-spacing: 0.05em; text-transform: uppercase;
@@ -382,6 +383,7 @@
     const pnl = document.getElementById(id); pnl.classList.add('show');
     pnl.querySelectorAll('iframe[data-src]').forEach(f => { f.src = f.dataset.src; f.removeAttribute('data-src'); });
     window.scrollTo({ top: 0, behavior: 'smooth' });
+    if (window.matchMedia('(max-width: 700px)').matches && window.__enterFs) window.__enterFs(pnl);
   }
   (function () {
     const SECS = [
@@ -436,20 +438,22 @@
     const HASH = { '#zine': 'zine', '#cutsew': 'cutsew', '#cards': 'cards', '#qr': 'qr', '#stencil': 'stencil', '#studio': 'video', '#character': 'toon', '#cartoon': 'toon', '#animation': 'toon', '#video': 'video', '#sign': 'sign', '#animate': 'toon', '#stop': 'video', '#vhs': 'video' };
     const key = HASH[location.hash]; if (!key) return; const id = window.__goTool(key); if (id) openPanel(id);
   })();
-  // ===== Full screen in place: same frame, same work, just bigger =====
-  document.querySelectorAll('.fullscreen-btn').forEach(btn => {
-    btn.addEventListener('click', e => {
-      const panel = btn.closest('.subpanel'); if (!panel) return;
-      e.preventDefault();
-      panel.classList.add('fs'); document.documentElement.classList.add('fs-open');
-      const name = (panel.querySelector('h2') || {}).textContent || 'NOCIV';
-      const bar = document.createElement('div'); bar.className = 'fs-bar';
-      bar.innerHTML = '<span></span><button type="button">&#10005; Exit full screen</button>';
-      bar.firstChild.textContent = name;
-      bar.querySelector('button').onclick = () => { panel.classList.remove('fs'); document.documentElement.classList.remove('fs-open'); bar.remove(); };
-      document.body.appendChild(bar);
-    });
-  });
+  // ===== Full screen in place: same frame, same work, just bigger. On a phone every tool opens this way, so there is only one thing to scroll. =====
+  const isPhone = () => window.matchMedia('(max-width: 700px)').matches;
+  function exitFs() { const p = document.querySelector('.subpanel.fs'); if (p) p.classList.remove('fs'); document.documentElement.classList.remove('fs-open'); document.querySelectorAll('.fs-bar').forEach(b => b.remove()); return p; }
+  function enterFs(panel) {
+    if (!panel || panel.classList.contains('fs')) return;
+    panel.classList.add('fs'); document.documentElement.classList.add('fs-open');
+    const name = (panel.querySelector('h2') || {}).textContent || 'NOCIV', phone = isPhone();
+    const bar = document.createElement('div'); bar.className = 'fs-bar';
+    bar.innerHTML = '<span></span><button type="button"></button>'; bar.firstChild.textContent = name;
+    const btn = bar.querySelector('button'); btn.innerHTML = phone ? '&lsaquo; Back to tools' : '&#10005; Exit full screen';
+    btn.onclick = () => { const p = exitFs(); if (phone && p) { const back = p.querySelector('.hub-back'); if (back) back.click(); } };
+    document.body.appendChild(bar);
+  }
+  document.querySelectorAll('.fullscreen-btn').forEach(btn => { btn.addEventListener('click', e => { const panel = btn.closest('.subpanel'); if (!panel) return; e.preventDefault(); enterFs(panel); }); });
+  window.__enterFs = enterFs;
+  { const open0 = document.querySelector('.subpanel.show'); if (open0 && isPhone()) enterFs(open0); }
   document.querySelectorAll('.hub-back').forEach(link => {
     link.addEventListener('click', () => {
       document.querySelectorAll('.subpanel').forEach(p => p.classList.remove('show'));
