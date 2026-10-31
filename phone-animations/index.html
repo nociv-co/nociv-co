@@ -69,12 +69,13 @@
   body.pupmode .panels { overflow: hidden; touch-action: manipulation; padding: 6px 8px 8px; display: flex; }
   body.pupmode .panel.on { flex: 1; min-height: 0; min-width: 0; width: 100%; display: flex; flex-direction: column; background: none; border: 0; padding: 0; }
   body.pupmode .panel > h2 { display: none; }
-  body.pupmode #toonBar, body.pupmode #editRow, body.pupmode #info, body.pupmode #tools, body.pupmode #looks { display: none !important; }
+  body.pupmode #toonBar, body.pupmode #editRow, body.pupmode #info, body.pupmode #looks { display: none !important; }
   body.pupmode .tl { padding-top: 6px; }
   body.pupmode #pupFloat { display: none; }
   @media (orientation: portrait) and (max-height: 700px) { body.pupmode.pupmini .vf canvas { max-height: 33svh; } }
   @media (orientation: landscape) and (max-height: 620px) {
-    body.pupmode .app { max-width: none; display: grid; grid-template-columns: minmax(0, 1fr) minmax(300px, 47%); grid-template-rows: auto auto minmax(0, 1fr); }
+    body.pupmode .app { max-width: none; display: grid; grid-template-columns: minmax(0, 1fr) minmax(300px, 47%); grid-template-rows: auto auto minmax(0, 1fr) auto; }
+    body.pupmode #tools { grid-column: 2; grid-row: 4; }
     body.pupmode .vf { grid-column: 1; grid-row: 1 / -1; min-height: 0; padding: 6px 0 6px 8px; display: flex; }
     body.pupmode .vf .stage { flex: 1; min-height: 0; }
     body.pupmode .hdr { grid-column: 2; grid-row: 1; padding: 4px 8px 0; }
@@ -162,6 +163,10 @@
   .tb-done { background: #1a1a1a; color: #f2ecd6; }
   .tb-make, .take { background: #c8412f; color: #fff; border: 0; text-shadow: none; box-shadow: 0 8px 18px rgba(200,65,47,.4), inset 0 1px 0 rgba(255,255,255,.3); }
   .take:active, .tb-make:active { transform: translateY(1px); box-shadow: 0 3px 8px rgba(200,65,47,.4); }
+  body.pupmode #pupLimb { display: none !important; }
+  #pupSub { display: grid; grid-template-columns: repeat(2, 1fr); gap: 8px; flex: none; } #pupSub.hide { display: none; }
+  #pupSub .pad { height: clamp(34px, 5.2svh, 46px); font-size: clamp(.8rem, 2.2svh, 1rem); text-align: center; padding: 0; } #pupSub .pad i { display: none; }
+  body.pupmode #pupZoom button { font-size: clamp(.78rem, 2.1svh, .95rem); padding: clamp(8px, 1.7svh, 12px) 13px; min-width: 66px; }
   #pupZoom { display: none; position: absolute; right: 8px; top: 50%; transform: translateY(-50%); z-index: 5; flex-direction: column; gap: 5px; }
   body.pupmode #pupZoom { display: flex; }
   #pupZoom button { background: rgba(26,26,26,.78); color: #f2ecd6; border: 0; border-radius: 999px; padding: clamp(6px, 1.3svh, 9px) 11px; font: 400 clamp(.62rem, 1.7svh, .75rem)/1 NocivAnton, Anton, Impact, sans-serif; letter-spacing: .07em; box-shadow: 0 5px 12px rgba(0,0,0,.3); }
@@ -437,7 +442,7 @@
     <button type="button" class="icon" id="redoBtn" aria-label="Redo" disabled>&#8631;</button>
   </header>
 
-  <div class="vf"><div class="stage"><canvas id="cv" width="540" height="960"></canvas><div id="pupZoom" role="group" aria-label="Zoom"><button type="button" data-z="all" aria-pressed="true">ALL</button><button type="button" data-z="head" aria-pressed="false">HEAD</button><button type="button" data-z="upper" aria-pressed="false">UPPER</button><button type="button" data-z="mid" aria-pressed="false">MID</button><button type="button" data-z="legs" aria-pressed="false">LEGS</button></div><button type="button" id="pupFloat" class="hide" aria-label="Take frame">Take frame</button><button type="button" id="fsBtn" class="hide" aria-label="Go fullscreen">Fullscreen</button><button type="button" id="fsX" class="hide" aria-label="Exit fullscreen">Close</button><div id="fsHint" class="hide">Turn your phone sideways</div><div id="stageMsg"></div></div></div>
+  <div class="vf"><div class="stage"><canvas id="cv" width="540" height="960"></canvas><div id="pupZoom" role="group" aria-label="Zoom"><button type="button" data-z="all" aria-pressed="true">WHOLE</button><button type="button" data-z="head" aria-pressed="false">HEAD</button><button type="button" data-z="upper" aria-pressed="false">ARMS</button><button type="button" data-z="mid" aria-pressed="false">BODY</button><button type="button" data-z="legs" aria-pressed="false">LEGS</button></div><button type="button" id="pupFloat" class="hide" aria-label="Take frame">Take frame</button><button type="button" id="fsBtn" class="hide" aria-label="Go fullscreen">Fullscreen</button><button type="button" id="fsX" class="hide" aria-label="Exit fullscreen">Close</button><div id="fsHint" class="hide">Turn your phone sideways</div><div id="stageMsg"></div></div></div>
   <section class="creator" id="creator" aria-label="Character creator">
     <div class="ctabs" id="cTabs"></div>
     <div class="cbody"><div class="crail" id="cRail"></div><div class="cgrid" id="cGrid"></div></div>
@@ -613,6 +618,7 @@
       </div>
       <div class="pc" id="pupConsole">
         <div class="pc-top"><div class="pc-lcd msg" id="pupMsg"></div><button type="button" class="tb tb-mini" id="pcShape" aria-label="Shape of the picture">TALL</button><button type="button" class="tb tb-mini" id="pcMini" aria-pressed="true">FULL CONSOLE</button></div>
+        <div class="pc-pads hide" id="pupSub"></div>
         <div class="pc-pads" id="pupLimb">
           <button type="button" class="pad p-r" data-l="aR" aria-pressed="true"><i></i>R ARM</button>
           <button type="button" class="pad p-b" data-l="aL" aria-pressed="false"><i></i>L ARM</button>
@@ -1133,7 +1139,7 @@
   const KN = []; function knobsDraw() { KN.forEach(f => f()); swDraw(); }
   function pupSync() {
     const k = pup.limb, d = PL[k] || PL.aR, P = pup.P; $('pupFace').classList.toggle('hide', k !== 'face'); $('pupEmote').classList.toggle('hide', k !== 'emote'); $('pupMoodRow').classList.toggle('hide', k !== 'mood'); $('pupLimbCtl').classList.toggle('hide', k === 'face' || k === 'emote' || k === 'mood');
-    document.querySelectorAll('#pupLimb [data-l]').forEach(x => x.setAttribute('aria-pressed', x.dataset.l === k ? 'true' : 'false'));
+    document.querySelectorAll('#pupLimb [data-l], #pupSub [data-l]').forEach(x => x.setAttribute('aria-pressed', x.dataset.l === k ? 'true' : 'false')); $('pupSub').classList.toggle('hide', ['head', 'upper', 'legs'].indexOf(pup.zm) < 0);
     if (k === 'face' || k === 'emote' || k === 'mood') { knobsDraw(); return; } $('pupL1').textContent = d[0]; $('pupL2').textContent = d[1];
     const s1 = $('pupS1'), s2 = $('pupS2'); s1.min = d[2]; s1.max = d[3]; s2.min = d[4]; s2.max = d[5];
     let v1, v2; if (k === 'aR' || k === 'aL') { v1 = P[k][0]; v2 = P[k][1]; } else if (k === 'lR' || k === 'lL') { v1 = P[k].a; v2 = Math.round(P[k].lift * 100); } else { v1 = P.lean; v2 = P.head; }
@@ -1206,7 +1212,7 @@
   async function pupBgSave() { try { const db = await openDb(); const tx = db.transaction('s', 'readwrite'); if (pup.bgBlob) tx.objectStore('s').put(pup.bgBlob, 'toonbg'); else tx.objectStore('s').delete('toonbg'); } catch (e) {} }
   async function pupOpen() {
     pup.on = true; pup.limb = 'emote'; try { landSync(); } catch (e) {} document.body.classList.add('pupmode'); $('pupFloat').classList.remove('hide'); st.cam = false; if (st.camVideo) { try { setCam(false); } catch (e) {} }
-    showPanel('pup'); pupSync(); pup.dirty = true; msg('pupMsg', '');
+    showPanel('pup'); pupPick('all'); { const ab = document.querySelector('#tools [data-p="animate"]'); if (ab) ab.setAttribute('aria-selected', 'true'); } pup.dirty = true; msg('pupMsg', '');
     if (!pup.fr) {
       const fr = document.createElement('iframe'); fr.src = 'character/?embed=1'; fr.setAttribute('aria-hidden', 'true'); fr.style.cssText = 'position:fixed;left:0;top:0;width:10px;height:10px;opacity:0;pointer-events:none;border:0'; document.body.appendChild(fr); pup.fr = fr;
       try {
@@ -1217,6 +1223,7 @@
     }
     pup.dirty = true;
   }
+  function pupLeave() { pupZoomReset(); pupPick('all'); pup.on = false; document.body.classList.remove('pupmode'); $('pupFloat').classList.add('hide'); if (pup.fr) { pup.fr.remove(); pup.fr = null; pup.w = null; } pup.prev = null; pup.n = 0; st.cam = false; refreshUI(); }
   function pupZoomReset() { pup.zm = 'all'; pup.zt = null; document.body.classList.remove('pupzoomed'); document.querySelectorAll('#pupZoom button').forEach(x => x.setAttribute('aria-pressed', x.dataset.z === 'all' ? 'true' : 'false')); }
   function pupClose() { pupZoomReset(); pup.on = false; document.body.classList.remove('pupmode'); $('pupFloat').classList.add('hide'); const had = pup.n; if (pup.fr) { pup.fr.remove(); pup.fr = null; pup.w = null; } pup.prev = null; pup.n = 0; st.cam = false; refreshUI(); showPanel('shoot'); if (had && st.frames.length > 1) { try { $('swTape').click(); setDeck('play'); } catch (e) {} } }
   $('pupBtn').addEventListener('click', () => $('pupBg').click());
@@ -1294,7 +1301,9 @@
   $('pcShape').addEventListener('click', () => { if (st.frames.length) { msg('pupMsg', 'Clear your frames to change the shape', true); return; } st.aspect = SHP[(SHP.indexOf(st.aspect) + 1) % 3]; document.querySelectorAll('#aspects .chip').forEach(x => x.setAttribute('aria-pressed', x.dataset.a === st.aspect ? 'true' : 'false')); buzz(8); shapeSync(); pup.dirty = true; });
   const landMQ = window.matchMedia('(orientation: landscape) and (max-height: 620px)'); const landSync = () => { document.body.classList.toggle('pupland', landMQ.matches); if (!pup.on || st.frames.length) return; const want = landMQ.matches ? 'wide' : 'tall'; if (st.aspect !== want && (st.aspect === 'tall' || st.aspect === 'wide')) { st.aspect = want; document.querySelectorAll('#aspects .chip').forEach(x => x.setAttribute('aria-pressed', x.dataset.a === want ? 'true' : 'false')); try { shapeSync(); } catch (e) {} pup.dirty = true; } }; landSync(); try { landMQ.addEventListener('change', landSync); } catch (e) { landMQ.addListener(landSync); }
   $('pcMini').addEventListener('click', () => { const on = !document.body.classList.contains('pupmini'); document.body.classList.toggle('pupmini', on); $('pcMini').setAttribute('aria-pressed', on ? 'true' : 'false'); $('pcMini').textContent = on ? 'FULL CONSOLE' : 'MORE ROOM'; pup.dirty = true; buzz(8); });
-  document.querySelectorAll('#pupZoom button').forEach(bt => bt.addEventListener('click', () => { pup.zm = bt.dataset.z; pup.zt = null; document.body.classList.toggle('pupzoomed', pup.zm !== 'all'); buzz(8); document.querySelectorAll('#pupZoom button').forEach(x => x.setAttribute('aria-pressed', x === bt ? 'true' : 'false')); }));
+  const PICK = { all: ['emote', []], head: ['face', [['face', 'FACE'], ['mood', 'MOOD']]], upper: ['aR', [['aR', 'R ARM'], ['aL', 'L ARM']]], mid: ['body', []], legs: ['lR', [['lR', 'R LEG'], ['lL', 'L LEG']]] };
+  function pupPick(z) { const P = PICK[z] || PICK.all, sub = $('pupSub'); sub.innerHTML = ''; P[1].forEach(s => { const b = document.createElement('button'); b.type = 'button'; b.className = 'pad'; b.dataset.l = s[0]; b.textContent = s[1]; b.addEventListener('click', () => { pup.limb = s[0]; buzz(8); pupSync(); }); sub.appendChild(b); }); if (!P[1].some(s => s[0] === pup.limb) && pup.limb !== P[0]) pup.limb = P[0]; else if (!P[1].length) pup.limb = P[0]; pupSync(); }
+  document.querySelectorAll('#pupZoom button').forEach(bt => bt.addEventListener('click', () => { pup.zm = bt.dataset.z; pupPick(pup.zm); pup.zt = null; document.body.classList.toggle('pupzoomed', pup.zm !== 'all'); buzz(8); document.querySelectorAll('#pupZoom button').forEach(x => x.setAttribute('aria-pressed', x === bt ? 'true' : 'false')); }));
   $('pupFloat').addEventListener('click', () => $('pupSnap').click());
   $('pupReset').addEventListener('click', () => { pup.P = pupFresh(); pupSync(); pup.dirty = true; });
   let pupTake; $('pupSnap').addEventListener('click', pupTake = async () => {
@@ -1430,7 +1439,7 @@
     const A = document.querySelector('.app'); if (!document.body.classList.contains('scrollapp') || document.body.classList.contains('sg') || document.body.classList.contains('pupmode') || A.classList.contains('is-create')) return;
     const tl = $('tl').getBoundingClientRect(), vf = document.querySelector('.vf').getBoundingClientRect(), pn = $('panels').getBoundingClientRect(); A.scrollTop += pn.top - Math.max(tl.bottom, vf.bottom) - 6;
   }
-  document.querySelectorAll('#tools button').forEach(b => b.addEventListener('click', () => { if (b.dataset.p === 'animate') goAnimate(); else showPanel(b.dataset.p); }));
+  document.querySelectorAll('#tools button').forEach(b => b.addEventListener('click', () => { if (b.dataset.p === 'animate') { if (!pup.on) goAnimate(); } else { if (pup.on) pupLeave(); showPanel(b.dataset.p); } }));
   async function goAnimate() { try { await pupOpen(); } catch (e) {} }
   function startKind(kind) {
     document.body.classList.toggle('sg', kind === 'board'); if (kind !== 'board') { cv.style.width = ''; cv.style.height = ''; }
