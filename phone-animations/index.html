@@ -58,6 +58,61 @@
   body.toon #modeSw, body.toon #looks, body.toon #eraSet { display: none !important; }
   #pupFloat { position: absolute; right: 10px; bottom: 10px; z-index: 5; background: #c8412f; color: #fff; border: 2px solid #1a1a1a; border-radius: 12px; padding: 10px 14px; font: 900 .85rem/1 inherit; text-transform: uppercase; letter-spacing: .06em; box-shadow: 0 3px 0 #1a1a1a; }
   #pupFloat.hide { display: none; }
+  /* ---- puppet console: a locked screen of pads, knobs and switches, like a kids dj toy ---- */
+  #pupLegacy { display: none; }
+  .pc { display: none; }
+  body.pupmode .panels { overflow: hidden; touch-action: manipulation; padding: 6px 8px 8px; display: flex; }
+  body.pupmode .panel.on { flex: 1; min-height: 0; display: flex; flex-direction: column; background: none; border: 0; padding: 0; }
+  body.pupmode .panel > h2 { display: none; }
+  body.pupmode #toonBar, body.pupmode #editRow, body.pupmode #info, body.pupmode #tools, body.pupmode #looks { display: none !important; }
+  body.pupmode .tl { padding-top: 6px; }
+  body.pupmode #pupFloat { display: none; }
+  body.pupmode .vf canvas { max-height: 27svh; }
+  body.pupmode .strip { min-height: 0; padding-bottom: 2px; }
+  body.pupmode .strip:empty::before { height: clamp(30px, 5svh, 56px); }
+  body.pupmode .strip .fr { height: clamp(34px, 5.5svh, 56px); width: clamp(24px, 3.9svh, 40px); }
+  body.pupmode .pc { display: flex; flex: 1; min-height: 0; flex-direction: column; gap: clamp(3px, 0.9svh, 9px); justify-content: space-between; background: #f2c230; border: 3px solid #1a1a1a; border-radius: 18px; padding: clamp(4px, 1svh, 11px) 9px; box-shadow: 0 4px 0 #1a1a1a, inset 0 -5px 0 rgba(0,0,0,.14); user-select: none; -webkit-user-select: none; -webkit-touch-callout: none; }
+  .pc button { -webkit-tap-highlight-color: transparent; touch-action: manipulation; }
+  .pc-lcd { flex: none; background: #1a1a1a; color: #d6dccf; border-radius: 8px; padding: 4px 10px; font: 700 .72rem/1.3 ui-monospace, Menlo, monospace; letter-spacing: .04em; text-transform: uppercase; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; min-height: 1.6em; margin: 0; }
+  .pc-lcd.err { color: #f2c230; }
+  .pc-lcd:empty::before { content: "Pick a pad. Turn a knob. Take a frame."; opacity: .7; }
+  .pc-pads { display: grid; grid-template-columns: repeat(3, 1fr); gap: clamp(5px, 1svh, 8px); }
+  .pad { position: relative; height: clamp(34px, 5.4svh, 46px); border: 2.5px solid #1a1a1a; border-radius: 12px; font: 400 clamp(.85rem, 2.4svh, 1.05rem)/1 NocivAnton, Anton, Impact, sans-serif; letter-spacing: .06em; color: #fff; box-shadow: 0 4px 0 #1a1a1a; transition: transform .05s, box-shadow .05s; padding: 0 0 0 12px; text-shadow: 0 1px 0 rgba(0,0,0,.35); }
+  .pad i { position: absolute; left: 8px; top: 50%; width: 7px; height: 7px; margin-top: -3.5px; border-radius: 50%; background: rgba(0,0,0,.35); }
+  .pad[aria-pressed="true"] { transform: translateY(3px); box-shadow: 0 1px 0 #1a1a1a, inset 0 0 0 3px rgba(255,255,255,.75); }
+  .pad[aria-pressed="true"] i { background: #fff; box-shadow: 0 0 6px 2px #fff; }
+  .p-r { background: #c8412f; } .p-b { background: #2f5d9e; } .p-g { background: #4f7a52; } .p-t { background: #8a6a4a; } .p-m { background: #7a4f8a; } .p-k { background: #1a1a1a; }
+  .pc-knobs { display: grid; grid-auto-flow: column; grid-auto-columns: 1fr; gap: 4px; align-items: start; background: #f2ecd6; border: 2.5px solid #1a1a1a; border-radius: 14px; padding: clamp(5px, 1.2svh, 10px) 4px; }
+  .pc-knobs.hide { display: none; }
+  .kc { display: flex; flex-direction: column; align-items: center; gap: 2px; min-width: 0; }
+  .kl { font: 400 clamp(.62rem, 1.8svh, .78rem)/1 NocivAnton, Anton, Impact, sans-serif; letter-spacing: .05em; text-align: center; color: #1a1a1a; text-transform: uppercase; white-space: nowrap; }
+  .kv { font: 700 .66rem/1 ui-monospace, Menlo, monospace; background: #1a1a1a; color: #f2c230; border-radius: 4px; padding: 2px 5px; min-width: 3.2em; text-align: center; white-space: nowrap; }
+  .kv:empty { display: none; }
+  .kb { width: clamp(40px, 9svh, 66px); height: clamp(40px, 9svh, 66px); touch-action: none; cursor: grab; border-radius: 50%; outline-offset: 2px; }
+  .kb svg { width: 100%; height: 100%; display: block; overflow: visible; }
+  .kb .rim { fill: #1a1a1a; } .kb .cap { fill: #c8412f; stroke: #1a1a1a; stroke-width: 3; } .kb .grip { fill: none; stroke: rgba(0,0,0,.28); stroke-width: 5; stroke-dasharray: 3 5.2; } .kb .dot { fill: #1a1a1a; } .kb .ptr { stroke: #f2ecd6; stroke-width: 7; stroke-linecap: round; }
+  .kc:nth-child(2) .kb .cap { fill: #2f5d9e; } .kc:nth-child(3) .kb .cap { fill: #f2c230; } .kc:nth-child(4) .kb .cap { fill: #4f7a52; }
+  .kc:nth-child(3) .kb .ptr { stroke: #1a1a1a; }
+  .kb:active { cursor: grabbing; } .kb:focus-visible { outline: 3px solid #2f5d9e; }
+  .sw { position: relative; width: clamp(54px, 15vw, 70px); height: clamp(26px, 4.4svh, 34px); border-radius: 999px; background: #1a1a1a; border: 0; padding: 0; box-shadow: inset 0 2px 0 rgba(255,255,255,.18), 0 3px 0 rgba(0,0,0,.25); }
+  .sw i { position: absolute; top: 3px; bottom: 3px; width: 44%; left: calc(3px + (100% - 6px - 44%) * var(--p, 0)); border-radius: 999px; background: #c8412f; border: 2px solid #f2ecd6; transition: left .09s; }
+  .sw[data-n="3"] i { width: 36%; left: calc(3px + (100% - 6px - 36%) * var(--p, 0)); background: #2f5d9e; }
+  .sw[aria-pressed="true"] i { background: #4f7a52; }
+  .kc-sw { justify-content: flex-end; height: 100%; }
+  .pc-row { display: flex; gap: clamp(5px, 1.2svh, 8px); align-items: flex-end; }
+  .tb { flex: 1; min-width: 0; height: clamp(34px, 5.6svh, 46px); border: 2.5px solid #1a1a1a; border-radius: 12px; background: #f2ecd6; color: #1a1a1a; font: 400 clamp(.78rem, 2.2svh, .95rem)/1 NocivAnton, Anton, Impact, sans-serif; letter-spacing: .06em; box-shadow: 0 4px 0 #1a1a1a; padding: 0 4px; }
+  .tb:active { transform: translateY(3px); box-shadow: 0 1px 0 #1a1a1a; }
+  .tb:disabled { opacity: .45; }
+  .tb-prop { display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 2px; flex: 1.5; }
+  .tb-prop small { font: 700 .55rem/1 ui-monospace, Menlo, monospace; opacity: .7; }
+  .tb-prop span { font-size: clamp(.7rem, 2svh, .85rem); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 100%; }
+  .tb-play { background: #d6dccf; } .tb-play[aria-pressed="true"] { background: #4f7a52; color: #fff; }
+  .tb-done { background: #1a1a1a; color: #f2ecd6; }
+  .pc-go { align-items: flex-end; }
+  .pc-go .tb, .pc-go .take { height: clamp(44px, 7.4svh, 60px); }
+  .pc-go .kc-sw { flex: 1.1; height: auto; }
+  .take { flex: 2.4; min-width: 0; border: 3px solid #1a1a1a; border-radius: 16px; background: #c8412f; color: #fff; font: 400 clamp(1rem, 3svh, 1.3rem)/1 NocivAnton, Anton, Impact, sans-serif; letter-spacing: .07em; box-shadow: 0 5px 0 #1a1a1a, inset 0 3px 0 rgba(255,255,255,.28); text-shadow: 0 2px 0 rgba(0,0,0,.3); }
+  .take:active { transform: translateY(4px); box-shadow: 0 1px 0 #1a1a1a, inset 0 3px 0 rgba(255,255,255,.28); }
   body.pupmode #stageMsg { top: 10px; bottom: auto; left: 10px; right: 10px; text-align: left; }
   #fsBtn, #fsX { position: absolute; top: 10px; right: 10px; z-index: 5; background: rgba(0,0,0,.6); color: #f2ecd6; border: 1.5px solid #f2ecd6; border-radius: 10px; padding: 8px 12px; font: 900 .8rem/1 inherit; text-transform: uppercase; letter-spacing: .06em; }
   #fsBtn.hide, #fsX.hide, #fsHint.hide { display: none; }
@@ -391,45 +446,54 @@
 
     <section class="panel" id="p-pup">
       <h2>Puppet</h2>
-      <p class="tip" id="pupTip">Drag the picture to move your character. Pick a limb, set it, then take a frame. Change it a little and take the next one.</p>
-      <div class="chips" id="pupLimb">
-        <button type="button" class="chip" data-l="aR" aria-pressed="true">Right arm</button>
-        <button type="button" class="chip" data-l="aL" aria-pressed="false">Left arm</button>
-        <button type="button" class="chip" data-l="lR" aria-pressed="false">Right leg</button>
-        <button type="button" class="chip" data-l="lL" aria-pressed="false">Left leg</button>
-        <button type="button" class="chip" data-l="body" aria-pressed="false">Head and body</button>
-        <button type="button" class="chip" data-l="face" aria-pressed="false">Eyes and mouth</button>
+      <div id="pupLegacy" aria-hidden="true">
+        <div class="chips" id="pfEyes"><button type="button" class="chip" data-v="0" aria-pressed="true"></button><button type="button" class="chip" data-v="1" aria-pressed="false"></button></div>
+        <div class="chips" id="pfGaze"><button type="button" class="chip" data-v="-1" aria-pressed="false"></button><button type="button" class="chip" data-v="0" aria-pressed="true"></button><button type="button" class="chip" data-v="1" aria-pressed="false"></button></div>
+        <div class="chips" id="pfMouth"><button type="button" class="chip" data-v="0" aria-pressed="true"></button><button type="button" class="chip" data-v="1" aria-pressed="false"></button><button type="button" class="chip" data-v="2" aria-pressed="false"></button><button type="button" class="chip" data-v="3" aria-pressed="false"></button></div>
+        <select id="pfBlink" tabindex="-1"><option value="0">Never</option><option value="2">2</option><option value="3">3</option><option value="4" selected>4</option><option value="6">6</option><option value="8">8</option></select>
+        <select id="pfTalk" tabindex="-1"><option value="0" selected>Off</option><option value="1">Fast</option><option value="2">Medium</option><option value="3">Slow</option></select>
+        <input type="range" id="pupS1" min="-30" max="180" step="1" value="9" tabindex="-1">
+        <input type="range" id="pupS2" min="-60" max="190" step="1" value="14" tabindex="-1">
+        <input type="range" id="pupS3" min="-40" max="70" step="1" value="0" tabindex="-1">
+        <input type="range" id="pupSz" min="0.3" max="1" step="0.01" value="0.6" tabindex="-1">
+        <select id="pupProp" tabindex="-1"><option value="">Saved</option><option value="none">None</option><option value="spray">Spray</option><option value="brush">Brush</option><option value="record">Record</option><option value="camera">Camera</option><option value="clipboard">Clipboard</option><option value="frame">Frame</option><option value="mic">Mic</option><option value="scissors">Scissors</option></select>
       </div>
-      <div id="pupFace" class="hide">
-        <label class="f">Eyes</label>
-        <div class="chips" id="pfEyes"><button type="button" class="chip" data-v="0" aria-pressed="true">Open</button><button type="button" class="chip" data-v="1" aria-pressed="false">Closed</button></div>
-        <label class="f">Looking</label>
-        <div class="chips" id="pfGaze"><button type="button" class="chip" data-v="-1" aria-pressed="false">Left</button><button type="button" class="chip" data-v="0" aria-pressed="true">Straight</button><button type="button" class="chip" data-v="1" aria-pressed="false">Right</button></div>
-        <label class="f">Mouth, when you set it yourself</label>
-        <div class="chips" id="pfMouth"><button type="button" class="chip" data-v="0" aria-pressed="true">Closed</button><button type="button" class="chip" data-v="1" aria-pressed="false">Small</button><button type="button" class="chip" data-v="2" aria-pressed="false">Wide</button><button type="button" class="chip" data-v="3" aria-pressed="false">Oh</button></div>
-        <label class="f">Blink on its own</label>
-        <select id="pfBlink" aria-label="Blink"><option value="0">Never, I will do it myself</option><option value="2">Every 2nd frame</option><option value="3">Every 3rd frame</option><option value="4" selected>Every 4th frame</option><option value="6">Every 6th frame</option><option value="8">Every 8th frame</option></select>
-        <label class="f">Talking</label>
-        <select id="pfTalk" aria-label="Talking"><option value="0" selected>Off, I will set the mouth</option><option value="1">Chatty: mouth changes every frame</option><option value="2">Normal: changes every 2nd frame</option><option value="3">Slow: changes every 3rd frame</option></select>
-        <p class="tip">The picture shows what the next frame will look like. Talking cycles through closed, small, wide and oh.</p>
+      <div class="pc" id="pupConsole">
+        <div class="pc-lcd msg" id="pupMsg"></div>
+        <div class="pc-pads" id="pupLimb">
+          <button type="button" class="pad p-r" data-l="aR" aria-pressed="true"><i></i>R ARM</button>
+          <button type="button" class="pad p-b" data-l="aL" aria-pressed="false"><i></i>L ARM</button>
+          <button type="button" class="pad p-g" data-l="lR" aria-pressed="false"><i></i>R LEG</button>
+          <button type="button" class="pad p-t" data-l="lL" aria-pressed="false"><i></i>L LEG</button>
+          <button type="button" class="pad p-m" data-l="body" aria-pressed="false"><i></i>BODY</button>
+          <button type="button" class="pad p-k" data-l="face" aria-pressed="false"><i></i>FACE</button>
+        </div>
+        <div class="pc-knobs" id="pupLimbCtl">
+          <div class="kc"><div class="kb" id="kn1" role="slider" tabindex="0" aria-label="First joint"></div><b class="kl" id="pupL1"></b><span class="kv" id="pupV1"></span></div>
+          <div class="kc"><div class="kb" id="kn2" role="slider" tabindex="0" aria-label="Second joint"></div><b class="kl" id="pupL2"></b><span class="kv" id="pupV2"></span></div>
+          <div class="kc"><div class="kb" id="kn3" role="slider" tabindex="0" aria-label="Crouch or jump"></div><b class="kl">CROUCH/JUMP</b><span class="kv" id="pupV3"></span></div>
+          <div class="kc"><div class="kb" id="kn4" role="slider" tabindex="0" aria-label="Size"></div><b class="kl">SIZE</b><span class="kv" id="pupVz"></span></div>
+        </div>
+        <div class="pc-knobs hide" id="pupFace">
+          <div class="kc"><div class="kb" id="knM" role="slider" tabindex="0" aria-label="Mouth"></div><b class="kl">MOUTH</b><span class="kv" id="vM"></span></div>
+          <div class="kc"><div class="kb" id="knB" role="slider" tabindex="0" aria-label="Blink"></div><b class="kl">BLINK</b><span class="kv" id="vB"></span></div>
+          <div class="kc"><div class="kb" id="knT" role="slider" tabindex="0" aria-label="Talk"></div><b class="kl">TALK</b><span class="kv" id="vT"></span></div>
+          <div class="kc kc-sw"><button type="button" class="sw" id="swEyes" data-n="2" aria-label="Eyes open or shut"><i></i></button><b class="kl">EYES</b><span class="kv" id="vE"></span></div>
+          <div class="kc kc-sw"><button type="button" class="sw" id="swLook" data-n="3" aria-label="Where they look"><i></i></button><b class="kl">LOOK</b><span class="kv" id="vL"></span></div>
+        </div>
+        <div class="pc-row">
+          <div class="kc kc-sw"><button type="button" class="sw" id="pupFlip" data-n="2" aria-label="Face the other way"><i></i></button><b class="kl">FLIP</b></div>
+          <button type="button" class="tb tb-prop" id="pcProp" aria-label="What they hold"><small>HOLDING</small><span id="pcPropV">SAVED</span></button>
+          <button type="button" class="tb" id="pupReset">RESET</button>
+          <button type="button" class="tb" id="pupBgBtn">PHOTO</button>
+        </div>
+        <div class="pc-row pc-go">
+          <button type="button" class="tb tb-play" id="pcPlay" aria-pressed="false">PLAY</button>
+          <div class="kc kc-sw"><button type="button" class="sw" id="swSpeed" data-n="3" aria-label="Playback speed"><i></i></button><b class="kl">SPEED</b><span class="kv" id="vS"></span></div>
+          <button type="button" class="take" id="pupSnap">TAKE FRAME</button>
+          <button type="button" class="tb tb-done" id="pupDone">DONE</button>
+        </div>
       </div>
-      <div id="pupLimbCtl">
-      <label class="f"><span id="pupL1"></span> <span id="pupV1"></span></label>
-      <input type="range" id="pupS1" min="-30" max="180" step="1" value="9">
-      <label class="f"><span id="pupL2"></span> <span id="pupV2"></span></label>
-      <input type="range" id="pupS2" min="-60" max="190" step="1" value="14">
-      <label class="f" id="pupL3w">Jump up, or bend the knees (minus) <span id="pupV3"></span></label>
-      <input type="range" id="pupS3" min="-40" max="70" step="1" value="0">
-      </div>
-      <label class="f">Holding</label>
-      <select id="pupProp" aria-label="What they hold"><option value="">What they were saved with</option><option value="none">Nothing</option><option value="spray">Spray can</option><option value="brush">Brush</option><option value="record">Record</option><option value="camera">Camera</option><option value="clipboard">Clipboard</option><option value="frame">Frame</option><option value="mic">Mic</option><option value="scissors">Scissors</option></select>
-      <label class="f">Size <span id="pupVz"></span></label>
-      <input type="range" id="pupSz" min="0.3" max="1" step="0.01" value="0.6">
-      <button type="button" class="btn dark" id="pupSnap" style="margin-top:12px">Take frame</button>
-      <div class="row" style="margin-top:8px"><button type="button" class="btn" id="pupBgBtn">Change photo</button><button type="button" class="btn" id="pupReset">Reset pose</button></div>
-      <button type="button" class="btn" id="pupFlip" style="margin-top:8px">Face the other way</button>
-      <button type="button" class="btn" id="pupDone" style="margin-top:8px">Done, play it back</button>
-      <div class="msg" id="pupMsg"></div>
     </section>
 
     <section class="panel" id="p-bsign">
@@ -584,7 +648,7 @@
   const board = { faces: [], sel: -1, aspect: 'wide', shape: 'wide', slats: 18, wave: 0.35, hold: 5, spin: 3, scene: 'float', t: 0, playing: true };
   function size() { return SIZES[st.kind === 'board' ? (fsOn() ? (innerHeight > innerWidth ? 'tall' : 'wide') : board.aspect) : st.kind === 'char' ? 'tall' : st.aspect]; }
   function applySize(w, h) { if (cv.width !== w || cv.height !== h) { cv.width = w; cv.height = h; } }
-  function msg(id, text, err) { const e = $(id); e.textContent = text || ''; e.className = 'msg' + (err ? ' err' : ''); }
+  function msg(id, text, err) { const e = $(id); e.textContent = text || ''; e.className = (e.classList.contains('pc-lcd') ? 'pc-lcd ' : '') + 'msg' + (err ? ' err' : ''); }
   function stageMsg(t) { $('stageMsg').textContent = t || ''; }
   function two(n) { return (n < 10 ? '0' : '') + n; }
   function clock(sec) { sec = Math.max(0, Math.floor(sec)); return two(Math.floor(sec / 3600)) + ':' + two(Math.floor(sec / 60) % 60) + ':' + two(sec % 60); }
@@ -868,25 +932,26 @@
 
   function pupFresh() { return { bob: 0, lean: 0, head: 0, hy: 0, aR: [9, 14], aL: [9, 14], lR: { a: 4, lift: 0 }, lL: { a: 4, lift: 0 } }; }
   pup.P = pupFresh();
-  const PL = { aR: ['Right shoulder', 'Right elbow', -30, 180, -60, 190], aL: ['Left shoulder', 'Left elbow', -30, 180, -60, 190], lR: ['Right leg out', 'Right leg lift', 0, 40, 0, 100], lL: ['Left leg out', 'Left leg lift', 0, 40, 0, 100], body: ['Lean', 'Head tilt', -20, 20, -25, 25] };
+  const PL = { aR: ['Shoulder', 'Elbow', -30, 180, -60, 190], aL: ['Shoulder', 'Elbow', -30, 180, -60, 190], lR: ['Leg out', 'Leg lift', 0, 40, 0, 100], lL: ['Leg out', 'Leg lift', 0, 40, 0, 100], body: ['Lean', 'Head tilt', -20, 20, -25, 25] };
+  const KN = []; function knobsDraw() { KN.forEach(f => f()); swDraw(); }
   function pupSync() {
     const k = pup.limb, d = PL[k] || PL.aR, P = pup.P; $('pupFace').classList.toggle('hide', k !== 'face'); $('pupLimbCtl').classList.toggle('hide', k === 'face');
-    if (k === 'face') { document.querySelectorAll('#pupLimb .chip').forEach(x => x.setAttribute('aria-pressed', x.dataset.l === k ? 'true' : 'false')); return; } $('pupL1').textContent = d[0]; $('pupL2').textContent = d[1];
+    document.querySelectorAll('#pupLimb [data-l]').forEach(x => x.setAttribute('aria-pressed', x.dataset.l === k ? 'true' : 'false'));
+    if (k === 'face') { knobsDraw(); return; } $('pupL1').textContent = d[0]; $('pupL2').textContent = d[1];
     const s1 = $('pupS1'), s2 = $('pupS2'); s1.min = d[2]; s1.max = d[3]; s2.min = d[4]; s2.max = d[5];
     let v1, v2; if (k === 'aR' || k === 'aL') { v1 = P[k][0]; v2 = P[k][1]; } else if (k === 'lR' || k === 'lL') { v1 = P[k].a; v2 = Math.round(P[k].lift * 100); } else { v1 = P.lean; v2 = P.head; }
     s1.value = v1; s2.value = v2; $('pupV1').textContent = Math.round(v1); $('pupV2').textContent = Math.round(v2);
     const jv = P.bob < 0 ? -P.bob : -(P.crouch || 0); $('pupS3').value = jv; $('pupV3').textContent = Math.round(jv); $('pupSz').value = pup.sz; $('pupVz').textContent = Math.round(pup.sz * 100) + '%';
-    $('pupBgBtn').textContent = pup.bg ? 'Change photo' : 'Pick your photo'; $('pupL3w').classList.toggle('hide', k !== 'body'); $('pupS3').classList.toggle('hide', k !== 'body');
-    document.querySelectorAll('#pupLimb .chip').forEach(x => x.setAttribute('aria-pressed', x.dataset.l === k ? 'true' : 'false'));
+    knobsDraw();
   }
   function pupSet() {
     const k = pup.limb, P = pup.P, a = +$('pupS1').value, b = +$('pupS2').value;
-    if (k === 'aR' || k === 'aL') P[k] = [a, b]; else if (k === 'lR' || k === 'lL') P[k] = { a: a, lift: b / 100 }; else { P.lean = a; P.head = b; const jv = +$('pupS3').value; P.bob = jv > 0 ? -jv : 0; P.crouch = jv < 0 ? -jv : 0; }
+    if (k === 'aR' || k === 'aL') P[k] = [a, b]; else if (k === 'lR' || k === 'lL') P[k] = { a: a, lift: b / 100 }; else { P.lean = a; P.head = b; } const jv = +$('pupS3').value; P.bob = jv > 0 ? -jv : 0; P.crouch = jv < 0 ? -jv : 0;
     $('pupV1').textContent = Math.round(a); $('pupV2').textContent = Math.round(b); $('pupV3').textContent = Math.round(P.bob < 0 ? -P.bob : -(P.crouch || 0));
     pup.sz = +$('pupSz').value; $('pupVz').textContent = Math.round(pup.sz * 100) + '%'; pup.dirty = true;
   }
   ['pupS1', 'pupS2', 'pupS3', 'pupSz'].forEach(id => $(id).addEventListener('input', pupSet));
-  document.querySelectorAll('#pupLimb .chip').forEach(b => b.addEventListener('click', () => { pup.limb = b.dataset.l; pupSync(); }));
+  document.querySelectorAll('#pupLimb [data-l]').forEach(b => b.addEventListener('click', () => { pup.limb = b.dataset.l; buzz(8); pupSync(); }));
   function pupDrawBg(c, W, H) {
     c.fillStyle = '#222'; c.fillRect(0, 0, W, H); const im = pup.bg; if (!im) return;
     const k = Math.max(W / im.naturalWidth, H / im.naturalHeight), w = im.naturalWidth * k, h = im.naturalHeight * k; c.drawImage(im, (W - w) / 2, (H - h) / 2, w, h);
@@ -940,22 +1005,57 @@
     const file = e.target.files[0]; e.target.value = ''; if (!file) return;
     try { await pupLoadBg(file); if (!pup.on) await pupOpen(); else pup.dirty = true; } catch (err) { msg('shootMsg', 'That photo would not open. Try JPG or PNG.', true); msg('pupMsg', 'That photo would not open. Try JPG or PNG.', true); }
   });
-  $('pupProp').addEventListener('change', () => { pup.dirty = true; });
-  $('pupFlip').addEventListener('click', () => { pup.flip = !pup.flip; pup.dirty = true; });
+  $('pupProp').addEventListener('change', () => { pup.dirty = true; swDraw(); });
+  $('pcProp').addEventListener('click', () => { const sl = $('pupProp'); sl.selectedIndex = (sl.selectedIndex + 1) % sl.options.length; buzz(8); sl.dispatchEvent(new Event('change')); });
+  $('pcPlay').addEventListener('click', () => $('tbPlay').click());
+  const SPD = [4, 8, 14];
+  $('swSpeed').addEventListener('click', () => { const cur = SPD.reduce((bi, v, i) => Math.abs(v - +$('fps').value) < Math.abs(SPD[bi] - +$('fps').value) ? i : bi, 0); $('toonFps').value = SPD[(cur + 1) % 3]; buzz(8); $('toonFps').dispatchEvent(new Event('input')); });
+  $('swEyes').addEventListener('click', () => { buzz(8); document.querySelector('#pfEyes .chip[data-v="' + (pup.face.eyes ? 0 : 1) + '"]').click(); swDraw(); });
+  $('swLook').addEventListener('click', () => { buzz(8); document.querySelector('#pfGaze .chip[data-v="' + (pup.face.gx === -1 ? 0 : pup.face.gx === 0 ? 1 : -1) + '"]').click(); swDraw(); });
+  // knobs: drag up or right to turn clockwise, tap a stepped knob to click it round to the next stop
+  function knobSvg(el) {
+    el.innerHTML = '<svg viewBox="-50 -50 100 100" aria-hidden="true"><circle class="rim" r="48"/><circle class="cap" r="36"/><circle class="grip" r="41"/><g class="kp"><line class="ptr" x1="0" y1="-12" x2="0" y2="-30"/></g></svg>';
+  }
+  function mkKnob(el, ad) {
+    knobSvg(el); const g = el.querySelector('.kp'); let f = 0, d = null;
+    function draw() { f = ad.get(); g.setAttribute('transform', 'rotate(' + (-135 + 270 * f).toFixed(1) + ')'); el.setAttribute('aria-valuenow', Math.round(f * 100)); if (ad.out) $(ad.out).textContent = ad.read(); }
+    function put(nf) { nf = Math.max(0, Math.min(1, nf)); if (ad.n) nf = Math.round(nf * (ad.n - 1)) / (ad.n - 1); if (Math.abs(nf - f) < 1e-6) return; ad.set(nf); draw(); if (ad.n) buzz(8); }
+    el.addEventListener('pointerdown', e => { d = { id: e.pointerId, x: e.clientX, y: e.clientY, acc: f, moved: 0 }; try { el.setPointerCapture(e.pointerId); } catch (x) {} e.preventDefault(); });
+    el.addEventListener('pointermove', e => { if (!d || d.id !== e.pointerId) return; const dx = e.clientX - d.x, dy = e.clientY - d.y; d.x = e.clientX; d.y = e.clientY; d.moved += Math.abs(dx) + Math.abs(dy); d.acc = Math.max(0, Math.min(1, d.acc + (dx - dy) / 190)); put(d.acc); });
+    const end = e => { if (!d || d.id !== e.pointerId) return; if (d.moved < 6 && ad.n && e.type === 'pointerup') put(((Math.round(f * (ad.n - 1)) + 1) % ad.n) / (ad.n - 1)); d = null; };
+    el.addEventListener('pointerup', end); el.addEventListener('pointercancel', end);
+    el.addEventListener('keydown', e => { const up = e.key === 'ArrowUp' || e.key === 'ArrowRight', dn = e.key === 'ArrowDown' || e.key === 'ArrowLeft'; if (!up && !dn) return; e.preventDefault(); put(f + (up ? 1 : -1) * (ad.n ? 1 / (ad.n - 1) : 0.04)); });
+    KN.push(draw); draw();
+  }
+  const rangeAd = id => ({ get: () => { const i = $(id); return (i.value - i.min) / (i.max - i.min); }, set: v => { const i = $(id); i.value = +i.min + v * (i.max - i.min); i.dispatchEvent(new Event('input')); } });
+  const selAd = (id, out, names) => ({ n: $(id).options.length, out: out, read: () => names[$(id).selectedIndex], get: () => $(id).selectedIndex / ($(id).options.length - 1), set: v => { $(id).selectedIndex = Math.round(v * ($(id).options.length - 1)); $(id).dispatchEvent(new Event('change')); } });
+  const chipAd = (id, out, names) => { const bs = () => [...document.querySelectorAll('#' + id + ' .chip')], cur = () => bs().findIndex(x => x.getAttribute('aria-pressed') === 'true'); return { n: bs().length, out: out, read: () => names[cur()], get: () => cur() / (bs().length - 1), set: v => bs()[Math.round(v * (bs().length - 1))].click() }; };
+  mkKnob($('kn1'), rangeAd('pupS1')); mkKnob($('kn2'), rangeAd('pupS2')); mkKnob($('kn3'), rangeAd('pupS3')); mkKnob($('kn4'), rangeAd('pupSz'));
+  mkKnob($('knM'), chipAd('pfMouth', 'vM', ['CLOSED', 'SMALL', 'WIDE', 'OH']));
+  mkKnob($('knB'), selAd('pfBlink', 'vB', ['NEVER', '1 IN 2', '1 IN 3', '1 IN 4', '1 IN 6', '1 IN 8']));
+  mkKnob($('knT'), selAd('pfTalk', 'vT', ['OFF', 'FAST', 'MEDIUM', 'SLOW']));
+  const PROPN = ['SAVED', 'NONE', 'SPRAY CAN', 'BRUSH', 'RECORD', 'CAMERA', 'CLIPBOARD', 'FRAME', 'MIC', 'SCISSORS'];
+  function swDraw() {
+    const set = (id, i, n) => { $(id).style.setProperty('--p', n > 1 ? i / (n - 1) : 0); };
+    set('swEyes', pup.face.eyes, 2); $('vE').textContent = pup.face.eyes ? 'SHUT' : 'OPEN'; set('swLook', pup.face.gx + 1, 3); $('vL').textContent = ['LEFT', 'AHEAD', 'RIGHT'][pup.face.gx + 1];
+    set('pupFlip', pup.flip ? 1 : 0, 2); const fp = +$('fps').value, si = SPD.reduce((bi, v, i) => Math.abs(v - fp) < Math.abs(SPD[bi] - fp) ? i : bi, 0); set('swSpeed', si, 3); $('vS').textContent = fp + ' FPS';
+    $('pcPropV').textContent = PROPN[$('pupProp').selectedIndex] || 'SAVED';
+  }
+  $('pupFlip').addEventListener('click', () => { pup.flip = !pup.flip; pup.dirty = true; buzz(8); swDraw(); });
   $('pupFloat').addEventListener('click', () => $('pupSnap').click());
   $('pupReset').addEventListener('click', () => { pup.P = pupFresh(); pupSync(); pup.dirty = true; });
   $('pupSnap').addEventListener('click', async () => {
     const [W, H] = size(), c = document.createElement('canvas'); c.width = W; c.height = H; const g = c.getContext('2d'); pupDrawBg(g, W, H); g.drawImage(pupChar(W, H), 0, 0);
     const ghost = document.createElement('canvas'); ghost.width = W; ghost.height = H; ghost.getContext('2d').drawImage(pup.flip ? pup.fc : pup.chc, 0, 0);
     snap(); await addBlob(await canvasToBlob(c, 'image/jpeg', 0.92)); pup.prev = ghost; pup.n++; st.sel = st.frames.length - 1; pup.dirty = true; buzz(15);
-    refreshUI(); msg('pupMsg', pup.n + (pup.n === 1 ? ' frame' : ' frames') + ' taken. Change a limb a little, take the next one.');
+    refreshUI(); msg('pupMsg', pup.n + (pup.n === 1 ? ' frame' : ' frames') + ' taken. Nudge a knob, take the next one.');
   });
   $('pupDone').addEventListener('click', pupClose);
   $('homeBtn').addEventListener('click', () => { if (pup.on) { pup.on = false; document.body.classList.remove('pupmode'); $('pupFloat').classList.add('hide'); if (pup.fr) { pup.fr.remove(); pup.fr = null; pup.w = null; } pup.prev = null; pup.n = 0; } }, true);
   $('cv').addEventListener('pointerdown', e => { if (!pup.on) return; const r = cv.getBoundingClientRect(); pup.drag = { id: e.pointerId, x: e.clientX, y: e.clientY, px: pup.x, py: pup.y, r }; try { cv.setPointerCapture(e.pointerId); } catch (x) {} });
   $('cv').addEventListener('pointermove', e => { const d = pup.drag; if (!pup.on || !d || d.id !== e.pointerId) return; pup.x = Math.min(1.1, Math.max(-0.1, d.px + (e.clientX - d.x) / d.r.width)); pup.y = Math.min(1.3, Math.max(0.2, d.py + (e.clientY - d.y) / d.r.height)); pup.dirty = true; });
   ['pointerup', 'pointercancel'].forEach(t => $('cv').addEventListener(t, () => { pup.drag = null; }));
-  function tbSync() { const pl = deck.mode === 'play'; $('tbPlay').textContent = pl ? 'Stop playing' : 'Play it'; $('tbPlay').setAttribute('aria-pressed', pl ? 'true' : 'false'); $('tbPlay').disabled = st.frames.length < 2 && !pl; $('tbFpsV').textContent = $('fps').value + ' frames a second'; if (document.activeElement !== $('toonFps')) $('toonFps').value = $('fps').value; }
+  function tbSync() { const pl = deck.mode === 'play'; $('tbPlay').textContent = pl ? 'Stop playing' : 'Play it'; $('tbPlay').setAttribute('aria-pressed', pl ? 'true' : 'false'); $('tbPlay').disabled = st.frames.length < 2 && !pl; $('tbFpsV').textContent = $('fps').value + ' frames a second'; $('pcPlay').textContent = pl ? 'STOP' : 'PLAY'; $('pcPlay').setAttribute('aria-pressed', pl ? 'true' : 'false'); $('pcPlay').disabled = $('tbPlay').disabled; try { swDraw(); } catch (e) {} if (document.activeElement !== $('toonFps')) $('toonFps').value = $('fps').value; }
   $('tbPlay').addEventListener('click', () => { buzz(12); if (deck.mode === 'play') { setDeck('pause'); pup.dirty = true; } else if (st.frames.length > 1) { deck.p = 0; setDeck('play'); } tbSync(); });
   $('toonFps').addEventListener('input', () => { $('fps').value = $('toonFps').value; $('fps').dispatchEvent(new Event('input')); tbSync(); });
   setInterval(() => { if (document.body.classList.contains('toon')) tbSync(); }, 400);
