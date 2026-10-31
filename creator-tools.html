@@ -392,7 +392,7 @@
       { id: 'real', name: 'Real life', color: '#c8412f', ci: '#ffffff', icon: '<rect x="3" y="7" width="12" height="10" rx="2"/><path d="M15 11l6-3v8l-6-3z"/>' },
       { id: 'fiction', name: 'Cartoon', color: '#2f5d9e', ci: '#ffffff', icon: '<circle cx="12" cy="8" r="4"/><path d="M4 21c0-5 4-8 8-8s8 3 8 8"/>' }
     ];
-    const ORDER = { paper: ['cards', 'zine', 'qr'], projects: ['stencil', 'cutsew'], real: ['video', 'sign'], fiction: ['toon'] };
+    const ORDER = { paper: ['zine', 'cards', 'qr'], projects: ['stencil', 'cutsew'], real: ['video', 'sign'], fiction: ['toon'] };
     const SHORT = { zine: 'Zine', cards: 'Cards', qr: 'QR', toon: 'Animation', video: 'Video', sign: 'Sign', stencil: 'Stencil', cutsew: 'Cut & Sew' };
     const el = id => document.getElementById(id), data = {};
     document.querySelectorAll('#toolData .tool-card').forEach(c => { data[c.dataset.key] = { key: c.dataset.key, sec: c.dataset.sec, panel: c.dataset.panel, poster: c.dataset.poster, made: c.dataset.made, art: c.querySelector('.tool-art').innerHTML, name: c.querySelector('.tool-name').textContent.trim(), desc: c.querySelector('.tool-desc').textContent.trim(), get: c.querySelector('.tool-get').textContent.trim() }; });
@@ -406,7 +406,7 @@
       tabs.querySelectorAll('button').forEach((b, k) => b.setAttribute('aria-selected', k === sec ? 'true' : 'false'));
       nums.classList.remove('b-in'); void nums.offsetWidth; nums.classList.add('b-in');
       nums.innerHTML = ''; list.forEach((k, i) => { const b = document.createElement('button'); b.type = 'button'; b.setAttribute('role', 'tab'); b.setAttribute('aria-label', data[k].name); b.setAttribute('aria-selected', i === idx ? 'true' : 'false'); b.style.setProperty('--c', S.color); b.style.setProperty('--ci', S.ci); b.textContent = SHORT[k] || data[k].name; b.addEventListener('click', () => show(sec, i, i > idx ? 1 : -1)); nums.appendChild(b); });
-      el('bSay1').textContent = S.name + ' selected'; el('bTool').textContent = T.name; el('bCard').innerHTML = T.art; el('bCap').textContent = T.get; el('bDesc').textContent = T.desc;
+      el('bSay1').textContent = 'Select a category'; el('bTool').textContent = T.name; el('bCard').innerHTML = T.art; el('bCap').textContent = T.get; el('bDesc').textContent = T.desc;
       el('bMade').innerHTML = T.made; const img = el('bPoster'); img.alt = 'A finished piece made with ' + T.name; img.src = T.poster; const rowEl = document.querySelector('.b-row'); const fit = () => rowEl.classList.toggle('b-wide', img.naturalWidth > img.naturalHeight * 1.1); img.onload = fit; if (img.complete && img.naturalWidth) fit();
       if (dir) ['bHero', 'bPoster'].forEach(id => { const n = el(id); n.style.setProperty('--from', (dir > 0 ? 16 : -16) + 'px'); n.classList.remove('b-swap'); void n.offsetWidth; n.classList.add('b-swap'); });
       requestAnimationFrame(drawArrows);
