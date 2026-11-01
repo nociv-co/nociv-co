@@ -188,7 +188,8 @@ input[type=range]::-moz-range-thumb{width:28px;height:28px;border:0;border-radiu
 
 /* templates browser */
 #itemGrid{display:flex;flex-wrap:wrap;gap:10px}
-#garmentDots{display:flex;flex-wrap:wrap;gap:12px}
+#garmentDots{display:grid;grid-template-columns:repeat(8,minmax(0,1fr));gap:8px;justify-items:center}
+#garmentDots .dot{width:100%;max-width:40px;height:auto;aspect-ratio:1}
 #tplSheet .card{height:calc(100% - 44px - env(safe-area-inset-top,0px));display:flex;flex-direction:column}
 #tplWrap{position:relative;flex:1;min-height:0;overflow:hidden}
 .tpage{position:absolute;inset:0;display:grid;grid-template-columns:1fr 1fr;grid-template-rows:repeat(3,minmax(0,1fr));gap:10px;transition:transform .42s var(--spring),opacity .3s}
@@ -360,7 +361,7 @@ const GIFTS = [
   // ITEMS: the tee size (11 x 14 in) and photo come from his own editor.
   // The other sizes are STARTING VALUES ONLY. Set w and h (inches) to the real print area for each item,
   // and the colors he actually stocks. The editor reshapes everything automatically.
-  {id:'tee',   name:'Tee',   w:11,  h:14,  icon:'tee',   confirmed:true,  colors:[['Black','#161616']]},
+  {id:'tee',   name:'Tee',   w:11,  h:14,  icon:'tee',   confirmed:true,  colors:[['Black','#161616'],['White','#f4f4f1'],['Heather','#9c9c9c'],['Red','#c41f28'],['Navy','#1d2742'],['Yellow','#f3d43a'],['Sand','#d9c8a4'],['Forest','#24402c']]},
   {id:'mug',   name:'Mug',   w:8.5, h:3.5, icon:'mug',   confirmed:false, colors:[['White','#f7f7f5']]},
   {id:'hat',   name:'Hat',   w:4.5, h:2.25,icon:'hat',   confirmed:false, colors:[['Black','#161616']]},
   {id:'socks', name:'Socks', w:3,   h:7,   icon:'sock',  confirmed:false, colors:[['White','#f4f4f1']]},
@@ -490,9 +491,24 @@ function cdist(a,b){ const x=hexRgb(a), y=hexRgb(b); return Math.hypot(x[0]-y[0]
 const darkGarment = () => lum(S.color) < 0.45;
 const inkAuto = () => darkGarment() ? '#ffffff' : '#111111';
 function resolve(c){ if(!c || c==='INK') return inkAuto(); return c; }
+// A color too close to the shirt keeps its hue but goes deeper (light shirt) or brighter (dark shirt),
+// so yellow on a white tee prints gold, not invisible. Plain white or gray falls back to black or white ink.
+const _fitC=new Map();
+function rgb2hsl([r,g,b]){ r/=255; g/=255; b/=255; const mx=Math.max(r,g,b), mn=Math.min(r,g,b), l=(mx+mn)/2; let h=0, sa=0;
+  if(mx!==mn){ const d=mx-mn; sa=l>.5?d/(2-mx-mn):d/(mx+mn); h= mx===r?((g-b)/d+(g<b?6:0)) : mx===g?((b-r)/d+2) : ((r-g)/d+4); h*=60; } return [h,sa,l]; }
+function hsl2hex(h,s,l){ const k=n=>(n+h/30)%12, a=s*Math.min(l,1-l), f=n=>l-a*Math.max(-1,Math.min(k(n)-3,9-k(n),1)); return '#'+[0,8,4].map(n=>Math.round(f(n)*255).toString(16).padStart(2,'0')).join(''); }
+function fitInk(c){ c=resolve(c); if(contrast(c,S.color)>=1.9) return c; const key=c+S.color; if(_fitC.has(key)) return _fitC.get(key);
+  const h=c.replace('#',''), rgb=[0,2,4].map(i=>parseInt(h.substr(i,2),16)), mx=Math.max(...rgb), mn=Math.min(...rgb), sat=mx?(mx-mn)/mx:0;
+  let out=inkAuto();
+  if (sat>0.25){ const dark=darkGarment(); let [H,Sa,L]=rgb2hsl(rgb);
+    if(!dark && H>45 && H<70) H=42;              // yellow deepens to gold, not olive
+    Sa=Math.max(Sa,.78);
+    for(let i=0;i<40;i++){ L+= dark? .015 : -.015; if(L<=.08||L>=.92) break; const hx=hsl2hex(H,Sa,L); if(contrast(hx,S.color)>=2.3){ out=hx; break; } } }
+  _fitC.set(key,out); return out; }
+function shown(c){ return fitInk(c); }
 function palette(){ return S.pal === 'custom' ? S.custom : (PALETTES[S.pal]||PALETTES[0]); }
 function contrast(a,b){ const A=lum(a)+.05, B=lum(b)+.05; return Math.max(A,B)/Math.min(A,B); }
-function roleColor(role){ const c = resolve(palette()[role]||'INK'); return contrast(c, S.color) < 1.9 ? inkAuto() : c; }
+function roleColor(role){ return fitInk(palette()[role]||'INK'); }
 function colorOf(o, key='color'){ if(o[key]) return resolve(o[key]); return roleColor(o.role||'a'); }
 
 /* ---------- history ---------- */
@@ -1025,9 +1041,9 @@ function panelLayout(v){
   const nl=el('button','tile'+(!S.tpl?' on':''), ic('ban')+'<small>No layout</small>'); nl.onclick=noLayout; top.append(nl);
   const sh=el('button','tile'+(S.tpl?'':' dim'), ic('shuffle')+'<small>Shuffle</small>'); sh.onclick=shuffle; top.append(sh);
   const pg=el('div','grid g4'); s.append(pg);
-  PALETTES.forEach((p,i)=>{ const b=el('button','pal'+(S.pal===i?' on':'')); ['a','b','c'].forEach(r=>{ const d=el('i'); d.style.background=resolve(p[r]); b.append(d); }); b.setAttribute('aria-label','Colors '+(i+1));
+  PALETTES.forEach((p,i)=>{ const b=el('button','pal'+(S.pal===i?' on':'')); ['a','b','c'].forEach(r=>{ const d=el('i'); d.style.background=shown(p[r]); b.append(d); }); b.setAttribute('aria-label','Colors '+(i+1));
     b.onclick=()=>{ setPal(i); pg.querySelectorAll('.pal').forEach(x=>x.classList.toggle('on',x===b)); }; pg.append(b); });
-  const cb=el('button','pal'+(S.pal==='custom'?' on':'')); ['a','b','c'].forEach(r=>{ const d=el('i'); d.style.background=resolve(S.custom[r]); cb.append(d); }); cb.insertAdjacentHTML('beforeend',ic('palette')); cb.setAttribute('aria-label','Your colors');
+  const cb=el('button','pal'+(S.pal==='custom'?' on':'')); ['a','b','c'].forEach(r=>{ const d=el('i'); d.style.background=shown(S.custom[r]); cb.append(d); }); cb.insertAdjacentHTML('beforeend',ic('palette')); cb.setAttribute('aria-label','Your colors');
   cb.onclick=()=>openPalSheet(()=>{ setPal('custom'); renderPanel(); }); pg.append(cb);
 }
 function curTplName(){ const t=TEMPLATES.find(t=>t.id===S.tpl); if(!t) return ''; const c=CATS.find(c=>c[0]===t.cat); return c?c[1]:''; }
