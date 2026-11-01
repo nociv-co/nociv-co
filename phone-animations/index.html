@@ -69,6 +69,7 @@
   .pv-h { font: 400 clamp(.8rem, 2.2svh, 1rem)/1 NocivAnton, Anton, Impact, sans-serif; letter-spacing: .1em; text-transform: uppercase; color: #1a1a1a; padding-left: 4px; }
   .pv-row { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 8px 6px; align-items: start; }
   .pv-row .vbox.sq { max-width: 74px; }
+  .pv-row .kc-sw { align-self: center; } .pv-row .kc-sw .tb { height: 42px; width: 100%; min-height: 0; font-size: .8rem; }
   .pv-row.k2 { grid-template-columns: repeat(2, minmax(0, 1fr)); }
   .pv-cols { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
   .pv-col { display: flex; flex-direction: column; align-items: center; gap: 4px; min-width: 0; }
@@ -516,7 +517,7 @@ body { animation: nvIn .3s ease both; }
     <button type="button" class="icon" id="redoBtn" aria-label="Redo" disabled><svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M15 14l5-5-5-5"/><path d="M20 9H10a6 6 0 000 12h3"/></svg></button>
   </header>
 
-  <div class="vf"><div class="stage"><canvas id="cv" width="540" height="960"></canvas><div id="pupZoom" role="group" aria-label="Zoom"><button type="button" data-z="all" aria-pressed="true">WHOLE</button><button type="button" data-z="head" aria-pressed="false">HEAD</button><button type="button" data-z="upper" aria-pressed="false">ARMS</button><button type="button" data-z="mid" aria-pressed="false">BODY</button><button type="button" data-z="legs" aria-pressed="false">LEGS</button></div><button type="button" id="pupFloat" class="hide" aria-label="Take frame">Take frame</button><button type="button" id="fsBtn" class="hide" aria-label="Go fullscreen">Fullscreen</button><button type="button" id="fsX" class="hide" aria-label="Exit fullscreen">Close</button><div id="fsHint" class="hide">Turn your phone sideways</div><div id="stageMsg"></div></div></div>
+  <div class="vf"><div class="stage"><canvas id="cv" width="540" height="960"></canvas><div id="pupZoom" role="group" aria-label="Zoom"><button type="button" data-z="all" aria-pressed="true">WHOLE</button><button type="button" data-z="head" aria-pressed="false">HEAD</button><button type="button" data-z="upper" aria-pressed="false">ARMS</button><button type="button" data-z="mid" aria-pressed="false">BODY</button><button type="button" data-z="legs" aria-pressed="false">LEGS</button><button type="button" data-z="pan" aria-pressed="false">PAN</button></div><button type="button" id="pupFloat" class="hide" aria-label="Take frame">Take frame</button><button type="button" id="fsBtn" class="hide" aria-label="Go fullscreen">Fullscreen</button><button type="button" id="fsX" class="hide" aria-label="Exit fullscreen">Close</button><div id="fsHint" class="hide">Turn your phone sideways</div><div id="stageMsg"></div></div></div>
   <section class="creator" id="creator" aria-label="Character creator">
     <div class="ctabs" id="cTabs"></div>
     <div class="cbody"><div class="crail" id="cRail"></div><div class="cgrid" id="cGrid"></div></div>
@@ -620,7 +621,7 @@ body { animation: nvIn .3s ease both; }
       <div class="msg" id="shootMsg"></div>
     </section>
 
-    <section class="panel" id="p-pan">
+    <section class="panel" id="p-pan" hidden>
       <h2>Pan</h2>
       <p class="tip">Move the camera while they walk. Pick a direction and how many frames the pan lasts, then make your frames.</p>
       <div class="pc-knobs panrow">
@@ -633,7 +634,7 @@ body { animation: nvIn .3s ease both; }
         <div class="kc"><div class="kb" id="knPS" role="slider" tabindex="0" aria-label="Shift the background"></div><b class="kl">SHIFT</b><span class="kv" id="vPS"></span></div>
         <div class="kc"><div class="kb" id="knPZ" role="slider" tabindex="0" aria-label="Zoom the background"></div><b class="kl">ZOOM</b><span class="kv" id="vPZ"></span></div>
       </div>
-      <div class="panbtns"><button type="button" class="tb" id="panRestart">START HERE</button><button type="button" class="tb tb-done" id="panNext">NEXT: ANIMATE</button></div>
+      <div class="panbtns"><button type="button" class="tb" id="panRestart">START HERE</button></div>
       <p class="tip" id="panInfo" style="margin-top:8px"></p>
     </section>
 
@@ -1246,7 +1247,7 @@ body { animation: nvIn .3s ease both; }
   const KN = []; function knobsDraw() { KN.forEach(f => f()); swDraw(); }
   function pupSync() {
     try { pvToggle(); } catch (e) {}
-    const k = pup.limb, d = PL[k] || PL.aR, P = pup.P; $('pupFace').classList.toggle('hide', k !== 'face'); $('pupEmote').classList.toggle('hide', k !== 'emote'); $('pupMoodRow').classList.toggle('hide', k !== 'mood'); $('pupLimbCtl').classList.toggle('hide', k === 'face' || k === 'emote' || k === 'mood');
+    const k = pup.limb, d = PL[k] || PL.aR, P = pup.P; $('pupFace').classList.toggle('hide', k !== 'face'); $('pupEmote').classList.toggle('hide', k !== 'emote' || pup.zm === 'pan'); $('pupMoodRow').classList.toggle('hide', k !== 'mood'); $('pupLimbCtl').classList.toggle('hide', k === 'face' || k === 'emote' || k === 'mood');
     document.querySelectorAll('#pupLimb [data-l], #pupSub [data-l]').forEach(x => x.setAttribute('aria-pressed', x.dataset.l === k ? 'true' : 'false')); $('pupSub').classList.toggle('hide', ['head', 'upper', 'legs'].indexOf(pup.zm) < 0);
     if (k === 'face' || k === 'emote' || k === 'mood') { knobsDraw(); return; } $('pupL1').textContent = d[0]; $('pupL2').textContent = d[1];
     const s1 = $('pupS1'), s2 = $('pupS2'); s1.min = d[2]; s1.max = d[3]; s2.min = d[4]; s2.max = d[5];
@@ -1354,12 +1355,11 @@ body { animation: nvIn .3s ease both; }
   function panSync() {
     $('panDirBtn').textContent = PAN_DN[PAN.dir]; panBoxDraw(); KN.forEach(f => f());
     const n = Math.max(0, st.frames.length - PAN.base);
-    $('panInfo').textContent = PAN.dir === 'off' ? 'Pan is off. Use shift and zoom to set where the background sits.' : 'Panning ' + PAN.dir + ' over ' + PAN.frames + ' frames. ' + Math.min(n, PAN.frames) + ' of ' + PAN.frames + ' done. Your next frame lands further along.';
+    if ($('panInfo')) $('panInfo').textContent = PAN.dir === 'off' ? 'Pan is off. Use shift and zoom to set where the background sits.' : 'Panning ' + PAN.dir + ' over ' + PAN.frames + ' frames. ' + Math.min(n, PAN.frames) + ' of ' + PAN.frames + ' done. Your next frame lands further along.';
   }
   function panSave() { try { localStorage.setItem('nocivPan', JSON.stringify({ dir: PAN.dir, frames: PAN.frames, dist: PAN.dist, ghost: PAN.ghost })); } catch (e) {} }
   $('panDirBtn').addEventListener('click', () => { PAN.dir = PAN_DIRS[(PAN_DIRS.indexOf(PAN.dir) + 1) % PAN_DIRS.length]; PAN.base = st.frames.length; buzz(8); panSave(); panApply(); panSync(); renderStill(); });
   $('panRestart').addEventListener('click', () => { PAN.base = st.frames.length; buzz(8); panApply(); panSync(); renderStill(); });
-  $('panNext').addEventListener('click', () => { if (!pup.on) goAnimate(); });
   async function scSave() { try { const db = await openDb(); db.transaction('s', 'readwrite').objectStore('s').put({ color: SCE.cur.color, floor: SCE.cur.floor, st: SCE.cur.st, cx: SCE.cur.cx || 0, cz: SCE.cur.cz || 1 }, 'toonscn'); } catch (e) {} }
   const PROPL = [['tree', 'Tree'], ['bush', 'Bush'], ['grass', 'Grass'], ['sun', 'Sun'], ['cloud', 'Cloud'], ['house', 'House'], ['lamp', 'Street lamp'], ['rocks', 'Rocks']];
   PROPL.forEach(pl => { const k = pl[0], b = document.createElement('button'); b.type = 'button'; b.className = 'propbtn'; b.setAttribute('aria-label', 'Add ' + pl[1]); b.innerHTML = '<svg viewBox="0 0 200 200" aria-hidden="true">' + (SKS[k] || '') + '</svg><span>' + pl[1] + '</span>'; b.addEventListener('click', () => { const n = SCE.cur.st.length; SCE.cur.st.push({ k: k, x: 0.3 + (n % 4) * 0.13, y: k === 'sun' || k === 'cloud' ? 0.18 : 0.66, s: k === 'grass' ? 0.3 : 0.4, r: 0, z: 'b' }); SCE.sel = SCE.cur.st.length - 1; buzz(8); scAfter(); }); $('scProp').appendChild(b); });
@@ -1426,11 +1426,11 @@ body { animation: nvIn .3s ease both; }
   function pupChar(W, H) { const cc = pup.chc; if (cc.width !== W || cc.height !== H) { cc.width = W; cc.height = H; } try { pup.w.__ch.puppet(cc, pup.P, pup.x * W, pup.y * H, pup.sz, $('pupProp').value || null, pupFaceFor(pup.n)); } catch (e) {}
     if (!pup.flip) return cc;
     const fc = pup.fc || (pup.fc = document.createElement('canvas')); fc.width = W; fc.height = H; const g = fc.getContext('2d'); g.clearRect(0, 0, W, H); g.save(); g.translate(2 * pup.x * W, 0); g.scale(-1, 1); g.drawImage(cc, 0, 0); g.restore(); return fc; }
-  const ZV = { all: { z: 1, f: 0.5 }, head: { z: 2.7, f: 0.93 }, upper: { z: 2.3, f: 0.7 }, mid: { z: 2.3, f: 0.46 }, legs: { z: 2.3, f: 0.14 } };
+  const ZV = { all: { z: 1, f: 0.5 }, head: { z: 2.7, f: 0.93 }, upper: { z: 2.3, f: 0.7 }, mid: { z: 2.3, f: 0.46 }, legs: { z: 2.3, f: 0.14 }, pan: { z: 1, f: 0.5 } };
   pup.zm = 'all'; pup.zc = { z: 1, f: 0.5, x: 0.5, t: 0 }; pup.zt = null;
   // how far we can zoom without cutting off a hand, a prop or a foot: measure the character inside the window
   function pupZoomTarget(W, H) {
-    const T = ZV[pup.zm]; if (pup.zm === 'all') return { z: 1, f: 0.5, x: pup.x };
+    const T = ZV[pup.zm]; if (pup.zm === 'all' || pup.zm === 'pan') return { z: 1, f: 0.5, x: pup.x };
     const src = pup.flip && pup.fc ? pup.fc : pup.chc; let z = T.z, x = pup.x; if (!src || src.width !== W) return { z: z, f: T.f, x: x };
     const g = src.getContext('2d'), cy = (pup.y - T.f * 0.925 * pup.sz) * H;
     for (let it = 0; it < 3; it++) {
@@ -1559,7 +1559,7 @@ body { animation: nvIn .3s ease both; }
   // ---- body parts as picture buttons: each part shows itself and its knobs sit right under it ----
   function pvToggle() {
     if (!$('vpHead')) return; const z = pup.zm;
-    $('vpHead').classList.toggle('hide', z !== 'head'); $('vpArms').classList.toggle('hide', z !== 'upper'); $('vpBody').classList.toggle('hide', z !== 'mid'); $('vpLegs').classList.toggle('hide', z !== 'legs'); vbDraw();
+    $('vpHead').classList.toggle('hide', z !== 'head'); $('vpArms').classList.toggle('hide', z !== 'upper'); $('vpBody').classList.toggle('hide', z !== 'mid'); $('vpLegs').classList.toggle('hide', z !== 'legs'); $('vpPan').classList.toggle('hide', z !== 'pan'); if (z === 'pan') { try { panSync(); } catch (e) {} } vbDraw();
   }
   (function () {
     const mid = document.querySelector('.pc-mid'), P = () => pup.P, F = () => pup.face;
@@ -1596,6 +1596,10 @@ body { animation: nvIn .3s ease both; }
     addK(bk, 'knBd2', 'TILT', () => P().head || 0, v => { P().head = v; }, -25, 25, deg);
     addK(bk, 'knBd3', 'JUMP', () => { const q = P(); return q.bob < 0 ? -q.bob : -(q.crouch || 0); }, v => { const q = P(); q.bob = v > 0 ? -v : 0; q.crouch = v < 0 ? -v : 0; }, -40, 70, v => v >= 0 ? 'UP ' + Math.round(v) : 'DOWN ' + Math.round(-v));
     addK(bk, 'knBd4', 'SIZE', () => pup.sz, v => { pup.sz = Math.round(v * 100) / 100; }, 0.3, 1, v => Math.round(v * 100) + '%');
+    // pan: the camera controls live in this same console, with the same take-frame and play buttons
+    const pan = mkPanel('vpPan', 'PAN'), prow = document.createElement('div'); prow.className = 'pv-row'; pan.appendChild(prow);
+    const rs = document.createElement('div'); rs.className = 'kc'; rs.style.alignSelf = 'center'; $('panRestart').style.cssText = 'height:44px;width:100%;min-height:0;font-size:.8rem'; rs.appendChild($('panRestart')); 
+    [$('panBox').parentNode, $('knPF').parentNode, $('knPD').parentNode, rs, $('knPG').parentNode, $('knPS').parentNode, $('knPZ').parentNode].forEach(n => prow.appendChild(n));
     // drawing
     const OFF = document.createElement('canvas'); OFF.width = 300; OFF.height = 444;
     const REG = { aR: [0.36, 0.06, 1.0, 0.06 + 192 / 444], aL: [0, 0.06, 0.64, 0.06 + 192 / 444], lR: [0.36, 0.48, 0.88, 0.48 + 187 / 444], lL: [0.12, 0.48, 0.64, 0.48 + 187 / 444], body: [0.1, 0.1, 0.9, 0.1 + 300 / 444] };
@@ -1638,9 +1642,9 @@ body { animation: nvIn .3s ease both; }
   $('pcShape').addEventListener('click', () => { if (st.frames.length) { msg('pupMsg', 'Clear your frames to change the shape', true); return; } st.aspect = SHP[(SHP.indexOf(st.aspect) + 1) % 3]; document.querySelectorAll('#aspects .chip').forEach(x => x.setAttribute('aria-pressed', x.dataset.a === st.aspect ? 'true' : 'false')); buzz(8); shapeSync(); pup.dirty = true; });
   const landMQ = window.matchMedia('(orientation: landscape) and (max-height: 620px)'); const landSync = (rot) => { document.body.classList.toggle('pupland', landMQ.matches); if (rot !== true || document.body.classList.contains('toon') || !pup.on || st.frames.length) return; const want = landMQ.matches ? 'wide' : 'tall'; if (st.aspect !== want && (st.aspect === 'tall' || st.aspect === 'wide')) { st.aspect = want; document.querySelectorAll('#aspects .chip').forEach(x => x.setAttribute('aria-pressed', x.dataset.a === want ? 'true' : 'false')); try { shapeSync(); } catch (e) {} pup.dirty = true; } }; landSync(); try { landMQ.addEventListener('change', () => landSync(true)); } catch (e) { landMQ.addListener(() => landSync(true)); }
   $('pcMini').addEventListener('click', () => { const on = !document.body.classList.contains('pupmini'); document.body.classList.toggle('pupmini', on); $('pcMini').setAttribute('aria-pressed', on ? 'true' : 'false'); $('pcMini').textContent = on ? 'FULL CONSOLE' : 'MORE ROOM'; pup.dirty = true; buzz(8); });
-  const PICK = { all: ['emote', []], head: ['face', [['face', 'FACE'], ['mood', 'MOOD']]], upper: ['aR', [['aR', 'R ARM'], ['aL', 'L ARM']]], mid: ['body', []], legs: ['lR', [['lR', 'R LEG'], ['lL', 'L LEG']]] };
+  const PICK = { all: ['emote', []], head: ['face', [['face', 'FACE'], ['mood', 'MOOD']]], upper: ['aR', [['aR', 'R ARM'], ['aL', 'L ARM']]], mid: ['body', []], pan: ['emote', []], legs: ['lR', [['lR', 'R LEG'], ['lL', 'L LEG']]] };
   function pupPick(z) { const P = PICK[z] || PICK.all, sub = $('pupSub'); sub.innerHTML = ''; P[1].forEach(s => { const b = document.createElement('button'); b.type = 'button'; b.className = 'pad'; b.dataset.l = s[0]; b.textContent = s[1]; b.addEventListener('click', () => { pup.limb = s[0]; buzz(8); pupSync(); }); sub.appendChild(b); }); if (!P[1].some(s => s[0] === pup.limb) && pup.limb !== P[0]) pup.limb = P[0]; else if (!P[1].length) pup.limb = P[0]; pupSync(); }
-  document.querySelectorAll('#pupZoom button').forEach(bt => bt.addEventListener('click', () => { pup.zm = bt.dataset.z; pupPick(pup.zm); pup.zt = null; document.body.classList.toggle('pupzoomed', pup.zm !== 'all'); buzz(8); document.querySelectorAll('#pupZoom button').forEach(x => x.setAttribute('aria-pressed', x === bt ? 'true' : 'false')); }));
+  document.querySelectorAll('#pupZoom button').forEach(bt => bt.addEventListener('click', () => { pup.zm = bt.dataset.z; pupPick(pup.zm); pup.zt = null; document.body.classList.toggle('pupzoomed', pup.zm !== 'all' && pup.zm !== 'pan'); { const pt = document.querySelector('#tools [data-p="pan"]'), at = document.querySelector('#tools [data-p="animate"]'); if (pt && at) { pt.setAttribute('aria-selected', pup.zm === 'pan' ? 'true' : 'false'); at.setAttribute('aria-selected', pup.zm === 'pan' ? 'false' : 'true'); } } buzz(8); document.querySelectorAll('#pupZoom button').forEach(x => x.setAttribute('aria-pressed', x === bt ? 'true' : 'false')); }));
   $('pupFloat').addEventListener('click', () => $('pupSnap').click());
   let pupTake; $('pupSnap').addEventListener('click', pupTake = async () => {
     const [W, H] = size(), c = document.createElement('canvas'); c.width = W; c.height = H; const g = c.getContext('2d'); scBack(g, W, H, SCE.cur, false); g.drawImage(pupChar(W, H), 0, 0); scFront(g, W, H, SCE.cur);
@@ -1775,7 +1779,7 @@ body { animation: nvIn .3s ease both; }
     const A = document.querySelector('.app'); if (!document.body.classList.contains('scrollapp') || document.body.classList.contains('sg') || document.body.classList.contains('pupmode') || A.classList.contains('is-create')) return;
     const tl = $('tl').getBoundingClientRect(), vf = document.querySelector('.vf').getBoundingClientRect(), pn = $('panels').getBoundingClientRect(); A.scrollTop += pn.top - Math.max(tl.bottom, vf.bottom) - 6;
   }
-  document.querySelectorAll('#tools button').forEach(b => b.addEventListener('click', () => { if (b.dataset.p === 'animate') { if (!pup.on) goAnimate(); } else { if (pup.on) pupLeave(); showPanel(b.dataset.p); try { panSync(); } catch (e) {} } }));
+  document.querySelectorAll('#tools button').forEach(b => b.addEventListener('click', () => { if (b.dataset.p === 'pan') { const go = () => document.querySelector('#pupZoom [data-z="pan"]').click(); if (!pup.on) goAnimate().then(go); else go(); } else if (b.dataset.p === 'animate') { if (!pup.on) goAnimate(); else document.querySelector('#pupZoom [data-z="all"]').click(); } else { if (pup.on) pupLeave(); showPanel(b.dataset.p); try { panSync(); } catch (e) {} } }));
   async function goAnimate() { try { await pupOpen(); } catch (e) {} }
   function startKind(kind) {
     document.body.classList.toggle('sg', kind === 'board'); if (kind !== 'board') { cv.style.width = ''; cv.style.height = ''; }
