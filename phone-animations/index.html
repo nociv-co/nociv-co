@@ -490,6 +490,52 @@ body { animation: nvIn .3s ease both; }
 .nv-sheet p { margin: 0 0 14px; line-height: 1.4; }
 .nv-sheet button { display: block; width: 100%; margin-top: 8px; padding: 14px; border: 2.5px solid var(--ink); border-radius: 12px; font-weight: 900; font-size: 1rem; background: #fff; color: var(--ink); }
 .nv-sheet button.dark { background: var(--ink); color: #fff; }
+
+  /* console grip: drag the yellow console down to fold it away so the stage fills the screen, drag up to bring it back */
+  #pcMini { display: none !important; }
+  body.pupmode .pc > .nv-grip { height: 18px; margin: -5px 0 -3px; background: none; z-index: 4; }
+  body.pupmode .pc > .nv-grip::before { background: rgba(26,26,26,.55); }
+  body.pupmode .pc-top { top: 20px; }
+  body.pupmode .pc-mid, body.pupmode .pc-row:not(.pc-go) { max-height: 70svh; transition: max-height .42s var(--nv-spring), opacity .25s, padding .3s, margin .3s; }
+  body.pupmode .vf canvas { transition: max-height .42s var(--nv-spring); }
+  html.cdown body.pupmode .pc-mid, html.cdown body.pupmode .pc-row:not(.pc-go) { max-height: 0 !important; opacity: 0; overflow: hidden; padding-top: 0; padding-bottom: 0; margin: 0; pointer-events: none; }
+  html.cdown body.pupmode .pc { flex: 0 0 auto; }
+  html.cdown body.pupmode .panels, html.cdown body.pupmode .panel.on { flex: 0 0 auto; }
+  html.cdown body.pupmode .pc-top { top: 20px; }
+
+
+
+
+  /* camera and billboard: same grip above the tools panel; the stage grows when it folds */
+  .nv-grip.nvouter { background: var(--paper); height: 22px; border-top: 2px solid #1a1a1a; }
+  body.pupmode .nv-grip.nvouter, .app.is-create .nv-grip.nvouter, body.fs .nv-grip.nvouter { display: none; }
+  body:not(.pupmode) #panels { transition: max-height .4s var(--nv-ease), height .4s var(--nv-ease), min-height .4s var(--nv-ease), padding .3s var(--nv-ease); }
+  html.cdown body:not(.pupmode) #panels { max-height: 0 !important; height: 0 !important; min-height: 0 !important; border-top-width: 0 !important; flex: 0 0 0 !important; padding-top: 0 !important; padding-bottom: 0 !important; overflow: hidden !important; }
+  html.cdown body:not(.pupmode):not(.sg) .app:not(.is-create) .vf canvas { max-height: 50svh !important; }
+  body:not(.pupmode):not(.sg) .vf canvas { transition: max-height .4s var(--nv-ease); }
+  body.scrollapp:not(.sg):not(.fs):not(.pupmode) .app:not(.is-create) { overflow: hidden !important; }
+  body.scrollapp:not(.sg):not(.fs):not(.pupmode) .app:not(.is-create) .panels { flex: 1 1 0 !important; overflow-y: auto !important; overflow-x: hidden; }
+
+/*NV-CSS-START nociv shared: console grip, slide-up sheets, press feel (one source, copied into each tool)*/
+:root{--nv-ease:cubic-bezier(.2,.8,.2,1);--nv-spring:cubic-bezier(.34,1.4,.5,1)}
+.nv-grip{position:sticky;top:0;z-index:6;height:28px;flex:none;display:grid;place-items:center;touch-action:none;cursor:grab;background:inherit;-webkit-tap-highlight-color:transparent}
+.nv-grip::before{content:"";width:44px;height:5px;border-radius:3px;background:#b9b2a2;transition:transform .2s var(--nv-spring),background .2s}
+.nv-grip:active::before{transform:scaleX(1.25);background:#1a1a1a}
+.nv-sheet{position:fixed;inset:0;z-index:20000;display:flex;flex-direction:column;justify-content:flex-end;pointer-events:none}
+.nv-sheet .nv-scrim{position:absolute;inset:0;background:rgba(20,18,12,.38);opacity:0;transition:opacity .25s}
+.nv-sheet .nv-card{position:relative;background:#f8f4e8;color:#1a1a1a;border-top:3px solid #1a1a1a;border-radius:22px 22px 0 0;padding:6px 16px calc(18px + env(safe-area-inset-bottom));max-height:86dvh;overflow-y:auto;overscroll-behavior:contain;transform:translateY(105%);transition:transform .4s var(--nv-spring);box-shadow:0 -10px 30px rgba(0,0,0,.22);font-family:inherit}
+.nv-sheet.on{pointer-events:auto}.nv-sheet.on .nv-scrim{opacity:1}.nv-sheet.on .nv-card{transform:none}
+.nv-sheet .nv-grab{width:44px;height:5px;border-radius:3px;background:#b9b2a2;margin:6px auto 10px;touch-action:none}
+.nv-sheet h3{margin:0 0 10px;font-size:1.05rem;letter-spacing:.08em;text-transform:uppercase}
+.nv-row{display:flex;flex-wrap:wrap;gap:8px 10px;align-items:flex-start;padding:10px 0;border-top:1.5px dashed rgba(29,28,26,.2)}
+.nv-row:first-of-type{border-top:0}
+.nv-row i{flex:none;width:22px;height:22px;border-radius:50%;display:grid;place-items:center;font-style:normal;font-weight:900;font-size:.8rem;color:#fff;background:#3f8a4a}
+.nv-row.warn i{background:#c8412f}
+.nv-row div{flex:1 1 calc(100% - 40px);min-width:0;font-size:.9rem;line-height:1.35}
+.nv-row button{flex:none;margin-left:32px;width:auto!important;padding:8px 12px!important;font-size:.8rem!important;font-weight:900;border:2px solid #1a1a1a;background:#fff;color:#1a1a1a;cursor:pointer}
+@media (prefers-reduced-motion:reduce){.nv-sheet .nv-card,.nv-grip::before{transition:none}}
+/*NV-CSS-END*/
+
 </style>
 </head>
 <body>
@@ -1636,7 +1682,7 @@ body { animation: nvIn .3s ease both; }
     $('pcPropV').textContent = PROPN[$('pupProp').selectedIndex] || 'SAVED';
   }
   $('pupFlip').addEventListener('click', () => { pup.flip = !pup.flip; pup.dirty = true; buzz(8); swDraw(); });
-  document.body.classList.add('pupmini');
+  if (innerHeight < 780) document.body.classList.add('pupmini');
   const SHP = ['tall', 'square', 'wide'], SHN = { tall: 'TALL', square: 'SQUARE', wide: 'WIDE' };
   function shapeSync() { $('pcShape').textContent = SHN[st.aspect] || 'TALL'; $('pcShape').classList.toggle('dim', st.frames.length > 0); document.body.classList.toggle('aspw', st.aspect === 'wide'); document.querySelectorAll('#aspects .chip').forEach(x => x.setAttribute('aria-pressed', x.dataset.a === st.aspect ? 'true' : 'false')); }
   $('pcShape').addEventListener('click', () => { if (st.frames.length) { msg('pupMsg', 'Clear your frames to change the shape', true); return; } st.aspect = SHP[(SHP.indexOf(st.aspect) + 1) % 3]; document.querySelectorAll('#aspects .chip').forEach(x => x.setAttribute('aria-pressed', x.dataset.a === st.aspect ? 'true' : 'false')); buzz(8); shapeSync(); pup.dirty = true; });
@@ -3125,6 +3171,73 @@ body { animation: nvIn .3s ease both; }
   updateKeep();
   window.__pa = st; window.__board = board; window.__deck = deck; window.__chr = chr; window.__chrUI = chrUI;
 })();
+</script>
+<script>
+
+
+</script>
+<script>
+
+
+</script>
+<script>
+/*NV-JS-START nociv shared: tween, console grip, slide-up sheet*/
+(function(){
+  if (window.NV) return;
+  var NV = window.NV = {};
+  NV.tween = function (ms, step, done) { var t0 = performance.now(); (function f(t) { var u = Math.min(1, (t - t0) / ms), e = 1 - Math.pow(1 - u, 3); step(e); if (u < 1) requestAnimationFrame(f); else if (done) done(); })(t0); };
+  // A drag handle on the tools panel. Drag it down or tap it and the panel folds away so the picture fills the screen. Drag up or tap again to bring it back.
+  NV.grip = function (panel, opts) {
+    opts = opts || {}; var g = document.createElement('div'); g.className = 'nv-grip' + (opts.cls ? ' ' + opts.cls : ''); g.setAttribute('role', 'button'); g.setAttribute('aria-label', 'Show or hide the tools'); if (opts.before) opts.before.parentNode.insertBefore(g, opts.before); else if (opts.after) opts.after.parentNode.insertBefore(g, opts.after.nextSibling); else panel.insertBefore(g, panel.firstChild);
+    var y0 = null, moved = false;
+    function frames() { var t0 = performance.now(); (function f(t) { if (opts.onFrame) opts.onFrame(); if (t - t0 < 560) requestAnimationFrame(f); })(t0); }
+    NV.setConsole = function (up) { var was = !document.documentElement.classList.contains('cdown'); if (was === up) return; document.documentElement.classList.toggle('cdown', !up); try { if (navigator.vibrate) navigator.vibrate(6); } catch (e) {} frames(); };
+    g.addEventListener('pointerdown', function (e) { y0 = e.clientY; moved = false; try { g.setPointerCapture(e.pointerId); } catch (_) {} });
+    g.addEventListener('pointermove', function (e) { if (y0 == null) return; var dy = e.clientY - y0; if (Math.abs(dy) > 16 && !moved) { moved = true; NV.setConsole(dy < 0); } });
+    g.addEventListener('pointerup', function () { if (y0 != null && !moved) NV.setConsole(document.documentElement.classList.contains('cdown')); y0 = null; });
+    g.addEventListener('pointercancel', function () { y0 = null; });
+    if (opts.onFrame) { window.addEventListener('resize', opts.onFrame); window.addEventListener('orientationchange', function () { setTimeout(opts.onFrame, 300); }); opts.onFrame(); }
+    return g;
+  };
+  // A sheet that slides up over a dim backdrop. NV.sheet(title, node) opens it, NV.sheetClose() closes it.
+  var sh, body, ttl;
+  function build() {
+    sh = document.createElement('div'); sh.className = 'nv-sheet'; sh.innerHTML = '<div class="nv-scrim"></div><div class="nv-card"><div class="nv-grab"></div><h3></h3><div class="nv-body"></div></div>'; document.body.appendChild(sh);
+    body = sh.querySelector('.nv-body'); ttl = sh.querySelector('h3'); sh.querySelector('.nv-scrim').addEventListener('click', NV.sheetClose);
+    var card = sh.querySelector('.nv-card'), grab = sh.querySelector('.nv-grab'), y0 = null;
+    grab.addEventListener('pointerdown', function (e) { y0 = e.clientY; try { grab.setPointerCapture(e.pointerId); } catch (_) {} });
+    grab.addEventListener('pointermove', function (e) { if (y0 != null && e.clientY - y0 > 40) { y0 = null; NV.sheetClose(); } });
+    grab.addEventListener('pointerup', function () { y0 = null; });
+  }
+  NV.sheet = function (title, node) { if (!sh) build(); ttl.textContent = title; body.innerHTML = ''; if (node) body.appendChild(node); sh.querySelector('.nv-card').scrollTop = 0; requestAnimationFrame(function () { sh.classList.add('on'); }); };
+  NV.sheetClose = function () { if (sh) sh.classList.remove('on'); };
+  NV.sheetOpen = function () { return !!(sh && sh.classList.contains('on')); };
+  document.addEventListener('keydown', function (e) { if (e.key === 'Escape') NV.sheetClose(); });
+})();
+/*NV-JS-END*/
+
+/*NV-ANIM-START*/
+(function () {
+  var pc = document.querySelector('.pc'); if (!pc) return;
+  NV.grip(pc, {});
+  var outer = document.getElementById('panels'); if (outer) NV.grip(null, { before: outer, cls: 'nvouter' });
+  var html = document.documentElement, $ = function (x) { return document.getElementById(x); };
+  // when the console folds the stage grows to fill the screen, smoothly; when it comes back the stage eases back
+  function fold() {
+    var cv = $('cv'), vf = document.querySelector('.vf'); if (!cv || !vf || !document.body.classList.contains('pupmode')) return;
+    if (!html.classList.contains('cdown')) { cv.style.maxHeight = ''; return; }
+    var go = pc.querySelector('.pc-go'), tools = $('tools'), tl = $('tl');
+    var guess = innerHeight - vf.getBoundingClientRect().top - (tools ? tools.offsetHeight : 60) - (tl ? tl.offsetHeight : 60) - (go ? go.offsetHeight : 60) - 84;
+    cv.style.maxHeight = Math.max(200, guess) + 'px';
+    setTimeout(function () { if (!html.classList.contains('cdown')) return; var free = tools.getBoundingClientRect().top - pc.getBoundingClientRect().bottom - 8; if (Math.abs(free) > 4) cv.style.maxHeight = Math.max(200, cv.getBoundingClientRect().height + free) + 'px'; }, 700);
+  }
+  new MutationObserver(fold).observe(html, { attributes: true, attributeFilter: ['class'] });
+  window.addEventListener('resize', fold);
+  // tapping a view button brings the console back so nothing is hidden when you reach for it
+  var z = $('pupZoom'); if (z) z.addEventListener('click', function () { NV.setConsole && NV.setConsole(true); });
+})();
+/*NV-ANIM-END*/
+
 </script>
 </body>
 </html>

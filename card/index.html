@@ -156,6 +156,55 @@
   .dirck.off { opacity: .45; cursor: default; }
   .dirmsg.ok { color: var(--green); font-weight: 800; }
   .dirmsg.bad { color: var(--red); font-weight: 800; }
+
+
+
+
+/*NV-CSS-START nociv shared: console grip, slide-up sheets, press feel (one source, copied into each tool)*/
+:root{--nv-ease:cubic-bezier(.2,.8,.2,1);--nv-spring:cubic-bezier(.34,1.4,.5,1)}
+.nv-grip{position:sticky;top:0;z-index:6;height:28px;flex:none;display:grid;place-items:center;touch-action:none;cursor:grab;background:inherit;-webkit-tap-highlight-color:transparent}
+.nv-grip::before{content:"";width:44px;height:5px;border-radius:3px;background:#b9b2a2;transition:transform .2s var(--nv-spring),background .2s}
+.nv-grip:active::before{transform:scaleX(1.25);background:#1a1a1a}
+.nv-sheet{position:fixed;inset:0;z-index:20000;display:flex;flex-direction:column;justify-content:flex-end;pointer-events:none}
+.nv-sheet .nv-scrim{position:absolute;inset:0;background:rgba(20,18,12,.38);opacity:0;transition:opacity .25s}
+.nv-sheet .nv-card{position:relative;background:#f8f4e8;color:#1a1a1a;border-top:3px solid #1a1a1a;border-radius:22px 22px 0 0;padding:6px 16px calc(18px + env(safe-area-inset-bottom));max-height:86dvh;overflow-y:auto;overscroll-behavior:contain;transform:translateY(105%);transition:transform .4s var(--nv-spring);box-shadow:0 -10px 30px rgba(0,0,0,.22);font-family:inherit}
+.nv-sheet.on{pointer-events:auto}.nv-sheet.on .nv-scrim{opacity:1}.nv-sheet.on .nv-card{transform:none}
+.nv-sheet .nv-grab{width:44px;height:5px;border-radius:3px;background:#b9b2a2;margin:6px auto 10px;touch-action:none}
+.nv-sheet h3{margin:0 0 10px;font-size:1.05rem;letter-spacing:.08em;text-transform:uppercase}
+.nv-row{display:flex;flex-wrap:wrap;gap:8px 10px;align-items:flex-start;padding:10px 0;border-top:1.5px dashed rgba(29,28,26,.2)}
+.nv-row:first-of-type{border-top:0}
+.nv-row i{flex:none;width:22px;height:22px;border-radius:50%;display:grid;place-items:center;font-style:normal;font-weight:900;font-size:.8rem;color:#fff;background:#3f8a4a}
+.nv-row.warn i{background:#c8412f}
+.nv-row div{flex:1 1 calc(100% - 40px);min-width:0;font-size:.9rem;line-height:1.35}
+.nv-row button{flex:none;margin-left:32px;width:auto!important;padding:8px 12px!important;font-size:.8rem!important;font-weight:900;border:2px solid #1a1a1a;background:#fff;color:#1a1a1a;cursor:pointer}
+@media (prefers-reduced-motion:reduce){.nv-sheet .nv-card,.nv-grip::before{transition:none}}
+/*NV-CSS-END*/
+
+/*NV-SHELL-CSS-START*/
+@media (max-width: 899px) {
+  html.nvlock, html.nvlock body { height: 100%; overflow: hidden; overscroll-behavior: none; }
+  html.nvlock body { display: flex; flex-direction: column; height: 100dvh; }
+  html.nvlock .wrap { flex: 1 1 auto; min-height: 0; width: 100%; max-width: none; margin: 0; padding: max(8px, env(safe-area-inset-top)) 16px 0; display: flex; flex-direction: column; }
+  html.nvlock .top { flex: none; margin: 0 0 6px; }
+  html.nvlock .top p, html.nvlock .top .full { display: none; }
+  html.nvlock .grid { flex: 1 1 auto; min-height: 0; display: flex; flex-direction: column; gap: 0; }
+  html.nvlock .preview-col { order: -1; flex: 1 1 auto; min-height: 0; position: relative; top: auto; margin: 0; padding: 4px 0 8px; border: 0; background: transparent; display: flex; flex-direction: column; }
+  html.nvlock .preview-col > .stage, html.nvlock .preview-col > .preview { flex: 1 1 auto; min-height: 0; height: auto !important; display: grid; place-items: center; overflow: hidden; }
+  html.nvlock .preview-col > * { flex-shrink: 0; }
+  html.nvlock .preview-col > .stage, html.nvlock .preview-col > .preview { flex-shrink: 1; }
+  html.nvlock #nvcon { flex: none; height: 44dvh; overflow-y: auto; overscroll-behavior: contain; position: relative; margin: 0 -16px; padding: 0 16px calc(24px + env(safe-area-inset-bottom)); background: var(--paper); border-radius: 22px 22px 0 0; border-top: 2px solid var(--ink); box-shadow: 0 -6px 22px rgba(40,30,10,.14); transition: height .42s var(--nv-spring); }
+  html.nvlock.cdown #nvcon { height: 28px; overflow: hidden; padding-bottom: 0; }
+  html.nvlock #nvcon > nav.steps { position: sticky; top: 28px; z-index: 5; background: var(--paper); padding: 4px 0 8px; margin: 0; }
+  html.nvlock #nvcon > section.note { margin-top: 6px; }
+  html.nvlock #nvcon > section.note { display: none; }
+  html.nvlock #nvcon > section.note.on { display: block; }
+  html.nvlock #nvcon > section.note .chips, html.nvlock #nvcon > section.note .swatches { flex-wrap: nowrap; overflow-x: auto; scrollbar-width: none; margin-right: -18px; padding-right: 18px; padding-bottom: 3px; }
+  html.nvlock #nvcon > section.note .chips::-webkit-scrollbar, html.nvlock #nvcon > section.note .swatches::-webkit-scrollbar { display: none; }
+  html.nvlock #nvcon > section.note .chip, html.nvlock #nvcon > section.note .sw { flex: none; }
+  html.nvlock body > footer, html.nvlock .wrap ~ footer, html.nvlock .foot { display: none; }
+}
+/*NV-SHELL-CSS-END*/
+
 </style>
 </head>
 <body>
@@ -1791,6 +1840,72 @@
     };
   })();
 })();
+</script>
+<script>
+
+
+</script>
+<script>
+
+
+</script>
+<script>
+/*NV-JS-START nociv shared: tween, console grip, slide-up sheet*/
+(function(){
+  if (window.NV) return;
+  var NV = window.NV = {};
+  NV.tween = function (ms, step, done) { var t0 = performance.now(); (function f(t) { var u = Math.min(1, (t - t0) / ms), e = 1 - Math.pow(1 - u, 3); step(e); if (u < 1) requestAnimationFrame(f); else if (done) done(); })(t0); };
+  // A drag handle on the tools panel. Drag it down or tap it and the panel folds away so the picture fills the screen. Drag up or tap again to bring it back.
+  NV.grip = function (panel, opts) {
+    opts = opts || {}; var g = document.createElement('div'); g.className = 'nv-grip'; g.setAttribute('role', 'button'); g.setAttribute('aria-label', 'Show or hide the tools'); if (opts.after) opts.after.parentNode.insertBefore(g, opts.after.nextSibling); else panel.insertBefore(g, panel.firstChild);
+    var y0 = null, moved = false;
+    function frames() { var t0 = performance.now(); (function f(t) { if (opts.onFrame) opts.onFrame(); if (t - t0 < 560) requestAnimationFrame(f); })(t0); }
+    NV.setConsole = function (up) { var was = !document.documentElement.classList.contains('cdown'); if (was === up) return; document.documentElement.classList.toggle('cdown', !up); try { if (navigator.vibrate) navigator.vibrate(6); } catch (e) {} frames(); };
+    g.addEventListener('pointerdown', function (e) { y0 = e.clientY; moved = false; try { g.setPointerCapture(e.pointerId); } catch (_) {} });
+    g.addEventListener('pointermove', function (e) { if (y0 == null) return; var dy = e.clientY - y0; if (Math.abs(dy) > 16 && !moved) { moved = true; NV.setConsole(dy < 0); } });
+    g.addEventListener('pointerup', function () { if (y0 != null && !moved) NV.setConsole(document.documentElement.classList.contains('cdown')); y0 = null; });
+    g.addEventListener('pointercancel', function () { y0 = null; });
+    if (opts.onFrame) { window.addEventListener('resize', opts.onFrame); window.addEventListener('orientationchange', function () { setTimeout(opts.onFrame, 300); }); opts.onFrame(); }
+    return g;
+  };
+  // A sheet that slides up over a dim backdrop. NV.sheet(title, node) opens it, NV.sheetClose() closes it.
+  var sh, body, ttl;
+  function build() {
+    sh = document.createElement('div'); sh.className = 'nv-sheet'; sh.innerHTML = '<div class="nv-scrim"></div><div class="nv-card"><div class="nv-grab"></div><h3></h3><div class="nv-body"></div></div>'; document.body.appendChild(sh);
+    body = sh.querySelector('.nv-body'); ttl = sh.querySelector('h3'); sh.querySelector('.nv-scrim').addEventListener('click', NV.sheetClose);
+    var card = sh.querySelector('.nv-card'), grab = sh.querySelector('.nv-grab'), y0 = null;
+    grab.addEventListener('pointerdown', function (e) { y0 = e.clientY; try { grab.setPointerCapture(e.pointerId); } catch (_) {} });
+    grab.addEventListener('pointermove', function (e) { if (y0 != null && e.clientY - y0 > 40) { y0 = null; NV.sheetClose(); } });
+    grab.addEventListener('pointerup', function () { y0 = null; });
+  }
+  NV.sheet = function (title, node) { if (!sh) build(); ttl.textContent = title; body.innerHTML = ''; if (node) body.appendChild(node); sh.querySelector('.nv-card').scrollTop = 0; requestAnimationFrame(function () { sh.classList.add('on'); }); };
+  NV.sheetClose = function () { if (sh) sh.classList.remove('on'); };
+  NV.sheetOpen = function () { return !!(sh && sh.classList.contains('on')); };
+  document.addEventListener('keydown', function (e) { if (e.key === 'Escape') NV.sheetClose(); });
+})();
+/*NV-JS-END*/
+
+/*NV-SHELL-START*/
+(function () {
+  var phone = matchMedia('(max-width: 899px)'), grid = document.querySelector('.grid'), nav = document.querySelector('nav.steps');
+  if (!phone.matches || !grid || !nav) return;
+  var prev = grid.querySelector('.preview-col'); if (!prev) return;
+  var con = document.createElement('div'); con.id = 'nvcon'; grid.appendChild(con); con.appendChild(nav);
+  Array.prototype.slice.call(grid.querySelectorAll(':scope > section.note')).forEach(function (n) { con.appendChild(n); });
+  document.documentElement.classList.add('nvlock');
+  var cvs = prev.querySelector('canvas'), box = cvs && cvs.parentElement;
+  function fit() {
+    if (!cvs || !box) return; var h = box.clientHeight, w = box.clientWidth; if (!h || !w) return;
+    var cs = getComputedStyle(box), pv = (parseFloat(cs.paddingTop) || 0) + (parseFloat(cs.paddingBottom) || 0), ph = (parseFloat(cs.paddingLeft) || 0) + (parseFloat(cs.paddingRight) || 0);
+    cvs.style.maxHeight = Math.max(80, h - pv - 6) + 'px'; cvs.style.maxWidth = Math.max(80, w - ph - 6) + 'px';
+  }
+  NV.grip(con, { onFrame: fit });
+  try { new ResizeObserver(fit).observe(box); } catch (e) {}
+  con.addEventListener('click', function (e) { if (e.target.closest && e.target.closest('nav.steps button, .next-step')) { con.scrollTop = 0; setTimeout(fit, 30); } });
+  window.__nvFit = fit;
+})();
+/*NV-SHELL-END*/
+
 </script>
 </body>
 </html>
