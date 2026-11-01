@@ -160,6 +160,14 @@
 
 
 
+
+
+
+
+
+
+
+
 /*NV-CSS-START nociv shared: console grip, slide-up sheets, press feel (one source, copied into each tool)*/
 :root{--nv-ease:cubic-bezier(.2,.8,.2,1);--nv-spring:cubic-bezier(.34,1.4,.5,1)}
 .nv-grip{position:sticky;top:0;z-index:6;height:28px;flex:none;display:grid;place-items:center;touch-action:none;cursor:grab;background:inherit;-webkit-tap-highlight-color:transparent}
@@ -178,6 +186,21 @@
 .nv-row div{flex:1 1 calc(100% - 40px);min-width:0;font-size:.9rem;line-height:1.35}
 .nv-row button{flex:none;margin-left:32px;width:auto!important;padding:8px 12px!important;font-size:.8rem!important;font-weight:900;border:2px solid #1a1a1a;background:#fff;color:#1a1a1a;cursor:pointer}
 @media (prefers-reduced-motion:reduce){.nv-sheet .nv-card,.nv-grip::before{transition:none}}
+
+.nv-mag{padding:0!important;width:42px!important;height:42px!important;min-width:0!important;margin:0!important;position:absolute;left:8px;bottom:8px;z-index:6;width:42px;height:42px;border-radius:13px;border:1.5px solid rgba(26,26,26,.55);background:rgba(255,255,255,.55);color:#1a1a1a;-webkit-backdrop-filter:blur(6px);backdrop-filter:blur(6px);display:grid;place-items:center;cursor:pointer;touch-action:manipulation;transition:transform .15s var(--nv-ease),background .2s}
+.nv-mag svg{width:22px;height:22px}.nv-mag:active{transform:scale(.9)}.nv-mag.on{background:#1a1a1a;color:#fff}
+.nv-zbar{position:absolute;left:8px;right:8px;bottom:58px;z-index:7;max-width:380px;display:flex;align-items:center;gap:8px;padding:6px 10px;border-radius:16px;background:rgba(26,26,26,.5);-webkit-backdrop-filter:blur(8px);backdrop-filter:blur(8px);color:#fff;opacity:0;transform:translateY(10px) scale(.97);pointer-events:none;transition:opacity .22s var(--nv-ease),transform .28s var(--nv-spring)}
+.nv-zbar.on{opacity:1;transform:none;pointer-events:auto}
+.nv-zbar button{flex:none!important;width:auto!important;min-width:34px!important;height:34px!important;border-radius:10px!important;border:0!important;background:rgba(255,255,255,.22)!important;color:#fff!important;font:900 20px/1 inherit!important;padding:0 8px!important;margin:0!important;box-shadow:none!important;cursor:pointer;touch-action:manipulation}
+.nv-zbar button.f{font-size:.72rem!important;letter-spacing:.1em;text-transform:uppercase}
+.nv-zbar .sp{flex:1}
+.nv-zbar input[type=range]{flex:1 1 auto!important;width:auto!important;min-width:0;height:34px!important;margin:0!important;padding:0!important;border:0!important;background:transparent!important;box-shadow:none!important;-webkit-appearance:none;appearance:none}
+.nv-zbar input[type=range]::-webkit-slider-runnable-track{height:4px;border-radius:2px;background:rgba(255,255,255,.45)}
+.nv-zbar input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:22px;height:22px;border-radius:50%;background:#fff;border:2px solid #1a1a1a;margin-top:-9px}
+.nv-zbar input[type=range]::-moz-range-track{height:4px;border-radius:2px;background:rgba(255,255,255,.45)}
+.nv-zbar input[type=range]::-moz-range-thumb{width:20px;height:20px;border-radius:50%;background:#fff;border:2px solid #1a1a1a}
+.nvzoomed{overflow:hidden}
+@media (prefers-reduced-motion:reduce){.nv-zbar,.nv-mag{transition:none}}
 /*NV-CSS-END*/
 
 /*NV-SHELL-CSS-START*/
@@ -1850,6 +1873,22 @@
 
 </script>
 <script>
+
+
+</script>
+<script>
+
+
+</script>
+<script>
+
+
+</script>
+<script>
+
+
+</script>
+<script>
 /*NV-JS-START nociv shared: tween, console grip, slide-up sheet*/
 (function(){
   if (window.NV) return;
@@ -1857,7 +1896,7 @@
   NV.tween = function (ms, step, done) { var t0 = performance.now(); (function f(t) { var u = Math.min(1, (t - t0) / ms), e = 1 - Math.pow(1 - u, 3); step(e); if (u < 1) requestAnimationFrame(f); else if (done) done(); })(t0); };
   // A drag handle on the tools panel. Drag it down or tap it and the panel folds away so the picture fills the screen. Drag up or tap again to bring it back.
   NV.grip = function (panel, opts) {
-    opts = opts || {}; var g = document.createElement('div'); g.className = 'nv-grip'; g.setAttribute('role', 'button'); g.setAttribute('aria-label', 'Show or hide the tools'); if (opts.after) opts.after.parentNode.insertBefore(g, opts.after.nextSibling); else panel.insertBefore(g, panel.firstChild);
+    opts = opts || {}; var g = document.createElement('div'); g.className = 'nv-grip' + (opts.cls ? ' ' + opts.cls : ''); g.setAttribute('role', 'button'); g.setAttribute('aria-label', 'Show or hide the tools'); if (opts.before) opts.before.parentNode.insertBefore(g, opts.before); else if (opts.after) opts.after.parentNode.insertBefore(g, opts.after.nextSibling); else panel.insertBefore(g, panel.firstChild);
     var y0 = null, moved = false;
     function frames() { var t0 = performance.now(); (function f(t) { if (opts.onFrame) opts.onFrame(); if (t - t0 < 560) requestAnimationFrame(f); })(t0); }
     NV.setConsole = function (up) { var was = !document.documentElement.classList.contains('cdown'); if (was === up) return; document.documentElement.classList.toggle('cdown', !up); try { if (navigator.vibrate) navigator.vibrate(6); } catch (e) {} frames(); };
@@ -1882,6 +1921,43 @@
   NV.sheetClose = function () { if (sh) sh.classList.remove('on'); };
   NV.sheetOpen = function () { return !!(sh && sh.classList.contains('on')); };
   document.addEventListener('keydown', function (e) { if (e.key === 'Escape') NV.sheetClose(); });
+
+  // Magnifier + see-through zoom bar. NV.zoomer({host, target, set, get, min, max, nopan, noslider, inOut}) puts a magnifier in the corner of host.
+  // Tap it and a transparent bar slides up: minus, slider, plus, Fit. It fades away after a few quiet seconds. While it is showing and you are zoomed in, one finger drags the picture.
+  var MAG = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" aria-hidden="true"><circle cx="10.5" cy="10.5" r="6.5"/><path d="M20 20l-4.9-4.9M10.5 7.5v6M7.5 10.5h6"/></svg>';
+  NV.zoomer = function (o) {
+    var host = o.host; if (!host || host.querySelector(':scope > .nv-mag')) return null;
+    if (getComputedStyle(host).position === 'static') host.style.position = 'relative';
+    var min = o.min || 1, max = o.max || 4, k = 1, tx = 0, ty = 0, open = false, t, api = {}, foc = null;
+    var btn = document.createElement('button'); btn.type = 'button'; btn.className = 'nv-mag'; btn.setAttribute('aria-label', 'Zoom'); btn.innerHTML = MAG;
+    var bar = document.createElement('div'); bar.className = 'nv-zbar'; bar.innerHTML = '<button type="button" class="m" aria-label="Zoom out">&minus;</button>' + (o.noslider ? '<span class="sp"></span>' : '<input type="range" aria-label="Zoom level" min="' + min + '" max="' + max + '" step="0.01" value="' + min + '">') + '<button type="button" class="p" aria-label="Zoom in">+</button><button type="button" class="f">Fit</button>';
+    host.appendChild(btn); host.appendChild(bar);
+    var rng = bar.querySelector('input'), fit = bar.querySelector('.f');
+    function clampPan() { if (!o.target) return; var mx = o.target.offsetWidth * (k - 1) / 2, my = o.target.offsetHeight * (k - 1) / 2; tx = Math.max(-mx, Math.min(mx, tx)); ty = Math.max(-my, Math.min(my, ty)); }
+    function paint() { if (o.target && !o.apply) { clampPan(); o.target.style.transformOrigin = '50% 50%'; o.target.style.transform = k === 1 ? '' : 'translate(' + tx + 'px,' + ty + 'px) scale(' + k + ')'; } if (rng) rng.value = k; host.classList.toggle('nvzoomed', k > 1.01); btn.classList.toggle('on', k > 1.01); }
+    function set(v) { var was = k; k = Math.max(min, Math.min(max, v)); if (k <= min + 0.01) { k = min; tx = ty = 0; foc = null; } else if (was <= min + 0.01 && o.focus) { foc = o.focus(); } if (foc) { tx = -k * foc.x; ty = -k * foc.y; } if (o.apply) o.apply(k, api); paint(); poke(); }
+    function poke() { clearTimeout(t); if (!open) return; t = setTimeout(hide, 4500); }
+    function show() { open = true; bar.classList.add('on'); poke(); }
+    function hide() { open = false; bar.classList.remove('on'); }
+    btn.addEventListener('click', function () { open ? hide() : show(); });
+    bar.querySelector('.m').addEventListener('click', function () { if (o.inOut) { o.inOut.out(); poke(); } else set(k - (o.step || 0.5)); });
+    bar.querySelector('.p').addEventListener('click', function () { if (o.inOut) { o.inOut.in(); poke(); } else set(k + (o.step || 0.5)); });
+    fit.addEventListener('click', function () { if (o.inOut) { o.inOut.fit(); poke(); } else set(min); });
+    if (rng) { rng.addEventListener('input', function () { set(parseFloat(rng.value)); }); }
+    bar.addEventListener('pointerdown', poke);
+    // one finger drags the picture while the bar is up and you are zoomed in
+    if (o.target && !o.nopan) {
+      var drag = null;
+      var stop = function (e) { if (open && k > 1.01 && e.target !== btn && !bar.contains(e.target)) { e.stopPropagation(); if (e.cancelable) e.preventDefault(); return true; } return false; };
+      host.addEventListener('pointerdown', function (e) { if (stop(e)) { drag = { x: e.clientX, y: e.clientY, tx: tx, ty: ty, id: e.pointerId }; try { host.setPointerCapture(e.pointerId); } catch (_) {} poke(); } }, true);
+      host.addEventListener('pointermove', function (e) { if (drag && drag.id === e.pointerId) { e.stopPropagation(); foc = null; tx = drag.tx + e.clientX - drag.x; ty = drag.ty + e.clientY - drag.y; paint(); poke(); } else stop(e); }, true);
+      var end = function (e) { if (drag && drag.id === e.pointerId) { drag = null; e.stopPropagation(); } };
+      host.addEventListener('pointerup', end, true); host.addEventListener('pointercancel', end, true);
+      ['touchstart', 'touchmove', 'mousedown'].forEach(function (n) { host.addEventListener(n, stop, true); });
+    }
+    api.set = set; api.get = function () { return k; }; api.reset = function () { if (k !== min) set(min); }; api.hide = hide; api.btn = btn;
+    return api;
+  };
 })();
 /*NV-JS-END*/
 
@@ -1903,6 +1979,12 @@
   try { new ResizeObserver(fit).observe(box); } catch (e) {}
   con.addEventListener('click', function (e) { if (e.target.closest && e.target.closest('nav.steps button, .next-step')) { con.scrollTop = 0; setTimeout(fit, 30); } });
   window.__nvFit = fit;
+})();
+(function () {
+  var prev = document.querySelector('.preview-col'); if (!prev) return;
+  var cvs = prev.querySelector('canvas'), box = cvs && cvs.parentElement; if (!box || !window.NV || !NV.zoomer) return;
+  var Z = NV.zoomer({ host: box, target: cvs, max: 4 });
+  if (Z) window.addEventListener('resize', function () { Z.reset(); });
 })();
 /*NV-SHELL-END*/
 
