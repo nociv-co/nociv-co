@@ -30,6 +30,7 @@
   .help-sheet .help-sub { margin: 0 0 14px; color: #5a564b; }
   .help-sheet ol { margin: 0 0 16px; padding-left: 1.3em; } .help-sheet li { margin: 0 0 10px; line-height: 1.4; }
   .help-sheet button { width: 100%; border: 0; background: #c8412f; color: #fff; font-weight: 900; letter-spacing: .12em; padding: 14px; border-radius: 12px; text-transform: uppercase; }
+  .fs-bar .fs-refresh { background: transparent; color: #f1ead6; border: 1px solid #f1ead6; margin-right: 8px; font-size: .68rem; }
   .fs-bar button { background: #c8412f; color: #fff; font: inherit; padding: 7px 12px; cursor: pointer; letter-spacing: .1em; }
   html.fs-open, html.fs-open body { overflow: hidden; }
   @media (max-width: 700px) { .subpanel .fullscreen-btn, .subpanel .build-header { display: none; } }
@@ -464,6 +465,14 @@
     s.querySelector('h3').textContent = g[0]; g[1].forEach(x => { const li = document.createElement('li'); li.textContent = x; s.querySelector('ol').appendChild(li); });
     const close = () => w.remove(); s.querySelector('button').onclick = close; w.addEventListener('click', e => { if (e.target === w) close(); }); w.appendChild(s); document.body.appendChild(w);
   }
+  // Refresh: throw away anything the phone saved and load the newest copy of this tool. Unsaved work in the tool is lost, so it asks first.
+  function freshTool(panel, rb) {
+    if (!confirm('Load the newest version of this tool? Anything you have not saved will be cleared.')) return;
+    rb.textContent = '...';
+    const done = () => { panel.querySelectorAll('iframe').forEach(f => { const base = (f.getAttribute('src') || '').replace(/([?&])(v|r)=[^&]*&?/g, '$1').replace(/[?&]$/, ''); if (!base) return; f.src = base + (base.indexOf('?') < 0 ? '?' : '&') + 'r=' + Date.now(); }); setTimeout(() => { rb.textContent = 'Refresh'; }, 1500); };
+    try { if (window.caches && caches.keys) { caches.keys().then(ks => Promise.all(ks.map(k => caches.delete(k)))).then(done, done); } else done(); } catch (e) { done(); }
+    try { if (navigator.serviceWorker && navigator.serviceWorker.getRegistrations) navigator.serviceWorker.getRegistrations().then(rs => rs.forEach(r => r.unregister())); } catch (e) {}
+  }
   function enterFs(panel) {
     if (!panel || panel.classList.contains('fs')) return;
     panel.classList.add('fs'); document.documentElement.classList.add('fs-open');
@@ -471,6 +480,7 @@
     const bar = document.createElement('div'); bar.className = 'fs-bar';
     bar.innerHTML = '<span></span><button type="button"></button>'; bar.firstChild.textContent = name;
     const hb = GUIDE[panel.id] ? document.createElement('button') : null; if (hb) { hb.type = 'button'; hb.className = 'fs-help'; hb.setAttribute('aria-label', 'How to use this'); hb.textContent = '?'; hb.onclick = () => showHelp(panel); bar.insertBefore(hb, bar.querySelector('button')); }
+    const rb = document.createElement('button'); rb.type = 'button'; rb.className = 'fs-refresh'; rb.textContent = 'Refresh'; rb.setAttribute('aria-label', 'Load the newest version of this tool'); rb.onclick = () => freshTool(panel, rb); bar.insertBefore(rb, bar.querySelector('button:last-child'));
     const btn = bar.querySelector('button:last-child'); btn.innerHTML = phone ? '&lsaquo; Back to tools' : '&#10005; Exit full screen';
     btn.onclick = () => { const p = exitFs(); if (phone && p) { const back = p.querySelector('.hub-back'); if (back) back.click(); } };
     document.body.appendChild(bar);
