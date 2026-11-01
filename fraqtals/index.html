@@ -550,6 +550,15 @@ function srcRect(o, im){
   const sw=Math.min(im.w,o.fw/z), sh=Math.min(im.h,o.fh/z);
   return {sx:(im.w-sw)/2+(o.cx||0)*(im.w-sw)/2, sy:(im.h-sh)/2+(o.cy||0)*(im.h-sh)/2, sw, sh};
 }
+// Photo placement inside its frame, in the frame's own units: z = units per image px, ix/iy = image center from frame center.
+function imgPlace(o){ const im=IMGS.get(o.src); if(!im||o.fit==='contain') return null;
+  const c0=Math.max(o.fw/im.w,o.fh/im.h), z=c0*(o.cz||1), DW=im.w*z, DH=im.h*z;
+  return {im,z,DW,DH,ix:-(o.cx||0)*(DW-o.fw)/2, iy:-(o.cy||0)*(DH-o.fh)/2}; }
+function setPlace(o,im,z,ix,iy){ const c0=Math.max(o.fw/im.w,o.fh/im.h); o.cz=Math.max(1,Math.min(6,z/c0)); z=c0*o.cz;
+  const ex=(im.w*z-o.fw)/2, ey=(im.h*z-o.fh)/2;
+  o.cx= ex>.01 ? Math.max(-1,Math.min(1,-ix/ex)) : 0; o.cy= ey>.01 ? Math.max(-1,Math.min(1,-iy/ey)) : 0; }
+function lockR(o){ return o.ratio || ((o.mask==='circle'||o.mask==='heart') ? o.fw/o.fh : 0); }
+function toLocal0(G,p){ const dx=p.x-G.x0, dy=p.y-G.y0, c=Math.cos(-G.rot), s=Math.sin(-G.rot); return {x:(dx*c-dy*s)/G.sc, y:(dx*s+dy*c)/G.sc}; }
 function effDpi(o){
   const im=IMGS.get(o.src); if(!im) return 999;
   const r=srcRect(o,im);
@@ -616,8 +625,8 @@ function autoLevels(a){
 
 /* ---------- drawing ---------- */
 function roundRect(x,X,Y,w,h,r){ x.moveTo(X+r,Y); x.arcTo(X+w,Y,X+w,Y+h,r); x.arcTo(X+w,Y+h,X,Y+h,r); x.arcTo(X,Y+h,X,Y,r); x.arcTo(X,Y,X+w,Y,r); x.closePath(); }
-function maskPath(x,o){
-  const w=o.fw,h=o.fh; x.beginPath();
+function maskPath(x,o,keep){
+  const w=o.fw,h=o.fh; if(!keep) x.beginPath();
   if(o.mask==='circle') x.ellipse(0,0,w/2,h/2,0,0,Math.PI*2);
   else if(o.mask==='round') roundRect(x,-w/2,-h/2,w,h,Math.min(w,h)*.1);
   else if(o.mask==='heart'){ const s=Math.min(w,h)/2; x.moveTo(0,s*.95); x.bezierCurveTo(-s*1.25,s*.1,-s,-s*1.05,0,-s*.45); x.bezierCurveTo(s,-s*1.05,s*1.25,s*.1,0,s*.95); x.closePath(); }
@@ -723,8 +732,15 @@ function render(){
   if (o){
     const b=boxOf(o), w=b.w*o.scale, h=b.h*o.scale, p=8/k;
     cx.save(); cx.translate(o.x,o.y); cx.rotate(o.rot||0);
-    cx.lineWidth=1.6/k; cx.strokeStyle=cropMode?'#ff9500':'#2d6cf6'; cx.setLineDash(cropMode?[6/k,4/k]:[]);
-    cx.strokeRect(-w/2-p,-h/2-p,w+p*2,h+p*2); cx.setLineDash([]);
+    const pl = cropMode && o.type==='img' ? imgPlace(o) : null;
+    if (pl){ drawCropUI(o,pl,k); }
+    else { cx.lineWidth=1.6/k; cx.strokeStyle='#2d6cf6'; cx.strokeRect(-w/2-p,-h/2-p,w+p*2,h+p*2); }
+    if (!cropMode && !o.lock && o.type==='img' && !lockR(o)){
+      // side grips: pull a side to crop the photo from that side
+      cx.fillStyle='#fff'; cx.strokeStyle='#2d6cf6'; cx.lineWidth=2/k; const L=26/k, T=8/k;
+      for (const [sx,sy] of [[-1,0],[1,0],[0,-1],[0,1]]){ const gx=sx*(w/2+p), gy=sy*(h/2+p), gw=sx?T:L, gh=sx?L:T;
+        cx.beginPath(); roundRect(cx,gx-gw/2,gy-gh/2,gw,gh,T/2); cx.fill(); cx.stroke(); }
+    }
     if (!cropMode && !o.lock){
       const hr=9/k; cx.fillStyle='#fff'; cx.strokeStyle='#2d6cf6'; cx.lineWidth=2/k;
       for (const [sx,sy] of [[-1,-1],[1,-1],[-1,1],[1,1]]){ cx.beginPath(); cx.arc(sx*(w/2+p),sy*(h/2+p),hr,0,Math.PI*2); cx.fill(); cx.stroke(); }
@@ -740,6 +756,27 @@ function render(){
   }
 }
 
+function drawCropUI(o,pl,k){
+  // called inside the object's translate+rotate; works in screen-scaled units
+  const s=o.scale, u=1/k, w=o.fw*s, h=o.fh*s, iw=pl.DW*s, ih=pl.DH*s, ix=pl.ix*s, iy=pl.iy*s;
+  // the rest of the photo, dimmed, so you always see what you are cutting
+  cx.save(); cx.beginPath(); cx.rect(ix-iw/2,iy-ih/2,iw,ih);
+  cx.save(); cx.scale(s,s); maskPath(cx,o,true); cx.restore(); cx.clip('evenodd');
+  cx.globalAlpha=.42; cx.drawImage(pl.im.small||pl.im.img, ix-iw/2, iy-ih/2, iw, ih); cx.restore();
+  cx.save(); cx.strokeStyle='rgba(255,255,255,.55)'; cx.lineWidth=1*u; cx.setLineDash([4*u,4*u]); cx.strokeRect(ix-iw/2,iy-ih/2,iw,ih); cx.restore();
+  // thirds grid
+  cx.save(); cx.strokeStyle='rgba(255,255,255,.6)'; cx.lineWidth=1*u; cx.beginPath();
+  for (const f of [-1/6,1/6]){ cx.moveTo(f*w,-h/2); cx.lineTo(f*w,h/2); cx.moveTo(-w/2,f*h); cx.lineTo(w/2,f*h); } cx.stroke(); cx.restore();
+  // frame + corner brackets + side bars
+  cx.save(); cx.strokeStyle='#fff'; cx.shadowColor='rgba(0,0,0,.45)'; cx.shadowBlur=4;
+  cx.lineWidth=1.5*u; cx.strokeRect(-w/2,-h/2,w,h);
+  const B=Math.min(20*u,w/3,h/3); cx.lineWidth=4*u; cx.lineCap='round';
+  for (const [sx,sy] of [[-1,-1],[1,-1],[-1,1],[1,1]]){ const X=sx*w/2, Y=sy*h/2; cx.beginPath(); cx.moveTo(X-sx*B,Y); cx.lineTo(X,Y); cx.lineTo(X,Y-sy*B); cx.stroke(); }
+  if (!lockR(o)){ const L=Math.min(22*u,w/4,h/4);
+    for (const [sx,sy] of [[-1,0],[1,0],[0,-1],[0,1]]){ const X=sx*w/2, Y=sy*h/2; cx.beginPath(); if(sx){ cx.moveTo(X,Y-L/2); cx.lineTo(X,Y+L/2); } else { cx.moveTo(X-L/2,Y); cx.lineTo(X+L/2,Y); } cx.stroke(); } }
+  cx.restore();
+}
+
 /* ---------- hit testing ---------- */
 function toPrint(X,Y){ const r=cv.getBoundingClientRect(), {k,ox,oy}=view(); return {x:(X-r.left-ox)/k, y:(Y-r.top-oy)/k}; }
 function local(o,p){ const dx=p.x-o.x, dy=p.y-o.y, c=Math.cos(-(o.rot||0)), s=Math.sin(-(o.rot||0)); return {x:(dx*c-dy*s)/o.scale, y:(dx*s+dy*c)/o.scale}; }
@@ -750,8 +787,24 @@ function handleAt(o,p){
   const pt=(lx,ly)=>({x:o.x+lx*c-ly*s, y:o.y+lx*s+ly*c});
   const r=pt(0,-(h/2+pd)-30/k); if (Math.hypot(p.x-r.x,p.y-r.y)<24/k) return 'rot';
   for (const [sx,sy] of [[-1,-1],[1,-1],[-1,1],[1,1]]){ const q=pt(sx*(w/2+pd),sy*(h/2+pd)); if(Math.hypot(p.x-q.x,p.y-q.y)<22/k) return 'scale'; }
+  if (o.type==='img' && !lockR(o)) for (const [sx,sy] of [[-1,0],[1,0],[0,-1],[0,1]]){ const q=pt(sx*(w/2+pd),sy*(h/2+pd)); if(Math.hypot(p.x-q.x,p.y-q.y)<22/k) return {ex:sx,ey:sy}; }
   return null;
 }
+// crop mode: corners and sides of the frame itself
+function cropHandleAt(o,p){
+  const {k}=view(), w=o.fw*o.scale, h=o.fh*o.scale, c=Math.cos(o.rot||0), s=Math.sin(o.rot||0), t=26/k;
+  const pt=(lx,ly)=>({x:o.x+lx*c-ly*s, y:o.y+lx*s+ly*c});
+  for (const [sx,sy] of [[-1,-1],[1,-1],[-1,1],[1,1]]){ const q=pt(sx*w/2,sy*h/2); if(Math.hypot(p.x-q.x,p.y-q.y)<t) return {ex:sx,ey:sy}; }
+  if (!lockR(o)){ const l=local(o,p), ls=t/o.scale;
+    if (Math.abs(Math.abs(l.x)-o.fw/2)<ls && Math.abs(l.y)<o.fh/2) return {ex:Math.sign(l.x),ey:0};
+    if (Math.abs(Math.abs(l.y)-o.fh/2)<ls && Math.abs(l.x)<o.fw/2) return {ex:0,ey:Math.sign(l.y)}; }
+  return null;
+}
+function inPhoto(o,p){ const pl=imgPlace(o); const l=local(o,p); const {k}=view(), pad=14/k/o.scale;
+  if (Math.abs(l.x)<=o.fw/2+pad && Math.abs(l.y)<=o.fh/2+pad) return true;
+  return pl && Math.abs(l.x-pl.ix)<=pl.DW/2 && Math.abs(l.y-pl.iy)<=pl.DH/2; }
+function edgeStart(o,hd){ const pl=imgPlace(o);
+  return {mode:'cedge',o,ex:hd.ex,ey:hd.ey,x0:o.x,y0:o.y,rot:o.rot||0,sc:o.scale,L0:-o.fw/2,R0:o.fw/2,T0:-o.fh/2,B0:o.fh/2,pl,ratio:lockR(o)}; }
 function inches(o){ const b=boxOf(o); const w=b.w*o.scale/DPI, h=b.h*o.scale/DPI; return `${w.toFixed(1)} x ${h.toFixed(1)} in`; }
 
 /* ---------- smart guides ---------- */
@@ -779,8 +832,9 @@ cv.addEventListener('pointerdown', e=>{
   if (ptrs.size===2){ multi={t:performance.now(),n:2,moved:false}; }
   if (ptrs.size===1){
     const p=toPrint(e.clientX,e.clientY), o=selObj();
-    if (o && !cropMode && !o.lock){ const hnd=handleAt(o,p); if(hnd){ G={mode:hnd,o,a0:Math.atan2(p.y-o.y,p.x-o.x),d0:Math.hypot(p.x-o.x,p.y-o.y),s0:o.scale,r0:o.rot||0}; return; } }
-    if (o && cropMode){ G={mode:'crop',o,sx:e.clientX,sy:e.clientY,cx0:o.cx||0,cy0:o.cy||0}; return; }
+    if (o && !cropMode && !o.lock){ const hnd=handleAt(o,p); if(hnd){ if(typeof hnd==='object'){ if(o.fit==='contain'){ o.fit='cover'; o.cz=1; } G=edgeStart(o,hnd); return; } G={mode:hnd,o,a0:Math.atan2(p.y-o.y,p.x-o.x),d0:Math.hypot(p.x-o.x,p.y-o.y),s0:o.scale,r0:o.rot||0}; return; } }
+    if (o && cropMode){ const hd=cropHandleAt(o,p); if(hd){ G=edgeStart(o,hd); return; }
+      if (inPhoto(o,p)){ const pl=imgPlace(o); if(pl){ G={mode:'cmove',o,pl,sx:e.clientX,sy:e.clientY}; return; } } }
     const hits=hitsAt(p);
     if (hits.length){
       const already = o && hits.includes(o);
@@ -790,7 +844,7 @@ cv.addEventListener('pointerdown', e=>{
     } else G={mode:'pan',sx:e.clientX,sy:e.clientY,px:V.px,py:V.py,empty:true};
   } else if (ptrs.size===2){
     const [a,b]=[...ptrs.values()]; const d=Math.hypot(a.x-b.x,a.y-b.y), ang=Math.atan2(b.y-a.y,b.x-a.x), o=selObj();
-    if (o && cropMode && o.type==='img') G={mode:'cropz',o,d0:d,z0:o.cz||1};
+    if (o && cropMode && o.type==='img' && imgPlace(o)){ const m=local(o,toPrint((a.x+b.x)/2,(a.y+b.y)/2)); G={mode:'cpinch',o,d0:d,pl:imgPlace(o),m0:m}; }
     else if (o && !o.lock) G={mode:'pinch',o,d0:d,a0:ang,s0:o.scale,r0:o.rot||0};
     else G={mode:'vzoom',d0:d,z0:V.z};
   }
@@ -803,25 +857,45 @@ cv.addEventListener('pointermove', e=>{
   else if (G.mode==='scale'){ const p=toPrint(e.clientX,e.clientY); G.o.scale=Math.max(.04,G.s0*Math.hypot(p.x-G.o.x,p.y-G.o.y)/G.d0); sizeLabel=inches(G.o); dirty(); }
   else if (G.mode==='rot'){ const p=toPrint(e.clientX,e.clientY); G.o.rot=snapRot(G.r0+Math.atan2(p.y-G.o.y,p.x-G.o.x)-G.a0); sizeLabel=Math.round(((G.o.rot*180/Math.PI)%360+360)%360)+'°'; dirty(); }
   else if (G.mode==='pan'){ if(V.z>1.01){ V.px=G.px+e.clientX-G.sx; V.py=G.py+e.clientY-G.sy; clampPan(); dirty(false); } }
-  else if (G.mode==='crop'){ const o=G.o, im=IMGS.get(o.src); if(!im) return; const r=srcRect(o,im); if(r.contain) return;
-    const rx=(im.w-r.sw)/2, ry=(im.h-r.sh)/2, sxp=o.fw*o.scale*k, syp=o.fh*o.scale*k;
-    o.cx = rx>.5 ? Math.max(-1,Math.min(1,G.cx0-((e.clientX-G.sx)/sxp*r.sw)/rx)) : 0;
-    o.cy = ry>.5 ? Math.max(-1,Math.min(1,G.cy0-((e.clientY-G.sy)/syp*r.sh)/ry)) : 0; dirty(); }
+  else if (G.mode==='cmove'){ const o=G.o, r=o.rot||0, c=Math.cos(-r), s=Math.sin(-r), dx=(e.clientX-G.sx)/k, dy=(e.clientY-G.sy)/k;
+    setPlace(o,G.pl.im,G.pl.z,G.pl.ix+(dx*c-dy*s)/o.scale,G.pl.iy+(dx*s+dy*c)/o.scale); dirty(); }
+  else if (G.mode==='cedge'){ cropEdge(G,toPrint(e.clientX,e.clientY)); dirty(); }
   else if (ptrs.size===2){ const [a,b]=[...ptrs.values()]; const d=Math.hypot(a.x-b.x,a.y-b.y), ang=Math.atan2(b.y-a.y,b.x-a.x);
     if(G.mode==='pinch'){ G.o.scale=Math.max(.04,G.s0*d/G.d0); G.o.rot=snapRot(G.r0+ang-G.a0); sizeLabel=inches(G.o); dirty(); }
-    else if(G.mode==='cropz'){ G.o.cz=Math.max(1,Math.min(6,G.z0*d/G.d0)); dirty(); }
+    else if(G.mode==='cpinch'){ const pl=G.pl, z=pl.z*d/G.d0, f=z/pl.z, m=local(G.o,toPrint((a.x+b.x)/2,(a.y+b.y)/2));
+      setPlace(G.o,pl.im,z,m.x+(pl.ix-G.m0.x)*f,m.y+(pl.iy-G.m0.y)*f); dirty(); }
     else if(G.mode==='vzoom'){ V.z=Math.max(1,Math.min(5,G.z0*d/G.d0)); clampPan(); updZoom(); dirty(false); } }
 });
+function syncCropSlider(){ const o=selObj(), r=document.querySelector('.pv.on .sec[data-s="crop"] input[type=range]'); if(o&&r) r.value=o.cz||1; }
+function cropEdge(G,p){
+  const o=G.o, l=toLocal0(G,p), mn=90/G.sc, pl=G.pl;
+  const iL=pl?pl.ix-pl.DW/2:-1e9, iR=pl?pl.ix+pl.DW/2:1e9, iT=pl?pl.iy-pl.DH/2:-1e9, iB=pl?pl.iy+pl.DH/2:1e9;
+  let L=G.L0,R=G.R0,T=G.T0,B=G.B0;
+  if (G.ratio && G.ex && G.ey){
+    const fx=G.ex<0?G.R0:G.L0, fy=G.ey<0?G.B0:G.T0;
+    let w=Math.max(Math.abs(l.x-fx), Math.abs(l.y-fy)*G.ratio, mn);
+    w=Math.min(w, G.ex<0?fx-iL:iR-fx, (G.ey<0?fy-iT:iB-fy)*G.ratio); const h=w/G.ratio;
+    if(G.ex<0) L=fx-w; else R=fx+w; if(G.ey<0) T=fy-h; else B=fy+h;
+  } else {
+    if (G.ex<0) L=Math.max(iL,Math.min(l.x,G.R0-mn)); if (G.ex>0) R=Math.min(iR,Math.max(l.x,G.L0+mn));
+    if (G.ey<0) T=Math.max(iT,Math.min(l.y,G.B0-mn)); if (G.ey>0) B=Math.min(iB,Math.max(l.y,G.T0+mn));
+  }
+  const mx=(L+R)/2, my=(T+B)/2, c=Math.cos(G.rot), s=Math.sin(G.rot);
+  o.fw=R-L; o.fh=B-T; o.x=G.x0+(mx*c-my*s)*G.sc; o.y=G.y0+(mx*s+my*c)*G.sc;
+  if (pl) setPlace(o,pl.im,pl.z,pl.ix-mx,pl.iy-my);
+  sizeLabel=inches(o);
+}
 function endPtr(e){
   if(!ptrs.has(e.pointerId)) return; ptrs.delete(e.pointerId);
   if (multi.n===2 && ptrs.size===0){ const quick=performance.now()-multi.t<280; const was=multi; multi={t:0,n:0,moved:false};
     if (quick && !was.moved){ G=null; undo(); return; } }
-  if (ptrs.size>0){ if(G && /pinch|vzoom|cropz/.test(G.mode)) G=null; return; }
+  if (ptrs.size>0){ if(G && G.mode==='cpinch') syncCropSlider(); if(G && /pinch|vzoom/.test(G.mode)){ if(G.mode!=='vzoom' && moved){ S.touched=true; commit(); } G=null; } return; }
   guides=[]; sizeLabel=null;
   if (G){
-    if (G.mode==='pan' && G.empty && !moved){ if(cropMode){ cropMode=false; buildCtx(); renderPanel(); } else { select(null); setTab('layout'); } }
+    if (G.mode==='pan' && G.empty && !moved){ if(cropMode) cropDone(); else { select(null); setTab('layout'); } }
     else if (G.mode==='move' && !moved) tapObject(G);
     if (moved && !/pan|vzoom/.test(G.mode)){ S.touched=true; commit(); }
+    if (moved && /^c(move|edge|pinch)/.test(G.mode)) syncCropSlider();
   }
   G=null; dirty();
 }
@@ -853,13 +927,27 @@ function select(id){ if(id) document.body.classList.remove('rhide'); updRailTab(
 function buildCtx(){ const o=selObj(), el=$('ctx'); if(!o){ el.classList.remove('on'); return; }
   const b=(n,f,cls='',lab='')=>{ const x=document.createElement('button'); x.className=cls; x.innerHTML=ic(n); x.onclick=f; x.setAttribute('aria-label',lab||n); return x; };
   el.innerHTML='';
+  if (cropMode){ const d=b('check',cropDone,'on','Done'); el.append(b('restart',cropReset,'','Reset crop'), d); el.classList.add('on'); return; }
   el.append(b('copy',dup,'','Duplicate'), b('front',()=>reorder(1),'','Bring forward'), b('back',()=>reorder(-1),'','Send back'), b('move',toggleNudge,'','Nudge'), b(o.lock?'lock':'unlock',toggleLock,o.lock?'on':'','Lock'), b('trash',delSel,'del','Delete'));
   el.classList.add('on'); }
 function dup(){ const o=selObj(); if(!o) return; const c=JSON.parse(JSON.stringify(o)); c.id=nid(); c.x+=PW()*.04; c.y+=PW()*.04; c.lock=false; S.objs.push(c); commit(); select(c.id); }
 function reorder(d){ const o=selObj(); if(!o) return; const i=S.objs.indexOf(o); S.objs.splice(i,1); S.objs.splice(d>0?S.objs.length:0,0,o); commit(); dirty(); toast(d>0?'front':'back'); }
 function toggleLock(){ const o=selObj(); if(!o) return; o.lock=!o.lock; commit(); buildCtx(); dirty(false); toast(o.lock?'lock':'unlock'); }
 function delSel(){ const i=S.objs.findIndex(o=>o.id===sel); if(i<0) return; S.objs.splice(i,1); sel=null; commit(); buildCtx(); renderPanel(); updWarn(); dirty(); }
-function toggleCrop(){ const o=selObj(); if(!o||o.type!=='img'||!o.src) return; if(o.fit==='contain'){ o.fit='cover'; commit(); } cropMode=!cropMode; buildCtx(); renderPanel(); dirty(false); }
+function setCrop(on){ const o=selObj(); if(on){ if(!o||o.type!=='img'||!o.src) return false; if(o.fit==='contain'){ o.fit='cover'; o.cz=1; o.cx=0; o.cy=0; commit(); } }
+  cropMode=!!on; buildCtx(); dirty(false); return true; }
+function toggleCrop(){ if(cropMode){ cropDone(); return; } sub.photo='crop'; if(!setCrop(true)) return; if(tab!=='photo') setTab('photo'); else renderPanel(); }
+function cropDone(){ setCrop(false); if(sub.photo==='crop') sub.photo='look'; if(tab==='photo') renderPanel(); }
+function cropReset(){ const o=selObj(); if(!o) return; const im=IMGS.get(o.src); o.cz=1; o.cx=0; o.cy=0; o.ratio=0;
+  if(im){ const pl={ix:0,iy:0}; const s=Math.sqrt(o.fw*o.fh/(im.w*im.h)); o.fw=im.w*s; o.fh=im.h*s; if(o.mask==='circle'||o.mask==='heart'){ const m=Math.min(o.fw,o.fh); o.fw=o.fh=m; } }
+  commit(); renderPanel(); dirty(); }
+function setAspect(r){ const o=selObj(); if(!o||o.type!=='img') return; const pl=imgPlace(o);
+  if(r==='orig'){ const im=IMGS.get(o.src); r=im? im.w/im.h : 0; }
+  o.ratio=r||0;
+  if(r){ let w=Math.sqrt(o.fw*o.fh*r), h=w/r;
+    if(pl){ const hx=Math.min(pl.DW/2-pl.ix, pl.DW/2+pl.ix), hy=Math.min(pl.DH/2-pl.iy, pl.DH/2+pl.iy), f=Math.min(1,hx/(w/2),hy/(h/2)); w*=f; h*=f; }
+    o.fw=w; o.fh=h; if(pl) setPlace(o,pl.im,pl.z,pl.ix,pl.iy); }
+  commit(); dirty(); }
 function closeNudge(){ $('nudge').classList.remove('on'); }
 function toggleNudge(){ const n=$('nudge'); if(n.classList.contains('on')){ closeNudge(); return; } n.innerHTML='';
   const cells=[[null],['up',0,-1],[null],['left',-1,0],['center'],['right',1,0],[null],['down',0,1],[null]];
@@ -901,7 +989,7 @@ function subs(v,list,key){ const r=$('rail'); r.innerHTML='';
   const LABEL={words:'Words',font:'Font',color:'Color',style:'Style',curve:'Curve',align:'Align',look:'Look',ink:'Ink',shape:'Shape',crop:'Crop',swap:'Swap'};
   if(!list.some(l=>l[0]===sub[key])) sub[key]=list[0][0];
   list.forEach(([id,icon,txt])=>{ const b=el('button',sub[key]===id?'on':''); b.innerHTML=(txt?`<span class="tx" style="${txt.style||''}">${txt.t}</span>`:ic(icon))+`<small>${LABEL[id]||id}</small>`; b.setAttribute('aria-label',id); b.dataset.s=id;
-    b.onclick=()=>{ setConsole(true); sub[key]=id; r.querySelectorAll('button').forEach(x=>x.classList.toggle('on',x===b)); v.querySelectorAll('.sec').forEach(s=>s.classList.toggle('on',s.dataset.s===id)); }; r.append(b); });
+    b.onclick=()=>{ setConsole(true); sub[key]=id; if(key==='photo'){ if(id==='crop') setCrop(true); else if(cropMode) setCrop(false); } r.querySelectorAll('button').forEach(x=>x.classList.toggle('on',x===b)); v.querySelectorAll('.sec').forEach(s=>s.classList.toggle('on',s.dataset.s===id)); }; r.append(b); });
   fitRail(list.length); r.classList.add('on'); v.dataset.rail='1';
   const body=el('div','body'); v.append(body); return body; }
 function homeRail(){ const r=$('rail'); r.innerHTML='';
@@ -1027,9 +1115,18 @@ function panelPhoto(v){
   rOn.onclick=()=>{ const s=selObj(); if(!s.ring) s.ring=Math.round(PW()*.012); commit(); rOn.classList.add('on'); rOff.classList.remove('on'); dirty(); };
   og.append(rOff,rOn);
   const cr=sec(body,'crop',sub.photo); const cg=el('div','grid g2'); cr.append(cg);
-  const mv=el('button','tog'+(cropMode?' on':''), ic('move')+'<span>Move inside</span>'); mv.onclick=toggleCrop; cg.append(mv);
-  const ft=el('button','tog'+(o.fit==='contain'?' on':''), ic('fit')+'<span>Show all</span>'); ft.onclick=()=>{ const s=selObj(); s.fit=s.fit==='contain'?'cover':'contain'; s.cz=1; commit(); ft.classList.toggle('on',s.fit==='contain'); dirty(); }; cg.append(ft);
-  slider(cr,'zoomOut','zoomIn',1,5,o.cz||1,val=>{ const s=selObj(); if(s.fit==='contain') s.fit='cover'; s.cz=val; dirty(); },.02);
+  cg.className='grid g6 asp'; const im0=IMGS.get(o.src);
+  const ASP=[['Free',0],['Original','orig'],['1:1',1],['4:5',4/5],['3:2',3/2],['16:9',16/9]];
+  const curR=o.ratio||0;
+  ASP.forEach(([lab,r])=>{ const rv=r==='orig'?(im0?im0.w/im0.h:1):r; const on=(r===0&&!curR)||(r!==0&&curR&&Math.abs(curR-rv)<.005);
+    const bw=rv?(rv>=1?18:18*rv):14, bh=rv?(rv>=1?18/rv:18):14;
+    const svg=`<svg class="i" viewBox="0 0 24 24">${r===0?'<path d="M4 9V4h5M15 4h5v5M20 15v5h-5M9 20H4v-5"/>':`<rect x="${12-bw/2}" y="${12-bh/2}" width="${bw}" height="${bh}" rx="2"/>`}</svg>`;
+    const t=el('button','tile'+(on?' on':''),svg+`<small>${lab}</small>`);
+    t.onclick=()=>{ if(!cropMode) toggleCrop(); setAspect(r); cg.querySelectorAll('.tile').forEach(x=>x.classList.toggle('on',x===t)); }; cg.append(t); });
+  const rw=el('div','grid g2'); cr.append(rw);
+  const rs=el('button','tog',ic('restart')+'<span>Reset</span>'); rs.onclick=cropReset; rw.append(rs);
+  const ft=el('button','tog'+(o.fit==='contain'?' on':''), ic('fit')+'<span>Show all</span>'); ft.onclick=()=>{ const s=selObj(); if(cropMode) setCrop(false); s.fit=s.fit==='contain'?'cover':'contain'; s.cz=1; s.cx=0; s.cy=0; commit(); ft.classList.toggle('on',s.fit==='contain'); dirty(); }; rw.append(ft);
+  slider(cr,'zoomOut','zoomIn',1,6,o.cz||1,val=>{ const s=selObj(); if(s.fit==='contain') s.fit='cover'; const pl=imgPlace(s); if(pl){ const c0=pl.z/(s.cz||1); setPlace(s,pl.im,c0*val,pl.ix*val/(s.cz||1),pl.iy*val/(s.cz||1)); } else s.cz=val; dirty(); },.02);
   const sw=sec(body,'swap',sub.photo); photoGrid(sw,id=>{ const s=selObj(); s.src=id; s.cz=1;s.cx=0;s.cy=0; commit(); renderPanel(); updWarn(); dirty(); }, o.src);
 }
 function coverDraw(c,src,w,h){ const x=c.getContext('2d'); const f=Math.max(c.width/w,c.height/h); x.drawImage(src,(c.width-w*f)/2,(c.height-h*f)/2,w*f,h*f); }
@@ -1040,10 +1137,9 @@ function lookThumb(c,o,look){ const x=c.getContext('2d'); x.fillStyle=S.color; x
 const embedded = window.parent!==window, PARENT_ORIGIN=params.get('parent')||'*', CREDIT=params.get('credit')!=='0';
 function panelDone(v){
   const s=only(v);
-  const b=el('button','cta',ic('check')+'<span>Add to order</span>'); b.style.height='56px'; b.onclick=preflight; s.append(b);
-  const g=el('div','grid '+(embedded?'g2':'g3')); s.append(g);
+  const b=el('button','cta',ic(embedded?'check':'file')+`<span>${embedded?'Add to order':'Save print file'}</span>`); b.style.height='56px'; b.onclick=preflight; s.append(b);
+  const g=el('div','grid g2'); s.append(g);
   const sp=el('button','tile',ic('share')+'<small>Save picture</small>'); sp.onclick=sharePicture; g.append(sp);
-  if(!embedded){ const pf=el('button','tile',ic('file')+'<small>Print file</small>'); pf.onclick=savePrintFile; g.append(pf); }
   const rs=el('button','tile',ic('restart')+'<small>Start over</small>');
   rs.onclick=()=>{ if(rs.dataset.armed){ startOver(); return; } rs.dataset.armed='1'; rs.style.background='#ffe1e1'; rs.querySelector('small').textContent='Tap again'; setTimeout(()=>{ delete rs.dataset.armed; rs.style.background=''; rs.querySelector('small').textContent='Start over'; },2400); };
   g.append(rs);
@@ -1124,13 +1220,20 @@ function preflight(){ select(null); setTab('done'); const list=issues(), box=$('
   if(!list.length){ closeSheet('doneSheet'); sendDesign(); return; }
   list.forEach(it=>{ const d=el('div','issue',ic(it.icon)+`<span>${it.text}</span>`); if(it.fix){ const b=el('button',null,it.fix); b.onclick=it.run; d.append(b); } box.append(d); });
   const blank=list.some(i=>i.k==='blank');
-  $('sendAnyway').innerHTML = blank ? '<span>OK</span>' : ic('check')+'<span>Add anyway</span>';
+  $('sendAnyway').innerHTML = blank ? '<span>OK</span>' : ic('check')+`<span>${embedded?'Add anyway':'Save anyway'}</span>`;
   $('sendAnyway').onclick=()=>{ closeSheet('doneSheet'); if(!blank) setTimeout(sendDesign,260); };
   openSheet('doneSheet'); }
 async function renderMockup(size){ const c=document.createElement('canvas'); c.width=c.height=size; drawMockup(c.getContext('2d'),size); return c; }
 const toBlob=c=>new Promise(r=>c.toBlob(r,'image/png'));
+// Writes a pHYs chunk (300 dpi) into a PNG so RIP and print software open it at its true size in inches.
+const CRC_T=(()=>{ const t=new Uint32Array(256); for(let n=0;n<256;n++){ let c=n; for(let k=0;k<8;k++) c=c&1?0xEDB88320^(c>>>1):c>>>1; t[n]=c>>>0; } return t; })();
+function crc32(b){ let c=0xFFFFFFFF; for(let i=0;i<b.length;i++) c=CRC_T[(c^b[i])&255]^(c>>>8); return (c^0xFFFFFFFF)>>>0; }
+async function stampDpi(blob,dpi){ const a=new Uint8Array(await blob.arrayBuffer()); const ppm=Math.round(dpi/0.0254);
+  const ch=new Uint8Array(21), dv=new DataView(ch.buffer); dv.setUint32(0,9); ch.set([112,72,89,115],4); dv.setUint32(8,ppm); dv.setUint32(12,ppm); ch[16]=1; dv.setUint32(17,crc32(ch.subarray(4,17)));
+  const at=33; return new Blob([a.subarray(0,at),ch,a.subarray(at)],{type:'image/png'}); }
+async function printBlob(){ const pc=await renderPrint(); return {pc, blob:await stampDpi(await toBlob(pc),DPI)}; }
 async function buildPackage(){
-  const pc=await renderPrint(), mc=await renderMockup(1200); const [printPng,mockupPng]=await Promise.all([toBlob(pc),toBlob(mc)]);
+  const {pc,blob:printPng}=await printBlob(), mc=await renderMockup(1200); const mockupPng=await toBlob(mc);
   const g=gift(), cname=(g.colors.find(c=>c[1]===S.color)||['Custom'])[0];
   const pkg={type:'fraqtals-design',version:2,item:{id:g.id,name:g.name,color:cname,colorHex:S.color},
     printArea:{widthIn:g.w,heightIn:g.h,dpi:DPI,widthPx:pc.width,heightPx:pc.height},
@@ -1143,14 +1246,15 @@ async function sendDesign(){ busy(true,'Making the print file');
     if(typeof window.onFraqtalsDesign==='function'){ await window.onFraqtalsDesign(pkg); handled=true; }
     window.dispatchEvent(new CustomEvent('fraqtals-design',{detail:pkg}));
     if(embedded){ window.parent.postMessage(pkg,PARENT_ORIGIN); handled=true; }
-    busy(false); if(!handled) await shareFiles([file(pkg.printPng,'print-'+pkg.item.id+'.png'),file(pkg.mockupPng,'mockup-'+pkg.item.id+'.png')]);
+    busy(false); if(!handled) await shareFiles([file(pkg.printPng,printName())]);
     showSent();
   }catch(err){ console.error(err); busy(false); toast('warn','Something went wrong. Try again.'); } }
 const file=(b,n)=>new File([b],n,{type:'image/png'});
 async function shareFiles(files){ if(navigator.canShare&&navigator.canShare({files})){ try{ await navigator.share({files}); return; }catch(e){ if(e.name==='AbortError') return; } }
   for(const f of files){ const a=document.createElement('a'); a.href=URL.createObjectURL(f); a.download=f.name; document.body.append(a); a.click(); a.remove(); setTimeout(()=>URL.revokeObjectURL(a.href),4000); } }
 async function sharePicture(){ busy(true,'Making your picture'); const mc=await renderMockup(1200); const b=await toBlob(mc); busy(false); await shareFiles([file(b,'my-'+gift().id+'.png')]); }
-async function savePrintFile(){ busy(true,'Making the print file'); const pc=await renderPrint(); const b=await toBlob(pc); busy(false); await shareFiles([file(b,`print-${gift().id}-${gift().w}x${gift().h}in.png`)]); }
+const printName=()=>`fraqtals-${gift().id}-${gift().w}x${gift().h}in-300dpi.png`;
+async function savePrintFile(){ busy(true,'Making the print file'); const {blob}=await printBlob(); busy(false); await shareFiles([file(blob,printName())]); }
 function showSent(){ const s=$('sent'); s.querySelector('.ring').innerHTML=ic('check'); s.classList.add('on'); setTimeout(()=>s.classList.remove('on'),1500); }
 window.addEventListener('message',e=>{ const d=e.data; if(!d||d.type!=='fraqtals-set') return; if(PARENT_ORIGIN!=='*'&&e.origin!==PARENT_ORIGIN) return; if(d.item) setGift(d.item,true); if(d.colorHex) setColor(d.colorHex); });
 function startOver(){ closeEdit(); S=Object.assign(freshState(),{gift:S.gift,color:S.color,custom:S.custom,recent:S.recent}); sel=null; tab='layout'; commit(); V={z:1,px:0,py:0}; refreshAll(); toast('restart','Fresh start'); }
@@ -1455,8 +1559,8 @@ const HELP=[
   ['zoomIn','See it for real','Tap the shirt in the top right.',
     ['Tap the shirt in the top right to see your design on it.','Pull the bar on top of the controls down for a bigger canvas.','The zoom button at the bottom left gets you close for small details.'],
     ()=>{ $('mockBtn').click(); }],
-  ['bag','Finish','Tap Done, then Add to order.',
-    ['Tap <b>Done</b>, then <b>Add to order</b>.','We check for anything outside the print area, words too small to print clean and blurry photos.','Most fixes are one tap. The print file is made print-ready for you.'],
+  ['bag','Finish',embedded?'Tap Done, then Add to order.':'Tap Done, then Save print file.',
+    [embedded?'Tap <b>Done</b>, then <b>Add to order</b>.':'Tap <b>Done</b>, then <b>Save print file</b>. It saves a see-through PNG at true print size, ready for the DTF printer.','We check for anything outside the print area, words too small to print clean and blurry photos.','Most fixes are one tap. The print file is made print-ready for you.'],
     ()=>{ setTab('done'); }],
 ];
 function openHelp(){ showHelpList(0); $('helpGo').innerHTML=ic('check')+'<span>Got it</span>'; $('helpGo').onclick=()=>closeSheet('helpSheet'); openSheet('helpSheet'); }
