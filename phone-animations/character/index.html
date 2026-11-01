@@ -197,26 +197,27 @@ function drawChar(c, S, P, view, o) {
   ctx.save(); ctx.translate(c.canvas.width / 2, c.canvas.height / 2); ctx.scale(PX, PX); ctx.translate(-view.cx, -view.cy);
   LW = Math.max(3.2, 4.4 * (view.w > 200 ? 1 : view.w / 220 + .3));
   // ground shadow
-  if (!o.noShadow) { ctx.fillStyle = 'rgba(26,26,26,.22)'; ctx.beginPath(); ctx.ellipse(0, 8, 58, 8, 0, 0, TAU); ctx.fill(); }
+  const ON = o.only || null;
+  if (!o.noShadow && !ON) { ctx.fillStyle = 'rgba(26,26,26,.22)'; ctx.beginPath(); ctx.ellipse(0, 8, 58, 8, 0, 0, TAU); ctx.fill(); }
   const hipY = -122 + (P.bob || 0);
   // skateboard under feet
-  if (S.pose === 'ollie' || (P.board && S.prop === 'board')) drawBoard(0, P.board ? P.board.y + 2 : 0, P.board ? P.board.rot : 0, S);
+  if (!ON && (S.pose === 'ollie' || (P.board && S.prop === 'board'))) drawBoard(0, P.board ? P.board.y + 2 : 0, P.board ? P.board.rot : 0, S);
   ctx.save(); ctx.translate(P.hx || 0, hipY);
   // legs
   const legs = [1, -1].map(side => legGeom(side, B, Object.assign({}, side > 0 ? P.lR : P.lL, { c: P.crouch || 0 }), P.hx || 0));
-  legs.forEach(g => drawLeg(g, B, S, skin));
+  legs.forEach(g => { if (!ON || ON === (g.side > 0 ? 'lR' : 'lL')) drawLeg(g, B, S, skin); });
   ctx.save(); ctx.rotate(R(P.lean || 0));
   const arms = [1, -1].map(side => armGeom(side, B, side > 0 ? P.aR : P.aL));
-  drawHairBack(S, B, P);
+  if (!ON) { drawHairBack(S, B, P);
   drawBagBack(S, B);
   drawTorso(S, B, skin);
-  drawExtrasTorso(S, B);
+  drawExtrasTorso(S, B); }
   // arms (left behind prop, right with prop)
-  arms.forEach((g, i) => drawArm(g, i ? -1 : 1, B, S, skin));
+  arms.forEach((g, i) => { if (!ON || ON === (i ? 'aL' : 'aR')) drawArm(g, i ? -1 : 1, B, S, skin); });
   // head
-  ctx.save(); ctx.translate(0, -134 + (P.hy || 0)); ctx.rotate(R(P.head || 0)); drawHead(S, B, P, o); ctx.restore();
+  if (!ON) { ctx.save(); ctx.translate(0, -134 + (P.hy || 0)); ctx.rotate(R(P.head || 0)); drawHead(S, B, P, o); ctx.restore();
   // props in the right hand
-  drawProp(arms[0], S, P, o);
+  drawProp(arms[0], S, P, o); }
   ctx.restore(); ctx.restore(); ctx.restore();
 }
 function legGeom(side, B, lg, hs) {
@@ -692,7 +693,7 @@ function puppet(canvas, P, px, py, sz, prop, face) {
   const w = canvas.width, h = canvas.height, g = canvas.getContext('2d'); layer.width = w; layer.height = h;
   const PXs = Math.max(0.2, sz) * h / 270, view = { cx: -(px - w / 2) / PXs, cy: -(py - h / 2) / PXs, w: w / PXs }, old = S.pose, oldProp = S.prop; S.pose = 'idle'; if (prop) S.prop = prop === 'none' ? 'none' : prop; const oldHead = S.head; if (face && face.head) S.head = face.head;
   const Pf = Object.assign({ bob: 0, lean: 0, head: 0, hy: 0, aR: [9, 14], aL: [9, 14], lR: { a: 4, lift: 0 }, lL: { a: 4, lift: 0 }, board: null }, P || {});
-  if (Pf.crouch) Pf.bob = (Pf.bob || 0) + Pf.crouch; face = face || {}; CH.drawChar(lg, S, Pf, view, { t: 0, gaze: { x: face.gx || 0, y: face.gy || 0 }, blink: !!face.blink, talk: face.talk || 0, mood: face.mood, turn: face.turn || 0, brow: face.brow || 0, lid: face.lid || 0 });
+  if (Pf.crouch) Pf.bob = (Pf.bob || 0) + Pf.crouch; face = face || {}; CH.drawChar(lg, S, Pf, view, { t: 0, gaze: { x: face.gx || 0, y: face.gy || 0 }, blink: !!face.blink, talk: face.talk || 0, mood: face.mood, turn: face.turn || 0, brow: face.brow || 0, lid: face.lid || 0, only: face.only || null });
   S.pose = old; S.prop = oldProp; S.head = oldHead; gritLayer(lg, w, h); g.clearRect(0, 0, w, h); g.drawImage(layer, 0, 0);
 }
 window.__ch = { puppet, frames: stopFrames, poses: () => Object.keys(CH.POSES), S: () => S, makeGifBytes, lzw, renderTo, setS: o => { Object.assign(S, o); save(); build(); tag(); }, setTab: k => { tab = k; build(); } };

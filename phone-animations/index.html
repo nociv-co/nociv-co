@@ -758,8 +758,6 @@ body { animation: nvIn .3s ease both; }
         <div class="pc-row">
           <div class="kc kc-sw"><button type="button" class="sw" id="pupFlip" data-n="2" aria-label="Face the other way"><i></i></button><b class="kl">FLIP</b></div>
           <button type="button" class="tb tb-prop" id="pcProp" aria-label="What they hold"><small>HOLDING</small><span id="pcPropV">SAVED</span></button>
-          <button type="button" class="tb" id="pupReset">RESET</button>
-          <button type="button" class="tb" id="pupBgBtn">PHOTO</button>
         </div>
         <div class="pc-row pc-go">
           <button type="button" class="tb tb-play" id="pcPlay" aria-pressed="false">PLAY</button>
@@ -1479,7 +1477,7 @@ body { animation: nvIn .3s ease both; }
 
   $('sceneNext').addEventListener('click', goAnimate);
   ($('clearScene') || document.createElement('i')).addEventListener('click', () => { if (!confirm('Start over? This clears every frame of this animation.')) return; st.frames = []; st.sel = -1; pup.n = 0; refreshUI(); queueSave(); updateKeep(); renderStill(); msg('shootMsg', 'Cleared.'); });
-  $('pupBgBtn').addEventListener('click', () => $('pupBg').click());
+
   $('pupBg').addEventListener('change', async e => {
     const file = e.target.files[0]; e.target.value = ''; if (!file) return;
     try { await pupLoadBg(file); pup.dirty = true; SCE.cur.color = null; scSync(); scSave(); if (!pup.on) { renderStill(); msg('shootMsg', 'Background set. Tap Animate when you are ready.'); } } catch (err) { msg('shootMsg', 'That photo would not open. Try JPG or PNG.', true); msg('pupMsg', 'That photo would not open. Try JPG or PNG.', true); }
@@ -1608,10 +1606,20 @@ body { animation: nvIn .3s ease both; }
         const spec = { mood: [{ mood: f.mood }, 1, 0.42], mouth: [{ talk: f.mouth }, 1.7, 0.72], eyes: [{ blink: f.eyes === 1 }, 1.7, 0.42], look: [{ gx: f.gx }, 1.7, 0.42], turn: [{ turn: f.turn }, 1, 0.42] };
         Object.keys(spec).forEach(k => { const cv = $('fb_' + k); vbFace(cv, Object.assign({}, neutral, spec[k][0]), spec[k][1], spec[k][2]); $('fbb_' + k).textContent = FB[k](); });
       }
-      if (vis('vpArms') || vis('vpLegs') || vis('vpBody')) {
+      // one limb on its own: draw only that arm or leg, then fit its outline into the box
+      const solo = (id, k, minW, minH) => {
+        const cv = $(id); if (!cv) return; const g = cv.getContext('2d'); g.clearRect(0, 0, cv.width, cv.height);
+        try { pup.w.__ch.puppet(OFF, pup.P, OFF.width / 2, OFF.height * 0.9, 0.66, null, { only: k }); } catch (e) { return; }
+        const d = OFF.getContext('2d').getImageData(0, 0, OFF.width, OFF.height).data; let x0 = 1e9, y0 = 1e9, x1 = -1, y1 = -1;
+        for (let y = 0; y < OFF.height; y += 2) for (let x = 0; x < OFF.width; x += 2) if (d[(y * OFF.width + x) * 4 + 3] > 24) { if (x < x0) x0 = x; if (x > x1) x1 = x; if (y < y0) y0 = y; if (y > y1) y1 = y; }
+        if (x1 < 0) return; const bw = Math.max(x1 - x0, minW), bh = Math.max(y1 - y0, minH), sc = Math.min(cv.width * 0.84 / bw, cv.height * 0.84 / bh), cx = (x0 + x1) / 2, cy = (y0 + y1) / 2;
+        g.imageSmoothingQuality = 'high'; g.drawImage(OFF, cx - cv.width / 2 / sc, cy - cv.height / 2 / sc, cv.width / sc, cv.height / sc, 0, 0, cv.width, cv.height);
+      };
+      if (vis('vpArms')) { solo('lb_aR', 'aR', 110, 110); solo('lb_aL', 'aL', 110, 110); }
+      if (vis('vpLegs')) { solo('lb_lR', 'lR', 70, 140); solo('lb_lL', 'lL', 70, 140); }
+      if (vis('vpBody')) {
         try { pup.w.__ch.puppet(OFF, pup.P, OFF.width / 2, OFF.height * 0.9, 0.66, $('pupProp').value || null, {}); } catch (e) { return; }
-        const put = (id, r) => { const cv = $(id); if (!cv) return; const g = cv.getContext('2d'); g.clearRect(0, 0, cv.width, cv.height); g.drawImage(OFF, r[0] * OFF.width, r[1] * OFF.height, (r[2] - r[0]) * OFF.width, (r[3] - r[1]) * OFF.height, 0, 0, cv.width, cv.height); };
-        if (vis('vpArms')) { put('lb_aR', REG.aR); put('lb_aL', REG.aL); } if (vis('vpLegs')) { put('lb_lR', REG.lR); put('lb_lL', REG.lL); } if (vis('vpBody')) put('lb_body', REG.body);
+        const cv = $('lb_body'), g = cv.getContext('2d'), r = REG.body; g.clearRect(0, 0, cv.width, cv.height); g.drawImage(OFF, r[0] * OFF.width, r[1] * OFF.height, (r[2] - r[0]) * OFF.width, (r[3] - r[1]) * OFF.height, 0, 0, cv.width, cv.height);
       }
     };
   })();
@@ -1634,7 +1642,6 @@ body { animation: nvIn .3s ease both; }
   function pupPick(z) { const P = PICK[z] || PICK.all, sub = $('pupSub'); sub.innerHTML = ''; P[1].forEach(s => { const b = document.createElement('button'); b.type = 'button'; b.className = 'pad'; b.dataset.l = s[0]; b.textContent = s[1]; b.addEventListener('click', () => { pup.limb = s[0]; buzz(8); pupSync(); }); sub.appendChild(b); }); if (!P[1].some(s => s[0] === pup.limb) && pup.limb !== P[0]) pup.limb = P[0]; else if (!P[1].length) pup.limb = P[0]; pupSync(); }
   document.querySelectorAll('#pupZoom button').forEach(bt => bt.addEventListener('click', () => { pup.zm = bt.dataset.z; pupPick(pup.zm); pup.zt = null; document.body.classList.toggle('pupzoomed', pup.zm !== 'all'); buzz(8); document.querySelectorAll('#pupZoom button').forEach(x => x.setAttribute('aria-pressed', x === bt ? 'true' : 'false')); }));
   $('pupFloat').addEventListener('click', () => $('pupSnap').click());
-  $('pupReset').addEventListener('click', () => { pup.P = pupFresh(); pupSync(); pup.dirty = true; });
   let pupTake; $('pupSnap').addEventListener('click', pupTake = async () => {
     const [W, H] = size(), c = document.createElement('canvas'); c.width = W; c.height = H; const g = c.getContext('2d'); scBack(g, W, H, SCE.cur, false); g.drawImage(pupChar(W, H), 0, 0); scFront(g, W, H, SCE.cur);
     const ghost = document.createElement('canvas'); ghost.width = W; ghost.height = H; ghost.getContext('2d').drawImage(pup.flip ? pup.fc : pup.chc, 0, 0);
