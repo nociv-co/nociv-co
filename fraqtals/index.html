@@ -228,7 +228,17 @@ input[type=range]::-moz-range-thumb{width:28px;height:28px;border:0;border-radiu
 #toast{position:fixed;left:50%;bottom:calc(var(--panelH) + var(--dock) + var(--sb) + 14px);transform:translate(-50%,16px);opacity:0;z-index:80;background:var(--ink);color:#fff;border-radius:16px;padding:10px 14px;display:flex;align-items:center;gap:8px;font-size:13px;font-weight:600;transition:opacity .25s,transform .35s var(--spring);pointer-events:none;max-width:90vw;box-shadow:0 8px 24px rgba(28,29,43,.25)}
 #toast.on{opacity:1;transform:translate(-50%,0)}
 #toast svg{width:18px;height:18px;flex:0 0 auto}
-.hrow{display:flex;align-items:center;gap:12px;padding:6px 2px;border-bottom:1px solid var(--line)}
+.hrow{display:flex;align-items:center;gap:12px;padding:6px 2px;border-bottom:1px solid var(--line);width:100%;text-align:left;transition:background .2s}
+.hrow:active{background:var(--tile)}
+.hrow .chev{margin-left:auto;color:var(--sub);flex:0 0 auto}
+.hrow .chev svg{width:18px;height:18px}
+#helpWrap{position:relative;overflow:hidden}
+#helpList,#helpDetail{transition:transform .38s var(--spring),opacity .25s}
+.dtip{display:flex;gap:12px;align-items:flex-start;padding:9px 2px;border-bottom:1px solid var(--line)}
+.dtip:last-child{border-bottom:0}
+.dtip i{flex:0 0 auto;width:8px;height:8px;border-radius:50%;background:var(--yel);box-shadow:0 0 0 1.5px var(--ink);margin-top:6px}
+.dtip span{font-size:14px;line-height:1.35;color:var(--ink);font-weight:500}
+.dtip b{font-weight:750}
 .hrow:last-child{border-bottom:0}
 .hrow .hi{width:40px;height:40px;border-radius:13px;background:var(--tile);color:var(--icon);display:grid;place-items:center;flex:0 0 auto}
 .hrow .hi svg{width:21px;height:21px}
@@ -319,8 +329,8 @@ input[type=range]::-moz-range-thumb{width:28px;height:28px;border:0;border-radiu
 
 <div class="sheet" id="helpSheet"><div class="scrim"></div><div class="card">
   <div class="grab"></div>
-  <div class="shead"><h3>How it works</h3><button class="ib" id="helpClose" aria-label="Close"></button></div>
-  <div id="helpList"></div>
+  <div class="shead"><button class="ib" id="helpBack" aria-label="Back" style="display:none"></button><h3 id="helpTitle">How it works</h3><button class="ib" id="helpClose" aria-label="Close"></button></div>
+  <div id="helpWrap"><div id="helpList"></div></div>
   <button class="cta" id="helpGo" style="margin-top:12px"></button>
 </div></div>
 
@@ -1419,16 +1429,40 @@ async function restore(){ await idb(); const raw=await get('kv','state2'); if(!r
 
 /* ---------- help guide (uses the real button names) ---------- */
 const HELP=[
-  ['tee','Pick your item','Tap the item at the top to change item and color.'],
-  ['layout','Pick a template','Tap the yellow button. No layout starts blank.'],
-  ['text','Change the words','Tap the words, then Edit words.'],
-  ['photo','Add your photo','Tap an empty photo spot.'],
-  ['move','Move and size','Drag to move. Pinch to resize and turn.'],
-  ['zoomIn','See it for real','Tap the shirt in the top right.'],
-  ['bag','Finish','Tap Done, then Add to order.'],
+  ['tee','Pick your item','Tap the item at the top to change item and color.',
+    ['Tap <b>Tee</b> at the top of the screen.','Pick the item, then the shirt color under it.','Your design moves over to fit the new item.'],
+    ()=>{ buildItemSheet(); openSheet('itemSheet'); }],
+  ['layout','Pick a template','Tap the yellow button. No layout starts blank.',
+    ['In <b>Layout</b>, tap the yellow button to see the 6 categories.','Tap a category, then tap a design to use it.','<b>Shuffle</b> tries new colors and fonts on the same design.','<b>No layout</b> clears everything so you can start blank.','The color dots below change the colors of the whole design.'],
+    ()=>{ setTab('layout'); openTemplates(); }],
+  ['text','Change the words','Tap the words, then Edit words.',
+    ['Tap any words on the design, then <b>Edit words</b> and type.','Side buttons: <b>Font</b>, <b>Color</b> (tap + for any color), <b>Style</b> (outline, hollow, spacing), <b>Curve</b>, <b>Align</b>.','Tap the check or tap outside to finish typing.','<b>Add text</b> on the side adds new words.'],
+    ()=>{ const t=S.objs.find(o=>o.type==='text'); if(t) select(t.id); else addText({font:'anton',size:.11}); }],
+  ['photo','Add your photo','Tap an empty photo spot.',
+    ['Tap an empty photo spot, or <b>Add photo</b> on the side.','<b>Look</b>: Original, Copy, Dots, Ink, Duo.','<b>Shape</b>: square, rounded, circle or heart, with or without an outline.','<b>Crop</b>: slide the photo inside its frame, or show all of it.','<b>Swap</b>: use a different photo in the same spot.'],
+    ()=>{ const im=S.objs.find(o=>o.type==='img'); if(im) select(im.id); else pickPhoto(); }],
+  ['move','Move and size','Drag to move. Pinch to resize and turn.',
+    ['One finger drags. Two fingers resize and turn.','Corner circles resize. The top circle turns it.','Pink lines show when it is centered or lined up.','The bar on top: copy, bring forward, send back, nudge, lock, delete.','Tap two fingers at once to undo.'],
+    ()=>{ const o=S.objs[S.objs.length-1]; if(o) select(o.id); }],
+  ['zoomIn','See it for real','Tap the shirt in the top right.',
+    ['Tap the shirt in the top right to see your design on it.','Pull the bar on top of the controls down for a bigger canvas.','The zoom button at the bottom left gets you close for small details.'],
+    ()=>{ $('mockBtn').click(); }],
+  ['bag','Finish','Tap Done, then Add to order.',
+    ['Tap <b>Done</b>, then <b>Add to order</b>.','We check for anything outside the print area, words too small to print clean and blurry photos.','Most fixes are one tap. The print file is made print-ready for you.'],
+    ()=>{ setTab('done'); }],
 ];
-function openHelp(){ const l=$('helpList'); l.innerHTML=''; HELP.forEach(([icn,t,d])=>{ l.append(el('div','hrow',`<div class="hi">${ic(icn)}</div><div><b>${t}</b><span>${d}</span></div>`)); });
-  $('helpGo').innerHTML=ic('check')+'<span>Got it</span>'; $('helpGo').onclick=()=>closeSheet('helpSheet'); openSheet('helpSheet'); }
+function openHelp(){ showHelpList(0); $('helpGo').innerHTML=ic('check')+'<span>Got it</span>'; $('helpGo').onclick=()=>closeSheet('helpSheet'); openSheet('helpSheet'); }
+function showHelpList(dir){ const w=$('helpWrap'); w.innerHTML=''; const l=el('div',''); l.id='helpList'; w.append(l);
+  $('helpBack').style.display='none'; $('helpTitle').textContent='How it works';
+  HELP.forEach((h,i)=>{ const b=el('button','hrow',`<div class="hi">${ic(h[0])}</div><div><b>${h[1]}</b><span>${h[2]}</span></div><div class="chev">${ic('chevR')}</div>`); b.onclick=()=>showHelpDetail(i); l.append(b); });
+  $('helpGo').innerHTML=ic('check')+'<span>Got it</span>'; $('helpGo').onclick=()=>closeSheet('helpSheet');
+  if(dir){ l.style.transform='translateX(-30px)'; l.style.opacity='0'; requestAnimationFrame(()=>{ l.style.transform='none'; l.style.opacity='1'; }); } }
+function showHelpDetail(i){ const h=HELP[i], w=$('helpWrap'); const minH=w.offsetHeight; w.innerHTML=''; w.style.minHeight=minH+'px';
+  const d=el('div',''); d.id='helpDetail'; w.append(d);
+  $('helpBack').style.display='grid'; $('helpTitle').textContent=h[1];
+  h[3].forEach(t=>d.append(el('div','dtip',`<i></i><span>${t}</span>`)));
+  $('helpGo').innerHTML=ic('right')+'<span>Show me</span>'; $('helpGo').onclick=()=>{ closeSheet('helpSheet'); setTimeout(h[4],280); };
+  d.style.transform='translateX(30px)'; d.style.opacity='0'; requestAnimationFrame(()=>{ d.style.transform='none'; d.style.opacity='1'; }); }
 function armReset(){ const b=$('resetBtn'); if(b.classList.contains('armed')){ b.classList.remove('armed'); startOver(); return; }
   b.classList.add('armed'); toast('restart','Tap again to start over'); setTimeout(()=>b.classList.remove('armed'),2600); }
 
@@ -1438,7 +1472,7 @@ async function boot(){
   $('undo').innerHTML=ic('undo'); $('redo').innerHTML=ic('redo'); $('mockClose').innerHTML=ic('close'); $('editDone').innerHTML=ic('check');
   $('tplBack').innerHTML=ic('chevL'); $('tplClose').innerHTML=ic('close'); $('cpDrop').innerHTML=ic('picker'); $('cpMore').innerHTML=ic('more'); $('cpUse').innerHTML=ic('check')+'<span>Use this color</span>';
   $('undo').onclick=undo; $('redo').onclick=redo;
-  $('resetBtn').innerHTML=ic('restart'); $('helpBtn').innerHTML='<span style="font-size:19px;font-weight:800;line-height:1">?</span>'; $('helpClose').innerHTML=ic('close');
+  $('resetBtn').innerHTML=ic('restart'); $('helpBtn').innerHTML='<span style="font-size:19px;font-weight:800;line-height:1">?</span>'; $('helpClose').innerHTML=ic('close'); $('helpBack').innerHTML=ic('chevL'); $('helpBack').onclick=()=>{ $('helpWrap').style.minHeight=''; showHelpList(-1); };
   $('resetBtn').onclick=armReset; $('helpBtn').onclick=openHelp;
   try{ if(!localStorage.getItem('fqHelpSeen')){ localStorage.setItem('fqHelpSeen','1'); setTimeout(openHelp,700); } }catch(e){}
   buildDock(); updZoom(); updRailTab();
