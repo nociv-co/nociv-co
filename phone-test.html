@@ -50,23 +50,35 @@
 
 <script>
 // ===== THE TEST LIST. Claude rewrites this block after every delivery. Keep each test to a few taps. =====
-var BATCH = '2026-11-02 night';
+var BATCH = '2026-11-02 late night';
 var TESTS = [
+  { id: 'find', title: 'Find box on Admin home', where: 'Admin, home screen',
+    steps: ['Open Admin and log in.', 'Tap the Find box at the top and type: refund.', 'Tap the answer.'],
+    expect: 'A short list shows where it lives (Recent Orders, Transactions). Tapping it opens that place. Typing customers puts Customers first.' },
+  { id: 'cust', title: 'Customer list', where: 'Admin, Transactions, Customers',
+    steps: ['Open Transactions, then Customers.', 'Type part of an email in the search box.', 'Tap Download customer list.'],
+    expect: 'One line per customer with orders, total spent and last order date. Repeat buyers are tagged. The CSV opens in Numbers or Sheets. With no sales yet it says No customers yet.' },
+  { id: 'unfin', title: 'Unfinished checkouts line', where: 'Admin, home screen',
+    steps: ['On your phone, add something to the cart on the shop and leave without paying.', 'Wait 45 minutes, open Admin.'],
+    expect: 'Needs you shows 1 checkout started and not finished, and what was in the bag. It does not have an email, that is normal.' },
+  { id: 'slip', title: 'Packing slip', where: 'Admin, Recent Orders, an order that ships',
+    steps: ['Open an order with a shipping address.', 'Tap Packing slip.', 'Tap Print.'],
+    expect: 'A clean page with the address, items and thank you. Print shows the page without the button. If nothing opens, allow pop ups for the site.' },
+  { id: 'refund', title: 'Refund button (real money)', where: 'Admin, Recent Orders',
+    steps: ['Buy your own cheapest pin first.', 'On that order tap Refund, leave the amount blank, confirm.', 'Check your card app and Stripe.'],
+    expect: 'It says Refunded, the order shows Refunded in red and moves to Cancelled. Stock is NOT put back, add it yourself. Needs the live Stripe key and the order to have a Stripe payment.' },
   { id: 'needs', title: 'Needs you list', where: 'Admin, home screen',
-    steps: ['Open Admin and log in.', 'Look at the top of the home screen.', 'Tap one line.'],
-    expect: 'A box called Needs you lists what is waiting (orders to handle, low stock, items with no cost). Each line opens the right place. If nothing is waiting it says All clear. Before the order tracking SQL is run, orders waiting is counted as online orders with no label yet.' },
-  { id: 'csv', title: 'Orders for taxes', where: 'Admin, Transactions',
-    steps: ['Open Transactions.', 'Tap Download 2026 orders (CSV).', 'Open the file from Files or Downloads.'],
-    expect: 'A spreadsheet with one row per order: date, what, paid, your cost and profit. It opens in Numbers or Sheets with the columns lined up.' },
+    steps: ['Look at the top of the home screen.', 'Tap one line.'],
+    expect: 'Each line opens the right place. If nothing is waiting it says All clear.' },
   { id: 'flip', title: 'Flip and Holding in Whole', where: 'Cartoon, Animate, Whole',
-    steps: ['Tap WHOLE, then PARTS, then FLIP + HOLD.', 'Tap FACE THE OTHER WAY.', 'Tap the Holding button a few times.'],
-    expect: 'The character turns the other way and the Holding button cycles through what they hold.' },
+    steps: ['Tap WHOLE, then PARTS, then FLIP + HOLD.', 'Tap FACE THE OTHER WAY.'],
+    expect: 'The character turns the other way and Holding cycles.' },
   { id: 'armsleg', title: 'Arms and legs panel', where: 'Cartoon, Animate, Arms then Legs',
     steps: ['Tap ARMS, turn the knobs, then tap LEGS.'],
-    expect: 'A small picture on the left, knobs on the right, nothing overlapping. The big picture above gets shorter to make room.' },
+    expect: 'Small picture left, knobs right, nothing overlapping.' },
   { id: 'pinfit', title: 'Pin art fits the face', where: 'Admin, Pins',
-    steps: ['Under How the art sits on the pin, keep Fill the button face.', 'Make print sheets, print ONE at 100 percent, cut a circle and press a pin.'],
-    expect: 'Your picture covers the whole visible face and nothing important is cut off at the edge.' }
+    steps: ['Keep Fill the button face, print ONE sheet at 100 percent, cut one and press a pin.'],
+    expect: 'Your picture covers the visible face and nothing important is cut off.' }
 ];
 // ===== end of list =====
 

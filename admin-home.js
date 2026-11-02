@@ -11,8 +11,8 @@
 
   // What each room holds, in the order you see it. First section is the one you reach for most.
   var ROOMS = [
-    { id: 'money', name: 'Transactions', desc: 'Orders, expenses, outside sales', sections: ['orders', 'expenses', 'crosslist'] },
-    { id: 'shop', name: 'NOCIV Shop', desc: 'Products, pins, codes, shipping, zines', sections: ['products', 'pins', 'bundles', 'codes', 'shipping', 'album', 'shopgoal', 'zines', 'cheatsheet'] },
+    { id: 'money', name: 'Transactions', desc: 'Orders, customers, expenses, outside sales', sections: ['orders', 'customers', 'expenses', 'crosslist'] },
+    { id: 'shop', name: 'NOCIV Shop', desc: 'Products, pins, codes, shipping, zines', sections: ['products', 'bundles', 'codes', 'shipping', 'pins', 'zines', 'album', 'shopgoal', 'cheatsheet'] },
     { id: 'clients', name: 'Clients', desc: 'Design clients, hours, invoices, files', sections: ['design'], open: true },
     { id: 'messages', name: 'Messages', desc: 'What people sent you', sections: ['messages'], open: true },
     { id: 'calendar', name: 'Calendar', desc: 'Dates, to-do list, phone calendar', sections: ['goals'], open: true },
@@ -20,6 +20,7 @@
     { id: 'community', name: 'Community', desc: 'Directory, vendor spots, mailing list', sections: ['directory', 'vendor', 'popup', 'mailing', 'promo'] },
     { id: 'tools', name: 'Tools and Setup', desc: 'Your tool links, Stripe, what is working', sections: ['links', 'health'], open: false }
   ];
+  window.nocivRooms = ROOMS;
   var byId = {}; ROOMS.forEach(function (r) { byId[r.id] = r; });
   var roomOf = {}; ROOMS.forEach(function (r) { r.sections.forEach(function (s) { roomOf['sec-' + s] = r.id; }); });
   var current = 'home';

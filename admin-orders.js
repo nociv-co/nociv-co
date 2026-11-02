@@ -50,6 +50,16 @@
     return bar;
   }
 
+  // a plain sheet to put in the box. No prices, so it works for gifts too.
+  function packingSlip(o) {
+    var w = window.open('', '_blank'); if (!w) { alert('Your browser blocked the packing slip. Allow pop ups for this site and try again.'); return; }
+    var items = Array.isArray(o.items) && o.items.length ? o.items.map(function (i) { return '<tr><td>' + esc(i.quantity || 1) + ' x</td><td>' + esc(i.name || 'Item') + (i.size ? ' <small>(' + esc(i.size) + ')</small>' : '') + '</td></tr>'; }).join('') : '<tr><td></td><td>' + esc(o.description || 'Your order') + '</td></tr>';
+    var addr = [o.ship_name, o.ship_address1, o.ship_address2, [o.ship_city, o.ship_state, o.ship_zip].filter(Boolean).join(' '), o.ship_country && o.ship_country !== 'US' ? o.ship_country : ''].filter(Boolean).map(esc).join('<br>');
+    var d = new Date(o.created_at); var when = isNaN(d) ? '' : d.toLocaleDateString('en-US', { timeZone: 'America/Phoenix', year: 'numeric', month: 'long', day: 'numeric' });
+    w.document.write('<!doctype html><html><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Packing slip ' + esc(o.id) + '</title><style>body{font:16px/1.4 -apple-system,Helvetica,Arial,sans-serif;color:#111;margin:0;padding:28px;max-width:640px}h1{font-size:2rem;letter-spacing:.08em;margin:0 0 2px}.sub{margin:0 0 22px;opacity:.7}h2{font-size:.78rem;letter-spacing:.12em;text-transform:uppercase;margin:22px 0 6px;border-bottom:2px solid #111;padding-bottom:4px}table{width:100%;border-collapse:collapse}td{padding:6px 0;border-bottom:1px solid #ddd;vertical-align:top}td:first-child{width:56px;font-weight:700}.thx{margin-top:28px;font-weight:700}button{font:inherit;font-weight:800;padding:12px 18px;border:2px solid #111;background:#111;color:#fff;margin-bottom:20px;cursor:pointer}@media print{button{display:none}body{padding:0}}</style></head><body><button onclick="window.print()">Print</button><h1>NOCIV.CO</h1><p class="sub">Order #' + esc(o.id) + (when ? ' &middot; ' + esc(when) : '') + '</p><h2>Ship to</h2><p>' + (addr || 'Local pickup') + '</p><h2>In this box</h2><table>' + items + '</table><p class="thx">Thank you for your order.</p></body></html>');
+    w.document.close();
+  }
+
   function card(o, ctx) {
     var s = status(o), steps = flow(o), idx = Math.max(0, steps.findIndex(function (x) { return x[0] === s; }));
     var done = s === 'delivered' || s === 'picked_up', cancelled = s === 'cancelled', inperson = o.source === 'in_person';
@@ -95,6 +105,29 @@
     var stripe = o.stripe_payment_intent_id ? 'https://dashboard.stripe.com/payments/' + encodeURIComponent(o.stripe_payment_intent_id)
       : (o.stripe_session_id ? 'https://dashboard.stripe.com/checkout/sessions/' + encodeURIComponent(o.stripe_session_id) : '');
     if (stripe) links.appendChild(el('<a href="' + esc(stripe) + '" target="_blank" rel="noopener">Payment in Stripe</a>'));
+    // refunds: asks Stripe through the refund-order function, only you can use it
+    var paidAmt = Number(o.amount_paid) || 0, refunded = Number(o.refunded_amount) || 0;
+    if (refunded > 0) links.appendChild(el('<span class="ord-hint" style="font-weight:800;color:#c8412f;">Refunded $' + refunded.toFixed(2) + (refunded >= paidAmt - 0.005 ? ' (all of it)' : '') + '</span>'));
+    if (o.stripe_payment_intent_id && !(refunded > 0 && refunded >= paidAmt - 0.005) && ctx.refund) {
+      var rb = el('<button type="button" class="ord-danger">Refund</button>');
+      rb.onclick = function () {
+        var left = Math.max(0, paidAmt - refunded);
+        var typed = prompt('Refund how much? Leave it blank to refund the full $' + left.toFixed(2) + '. Type an amount like 5.00 for part of it.', '');
+        if (typed === null) return;
+        typed = typed.trim().replace(/^\$/, '');
+        var amt = typed === '' ? null : Number(typed);
+        if (amt !== null && (!isFinite(amt) || amt <= 0)) { alert('That is not an amount. Type something like 5.00.'); return; }
+        var shown = amt === null ? left : amt;
+        if (!confirm('Refund $' + shown.toFixed(2) + ' to the customer\'s card now?' + (amt === null || shown >= left - 0.005 ? ' This also cancels the order and emails the customer. Stock is NOT put back, do that by hand.' : '') + ' This cannot be undone.')) return;
+        ctx.refund(o, amt, rb);
+      };
+      links.appendChild(rb);
+    }
+    if (!inperson && o.ship_address1) {
+      var ps = el('<button type="button">Packing slip</button>');
+      ps.onclick = function () { packingSlip(o); };
+      links.appendChild(ps);
+    }
     if (!inperson && o.tracking_token) {
       var url = location.origin + '/order.html?t=' + o.tracking_token;
       links.appendChild(el('<a href="' + esc(url) + '" target="_blank" rel="noopener">What the customer sees</a>'));

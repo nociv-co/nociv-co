@@ -39,7 +39,7 @@
   }
 
   // Each check returns null (nothing to show) or { n, text, sub, to, soft }.
-  function checks(orders, products, variants) {
+  function checks(orders, products, variants, carts) {
     var out = [];
     if (orders) {
       var hasStatus = orders.some(function (o) { return o.order_status != null; });
@@ -66,6 +66,15 @@
       var nocost = live.filter(function (p) { return p.cost == null || p.cost === ''; });
       if (nocost.length) out.push({ n: nocost.length, text: nocost.length + ' for sale item' + (nocost.length === 1 ? ' has' : 's have') + ' no cost filled in', sub: 'Profit cannot be worked out. ' + lines(nocost.map(function (p) { return p.name; }), 3), to: '#sec-products', soft: true });
     }
+    if (carts && products) {
+      var nowMs = Date.now(), nameOf = {}; products.forEach(function (p) { nameOf[p.id] = p.name; });
+      var open2 = carts.filter(function (c) { var age = nowMs - new Date(c.created_at).getTime(); return !c.used_at && age > 45 * 60000 && age < 7 * 86400000; });
+      if (open2.length) {
+        var tally = {}; open2.forEach(function (c) { (Array.isArray(c.items) ? c.items : []).forEach(function (i) { var n = nameOf[i.productId] || ''; if (n) tally[n] = (tally[n] || 0) + (Number(i.quantity) || 1); }); });
+        var top = Object.keys(tally).sort(function (a, b) { return tally[b] - tally[a]; });
+        out.push({ n: open2.length, text: open2.length + ' checkout' + (open2.length === 1 ? '' : 's') + ' started this week and not finished', sub: (top.length ? 'Most left in the bag: ' + lines(top, 3) + '. ' : '') + 'No emails are collected, so this is for your information', to: '#sec-products', soft: true });
+      }
+    }
     return out;
   }
 
@@ -84,10 +93,12 @@
   var busy = false;
   function refresh() {
     if (busy || typeof supabaseClient === 'undefined') return; busy = true;
-    Promise.all([get('orders', '*'), get('products', '*'), get('product_variants', '*')]).then(function (r) {
+    Promise.all([get('orders', '*'), get('products', '*'), get('product_variants', '*'), get('checkout_carts', '*')]).then(function (r) {
       busy = false;
       if (r[0] === null && r[1] === null) { box.style.display = ''; box.innerHTML = ''; return; } // not signed in yet or tables missing
-      render(checks(r[0] && r[0].slice(-300), r[1], r[2]));
+      var list = checks(r[0] && r[0].slice(-300), r[1], r[2], r[3]); render(list);
+      var shopN = list.filter(function (c) { return /Running low|no cost/.test(c.text); }).reduce(function (a, c) { return a + c.n; }, 0), b = $('bub-shop');
+      if (b) { b.textContent = shopN ? String(shopN) : ''; b.classList.toggle('on', !!shopN); }
     }, function () { busy = false; });
   }
   window.nocivNeedsYou = refresh;
@@ -140,5 +151,65 @@
   setInterval(function () { if (document.body.getAttribute('data-view') === 'home') refresh(); }, 90000);
   if (document.body.getAttribute('data-view') === 'home') setTimeout(refresh, 1200);
   var tries = 0, t = setInterval(function () { if (typeof supabaseClient !== 'undefined' || ++tries > 20) { clearInterval(t); if (document.body.getAttribute('data-view') === 'home') refresh(); } }, 700);
-  window.nocivCsv = { csvOf: csvOf };
+
+  // ---- Customers: who bought, who came back ----
+  var parking = $('roomParking');
+  if (parking && !$('sec-customers')) {
+    var cs = document.createElement('details'); cs.className = 'admin-section'; cs.id = 'sec-customers';
+    cs.innerHTML = '<summary>Customers <span class="admin-section-hint">who bought, who came back</span></summary><div class="admin-section-body"><input type="search" id="custFind" placeholder="Search by email" autocomplete="off" style="width:100%;box-sizing:border-box;margin-bottom:10px"><p class="field-hint" id="custSum">Open to load.</p><div id="custList"></div><button type="button" class="ny-dl" id="custCsv" style="margin-top:12px">Download customer list (CSV)</button><p class="field-hint">Built from your orders. In person sales have no email, so they are not here. Only email people who asked to hear from you.</p></div>';
+    parking.appendChild(cs);
+    var custRows = [];
+    var loadCust = function () {
+      supabaseClient.from('orders').select('*').order('created_at', { ascending: true }).limit(5000).then(function (r) {
+        if (r.error) { $('custSum').textContent = 'Could not read orders: ' + r.error.message; return; }
+        var by = {};
+        (r.data || []).forEach(function (o) {
+          var em = String(o.customer_email || '').trim().toLowerCase(); if (!em || o.order_status === 'cancelled' || o.source === 'in_person') return;
+          var net = (Number(o.amount_paid) || 0) - (Number(o.refunded_amount) || 0);
+          var c = by[em] || (by[em] = { email: em, n: 0, spent: 0, first: o.created_at, last: o.created_at, name: '' });
+          c.n++; c.spent += net; c.last = o.created_at; if (o.ship_name) c.name = o.ship_name;
+        });
+        custRows = Object.keys(by).map(function (k) { return by[k]; }).sort(function (a, b) { return b.spent - a.spent; });
+        drawCust();
+      });
+    };
+    var drawCust = function () {
+      var q = ($('custFind').value || '').trim().toLowerCase(), rows = custRows.filter(function (c) { return !q || c.email.indexOf(q) > -1 || c.name.toLowerCase().indexOf(q) > -1; });
+      var rep = custRows.filter(function (c) { return c.n > 1; }).length;
+      $('custSum').textContent = custRows.length ? custRows.length + ' customer' + (custRows.length === 1 ? '' : 's') + ', ' + rep + ' came back for more' + (custRows.length ? ' (' + Math.round(rep / custRows.length * 100) + '%)' : '') + '.' : 'No customers yet.';
+      $('custList').innerHTML = rows.slice(0, 100).map(function (c) {
+        return '<div style="border-top:1px solid #ddd;padding:8px 0"><b>' + esc(c.name || c.email) + '</b>' + (c.n > 1 ? ' <span class="ny-n soft" style="height:20px;min-width:20px;font-size:.7rem">repeat</span>' : '') + '<br><span style="font-size:.82rem;opacity:.7">' + (c.name ? esc(c.email) + '<br>' : '') + c.n + ' order' + (c.n === 1 ? '' : 's') + ' &middot; $' + c.spent.toFixed(2) + ' &middot; last ' + esc(phoenixDay(new Date(c.last))) + '</span></div>';
+      }).join('') + (rows.length > 100 ? '<p class="field-hint">Showing the first 100. Search or download to see the rest.</p>' : '');
+    };
+    cs.addEventListener('toggle', function () { if (cs.open && typeof supabaseClient !== 'undefined') loadCust(); });
+    $('custFind').addEventListener('input', drawCust);
+    $('custCsv').addEventListener('click', function () {
+      if (!custRows.length) return;
+      download('nociv-customers.csv', '﻿' + ['Email,Name,Orders,Spent,First order,Last order'].concat(custRows.map(function (c) { return [c.email, c.name, c.n, c.spent.toFixed(2), phoenixDay(new Date(c.first)), phoenixDay(new Date(c.last))].map(cell).join(','); })).join('\r\n'));
+    });
+  }
+
+  // ---- Find anything: type a word, tap where it lives ----
+  var KEYS = { orders: 'orders refund packing slip shipping label tracking email cancel customer', customers: 'customers buyers repeat emails list export', expenses: 'expenses costs receipts spending', crosslist: 'outside sales etsy vinted cross list', products: 'products inventory stock prices sizes sale items', pins: 'pins buttons print sheets circles', bundles: 'bundles sets deals', codes: 'discount codes coupons promo', shipping: 'shipping rates free shipping weights', zines: 'zines lulu pdf books print', album: 'album photos process', shopgoal: 'goal note shop', cheatsheet: 'cheat sheet help', design: 'clients design invoices hours', messages: 'messages contact inbox', goals: 'calendar to do tasks dates', time: 'clock hours tracker time', directory: 'directory community listings', vendor: 'vendor spots stalls', popup: 'pop up events', mailing: 'mailing list signups newsletter', promo: 'promo flyers', links: 'links shippo printify lulu stripe tools', health: 'what is working installed sql check' };
+  var find = document.createElement('div'); find.id = 'adminFindWrap';
+  find.innerHTML = '<input type="search" id="adminFind" placeholder="Find something in Admin (try refund, pins, label)" autocomplete="off"><div id="adminFindList"></div>';
+  home.parentNode.insertBefore(find, home);
+  var css2 = document.createElement('style');
+  css2.textContent = '#adminFindWrap{display:none;margin:0 0 10px}body[data-view="home"] #adminFindWrap{display:block}#adminFind{width:100%;box-sizing:border-box;padding:11px 12px;border:2px solid #111;border-radius:10px;font:inherit;font-size:16px;background:#fff}#adminFindList button{display:block;width:100%;text-align:left;border:0;border-bottom:1px solid #ddd;background:#fff;padding:11px 12px;font:inherit;font-weight:700;color:#111;cursor:pointer}#adminFindList small{display:block;font-weight:400;opacity:.6}#adminFindList{background:#fff;border-radius:0 0 10px 10px}';
+  document.head.appendChild(css2);
+  var roomName = function (secId) { var rs = window.nocivRooms || []; for (var i = 0; i < rs.length; i++) if (rs[i].sections.indexOf(secId) > -1) return rs[i].name; return ''; };
+  $('adminFind').addEventListener('input', function () {
+    var q = this.value.trim().toLowerCase(), list = $('adminFindList'); list.innerHTML = ''; if (!q) return;
+    var hits = [];
+    [].slice.call(document.querySelectorAll('.admin-section')).forEach(function (sec) {
+      var id = sec.id.replace('sec-', ''), sm = sec.querySelector('summary'); if (!sm || !roomName(id)) return;
+      var title = (sm.childNodes[0] ? sm.childNodes[0].textContent : sm.textContent).trim(), hay = (title + ' ' + (KEYS[id] || '') + ' ' + sm.textContent).toLowerCase();
+      var words = q.split(/\s+/);
+      if (words.every(function (w) { return hay.indexOf(w) > -1; })) hits.push({ id: id, title: title, room: roomName(id), score: words.every(function (w) { return title.toLowerCase().indexOf(w) > -1; }) ? 2 : words.every(function (w) { return (KEYS[id] || '').indexOf(w) > -1; }) ? 1 : 0 });
+    });
+    hits.sort(function (x, y) { return y.score - x.score; });
+    list.innerHTML = hits.slice(0, 8).map(function (h) { return '<button type="button" data-id="' + esc(h.id) + '">' + esc(h.title) + '<small>' + esc(h.room) + '</small></button>'; }).join('') || '<p class="field-hint" style="padding:8px 4px">Nothing matches. Try another word.</p>';
+  });
+  $('adminFindList').addEventListener('click', function (e) { var b = e.target.closest('button[data-id]'); if (!b) return; $('adminFind').value = ''; $('adminFindList').innerHTML = ''; location.hash = '#sec-' + b.dataset.id; });
+    window.nocivCsv = { csvOf: csvOf };
 })();

@@ -1495,9 +1495,9 @@
 <script src="crop.js"></script>
 <script src="pin-sheets.js?v=4"></script>
 <script src="design-admin.js?v=1"></script>
-<script src="admin-home.js?v=3"></script>
-<script src="admin-attention.js?v=1"></script>
-<script src="admin-orders.js?v=1"></script>
+<script src="admin-home.js?v=4"></script>
+<script src="admin-attention.js?v=2"></script>
+<script src="admin-orders.js?v=2"></script>
 <script src="admin-lulu.js?v=2"></script>
 <script>
   const loginBox = document.getElementById('loginBox');
@@ -3432,6 +3432,18 @@
         const { error } = await supabaseClient.from('orders').update({ order_status: prev, emailed_status: prev }).eq('id', ord.id);
         if (error) { alert('Could not undo: ' + error.message); return; }
         await loadOrders();
+      },
+      refund: async (ord, amount, btn) => {
+        const t = btn.textContent; btn.disabled = true; btn.textContent = 'Refunding...';
+        try {
+          const res = await fetch('https://vscombrgcdtrfndqyugb.supabase.co/functions/v1/refund-order', {
+            method: 'POST', headers: Object.assign({ 'Content-Type': 'application/json' }, await authHeader()), body: JSON.stringify({ order_id: ord.id, amount: amount }),
+          });
+          const r = await res.json().catch(() => ({}));
+          if (r.ok) alert('Refunded $' + Number(r.refunded).toFixed(2) + '.' + (r.full ? ' The order is cancelled.' : '') + (r.saved === false ? ' The refund went through in Stripe, but could not be saved on the order here.' : ''));
+          else alert('Not refunded: ' + (r.error || r.message || 'the refund function did not answer. It may not be deployed.'));
+        } catch (e) { alert('Could not reach the refund function. Nothing was refunded.'); }
+        btn.disabled = false; btn.textContent = t; await loadOrders();
       },
       test: async (ord, status, btn) => {
         const t = btn.textContent; btn.disabled = true; btn.textContent = 'Sending...';
