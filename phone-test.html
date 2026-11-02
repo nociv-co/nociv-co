@@ -50,11 +50,23 @@
 
 <script>
 // ===== THE TEST LIST. Claude rewrites this block after every delivery. Keep each test to a few taps. =====
-var BATCH = '2026-11-02 evening';
+var BATCH = '2026-11-02 night';
 var TESTS = [
+  { id: 'needs', title: 'Needs you list', where: 'Admin, home screen',
+    steps: ['Open Admin and log in.', 'Look at the top of the home screen.', 'Tap one line.'],
+    expect: 'A box called Needs you lists what is waiting (orders to handle, low stock, items with no cost). Each line opens the right place. If nothing is waiting it says All clear. Before the order tracking SQL is run, orders waiting is counted as online orders with no label yet.' },
+  { id: 'csv', title: 'Orders for taxes', where: 'Admin, Transactions',
+    steps: ['Open Transactions.', 'Tap Download 2026 orders (CSV).', 'Open the file from Files or Downloads.'],
+    expect: 'A spreadsheet with one row per order: date, what, paid, your cost and profit. It opens in Numbers or Sheets with the columns lined up.' },
+  { id: 'flip', title: 'Flip and Holding in Whole', where: 'Cartoon, Animate, Whole',
+    steps: ['Tap WHOLE, then PARTS, then FLIP + HOLD.', 'Tap FACE THE OTHER WAY.', 'Tap the Holding button a few times.'],
+    expect: 'The character turns the other way and the Holding button cycles through what they hold.' },
+  { id: 'armsleg', title: 'Arms and legs panel', where: 'Cartoon, Animate, Arms then Legs',
+    steps: ['Tap ARMS, turn the knobs, then tap LEGS.'],
+    expect: 'A small picture on the left, knobs on the right, nothing overlapping. The big picture above gets shorter to make room.' },
   { id: 'pinfit', title: 'Pin art fits the face', where: 'Admin, Pins',
-    steps: ['Open Admin, then Pins.', 'Under How the art sits on the pin, leave Fill the button face selected.', 'Add one pin picture and tap Make print sheets (PDF).', 'Print ONE sheet at 100 percent (Actual size), cut one circle and press one pin.'],
-    expect: 'The whole face of the pressed pin shows your picture. Nothing important is cut off at the edge. If the edge still clips, switch to Show my whole picture on the face and press another.' }
+    steps: ['Under How the art sits on the pin, keep Fill the button face.', 'Make print sheets, print ONE at 100 percent, cut a circle and press a pin.'],
+    expect: 'Your picture covers the whole visible face and nothing important is cut off at the edge.' }
 ];
 // ===== end of list =====
 
