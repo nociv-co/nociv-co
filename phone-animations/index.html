@@ -94,7 +94,10 @@
   .wp-bar { display: flex; align-items: center; }
   .wp-strip { display: flex; gap: 5px; overflow-x: auto; scrollbar-width: none; padding: 2px 2px 6px; width: 100%; animation: wpOpen .26s ease-out; }
   .wp-strip::-webkit-scrollbar { display: none; }
-  @keyframes wpOpen { from { clip-path: inset(0 100% 0 0); opacity: .4; } to { clip-path: inset(0 0 0 0); opacity: 1; } }
+  @keyframes wpOpen { from { transform: translateX(-28px); opacity: 0; } to { transform: none; opacity: 1; } }
+  body.pupmode .wp-strip .wp-chip { padding: 0 13px; box-shadow: none; }
+  body.pupmode .wp-strip .wp-chip[aria-pressed="true"] { box-shadow: inset 0 0 0 2px rgba(255,255,255,.5); }
+  body.pupmode.cvfit .vf canvas { max-height: var(--cvmax) !important; }
   .wp-chip { flex: none; width: auto; padding: 0 10px; height: clamp(26px, 4svh, 32px); font-size: clamp(.68rem, 1.9svh, .8rem); letter-spacing: .04em; }
   #vpArms > .pv-h, #vpLegs > .pv-h { display: none; }
   .wp-g { display: none; } .wp-g.on { display: block; }
@@ -239,6 +242,9 @@
   body.pupmode #pupZoom button { font-size: clamp(.78rem, 2.1svh, .95rem); padding: clamp(8px, 1.7svh, 12px) 13px; min-width: 66px; }
   #pupZoom { display: none; position: absolute; right: 8px; top: 50%; transform: translateY(-50%); z-index: 5; flex-direction: column; gap: 5px; }
   body.pupmode #pupZoom { display: flex; }
+  /* the zone buttons always fit the picture, however short it gets */
+  body.pupmode #pupZoom { top: 6px; bottom: 6px; transform: none; justify-content: center; gap: 4px; }
+  body.pupmode #pupZoom button { flex: 1 1 0; min-height: 0; max-height: 38px; padding: 0 13px; display: flex; align-items: center; justify-content: center; }
   #pupZoom button { background: rgba(26,26,26,.78); color: #f2ecd6; border: 0; border-radius: 999px; padding: clamp(6px, 1.3svh, 9px) 11px; font: 400 clamp(.62rem, 1.7svh, .75rem)/1 NocivAnton, Anton, Impact, sans-serif; letter-spacing: .07em; box-shadow: 0 5px 12px rgba(0,0,0,.3); }
   #pupZoom button[aria-pressed="true"] { background: #c8412f; color: #fff; }
   body.pupmode #stageMsg { transition: opacity .35s; }
@@ -1333,13 +1339,26 @@ body { animation: nvIn .3s ease both; }
     try { pvToggle(); } catch (e) {}
     const k = pup.limb, d = PL[k] || PL.aR, P = pup.P; $('pupFace').classList.toggle('hide', k !== 'face'); $('pupEmote').classList.toggle('hide', k !== 'emote' || pup.zm === 'pan' || (pup.zm === 'all' && !!pup.wp)); $('pupMoodRow').classList.toggle('hide', k !== 'mood'); $('pupLimbCtl').classList.toggle('hide', k === 'face' || k === 'emote' || k === 'mood');
     document.querySelectorAll('#pupLimb [data-l], #pupSub [data-l]').forEach(x => x.setAttribute('aria-pressed', x.dataset.l === k ? 'true' : 'false')); $('pupSub').classList.toggle('hide', ['head', 'upper', 'legs'].indexOf(pup.zm) < 0);
-    if (k === 'face' || k === 'emote' || k === 'mood') { knobsDraw(); return; } $('pupL1').textContent = d[0]; $('pupL2').textContent = d[1];
+    if (k === 'face' || k === 'emote' || k === 'mood') { knobsDraw(); requestAnimationFrame(pupFit); return; } $('pupL1').textContent = d[0]; $('pupL2').textContent = d[1];
     const s1 = $('pupS1'), s2 = $('pupS2'); s1.min = d[2]; s1.max = d[3]; s2.min = d[4]; s2.max = d[5];
     let v1, v2; if (k === 'aR' || k === 'aL') { v1 = P[k][0]; v2 = P[k][1]; } else if (k === 'lR' || k === 'lL') { v1 = P[k].a; v2 = Math.round(P[k].lift * 100); } else { v1 = P.lean; v2 = P.head; }
     s1.value = v1; s2.value = v2; $('pupV1').textContent = Math.round(v1); $('pupV2').textContent = Math.round(v2);
     const jv = P.bob < 0 ? -P.bob : -(P.crouch || 0); $('pupS3').value = jv; $('pupV3').textContent = Math.round(jv); $('pupSz').value = pup.sz; $('pupVz').textContent = Math.round(pup.sz * 100) + '%';
-    knobsDraw();
+    knobsDraw(); requestAnimationFrame(pupFit);
   }
+  // give the console the room it needs: if the open panel is taller than the console, the picture above shrinks by exactly that much
+  function pupFit() {
+    const b = document.body; if (!b.classList.contains('pupmode')) return;
+    const cv = document.querySelector('.vf canvas'), pn = [].slice.call(document.querySelectorAll('.pc-mid > .pc-knobs')).filter(n => n.offsetParent !== null)[0]; if (!cv || !pn) return;
+    const top = Math.round(innerHeight * (b.classList.contains('pupmini') ? 0.42 : 0.25));
+    for (let i = 0; i < 4; i++) {
+      const avail = pn.clientHeight; pn.style.alignSelf = 'start'; const nat = pn.offsetHeight; pn.style.alignSelf = '';
+      const d = nat - avail + 6; if (Math.abs(d) <= 3 || (d < 0 && !b.classList.contains('cvfit'))) break;
+      const next = Math.max(100, Math.min(top, cv.clientHeight - d)); if (Math.abs(next - cv.clientHeight) < 2) break;
+      b.style.setProperty('--cvmax', Math.floor(next) + 'px'); b.classList.add('cvfit');
+    }
+  }
+  window.pupFit = pupFit; window.addEventListener('resize', () => requestAnimationFrame(pupFit));
   function pupSet(jumpEdit) {
     const k = pup.limb, P = pup.P, a = +$('pupS1').value, b = +$('pupS2').value;
     if (k === 'aR' || k === 'aL') P[k] = [a, b]; else if (k === 'lR' || k === 'lL') P[k] = { a: a, lift: b / 100 }; else { P.lean = a; P.head = b; } if (jumpEdit) { const jv = +$('pupS3').value; P.bob = jv > 0 ? -jv : 0; P.crouch = jv < 0 ? -jv : 0; }
