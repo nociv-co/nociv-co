@@ -33,12 +33,15 @@ alter table orders drop constraint if exists orders_order_status_check;
 alter table orders add constraint orders_order_status_check check (order_status in
   ('new','processing','label_printed','shipped','delivered','ready_pickup','picked_up','cancelled'));
 
--- Admin (any logged in user, you are the only one) can change orders
+-- Only YOUR admin login can change orders (not just any logged in account).
+-- If you ever change your admin email, change it here too and run this again.
 drop policy if exists "Admin can update orders" on orders;
-create policy "Admin can update orders" on orders for update to authenticated using (true) with check (true);
+create policy "Admin can update orders" on orders for update to authenticated
+  using ((auth.jwt() ->> 'email') = 'nociv.co@gmail.com')
+  with check ((auth.jwt() ->> 'email') = 'nociv.co@gmail.com');
 
 -- Keep the history honest: every status change is stamped, no matter who made it
-create or replace function orders_track() returns trigger language plpgsql as $$
+create or replace function orders_track() returns trigger language plpgsql set search_path = public as $$
 begin
   if tg_op = 'INSERT' then
     if new.source = 'in_person' then new.order_status := 'delivered'; end if;
@@ -78,6 +81,10 @@ begin
   end;
   return null;
 end $$;
+
+-- Trigger helpers are not for the public to call
+revoke execute on function orders_track() from public, anon, authenticated;
+revoke execute on function orders_notify() from public, anon, authenticated;
 
 drop trigger if exists orders_notify_ins on orders;
 create trigger orders_notify_ins after insert on orders for each row execute function orders_notify();
