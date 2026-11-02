@@ -14,7 +14,7 @@
     custom: { finish: 1.25, cut: 1.73, note: 'Type the finished size of your button and the size of the paper circle your cutter makes.' }
   };
   var designs = [], uid = 0, page = 0, products = [], timer = null, restored = false, saveT = null;
-  var CFG_IDS = ['pinMachine', 'pinFinish', 'pinCut', 'pinMargin', 'pinGap', 'pinPaper', 'pinOutline', 'pinBg'];
+  var CFG_IDS = ['pinMachine', 'pinFinish', 'pinCut', 'pinMargin', 'pinGap', 'pinPaper', 'pinOutline', 'pinBg', 'pinFit'];
 
   // ---- keep your work if the page reloads (phone browsers do this a lot). Saved only on this device. ----
   function idb() {
@@ -52,7 +52,7 @@
   function cfg() {
     var n = function (id, d) { var v = parseFloat($(id).value); return isFinite(v) && v > 0 ? v : d; };
     var p = PAPER[$('pinPaper').value] || PAPER.letter;
-    var c = { finish: n('pinFinish', 1.25), cut: n('pinCut', 1.73), margin: Math.max(0, parseFloat($('pinMargin').value) || 0), gap: Math.max(0, parseFloat($('pinGap').value) || 0), pw: p[0], ph: p[1], outline: $('pinOutline').checked, bg: $('pinBg').value || '#ffffff' };
+    var c = { finish: n('pinFinish', 1.25), cut: n('pinCut', 1.73), margin: Math.max(0, parseFloat($('pinMargin').value) || 0), gap: Math.max(0, parseFloat($('pinGap').value) || 0), pw: p[0], ph: p[1], outline: $('pinOutline').checked, bg: $('pinBg').value || '#ffffff', fit: $('pinFit').value || 'face' };
     var uw = c.pw - 2 * c.margin, uh = c.ph - 2 * c.margin;
     c.cols = Math.max(0, Math.floor((uw + c.gap + 1e-9) / (c.cut + c.gap)));
     c.rows = Math.max(0, Math.floor((uh + c.gap + 1e-9) / (c.cut + c.gap)));
@@ -66,10 +66,21 @@
   function slots() { var out = []; designs.forEach(function (d) { for (var i = 0; i < d.count; i++) out.push(d); }); return out; }
 
   // ---- drawing ----
-  function drawArt(g, art, cx, cy, d, bg) {
+  // d = the circle that is cut. faceD = the part you can see on the finished button. cutD = the paper circle.
+  // The paper outside the face wraps behind the button, so anything your art puts there is hidden when pressed.
+  //   face  : your picture fills the visible face (the short side of the picture = the face). Recommended.
+  //   whole : your whole picture sits inside the face, nothing is cropped. The rest is the "behind" color.
+  //   cut   : your picture fills the whole paper circle, so the outer edge is hidden when pressed (the old way).
+  function drawArt(g, art, cx, cy, d, bg, faceD, cutD, mode) {
+    mode = mode || 'face'; faceD = faceD || d; cutD = cutD || d;
     g.save(); g.beginPath(); g.arc(cx, cy, d / 2, 0, Math.PI * 2); g.clip();
     g.fillStyle = bg; g.fillRect(cx - d / 2, cy - d / 2, d, d);
-    var s = d / Math.min(art.width, art.height), w = art.width * s, h = art.height * s;
+    var sh = Math.min(art.width, art.height), s;
+    if (mode === 'cut') s = cutD / sh;
+    else if (mode === 'whole') s = faceD / Math.sqrt(art.width * art.width + art.height * art.height);
+    else s = faceD / sh;
+    if (mode === 'face') { var u = cutD / sh; g.drawImage(art, cx - art.width * u / 2, cy - art.height * u / 2, art.width * u, art.height * u); } // wraps behind the button
+    var w = art.width * s, h = art.height * s;
     g.drawImage(art, cx - w / 2, cy - h / 2, w, h); g.restore();
   }
   function drawPage(canvas, pageIdx, dpi, guides) {
@@ -80,7 +91,7 @@
     for (var i = from; i < to; i++) {
       var k = i - from, r = Math.floor(k / c.cols), col = k % c.cols;
       var cx = (c.x0 + col * (c.cut + c.gap) + c.cut / 2) * dpi, cy = (c.y0 + r * (c.cut + c.gap) + c.cut / 2) * dpi;
-      drawArt(g, sl[i].art, cx, cy, c.cut * dpi, c.bg);
+      drawArt(g, sl[i].art, cx, cy, c.cut * dpi, c.bg, c.finish * dpi, c.cut * dpi, c.fit);
       if (c.outline) { // sits just outside the art, so it is cut off with the circle
         g.beginPath(); g.arc(cx, cy, c.cut * dpi / 2 + 0.012 * dpi, 0, Math.PI * 2); g.lineWidth = Math.max(1, 0.006 * dpi); g.strokeStyle = '#8a8a8a'; g.stroke();
       }
@@ -98,7 +109,7 @@
     g.save(); g.shadowColor = 'rgba(0,0,0,.35)'; g.shadowBlur = size * 0.045; g.shadowOffsetY = size * 0.022; g.fillStyle = '#9a9a9a'; g.beginPath(); g.arc(cx, cy, R * 1.04, 0, Math.PI * 2); g.fill(); g.restore();
     var rim = g.createLinearGradient(cx - R, cy - R, cx + R, cy + R); rim.addColorStop(0, '#fbfbfb'); rim.addColorStop(0.5, '#a9a9a9'); rim.addColorStop(1, '#ececec');
     g.fillStyle = rim; g.beginPath(); g.arc(cx, cy, R * 1.04, 0, Math.PI * 2); g.fill();
-    drawArt(g, art, cx, cy, R * 2 * 0.97, bg || '#fff');
+    var cc = cfg(); drawArt(g, art, cx, cy, R * 2 * 0.97, bg || '#fff', R * 2 * 0.97, R * 2 * 0.97 * cc.cut / cc.finish, cc.fit);
     g.save(); g.beginPath(); g.arc(cx, cy, R * 0.97, 0, Math.PI * 2); g.clip();
     var edge = g.createRadialGradient(cx, cy, R * 0.8, cx, cy, R * 0.97); edge.addColorStop(0, 'rgba(0,0,0,0)'); edge.addColorStop(1, 'rgba(0,0,0,.2)'); g.fillStyle = edge; g.fillRect(cx - R, cy - R, R * 2, R * 2);
     var gl = g.createRadialGradient(cx - R * 0.45, cy - R * 0.55, R * 0.05, cx - R * 0.45, cy - R * 0.55, R * 1.15); gl.addColorStop(0, 'rgba(255,255,255,.55)'); gl.addColorStop(0.5, 'rgba(255,255,255,.08)'); gl.addColorStop(1, 'rgba(255,255,255,0)'); g.fillStyle = gl; g.fillRect(cx - R, cy - R, R * 2, R * 2);
@@ -331,7 +342,7 @@
   // ---- wiring ----
   function byId(el) { var r = el.closest('[data-id]'); return r ? designs.filter(function (d) { return String(d.id) === r.dataset.id; })[0] : null; }
   $('pinMachine').addEventListener('change', function () { var m = MACHINES[this.value]; if (this.value !== 'custom') { $('pinFinish').value = m.finish; $('pinCut').value = m.cut; } $('pinMachineNote').textContent = m.note; renderAll(); });
-  ['pinFinish', 'pinCut', 'pinMargin', 'pinGap', 'pinPaper', 'pinOutline', 'pinBg'].forEach(function (id) {
+  ['pinFinish', 'pinCut', 'pinMargin', 'pinGap', 'pinPaper', 'pinOutline', 'pinBg', 'pinFit'].forEach(function (id) {
     $(id).addEventListener('input', function () { if (id === 'pinFinish' || id === 'pinCut') { $('pinMachine').value = (parseFloat($('pinFinish').value) === 1.25 && parseFloat($('pinCut').value) === 1.73) ? 'vevor32' : 'custom'; } renderAll(); });
   });
   $('pinFile').addEventListener('change', function (e) { var f = [].slice.call(e.target.files || []); if (f.length) addFiles(f); });

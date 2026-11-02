@@ -1023,6 +1023,10 @@
             <div><label for="pinPaper">Paper</label><select id="pinPaper"><option value="letter">Letter 8.5 x 11</option><option value="a4">A4</option></select></div>
             <div><label for="pinBg">Behind see-through art</label><input type="color" id="pinBg" value="#ffffff"></div>
           </div>
+          <div class="admin-form-row">
+            <div style="flex:1 1 100%;"><label for="pinFit">How the art sits on the pin</label><select id="pinFit"><option value="face">Fill the button face (recommended)</option><option value="whole">Show my whole picture on the face</option><option value="cut">Fill the whole paper circle (edges get hidden)</option></select></div>
+          </div>
+          <p class="field-hint">The outer ring of the paper circle wraps behind the button, so you never see it. "Fill the button face" puts your picture on the part you can see and lets only the extra edge wrap. The preview below matches what the pressed pin shows.</p>
           <label style="display:flex; align-items:center; gap:8px; cursor:pointer;"><input type="checkbox" id="pinOutline" checked style="width:auto; margin:0;"> Thin cut outline just outside each circle (gets cut off with the circle)</label>
           <p class="field-hint" id="pinFit"></p>
 
@@ -1489,7 +1493,7 @@
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script src="supabase.js"></script>
 <script src="crop.js"></script>
-<script src="pin-sheets.js?v=3"></script>
+<script src="pin-sheets.js?v=4"></script>
 <script src="design-admin.js?v=1"></script>
 <script src="admin-home.js?v=3"></script>
 <script src="admin-orders.js?v=1"></script>
