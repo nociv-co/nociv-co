@@ -104,6 +104,9 @@
   .wp-g .pv-kn { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 6px 4px; }
   .wp-g .pv-kn.k3 { grid-template-columns: repeat(3, minmax(0, 1fr)); } .wp-g .pv-kn.k2 { grid-template-columns: repeat(2, minmax(0, 96px)); justify-content: start; gap: 6px 22px; }
   .wp-body { padding: 2px 4px 0; }
+  .pv-kn.k2x { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; align-items: stretch; }
+  .pv-kn.k2x .tb { height: clamp(40px, 7svh, 54px); font-size: clamp(.72rem, 2svh, .9rem); }
+  .pv-kn.k2x .tb[aria-pressed="true"] { background: #c8412f; color: #fff; }
   .toononly { display: none; }
   body.toon.noframes:not(.pupmode) #editRow, body.toon.noframes:not(.pupmode) #deck, body.toon.noframes:not(.pupmode) #rewindRow, body.toon.noframes:not(.pupmode) #info, body.toon.noframes:not(.pupmode) #tl { display: none !important; }
   body.toon .toononly { display: block; }
@@ -1701,7 +1704,7 @@ body { animation: nvIn .3s ease both; }
     addK(bk, 'knBd4', 'SIZE', () => pup.sz, v => { pup.sz = Math.round(v * 100) / 100; }, 0.3, 1, v => Math.round(v * 100) + '%');
     // whole: a PARTS drop-down that slides out sideways. Pick any body part, adjust it right here.
     const wh = mkPanel('vpWhole', 'PARTS'); wh.innerHTML = '<div class="wp-bar"><div class="wp-strip" id="wpStrip"></div></div><div class="wp-body" id="wpBody"></div>';
-    const WP = [['head', 'HEAD'], ['aR', 'R ARM'], ['aL', 'L ARM'], ['lR', 'R LEG'], ['lL', 'L LEG'], ['body', 'BODY']], wg = {};
+    const WP = [['head', 'HEAD'], ['aR', 'R ARM'], ['aL', 'L ARM'], ['lR', 'R LEG'], ['lL', 'L LEG'], ['body', 'BODY'], ['extra', 'FLIP + HOLD']], wg = {};
     const wpGroup = (key, cls) => { const g = document.createElement('div'); g.className = 'wp-g'; g.innerHTML = '<div class="pv-kn ' + cls + '"></div>'; $('wpBody').appendChild(g); wg[key] = g; return g.firstChild; };
     const turnSel = t => { const i = Math.max(0, Math.min(4, Math.round(t * 2) + 2)); $('pupTurn').selectedIndex = i; };
     let k = wpGroup('head', '');
@@ -1715,8 +1718,12 @@ body { animation: nvIn .3s ease both; }
     addK(k, 'wk_lean', 'LEAN', () => P().lean || 0, v => { P().lean = v; }, -20, 20, deg);
     addK(k, 'wk_jump', 'JUMP', () => { const q = P(); return q.bob < 0 ? -q.bob : -(q.crouch || 0); }, v => { const q = P(); q.bob = v > 0 ? -v : 0; q.crouch = v < 0 ? -v : 0; }, -40, 70, v => v >= 0 ? 'UP ' + Math.round(v) : 'DOWN ' + Math.round(-v));
     addK(k, 'wk_size', 'SIZE', () => pup.sz, v => { pup.sz = Math.round(v * 100) / 100; }, 0.3, 1, v => Math.round(v * 100) + '%');
+    // flip and what they hold: the small console hides that row, so they live here too
+    { const g = document.createElement('div'); g.className = 'wp-g'; g.innerHTML = '<div class="pv-kn k2x"><button type="button" class="tb" id="wkFlip" aria-pressed="false">FACE THE OTHER WAY</button><button type="button" class="tb tb-prop" id="wkProp"><small>HOLDING</small><span id="wkPropV">SAVED</span></button></div>'; $('wpBody').appendChild(g); wg.extra = g;
+      const sync = () => { $('wkFlip').setAttribute('aria-pressed', pup.flip ? 'true' : 'false'); $('wkFlip').textContent = pup.flip ? 'FACING FLIPPED' : 'FACE THE OTHER WAY'; $('wkPropV').textContent = $('pcPropV').textContent; };
+      $('wkFlip').addEventListener('click', () => { $('pupFlip').click(); sync(); }); $('wkProp').addEventListener('click', () => { $('pcProp').click(); setTimeout(sync, 60); }); pup.wpExtra = sync; }
     pup.wpSel = 'head';
-    const wpDraw = () => { const st0 = $('wpStrip'); st0.innerHTML = ''; WP.forEach(([key, name]) => { const b = document.createElement('button'); b.type = 'button'; b.className = 'pad wp-chip'; b.textContent = name; b.setAttribute('aria-pressed', key && key === pup.wpSel ? 'true' : 'false'); b.addEventListener('click', () => { buzz(8); pup.wpSel = key; wpDraw(); pupSync(); }); st0.appendChild(b); }); Object.keys(wg).forEach(key => wg[key].classList.toggle('on', key === pup.wpSel)); };
+    const wpDraw = () => { const st0 = $('wpStrip'); st0.innerHTML = ''; WP.forEach(([key, name]) => { const b = document.createElement('button'); b.type = 'button'; b.className = 'pad wp-chip'; b.textContent = name; b.setAttribute('aria-pressed', key && key === pup.wpSel ? 'true' : 'false'); b.addEventListener('click', () => { buzz(8); pup.wpSel = key; wpDraw(); pupSync(); }); st0.appendChild(b); }); Object.keys(wg).forEach(key => wg[key].classList.toggle('on', key === pup.wpSel)); if (pup.wpExtra) pup.wpExtra(); };
     pup.wpOpen = () => { pup.wp = true; if (pup.zm !== 'all') return; wpDraw(); pupSync(); };
     $('pcParts').addEventListener('click', () => { buzz(8); if (pup.wp) { pup.wp = false; pupSync(); } else pup.wpOpen(); });
     pup.wpDraw = wpDraw; wpDraw();
