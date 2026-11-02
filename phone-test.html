@@ -50,7 +50,7 @@
 
 <script>
 // ===== THE TEST LIST. Claude rewrites this block after every delivery. Keep each test to a few taps. =====
-var BATCH = '2026-11-01 evening';
+var BATCH = '2026-11-01 night';
 var TESTS = [
   { id: 'orders', title: 'Order board', where: 'Admin, Transactions, Recent Orders',
     steps: ['Open Admin and log in.', 'Open Transactions, then Recent Orders.', 'Find an order. Tap the big red button on it.'],
@@ -73,9 +73,9 @@ var TESTS = [
   { id: 'camera', title: 'Camera fold', where: 'Animate + Edit, Camera',
     steps: ['Open the camera.', 'Pull the console down, then back up.'],
     expect: 'The screen never gets stuck, and the tool bar never covers the grip.' },
-  { id: 'zoom', title: 'Zoom bar', where: 'Any tool',
-    steps: ['In any tool, tap the magnifying glass.'],
-    expect: 'A see-through zoom bar pops up, and dragging it zooms. It fades away on its own.' },
+  { id: 'zoom', title: 'Small zoom bar', where: 'Any tool (Zine, Stencil, Cut & Sew, Animate, QR, Cards)',
+    steps: ['Tap the magnifying glass in the bottom left corner of the picture.', 'Tap + once, then tap minus once.', 'Now press and HOLD +, then press and hold minus.', 'Tap Fit.'],
+    expect: 'A small see-through bar stands up above the magnifier with +, minus and FIT. One tap is a small step. Holding keeps zooming, faster the longer you hold. Fit puts it back. It fades away on its own.' },
   { id: 'refresh', title: 'Refresh button', where: 'Tools page',
     steps: ['Open any tool from the Tools page.', 'Tap the refresh button at the top.'],
     expect: 'You get the newest version of the tool, not an old stuck one.' }

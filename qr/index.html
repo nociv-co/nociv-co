@@ -163,16 +163,11 @@
 
 .nv-mag{padding:0!important;width:42px!important;height:42px!important;min-width:0!important;margin:0!important;position:absolute;left:8px;bottom:8px;z-index:6;width:42px;height:42px;border-radius:13px;border:1.5px solid rgba(26,26,26,.55);background:rgba(255,255,255,.55);color:#1a1a1a;-webkit-backdrop-filter:blur(6px);backdrop-filter:blur(6px);display:grid;place-items:center;cursor:pointer;touch-action:manipulation;transition:transform .15s var(--nv-ease),background .2s}
 .nv-mag svg{width:22px;height:22px}.nv-mag:active{transform:scale(.9)}.nv-mag.on{background:#1a1a1a;color:#fff}
-.nv-zbar{position:absolute;left:8px;right:8px;bottom:58px;z-index:7;max-width:380px;display:flex;align-items:center;gap:8px;padding:6px 10px;border-radius:16px;background:rgba(26,26,26,.5);-webkit-backdrop-filter:blur(8px);backdrop-filter:blur(8px);color:#fff;opacity:0;transform:translateY(10px) scale(.97);pointer-events:none;transition:opacity .22s var(--nv-ease),transform .28s var(--nv-spring)}
+.nv-zbar{box-sizing:border-box;position:absolute;left:8px;bottom:58px;z-index:7;width:42px;display:flex;flex-direction:column;align-items:stretch;gap:5px;padding:5px;border-radius:14px;background:rgba(26,26,26,.5);-webkit-backdrop-filter:blur(8px);backdrop-filter:blur(8px);color:#fff;opacity:0;transform:translateY(10px) scale(.97);pointer-events:none;transition:opacity .22s var(--nv-ease),transform .28s var(--nv-spring);-webkit-user-select:none;user-select:none;-webkit-touch-callout:none}
 .nv-zbar.on{opacity:1;transform:none;pointer-events:auto}
-.nv-zbar button{flex:none!important;width:auto!important;min-width:34px!important;height:34px!important;border-radius:10px!important;border:0!important;background:rgba(255,255,255,.22)!important;color:#fff!important;font:900 20px/1 inherit!important;padding:0 8px!important;margin:0!important;box-shadow:none!important;cursor:pointer;touch-action:manipulation}
-.nv-zbar button.f{font-size:.72rem!important;letter-spacing:.1em;text-transform:uppercase}
-.nv-zbar .sp{flex:1}
-.nv-zbar input[type=range]{flex:1 1 auto!important;width:auto!important;min-width:0;height:34px!important;margin:0!important;padding:0!important;border:0!important;background:transparent!important;box-shadow:none!important;-webkit-appearance:none;appearance:none}
-.nv-zbar input[type=range]::-webkit-slider-runnable-track{height:4px;border-radius:2px;background:rgba(255,255,255,.45)}
-.nv-zbar input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:22px;height:22px;border-radius:50%;background:#fff;border:2px solid #1a1a1a;margin-top:-9px}
-.nv-zbar input[type=range]::-moz-range-track{height:4px;border-radius:2px;background:rgba(255,255,255,.45)}
-.nv-zbar input[type=range]::-moz-range-thumb{width:20px;height:20px;border-radius:50%;background:#fff;border:2px solid #1a1a1a}
+.nv-zbar button{flex:none!important;width:100%!important;min-width:0!important;height:34px!important;border-radius:10px!important;border:0!important;background:rgba(255,255,255,.22)!important;color:#fff!important;font:900 22px/1 inherit!important;padding:0!important;margin:0!important;box-shadow:none!important;cursor:pointer;touch-action:none;-webkit-user-select:none;user-select:none}
+.nv-zbar button:active{background:rgba(255,255,255,.4)!important}
+.nv-zbar button.f{font-size:.62rem!important;letter-spacing:.08em;text-transform:uppercase;height:28px!important}
 .nvzoomed{overflow:hidden}
 @media (prefers-reduced-motion:reduce){.nv-zbar,.nv-mag{transition:none}}
 /*NV-CSS-END*/
@@ -864,20 +859,32 @@
     if (getComputedStyle(host).position === 'static') host.style.position = 'relative';
     var min = o.min || 1, max = o.max || 4, k = 1, tx = 0, ty = 0, open = false, t, api = {}, foc = null;
     var btn = document.createElement('button'); btn.type = 'button'; btn.className = 'nv-mag'; btn.setAttribute('aria-label', 'Zoom'); btn.innerHTML = MAG;
-    var bar = document.createElement('div'); bar.className = 'nv-zbar'; bar.innerHTML = '<button type="button" class="m" aria-label="Zoom out">&minus;</button>' + (o.noslider ? '<span class="sp"></span>' : '<input type="range" aria-label="Zoom level" min="' + min + '" max="' + max + '" step="0.01" value="' + min + '">') + '<button type="button" class="p" aria-label="Zoom in">+</button><button type="button" class="f">Fit</button>';
+    // small vertical stack: plus, minus, Fit. Hold plus or minus and it keeps zooming, faster the longer you hold.
+    var bar = document.createElement('div'); bar.className = 'nv-zbar'; bar.innerHTML = '<button type="button" class="p" aria-label="Zoom in">+</button><button type="button" class="m" aria-label="Zoom out">&minus;</button><button type="button" class="f" aria-label="Fit">Fit</button>';
     host.appendChild(btn); host.appendChild(bar);
-    var rng = bar.querySelector('input'), fit = bar.querySelector('.f');
+    var fit = bar.querySelector('.f'), rng = null;
     function clampPan() { if (!o.target) return; var mx = o.target.offsetWidth * (k - 1) / 2, my = o.target.offsetHeight * (k - 1) / 2; tx = Math.max(-mx, Math.min(mx, tx)); ty = Math.max(-my, Math.min(my, ty)); }
-    function paint() { if (o.target && !o.apply) { clampPan(); o.target.style.transformOrigin = '50% 50%'; o.target.style.transform = k === 1 ? '' : 'translate(' + tx + 'px,' + ty + 'px) scale(' + k + ')'; } if (rng) rng.value = k; host.classList.toggle('nvzoomed', k > 1.01); btn.classList.toggle('on', k > 1.01); }
+    function paint() { if (o.target && !o.apply) { clampPan(); o.target.style.transformOrigin = '50% 50%'; o.target.style.transform = k === 1 ? '' : 'translate(' + tx + 'px,' + ty + 'px) scale(' + k + ')'; } host.classList.toggle('nvzoomed', k > 1.01); btn.classList.toggle('on', k > 1.01); }
     function set(v) { var was = k; k = Math.max(min, Math.min(max, v)); if (k <= min + 0.01) { k = min; tx = ty = 0; foc = null; } else if (was <= min + 0.01 && o.focus) { foc = o.focus(); } if (foc) { tx = -k * foc.x; ty = -k * foc.y; } if (o.apply) o.apply(k, api); paint(); poke(); }
     function poke() { clearTimeout(t); if (!open) return; t = setTimeout(hide, 4500); }
     function show() { open = true; bar.classList.add('on'); poke(); }
     function hide() { open = false; bar.classList.remove('on'); }
     btn.addEventListener('click', function () { open ? hide() : show(); });
-    bar.querySelector('.m').addEventListener('click', function () { if (o.inOut) { o.inOut.out(); poke(); } else set(k - (o.step || 0.5)); });
-    bar.querySelector('.p').addEventListener('click', function () { if (o.inOut) { o.inOut.in(); poke(); } else set(k + (o.step || 0.5)); });
+    // press and hold: one step right away, then it keeps going and speeds up
+    function hold(el, dir) {
+      var rep = null, wait = null, n = 0;
+      function step(fast) {
+        if (o.inOut) { (dir > 0 ? o.inOut.in : o.inOut.out)(); poke(); return; }
+        set(fast ? (dir > 0 ? k * (1 + Math.min(0.12, 0.04 + n * 0.004)) : k / (1 + Math.min(0.12, 0.04 + n * 0.004))) : k + dir * (o.step || 0.5));
+      }
+      function stopRep() { clearTimeout(wait); clearInterval(rep); rep = wait = null; }
+      el.addEventListener('pointerdown', function (e) { e.preventDefault(); try { el.setPointerCapture(e.pointerId); } catch (_) {} n = 0; step(false); stopRep(); wait = setTimeout(function () { rep = setInterval(function () { n++; step(true); }, o.inOut ? 110 : 45); }, 320); });
+      ['pointerup', 'pointercancel', 'lostpointercapture'].forEach(function (ev) { el.addEventListener(ev, stopRep); });
+      el.addEventListener('contextmenu', function (e) { e.preventDefault(); });
+      el.addEventListener('click', function (e) { if (e.detail === 0) step(false); }); // keyboard
+    }
+    hold(bar.querySelector('.p'), 1); hold(bar.querySelector('.m'), -1);
     fit.addEventListener('click', function () { if (o.inOut) { o.inOut.fit(); poke(); } else set(min); });
-    if (rng) { rng.addEventListener('input', function () { set(parseFloat(rng.value)); }); }
     bar.addEventListener('pointerdown', poke);
     // one finger drags the picture while the bar is up and you are zoomed in
     if (o.target && !o.nopan) {
