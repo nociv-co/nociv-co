@@ -189,6 +189,7 @@
     ['Made to order and pre-order cap', 'products', 'made_to_order,made_to_order_limit', 'supabase-migration-made-to-order.sql'],
     ['Made to order queue on orders', 'orders', 'make_status,due_date,ready_notified_at', 'supabase-migration-made-to-order.sql'],
     ['Order tracking and customer emails', 'orders', 'order_status,tracking_token,status_history', 'supabase-migration-order-tracking.sql'],
+    ['Lulu files on zines', 'zines', 'lulu', 'supabase-migration-lulu.sql'],
     ['Shipping address and labels', 'orders', 'ship_name,label_url,tracking_number', 'supabase-migration-shipping-labels.sql'],
     ['Discount and list codes', 'discount_codes', 'id', 'supabase-migration-shipping-codes.sql'],
     ['Sale price (crossed out)', 'products', 'compare_at_price', 'supabase-migration-sale-and-free-shipping.sql'],

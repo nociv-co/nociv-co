@@ -1266,6 +1266,10 @@
           <strong>What this is for</strong>
           The free zines anyone can read or download from the Shop, no payment involved, this is separate from anything that gets printed and shipped. Upload the PDF, add a cover image if you have one, title it, hit Add Zine.
         </div>
+        <details class="ship-details" style="margin:0 0 14px;">
+          <summary>Make a Lulu print file from a PDF</summary>
+          <div id="luluMaker" style="margin-top:10px;"></div>
+        </details>
         <div class="admin-form">
           <label for="zineTitle">Title</label>
           <input type="text" id="zineTitle" placeholder="e.g. How to Feel the Void of Life">
@@ -1487,8 +1491,9 @@
 <script src="crop.js"></script>
 <script src="pin-sheets.js?v=3"></script>
 <script src="design-admin.js?v=1"></script>
-<script src="admin-home.js?v=2"></script>
+<script src="admin-home.js?v=3"></script>
 <script src="admin-orders.js?v=1"></script>
+<script src="admin-lulu.js?v=2"></script>
 <script>
   const loginBox = document.getElementById('loginBox');
   const dashboard = document.getElementById('dashboard');
@@ -4189,6 +4194,16 @@
   }
 
   // ===== ZINE LIBRARY (table: zines, storage bucket: zine-files) =====
+  if (window.NLulu) NLulu.mount(document.getElementById('luluMaker'), async () => (await supabaseClient.from('zines').select('id,title,file_url,parts').order('sort_order')).data || [], {
+    keep: async (zineId, r, base) => {
+      const iUrl = await uploadZinePdf(new File([r.interiorBytes], 'lulu-inside-' + base + '.pdf', { type: 'application/pdf' }));
+      const cUrl = await uploadZinePdf(new File([r.coverBytes], 'lulu-cover-' + base + '.pdf', { type: 'application/pdf' }));
+      const lulu = { interior_url: iUrl, cover_url: cUrl, pages: r.total, trim_w_in: Math.round(r.trimW / 72 * 100) / 100, trim_h_in: Math.round(r.trimH / 72 * 100) / 100, binding: 'saddle_stitch', made_at: new Date().toISOString() };
+      const { error } = await supabaseClient.from('zines').update({ lulu }).eq('id', zineId);
+      if (error) throw new Error(/lulu/i.test(error.message) ? 'Run the Lulu SQL first (supabase-migration-lulu.sql), then try again.' : 'Could not save: ' + error.message);
+      loadZineAdminList();
+    }
+  });
   function addZinePartRow() {
     const wrap = document.getElementById('zinePartRows');
     const n = wrap.children.length + 1;
@@ -4423,7 +4438,7 @@
         ${zineImgHtml}
         <div class="info">
           <div class="name">${escapeAttr(z.title)}</div>
-          <div class="meta">${escapeAttr(z.sub || '')} ${parts.length} PDF${parts.length === 1 ? '' : 's'}</div>
+          <div class="meta">${escapeAttr(z.sub || '')} ${parts.length} PDF${parts.length === 1 ? '' : 's'}${z.lulu && z.lulu.interior_url ? ' · <strong>Lulu files ready (' + z.lulu.pages + ' pages)</strong>' : ''}</div>
         </div>
         <button class="edit-btn" data-dir="up" ${idx === 0 ? 'disabled' : ''}>↑</button>
         <button class="edit-btn" data-dir="down" ${idx === zineRows.length - 1 ? 'disabled' : ''}>↓</button>
