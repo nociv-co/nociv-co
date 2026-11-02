@@ -1,0 +1,209 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<!-- Site Created & Designed by Jasilyn A. Anderson | NOCIV.CO -->
+<meta charset="UTF-8">
+<title>Where's my order: NOCIV.CO</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<meta name="robots" content="noindex">
+<link rel="stylesheet" href="style.css?v=4.1">
+<style>
+  :root { --ink: #1a1a1a; --paper: #e9e6df; --note: #f2ecd6; --red: #c8412f; --muted: #6b665c; --line: #d9d3c4; }
+  body { background: var(--paper); color: var(--ink); }
+  .ot-wrap { max-width: 560px; margin: 0 auto; padding: 14px 16px calc(48px + env(safe-area-inset-bottom)); }
+  .ot-top { display: flex; justify-content: space-between; align-items: center; gap: 10px; margin: 6px 0 14px; font-size: .78rem; letter-spacing: .08em; text-transform: uppercase; font-weight: 800; }
+  .ot-top a { border: 1.5px solid var(--ink); padding: 7px 11px; }
+  .ot-num { opacity: .65; }
+
+  .ot-hero { background: #fff; border: 2px solid var(--ink); padding: 22px 18px 20px; position: relative; box-shadow: 5px 5px 0 var(--ink); }
+  .ot-hero::before { content: ''; position: absolute; top: -12px; left: 20px; width: 70px; height: 22px; background: var(--ink); opacity: .85; transform: rotate(-3deg); }
+  .ot-live { display: inline-flex; align-items: center; gap: 8px; font-size: .72rem; font-weight: 900; letter-spacing: .14em; text-transform: uppercase; color: var(--red); }
+  .ot-live i { width: 10px; height: 10px; border-radius: 50%; background: var(--red); animation: otpulse 1.6s ease-out infinite; }
+  .done .ot-live { color: var(--ink); } .done .ot-live i { background: var(--ink); animation: none; }
+  @keyframes otpulse { 0% { box-shadow: 0 0 0 0 rgba(200,65,47,.55); } 70% { box-shadow: 0 0 0 12px rgba(200,65,47,0); } 100% { box-shadow: 0 0 0 0 rgba(200,65,47,0); } }
+  .ot-hero h1 { font-size: clamp(2rem, 9vw, 2.9rem); line-height: .98; letter-spacing: .01em; text-transform: uppercase; margin: 10px 0 8px; font-weight: 900; }
+  .ot-sub { margin: 0; font-size: 1rem; line-height: 1.45; color: #333; }
+
+  /* the where we at bar */
+  .ot-bar { position: relative; display: grid; gap: 0; margin: 26px 0 4px; }
+  .ot-track { position: absolute; left: 0; right: 0; top: 17px; height: 8px; background: var(--line); border-radius: 4px; }
+  .ot-fill { position: absolute; left: 0; top: 0; bottom: 0; width: 0; background: var(--ink); border-radius: 4px; transition: width 1.1s cubic-bezier(.2,.8,.2,1); }
+  .ot-fill::after { content: ''; position: absolute; right: -2px; top: 0; bottom: 0; width: 36px; background: linear-gradient(90deg, rgba(200,65,47,0), var(--red)); border-radius: 4px; opacity: 0; }
+  .live .ot-fill::after { opacity: 1; animation: otglow 1.6s ease-in-out infinite; }
+  @keyframes otglow { 50% { opacity: .35; } }
+  .ot-step { position: relative; text-align: center; padding: 0 2px; }
+  .ot-dot { width: 42px; height: 42px; margin: 0 auto; border-radius: 50%; background: #fff; border: 3px solid var(--line); display: grid; place-items: center; position: relative; z-index: 1; transition: background .5s, border-color .5s, transform .5s cubic-bezier(.34,1.4,.5,1); }
+  .ot-dot svg { width: 20px; height: 20px; stroke: #b9b2a1; fill: none; stroke-width: 2.2; stroke-linecap: round; stroke-linejoin: round; transition: stroke .5s; }
+  .ot-step.done .ot-dot { background: var(--ink); border-color: var(--ink); } .ot-step.done .ot-dot svg { stroke: #fff; }
+  .ot-step.now .ot-dot { background: var(--red); border-color: var(--red); transform: scale(1.12); } .ot-step.now .ot-dot svg { stroke: #fff; }
+  .live .ot-step.now .ot-dot { animation: otpop 1.8s ease-in-out infinite; }
+  @keyframes otpop { 50% { transform: scale(1.2); } }
+  .ot-lab { margin-top: 8px; font-size: .64rem; line-height: 1.2; font-weight: 900; letter-spacing: .06em; text-transform: uppercase; color: #8a857a; }
+  .ot-step.done .ot-lab { color: var(--ink); } .ot-step.now .ot-lab { color: var(--red); }
+  .ot-when { margin-top: 3px; font-size: .62rem; color: var(--muted); min-height: 1.6em; line-height: 1.25; }
+
+  .ot-card { background: var(--note); border: 2px solid var(--ink); padding: 14px 16px; margin-top: 18px; }
+  .ot-card h2 { margin: 0 0 8px; font-size: .78rem; letter-spacing: .14em; text-transform: uppercase; }
+  .ot-card p { margin: 0 0 8px; line-height: 1.45; } .ot-card p:last-child { margin-bottom: 0; }
+  .ot-btn { display: block; width: 100%; text-align: center; background: var(--red); color: #fff; border: 0; font: inherit; font-weight: 900; letter-spacing: .08em; text-transform: uppercase; padding: 14px; cursor: pointer; text-decoration: none; margin-top: 10px; }
+  .ot-btn.alt { background: #fff; color: var(--ink); border: 2px solid var(--ink); }
+  .ot-trk { font-family: ui-monospace, Menlo, monospace; font-weight: 700; word-break: break-all; }
+  .ot-items { list-style: none; margin: 0; padding: 0; } .ot-items li { display: flex; justify-content: space-between; gap: 10px; padding: 7px 0; border-top: 1px dotted #bdb59f; } .ot-items li:first-child { border-top: 0; }
+  .ot-log { list-style: none; margin: 0; padding: 0; font-size: .86rem; } .ot-log li { display: flex; justify-content: space-between; gap: 10px; padding: 5px 0; border-top: 1px dotted #bdb59f; } .ot-log li:first-child { border-top: 0; } .ot-log span:last-child { color: var(--muted); text-align: right; }
+
+  .ot-find input { width: 100%; font: inherit; font-size: 16px; padding: 13px; border: 2px solid var(--ink); background: #fff; margin: 0 0 10px; }
+  .ot-err { color: var(--red); font-weight: 700; margin: 8px 0 0; }
+  .ot-foot { margin-top: 22px; font-size: .78rem; color: var(--muted); text-align: center; line-height: 1.5; }
+  .ot-upd { text-align: center; font-size: .72rem; color: var(--muted); margin-top: 14px; }
+  .ot-cancel .ot-bar { display: none; }
+  @media (prefers-reduced-motion: reduce) { .ot-live i, .live .ot-step.now .ot-dot, .live .ot-fill::after { animation: none; } .ot-fill, .ot-dot { transition: none; } }
+</style>
+</head>
+<body class="light">
+<header class="nociv-header"><img class="torn-header-img" src="header.png" alt="NOCIV.CO: Nothing Of Civilization"></header>
+
+<main class="ot-wrap" id="app" aria-live="polite">
+  <p class="ot-upd">Loading your order...</p>
+</main>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="supabase.js"></script>
+<script>
+(function () {
+  var app = document.getElementById('app');
+  var token = new URLSearchParams(location.search).get('t') || '';
+  var timer = null, last = null;
+
+  var ICON = {
+    new: '<svg viewBox="0 0 24 24"><path d="M6 3h12l2 4v13a1 1 0 0 1-1 1H5a1 1 0 0 1-1-1V7z"/><path d="M4 7h16M9 11a3 3 0 0 0 6 0"/></svg>',
+    processing: '<svg viewBox="0 0 24 24"><path d="M3 8l9-5 9 5v8l-9 5-9-5z"/><path d="M3 8l9 5 9-5M12 13v8"/></svg>',
+    label_printed: '<svg viewBox="0 0 24 24"><path d="M3 12l9-9h8a1 1 0 0 1 1 1v8l-9 9z"/><circle cx="15.5" cy="8.5" r="1.3"/></svg>',
+    shipped: '<svg viewBox="0 0 24 24"><path d="M2 6h12v10H2zM14 10h4l4 3v3h-8z"/><circle cx="7" cy="18" r="2"/><circle cx="18" cy="18" r="2"/></svg>',
+    delivered: '<svg viewBox="0 0 24 24"><path d="M3 11l9-8 9 8v9a1 1 0 0 1-1 1H4a1 1 0 0 1-1-1z"/><path d="M8.5 14l2.5 2.5L16 11"/></svg>',
+    ready_pickup: '<svg viewBox="0 0 24 24"><path d="M12 21s7-6.2 7-11a7 7 0 0 0-14 0c0 4.8 7 11 7 11z"/><circle cx="12" cy="10" r="2.5"/></svg>',
+    picked_up: '<svg viewBox="0 0 24 24"><path d="M5 12.5l4.5 4.5L19 7.5"/></svg>'
+  };
+  var SHIP = [['new', 'Order in'], ['processing', 'Getting it ready'], ['label_printed', 'Label made'], ['shipped', 'On the way'], ['delivered', 'Delivered']];
+  var PICK = [['new', 'Order in'], ['processing', 'Getting it ready'], ['ready_pickup', 'Ready for pickup'], ['picked_up', 'Picked up']];
+  var TITLE = { new: 'Order in.', processing: 'Getting it ready.', label_printed: 'Label made.', shipped: 'On the way.', delivered: 'Delivered.', ready_pickup: 'Ready for pickup.', picked_up: 'Picked up.', cancelled: 'Cancelled.' };
+
+  function esc(s) { var d = document.createElement('div'); d.textContent = s == null ? '' : String(s); return d.innerHTML; }
+  function when(iso) {
+    if (!iso) return '';
+    try { return new Date(iso).toLocaleString('en-US', { timeZone: 'America/Phoenix', month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit' }); } catch (e) { return ''; }
+  }
+  function dueFmt(d) { try { return new Date(d + 'T12:00:00').toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric' }); } catch (e) { return d; } }
+
+  function sub(o) {
+    var mto = o.made_to_order, name = o.first_name ? esc(o.first_name) + ', ' : '';
+    switch (o.status) {
+      case 'new': return mto ? name + 'it is made to order, so I make it after you buy it.' + (o.due_date ? ' I am aiming for ' + esc(dueFmt(o.due_date)) + '.' : '') : name + 'I got it. I will start on it soon and this page moves as I do.';
+      case 'processing': return mto ? 'I am making it right now.' + (o.due_date ? ' Due ' + esc(dueFmt(o.due_date)) + '.' : '') : 'It is being packed up. The shipping label is next.';
+      case 'label_printed': return 'Packed and labeled. It goes to the carrier next.';
+      case 'shipped': return 'It is with the carrier' + (o.city ? ', headed to ' + esc(o.city) + (o.state ? ', ' + esc(o.state) : '') : '') + '.';
+      case 'delivered': return 'It should be at your door. If something is off, reply to your order email and I will make it right.';
+      case 'ready_pickup': return 'Come get it. Details below.';
+      case 'picked_up': return 'Thanks for coming through.';
+      case 'cancelled': return 'This order was cancelled. If you were charged, the refund goes back to your card in a few business days.';
+    }
+    return '';
+  }
+
+  function render(o) {
+    var steps = o.method === 'pickup' ? PICK : SHIP;
+    var st = o.status, cancelled = st === 'cancelled';
+    var idx = steps.findIndex(function (s) { return s[0] === st; });
+    if (idx < 0) idx = 0;
+    var finished = st === 'delivered' || st === 'picked_up';
+    var firstAt = {};
+    (o.history || []).forEach(function (h) { if (!firstAt[h.status]) firstAt[h.status] = h.at; });
+
+    var n = steps.length;
+    var bar = '<div class="ot-bar" style="grid-template-columns:repeat(' + n + ',1fr)"><div class="ot-track" style="left:calc(50% / ' + n + ');right:calc(50% / ' + n + ')"><div class="ot-fill" id="otfill"></div></div>' +
+      steps.map(function (s, i) {
+        var cls = i < idx ? 'done' : (i === idx ? (finished ? 'done' : 'now') : '');
+        return '<div class="ot-step ' + cls + '"><div class="ot-dot">' + ICON[s[0]] + '</div><div class="ot-lab">' + esc(s[1]) + '</div><div class="ot-when">' + esc(i <= idx ? when(firstAt[s[0]]) : '') + '</div></div>';
+      }).join('') + '</div>';
+
+    var items = (o.items && o.items.length ? o.items : (o.description ? [{ name: o.description, quantity: 1 }] : []));
+    var html = '<div class="ot-top"><span class="ot-num">Order #' + esc(o.order_number) + '</span><a href="index.html">NOCIV.CO</a></div>' +
+      '<section class="ot-hero ' + (finished || cancelled ? 'done' : 'live') + (cancelled ? ' ot-cancel' : '') + '">' +
+      '<div class="ot-live"><i></i>' + (finished ? 'All done' : (cancelled ? 'Cancelled' : 'Live')) + '</div>' +
+      '<h1>' + esc(TITLE[st] || 'Update.') + '</h1><p class="ot-sub">' + sub(o) + '</p>' + bar + '</section>';
+
+    if ((st === 'label_printed' || st === 'shipped' || st === 'delivered') && o.tracking_number) {
+      html += '<section class="ot-card"><h2>Tracking</h2><p>' + esc(o.carrier || 'Carrier') + '<br><span class="ot-trk">' + esc(o.tracking_number) + '</span></p>' +
+        (o.tracking_url ? '<a class="ot-btn alt" href="' + esc(o.tracking_url) + '" target="_blank" rel="noopener">Track with ' + esc(o.carrier || 'the carrier') + '</a>' : '') + '</section>';
+    }
+    if (o.method === 'pickup' && (st === 'new' || st === 'processing' || st === 'ready_pickup') && o.pickup_note) {
+      html += '<section class="ot-card"><h2>Pickup</h2><p style="white-space:pre-line">' + esc(String(o.pickup_note).replace(/^"|"$/g, '')) + '</p></section>';
+    }
+    if (o.made_to_order && o.due_date && !finished && !cancelled) {
+      html += '<section class="ot-card"><h2>Made to order</h2><p>Made for you after you ordered. Aiming for <strong>' + esc(dueFmt(o.due_date)) + '</strong>.</p></section>';
+    }
+    if (items.length) {
+      html += '<section class="ot-card"><h2>What you got</h2><ul class="ot-items">' + items.map(function (i) {
+        return '<li><span>' + esc(i.name) + (i.size ? ' (' + esc(i.size) + ')' : '') + '</span><span>' + (Number(i.quantity) > 1 ? 'x' + esc(i.quantity) : '') + '</span></li>';
+      }).join('') + '</ul></section>';
+    }
+    if (finished) {
+      html += '<section class="ot-card"><h2>Pass it on</h2><p>If you love it, tell one person where you got it. That is the whole marketing plan.</p><button type="button" class="ot-btn" id="otshare">Tell someone</button></section>';
+    }
+    var log = (o.history || []).slice().reverse();
+    if (log.length > 1) {
+      html += '<section class="ot-card"><h2>Timeline</h2><ul class="ot-log">' + log.map(function (h) {
+        return '<li><span>' + esc(TITLE[h.status] || h.status) + '</span><span>' + esc(when(h.at)) + '</span></li>';
+      }).join('') + '</ul></section>';
+    }
+    html += '<p class="ot-upd" id="otupd"></p><p class="ot-foot">Questions? Reply to your order email.<br>This page is just for you. Do not share the link.</p>';
+    app.innerHTML = html;
+
+    // the bar fills to the current step after it paints, so it slides in
+    requestAnimationFrame(function () { requestAnimationFrame(function () {
+      var f = document.getElementById('otfill'); if (!f) return;
+      var span = Math.max(1, n - 1), at = finished ? span : idx;
+      f.style.width = (cancelled ? 0 : (at / span) * 100) + '%';
+    }); });
+    var sh = document.getElementById('otshare');
+    if (sh) sh.onclick = function () {
+      var d = { title: 'NOCIV.CO', text: 'Nothing Of Civilization. Check it out.', url: location.origin + '/' };
+      if (navigator.share) navigator.share(d).catch(function () {}); else { try { navigator.clipboard.writeText(d.url); sh.textContent = 'Link copied'; } catch (e) {} }
+    };
+    stamp();
+  }
+
+  function stamp() { var u = document.getElementById('otupd'); if (u) u.textContent = 'Updated ' + new Date().toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' }) + '. This page refreshes on its own.'; }
+
+  function find(msg) {
+    app.innerHTML = '<div class="ot-top"><span class="ot-num">Where is my order?</span><a href="index.html">NOCIV.CO</a></div>' +
+      '<section class="ot-card ot-find"><h2>Find your order</h2><p>Use the order number and the email you used at checkout. Your order email also has a direct link.</p>' +
+      '<input id="fnum" inputmode="numeric" placeholder="Order number" autocomplete="off"><input id="fem" type="email" placeholder="Email at checkout" autocomplete="email">' +
+      '<button type="button" class="ot-btn" id="fgo">Show me</button><p class="ot-err" id="ferr">' + (msg ? esc(msg) : '') + '</p></section>';
+    document.getElementById('fgo').onclick = function () {
+      var num = parseInt(document.getElementById('fnum').value.replace(/\D/g, ''), 10), em = document.getElementById('fem').value.trim();
+      var er = document.getElementById('ferr');
+      if (!num || !em) { er.textContent = 'Enter both, please.'; return; }
+      er.textContent = '';
+      supabaseClient.rpc('find_order_token', { p_email: em, p_number: num }).then(function (r) {
+        if (r.error || !r.data) { er.textContent = 'No order matched that number and email. Check the email you used at checkout.'; return; }
+        location.search = '?t=' + encodeURIComponent(r.data);
+      });
+    };
+  }
+
+  function load(first) {
+    supabaseClient.rpc('get_order_tracking', { p_token: token }).then(function (r) {
+      if (r.error || !r.data) { if (first) find('We could not find that order. Try the number and email below.'); return; }
+      var sig = JSON.stringify([r.data.status, r.data.history, r.data.tracking_number]);
+      if (sig !== last) { last = sig; render(r.data); } else stamp();
+    }, function () { if (first) app.innerHTML = '<p class="ot-upd">Could not load. Check your connection and refresh.</p>'; });
+  }
+
+  if (!token || !/^[0-9a-f-]{36}$/i.test(token)) { find(''); return; }
+  load(true);
+  timer = setInterval(function () { if (!document.hidden) load(false); }, 30000);
+  document.addEventListener('visibilitychange', function () { if (!document.hidden) load(false); });
+})();
+</script>
+</body>
+</html>

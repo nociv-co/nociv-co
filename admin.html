@@ -1073,7 +1073,7 @@
       <div class="admin-section-body">
         <div class="how-to-box">
           <strong>What this is for</strong>
-          Every sale, from the website and from in-person Tap to Pay, lands here on its own, nothing to type in for a normal online sale. For an in-person sale, type in what it actually cost you in the Cost box on that order and hit Save, that's the only manual step, and it's what makes the Net Profit number at the top accurate. You also get an email the moment a new order comes in, once that's connected on the backend. Open Shipping Address &amp; Label on any order to fill in where it's going and print a real shipping label without leaving this page.
+          Every sale, from the website and from in-person Tap to Pay, lands here on its own, nothing to type in for a normal online sale. For an in-person sale, type in what it actually cost you in the Cost box on that order and hit Save, that's the only manual step, and it's what makes the Net Profit number at the top accurate. Every order has a "where we at" bar like a pizza tracker. Tap the big red button to move it to the next step, and the customer is emailed automatically (you pick which steps email them under Customer emails). Open Shipping Address &amp; Label on any order to fill in where it's going and print a real shipping label without leaving this page.
         </div>
         <div class="time-summary" id="revenueDashboard">
           <div class="time-summary-card">
@@ -1093,7 +1093,9 @@
         <p class="field-hint">
           Online sales pull their cost from the product's own cost, shipping, and fee numbers. In-person Tap to Pay sales show up here automatically too, but they need their cost filled in by hand below since there's no product tied to them, that's the only manual step left.
         </p>
+        <div id="orderEmailPanel"></div>
         <div id="mtoQueue"></div>
+        <div id="orderFilters"></div>
         <div id="orderList"></div>
       </div>
     </details>
@@ -1485,7 +1487,8 @@
 <script src="crop.js"></script>
 <script src="pin-sheets.js?v=3"></script>
 <script src="design-admin.js?v=1"></script>
-<script src="admin-home.js?v=1"></script>
+<script src="admin-home.js?v=2"></script>
+<script src="admin-orders.js?v=1"></script>
 <script>
   const loginBox = document.getElementById('loginBox');
   const dashboard = document.getElementById('dashboard');
@@ -3363,6 +3366,74 @@
     el.appendChild(box);
   }
 
+  // ----- order board helpers (admin-orders.js draws the cards) -----
+  async function loadOrderEmailSettings() {
+    try {
+      const { data } = await supabaseClient.from('app_settings').select('value').eq('key', 'order_email_statuses').maybeSingle();
+      if (data && data.value) { const v = JSON.parse(data.value); if (Array.isArray(v)) NOrders.state.enabled = v; }
+    } catch (e) {}
+    const host = document.getElementById('orderEmailPanel');
+    if (!host.dataset.ready) {
+      host.dataset.ready = '1';
+      window.__ordEmail = NOrders.emailPanel(host, {
+        saveEnabled: async (v) => {
+          const { error } = await supabaseClient.from('app_settings').upsert([{ key: 'order_email_statuses', value: JSON.stringify(v) }], { onConflict: 'key' });
+          if (error) { alert('Could not save: ' + error.message); return false; }
+          return true;
+        },
+        reload: () => loadOrders(),
+      });
+      checkEmailSender();
+    } else if (host.querySelector('.ord-check input')) { window.__ordEmail.paint(); }
+  }
+  async function callOrderEmails(payload) {
+    const res = await fetch('https://vscombrgcdtrfndqyugb.supabase.co/functions/v1/order-emails', {
+      method: 'POST', headers: Object.assign({ 'Content-Type': 'application/json' }, await authHeader()), body: JSON.stringify(payload),
+    });
+    return res.json();
+  }
+  async function checkEmailSender() {
+    try {
+      const first = await supabaseClient.from('orders').select('id').order('created_at', { ascending: false }).limit(1);
+      if (!first.data || !first.data.length) return;
+      const r = await callOrderEmails({ order_id: first.data[0].id, preview: true });
+      if (r && typeof r.sender_set === 'boolean') window.__ordEmail.sender(r.sender_set);
+      else window.__ordEmail.sender(false, 'Could not check the email function. It may not be deployed yet (see the checklist).');
+    } catch (e) { window.__ordEmail.sender(false, 'Could not reach the email function. It may not be deployed yet.'); }
+  }
+  function orderCtx(o, row) {
+    return {
+      openLabel: () => {
+        const d = row.querySelector('.ship-details'); d.open = true;
+        d.scrollIntoView({ behavior: 'smooth', block: 'center' });
+      },
+      setStatus: async (ord, to) => {
+        const { data, error } = await supabaseClient.from('orders').update({ order_status: to }).eq('id', ord.id).select('id');
+        if (error) { alert('Could not change the step: ' + error.message); return; }
+        if (!data || !data.length) { alert('The change did not save. Run the order tracking SQL first (see the checklist).'); return; }
+        await loadOrders();
+        setTimeout(loadOrders, 2500); // pick up the email result written by the function
+      },
+      undo: async (ord) => {
+        const h = Array.isArray(ord.status_history) ? ord.status_history : [];
+        if (h.length < 2) return;
+        const prev = h[h.length - 2].status;
+        if (!confirm('Go back to "' + (NOrders.NAME[prev] || prev) + '"? The customer is NOT emailed for an undo.')) return;
+        const { error } = await supabaseClient.from('orders').update({ order_status: prev, emailed_status: prev }).eq('id', ord.id);
+        if (error) { alert('Could not undo: ' + error.message); return; }
+        await loadOrders();
+      },
+      test: async (ord, status, btn) => {
+        const t = btn.textContent; btn.disabled = true; btn.textContent = 'Sending...';
+        try {
+          const r = await callOrderEmails({ order_id: ord.id, test: true, status });
+          alert(r.sent ? 'Sent a test to ' + (r.sent_to || 'you') + '.' : 'Test failed: ' + (r.error || 'unknown'));
+        } catch (e) { alert('Could not reach the email function.'); }
+        btn.disabled = false; btn.textContent = t;
+      },
+    };
+  }
+
   async function loadOrders() {
     const orderListEl = document.getElementById('orderList');
     orderListEl.innerHTML = '<p style="opacity:.5;">Loading...</p>';
@@ -3402,7 +3473,13 @@
 
     orderListEl.innerHTML = '';
     renderMtoQueue(orders);
-    orders.forEach(o => {
+    await loadOrderEmailSettings();
+    const filterHost = document.getElementById('orderFilters');
+    filterHost.innerHTML = '';
+    filterHost.appendChild(NOrders.filterBar(orders, () => loadOrders()));
+    const shown = orders.filter(o => NOrders.match(o, NOrders.state.filter));
+    if (!shown.length) orderListEl.innerHTML = '<p style="opacity:.5;">Nothing in this view.</p>';
+    shown.forEach(o => {
       const row = document.createElement('div');
       row.className = 'product-row';
       const printifyBit = o.printify_order_id
@@ -3440,6 +3517,7 @@
           <div class="name">${escapeAttr(name)}</div>
           <div class="meta">$${o.amount_paid ?? '-'} · ${escapeAttr(o.customer_email || 'no email')} · ${new Date(o.created_at).toLocaleString()}${sizeBit}${sourceBit}${mtoBit}${methodBit}${printifyBit}</div>
           ${itemsHtml}
+          <div class="ord-slot"></div>
           ${costInputHtml}
           <details class="ship-details">
             <summary>Shipping address &amp; label</summary>
@@ -3465,6 +3543,7 @@
         </div>
       `;
 
+      row.querySelector('.ord-slot').appendChild(NOrders.card(o, orderCtx(o, row)));
       const saveBtn = row.querySelector('.save-order-cost-btn');
       if (saveBtn) {
         saveBtn.addEventListener('click', async () => {
@@ -3505,7 +3584,7 @@
         try {
           const res = await fetch('https://vscombrgcdtrfndqyugb.supabase.co/functions/v1/shipping-label', {
             method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
+            headers: Object.assign({ 'Content-Type': 'application/json' }, await authHeader()),
             body: JSON.stringify({ order_id: o.id, weight_oz }),
           });
           const result = await res.json();

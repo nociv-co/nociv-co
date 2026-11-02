@@ -115,7 +115,7 @@
     var u = digits(($('msgUnreadBadge') || {}).textContent); setBubble('messages', u ? String(u) : '');
     var d = digits(($('dirReqCount') || {}).textContent); setBubble('community', d ? String(d) : '');
     if (typeof supabaseClient === 'undefined') return;
-    supabaseClient.from('orders').select('id', { count: 'exact', head: true }).eq('status', 'paid').is('tracking_number', null)
+    supabaseClient.from('orders').select('id', { count: 'exact', head: true }).in('order_status', ['new', 'processing', 'label_printed'])
       .then(function (r) { if (!r.error) setBubble('money', r.count ? String(r.count) : ''); });
     supabaseClient.from('design_time').select('id', { count: 'exact', head: true }).eq('running', true)
       .then(function (r) { if (!r.error) setBubble('clients', r.count ? 'ON' : ''); });
@@ -188,6 +188,7 @@
     ['Sizes and stock', 'product_variants', 'id', null],
     ['Made to order and pre-order cap', 'products', 'made_to_order,made_to_order_limit', 'supabase-migration-made-to-order.sql'],
     ['Made to order queue on orders', 'orders', 'make_status,due_date,ready_notified_at', 'supabase-migration-made-to-order.sql'],
+    ['Order tracking and customer emails', 'orders', 'order_status,tracking_token,status_history', 'supabase-migration-order-tracking.sql'],
     ['Shipping address and labels', 'orders', 'ship_name,label_url,tracking_number', 'supabase-migration-shipping-labels.sql'],
     ['Discount and list codes', 'discount_codes', 'id', 'supabase-migration-shipping-codes.sql'],
     ['Sale price (crossed out)', 'products', 'compare_at_price', 'supabase-migration-sale-and-free-shipping.sql'],
