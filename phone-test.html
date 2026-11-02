@@ -50,35 +50,14 @@
 
 <script>
 // ===== THE TEST LIST. Claude rewrites this block after every delivery. Keep each test to a few taps. =====
-var BATCH = '2026-11-01 night';
+var BATCH = '2026-11-02 afternoon';
 var TESTS = [
-  { id: 'orders', title: 'Order board', where: 'Admin, Transactions, Recent Orders',
-    steps: ['Open Admin and log in.', 'Open Transactions, then Recent Orders.', 'Find an order. Tap the big red button on it.'],
-    expect: 'The bar moves one step and the new step is highlighted. If you see "did not save", the order tracking SQL has not been run yet.' },
-  { id: 'testemail', title: 'Test email', where: 'Admin, Recent Orders',
-    steps: ['On any order, tap Send me a test email.'],
-    expect: 'A message says it sent. Check your inbox for an email. If it says no sender address, the CUSTOMER_FROM secret is missing.' },
-  { id: 'tracker', title: 'What the customer sees', where: 'Admin, Recent Orders',
-    steps: ['On an order, tap What the customer sees.'],
-    expect: 'A page opens with the where we at bar, the order number and the items. No email or street address shown.' },
-  { id: 'lulu', title: 'Lulu files from a PDF', where: 'Admin, Zine Library',
-    steps: ['Open Zine Library, then Make a Lulu print file from a PDF.', 'Pick the Void zine from your library.', 'Tap Make my Lulu files.', 'Tap Save on both.'],
-    expect: 'It says 40 inside pages. You get two PDFs saved. If Keep on my site says to run the Lulu SQL, run supabase-migration-lulu.sql.' },
-  { id: 'zinereopen', title: 'Reopen an old zine', where: 'Zine Builder, Set up',
-    steps: ['Open the Zine Builder.', 'At the top, tap Rebuild from pictures.', 'Pick your 8 page pictures, or the one print sheet picture.'],
-    expect: 'Your pages appear in the right order, and you can add words on top of any page.' },
-  { id: 'zinelulu', title: 'Zine Builder Lulu files', where: 'Zine Builder, Print step',
-    steps: ['Go to the Print step.', 'Find Already have a PDF.', 'Pick a PDF and tap Make my Lulu files.'],
-    expect: 'Two saved files, and a line saying every page stays in the same spot.' },
-  { id: 'camera', title: 'Camera fold', where: 'Animate + Edit, Camera',
-    steps: ['Open the camera.', 'Pull the console down, then back up.'],
-    expect: 'The screen never gets stuck, and the tool bar never covers the grip.' },
-  { id: 'zoom', title: 'Small zoom bar', where: 'Any tool (Zine, Stencil, Cut & Sew, Animate, QR, Cards)',
-    steps: ['Tap the magnifying glass in the bottom left corner of the picture.', 'Tap + once, then tap minus once.', 'Now press and HOLD +, then press and hold minus.', 'Tap Fit.'],
-    expect: 'A small see-through bar stands up above the magnifier with +, minus and FIT. One tap is a small step. Holding keeps zooming, faster the longer you hold. Fit puts it back. It fades away on its own.' },
-  { id: 'refresh', title: 'Refresh button', where: 'Tools page',
-    steps: ['Open any tool from the Tools page.', 'Tap the refresh button at the top.'],
-    expect: 'You get the newest version of the tool, not an old stuck one.' }
+  { id: 'armsleg', title: 'Arms and legs panel', where: 'Cartoon, Animate, Arms then Legs',
+    steps: ['Open Cartoon, tap Animate, then tap ARMS on the right.', 'Turn the shoulder and elbow knobs on each arm.', 'Tap LEGS and turn the leg knobs.'],
+    expect: 'A small picture of the arm or leg on the left, its two knobs on the right. Everything fits inside the console with nothing cut off, and the picture follows the knobs.' },
+  { id: 'parts', title: 'Whole: Parts menu', where: 'Cartoon, Animate, Whole',
+    steps: ['Tap WHOLE on the right.', 'Tap PARTS at the top right of the console.', 'Tap HEAD, then drag HEAD TURN left and right.', 'Tap R ARM, L ARM, R LEG, L LEG and BODY and turn a knob on each.', 'Tap BACK.'],
+    expect: 'A row of body parts slides out sideways. HEAD TURN shows degrees and turns the head smoothly. Each part has its own knobs. BACK brings the emote controls back.' }
 ];
 // ===== end of list =====
 

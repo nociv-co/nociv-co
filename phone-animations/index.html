@@ -81,6 +81,26 @@
   .vbox.arm { width: 100%; max-width: 150px; height: auto; aspect-ratio: 1; }
   .vbox.leg { width: 100%; max-width: 110px; height: auto; aspect-ratio: 5 / 6; }
   .vbox.bod { width: 100%; max-width: 110px; height: auto; aspect-ratio: 4 / 5; }
+  /* arms and legs: small picture on the left, its knobs on the right, so the whole panel fits the console */
+  .pv-cols { grid-template-columns: minmax(0, 1fr); gap: clamp(4px, 1svh, 8px); }
+  .pv-col { display: grid; grid-template-columns: clamp(46px, 8.4svh, 64px) minmax(0, 1fr); grid-template-areas: "box lbl" "box kn"; column-gap: 12px; row-gap: 3px; align-items: center; justify-items: start; }
+  .pv-col > .kl { grid-area: lbl; align-self: end; } .pv-col > .vbox { grid-area: box; max-width: none; width: 100%; } .pv-col > .pv-kn { grid-area: kn; align-self: start; }
+  .pv-col .pv-kn { grid-template-columns: repeat(2, minmax(0, 74px)); gap: 4px 12px; }
+  .pv-col .kb { width: clamp(30px, 5.4svh, 40px); height: clamp(30px, 5.4svh, 40px); }
+  .pv-body { grid-template-columns: minmax(0, 0.55fr) minmax(0, 1.6fr); }
+  .pv-body .vbox.bod { max-width: 78px; }
+  /* WHOLE: PARTS drop-down that opens sideways */
+  #pcParts { margin-right: 0; }
+  .wp-bar { display: flex; align-items: center; }
+  .wp-strip { display: flex; gap: 5px; overflow-x: auto; scrollbar-width: none; padding: 2px 2px 6px; width: 100%; animation: wpOpen .26s ease-out; }
+  .wp-strip::-webkit-scrollbar { display: none; }
+  @keyframes wpOpen { from { clip-path: inset(0 100% 0 0); opacity: .4; } to { clip-path: inset(0 0 0 0); opacity: 1; } }
+  .wp-chip { flex: none; width: auto; padding: 0 10px; height: clamp(26px, 4svh, 32px); font-size: clamp(.68rem, 1.9svh, .8rem); letter-spacing: .04em; }
+  #vpArms > .pv-h, #vpLegs > .pv-h { display: none; }
+  .wp-g { display: none; } .wp-g.on { display: block; }
+  .wp-g .pv-kn { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 6px 4px; }
+  .wp-g .pv-kn.k3 { grid-template-columns: repeat(3, minmax(0, 1fr)); } .wp-g .pv-kn.k2 { grid-template-columns: repeat(2, minmax(0, 96px)); justify-content: start; gap: 6px 22px; }
+  .wp-body { padding: 2px 4px 0; }
   .toononly { display: none; }
   body.toon.noframes:not(.pupmode) #editRow, body.toon.noframes:not(.pupmode) #deck, body.toon.noframes:not(.pupmode) #rewindRow, body.toon.noframes:not(.pupmode) #info, body.toon.noframes:not(.pupmode) #tl { display: none !important; }
   body.toon .toononly { display: block; }
@@ -781,7 +801,7 @@ body { animation: nvIn .3s ease both; }
         <select id="pupProp" tabindex="-1"><option value="">Saved</option><option value="none">None</option><option value="spray">Spray</option><option value="brush">Brush</option><option value="record">Record</option><option value="camera">Camera</option><option value="clipboard">Clipboard</option><option value="frame">Frame</option><option value="mic">Mic</option><option value="scissors">Scissors</option></select>
       </div>
       <div class="pc" id="pupConsole">
-        <div class="pc-top"><div class="pc-lcd msg" id="pupMsg"></div><button type="button" class="tb tb-mini" id="pcShape" aria-label="Shape of the picture">TALL</button><button type="button" class="tb tb-mini" id="pcMini" aria-pressed="true">FULL CONSOLE</button></div>
+        <div class="pc-top"><div class="pc-lcd msg" id="pupMsg"></div><button type="button" class="tb tb-mini hide" id="pcParts" aria-pressed="false">PARTS &#9656;</button><button type="button" class="tb tb-mini" id="pcShape" aria-label="Shape of the picture">TALL</button><button type="button" class="tb tb-mini" id="pcMini" aria-pressed="true">FULL CONSOLE</button></div>
         <div class="pc-mid">
         <div class="pc-pads hide" id="pupSub"></div>
         <div class="pc-pads" id="pupLimb">
@@ -1311,7 +1331,7 @@ body { animation: nvIn .3s ease both; }
   const KN = []; function knobsDraw() { KN.forEach(f => f()); swDraw(); }
   function pupSync() {
     try { pvToggle(); } catch (e) {}
-    const k = pup.limb, d = PL[k] || PL.aR, P = pup.P; $('pupFace').classList.toggle('hide', k !== 'face'); $('pupEmote').classList.toggle('hide', k !== 'emote' || pup.zm === 'pan'); $('pupMoodRow').classList.toggle('hide', k !== 'mood'); $('pupLimbCtl').classList.toggle('hide', k === 'face' || k === 'emote' || k === 'mood');
+    const k = pup.limb, d = PL[k] || PL.aR, P = pup.P; $('pupFace').classList.toggle('hide', k !== 'face'); $('pupEmote').classList.toggle('hide', k !== 'emote' || pup.zm === 'pan' || (pup.zm === 'all' && !!pup.wp)); $('pupMoodRow').classList.toggle('hide', k !== 'mood'); $('pupLimbCtl').classList.toggle('hide', k === 'face' || k === 'emote' || k === 'mood');
     document.querySelectorAll('#pupLimb [data-l], #pupSub [data-l]').forEach(x => x.setAttribute('aria-pressed', x.dataset.l === k ? 'true' : 'false')); $('pupSub').classList.toggle('hide', ['head', 'upper', 'legs'].indexOf(pup.zm) < 0);
     if (k === 'face' || k === 'emote' || k === 'mood') { knobsDraw(); return; } $('pupL1').textContent = d[0]; $('pupL2').textContent = d[1];
     const s1 = $('pupS1'), s2 = $('pupS2'); s1.min = d[2]; s1.max = d[3]; s2.min = d[4]; s2.max = d[5];
@@ -1623,7 +1643,7 @@ body { animation: nvIn .3s ease both; }
   // ---- body parts as picture buttons: each part shows itself and its knobs sit right under it ----
   function pvToggle() {
     if (!$('vpHead')) return; const z = pup.zm;
-    $('vpHead').classList.toggle('hide', z !== 'head'); $('vpArms').classList.toggle('hide', z !== 'upper'); $('vpBody').classList.toggle('hide', z !== 'mid'); $('vpLegs').classList.toggle('hide', z !== 'legs'); $('vpPan').classList.toggle('hide', z !== 'pan'); if (z === 'pan') { try { panSync(); } catch (e) {} } vbDraw();
+    $('vpHead').classList.toggle('hide', z !== 'head'); $('vpArms').classList.toggle('hide', z !== 'upper'); $('vpBody').classList.toggle('hide', z !== 'mid'); $('vpLegs').classList.toggle('hide', z !== 'legs'); $('vpPan').classList.toggle('hide', z !== 'pan'); { const wh = $('vpWhole'), pb = $('pcParts'); if (wh) wh.classList.toggle('hide', !(z === 'all' && pup.wp)); if (pb) { pb.classList.toggle('hide', z !== 'all'); pb.textContent = pup.wp ? '\u2039 BACK' : 'PARTS \u25b8'; pb.setAttribute('aria-pressed', pup.wp ? 'true' : 'false'); } } if (z === 'pan') { try { panSync(); } catch (e) {} } vbDraw();
   }
   (function () {
     const mid = document.querySelector('.pc-mid'), P = () => pup.P, F = () => pup.face;
@@ -1660,6 +1680,27 @@ body { animation: nvIn .3s ease both; }
     addK(bk, 'knBd2', 'TILT', () => P().head || 0, v => { P().head = v; }, -25, 25, deg);
     addK(bk, 'knBd3', 'JUMP', () => { const q = P(); return q.bob < 0 ? -q.bob : -(q.crouch || 0); }, v => { const q = P(); q.bob = v > 0 ? -v : 0; q.crouch = v < 0 ? -v : 0; }, -40, 70, v => v >= 0 ? 'UP ' + Math.round(v) : 'DOWN ' + Math.round(-v));
     addK(bk, 'knBd4', 'SIZE', () => pup.sz, v => { pup.sz = Math.round(v * 100) / 100; }, 0.3, 1, v => Math.round(v * 100) + '%');
+    // whole: a PARTS drop-down that slides out sideways. Pick any body part, adjust it right here.
+    const wh = mkPanel('vpWhole', 'PARTS'); wh.innerHTML = '<div class="wp-bar"><div class="wp-strip" id="wpStrip"></div></div><div class="wp-body" id="wpBody"></div>';
+    const WP = [['head', 'HEAD'], ['aR', 'R ARM'], ['aL', 'L ARM'], ['lR', 'R LEG'], ['lL', 'L LEG'], ['body', 'BODY']], wg = {};
+    const wpGroup = (key, cls) => { const g = document.createElement('div'); g.className = 'wp-g'; g.innerHTML = '<div class="pv-kn ' + cls + '"></div>'; $('wpBody').appendChild(g); wg[key] = g; return g.firstChild; };
+    const turnSel = t => { const i = Math.max(0, Math.min(4, Math.round(t * 2) + 2)); $('pupTurn').selectedIndex = i; };
+    let k = wpGroup('head', '');
+    addK(k, 'wk_turn', 'HEAD TURN', () => F().turn * 90, v => { const t = Math.round(v / 90 * 40) / 40; F().turn = t; turnSel(t); }, -90, 90, v => (v > 0 ? '+' : '') + Math.round(v) + '°');
+    addK(k, 'wk_tilt', 'HEAD TILT', () => P().head || 0, v => { P().head = v; }, -25, 25, deg);
+    addK(k, 'wk_brow', 'BROWS', () => F().brow, v => { F().brow = Math.round(v * 20) / 20; $('pupBr').value = F().brow; }, -1, 1, v => (v > 0 ? '+' : '') + Math.round(v * 100));
+    addK(k, 'wk_lid', 'SQUINT', () => F().lid, v => { F().lid = Math.round(v * 20) / 20; $('pupLid').value = F().lid; }, -1, 1, v => v < -0.05 ? 'SQUINT' : v > 0.05 ? 'WIDE' : 'NORMAL');
+    [['aR', 'SHOULDER', 'ELBOW', -30, 180, -60, 190], ['aL', 'SHOULDER', 'ELBOW', -30, 180, -60, 190]].forEach(a => { const kk = wpGroup(a[0], 'k2'); addK(kk, 'wk_' + a[0] + '1', a[1], arm(a[0], 0).get, arm(a[0], 0).set, a[3], a[4], deg); addK(kk, 'wk_' + a[0] + '2', a[2], arm(a[0], 1).get, arm(a[0], 1).set, a[5], a[6], deg); });
+    ['lR', 'lL'].forEach(l => { const kk = wpGroup(l, 'k2'); addK(kk, 'wk_' + l + '1', 'LEG OUT', leg(l, 'a').get, leg(l, 'a').set, 0, 40, deg); addK(kk, 'wk_' + l + '2', 'LEG LIFT', leg(l, 'l').get, leg(l, 'l').set, 0, 100, v => Math.round(v) + '%'); });
+    k = wpGroup('body', 'k3');
+    addK(k, 'wk_lean', 'LEAN', () => P().lean || 0, v => { P().lean = v; }, -20, 20, deg);
+    addK(k, 'wk_jump', 'JUMP', () => { const q = P(); return q.bob < 0 ? -q.bob : -(q.crouch || 0); }, v => { const q = P(); q.bob = v > 0 ? -v : 0; q.crouch = v < 0 ? -v : 0; }, -40, 70, v => v >= 0 ? 'UP ' + Math.round(v) : 'DOWN ' + Math.round(-v));
+    addK(k, 'wk_size', 'SIZE', () => pup.sz, v => { pup.sz = Math.round(v * 100) / 100; }, 0.3, 1, v => Math.round(v * 100) + '%');
+    pup.wpSel = 'head';
+    const wpDraw = () => { const st0 = $('wpStrip'); st0.innerHTML = ''; WP.forEach(([key, name]) => { const b = document.createElement('button'); b.type = 'button'; b.className = 'pad wp-chip'; b.textContent = name; b.setAttribute('aria-pressed', key && key === pup.wpSel ? 'true' : 'false'); b.addEventListener('click', () => { buzz(8); pup.wpSel = key; wpDraw(); pupSync(); }); st0.appendChild(b); }); Object.keys(wg).forEach(key => wg[key].classList.toggle('on', key === pup.wpSel)); };
+    pup.wpOpen = () => { pup.wp = true; if (pup.zm !== 'all') return; wpDraw(); pupSync(); };
+    $('pcParts').addEventListener('click', () => { buzz(8); if (pup.wp) { pup.wp = false; pupSync(); } else pup.wpOpen(); });
+    pup.wpDraw = wpDraw; wpDraw();
     // pan: the camera controls live in this same console, with the same take-frame and play buttons
     const pan = mkPanel('vpPan', 'PAN'), prow = document.createElement('div'); prow.className = 'pv-row'; pan.appendChild(prow);
     const rs = document.createElement('div'); rs.className = 'kc'; rs.style.alignSelf = 'center'; $('panRestart').style.cssText = 'height:44px;width:100%;min-height:0;font-size:.8rem'; rs.appendChild($('panRestart')); 
