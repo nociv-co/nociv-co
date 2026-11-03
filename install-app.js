@@ -19,7 +19,7 @@
     '#installApp h2{font-family:NocivAnton,Anton,Impact,sans-serif;font-weight:400;font-size:1.45rem;letter-spacing:.06em;margin:0 0 4px;text-transform:uppercase;color:#fff}' +
     '#installApp p{margin:0 0 14px;font-size:.9rem;line-height:1.4;font-weight:600;color:#fff}' +
     '#installApp .ia-row{display:flex;flex-wrap:wrap;gap:12px;justify-content:center}' +
-    '#installApp button.ia-btn{font:inherit;font-weight:800;letter-spacing:.06em;text-transform:uppercase;font-size:.85rem;padding:12px 20px;min-height:46px;background:#6a6a6a;color:#fff;border:2px solid #fff;border-radius:16px;box-shadow:0 5px 14px rgba(0,0,0,.38);cursor:pointer;-webkit-tap-highlight-color:transparent}' +
+    '#installApp button.ia-btn{font:inherit;font-weight:800;letter-spacing:.06em;text-transform:uppercase;font-size:.85rem;padding:12px 20px;min-height:46px;background:#6a6a6a;color:#fff;border:2px solid #fff;border-radius:0;box-shadow:0 5px 14px rgba(0,0,0,.38);cursor:pointer;-webkit-tap-highlight-color:transparent}' +
     '#installApp button.ia-btn:active{transform:translateY(1px);box-shadow:0 2px 7px rgba(0,0,0,.38)}' +
     '#installApp button.ia-btn:disabled{opacity:.6}' +
     '#installApp .ia-steps{display:none;text-align:left;margin:16px auto 0;max-width:340px;background:rgba(0,0,0,.2);border:2px solid #fff;border-radius:16px;box-shadow:0 5px 14px rgba(0,0,0,.25);color:#fff;padding:12px 16px;font-size:.9rem}' +
