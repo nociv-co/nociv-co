@@ -423,6 +423,7 @@
       <a href="#sec-time">Time Tracker</a>
       <a href="#sec-goals">Goals</a>
       <a href="#sec-cheatsheet">Pricing Cheat Sheet</a>
+      <a href="#sec-reference">Reference Library</a>
       <a href="#sec-products">Products</a>
       <a href="#sec-pins">Pins</a>
       <a href="#sec-crosslist"><span class="xlist-only">Cross-Listing</span><span class="xlist-off-only">Outside Sales</span></a>
@@ -716,6 +717,17 @@
       </div>
     </details>
 
+    <details class="admin-section" id="sec-reference">
+      <summary>Reference Library <span class="admin-section-hint">GitHub projects saved to study and borrow ideas from</span></summary>
+      <div class="admin-section-body">
+        <div class="how-to-box">
+          <strong>What this is for</strong>
+          Open source projects we saved in your own GitHub repo, nociv-reference, one folder each, with their licenses. Read the notes on each before borrowing anything, the license says what you can reuse.
+        </div>
+        <p><a class="edit-btn" id="refRepo" href="https://github.com/nociv-co/nociv-reference" target="_blank" rel="noopener" style="display:inline-block;text-decoration:none">Open the nociv-reference repo</a></p>
+        <div id="refList"><p class="muted">Loading...</p></div>
+      </div>
+    </details>
     <details class="admin-section" id="sec-cheatsheet">
       <summary>Pricing Cheat Sheet <span class="admin-section-hint">what you actually keep per sale, before you set a price anywhere</span></summary>
       <div class="admin-section-body">
@@ -1504,8 +1516,8 @@
 <script src="crop.js"></script>
 <script src="pin-sheets.js?v=4"></script>
 <script src="design-admin.js?v=1"></script>
-<script src="admin-home.js?v=5"></script>
-<script src="admin-attention.js?v=2"></script>
+<script src="admin-home.js?v=6"></script>
+<script src="admin-attention.js?v=3"></script>
 <script src="admin-push.js?v=1"></script>
 <script src="admin-orders.js?v=2"></script>
 <script src="admin-lulu.js?v=3"></script>
@@ -4979,5 +4991,19 @@
   }
 </script>
 
+<script>
+(function () {
+  function esc(s) { return String(s == null ? '' : s).replace(/[&<>"]/g, function (c) { return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]; }); }
+  var box = document.getElementById('refList'); if (!box) return;
+  fetch('reference.json', { cache: 'no-store' }).then(function (r) { return r.json(); }).then(function (d) {
+    var items = (d && d.items) || [];
+    if (!items.length) { box.innerHTML = '<p class="muted">Nothing saved yet. Send Claude GitHub links and they show up here with notes.</p>'; return; }
+    box.innerHTML = items.map(function (x) {
+      var url = /^https:\/\/github\.com\//.test(x.url || '') ? x.url : '';
+      return '<div class="how-to-box" style="margin-top:10px"><strong>' + esc(x.name) + '</strong> ' + esc(x.what) + (x.license ? '<br>License: ' + esc(x.license) : '') + (x.borrow ? '<br>Worth borrowing: ' + esc(x.borrow) + '' : '') + (url ? '<br><a href="' + esc(url) + '" target="_blank" rel="noopener">Source on GitHub</a>' : '') + '</div>';
+    }).join('');
+  }).catch(function () { box.innerHTML = '<p class="muted">Could not load the list.</p>'; });
+})();
+</script>
 </body>
 </html>

@@ -12,7 +12,7 @@
   // What each room holds, in the order you see it. First section is the one you reach for most.
   var ROOMS = [
     { id: 'money', name: 'Transactions', desc: 'Orders, customers, expenses, outside sales', sections: ['orders', 'customers', 'expenses', 'crosslist'] },
-    { id: 'shop', name: 'NOCIV Shop', desc: 'Products, pins, codes, shipping, zines', sections: ['products', 'bundles', 'codes', 'shipping', 'pins', 'zines', 'album', 'shopgoal', 'cheatsheet'] },
+    { id: 'shop', name: 'NOCIV Shop', desc: 'Products, pins, codes, shipping, zines', sections: ['products', 'bundles', 'codes', 'shipping', 'pins', 'zines', 'album', 'shopgoal', 'cheatsheet', 'reference'] },
     { id: 'clients', name: 'Clients', desc: 'Design clients, hours, invoices, files', sections: ['design'], open: true },
     { id: 'messages', name: 'Messages', desc: 'What people sent you', sections: ['messages'], open: true },
     { id: 'calendar', name: 'Calendar', desc: 'Dates, to-do list, phone calendar', sections: ['goals'], open: true },
