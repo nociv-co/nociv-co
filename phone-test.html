@@ -52,9 +52,15 @@
 // ===== THE TEST LIST. Claude rewrites this block after every delivery. Keep each test to a few taps. =====
 var BATCH = '2026-11-02 apps';
 var TESTS = [
+  { id: 'optin', title: 'Pop-up alerts opt in', where: 'Shop app from your home screen',
+    steps: ['Open the NOCIV shop app from your home screen.', 'Scroll to the grey block at the bottom and tap Alert me.', 'Tap Allow.', 'Then open Admin, Community, Pop-up drop alert.'],
+    expect: 'The block says Alerts are on. In Admin the count goes up by 1. Tap Turn alerts off and the count drops back after you reopen the section.' },
+  { id: 'dropsend', title: 'Send a drop alert', where: 'Admin, Community, Pop-up drop alert',
+    steps: ['Type a title and message, pick a page, tap Send alert, confirm.', 'Lock your phone and wait up to a minute.'],
+    expect: 'A banner from NOCIV.CO shows on your lock screen. Tapping it opens the page you chose. Needs SQL run and Admin opened once first.' },
   { id: 'getapp', title: 'Get the app block', where: 'Bottom of Home, Shop, About, Community, Tools',
     steps: ['Scroll to the bottom of the home page in Safari.', 'Tap Add to home screen and read the steps.'],
-    expect: 'A black block above the footer with a red button and 3 steps for Safari. It does not appear once the site is opened from the home screen icon.' },
+    expect: 'A grey block above the footer with white text, a black button and 3 steps for Safari. It does not appear once the site is opened from the home screen icon.' },
   { id: 'shopapp', title: 'Shop app icon', where: 'iPhone Safari, nociv.co',
     steps: ['Open nociv.co in Safari.', 'Tap Share, then Add to Home Screen, then Add.', 'Open it from your home screen.'],
     expect: 'Your chain and face art on cream as the icon. It opens full screen with no Safari bars. Pages and the cart work like the website.' },

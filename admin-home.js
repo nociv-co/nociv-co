@@ -17,7 +17,7 @@
     { id: 'messages', name: 'Messages', desc: 'What people sent you', sections: ['messages'], open: true },
     { id: 'calendar', name: 'Calendar', desc: 'Dates, to-do list, phone calendar', sections: ['goals'], open: true },
     { id: 'tracker', name: 'Tracker', desc: 'Clock in, hours, what your time earns', sections: ['time'], open: true },
-    { id: 'community', name: 'Community', desc: 'Directory, vendor spots, mailing list', sections: ['directory', 'vendor', 'popup', 'mailing', 'promo'] },
+    { id: 'community', name: 'Community', desc: 'Directory, vendor spots, mailing list', sections: ['directory', 'vendor', 'popup', 'dropalert', 'mailing', 'promo'] },
     { id: 'tools', name: 'Tools and Setup', desc: 'Your tool links, Stripe, what is working', sections: ['links', 'health'], open: false }
   ];
   window.nocivRooms = ROOMS;
