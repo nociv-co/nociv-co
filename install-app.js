@@ -17,15 +17,15 @@
     '#installApp .ia-in{max-width:480px;margin:0 auto}' +
     '#installApp h2{font-family:NocivAnton,Anton,Impact,sans-serif;font-weight:400;font-size:1.45rem;letter-spacing:.06em;margin:0 0 4px;text-transform:uppercase;color:#fff}' +
     '#installApp p{margin:0 0 12px;font-size:.9rem;line-height:1.4;font-weight:600;color:#fff}' +
-    '#installApp button.ia-btn{font:inherit;font-weight:800;letter-spacing:.08em;text-transform:uppercase;font-size:.9rem;padding:12px 20px;min-height:44px;background:#111;color:#fff;border:2px solid #111;border-radius:0;cursor:pointer}' +
+    '#installApp button.ia-btn{font:inherit;font-weight:800;letter-spacing:.08em;text-transform:uppercase;font-size:.9rem;padding:12px 20px;min-height:44px;background:#fff;color:#111;border:2px solid #111;border-radius:0;cursor:pointer}' +
     '#installApp button.ia-btn:disabled{opacity:.6}' +
-    '#installApp .ia-steps{display:none;text-align:left;margin:14px auto 0;max-width:340px;background:#111;color:#fff;padding:12px 14px;font-size:.9rem}' +
+    '#installApp .ia-steps{display:none;text-align:left;margin:14px auto 0;max-width:340px;background:#fff;color:#111;padding:12px 14px;font-size:.9rem}' +
     '#installApp .ia-steps.on{display:block}' +
     '#installApp ol{margin:0;padding-left:20px;line-height:1.45}#installApp li{margin:3px 0}' +
-    '#installApp .ia-steps p{margin:10px 0 0}' +
+    '#installApp .ia-steps p{margin:10px 0 0;color:#111}' +
     '#installApp .ia-small{margin:10px 0 0;font-size:.78rem;font-weight:600}' +
     '#installApp .ia-alerts{margin-top:16px;padding-top:16px;border-top:1px solid rgba(255,255,255,.5)}#installApp .ia-alerts h3{font-family:NocivAnton,Anton,Impact,sans-serif;font-weight:400;font-size:1.15rem;letter-spacing:.06em;margin:0 0 4px;text-transform:uppercase;color:#fff}' +
-    '#installApp .ia-btn.ghost{background:transparent;border-color:#fff}#installApp .ia-msg{margin:10px 0 0;font-size:.85rem}';
+    '#installApp .ia-btn.ghost{background:#fff;border-color:#111}#installApp .ia-msg{margin:10px 0 0;font-size:.85rem}';
   document.head.appendChild(st);
 
   var box = document.createElement('section');
