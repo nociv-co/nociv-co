@@ -1,21 +1,86 @@
-// NOCIV service worker. Network first, so you always get the newest page and the newest data.
-// It only keeps a copy of pages to show if the phone has no signal. It never touches
-// Supabase, Stripe or any other site, only pages from nociv.co.
-var CACHE = 'nociv-v2';
+// NOCIV service worker.
+// Pages and data: network first, so you always get the newest. If there is no signal, you get the saved copy.
+// Tools: every creator tool is saved on the phone when the app is added to the home screen, so they work with no signal.
+// It never touches Supabase, Stripe or any other site, only files from nociv.co.
+var CACHE = 'nociv-v3';
+var TOOLS = [
+  '/card/fonts/abrilfatface.woff',
+  '/card/fonts/anton.woff',
+  '/card/fonts/bagelfatone.woff',
+  '/card/fonts/bungee.woff',
+  '/card/fonts/shrikhand.woff',
+  '/cut-sew/clothing-builder.html',
+  '/cut-sew/crop.js',
+  '/fonts/anton.woff',
+  '/qr/qr.js',
+  '/vendor/pdf-lib.min.js',
+  '/zine/crop.js',
+  '/zine/fonts/abrilfatface.woff',
+  '/zine/fonts/anton.woff',
+  '/zine/fonts/bungee.woff',
+  '/zine/fonts/courierprime.woff',
+  '/zine/fonts/permanentmarker.woff',
+  '/zine/fonts/rocksalt.woff',
+  '/zine/fonts/shrikhand.woff',
+  '/zine/fonts/specialelite.woff',
+  '/zine/pdfbook.js',
+  '/zine/qr.js',
+  '/zine/vendor/pdf-lib.min.js',
+  '/zine/vendor/pdf.min.mjs',
+  '/zine/vendor/pdf.worker.min.mjs',
+  '/zine/',
+  '/qr/',
+  '/stencil/',
+  '/phone-animations/',
+  '/phone-animations/character/',
+  '/card/',
+  '/creator-tools.html',
+  '/style.css',
+  '/crop.js',
+  '/install-app.js',
+  '/supabase.js',
+  '/header.png',
+  '/nav-about.png',
+  '/nav-shop.png',
+  '/nav-tools.png',
+  '/base-button.png',
+  '/img/type/build-something.png',
+  '/img/tools/cartoon-card.webp',
+  '/img/tools/cartoon-strip.webp',
+  '/img/tools/stop-hero.webp',
+  '/img/tools/vhs.webp',
+  '/img/tools/video-hero.webp',
+  '/img/signifier-mural.webp',
+  '/icons/shop-192.png'
+];
 self.addEventListener('install', function (e) {
-  e.waitUntil(caches.open(CACHE).then(function (c) { return c.add('/offline.html'); }).then(function () { return self.skipWaiting(); }));
+  e.waitUntil(caches.open(CACHE).then(function (c) {
+    return c.add('/offline.html').then(function () {
+      // Save the tools. One missing file must not stop the rest, so each one is tried alone.
+      return Promise.all(TOOLS.map(function (u) { return fetch(u, { cache: 'reload' }).then(function (r) { if (r && r.ok) return c.put(u, r); }).catch(function () {}); }));
+    });
+  }).then(function () { return self.skipWaiting(); }));
 });
 self.addEventListener('activate', function (e) {
   e.waitUntil(caches.keys().then(function (ks) { return Promise.all(ks.filter(function (k) { return k !== CACHE; }).map(function (k) { return caches.delete(k); })); }).then(function () { return self.clients.claim(); }));
 });
+function keepable(r) { var d = r.destination; return r.mode === 'navigate' || d === 'script' || d === 'style' || d === 'font' || d === 'image' || d === 'document' || d === 'iframe' || d === 'worker' || d === ''; }
 self.addEventListener('fetch', function (e) {
   var r = e.request, u = new URL(r.url);
-  if (r.method !== 'GET' || u.origin !== location.origin || u.pathname.indexOf('/functions/') === 0) return;
-  e.respondWith(fetch(r).then(function (res) {
-    if (res && res.ok && r.mode === 'navigate') { var copy = res.clone(); caches.open(CACHE).then(function (c) { c.put(r, copy); }); }
-    return res;
-  }).catch(function () {
-    return caches.match(r).then(function (hit) { return hit || (r.mode === 'navigate' ? caches.match('/offline.html') : Response.error()); });
+  if (r.method !== 'GET' || u.origin !== location.origin || u.pathname.indexOf('/functions/') === 0 || r.headers.has('range')) return;
+  var saved = function () { return caches.match(r, { ignoreSearch: true }); };
+  e.respondWith(new Promise(function (resolve) {
+    var done = false;
+    // Weak signal: after 6 seconds, show the saved copy if there is one.
+    var t = setTimeout(function () { saved().then(function (hit) { if (hit && !done) { done = true; resolve(hit); } }); }, 6000);
+    fetch(r).then(function (res) {
+      clearTimeout(t);
+      if (res && res.ok && keepable(r)) { var copy = res.clone(); caches.open(CACHE).then(function (c) { c.put(r.url.split('#')[0], copy); }); }
+      if (!done) { done = true; resolve(res); }
+    }).catch(function () {
+      clearTimeout(t);
+      saved().then(function (hit) { if (!done) { done = true; resolve(hit || (r.mode === 'navigate' ? caches.match('/offline.html') : Response.error())); } });
+    });
   }));
 });
 

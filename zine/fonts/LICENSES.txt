@@ -1,0 +1,4 @@
+Fonts used by the NOCIV Zine Builder. All are free to use, including commercially.
+Permanent Marker, Special Elite, Rock Salt: Apache License 2.0 (Font Diner / Astigmatic / Sideshow), from Google Fonts.
+Courier Prime, Anton, Bungee, Shrikhand, Abril Fatface: SIL Open Font License 1.1, from Google Fonts.
+Files were subset to Latin characters and converted to WOFF. Full license texts: https://www.apache.org/licenses/LICENSE-2.0 and https://openfontlicense.org

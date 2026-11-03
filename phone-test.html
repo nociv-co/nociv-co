@@ -50,41 +50,20 @@
 
 <script>
 // ===== THE TEST LIST. Claude rewrites this block after every delivery. Keep each test to a few taps. =====
-var BATCH = '2026-11-02 apps';
+var BATCH = '2026-11-03 pdf and offline';
 var TESTS = [
-  { id: 'lulumake', title: 'Make Lulu files from a library zine', where: 'Admin, Shop, Zine Library',
-    steps: ['Open Zine Library and find a zine in the list.', 'Tap Make Lulu files on it.', 'Tap Make my Lulu files, then Save on each file.'],
-    expect: 'The Lulu box opens with that zine already picked and shows its page size. You get two PDFs, the inside pages and the cover spread. Over 44 pages it tells you it needs a spine book, which is not built yet.' },
-  { id: 'optin', title: 'Pop-up alerts opt in', where: 'Shop app from your home screen',
-    steps: ['Open the NOCIV shop app from your home screen.', 'Scroll to the grey block at the bottom, inside the app, and tap Alert me about pop-ups.', 'Tap Allow.', 'Then open Admin, Community, Pop-up drop alert.'],
-    expect: 'The button says Alerts on, tap to turn off. In Admin the count goes up by 1. Tap that button again and the count drops back after you reopen the section.' },
-  { id: 'dropsend', title: 'Send a drop alert', where: 'Admin, Community, Pop-up drop alert',
-    steps: ['Type a title and message, pick a page, tap Send alert, confirm.', 'Lock your phone and wait up to a minute.'],
-    expect: 'A banner from NOCIV.CO shows on your lock screen. Tapping it opens the page you chose. Needs SQL run and Admin opened once first.' },
-  { id: 'getapp', title: 'Get the app block', where: 'Bottom of Home, Shop, About, Community, Tools',
-    steps: ['Scroll to the bottom of the home page in Safari.', 'Tap Add to home screen and read the steps.'],
-    expect: 'A grey block above the footer with white text, a black button and 3 steps for Safari. It does not appear once the site is opened from the home screen icon.' },
-  { id: 'shopapp', title: 'Shop app icon', where: 'iPhone Safari, nociv.co',
-    steps: ['Open nociv.co in Safari.', 'Tap Share, then More, then Add to Home Screen, then Add.', 'Open it from your home screen.'],
-    expect: 'Your chain and face art on cream as the icon. It opens full screen with no Safari bars. Pages and the cart work like the website.' },
-  { id: 'adminapp', title: 'Admin app icon', where: 'iPhone Safari, nociv.co/admin.html',
-    steps: ['Open nociv.co/admin.html in Safari.', 'Tap Share, then More, then Add to Home Screen, then Add.', 'Open it from your home screen and log in.'],
-    expect: 'A black NOCIV ADMIN icon that opens straight to Admin. You have to log in once inside the app, that is normal on iPhone. It stays logged in after that.' },
-  { id: 'offline', title: 'No signal screen', where: 'Either app',
-    steps: ['Turn on Airplane Mode.', 'Open a page you have not visited yet.'],
-    expect: 'A black screen that says No signal right now with a Try again button, not a blank page.' },
-  { id: 'find', title: 'Find box on Admin home', where: 'Admin, home screen',
-    steps: ['Type refund in the Find box.', 'Tap the answer.'],
-    expect: 'It jumps to Recent Orders.' },
-  { id: 'cust', title: 'Customer list', where: 'Admin, Transactions, Customers',
-    steps: ['Open Customers, search part of an email, tap Download.'],
-    expect: 'One line per customer. The CSV opens in Numbers or Sheets.' },
-  { id: 'slip', title: 'Packing slip', where: 'Admin, Recent Orders',
-    steps: ['On an order that ships, tap Packing slip, then Print.'],
-    expect: 'A clean page with address and items. If nothing opens, allow pop ups.' },
-  { id: 'refund', title: 'Refund button (real money)', where: 'Admin, Recent Orders',
-    steps: ['Buy your cheapest pin, tap Refund on it, leave the amount blank, confirm.'],
-    expect: 'Refunded in red, order moves to Cancelled, money back on your card. Stock is not put back.' }
+  { id: 'pdfbook', title: 'PDF to booklet', where: 'Tools, Zine Builder, Set up',
+    steps: ['Tap Bring a PDF and pick a PDF from your phone (try one that is not a multiple of 4 pages).', 'Check the page grid. Tap a page, then use Earlier, Later, Remove. Tap + Blank page, + PDF, + Photo.', 'Turn on Page numbers. Tap Make my booklet and send it to your printer or Print from the share sheet.'],
+    expect: 'It tells you how many blank pages it added and how many sheets you need. The booklet is a landscape PDF with 2 pages per side. Printed double sided, flip on the short edge, folded and stapled, the pages read in order with a small number at the bottom of each. Not tested on a real printer.' },
+  { id: 'pdfcap', title: 'Cap warning and book file', where: 'Tools, Zine Builder, Bring a PDF',
+    steps: ['Pick a PDF over 44 pages, or add one PDF to another.', 'Read the red message, then tap Make the book inside file.'],
+    expect: 'A red warning suggests making it a book. You can still make the booklet. The book file downloads with an even page count. Upload it to Lulu and check it is accepted, that part is not tested.' },
+  { id: 'offline', title: 'Tools work offline', where: 'The NOCIV shop app from your home screen',
+    steps: ['Open the app once with signal, open Tools, wait 30 seconds.', 'Turn on Airplane Mode.', 'Open the app, tap Tools, open Zine Builder, Cards, QR and Stencil. Bring a PDF in the zine builder.'],
+    expect: 'The tools open and work with no signal. The shop and saving to the directory say you are offline. If a tool does not open, tell me which one.' },
+  { id: 'footer', title: 'Footer offline line', where: 'Bottom of any page in Safari',
+    steps: ['Scroll to the grey block at the bottom.'],
+    expect: 'It says Works with no signal under the home screen line, then the Add to home screen button.' }
 ];
 // ===== end of list =====
 

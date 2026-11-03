@@ -26,6 +26,7 @@
     '#installApp .ia-steps.on{display:block}' +
     '#installApp ol{margin:0;padding-left:20px;line-height:1.45}#installApp li{margin:3px 0}' +
     '#installApp .ia-steps p{margin:10px 0 0}' +
+    '#installApp .ia-off{margin:0 auto 14px;max-width:340px;font-size:.88rem}' +
     '#installApp .ia-small{margin:12px 0 0;font-size:.78rem;font-weight:600}' +
     '#installApp .ia-msg{margin:12px 0 0;font-size:.85rem}#installApp .ia-note{margin:14px auto 0;max-width:340px;font-size:.85rem;font-weight:600}';
   document.head.appendChild(st);
@@ -34,6 +35,7 @@
   box.id = 'installApp'; box.setAttribute('aria-label', 'Add NOCIV to your home screen');
   box.innerHTML = '<div class="ia-in"><h2>' + (standalone ? 'Pop-up shop alerts' : 'Keep NOCIV in your pocket') + '</h2>' +
     '<p>' + (standalone ? 'Get one short alert when a pop-up shop drops. Nothing else. No account.' : 'Put it on your home screen like an app. Free. No App Store, no account, no tracking.') + '</p>' +
+    '<p class="ia-off"><b>Works with no signal.</b> ' + (standalone ? 'Every creator tool keeps working offline: zines, cards, QR, stencils, animation and clothing.' : 'Zine builder, cards, QR, stencils, animation and clothing builder all run offline once it is on your phone.') + '</p>' +
     '<div class="ia-row">' + (standalone ? '<button type="button" class="ia-btn" id="iaAlert" style="display:none">Alert me about pop-ups</button>' : '<button type="button" class="ia-btn" id="iaBtn">Add to home screen</button>') + '</div>' +
     '<div class="ia-steps" id="iaSteps" role="status"></div>' +
     (standalone ? '' : '<p class="ia-note">Pop-up shop alerts are inside the app. Open it from your home screen and tap Alert me about pop-ups to get one when a shop drops. iPhone needs iOS 16.4 or newer.</p>') +
