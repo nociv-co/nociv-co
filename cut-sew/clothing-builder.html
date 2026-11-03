@@ -274,6 +274,51 @@
     .cslogo { font-size: 34px; }
   }
   @media (max-height: 620px) and (max-width: 899px) { .app.stepped .grid > section.note.on { flex-basis: 50%; } .app.stepped .preview-col > nav.steps button { font-size: 0; gap: 0; } }
+
+
+
+
+
+
+
+
+/*NV-CSS-START nociv shared: console grip, slide-up sheets, press feel (one source, copied into each tool)*/
+:root{--nv-ease:cubic-bezier(.2,.8,.2,1);--nv-spring:cubic-bezier(.34,1.4,.5,1)}
+.nv-grip{position:sticky;top:0;z-index:6;height:28px;flex:none;display:grid;place-items:center;touch-action:none;cursor:grab;background:inherit;-webkit-tap-highlight-color:transparent}
+.nv-grip::before{content:"";width:44px;height:5px;border-radius:3px;background:#b9b2a2;transition:transform .2s var(--nv-spring),background .2s}
+.nv-grip:active::before{transform:scaleX(1.25);background:#1a1a1a}
+.nv-sheet{position:fixed;inset:0;z-index:20000;display:flex;flex-direction:column;justify-content:flex-end;pointer-events:none}
+.nv-sheet .nv-scrim{position:absolute;inset:0;background:rgba(20,18,12,.38);opacity:0;transition:opacity .25s}
+.nv-sheet .nv-card{position:relative;background:#f8f4e8;color:#1a1a1a;border-top:3px solid #1a1a1a;border-radius:22px 22px 0 0;padding:6px 16px calc(18px + env(safe-area-inset-bottom));max-height:86dvh;overflow-y:auto;overscroll-behavior:contain;transform:translateY(105%);transition:transform .4s var(--nv-spring);box-shadow:0 -10px 30px rgba(0,0,0,.22);font-family:inherit}
+.nv-sheet.on{pointer-events:auto}.nv-sheet.on .nv-scrim{opacity:1}.nv-sheet.on .nv-card{transform:none}
+.nv-sheet .nv-grab{width:44px;height:5px;border-radius:3px;background:#b9b2a2;margin:6px auto 10px;touch-action:none}
+.nv-sheet h3{margin:0 0 10px;font-size:1.05rem;letter-spacing:.08em;text-transform:uppercase}
+.nv-row{display:flex;flex-wrap:wrap;gap:8px 10px;align-items:flex-start;padding:10px 0;border-top:1.5px dashed rgba(29,28,26,.2)}
+.nv-row:first-of-type{border-top:0}
+.nv-row i{flex:none;width:22px;height:22px;border-radius:50%;display:grid;place-items:center;font-style:normal;font-weight:900;font-size:.8rem;color:#fff;background:#3f8a4a}
+.nv-row.warn i{background:#c8412f}
+.nv-row div{flex:1 1 calc(100% - 40px);min-width:0;font-size:.9rem;line-height:1.35}
+.nv-row button{flex:none;margin-left:32px;width:auto!important;padding:8px 12px!important;font-size:.8rem!important;font-weight:900;border:2px solid #1a1a1a;background:#fff;color:#1a1a1a;cursor:pointer}
+@media (prefers-reduced-motion:reduce){.nv-sheet .nv-card,.nv-grip::before{transition:none}}
+
+.nv-mag{padding:0!important;width:42px!important;height:42px!important;min-width:0!important;margin:0!important;position:absolute;left:8px;bottom:8px;z-index:6;width:42px;height:42px;border-radius:13px;border:1.5px solid rgba(26,26,26,.55);background:rgba(255,255,255,.55);color:#1a1a1a;-webkit-backdrop-filter:blur(6px);backdrop-filter:blur(6px);display:grid;place-items:center;cursor:pointer;touch-action:manipulation;transition:transform .15s var(--nv-ease),background .2s}
+.nv-mag svg{width:22px;height:22px}.nv-mag:active{transform:scale(.9)}.nv-mag.on{background:#1a1a1a;color:#fff}
+.nv-zbar{box-sizing:border-box;position:absolute;left:8px;bottom:58px;z-index:7;width:42px;display:flex;flex-direction:column;align-items:stretch;gap:5px;padding:5px;border-radius:14px;background:rgba(26,26,26,.5);-webkit-backdrop-filter:blur(8px);backdrop-filter:blur(8px);color:#fff;opacity:0;transform:translateY(10px) scale(.97);pointer-events:none;transition:opacity .22s var(--nv-ease),transform .28s var(--nv-spring);-webkit-user-select:none;user-select:none;-webkit-touch-callout:none}
+.nv-zbar.on{opacity:1;transform:none;pointer-events:auto}
+.nv-zbar button{flex:none!important;width:100%!important;min-width:0!important;height:34px!important;border-radius:10px!important;border:0!important;background:rgba(255,255,255,.22)!important;color:#fff!important;font:900 22px/1 inherit!important;padding:0!important;margin:0!important;box-shadow:none!important;cursor:pointer;touch-action:none;-webkit-user-select:none;user-select:none}
+.nv-zbar button:active{background:rgba(255,255,255,.4)!important}
+.nv-zbar button.f{font-size:.62rem!important;letter-spacing:.08em;text-transform:uppercase;height:28px!important}
+.nvzoomed{overflow:hidden}
+@media (prefers-reduced-motion:reduce){.nv-zbar,.nv-mag{transition:none}}
+/*NV-CSS-END*/
+
+/*NV-CUTSEW-CSS-START*/
+html.app .grid > .nv-grip { flex: none; height: 26px; background: var(--paper); border-top: 2px solid var(--ink); }
+html.app.stepped .grid > section.note.on { transition: flex-basis .42s var(--nv-spring), padding .3s var(--nv-ease); }
+html.app.stepped.cdown .grid > section.note.on { flex: 0 0 0 !important; padding-top: 0 !important; padding-bottom: 0 !important; overflow: hidden !important; border-top-width: 0 !important; }
+html.app.stepped.cdown .grid > section.note.on::after { display: none; }
+/*NV-CUTSEW-CSS-END*/
+
 </style>
 </head>
 <body>
@@ -321,8 +366,17 @@
       <div id="garments"></div>
     </section>
 
+    <section class="note" data-step="Fit">
+      <h2><b>2</b> Fit and details</h2>
+      <div id="fitBox">
+        <div class="group-name">Fit</div>
+        <div class="chips" id="fit"></div>
+      </div>
+      <div id="opts"></div>
+    </section>
+
     <section class="note" data-step="Measure">
-      <h2><b>2</b> Your measurements</h2>
+      <h2><b>3</b> Your measurements</h2>
       <div class="chips" id="units">
         <button type="button" class="chip" data-v="in" aria-pressed="true">Inches</button>
         <button type="button" class="chip" data-v="cm" aria-pressed="false">Centimeters</button>
@@ -332,17 +386,8 @@
         <div class="chips" id="sizes"></div>
       </div>
       <div class="fields" id="fields"></div>
-      <p class="meta">Measure your body with a soft tape, room to move gets added in the next step. Or match a piece you already own: tap "Measure a piece you own" up top.</p>
+      <p class="meta">Measure your body with a soft tape, the room to move you picked in the Fit step gets added to them. Or match a piece you already own: tap "Measure a piece you own" up top.</p>
       <p class="done-note" id="pmDone" hidden></p>
-    </section>
-
-    <section class="note" data-step="Fit">
-      <h2><b>3</b> Fit and details</h2>
-      <div id="fitBox">
-        <div class="group-name">Fit</div>
-        <div class="chips" id="fit"></div>
-      </div>
-      <div id="opts"></div>
     </section>
 
     <section class="note" data-step="Tech pack">
@@ -493,7 +538,7 @@
 <li>Keep the tape level all the way around. Use a mirror, or better, have a friend do it.</li>
 <li>Stand relaxed, feet together, breathe normally. Do not suck in.</li>
 <li>Measure twice. If the two numbers are different, measure a third time.</li>
-<li>Each box in step 2 tells you exactly where that measurement goes.</li>
+<li>Each box in step 3 tells you exactly where that measurement goes.</li>
 </ul>
 <h4>Measuring a garment</h4>
 <svg class="lfig" viewBox="0 0 400 150" role="img" aria-label="A shirt laid flat with a tape across the chest and down the length">
@@ -563,7 +608,7 @@
 <li><b>Darts</b> are folded wedges. Sewing a dart takes out fabric at one end and leaves it at the other, so the fabric cups around the seat, the waist or the chest. Our pants use back darts.</li>
 <li><b>The crotch curve</b> is the deepest curve in clothes. The back curve is longer and deeper than the front because your seat needs more room.</li>
 <li><b>Pleats and gathers</b> fold or scrunch extra fabric into a smaller edge, like a pleat at the waist or elastic in a casing.</li>
-<li><b>Ease</b> is the extra room on top of your body measurements. Fitted, regular, relaxed and baggy in step 3 are different amounts of ease.</li>
+<li><b>Ease</b> is the extra room on top of your body measurements. Fitted, regular, relaxed and baggy in step 2 are different amounts of ease.</li>
 <li><b>Grain</b> is the direction of the threads. The blue arrow on each pattern piece goes parallel to the finished edge of the fabric, so the garment hangs straight and does not twist.</li>
 </ul>
 </article>
@@ -1795,27 +1840,31 @@
     });
   }
   var viewFam = null;
-  function buildGarments() {
-    var box = $('garments'); box.innerHTML = '';
-    var fam = viewFam || famOf(state.g);
-    var top = document.createElement('div'); top.className = 'fams'; box.appendChild(top);
-    GROUPS.forEach(function (g) {
-      var b = document.createElement('button'); b.type = 'button'; b.textContent = g.name; b.setAttribute('aria-pressed', String(g.id === fam));
-      b.onclick = function () { viewFam = g.id; buildGarments(); }; top.appendChild(b);
-    });
-    var g = GROUPS.filter(function (x) { return x.id === fam; })[0], list = document.createElement('div'); list.className = 'famlist'; box.appendChild(list);
-    g.items.forEach(function (it) {
-      var b = document.createElement('button'); b.type = 'button'; b.setAttribute('aria-pressed', String(it[0] === state.g));
-      b.textContent = it[1]; if (it[2]) { b.disabled = true; b.insertAdjacentHTML('beforeend', '<small>soon</small>'); }
-      b.onclick = function () {
-        var v = it[0], oldFam = famOf(state.g); state.g = v; viewFam = null;
+  function pickGarment(v) {
+    var oldFam = famOf(state.g); state.g = v; viewFam = null;
         if (v === 'tote') { state.m.width = 14; state.m.height = 15; state.m.depth = 4; state.m.strap = 24; }
         if (v === 'minitote') { state.m.width = 10; state.m.height = 10; state.m.depth = 3; state.m.strap = 20; }
         if (v === 'fanny') { state.m.width = 12; state.m.height = 6; state.m.depth = 2.5; state.m.strap = 36; }
         if (v === 'backpack') { state.o.pack = 'reg'; state.o.straps = 2; state.m.width = 10; state.m.height = 16; state.m.strap = 30; }
         if (famOf(v) !== oldFam) state.fit = famOf(v) === 'tops' ? 'regular' : 'relaxed';
         buildAll();
-      };
+  }
+  function buildGarments() {
+    var box = $('garments'); box.innerHTML = '';
+    var fam = viewFam || famOf(state.g);
+    var top = document.createElement('div'); top.className = 'fams'; box.appendChild(top);
+    GROUPS.forEach(function (g) {
+      var b = document.createElement('button'); b.type = 'button'; b.textContent = g.name; b.setAttribute('aria-pressed', String(g.id === fam));
+      b.onclick = function () {
+        if (g.id === famOf(state.g)) { viewFam = null; buildGarments(); return; }
+        var first = g.items.filter(function (x) { return !x[2]; })[0]; if (first) pickGarment(first[0]); else { viewFam = g.id; buildGarments(); }
+      }; top.appendChild(b);
+    });
+    var g = GROUPS.filter(function (x) { return x.id === fam; })[0], list = document.createElement('div'); list.className = 'famlist'; box.appendChild(list);
+    g.items.forEach(function (it) {
+      var b = document.createElement('button'); b.type = 'button'; b.setAttribute('aria-pressed', String(it[0] === state.g));
+      b.textContent = it[1]; if (it[2]) { b.disabled = true; b.insertAdjacentHTML('beforeend', '<small>soon</small>'); }
+      b.onclick = function () { pickGarment(it[0]); };
       list.appendChild(b);
     });
   }
@@ -2941,7 +2990,7 @@
     $('pmContrast').onclick = function () { PM.contrast = !PM.contrast; $('pmCanvas').style.filter = PM.contrast ? 'contrast(1.7) saturate(0.4)' : ''; this.setAttribute('aria-pressed', String(PM.contrast)); };
     $('pmFitBtn').onclick = function () { PM.zoom = 1; PM.cx = PM.cy = null; pmFit(); pmDraw(); };
     $('pmPaper').querySelectorAll('[data-v]').forEach(function (b) { b.onclick = function () { PM.paper = b.dataset.v; $('pmPaper').querySelectorAll('[data-v]').forEach(function (o) { o.setAttribute('aria-pressed', String(o === b)); }); if (PM.img) pmDraw(); }; });
-    $('pmUse').onclick = function () { var r = pmCombined().r; if (!r) return; pmApply(r); pmClose(); var msg = $('pmDone'); msg.hidden = false; msg.textContent = 'Done. Your ' + nameOf(state.g).toLowerCase() + ' pattern and tech pack now come out the same size as the piece you measured, with the ' + (famOf(state.g) === 'tops' || famOf(state.g) === 'pants' ? state.fit + ' fit you picked' : 'style you picked') + '. Check one number with a tape measure before you cut fabric.'; if (window.nocivSteps) window.nocivSteps.show(1, true); };
+    $('pmUse').onclick = function () { var r = pmCombined().r; if (!r) return; pmApply(r); pmClose(); var msg = $('pmDone'); msg.hidden = false; msg.textContent = 'Done. Your ' + nameOf(state.g).toLowerCase() + ' pattern and tech pack now come out the same size as the piece you measured, with the ' + (famOf(state.g) === 'tops' || famOf(state.g) === 'pants' ? state.fit + ' fit you picked' : 'style you picked') + '. Check one number with a tape measure before you cut fabric.'; if (window.nocivSteps) window.nocivSteps.show(2, true); };
     window.addEventListener('resize', function () { if (!$('pm').hidden && PM.img) { pmFit(); pmDraw(); } });
   })();
   window.__pm = { PM: PM, combined: pmCombined, switchSide: pmSwitch, results: pmResults, apply: pmApply, H: pmH, map: hmap, draw: function () { pmFit(); pmDraw(); } };
@@ -3044,6 +3093,125 @@
   if (window.nocivFocus) window.nocivFocus(document.querySelector('.preview-col'), $('stage'), 'Screen locked. Drag to look around, pinch to zoom.');
   buildAll();
 })();
+</script>
+<script>
+
+
+</script>
+<script>
+
+
+</script>
+<script>
+
+
+</script>
+<script>
+
+
+</script>
+<script>
+/*NV-JS-START nociv shared: tween, console grip, slide-up sheet*/
+(function(){
+  if (window.NV) return;
+  var NV = window.NV = {};
+  NV.tween = function (ms, step, done) { var t0 = performance.now(); (function f(t) { var u = Math.min(1, (t - t0) / ms), e = 1 - Math.pow(1 - u, 3); step(e); if (u < 1) requestAnimationFrame(f); else if (done) done(); })(t0); };
+  // A drag handle on the tools panel. Drag it down or tap it and the panel folds away so the picture fills the screen. Drag up or tap again to bring it back.
+  NV.grip = function (panel, opts) {
+    opts = opts || {}; var g = document.createElement('div'); g.className = 'nv-grip' + (opts.cls ? ' ' + opts.cls : ''); g.setAttribute('role', 'button'); g.setAttribute('aria-label', 'Show or hide the tools'); if (opts.before) opts.before.parentNode.insertBefore(g, opts.before); else if (opts.after) opts.after.parentNode.insertBefore(g, opts.after.nextSibling); else panel.insertBefore(g, panel.firstChild);
+    var y0 = null, moved = false;
+    function frames() { var t0 = performance.now(); (function f(t) { if (opts.onFrame) opts.onFrame(); if (t - t0 < 560) requestAnimationFrame(f); })(t0); }
+    NV.setConsole = function (up) { var was = !document.documentElement.classList.contains('cdown'); if (was === up) return; document.documentElement.classList.toggle('cdown', !up); try { if (navigator.vibrate) navigator.vibrate(6); } catch (e) {} frames(); };
+    g.addEventListener('pointerdown', function (e) { y0 = e.clientY; moved = false; try { g.setPointerCapture(e.pointerId); } catch (_) {} });
+    g.addEventListener('pointermove', function (e) { if (y0 == null) return; var dy = e.clientY - y0; if (Math.abs(dy) > 16 && !moved) { moved = true; NV.setConsole(dy < 0); } });
+    g.addEventListener('pointerup', function () { if (y0 != null && !moved) NV.setConsole(document.documentElement.classList.contains('cdown')); y0 = null; });
+    g.addEventListener('pointercancel', function () { y0 = null; });
+    if (opts.onFrame) { window.addEventListener('resize', opts.onFrame); window.addEventListener('orientationchange', function () { setTimeout(opts.onFrame, 300); }); opts.onFrame(); }
+    return g;
+  };
+  // A sheet that slides up over a dim backdrop. NV.sheet(title, node) opens it, NV.sheetClose() closes it.
+  var sh, body, ttl;
+  function build() {
+    sh = document.createElement('div'); sh.className = 'nv-sheet'; sh.innerHTML = '<div class="nv-scrim"></div><div class="nv-card"><div class="nv-grab"></div><h3></h3><div class="nv-body"></div></div>'; document.body.appendChild(sh);
+    body = sh.querySelector('.nv-body'); ttl = sh.querySelector('h3'); sh.querySelector('.nv-scrim').addEventListener('click', NV.sheetClose);
+    var card = sh.querySelector('.nv-card'), grab = sh.querySelector('.nv-grab'), y0 = null;
+    grab.addEventListener('pointerdown', function (e) { y0 = e.clientY; try { grab.setPointerCapture(e.pointerId); } catch (_) {} });
+    grab.addEventListener('pointermove', function (e) { if (y0 != null && e.clientY - y0 > 40) { y0 = null; NV.sheetClose(); } });
+    grab.addEventListener('pointerup', function () { y0 = null; });
+  }
+  NV.sheet = function (title, node) { if (!sh) build(); ttl.textContent = title; body.innerHTML = ''; if (node) body.appendChild(node); sh.querySelector('.nv-card').scrollTop = 0; requestAnimationFrame(function () { sh.classList.add('on'); }); };
+  NV.sheetClose = function () { if (sh) sh.classList.remove('on'); };
+  NV.sheetOpen = function () { return !!(sh && sh.classList.contains('on')); };
+  document.addEventListener('keydown', function (e) { if (e.key === 'Escape') NV.sheetClose(); });
+
+  // Magnifier + see-through zoom bar. NV.zoomer({host, target, set, get, min, max, nopan, noslider, inOut}) puts a magnifier in the corner of host.
+  // Tap it and a transparent bar slides up: minus, slider, plus, Fit. It fades away after a few quiet seconds. While it is showing and you are zoomed in, one finger drags the picture.
+  var MAG = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" aria-hidden="true"><circle cx="10.5" cy="10.5" r="6.5"/><path d="M20 20l-4.9-4.9M10.5 7.5v6M7.5 10.5h6"/></svg>';
+  NV.zoomer = function (o) {
+    var host = o.host; if (!host || host.querySelector(':scope > .nv-mag')) return null;
+    if (getComputedStyle(host).position === 'static') host.style.position = 'relative';
+    var min = o.min || 1, max = o.max || 4, k = 1, tx = 0, ty = 0, open = false, t, api = {}, foc = null;
+    var btn = document.createElement('button'); btn.type = 'button'; btn.className = 'nv-mag'; btn.setAttribute('aria-label', 'Zoom'); btn.innerHTML = MAG;
+    // small vertical stack: plus, minus, Fit. Hold plus or minus and it keeps zooming, faster the longer you hold.
+    var bar = document.createElement('div'); bar.className = 'nv-zbar'; bar.innerHTML = '<button type="button" class="p" aria-label="Zoom in">+</button><button type="button" class="m" aria-label="Zoom out">&minus;</button><button type="button" class="f" aria-label="Fit">Fit</button>';
+    host.appendChild(btn); host.appendChild(bar);
+    var fit = bar.querySelector('.f'), rng = null;
+    function clampPan() { if (!o.target) return; var mx = o.target.offsetWidth * (k - 1) / 2, my = o.target.offsetHeight * (k - 1) / 2; tx = Math.max(-mx, Math.min(mx, tx)); ty = Math.max(-my, Math.min(my, ty)); }
+    function paint() { if (o.target && !o.apply) { clampPan(); o.target.style.transformOrigin = '50% 50%'; o.target.style.transform = k === 1 ? '' : 'translate(' + tx + 'px,' + ty + 'px) scale(' + k + ')'; } host.classList.toggle('nvzoomed', k > 1.01); btn.classList.toggle('on', k > 1.01); }
+    function set(v) { var was = k; k = Math.max(min, Math.min(max, v)); if (k <= min + 0.01) { k = min; tx = ty = 0; foc = null; } else if (was <= min + 0.01 && o.focus) { foc = o.focus(); } if (foc) { tx = -k * foc.x; ty = -k * foc.y; } if (o.apply) o.apply(k, api); paint(); poke(); }
+    function poke() { clearTimeout(t); if (!open) return; t = setTimeout(hide, 4500); }
+    function show() { open = true; bar.classList.add('on'); poke(); }
+    function hide() { open = false; bar.classList.remove('on'); }
+    btn.addEventListener('click', function () { open ? hide() : show(); });
+    // press and hold: one step right away, then it keeps going and speeds up
+    function hold(el, dir) {
+      var rep = null, wait = null, n = 0;
+      function step(fast) {
+        if (o.inOut) { (dir > 0 ? o.inOut.in : o.inOut.out)(); poke(); return; }
+        set(fast ? (dir > 0 ? k * (1 + Math.min(0.12, 0.04 + n * 0.004)) : k / (1 + Math.min(0.12, 0.04 + n * 0.004))) : k + dir * (o.step || 0.5));
+      }
+      function stopRep() { clearTimeout(wait); clearInterval(rep); rep = wait = null; }
+      el.addEventListener('pointerdown', function (e) { e.preventDefault(); try { el.setPointerCapture(e.pointerId); } catch (_) {} n = 0; step(false); stopRep(); wait = setTimeout(function () { rep = setInterval(function () { n++; step(true); }, o.inOut ? 110 : 45); }, 320); });
+      ['pointerup', 'pointercancel', 'lostpointercapture'].forEach(function (ev) { el.addEventListener(ev, stopRep); });
+      el.addEventListener('contextmenu', function (e) { e.preventDefault(); });
+      el.addEventListener('click', function (e) { if (e.detail === 0) step(false); }); // keyboard
+    }
+    hold(bar.querySelector('.p'), 1); hold(bar.querySelector('.m'), -1);
+    fit.addEventListener('click', function () { if (o.inOut) { o.inOut.fit(); poke(); } else set(min); });
+    bar.addEventListener('pointerdown', poke);
+    // one finger drags the picture while the bar is up and you are zoomed in
+    if (o.target && !o.nopan) {
+      var drag = null;
+      var stop = function (e) { if (open && k > 1.01 && e.target !== btn && !bar.contains(e.target)) { e.stopPropagation(); if (e.cancelable) e.preventDefault(); return true; } return false; };
+      host.addEventListener('pointerdown', function (e) { if (stop(e)) { drag = { x: e.clientX, y: e.clientY, tx: tx, ty: ty, id: e.pointerId }; try { host.setPointerCapture(e.pointerId); } catch (_) {} poke(); } }, true);
+      host.addEventListener('pointermove', function (e) { if (drag && drag.id === e.pointerId) { e.stopPropagation(); foc = null; tx = drag.tx + e.clientX - drag.x; ty = drag.ty + e.clientY - drag.y; paint(); poke(); } else stop(e); }, true);
+      var end = function (e) { if (drag && drag.id === e.pointerId) { drag = null; e.stopPropagation(); } };
+      host.addEventListener('pointerup', end, true); host.addEventListener('pointercancel', end, true);
+      ['touchstart', 'touchmove', 'mousedown'].forEach(function (n) { host.addEventListener(n, stop, true); });
+    }
+    api.set = set; api.get = function () { return k; }; api.reset = function () { if (k !== min) set(min); }; api.hide = hide; api.btn = btn;
+    return api;
+  };
+})();
+/*NV-JS-END*/
+
+/*NV-CUTSEW-START*/
+(function () {
+  var root = document.documentElement, grid = document.querySelector('.grid'), pc = grid && grid.querySelector('.preview-col');
+  if (!pc || !root.classList.contains('app')) return;
+  NV.grip(null, { after: pc });
+  // tapping a step tab brings the panel back if it was folded away
+  var nav = pc.querySelector('nav.steps'); if (nav) nav.addEventListener('click', function () { NV.setConsole && NV.setConsole(true); });
+})();
+(function () {
+  var st = document.getElementById('stage'), zi = document.getElementById('zIn'), zo = document.getElementById('zOut'), zf = document.getElementById('zFit');
+  if (!st || !zi || !zo || !zf || !window.NV || !NV.zoomer) return;
+  var ZC = NV.zoomer({ host: st, noslider: true, nopan: true, inOut: { in: function () { zi.click(); }, out: function () { zo.click(); }, fit: function () { zf.click(); } } });
+  var lb = document.getElementById('zLbl'), sp = st.querySelector('.nv-zbar .sp');
+  if (lb && sp) { var up = function () { sp.textContent = lb.textContent; sp.style.cssText = 'text-align:center;font-weight:900;letter-spacing:.06em'; }; up(); try { new MutationObserver(up).observe(lb, { childList: true, characterData: true, subtree: true }); } catch (e) {} }
+})();
+/*NV-CUTSEW-END*/
+
 </script>
 </body>
 </html>
