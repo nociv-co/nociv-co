@@ -52,6 +52,9 @@
 // ===== THE TEST LIST. Claude rewrites this block after every delivery. Keep each test to a few taps. =====
 var BATCH = '2026-11-02 apps';
 var TESTS = [
+  { id: 'getapp', title: 'Get the app block', where: 'Bottom of Home, Shop, About, Community, Tools',
+    steps: ['Scroll to the bottom of the home page in Safari.', 'Tap Add to home screen and read the steps.'],
+    expect: 'A black block above the footer with a red button and 3 steps for Safari. It does not appear once the site is opened from the home screen icon.' },
   { id: 'shopapp', title: 'Shop app icon', where: 'iPhone Safari, nociv.co',
     steps: ['Open nociv.co in Safari.', 'Tap Share, then Add to Home Screen, then Add.', 'Open it from your home screen.'],
     expect: 'A black NOCIV.CO icon. It opens full screen with no Safari bars. Pages and the cart work like the website.' },
