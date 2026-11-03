@@ -50,35 +50,29 @@
 
 <script>
 // ===== THE TEST LIST. Claude rewrites this block after every delivery. Keep each test to a few taps. =====
-var BATCH = '2026-11-02 late night';
+var BATCH = '2026-11-02 apps';
 var TESTS = [
+  { id: 'shopapp', title: 'Shop app icon', where: 'iPhone Safari, nociv.co',
+    steps: ['Open nociv.co in Safari.', 'Tap Share, then Add to Home Screen, then Add.', 'Open it from your home screen.'],
+    expect: 'A black NOCIV.CO icon. It opens full screen with no Safari bars. Pages and the cart work like the website.' },
+  { id: 'adminapp', title: 'Admin app icon', where: 'iPhone Safari, nociv.co/admin.html',
+    steps: ['Open nociv.co/admin.html in Safari.', 'Tap Share, then Add to Home Screen, then Add.', 'Open it from your home screen and log in.'],
+    expect: 'A cream NOCIV ADMIN icon that opens straight to Admin. You have to log in once inside the app, that is normal on iPhone. It stays logged in after that.' },
+  { id: 'offline', title: 'No signal screen', where: 'Either app',
+    steps: ['Turn on Airplane Mode.', 'Open a page you have not visited yet.'],
+    expect: 'A black screen that says No signal right now with a Try again button, not a blank page.' },
   { id: 'find', title: 'Find box on Admin home', where: 'Admin, home screen',
-    steps: ['Open Admin and log in.', 'Tap the Find box at the top and type: refund.', 'Tap the answer.'],
-    expect: 'A short list shows where it lives (Recent Orders, Transactions). Tapping it opens that place. Typing customers puts Customers first.' },
+    steps: ['Type refund in the Find box.', 'Tap the answer.'],
+    expect: 'It jumps to Recent Orders.' },
   { id: 'cust', title: 'Customer list', where: 'Admin, Transactions, Customers',
-    steps: ['Open Transactions, then Customers.', 'Type part of an email in the search box.', 'Tap Download customer list.'],
-    expect: 'One line per customer with orders, total spent and last order date. Repeat buyers are tagged. The CSV opens in Numbers or Sheets. With no sales yet it says No customers yet.' },
-  { id: 'unfin', title: 'Unfinished checkouts line', where: 'Admin, home screen',
-    steps: ['On your phone, add something to the cart on the shop and leave without paying.', 'Wait 45 minutes, open Admin.'],
-    expect: 'Needs you shows 1 checkout started and not finished, and what was in the bag. It does not have an email, that is normal.' },
-  { id: 'slip', title: 'Packing slip', where: 'Admin, Recent Orders, an order that ships',
-    steps: ['Open an order with a shipping address.', 'Tap Packing slip.', 'Tap Print.'],
-    expect: 'A clean page with the address, items and thank you. Print shows the page without the button. If nothing opens, allow pop ups for the site.' },
+    steps: ['Open Customers, search part of an email, tap Download.'],
+    expect: 'One line per customer. The CSV opens in Numbers or Sheets.' },
+  { id: 'slip', title: 'Packing slip', where: 'Admin, Recent Orders',
+    steps: ['On an order that ships, tap Packing slip, then Print.'],
+    expect: 'A clean page with address and items. If nothing opens, allow pop ups.' },
   { id: 'refund', title: 'Refund button (real money)', where: 'Admin, Recent Orders',
-    steps: ['Buy your own cheapest pin first.', 'On that order tap Refund, leave the amount blank, confirm.', 'Check your card app and Stripe.'],
-    expect: 'It says Refunded, the order shows Refunded in red and moves to Cancelled. Stock is NOT put back, add it yourself. Needs the live Stripe key and the order to have a Stripe payment.' },
-  { id: 'needs', title: 'Needs you list', where: 'Admin, home screen',
-    steps: ['Look at the top of the home screen.', 'Tap one line.'],
-    expect: 'Each line opens the right place. If nothing is waiting it says All clear.' },
-  { id: 'flip', title: 'Flip and Holding in Whole', where: 'Cartoon, Animate, Whole',
-    steps: ['Tap WHOLE, then PARTS, then FLIP + HOLD.', 'Tap FACE THE OTHER WAY.'],
-    expect: 'The character turns the other way and Holding cycles.' },
-  { id: 'armsleg', title: 'Arms and legs panel', where: 'Cartoon, Animate, Arms then Legs',
-    steps: ['Tap ARMS, turn the knobs, then tap LEGS.'],
-    expect: 'Small picture left, knobs right, nothing overlapping.' },
-  { id: 'pinfit', title: 'Pin art fits the face', where: 'Admin, Pins',
-    steps: ['Keep Fill the button face, print ONE sheet at 100 percent, cut one and press a pin.'],
-    expect: 'Your picture covers the visible face and nothing important is cut off.' }
+    steps: ['Buy your cheapest pin, tap Refund on it, leave the amount blank, confirm.'],
+    expect: 'Refunded in red, order moves to Cancelled, money back on your card. Stock is not put back.' }
 ];
 // ===== end of list =====
 

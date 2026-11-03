@@ -58,6 +58,15 @@
   .ot-cancel .ot-bar { display: none; }
   @media (prefers-reduced-motion: reduce) { .ot-live i, .live .ot-step.now .ot-dot, .live .ot-fill::after { animation: none; } .ot-fill, .ot-dot { transition: none; } }
 </style>
+<link rel="manifest" href="/manifest.webmanifest">
+<meta name="theme-color" content="#111111">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="NOCIV">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<link rel="apple-touch-icon" href="/icons/shop-180.png">
+<link rel="icon" type="image/png" sizes="192x192" href="/icons/shop-192.png">
+<script>if('serviceWorker' in navigator){window.addEventListener('load',function(){navigator.serviceWorker.register('/sw.js').catch(function(){})})}</script>
 </head>
 <body class="light">
 <header class="nociv-header"><img class="torn-header-img" src="header.png" alt="NOCIV.CO: Nothing Of Civilization"></header>

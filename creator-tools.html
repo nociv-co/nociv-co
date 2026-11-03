@@ -94,6 +94,15 @@
   @media (max-width: 370px) { .b-tabs button, .b-apps button { font-size: .64rem; letter-spacing: .06em; gap: 4px; padding: 0 2px; } }
   @media (prefers-reduced-motion: reduce) { .b-swap, .b-apps.b-in button { animation: none; } }
 </style>
+<link rel="manifest" href="/manifest.webmanifest">
+<meta name="theme-color" content="#111111">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="NOCIV">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<link rel="apple-touch-icon" href="/icons/shop-180.png">
+<link rel="icon" type="image/png" sizes="192x192" href="/icons/shop-192.png">
+<script>if('serviceWorker' in navigator){window.addEventListener('load',function(){navigator.serviceWorker.register('/sw.js').catch(function(){})})}</script>
 </head>
 <body>
 
