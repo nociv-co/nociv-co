@@ -156,6 +156,14 @@
       } catch (e) { $('lmOut').innerHTML = '<div class="lm-warn">That did not work: ' + esc(e && e.message || 'unknown error') + '</div>'; }
       b.disabled = false; b.textContent = t;
     };
+    // lets a zine in the Zine Library list say "make Lulu files from this one"
+    window.NLulu = window.NLulu || {};
+    window.NLulu.pick = function (url, name) {
+      var sel = $('lmLib'), found = false;
+      for (var i = 0; i < sel.options.length; i++) if (sel.options[i].value === url) { sel.selectedIndex = i; found = true; break; }
+      if (!found) return false;
+      sel.onchange(); return true;
+    };
     // library list
     Promise.resolve(getLibrary && getLibrary()).then(function (rows) {
       libRows = rows || [];
@@ -166,5 +174,5 @@
     }).catch(function () {});
   }
 
-  window.NLulu = { mount: mount, build: build };
+  window.NLulu = Object.assign(window.NLulu || {}, { mount: mount, build: build });
 })();

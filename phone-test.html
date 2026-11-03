@@ -52,6 +52,9 @@
 // ===== THE TEST LIST. Claude rewrites this block after every delivery. Keep each test to a few taps. =====
 var BATCH = '2026-11-02 apps';
 var TESTS = [
+  { id: 'lulumake', title: 'Make Lulu files from a library zine', where: 'Admin, Shop, Zine Library',
+    steps: ['Open Zine Library and find a zine in the list.', 'Tap Make Lulu files on it.', 'Tap Make my Lulu files, then Save on each file.'],
+    expect: 'The Lulu box opens with that zine already picked and shows its page size. You get two PDFs, the inside pages and the cover spread. Over 44 pages it tells you it needs a spine book, which is not built yet.' },
   { id: 'optin', title: 'Pop-up alerts opt in', where: 'Shop app from your home screen',
     steps: ['Open the NOCIV shop app from your home screen.', 'Scroll to the grey block at the bottom, inside the app, and tap Alert me about pop-ups.', 'Tap Allow.', 'Then open Admin, Community, Pop-up drop alert.'],
     expect: 'The button says Alerts on, tap to turn off. In Admin the count goes up by 1. Tap that button again and the count drops back after you reopen the section.' },

@@ -1508,7 +1508,7 @@
 <script src="admin-attention.js?v=2"></script>
 <script src="admin-push.js?v=1"></script>
 <script src="admin-orders.js?v=2"></script>
-<script src="admin-lulu.js?v=2"></script>
+<script src="admin-lulu.js?v=3"></script>
 <script>
   const loginBox = document.getElementById('loginBox');
   const dashboard = document.getElementById('dashboard');
@@ -4471,6 +4471,7 @@
         <button class="edit-btn" data-dir="down" ${idx === zineRows.length - 1 ? 'disabled' : ''}>↓</button>
         <button class="edit-btn" data-act="addpart">+ Part</button>
         <input type="file" accept="application/pdf" class="addpart-file" style="display:none;">
+        <button class="edit-btn" data-act="lulumake">Make Lulu files</button>
         <button class="edit-btn" data-act="lulucover">Lulu cover</button>
         <input type="file" accept="application/pdf,image/*" class="lulucover-file" style="display:none;">
         <button class="edit-btn" data-act="backcover">${z.back_cover_url ? 'Change back' : '+ Back cover'}</button>
@@ -4519,6 +4520,23 @@
           next.push({ label: label.trim() || 'Part ' + (next.length + 1), url });
           if (await saveZineParts(z, next)) await loadZineAdminList();
         } catch (e) { alert('Could not add part: ' + e.message); }
+      });
+      // Make Lulu print files straight from this zine's PDF (opens the Lulu maker above with it picked)
+      row.querySelector('[data-act="lulumake"]').addEventListener('click', () => {
+        const withUrl = parts.filter(p => p && p.url);
+        if (!withUrl.length) { alert('This zine has no PDF yet.'); return; }
+        let pick = withUrl[0];
+        if (withUrl.length > 1) {
+          const ans = prompt('Which part? Type a number from 1 to ' + withUrl.length + '.\n' + withUrl.map((p, i) => (i + 1) + ' = ' + (p.label || 'Part ' + (i + 1))).join('\n'), '1');
+          if (ans === null) return; const n = parseInt(ans, 10);
+          if (!(n >= 1 && n <= withUrl.length)) { alert('Type a number from 1 to ' + withUrl.length + '.'); return; }
+          pick = withUrl[n - 1];
+        }
+        const host = document.getElementById('luluMaker'), det = host && host.closest('details'); if (!host) return;
+        if (det) det.open = true;
+        const ok = window.NLulu && NLulu.pick && NLulu.pick(pick.url);
+        host.scrollIntoView({ behavior: 'smooth', block: 'start' });
+        if (!ok) alert('The Lulu maker is still loading. Wait a second and tap again.');
       });
       // Back cover: either a Lulu spread (split in two, front replaces the cover) or just a back picture.
       const lcInput = row.querySelector('.lulucover-file');
