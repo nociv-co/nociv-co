@@ -53,7 +53,7 @@
 var BATCH = '2026-11-02 apps';
 var TESTS = [
   { id: 'optin', title: 'Pop-up alerts opt in', where: 'Shop app from your home screen',
-    steps: ['Open the NOCIV shop app from your home screen.', 'Scroll to the grey block at the bottom and tap Alert me about pop-ups.', 'Tap Allow.', 'Then open Admin, Community, Pop-up drop alert.'],
+    steps: ['Open the NOCIV shop app from your home screen.', 'Scroll to the grey block at the bottom, inside the app, and tap Alert me about pop-ups.', 'Tap Allow.', 'Then open Admin, Community, Pop-up drop alert.'],
     expect: 'The button says Alerts on, tap to turn off. In Admin the count goes up by 1. Tap that button again and the count drops back after you reopen the section.' },
   { id: 'dropsend', title: 'Send a drop alert', where: 'Admin, Community, Pop-up drop alert',
     steps: ['Type a title and message, pick a page, tap Send alert, confirm.', 'Lock your phone and wait up to a minute.'],

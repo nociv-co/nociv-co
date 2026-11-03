@@ -27,16 +27,17 @@
     '#installApp ol{margin:0;padding-left:20px;line-height:1.45}#installApp li{margin:3px 0}' +
     '#installApp .ia-steps p{margin:10px 0 0}' +
     '#installApp .ia-small{margin:12px 0 0;font-size:.78rem;font-weight:600}' +
-    '#installApp .ia-msg{margin:12px 0 0;font-size:.85rem}';
+    '#installApp .ia-msg{margin:12px 0 0;font-size:.85rem}#installApp .ia-note{margin:14px auto 0;max-width:340px;font-size:.85rem;font-weight:600}';
   document.head.appendChild(st);
 
   var box = document.createElement('section');
   box.id = 'installApp'; box.setAttribute('aria-label', 'Add NOCIV to your home screen');
   box.innerHTML = '<div class="ia-in"><h2>' + (standalone ? 'Pop-up shop alerts' : 'Keep NOCIV in your pocket') + '</h2>' +
-    '<p>' + (standalone ? 'Get one short alert when a pop-up shop drops. Nothing else. No account.' : 'Put it on your home screen like an app and get an alert when a pop-up shop drops. Free. No App Store, no account, no tracking.') + '</p>' +
-    '<div class="ia-row">' + (standalone ? '' : '<button type="button" class="ia-btn" id="iaBtn">Add to home screen</button>') +
-    '<button type="button" class="ia-btn" id="iaAlert" style="display:none">Alert me about pop-ups</button></div>' +
-    '<div class="ia-steps" id="iaSteps" role="status"></div><p class="ia-msg" id="iaMsg" role="status"></p>' +
+    '<p>' + (standalone ? 'Get one short alert when a pop-up shop drops. Nothing else. No account.' : 'Put it on your home screen like an app. Free. No App Store, no account, no tracking.') + '</p>' +
+    '<div class="ia-row">' + (standalone ? '<button type="button" class="ia-btn" id="iaAlert" style="display:none">Alert me about pop-ups</button>' : '<button type="button" class="ia-btn" id="iaBtn">Add to home screen</button>') + '</div>' +
+    '<div class="ia-steps" id="iaSteps" role="status"></div>' +
+    (standalone ? '' : '<p class="ia-note">Pop-up shop alerts are inside the app. Open it from your home screen and tap Alert me about pop-ups to get one when a shop drops. iPhone needs iOS 16.4 or newer.</p>') +
+    '<p class="ia-msg" id="iaMsg" role="status"></p>' +
     '<p class="ia-small" id="iaSmall" style="display:none">We save only your phone\'s alert address. No name, no email.</p></div>';
 
   var foot = document.querySelector('footer');
@@ -47,7 +48,7 @@
   var iaBtn = document.getElementById('iaBtn');
   if (iaBtn) iaBtn.addEventListener('click', function () {
     if (deferred) { deferred.prompt(); deferred = null; return; }
-    if (ios) show('<ol><li>Tap the <b>Share</b> button (the square with an arrow) at the bottom or top of Safari.</li><li>Scroll and tap <b>Add to Home Screen</b>.</li><li>Tap <b>Add</b>.</li><li>Open NOCIV from your home screen and tap <b>Alert me about pop-ups</b>.</li></ol><p class="ia-small">Using another browser on iPhone? Open nociv.co in Safari first. Alerts need iOS 16.4 or newer.</p>');
+    if (ios) show('<ol><li>Tap the <b>Share</b> button (the square with an arrow) at the bottom or top of Safari.</li><li>Scroll and tap <b>Add to Home Screen</b>.</li><li>Tap <b>Add</b>.</li></ol><p class="ia-small">Using another browser on iPhone? Open nociv.co in Safari first.</p>');
     else if (android) show('<ol><li>Tap the <b>menu</b> (three dots) in Chrome.</li><li>Tap <b>Add to Home screen</b> or <b>Install app</b>.</li><li>Tap <b>Install</b>.</li></ol>');
     else show('<ol><li>Open <b>nociv.co</b> on your phone.</li><li>iPhone: Safari, Share, Add to Home Screen.</li><li>Android: Chrome menu, Install app.</li></ol>');
   });
@@ -88,10 +89,11 @@
       .then(function () { draw('off', 'Alerts are off.'); }).catch(function () { draw('off'); });
   }
   if (ab) ab.addEventListener('click', function () {
-    if (!canPush) { msg.textContent = 'Add NOCIV to your home screen first, then open it from there and tap this button. Alerts need iOS 16.4 or newer.'; return; }
+    if (!canPush) { msg.textContent = 'Alerts are not available on this phone.'; return; }
     if (state === 'on') unsubscribe(); else subscribe();
   });
-  if (!canPush) { if (ios && !standalone) ab.style.display = ''; }
+  if (!ab) { /* website tab: words only, the button lives inside the installed app */ }
+  else if (!canPush) { ab.style.display = 'none'; }
   else if (Notification.permission === 'denied') draw('blocked');
   else current().then(function (sub) { draw(sub ? 'on' : 'off'); }).catch(function () { draw('off'); });
 })();
