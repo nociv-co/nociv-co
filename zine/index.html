@@ -267,6 +267,7 @@ html.cdown #nvdock .toolbar{max-height:0;padding-top:0;padding-bottom:0;opacity:
         <button class="fmtbtn" data-fmt="booklet"><b>Booklet</b><span>Bigger half-letter pages, folded and stapled. 8 to 24 pages.</span></button>
       </div>
       <label class="pdfopen"><b>Bring a PDF</b><span>Turn any PDF into a booklet you can print at home. Any number of pages.</span><input type="file" id="pdfStart" accept="application/pdf,.pdf" style="position:absolute;inset:0;opacity:0"></label>
+      <button type="button" class="pdfopen" id="pdfResume" hidden><b>Pick up your PDF booklet</b><span id="pdfResumeSub"></span></button>
       <div id="countBox" hidden>
         <div class="field"><label>Pages</label></div>
         <div class="wide" id="counts"></div>
@@ -1340,11 +1341,13 @@ html.cdown #nvdock .toolbar{max-height:0;padding-top:0;padding-bottom:0;opacity:
     if (s === 'print') buildPrint();
   }
   window.ZineSetStep = setStep;
+  $('pdfResume').onclick = function () { setStep('pdf'); PdfBook.resume($('pdfView')); };
   $('pdfStart').onchange = function () { var f = this.files && this.files[0]; this.value = ''; if (!f) return; setStep('pdf'); PdfBook.mount($('pdfView')); PdfBook.start(f); };
   document.querySelectorAll('.tab').forEach(function (t) { t.onclick = function () { setStep(t.dataset.step); }; });
   document.querySelectorAll('[data-goto]').forEach(function (b) { b.onclick = function () { setStep(b.dataset.goto); }; });
   function buildSetup() {
     document.querySelectorAll('.fmtbtn').forEach(function (b) { b.setAttribute('aria-pressed', String(b.dataset.fmt === Z.fmt)); b.onclick = function () { setFormat(b.dataset.fmt, Z.fmt === 'booklet' && b.dataset.fmt === 'booklet' ? Z.pages.length : b.dataset.fmt === 'mini' ? 8 : Math.max(8, Z.pages.length)); }; });
+    if (window.PdfBook) PdfBook.hasSaved().then(function (n) { $('pdfResume').hidden = !n; $('pdfResumeSub').textContent = n + ' pages, saved on this phone.'; });
     $('countBox').hidden = Z.fmt !== 'booklet';
     var box = $('counts'); box.innerHTML = '';
     [8, 12, 16, 20, 24].forEach(function (n) { chip(box, n + ' pages', Z.pages.length === n, function () { setFormat('booklet', n); }); });

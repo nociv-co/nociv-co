@@ -48,6 +48,42 @@
   }
   function fresh() { return { sources: [], pages: [], sel: -1, numbers: false, skipFirst: true, paper: 'letter', shrink: true, backCover: false, busy: '', msg: '', trim: 'digest' }; }
 
+
+  /* ---------- saving on this phone (IndexedDB), so closing the tab does not lose the booklet ---------- */
+  function idb() {
+    return new Promise(function (ok, no) {
+      if (!window.indexedDB) return no(new Error('no idb'));
+      var q = indexedDB.open('nocivPdfBook', 1);
+      q.onupgradeneeded = function () { q.result.createObjectStore('p'); };
+      q.onsuccess = function () { ok(q.result); }; q.onerror = function () { no(q.error); };
+    });
+  }
+  function idbDo(mode, fn) { return idb().then(function (db) { return new Promise(function (ok, no) { var tx = db.transaction('p', mode), st = tx.objectStore('p'), r = fn(st); tx.oncomplete = function () { ok(r && r.result); }; tx.onerror = function () { no(tx.error); }; }); }); }
+  var saveT = 0;
+  function persist() {
+    clearTimeout(saveT);
+    saveT = setTimeout(function () {
+      if (!S || !S.sources.length) { idbDo('readwrite', function (st) { return st.delete('cur'); }).catch(function () {}); return; }
+      var data = { v: 1, opts: { numbers: S.numbers, skipFirst: S.skipFirst, paper: S.paper, shrink: S.shrink, backCover: S.backCover, trim: S.trim },
+        sources: S.sources.map(function (s) { return { kind: s.kind, name: s.name, bytes: s.bytes, size: s.size }; }), pages: S.pages.map(function (p) { return p.blank ? { blank: true } : { s: p.s, i: p.i }; }) };
+      idbDo('readwrite', function (st) { return st.put(data, 'cur'); }).catch(function () {});
+    }, 600);
+  }
+  function loadSaved() { return idbDo('readonly', function (st) { return st.get('cur'); }).catch(function () { return null; }); }
+  async function restore() {
+    var d = await loadSaved(); if (!d || !d.sources || !d.sources.length) return false;
+    var L = await lib(), n = fresh(), i;
+    for (i = 0; i < d.sources.length; i++) {
+      var s = d.sources[i], src = { kind: s.kind, name: s.name, bytes: s.bytes, size: s.size, thumbs: {} };
+      if (s.kind === 'pdf') { src.doc = await L.PDFDocument.load(s.bytes); src.count = src.doc.getPageCount(); }
+      else src.url = URL.createObjectURL(new Blob([s.bytes], { type: 'image/jpeg' }));
+      n.sources.push(src);
+    }
+    n.pages = d.pages; Object.keys(d.opts || {}).forEach(function (k) { n[k] = d.opts[k]; });
+    S = n; n.sources.forEach(function (s, k) { if (s.kind === 'pdf') thumbsFor(k); });
+    return true;
+  }
+
   /* ---------- adding things ---------- */
   function readBytes(file) { return new Promise(function (ok, no) { var r = new FileReader(); r.onload = function () { ok(new Uint8Array(r.result)); }; r.onerror = function () { no(r.error); }; r.readAsArrayBuffer(file); }); }
 
@@ -266,7 +302,7 @@
 
     root.querySelectorAll('.pbt').forEach(function (b) { b.onclick = function () { S.sel = S.sel === +b.dataset.i ? -1 : +b.dataset.i; render(); }; });
     $('pbL').onclick = function () { move(-1); }; $('pbR').onclick = function () { move(1); };
-    $('pbDel').onclick = function () { if (S.sel < 0) return; S.pages.splice(S.sel, 1); S.sel = Math.min(S.sel, S.pages.length - 1); if (!S.pages.length) { S = fresh(); } render(); };
+    $('pbDel').onclick = function () { if (S.sel < 0) return; S.pages.splice(S.sel, 1); S.sel = Math.min(S.sel, S.pages.length - 1); if (!S.pages.length) { S = fresh(); } render(); persist(); };
     $('pbBlank').onclick = function () { insert([{ blank: true }], S.sel >= 0 ? S.sel + 1 : null); render(); };
     wireFile('pbAddPdf', function (f) { addPdf(f, S.sel >= 0 ? S.sel + 1 : null); });
     wireFile('pbAddImg', function (f) { addPhoto(f, S.sel >= 0 ? S.sel + 1 : null); });
@@ -274,8 +310,9 @@
     $('pbPaper').onchange = function () { S.paper = this.value; }; $('pbTrim').onchange = function () { S.trim = this.value; };
     $('pbMake').onclick = function () { run('booklet'); }; $('pbBook').onclick = function () { run('book'); };
     $('pbBack').onclick = function () { window.ZineSetStep && window.ZineSetStep('setup'); };
-    $('pbClear').onclick = function () { if (confirm('Start over with a new PDF?')) { S = fresh(); render(); } };
+    $('pbClear').onclick = function () { if (confirm('Start over with a new PDF?')) { S = fresh(); render(); persist(); } };
     root.scrollTop = keep;
+    persist();
   }
   function move(d) {
     var a = S.sel, b = a + d; if (a < 0 || b < 0 || b >= S.pages.length) return;
@@ -285,8 +322,11 @@
 
   window.PdfBook = {
     mount: function (el) { root = el; if (!S) S = fresh(); render(); },
-    // called from step 1 when a file is picked there
-    start: function (file) { if (!S) S = fresh(); addPdf(file, null); },
+    // pick up the saved booklet, if there is one
+    resume: function (el) { root = el; return restore().then(function (ok) { if (!S) S = fresh(); render(); return ok; }); },
+    hasSaved: function () { return loadSaved().then(function (d) { return d && d.pages ? d.pages.length : 0; }); },
+    // called from step 1 when a file is picked there. A new file starts a new booklet.
+    start: function (file) { S = fresh(); addPdf(file, null); },
     _state: function () { return S; }
   };
   window.PdfBookCore.buildBooklet = function () { return buildBooklet(); };
