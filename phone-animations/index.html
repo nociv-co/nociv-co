@@ -66,7 +66,7 @@
   #pupSub, #pupFace, #pupMoodRow, #pupLimbCtl { display: none !important; }
   .pc-knobs.pv { display: flex; flex-direction: column; gap: 6px; align-items: stretch; justify-content: center; }
   .pc-knobs.pv.hide { display: none; }
-  .pv-h { font: 400 clamp(.8rem, 2.2svh, 1rem)/1 NocivAnton, Anton, Impact, sans-serif; letter-spacing: .1em; text-transform: uppercase; color: #1a1a1a; padding-left: 4px; }
+  .pv-h { font: 900 clamp(.8rem, 2.2svh, 1rem)/1 -apple-system, BlinkMacSystemFont, "Helvetica Neue", Arial, sans-serif; letter-spacing: .1em; text-transform: uppercase; color: #1a1a1a; padding-left: 4px; }
   .pv-row { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 8px 6px; align-items: start; }
   .pv-row .vbox.sq { max-width: 74px; }
   .pv-row .kc-sw { align-self: center; } .pv-row .kc-sw .tb { height: 42px; width: 100%; min-height: 0; font-size: .8rem; }
@@ -178,7 +178,7 @@
   .stage.flash::after { content: ''; position: absolute; inset: 0; background: #fff; border-radius: 12px; pointer-events: none; animation: shot .22s ease-out forwards; }
   @keyframes shot { from { opacity: .85; } to { opacity: 0; } }
   .tb.dim { opacity: .55; }
-  .pad { position: relative; height: clamp(30px, 5.2svh, 46px); border: 2.5px solid #1a1a1a; border-radius: 12px; font: 400 clamp(.85rem, 2.4svh, 1.05rem)/1 NocivAnton, Anton, Impact, sans-serif; letter-spacing: .06em; color: #fff; box-shadow: 0 4px 0 #1a1a1a; transition: transform .05s, box-shadow .05s; padding: 0 0 0 12px; text-shadow: 0 1px 0 rgba(0,0,0,.35); }
+  .pad { position: relative; height: clamp(30px, 5.2svh, 46px); border: 2.5px solid #1a1a1a; border-radius: 12px; font: 900 clamp(.85rem, 2.4svh, 1.05rem)/1 -apple-system, BlinkMacSystemFont, "Helvetica Neue", Arial, sans-serif; letter-spacing: .06em; color: #fff; box-shadow: 0 4px 0 #1a1a1a; transition: transform .05s, box-shadow .05s; padding: 0 0 0 12px; text-shadow: 0 1px 0 rgba(0,0,0,.35); }
   .pad i { position: absolute; left: 8px; top: 50%; width: 7px; height: 7px; margin-top: -3.5px; border-radius: 50%; background: rgba(0,0,0,.35); }
   .pad[aria-pressed="true"] { transform: translateY(3px); box-shadow: 0 1px 0 #1a1a1a, inset 0 0 0 3px rgba(255,255,255,.75); }
   .pad[aria-pressed="true"] i { background: #fff; box-shadow: 0 0 6px 2px #fff; }
@@ -186,7 +186,7 @@
   .pc-knobs { display: grid; grid-auto-flow: column; grid-auto-columns: minmax(0, 1fr); gap: 4px; align-items: start; background: #f2ecd6; border: 2.5px solid #1a1a1a; border-radius: 14px; padding: clamp(5px, 1.2svh, 10px) 4px; }
   .pc-knobs.hide { display: none; }
   .kc { display: flex; flex-direction: column; align-items: center; gap: 2px; min-width: 0; }
-  .kl { font: 400 clamp(.62rem, 1.8svh, .78rem)/1 NocivAnton, Anton, Impact, sans-serif; letter-spacing: .05em; text-align: center; color: #1a1a1a; text-transform: uppercase; white-space: nowrap; }
+  .kl { font: 900 clamp(.62rem, 1.8svh, .78rem)/1 -apple-system, BlinkMacSystemFont, "Helvetica Neue", Arial, sans-serif; letter-spacing: .05em; text-align: center; color: #1a1a1a; text-transform: uppercase; white-space: nowrap; }
   .kv { font: 700 .66rem/1 ui-monospace, Menlo, monospace; background: #1a1a1a; color: #f2c230; border-radius: 4px; padding: 2px 5px; min-width: 3.2em; text-align: center; white-space: nowrap; }
   .kv:empty { display: none; }
   .kb { width: clamp(40px, 9svh, 66px); height: clamp(40px, 9svh, 66px); touch-action: none; cursor: grab; border-radius: 50%; outline-offset: 2px; }
@@ -201,7 +201,7 @@
   .sw[aria-pressed="true"] i { background: #4f7a52; }
   .kc-sw { justify-content: flex-end; height: 100%; }
   .pc-row { display: flex; gap: clamp(5px, 1.2svh, 8px); align-items: flex-end; }
-  .tb { flex: 1; min-width: 0; height: clamp(30px, 5.6svh, 46px); border: 2.5px solid #1a1a1a; border-radius: 12px; background: #f2ecd6; color: #1a1a1a; font: 400 clamp(.78rem, 2.2svh, .95rem)/1 NocivAnton, Anton, Impact, sans-serif; letter-spacing: .06em; box-shadow: 0 4px 0 #1a1a1a; padding: 0 4px; }
+  .tb { flex: 1; min-width: 0; height: clamp(30px, 5.6svh, 46px); border: 2.5px solid #1a1a1a; border-radius: 12px; background: #f2ecd6; color: #1a1a1a; font: 900 clamp(.78rem, 2.2svh, .95rem)/1 -apple-system, BlinkMacSystemFont, "Helvetica Neue", Arial, sans-serif; letter-spacing: .06em; box-shadow: 0 4px 0 #1a1a1a; padding: 0 4px; }
   .tb:active { transform: translateY(3px); box-shadow: 0 1px 0 #1a1a1a; }
   .tb:disabled { opacity: .45; }
   .tb-prop { display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 2px; flex: 1.5; }
@@ -213,7 +213,7 @@
   .pc-go { align-items: flex-end; }
   .pc-go .tb, .pc-go .take { height: clamp(40px, 7.4svh, 60px); }
   .pc-go .kc-sw { flex: 1.1; height: auto; }
-  .take { flex: 2.4; min-width: 0; border: 3px solid #1a1a1a; border-radius: 16px; background: #c8412f; color: #fff; font: 400 clamp(1rem, 3svh, 1.3rem)/1 NocivAnton, Anton, Impact, sans-serif; letter-spacing: .07em; box-shadow: 0 5px 0 #1a1a1a, inset 0 3px 0 rgba(255,255,255,.28); text-shadow: 0 2px 0 rgba(0,0,0,.3); }
+  .take { flex: 2.4; min-width: 0; border: 3px solid #1a1a1a; border-radius: 16px; background: #c8412f; color: #fff; font: 900 clamp(1rem, 3svh, 1.3rem)/1 -apple-system, BlinkMacSystemFont, "Helvetica Neue", Arial, sans-serif; letter-spacing: .07em; box-shadow: 0 5px 0 #1a1a1a, inset 0 3px 0 rgba(255,255,255,.28); text-shadow: 0 2px 0 rgba(0,0,0,.3); }
   .take:active { transform: translateY(4px); box-shadow: 0 1px 0 #1a1a1a, inset 0 3px 0 rgba(255,255,255,.28); }
   /* soft pass: three colors (ink, tan, red), soft shadows instead of hard offsets */
   body.pupmode .pc { background: #ece6d2; border: 1.5px solid #1a1a1a; box-shadow: 0 10px 28px rgba(26,26,26,.18), inset 0 1px 0 rgba(255,255,255,.6); }
@@ -248,7 +248,7 @@
   /* the zone buttons always fit the picture, however short it gets */
   body.pupmode #pupZoom { top: 6px; bottom: 6px; transform: none; justify-content: center; gap: 4px; }
   body.pupmode #pupZoom button { flex: 1 1 0; min-height: 0; max-height: 38px; padding: 0 13px; display: flex; align-items: center; justify-content: center; }
-  #pupZoom button { background: rgba(26,26,26,.78); color: #f2ecd6; border: 0; border-radius: 999px; padding: clamp(6px, 1.3svh, 9px) 11px; font: 400 clamp(.62rem, 1.7svh, .75rem)/1 NocivAnton, Anton, Impact, sans-serif; letter-spacing: .07em; box-shadow: 0 5px 12px rgba(0,0,0,.3); }
+  #pupZoom button { background: rgba(26,26,26,.78); color: #f2ecd6; border: 0; border-radius: 999px; padding: clamp(6px, 1.3svh, 9px) 11px; font: 900 clamp(.62rem, 1.7svh, .75rem)/1 -apple-system, BlinkMacSystemFont, "Helvetica Neue", Arial, sans-serif; letter-spacing: .07em; box-shadow: 0 5px 12px rgba(0,0,0,.3); }
   #pupZoom button[aria-pressed="true"] { background: #c8412f; color: #fff; }
   body.pupmode #stageMsg { transition: opacity .35s; }
   body.pupzoomed #stageMsg { opacity: 0; }
@@ -461,9 +461,9 @@
   .start::before { content: ''; position: absolute; inset: 0; pointer-events: none; background-image: radial-gradient(rgba(26,26,26,.16) 1.7px, transparent 2px); background-size: 15px 15px; -webkit-mask-image: linear-gradient(180deg, #000 0%, transparent 46%, transparent 62%, #000 100%); mask-image: linear-gradient(180deg, #000 0%, transparent 46%, transparent 62%, #000 100%); }
   .start-in { position: relative; max-width: 460px; }
   .start .st-top { text-align: left; margin: 2px 4px 14px; }
-  .start h1 { font-family: NocivAnton, Impact, "Arial Narrow", sans-serif; font-weight: 400; font-size: clamp(2.6rem, 13vw, 3.6rem); letter-spacing: .02em; line-height: .95; text-transform: uppercase; }
+  .start h1 { font-family: -apple-system, BlinkMacSystemFont, "Helvetica Neue", Arial, sans-serif; font-weight: 900; font-size: clamp(2.6rem, 13vw, 3.6rem); letter-spacing: .02em; line-height: 1.02; text-transform: uppercase; }
   .start h1 span { padding: 4px 12px 2px; transform: rotate(-2deg); box-shadow: 4px 4px 0 var(--red); }
-  .start .st-sub { margin-top: 12px; font-family: NocivAnton, Impact, sans-serif; font-weight: 400; font-size: 1rem; letter-spacing: .18em; border: 0; background: none; padding: 0; transform: none; color: var(--red); }
+  .start .st-sub { margin-top: 12px; font-family: -apple-system, BlinkMacSystemFont, "Helvetica Neue", Arial, sans-serif; font-weight: 900; font-size: 1rem; letter-spacing: .18em; border: 0; background: none; padding: 0; transform: none; color: var(--red); }
   .st-art { position: relative; margin: 6px 0 24px; aspect-ratio: 16 / 10; border: 3px solid var(--ink); background: #d6dccf; box-shadow: 6px 6px 0 var(--ink); transform: rotate(-.8deg); overflow: visible; }
   .st-art::before, .st-art::after { content: ''; position: absolute; z-index: 2; width: 74px; height: 22px; background: rgba(242,194,48,.82); top: -13px; left: 14px; transform: rotate(-5deg); box-shadow: 0 1px 3px rgba(0,0,0,.2); }
   .st-art::after { left: auto; right: 14px; transform: rotate(4deg); background: rgba(26,26,26,.72); }
@@ -473,11 +473,11 @@
   @keyframes stSwap { from { opacity: 0; transform: translateX(16px) rotate(-.8deg); } to { opacity: 1; transform: rotate(-.8deg); } }
   .start .mtabs { display: flex; gap: 8px; margin: -6px 0 14px; }
   .start .mtabs button { flex: 1; flex-direction: row; justify-content: center; gap: 8px; height: 44px; padding: 0 6px; border: 2px solid var(--ink); border-radius: 12px; background: var(--note); box-shadow: 0 4px 10px rgba(0,0,0,.14); font-weight: 900; font-size: .74rem; letter-spacing: .1em; }
-  .start .mtabs button i { font-family: NocivAnton, Impact, sans-serif; font-weight: 400; font-size: 1.1rem; }
+  .start .mtabs button i { font-family: -apple-system, BlinkMacSystemFont, "Helvetica Neue", Arial, sans-serif; font-weight: 900; font-size: 1.1rem; }
   .start .mtabs button[aria-pressed="true"] { background: var(--ink); color: var(--note); box-shadow: inset 0 2px 6px rgba(0,0,0,.5); }
-  .start .mode-name { text-align: left; font-family: NocivAnton, Impact, "Arial Narrow", sans-serif; font-weight: 400; font-size: clamp(1.9rem, 9vw, 2.5rem); letter-spacing: .03em; margin: 0 4px; line-height: 1; text-transform: uppercase; }
+  .start .mode-name { text-align: left; font-family: -apple-system, BlinkMacSystemFont, "Helvetica Neue", Arial, sans-serif; font-weight: 900; font-size: clamp(1.9rem, 9vw, 2.5rem); letter-spacing: .03em; margin: 0 4px; line-height: 1; text-transform: uppercase; }
   .start .mode-desc { text-align: left; margin: 8px 4px 16px !important; font-size: .98rem !important; line-height: 1.42; min-height: 4.2em; color: #3a3832; }
-  .start .go { height: 58px; display: grid; place-items: center; padding: 0; background: var(--red); border: 3px solid var(--ink); border-radius: 12px; box-shadow: 5px 5px 0 var(--ink); font-family: NocivAnton, Impact, sans-serif; font-weight: 400; font-size: 1.5rem; letter-spacing: .2em; }
+  .start .go { height: 58px; display: grid; place-items: center; padding: 0; background: var(--red); border: 3px solid var(--ink); border-radius: 12px; box-shadow: 5px 5px 0 var(--ink); font-family: -apple-system, BlinkMacSystemFont, "Helvetica Neue", Arial, sans-serif; font-weight: 900; font-size: 1.5rem; letter-spacing: .2em; }
   .start .go:active { transform: translate(5px, 5px); box-shadow: none; }
   .start .foot { text-align: center; margin-top: 20px; }
   /* Camera landing: plain and soft. No dots, no hard boxes */
@@ -490,7 +490,7 @@
   body.real .st-art.swap { animation: none; }
   body.real .start .mtabs button { box-shadow: none; border: 0; background: rgba(26,26,26,.08); border-radius: 10px; }
   body.real .start .mtabs button[aria-pressed="true"] { background: var(--ink); color: var(--note); box-shadow: none; }
-  body.real .start .mode-name { font-family: NocivAnton, Impact, sans-serif; font-weight: 400; }
+  body.real .start .mode-name { font-family: -apple-system, BlinkMacSystemFont, "Helvetica Neue", Arial, sans-serif; font-weight: 900; }
   body.real .start .go { background: var(--red); color: #fff; border: 0; border-radius: 12px; box-shadow: none; }
   body.real .start .go:active { transform: none; opacity: .85; }
 body.sg #undoBtn, body.sg #redoBtn { display: none; }

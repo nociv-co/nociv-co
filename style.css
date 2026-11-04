@@ -561,7 +561,7 @@ footer.nociv-footer {
 .build-hero { max-width: 900px; margin: 0 auto 30px; background: var(--bn); position: relative; padding: 30px 20px 22px; box-shadow: 0 6px 16px rgba(0,0,0,0.16); transform: rotate(-0.4deg); }
 .build-hero::before, .tool-card::before { content: ''; position: absolute; top: -11px; left: 22px; width: 64px; height: 22px; background: var(--bi); opacity: .85; transform: rotate(-3deg); }
 .build-hero::after { content: ''; position: absolute; top: -9px; right: 26px; width: 54px; height: 20px; background: var(--bi); opacity: .85; transform: rotate(4deg); }
-.build-title { margin: 0; font-family: NocivAnton, Impact, "Arial Narrow", sans-serif; font-weight: 400; font-size: clamp(3rem, 15vw, 6.4rem); line-height: .86; letter-spacing: .01em; text-transform: uppercase; }
+.build-title { margin: 0; font-family: -apple-system, BlinkMacSystemFont, "Helvetica Neue", Arial, sans-serif; font-weight: 900; font-size: clamp(3rem, 15vw, 6.4rem); line-height: 1.02; letter-spacing: .01em; text-transform: uppercase; }
 .build .build-quote { margin: 14px 0 14px; font-style: italic; font-weight: 800; font-size: 1.05rem; }
 .build-lede { margin: 0; color: var(--bm); font-size: 0.95rem; line-height: 1.45; max-width: 460px; }
 .tool-grid { max-width: 900px; margin: 0 auto; display: grid; grid-template-columns: 1fr; gap: 30px; }

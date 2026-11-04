@@ -11,7 +11,7 @@
   * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
   html, body { margin: 0; background: var(--paper); color: var(--ink); font-family: -apple-system, system-ui, 'Helvetica Neue', Arial, sans-serif; }
   body { padding: 16px 16px calc(40px + env(safe-area-inset-bottom)); max-width: 560px; margin: 0 auto; }
-  h1 { font-family: 'Anton', Impact, sans-serif; font-weight: 400; font-size: 2.1rem; letter-spacing: .02em; text-transform: uppercase; margin: 8px 0 4px; line-height: 1; }
+  h1 { font-family: -apple-system, BlinkMacSystemFont, "Helvetica Neue", Arial, sans-serif; font-weight: 900; font-size: 2.1rem; letter-spacing: .02em; text-transform: uppercase; margin: 8px 0 4px; line-height: 1; }
   .lede { margin: 0 0 14px; font-size: .95rem; line-height: 1.4; }
   .bar { height: 10px; background: var(--line); margin: 6px 0 4px; }
   .bar i { display: block; height: 100%; width: 0; background: var(--ink); transition: width .25s; }
@@ -52,6 +52,9 @@
 // ===== THE TEST LIST. Claude rewrites this block after every delivery. Keep each test to a few taps. =====
 var BATCH = '2026-11-03 from scratch';
 var TESTS = [
+  { id: 'nofont', title: 'Tall poster font gone, section lines', where: 'nociv.co/about.html, Tools, Case Zero, From Scratch',
+    steps: ['Open About, Philosophy.', 'Open Tools, then Case Zero and From Scratch.'],
+    expect: 'Big headings use the same heavy bold letters as the Directory card name, not the tall skinny poster font. On About a thin grey line runs between sections. Nothing is cut off on the sides.' },
   { id: 'baseheading', title: 'Base: lined paper heading card', where: 'nociv.co/community.html',
     steps: ['Open Base.'],
     expect: 'The top Base card is lined paper with blue lines and a red margin line, like the About list, tape still on top.' },

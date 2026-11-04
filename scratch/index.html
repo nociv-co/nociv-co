@@ -13,12 +13,12 @@
 <link rel="icon" type="image/png" sizes="192x192" href="/icons/shop-192.png">
 <style>
 @font-face { font-family: FSAnton; src: url('/fonts/anton.woff') format('woff'); font-display: swap; }
-.fs-title { margin: 0; font-family: FSAnton, Impact, sans-serif; font-size: clamp(3rem, 15vw, 4.6rem); line-height: .9; text-transform: uppercase; letter-spacing: .02em; }
+.fs-title { margin: 0; font-family: -apple-system, BlinkMacSystemFont, "Helvetica Neue", Arial, sans-serif; font-weight: 900; font-size: clamp(3rem, 15vw, 4.6rem); line-height: 1.02; text-transform: uppercase; letter-spacing: .02em; }
 .fs-tape { display: inline-block; background: rgba(242,194,48,.75); padding: 2px 8px; font-weight: 800; transform: rotate(-1deg); }
 a.tool-card { text-decoration: none; color: inherit; }
 .fs-box { max-width: 900px; margin: 34px auto 0; background: var(--bn); position: relative; padding: 28px 18px 22px; box-shadow: 0 6px 16px rgba(0,0,0,0.16); }
 .fs-box::before { content: ''; position: absolute; top: -11px; left: 22px; width: 64px; height: 22px; background: rgba(242,194,48,.75); transform: rotate(-3deg); }
-.fs-box h2 { margin: 0 0 6px; font-family: FSAnton, Impact, sans-serif; font-size: 1.8rem; text-transform: uppercase; letter-spacing: .03em; line-height: 1; }
+.fs-box h2 { margin: 0 0 6px; font-family: -apple-system, BlinkMacSystemFont, "Helvetica Neue", Arial, sans-serif; font-weight: 900; font-size: 1.8rem; text-transform: uppercase; letter-spacing: .03em; line-height: 1; }
 .fs-box p { margin: 6px 0; line-height: 1.5; }
 .fs-cost { width: 100%; border-collapse: collapse; margin-top: 12px; font-size: .95rem; }
 .fs-cost th, .fs-cost td { text-align: left; padding: 10px 8px; border-bottom: 1.5px solid rgba(26,26,26,.15); vertical-align: top; }
@@ -32,10 +32,10 @@ a.tool-card { text-decoration: none; color: inherit; }
 .fs-acc span { font-size: .92rem; line-height: 1.45; display: block; margin-top: 2px; }
 .fs-steps { counter-reset: s; list-style: none; padding: 0; margin: 14px 0 0; }
 .fs-steps > li { counter-increment: s; position: relative; padding: 14px 0 14px 52px; border-top: 1.5px dashed rgba(26,26,26,.25); line-height: 1.5; }
-.fs-steps > li::before { content: counter(s); position: absolute; left: 0; top: 12px; width: 38px; height: 38px; display: grid; place-items: center; background: var(--bi); color: #f2ecd6; font-family: FSAnton, Impact, sans-serif; font-size: 1.2rem; }
+.fs-steps > li::before { content: counter(s); position: absolute; left: 0; top: 12px; width: 38px; height: 38px; display: grid; place-items: center; background: var(--bi); color: #f2ecd6; font-family: -apple-system, BlinkMacSystemFont, "Helvetica Neue", Arial, sans-serif; font-weight: 900; font-size: 1.2rem; }
 .fs-steps b { display: block; font-size: 1.05rem; margin-bottom: 2px; }
 .fs-steps em { font-style: normal; font-weight: 800; background: rgba(242,194,48,.45); padding: 0 4px; }
-.fs-how { all: unset; box-sizing: border-box; display: flex; align-items: center; justify-content: space-between; width: 100%; max-width: 900px; margin: 34px auto 0; padding: 0 18px; height: 58px; background: var(--bi); color: #f2ecd6; font-family: FSAnton, Impact, sans-serif; font-size: 1.45rem; letter-spacing: .08em; text-transform: uppercase; cursor: pointer; box-shadow: 0 6px 16px rgba(0,0,0,.16); -webkit-tap-highlight-color: transparent; }
+.fs-how { all: unset; box-sizing: border-box; display: flex; align-items: center; justify-content: space-between; width: 100%; max-width: 900px; margin: 34px auto 0; padding: 0 18px; height: 58px; background: var(--bi); color: #f2ecd6; font-family: -apple-system, BlinkMacSystemFont, "Helvetica Neue", Arial, sans-serif; font-weight: 900; font-size: 1.45rem; letter-spacing: .08em; text-transform: uppercase; cursor: pointer; box-shadow: 0 6px 16px rgba(0,0,0,.16); -webkit-tap-highlight-color: transparent; }
 .fs-how i { width: 12px; height: 12px; border-right: 3px solid currentColor; border-bottom: 3px solid currentColor; transform: translateY(-3px) rotate(45deg); transition: transform .2s ease; }
 .fs-how[aria-expanded="true"] i { transform: translateY(3px) rotate(-135deg); }
 .fs-how:focus-visible { outline: 3px solid #c8412f; outline-offset: 3px; }

@@ -38,7 +38,7 @@
 
   /* Every About page: one big line, plain short sentences, a bold turn, quiet facts last */
   .pg-open { text-align: center; max-width: 640px; padding-bottom: 8px; }
-  .pg-big { margin: 18px auto 30px; font-family: NocivAnton, Impact, "Arial Narrow", sans-serif; font-weight: 400; font-size: clamp(2.6rem, 12vw, 4.4rem); line-height: .95; letter-spacing: .01em; text-transform: uppercase; color: #1a1a1a; max-width: 9.5em; }
+  .pg-big { margin: 18px auto 30px; font-family: -apple-system, BlinkMacSystemFont, "Helvetica Neue", Arial, sans-serif; font-weight: 900; font-size: clamp(2.6rem, 12vw, 4.4rem); line-height: 1.02; letter-spacing: .01em; text-transform: uppercase; color: #1a1a1a; max-width: 9.5em; }
   .pg-mid { margin: 0 auto 24px; font-size: 1.1rem; line-height: 1.7; max-width: 30em; }
   .pg-turn { margin: 0 auto 26px; font-size: 1.2rem; line-height: 1.5; font-weight: 800; max-width: 22em; }
   .pg-center { text-align: center; margin-top: 34px; }
@@ -47,6 +47,8 @@
   .pg-body p { margin: 0 0 14px; }
   .pg-turn-l { font-weight: 800; font-size: 1.15rem; line-height: 1.5; margin: 20px 0 !important; }
   .pg-quiet { color: #5c5850; font-size: .95rem; }
+  /* Thin grey line between sections */
+  .about-page > .wrap + .wrap:not(.pg-open), .about-page > .pg-open + .wrap { border-top: 1px solid #c4c0b6; }
 
   /* --- About: first page is a to-do list on lined paper. Tap a box, that section opens as its own page. --- */
   .todo { max-width: 560px; margin: 26px auto 10px; padding: 0 16px; box-sizing: border-box; }
