@@ -28,7 +28,7 @@
     '#installApp .ia-steps p{margin:10px 0 0;font-size:.78rem}' +
     '#installApp .ia-small{margin:10px 0 0;font-size:.74rem}' +
     '#installApp .ia-msg{margin:8px 0 0}' +
-    '#installApp .build-note{margin:0 0 18px;padding:0;font-size:.9rem;font-weight:800;line-height:1.4;color:#1a1a1a;max-width:none}#installApp .build-note::before,#installApp .build-note::after{display:none}';
+    '#installApp .build-note{margin:0 0 18px;padding:0;font-size:.9rem;font-weight:800;line-height:1.4;color:#1a1a1a;max-width:none}#installApp .build-note::before,#installApp .build-note::after{display:none}#installApp .build-note a{color:inherit;text-decoration:underline;text-underline-offset:3px;text-decoration-thickness:2px}';
   document.head.appendChild(st);
 
   var box = document.createElement('section');
