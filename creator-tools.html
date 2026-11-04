@@ -138,6 +138,19 @@
   .cz-more:focus-visible { outline: 3px solid #c8412f; outline-offset: 2px; }
   .cz-more-in { padding-top: 14px; animation: czIn .25s ease-out; }
   .cz-more-in[hidden] { display: none; }
+  /* Advanced: one tap opens it, same icon language as the hub above */
+  .cz-toggle { all: unset; box-sizing: border-box; display: block; width: 100%; cursor: pointer; padding: 8px 0 4px; color: #1a1a1a; -webkit-tap-highlight-color: transparent; }
+  .cz-toggle .cz-cut { margin: 0; }
+  .cz-chev { display: block; width: 12px; height: 12px; margin: 14px auto 6px; border-right: 3px solid currentColor; border-bottom: 3px solid currentColor; transform: translateY(-3px) rotate(45deg); transition: transform .2s ease; }
+  .cz-toggle[aria-expanded="true"] .cz-chev { transform: translateY(3px) rotate(-135deg); }
+  .cz-toggle:focus-visible { outline: 3px solid #c8412f; outline-offset: 4px; }
+  .cz-line { margin: 6px auto 0 !important; max-width: 520px; text-align: center; font-size: 1rem; line-height: 1.6; }
+  .cz-apps { justify-content: center; gap: 24px; margin: 18px auto 0; max-width: 360px; }
+  .cz-apps button[data-app] { flex: 0 1 140px; }
+  .cz-pick { max-width: 460px; margin: 18px auto 0; padding-top: 16px; border-top: 2px dashed rgba(26,26,26,.28); }
+  .cz-desc { margin: 0 !important; font-size: 1rem; line-height: 1.5; }
+  .cz-get { margin: 10px 0 12px !important; font-weight: 800; font-size: .88rem; color: #6d6a62; }
+  a.cz-go { text-decoration: none; }
   .cz-deep h2 { margin: 0; font-family: NocivAnton, Impact, "Arial Narrow", sans-serif; font-size: clamp(2rem, 9vw, 3rem); line-height: .95; text-transform: uppercase; letter-spacing: .02em; }
   .cz-deep p { margin: 12px 0 0; font-size: 1rem; line-height: 1.5; max-width: 560px; }
   .cz-deep .cz-quote { display: inline-block; background: rgba(242,194,48,.75); color: #1a1a1a; padding: 2px 8px; font-weight: 800; transform: rotate(-1deg); box-shadow: 0 2px 6px rgba(0,0,0,.12); }
@@ -277,21 +290,19 @@
       </span>
     </button>
   </template>
-  <section class="cz-deep" aria-labelledby="czDeepTitle">
-    <div class="cz-cut" role="separator"><span>Advanced</span></div>
-    <button type="button" class="cz-more" id="czMoreBtn" aria-expanded="false" aria-controls="czMore" aria-label="Show advanced"><i aria-hidden="true"></i></button>
+  <section class="cz-deep" aria-label="Advanced">
+    <button type="button" class="cz-toggle" id="czMoreBtn" aria-expanded="false" aria-controls="czMore"><span class="cz-cut"><span>Advanced</span></span><i class="cz-chev" aria-hidden="true"></i></button>
     <div class="cz-more-in" id="czMore" hidden>
-    <h2 id="czDeepTitle">Want to go deeper?</h2>
-    <p>Make a site. Build your own device.</p>
-    <p>Maybe you do not like where big tech is going. <span class="cz-quote">"Own nothing and be happy."</span></p>
-    <p>Here you own what you buy, and you are still happy. <span class="cz-power">Put the power back in your hands.</span></p>
-    <div class="cz-menu">
-      <button type="button" class="cz-btn" id="czBtn" aria-expanded="false" aria-controls="czOpen">Tech <i aria-hidden="true"></i></button>
-      <div class="cz-open" id="czOpen" hidden>
-        <a href="/casezero/"><span class="cz-tag">CZ</span><span><b>Case Zero</b><small>Build your own device. The brain: parts, cost, code. The body: a case to print or cut from wood.</small></span><span class="cz-go" aria-hidden="true">&rarr;</span></a>
-        <a href="/scratch/"><span class="cz-tag">FS</span><span><b>From Scratch</b><small>Build your own website. Pick a base, make it yours, own the files. About $11 a year.</small></span><span class="cz-go" aria-hidden="true">&rarr;</span></a>
+      <p class="cz-line">Make a site. Build your own device. Not <span class="cz-quote">"Own nothing and be happy."</span> Own what you make.</p>
+      <div class="b-apps cz-apps" id="czApps" role="tablist" aria-label="Advanced tools">
+        <button type="button" role="tab" data-app="casezero" style="--c:#c8412f" aria-selected="true"><svg viewBox="0 0 48 40" aria-hidden="true"><rect class="f" x="4" y="5" width="40" height="31" rx="3"/><rect class="k" x="9" y="10" width="17" height="11" rx="1"/><circle class="l" cx="35" cy="15.5" r="4.5"/><path class="l" d="M35 15.5l2.5-2.5"/><circle class="k" cx="12" cy="29" r="2.6"/><circle class="k" cx="20" cy="29" r="2.6"/><circle class="k" cx="28" cy="29" r="2.6"/></svg><span>Case Zero</span></button>
+        <button type="button" role="tab" data-app="scratch" style="--c:#f2c230" aria-selected="false"><svg viewBox="0 0 48 40" aria-hidden="true"><rect class="f" x="3" y="5" width="42" height="31" rx="2"/><path class="l" d="M3 12h42M9 19h18M9 24h26M9 29h14"/><circle class="k" cx="8" cy="8.5" r="1.5"/><circle class="k" cx="12.5" cy="8.5" r="1.5"/><circle class="k" cx="17" cy="8.5" r="1.5"/></svg><span>From Scratch</span></button>
       </div>
-    </div>
+      <div class="cz-pick">
+        <p class="cz-desc" id="czDesc"></p>
+        <p class="cz-get" id="czGet"></p>
+        <a class="b-open cz-go" id="czGo" href="/casezero/">OPEN</a>
+      </div>
     </div>
   </section>
   <p class="build-note">Made something? Show it at the <a href="/community.html">Base</a>. That is how this spreads.</p>
@@ -614,9 +625,23 @@
 <script>
 (function () {
   var m = document.getElementById('czMoreBtn'), mo = document.getElementById('czMore');
-  if (m && mo) m.addEventListener('click', function () { var open = m.getAttribute('aria-expanded') !== 'true'; m.setAttribute('aria-expanded', open ? 'true' : 'false'); m.setAttribute('aria-label', open ? 'Hide advanced' : 'Show advanced'); mo.hidden = !open; });
-  var b = document.getElementById('czBtn'), o = document.getElementById('czOpen'); if (!b || !o) return;
-  b.addEventListener('click', function () { var open = b.getAttribute('aria-expanded') !== 'true'; b.setAttribute('aria-expanded', open ? 'true' : 'false'); o.hidden = !open; });
+  var CZ = {
+    casezero: ['Build your own device. The Brain picks the parts, the cost and the code. The Body builds the case to 3D print or cut from wood.', 'You leave with: parts list, case files', '/casezero/'],
+    scratch: ['Build your own website from a starter kit. Pick a base, make it yours, own every file. About $11 a year.', 'You leave with: your whole site, ready to go', '/scratch/']
+  };
+  function czOpen(open) { m.setAttribute('aria-expanded', open ? 'true' : 'false'); mo.hidden = !open; try { sessionStorage.setItem('czOpen', open ? '1' : ''); } catch (e) {} }
+  function czPick(k) {
+    if (!CZ[k]) k = 'casezero';
+    document.querySelectorAll('#czApps button').forEach(function (b) { b.setAttribute('aria-selected', b.dataset.app === k ? 'true' : 'false'); });
+    document.getElementById('czDesc').textContent = CZ[k][0]; document.getElementById('czGet').textContent = CZ[k][1]; document.getElementById('czGo').href = CZ[k][2];
+    try { sessionStorage.setItem('czPick', k); } catch (e) {}
+  }
+  if (m && mo) {
+    m.addEventListener('click', function () { czOpen(m.getAttribute('aria-expanded') !== 'true'); });
+    document.querySelectorAll('#czApps button').forEach(function (b) { b.addEventListener('click', function () { czPick(b.dataset.app); }); });
+    var was = '', pk = ''; try { was = sessionStorage.getItem('czOpen'); pk = sessionStorage.getItem('czPick'); } catch (e) {}
+    czPick(pk); if (was) czOpen(true);
+  }
 })();
 </script>
 </body>
