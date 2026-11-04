@@ -19,7 +19,7 @@
     { id: 'tracker', name: 'Tracker', desc: 'Clock in, hours, what your time earns', sections: ['time'], open: true },
     { id: 'community', name: 'Community', desc: 'Directory, vendor spots, mailing list', sections: ['directory', 'vendor', 'popup', 'dropalert', 'mailing', 'promo'] },
     { id: 'casezero', name: 'Case Zero', desc: 'Kits, notes, links, build log (private)', sections: ['casezero'], open: true },
-    { id: 'tools', name: 'Tools and Setup', desc: 'Your tool links, Stripe, what is working', sections: ['links', 'health'], open: false }
+    { id: 'tools', name: 'Tools and Setup', desc: 'Your tool links, Stripe, what is working', sections: ['links', 'health', 'storage'], open: false }
   ];
   window.nocivRooms = ROOMS;
   var byId = {}; ROOMS.forEach(function (r) { byId[r.id] = r; });

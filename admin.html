@@ -1516,10 +1516,11 @@
 <script src="crop.js"></script>
 <script src="pin-sheets.js?v=4"></script>
 <script src="design-admin.js?v=1"></script>
-<script src="admin-home.js?v=8"></script>
+<script src="admin-home.js?v=9"></script>
 <script src="admin-attention.js?v=5"></script>
 <script src="admin-casezero.js?v=2"></script>
 <script src="admin-push.js?v=1"></script>
+<script src="admin-storage.js?v=1"></script>
 <script src="admin-orders.js?v=2"></script>
 <script src="admin-lulu.js?v=3"></script>
 <script>
@@ -1551,6 +1552,15 @@
 
   // Product photos upload at full resolution on purpose (print files).
   // Process Album photos are only viewed on the site, so they get resized.
+  // Product photos straight off a phone are 3 to 7 MB. Shrink camera photos to 2000 px JPEG (plenty for zoom), about 90% smaller.
+  // PNG, GIF and WebP stay as they are so mockups keep their see-through backgrounds.
+  async function shrinkProductPhoto(file) {
+    const isPhoto = /jpe?g|heic|heif/i.test(file.type || '') || /\.(jpe?g|heic|heif)$/i.test(file.name || '');
+    if (isPhoto) {
+      try { const b = await resizeAlbumPhoto(file, 2000, 0.85); if (b && b.size && b.size < file.size) return { blob: b, ext: 'jpg', type: 'image/jpeg' }; } catch (e) { console.warn('Product photo shrink skipped:', e); }
+    }
+    return { blob: file, ext: (file.name.split('.').pop() || 'jpg').toLowerCase(), type: file.type || 'application/octet-stream' };
+  }
   function resizeAlbumPhoto(file, maxDim = 1600, quality = 0.85) {
     return new Promise((resolve, reject) => {
       const img = new Image();
@@ -2504,11 +2514,12 @@
     } else if (files.length > 0) {
       const uploadedUrls = [];
       for (const file of files) {
-        const ext = (file.name.split('.').pop() || 'jpg').toLowerCase();
+        const sh = await shrinkProductPhoto(file);
+        const ext = sh.ext;
         const fileName = `${Date.now()}-${Math.random().toString(36).slice(2, 7)}-${file.name.replace(/\s+/g, '-').replace(/\.[^/.]+$/, '')}.${ext}`;
         const { error: uploadError } = await supabaseClient.storage
           .from('product-images')
-          .upload(fileName, file, { contentType: file.type || 'application/octet-stream' });
+          .upload(fileName, sh.blob, { contentType: sh.type });
         if (uploadError) {
           errEl.textContent = 'Image upload failed on "' + file.name + '": ' + uploadError.message;
           errEl.style.display = 'block';
@@ -3115,11 +3126,12 @@
       const newFiles = Array.from(e.target.files);
       if (newFiles.length === 0) return;
       for (const file of newFiles) {
-        const ext = (file.name.split('.').pop() || 'jpg').toLowerCase();
+        const sh = await shrinkProductPhoto(file);
+        const ext = sh.ext;
         const fileName = `${Date.now()}-${Math.random().toString(36).slice(2, 7)}-${file.name.replace(/\s+/g, '-').replace(/\.[^/.]+$/, '')}.${ext}`;
         const { error: uploadError } = await supabaseClient.storage
           .from('product-images')
-          .upload(fileName, file, { contentType: file.type || 'application/octet-stream' });
+          .upload(fileName, sh.blob, { contentType: sh.type });
         if (uploadError) { alert('Upload failed for "' + file.name + '": ' + uploadError.message); continue; }
         const { data: urlData } = supabaseClient.storage.from('product-images').getPublicUrl(fileName);
         if (!p.image_url) {
