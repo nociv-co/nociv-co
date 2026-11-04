@@ -14,39 +14,29 @@
 
   var st = document.createElement('style');
   st.textContent =
-    '#installApp{color:#1a1a1a;padding:84px 16px 30px;text-align:center}' +
-    '#installApp .ia-in{max-width:420px;margin:0 auto}' +
-    '#installApp p{margin:0 0 12px;font-size:.88rem;line-height:1.45;color:#1a1a1a}' +
-    '#installApp .ia-line{font-weight:800;font-size:.95rem}' +
-    '#installApp .ia-row{display:flex;gap:6px;justify-content:center;align-items:center}' +
-    '#installApp button.ia-btn{font:inherit;font-weight:800;letter-spacing:.06em;text-transform:uppercase;font-size:.78rem;padding:10px 16px;min-height:44px;background:transparent;color:#1a1a1a;border:2px solid #1a1a1a;border-radius:0;cursor:pointer;-webkit-tap-highlight-color:transparent}' +
+    '#installApp{color:#1a1a1a;padding:40px 16px 4px;text-align:center}' +
+    '#installApp .ia-in{max-width:420px;margin:0 auto;border-top:1px solid rgba(26,26,26,.14);padding-top:22px}' +
+    '#installApp p{margin:0 0 10px;font-size:.8rem;line-height:1.45;color:#5a564d}' +
+    '#installApp .ia-line{font-weight:600;color:#3d3a33}' +
+    '#installApp .ia-row{display:flex;justify-content:center}' +
+    '#installApp button.ia-btn{font:inherit;font-weight:800;letter-spacing:.08em;text-transform:uppercase;font-size:.7rem;padding:0 14px;min-height:44px;background:transparent;color:#1a1a1a;border:1.5px solid #1a1a1a;border-radius:0;cursor:pointer;-webkit-tap-highlight-color:transparent}' +
     '#installApp button.ia-btn:active{transform:translateY(1px)}' +
     '#installApp button.ia-btn:disabled{opacity:.6}' +
-    '#installApp .ia-more{all:unset;box-sizing:border-box;width:44px;height:44px;display:grid;place-items:center;cursor:pointer;color:#1a1a1a;-webkit-tap-highlight-color:transparent}' +
-    '#installApp .ia-more i{width:10px;height:10px;border-right:2.5px solid currentColor;border-bottom:2.5px solid currentColor;transform:translateY(-3px) rotate(45deg);transition:transform .2s}' +
-    '#installApp .ia-more[aria-expanded="true"] i{transform:translateY(2px) rotate(-135deg)}' +
-    '#installApp .ia-more:focus-visible{outline:3px solid #c8412f}' +
-    '#installApp .ia-det{margin-top:10px}#installApp .ia-det[hidden]{display:none}#installApp .ia-det p{color:#4f4b42}' +
-    '#installApp .ia-steps{display:none;text-align:left;margin:14px auto 0;max-width:320px;border:2px solid #1a1a1a;background:rgba(0,0,0,.03);padding:12px 16px;font-size:.88rem}' +
+    '#installApp .ia-steps{display:none;text-align:left;margin:12px auto 0;max-width:320px;border:1.5px solid #1a1a1a;padding:12px 14px;font-size:.82rem;color:#1a1a1a}' +
     '#installApp .ia-steps.on{display:block}' +
-    '#installApp ol{margin:0;padding-left:20px;line-height:1.45}#installApp li{margin:3px 0}' +
-    '#installApp .ia-steps p{margin:10px 0 0}' +
-    '#installApp .ia-small{margin:12px 0 0;font-size:.78rem}' +
-    '#installApp .ia-msg{margin:10px 0 0;font-size:.85rem}' +
-    '@media (prefers-reduced-motion:reduce){#installApp .ia-more i{transition:none}}';
+    '#installApp ol{margin:0;padding-left:18px;line-height:1.45}#installApp li{margin:3px 0}' +
+    '#installApp .ia-steps p{margin:10px 0 0;font-size:.78rem}' +
+    '#installApp .ia-small{margin:10px 0 0;font-size:.74rem}' +
+    '#installApp .ia-msg{margin:8px 0 0}';
   document.head.appendChild(st);
 
   var box = document.createElement('section');
   box.id = 'installApp'; box.setAttribute('aria-label', 'Add NOCIV to your home screen');
+  var DET = '<p>No App Store, no account, no tracking. The creator tools run offline once it is on your phone. Pop-up shop alerts live inside the app (iPhone needs iOS 16.4 or newer).</p>';
   box.innerHTML = '<div class="ia-in">' +
-    '<p class="ia-line">' + (standalone ? 'Get an alert when a pop-up shop drops.' : 'Put NOCIV on your home screen. Free, works with no signal.') + '</p>' +
-    '<div class="ia-row">' + (standalone ? '<button type="button" class="ia-btn" id="iaAlert" style="display:none">Alert me about pop-ups</button>' : '<button type="button" class="ia-btn" id="iaBtn">Add to home screen</button>') +
-    '<button type="button" class="ia-more" id="iaMore" aria-expanded="false" aria-controls="iaDet" aria-label="More about the app"><i aria-hidden="true"></i></button></div>' +
+    '<p class="ia-line">' + (standalone ? 'Get one alert when a pop-up shop drops. Nothing else.' : 'Add NOCIV to your home screen. Free, works offline.') + '</p>' +
+    '<div class="ia-row">' + (standalone ? '<button type="button" class="ia-btn" id="iaAlert" style="display:none">Alert me about pop-ups</button>' : '<button type="button" class="ia-btn" id="iaBtn">Add to home screen</button>') + '</div>' +
     '<div class="ia-steps" id="iaSteps" role="status"></div>' +
-    '<div class="ia-det" id="iaDet" hidden>' +
-    '<p>No App Store, no account, no tracking. Zine builder, cards, QR, stencils, animation and clothing builder all run offline once it is on your phone.</p>' +
-    (standalone ? '<p>One short alert when a pop-up shop drops. Nothing else.</p>' : '<p>Pop-up shop alerts live inside the app. Open it from your home screen and tap Alert me about pop-ups. iPhone needs iOS 16.4 or newer.</p>') +
-    '</div>' +
     '<p class="ia-msg" id="iaMsg" role="status"></p>' +
     '<p class="ia-small" id="iaSmall" style="display:none">We save only your phone\'s alert address. No name, no email.</p></div>';
 
@@ -67,10 +57,8 @@
     });
     if (best) { box.style.backgroundColor = best; var f = document.querySelector('footer'); if (f) f.style.backgroundColor = best; }
   })();
-  var more = document.getElementById('iaMore'), det = document.getElementById('iaDet');
-  more.addEventListener('click', function () { var o = more.getAttribute('aria-expanded') !== 'true'; more.setAttribute('aria-expanded', o ? 'true' : 'false'); det.hidden = !o; });
   var steps = document.getElementById('iaSteps'), msg = document.getElementById('iaMsg'), small = document.getElementById('iaSmall');
-  function show(html) { steps.innerHTML = html; steps.classList.add('on'); }
+  function show(html) { steps.innerHTML = html + DET; steps.classList.add('on'); }
   var iaBtn = document.getElementById('iaBtn');
   if (iaBtn) iaBtn.addEventListener('click', function () {
     if (deferred) { deferred.prompt(); deferred = null; return; }

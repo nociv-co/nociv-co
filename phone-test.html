@@ -53,8 +53,8 @@
 var BATCH = '2026-11-03 from scratch';
 var TESTS = [
   { id: 'footer', title: 'New simple footer', where: 'Bottom of Home, Tools and Shop',
-    steps: ['Scroll to the very bottom of each page.', 'Tap the small arrow next to Add to home screen.', 'Tap Add to home screen.'],
-    expect: 'No grey block. One line, one outline button, a small arrow. Same color as the page above it, no strip. The arrow opens the details. The button shows the Share steps.' },
+    steps: ['Scroll to the very bottom of each page.', 'Tap Add to home screen.'],
+    expect: 'A thin line, then one small quiet line and a small outline button, centered. Smaller than the page content, same color as the page above. Tapping shows the Share steps and the details.' },
   { id: 'advanced', title: 'Advanced line on Tools', where: 'nociv.co/creator-tools.html, under the zine preview',
     steps: ['Scroll down past the preview.', 'Tap the small arrow under ADVANCED.', 'Tap TECH.'],
     expect: 'More space above a dashed line with ADVANCED in the middle. Only an arrow shows until you tap it. Then Want to go deeper opens, and TECH shows Case Zero and From Scratch.' },
