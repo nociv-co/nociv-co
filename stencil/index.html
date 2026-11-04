@@ -942,8 +942,8 @@ html.nvlock main > aside:not(.right){padding-top:0!important}
     var grip = document.createElement('div'); grip.className = 'c-grip'; grip.setAttribute('role', 'button'); grip.setAttribute('aria-label', 'Drag to resize the tools, tap to tuck them away'); grip.innerHTML = '<i></i>';
     aside.insertBefore(grip, head);
     var vh = function () { return window.innerHeight; };
-    var snaps = function () { var peek = grip.offsetHeight + head.offsetHeight + 4; return [peek, Math.round(vh() * 0.44), Math.round(vh() * 0.7)]; };
-    var hNow = Math.round(vh() * 0.44), y0 = null, h0 = 0, moved = false, lastY = 0, lastT = 0, vel = 0;
+    var snaps = function () { var peek = grip.offsetHeight + head.offsetHeight + 4; return [peek, Math.round(vh() * 0.47), Math.round(vh() * 0.7)]; };
+    var hNow = Math.round(vh() * 0.47), y0 = null, h0 = 0, moved = false, lastY = 0, lastT = 0, vel = 0;
     var setH = function (h, anim) {
       var s = snaps(); h = Math.max(s[0], Math.min(s[2], h)); hNow = h;
       aside.classList.toggle('c-drag', !anim); aside.style.height = h + 'px';
@@ -965,6 +965,7 @@ html.nvlock main > aside:not(.right){padding-top:0!important}
     if (modes) modes.addEventListener('click', function () { var s = snaps(); if (hNow <= s[0] + 2) setH(s[1], true); });
     window.addEventListener('resize', function () { setH(hNow, false); });
     setH(hNow, false);
+    window.__nvConsole = { setH: setH, snaps: snaps, now: function () { return hNow; }, grip: grip, head: head };
   }
 
   /* ---- knobs in place of sliders (same feel as the Cartoon console). Drag up or down, double tap to reset ---- */
@@ -1066,4 +1067,148 @@ html.nvlock main > aside:not(.right){padding-top:0!important}
 })();
 </script>
 <!--NV-STENCIL-V2-END-->
+<!--NV-STENCIL-RAIL-START: floating symbol toolbar that changes the console, so no step scrolls-->
+<style>
+.rail{position:absolute;top:8px;right:8px;bottom:56px;z-index:7;display:flex;flex-direction:column;flex-wrap:wrap-reverse;align-content:flex-start;align-items:flex-end;gap:6px;pointer-events:none}
+.rail[hidden]{display:none}
+.rail button{pointer-events:auto;display:flex;align-items:center;gap:6px;height:40px;min-width:40px;width:auto!important;padding:0 10px!important;margin:0!important;border:1.5px solid rgba(26,26,26,.55)!important;border-radius:12px!important;background:rgba(255,255,255,.72)!important;color:#1a1a1a!important;-webkit-backdrop-filter:blur(6px);backdrop-filter:blur(6px);font:800 12px/1 -apple-system,BlinkMacSystemFont,"Helvetica Neue",Arial,sans-serif!important;cursor:pointer;-webkit-tap-highlight-color:transparent;box-shadow:0 2px 6px rgba(0,0,0,.12)}
+.rail button svg{width:20px;height:20px;flex:none;fill:none;stroke:currentColor;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
+.rail button span{display:none;white-space:nowrap}
+.rail button[aria-pressed=true]{background:#1a1a1a!important;color:#fff!important;border-color:#1a1a1a!important}
+.rail button[aria-pressed=true] span{display:inline}
+.rail button.info{min-width:40px;padding:0!important;justify-content:center}
+.rail button.info[aria-pressed=true]{background:#f2c230!important;color:#1a1a1a!important;border-color:#1a1a1a!important}
+.rail button:disabled{opacity:.35}
+/* magnifier moves to the bottom right, the rail owns the top right */
+.canvasWrap .nv-mag,.stage .nv-mag{top:auto!important;bottom:8px!important;right:8px!important;left:auto!important}
+.canvasWrap .nv-zbar,.stage .nv-zbar{top:auto!important;bottom:58px!important;right:8px!important;left:auto!important}
+/* grouped steps: only the picked group shows, no headings, help only when i is on */
+section.grouped > h2{display:none!important}
+section.grouped .g-off.g-off.g-off{display:none!important}
+section.grouped .kgrid .kc.g-off.g-off{display:none!important}
+section.grouped:not(.show-help) .help,section.grouped:not(.show-help) .note:not(#islN){display:none!important}
+section.grouped .kgrid{margin-top:4px}
+/* nothing scrolls sideways either: picture buttons wrap into a grid, knobs center */
+section.grouped .pchips{display:grid!important;grid-template-columns:repeat(auto-fill,minmax(66px,1fr));overflow:visible!important;margin:6px 0 8px!important;padding:0!important}
+section.grouped .pchips button{min-width:0!important;width:100%!important;padding:7px 4px 6px!important}
+section.grouped .kgrid{display:flex!important;flex-wrap:wrap;justify-content:center;gap:10px 18px}
+section.grouped .kgrid .kc{width:88px}
+/* step row: numbers only, the current step shows its name, so all steps fit on one line */
+.c-head .stabs{display:flex!important;flex-wrap:nowrap!important;overflow:visible!important;gap:4px!important}
+.c-head .stabs button{flex:none;min-width:0!important}
+.c-head .stabs button[aria-selected=false]{font-size:0!important;padding:4px!important;gap:0!important}
+.c-head .stabs button[aria-selected=false] b{margin:0!important}
+.c-head .stabs button[aria-selected=true]{flex:1 1 auto;justify-content:center}
+@media(max-width:370px){.c-head .stabs{gap:3px!important}.c-head .stabs button{padding:3px!important}.c-head .stabs button b{width:20px!important;height:20px!important;font-size:10px!important}.c-head .stabs button[aria-selected=true]{font-size:0!important;padding:4px!important;gap:0!important;flex:none}.c-head .stabs button[aria-selected=true] b{margin:0!important}section.grouped > h2{display:block!important;font-size:13px!important;margin:0 0 6px!important;padding:0!important;background:none!important;color:inherit!important;transform:none!important}}
+section.grouped{padding-top:12px!important;padding-bottom:10px!important}
+section.grouped::before{display:none!important}
+section.grouped .row{margin-top:8px!important}
+section.grouped .filebtn{padding:12px!important}
+</style>
+<script>
+(function () {
+  'use strict';
+  var $ = function (x) { return document.getElementById(x); }, aside = document.querySelector('main > aside:not(.right)'), wrap = $('wrap');
+  if (!aside || !wrap) return;
+  // symbols (own drawings)
+  var I = {
+    photo: '<rect x="3" y="5" width="18" height="14" rx="2"/><circle cx="9" cy="11" r="2"/><path d="M21 16l-5-5-8 8"/>',
+    crop: '<path d="M6 2v16h16"/><path d="M2 6h16v16"/>',
+    palette: '<path d="M12 3a9 9 0 1 0 0 18c1.2 0 1.6-.9 1.2-1.8-.5-1-.1-2.2 1.2-2.2H17a4 4 0 0 0 4-4c0-5.5-4-10-9-10z"/><circle cx="7.5" cy="11" r="1.2"/><circle cx="11" cy="7" r="1.2"/><circle cx="15.5" cy="8" r="1.2"/>',
+    drop: '<path d="M12 3s6 7 6 11a6 6 0 0 1-12 0c0-4 6-11 6-11z"/>',
+    shape: '<circle cx="7" cy="7" r="3.2"/><rect x="14" y="3.8" width="6.4" height="6.4"/><path d="M7 13.5l3.6 3.6L7 20.7l-3.6-3.6z"/><path d="M14 17h7"/>',
+    dots: '<circle cx="5" cy="6" r="1.2"/><circle cx="12" cy="6" r="2"/><circle cx="19" cy="6" r="2.8"/><circle cx="5" cy="15" r="1.2"/><circle cx="12" cy="15" r="2"/><circle cx="19" cy="15" r="2.8"/>',
+    sun: '<circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M2 12h2M20 12h2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M4.9 19.1l1.4-1.4M17.7 6.3l1.4-1.4"/>',
+    limits: '<circle cx="6" cy="12" r="1.5"/><circle cx="17" cy="12" r="5"/><path d="M2 5h20M2 19h20" stroke-dasharray="2 2.5"/>',
+    eye: '<path d="M2 12s4-7 10-7 10 7 10 7-4 7-10 7-10-7-10-7z"/><circle cx="12" cy="12" r="3"/>',
+    bridge: '<path d="M3 18V9a9 6 0 0 1 18 0v9"/><path d="M3 13h18M8 13v5M16 13v5"/>',
+    brush: '<path d="M18 3l3 3-9.5 9.5-3-3z"/><path d="M8.5 12.5c-2 0-3.5 1.5-3.5 3.5 0 1.5-1 2.5-2 3 2.5 1 6.5.5 7.5-2.5"/>',
+    stack: '<path d="M12 3l9 5-9 5-9-5z"/><path d="M3 13l9 5 9-5"/>',
+    list: '<path d="M8 6h13M8 12h13M8 18h13"/><circle cx="4" cy="6" r="1"/><circle cx="4" cy="12" r="1"/><circle cx="4" cy="18" r="1"/>',
+    ruler: '<rect x="2" y="8" width="20" height="8" rx="1"/><path d="M6 8v3M10 8v4M14 8v3M18 8v4"/>',
+    file: '<path d="M6 2h9l5 5v15H6z"/><path d="M14 2v6h6M10 13v6M7 16l3 3 3-3"/>',
+    share: '<circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><path d="M8.6 10.5l6.8-4M8.6 13.5l6.8 4"/>',
+    info: '<circle cx="12" cy="12" r="9"/><path d="M12 11v6M12 7.5v.5"/>'
+  };
+  function ico(n) { return '<svg viewBox="0 0 24 24" aria-hidden="true">' + I[n] + '</svg>'; }
+  function sec(name) { return Array.prototype.filter.call(aside.querySelectorAll('section'), function (s) { var h = s.querySelector('h2'); return h && h.textContent.trim() === name; })[0]; }
+  function kids(s) { return Array.prototype.slice.call(s.children).filter(function (c) { return c.tagName !== 'H2'; }); }
+  function kc(id) { var k = document.querySelector('.kb[aria-label]') && document.getElementById(id); var r = document.getElementById(id); var card = null; Array.prototype.forEach.call(document.querySelectorAll('.kc'), function (c) { if (c._rng === r) card = c; }); return card; }
+  // tag the knob cards with the slider they drive
+  Array.prototype.forEach.call(document.querySelectorAll('.kgrid'), function (g) {
+    var sec = g.closest('section'), rs = sec.querySelectorAll('.range > input[type=range]'), cards = g.querySelectorAll('.kc');
+    Array.prototype.forEach.call(cards, function (c, i) { if (rs[i]) c._rng = rs[i]; });
+  });
+  // groups per step: [key, symbol, label, function(section) -> list of elements]
+  var G = {
+    'Photo': [['pick', 'photo', 'Photo', function (s) { return kids(s).filter(function (c) { return c.id !== 'frameBox'; }); }],
+      ['shape', 'shape', 'Shape', function () { var fb = $('frameBox'), k = Array.prototype.slice.call(fb.children), i = k.indexOf(document.querySelector('#frameBox .pchips') || $('fShape')); return [fb].concat(k.slice(0, i + 2)); }, function () { return !$('frameBox').hidden; }],
+      ['crop', 'crop', 'Crop + turn', function () { var fb = $('frameBox'), k = Array.prototype.slice.call(fb.children), i = k.indexOf($('fShape')); return [fb].concat(k.slice(i + 1)); }, function () { return !$('frameBox').hidden; }]],
+    'Ink': [['type', 'palette', 'Ink', function (s) { return kids(s).filter(function (c) { return c.id !== 'hOneBox'; }); }], ['colors', 'drop', 'Colors', function () { return [$('hOneBox')]; }, function () { return $('hInk').value === 'one'; }]],
+    'Dots': [['style', 'shape', 'Style', function (s) { var k = kids(s), i = k.indexOf($('hShape')); return k.slice(0, i + 1); }],
+      ['size', 'dots', 'Size', function (s) { var lp = $('hLpi').closest('section').querySelectorAll('.pchips')[1]; return [lp, s.querySelector('.kgrid'), kc('hLpi')]; }],
+      ['tone', 'sun', 'Tone', function (s) { return [s.querySelector('.kgrid'), kc('hBri'), kc('hCon'), kc('hAng'), $('hAngleBox'), $('hCmykAng')]; }],
+      ['limits', 'limits', 'Limits', function (s) { var k = kids(s); return [s.querySelector('.kgrid'), kc('hMin'), kc('hMax'), k[k.length - 1]]; }]],
+    'Bridges': [['show', 'eye', 'Find', function (s) { var k = kids(s); return [k[0], k[1], $('islN')]; }],
+      ['auto', 'bridge', 'Bridges', function (s) { return [s.querySelector('.kgrid'), kc('bw'), $('autoB').parentNode, $('bPer')]; }],
+      ['hand', 'brush', 'By hand', function (s) { var k = kids(s), i = k.indexOf($('tools')); return [k[i - 1], $('tools'), $('toolHelp'), $('edUndo').parentNode]; }]],
+    'Layers': [['count', 'stack', 'How many', function (s) { var k = kids(s), i = k.indexOf($('list')); return k.slice(0, i).concat([]); }], ['list', 'list', 'Layers', function (s) { var k = kids(s), i = k.indexOf($('list')); return k.slice(i); }]],
+    'Save': [['size', 'ruler', 'Size', function (s) { var k = kids(s); return [k[0], s.querySelector('.kgrid'), kc('wi'), k.filter(function (c) { return c.classList.contains('check'); })[0]]; }],
+      ['files', 'file', 'Files', function () { var h = $('files').nextElementSibling; return [$('make'), $('files'), h]; }],
+      ['share', 'share', 'Share', function (s) { var k = kids(s), ch = k.filter(function (c) { return c.classList.contains('check'); }); return [ch[1], $('shareBtn'), $('shareMsg')]; }]]
+  };
+  var rail = document.createElement('div'); rail.className = 'rail'; rail.hidden = true; rail.setAttribute('role', 'toolbar'); rail.setAttribute('aria-label', 'Controls for this step');
+  wrap.appendChild(rail);
+  var pick = {}, cur = null;
+  function apply(name, s, key) {
+    var groups = G[name], g = groups.filter(function (x) { return x[0] === key; })[0] || groups[0];
+    pick[name] = g[0];
+    var on = g[3](s).filter(Boolean);
+    var all = kids(s); if ($('frameBox') && s.contains($('frameBox'))) all = all.concat(Array.prototype.slice.call($('frameBox').children));
+    all.forEach(function (c) { c.classList.toggle('g-off', on.indexOf(c) < 0); });
+    Array.prototype.forEach.call(s.querySelectorAll('.kc'), function (c) { c.classList.toggle('g-off', on.indexOf(c) < 0); });
+    Array.prototype.forEach.call(rail.querySelectorAll('button[data-g]'), function (b) { b.setAttribute('aria-pressed', String(b.dataset.g === g[0])); b.disabled = !!(groups.filter(function (x) { return x[0] === b.dataset.g; })[0][4] && !groups.filter(function (x) { return x[0] === b.dataset.g; })[0][4]()); });
+    aside.scrollTop = 0;
+    fitConsole(s);
+  }
+  function fitConsole(s) {
+    var C = window.__nvConsole; if (!C) return;
+    var sn = C.snaps(); if (C.now() <= sn[0] + 2) return; // tucked stays tucked
+    requestAnimationFrame(function () {
+      var was = aside.style.height; aside.classList.add('c-drag'); aside.style.height = 'auto'; var need = aside.offsetHeight + 2; aside.style.height = was;
+      C.setH(Math.min(Math.round(window.innerHeight * 0.72), Math.max(sn[0] + 40, need)), true);
+    });
+  }
+  function build() {
+    var s = active();
+    var name = s && s.querySelector('h2') ? s.querySelector('h2').textContent.trim() : null;
+    if (cur && cur !== s) cur.classList.remove('grouped', 'show-help');
+    cur = s;
+    if (!s) { rail.hidden = true; rail.innerHTML = ''; return; }
+    if (!G[name]) G[name] = [['all', null, name, function (x) { return kids(x); }]];
+    s.classList.add('grouped');
+    rail.innerHTML = G[name].filter(function (g) { return g[1]; }).map(function (g) { return '<button type="button" data-g="' + g[0] + '" aria-label="' + g[2] + '" title="' + g[2] + '"><span>' + g[2] + '</span>' + ico(g[1]) + '</button>'; }).join('') +
+      '<button type="button" class="info" aria-label="Show tips for this step" title="Tips" aria-pressed="' + s.classList.contains('show-help') + '">' + ico('info') + '</button>';
+    rail.hidden = false;
+    apply(name, s, pick[name]);
+  }
+  rail.addEventListener('click', function (e) {
+    var b = e.target.closest('button'); if (!b || !cur) return;
+    if (b.classList.contains('info')) { var on = cur.classList.toggle('show-help'); b.setAttribute('aria-pressed', String(on)); fitConsole(cur); return; }
+    var name = cur.querySelector('h2').textContent.trim(); apply(name, cur, b.dataset.g);
+    try { if (navigator.vibrate) navigator.vibrate(5); } catch (_) {}
+  });
+  // rebuild when the step or mode changes, or when a photo arrives (Crop + shape turns on), or Ink type changes
+  var t = null, force = false;
+  function active() { return Array.prototype.filter.call(aside.querySelectorAll('section'), function (x) { return x.classList.contains('show') && x.offsetParent !== null; })[0]; }
+  function soon(f) { if (f === true) force = true; clearTimeout(t); t = setTimeout(function () { if (force || active() !== cur) build(); force = false; }, 30); }
+  function hard() { soon(true); }
+  try { var mo = new MutationObserver(function () { soon(); }); Array.prototype.forEach.call(aside.querySelectorAll('section'), function (x) { mo.observe(x, { attributes: true, attributeFilter: ['class'] }); }); } catch (_) {}
+  try { new MutationObserver(hard).observe($('frameBox'), { attributes: true, attributeFilter: ['hidden'] }); } catch (_) {}
+  ['mSt', 'mHt'].forEach(function (id) { var b = $(id); if (b) b.addEventListener('click', hard); });
+  if ($('hInk')) $('hInk').addEventListener('change', hard);
+  build();
+})();
+</script>
+<!--NV-STENCIL-RAIL-END-->
 </body></html>
