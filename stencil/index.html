@@ -1364,4 +1364,71 @@ section.grouped .filebtn{padding:12px!important}
 })();
 </script>
 <!--NV-STENCIL-LOCK-END-->
+<!--NV-STENCIL-TIDY-START: part tabs on top inside the console, smaller console, bigger picture, flat clean panel-->
+<style>
+@media(max-width:700px){
+ /* picture takes what is left, the console is one fixed, smaller height. Neither changes between steps. */
+ html.nvlock .stage{flex:1 1 auto!important;height:auto!important;min-height:0!important}
+ html.nvlock main > aside:not(.right){flex:none!important;height:268px!important;padding:0!important;display:flex!important;flex-direction:column!important;overflow:hidden!important;background:#fbf9f4!important;border-top:1.5px solid #1a1a1a!important;border-radius:0!important;box-shadow:none!important}
+ html.nvlock main > aside:not(.right) > :not(.ctabs){flex:none}
+ html.nvlock main > aside:not(.right) > section.show{flex:1 1 auto!important;min-height:0!important;overflow-y:auto!important}
+ .c-head{display:none!important}
+ /* the part tabs: one row at the top of the console, symbol over word, picked = black */
+ .ctabs{flex:none;display:flex;align-items:stretch;gap:4px;padding:6px 8px;border-bottom:1px solid #d9d4c8;background:#fbf9f4}
+ .ctabs .rail{position:static!important;flex:1;min-width:0;display:flex!important;justify-content:flex-start!important;gap:4px!important;pointer-events:auto}
+ .ctabs .rail button,.ctabs .qb{flex:1 1 0;min-width:0!important;height:46px!important;padding:3px 2px!important;flex-direction:column!important;justify-content:center!important;gap:3px!important;border:0!important;border-radius:10px!important;background:transparent!important;box-shadow:none!important;-webkit-backdrop-filter:none!important;backdrop-filter:none!important;color:#6f6a60!important;font:700 10px/1 -apple-system,BlinkMacSystemFont,"Helvetica Neue",Arial,sans-serif!important}
+ .ctabs .rail button span{display:block!important;order:2;max-width:100%;overflow:hidden;text-overflow:ellipsis}
+ .ctabs .rail button svg{order:1;width:20px!important;height:20px!important}
+ .ctabs .rail button[aria-pressed=true]{background:#1a1a1a!important;color:#fff!important}
+ .ctabs .rail button.info{flex:0 0 38px!important}
+ .ctabs .rail button.info[aria-pressed=true]{background:#f2c230!important;color:#1a1a1a!important}
+ .ctabs .qb{all:unset;flex:0 0 38px;display:flex;align-items:center;justify-content:center;align-self:center;width:34px;height:34px;border-radius:50%;background:#1a1a1a;color:#fff;font:900 18px/1 -apple-system,BlinkMacSystemFont,"Helvetica Neue",Arial,sans-serif;cursor:pointer}
+ .ctabs .qb{flex:0 0 34px!important;height:34px!important;padding:0!important;border-radius:50%!important;background:#1a1a1a!important;color:#fff!important;font-size:18px!important;font-weight:900!important}
+ /* flat panel: no card inside a card */
+ html.nvlock main aside section.grouped{background:transparent!important;box-shadow:none!important;border:0!important;border-radius:0!important;padding:10px 12px 12px!important;margin:0!important}
+ section.grouped .kgrid{background:transparent!important;box-shadow:none!important;padding:2px 0!important;margin:2px 0!important}
+ /* Stencil / Halftone choice sits inside Photo as the first thing you pick */
+ section .modes.inphoto{display:flex!important;gap:0!important;margin:0 0 8px!important;border:1.5px solid #1a1a1a;border-radius:10px;overflow:hidden}
+ section .modes.inphoto button{flex:1;margin:0!important;border:0!important;border-radius:0!important;padding:8px 6px!important;font:800 13px/1 -apple-system,BlinkMacSystemFont,"Helvetica Neue",Arial,sans-serif!important;letter-spacing:.04em;background:#fff!important;color:#1a1a1a!important;width:auto!important}
+ section .modes.inphoto button.on,section .modes.inphoto button[aria-selected=true]{background:#1a1a1a!important;color:#fff!important}
+ /* dot styles: 6 name buttons in a 3 by 2 grid, the picked one's picture shows under them */
+ .dlist{display:grid!important;grid-template-columns:repeat(3,minmax(0,1fr))!important;gap:6px!important;margin:0 0 8px!important}
+ .drow .db{display:none!important}
+ .drow .dh{justify-content:center!important;padding:10px 4px!important;font-size:13px!important}
+ .drow .dh i{display:none!important}
+ section.grouped label:has(+ .dlist){display:none!important}
+ .dprev svg{display:block;width:100%;height:62px;border-radius:8px;background:#fff;border:1.5px solid #1a1a1a}
+ .dprev p{margin:6px 0 0;font:500 12px/1.35 -apple-system,BlinkMacSystemFont,"Helvetica Neue",Arial,sans-serif;color:#3a3a3a}
+ /* the picture keeps only the Artboard switch and the magnifier */
+ .canvasWrap .viewt{bottom:8px!important}
+ .status{font-size:11px!important;padding:3px 64px 3px 2px!important}
+}
+@media(max-width:700px) and (max-height:600px){ html.nvlock main > aside:not(.right){height:292px!important} section.grouped .help{display:none!important} }
+</style>
+<script>
+(function () {
+  'use strict';
+  if (!window.matchMedia('(max-width:700px)').matches) return;
+  var $ = function (x) { return document.getElementById(x); };
+  var aside = document.querySelector('main > aside:not(.right)'), rail = document.querySelector('.rail'), help = $('learnTop'), modes = document.querySelector('.modes');
+  if (!aside || !rail) return;
+  var bar = document.createElement('div'); bar.className = 'ctabs';
+  bar.appendChild(rail);
+  if (help) { help.classList.add('qb'); help.classList.remove('learnTop'); bar.appendChild(help); }
+  aside.insertBefore(bar, aside.firstChild);
+  // Stencil / Halftone goes into the Photo part
+  var photo = Array.prototype.filter.call(aside.querySelectorAll('section'), function (s) { var h = s.querySelector('h2'); return h && h.textContent.trim() === 'Photo'; })[0];
+  if (modes && photo) { modes.classList.add('inphoto'); modes.classList.remove('off'); var h = photo.querySelector('h2'); photo.insertBefore(modes, h ? h.nextSibling : photo.firstChild); }
+  // keep the mode switch visible whenever Photo is showing
+  new MutationObserver(function () { if (modes && (modes.classList.contains('off') || modes.classList.contains('g-off'))) modes.classList.remove('off', 'g-off'); }).observe(modes || document.body, { attributes: true, attributeFilter: ['class'] });
+  // dot style picture under the name grid
+  var dl = document.querySelector('.dlist'), shp = $('hShape');
+  if (dl && shp) {
+    var pv = document.createElement('div'); pv.className = 'dprev'; dl.parentNode.insertBefore(pv, dl.nextSibling);
+    var paint = function () { var on = dl.querySelector('.drow[aria-pressed=true] .db'); pv.innerHTML = on ? on.innerHTML : ''; };
+    shp.addEventListener('change', function () { setTimeout(paint, 0); }); dl.addEventListener('click', function () { setTimeout(paint, 0); }); paint();
+  }
+})();
+</script>
+<!--NV-STENCIL-TIDY-END-->
 </body></html>
