@@ -52,9 +52,9 @@
 // ===== THE TEST LIST. Claude rewrites this block after every delivery. Keep each test to a few taps. =====
 var BATCH = '2026-11-03 from scratch';
 var TESTS = [
-  { id: 'fsstart', title: 'From Scratch: one question, icon buttons', where: 'nociv.co/scratch',
-    steps: ['Read the page top to bottom.', 'Tap Music.', 'In the Studio tap a different tile, then a color dot, then Next.'],
-    expect: 'The page asks What are you making? with 8 icon buttons. The details (free kit, domain cost, how it works) are underneath everything. The Studio opens on 1 Start with Music picked: icon buttons, picture tiles, color dots. Next goes to 2 Pages.' },
+  { id: 'fsstart', title: 'From Scratch: Start, then Look with your own colors, fonts, buttons, icons', where: 'nociv.co/scratch',
+    steps: ['Tap Archive, then Log.', 'Tap Next: pick a look.', 'Tap a look, then Or pick your own: change Buttons color.', 'Pick a font tile, a button style and an icon style.'],
+    expect: 'Step 1 is just What are you making? plus the pages you get. Step 2 Look has looks, color dots, your own 3 colors, font tiles in the real fonts, button and icon pictures. The preview changes right away. The landing page says it can cost nothing, a domain is optional.' },
   { id: 'stencilrail', title: 'Stencil + Halftone: symbol toolbar, nothing scrolls', where: 'Tools, Stencil + Halftone',
     steps: ['Load the Sample. Tap Halftone, then step 4.', 'Tap each symbol in the toolbar at the top right of the picture.', 'Tap the i symbol.', 'Go through every step number in both Stencil and Halftone.'],
     expect: 'Each symbol swaps what the panel shows (Style, Size, Tone, Limits) and the panel resizes to fit, with no scrolling up, down or sideways. The i shows the tips. Steps you are not on show only their number.' },

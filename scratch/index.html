@@ -95,8 +95,8 @@ a.tool-card { text-decoration: none; color: inherit; }
 
   <div class="fs-good">
     <h2>Good to know</h2>
-    <ul><li>Free kit, no sign up</li><li>Works on your phone</li><li>Bring your own domain</li><li>You own every file</li></ul>
-    <p><b>The kit is free and always will be.</b> The one thing you need is a domain name (like yourname.com). You buy it from a domain seller, not from us. A .com usually costs about $11 a year.</p>
+    <ul><li>Free kit, no sign up</li><li>Works on your phone</li><li>Free hosting</li><li>You own every file</li></ul>
+    <p><b>It can cost nothing.</b> Your site goes online free with a link like yourname.pages.dev. A domain name of your own (like yourname.com) is optional. If you want one later, it usually costs about $11 a year from a domain seller, not from us.</p>
   </div>
 
   <button type="button" class="fs-how" id="fsHow" aria-expanded="false" aria-controls="fsMore">How it works <i aria-hidden="true"></i></button>
@@ -114,9 +114,9 @@ a.tool-card { text-decoration: none; color: inherit; }
       <thead><tr><th></th><th>From Scratch</th><th>Shopify Basic</th></tr></thead>
       <tbody>
         <tr><td>Site</td><td class="win">$0. Free hosting on Cloudflare Pages</td><td>$39 a month, or $29 a month paid yearly</td></tr>
-        <tr><td>Domain</td><td class="win">About $11 a year for .com, sold at cost on Cloudflare</td><td>Extra</td></tr>
+        <tr><td>Domain</td><td class="win">Optional. Free yourname.pages.dev link, or about $11 a year for your own .com</td><td>Extra</td></tr>
         <tr><td>Per sale</td><td>Stripe: 2.9% + 30¢ per US card</td><td>Card fees too</td></tr>
-        <tr><td>First year</td><td class="win">About $11, all of it for your domain. The kit is free.</td><td>$348 to $468</td></tr>
+        <tr><td>First year</td><td class="win">$0 with a free yourname.pages.dev link. About $11 if you add your own domain.</td><td>$348 to $468</td></tr>
       </tbody>
     </table>
     <p class="fs-small">Prices checked November 2026. Prices change, so check before you buy.</p>
@@ -136,9 +136,9 @@ a.tool-card { text-decoration: none; color: inherit; }
     <ol class="fs-steps">
       <li><b>Build it</b>Tap what you are making, above. Fill in your pages. On Publish, tap <em>Download my site</em>. On iPhone it lands in Files, Downloads.</li>
       <li><b>Make a Cloudflare account</b>Go to dash.cloudflare.com and sign up. Confirm your email.</li>
-      <li><b>Buy your domain</b>In Cloudflare tap <em>Domain registration</em>, then <em>Register domains</em>. Search your name and buy it.</li>
+      <li><b>Optional: buy a domain</b>Skip this to stay free. Your site still gets a yourname.pages.dev link. To get your own name, in Cloudflare tap <em>Domain registration</em>, then <em>Register domains</em>, search it and buy it.</li>
       <li><b>Upload your site</b>Tap <em>Workers and Pages</em>, then <em>Create</em>, then the <em>Pages</em> tab, then <em>Upload assets</em>. Name it and pick your zip. Tap <em>Deploy</em>. You get a free yourname.pages.dev link right away.</li>
-      <li><b>Connect your domain</b>In your project tap <em>Custom domains</em>, then <em>Set up a custom domain</em>. Type your domain. Because you bought it on Cloudflare, it connects itself. The lock (HTTPS) is automatic.</li>
+      <li><b>Optional: connect your domain</b>Only if you bought one. In your project tap <em>Custom domains</em>, then <em>Set up a custom domain</em>. Type your domain. Because you bought it on Cloudflare, it connects itself. The lock (HTTPS) is automatic.</li>
       <li><b>Turn on selling</b>Make a Stripe account and add your bank. In Stripe go to <em>Payment Links</em>, then <em>New</em>. Add the product and price. Turn on collecting the shipping address and add shipping rates. Copy the link.</li>
       <li><b>Paste your buy links</b>Go to yourdomain.com/admin.html. Open the item and paste the link in Buy link. Download again, then upload again in Cloudflare with <em>Create deployment</em>.</li>
       <li><b>Ship it</b>Stripe emails you and the buyer on every sale. Buy the label at USPS Click-N-Ship or Pirate Ship and send it out.</li>
@@ -159,7 +159,7 @@ a.tool-card { text-decoration: none; color: inherit; }
   if (location.hash === '#steps') { set(true); setTimeout(function () { var t = document.getElementById('steps'); if (t) t.scrollIntoView(); }, 50); }
 })();
 </script>
-<script>window.TOOL_HELP = Object.assign(window.TOOL_HELP || {}, {"fs": {"title": "From Scratch", "items": [["What it is", "A free kit to make your own website. We do not host it. You download the files and they are yours."], ["Pick a start", "Shop, Archive, App, Music, Food, Event, Links or Blank. You can change every word, color and page after."], ["Make it yours", "In the Studio, tap a Look or Shuffle. Your words, photos and pages stay when you switch."], ["Put it online", "You need a domain name, about $11 a year from a domain seller. Hosting on Cloudflare Pages is free. Every step is under How it works."], ["What it costs", "Nothing from us. Ever."]]}});</script>
+<script>window.TOOL_HELP = Object.assign(window.TOOL_HELP || {}, {"fs": {"title": "From Scratch", "items": [["What it is", "A free kit to make your own website. We do not host it. You download the files and they are yours."], ["Pick a start", "Shop, Archive, App, Music, Food, Event, Links or Blank. You can change every word, color and page after."], ["Make it yours", "In the Studio, tap a Look or Shuffle. Your words, photos and pages stay when you switch."], ["Put it online", "Free. Your site gets a link like yourname.pages.dev. Your own domain name is optional, about $11 a year if you want one later. Every step is under How it works."], ["What it costs", "Nothing from us. Ever."]]}});</script>
 <script src="/tool-help.js" defer></script>
 </body>
 </html>

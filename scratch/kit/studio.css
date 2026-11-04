@@ -8,6 +8,13 @@
 @font-face{font-family:'FS Bricolage';src:url('fonts/bricolage-grotesque-800.woff') format('woff');font-weight:800;font-style:normal;font-display:swap}
 @font-face{font-family:'FS Special Elite';src:url('fonts/special-elite.woff') format('woff');font-weight:400;font-style:normal;font-display:swap}
 @font-face{font-family:'FS Permanent Marker';src:url('fonts/permanent-marker.woff') format('woff');font-weight:400;font-style:normal;font-display:swap}
+@font-face{font-family:'FS Inter Tight';src:url('fonts/inter-tight-800.woff') format('woff');font-weight:800;font-style:normal;font-display:swap}
+@font-face{font-family:'FS Barlow Condensed';src:url('fonts/barlow-condensed-700.woff') format('woff');font-weight:700;font-style:normal;font-display:swap}
+@font-face{font-family:'FS Tenor Sans';src:url('fonts/tenor-sans.woff') format('woff');font-weight:400;font-style:normal;font-display:swap}
+@font-face{font-family:'FS Nunito';src:url('fonts/nunito-800.woff') format('woff');font-weight:800;font-style:normal;font-display:swap}
+@font-face{font-family:'FS Fraunces';src:url('fonts/fraunces-700.woff') format('woff');font-weight:700;font-style:normal;font-display:swap}
+@font-face{font-family:'FS Roboto Slab';src:url('fonts/roboto-slab-800.woff') format('woff');font-weight:800;font-style:normal;font-display:swap}
+@font-face{font-family:'FS IBM Plex Mono';src:url('fonts/ibm-plex-mono-600.woff') format('woff');font-weight:600;font-style:normal;font-display:swap}
 /* From Scratch Studio. Free to use, change and share (MIT). */
 *,*::before,*::after{box-sizing:border-box}
 :root{--ink:#161616;--paper:#efeee9;--card:#fbfaf6;--line:#d6d3c8;--mute:#6d6a62;--hi:#f2c230;--bad:#b42318;--ok:#1f7a3a;--mono:ui-monospace,"SF Mono",Menlo,Consolas,monospace}
@@ -233,3 +240,34 @@ h2.sec2{margin-top:22px;padding-top:16px;border-top:1.5px dashed var(--line)}
 .dot{width:44px;height:44px;border-radius:50%;border:2.5px solid;padding:0;cursor:pointer}
 .dot.on{box-shadow:0 0 0 3px var(--paper),0 0 0 5.5px var(--ink)}
 .next{display:block;width:100%;margin-top:18px;min-height:52px;background:var(--ink);color:var(--paper);border:0;border-radius:12px;font:inherit;font-weight:900;font-size:15px;cursor:pointer}
+
+/* 1 Start: kind buttons in a grid, archive versions, what you get */
+.kinds-grid{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:8px}
+.kinds-grid .kd{width:auto;height:78px}
+.vers3{display:flex;flex-direction:column;gap:8px}
+.vr{display:grid;grid-template-columns:28px 1fr;grid-template-rows:auto auto;column-gap:10px;text-align:left;align-items:center;background:#f6f1e3;border:2px solid var(--ink);border-radius:12px;padding:10px 12px;font:inherit;color:var(--ink);cursor:pointer}
+.vr svg{grid-row:1/3;width:24px;height:24px;fill:none;stroke:currentColor;stroke-width:1.9;stroke-linecap:round;stroke-linejoin:round}
+.vr b{font-size:15px}.vr span{font-size:12px;color:var(--mute)}
+.vr.on{background:var(--ink);color:#f6f1e3}.vr.on span{color:#cfc9bb}
+.youget{list-style:none;margin:0;padding:0;display:flex;flex-wrap:wrap;gap:6px}
+.youget li{display:flex;align-items:center;gap:6px;background:var(--card);border:1.5px solid var(--line);border-radius:999px;padding:6px 12px 6px 8px;font-weight:700;font-size:14px}
+.youget svg{width:16px;height:16px;fill:none;stroke:currentColor;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
+/* 2 Look: your own colors, type tiles, buttons, icons */
+.step-s{margin:12px 0 8px;font-size:13px;font-weight:700;color:var(--mute)}
+.mine{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px}
+.swatch{position:relative;display:flex;flex-direction:column;align-items:center;gap:6px;background:var(--card);border:1.5px solid var(--line);border-radius:12px;padding:10px 6px;cursor:pointer}
+.swatch input{position:absolute;inset:0;opacity:0;width:100%;height:100%;cursor:pointer}
+.swatch i{width:40px;height:40px;border-radius:50%;border:2px solid var(--ink)}
+.swatch span{font-size:12px;font-weight:800}
+.ftiles{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px}
+.ft{display:flex;flex-direction:column;align-items:center;gap:4px;background:var(--card);border:1.5px solid var(--line);border-radius:12px;padding:10px 4px 8px;font:inherit;color:var(--ink);cursor:pointer}
+.ft b{font-size:30px;line-height:1.05}
+.ft span{font-size:11px;font-weight:700;color:var(--mute);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:100%}
+.ft.on,.bt2.on,.ic2.on{border:2px solid var(--ink);box-shadow:0 0 0 2px var(--ink)}
+.btiles{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px}
+.bt2,.ic2{display:flex;flex-direction:column;align-items:center;gap:8px;border:1.5px solid var(--line);border-radius:12px;padding:14px 6px 10px;font:inherit;cursor:pointer;background:var(--card);color:var(--ink)}
+.bt2 i{font-style:normal;font-weight:800;font-size:14px;padding:8px 18px;min-width:84px;text-align:center}
+.bt2 span,.ic2 span{font-size:12px;font-weight:800;color:var(--ink);background:var(--card);padding:1px 6px;border-radius:4px}
+.ic2 i{display:flex;gap:8px;font-style:normal;min-height:30px;align-items:center}
+.ic2 svg{width:22px;height:22px;stroke:currentColor;stroke-linecap:round;stroke-linejoin:round}
+.ic2 em{font-style:normal;font-weight:700;font-size:13px}

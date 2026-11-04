@@ -5,15 +5,15 @@
 
 var FONTS = {
   clean:     ['system-ui,-apple-system,"Segoe UI",Roboto,"Helvetica Neue",Arial,sans-serif', 'system-ui,-apple-system,"Segoe UI",Roboto,"Helvetica Neue",Arial,sans-serif'],
-  editorial: ['"Iowan Old Style","Palatino Linotype",Palatino,Georgia,serif', 'system-ui,-apple-system,"Segoe UI",Roboto,Arial,sans-serif'],
+  editorial: ['"FS Fraunces","Iowan Old Style","Palatino Linotype",Palatino,Georgia,serif', 'system-ui,-apple-system,"Segoe UI",Roboto,Arial,sans-serif'],
   poster:    ['Impact,Haettenschweiler,"Arial Narrow Bold","Franklin Gothic Bold",sans-serif', 'system-ui,-apple-system,"Segoe UI",Roboto,Arial,sans-serif'],
-  type:      ['ui-monospace,"SF Mono",Menlo,Consolas,"Courier New",monospace', 'ui-monospace,"SF Mono",Menlo,Consolas,"Courier New",monospace'],
-  soft:      ['ui-rounded,"SF Pro Rounded","Arial Rounded MT Bold",system-ui,sans-serif', 'ui-rounded,"SF Pro Rounded",system-ui,sans-serif'],
-  grotesk:   ['"Helvetica Neue","Arial Black",Arial,sans-serif', '"Helvetica Neue",Arial,sans-serif'],
+  type:      ['"FS IBM Plex Mono",ui-monospace,"SF Mono",Menlo,Consolas,"Courier New",monospace', 'ui-monospace,"SF Mono",Menlo,Consolas,"Courier New",monospace'],
+  soft:      ['"FS Nunito",ui-rounded,"SF Pro Rounded","Arial Rounded MT Bold",system-ui,sans-serif', 'ui-rounded,"SF Pro Rounded",system-ui,sans-serif'],
+  grotesk:   ['"FS Inter Tight","Helvetica Neue","Arial Black",Arial,sans-serif', '"Helvetica Neue",Arial,sans-serif'],
   didone:    ['"FS DM Serif Display",Didot,"Bodoni 72",Georgia,serif', 'system-ui,-apple-system,"Segoe UI",Roboto,Arial,sans-serif'],
-  slab:      ['Rockwell,"Rockwell Extra Bold","Roboto Slab","Courier New",serif', 'system-ui,-apple-system,"Segoe UI",Roboto,Arial,sans-serif'],
-  condensed: ['"Avenir Next Condensed","Arial Narrow","Roboto Condensed","Helvetica Neue",sans-serif', '"Avenir Next","Avenir",system-ui,sans-serif'],
-  humanist:  ['Optima,Candara,"Gill Sans","Noto Sans",sans-serif', 'Optima,Candara,"Gill Sans","Noto Sans",sans-serif'],
+  slab:      ['"FS Roboto Slab",Rockwell,"Rockwell Extra Bold","Roboto Slab","Courier New",serif', 'system-ui,-apple-system,"Segoe UI",Roboto,Arial,sans-serif'],
+  condensed: ['"FS Barlow Condensed","Avenir Next Condensed","Arial Narrow","Roboto Condensed","Helvetica Neue",sans-serif', '"Avenir Next","Avenir",system-ui,sans-serif'],
+  humanist:  ['"FS Tenor Sans",Optima,Candara,"Gill Sans","Noto Sans",sans-serif', 'Optima,Candara,"Gill Sans","Noto Sans",sans-serif'],
   marker:    ['"FS Permanent Marker","Marker Felt","Chalkboard SE",sans-serif', 'system-ui,-apple-system,"Segoe UI",Roboto,Arial,sans-serif'],
   space:     ['"FS Space Grotesk",system-ui,sans-serif', '"FS Space Grotesk",system-ui,sans-serif'],
   block:     ['"FS Archivo Black","Arial Black",sans-serif', 'system-ui,-apple-system,"Segoe UI",Roboto,Arial,sans-serif'],
@@ -94,7 +94,7 @@ function applyStyle() {
   var b = document.body;
   b.className = ['nav-' + (c.nav || 'tabs'), 'm-' + (reduce ? 'none' : (c.motion || 'fade')), 'f-' + (c.font || 'clean'), 'd-' + (c.density || 'comfy'),
     'h-' + (c.header || 'left'), 'g-' + (c.layout || 'grid'), 'p-' + (c.photo || 'square'), 'base-' + (S.base || 'shop'),
-    'b-' + (c.btn || 'solid'), 'c-' + (c.case || 'normal'), 't-' + (c.tex || 'none'), 'k-' + (c.card || 'plain')].join(' ');
+    'b-' + (c.btn || 'solid'), 'c-' + (c.case || 'normal'), 't-' + (c.tex || 'none'), 'k-' + (c.card || 'plain'), 'ic-' + (c.icons || 'line')].join(' ');
   var tc = $('meta[name="theme-color"]'); if (tc) tc.setAttribute('content', bg);
 }
 

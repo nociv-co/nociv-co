@@ -54,9 +54,9 @@ var PALETTES = [
   ['Peach', '#ffe9dc', '#3a1d12', '#e2553d'], ['Midnight', '#0e1726', '#eef2f7', '#9cc4ff'], ['Ember', '#1a1210', '#f6e6dc', '#ff6a3d'], ['Electric', '#1d1dff', '#ffffff', '#f2ff3b']
 ];
 /* ---------- looks: 30 ready-made looks in 6 families. Applying one keeps every word, photo and page. ---------- */
-var FONT_H = { clean: 'system-ui,sans-serif', editorial: '"Iowan Old Style",Palatino,Georgia,serif', poster: 'Impact,"Arial Narrow Bold",sans-serif', type: 'ui-monospace,Menlo,monospace', soft: 'ui-rounded,"SF Pro Rounded",system-ui,sans-serif',
-  grotesk: '"Helvetica Neue","Arial Black",Arial,sans-serif', didone: '"FS DM Serif Display",Didot,Georgia,serif', slab: 'Rockwell,"Roboto Slab","Courier New",serif', condensed: '"Avenir Next Condensed","Arial Narrow",sans-serif', humanist: 'Optima,Candara,"Gill Sans",sans-serif', marker: '"FS Permanent Marker","Marker Felt",sans-serif', space: '"FS Space Grotesk",system-ui,sans-serif', block: '"FS Archivo Black","Arial Black",sans-serif', gallery: '"FS Syne",sans-serif', bricolage: '"FS Bricolage",sans-serif', journal: '"FS Instrument Serif",Georgia,serif', typed: '"FS Special Elite","Courier New",monospace', mono: '"FS Rubik Mono One",monospace' };
-var FONT_W = { poster: 400, didone: 400, marker: 400, humanist: 600, grotesk: 900, space: 700, block: 400, gallery: 800, bricolage: 800, journal: 400, typed: 400, mono: 400 };
+var FONT_H = { clean: 'system-ui,sans-serif', editorial: '"FS Fraunces",Georgia,serif', poster: 'Impact,"Arial Narrow Bold",sans-serif', type: '"FS IBM Plex Mono",Menlo,monospace', soft: '"FS Nunito",ui-rounded,sans-serif',
+  grotesk: '"FS Inter Tight","Helvetica Neue",sans-serif', didone: '"FS DM Serif Display",Didot,Georgia,serif', slab: '"FS Roboto Slab",Rockwell,serif', condensed: '"FS Barlow Condensed","Arial Narrow",sans-serif', humanist: '"FS Tenor Sans",Optima,sans-serif', marker: '"FS Permanent Marker","Marker Felt",sans-serif', space: '"FS Space Grotesk",system-ui,sans-serif', block: '"FS Archivo Black","Arial Black",sans-serif', gallery: '"FS Syne",sans-serif', bricolage: '"FS Bricolage",sans-serif', journal: '"FS Instrument Serif",Georgia,serif', typed: '"FS Special Elite","Courier New",monospace', mono: '"FS Rubik Mono One",monospace' };
+var FONT_W = { poster: 400, didone: 400, marker: 400, humanist: 400, grotesk: 800, condensed: 700, editorial: 700, type: 600, slab: 800, soft: 800, space: 700, block: 400, gallery: 800, bricolage: 800, journal: 400, typed: 400, mono: 400 };
 var LOOK_KEYS = ['font', 'bg', 'text', 'accent', 'corner', 'density', 'header', 'layout', 'photo', 'btn', 'case', 'tex', 'card', 'motion'];
 var LOOKS = {
   Clean: [['Gallery White', 'clean,#ffffff,#111111,#111111,sharp,comfy,left,grid,natural,outline,normal,none,plain,fade'], ['Soft Paper', 'humanist,#fafaf7,#1b1b1b,#2f6db5,soft,comfy,center,grid,portrait,solid,normal,none,plain,fade'],
@@ -310,23 +310,20 @@ function group(title, key, opts, note) {
 /* ---------- panes ---------- */
 function pStart() {
   var k = kindSel || kindOf(D._preset);
-  var row = '<div class="kinds-row" role="tablist" aria-label="What are you making">' + KINDS.map(function (x) {
-    return '<button type="button" class="kd' + (x[0] === k ? ' on' : '') + '" data-act="kind" data-v="' + x[0] + '" role="tab" aria-selected="' + (x[0] === k) + '"><svg viewBox="0 0 24 24" aria-hidden="true">' + KIND_ICON[x[0]] + '</svg><b>' + x[1] + '</b></button>';
+  var row = '<div class="kinds-grid" role="list">' + KINDS.map(function (x) {
+    return '<button type="button" class="kd' + (x[0] === kindOf(D._preset) ? ' on' : '') + '" data-act="kind" data-v="' + x[0] + '"><svg viewBox="0 0 24 24" aria-hidden="true">' + KIND_ICON[x[0]] + '</svg><b>' + x[1] + '</b></button>';
   }).join('') + '</div>';
-  var tiles = '<div class="vtiles">' + VARIANTS[k].map(function (v, i) {
-    var key = k + ':' + i, t = lookTile(v[2], variantStyle(v), 'variant', key);
-    var sel = D._variant ? D._variant === key : (v[0] === D._preset && !v[1]);
-    return sel ? t.replace('class="lk"', 'class="lk on"') : t;
-  }).join('') + '</div>';
-  var cur = D.style, pal = '<div class="dots">' + PALETTES.map(function (q) {
-    var on = q[1] === cur.bg && q[3] === cur.accent;
-    return '<button type="button" class="dot' + (on ? ' on' : '') + '" data-act="pal" data-v="' + q.slice(1).join(',') + '" aria-label="' + q[0] + '" style="background:linear-gradient(135deg,' + q[1] + ' 50%,' + q[3] + ' 50%);border-color:' + q[2] + '"></button>';
-  }).join('') + '</div>';
-  return '<p class="step-h">What are you making?</p>' + row +
-    '<p class="step-h">Pick a starting point</p>' + tiles +
-    '<p class="step-h">Color</p>' + pal +
-    '<p class="help">Tap a tile to start. Tap a color any time, your words stay. Next, fill in your pages.</p>' +
-    '<button type="button" class="next" data-act="pane" data-v="pages">Next: fill in your pages &rarr;</button>';
+  var more = '';
+  if (k === 'archive') {
+    more = '<p class="step-h">Which kind of archive?</p><div class="vers3">' + [['archive', 'Finds', 'Cool things you found, with links', 'star'], ['archiveProducer', 'Producer', 'Beats and packs with a play button', 'play'], ['archiveLog', 'Log', 'Dated entries documenting something', 'page']].map(function (v) {
+      return '<button type="button" class="vr' + (D._preset === v[0] ? ' on' : '') + '" data-act="variant" data-v="archive:' + ['archive', 'archiveProducer', 'archiveLog'].indexOf(v[0]) + '">' + ico(v[3]) + '<b>' + v[1] + '</b><span>' + v[2] + '</span></button>';
+    }).join('') + '</div>';
+  }
+  var pages = D.tabs.map(function (t) { return '<li>' + ico(t.icon || T_ICON[t.type]) + esc(t.name) + '</li>'; }).join('');
+  return '<p class="step-h">What are you making?</p>' + row + more +
+    '<p class="step-h">You get these pages</p><ul class="youget">' + pages + '</ul>' +
+    '<p class="help">You can rename, add or remove any page after.</p>' +
+    '<button type="button" class="next" data-act="pane" data-v="look">Next: pick a look &rarr;</button>';
 }
 
 function pAdd() {
@@ -347,27 +344,40 @@ function pLook() {
     '<button type="button" class="lk lk-sh" data-act="shuffle"><b>Shuffle</b><small>New colors and type, same pages</small></button></div>' +
     (D._prevStyle ? '<button type="button" class="sm wide" data-act="lookundo">Undo last look</button>' : '') +
     '<p class="note">Looks change colors, type, buttons and spacing. Your words, photos and pages stay.</p>';
-  return '<h2>Look</h2>' + gal + '<details class="fine"' + (fineOpen ? ' open' : '') + '><summary>Fine tune</summary>' +
+  var colors = '<p class="step-h">Colors</p><div class="dots">' + PALETTES.map(function (q) {
+      var on = q[1] === s.bg && q[3] === s.accent;
+      return '<button type="button" class="dot' + (on ? ' on' : '') + '" data-act="pal" data-v="' + q.slice(1).join(',') + '" aria-label="' + q[0] + '" style="background:linear-gradient(135deg,' + q[1] + ' 50%,' + q[3] + ' 50%);border-color:' + q[2] + '"></button>';
+    }).join('') + '</div><p class="step-s">Or pick your own</p><div class="mine">' +
+    [['style.bg', 'Background', s.bg], ['style.text', 'Words', s.text], ['style.accent', 'Buttons', s.accent]].map(function (c) {
+      return '<label class="swatch"><input type="color" data-b="' + c[0] + '" value="' + esc(c[2]) + '"><i style="background:' + esc(c[2]) + '"></i><span>' + c[1] + '</span></label>';
+    }).join('') + '</div><ul class="ratios">' + rd(tr, 4.5, 'Words are easy to read') + rd(ar, 4.5, 'Button words are easy to read') + '</ul>';
+  var FL = [['clean', 'Clean'], ['space', 'Space Grotesk'], ['grotesk', 'Inter Tight'], ['block', 'Archivo Black'], ['gallery', 'Syne'], ['bricolage', 'Bricolage'], ['condensed', 'Barlow'], ['humanist', 'Tenor Sans'], ['soft', 'Nunito'], ['editorial', 'Fraunces'], ['journal', 'Instrument'], ['didone', 'DM Serif'], ['slab', 'Roboto Slab'], ['type', 'Plex Mono'], ['typed', 'Special Elite'], ['mono', 'Rubik Mono'], ['marker', 'Marker']];
+  var type = '<p class="step-h">Type</p><div class="ftiles">' + FL.map(function (f) {
+    return '<button type="button" class="ft' + (s.font === f[0] ? ' on' : '') + '" data-act="style" data-k="font" data-v="' + f[0] + '"><b style="font-family:' + FONT_H[f[0]].replace(/"/g, "'") + ';font-weight:' + (FONT_W[f[0]] || 800) + '">Aa</b><span>' + f[1] + '</span></button>';
+  }).join('') + '</div>';
+  var acx = onColor(s.accent), rr = { sharp: '0', soft: '7px', round: '14px' }[s.corner] || '7px';
+  var bstyle = { solid: 'background:' + s.accent + ';color:' + acx + ';border:2px solid ' + s.accent + ';border-radius:' + rr, outline: 'background:transparent;color:' + s.text + ';border:2px solid ' + s.text + ';border-radius:' + rr, pill: 'background:' + s.accent + ';color:' + acx + ';border:2px solid ' + s.accent + ';border-radius:99px', underline: 'background:transparent;color:' + s.text + ';border:0;border-bottom:3px solid ' + s.accent + ';border-radius:0' };
+  var btns = '<p class="step-h">Buttons</p><div class="btiles">' + [['solid', 'Solid'], ['outline', 'Outline'], ['pill', 'Pill'], ['underline', 'Underline']].map(function (x) {
+    return '<button type="button" class="bt2' + ((s.btn || 'solid') === x[0] ? ' on' : '') + '" data-act="style" data-k="btn" data-v="' + x[0] + '" style="background:' + s.bg + '"><i style="' + bstyle[x[0]] + '">Shop</i><span>' + x[1] + '</span></button>';
+  }).join('') + '</div>';
+  var ics = '<p class="step-h">Icons</p><div class="btiles">' + [['line', 'Line'], ['bold', 'Bold'], ['duo', 'Filled'], ['badge', 'Badge'], ['none', 'Words only']].map(function (x) {
+    var st = x[0] === 'bold' ? 'stroke-width:2.7' : x[0] === 'duo' ? 'stroke-width:1.8' : 'stroke-width:1.8', fill = x[0] === 'duo' ? 'fill:currentColor;fill-opacity:.4' : 'fill:none';
+    var one = function (n) { return '<svg viewBox="0 0 24 24" style="' + st + ';' + fill + (x[0] === 'badge' ? ';background:' + s.accent + ';color:' + acx + ';border-radius:6px;padding:3px' : '') + '">' + ICONS[n] + '</svg>'; };
+    return '<button type="button" class="ic2' + ((s.icons || 'line') === x[0] ? ' on' : '') + '" data-act="style" data-k="icons" data-v="' + x[0] + '"><i>' + (x[0] === 'none' ? '<em>Home Shop</em>' : one('home') + one('bag') + one('user')) + '</i><span>' + x[1] + '</span></button>';
+  }).join('') + '</div>';
+  return '<h2>Look</h2>' + gal + colors + type + btns + ics + '<details class="fine"' + (fineOpen ? ' open' : '') + '><summary>Fine tune</summary>' +
     group('Menu', 'nav', [['tabs', 'Tabs', 'on top'], ['menu', 'Menu', 'button'], ['bottom', 'Bottom bar', 'like an app'], ['side', 'Side list', 'computer']], navNote) +
     group('Page change', 'motion', [['none', 'None'], ['fade', 'Fade'], ['slide', 'Slide'], ['rise', 'Rise'], ['zoom', 'Zoom']]) +
     '<button type="button" class="sm wide" data-act="demo">▶ Watch it</button>' +
-    group('Type', 'font', [['clean', 'Clean'], ['space', 'Space Grotesk'], ['block', 'Archivo Black'], ['gallery', 'Syne'], ['bricolage', 'Bricolage'], ['grotesk', 'Grotesk'], ['condensed', 'Condensed'], ['humanist', 'Humanist'], ['soft', 'Soft'], ['editorial', 'Editorial'], ['journal', 'Instrument Serif'], ['didone', 'DM Serif'], ['slab', 'Slab'], ['type', 'Typewriter'], ['typed', 'Special Elite'], ['mono', 'Rubik Mono'], ['marker', 'Marker']].map(function (f) { return [f[0], f[1], '', 'font-family:' + FONT_H[f[0]].replace(/"/g, "'") + ';font-weight:' + (FONT_W[f[0]] || 800)]; })) +
-    '<div class="g"><h3>Colors</h3><div class="pal">' + PALETTES.map(function (p) {
-      return '<button type="button" data-act="pal" data-v="' + p.slice(1).join(',') + '" aria-label="' + p[0] + '" style="background:' + p[1] + ';color:' + p[2] + '"><i style="background:' + p[3] + '"></i>' + p[0] + '</button>';
-    }).join('') + '</div><div class="cols">' +
-    '<label>Background<input type="color" data-b="style.bg" value="' + esc(s.bg) + '"></label>' +
-    '<label>Text<input type="color" data-b="style.text" value="' + esc(s.text) + '"></label>' +
-    '<label>Accent<input type="color" data-b="style.accent" value="' + esc(s.accent) + '"></label></div>' +
-    '<ul class="ratios">' + rd(tr, 4.5, 'Text is readable') + rd(ar, 4.5, 'Button words are readable') + rd(ab, 3, 'Accent stands out') + '</ul></div>' +
     group('Corners', 'corner', [['sharp', 'Sharp'], ['soft', 'Soft'], ['round', 'Round']]) +
     group('Spacing', 'density', [['comfy', 'Roomy'], ['compact', 'Tight']]) +
     group('Name at top', 'header', [['left', 'Left'], ['center', 'Center'], ['stack', 'Big']]) +
     group('Item layout', 'layout', [['grid', 'Grid'], ['masonry', 'Stagger'], ['list', 'List']]) +
     group('Photo shape', 'photo', [['square', 'Square'], ['portrait', 'Tall'], ['landscape', 'Wide'], ['natural', 'As is']]) +
-    group('Buttons', 'btn', [['solid', 'Solid'], ['outline', 'Outline'], ['pill', 'Pill'], ['underline', 'Underline']]) +
     group('Headings', 'case', [['normal', 'As typed'], ['upper', 'ALL CAPS']]) +
     group('Background', 'tex', [['none', 'Plain'], ['grain', 'Grain'], ['grid', 'Graph'], ['lines', 'Lined'], ['dots', 'Dots']]) +
-    group('Photo frame', 'card', [['plain', 'None'], ['border', 'Line'], ['shadow', 'Shadow'], ['tape', 'Tape']]) + '</details>';
+    group('Photo frame', 'card', [['plain', 'None'], ['border', 'Line'], ['shadow', 'Shadow'], ['tape', 'Tape']]) + '</details>' +
+    '<button type="button" class="next" data-act="pane" data-v="pages">Next: fill in your pages &rarr;</button>';
 }
 
 function pPages() {
@@ -486,7 +496,7 @@ function checks() {
   c(!nopic, 'Every item has a photo', nopic + ' item' + (nopic > 1 ? 's need' : ' needs') + ' a photo', 'pages');
   c(!empty, 'No empty pages', empty + ' page' + (empty > 1 ? 's are' : ' is') + ' empty', 'pages');
   c(!!D.description, 'Search description is set', 'Add a search description', 'info');
-  c(!!D.domain, 'Domain is set for link previews', 'Add your domain when you have it', 'info');
+  c(true, D.domain ? 'Your own domain is set' : 'Free link works, no domain needed. You can add one any time in Info', '', 'info');
   return out;
 }
 
@@ -572,7 +582,7 @@ function usedImages() {
   D.tabs.forEach(function (t) { add(t.image); (t.items || []).forEach(function (x) { (x.images || []).forEach(add); add(x.audio); }); });
   return Object.keys(s);
 }
-var README = 'YOUR SITE\n=========\n\nThis folder is your whole website. You own it.\n\nindex.html     the site\nsite.json      everything you typed: pages, items, colors\nimages/        your photos\nadmin.html     the studio, to change things later\nkit/           the engine. You do not need to touch it.\n\nPUT IT ONLINE (Cloudflare, free hosting)\n1. Make a free Cloudflare account. Buy your domain there (sold at cost, about $11 a year for .com).\n2. Workers and Pages > Create > Pages > Upload assets. Name it, then drop in this zip or folder. Deploy.\n3. Custom domains > Set up a domain > type your domain. Cloudflare connects it for you.\n\nSELL THINGS (Stripe)\n1. Make a Stripe account. Stripe is who pays you.\n2. Payment Links > New. Add the product and price. Turn on: collect shipping address, shipping rates.\n3. Copy the link and paste it into the item\'s Buy link in admin.html.\nStripe sends the receipt email. You see orders in Stripe and buy labels at USPS or Pirate Ship.\n\nCHANGE IT LATER\nGo to yourdomain.com/admin.html. Edit. Download a new zip. Upload it again in Cloudflare (Create deployment).\nYour live site only changes when you upload.\n\nFull guide: ' + GUIDE + '\n';
+var README = 'YOUR SITE\n=========\n\nThis folder is your whole website. You own it.\n\nindex.html     the site\nsite.json      everything you typed: pages, items, colors\nimages/        your photos\nadmin.html     the studio, to change things later\nkit/           the engine. You do not need to touch it.\n\nPUT IT ONLINE (Cloudflare, free hosting, $0)\n1. Make a free Cloudflare account.\n2. Workers and Pages > Create > Pages > Upload assets. Name it, then drop in this zip or folder. Deploy.\n   You get a free link right away, like yourname.pages.dev. That is all you need.\n3. Optional: your own domain. Buy one in Cloudflare (sold at cost, about $11 a year for .com), then Custom domains > Set up a domain > type it.\n\nSELL THINGS (Stripe)\n1. Make a Stripe account. Stripe is who pays you.\n2. Payment Links > New. Add the product and price. Turn on: collect shipping address, shipping rates.\n3. Copy the link and paste it into the item\'s Buy link in admin.html.\nStripe sends the receipt email. You see orders in Stripe and buy labels at USPS or Pirate Ship.\n\nCHANGE IT LATER\nGo to your site address + /admin.html (like yourname.pages.dev/admin.html). Edit. Download a new zip. Upload it again in Cloudflare (Create deployment).\nYour live site only changes when you upload.\n\nFull guide: ' + GUIDE + '\n';
 var LICENSE = 'MIT License\n\nCopyright (c) ' + new Date().getFullYear() + ' NOCIV.CO From Scratch\n\nPermission is hereby granted, free of charge, to any person obtaining a copy of this software and associated documentation files (the "Software"), to deal in the Software without restriction, including without limitation the rights to use, copy, modify, merge, publish, distribute, sublicense, and/or sell copies of the Software, and to permit persons to whom the Software is furnished to do so, subject to the following conditions:\n\nThe above copyright notice and this permission notice shall be included in all copies or substantial portions of the Software.\n\nTHE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.\n';
 
 function bytes(r) { return r.arrayBuffer().then(function (b) { return new Uint8Array(b); }); }
@@ -584,7 +594,7 @@ function buildZip() {
   files.push({ name: 'index.html', data: enc.encode(html) }, { name: '404.html', data: enc.encode(html) },
     { name: 'site.json', data: enc.encode(JSON.stringify(json, null, 2)) }, { name: 'README.txt', data: enc.encode(README) },
     { name: 'LICENSE.txt', data: enc.encode(LICENSE) }, { name: 'robots.txt', data: enc.encode('User-agent: *\nDisallow: /admin.html\nDisallow: /preview.html\n') });
-  var kit = [['kit/site.js', 'kit/site.js'], ['kit/site.css', 'kit/site.css'], ['kit/studio.js', 'kit/studio.js'], ['kit/studio.css', 'kit/studio.css'], ['preview.html', 'preview.html'], ['admin.html', self], ['kit/fonts/archivo-black.woff', 'kit/fonts/archivo-black.woff'], ['kit/fonts/bricolage-grotesque-800.woff', 'kit/fonts/bricolage-grotesque-800.woff'], ['kit/fonts/dm-serif-display.woff', 'kit/fonts/dm-serif-display.woff'], ['kit/fonts/instrument-serif.woff', 'kit/fonts/instrument-serif.woff'], ['kit/fonts/permanent-marker.woff', 'kit/fonts/permanent-marker.woff'], ['kit/fonts/rubik-mono-one.woff', 'kit/fonts/rubik-mono-one.woff'], ['kit/fonts/space-grotesk-400.woff', 'kit/fonts/space-grotesk-400.woff'], ['kit/fonts/space-grotesk-700.woff', 'kit/fonts/space-grotesk-700.woff'], ['kit/fonts/special-elite.woff', 'kit/fonts/special-elite.woff'], ['kit/fonts/syne-800.woff', 'kit/fonts/syne-800.woff'], ['kit/fonts/LICENSE-spacegrotesk.txt', 'kit/fonts/LICENSE-spacegrotesk.txt'], ['kit/fonts/LICENSE-archivoblack.txt', 'kit/fonts/LICENSE-archivoblack.txt'], ['kit/fonts/LICENSE-dmserifdisplay.txt', 'kit/fonts/LICENSE-dmserifdisplay.txt'], ['kit/fonts/LICENSE-syne.txt', 'kit/fonts/LICENSE-syne.txt'], ['kit/fonts/LICENSE-instrumentserif.txt', 'kit/fonts/LICENSE-instrumentserif.txt'], ['kit/fonts/LICENSE-rubikmonoone.txt', 'kit/fonts/LICENSE-rubikmonoone.txt'], ['kit/fonts/LICENSE-bricolagegrotesque.txt', 'kit/fonts/LICENSE-bricolagegrotesque.txt'], ['kit/fonts/LICENSE-specialelite.txt', 'kit/fonts/LICENSE-specialelite.txt'], ['kit/fonts/LICENSE-permanentmarker.txt', 'kit/fonts/LICENSE-permanentmarker.txt']];
+  var kit = [['kit/site.js', 'kit/site.js'], ['kit/site.css', 'kit/site.css'], ['kit/studio.js', 'kit/studio.js'], ['kit/studio.css', 'kit/studio.css'], ['preview.html', 'preview.html'], ['admin.html', self], ['kit/fonts/archivo-black.woff', 'kit/fonts/archivo-black.woff'], ['kit/fonts/bricolage-grotesque-800.woff', 'kit/fonts/bricolage-grotesque-800.woff'], ['kit/fonts/dm-serif-display.woff', 'kit/fonts/dm-serif-display.woff'], ['kit/fonts/instrument-serif.woff', 'kit/fonts/instrument-serif.woff'], ['kit/fonts/permanent-marker.woff', 'kit/fonts/permanent-marker.woff'], ['kit/fonts/rubik-mono-one.woff', 'kit/fonts/rubik-mono-one.woff'], ['kit/fonts/space-grotesk-400.woff', 'kit/fonts/space-grotesk-400.woff'], ['kit/fonts/space-grotesk-700.woff', 'kit/fonts/space-grotesk-700.woff'], ['kit/fonts/special-elite.woff', 'kit/fonts/special-elite.woff'], ['kit/fonts/syne-800.woff', 'kit/fonts/syne-800.woff'], ['kit/fonts/LICENSE-spacegrotesk.txt', 'kit/fonts/LICENSE-spacegrotesk.txt'], ['kit/fonts/LICENSE-archivoblack.txt', 'kit/fonts/LICENSE-archivoblack.txt'], ['kit/fonts/LICENSE-dmserifdisplay.txt', 'kit/fonts/LICENSE-dmserifdisplay.txt'], ['kit/fonts/LICENSE-syne.txt', 'kit/fonts/LICENSE-syne.txt'], ['kit/fonts/LICENSE-instrumentserif.txt', 'kit/fonts/LICENSE-instrumentserif.txt'], ['kit/fonts/LICENSE-rubikmonoone.txt', 'kit/fonts/LICENSE-rubikmonoone.txt'], ['kit/fonts/LICENSE-bricolagegrotesque.txt', 'kit/fonts/LICENSE-bricolagegrotesque.txt'], ['kit/fonts/LICENSE-specialelite.txt', 'kit/fonts/LICENSE-specialelite.txt'], ['kit/fonts/LICENSE-permanentmarker.txt', 'kit/fonts/LICENSE-permanentmarker.txt'], ['kit/fonts/inter-tight-800.woff', 'kit/fonts/inter-tight-800.woff'], ['kit/fonts/barlow-condensed-700.woff', 'kit/fonts/barlow-condensed-700.woff'], ['kit/fonts/tenor-sans.woff', 'kit/fonts/tenor-sans.woff'], ['kit/fonts/nunito-800.woff', 'kit/fonts/nunito-800.woff'], ['kit/fonts/fraunces-700.woff', 'kit/fonts/fraunces-700.woff'], ['kit/fonts/roboto-slab-800.woff', 'kit/fonts/roboto-slab-800.woff'], ['kit/fonts/ibm-plex-mono-600.woff', 'kit/fonts/ibm-plex-mono-600.woff'], ['kit/fonts/LICENSE-intertight.txt', 'kit/fonts/LICENSE-intertight.txt'], ['kit/fonts/LICENSE-barlowcondensed.txt', 'kit/fonts/LICENSE-barlowcondensed.txt'], ['kit/fonts/LICENSE-tenorsans.txt', 'kit/fonts/LICENSE-tenorsans.txt'], ['kit/fonts/LICENSE-nunito.txt', 'kit/fonts/LICENSE-nunito.txt'], ['kit/fonts/LICENSE-fraunces.txt', 'kit/fonts/LICENSE-fraunces.txt'], ['kit/fonts/LICENSE-ibmplexmono.txt', 'kit/fonts/LICENSE-ibmplexmono.txt'], ['kit/fonts/LICENSE-robotoslab.txt', 'kit/fonts/LICENSE-robotoslab.txt']];
   var jobs = kit.map(function (k) { return fetchBytes(k[1]).then(function (d) { files.push({ name: k[0], data: d }); }); });
   usedImages().forEach(function (p) {
     jobs.push(getBlob(p).then(function (b) { return b ? bytes(b) : fetchBytes(p); }).then(function (d) { files.push({ name: p, data: d }); }));
@@ -632,7 +642,13 @@ function onAct(b) {
       D = PRESETS[b.dataset.v](); D._preset = b.dataset.v; editTab = editItem = null; save(); D._touched = false; localStorage.setItem(KEY, JSON.stringify(D)); break;
     case 'style': D.style[b.dataset.k] = b.dataset.v; save(); break;
     case 'fam': lookFam = b.dataset.v; break;
-    case 'kind': kindSel = b.dataset.v; if (VARIANTS[kindSel].length === 1 || kindSel !== kindOf(D._preset)) { /* show tiles, nothing replaced yet */ } break;
+    case 'kind':
+      kindSel = b.dataset.v;
+      if (kindSel === 'archive' && /^archive/.test(D._preset || '')) break;
+      var base0 = kindSel === 'archive' ? 'archive' : kindSel;
+      if (base0 === D._preset) break;
+      if (D._touched && !confirm('Start a new ' + b.textContent.trim() + ' site? What you have now gets replaced. Save a backup first if you want it.')) return;
+      D = PRESETS[base0](); D._preset = base0; editTab = editItem = null; pvHash = null; save(); break;
     case 'variant':
       var vk = b.dataset.v.split(':'), vv = VARIANTS[vk[0]][+vk[1]];
       if (D._touched && D._preset !== vv[0] && !confirm('Start a new ' + vv[2] + ' site? What you have now gets replaced. Save a backup first if you want it.')) return;
