@@ -387,7 +387,7 @@ function drawFiles() {
   else if (pots) rows += '<li><b>' + pots + ' x knob for a 6 mm shaft</b><br><small>Any knob made for a 6 mm knurled or round shaft.</small></li>';
   rows += '<li><b>4 x M2 screws, about 5 mm long</b><br><small>Hold the Pico on its posts.</small></li><li><b>4 x M3 screws, about 8 mm long</b><br><small>Hold the lid on. They cut their own thread in the corner posts.</small></li>';
   $('partsList').innerHTML = rows;
-  $('fileSize').textContent = 'Box ' + g.W + ' x ' + g.D + ' x ' + g.H.toFixed(1) + ' mm. Lid ' + g.W + ' x ' + g.D + ' x ' + LT + ' mm.';
+  $('fileSize').textContent = 'Box ' + g.W.toFixed(1) + ' x ' + g.D.toFixed(1) + ' x ' + g.H.toFixed(1) + ' mm. Lid ' + g.W.toFixed(1) + ' x ' + g.D.toFixed(1) + ' x ' + LT + ' mm.';
 }
 function download(blob, name) {
   const a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = name; document.body.appendChild(a); a.click();
