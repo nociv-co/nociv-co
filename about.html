@@ -36,6 +36,11 @@
     font-size: 1.05rem;
   }
 
+  /* Philosophy opener: one big line, three plain sentences, the turn in bold, facts small and quiet */
+  .ph-big { margin: 18px auto 34px; font-family: NocivAnton, Impact, "Arial Narrow", sans-serif; font-weight: 400; font-size: clamp(2.6rem, 12vw, 4.4rem); line-height: .95; letter-spacing: .01em; text-transform: uppercase; color: #1a1a1a; max-width: 9.5em; }
+  .ph-mid { margin: 0 auto 26px; font-size: 1.1rem; line-height: 1.7; max-width: 30em; }
+  .ph-turn { margin: 0 auto 30px; font-size: 1.2rem; line-height: 1.5; font-weight: 800; max-width: 22em; }
+  .ph-facts { margin: 0 auto; font-size: .85rem; letter-spacing: .04em; color: #6b665c; }
   /* --- Culture panel: tighter spacing --- */
   #culturePanel .wrap { padding: 24px 20px; }
   #culturePanel .wrap + .wrap { padding-top: 4px; }
@@ -149,18 +154,14 @@
 <!-- ===== PHILOSOPHY ===== -->
 <div class="about-page" id="philosophyPanel" data-k="philosophy" hidden>
   <div class="wrap" style="text-align:center; max-width:640px;">
-    <p style="font-size:1.3rem; line-height:1.7; font-weight:700;">
-      NOCIV is a Black-owned creator brand from Arizona.
+    <h1 class="ph-big">Normal was made by someone.</h1>
+    <p class="ph-mid">
+      So we're making a new one. Clothes that show what American really
+      looks like. Tools you can have for free. A brand that grows by word
+      of mouth, not ads.
     </p>
-    <p style="font-size:1.1rem; line-height:1.7;">
-      We sell clothes and give away tools. Most brands only let you buy. We let you make too.
-    </p>
-    <p style="font-size:1.15rem; line-height:1.7; font-weight:700;">
-      Restoring the balance between the people who buy and the people who sell.
-    </p>
-    <p style="font-size:1.05rem; line-height:1.8; opacity:.9;">
-      Our clothes reclaim what "American" looks like. No ads. No algorithm. If you're here, someone told you.
-    </p>
+    <p class="ph-turn">One shirt. One zine. One person telling another. That's how normal changes.</p>
+    <p class="ph-facts">Black-owned. Built in Arizona. If you're here, someone told you.</p>
   </div>
 
   <div class="wrap">
