@@ -52,6 +52,9 @@
 // ===== THE TEST LIST. Claude rewrites this block after every delivery. Keep each test to a few taps. =====
 var BATCH = '2026-11-03 from scratch';
 var TESTS = [
+  { id: 'baseheading', title: 'Base: lined paper heading card', where: 'nociv.co/community.html',
+    steps: ['Open Base.'],
+    expect: 'The top Base card is lined paper with blue lines and a red margin line, like the About list, tape still on top.' },
   { id: 'aboutcopy', title: 'About: new words', where: 'nociv.co/about.html',
     steps: ['Open Philosophy, then Participate, then Founder.', 'On Participate tap Tools in the Build card.'],
     expect: 'Philosophy opens with Black-owned creator brand from Arizona, then We Are All Creators. Participate cards look like taped paper notes with black name tags, list the real tools and Base sections, and Go to Tools opens Tools. Founder is short and ends with Own what you make.' },
