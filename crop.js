@@ -4,11 +4,11 @@
   var css = '.ncrop{position:fixed;inset:0;z-index:100000;background:#141312;display:flex;flex-direction:column;color:#fff;font-family:-apple-system,BlinkMacSystemFont,"Helvetica Neue",Arial,sans-serif;padding-top:env(safe-area-inset-top);touch-action:none}' +
     '.ncrop-bar{display:flex;align-items:center;justify-content:space-between;gap:10px;padding:10px 12px}' +
     '.ncrop-bar b{font-size:13px;letter-spacing:.08em;text-transform:uppercase}' +
-    '.ncrop-bar button{font:inherit;font-weight:900;font-size:15px;border:0;border-radius:999px;padding:10px 18px;cursor:pointer}' +
+    '.ncrop-bar button{width:auto!important;flex:none!important;margin:0!important;font:inherit;font-weight:900;font-size:15px;border:0;border-radius:999px;padding:10px 18px;cursor:pointer}' +
     '.ncrop-x{background:#2c2a27;color:#fff}.ncrop-ok{background:#c8412f;color:#fff}' +
-    '.ncrop-stage{flex:1;min-height:0;position:relative;overflow:hidden}.ncrop-stage canvas{position:absolute;inset:0;width:100%;height:100%}' +
+    '.ncrop-stage{flex:1;min-height:0;position:relative;overflow:hidden}.ncrop-stage canvas{position:absolute!important;inset:0!important;width:100%!important;height:100%!important;max-width:none!important;max-height:none!important;box-shadow:none!important;margin:0!important;transform:none!important}' +
     '.ncrop-tools{padding:10px 12px calc(14px + env(safe-area-inset-bottom));display:flex;gap:8px;overflow-x:auto;scrollbar-width:none}.ncrop-tools::-webkit-scrollbar{display:none}' +
-    '.ncrop-tools button{flex:none;font:inherit;font-weight:800;font-size:14px;color:#fff;background:#2c2a27;border:1.5px solid #4a4743;border-radius:999px;padding:9px 14px;cursor:pointer}' +
+    '.ncrop-tools button{width:auto!important;min-width:0!important;height:auto!important;margin:0!important;flex:none!important;font:inherit;font-weight:800;font-size:14px;color:#fff;background:#2c2a27;border:1.5px solid #4a4743;border-radius:999px;padding:9px 14px;cursor:pointer}' +
     '.ncrop-tools button[aria-pressed=true]{background:#fff;color:#141312;border-color:#fff}' +
     '.ncrop-hint{text-align:center;font-size:12px;color:#b8b2a7;padding:0 12px 4px}';
   var st = document.createElement('style'); st.textContent = css; document.head.appendChild(st);

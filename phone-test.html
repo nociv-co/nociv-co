@@ -52,6 +52,9 @@
 // ===== THE TEST LIST. Claude rewrites this block after every delivery. Keep each test to a few taps. =====
 var BATCH = '2026-11-03 from scratch';
 var TESTS = [
+  { id: 'stencil2', title: 'Stencil + Halftone: knobs, picture buttons, fluid console, crop', where: 'Tools, Stencil + Halftone',
+    steps: ['Choose a photo. In the crop screen pick Free, then 4:5, drag a corner, tap Done.', 'Tap Halftone, then Dots. Turn the Contrast knob by dragging up. Double tap it.', 'Tap Pop art, then Ink, then CMYK.', 'Drag the little bar above the buttons down, then up, then tap it.'],
+    expect: 'Crop shows the photo with its real shape and every crop shape button fits. Knobs turn and the picture updates; double tap puts a knob back. Dot size, style and ink are picture buttons. The console follows your finger and settles tucked, half or tall, and the step buttons never disappear. No expand button on the right. Only one title bar.' },
   { id: 'fseditor', title: 'From Scratch: tap to select, Layers, Insert, Publish', where: 'nociv.co/scratch/studio.html',
     steps: ['Tap a product in the preview.', 'Tap the play button at the top, tap a product, then tap the arrow.', 'Open Layers and tap a product under Shop.', 'Open Insert and add a Log page. Tap Publish (top right).'],
     expect: 'Tapping in the preview draws a red box with a name tag and opens that thing\'s settings below. Play mode lets you click around like a visitor. Layers shows every page with its items nested under it. Insert adds pages. Publish opens the checklist and download.' },
