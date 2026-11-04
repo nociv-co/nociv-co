@@ -1,4 +1,4 @@
-/* NOCIV Repeating Pattern: the app. Start (what), Make, Color, Fabric, Board.
+/* NOCIV Patterns: the app. Start (what), Make, Color, Fabric, Board.
    Locked picture on top, a fixed console, part tabs above the step bar, nothing slides. */
 (function () {
   'use strict';
@@ -125,6 +125,19 @@
     }
     return c;
   }
+  // mix and match helpers
+  var MIXUI = [['solid', 'Solid'], ['dots', 'Dots'], ['hatch', 'Lines'], ['logo', 'Logo'], ['empty', 'Empty']];
+  var BANDF = [['solid', 'Solid'], ['dots', 'Dots'], ['hatch', 'Lines'], ['logo', 'Logo']];
+  function mixOf() { var m = S.checks.mix; return m && m.length > 1 ? m : null; }
+  function fadeIt(m) { if (m && S.rep.fade < 100) { var c = E.cv(m.width, m.height), g = c.getContext('2d'); g.globalAlpha = S.rep.fade / 100; g.drawImage(m, 0, 0); m = c; } return m; }
+  function altMotif(cols) {
+    var a = S.rep.alt || 'none';
+    if (a === 'space') return null;
+    if (a === 'icon') return fadeIt(renderLogo({ shape: 'none', text: '', icon: S.logo.icon !== 'none' ? S.logo.icon : 'star', ring: false }, cols));
+    if (a === 'other') return fadeIt(S.kind === 'logo' ? picMotif(cols) : renderLogo(S.logo, cols));
+    return undefined;
+  }
+  function motifs() { var m = motif(); if (!m || !S.rep.alt || S.rep.alt === 'none') return null; var b = altMotif(colors()); if (b === undefined || (S.rep.alt === 'other' && !b)) return null; return [m, b]; }
   function motif() {
     var cols = colors(), m = S.kind === 'logo' ? renderLogo(S.logo, cols) : picMotif(cols);
     if (m && S.rep.fade < 100) { var c = E.cv(m.width, m.height), g = c.getContext('2d'); g.globalAlpha = S.rep.fade / 100; g.drawImage(m, 0, 0); m = c; }
@@ -314,7 +327,7 @@
     hwCols().forEach(function (hx0, i) { var hx = toHex(hx0), x = 5 * u + i * 22 * u, y = cy + 3.4 * u, pt = S.board.pantone[hx]; g.fillStyle = hx; g.fillRect(x, y, 18 * u, 8 * u); g.strokeStyle = '#1a1a1a'; g.lineWidth = .2 * u; g.strokeRect(x, y, 18 * u, 8 * u); g.fillStyle = '#1a1a1a'; g.font = '800 ' + 1.5 * u + 'px ' + sys; g.fillText(labels[i].toUpperCase() + '  ' + hx.toUpperCase(), x, y + 9 * u); g.font = '600 ' + 1.25 * u + 'px ' + sys; g.fillStyle = pt ? '#1a1a1a' : '#b0aa9c'; g.fillText(pt ? 'PANTONE ' + pt : 'Pantone: match it', x, y + 11.2 * u); });
     var ny = 110 * u; g.fillStyle = '#1a1a1a'; g.font = '900 ' + 2.1 * u + 'px ' + sys; g.fillText('NOTES', 5 * u, ny);
     g.font = '600 ' + 1.8 * u + 'px ' + sys; wrapText(g, S.board.notes || 'Add notes on the Board tab: bag, placement, quantity.', 5 * u, ny + 3.4 * u, 90 * u, 2.6 * u);
-    g.fillStyle = '#8d887d'; g.font = '600 ' + 1.35 * u + 'px ' + sys; g.fillText('Metal colors on screen are a guide. Ask for a physical sample before a run. Made with NOCIV Repeating Pattern.', 5 * u, H - 4 * u);
+    g.fillStyle = '#8d887d'; g.font = '600 ' + 1.35 * u + 'px ' + sys; g.fillText('Metal colors on screen are a guide. Ask for a physical sample before a run. Made with NOCIV Patterns.', 5 * u, H - 4 * u);
     return c;
   }
   // Cut file: the plate outline and holes as real vectors in millimeters. The mark goes in its own PNG.
@@ -374,10 +387,10 @@
     var key = stateKey() + '@' + Math.round(ppi * 10) + (big ? 'B' : '');
     if (tcache.k === key) return tcache.t;
     var cols = colors(), t = null, k = S.kind;
-    if (k === 'logo' || k === 'picture') { var m = motif(); if (m) t = E.repeatTile({ motif: m, type: S.rep.type, tileIn: S.rep.tileIn, ppi: ppi, scale: S.rep.scale, angle: S.rep.angle, flip: S.rep.flip, bg: cols[0], seed: S.rep.seed, density: S.rep.density }); }
+    if (k === 'logo' || k === 'picture') { var m = motif(); if (m) t = E.repeatTile({ motif: m, motifs: motifs(), type: S.rep.type, tileIn: S.rep.tileIn, ppi: ppi, scale: S.rep.scale, angle: S.rep.angle, flip: S.rep.flip, bg: cols[0], seed: S.rep.seed, density: S.rep.density }); }
     else if (k === 'plaid') t = E.plaidTile({ sett: S.plaid.sett, mirror: S.plaid.mirror, threadIn: S.plaid.threadIn, ppi: ppi, colors: cols, weave: S.plaid.weave });
-    else if (k === 'stripes') t = E.stripeTile({ bands: S.stripes.bands.map(function (b) { return [b[0], b[1] * S.stripes.scale]; }), dir: S.stripes.dir, ppi: ppi, colors: cols });
-    else if (k === 'checks') t = E.checkTile({ kind: S.checks.kind, cellIn: S.checks.cellIn, fill: S.checks.fill, point: S.checks.point, ppi: ppi, colors: cols, logo: S.checks.point === 'logo' ? renderLogo(S.logo, cols, 300) : null });
+    else if (k === 'stripes') t = E.stripeTile({ bands: S.stripes.bands.map(function (b) { return [b[0], b[1] * S.stripes.scale, b[2] || 'solid']; }), dir: S.stripes.dir, ppi: ppi, colors: cols, logo: S.stripes.bands.some(function (b) { return b[2] === 'logo'; }) ? renderLogo(S.logo, cols, 300) : null });
+    else if (k === 'checks') t = E.checkTile({ kind: S.checks.kind, cellIn: S.checks.cellIn, fill: S.checks.fill, mix: mixOf(), point: S.checks.point, ppi: ppi, colors: cols, logo: S.checks.point === 'logo' || (mixOf() || []).indexOf('logo') >= 0 ? renderLogo(S.logo, cols, 300) : null });
     else if (k === 'camo') t = E.camoTile({ type: S.camo.type, tileIn: S.camo.tileIn, scale: S.camo.scale, seed: S.camo.seed, ppi: ppi, colors: cols, maxWork: big ? 1800 : 900 });
     tcache = { k: key, t: t }; return t;
   }
@@ -471,7 +484,7 @@
     if (p === 'pic') return '<button type="button" class="btn dark" data-act="choose">' + (PIC ? 'Choose another picture' : 'Choose a picture') + '</button><p class="note" style="margin:6px 0 10px">PNG with a clear background works best. A halftone from Stencil + Halftone comes in here too.</p>' +
       '<div class="row"><b>White</b>' + seg('white', [['1', 'Remove white'], ['0', 'Keep it']], S.rep.white ? '1' : '0') + '</div>' +
       '<div class="row"><b>Color</b>' + seg('tint', [['0', 'As it is'], ['1', 'One color']], S.rep.tint ? '1' : '0') + '</div><p class="note">One color turns it into a monogram or watermark in your ink.</p>';
-    if (p === 'repeat') return '<p class="h">How it repeats</p>' + picks(E.REPEATS, S.rep.type, 'rep', 5, function (x) { return mini('rep:' + x[0]); }, true) + '<p class="note">' + esc((presetOf(E.REPEATS, S.rep.type) || [0, 0, ''])[2]) + '</p>';
+    if (p === 'repeat') return '<p class="h">How it repeats</p>' + picks(E.REPEATS, S.rep.type, 'rep', 5, function (x) { return mini('rep:' + x[0]); }, true) + '<div class="row" style="margin-top:8px"><b>Mix</b>' + seg('ralt', [['none', 'Just one'], ['icon', 'Icon'], ['space', 'Space'], ['other', S.kind === 'logo' ? 'Picture' : 'Logo']], S.rep.alt || 'none') + '</div>';
     if (p === 'size') return stepper('tileIn', 'Repeat', S.rep.tileIn, fmtIn(S.rep.tileIn)) + stepper('scale', 'Motif', S.rep.scale, Math.round(S.rep.scale * 100) + '%') + stepper('angle', 'Turn', S.rep.angle, S.rep.angle + '°') +
       '<div class="row"><b>Flip</b>' + seg('flip', [['none', 'All same'], ['alt', 'Every other']], S.rep.flip) + '</div>' +
       '<div class="row"><b>Fade</b>' + seg('fade', [['100', 'Solid'], ['60', '60%'], ['30', 'Watermark']], String(S.rep.fade)) + '</div>' + (S.rep.type === 'toss' ? '<button type="button" class="btn" data-act="toss">Shuffle the toss</button>' : '');
@@ -482,7 +495,9 @@
     if (p === 'bands') return '<p class="h">Each band, its color and width</p>' + bandsHtml(S.stripes.bands, cols, 'bands');
     if (p === 'lay') return '<div class="row"><b>Direction</b>' + seg('sdir', [['h', 'Across'], ['v', 'Up and down'], ['d', 'Diagonal']], S.stripes.dir) + '</div>' + stepper('sscale', 'Size', S.stripes.scale, Math.round(S.stripes.scale * 100) + '%');
     if (p === 'cstyle') return picks(E.CHECKS, S.checks.kind, 'check', 3, function (x) { return mini('check:' + x[0]); }, true) + '<p class="note">' + esc((presetOf(E.CHECKS, S.checks.kind) || [0, 0, ''])[2]) + '</p>';
-    if (p === 'fill') return '<p class="h">How the dark squares are filled</p>' + picks(E.FILLS, S.checks.fill, 'cfill', 3, function (x) { return mini('fill:' + x[0]); }, true) + '<p class="note">Fill works on Checkerboard and Two-tone.</p>';
+    if (p === 'fill') { var mx = mixOf(), n = mx ? mx.length : 1; return '<div class="row"><b>Squares</b>' + seg('cmix', [['1', 'All same'], ['2', 'Mix 2'], ['3', 'Mix 3'], ['4', 'Mix 4']], String(n)) + '</div>' +
+      (mx ? '<div class="slots">' + mx.map(function (f, i) { return '<div class="row"><b>' + (i + 1) + '</b>' + seg('slot' + i, MIXUI, f) + '</div>'; }).join('') + '</div><p class="note">The squares take turns. Logo uses your Logo maker logo.</p>'
+        : picks(E.FILLS, S.checks.fill, 'cfill', 3, function (x) { return mini('fill:' + x[0]); }, true) + '<p class="note">Works on Checkerboard and Two-tone.</p>'); }
     if (p === 'corner') return '<p class="h">Put something where the lines meet</p>' + picks(E.POINTS, S.checks.point, 'point', 3, function (x) { return mini('point:' + x[0]); }, true) + '<p class="note">My logo uses the logo from the Logo maker.</p>';
     if (p === 'csize') return stepper('cell', 'Square', S.checks.cellIn, fmtIn(S.checks.cellIn));
     if (p === 'mstyle') return picks(E.CAMOS, S.camo.type, 'camo', 3, function (x) { return mini('camo:' + x[0]); }, true) + '<p class="note">' + esc((presetOf(E.CAMOS, S.camo.type) || [0, 0, ''])[2]) + '</p>';
@@ -501,7 +516,7 @@
   function toHex(c) { if (/^#[0-9a-f]{6}$/i.test(c)) return c.toLowerCase(); if (/^#[0-9a-f]{3}$/i.test(c)) return ('#' + c.slice(1).replace(/./g, '$&$&')).toLowerCase(); var h = E.hex(c); return '#' + h.map(function (v) { return ('0' + v.toString(16)).slice(-2); }).join(''); }
   function bandsHtml(list, cols, name) {
     var unit = name === 'threads' ? function (v) { return v + ' th'; } : function (v) { return (Math.round(v * 100) / 100) + ' in'; };
-    return '<div class="bands" data-bands="' + name + '">' + list.map(function (b, i) { return '<div class="band" data-i="' + i + '"><div class="sw">' + cols.map(function (h, ci) { return '<button type="button" data-bc="' + ci + '" style="background:' + h + '" aria-label="Color ' + (ci + 1) + '" aria-pressed="' + (b[0] === ci) + '"></button>'; }).join('') + '</div><div class="step" data-bw="' + i + '"><button type="button" data-d="-1">&minus;</button><output>' + unit(b[1]) + '</output><button type="button" data-d="1">+</button></div>' + (list.length > 2 ? '<button type="button" class="x" data-del="' + i + '" aria-label="Remove">&times;</button>' : '') + '</div>'; }).join('') + '</div><button type="button" class="btn" data-act="addband" style="margin-top:6px;padding:9px">+ Add a band</button>';
+    return '<div class="bands" data-bands="' + name + '">' + list.map(function (b, i) { return '<div class="band" data-i="' + i + '"><div class="sw">' + cols.map(function (h, ci) { return '<button type="button" data-bc="' + ci + '" style="background:' + h + '" aria-label="Color ' + (ci + 1) + '" aria-pressed="' + (b[0] === ci) + '"></button>'; }).join('') + '</div><div class="step" data-bw="' + i + '"><button type="button" data-d="-1">&minus;</button><output>' + unit(b[1]) + '</output><button type="button" data-d="1">+</button></div>' + (name === 'bands' ? '<button type="button" class="bf" data-bf="' + i + '" aria-label="Band fill">' + (presetOf(BANDF, b[2] || 'solid') || BANDF[0])[1] + '</button>' : '') + (list.length > 2 ? '<button type="button" class="x" data-del="' + i + '" aria-label="Remove">&times;</button>' : '') + '</div>'; }).join('') + '</div><button type="button" class="btn" data-act="addband" style="margin-top:6px;padding:9px">+ Add a band</button>';
   }
   var WHERE = [
     ['Spoonflower', 'About $20 a yard basic cotton, sales near $15. No minimum.', 'https://www.spoonflower.com'],
@@ -576,6 +591,7 @@
     if (d.act === 'camoseed') { S.camo.seed = Math.floor(Math.random() * 1e6); return changed(false); }
     if (d.act === 'addband') { var arr = curPart() === 'threads' ? S.plaid.sett : S.stripes.bands; arr.push([arr.length % cols.length, curPart() === 'threads' ? 4 : .25]); S.plaid.preset = curPart() === 'threads' ? 'mine' : S.plaid.preset; return changed(true); }
     if (d.del != null) { var ar2 = curPart() === 'threads' ? S.plaid.sett : S.stripes.bands; ar2.splice(+d.del, 1); return changed(true); }
+    if (d.bf != null) { var bb = S.stripes.bands[+d.bf], ix = BANDF.map(function (x) { return x[0]; }).indexOf(bb[2] || 'solid'); bb[2] = BANDF[(ix + 1) % BANDF.length][0]; return changed(true); }
     if (d.bc != null) { var row = b.closest('.band'), ar3 = curPart() === 'threads' ? S.plaid.sett : S.stripes.bands; ar3[+row.dataset.i][0] = +d.bc; return changed(true); }
     if (d.d) {
       var st = b.closest('[data-st]'), bw = b.closest('[data-bw]'), dir = +d.d;
@@ -589,6 +605,9 @@
       if (k === 'ring') S.logo.ring = v === '1'; else if (k === 'white') S.rep.white = v === '1'; else if (k === 'tint') S.rep.tint = v === '1';
       else if (k === 'flip') S.rep.flip = v; else if (k === 'fade') S.rep.fade = +v; else if (k === 'pmirror') S.plaid.mirror = v === '1';
       else if (k === 'weave') S.plaid.weave = v; else if (k === 'sdir') S.stripes.dir = v;
+      else if (k === 'ralt') { if (v === 'other' && S.kind === 'logo' && !PIC) { S.rep.alt = 'other'; keep(); $('file')._keepKind = true; $('file').click(); return; } S.rep.alt = v; }
+      else if (k === 'cmix') { var nn = +v; S.checks.mix = nn > 1 ? ['dots', 'hatch', 'logo', 'solid'].slice(0, nn).map(function (x, i) { return (S.checks.mix && S.checks.mix[i]) || x; }) : null; }
+      else if (k.indexOf('slot') === 0) { S.checks.mix[+k.slice(4)] = v; }
       return changed(true);
     }
     if (d.act === 'make') { makeFiles(); return; }
@@ -608,7 +627,14 @@
   $('pane').addEventListener('change', function (e) { if (e.target.dataset.ci != null) changed(true); });
   $('file').addEventListener('change', function () {
     var f = this.files && this.files[0]; if (!f) return; this.value = '';
-    blobToCanvas(f).then(function (c) { if (!c) return; PIC = c; PIC._id = Date.now(); idbSet('pic', f); S.kind = 'picture'; S.step = 1; S.part['1:picture'] = 'pic'; keep(); render(); });
+    var keepKind = this._keepKind; this._keepKind = false;
+    // crop first (free, as it is or square), then use the cropped picture everywhere
+    var crop = window.nocivCrop ? window.nocivCrop(f, { title: 'Crop your picture', aspects: [['free', 'Free'], ['orig', 'Original'], [1, 'Square']], maxPx: 1600 }).catch(function () { return null; }) : blobToCanvas(f);
+    crop.then(function (c) {
+      if (!c) return; if (c.width > 1400 || c.height > 1400) { var k = 1400 / Math.max(c.width, c.height), c2 = E.cv(Math.round(c.width * k), Math.round(c.height * k)); c2.getContext('2d').drawImage(c, 0, 0, c2.width, c2.height); c = c2; }
+      PIC = c; PIC._id = Date.now(); if (c.toBlob) c.toBlob(function (b) { if (b) idbSet('pic', b); }, 'image/png');
+      if (!keepKind) { S.kind = 'picture'; S.step = 1; S.part['1:picture'] = 'pic'; } keep(); render();
+    });
   });
 
   /* ---------- the mood board / tech pack ---------- */
@@ -650,7 +676,7 @@
     var nx = (S.kind === 'logo' || S.kind === 'picture') ? 27 * u : 5 * u;
     g.fillStyle = '#1a1a1a'; g.font = '900 ' + 2.1 * u + 'px ' + sys; g.fillText('NOTES', nx, by);
     g.font = '600 ' + 1.8 * u + 'px ' + sys; wrapText(g, S.board.notes || 'Add notes on the Board tab: season, garment, trims, care.', nx, by + 3.4 * u, 95 * u - nx, 2.6 * u);
-    g.fillStyle = '#8d887d'; g.font = '600 ' + 1.35 * u + 'px ' + sys; g.fillText('Screen colors are a guide. Order a printed swatch before yardage. Made with NOCIV Repeating Pattern.', 5 * u, H - 4 * u);
+    g.fillStyle = '#8d887d'; g.font = '600 ' + 1.35 * u + 'px ' + sys; g.fillText('Screen colors are a guide. Order a printed swatch before yardage. Made with NOCIV Patterns.', 5 * u, H - 4 * u);
     return c;
   }
   function wrapText(g, t, x, y, w, lh) { var words = String(t).split(/\s+/), line = ''; words.forEach(function (wd) { var test = line ? line + ' ' + wd : wd; if (g.measureText(test).width > w && line) { g.fillText(line, x, y); y += lh; line = wd; } else line = test; }); if (line) g.fillText(line, x, y); }

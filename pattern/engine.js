@@ -1,4 +1,4 @@
-/* NOCIV Repeating Pattern: the engine.
+/* NOCIV Patterns: the engine.
    Every maker here returns ONE seamless tile (a canvas). Tile it in any direction and the edges meet.
    Sizes are in inches; ppi is pixels per inch (150 is what fabric printers print at).
    Clean room: repeat ideas are the common textile terms (block, half-drop, half-brick, mirror, wallpaper symmetry),
@@ -42,10 +42,11 @@
     g.rotate(angle * Math.PI / 180); g.scale(flipX ? -1 : 1, flipY ? -1 : 1); g.drawImage(m, -w / 2, -h / 2, w, h);
   }
   // one kaleidoscope slice: the motif seen through a wedge of angle `a`, then mirrored around the center
-  function kaleCell(m, R, slices, angle) {
+  function kaleCell(m, R, slices, angle, tri) {
     var c = cv(R * 2, R * 2), g = c.getContext('2d'), a = Math.PI * 2 / slices;
     var w = cv(R * 2, R * 2), wg = w.getContext('2d');
-    wg.translate(R, R); wg.beginPath(); wg.moveTo(0, 0); wg.arc(0, 0, R * 1.02, -a / 2, a / 2); wg.closePath(); wg.clip();
+    // tri: the wedge is a real equilateral triangle (straight outer edge), so every edge of every triangle is a mirror
+    wg.translate(R, R); wg.beginPath(); wg.moveTo(0, 0); var e2 = a / 2 + .012; if (tri) { wg.lineTo(Math.cos(-e2) * R * 1.05, Math.sin(-e2) * R * 1.05); wg.lineTo(Math.cos(e2) * R * 1.05, Math.sin(e2) * R * 1.05); } else wg.arc(0, 0, R * 1.02, -e2, e2); wg.closePath(); wg.clip();
     wg.save(); wg.translate(R * 0.55, 0); placeMotif(wg, m, R * 0.9, angle, false, false); wg.restore();
     g.translate(R, R);
     for (var i = 0; i < slices; i++) { g.save(); g.rotate(i * a); if (i % 2) g.scale(1, -1); g.drawImage(w, -R, -R); g.restore(); }
@@ -74,18 +75,21 @@
       // hexagons sit on a lattice; the rectangle of 2 hexes across and 2 rows down repeats cleanly
       var Rh = T / 2, hw = Math.round(Math.sqrt(3) * Rh), hh = Math.round(3 * Rh);
       c = cv(hw, hh); g = c.getContext('2d'); if (o.bg) { g.fillStyle = o.bg; g.fillRect(0, 0, hw, hh); }
-      var slices = t === 'kaleHex' ? 12 : 6, cellH = kaleCell(m, Rh * 1.16, slices, ang);
+      var slices = t === 'kaleHex' ? 12 : 6, cellH = t === 'kaleTri' ? kaleCell(m, Rh, 6, ang, true) : kaleCell(m, Rh * 1.16, slices, ang);
       var hexPath = function (gg, r) { gg.beginPath(); for (var k = 0; k < 6; k++) { var aa = Math.PI / 6 + k * Math.PI / 3; gg.lineTo(Math.cos(aa) * r, Math.sin(aa) * r); } gg.closePath(); };
       [[0, 0], [hw / 2, hh / 2]].forEach(function (p) {
-        wrapDraw(g, hw, hh, p[0], p[1], Rh * 1.2, function (gg) { if (t === 'kaleHex') { hexPath(gg, Rh + .6); gg.clip(); } gg.drawImage(cellH, -cellH.width / 2, -cellH.height / 2); });
+        wrapDraw(g, hw, hh, p[0], p[1], Rh * 1.2, function (gg) { hexPath(gg, Rh + 1); gg.clip(); gg.drawImage(cellH, -cellH.width / 2, -cellH.height / 2); });
       });
       return c;
     }
-    c = cv(W, H); g = c.getContext('2d'); if (o.bg) { g.fillStyle = o.bg; g.fillRect(0, 0, W, H); }
+    // mix and match: several motifs (your logo, your picture, an icon, empty space) take turns. The tile repeats n times across.
+    // turns run both across and down, so neighbors are never the same motif
+    var ms = o.motifs && o.motifs.length > 1 ? o.motifs : [m], n = ms.length, SW = W * n, SH = H * n;
+    c = cv(SW, SH); g = c.getContext('2d'); if (o.bg) { g.fillStyle = o.bg; g.fillRect(0, 0, SW, SH); }
     if (t === 'diamond') { spots = [[W / 2, H / 2, 0, 0, 0], [0, 0, 0, 0, 0]]; }
-    spots.forEach(function (s, i) {
-      var alt = o.flip === 'alt' && (i % 2 === 1), fx = !!s[3] !== alt, fy = !!s[4];
-      wrapDraw(g, W, H, s[0], s[1], size * .75, function (gg) { placeMotif(gg, m, size, ang + s[2], fx, fy); });
+    for (var cy = 0; cy < n; cy++) for (var cp = 0; cp < n; cp++) spots.forEach(function (s, i) {
+      var alt = o.flip === 'alt' && (i % 2 === 1), fx = !!s[3] !== alt, fy = !!s[4], mm = ms[(cp + cy + i) % n]; if (!mm) return;
+      wrapDraw(g, SW, SH, s[0] + cp * W, s[1] + cy * H, size * .75, function (gg) { placeMotif(gg, mm, size, ang + s[2], fx, fy); });
     });
     return c;
   };
@@ -146,8 +150,16 @@
         pos += w; });
       return c;
     }
-    var vert = dir === 'v', c2 = vert ? cv(L, 8) : cv(8, L), g2 = c2.getContext('2d'), p2 = 0;
-    o.bands.forEach(function (b) { var w = b[1] / tot * L; g2.fillStyle = cols[b[0]] || cols[0]; if (vert) g2.fillRect(Math.round(p2), 0, Math.ceil(w), 8); else g2.fillRect(0, Math.round(p2), 8, Math.ceil(w)); p2 += w; });
+    // a band can be solid, dots, lines, outline or your logo running along it (mix and match)
+    var fancy = o.bands.some(function (b) { return b[2] && b[2] !== 'solid'; }), A = fancy ? L : 8;
+    var vert = dir === 'v', c2 = vert ? cv(L, A) : cv(A, L), g2 = c2.getContext('2d'), p2 = 0;
+    g2.fillStyle = cols[0]; g2.fillRect(0, 0, c2.width, c2.height);
+    o.bands.forEach(function (b) {
+      var w = b[1] / tot * L, col = cols[b[0]] || cols[0], f = b[2] || 'solid', x0 = Math.round(p2), bw = Math.ceil(w);
+      if (f === 'solid') { g2.fillStyle = col; if (vert) g2.fillRect(x0, 0, bw, A); else g2.fillRect(0, x0, A, bw); }
+      else { var n = Math.max(1, Math.round(A / Math.max(2, bw))), step = A / n; for (var k = 0; k < n; k++) { if (vert) fillCell(g2, x0, k * step + (step - bw) / 2, bw, f, col, cols[0], o.logo); else fillCell(g2, k * step + (step - bw) / 2, x0, bw, f, col, cols[0], o.logo); } }
+      p2 += w;
+    });
     return c2;
   };
 
@@ -161,10 +173,14 @@
     ['buffalo', 'Block check', 'Two crossing stripes make three tones.']
   ];
   E.FILLS = [['solid', 'Solid'], ['dots', 'Dots'], ['outline', 'Outline'], ['hatch', 'Lines'], ['cross', 'Crosshatch']];
+  // mix and match: every slot can be any of these, the slots take turns
+  E.MIXFILLS = [['solid', 'Solid'], ['dots', 'Dots'], ['hatch', 'Lines'], ['outline', 'Outline'], ['cross', 'Cross'], ['logo', 'Logo'], ['empty', 'Empty']];
   E.POINTS = [['none', 'None'], ['dot', 'Dot'], ['diamond', 'Diamond'], ['star', 'Star'], ['plus', 'Plus'], ['logo', 'My logo']];
-  function fillCell(g, x, y, s, style, col, bg) {
+  function fillCell(g, x, y, s, style, col, bg, logo) {
     g.fillStyle = col; g.strokeStyle = col;
+    if (style === 'empty') return;
     if (style === 'solid') { g.fillRect(x, y, s, s); return; }
+    if (style === 'logo') { if (logo) { var lk = s * .78 / Math.max(logo.width, logo.height); g.drawImage(logo, x + (s - logo.width * lk) / 2, y + (s - logo.height * lk) / 2, logo.width * lk, logo.height * lk); } return; }
     if (style === 'outline') { g.lineWidth = Math.max(1, s * .08); g.strokeRect(x + g.lineWidth / 2 + s * .08, y + g.lineWidth / 2 + s * .08, s - g.lineWidth - s * .16, s - g.lineWidth - s * .16); return; }
     if (style === 'dots') { var n = 3, r = s / n * .3; for (var i = 0; i < n; i++) for (var j = 0; j < n; j++) { g.beginPath(); g.arc(x + (i + .5) * s / n, y + (j + .5) * s / n, r, 0, 7); g.fill(); } return; }
     g.save(); g.beginPath(); g.rect(x, y, s, s); g.clip(); g.lineWidth = Math.max(1, s * .06);
@@ -201,11 +217,14 @@
       c = cv(s * 2, s * 2); g = c.getContext('2d'); g.fillStyle = cols[0]; g.fillRect(0, 0, s * 2, s * 2);
       g.fillStyle = mix(cols[0], cols[1], .5); g.fillRect(s, 0, s, s); g.fillRect(0, s, s, s); g.fillStyle = cols[1]; g.fillRect(s, s, s, s);
     } else { // checkerboard and two-tone
-      c = cv(s * 2, s * 2); g = c.getContext('2d');
+      // mix and match: the filled squares take turns through the slots (one dots, one lines, one logo...). The tile grows so the turns repeat cleanly.
+      var slots = o.mix && o.mix.length > 1 ? o.mix : [o.fill || 'solid'], n = slots.length, nx = 2 * n, ny = n % 2 ? 2 * n : n;
+      if (n === 1) { nx = 2; ny = 2; }
+      c = cv(s * nx, s * ny); g = c.getContext('2d');
       var a = cols[0], b = kind === 'twotone' ? mix(cols[0], cols[1], .35) : cols[1];
-      g.fillStyle = a; g.fillRect(0, 0, s * 2, s * 2);
-      fillCell(g, s, 0, s, o.fill || 'solid', b, a); fillCell(g, 0, s, s, o.fill || 'solid', b, a);
-      if (kind === 'twotone') { g.fillStyle = cols[2] || mix(cols[0], cols[1], .7); var l2 = Math.max(1, s * .03); g.fillRect(0, 0, s * 2, l2); g.fillRect(0, s, s * 2, l2); g.fillRect(0, 0, l2, s * 2); g.fillRect(s, 0, l2, s * 2); }
+      g.fillStyle = a; g.fillRect(0, 0, c.width, c.height);
+      for (var j = 0; j < ny; j++) for (var i = 0; i < nx; i++) { if ((i + j) % 2 === 0) continue; var slot = slots[(Math.floor(i / 2) + j) % n]; fillCell(g, i * s, j * s, s, slot, b, a, o.logo); }
+      if (kind === 'twotone') { g.fillStyle = cols[2] || mix(cols[0], cols[1], .7); var l2 = Math.max(1, s * .03); for (var q = 0; q <= Math.max(nx, ny); q++) { g.fillRect(0, q * s, c.width, l2); g.fillRect(q * s, 0, l2, c.height); } }
     }
     if (o.point && o.point !== 'none') { // something at the corners where the lines meet
       var W2 = c.width, H2 = c.height, step = kind === 'argyle' ? [W2, H2] : [s, s];
@@ -269,8 +288,9 @@
       var balls = []; for (var i = 0; i < 26 * sc; i++) balls.push([R() * Wd, R() * Wd, (.04 + R() * .07) * Wd / sc, 1 + Math.floor(R() * (cols.length - 1))]);
       var im2 = g.getImageData(0, 0, Wd, Wd), d2 = im2.data, step = 2;
       for (var y = 0; y < Wd; y += step) for (var x = 0; x < Wd; x += step) {
-        var best = 0, bc = 0;
-        for (var b = 0; b < balls.length; b++) { var dx = Math.abs(x - balls[b][0]), dy = Math.abs(y - balls[b][1]); dx = Math.min(dx, Wd - dx); dy = Math.min(dy, Wd - dy); var v = balls[b][2] * balls[b][2] / (dx * dx + dy * dy + 1); if (v > best) { best = v; bc = balls[b][3]; } }
+        var sums = [0, 0, 0, 0, 0, 0, 0, 0], best = 0, bc = 0;
+        for (var b = 0; b < balls.length; b++) { var dx = Math.abs(x - balls[b][0]), dy = Math.abs(y - balls[b][1]); dx = Math.min(dx, Wd - dx); dy = Math.min(dy, Wd - dy); sums[balls[b][3]] += balls[b][2] * balls[b][2] / (dx * dx + dy * dy + 1); }
+        for (var q2 = 1; q2 < sums.length; q2++) if (sums[q2] > best) { best = sums[q2]; bc = q2; }
         if (best > .9) { var col2 = hex(cols[bc]); for (var yy2 = 0; yy2 < step; yy2++) for (var xx2 = 0; xx2 < step; xx2++) { var p2 = ((y + yy2) * Wd + x + xx2) * 4; if (p2 < d2.length) { d2[p2] = col2[0]; d2[p2 + 1] = col2[1]; d2[p2 + 2] = col2[2]; } } }
       }
       g.putImageData(im2, 0, 0);

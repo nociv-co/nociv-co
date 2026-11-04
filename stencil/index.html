@@ -1995,7 +1995,7 @@ section.grouped .kgrid{margin-top:0!important}
 })();
 </script>
 <!--NV-STENCIL-CLOSEUP-END-->
-<!--NV-STENCIL-PATTERN-START: send what you made to the Repeating Pattern app-->
+<!--NV-STENCIL-PATTERN-START: send what you made to the Patterns app-->
 <style>
 .topattern{all:unset;box-sizing:border-box;display:flex;align-items:center;gap:10px;width:100%;margin:0 0 8px;padding:10px 12px;border:2px solid #1a1a1a;border-radius:12px;background:#f2c230;color:#1a1a1a;font:800 13.5px/1.2 -apple-system,BlinkMacSystemFont,"Helvetica Neue",Arial,sans-serif;cursor:pointer}
 .topattern svg{width:26px;height:26px;flex:none;fill:none;stroke:#1a1a1a;stroke-width:2}
@@ -2005,7 +2005,7 @@ section.grouped .kgrid{margin-top:0!important}
 (function () {
   'use strict';
   var btn = document.createElement('button'); btn.type = 'button'; btn.className = 'topattern';
-  btn.innerHTML = '<svg viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="7" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/></svg><span>Make it a repeating pattern<small>Fabric, monogram or watermark from this</small></span>';
+  btn.innerHTML = '<svg viewBox="0 0 24 24" aria-hidden="true"><ellipse cx="4.5" cy="5" rx="1.8" ry="2.6"/><path d="M4.5 2.4h15v5.2h-15"/><ellipse cx="6" cy="12" rx="1.8" ry="2.6"/><path d="M6 9.4h15v5.2H6"/><ellipse cx="4.5" cy="19" rx="1.8" ry="2.6"/><path d="M4.5 16.4h15v5.2h-15"/></svg><span>Make it a pattern<small>Fabric, monogram or watermark from this</small></span>';
   function put(blob) {
     return new Promise(function (res) {
       try { var r = indexedDB.open('nocivPattern', 1); r.onupgradeneeded = function () { r.result.createObjectStore('img'); };
