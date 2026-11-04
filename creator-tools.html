@@ -88,7 +88,7 @@
   .b-apps button[data-app="video"][aria-selected="true"] svg, .b-apps button[data-app="toon"][aria-selected="true"] svg, .b-apps button[data-app="sign"][aria-selected="true"] svg { animation: none; }
   @media (prefers-reduced-motion: reduce) { .b-apps button[data-app][aria-selected="true"] svg { animation: none; } }
   .b-tabs button:focus-visible, .b-apps button:focus-visible { outline: 3px solid #c8412f; outline-offset: 2px; }
-  .b-line { width: 100%; height: 0; border-top: 1.5px solid rgba(26,26,26,.55); margin: 4px 0 0; }
+  .b-line { width: 100%; height: 0; border-top: 1.5px solid rgba(26,26,26,.55); margin: 4px 0 14px; }
   .b-rule { width: 100%; height: 0; border-top: 2px dashed rgba(26,26,26,.28); margin: 0 auto; }
   .b-row { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 42%); gap: 22px; align-items: start; }
   .b-prev { text-align: center; min-width: 0; }
@@ -214,7 +214,7 @@
     </div>
     <div class="b-sel"><span class="b-say" id="bSay1"></span><div class="b-tabs" id="bTabs" role="tablist" aria-label="Sections"></div></div>
     <div class="b-line" role="presentation"></div>
-    <div class="b-sel"><span class="b-say" id="bSay2">Select application</span><div class="b-apps" id="bNums" role="tablist" aria-label="Tools in this section"></div></div>
+    <div class="b-sel"><span class="b-say" id="bSay2">Select application:</span><div class="b-apps" id="bNums" role="tablist" aria-label="Tools in this section"></div></div>
     <div class="b-rule"></div>
     <div class="b-row">
       <div class="b-foot">
@@ -536,7 +536,7 @@
       tabs.querySelectorAll('button').forEach((b, k) => b.setAttribute('aria-selected', k === sec ? 'true' : 'false'));
       nums.classList.remove('b-in'); void nums.offsetWidth; nums.classList.add('b-in');
       nums.innerHTML = ''; list.forEach((k, i) => { const b = document.createElement('button'); b.type = 'button'; b.setAttribute('role', 'tab'); b.setAttribute('aria-label', data[k].name); b.setAttribute('aria-selected', i === idx ? 'true' : 'false'); b.style.setProperty('--c', S.color); b.style.setProperty('--ci', S.ci); b.dataset.app = k; b.innerHTML = '<svg viewBox="0 0 48 40" aria-hidden="true">' + (APP_ICON[k] || '') + '</svg><span></span>'; b.querySelector('span').textContent = SHORT[k] || data[k].name; b.addEventListener('click', () => show(sec, i, i > idx ? 1 : -1)); nums.appendChild(b); });
-      el('bSay1').textContent = 'Select a category'; el('bTool').textContent = T.name; el('bCard').innerHTML = T.art; el('bCap').textContent = T.get; el('bDesc').textContent = T.desc;
+      el('bSay1').textContent = 'Select a category:'; el('bTool').textContent = T.name; el('bCard').innerHTML = T.art; el('bCap').textContent = T.get; el('bDesc').textContent = T.desc;
       el('bMade').innerHTML = T.made; const img = el('bPoster'), vid = el('bVid'); img.alt = 'A finished piece made with ' + T.name; img.src = T.poster; const rowEl = document.querySelector('.b-row'); const fit = () => rowEl.classList.toggle('b-wide', (T.video ? vid.videoWidth > vid.videoHeight * 1.1 : img.naturalWidth > img.naturalHeight * 1.1)); img.onload = fit; if (img.complete && img.naturalWidth) fit();
       const pb = el('bPlay');
       if (T.video) {
