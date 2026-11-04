@@ -66,13 +66,13 @@
   .b-tabs button[data-tex="paper"], .b-tabs button[data-tex="paper"][aria-selected="true"] { background-color: #f7f2e1; background-image: linear-gradient(rgba(58,110,170,.24) 1px, transparent 1px), linear-gradient(90deg, rgba(58,110,170,.24) 1px, transparent 1px); background-size: 9px 9px; color: #1a1a1a; }
   .b-tabs button[data-tex="projects"], .b-tabs button[data-tex="projects"][aria-selected="true"] { background-color: #3b5878; background-image: repeating-linear-gradient(45deg, rgba(255,255,255,.08) 0 2px, transparent 2px 4px), repeating-linear-gradient(-45deg, rgba(0,0,0,.14) 0 1px, transparent 1px 3px); color: #fff; }
   .b-tabs button[data-tex="projects"]::after { content: ''; position: absolute; inset: 4px; border: 1.5px dashed #e0a240; border-radius: 8px; pointer-events: none; }
-  .b-tabs button[data-tex="real"], .b-tabs button[data-tex="real"][aria-selected="true"] { background-color: #18181f; background-image: repeating-linear-gradient(0deg, rgba(255,255,255,.08) 0 1px, transparent 1px 3px), linear-gradient(90deg, rgba(255,42,79,.10), transparent 40%, transparent 60%, rgba(42,214,255,.10)); color: #fff; }
-  .b-tabs button[data-tex="real"] span { text-shadow: -1.5px 0 #ff2a4f, 1.5px 0 #2ad6ff; }
+  .b-tabs button[data-tex="real"], .b-tabs button[data-tex="real"][aria-selected="true"] { background-color: #222; background-image: linear-gradient(rgba(0,0,0,0) 30%, rgba(255,255,255,.10) 42%, rgba(0,0,0,0) 52%, rgba(0,0,0,0) 70%, rgba(255,255,255,.07) 78%, rgba(0,0,0,0) 86%), linear-gradient(rgba(0,0,0,.28), rgba(0,0,0,.28)), url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='160' height='80'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='1.15' numOctaves='2' stitchTiles='stitch'/%3E%3CfeColorMatrix type='saturate' values='0'/%3E%3CfeComponentTransfer%3E%3CfeFuncR type='discrete' tableValues='0 0 .35 1'/%3E%3CfeFuncG type='discrete' tableValues='0 0 .35 1'/%3E%3CfeFuncB type='discrete' tableValues='0 0 .35 1'/%3E%3C/feComponentTransfer%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E"); background-size: 100% 100%, 100% 100%, 160px 80px; color: #fff; }
+  .b-tabs button[data-tex="real"] span { background: rgba(0,0,0,.72); }
   .b-tabs button[data-tex][aria-selected="true"] { border-width: 3px; transform: translateY(-2px); box-shadow: 0 8px 16px rgba(0,0,0,.28); }
   .b-tabs button[data-tex][aria-selected="true"] span { font-size: 1.12em; transform: rotate(-1.5deg); box-shadow: 0 2px 6px rgba(0,0,0,.25); }
   .b-tabs button[data-tex="paper"][aria-selected="true"] span { background: #1a1a1a; color: #f7f2e1; }
   .b-tabs button[data-tex="projects"][aria-selected="true"] span { background: #f2ecd6; color: #1f3550; }
-  .b-tabs button[data-tex="real"][aria-selected="true"] span { background: #fff; color: #111; text-shadow: -1.5px 0 rgba(255,42,79,.75), 1.5px 0 rgba(42,214,255,.75); }
+  .b-tabs button[data-tex="real"][aria-selected="true"] span { background: #000; color: #fff; }
   @keyframes bGlitch { 0%, 88%, 100% { transform: rotate(-1.5deg) translateX(0); } 90% { transform: rotate(-1.5deg) translateX(-2px); } 93% { transform: rotate(-1.5deg) translateX(2px); } 96% { transform: rotate(-1.5deg) translateX(-1px); } }
   @media (prefers-reduced-motion: reduce) { .b-tabs button[data-tex="real"][aria-selected="true"] span { animation: none; } }
   /* App buttons: floating icons shaped like what they make */
@@ -101,6 +101,13 @@
   .b-poster img { display: block; width: 100%; height: auto; }
   .b-poster video { display: block; width: 100%; height: auto; background: #1a1a1a; }
   .b-poster [hidden] { display: none !important; }
+  .b-play { all: unset; box-sizing: border-box; white-space: nowrap; position: absolute; left: 50%; top: 50%; transform: translate(-50%, -50%); display: flex; align-items: center; gap: 8px; padding: 0 16px 0 12px; height: 46px; background: rgba(17,17,17,.88); color: #fff; font-weight: 900; font-size: .72rem; letter-spacing: .1em; text-transform: uppercase; cursor: pointer; box-shadow: 0 4px 12px rgba(0,0,0,.35); -webkit-tap-highlight-color: transparent; z-index: 2; }
+  .b-play i { width: 0; height: 0; border-left: 13px solid #fff; border-top: 8px solid transparent; border-bottom: 8px solid transparent; }
+  .b-play.on { top: auto; bottom: 10px; transform: translateX(-50%); height: 40px; opacity: .85; }
+  .b-play.on i { width: 11px; height: 11px; border: 0; background: #fff; }
+  .b-play.on span { display: none; }
+  .b-play[hidden] { display: none !important; }
+  .b-play:focus-visible { outline: 3px solid #c8412f; outline-offset: 2px; }
   .b-row.b-wide { grid-template-columns: minmax(0, 1fr); }
   .b-row.b-wide .b-prev { order: 2; max-width: 520px; margin: 6px auto 0; }
   .b-made { margin: 10px 0 0; font-size: .7rem; font-weight: 700; color: #6b665c; line-height: 1.3; }
@@ -203,7 +210,7 @@
       </div>
       <div class="b-prev">
         <span class="b-prev-l">Preview</span>
-        <figure class="b-poster"><img id="bPoster" alt="" width="800" height="1000"><video id="bVid" muted loop playsinline autoplay preload="metadata" hidden></video></figure>
+        <figure class="b-poster"><img id="bPoster" alt="" width="800" height="1000"><video id="bVid" muted loop playsinline autoplay preload="metadata" hidden></video><button type="button" class="b-play" id="bPlay" hidden aria-label="Play the preview"><i aria-hidden="true"></i><span>Tap to play</span></button></figure>
         <p class="b-made">Made with <b id="bMade"></b></p>
       </div>
     </div>
@@ -502,7 +509,9 @@
       toon: '<circle class="f" cx="24" cy="20" r="16"/><circle class="k" cx="18" cy="17" r="2.6"/><circle class="k" cx="30" cy="17" r="2.6"/><path class="l" d="M16 25c4 5 12 5 16 0"/>',
       sign: '<rect class="f" x="3" y="3" width="42" height="22" rx="1"/><path class="l" d="M14 25v13M34 25v13M9 10h20M9 16h28"/>'
     };
-    const SLOW = { video: 0.6, toon: 0.6 };
+    // Cartoon and Billboard wait for a tap so the page is calm. Camera plays on its own.
+    const TAP = { toon: 1, sign: 1 };
+    function setPlay(on) { const pb = el('bPlay'); pb.classList.toggle('on', on); pb.setAttribute('aria-label', on ? 'Stop the preview' : 'Play the preview'); }
     const SHORT = { zine: 'Zine', cards: 'Cards', qr: 'QR', toon: 'Cartoon', video: 'Camera', sign: 'Billboard', stencil: 'Stencil', cutsew: 'Cut & Sew' };
     const el = id => document.getElementById(id), data = {};
     document.querySelectorAll('#toolData .tool-card').forEach(c => { data[c.dataset.key] = { key: c.dataset.key, sec: c.dataset.sec, panel: c.dataset.panel, poster: c.dataset.poster, video: c.dataset.video || '', made: c.dataset.made, art: c.querySelector('.tool-art').innerHTML, name: c.querySelector('.tool-name').textContent.trim(), desc: c.querySelector('.tool-desc').textContent.trim(), get: c.querySelector('.tool-get').textContent.trim() }; });
@@ -518,7 +527,13 @@
       nums.innerHTML = ''; list.forEach((k, i) => { const b = document.createElement('button'); b.type = 'button'; b.setAttribute('role', 'tab'); b.setAttribute('aria-label', data[k].name); b.setAttribute('aria-selected', i === idx ? 'true' : 'false'); b.style.setProperty('--c', S.color); b.style.setProperty('--ci', S.ci); b.dataset.app = k; b.innerHTML = '<svg viewBox="0 0 48 40" aria-hidden="true">' + (APP_ICON[k] || '') + '</svg><span></span>'; b.querySelector('span').textContent = SHORT[k] || data[k].name; b.addEventListener('click', () => show(sec, i, i > idx ? 1 : -1)); nums.appendChild(b); });
       el('bSay1').textContent = 'Select a category'; el('bTool').textContent = T.name; el('bCard').innerHTML = T.art; el('bCap').textContent = T.get; el('bDesc').textContent = T.desc;
       el('bMade').innerHTML = T.made; const img = el('bPoster'), vid = el('bVid'); img.alt = 'A finished piece made with ' + T.name; img.src = T.poster; const rowEl = document.querySelector('.b-row'); const fit = () => rowEl.classList.toggle('b-wide', (T.video ? vid.videoWidth > vid.videoHeight * 1.1 : img.naturalWidth > img.naturalHeight * 1.1)); img.onload = fit; if (img.complete && img.naturalWidth) fit();
-      if (T.video) { img.hidden = true; vid.hidden = false; vid.poster = T.poster; vid.onloadedmetadata = fit; if (vid.getAttribute('src') !== T.video) vid.src = T.video; vid.muted = true; vid.defaultPlaybackRate = vid.playbackRate = (SLOW[T.key] || 1); vid.onloadeddata = () => { vid.playbackRate = SLOW[T.key] || 1; }; try { const pr = vid.play(); if (pr && pr.catch) pr.catch(() => {}); } catch (e) {} } else { vid.pause(); vid.hidden = true; img.hidden = false; }
+      const pb = el('bPlay');
+      if (T.video) {
+        img.hidden = true; vid.hidden = false; vid.poster = T.poster; vid.onloadedmetadata = fit; vid.muted = true;
+        if (vid.getAttribute('src') !== T.video) vid.src = T.video;
+        if (TAP[T.key]) { vid.removeAttribute('autoplay'); vid.pause(); try { vid.currentTime = 0; } catch (e) {} pb.hidden = false; setPlay(false); }
+        else { pb.hidden = true; try { const pr = vid.play(); if (pr && pr.catch) pr.catch(() => {}); } catch (e) {} }
+      } else { vid.pause(); vid.hidden = true; img.hidden = false; pb.hidden = true; }
       if (dir) ['bHero', 'bPoster'].forEach(id => { const n = el(id); n.style.setProperty('--from', (dir > 0 ? 16 : -16) + 'px'); n.classList.remove('b-swap'); void n.offsetWidth; n.classList.add('b-swap'); });
       requestAnimationFrame(drawArrows);
       try { sessionStorage.setItem('toolSec', sec); sessionStorage.setItem('toolIdx', idx); } catch (e) {}
@@ -535,6 +550,7 @@
     }
     window.addEventListener('resize', drawArrows); if (document.fonts && document.fonts.ready) document.fonts.ready.then(drawArrows);
     el('bOpen').addEventListener('click', () => openPanel(cur().panel));
+    el('bPlay').addEventListener('click', e => { e.stopPropagation(); const v = el('bVid'); if (v.paused) { try { const pr = v.play(); if (pr && pr.catch) pr.catch(() => {}); } catch (x) {} setPlay(true); } else { v.pause(); setPlay(false); } });
     el('bCard').addEventListener('click', () => { if (!swiped) openPanel(cur().panel); swiped = false; });
     // swipe the card left or right to move through the tools in this section
     let x0 = null, y0 = 0, swiped = false; const card = el('bCard');
