@@ -1,0 +1,67 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="robots" content="noindex">
+<title>Case Zero | NOCIV.CO</title>
+<style>
+@font-face{font-family:ZAnton;src:url('../fonts/anton.woff') format('woff');font-display:swap}
+:root{--ink:#111;--paper:#f2ecd6;--red:#c8412f;--soft:#5d594e;--line:#d6cdb0}
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+html,body{margin:0;background:var(--paper);color:var(--ink);font-family:-apple-system,BlinkMacSystemFont,"Helvetica Neue",Arial,sans-serif;-webkit-text-size-adjust:100%}
+main{max-width:560px;margin:0 auto;padding:20px 16px 60px}
+h1{font-family:ZAnton,Impact,sans-serif;font-size:3.2rem;letter-spacing:.04em;margin:8px 0 0;line-height:1;text-transform:uppercase}
+.tag{margin:6px 0 20px;color:var(--soft)}
+.card{background:#fff;border:2px solid var(--ink);padding:16px;margin-bottom:14px}
+label{display:block;font-weight:800;font-size:.78rem;letter-spacing:.06em;text-transform:uppercase;margin:12px 0 4px}
+input,select{width:100%;font:inherit;font-size:16px;border:2px solid var(--ink);border-radius:0;padding:12px;background:#fff}
+.host{display:flex;align-items:stretch}.host input{border-right:0}.host span{display:flex;align-items:center;border:2px solid var(--ink);padding:0 10px;background:var(--paper);font-weight:700;white-space:nowrap}
+.msg{margin:10px 0 0;font-weight:700;font-size:.9rem}.bad{color:var(--red)}.ok{color:#1c6b36}
+pre{background:var(--ink);color:#f2ecd6;padding:12px;overflow:auto;font-size:.8rem;margin:8px 0 0;white-space:pre-wrap;word-break:break-word}
+.muted{color:var(--soft);font-size:.88rem;line-height:1.45}
+button{font:inherit;font-weight:900;letter-spacing:.06em;text-transform:uppercase;background:var(--ink);color:#fff;border:0;padding:14px;width:100%;margin-top:12px;cursor:pointer}
+a{color:inherit}
+</style></head><body><main>
+<h1>Case Zero</h1>
+<p class="tag">Claim your own name on the internet. Free. This is the test version, nothing is created yet.</p>
+<div class="card">
+  <label for="n">Name you want</label>
+  <div class="host"><input id="n" autocomplete="off" autocapitalize="off" spellcheck="false" placeholder="yourname" maxlength="40"><span id="dom">.yourdomain</span></div>
+  <label for="t">What should it do</label>
+  <select id="t"><option value="CNAME">Show my website (CNAME)</option><option value="A">Point at an IP address (A)</option><option value="URL">Send visitors to another address (redirect)</option></select>
+  <label for="v" id="vl">Where it points</label>
+  <input id="v" autocomplete="off" autocapitalize="off" spellcheck="false" placeholder="yourname.github.io">
+  <label for="o">Who you are (GitHub name or email)</label>
+  <input id="o" autocomplete="off" autocapitalize="off" spellcheck="false" placeholder="@yourname">
+  <p class="msg" id="msg" role="status"></p>
+</div>
+<div class="card" id="out" hidden>
+  <strong>What would happen</strong>
+  <p class="muted" id="prev"></p>
+  <strong>Your request file</strong>
+  <pre id="file"></pre>
+  <p class="muted">In the real version you send this file to GitHub. It is checked by the same rules you just saw, a person approves it, and the name goes live in a few minutes.</p>
+  <button id="copy" type="button">Copy the file</button>
+</div>
+<p class="muted">Test version. No real domain is connected yet, so no names are created and nothing is saved.</p>
+</main>
+<script src="validate.js"></script>
+<script>
+(function () {
+  var $ = function (i) { return document.getElementById(i); }, domain = '';
+  fetch('config.json', { cache: 'no-store' }).then(function (r) { return r.json(); }).then(function (c) { domain = (c && c.domain) || ''; draw(); }).catch(function () {});
+  var hints = { CNAME: ['Where it points', 'yourname.github.io'], A: ['IP address', '185.199.108.153'], URL: ['Full address', 'https://example.com'] };
+  function req() { return { name: $('n').value.trim().toLowerCase(), type: $('t').value, value: $('v').value.trim(), owner: $('o').value.trim() }; }
+  function draw() {
+    $('dom').textContent = '.' + (domain || 'yourdomain');
+    var h = hints[$('t').value]; $('vl').textContent = h[0]; $('v').placeholder = h[1];
+    var r = req(), touched = r.name || r.value, res = CaseZero.validate(r), m = $('msg');
+    if (!touched) { m.textContent = ''; m.className = 'msg'; $('out').hidden = true; return; }
+    if (!res.ok) { m.textContent = res.errors[0]; m.className = 'msg bad'; $('out').hidden = true; return; }
+    m.textContent = 'That works. ' + r.name + '.' + (domain || 'yourdomain') + ' is open in this test.'; m.className = 'msg ok';
+    $('prev').textContent = CaseZero.dnsPreview(r, domain);
+    $('file').textContent = JSON.stringify(CaseZero.requestFile(r, domain), null, 2);
+    $('out').hidden = false;
+  }
+  ['n', 't', 'v', 'o'].forEach(function (i) { $(i).addEventListener('input', draw); });
+  $('copy').onclick = function () { var b = this; var t = $('file').textContent; (navigator.clipboard ? navigator.clipboard.writeText(t) : Promise.reject()).then(function () { b.textContent = 'Copied'; }, function () { b.textContent = 'Press and hold the file to copy'; }); setTimeout(function () { b.textContent = 'Copy the file'; }, 2000); };
+  draw();
+})();
+</script></body></html>
