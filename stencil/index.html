@@ -1270,7 +1270,6 @@ section.grouped .filebtn{padding:12px!important}
     if (modes) modes.classList.toggle('off', stepI !== 0);
     var want = partOf[st[0]]; if (!want || st[2].indexOf(want) < 0 || (P[want][4] && !P[want][4]())) want = st[2][0];
     showPart(want);
-    var C = window.__nvConsole; if (C && C.now() <= C.snaps()[0] + 2) C.setH(C.snaps()[1], true);
   }
   bbar.addEventListener('click', function (e) { var b = e.target.closest('button[data-s]'); if (b) showStep(+b.dataset.s); });
   rail.addEventListener('click', function (e) {
@@ -1287,4 +1286,82 @@ section.grouped .filebtn{padding:12px!important}
 })();
 </script>
 <!--NV-STENCIL-RAIL-END-->
+<!--NV-STENCIL-LOCK-START: locked picture, fixed panel, no sliding, compact controls-->
+<style>
+@media(max-width:700px){
+ /* no fluid motion: the picture and the panel each keep one fixed size */
+ html.nvlock main{display:flex!important;flex-direction:column!important}
+ html.nvlock .stage{flex:none!important;height:38dvh!important;min-height:0!important;padding:4px 0 0!important}
+ html.nvlock main > aside:not(.right){flex:1 1 auto!important;height:auto!important;min-height:0!important;transition:none!important;padding:0 12px 6px!important;overflow-y:auto!important}
+ .c-grip{display:none!important}
+ body > header{display:none!important}
+ .status{min-height:0!important;padding:2px 2px 0!important;font-size:11px!important}
+ /* compact head */
+ .c-head{padding:8px 0 6px!important;gap:4px!important}
+ .c-head .modes button{padding:6px 10px!important;font-size:12px!important}
+ .c-head .learnTop{width:32px!important;height:32px!important;font-size:17px!important}
+ .c-title{font-size:12px!important}
+ /* compact controls so every part fits the fixed panel */
+ section.grouped{padding:8px 10px 8px!important;margin:0!important;box-shadow:none!important}
+ section.grouped label{margin:6px 0 4px!important;font-size:13px!important}
+ section.grouped .kgrid{margin:2px 0!important;padding:6px 4px!important;gap:6px 12px!important}
+ section.grouped .kgrid .kc{width:76px!important}
+ .kb{width:48px!important;height:48px!important}
+ .kl{font-size:.62rem!important}.kv{font-size:.66rem!important;padding:2px 5px!important}
+ section.grouped .pchips{gap:6px!important;margin:4px 0!important}
+ section.grouped .pchips button{padding:5px 3px 4px!important;gap:3px!important;font-size:11px!important}
+ section.grouped .pchips button svg{width:34px!important;height:24px!important}
+ section.grouped .pchips button small{font-size:9px!important}
+ .sizes{grid-template-columns:repeat(3,minmax(0,1fr))!important;gap:6px!important}
+ .sizes button{padding:6px 4px!important;font-size:12px!important;line-height:1.15!important}
+ .sizes button small{font-size:10px!important;margin-top:1px!important}
+ section.grouped .row{gap:6px!important;margin-top:6px!important}
+ section.grouped .row button,section.grouped button.primary,section.grouped .filebtn{padding:9px 8px!important;font-size:13px!important;min-height:0!important}
+ section.grouped .check{margin:6px 0!important;font-size:13px!important}
+ section.grouped .chips2 button{padding:7px 9px!important;font-size:12px!important}
+ section.grouped .regs{gap:4px!important}
+ section.grouped .regs canvas{max-width:44px!important}
+ section.grouped .metric{padding:6px 0!important;font-size:13px!important}
+ section.grouped .fname{font-size:12px!important;margin:4px 0!important}
+ section.grouped input[type=color]{height:36px!important}
+ .drow .dh{padding:9px 12px!important;font-size:14px!important}
+ .drow .db svg{height:64px!important}
+ .drow .db p{margin-top:6px!important;font-size:12px!important}
+ .dlist{gap:5px!important}
+ .bbar button{min-height:54px!important;gap:3px!important;font-size:11px!important}
+ .bbar button svg{width:22px!important;height:22px!important}
+
+ .status{padding-right:64px!important}
+}
+@media(max-width:700px) and (max-height:700px){
+ html.nvlock .stage{height:34dvh!important}
+ .kb{width:42px!important;height:42px!important}
+ section.grouped .kgrid{padding:4px!important;gap:4px 10px!important}
+ section.grouped label{margin:4px 0 2px!important}
+ .bbar button{min-height:48px!important}
+}
+</style>
+<script>
+(function () {
+  'use strict';
+  var $ = function (x) { return document.getElementById(x); };
+  // panel height never animates or follows a finger any more
+  if (window.__nvConsole) { window.__nvConsole.setH = function () {}; window.__nvConsole.snaps = function () { return [0, 0, 0]; }; window.__nvConsole.now = function () { return 1; }; }
+  var aside = document.querySelector('main > aside:not(.right)'); if (aside) { aside.style.height = ''; aside.classList.remove('c-drag'); }
+  setTimeout(function () { if (window.__nvStFit) window.__nvStFit(); }, 120);
+  window.addEventListener('resize', function () { if (window.__nvStFit) window.__nvStFit(); });
+  // ? opens the beginner topic for the mode you are in (Learn lives here now)
+  var help = $('learnTop');
+  if (help) {
+    help.setAttribute('aria-label', 'Help and Learn'); help.title = 'Help and Learn';
+    document.addEventListener('click', function (e) {
+      if (!e.target.closest || !e.target.closest('#learnTop')) return;
+      var want = document.body.classList.contains('m-ht') ? 'Make a screen' : 'Draw for stencils';
+      var b = Array.prototype.filter.call(document.querySelectorAll('#learnList button'), function (x) { return x.textContent.indexOf(want) === 0; })[0];
+      if (b) { e.preventDefault(); e.stopPropagation(); b.click(); }
+    }, true);
+  }
+})();
+</script>
+<!--NV-STENCIL-LOCK-END-->
 </body></html>
