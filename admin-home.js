@@ -18,10 +18,11 @@
     { id: 'calendar', name: 'Calendar', desc: 'Dates, to-do list, phone calendar', sections: ['goals'], open: true },
     { id: 'tracker', name: 'Tracker', desc: 'Clock in, hours, what your time earns', sections: ['time'], open: true },
     { id: 'community', name: 'Community', desc: 'Directory, vendor spots, mailing list', sections: ['directory', 'vendor', 'popup', 'dropalert', 'mailing', 'promo'] },
-    { id: 'casezero', name: 'Case Zero', desc: 'Kits, notes, links, build log (private)', sections: ['casezero'], open: true },
-    { id: 'tools', name: 'Tools and Setup', desc: 'Storage space, tool links, Stripe, what is working', sections: ['storage', 'links', 'health'], open: false }
+    { id: 'casezero', name: 'Workbench', desc: 'Case Zero, REA, storage space, what is working', sections: ['casezero', 'rea', 'storage', 'health'], open: false },
+    { id: 'tools', name: 'Tools and Setup', desc: 'Your tool links and accounts', sections: ['links'], open: true }
   ];
   window.nocivRooms = ROOMS;
+  window.nocivOpenRoom = function (id) { go(id); };
   var byId = {}; ROOMS.forEach(function (r) { byId[r.id] = r; });
   var roomOf = {}; ROOMS.forEach(function (r) { r.sections.forEach(function (s) { roomOf['sec-' + s] = r.id; }); });
   var current = 'home';
