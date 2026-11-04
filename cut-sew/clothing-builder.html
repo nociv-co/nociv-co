@@ -188,7 +188,7 @@
     .preview-col .stage { height: 44vh; height: 44svh; }
     html.stepped body { padding-bottom: calc(76px + env(safe-area-inset-bottom)); }
     html.stepped { scroll-padding-bottom: calc(90px + env(safe-area-inset-bottom)); scroll-padding-top: 46svh; }
-    .stepped .preview-col > nav.steps { position: fixed; left: 0; right: 0; bottom: 0; z-index: 30; display: grid; grid-template-columns: repeat(6, 1fr); gap: 3px; padding: 6px 6px max(8px, env(safe-area-inset-bottom)); background: var(--paper); border-top: 1.5px solid var(--line); overflow: visible; margin: 0; }
+    .stepped .preview-col > nav.steps { position: fixed; left: 0; right: 0; bottom: 0; z-index: 30; display: grid; grid-template-columns: repeat(7, 1fr); gap: 3px; padding: 6px 6px max(8px, env(safe-area-inset-bottom)); background: var(--paper); border-top: 1.5px solid var(--line); overflow: visible; margin: 0; }
     .stepped .preview-col > nav.steps button { flex-direction: column; justify-content: center; gap: 3px; border: 1.5px solid transparent; background: none; border-radius: 12px; padding: 6px 1px 5px; font-size: 0.62rem; font-weight: 800; min-width: 0; white-space: nowrap; overflow: hidden; }
     .stepped .preview-col > nav.steps button b { display: none; }
     .stepped .preview-col > nav.steps button svg { width: 22px; height: 22px; display: block; }
@@ -228,7 +228,7 @@
   .app .vbtn { height: 42px; padding: 0 12px; }
   .app .vdrop { position: absolute; right: -50px; bottom: calc(100% + 8px); margin: 0; }
   .app #view, .app .vdrop .vlab:first-child { display: none !important; }
-  .app.stepped .preview-col > nav.steps { position: static !important; display: grid !important; grid-template-columns: repeat(6, minmax(0, 1fr)); gap: 4px; padding: 8px 0 8px !important; margin: 0 !important; background: none !important; border: 0 !important; overflow: visible; }
+  .app.stepped .preview-col > nav.steps { position: static !important; display: grid !important; grid-template-columns: repeat(7, minmax(0, 1fr)); gap: 3px; padding: 8px 0 8px !important; margin: 0 !important; background: none !important; border: 0 !important; overflow: visible; }
   .app.stepped .preview-col > nav.steps button { display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 3px; border: 2px solid var(--ink) !important; background: #fff; color: var(--ink); border-radius: 12px; padding: 6px 1px 5px !important; font-size: 0.6rem; font-weight: 800; min-width: 0; white-space: nowrap; overflow: hidden; box-shadow: 2px 2px 0 var(--ink); }
   .app.stepped .preview-col > nav.steps button b { display: none; }
   .app.stepped .preview-col > nav.steps button svg { display: block !important; width: 22px; height: 22px; }
@@ -262,6 +262,27 @@
   .fams button[aria-pressed="true"] { background: var(--ink); color: #fff; }
   .famlist { margin-top: 8px; border: 2px solid var(--ink); background: #fff; display: grid; }
   .famlist button { font: inherit; text-align: left; display: flex; justify-content: space-between; align-items: center; gap: 10px; border: none; background: none; padding: 13px 12px; font-size: 0.95rem; font-weight: 800; color: var(--ink); cursor: pointer; -webkit-tap-highlight-color: transparent; }
+  @media (max-width: 374px) { .app.stepped .preview-col > nav.steps button { font-size: 0.54rem !important; letter-spacing: -0.01em; } }
+  .refs { display: grid; grid-template-columns: 1fr 1fr; gap: 6px; }
+  .refs button { font: inherit; text-align: left; border: 2px solid var(--ink); background: #fff; color: var(--ink); padding: 9px 9px 8px; cursor: pointer; display: grid; grid-template-columns: 38px 1fr; gap: 0 8px; align-items: center; min-height: 58px; -webkit-tap-highlight-color: transparent; }
+  .refs button svg { grid-row: span 2; width: 38px; height: 38px; }
+  .refs button b { font-size: 0.82rem; font-weight: 900; line-height: 1.15; }
+  .refs button small { font-size: 0.68rem; color: var(--soft); font-weight: 700; line-height: 1.2; }
+  .refs button[aria-pressed="true"] { background: var(--ink); color: #fff; } .refs button[aria-pressed="true"] small { color: #d8d2c3; }
+  .refs button[aria-pressed="true"] svg * { stroke: #fff; }
+  .srcpick { display: grid; grid-template-columns: 1fr 1fr; gap: 6px; }
+  .srcpick button { font: inherit; text-align: left; border: 2px solid var(--ink); background: #fff; color: var(--ink); padding: 12px 10px; cursor: pointer; display: grid; gap: 3px; }
+  .srcpick button b { font-weight: 900; text-transform: uppercase; letter-spacing: .06em; font-size: 0.9rem; }
+  .srcpick button small { font-size: 0.72rem; font-weight: 700; color: var(--soft); line-height: 1.25; }
+  .srcpick button[aria-pressed="true"] { background: var(--ink); color: #fff; } .srcpick button[aria-pressed="true"] small { color: #d8d2c3; }
+  .srccard { background: #fff; border: 2px solid var(--ink); padding: 11px 12px; margin-top: 8px; }
+  .srccard h3 { margin: 0; font-size: 0.95rem; font-weight: 900; } .srccard h3 i { font-style: normal; color: var(--red); }
+  .srccard p { margin: 4px 0 0; font-size: 0.8rem; line-height: 1.35; }
+  .srccard .srow { display: flex; gap: 6px; margin-top: 9px; flex-wrap: wrap; }
+  .srccard .srow a, .srccard .srow button { font: inherit; font-size: 0.78rem; font-weight: 900; text-transform: uppercase; letter-spacing: .05em; padding: 9px 11px; border: 2px solid var(--ink); background: #fff; color: var(--ink); text-decoration: none; cursor: pointer; }
+  .srccard .srow button.go { background: var(--red); border-color: var(--red); color: #fff; }
+  .srccard .price { float: right; font-weight: 900; font-size: 0.85rem; }
+  .srchead { font-weight: 900; text-transform: uppercase; letter-spacing: .08em; font-size: 0.75rem; margin: 14px 0 0; }
   .famlist button + button { border-top: 1.5px solid var(--line); }
   .famlist button[aria-pressed="true"] { background: var(--note); }
   .famlist button[aria-pressed="true"]::after { content: '\2713'; color: var(--red); font-weight: 900; }
@@ -364,6 +385,9 @@ html.app.stepped.cdown .grid > section.note.on::after { display: none; }
     <section class="note" data-step="What">
       <h2><b>1</b> What are you making?</h2>
       <div id="garments"></div>
+      <div class="group-name">Or start from a proven style</div>
+      <div class="refs" id="refStyles"></div>
+      <p class="meta">Each style sets the cut, details and tech pack fabric to match a blank you can buy. Tap one, then fix anything.</p>
     </section>
 
     <section class="note" data-step="Fit">
@@ -375,7 +399,7 @@ html.app.stepped.cdown .grid > section.note.on::after { display: none; }
       <div id="opts"></div>
     </section>
 
-    <section class="note" data-step="Measure">
+    <section class="note" data-step="Size">
       <h2><b>3</b> Your measurements</h2>
       <div class="chips" id="units">
         <button type="button" class="chip" data-v="in" aria-pressed="true">Inches</button>
@@ -390,7 +414,7 @@ html.app.stepped.cdown .grid > section.note.on::after { display: none; }
       <p class="done-note" id="pmDone" hidden></p>
     </section>
 
-    <section class="note" data-step="Tech pack">
+    <section class="note" data-step="Specs">
       <h2><b>4</b> Tech pack</h2>
       <p class="meta" style="margin-top:0">Everything a factory or sample maker needs: flats, measurements for every size, materials, how it is sewn. Same numbers as your pattern, so they always match. Skip it if you are only sewing for you.</p>
       <div class="group-name">Style</div>
@@ -430,8 +454,17 @@ html.app.stepped.cdown .grid > section.note.on::after { display: none; }
       <p class="meta">Tap FLAT on the viewer to see your tech flats. Red letters show where each measurement is taken.</p>
     </section>
 
+    <section class="note" data-step="Source">
+      <h2><b>5</b> Buy a blank or get it made</h2>
+      <div class="srcpick" id="srcMode">
+        <button type="button" data-v="blank" aria-pressed="true"><b>Buy blanks</b><small>1 to 100 pieces. Print or embroider on a ready made piece.</small></button>
+        <button type="button" data-v="made" aria-pressed="false"><b>Get it made</b><small>Your own cut, fabric and labels. Usually 10 to 50 pieces to start.</small></button>
+      </div>
+      <div id="srcBox"></div>
+    </section>
+
     <section class="note" data-step="Save">
-      <h2><b>5</b> Save</h2>
+      <h2><b>6</b> Save</h2>
       <div class="group-name">Paper</div>
       <div class="chips" id="paper">
         <button type="button" class="chip" data-v="letter" aria-pressed="true">Letter <small>home printer</small></button>
@@ -454,7 +487,7 @@ html.app.stepped.cdown .grid > section.note.on::after { display: none; }
     </section>
 
     <section class="note" data-step="Sew">
-      <h2><b>6</b> How to sew it</h2>
+      <h2><b>7</b> How to sew it</h2>
       <ol class="sewsteps" id="steps"></ol>
       <button type="button" class="btn" style="background:var(--ink)" onclick="window.nocivLearn&&window.nocivLearn(5)">How to sew pockets, zippers, sleeves, waistbands</button>
       <div class="tip">First time with a new pattern? Make a test one from cheap fabric (an old sheet works). Patterns from measurements get you close, a test gets you the rest of the way.</div>
@@ -3018,9 +3051,10 @@ html.app.stepped.cdown .grid > section.note.on::after { display: none; }
     window.__setViewName = function () { $('vName').textContent = { pieces: 'PIECES', pages: 'PAGES', flat: 'FLAT' }[state.view] + '  ' + $('zLbl').textContent; };
     var ICON = {
       What: '<path d="M12 4a2 2 0 012 2c0 1-1 1.6-2 2.2V10l8 5.5a1.5 1.5 0 01-.9 2.7H4.9a1.5 1.5 0 01-.9-2.7L12 10"/>',
-      Measure: '<rect x="3" y="8" width="18" height="8" rx="1"/><path d="M7 8v3M11 8v4M15 8v3M19 8v2"/>',
+      Size: '<rect x="3" y="8" width="18" height="8" rx="1"/><path d="M7 8v3M11 8v4M15 8v3M19 8v2"/>',
       Fit: '<path d="M8 4l-5 3 2 4 2-1v10h10V10l2 1 2-4-5-3c-1 1.5-2.2 2-4 2s-3-.5-4-2z"/>',
-      'Tech pack': '<rect x="5" y="4" width="14" height="17" rx="1"/><path d="M9 4V3h6v1M8 10h8M8 14h8M8 18h5"/>',
+      Specs: '<rect x="5" y="4" width="14" height="17" rx="1"/><path d="M9 4V3h6v1M8 10h8M8 14h8M8 18h5"/>',
+      Source: '<path d="M4 9l2-5h12l2 5M4 9h16v11H4zM9 13h6"/>',
       Save: '<path d="M12 4v11M7 10l5 5 5-5M5 20h14"/>',
       Sew: '<path d="M5 19L19 5"/><circle cx="17.5" cy="6.5" r="1.2"/><path d="M5 19c3 1 4-2 7-1s4 2 7 0" stroke-dasharray="2 2"/>'
     };
@@ -3085,6 +3119,135 @@ html.app.stepped.cdown .grid > section.note.on::after { display: none; }
     mo.observe(document.querySelector('.grid'), { childList: true, subtree: true, attributes: true, attributeFilter: ['aria-pressed'] });
     ddify();
   })();
+
+  // =====================================================================
+  // PROVEN STYLES + BUY A BLANK OR GET IT MADE (prices checked Nov 2026)
+  // Styles are our own simple flats. Each one maps to a cut this tool drafts
+  // and to a blank you can buy, so pattern, tech pack and sourcing agree.
+  // =====================================================================
+  var ICO = {
+    shorts: 'M8 6h22l2 20h-9l-4-12-4 12H6z', pants: 'M9 3h20l2 33h-8l-4-24-4 24H7z',
+    tee: 'M12 5l-9 6 4 6 4-3v20h16V14l4 3 4-6-9-6c-1 3-3 4-7 4s-6-1-7-4z', crop: 'M12 8l-9 6 4 6 4-3v11h16V17l4 3 4-6-9-6c-1 3-3 4-7 4s-6-1-7-4z',
+    polo: 'M12 5l-9 6 4 6 4-3v20h16V14l4 3 4-6-9-6-4 4-1 7-1-7z', beanie: 'M6 28c0-12 6-20 13-20s13 8 13 20zM5 26h28v6H5z',
+    tote: 'M7 14h24l-2 20H9zM13 14c0-8 12-8 12 0', cadet: 'M8 22l2-12h18l2 12zM6 22h22l6 4H8z', jacket: 'M12 4l-9 6 2 22h6V14v20h16V14v18h6l2-22-9-6-5 6z'
+  };
+  function ico(k) { return '<svg viewBox="0 0 38 38" aria-hidden="true"><path d="' + ICO[k] + '" fill="none" stroke="#1a1a1a" stroke-width="2" stroke-linejoin="round"/></svg>'; }
+  // g: cut, o: details, f: fit, m: measurements, tp: tech pack fabric. blank: matching blank key.
+  var REFS = [
+    { id: 'baggyfleece', name: 'Baggy fleece shorts', sub: 'Extra wide, pull on', ico: 'shorts', g: 'xwide', f: 'baggy', o: { waist: 'elastic', fpock: true, bpock: false }, m: { inseam: 9 }, tp: ['Fleece', 'Cotton / poly blend', 'Heavyweight fleece'], blank: 'shlfbs' },
+    { id: 'plaidshort', name: 'Plaid shorts', sub: 'Wide leg, pull on', ico: 'shorts', g: 'wide', f: 'relaxed', o: { waist: 'elastic', fpock: true, bpock: true }, m: { inseam: 8 }, tp: ['Woven plaid', '100% cotton or poly / cotton', 'Shirting to flannel weight'], blank: 'shsp' },
+    { id: 'openbottom', name: 'Open bottom sweats', sub: 'Straight, elastic waist', ico: 'pants', g: 'straight', f: 'relaxed', o: { waist: 'elastic', fpock: true, bpock: false }, tp: ['Fleece', '50% cotton / 50% polyester', '7.75 oz'], blank: 'g18400' },
+    { id: 'workpant', name: 'Work pant', sub: 'Straight, zip fly', ico: 'pants', g: 'straight', f: 'regular', o: { waist: 'fly', fpock: true, bpock: true }, tp: ['Twill', '65% polyester / 35% cotton', '8.5 oz'], blank: 'd874' },
+    { id: 'doubleknee', name: 'Double knee pant', sub: 'Carpenter, loose', ico: 'pants', g: 'carpenter', f: 'relaxed', o: { waist: 'fly', fpock: true, bpock: true, dknee: true }, tp: ['Twill', '65% polyester / 35% cotton', '8.5 oz'], blank: 'd8528' },
+    { id: 'heavytee', name: 'Max heavyweight tee', sub: 'Boxy, crew', ico: 'tee', g: 'boxy', f: 'oversized', o: { neck: 'crew', cpock: false }, tp: ['Cotton jersey', '100% US cotton', '7.5 oz (about 255 GSM)'], blank: 'shmhss' },
+    { id: 'croptee', name: 'Heavyweight crop tee', sub: 'Cropped, boxy', ico: 'crop', g: 'crop', f: 'oversized', o: { neck: 'crew', cpock: false }, tp: ['Cotton jersey', '100% cotton', '7.5 oz (about 255 GSM)'], blank: 'shmcs' },
+    { id: 'jerseypolo', name: 'Jersey polo', sub: 'Tee with polo collar', ico: 'polo', g: 'tee', f: 'regular', o: { neck: 'polo', btn: 3, cpock: false }, tp: ['Jersey knit', '50% cotton / 50% polyester', '6 oz'], blank: 'g8800' },
+    { id: 'cuffbeanie', name: 'Cuffed beanie', sub: 'Double layer knit', ico: 'beanie', g: 'beanie', o: { cuff: true }, tp: ['Rib knit', '100% acrylic', 'Double layer'], blank: 'ub89' },
+    { id: 'canvastote', name: 'Canvas tote', sub: 'Open top, no gusset pocket', ico: 'tote', g: 'tote', o: { tpock: false }, tp: ['Cotton canvas', '100% cotton', '12 oz'], blank: 'q800' },
+    { id: 'cadetcap', name: 'Cadet cap', sub: 'Washed twill, soft crown', ico: 'cadet', g: 'cadet', tp: ['Garment washed cotton twill', '100% cotton', '8 to 10 oz'], blank: 'otto791' },
+    { id: 'mechanic', name: 'Mechanic jacket', sub: 'Blank only, pattern soon', ico: 'jacket', blank: 'shmj' }
+  ];
+  // Blanks: brand, style, what it is, fabric, approx low price (each, before decoration), which cuts it fits.
+  var BLANKS = {
+    shlfbs: ['Shaka Wear', 'SHLFBS', 'Baggy fleece shorts', 'Heavy fleece, elastic waist', 15.05, ['xwide']],
+    shsp: ['Shaka Wear', 'SHSP', 'Plaid shorts', 'Woven plaid, elastic waist', 13.48, ['wide']],
+    g18400: ['Gildan', '18400', 'Open bottom sweatpants', '50/50 fleece, 7.75 oz, elastic drawcord waist', 13.50, ['straight', 'wide']],
+    d874: ['Dickies', '874', 'Original work pant', '65/35 twill, 8.5 oz', 30.11, ['straight']],
+    d8528: ['Dickies', '8528', 'Double knee work pant', '65/35 twill, 8.5 oz, loose fit', 33.56, ['carpenter', 'wide', 'xwide']],
+    lu20: ['Dickies', 'LU20', 'Carpenter jean', 'Denim, relaxed', 31.43, ['carpenter']],
+    lp600: ['Dickies', 'LP600', 'Relaxed cargo pant', 'Twill, straight leg, leg pockets', 34.87, ['army']],
+    shmhss: ['Shaka Wear', 'SHMHSS', 'Max heavyweight tee', '100% US cotton, 7.5 oz, boxy', 6.11, ['tee', 'boxy']],
+    shmcs: ['Shaka Wear', 'SHMCS', 'Max heavyweight cropped tee', '100% cotton, heavyweight, cropped', 0, ['crop']],
+    g8800: ['Gildan', '8800', 'DryBlend jersey polo', '50/50 jersey, 6 oz', 8.78, ['tee']],
+    cc9360: ['Comfort Colors', '9360', 'Heavyweight tank', 'Garment dyed ring spun cotton', 0, ['tank']],
+    bc3483: ['Bella+Canvas', '3483', 'Jersey muscle tank', 'Airlume combed cotton, dropped armhole', 0, ['muscle']],
+    ub89: ['Russell Athletic', 'UB89UHB', 'Core patch beanie', 'Acrylic knit, double layer', 4.29, ['beanie']],
+    otto791: ['OTTO', '109-791', 'Military cap', 'Garment washed cotton twill, unstructured, hook and loop back', 0, ['cadet']],
+    q800: ['Q-Tees', 'Q800', 'Canvas tote', '12 oz cotton canvas', 3.54, ['tote', 'minitote']],
+    td800: ['Q-Tees', 'TD800', 'Tie dyed canvas tote', 'Canvas, tie dyed', 3.32, ['tote']],
+    shmj: ['Shaka Wear', 'SHMJ', 'Mechanic jacket', '65/35 twill, quilted lining, sleeve pocket, adjustable waist. Size S chest 22 1/2, body 26, sleeve 36 1/4', 31.82, []]
+  };
+  // US makers for small runs. MOQ = minimum order. Always ask for a quote, a sample cost and a lead time.
+  var MAKERS = [
+    ['Los Angeles Apparel', 'Los Angeles, CA', 'From 25 pieces', 'Cut and sew on their own heavyweight fabrics. Great for tees, fleece and sweats.'],
+    ['Lefty Production Co', 'Los Angeles, CA', 'From 50 pieces', 'Small brand friendly. Patterns, samples and production in one place.'],
+    ['Manufacture New York', 'Brooklyn, NY', 'From 25 to 50', 'Design to production help for new brands, plus workshops.'],
+    ['Good Clothing Company', 'Fall River, MA', 'From 10 per style, size and color', 'Small runs of knits and wovens, very new brand friendly.'],
+    ['ARGYLE Haus', 'San Fernando, CA', 'Small batch from 25', 'Patterns, samples and short runs.'],
+    ['Argus Apparel', 'Los Angeles, CA', 'Ask', 'Denim and pants. Good for carpenter and work pants.'],
+    ['Bomme Studio', 'Los Angeles, CA', 'From 150', 'Full package production when you are ready to scale.'],
+    ['Bespoke Manufacturing Company', 'Phoenix, AZ', 'Small batch and on demand', 'Close to home for Arizona brands. Ask for a walk through.'],
+    ["Maker's Row", 'Online', 'Varies', 'Post your tech pack and get bids from US factories.']
+  ];
+  var srcMode = 'blank', refOn = null, extraBlank = null;
+  try { var rs = JSON.parse(localStorage.getItem('nocivCutSewRef') || 'null'); if (rs) { srcMode = rs.mode || 'blank'; refOn = rs.ref || null; } } catch (e) {}
+  function saveRef() { try { localStorage.setItem('nocivCutSewRef', JSON.stringify({ mode: srcMode, ref: refOn })); } catch (e) {} }
+  function findLink(q) { return 'https://www.google.com/search?q=' + encodeURIComponent(q); }
+  function money(v) { return v ? 'From about $' + v.toFixed(2) : 'Check price'; }
+  function goStep(name) { var b = Array.prototype.filter.call(document.querySelectorAll('.steps button'), function (x) { return x.textContent.indexOf(name) > -1; })[0]; if (b) b.click(); }
+  function buildRefs() {
+    var box = $('refStyles'); if (!box) return; box.innerHTML = '';
+    REFS.forEach(function (r) {
+      var b = document.createElement('button'); b.type = 'button';
+      b.setAttribute('aria-pressed', String(refOn === r.id && (!r.g || r.g === state.g)));
+      b.innerHTML = ico(r.ico) + '<b>' + r.name + '</b><small>' + r.sub + '</small>';
+      b.onclick = function () { useRef(r); };
+      box.appendChild(b);
+    });
+  }
+  function useRef(r) {
+    refOn = r.id; saveRef();
+    if (!r.g) { extraBlank = r.blank; srcMode = 'blank'; buildRefs(); buildSrc(); goStep('Source'); return; }
+    extraBlank = null;
+    if (state.g !== r.g) pickGarment(r.g);
+    if (r.f) state.fit = r.f;
+    if (r.o) Object.assign(state.o, r.o);
+    if (r.m) Object.assign(state.m, r.m);
+    if (r.tp) { state.tp.style = r.name; state.tp.fabric = r.tp[0]; state.tp.content = r.tp[1]; state.tp.weight = r.tp[2]; saveTP(); }
+    save(); buildAll();
+  }
+  function useBlank(k) {
+    var b = BLANKS[k];
+    state.tp.fabric = b[3].split(',')[0]; state.tp.weight = (b[3].match(/[\d.]+ oz[^,]*/) || [''])[0] || state.tp.weight;
+    state.tp.notes = 'Base blank: ' + b[0] + ' ' + b[1] + ' ' + b[2] + '.' + (state.tp.notes && state.tp.notes.indexOf('Base blank:') !== 0 ? ' ' + state.tp.notes : '');
+    saveTP(); buildTP(); render(); buildSrc();
+  }
+  function blankCard(k) {
+    var b = BLANKS[k], d = document.createElement('div'); d.className = 'srccard';
+    d.innerHTML = '<span class="price">' + money(b[4]) + '</span><h3>' + b[0] + ' <i>' + b[1] + '</i></h3><p><b>' + b[2] + '.</b> ' + b[3] + '.</p><div class="srow"></div>';
+    var row = d.querySelector('.srow'), a = document.createElement('a');
+    a.href = findLink(b[0] + ' ' + b[1] + ' blank wholesale'); a.target = '_blank'; a.rel = 'noopener'; a.textContent = 'Find it'; row.appendChild(a);
+    if (b[5].length) { var u = document.createElement('button'); u.type = 'button'; u.className = 'go'; u.textContent = 'Put in tech pack'; u.onclick = function () { useBlank(k); u.textContent = 'Added'; }; row.appendChild(u); }
+    return d;
+  }
+  function buildSrc() {
+    var box = $('srcBox'); if (!box) return; box.innerHTML = '';
+    Array.prototype.forEach.call($('srcMode').children, function (b) { b.setAttribute('aria-pressed', String(b.dataset.v === srcMode)); });
+    var nm = nameOf(state.g);
+    if (srcMode === 'blank') {
+      var keys = extraBlank ? [extraBlank] : Object.keys(BLANKS).filter(function (k) { return BLANKS[k][5].indexOf(state.g) > -1; });
+      var h = document.createElement('p'); h.className = 'srchead'; h.textContent = extraBlank ? 'Blank for this style' : 'Blanks that match your ' + nm.toLowerCase(); box.appendChild(h);
+      keys.forEach(function (k) { box.appendChild(blankCard(k)); });
+      if (!keys.length) { var n = document.createElement('div'); n.className = 'srccard'; n.innerHTML = '<h3>No standard blank yet</h3><p>Decorator wholesalers carry few ' + nm.toLowerCase() + 's. Search "' + nm.toLowerCase() + '" on S&amp;S Activewear or alphabroder, or get it made. Most makers will do a small run of bags.</p>'; box.appendChild(n); }
+      var t = document.createElement('div'); t.className = 'tip';
+      t.innerHTML = '<b>Where to buy.</b> S&amp;S Activewear and alphabroder (now one company), SanMar and Blankstyle sell to the public or to anyone with a free reseller account. Prices are the low tier, checked Nov 2026, and go down with quantity. Print it yourself with Stencil, or send it to a local screen printer.';
+      box.appendChild(t);
+    } else {
+      var h2 = document.createElement('p'); h2.className = 'srchead'; h2.textContent = 'US makers for small runs'; box.appendChild(h2);
+      MAKERS.forEach(function (m) {
+        var d = document.createElement('div'); d.className = 'srccard';
+        d.innerHTML = '<span class="price">' + m[2] + '</span><h3>' + m[0] + '</h3><p><b>' + m[1] + '.</b> ' + m[3] + '</p><div class="srow"><a target="_blank" rel="noopener" href="' + findLink(m[0] + ' ' + m[1] + ' clothing manufacturer') + '">Find them</a></div>';
+        box.appendChild(d);
+      });
+      var t2 = document.createElement('div'); t2.className = 'tip';
+      t2.innerHTML = '<b>How to ask.</b> Send your tech pack PDF from Save. Ask 3 makers for: sample cost, pattern cost, price per piece at 25 and 50, minimum per color, and lead time. Pay for one sample first and wear it before you order. Free help: your local SBA office and SCORE mentors.';
+      box.appendChild(t2);
+    }
+  }
+  Array.prototype.forEach.call($('srcMode').children, function (b) { b.onclick = function () { srcMode = b.dataset.v; saveRef(); buildSrc(); }; });
+  var _buildAll = buildAll;
+  buildAll = function () { _buildAll(); buildRefs(); buildSrc(); };
+  window.__csSrc = { REFS: REFS, BLANKS: BLANKS, useRef: function (id) { useRef(REFS.filter(function (r) { return r.id === id; })[0]); } };
 
   // Exposed for testing only.
   window.__cs = { flatsSVG: function () { return flatsFileSVG(current.res, true); }, tpPages: function () { return tpPages(current.res, null); }, poms: function () { return poms(current.res.spec, flatGeo(current.res.spec)); }, graded: function () { return graded(poms(current.res.spec, flatGeo(current.res.spec))); }, state: state, draft: draft, layout: layout, outline: outline, offset: offset, plen: plen, files: function () { return files; }, current: function () { return current; }, render: render, buildAll: buildAll };

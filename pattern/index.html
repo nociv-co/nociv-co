@@ -100,6 +100,13 @@ html.embedded .top{display:none}
 .band{display:flex;align-items:center;gap:6px}
 .band .sw{display:flex;gap:4px}.band .sw button{all:unset;cursor:pointer;width:24px;height:24px;border-radius:50%;border:2px solid #fff;box-shadow:0 0 0 1.5px #b9b5ab}
 .band .sw button[aria-pressed=true]{box-shadow:0 0 0 2.5px var(--ink)}
+.hwcols{display:flex;gap:4px;flex-wrap:wrap;align-items:center}.hwcols button{all:unset;cursor:pointer;width:24px;height:24px;border-radius:50%;border:2px solid #fff;box-shadow:0 0 0 1.5px #b9b5ab}.hwcols button[aria-pressed=true]{box-shadow:0 0 0 2.5px var(--ink)}
+.hwpick{position:relative;width:24px;height:24px;border-radius:50%;border:1.5px dashed var(--ink);display:grid;place-items:center;font:900 15px/1 var(--sys);overflow:hidden}.hwpick input{position:absolute;inset:0;opacity:0;width:100%;height:100%}
+.stage .views[hidden]{display:none}.pcode{min-width:0}
+.hrow{display:grid;grid-auto-flow:column;grid-auto-columns:64px;gap:5px;overflow-x:auto;scrollbar-width:none;padding-bottom:2px}.hrow::-webkit-scrollbar{display:none}.hrow .pick{min-height:40px;padding:4px}
+.hbacks canvas{height:30px!important}.hbacks .pick{min-height:0}
+.kinds .pick.big{min-height:74px;font-size:13px}.kinds .pick.big small{font-size:10px}
+@media(max-height:700px){.kinds .pick.big small{display:none}.kinds .pick.big{min-height:64px}}
 .band .step{flex:1}.band .step button{width:36px;height:32px;font-size:17px}.band .step output{padding:8px 2px;font-size:12.5px}
 .band .x{all:unset;cursor:pointer;width:30px;height:30px;display:grid;place-items:center;font:900 16px var(--sys);color:var(--mute)}
 .list{display:flex;flex-direction:column;gap:6px}
@@ -107,7 +114,7 @@ html.embedded .top{display:none}
 .list a,.list .it{display:block;padding:9px 11px;border:1.5px solid var(--ink);border-radius:11px;background:#fff;color:var(--ink);text-decoration:none;font:600 12.5px/1.35 var(--sys)}
 .list b{display:block;font:800 13.5px/1.2 var(--sys);margin-bottom:2px}
 .files{display:grid;grid-template-columns:1fr 1fr;gap:7px}
-.pcodes{display:grid;grid-template-columns:1fr 1fr;gap:4px 8px}.pcodes .pcode code{display:none}
+.pcodes{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:4px 8px}.pcodes .pcode code{display:none}
 .pcode{display:flex;align-items:center;gap:6px;margin:0 0 5px}
 .pcode i{width:22px;height:22px;border-radius:50%;border:1.5px solid rgba(0,0,0,.3);flex:none}
 .pcode code{font:700 11.5px/1 ui-monospace,Menlo,monospace;flex:0 0 66px}

@@ -33,14 +33,16 @@
     file: '<path d="M6 2h9l5 5v15H6z"/><path d="M14 2v6h6M10 13v6M7 16l3 3 3-3"/>',
     print: '<path d="M6 9V3h12v6M6 18H4v-7h16v7h-2"/><rect x="6" y="14" width="12" height="7"/>',
     info: '<circle cx="12" cy="12" r="9"/><path d="M12 11v6M12 7.5v.5"/>',
+    plate: '<rect x="2" y="7" width="20" height="10" rx="2"/><circle cx="5" cy="10" r=".9" fill="currentColor"/><circle cx="19" cy="14" r=".9" fill="currentColor"/><path d="M8 12h8"/>',
+    edge: '<rect x="3" y="6" width="18" height="12" rx="2"/><rect x="6" y="9" width="12" height="6" rx="1" stroke-dasharray="2 1.5"/>',
     halftone: '<circle cx="6" cy="6" r="1.2"/><circle cx="12" cy="6" r="2"/><circle cx="18" cy="6" r="2.8"/><circle cx="6" cy="14" r="1.2"/><circle cx="12" cy="14" r="2"/><circle cx="18" cy="14" r="2.8"/>'
   };
   function ico(n, cls) { return '<svg class="' + (cls || 'sm') + '" viewBox="0 0 24 24" aria-hidden="true">' + (I[n] || '') + '</svg>'; }
   function esc(s) { return String(s == null ? '' : s).replace(/[&<>"]/g, function (c) { return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]; }); }
 
   /* ---------- state ---------- */
-  var KINDS = [['logo', 'Logo', 'Make a simple logo, then repeat it'], ['picture', 'My picture', 'A PNG or photo you have'], ['plaid', 'Plaid', 'Flannel, tartan, gingham'], ['stripes', 'Stripes', 'Breton to club tie'], ['checks', 'Checks', 'Checkerboard to houndstooth'], ['camo', 'Camo', 'Woodland to bubble']];
-  var KIND_ICON = { logo: 'logo', picture: 'pic', plaid: 'plaid', stripes: 'stripes', checks: 'checks', camo: 'camo', halftone: 'halftone' };
+  var KINDS = [['logo', 'Logo', 'Make a simple logo, then repeat it'], ['picture', 'My picture', 'A PNG or photo you have'], ['plaid', 'Plaid', 'Flannel, tartan, gingham'], ['stripes', 'Stripes', 'Breton to club tie'], ['checks', 'Checks', 'Checkerboard to houndstooth'], ['camo', 'Camo', 'Woodland to bubble'], ['hardware', 'Hardware', 'Plaques and cut out emblems']];
+  var KIND_ICON = { logo: 'logo', picture: 'pic', plaid: 'plaid', stripes: 'stripes', checks: 'checks', camo: 'camo', halftone: 'halftone', hardware: 'plate' };
   function presetOf(list, id) { return list.filter(function (x) { return x[0] === id; })[0]; }
   var S = {
     kind: null, step: 0, part: {}, view: 'swatch', fabric: 'poplin',
@@ -56,7 +58,7 @@
   try { var saved = JSON.parse(localStorage.getItem('nocivPattern') || 'null'); if (saved && saved.v === 1) Object.assign(S, saved.s); } catch (e) {}
   function keep() { try { localStorage.setItem('nocivPattern', JSON.stringify({ v: 1, s: S })); } catch (e) {} }
   var PALKEY = { logo: 'repeat', picture: 'repeat', halftone: 'repeat', plaid: 'plaid', stripes: 'stripes', checks: 'checks', camo: 'camo' };
-  function colors() { var k = S.kind || 'logo'; if (!S.colorsBy[k]) { var p = E.PALETTES[PALKEY[k]][k === 'camo' ? camoPalIndex() : 0]; S.colorsBy[k] = p[1].slice(); S.palBy[k] = p[0]; } return S.colorsBy[k]; }
+  function colors() { if (S.kind === 'hardware') return hwCols(); var k = S.kind || 'logo'; if (!S.colorsBy[k]) { var p = E.PALETTES[PALKEY[k]][k === 'camo' ? camoPalIndex() : 0]; S.colorsBy[k] = p[1].slice(); S.palBy[k] = p[0]; } return S.colorsBy[k]; }
   function camoPalIndex() { var t = presetOf(E.CAMOS, S.camo.type), name = t ? t[3] : 'Woodland', i = 0; E.PALETTES.camo.forEach(function (p, j) { if (p[0] === name) i = j; }); return i; }
 
   /* ---------- pictures kept on this phone (IndexedDB) ---------- */
@@ -129,6 +131,242 @@
     return m;
   }
 
+  /* ---------- hardware: plaques, emblems, cut out logos ---------- */
+  // Everything is drawn in millimeters, so the cut file and the spec match the picture.
+  var HW_SHAPES = [['rect', 'Bar'], ['rounded', 'Rounded'], ['pill', 'Pill'], ['oval', 'Oval'], ['circle', 'Round'], ['shield', 'Shield'], ['hex', 'Hexagon'], ['arch', 'Arch'], ['badge', 'Badge'], ['diamond', 'Diamond']];
+  var HW_FIN = [ // id, name, base, light, dark
+    ['gold', 'Gold plated', '#d4a933', '#fff1b8', '#7a5a12'], ['brass', 'Raw brass', '#b9973f', '#efd98d', '#5e4815'],
+    ['silver', 'Nickel silver', '#c2c5c8', '#ffffff', '#5d6166'], ['gunmetal', 'Gunmetal', '#4b4e53', '#a3a7ad', '#1d1f22'],
+    ['copper', 'Copper', '#b8703f', '#f5c09a', '#5a2f14'], ['rose', 'Rose gold', '#d29a86', '#fbe1d6', '#7d4b3d'],
+    ['black', 'Matte black', '#2a2a2a', '#5a5a5a', '#0e0e0e'], ['antique', 'Antique brass', '#8d7134', '#c9ad66', '#3a2c0e']
+  ];
+  var HW_LOOK = [['polished', 'Polished'], ['brushed', 'Brushed'], ['matte', 'Matte']];
+  var HW_MARK = [['engrave', 'Engraved'], ['raised', 'Raised'], ['cut', 'Cut through'], ['enamel', 'Enamel fill']];
+  var HW_FIX = [['rivets', 'Rivets'], ['screws', 'Screws'], ['prongs', 'Prongs'], ['sew', 'Sew holes'], ['none', 'Glue']];
+  var HW_BACK = [['leather', 'Smooth leather', '#8a5a34'], ['pebble', 'Pebbled leather', '#2b2622'], ['suede', 'Suede', '#b68a5e'], ['canvas', 'Canvas', '#d9cdb3'], ['denim', 'Denim', '#2f4566'], ['none', 'No patch', '']];
+  var HW_LEATHER = ['#8a5a34', '#5b3a22', '#2b2622', '#c69a6d', '#7a1f1f', '#1f3324', '#e8dfcf', '#111111'];
+  function hwDef() { return { shape: 'rounded', w: 60, h: 20, thick: 1.5, fin: 'gold', look: 'brushed', mark: 'engrave', text: 'NOCIV', line2: 'MADE IN USA', font: 'FS Archivo Black', logo: 'none', border: 'line', fix: 'rivets', back: 'leather', backCol: '#8a5a34', enamel: '#1a1a1a', stitch: true }; }
+  function HW() { if (!S.hw) S.hw = hwDef(); return S.hw; }
+  function finOf(id) { return presetOf(HW_FIN, id) || HW_FIN[0]; }
+  function hwCols() { var h = HW(), c = [finOf(h.fin)[2]]; if (h.back !== 'none') c.push(h.backCol); if (h.mark === 'enamel') c.push(h.enamel); return c; }
+  function mmIn(mm) { return (Math.round(mm / 25.4 * 100) / 100) + ' in'; }
+  function hwPath(g, h, ppm, inset) {
+    var w = h.w * ppm / 2 - inset, hh = h.h * ppm / 2 - inset, k = h.shape;
+    g.beginPath();
+    if (k === 'rect' || k === 'rounded' || k === 'pill') {
+      var r = k === 'rect' ? Math.min(w, hh) * .06 : k === 'rounded' ? Math.min(w, hh) * .35 : Math.min(w, hh);
+      r = Math.max(0, r); g.moveTo(-w + r, -hh); g.arcTo(w, -hh, w, hh, r); g.arcTo(w, hh, -w, hh, r); g.arcTo(-w, hh, -w, -hh, r); g.arcTo(-w, -hh, w, -hh, r); g.closePath(); return;
+    }
+    if (k === 'oval') { g.ellipse(0, 0, Math.max(1, w), Math.max(1, hh), 0, 0, Math.PI * 2); g.closePath(); return; }
+    g.save(); g.scale(Math.max(.01, w), Math.max(.01, hh)); shapePath(g, k === 'circle' ? 'circle' : k, 1); g.restore();
+  }
+  function metalFill(g, f, look, x0, y0, x1, y1, bright) {
+    var gr = g.createLinearGradient(x0, y0, x1, y1), b = bright || 0;
+    if (look === 'matte') { gr.addColorStop(0, mix(f[2], f[3], .18 + b)); gr.addColorStop(1, mix(f[2], f[4], .18)); }
+    else { gr.addColorStop(0, mix(f[2], f[4], .25)); gr.addColorStop(.28, mix(f[2], f[3], .55 + b)); gr.addColorStop(.5, f[2]); gr.addColorStop(.72, mix(f[2], f[3], .35 + b)); gr.addColorStop(1, mix(f[2], f[4], .4)); }
+    return gr;
+  }
+  function mix(a, b, t) { var x = E.hex(a), y = E.hex(b); t = Math.max(0, Math.min(1, t)); return 'rgb(' + x.map(function (v, i) { return Math.round(v + (y[i] - v) * t); }).join(',') + ')'; }
+  // The mark (words, logo) as an alpha mask the size of the plate.
+  function hwMask(h, ppm) {
+    var W = Math.ceil(h.w * ppm), H = Math.ceil(h.h * ppm), c = E.cv(W, H), g = c.getContext('2d');
+    var pad = Math.min(W, H) * (h.border === 'none' ? .14 : .22) + (h.fix === 'none' || h.fix === 'prongs' ? 0 : Math.min(W, H) * .18 * (h.shape === 'circle' || h.shape === 'badge' ? 0 : 1));
+    if (h.shape === 'shield' || h.shape === 'diamond' || h.shape === 'badge' || h.shape === 'hex' || h.shape === 'circle' || h.shape === 'oval') pad = Math.min(W, H) * .22;
+    var bx = pad, by = Math.min(W, H) * .16, bw = W - pad * 2, bh = H - by * 2; if (h.shape === 'arch') by = H * .3, bh = H - by - H * .14;
+    var hasLogo = h.logo !== 'none', text = (h.text || '').slice(0, 18), l2 = (h.line2 || '').slice(0, 28);
+    g.fillStyle = '#000'; g.textAlign = 'center'; g.textBaseline = 'middle';
+    var tx = bx, tw = bw;
+    if (hasLogo) {
+      var lg = renderLogo(S.logo, ['#ffffff', '#000000'], 400), lc = E.cv(400, 400), lgx = lc.getContext('2d'); lgx.drawImage(lg, 0, 0);
+      var im = lgx.getImageData(0, 0, 400, 400), d = im.data; for (var i = 0; i < d.length; i += 4) { var lum = (d[i] + d[i + 1] + d[i + 2]) / 765; d[i + 3] = Math.round(d[i + 3] * (1 - lum)); d[i] = d[i + 1] = d[i + 2] = 0; } lgx.putImageData(im, 0, 0);
+      var only = !text && !l2, ls = only ? Math.min(bw, bh) : Math.min(bh, bw * .4);
+      if (only || h.logo === 'center') { var cy = only ? H / 2 : by + ls / 2; ls = only ? ls : Math.min(bw, bh * .55); g.drawImage(lc, W / 2 - ls / 2, (only ? H / 2 : by + ls / 2) - ls / 2, ls, ls); void cy; if (!only) { by += ls + bh * .04; bh -= ls + bh * .04; } }
+      else { g.drawImage(lc, bx, H / 2 - ls / 2, ls, ls); tx = bx + ls + bw * .04; tw = bw - ls - bw * .04; }
+    }
+    function fitText(t, fam, maxH, maxW) { var fs = maxH; g.font = fs + "px '" + fam + "', sans-serif"; var w = g.measureText(t).width; if (w > maxW) fs = fs * maxW / w; return Math.max(4, fs); }
+    if (text || l2) {
+      var big = l2 ? bh * .62 : bh * .9, small = bh * .26, fs1 = text ? fitText(text, h.font, big, tw) : 0, fs2 = l2 ? fitText(l2, 'FS Barlow Condensed', small, tw) : 0;
+      var total = fs1 + (fs2 ? fs2 * 1.25 : 0), y = by + bh / 2 - total / 2;
+      if (text) { g.font = fs1 + "px '" + h.font + "', sans-serif"; g.fillText(text, tx + tw / 2, y + fs1 / 2); }
+      if (l2) { g.font = '600 ' + fs2 + "px 'FS Barlow Condensed', sans-serif"; if (g.letterSpacing !== undefined) g.letterSpacing = (fs2 * .18) + 'px'; g.fillText(l2.toUpperCase(), tx + tw / 2, y + fs1 + fs2 * .25 + fs2 / 2); }
+    }
+    return c;
+  }
+  function hwFixPoints(h, ppm) {
+    var w = h.w * ppm / 2, hh = h.h * ppm / 2, m = Math.min(w, hh), ins = Math.max(m * .3, 2.6 * ppm);
+    if (h.shape === 'circle' || h.shape === 'badge' || h.shape === 'hex' || (h.shape === 'oval' && Math.abs(h.w - h.h) < 8)) return [[0, -hh + ins * .9], [0, hh - ins * .9]];
+    if (h.shape === 'shield' || h.shape === 'diamond' || h.shape === 'arch') return [[-w + ins, -hh + ins], [w - ins, -hh + ins], [0, hh - ins]];
+    if (h.shape === 'oval' || h.shape === 'pill') return [[-w + ins * 1.15, 0], [w - ins * 1.15, 0]];
+    return [[-w + ins, -hh + ins], [w - ins, -hh + ins], [-w + ins, hh - ins], [w - ins, hh - ins]];
+  }
+  // Draws the piece centered on g at (cx, cy). withBack draws the leather or cloth patch behind it.
+  function drawHW(g, cx, cy, ppm, withBack) {
+    var h = HW(), f = finOf(h.fin), w = h.w * ppm, hh = h.h * ppm, m = Math.min(w, hh), back = withBack && h.back !== 'none';
+    g.save(); g.translate(cx, cy);
+    if (back) {
+      var pm = Math.max(5 * ppm, m * .22), bw = w / 2 + pm, bhh = hh / 2 + pm, rr = Math.min(bw, bhh) * .18;
+      g.save(); g.shadowColor = 'rgba(0,0,0,.35)'; g.shadowBlur = 4 * ppm; g.shadowOffsetY = 1.2 * ppm;
+      g.beginPath(); g.moveTo(-bw + rr, -bhh); g.arcTo(bw, -bhh, bw, bhh, rr); g.arcTo(bw, bhh, -bw, bhh, rr); g.arcTo(-bw, bhh, -bw, -bhh, rr); g.arcTo(-bw, -bhh, bw, -bhh, rr); g.closePath();
+      g.fillStyle = h.backCol; g.fill(); g.restore();
+      g.save(); g.clip(); var tx = backTex(h.back, h.backCol, ppm); g.fillStyle = g.createPattern(tx, 'repeat'); g.fillRect(-bw, -bhh, bw * 2, bhh * 2);
+      var sh = g.createLinearGradient(0, -bhh, 0, bhh); sh.addColorStop(0, 'rgba(255,255,255,.12)'); sh.addColorStop(1, 'rgba(0,0,0,.18)'); g.fillStyle = sh; g.fillRect(-bw, -bhh, bw * 2, bhh * 2); g.restore();
+      if (h.stitch) { var si = 2.6 * ppm; g.save(); g.setLineDash([2.4 * ppm, 1.4 * ppm]); g.lineWidth = Math.max(1, .7 * ppm); g.strokeStyle = mix(h.backCol, '#f3e7cf', .7); g.lineCap = 'round'; g.beginPath(); var r2 = Math.max(0, rr - si * .6); g.moveTo(-bw + si + r2, -bhh + si); g.arcTo(bw - si, -bhh + si, bw - si, bhh - si, r2); g.arcTo(bw - si, bhh - si, -bw + si, bhh - si, r2); g.arcTo(-bw + si, bhh - si, -bw + si, -bhh + si, r2); g.arcTo(-bw + si, -bhh + si, bw - si, -bhh + si, r2); g.closePath(); g.stroke(); g.restore(); }
+    }
+    // plate body with its thickness and shadow
+    var depth = Math.max(1, h.thick * ppm * .6);
+    g.save(); g.shadowColor = 'rgba(0,0,0,.45)'; g.shadowBlur = 2.5 * ppm; g.shadowOffsetY = depth * .9; g.translate(0, depth); hwPath(g, h, ppm, 0); g.fillStyle = mix(f[2], f[4], .55); g.fill(); g.restore();
+    hwPath(g, h, ppm, 0); g.fillStyle = metalFill(g, f, h.look, -w / 2, -hh / 2, w / 2, hh / 2); g.fill();
+    g.save(); hwPath(g, h, ppm, 0); g.clip();
+    if (h.look === 'brushed') { var rnd = E.rng(5); g.globalAlpha = .16; for (var y = -hh / 2; y < hh / 2; y += Math.max(1, ppm * .18)) { g.strokeStyle = rnd() > .5 ? f[3] : f[4]; g.lineWidth = Math.max(.5, ppm * .08); g.beginPath(); g.moveTo(-w / 2, y); g.lineTo(w / 2, y + (rnd() - .5) * ppm * .1); g.stroke(); } g.globalAlpha = 1; }
+    if (h.look === 'matte') { var rn = E.rng(9); g.globalAlpha = .12; for (var n = 0; n < w * hh / 18; n++) { g.fillStyle = rn() > .5 ? f[3] : f[4]; g.fillRect((rn() - .5) * w, (rn() - .5) * hh, 1, 1); } g.globalAlpha = 1; }
+    if (h.fin === 'antique') { var rg = g.createRadialGradient(0, 0, m * .2, 0, 0, Math.max(w, hh) * .7); rg.addColorStop(0, 'rgba(0,0,0,0)'); rg.addColorStop(1, 'rgba(30,20,5,.45)'); g.fillStyle = rg; g.fillRect(-w / 2, -hh / 2, w, hh); }
+    // the mark
+    var mk = hwMask(h, ppm), mx = -mk.width / 2, my = -mk.height / 2;
+    function tinted(col) { var c = E.cv(mk.width, mk.height), cg = c.getContext('2d'); cg.drawImage(mk, 0, 0); cg.globalCompositeOperation = 'source-in'; cg.fillStyle = col; cg.fillRect(0, 0, c.width, c.height); return c; }
+    if (h.mark === 'enamel') { g.globalAlpha = 1; hwPath(g, h, ppm, m * .1); g.fillStyle = h.enamel; g.fill(); var gl = g.createLinearGradient(0, -hh / 2, 0, hh / 2); gl.addColorStop(0, 'rgba(255,255,255,.22)'); gl.addColorStop(.45, 'rgba(255,255,255,0)'); g.fillStyle = gl; g.fill(); }
+    if (h.mark === 'engrave') { g.drawImage(tinted('rgba(255,255,255,.35)'), mx, my + Math.max(1, ppm * .18)); g.drawImage(tinted(mix(f[2], f[4], .7)), mx, my); }
+    else if (h.mark === 'raised' || h.mark === 'enamel') {
+      g.drawImage(tinted('rgba(0,0,0,.45)'), mx + ppm * .12, my + Math.max(1, ppm * .25));
+      var lit = E.cv(mk.width, mk.height), lg2 = lit.getContext('2d'); lg2.drawImage(mk, 0, 0); lg2.globalCompositeOperation = 'source-in'; lg2.fillStyle = metalFill(lg2, f, 'polished', 0, 0, mk.width, mk.height, .15); lg2.fillRect(0, 0, mk.width, mk.height); g.drawImage(lit, mx, my);
+    }
+    g.restore();
+    if (h.mark === 'cut') {
+      var hole = E.cv(mk.width, mk.height), hg = hole.getContext('2d'); hg.drawImage(mk, 0, 0); hg.globalCompositeOperation = 'source-in';
+      hg.fillStyle = back ? h.backCol : '#e7e2d6'; hg.fillRect(0, 0, hole.width, hole.height);
+      if (back) { hg.fillStyle = hg.createPattern(backTex(h.back, h.backCol, ppm), 'repeat'); hg.fillRect(0, 0, hole.width, hole.height); }
+      g.drawImage(tinted('rgba(0,0,0,.55)'), mx, my - Math.max(1, ppm * .3)); g.drawImage(hole, mx, my + Math.max(.5, ppm * .1));
+    }
+    // bevel
+    g.save(); hwPath(g, h, ppm, Math.max(.6, ppm * .25)); var bv = g.createLinearGradient(-w / 2, -hh / 2, w / 2, hh / 2); bv.addColorStop(0, 'rgba(255,255,255,.75)'); bv.addColorStop(.5, 'rgba(255,255,255,0)'); bv.addColorStop(1, 'rgba(0,0,0,.45)'); g.strokeStyle = bv; g.lineWidth = Math.max(1, ppm * .45); g.stroke(); g.restore();
+    // border
+    if (h.border === 'line') { hwPath(g, h, ppm, m * .1); g.strokeStyle = mix(f[2], f[4], .6); g.lineWidth = Math.max(1, ppm * .35); g.stroke(); hwPath(g, h, ppm, m * .1 + ppm * .3); g.strokeStyle = 'rgba(255,255,255,.35)'; g.lineWidth = Math.max(.5, ppm * .15); g.stroke(); }
+    if (h.border === 'double') { [m * .08, m * .14].forEach(function (i) { hwPath(g, h, ppm, i); g.strokeStyle = mix(f[2], f[4], .6); g.lineWidth = Math.max(1, ppm * .25); g.stroke(); }); }
+    if (h.border === 'beads') { var pts = pathPoints(h, ppm, m * .1, Math.max(5, ppm * 1.6)); pts.forEach(function (p) { var bg = g.createRadialGradient(p[0] - ppm * .15, p[1] - ppm * .15, 0, p[0], p[1], ppm * .5); bg.addColorStop(0, f[3]); bg.addColorStop(1, f[4]); g.fillStyle = bg; g.beginPath(); g.arc(p[0], p[1], Math.max(1, ppm * .45), 0, 7); g.fill(); }); }
+    // fixings
+    if (h.fix === 'rivets' || h.fix === 'screws' || h.fix === 'sew') {
+      hwFixPoints(h, ppm).forEach(function (p) {
+        var r = Math.max(2, ppm * (h.fix === 'sew' ? .75 : 1.6));
+        if (h.fix === 'sew') { g.fillStyle = back ? mix(h.backCol, '#000', .3) : '#e7e2d6'; g.beginPath(); g.arc(p[0], p[1], r, 0, 7); g.fill(); g.strokeStyle = 'rgba(0,0,0,.4)'; g.lineWidth = 1; g.stroke(); return; }
+        g.save(); g.shadowColor = 'rgba(0,0,0,.45)'; g.shadowBlur = ppm * .6; g.shadowOffsetY = ppm * .25;
+        var rg2 = g.createRadialGradient(p[0] - r * .35, p[1] - r * .35, r * .1, p[0], p[1], r); rg2.addColorStop(0, f[3]); rg2.addColorStop(.6, f[2]); rg2.addColorStop(1, f[4]); g.fillStyle = rg2; g.beginPath(); g.arc(p[0], p[1], r, 0, 7); g.fill(); g.restore();
+        if (h.fix === 'screws') { g.strokeStyle = f[4]; g.lineWidth = Math.max(1, r * .22); g.beginPath(); g.moveTo(p[0] - r * .6, p[1] + r * .2); g.lineTo(p[0] + r * .6, p[1] - r * .2); g.stroke(); }
+      });
+    }
+    g.restore();
+  }
+  function pathPoints(h, ppm, inset, step) {
+    var c = E.cv(4, 4).getContext('2d'), out = [], w = h.w * ppm / 2 - inset, hh = h.h * ppm / 2 - inset;
+    // walk the inset outline by sampling a perimeter; good enough for evenly spaced beads
+    var N = 720, pts = [];
+    for (var i = 0; i < N; i++) { var a = i / N * Math.PI * 2, dx = Math.cos(a), dy = Math.sin(a), lo = 0, hi = Math.max(w, hh) * 2; for (var k = 0; k < 16; k++) { var mid = (lo + hi) / 2; hwPath(c, h, ppm, inset); if (c.isPointInPath(dx * mid, dy * mid)) lo = mid; else hi = mid; } pts.push([dx * lo, dy * lo]); }
+    var acc = 0; out.push(pts[0]); for (var j = 1; j < pts.length; j++) { acc += Math.hypot(pts[j][0] - pts[j - 1][0], pts[j][1] - pts[j - 1][1]); if (acc >= step) { out.push(pts[j]); acc = 0; } }
+    return out;
+  }
+  var btCache = {};
+  function backTex(kind, col, ppm) {
+    var key = kind + col + Math.round(ppm * 4); if (btCache[key]) return btCache[key];
+    var S2 = 96, c = E.cv(S2, S2), g = c.getContext('2d'), r = E.rng(11); g.fillStyle = col; g.fillRect(0, 0, S2, S2);
+    if (kind === 'pebble') { for (var i = 0; i < 260; i++) { var x = r() * S2, y = r() * S2, s = 2 + r() * 4; g.fillStyle = r() > .5 ? 'rgba(255,255,255,.07)' : 'rgba(0,0,0,.18)'; g.beginPath(); g.ellipse(x, y, s, s * .8, r() * 3, 0, 7); g.fill(); } }
+    else if (kind === 'suede') { for (var j = 0; j < 2400; j++) { g.fillStyle = r() > .5 ? 'rgba(255,255,255,.07)' : 'rgba(0,0,0,.09)'; g.fillRect(r() * S2, r() * S2, 1, 1); } }
+    else if (kind === 'canvas' || kind === 'denim') { for (var y2 = 0; y2 < S2; y2 += 2) { g.fillStyle = 'rgba(0,0,0,' + (kind === 'denim' ? .16 : .07) + ')'; g.fillRect(0, y2, S2, 1); } for (var x2 = 0; x2 < S2; x2 += 3) { g.fillStyle = kind === 'denim' ? 'rgba(255,255,255,.09)' : 'rgba(0,0,0,.05)'; g.fillRect(x2 + (x2 % 6 ? 1 : 0), 0, 1, S2); } }
+    else { for (var k = 0; k < 900; k++) { g.fillStyle = r() > .5 ? 'rgba(255,255,255,.04)' : 'rgba(0,0,0,.08)'; g.fillRect(r() * S2, r() * S2, 1 + r() * 2, 1); } }
+    return (btCache[key] = c);
+  }
+  function hwDrawView(g, W, H) {
+    var h = HW(), bgc = '#e7e2d6';
+    g.fillStyle = bgc; g.fillRect(0, 0, W, H);
+    var t = E.checkTile({ kind: 'board', cellIn: .5, fill: 'dots', point: 'none', ppi: W / 10, colors: ['#ece6d6', '#ddd5c2'] }); g.fillStyle = g.createPattern(t, 'repeat'); g.fillRect(0, 0, W, H);
+    var pm = h.back !== 'none' ? Math.max(5, Math.min(h.w, h.h) * .22) * 2 + 4 : 6, ppm = Math.min(W * .86 / (h.w + pm), H * .72 / (h.h + pm));
+    drawHW(g, W / 2, H / 2, ppm, true);
+    // a ruler so you can see the real size
+    var u = W / 390, mm10 = 10 * ppm, rx = 14 * u, ry = 30 * u; g.fillStyle = 'rgba(26,26,26,.85)'; g.fillRect(rx, ry, mm10, Math.max(2, 2.5 * u)); g.fillRect(rx, ry - 5 * u, Math.max(1.5, 1.5 * u), 7.5 * u); g.fillRect(rx + mm10 - 1.5 * u, ry - 5 * u, Math.max(1.5, 1.5 * u), 7.5 * u); g.font = '800 ' + Math.round(12 * u) + 'px -apple-system,Arial,sans-serif'; g.textAlign = 'left'; g.fillText('10 mm', rx, ry - 9 * u);
+    g.textAlign = 'left';
+    tag(presetOf(HW_SHAPES, h.shape)[1] + ' plate, ' + h.w + ' x ' + h.h + ' mm (' + mmIn(h.w) + ' x ' + mmIn(h.h) + '), ' + finOf(h.fin)[1].toLowerCase() + ', ' + presetOf(HW_MARK, h.mark)[1].toLowerCase() + '.');
+  }
+  function hwBoard(Wpx) {
+    var h = HW(), W = Wpx || 1275, H = Math.round(W * 11 / 8.5), u = W / 100, c = E.cv(W, H), g = c.getContext('2d'), sys = '-apple-system,BlinkMacSystemFont,"Helvetica Neue",Arial,sans-serif';
+    g.fillStyle = '#f7f4ec'; g.fillRect(0, 0, W, H);
+    var name = S.board.name || ((h.text || 'Custom') + ' plate'); g.fillStyle = '#1a1a1a'; g.font = '900 ' + 5.2 * u + 'px ' + sys; g.textBaseline = 'top'; g.fillText(name.toUpperCase().slice(0, 28), 5 * u, 5 * u);
+    g.font = '600 ' + 1.9 * u + 'px ' + sys; g.fillStyle = '#5a564d'; var date = new Date().toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
+    g.fillText('Hardware spec' + (S.board.by ? '  |  ' + S.board.by : '') + '  |  ' + date, 5 * u, 11.4 * u); g.fillRect(5 * u, 14.6 * u, 90 * u, .25 * u);
+    // big render on the patch
+    var bx = 5 * u, by = 17 * u, bw = 90 * u, bh = 34 * u; g.fillStyle = '#e7e2d6'; g.fillRect(bx, by, bw, bh);
+    var pm = h.back !== 'none' ? Math.max(5, Math.min(h.w, h.h) * .22) * 2 + 4 : 6, ppm = Math.min(bw * .8 / (h.w + pm), bh * .8 / (h.h + pm)); drawHW(g, bx + bw / 2, by + bh / 2, ppm, true);
+    g.strokeStyle = '#1a1a1a'; g.lineWidth = .3 * u; g.strokeRect(bx, by, bw, bh);
+    g.fillStyle = '#1a1a1a'; g.font = '800 ' + 1.6 * u + 'px ' + sys; g.fillText('RENDER, NOT TO SCALE', bx, by + bh + 1.2 * u);
+    // actual size outline with dimensions
+    var ay = by + bh + 6 * u, appm = W / 215.9, aw = h.w * appm, ah = h.h * appm, ax = 5 * u;
+    if (aw < 44 * u && ah < 30 * u) {
+      g.save(); g.translate(ax + aw / 2, ay + ah / 2); hwPath(g, h, appm, 0); g.strokeStyle = '#1a1a1a'; g.lineWidth = .2 * u; g.stroke();
+      if (h.fix === 'rivets' || h.fix === 'screws' || h.fix === 'sew') hwFixPoints(h, appm).forEach(function (p) { g.beginPath(); g.arc(p[0], p[1], (h.fix === 'sew' ? .75 : 1.6) * appm, 0, 7); g.stroke(); });
+      g.restore();
+      g.strokeStyle = '#c8412f'; g.fillStyle = '#c8412f'; g.lineWidth = .15 * u; g.beginPath(); g.moveTo(ax, ay - 1.2 * u); g.lineTo(ax + aw, ay - 1.2 * u); g.moveTo(ax + aw + 1.2 * u, ay); g.lineTo(ax + aw + 1.2 * u, ay + ah); g.stroke();
+      g.font = '800 ' + 1.4 * u + 'px ' + sys; g.fillText(h.w + ' mm', ax + aw / 2 - 2.5 * u, ay - 3.4 * u); g.fillText(h.h + ' mm', ax + aw + 2 * u, ay + ah / 2 - .7 * u);
+      g.fillStyle = '#1a1a1a'; g.font = '800 ' + 1.6 * u + 'px ' + sys; g.fillText('ACTUAL SIZE ON LETTER PAPER', ax, ay + ah + 1.4 * u);
+    } else { g.fillStyle = '#1a1a1a'; g.font = '800 ' + 1.6 * u + 'px ' + sys; g.fillText('Too big to show at actual size here. Use the cut file.', ax, ay); }
+    // facts
+    var fx = 50 * u, fy = by + bh + 5 * u, facts = [['Piece', presetOf(HW_SHAPES, h.shape)[1] + ' plate'], ['Size', h.w + ' x ' + h.h + ' mm (' + mmIn(h.w) + ' x ' + mmIn(h.h) + ')'], ['Thickness', h.thick + ' mm'], ['Metal', finOf(h.fin)[1] + ', ' + presetOf(HW_LOOK, h.look)[1].toLowerCase()], ['Mark', presetOf(HW_MARK, h.mark)[1] + (h.mark === 'enamel' ? ' ' + toHex(h.enamel).toUpperCase() : '')], ['Border', { none: 'None', line: 'Single line', double: 'Double line', beads: 'Beads' }[h.border]], ['Attach', presetOf(HW_FIX, h.fix)[1] + (h.fix === 'rivets' ? ', 3 mm caps' : h.fix === 'screws' ? ', Chicago screws' : '')], ['Patch', h.back === 'none' ? 'None' : presetOf(HW_BACK, h.back)[1] + (h.stitch ? ', stitched edge' : '')]];
+    g.font = '600 ' + 1.7 * u + 'px ' + sys;
+    facts.forEach(function (f2, i) { g.fillStyle = '#8d887d'; g.fillText(f2[0].toUpperCase(), fx, fy + i * 3.5 * u); g.fillStyle = '#1a1a1a'; g.font = '800 ' + 1.7 * u + 'px ' + sys; g.fillText(f2[1], fx + 11 * u, fy + i * 3.5 * u); g.font = '600 ' + 1.7 * u + 'px ' + sys; });
+    // colorway
+    var cy = 92 * u; g.fillStyle = '#1a1a1a'; g.font = '900 ' + 2.1 * u + 'px ' + sys; g.fillText('COLORS', 5 * u, cy);
+    var labels = ['Metal'].concat(h.back !== 'none' ? ['Patch'] : []).concat(h.mark === 'enamel' ? ['Enamel'] : []);
+    hwCols().forEach(function (hx0, i) { var hx = toHex(hx0), x = 5 * u + i * 22 * u, y = cy + 3.4 * u, pt = S.board.pantone[hx]; g.fillStyle = hx; g.fillRect(x, y, 18 * u, 8 * u); g.strokeStyle = '#1a1a1a'; g.lineWidth = .2 * u; g.strokeRect(x, y, 18 * u, 8 * u); g.fillStyle = '#1a1a1a'; g.font = '800 ' + 1.5 * u + 'px ' + sys; g.fillText(labels[i].toUpperCase() + '  ' + hx.toUpperCase(), x, y + 9 * u); g.font = '600 ' + 1.25 * u + 'px ' + sys; g.fillStyle = pt ? '#1a1a1a' : '#b0aa9c'; g.fillText(pt ? 'PANTONE ' + pt : 'Pantone: match it', x, y + 11.2 * u); });
+    var ny = 110 * u; g.fillStyle = '#1a1a1a'; g.font = '900 ' + 2.1 * u + 'px ' + sys; g.fillText('NOTES', 5 * u, ny);
+    g.font = '600 ' + 1.8 * u + 'px ' + sys; wrapText(g, S.board.notes || 'Add notes on the Board tab: bag, placement, quantity.', 5 * u, ny + 3.4 * u, 90 * u, 2.6 * u);
+    g.fillStyle = '#8d887d'; g.font = '600 ' + 1.35 * u + 'px ' + sys; g.fillText('Metal colors on screen are a guide. Ask for a physical sample before a run. Made with NOCIV Repeating Pattern.', 5 * u, H - 4 * u);
+    return c;
+  }
+  // Cut file: the plate outline and holes as real vectors in millimeters. The mark goes in its own PNG.
+  function hwSvg() {
+    var h = HW(), ppm = 10, rec = [], fake = { beginPath: function () { rec = []; }, moveTo: function (x, y) { rec.push('M' + f(x) + ' ' + f(y)); }, lineTo: function (x, y) { rec.push('L' + f(x) + ' ' + f(y)); }, closePath: function () { rec.push('Z'); } };
+    function f(v) { return (Math.round(v / ppm * 100) / 100 + h.w / 2).toFixed(2); }
+    // sample the outline into points (exact enough for laser and CNC, about 0.05 mm)
+    var c = E.cv(4, 4).getContext('2d'), N = 1440, w = h.w * ppm / 2, hh = h.h * ppm / 2, pts = [];
+    for (var i = 0; i < N; i++) { var a = i / N * Math.PI * 2, dx = Math.cos(a), dy = Math.sin(a), lo = 0, hi = Math.max(w, hh) * 2; for (var k = 0; k < 18; k++) { var mid = (lo + hi) / 2; hwPath(c, h, ppm, 0); if (c.isPointInPath(dx * mid, dy * mid)) lo = mid; else hi = mid; } pts.push([dx * lo, dy * lo]); }
+    void fake;
+    var X = function (v) { return (v / ppm + h.w / 2).toFixed(2); }, Y = function (v) { return (v / ppm + h.h / 2).toFixed(2); };
+    var d = pts.map(function (p, j) { return (j ? 'L' : 'M') + X(p[0]) + ' ' + Y(p[1]); }).join('') + 'Z', holes = '';
+    if (h.fix === 'rivets' || h.fix === 'screws' || h.fix === 'sew') hwFixPoints(h, ppm).forEach(function (p) { holes += '<circle cx="' + X(p[0]) + '" cy="' + Y(p[1]) + '" r="' + (h.fix === 'sew' ? .75 : 1.25) + '" fill="none" stroke="#ff0000" stroke-width="0.1"/>'; });
+    return '<?xml version="1.0" encoding="UTF-8"?>\n<svg xmlns="http://www.w3.org/2000/svg" width="' + h.w + 'mm" height="' + h.h + 'mm" viewBox="0 0 ' + h.w + ' ' + h.h + '">\n<!-- NOCIV hardware cut file. Units are millimeters. Red = cut. ' + h.thick + ' mm ' + finOf(h.fin)[1] + '. The mark is in the separate mark PNG: trace it or convert text to outlines in your cutter software. -->\n<path d="' + d + '" fill="none" stroke="#ff0000" stroke-width="0.1"/>\n' + holes + '\n</svg>';
+  }
+  function hwMarkPng() { var h = HW(), ppm = 1000 / 25.4, mk = hwMask(h, ppm), c = E.cv(mk.width, mk.height), g = c.getContext('2d'); g.fillStyle = '#fff'; g.fillRect(0, 0, c.width, c.height); g.save(); g.translate(c.width / 2, c.height / 2); hwPath(g, h, ppm, 0); g.strokeStyle = '#999'; g.lineWidth = 2; g.stroke(); g.restore(); g.drawImage(mk, 0, 0); return c; }
+  function hwPane(p) {
+    var h = HW();
+    if (p === 'hplate') return '<div class="grid g5 tight">' + HW_SHAPES.map(function (x) { return '<button type="button" class="pick" data-hshape="' + x[0] + '" aria-pressed="' + (h.shape === x[0]) + '"><canvas data-mini="hshape:' + x[0] + '" width="120" height="64"></canvas>' + x[1] + '</button>'; }).join('') + '</div>' +
+      stepper('hw', 'Width', h.w, h.w + ' mm  ' + mmIn(h.w)) + stepper('hh', 'Height', h.h, h.h + ' mm  ' + mmIn(h.h));
+    if (p === 'hmark') return '<div class="row"><input class="txt" id="hwtext" maxlength="18" value="' + esc(h.text) + '" placeholder="Brand name" aria-label="Main words"><input class="txt" id="hwline2" maxlength="28" value="' + esc(h.line2) + '" placeholder="Small line" aria-label="Small line"></div>' +
+      '<div class="row"><b>How</b>' + seg('hmk', HW_MARK, h.mark) + '</div>' +
+      '<div class="row"><b>Logo</b>' + seg('hlogo', [['none', 'None'], ['left', 'Beside words'], ['center', 'Above words']], h.logo) + '</div>' +
+      '<div class="hrow">' + FONTS.map(function (x) { return '<button type="button" class="pick" data-hfont="' + x[0] + '" aria-pressed="' + (h.font === x[0]) + '"><span style="font:17px/1.1 \'' + x[0] + '\',sans-serif">' + esc((h.text || 'Aa').slice(0, 3)) + '</span></button>'; }).join('') + '</div>' +
+      (h.mark === 'cut' ? '<p class="note">Cut through letters lose their middles (O, A, R). Use a stencil style font, or ask the cutter to leave small bridges.</p>' : '<p class="note">Logo uses the one from the Logo maker. Clear the words to show just the logo.</p>');
+    if (p === 'hdetail') return '<div class="row"><b>Edge</b>' + seg('hbd', [['none', 'Plain'], ['line', 'Line'], ['double', 'Double'], ['beads', 'Beads']], h.border) + '</div>' +
+      '<div class="row"><b>Attach</b>' + seg('hfix', HW_FIX, h.fix) + '</div>' +
+      '<div class="row"><b>Thick</b>' + seg('hthk', [['1', '1 mm'], ['1.5', '1.5 mm'], ['2', '2 mm'], ['3', '3 mm']], String(h.thick)) + '</div>' +
+      '<p class="note">' + { rivets: 'Rivets go through the plate and the leather. Strongest on bags.', screws: 'Chicago screws come apart, so the plate can be swapped.', prongs: 'Prongs (tabs) push through slits and fold flat behind. Clean front, no holes showing.', sew: 'Sew holes let you stitch it on like a patch.', none: 'Glue only. Fine for display, weak on bags that flex.' }[h.fix] + '</p>';
+    if (p === 'hmetal') return '<div class="grid g4 tight">' + HW_FIN.map(function (x) { return '<button type="button" class="pick" data-hfin="' + x[0] + '" aria-pressed="' + (h.fin === x[0]) + '"><canvas data-mini="hfin:' + x[0] + '" width="120" height="56"></canvas>' + x[1] + '</button>'; }).join('') + '</div>' +
+      '<div class="row"><b>Finish</b>' + seg('hlook', HW_LOOK, h.look) + '</div>' +
+      (h.mark === 'enamel' ? '<div class="row"><b>Enamel</b><div class="mine"><label><input type="color" data-hen="1" value="' + toHex(h.enamel) + '">Fill color</label></div></div>' : '');
+    if (p === 'hback') return '<div class="grid g3 tight hbacks">' + HW_BACK.map(function (x) { return '<button type="button" class="pick" data-hback="' + x[0] + '" aria-pressed="' + (h.back === x[0]) + '"><canvas data-mini="hback:' + x[0] + '" width="120" height="48"></canvas>' + x[1] + '</button>'; }).join('') + '</div>' +
+      (h.back !== 'none' ? '<div class="row"><b>Color</b><div class="sw hwcols">' + HW_LEATHER.map(function (c) { return '<button type="button" data-hcol="' + c + '" style="background:' + c + '" aria-label="' + c + '" aria-pressed="' + (h.backCol === c) + '"></button>'; }).join('') + '<label class="hwpick"><input type="color" data-hbc="1" value="' + toHex(h.backCol) + '">+</label></div></div><div class="row"><b>Stitch</b>' + seg('hst', [['1', 'Stitched edge'], ['0', 'No stitch']], h.stitch ? '1' : '0') + '</div>' : '');
+    return '';
+  }
+  var HW_WHERE = [
+    ['SendCutSend', 'Laser cut brass, copper, steel and aluminum. Upload the SVG, no minimum.', 'https://sendcutsend.com'],
+    ['OSH Cut', 'Instant quotes for laser cut metal from one part.', 'https://www.oshcut.com'],
+    ['Ponoko', 'Laser cut and engraved metal and acrylic, small runs.', 'https://www.ponoko.com'],
+    ['Local engraver', 'Trophy and sign shops engrave brass plates fast and cheap. Bring the mark PNG.', 'https://www.google.com/search?q=brass+plate+engraving+near+me']
+  ];
+  function hwMini(c, what, v) {
+    var g = c.getContext('2d'), W = c.width, H = c.height, h = Object.assign({}, HW());
+    g.fillStyle = '#fff'; g.fillRect(0, 0, W, H);
+    if (what === 'hback') { if (v === 'none') { g.fillStyle = '#e7e2d6'; g.fillRect(0, 0, W, H); return; } var col = presetOf(HW_BACK, v)[2]; g.fillStyle = g.createPattern(backTex(v, col, 4), 'repeat'); g.fillRect(0, 0, W, H); return; }
+    var saved = S.hw; S.hw = Object.assign({}, h, { text: '', line2: '', logo: 'none', back: 'none', border: 'none', fix: 'none' });
+    if (what === 'hshape') { S.hw.shape = v; S.hw.w = v === 'circle' || v === 'badge' || v === 'hex' || v === 'shield' || v === 'diamond' ? 30 : 56; S.hw.h = 30; }
+    if (what === 'hfin') { S.hw.fin = v; S.hw.shape = 'rounded'; S.hw.w = 56; S.hw.h = 24; }
+    try { drawHW(g, W / 2, H / 2 - 2, Math.min(W * .8 / S.hw.w, H * .8 / S.hw.h), false); } finally { S.hw = saved; }
+  }
+
   /* ---------- tiles ---------- */
   var tcache = {};
   function stateKey() { return JSON.stringify([S.kind, colors(), S.logo, S.rep, S.plaid, S.stripes, S.checks, S.camo, !!PIC && PIC.width + 'x' + PIC.height + (PIC._id || '')]); }
@@ -150,6 +388,7 @@
     if (k === 'plaid') return (presetOf(E.PLAIDS, S.plaid.preset) || [0, 'My plaid'])[1] + ' plaid';
     if (k === 'stripes') return (presetOf(E.STRIPES, S.stripes.preset) || [0, 'My stripe'])[1];
     if (k === 'checks') return (presetOf(E.CHECKS, S.checks.kind) || [0, 'Checks'])[1];
+    if (k === 'hardware') return (HW().text || 'Custom') + ' plate';
     return (presetOf(E.CAMOS, S.camo.type) || [0, 'Camo'])[1] + ' camo';
   }
 
@@ -173,6 +412,7 @@
     $('views').hidden = !S.kind || S.step === 4;
     if (S.step === 4 && S.kind) { var b = boardCanvas(900); var k = Math.min(W / b.width, H / b.height) * .96; g.fillStyle = '#e7e2d6'; g.fillRect(0, 0, W, H); g.drawImage(b, (W - b.width * k) / 2, (H - b.height * k) / 2, b.width * k, b.height * k); tag('Your mood board for the tech pack'); return; }
     if (!S.kind) { welcome(g, W, H); tag('Pick what you are making'); return; }
+    if (S.kind === 'hardware') { $('views').hidden = true; hwDrawView(g, W, H); return; }
     var across = { close: 3, swatch: 10, yard: 42 }[S.view] || 10, ppi = W / across;
     if (!fillPattern(g, W, H, ppi, S.step >= 3 || S.view === 'close')) { g.fillStyle = '#e7e2d6'; g.fillRect(0, 0, W, H); tag(S.kind === 'picture' ? 'Choose a picture to repeat' : 'Loading'); return; }
     if (S.view === 'yard') { g.fillStyle = 'rgba(26,26,26,.85)'; for (var x = 0; x <= 42; x += 6) { var px = x * ppi; g.fillRect(px, 0, Math.max(1, ppi * .05), ppi * (x % 12 ? .6 : 1.2)); } }
@@ -200,11 +440,12 @@
       if (k === 'stripes') return [['sstyle', 'Style', 'style'], ['bands', 'Bands', 'threads'], ['lay', 'Lay', 'size']];
       if (k === 'checks') return [['cstyle', 'Style', 'style'], ['fill', 'Fill', 'fill'], ['corner', 'Corners', 'corner'], ['csize', 'Size', 'size']];
       if (k === 'camo') return [['mstyle', 'Style', 'style'], ['msize', 'Size', 'size']];
+      if (k === 'hardware') return [['hplate', 'Plate', 'plate'], ['hmark', 'Mark', 'words'], ['hdetail', 'Details', 'edge']];
       return [['what', 'What', 'spark']];
     }
-    if (step === 2) return [['pals', 'Palettes', 'pal'], ['mine', 'My colors', 'mine']];
-    if (step === 3) return [['fabric', 'Fabric', 'cloth']];
-    return [['board', 'Board', 'board'], ['files', 'Files', 'file'], ['where', 'Print it', 'print']];
+    if (step === 2) return S.kind === 'hardware' ? [['hmetal', 'Metal', 'pal']] : [['pals', 'Palettes', 'pal'], ['mine', 'My colors', 'mine']];
+    if (step === 3) return S.kind === 'hardware' ? [['hback', 'Patch', 'cloth']] : [['fabric', 'Fabric', 'cloth']];
+    return [['board', 'Board', 'board'], ['files', 'Files', 'file'], ['where', S.kind === 'hardware' ? 'Make it' : 'Print it', 'print']];
   }
   function curPart() { var ps = partsFor(S.step), p = S.part[S.step + ':' + S.kind]; return ps.some(function (x) { return x[0] === p; }) ? p : ps[0][0]; }
   function drawBar() {
@@ -222,7 +463,8 @@
   function mini(id) { return '<canvas data-mini="' + id + '" width="160" height="84"></canvas>'; }
   function paneHtml(p) {
     var cols = colors();
-    if (p === 'what') return '<p class="h">What are you making?</p><div class="grid g3">' + KINDS.map(function (k) { return '<button type="button" class="pick big" data-kind="' + k[0] + '" aria-pressed="' + (S.kind === k[0]) + '">' + ico(KIND_ICON[k[0]]) + k[1] + '<small>' + k[2] + '</small></button>'; }).join('') + '</div>';
+    if (p.charAt(0) === 'h' && p !== 'help') { var hp = hwPane(p); if (hp) return hp; }
+    if (p === 'what') return '<p class="h">What are you making?</p><div class="grid g4 kinds">' + KINDS.map(function (k) { return '<button type="button" class="pick big" data-kind="' + k[0] + '" aria-pressed="' + (S.kind === k[0]) + '">' + ico(KIND_ICON[k[0]]) + k[1] + '<small>' + k[2] + '</small></button>'; }).join('') + '</div>';
     if (p === 'shape') return '<p class="h">Pick a shape for your logo</p>' + picks(SHAPES, S.logo.shape, 'shape', 5, function (x) { return mini('shape:' + x[0]); }, true) + '<div class="row" style="margin-top:8px"><b>Inner ring</b>' + seg('ring', [['0', 'Off'], ['1', 'On']], S.logo.ring ? '1' : '0') + '</div>';
     if (p === 'words') return '<div class="row"><b>Words</b><input class="txt" id="ltext" maxlength="14" value="' + esc(S.logo.text) + '" placeholder="Your initials" autocomplete="off"></div><p class="h">Letters</p>' + picks(FONTS, S.logo.font, 'font', 4, function (x) { return '<span style="font:19px/1.1 \'' + x[0] + '\',sans-serif">' + esc((S.logo.text || 'Aa').slice(0, 3)) + '</span>'; }, true);
     if (p === 'icon') return '<p class="h">Add a little picture</p>' + picks(ICONS, S.logo.icon, 'icon', 5, function (x) { return mini('icon:' + x[0]); }, true) + '<p class="note">Colors come from the Color step. Your logo saves as a PNG on the Board.</p>';
@@ -249,6 +491,8 @@
     if (p === 'mine') return '<p class="h">Your own colors</p><div class="mine">' + cols.map(function (h, i) { return '<label><input type="color" data-ci="' + i + '" value="' + toHex(h) + '">' + colorName(i) + '</label>'; }).join('') + '</div><p class="note">' + (S.kind === 'logo' || S.kind === 'picture' ? 'Ground is the fabric color, Ink is your logo or one color picture.' : 'Each number is one color in your pattern.') + '</p>';
     if (p === 'fabric') { var sug = E.SUGGEST[PALKEY[S.kind] === 'repeat' ? 'repeat' : PALKEY[S.kind]] || []; return '<div class="grid g4 tight fabs">' + E.FABRICS.map(function (f) { return '<button type="button" class="pick' + (sug.indexOf(f[0]) >= 0 ? ' fit' : '') + '" data-fab="' + f[0] + '" aria-pressed="' + (S.fabric === f[0]) + '">' + mini('fab:' + f[0]) + esc(f[1].replace('Cotton ', '').replace('Jersey knit', 'Jersey')) + '</button>'; }).join('') + '</div><p class="note">' + esc((presetOf(E.FABRICS, S.fabric) || [0, 0, ''])[2]) + ' Red dot = good fit. ' + esc(E.SUGGEST_WHY[PALKEY[S.kind] === 'repeat' ? 'repeat' : PALKEY[S.kind]] || '') + '</p>'; }
     if (p === 'board') return '<div class="row"><input class="txt" data-bd="name" value="' + esc(S.board.name) + '" placeholder="Name: ' + esc(repeatName()) + '" aria-label="Name"><input class="txt" data-bd="by" value="' + esc(S.board.by) + '" placeholder="Made by" aria-label="Made by"></div><div class="row"><input class="txt" aria-label="Notes" data-bd="notes" value="' + esc(S.board.notes) + '" placeholder="Notes: season, garment, trims"></div><p class="h" style="margin-top:4px">Pantone codes, if you matched them (? explains)</p><div class="pcodes">' + cols.map(function (h, i) { return '<div class="pcode"><i style="background:' + h + '"></i><code>' + toHex(h).toUpperCase() + '</code><input data-pt="' + i + '" value="' + esc(S.board.pantone[toHex(h)] || '') + '" placeholder="19-4052 TCX"></div>'; }).join('') + '</div>';
+    if (p === 'files' && S.kind === 'hardware') return '<button type="button" class="btn dark" data-act="make">Make my files</button><p class="note" style="margin:6px 0 8px">Cut file (SVG in mm), the mark at 1000 DPI, a render and the spec sheet.</p><div class="files" id="files"></div>';
+    if (p === 'where' && S.kind === 'hardware') return '<div class="list two">' + HW_WHERE.map(function (w) { return '<a href="' + w[2] + '" target="_blank" rel="noopener"><b>' + w[0] + '</b>' + w[1] + '</a>'; }).join('') + '</div><p class="note">Gold color: cut it in brass, or ask a plater for gold plating after. Ask for one sample first.</p>';
     if (p === 'files') { var ti = tileInches(); return '<button type="button" class="btn dark" data-act="make">Make my files</button><p class="note" style="margin:6px 0 8px">Tile repeats every ' + fmtIn(ti[0]) + ' by ' + fmtIn(ti[1]) + ', saved at 150 DPI (' + Math.round(ti[0] * 150) + ' by ' + Math.round(ti[1] * 150) + ' px), ready for fabric printers.</p><div class="files" id="files"></div>'; }
     if (p === 'where') return '<div class="list two">' + WHERE.map(function (w) { return '<a href="' + w[2] + '" target="_blank" rel="noopener"><b>' + w[0] + '</b>' + w[1] + '</a>'; }).join('') + '</div><p class="note">Prices checked Nov 2026. Upload as Basic repeat.</p>';
     return '';
@@ -273,6 +517,7 @@
       var id = c.dataset.mini.split(':'), what = id[0], v = id[1], g = c.getContext('2d'), W = c.width, H = c.height, t = null;
       g.fillStyle = '#fff'; g.fillRect(0, 0, W, H);
       try {
+        if (what.charAt(0) === 'h') { hwMini(c, what, v); return; }
         if (what === 'shape' || what === 'icon') { var L = Object.assign({}, S.logo); if (what === 'shape') L.shape = v; else { L.icon = v; } var lg = renderLogo(L, cols, 140); g.drawImage(lg, (W - 80) / 2, 2, 80, 80); return; }
         if (what === 'rep') { var m = S.kind === 'logo' ? renderLogo(S.logo, cols, 120) : (picMotif(cols) || renderLogo(S.logo, cols, 120)); t = E.repeatTile({ motif: m, type: v, tileIn: 1, ppi: 26, scale: .62, angle: 0, flip: 'none', bg: cols[0], seed: 7, density: 1 }); }
         else if (what === 'plaid') { var pr = presetOf(E.PLAIDS, v); t = E.plaidTile({ sett: pr[3], mirror: pr[4], threadIn: 1 / 36, ppi: 50, colors: cols, weave: 'twill' }); }
@@ -288,7 +533,7 @@
   }
 
   /* ---------- taps ---------- */
-  var DEF = { logo: 'shape', picture: 'pic', plaid: 'pstyle', stripes: 'sstyle', checks: 'cstyle', camo: 'mstyle' };
+  var DEF = { logo: 'shape', picture: 'pic', plaid: 'pstyle', stripes: 'sstyle', checks: 'cstyle', camo: 'mstyle', hardware: 'hplate' };
   $('bbar').addEventListener('click', function (e) { var b = e.target.closest('button[data-s]'); if (b && !b.disabled) go(+b.dataset.s); });
   $('parts').addEventListener('click', function (e) { var b = e.target.closest('button[data-p]'); if (!b) return; S.part[S.step + ':' + S.kind] = b.dataset.p; $('con').classList.remove('down'); keep(); render(); });
   $('drop').addEventListener('click', function () { var d = $('con').classList.toggle('down'); this.setAttribute('aria-label', d ? 'Show the controls' : 'Hide the controls'); draw(); });
@@ -301,12 +546,19 @@
     sscale: function (d) { S.stripes.scale = clamp(Math.round((S.stripes.scale + d * .1) * 10) / 10, .3, 4); },
     cell: function (d) { S.checks.cellIn = clamp(Math.round((S.checks.cellIn + d * .125) * 1000) / 1000, .125, 3); },
     cscale: function (d) { S.camo.scale = clamp(Math.round((S.camo.scale + d * .1) * 10) / 10, .4, 2.5); },
-    ctile: function (d) { S.camo.tileIn = clamp(S.camo.tileIn + d * 2, 4, 24); }
+    ctile: function (d) { S.camo.tileIn = clamp(S.camo.tileIn + d * 2, 4, 24); },
+    hw: function (d) { var h = HW(); h.w = clamp(h.w + d * (h.w >= 40 ? 5 : 2), 10, 200); },
+    hh: function (d) { var h = HW(); h.h = clamp(h.h + d * (h.h >= 40 ? 5 : 2), 8, 200); }
   };
   function clamp(v, a, b) { return Math.max(a, Math.min(b, v)); }
   $('pane').addEventListener('click', function (e) {
     var b = e.target.closest('button'); if (!b) return; var d = b.dataset, cols = colors();
     if (d.kind) { var was = S.kind; S.kind = d.kind; if (d.kind === 'picture' && !PIC) { $('file').click(); } keep(); if (was !== d.kind || true) { S.step = 1; S.part['1:' + S.kind] = S.part['1:' + S.kind] || DEF[S.kind]; } render(); return; }
+    if (d.hshape) { HW().shape = d.hshape; if (/circle|badge|hex|shield|diamond/.test(d.hshape) && HW().w > HW().h * 1.4) HW().h = HW().w = Math.max(HW().h, 30); if (/rect|rounded|pill/.test(d.hshape) && HW().w === HW().h) { HW().w = 60; HW().h = 20; } return changed(true); }
+    if (d.hfont) { HW().font = d.hfont; return changed(true); }
+    if (d.hfin) { HW().fin = d.hfin; return changed(true); }
+    if (d.hback) { HW().back = d.hback; if (d.hback !== 'none') HW().backCol = presetOf(HW_BACK, d.hback)[2]; return changed(true); }
+    if (d.hcol) { HW().backCol = d.hcol; return changed(true); }
     if (d.shape) { S.logo.shape = d.shape; return changed(true); }
     if (d.font) { S.logo.font = d.font; return changed(true); }
     if (d.icon) { S.logo.icon = d.icon; return changed(true); }
@@ -333,6 +585,7 @@
     var sg = b.closest('[data-sg]');
     if (sg && d.v != null) {
       var k = sg.dataset.sg, v = d.v;
+      if (k.charAt(0) === 'h' && k !== 'hx') { var hw = HW(); if (k === 'hmk') hw.mark = v; else if (k === 'hlogo') hw.logo = v; else if (k === 'hbd') hw.border = v; else if (k === 'hfix') hw.fix = v; else if (k === 'hthk') hw.thick = +v; else if (k === 'hlook') hw.look = v; else if (k === 'hst') hw.stitch = v === '1'; return changed(true); }
       if (k === 'ring') S.logo.ring = v === '1'; else if (k === 'white') S.rep.white = v === '1'; else if (k === 'tint') S.rep.tint = v === '1';
       else if (k === 'flip') S.rep.flip = v; else if (k === 'fade') S.rep.fade = +v; else if (k === 'pmirror') S.plaid.mirror = v === '1';
       else if (k === 'weave') S.plaid.weave = v; else if (k === 'sdir') S.stripes.dir = v;
@@ -345,6 +598,9 @@
   $('pane').addEventListener('input', function (e) {
     var t = e.target;
     if (t.id === 'ltext') { S.logo.text = t.value; keep(); draw(); clearTimeout(t._tm); t._tm = setTimeout(function () { var s = $('pane').scrollTop; $('pane').innerHTML = paneHtml(curPart()); afterPane(); $('pane').scrollTop = s; var n = $('ltext'); if (n) { n.focus(); n.setSelectionRange(n.value.length, n.value.length); } }, 700); return; }
+    if (t.id === 'hwtext' || t.id === 'hwline2') { HW()[t.id === 'hwtext' ? 'text' : 'line2'] = t.value; keep(); draw(); return; }
+    if (t.dataset.hen) { HW().enamel = t.value; keep(); draw(); return; }
+    if (t.dataset.hbc) { HW().backCol = t.value; keep(); draw(); return; }
     if (t.dataset.ci != null) { colors()[+t.dataset.ci] = t.value; S.palBy[S.kind] = ''; keep(); draw(); return; }
     if (t.dataset.bd) { S.board[t.dataset.bd] = t.value; keep(); draw(); return; }
     if (t.dataset.pt != null) { S.board.pantone[toHex(colors()[+t.dataset.pt])] = t.value; keep(); draw(); }
@@ -357,6 +613,7 @@
 
   /* ---------- the mood board / tech pack ---------- */
   function boardCanvas(Wpx) {
+    if (S.kind === 'hardware') return hwBoard(Wpx);
     var W = Wpx || 1275, H = Math.round(W * 11 / 8.5), u = W / 100, c = E.cv(W, H), g = c.getContext('2d'), cols = colors();
     g.fillStyle = '#f7f4ec'; g.fillRect(0, 0, W, H);
     var name = S.board.name || repeatName(), sys = '-apple-system,BlinkMacSystemFont,"Helvetica Neue",Arial,sans-serif';
@@ -404,6 +661,20 @@
     var out = $('files'); if (!out) return; out.innerHTML = '<p class="note">Making...</p>';
     setTimeout(function () {
       var jobs = [];
+      if (S.kind === 'hardware') {
+        var hb = (S.board.name || (HW().text || 'plate') + '-plate').toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '');
+        var rc = E.cv(1600, 1600), rpm = Math.min(1400 / (HW().w + 30), 1400 / (HW().h + 30)); drawHW(rc.getContext('2d'), 800, 800, rpm, true);
+        var pc = E.cv(Math.ceil(HW().w * 20 + 80), Math.ceil(HW().h * 20 + 80)); drawHW(pc.getContext('2d'), pc.width / 2, pc.height / 2, 20, false);
+        var hbd = hwBoard(1275), mk = hwMarkPng();
+        jobs.push(Promise.resolve({ label: 'Cut file SVG (mm)', name: hb + '-cut.svg', blob: new Blob([hwSvg()], { type: 'image/svg+xml' }) }));
+        jobs.push(E.pngWithDpi(mk, 1000).then(function (b) { return { label: 'Mark PNG (1000 DPI)', name: hb + '-mark.png', blob: b }; }));
+        jobs.push(new Promise(function (r) { rc.toBlob(function (b) { r({ label: 'Render on patch', name: hb + '-render.png', blob: b }); }, 'image/png'); }));
+        jobs.push(new Promise(function (r) { pc.toBlob(function (b) { r({ label: 'Plate only PNG', name: hb + '-plate.png', blob: b }); }, 'image/png'); }));
+        jobs.push(new Promise(function (r) { hbd.toBlob(function (b) { r({ label: 'Spec sheet PNG', name: hb + '-spec.png', blob: b }); }, 'image/png'); }));
+        jobs.push(Promise.resolve({ label: 'Spec sheet PDF', name: hb + '-spec.pdf', blob: E.pdfOf(hbd, 8.5, 11) }));
+        Promise.all(jobs).then(function (fs) { FILES = fs; out.innerHTML = fs.map(function (f, i) { return '<button type="button" class="btn" data-f="' + i + '">Save ' + f.label + '</button>'; }).join(''); });
+        return;
+      }
       tcache = {}; var tile = tileAt(150, true); if (!tile) { out.innerHTML = '<p class="note">Add your picture first.</p>'; return; }
       var base = (S.board.name || repeatName() || 'pattern').toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '');
       jobs.push(E.pngWithDpi(tile, 150).then(function (b) { return { label: 'Tile (150 DPI)', name: base + '-tile.png', blob: b }; }));
@@ -431,6 +702,7 @@
     ['Sourcing materials cheaply', '<ul><li><b>Swatch first, always.</b> Mood Fabrics swatches are about $1 each. It saves you from a $60 mistake.</li><li><b>Jobbers</b> buy leftover mill fabric and sell it with very low minimums, often one yard. Cheap, but you usually cannot reorder, so buy everything you need at once.</li><li><b>Deadstock</b> is unused fabric from big brands. FabScrap (NYC) and fabric districts like LA sell it for less. Great for drops and samples.</li><li><b>Mill stock programs</b> (ready-made colors) have lower minimums than custom fabric.</li><li>Wider fabric (58 to 60 in) can save yardage. Count yards per piece: a tee is about 1 to 1.5 yd, a hoodie about 2 yd, a tote under 1 yd.</li><li>Buy the whole order in one dye lot, and prewash a sample to check shrinkage.</li></ul>'],
     ['Fabric guide', '<ul>' + E.FABRICS.map(function (f) { return '<li><b>' + f[1] + '</b>: ' + f[2] + '</li>'; }).join('') + '</ul>'],
     ['Color and Pantone', '<ul><li>Fabric printers print what your file says in sRGB. The hex code is the real color of your file.</li><li>Pantone codes (like 19-4052 TCX for fabric) are a shared language with factories. Find the closest match with the Pantone app or a printed Pantone guide, then type it on the Board. We do not ship Pantone\'s library, it is theirs.</li><li>The CMYK numbers on the board are a starting point for paper printing, not fabric.</li></ul>'],
+    ['Hardware, explained', '<ul><li><b>Plates and emblems</b> are cut from sheet metal, usually brass 1 to 2 mm thick. The cut file is the outline in millimeters.</li><li><b>Gold color</b>: raw brass is already gold toned. Real gold is plating over brass, done by a plater after cutting. PVD is a tougher color coat.</li><li><b>Engraved</b> marks are lasered or etched into the face. <b>Raised</b> marks need stamping or casting, which means a mold and higher minimums. <b>Cut through</b> letters show the leather behind, keep the middles of O and A with bridges. <b>Enamel</b> fills a recessed area with color.</li><li><b>Attaching</b>: rivets through plate and leather (strongest), Chicago screws (removable), prongs that fold behind (clean front), or sew holes.</li><li><b>Small runs</b>: laser cut services do one piece. Stamped or cast hardware from factories usually starts around a few hundred pieces, ask for a sample first.</li><li>Keep your design your own. Do not copy a luxury house plate or logo.</li></ul>'],
     ['Make it yours', '<ul><li>Famous checks, monograms and camos belong to the brands that made them. Copying them can get your work taken down.</li><li>Use the structure (a camel check, a two-tone checker, a club stripe), then change the colors, the proportions and put your own logo at the corners. That is how it becomes yours.</li></ul>']
   ];
   function openHelp() {
@@ -454,5 +726,5 @@
     if (document.fonts && document.fonts.ready) document.fonts.ready.then(function () { tcache = {}; draw(); afterPane(); });
     render();
   });
-  window.__pattern = { S: S, tileAt: tileAt, boardCanvas: boardCanvas, render: render };
+  window.__pattern = { S: S, tileAt: tileAt, boardCanvas: boardCanvas, render: render, hwSvg: hwSvg, go: go };
 })();
