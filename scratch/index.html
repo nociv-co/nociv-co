@@ -1,0 +1,139 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<!-- Site Created & Designed by Jasilyn A. Anderson | NOCIV.CO -->
+<title>From Scratch | NOCIV.CO</title>
+<meta name="description" content="From Scratch. Build your own website and own the files. Pick a base, make it yours, put it online for about $11 a year. Free kit, no sign up.">
+<link rel="stylesheet" href="/style.css?v=4.4">
+<link rel="manifest" href="/manifest.webmanifest">
+<meta name="theme-color" content="#f2ecd6">
+<link rel="apple-touch-icon" href="/icons/shop-180.png">
+<link rel="icon" type="image/png" sizes="192x192" href="/icons/shop-192.png">
+<style>
+@font-face { font-family: FSAnton; src: url('/fonts/anton.woff') format('woff'); font-display: swap; }
+.fs-title { margin: 0; font-family: FSAnton, Impact, sans-serif; font-size: clamp(3rem, 15vw, 4.6rem); line-height: .9; text-transform: uppercase; letter-spacing: .02em; }
+.fs-tape { display: inline-block; background: rgba(242,194,48,.75); padding: 2px 8px; font-weight: 800; transform: rotate(-1deg); }
+a.tool-card { text-decoration: none; color: inherit; }
+.fs-box { max-width: 900px; margin: 34px auto 0; background: var(--bn); position: relative; padding: 28px 18px 22px; box-shadow: 0 6px 16px rgba(0,0,0,0.16); }
+.fs-box::before { content: ''; position: absolute; top: -11px; left: 22px; width: 64px; height: 22px; background: rgba(242,194,48,.75); transform: rotate(-3deg); }
+.fs-box h2 { margin: 0 0 6px; font-family: FSAnton, Impact, sans-serif; font-size: 1.8rem; text-transform: uppercase; letter-spacing: .03em; line-height: 1; }
+.fs-box p { margin: 6px 0; line-height: 1.5; }
+.fs-cost { width: 100%; border-collapse: collapse; margin-top: 12px; font-size: .95rem; }
+.fs-cost th, .fs-cost td { text-align: left; padding: 10px 8px; border-bottom: 1.5px solid rgba(26,26,26,.15); vertical-align: top; }
+.fs-cost th { font-size: .78rem; text-transform: uppercase; letter-spacing: .06em; }
+.fs-cost td:first-child { font-weight: 800; }
+.fs-cost .win { background: rgba(242,194,48,.35); }
+.fs-small { font-size: .82rem; color: var(--bm); }
+.fs-acc { display: grid; gap: 10px; margin-top: 12px; }
+.fs-acc div { border: 2px solid var(--bi); padding: 12px 14px; background: #fff; }
+.fs-acc b { display: block; font-size: 1.05rem; }
+.fs-acc span { font-size: .92rem; line-height: 1.45; display: block; margin-top: 2px; }
+.fs-steps { counter-reset: s; list-style: none; padding: 0; margin: 14px 0 0; }
+.fs-steps > li { counter-increment: s; position: relative; padding: 14px 0 14px 52px; border-top: 1.5px dashed rgba(26,26,26,.25); line-height: 1.5; }
+.fs-steps > li::before { content: counter(s); position: absolute; left: 0; top: 12px; width: 38px; height: 38px; display: grid; place-items: center; background: var(--bi); color: #f2ecd6; font-family: FSAnton, Impact, sans-serif; font-size: 1.2rem; }
+.fs-steps b { display: block; font-size: 1.05rem; margin-bottom: 2px; }
+.fs-steps em { font-style: normal; font-weight: 800; background: rgba(242,194,48,.45); padding: 0 4px; }
+.fs-go { display: inline-flex; align-items: center; justify-content: center; min-height: 52px; padding: 0 24px; margin-top: 14px; background: var(--bi); color: #f2ecd6; font-weight: 900; text-transform: uppercase; letter-spacing: .06em; text-decoration: none; box-shadow: 4px 4px 0 rgba(242,194,48,.9); }
+</style>
+<script>if('serviceWorker' in navigator){window.addEventListener('load',function(){navigator.serviceWorker.register('/sw.js').catch(function(){})})}</script>
+</head>
+<body>
+
+<header class="nociv-header">
+  <a href="/index.html"><img class="torn-header-img" src="/header.png" alt="NOCIV.CO: Nothing Of Civilization"></a>
+</header>
+
+<nav class="tabs">
+  <a href="/about.html" class="img-tab"><img src="/nav-about.png" alt="About"></a>
+  <a href="/shop.html" class="img-tab"><img src="/nav-shop.png" alt="Shop"></a>
+  <a href="/creator-tools.html" class="img-tab active"><img src="/nav-tools.png" alt="Tools"></a>
+  <a href="/community.html" class="img-tab"><img src="/base-button.png" alt="Base"></a>
+</nav>
+
+<section class="build">
+  <div class="build-hero">
+    <h1 class="fs-title">From Scratch</h1>
+    <p class="build-quote">Build your own website. <span class="fs-tape">Own every file.</span></p>
+    <ul class="build-points"><li>Free kit</li><li>No sign up</li><li>About $11 a year</li><li>Works on your phone</li></ul>
+    <p class="build-lede">Pick a base. Name your tabs, add your stuff, choose how it looks and moves. Download it and put it online. It is yours, not rented.</p>
+  </div>
+
+  <div class="tool-grid">
+    <a class="tool-card" href="/scratch/studio.html?base=shop">
+      <span class="tool-art"><svg viewBox="0 0 320 180" xmlns="http://www.w3.org/2000/svg" aria-hidden="true" preserveAspectRatio="xMidYMid slice"><rect width="320" height="180" fill="#e2d8c2"/><g stroke="#1a1a1a" stroke-width="2.5"><rect x="96" y="18" width="128" height="160" fill="#fff"/><rect x="96" y="18" width="128" height="20" fill="#1a1a1a"/><rect x="106" y="48" width="50" height="58" fill="#c8412f"/><rect x="164" y="48" width="50" height="58" fill="#f2c230"/><rect x="106" y="124" width="50" height="40" fill="#d6dccf"/><rect x="164" y="124" width="50" height="40" fill="#e9e2cc"/></g><g fill="#1a1a1a"><rect x="106" y="110" width="34" height="5"/><rect x="164" y="110" width="28" height="5"/></g></svg></span>
+      <span class="tool-body">
+        <span class="tool-name"><b>01</b>Shop</span>
+        <span class="tool-desc">Sell anything. A home page, a page for every product with photos, shipping info and a buy button.</span>
+        <span class="tool-foot"><span class="tool-get">Inside: products, filters, buy links</span><span class="tool-open">Open</span></span>
+      </span>
+    </a>
+    <a class="tool-card" href="/scratch/studio.html?base=archive">
+      <span class="tool-art"><svg viewBox="0 0 320 180" xmlns="http://www.w3.org/2000/svg" aria-hidden="true" preserveAspectRatio="xMidYMid slice"><rect width="320" height="180" fill="#d6dccf"/><g stroke="#1a1a1a" stroke-width="2.5"><rect x="40" y="24" width="70" height="92" fill="#fff"/><rect x="120" y="24" width="70" height="56" fill="#c8412f"/><rect x="200" y="24" width="80" height="110" fill="#e9e2cc"/><rect x="40" y="124" width="70" height="44" fill="#f2c230"/><rect x="120" y="88" width="70" height="80" fill="#fff"/></g><text x="75" y="76" font-family="Georgia,serif" font-size="26" font-style="italic" text-anchor="middle" fill="#1a1a1a">Aa</text></svg></span>
+      <span class="tool-body">
+        <span class="tool-name"><b>02</b>Archive</span>
+        <span class="tool-desc">Show your work. Portfolio, sketchbook, bio and contact. Prices if you want them, none if you do not.</span>
+        <span class="tool-foot"><span class="tool-get">Inside: work grid, gallery, about</span><span class="tool-open">Open</span></span>
+      </span>
+    </a>
+    <a class="tool-card" href="/scratch/studio.html?base=app">
+      <span class="tool-art"><svg viewBox="0 0 320 180" xmlns="http://www.w3.org/2000/svg" aria-hidden="true" preserveAspectRatio="xMidYMid slice"><rect width="320" height="180" fill="#1a1a1a"/><g stroke="#f2ecd6" stroke-width="2.5"><rect x="110" y="14" width="100" height="176" rx="18" fill="#0f1115"/><rect x="122" y="40" width="76" height="40" rx="10" fill="#7cf29a"/><rect x="122" y="88" width="35" height="35" rx="8" fill="none"/><rect x="163" y="88" width="35" height="35" rx="8" fill="none"/></g><g fill="#f2ecd6"><circle cx="132" cy="160" r="5"/><circle cx="153" cy="160" r="5"/><circle cx="174" cy="160" r="5"/><circle cx="195" cy="160" r="5"/></g></svg></span>
+      <span class="tool-body">
+        <span class="tool-name"><b>03</b>App</span>
+        <span class="tool-desc">Feels like a phone app. A bottom bar with icons, cards, slide transitions. Something new.</span>
+        <span class="tool-foot"><span class="tool-get">Inside: bottom bar, feed, links</span><span class="tool-open">Open</span></span>
+      </span>
+    </a>
+  </div>
+
+  <div class="fs-box">
+    <h2>What you can change</h2>
+    <p>Every base can turn into any other. Name your tabs anything and add as many as you need. Each tab is a kind of page: Home, Items, Page, Gallery, Links or Contact.</p>
+    <p>Choose the menu: tabs on top, a menu button, an app bottom bar or a side list. Choose how pages change: fade, slide, rise or zoom. Pick type, colors, corners, spacing, layout and photo shape. The studio checks that your text is readable.</p>
+  </div>
+
+  <div class="fs-box">
+    <h2>What it costs</h2>
+    <table class="fs-cost">
+      <thead><tr><th></th><th>From Scratch</th><th>Shopify Basic</th></tr></thead>
+      <tbody>
+        <tr><td>Site</td><td class="win">$0. Free hosting on Cloudflare Pages</td><td>$39 a month, or $29 a month paid yearly</td></tr>
+        <tr><td>Domain</td><td class="win">About $11 a year for .com, sold at cost on Cloudflare</td><td>Extra</td></tr>
+        <tr><td>Per sale</td><td>Stripe: 2.9% + 30¢ per US card</td><td>Card fees too</td></tr>
+        <tr><td>First year</td><td class="win">About $11</td><td>$348 to $468</td></tr>
+      </tbody>
+    </table>
+    <p class="fs-small">Prices checked November 2026. Prices change, so check before you buy.</p>
+  </div>
+
+  <div class="fs-box">
+    <h2>Two accounts. That is it.</h2>
+    <div class="fs-acc">
+      <div><b>Cloudflare (free)</b><span>Buys your domain, hosts your site, handles the security lock. One place.</span></div>
+      <div><b>Stripe (free to open)</b><span>Pays you. Runs checkout, takes the shipping address, emails the receipt. Only needed if you sell.</span></div>
+    </div>
+    <p class="fs-small">Why not zero? Money has to land in an account with your name on it. That part cannot be skipped by anyone.</p>
+  </div>
+
+  <div class="fs-box" id="steps">
+    <h2>Put it online, step by step</h2>
+    <ol class="fs-steps">
+      <li><b>Build it</b>Open a base above. Fill in Pages and Info. On Publish, tap <em>Download my site</em>. On iPhone it lands in Files, Downloads.</li>
+      <li><b>Make a Cloudflare account</b>Go to dash.cloudflare.com and sign up. Confirm your email.</li>
+      <li><b>Buy your domain</b>In Cloudflare tap <em>Domain registration</em>, then <em>Register domains</em>. Search your name and buy it.</li>
+      <li><b>Upload your site</b>Tap <em>Workers and Pages</em>, then <em>Create</em>, then the <em>Pages</em> tab, then <em>Upload assets</em>. Name it and pick your zip. Tap <em>Deploy</em>. You get a free yourname.pages.dev link right away.</li>
+      <li><b>Connect your domain</b>In your project tap <em>Custom domains</em>, then <em>Set up a custom domain</em>. Type your domain. Because you bought it on Cloudflare, it connects itself. The lock (HTTPS) is automatic.</li>
+      <li><b>Turn on selling</b>Make a Stripe account and add your bank. In Stripe go to <em>Payment Links</em>, then <em>New</em>. Add the product and price. Turn on collecting the shipping address and add shipping rates. Copy the link.</li>
+      <li><b>Paste your buy links</b>Go to yourdomain.com/admin.html. Open the item and paste the link in Buy link. Download again, then upload again in Cloudflare with <em>Create deployment</em>.</li>
+      <li><b>Ship it</b>Stripe emails you and the buyer on every sale. Buy the label at USPS Click-N-Ship or Pirate Ship and send it out.</li>
+    </ol>
+    <a class="fs-go" href="/scratch/studio.html">Open the studio</a>
+  </div>
+
+  <p class="build-note">Built yours? Show it at the Base. That is how this spreads.</p>
+</section>
+
+<footer class="nociv-footer">NOCIV.CO: Nothing Of Civilization<br>© 2023–2026 NOCIV.CO. Established 2023. All rights reserved.</footer>
+</body>
+</html>

@@ -50,17 +50,17 @@
 
 <script>
 // ===== THE TEST LIST. Claude rewrites this block after every delivery. Keep each test to a few taps. =====
-var BATCH = '2026-11-03 pdf and offline';
+var BATCH = '2026-11-03 from scratch';
 var TESTS = [
-  { id: 'techmenu', title: 'Tech drop down on Tools', where: 'nociv.co/creator-tools.html',
-    steps: ['Scroll under the preview to the dashed line.', 'Check the quote looks like yellow masking tape.', 'Tap TECH. Tap Case Zero.'],
-    expect: 'Only a dashed line (no words on it). TECH opens Case Zero and From Scratch (coming soon). Case Zero opens nociv.co/casezero.' },
-  { id: 'czcards', title: 'Case Zero cards', where: 'nociv.co/casezero',
-    steps: ['Look at the page top to bottom.', 'Tap The Body.'],
-    expect: 'Cards like the Base page: 01 The Brain (Being built), 02 The Body (Open). No prices, nothing for sale. The Body opens the Builder.' },
-  { id: 'toonscene', title: 'Cartoon starts with sky and grass', where: 'Tools, Cartoon, scene step (on a phone that never set a scene)',
-    steps: ['Open Cartoon and go to the scene part.'],
-    expect: 'Background starts sky blue with a green grass floor. If you saved a scene before, yours stays.' }
+  { id: 'fsguide', title: 'From Scratch page', where: 'Tools, TECH, From Scratch (nociv.co/scratch)',
+    steps: ['Tap TECH under the dashed line, then From Scratch.', 'Scroll the whole page.'],
+    expect: 'Three cards (Shop, Archive, App), a cost table, two accounts, and 8 steps. Looks like the Case Zero page.' },
+  { id: 'fsstudio', title: 'Build a site in the studio', where: 'From Scratch, tap the Shop card',
+    steps: ['Preview on top, editor under it.', 'Look: tap Menu, then Slide, then Watch it.', 'Pages: tap Shop, tap an item, add a photo from your camera roll, type a price.', 'Tap Full view, then Close.'],
+    expect: 'Preview changes as you tap. Watch it flips through the pages with the slide. Your photo shows on the item page in the preview.' },
+  { id: 'fszip', title: 'Download and upload the zip', where: 'Studio, Publish tab',
+    steps: ['Tap Download my site.', 'Open Files, Downloads and check the zip is there.', 'Optional: in Cloudflare, Workers and Pages, Create, Pages, Upload assets, pick the zip.'],
+    expect: 'A zip named after your site lands in Downloads. If you try Cloudflare, tell me if it took the zip from your phone. That is the one step I could not test.' }
 ];
 // ===== end of list =====
 

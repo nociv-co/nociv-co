@@ -1,0 +1,34 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Studio | From Scratch</title>
+<meta name="robots" content="noindex">
+<meta name="theme-color" content="#161616">
+<link rel="stylesheet" href="kit/studio.css">
+</head>
+<body data-dev="phone">
+<header class="st-top">
+  <b class="st-logo">From<span>Scratch</span></b>
+  <span class="st-saved" id="saved" aria-live="polite">Saved</span>
+  <span class="sp"></span>
+  <div class="st-dev" role="group" aria-label="Preview size"><button type="button" data-dev="phone" class="on">Phone</button><button type="button" data-dev="wide">Wide</button></div>
+  <a href="https://nociv.co/scratch/" target="_blank" rel="noopener">Guide</a>
+</header>
+<section class="st-prev" aria-label="Live preview">
+  <div class="st-frame"><iframe id="pv" src="preview.html" title="Live preview of your site"></iframe><button type="button" id="full">Full view</button></div>
+</section>
+<section class="st-ed">
+  <nav class="st-tabs" role="tablist" aria-label="Studio">
+    <button type="button" role="tab" data-p="start">Start</button>
+    <button type="button" role="tab" data-p="look">Look</button>
+    <button type="button" role="tab" data-p="pages">Pages</button>
+    <button type="button" role="tab" data-p="info">Info</button>
+    <button type="button" role="tab" data-p="publish">Publish</button>
+  </nav>
+  <div id="pane"></div>
+</section>
+<script src="kit/studio.js"></script>
+</body>
+</html>
