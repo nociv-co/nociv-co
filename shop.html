@@ -199,27 +199,24 @@
   .catalog-card button.card-action.voted { background: #222; color: #888; cursor: default; }
 
   /* Shop sections: original buttons, the picked one gets a drawn arrow down to a red icon and two lines about the section */
-  .shop-pick { position: relative; max-width: var(--max); margin: 0 auto; padding: 94px 20px 6px; box-sizing: border-box; }
-  .sp-arrow { position: absolute; inset: 0; width: 100%; height: 100%; overflow: visible; }
-  .sp-arrow path { fill: none; stroke: #1a1a1a; stroke-width: 2.5; stroke-linecap: round; stroke-linejoin: round; }
-  .sp-icon { position: absolute; top: 40px; left: 0; width: 56px; height: 48px; pointer-events: none; }
-  .sp-desc { margin: 4px 0 0; font-size: .92rem; line-height: 1.5; color: #2b2b2b; max-width: 560px; }
-  /* Section buttons: texture buttons like the Tools categories. Word on a cream tag, picked one gets a black tag, tilted and lifted. */
-  .subnav.subnav-one { gap: 8px; padding: 18px 10px 4px; background: transparent; border: none; margin-top: 0; }
-  .subnav.subnav-one button { position: relative; overflow: hidden; height: 48px; padding: 0 6px; border: 2.5px solid #1a1a1a; border-radius: 12px; box-shadow: 0 3px 6px rgba(0,0,0,.3); color: #1a1a1a; transition: transform .16s ease, box-shadow .16s ease; -webkit-tap-highlight-color: transparent; }
-  .subnav.subnav-one button span { position: relative; z-index: 1; padding: 3px 8px; background: #f2ecd6; color: #1a1a1a; box-shadow: 0 1px 3px rgba(0,0,0,.18); transition: background .16s ease, color .16s ease, transform .16s ease, font-size .16s ease; }
-  .subnav.subnav-one button[data-panel="clothingPanel"] { background-color: #3b5878; background-image: repeating-linear-gradient(45deg, rgba(255,255,255,.08) 0 2px, transparent 2px 4px), repeating-linear-gradient(-45deg, rgba(0,0,0,.14) 0 1px, transparent 1px 3px); }
-  .subnav.subnav-one button[data-panel="clothingPanel"]::after { content: ''; position: absolute; inset: 4px; border: 1.5px dashed #e0a240; border-radius: 8px; pointer-events: none; }
-  .subnav.subnav-one button[data-panel="artPanel"] { background-color: #b9b9b6; background-image: repeating-linear-gradient(62deg, rgba(40,40,40,.22) 0 1px, transparent 1px 3px), repeating-linear-gradient(58deg, rgba(255,255,255,.18) 0 1px, transparent 1px 5px), linear-gradient(100deg, rgba(255,255,255,.25), rgba(0,0,0,.08)); }
-  .subnav.subnav-one button[data-panel="zinesPanel"] { background-color: #fdfcf6; background-image: linear-gradient(90deg, transparent 13px, #e08a7e 13px 14.5px, transparent 14.5px), repeating-linear-gradient(to bottom, transparent 0 10px, #9fbbdc 10px 11px); }
-  .subnav.subnav-one button:hover { color: #1a1a1a; }
-  .subnav.subnav-one button.active { border: 3px solid #1a1a1a; transform: translateY(-2px); box-shadow: 0 8px 16px rgba(0,0,0,.45); }
-  .subnav.subnav-one button.active span { font-size: 1.12em; transform: rotate(-1.5deg); background: #1a1a1a; color: #f2ecd6; box-shadow: 0 2px 6px rgba(0,0,0,.3); }
-
-  .sp-icon svg { width: 100%; height: 100%; overflow: visible; filter: drop-shadow(0 8px 7px rgba(0,0,0,.28)); transform: rotate(-3deg); }
-  .sp-icon .f { fill: #c8412f; stroke: #1a1a1a; stroke-width: 2.4; stroke-linejoin: round; }
-  .sp-icon .l { fill: none; stroke: #1a1a1a; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
-  .sp-icon .k { fill: #1a1a1a; }
+  /* Shop sections: floating icons like the Tools apps. Cream when not picked, red and floating when picked, the word gets a dashed ring. */
+  .subnav.subnav-one { grid-template-columns: 1fr 1fr 1fr; gap: 8px; padding: 16px 10px 0; background: transparent; border: none; margin-top: 0; align-items: end; }
+  .subnav.subnav-one button, .subnav.subnav-one button:hover, .subnav.subnav-one button.active { all: unset; box-sizing: border-box; display: flex; flex-direction: column; align-items: center; justify-content: flex-end; gap: 6px; min-height: 104px; padding: 6px 0; cursor: pointer; -webkit-tap-highlight-color: transparent; color: #1a1a1a; font-weight: 900; font-size: .82rem; letter-spacing: .1em; text-transform: uppercase; text-align: center; }
+  .subnav.subnav-one button svg { width: 66px; height: 56px; overflow: visible; filter: drop-shadow(0 6px 7px rgba(0,0,0,.22)); transition: transform .2s ease; will-change: transform; }
+  .subnav.subnav-one svg .f { fill: #f2ecd6; stroke: #1a1a1a; stroke-width: 2.4; stroke-linejoin: round; transition: fill .16s ease; }
+  .subnav.subnav-one svg .p { fill: #fff; stroke: #1a1a1a; stroke-width: 2; }
+  .subnav.subnav-one svg .l { fill: none; stroke: #1a1a1a; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
+  .subnav.subnav-one svg .k { fill: #1a1a1a; }
+  .subnav.subnav-one button span { padding: 4px 12px; border: 2px dashed transparent; border-radius: 999px; transition: border-color .16s ease; }
+  .subnav.subnav-one button.active svg { transform: translateY(-5px) rotate(-3deg) scale(1.08); animation: spFloat 2.8s ease-in-out infinite; }
+  .subnav.subnav-one button.active svg .f { fill: #c8412f; }
+  .subnav.subnav-one button.active span { border-color: #1a1a1a; }
+  .subnav.subnav-one button:focus-visible span { outline: 3px solid #c8412f; outline-offset: 2px; }
+  @keyframes spFloat { 0%, 100% { transform: translateY(-5px) rotate(-3deg) scale(1.08); } 50% { transform: translateY(-9px) rotate(-1deg) scale(1.08); } }
+  @media (hover: hover) { .subnav.subnav-one button:not(.active):hover svg { transform: translateY(-3px); } }
+  @media (prefers-reduced-motion: reduce) { .subnav.subnav-one button.active svg { animation: none; } }
+  .shop-pick { max-width: var(--max); margin: 0 auto; padding: 10px 20px 6px; box-sizing: border-box; }
+  .sp-desc { margin: 0 auto; font-size: .92rem; line-height: 1.5; color: #2b2b2b; max-width: 560px; text-align: center; }
   .catalog-empty { opacity: .5; font-style: italic; padding: 20px; text-align: center; }
 
   /* --- Product detail modal (tap a card to zoom + read the description) --- */
@@ -519,11 +516,11 @@
 
 <!-- SUB-NAV: Clothing leads, Art and Zines are secondary, "also from the collective" -->
 <nav class="subnav subnav-one" aria-label="Shop sections">
-  <button data-panel="clothingPanel" class="active"><span>Clothing</span></button>
-  <button data-panel="artPanel"><span>Art</span></button>
-  <button data-panel="zinesPanel"><span>Zines</span></button>
+  <button data-panel="clothingPanel" class="active"><svg viewBox="0 0 48 40" aria-hidden="true"><path class="f" d="M17 4l-11 6 4 8 5-2v20h18V16l5 2 4-8-11-6c-1 4-4 6-7 6s-6-2-7-6z"/><path class="l" d="M15 16v20M33 16v20" stroke-dasharray="2 2.5"/></svg><span>Clothing</span></button>
+  <button data-panel="artPanel"><svg viewBox="0 0 48 40" aria-hidden="true"><rect class="f" x="4" y="3" width="40" height="34" rx="1"/><rect class="p" x="9" y="8" width="30" height="24"/><path class="l" d="M10 30l9-10 6 6 5-5 8 9"/><circle class="k" cx="31" cy="14" r="3"/></svg><span>Art</span></button>
+  <button data-panel="zinesPanel"><svg viewBox="0 0 48 40" aria-hidden="true"><path class="f" d="M5 8l19 4 19-4v26l-19 4-19-4z"/><path class="l" d="M24 12v26M10 15l9 2M10 20l9 2M29 17l9-2M29 22l9-2"/></svg><span>Zines</span></button>
 </nav>
-<div class="shop-pick" id="shopPick"><svg class="sp-arrow" aria-hidden="true"><path id="spPath"/></svg><span class="sp-icon" id="spIcon" aria-hidden="true"></span><p class="sp-desc" id="spDesc" role="status"></p></div>
+<div class="shop-pick" id="shopPick"><p class="sp-desc" id="spDesc" role="status"></p></div>
 
 <div class="free-ship-bar" id="freeShipBar" role="status" hidden></div>
 <div class="shop-banner" id="shopBanner" role="status" hidden>
@@ -713,30 +710,17 @@
   });
 
 
-  // Shop sections: torn page on the picked button, hand drawn arrow to a red icon of that section
-  const SP_ICON = {
-    clothingPanel: '<path class="f" d="M17 4l-11 6 4 8 5-2v20h18V16l5 2 4-8-11-6c-1 4-4 6-7 6s-6-2-7-6z"/><path class="l" d="M15 16v20M33 16v20" stroke-dasharray="2 2.5"/>',
-    artPanel: '<rect class="f" x="4" y="3" width="40" height="34" rx="1"/><rect x="9" y="8" width="30" height="24" fill="#f2ecd6" stroke="#1a1a1a" stroke-width="2"/><path class="l" d="M10 30l9-10 6 6 5-5 8 9"/><circle class="k" cx="31" cy="14" r="3"/>',
-    zinesPanel: '<path class="f" d="M5 8l19 4 19-4v26l-19 4-19-4z"/><path class="l" d="M24 12v26M10 15l9 2M10 20l9 2M29 17l9-2M29 22l9-2"/>'
-  };
+  // Shop sections: two sentences about the picked section under the icons
   const SP_DESC = {
-    clothingPanel: ['Clothing', 'Pieces made by NOCIV, printed and stenciled by hand. Wear the art, start the conversation.'],
-    artPanel: ['Art', 'Prints, posters and original pieces from NOCIV. Art made to live on your wall, not in a feed.'],
-    zinesPanel: ['Zines', 'Read them free, right here on your phone. Stories, sketches and how-tos, made by hand to pass on.']
+    clothingPanel: 'Pieces made by NOCIV, printed and stenciled by hand. Wear the art, start the conversation.',
+    artPanel: 'Prints, posters and original pieces from NOCIV. Art made to live on your wall, not in a feed.',
+    zinesPanel: 'Read them free, right here on your phone. Stories, sketches and how-tos, made by hand to pass on.'
   };
   function drawShopPick() {
-    const pick = document.getElementById('shopPick'), act = document.querySelector('.subnav-one button.active'); if (!pick || !act) return;
-    const k = act.dataset.panel, D = SP_DESC[k] || ['', ''];
-    document.getElementById('spIcon').innerHTML = '<svg viewBox="0 0 48 40">' + (SP_ICON[k] || '') + '</svg>';
-    document.getElementById('spDesc').textContent = D[1];
-    const P = pick.getBoundingClientRect(), b = act.getBoundingClientRect(), iconEl = document.getElementById('spIcon');
-    const cx = Math.max(34, Math.min(P.width - 34, b.left + b.width / 2 - P.left));
-    iconEl.style.left = (cx - 28) + 'px';
-    const sx = b.left + b.width / 2 - P.left, sy = b.bottom - P.top + 4, ty = 36;
-    document.getElementById('spPath').setAttribute('d', 'M' + sx + ' ' + sy + ' C' + (sx + 10) + ' ' + (sy + 8) + ' ' + (cx - 10) + ' ' + (ty - 8) + ' ' + cx + ' ' + ty + ' M' + (cx - 6) + ' ' + (ty - 7) + ' L' + cx + ' ' + ty + ' L' + (cx + 6) + ' ' + (ty - 7));
+    const act = document.querySelector('.subnav-one button.active'); if (!act) return;
+    document.getElementById('spDesc').textContent = SP_DESC[act.dataset.panel] || '';
   }
   subnavBtns.forEach(b => b.addEventListener('click', () => requestAnimationFrame(drawShopPick)));
-  window.addEventListener('resize', drawShopPick); window.addEventListener('load', drawShopPick); if (document.fonts && document.fonts.ready) document.fonts.ready.then(drawShopPick);
   drawShopPick();
 
   // The post area (goal + NOW + album) sits under the shopping area on every Shop tab.
