@@ -384,7 +384,7 @@ function htSample(){src.width=1000;src.height=1000;let g=sx.createLinearGradient
 function sample(){mode==='ht'?htSample():stSample();orig.width=src.width;orig.height=src.height;ox.drawImage(src,0,0);resetFrame();loaded()}
 function loadCanvas(cv,keepRaw){if(!keepRaw){/* first pick handled in onchange */}let k=Math.min(1,1600/Math.max(cv.width,cv.height));orig.width=Math.round(cv.width*k);orig.height=Math.round(cv.height*k);ox.clearRect(0,0,orig.width,orig.height);ox.drawImage(cv,0,0,orig.width,orig.height);resetFrame();loaded()}
 function load(f){let im=new Image();im.onload=()=>{let k=Math.min(1,1600/Math.max(im.width,im.height));orig.width=Math.round(im.width*k);orig.height=Math.round(im.height*k);ox.clearRect(0,0,orig.width,orig.height);ox.drawImage(im,0,0,orig.width,orig.height);URL.revokeObjectURL(im.src);resetFrame();loaded()};im.onerror=()=>{$('status').textContent="Couldn't open that file. Try a JPG or PNG."};im.src=URL.createObjectURL(f)}
-function loaded(){has=true;$('wrap').classList.add('has');applyFrame();$('frameBox').hidden=false;$('pick').hidden=true;$('viewT').hidden=false;redraw()}
+function loaded(){window.__nvPicN=(window.__nvPicN||0)+1;has=true;$('wrap').classList.add('has');applyFrame();$('frameBox').hidden=false;$('pick').hidden=true;$('viewT').hidden=false;redraw()}
 $('file').onchange=e=>{let f=e.target.files[0];e.target.value='';if(!f)return;let fu=URL.createObjectURL(f),ri=new Image();ri.onload=()=>{let k=Math.min(1,2400/Math.max(ri.width,ri.height));RAW=document.createElement('canvas');RAW.width=Math.round(ri.width*k);RAW.height=Math.round(ri.height*k);RAW.getContext('2d').drawImage(ri,0,0,RAW.width,RAW.height);URL.revokeObjectURL(fu);cropRaw(f.name)};ri.src=fu};
 function cropRaw(name){if(!RAW)return;window.nocivCrop(RAW,{title:'Crop your picture',aspects:[['free','Free'],['orig','Original'],[1,'Square'],[4/5,'4:5'],[3/4,'3:4'],[3/2,'3:2'],[16/9,'16:9']],maxPx:2400}).then(c=>{if(!c)return;if(name)$('fname').textContent=name;clearEdits();loadCanvas(c)})}
 $('fCrop').onclick=()=>cropRaw();$('pick').onclick=()=>$('file').click();$('sample').onclick=sample;$('reset').onclick=()=>{has=false;$('wrap').classList.remove('has');H.cov=null;$('frameBox').hidden=true;c.width=c.height=0;$('pick').hidden=false;$('file').value='';$('fname').textContent='JPG or PNG. A drawing on white paper works great.';clearFiles();$('status').textContent='Load artwork to begin.';$('size').textContent='';$('viewT').hidden=true;if(M.mock)setView(false)};
@@ -1701,7 +1701,7 @@ aside.mixing #mixPanel{display:block;flex:1 1 auto;min-height:0;overflow-y:auto}
 .cu-row{display:flex;gap:10px;align-items:stretch;margin:0 0 6px}
 .cu-box{flex:none;position:relative}
 .cu-box canvas{display:block;width:110px;height:110px;border:2px solid #1a1a1a;border-radius:10px;background:#fff}
-.cu-box span{position:absolute;left:6px;top:6px;padding:2px 6px;border-radius:6px;background:#1a1a1a;color:#fff;font:800 10px/1.3 -apple-system,BlinkMacSystemFont,"Helvetica Neue",Arial,sans-serif;letter-spacing:.04em}
+.cu-box span{position:absolute;left:5px;top:5px;padding:2px 5px;border-radius:5px;background:#1a1a1a;color:#fff;font:800 9px/1.3 -apple-system,BlinkMacSystemFont,"Helvetica Neue",Arial,sans-serif;letter-spacing:.04em}
 .cu-side{flex:1;min-width:0;display:flex;flex-direction:column;gap:6px}
 .cu-side.withknob .pchips{display:grid!important;grid-template-columns:1fr 1fr!important;gap:6px!important;margin:0!important;height:100%}
 .cu-side.withknob .pchips button{padding:4px 2px!important;flex-direction:column}
@@ -1711,6 +1711,7 @@ aside.mixing #mixPanel{display:block;flex:1 1 auto;min-height:0;overflow-y:auto}
 .mesh-line small{font:600 11.5px/1.25 -apple-system,BlinkMacSystemFont,"Helvetica Neue",Arial,sans-serif;color:#5a564d}.mesh-line small.warn{color:#b0321f}
 .mesh-line button{all:unset;margin-top:3px;padding:6px 10px;border-radius:9px;background:#c8412f;color:#fff;font:800 12px/1 -apple-system,BlinkMacSystemFont,"Helvetica Neue",Arial,sans-serif;cursor:pointer}
 section.cu-on .kgrid{flex-wrap:nowrap!important;align-items:center}
+section.cu-on > label[for=hInk]{display:none!important}
 html.nvlock main aside section.grouped.cu-on{padding-top:8px!important;padding-bottom:6px!important}
 .cu-side .qg{display:grid;grid-template-columns:1fr 1fr;gap:6px;flex:1}
 .cu-side .qg button{all:unset;box-sizing:border-box;display:flex;align-items:center;justify-content:center;text-align:center;padding:8px 4px;border:2px solid #1a1a1a;border-radius:10px;background:#fff;color:#1a1a1a;font:800 13px/1.1 -apple-system,BlinkMacSystemFont,"Helvetica Neue",Arial,sans-serif;cursor:pointer;-webkit-tap-highlight-color:transparent}
@@ -1721,6 +1722,19 @@ html.nvlock main aside section.grouped.cu-on{padding-top:8px!important;padding-b
 .cu-side .mesh small{display:block;margin-top:4px;font:600 11.5px/1.3 -apple-system,BlinkMacSystemFont,"Helvetica Neue",Arial,sans-serif;color:#5a564d}
 .cu-side .mesh small.warn{color:#b0321f}
 .cu-side .fixb{all:unset;box-sizing:border-box;text-align:center;padding:8px;border-radius:10px;background:#c8412f;color:#fff;font:800 13px/1 -apple-system,BlinkMacSystemFont,"Helvetica Neue",Arial,sans-serif;cursor:pointer}
+.cu-side .mesh .mchg,.mesh-line .mchg{all:unset;margin-top:4px;align-self:flex-start;font:800 11.5px/1 -apple-system,BlinkMacSystemFont,"Helvetica Neue",Arial,sans-serif;color:#1a1a1a;text-decoration:underline;cursor:pointer}
+.mesh-line .mchg{margin:0 0 0 4px}
+.mesh-sheet{position:absolute;left:0;right:0;bottom:0;top:0;z-index:20;background:#fbf9f4;padding:12px;display:flex;flex-direction:column;gap:8px;overflow:auto}
+.mesh-sheet[hidden]{display:none}
+.mesh-sheet b{font:900 15px/1.1 -apple-system,BlinkMacSystemFont,"Helvetica Neue",Arial,sans-serif}.mesh-sheet p{margin:0;font:500 12.5px/1.35 -apple-system,BlinkMacSystemFont,"Helvetica Neue",Arial,sans-serif;color:#5a564d}
+.ms-grid{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:6px}
+.ms-grid button,.ms-row button{all:unset;box-sizing:border-box;text-align:center;padding:10px 2px;border:2px solid #1a1a1a;border-radius:10px;background:#fff;font:800 14px/1 -apple-system,BlinkMacSystemFont,"Helvetica Neue",Arial,sans-serif;cursor:pointer}
+.ms-grid button[aria-pressed=true],.ms-row button.dark{background:#1a1a1a;color:#fff}
+.ms-row{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:auto}
+.inklist{flex:1;display:flex;flex-direction:column;gap:5px;padding:8px 10px;border:2px solid #1a1a1a;border-radius:10px;background:#fff}
+.inklist b{font:800 12px/1.2 -apple-system,BlinkMacSystemFont,"Helvetica Neue",Arial,sans-serif}
+.inklist span{display:flex;align-items:center;gap:7px;font:700 12.5px/1 -apple-system,BlinkMacSystemFont,"Helvetica Neue",Arial,sans-serif}
+.inklist i{width:16px;height:16px;border-radius:50%;border:1.5px solid #1a1a1a;flex:none}
 .cu-hint{margin:0 0 4px;font:600 11px/1.2 -apple-system,BlinkMacSystemFont,"Helvetica Neue",Arial,sans-serif;color:#8d887d}
 .cu-mark{position:absolute;z-index:6;border:2px solid #c8412f;border-radius:3px;box-shadow:0 0 0 1px #fff;pointer-events:none;display:none}
 section.grouped .kgrid{margin-top:0!important}
@@ -1729,30 +1743,65 @@ section.grouped .kgrid{margin-top:0!important}
 (function () {
   'use strict';
   var $ = function (x) { return document.getElementById(x); };
-  var PARTS = { tone: 1, dsize: 1, limits: 1, light: 1 };
-  var MESH = [110, 125, 156, 160, 200, 230, 280, 305, 355];
+  var PARTS = { tone: 1, dsize: 1, limits: 1, light: 1, ink: 1 };
+  var MESH = [110, 125, 156, 160, 200, 230, 280, 305, 355], OWN = null;
+  try { OWN = JSON.parse(localStorage.getItem('nocivMyMesh') || 'null'); } catch (e) {}
   var row = document.createElement('div'); row.className = 'cu-row';
   row.innerHTML = '<div class="cu-box"><canvas id="nvCU" width="236" height="236" aria-label="Close-up of the picture"></canvas><span>CLOSE-UP</span></div><div class="cu-side" id="nvCUside"></div>';
-  var cu = row.querySelector('canvas'), cx = cu.getContext('2d'), side = row.querySelector('#nvCUside');
+  var cu = row.querySelector('canvas'), cx = cu.getContext('2d'), side = row.querySelector('#nvCUside'), tag = row.querySelector('.cu-box span');
   var mark = document.createElement('div'); mark.className = 'cu-mark';
   var F = { x: .5, y: .45 }, on = false, part = null;
 
+  // the dots exactly as they will print: worked out at full print size, only for the close-up square
+  function regionMask(cv, p, OW, OH, cell, x0, y0, rw) {
+    var sh = H.shape, th = p.angle * Math.PI / 180, co = Math.cos(th), si = Math.sin(th), cx0 = OW / 2, cy0 = OH / 2, inv = 1 / cell, kx = cv.w / OW, ky = cv.h / OH, rad = Math.max(.5, cell * kx / 2), m = new Uint8Array(rw * rw), memo = {};
+    function cellK(i, j) { var key = i + ',' + j, v = memo[key]; if (v !== undefined) return v; var u = i * cell, w = j * cell, x = cx0 + u * co - w * si, y = cy0 + u * si + w * co; v = tone(boxMean(cv, p.idx, x * kx, y * ky, rad)); memo[key] = v; return v; }
+    for (var yy = 0; yy < rw; yy++) for (var xx = 0; xx < rw; xx++) {
+      var X = x0 + xx + .5 - cx0, Y = y0 + yy + .5 - cy0, u = (X * co + Y * si) * inv, v = (-X * si + Y * co) * inv, i = Math.round(u), j = Math.round(v), k = cellK(i, j);
+      if (k <= 0) continue; if (k >= 1) { m[yy * rw + xx] = 1; continue; }
+      var fu = u - i, fv = v - j, au = fu < 0 ? -fu : fu, av = fv < 0 ? -fv : fv, hit;
+      if (sh === 'round') { var r = lut(0)[Math.round(k * 1024)]; hit = fu * fu + fv * fv < r * r; }
+      else if (sh === 'ellipse') { var ry = lut(1)[Math.round(k * 1024)], rx = ry * 1.6; hit = fu * fu / (rx * rx) + fv * fv / (ry * ry) < 1; }
+      else if (sh === 'square') hit = au < Math.sqrt(k) / 2 && av < Math.sqrt(k) / 2;
+      else if (sh === 'diamond') hit = au + av < (k <= .5 ? Math.sqrt(k / 2) : 1 - Math.sqrt((1 - k) / 2));
+      else hit = av < k / 2;
+      if (hit) m[yy * rw + xx] = 1;
+    }
+    return m;
+  }
+  function printCU() { // returns the region it drew in canvas pixels, or null
+    if (!document.body.classList.contains('m-ht') || H.shape === 'grain' || (typeof M !== 'undefined' && M.mock)) return null;
+    var o = outSize(), cell = o.dpi / H.lpi, rw = Math.round(Math.max(24, Math.min(400, cell * 11))), cv = H.cov || buildCov();
+    var x0 = Math.round(Math.max(0, Math.min(o.W - rw, F.x * o.W - rw / 2))), y0 = Math.round(Math.max(0, Math.min(o.H - rw, F.y * o.H - rw / 2)));
+    var ps = plates().map(function (p, i) { return Object.assign({}, p, { idx: i }); }), show = H.view === 'all' ? ps : ps.filter(function (p) { return p.id === H.view; });
+    var SS = Math.max(1, Math.min(4, Math.floor(600 / rw))), RW = rw * SS; var t = document.createElement('canvas'); t.width = t.height = RW; var g = t.getContext('2d'); g.fillStyle = H.ink === 'one' && H.view === 'all' ? H.shirt : '#fff'; g.fillRect(0, 0, RW, RW);
+    show.forEach(function (p) {
+      var mk = regionMask(cv, p, o.W * SS, o.H * SS, cell * SS, x0 * SS, y0 * SS, RW), u = document.createElement('canvas'); u.width = u.height = RW; var ug = u.getContext('2d'), im = ug.createImageData(RW, RW), d = im.data, col = p.color || '#000000', R = parseInt(col.slice(1, 3), 16), G = parseInt(col.slice(3, 5), 16), B = parseInt(col.slice(5, 7), 16);
+      for (var q = 0, z = 0; q < mk.length; q++, z += 4) if (mk[q]) { d[z] = R; d[z + 1] = G; d[z + 2] = B; d[z + 3] = 255; }
+      ug.putImageData(im, 0, 0); g.globalCompositeOperation = H.ink === 'cmyk' && H.view === 'all' ? 'multiply' : 'source-over'; g.drawImage(u, 0, 0);
+    });
+    cx.imageSmoothingEnabled = true; cx.imageSmoothingQuality = 'high'; cx.drawImage(t, 0, 0, 236, 236);
+    var k = c.width / o.W; return [x0 * k, y0 * k, rw * k];
+  }
   function paintCU() {
     if (!on || !has || !c.width) { mark.style.display = 'none'; return; }
     var reg = document.body.classList.contains('m-ht') && H.shape !== 'grain' ? c.width / Math.max(1, S.w * H.lpi) * 11 : (document.body.classList.contains('m-ht') ? c.width / 9 : c.width / 5);
     reg = Math.round(Math.max(24, Math.min(Math.min(c.width, c.height) / 2, reg)));
-    if (!F.user && F.pic !== c.width + 'x' + c.height + ':' + src.width) { F.pic = c.width + 'x' + c.height + ':' + src.width; pickSpot(); }
+    var sig = src.width + 'x' + src.height + ':' + (window.__nvPicN || 0); if (lastPic !== (window.__nvPicN || 0)) { lastPic = window.__nvPicN || 0; F.user = false; } if (!F.user && F.pic !== sig) { F.pic = sig; pickSpot(); }
     var sx0 = Math.round(Math.max(0, Math.min(c.width - reg, F.x * c.width - reg / 2))), sy0 = Math.round(Math.max(0, Math.min(c.height - reg, F.y * c.height - reg / 2)));
-    cx.imageSmoothingEnabled = true; cx.imageSmoothingQuality = 'high'; cx.fillStyle = '#fff'; cx.fillRect(0, 0, 236, 236);
-    try { cx.drawImage(c, sx0, sy0, reg, reg, 0, 0, 236, 236); } catch (e) {}
+    cx.fillStyle = '#fff'; cx.fillRect(0, 0, 236, 236);
+    var pr = null; try { pr = printCU(); } catch (e) { pr = null; }
+    if (pr) { sx0 = pr[0]; sy0 = pr[1]; reg = pr[2]; tag.textContent = 'AS IT PRINTS'; }
+    else { tag.textContent = 'CLOSE-UP'; cx.imageSmoothingEnabled = true; cx.imageSmoothingQuality = 'high'; try { cx.drawImage(c, sx0, sy0, reg, reg, 0, 0, 236, 236); } catch (e) {} }
     var host = c.parentNode; if (mark.parentNode !== host) host.appendChild(mark);
     var r = c.getBoundingClientRect(), hr = host.getBoundingClientRect(), k = r.width / c.width;
     if (!r.width) { mark.style.display = 'none'; return; }
-    mark.style.display = 'block'; mark.style.left = (r.left - hr.left + sx0 * k) + 'px'; mark.style.top = (r.top - hr.top + sy0 * k) + 'px'; mark.style.width = mark.style.height = Math.max(8, reg * k) + 'px';
+    mark.style.display = 'block'; mark.style.left = (r.left - hr.left + sx0 * k) + 'px'; mark.style.top = (r.top - hr.top + sy0 * k) + 'px'; mark.style.width = mark.style.height = Math.max(14, reg * k) + 'px'; if (reg * k < 14) { mark.style.left = (parseFloat(mark.style.left) - (14 - reg * k) / 2) + 'px'; mark.style.top = (parseFloat(mark.style.top) - (14 - reg * k) / 2) + 'px'; }
   }
+  var lastPic = 0;
   function pickSpot() { // start the close-up where the picture has the most going on
-    try { var t = document.createElement('canvas'); t.width = 24; t.height = 24; var g = t.getContext('2d', { willReadFrequently: true }); g.drawImage(c, 0, 0, 24, 24); var d = g.getImageData(0, 0, 24, 24).data, best = 9, bx = .5, by = .45;
-      for (var y = 3; y < 21; y++) for (var x = 3; x < 21; x++) { var i = (y * 24 + x) * 4, v = (d[i] + d[i + 1] + d[i + 2]) / 765, sc = Math.abs(v - .5) + Math.hypot(x / 24 - .5, y / 24 - .45) * .25; if (sc < best) { best = sc; bx = (x + .5) / 24; by = (y + .5) / 24; } }
+    try { var t = document.createElement('canvas'); t.width = 24; t.height = 24; var g = t.getContext('2d', { willReadFrequently: true }); g.imageSmoothingEnabled = true; g.imageSmoothingQuality = 'high'; g.drawImage(src, 0, 0, 24, 24); var d = g.getImageData(0, 0, 24, 24).data, best = 9, bx = .5, by = .45;
+      for (var y = 3; y < 21; y++) for (var x = 3; x < 21; x++) { var i = (y * 24 + x) * 4, v = (d[i] + d[i + 1] + d[i + 2]) / 765, sc = Math.abs(v - .5) + Math.hypot(x / 24 - .5, y / 24 - .45) * .06; if (sc < best) { best = sc; bx = (x + .5) / 24; by = (y + .5) / 24; } }
       F.x = bx; F.y = by; } catch (e) {}
   }
   var rq = 0; function later() { if (rq) return; rq = requestAnimationFrame(function () { rq = 0; paintCU(); }); }
@@ -1789,10 +1838,24 @@ section.grouped .kgrid{margin-top:0!important}
     setR('thr', th);
   }
   function meshInfo() {
-    var L = H.lpi, need = L * 4.5, mesh = MESH.filter(function (m) { return m >= need; })[0] || 355;
+    var L = H.lpi, need = L * 4.5, list = OWN && OWN.length ? OWN.slice().sort(function (a, b) { return a - b; }) : MESH, mesh = list.filter(function (m) { return m >= need; })[0], short = false;
+    if (!mesh) { mesh = list[list.length - 1]; short = true; }
     var dot = 1.5 / mesh * L, minPct = Math.ceil(Math.PI / 4 * dot * dot * 100);
-    return { mesh: mesh, minPct: minPct };
+    return { mesh: mesh, minPct: minPct, short: short, own: !!(OWN && OWN.length), maxLpi: Math.floor(mesh / 4.5) };
   }
+  // pick the screens you actually own, the advice then only uses those
+  var sheet = document.createElement('div'); sheet.className = 'mesh-sheet'; sheet.hidden = true;
+  function drawSheet() {
+    sheet.innerHTML = '<b>Which screens do you have?</b><p>Tap every mesh you own. The advice will only pick from these.</p><div class="ms-grid">' + MESH.map(function (m) { return '<button type="button" data-m="' + m + '" aria-pressed="' + !!(OWN && OWN.indexOf(m) >= 0) + '">' + m + '</button>'; }).join('') + '</div><div class="ms-row"><button type="button" data-ms="clear">Any mesh</button><button type="button" data-ms="done" class="dark">Done</button></div>';
+  }
+  sheet.addEventListener('click', function (e) {
+    var b = e.target.closest('button'); if (!b) return;
+    if (b.dataset.m) { var m = +b.dataset.m; OWN = OWN || []; var i = OWN.indexOf(m); if (i >= 0) OWN.splice(i, 1); else OWN.push(m); drawSheet(); }
+    if (b.dataset.ms === 'clear') { OWN = null; drawSheet(); }
+    if (b.dataset.ms === 'done') { sheet.hidden = true; drawSide(); }
+    try { localStorage.setItem('nocivMyMesh', JSON.stringify(OWN && OWN.length ? OWN : null)); } catch (_) {}
+  });
+  function openSheet() { var a2 = document.querySelector('main > aside:not(.right)'); if (sheet.parentNode !== a2) a2.appendChild(sheet); drawSheet(); sheet.hidden = false; }
   var TONES = [['Soft', 0, -10], ['Normal', 0, 10], ['Punchy', 0, 35]];
   function drawSide() {
     var keepK = moved && moved.el.parentNode === side ? moved.el : null; drawSide0(); if (keepK) side.insertBefore(keepK, side.firstChild); if (meshLine.parentNode) drawMeshLine();
@@ -1805,7 +1868,10 @@ section.grouped .kgrid{margin-top:0!important}
     } else if (part === 'limits') {
       if (H.shape === 'grain') { side.innerHTML = '<div class="mesh"><b>230 mesh</b><small>Grain has no set dot size. 230 or finer holds the specks.</small></div>'; return; }
       var mi = meshInfo(), low = H.min < mi.minPct;
-      side.innerHTML = '<div class="mesh"><b>' + mi.mesh + ' mesh</b><small>Screen for ' + H.lpi + ' LPI dots</small><small class="' + (low ? 'warn' : '') + '">' + (low ? 'Dots under ' + mi.minPct + '% will wash out.' : 'Smallest dots will hold.') + '</small></div>' + (low ? '<button type="button" class="fixb" data-x="fixmin">Fix tiny dots</button>' : '');
+      side.innerHTML = '<div class="mesh"><b>' + mi.mesh + ' mesh</b><small>' + (mi.short ? 'Your finest screen. Best up to ' + mi.maxLpi + ' LPI' : (mi.own ? 'From your screens, ' : 'Screen for ') + H.lpi + ' LPI dots') + '</small><small class="' + (low ? 'warn' : '') + '">' + (low ? 'Dots under ' + mi.minPct + '% will wash out.' : 'Smallest dots will hold.') + '</small><button type="button" class="mchg" data-x="mine">' + (mi.own ? 'My screens' : 'Set my screens') + '</button></div>' + (low ? '<button type="button" class="fixb" data-x="fixmin">Fix tiny dots</button>' : '');
+    } else if (part === 'ink') {
+      var ps = plates(), ord = ps.slice().sort(function (a, b) { return a.letter < b.letter ? -1 : 1; });
+      side.innerHTML = '<div class="inklist"><b>' + (ps.length > 1 ? ps.length + ' screens, print in this order' : 'One screen') + '</b>' + ord.map(function (p) { return '<span><i style="background:' + p.color + '"></i>' + (ps.length > 1 ? p.letter + ' ' : '') + p.name + '</span>'; }).join('') + (H.ink === 'one' ? '<span><i style="background:' + H.shirt + '"></i>Shirt</span>' : '') + '</div>';
     } else if (part === 'light') {
       side.innerHTML = '<div class="qg" style="grid-template-columns:1fr"><button type="button" class="auto" data-x="otsu">Auto split</button><button type="button" data-x="flip">Flip black and white</button><button type="button" data-x="mid">Back to middle</button></div>';
     }
@@ -1815,12 +1881,13 @@ section.grouped .kgrid{margin-top:0!important}
     if (b.dataset.tone) { var v = b.dataset.tone.split(','); setR('hBri', +v[0]); setR('hCon', +v[1]); }
     else if (b.dataset.x === 'auto') autoTone();
     else if (b.dataset.x === 'fixmin') setR('hMin', Math.min(30, meshInfo().minPct));
+    else if (b.dataset.x === 'mine') { openSheet(); return; }
     else if (b.dataset.x === 'otsu') otsu();
     else if (b.dataset.x === 'mid') setR('thr', 128);
     else if (b.dataset.x === 'flip') { var iv = $('inv'); if (iv) iv.click(); }
     setTimeout(drawSide, 0);
   });
-  ['hBri', 'hCon', 'hLpi', 'hMin', 'hShape'].forEach(function (id) { var el = $(id); if (el) el.addEventListener('input', function () { if (on) drawSide(); }); if (el) el.addEventListener('change', function () { if (on) drawSide(); }); });
+  ['hBri', 'hCon', 'hLpi', 'hMin', 'hShape', 'hInk', 'hInkC', 'hShirt'].forEach(function (id) { var el = $(id); if (el) el.addEventListener('input', function () { if (on) drawSide(); }); if (el) el.addEventListener('change', function () { if (on) drawSide(); }); });
 
   var moved = null;
   function restoreKnob() { if (moved) { moved.home.insertBefore(moved.el, moved.next); moved.el.classList.add('g-off'); moved = null; } side.classList.remove('withknob'); if (meshLine.parentNode) meshLine.remove(); }
@@ -1828,9 +1895,9 @@ section.grouped .kgrid{margin-top:0!important}
   function drawMeshLine() {
     if (H.shape === 'grain') { meshLine.innerHTML = '<b>230 mesh</b><small>Grain needs 230 or finer.</small>'; return; }
     var mi = meshInfo(), low = H.min < mi.minPct;
-    meshLine.innerHTML = '<b>' + mi.mesh + ' mesh</b><small>for ' + H.lpi + ' LPI</small><small class="' + (low ? 'warn' : '') + '">' + (low ? 'Dots under ' + mi.minPct + '% wash out' : 'Small dots will hold') + '</small>' + (low ? '<button type="button" data-x="fixmin">Fix tiny dots</button>' : '');
+    meshLine.innerHTML = '<b>' + mi.mesh + ' mesh</b><small>' + (mi.short ? 'your finest, best to ' + mi.maxLpi + ' LPI' : (mi.own ? 'your screen for ' : 'for ') + H.lpi + ' LPI') + ' <button type="button" class="mchg" data-x="mine">' + (mi.own ? 'Change' : 'My screens') + '</button></small><small class="' + (low ? 'warn' : '') + '">' + (low ? 'Dots under ' + mi.minPct + '% wash out' : 'Small dots will hold') + '</small>' + (low ? '<button type="button" data-x="fixmin">Fix tiny dots</button>' : '');
   }
-  meshLine.addEventListener('click', function (e) { if (e.target.closest('[data-x=fixmin]')) { setR('hMin', Math.min(30, meshInfo().minPct)); setTimeout(drawMeshLine, 0); } });
+  meshLine.addEventListener('click', function (e) { if (e.target.closest('[data-x=mine]')) { openSheet(); return; } if (e.target.closest('[data-x=fixmin]')) { setR('hMin', Math.min(30, meshInfo().minPct)); setTimeout(drawMeshLine, 0); } });
   window.addEventListener('nvpart', function (e) {
     restoreKnob(); Array.prototype.forEach.call(document.querySelectorAll('section.cu-on'), function (x) { x.classList.remove('cu-on'); });
     part = e.detail; on = !!PARTS[part] && !(part !== 'light' && document.body.classList.contains('m-st')) && !(part === 'light' && !document.body.classList.contains('m-st'));
