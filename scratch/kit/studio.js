@@ -4,8 +4,8 @@
 (function () {
 'use strict';
 
-var KEY = 'fromscratch-v1', ORIGIN = location.origin, GUIDE = 'https://nociv.co/scratch/#steps';
-var D = null, pane = 'start', editTab = null, editItem = null, pvHash = null, mode = 'pick', URLS = {}, db = null, ready = false, timer = null;
+var KEYBASE = 'fromscratch-v1', KEY = KEYBASE, ORIGIN = location.origin, GUIDE = 'https://nociv.co/scratch/#steps';
+var D = null, pane = 'look', editTab = null, editItem = null, pvHash = null, mode = 'pick', URLS = {}, db = null, ready = false, timer = null;
 
 function $(s, el) { return (el || document).querySelector(s); }
 function $$(s, el) { return Array.prototype.slice.call((el || document).querySelectorAll(s)); }
@@ -224,9 +224,12 @@ function loadImgs() {
 }
 function getBlob(k) { return idbDo('readonly', function (s) { return s.get(k); }); }
 
+// every kind of site keeps its own save, so opening another kind never replaces your work
+function keyFor(p) { return KEYBASE + ':' + (p || 'shop'); }
+function readKey(k) { try { return JSON.parse(localStorage.getItem(k) || 'null'); } catch (e) { return null; } }
 function save() {
-  D._touched = true;
-  try { localStorage.setItem(KEY, JSON.stringify(D)); flash('Saved'); } catch (e) { flash('Not saved, storage full'); }
+  D._touched = true; KEY = keyFor(D._preset);
+  try { localStorage.setItem(KEY, JSON.stringify(D)); localStorage.setItem(KEYBASE + ':last', D._preset || 'shop'); flash('Saved'); } catch (e) { flash('Not saved, storage full'); }
   clearTimeout(timer); timer = setTimeout(push, 90);
 }
 function flash(t) { var s = $('#saved'); if (!s) return; s.textContent = t; s.classList.add('on'); clearTimeout(flash.t); flash.t = setTimeout(function () { s.classList.remove('on'); }, 900); }
@@ -365,7 +368,7 @@ function pLook() {
     var one = function (n) { return '<svg viewBox="0 0 24 24" style="' + st + ';' + fill + (x[0] === 'badge' ? ';background:' + s.accent + ';color:' + acx + ';border-radius:6px;padding:3px' : '') + '">' + ICONS[n] + '</svg>'; };
     return '<button type="button" class="ic2' + ((s.icons || 'line') === x[0] ? ' on' : '') + '" data-act="style" data-k="icons" data-v="' + x[0] + '"><i>' + (x[0] === 'none' ? '<em>Home Shop</em>' : one('home') + one('bag') + one('user')) + '</i><span>' + x[1] + '</span></button>';
   }).join('') + '</div>';
-  return '<h2>Look</h2>' + gal + colors + type + btns + ics + '<details class="fine"' + (fineOpen ? ' open' : '') + '><summary>Fine tune</summary>' +
+  return gal + colors + type + btns + ics + '<details class="fine"' + (fineOpen ? ' open' : '') + '><summary>Fine tune</summary>' +
     group('Menu', 'nav', [['tabs', 'Tabs', 'on top'], ['menu', 'Menu', 'button'], ['bottom', 'Bottom bar', 'like an app'], ['side', 'Side list', 'computer']], navNote) +
     group('Page change', 'motion', [['none', 'None'], ['fade', 'Fade'], ['slide', 'Slide'], ['rise', 'Rise'], ['zoom', 'Zoom']]) +
     '<button type="button" class="sm wide" data-act="demo">▶ Watch it</button>' +
@@ -394,7 +397,7 @@ function pPages() {
       '<button type="button" class="ic" data-act="down" data-i="' + i + '" aria-label="Move down"' + (i < D.tabs.length - 1 ? '' : ' disabled') + '>&darr;</button>' +
       '<button type="button" class="ic" data-act="del" data-i="' + i + '" aria-label="Delete page">&times;</button></div>' + (k ? '<ul class="ly-kids">' + k + '</ul>' : '') + '</li>';
   }).join('');
-  return '<h2>Pages</h2><p class="lede">Tap a page or anything in it to fill it in. You can also tap things right in the preview.</p><ul class="lys">' + rows + '</ul>' +
+  return '<p class="lede">Tap a page or anything in it to fill it in. You can also tap things right in the preview.</p><ul class="lys">' + rows + '</ul>' +
     '<button type="button" class="add" data-act="pane" data-v="add">+ Add a page</button>';
 }
 
@@ -463,7 +466,7 @@ function pItem() {
 
 function pInfo() {
   var c = ['USD', 'CAD', 'MXN', 'EUR', 'GBP', 'AUD', 'JPY'];
-  return '<h2>Info</h2>' + fld('Name', 'name', { max: 40 }) + fld('Tagline', 'tagline', { max: 90 }) + imgf('Logo', 'logo') +
+  return fld('Name', 'name', { max: 40 }) + fld('Tagline', 'tagline', { max: 90 }) + imgf('Logo', 'logo') +
     fld('Top banner', 'notice', { max: 70, ph: 'Free shipping over $50', help: 'A short line across the very top. Leave empty to hide.' }) +
     fld('Email', 'email', { type: 'email', mode: 'email', ph: 'you@yourname.com', help: 'Shown in the footer and on Contact.' }) +
     fld('Footer', 'footer', { ph: '© ' + new Date().getFullYear() + ' ' + (D.name || 'Your Name') }) +
@@ -695,7 +698,7 @@ function onAct(b) {
         if (!confirm('Replace what is here with your live site?')) return; D = d; editTab = editItem = null; save(); draw();
       }).catch(function () { alert('No live site.json found here. This works from your own site\'s admin.html.'); });
       return;
-    case 'reset': if (!confirm('Start over from nothing? This clears what is saved on this device.')) return; D = PRESETS.blank(); editTab = editItem = null; pane = 'start'; save(); break;
+    case 'reset': if (!confirm('Start this site over? This clears it on this phone.')) return; D = PRESETS[D._preset || 'blank'] ? PRESETS[D._preset || 'blank']() : PRESETS.blank(); D._preset = D._preset || 'blank'; editTab = editItem = null; pane = 'look'; save(); break;
   }
   draw();
 }
@@ -744,21 +747,27 @@ function bind() {
 /* ---------- start ---------- */
 function boot() {
   idb().then(loadImgs).then(function () {
-    var saved = null; try { saved = JSON.parse(localStorage.getItem(KEY) || 'null'); } catch (e) {}
+    // move a save from before per-kind saving into its own slot
+    var legacy = readKey(KEYBASE);
+    if (legacy && legacy.tabs) { var lk = keyFor(legacy._preset); if (!readKey(lk)) try { localStorage.setItem(lk, JSON.stringify(legacy)); localStorage.setItem(KEYBASE + ':last', legacy._preset || 'shop'); } catch (e) {} try { localStorage.removeItem(KEYBASE); } catch (e) {} }
     var rm = (location.hash.match(/remix=([A-Za-z0-9_-]+)/) || [])[1];
     if (rm) {
       history.replaceState(null, '', location.pathname + location.search);
       try {
-        var pack = JSON.parse(b64d(rm));
-        if (!saved || !saved._touched || confirm('Start a new site from ' + (pack.from || 'this') + '\'s look? What you have here gets replaced. Save a backup first if you want it.')) { pane = 'pages'; var nd = remixApply(pack); nd._touched = true; try { localStorage.setItem(KEY, JSON.stringify(nd)); } catch (e) {} return nd; }
+        var pack = JSON.parse(b64d(rm)), nd = remixApply(pack), old = readKey(keyFor(nd._preset));
+        if (old && old._touched) try { localStorage.setItem(KEYBASE + ':before-remix', JSON.stringify(old)); } catch (e) {}
+        nd._touched = true; pane = 'pages'; try { localStorage.setItem(keyFor(nd._preset), JSON.stringify(nd)); } catch (e) {} KEY = keyFor(nd._preset); return nd;
       } catch (e) { alert('That remix link is broken or cut off.'); }
     }
     var want = (location.search.match(/base=(\w+)/) || [])[1];
     if (want && PRESETS[want]) {
       history.replaceState(null, '', location.pathname);
-      if (!saved || !saved._touched || confirm('Start a new site from this template? What you have here gets replaced. Save a backup first if you want it.')) { var bp = PRESETS[want](); bp._preset = want; return bp; }
+      var mine = readKey(keyFor(want)); KEY = keyFor(want);
+      if (mine && mine.tabs) { pane = 'pages'; return mine; }
+      var bp = PRESETS[want](); bp._preset = want; pane = 'look'; return bp;
     }
-    if (saved && saved.tabs) { pane = 'pages'; return saved; }
+    var last = localStorage.getItem(KEYBASE + ':last'), saved = last ? readKey(keyFor(last)) : null;
+    if (saved && saved.tabs) { pane = 'pages'; KEY = keyFor(last); return saved; }
     if (/studio\.html$/.test(location.pathname)) { var b0 = PRESETS[want] ? want : 'shop', p0 = PRESETS[b0](); p0._preset = b0; return p0; }
     return fetch('site.json', { cache: 'no-cache' }).then(function (r) { if (!r.ok) throw 0; return r.json(); })
       .then(function (d) { pane = 'pages'; return d; })

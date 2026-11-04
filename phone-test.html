@@ -52,9 +52,9 @@
 // ===== THE TEST LIST. Claude rewrites this block after every delivery. Keep each test to a few taps. =====
 var BATCH = '2026-11-03 from scratch';
 var TESTS = [
-  { id: 'fsstart', title: 'From Scratch: Start, then Look with your own colors, fonts, buttons, icons', where: 'nociv.co/scratch',
-    steps: ['Tap Archive, then Log.', 'Tap Next: pick a look.', 'Tap a look, then Or pick your own: change Buttons color.', 'Pick a font tile, a button style and an icon style.'],
-    expect: 'Step 1 is just What are you making? plus the pages you get. Step 2 Look has looks, color dots, your own 3 colors, font tiles in the real fonts, button and icon pictures. The preview changes right away. The landing page says it can cost nothing, a domain is optional.' },
+  { id: 'fsstart', title: 'From Scratch: pick on the landing, Studio opens on Look, no pop up', where: 'nociv.co/scratch',
+    steps: ['Tap Archive. Pick Producer.', 'In the Studio check the tabs. Tap Shuffle once.', 'Tap back, pick Shop.', 'Tap back, Archive, Producer again.'],
+    expect: 'Archive opens a small Finds / Producer / Log choice right on the landing page. The Studio has only Look, Pages, Info (no Start, no numbers, no repeated heading). No pop up ever asks to replace your site. Your Shop and your Producer site each keep their own work, so going back to Producer shows your shuffled look.' },
   { id: 'stencillock', title: 'Stencil + Halftone: tabs on top of the console, small console, big picture', where: 'Tools, Stencil + Halftone',
     steps: ['Close the site fully and reopen it once (new version).', 'Load the Sample. In Start, Photo, tap Halftone.', 'Tap Start, Ink, Dots, Print on the bottom bar.', 'In each step tap every tab across the top of the console.', 'In Dots tap Style, then Ellipse and Grain.', 'Tap ? (top right of the console).'],
     expect: 'The picture is big and stays the same size on every step. The console is short and never changes size. Its top row is the tabs for that step (symbol over a word, picked one is black), with i and ? at the end. No card inside a card. Nothing scrolls. Dot styles are 6 name buttons with one picture of the picked style under them. ? opens Learn on Make a screen.' },
