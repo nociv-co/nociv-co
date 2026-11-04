@@ -5009,14 +5009,22 @@
 (function () {
   function esc(s) { return String(s == null ? '' : s).replace(/[&<>"]/g, function (c) { return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]; }); }
   var box = document.getElementById('refList'); if (!box) return;
-  fetch('reference.json', { cache: 'no-store' }).then(function (r) { return r.json(); }).then(function (d) {
+  // Private: the list lives in app_settings (key reference_library), which only your admin login can read.
+  function loadRef() {
+  if (typeof supabaseClient === 'undefined' || !supabaseClient) { box.innerHTML = '<p class="muted">Log in to see the list.</p>'; return; }
+  supabaseClient.from('app_settings').select('value').eq('key', 'reference_library').maybeSingle().then(function (r) {
+    if (r.error) { box.innerHTML = '<p class="muted">Log in to see the list.</p>'; return; }
+    var d = {}; try { d = r.data && r.data.value ? JSON.parse(r.data.value) : {}; } catch (e) { d = {}; }
     var items = (d && d.items) || [];
     if (!items.length) { box.innerHTML = '<p class="muted">Nothing saved yet. Send Claude GitHub links and they show up here with notes.</p>'; return; }
     box.innerHTML = items.map(function (x) {
       var url = /^https:\/\/github\.com\//.test(x.url || '') ? x.url : '';
       return '<div class="how-to-box" style="margin-top:10px"><strong>' + esc(x.name) + '</strong> ' + esc(x.what) + (x.license ? '<br>License: ' + esc(x.license) : '') + (x.borrow ? '<br>Worth borrowing: ' + esc(x.borrow) + '' : '') + (url ? '<br><a href="' + esc(url) + '" target="_blank" rel="noopener">Source on GitHub</a>' : '') + '</div>';
     }).join('');
-  }).catch(function () { box.innerHTML = '<p class="muted">Could not load the list.</p>'; });
+  });
+  }
+  var sec = box.closest('details');
+  if (sec) sec.addEventListener('toggle', function () { if (sec.open) loadRef(); }); else loadRef();
 })();
 </script>
 </body>
