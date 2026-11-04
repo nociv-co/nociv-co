@@ -36,16 +36,17 @@
     font-size: 1.05rem;
   }
 
-  /* Philosophy opener: one big line, three plain sentences, the turn in bold, facts small and quiet */
-  .ph-big { margin: 18px auto 34px; font-family: NocivAnton, Impact, "Arial Narrow", sans-serif; font-weight: 400; font-size: clamp(2.6rem, 12vw, 4.4rem); line-height: .95; letter-spacing: .01em; text-transform: uppercase; color: #1a1a1a; max-width: 9.5em; }
-  .ph-mid { margin: 0 auto 26px; font-size: 1.1rem; line-height: 1.7; max-width: 30em; }
-  .ph-turn { margin: 0 auto 30px; font-size: 1.2rem; line-height: 1.5; font-weight: 800; max-width: 22em; }
-  .ph-facts { margin: 0 auto; font-size: .85rem; letter-spacing: .04em; color: #6b665c; }
-  /* --- Culture panel: tighter spacing --- */
-  #culturePanel .wrap { padding: 24px 20px; }
-  #culturePanel .wrap + .wrap { padding-top: 4px; }
-  #culturePanel p { line-height: 1.6; margin: 0 0 12px; }
-  #culturePanel p:last-child { margin-bottom: 0; }
+  /* Every About page: one big line, plain short sentences, a bold turn, quiet facts last */
+  .pg-open { text-align: center; max-width: 640px; padding-bottom: 8px; }
+  .pg-big { margin: 18px auto 30px; font-family: NocivAnton, Impact, "Arial Narrow", sans-serif; font-weight: 400; font-size: clamp(2.6rem, 12vw, 4.4rem); line-height: .95; letter-spacing: .01em; text-transform: uppercase; color: #1a1a1a; max-width: 9.5em; }
+  .pg-mid { margin: 0 auto 24px; font-size: 1.1rem; line-height: 1.7; max-width: 30em; }
+  .pg-turn { margin: 0 auto 26px; font-size: 1.2rem; line-height: 1.5; font-weight: 800; max-width: 22em; }
+  .pg-center { text-align: center; margin-top: 34px; }
+  .pg-facts { margin: 0 auto; font-size: .85rem; letter-spacing: .04em; color: #6b665c; }
+  .pg-body { font-size: 1.05rem; line-height: 1.75; max-width: 640px; }
+  .pg-body p { margin: 0 0 14px; }
+  .pg-turn-l { font-weight: 800; font-size: 1.15rem; line-height: 1.5; margin: 20px 0 !important; }
+  .pg-quiet { color: #5c5850; font-size: .95rem; }
 
   /* --- About: first page is a to-do list on lined paper. Tap a box, that section opens as its own page. --- */
   .todo { max-width: 560px; margin: 26px auto 10px; padding: 0 16px; box-sizing: border-box; }
@@ -77,6 +78,7 @@
   .about-back a:active { background: #1a1a1a; color: #fff; }
   .about-back.bottom { margin: 10px auto 30px; display: flex; justify-content: space-between; gap: 10px; }
   .about-back a.ab-next { background: #1a1a1a; color: #f2ecd6; }
+  .about-back.bottom a { flex: 1 1 0; justify-content: center; white-space: nowrap; padding: 0 8px; font-size: .72rem; letter-spacing: .06em; }
   .todo-clear { display: block; margin: 12px auto 0; background: none; border: none; font: inherit; font-size: .8rem; color: #777; text-decoration: underline; cursor: pointer; min-height: 44px; padding: 0 10px; }
   .todo-clear[hidden] { display: none; }
 
@@ -139,11 +141,11 @@
   <div class="todo-paper">
     <div class="todo-head"><h1>About NOCIV</h1><p>Check them off in any order.</p></div>
     <ul class="todo-list">
-    <li><a href="#philosophy" data-k="philosophy"><span class="todo-box"><svg viewBox="0 0 34 34" aria-hidden="true"><path d="M6 18 L14 26 L30 4"/></svg></span><span class="todo-t">Philosophy</span><span class="todo-d">What NOCIV is. We are all creators.</span><span class="todo-go" aria-hidden="true">&rarr;</span></a></li>
-    <li><a href="#participate" data-k="participate"><span class="todo-box"><svg viewBox="0 0 34 34" aria-hidden="true"><path d="M6 18 L14 26 L30 4"/></svg></span><span class="todo-t">Participate</span><span class="todo-d">Buy, build or share. You pick.</span><span class="todo-go" aria-hidden="true">&rarr;</span></a></li>
-    <li><a href="#culture" data-k="culture"><span class="todo-box"><svg viewBox="0 0 34 34" aria-hidden="true"><path d="M6 18 L14 26 L30 4"/></svg></span><span class="todo-t">Culture</span><span class="todo-d">Why Arizona. Representing Black America.</span><span class="todo-go" aria-hidden="true">&rarr;</span></a></li>
+    <li><a href="#philosophy" data-k="philosophy"><span class="todo-box"><svg viewBox="0 0 34 34" aria-hidden="true"><path d="M6 18 L14 26 L30 4"/></svg></span><span class="todo-t">Philosophy</span><span class="todo-d">Normal was made by someone.</span><span class="todo-go" aria-hidden="true">&rarr;</span></a></li>
+    <li><a href="#participate" data-k="participate"><span class="todo-box"><svg viewBox="0 0 34 34" aria-hidden="true"><path d="M6 18 L14 26 L30 4"/></svg></span><span class="todo-t">Participate</span><span class="todo-d">Buy, build or share. Every way counts.</span><span class="todo-go" aria-hidden="true">&rarr;</span></a></li>
+    <li><a href="#culture" data-k="culture"><span class="todo-box"><svg viewBox="0 0 34 34" aria-hidden="true"><path d="M6 18 L14 26 L30 4"/></svg></span><span class="todo-t">Culture</span><span class="todo-d">Arizona based. Representing Black America.</span><span class="todo-go" aria-hidden="true">&rarr;</span></a></li>
     <li><a href="#founder" data-k="founder"><span class="todo-box"><svg viewBox="0 0 34 34" aria-hidden="true"><path d="M6 18 L14 26 L30 4"/></svg></span><span class="todo-t">Founder</span><span class="todo-d">Who is behind NOCIV</span><span class="todo-go" aria-hidden="true">&rarr;</span></a></li>
-    <li><a href="#contact" data-k="contact"><span class="todo-box"><svg viewBox="0 0 34 34" aria-hidden="true"><path d="M6 18 L14 26 L30 4"/></svg></span><span class="todo-t">Contact</span><span class="todo-d">Write to me directly</span><span class="todo-go" aria-hidden="true">&rarr;</span></a></li>
+    <li><a href="#contact" data-k="contact"><span class="todo-box"><svg viewBox="0 0 34 34" aria-hidden="true"><path d="M6 18 L14 26 L30 4"/></svg></span><span class="todo-t">Contact</span><span class="todo-d">An order, a collab, a pop-up spot</span><span class="todo-go" aria-hidden="true">&rarr;</span></a></li>
     </ul>
   </div>
   <button type="button" class="todo-clear" id="todoClear" hidden>Uncheck all</button>
@@ -153,131 +155,77 @@
 
 <!-- ===== PHILOSOPHY ===== -->
 <div class="about-page" id="philosophyPanel" data-k="philosophy" hidden>
-  <div class="wrap" style="text-align:center; max-width:640px;">
-    <h1 class="ph-big">Normal was made by someone.</h1>
-    <p class="ph-mid">
+  <div class="wrap pg-open">
+    <h1 class="pg-big">Normal was made by someone.</h1>
+    <p class="pg-mid">
       So we're making a new one. Clothes that show what American really
       looks like. Tools you can have for free. A brand that grows by word
       of mouth, not ads.
     </p>
-    <p class="ph-turn">One shirt. One zine. One person telling another. That's how normal changes.</p>
-    <p class="ph-facts">Black-owned. Built in Arizona. If you're here, someone told you.</p>
+    <p class="pg-turn">One shirt. One zine. One person telling another. That's how normal changes.</p>
+    <p class="pg-facts">Black-owned. Built in Arizona. If you're here, someone told you.</p>
+  </div>
+
+  <div class="wrap">
+    <div class="eyebrow">Nothing Of Civilization</div>
+    <div class="pg-body">
+      <p>It doesn't mean going backward. It means remembering that nothing around us is permanent. Every rule, every tool, every product was built by people.</p>
+      <p class="pg-turn-l">We built this world. So we can build something else.</p>
+      <p class="pg-quiet">Every idea starts with a gap between vision and action. You can ignore it, wait for someone else, or begin.</p>
+    </div>
   </div>
 
   <div class="wrap">
     <div class="eyebrow">We Are All Creators</div>
-    <div style="font-size:1.05rem; line-height:1.8; max-width:640px;">
-      <p>
-        "Maker" got claimed by tech. "Creator" got claimed by content.
-        "Artist" means painter. "Polymath" sounds like a math test.
-      </p>
-      <p>
-        NOCIV is traditional in exactly one way: what it means to be a
-        creator. To make things.
-      </p>
-      <p style="font-weight:700;">We are all creators.</p>
-      <p>
-        The internet is the starting point, not the destination. A shirt,
-        a zine or a tool here should lead somewhere real: a pop-up, a
-        conversation, or something you made with your own hands.
-      </p>
-    </div>
-  </div>
-
-  <div class="wrap">
-    <div class="eyebrow">What Does "Nothing Of Civilization" Mean?</div>
-    <div style="font-size:1.05rem; line-height:1.8; max-width:640px;">
-      <p>
-        It isn't about going backward, or pretending we can return to
-        a previous era. It's a reminder that the systems, objects, and
-        norms around us aren't permanent features of nature, because
-        somebody built them. We buy things without knowing who made
-        them, and live inside social norms as if they simply exist on
-        their own. But every system, tool, and product was constructed by
-        people.
-      </p>
-      <p style="font-weight:700;">
-        We built this world. Which means we can build something else.
-      </p>
-      <p>
-        Every idea starts with a gap between vision and action. You can
-        ignore it, wait for someone else, or begin.
-      </p>
+    <div class="pg-body">
+      <p>"Maker" got claimed by tech. "Creator" got claimed by content. "Artist" means painter. "Polymath" sounds like a math test.</p>
+      <p>NOCIV uses the oldest meaning. A creator makes things.</p>
+      <p class="pg-turn-l">So do you.</p>
+      <p class="pg-quiet">The site is where it starts, not where it ends. A shirt, a zine or a tool here should lead somewhere real: a pop-up, a conversation, or something you made with your own hands.</p>
     </div>
   </div>
 </div>
 
-<!-- ===== PARTICIPATE (moved up from Community, this is the actual business model) ===== -->
+<!-- ===== PARTICIPATE ===== -->
 <div class="about-page" id="participatePanel" data-k="participate" hidden>
+  <div class="wrap pg-open">
+    <img src="buy-build-share.webp" alt="Buy. Build. Share. Representing Black America. No socials, algorithm, or ads, just being human." style="width:100%; max-width:640px; display:block; margin:0 auto 30px;">
+    <h1 class="pg-big">Pick your way in.</h1>
+    <p class="pg-mid">Buy something. Build something. Share something. Go as far as you want.</p>
+  </div>
   <div class="wrap">
-    <img src="buy-build-share.webp" alt="Buy. Build. Share. Representing Black America. No socials, algorithm, or ads, just being human." style="width:100%; max-width:640px; display:block; margin:0 auto 24px;">
-    <div class="eyebrow">Buy. Build. Share.</div>
-    <p style="font-size:1.05rem; line-height:1.8; max-width:640px;">
-      Three honest ways in. You choose how far you go.
-    </p>
-
     <div class="participate-grid">
       <div class="participate-card buy">
         <h3>Buy</h3>
-        <p>Get something made by NOCIV: clothing, prints and art. Support the brand and take home something real.<br><a href="shop.html">Go to Shop &rarr;</a></p>
+        <p>Clothing, prints and art made by NOCIV. Support the brand and take home something real.<br><a href="shop.html">Go to Shop &rarr;</a></p>
       </div>
       <div class="participate-card build">
         <h3>Build</h3>
-        <p>Use the free tools: Zine, Cut &amp; Sew, Stencil, Cards, Camera, Cartoon and Billboard. Go deeper with Case Zero hardware, or From Scratch to make your own website.<br><a href="creator-tools.html">Go to Tools &rarr;</a></p>
+        <p>Free tools: Zine, Cut &amp; Sew, Stencil, Cards, Camera, Cartoon and Billboard. Go deeper with Case Zero hardware, or From Scratch for your own website.<br><a href="creator-tools.html">Go to Tools &rarr;</a></p>
       </div>
       <div class="participate-card share">
         <h3>Share</h3>
-        <p>Show up at the Base: the Stall Wall, the Directory and Spread the Word. No purchase required.<br><a href="community.html">Go to Base &rarr;</a></p>
+        <p>Show up at the Base: the Stall Wall, the Directory and Spread the Word. No purchase needed.<br><a href="community.html">Go to Base &rarr;</a></p>
       </div>
     </div>
+    <p class="pg-turn pg-center">Every way counts the same.</p>
   </div>
 </div>
 
 <!-- ===== CULTURE ===== -->
 <div class="about-page" id="culturePanel" data-k="culture" hidden>
-  <div class="wrap">
-    <div class="eyebrow">Why Arizona?</div>
-    <div style="font-size:1.05rem; line-height:1.8; max-width:640px;">
-      <p>NOCIV is built in Arizona. Arizona is home.</p>
-      <p>
-        Born in California and raised in Texas before moving to
-        Arizona, identity has always been a hybrid experience for me,
-        but a brand needs to physically exist somewhere to build real
-        community.
-      </p>
-      <p>
-        Arizona is where NOCIV collaborates, hosts, crafts, and builds
-        in person. Those connections start locally, but they travel
-        globally.
-      </p>
-      <p style="font-weight:700;">NOCIV is Arizona based, not Arizona limited.</p>
-    </div>
+  <div class="wrap pg-open">
+    <h1 class="pg-big">Arizona based. Not Arizona limited.</h1>
+    <p class="pg-mid">Born in California. Raised in Texas. Home in Arizona. A brand has to live somewhere to build real community, and this is where we host, craft and build in person.</p>
+    <p class="pg-facts">The connections start here. They travel everywhere.</p>
   </div>
 
   <div class="wrap">
     <div class="eyebrow">Representing Black America</div>
-    <div style="font-size:1.05rem; line-height:1.8; max-width:640px;">
-      <p>
-        NOCIV is a Black American owned company, and that foundation
-        shapes everything we create. Our roots in this country run
-        deep. Black Americans didn't just survive here. We built,
-        adapted, and forged a culture that continuously shapes world
-        history.
-      </p>
-      <p style="font-weight:700;">
-        We know who we are. We are not lost. We are here.
-      </p>
-      <p>
-        Representing Black America means honoring that legacy without
-        flattening it into caricature, not just sanitized "Black
-        excellence" or historical stereotypes, but Black life in all
-        its nuances, contradictions, regional styles, and creative
-        expressions.
-      </p>
-      <p>
-        We create from this history and express it as something living,
-        active and present.
-      </p>
+    <div class="pg-body">
+      <p>NOCIV is Black American owned, and that shapes everything we make. Black Americans didn't just survive here. We built, adapted, and made a culture that keeps shaping the world.</p>
+      <p class="pg-turn-l">We know who we are. We are not lost. We are here.</p>
+      <p class="pg-quiet">That means Black life in full: the regions, the styles, the contradictions. Not a caricature. Not a poster. Something living, active and present.</p>
     </div>
   </div>
 </div>
@@ -287,37 +235,31 @@
   <div class="wrap" style="padding:0; max-width:100%;">
     <img src="about-founder-art.webp" alt="About Founder: My name is Jasilyn Anderson, I am a Black American, my journey has been a lot of unlearning and learning, and my art reflects those realizations." style="width:100%; display:block;">
   </div>
-
+  <div class="wrap pg-open">
+    <h1 class="pg-big">I make things.</h1>
+    <p class="pg-mid">I'm Jasilyn Anderson, also known as Lofty Lyn. Black American. A creative individual.</p>
+  </div>
   <div class="wrap">
-    <div class="eyebrow">Who Is Behind NOCIV?</div>
-    <div style="font-size:1.05rem; line-height:1.8; max-width:640px;">
-      <p>
-        I'm Jasilyn Anderson, also known as Lofty Lyn. Black American.
-        A creative individual.
-      </p>
-      <p>
-        My journey has been a lot of unlearning and learning. I start most
-        things knowing nothing, figure them out one piece at a time, and end
-        up holding something real that didn't exist before. Art, textiles,
-        screen printing, hardware, code, writing. I never picked one, and the
-        words for people like me never fit. So I stopped looking for one. I
-        make things. That makes me a creator, the old way.
-      </p>
-      <p style="font-weight:700;">
-        That's why NOCIV sells clothes and gives the tools away. Not "own
-        nothing and be happy." Own what you make.
-      </p>
+    <div class="eyebrow">Who Is Behind NOCIV</div>
+    <div class="pg-body">
+      <p>My journey has been a lot of unlearning and learning. I start most things knowing nothing and figure them out one piece at a time. Art, textiles, screen printing, hardware, code, writing.</p>
+      <p>The words for people like me never fit. So I stopped looking for one.</p>
+      <p>That's why NOCIV sells clothes and gives the tools away.</p>
+      <p class="pg-turn-l">Not "own nothing and be happy." Own what you make.</p>
     </div>
   </div>
 </div>
 
 <!-- ===== CONTACT ===== -->
 <div class="about-page" id="contactPanel" data-k="contact" hidden>
+  <div class="wrap pg-open">
+    <h1 class="pg-big">Write to me.</h1>
+    <p class="pg-mid">An order, a custom piece, a collab, a spot for a pop-up. It comes straight to me.</p>
+  </div>
   <div class="wrap">
-    <div class="eyebrow">Contact</div>
     <div class="contact-note">
       <div id="contactFormWrap">
-        <p class="lead">Question about an order, a custom piece, a collab, a spot for a pop-up? Write it here. It comes straight to me.</p>
+        
         <form id="contactForm" novalidate>
           <label for="cName">Your name (optional)</label>
           <input type="text" id="cName" maxlength="80" autocomplete="name">
