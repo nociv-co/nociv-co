@@ -2,138 +2,127 @@
 <html lang="en">
 <head>
 <!-- Site Created & Designed by Jasilyn A. Anderson | NOCIV.CO -->
-<meta charset="UTF-8">
-<title>Case Zero Builder | NOCIV.CO</title>
-<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, viewport-fit=cover">
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Case Zero Builder | NOCIV</title>
 <meta name="robots" content="noindex">
-<meta name="description" content="Pick what your device does, place the parts, download a case to 3D print. Free.">
-<meta name="theme-color" content="#e9e6df">
+<meta name="description" content="Pick your parts, arrange them, pick a shape, fit it to your printer. Free.">
+<meta name="theme-color" content="#161616">
 <link rel="apple-touch-icon" href="/icons/shop-180.png">
 <link rel="icon" type="image/png" sizes="192x192" href="/icons/shop-192.png">
 <style>
-  @font-face { font-family: CZAnton; src: url('/fonts/anton.woff') format('woff'); font-display: swap; }
-  :root { --paper: #e9e6df; --note: #f2ecd6; --ink: #1a1a1a; --red: #c8412f; --green: #2f7a4b; --muted: #6b665c; }
-  * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
-  html, body { margin: 0; background: var(--paper); color: var(--ink); }
-  body { font-family: -apple-system, BlinkMacSystemFont, "Helvetica Neue", Arial, sans-serif; -webkit-text-size-adjust: 100%; }
-  .wrap { max-width: 640px; margin: 0 auto; padding: 18px 14px 120px; }
-  .top { display: flex; align-items: flex-end; justify-content: space-between; gap: 10px; margin-bottom: 14px; }
-  .top h1 { margin: 0; font-family: -apple-system, BlinkMacSystemFont, "Helvetica Neue", Arial, sans-serif; font-weight: 900; font-size: clamp(30px, 9vw, 42px); line-height: 1.02; letter-spacing: .03em; text-transform: uppercase; }
-  .top h1 span { background: var(--ink); color: #fff; padding: 2px 8px; display: inline-block; transform: rotate(-1.5deg); }
-  .top a { font-size: .8rem; font-weight: 800; color: var(--ink); white-space: nowrap; }
-  .top-r { display: flex; align-items: center; gap: 8px; }
-  .steps { display: flex; gap: 6px; overflow-x: auto; scrollbar-width: none; padding: 4px 2px 10px; margin: 0 -2px; }
-  .steps::-webkit-scrollbar { display: none; }
-  .st { flex: none; font: inherit; font-size: .78rem; font-weight: 900; letter-spacing: .06em; text-transform: uppercase; border: 2px solid var(--ink); background: #fff; color: var(--ink); padding: 9px 11px; border-radius: 0; cursor: pointer; display: flex; align-items: center; gap: 6px; }
-  .st b { background: var(--red); color: #fff; width: 20px; height: 20px; display: inline-flex; align-items: center; justify-content: center; font-size: .75rem; }
-  .st[aria-current="step"] { background: var(--ink); color: #fff; }
-  .note { background: var(--note); padding: 24px 16px 18px; position: relative; box-shadow: 0 6px 16px rgba(0,0,0,0.16); margin-top: 14px; }
-  .note::before { content: ''; position: absolute; top: -11px; left: 22px; width: 64px; height: 22px; background: var(--ink); opacity: .85; transform: rotate(-3deg); }
-  .note h2 { margin: 0 0 6px; font-size: 1rem; font-weight: 900; letter-spacing: .08em; text-transform: uppercase; }
-  .note h2 b { background: var(--red); color: #fff; padding: 1px 7px; margin-right: 6px; }
-  .hint { margin: 0 0 12px; font-size: .9rem; line-height: 1.45; color: var(--muted); }
-  .fn { display: flex; align-items: center; justify-content: space-between; gap: 10px; padding: 11px 0; border-top: 1.5px solid rgba(0,0,0,.12); }
-  .fn-t b { display: block; font-size: .98rem; }
-  .fn-t span { font-size: .78rem; color: var(--muted); }
-  .fn-n { display: flex; align-items: center; gap: 8px; flex: none; }
-  .nb { width: 40px; height: 40px; font: inherit; font-size: 1.3rem; font-weight: 900; border: 2px solid var(--ink); background: #fff; color: var(--ink); border-radius: 0; cursor: pointer; }
-  .nb:disabled { opacity: .35; }
-  .nv { min-width: 18px; text-align: center; font-weight: 900; }
-  .chips { display: flex; flex-wrap: wrap; gap: 8px; }
-  .chip { font: inherit; font-size: .85rem; font-weight: 700; padding: 10px 13px; border: 2px solid var(--ink); background: #fff; color: var(--ink); cursor: pointer; border-radius: 0; }
-  .chip[aria-pressed="true"] { background: var(--ink); color: #fff; }
-  .knobchip { display: block; margin-top: 6px; font-size: .75rem; padding: 6px 9px; }
-  .msg { font-size: .88rem; font-weight: 700; margin: 10px 0 0; line-height: 1.45; min-height: 1.2em; }
-  .bad { color: var(--red); } .ok { color: var(--green); }
-  #board { display: block; width: 100%; height: auto; max-height: 62vh; touch-action: none; user-select: none; -webkit-user-select: none; background: #fff; border: 2px solid var(--ink); }
-  #board .part { cursor: grab; }
-  .selbar { display: flex; align-items: center; justify-content: space-between; gap: 10px; margin-top: 10px; background: #fff; border: 2px solid var(--ink); padding: 8px 10px; font-weight: 800; font-size: .9rem; }
-  .selbar[hidden] { display: none; }
-  .selbar button { font: inherit; font-weight: 900; font-size: .8rem; text-transform: uppercase; letter-spacing: .06em; border: 2px solid var(--ink); background: var(--ink); color: #fff; padding: 8px 12px; border-radius: 0; cursor: pointer; }
-  #view3d { width: 100%; height: min(62vh, 440px); background: #fff; border: 2px solid var(--ink); touch-action: none; }
-  #view3d canvas { display: block; width: 100%; height: 100%; }
-  .row { display: flex; gap: 8px; margin-top: 10px; flex-wrap: wrap; }
-  .btn { font: inherit; font-weight: 900; letter-spacing: .08em; text-transform: uppercase; font-size: .9rem; border: 0; background: var(--red); color: #fff; padding: 15px 14px; border-radius: 0; cursor: pointer; flex: 1; }
-  .btn.alt { background: #fff; color: var(--ink); border: 2px solid var(--ink); }
-  .btn:disabled { opacity: .4; cursor: default; }
-  ul.parts { margin: 10px 0 0; padding-left: 18px; line-height: 1.45; font-size: .92rem; }
-  ul.parts li { margin: 6px 0; } ul.parts small { color: var(--muted); } ul.parts a { color: var(--ink); font-weight: 800; }
-  .how { font-size: .88rem; line-height: 1.5; margin: 12px 0 0; padding-left: 18px; }
-  .pc { background: var(--ink); color: var(--note); padding: 12px 14px; margin-top: 14px; font-size: .88rem; line-height: 1.45; }
-  .pc b { color: #fff; }
-  .next-bar { position: fixed; left: 0; right: 0; bottom: 0; padding: 10px 14px calc(10px + env(safe-area-inset-bottom)); background: linear-gradient(rgba(233,230,223,0), var(--paper) 30%); }
-  .next-bar .btn { display: block; width: 100%; max-width: 612px; margin: 0 auto; }
-  .next-bar .btn[hidden], .next-bar[hidden] { display: none; }
-  .tiny { font-size: .78rem; color: var(--muted); margin: 14px 0 0; line-height: 1.45; }
-  .linkish { background: none; border: 0; font: inherit; font-size: .8rem; text-decoration: underline; color: var(--muted); padding: 6px 0; cursor: pointer; }
+:root{--ink:#1a1a1a;--paper:#f3efe6;--panel:#fbf9f4;--line:#d9d4c8;--mute:#6f6a60;--red:#c8412f;--green:#2f7a4b;--sys:-apple-system,BlinkMacSystemFont,"Helvetica Neue",Arial,sans-serif}
+*{box-sizing:border-box}
+html,body{margin:0;height:100%;background:var(--paper);color:var(--ink);font:500 15px/1.35 var(--sys);-webkit-text-size-adjust:100%;overscroll-behavior:none}
+body{display:flex;flex-direction:column;height:100dvh;overflow:hidden}
+button,select{font:inherit;color:inherit}
+.top{flex:none;display:flex;align-items:center;gap:8px;padding:8px 10px;padding-top:max(8px,env(safe-area-inset-top));background:var(--ink);color:#fff}
+.top a.back{color:#fff;text-decoration:none;font:800 22px/1 var(--sys);padding:4px 8px}
+.top b{font:900 14px/1 var(--sys);letter-spacing:.1em;text-transform:uppercase}
+.top .sp{flex:1}
+.top .tb{all:unset;cursor:pointer;width:36px;height:36px;display:grid;place-items:center;border:1.5px solid #fff;border-radius:10px;font:900 17px/1 var(--sys)}
+html.embedded .top{display:none}
+.stage{flex:1 1 auto;min-height:0;position:relative;background:#e7e2d6;overflow:hidden}
+.stage canvas#view{position:absolute;inset:0;width:100%;height:100%;display:block;touch-action:none}
+.stage #v3{position:absolute;inset:0;touch-action:none}
+.stage #v3[hidden]{display:none}
+.stage #v3 canvas{display:block;width:100%;height:100%}
+.stage .tag{position:absolute;left:8px;bottom:8px;padding:4px 8px;border-radius:8px;background:rgba(26,26,26,.82);color:#fff;font:700 11.5px/1.2 var(--sys);pointer-events:none;max-width:calc(100% - 16px)}
+.stage .sb{position:absolute;right:8px;top:8px;display:flex;gap:6px}
+.stage .sb button{all:unset;cursor:pointer;padding:8px 11px;border:1.5px solid var(--ink);border-radius:10px;background:#fff;font:800 12px/1 var(--sys)}
+.stage .sb button[aria-pressed=true]{background:var(--ink);color:#fff}
+.stage .sb[hidden]{display:none}
+.con{flex:none;height:318px;display:flex;flex-direction:column;background:var(--panel);border-top:1.5px solid var(--ink)}
+.con.down{height:auto}.con.down .pane{display:none}
+.pane{flex:1 1 auto;min-height:0;overflow-y:auto;padding:10px 12px}
+.tabs{flex:none;display:flex;align-items:stretch;gap:4px;padding:6px 8px;border-top:1px solid var(--line)}
+.con.down .tabs{border-top:0}
+.tabs .tl{flex:1;min-width:0;display:flex;gap:4px}
+.tabs .tl button{all:unset;cursor:pointer;flex:1 1 0;min-width:0;height:54px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:4px;border-radius:10px;color:#6f6a60;font:700 11px/1 var(--sys)}
+.tabs .tl button svg{width:23px;height:23px;fill:none;stroke:currentColor;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
+.tabs .tl button span{max-width:100%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.tabs .tl button[aria-pressed=true]{background:var(--ink);color:#fff}
+.tabs .rb{all:unset;cursor:pointer;flex:0 0 38px;width:38px;height:38px;align-self:center;display:grid;place-items:center;border-radius:50%;border:1.5px solid var(--ink);background:#fff}
+.tabs .rb svg{width:18px;height:18px;fill:none;stroke:var(--ink);stroke-width:2.4;stroke-linecap:round;stroke-linejoin:round}
+.con.down .tabs .rb.drop svg{transform:rotate(180deg)}
+.tabs .rb.q{background:var(--ink);color:#fff;font:900 18px/1 var(--sys)}
+.bbar{flex:none;position:relative;display:grid;grid-template-columns:repeat(5,minmax(0,1fr));background:#fff;border-top:1.5px solid var(--ink);padding-bottom:env(safe-area-inset-bottom)}
+.bbar i{position:absolute;top:-1.5px;left:0;height:4px;background:var(--red)}
+.bbar button{all:unset;cursor:pointer;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:3px;min-height:54px;color:#8d887d;font:800 11px/1 var(--sys)}
+.bbar button svg{width:22px;height:22px;fill:none;stroke:currentColor;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
+.bbar button[aria-current=step]{color:var(--ink)}
+.h{margin:0 0 6px;font:800 11px/1 var(--sys);letter-spacing:.07em;text-transform:uppercase;color:var(--mute)}
+.grid{display:grid;gap:7px}
+.g2{grid-template-columns:repeat(2,minmax(0,1fr))}.g3{grid-template-columns:repeat(3,minmax(0,1fr))}.g4{grid-template-columns:repeat(4,minmax(0,1fr))}
+.pick{all:unset;cursor:pointer;box-sizing:border-box;position:relative;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:3px;text-align:center;padding:6px 4px;min-height:44px;border:2px solid var(--ink);border-radius:12px;background:#fff;font:800 12px/1.15 var(--sys)}
+.pick small{font-weight:600;font-size:10px;color:var(--mute)}
+.pick svg{width:100%;height:36px;display:block}
+.pick[aria-pressed=true]{background:var(--ink);color:#fff}.pick[aria-pressed=true] small{color:#d8d2c4}
+.pick .n{position:absolute;top:-7px;right:-6px;min-width:20px;height:20px;padding:0 5px;border-radius:10px;background:var(--red);color:#fff;font:900 11px/20px var(--sys)}
+.pick .lk{position:absolute;top:3px;left:4px;font:900 8.5px/1 var(--sys);letter-spacing:.04em;padding:2px 4px;border-radius:4px;background:#e7e2d6;color:var(--ink)}
+.pick .lk.plug,.pick .lk.pins{background:#cfe9d7}
+.hrow{display:grid;grid-auto-flow:column;grid-auto-columns:96px;gap:7px;overflow-x:auto;scrollbar-width:none;padding:8px 2px 4px;scroll-snap-type:x proximity}
+.hrow::-webkit-scrollbar{display:none}.hrow .pick{scroll-snap-align:start;min-height:96px}
+.catsel{display:flex;align-items:center;gap:8px}
+.catsel select{flex:1;height:40px;border:1.5px solid var(--ink);border-radius:10px;background:#fff;padding:0 10px;font:800 14px var(--sys);-webkit-appearance:none;appearance:none;background-image:linear-gradient(45deg,transparent 50%,var(--ink) 50%),linear-gradient(135deg,var(--ink) 50%,transparent 50%);background-position:calc(100% - 17px) 17px,calc(100% - 12px) 17px;background-size:5px 5px;background-repeat:no-repeat}
+.row{display:flex;align-items:center;gap:8px;margin:0 0 8px}
+.row > b{flex:0 0 74px;font:800 12px/1.15 var(--sys)}
+.step{display:flex;align-items:center;flex:1;border:1.5px solid var(--ink);border-radius:10px;overflow:hidden;background:#fff}
+.step button{all:unset;cursor:pointer;width:42px;height:36px;display:grid;place-items:center;font:900 20px/1 var(--sys)}
+.step output{flex:1;text-align:center;font:800 13.5px/1 var(--sys);border-left:1.5px solid var(--ink);border-right:1.5px solid var(--ink);padding:11px 2px}
+.seg{display:flex;flex:1;min-width:0;border:1.5px solid var(--ink);border-radius:10px;overflow:hidden}
+.seg button{all:unset;cursor:pointer;flex:1;text-align:center;padding:10px 2px;font:700 12px/1 var(--sys);background:#fff;white-space:nowrap}
+.seg button + button{border-left:1.5px solid var(--ink)}
+.seg button[aria-pressed=true]{background:var(--ink);color:#fff}
+.btn{all:unset;cursor:pointer;box-sizing:border-box;display:block;text-align:center;padding:11px 8px;border:2px solid var(--ink);border-radius:12px;background:#fff;font:800 13px/1.15 var(--sys)}
+.btn.dark{background:var(--ink);color:#fff}.btn.red{background:var(--red);border-color:var(--red);color:#fff}
+.btn:disabled,.btn[aria-disabled=true]{opacity:.4}
+.note{margin:6px 0 0;font:500 12px/1.35 var(--sys);color:var(--mute)}
+.note b{color:var(--ink)}
+.bad{color:var(--red)!important}.ok{color:var(--green)!important}
+.chosen{display:flex;flex-wrap:wrap;gap:5px;margin-top:6px}
+.chosen span{display:inline-flex;align-items:center;gap:5px;padding:5px 8px;border:1.5px solid var(--ink);border-radius:999px;background:#fff;font:800 11.5px/1 var(--sys)}
+.chosen span i{font-style:normal;color:var(--red)}
+.list{display:flex;flex-direction:column;gap:6px}
+.list .it,.list a{display:block;padding:9px 11px;border:1.5px solid var(--ink);border-radius:11px;background:#fff;color:var(--ink);text-decoration:none;font:600 12.5px/1.35 var(--sys)}
+.list b{display:block;font:800 13.5px/1.2 var(--sys);margin-bottom:2px}
+.files{display:grid;grid-template-columns:1fr 1fr;gap:7px}
+.selbar{display:flex;gap:6px;align-items:center;margin:0 0 8px;padding:7px 8px;border:1.5px solid var(--ink);border-radius:12px;background:#fff}
+.selbar b{flex:1;font:800 13px/1.2 var(--sys)}
+.selbar button{all:unset;cursor:pointer;padding:8px 10px;border:1.5px solid var(--ink);border-radius:9px;font:800 12px/1 var(--sys)}
+.sheet{position:fixed;inset:0;z-index:50;background:rgba(0,0,0,.45);display:flex;align-items:flex-end}
+.sheet[hidden]{display:none}
+.sheet .in{width:100%;max-height:88dvh;overflow:auto;background:var(--panel);border-radius:18px 18px 0 0;padding:14px 14px calc(18px + env(safe-area-inset-bottom))}
+.sheet h2{margin:0 0 8px;font:900 18px/1.1 var(--sys);text-transform:uppercase;letter-spacing:.04em}
+.sheet .x{all:unset;cursor:pointer;float:right;width:36px;height:36px;display:grid;place-items:center;border:1.5px solid var(--ink);border-radius:50%;font:900 16px var(--sys)}
+.sheet details{border:1.5px solid var(--ink);border-radius:12px;background:#fff;margin:0 0 8px;padding:0 12px}
+.sheet summary{cursor:pointer;padding:12px 0;font:800 14.5px/1.2 var(--sys)}
+.sheet details p,.sheet details li,.sheet td{font:500 13.5px/1.45 var(--sys);color:#2c2a26}
+.sheet details ul,.sheet details ol{padding-left:18px;margin:0 0 12px}
+.sheet table{border-collapse:collapse;width:100%;margin:0 0 12px}.sheet td{border-top:1px solid var(--line);padding:5px 4px;vertical-align:top}.sheet td:first-child{font-weight:800;white-space:nowrap}
+.sheet a{color:var(--ink)}
+@media(max-height:620px){.con{height:296px}}
+@media(min-width:900px){body{max-width:560px;margin:0 auto;border-left:1.5px solid var(--ink);border-right:1.5px solid var(--ink)}}
 </style>
+<script src="/vendor/clipper/clipper.js"></script>
+<script src="parts.js?v=7"></script>
 <script type="importmap">{ "imports": { "three": "/vendor/three/three.module.js", "three/addons/": "/vendor/three/" } }</script>
 </head>
 <body>
-<div class="wrap">
-  <div class="top"><h1><span>Case Zero</span><br>Builder</h1><span class="top-r"><a class="th-back" href="/casezero/">&lsaquo; Back</a><button type="button" class="th-q" data-help="czb" aria-label="Builder help">?</button></span></div>
-
-  <nav class="steps" aria-label="Steps">
-    <button type="button" class="st" data-step="1"><b>1</b>Does</button>
-    <button type="button" class="st" data-step="2"><b>2</b>Size</button>
-    <button type="button" class="st" data-step="3"><b>3</b>Place</button>
-    <button type="button" class="st" data-step="4"><b>4</b>3D</button>
-    <button type="button" class="st" data-step="5"><b>5</b>Files</button>
-  </nav>
-
-  <section class="note pane" data-step="1">
-    <h2><b>1</b>What should it do?</h2>
-    <p class="hint">Tap + for each thing you want. We pick the parts. The brain is a Raspberry Pi Pico.</p>
-    <div id="funcList"></div>
-    <p class="msg bad" id="fnMsg" role="status"></p>
-  </section>
-
-  <section class="note pane" data-step="2" hidden>
-    <h2><b>2</b>How big?</h2>
-    <p class="hint">Pick how many 20 mm squares the lid has. Parts snap to half squares.</p>
-    <div class="chips" id="sizeList"></div>
-    <p class="msg" id="sizeInfo"></p>
-  </section>
-
-  <section class="note pane" data-step="3" hidden>
-    <h2><b>3</b>Place your parts</h2>
-    <p class="hint">This is the lid, seen from the top. Each part takes the squares it really needs. Drag it to move. Yellow means it does not fit there.</p>
-    <svg id="board" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Lid layout"></svg>
-    <div class="selbar" id="selBar" hidden><span id="selName"></span><button type="button" id="selRemove">Remove</button></div>
-    <p class="msg" id="placeMsg" role="status"></p>
-  </section>
-
-  <section class="note pane" data-step="4" hidden>
-    <h2><b>4</b>Look at it</h2>
-    <p class="hint">Spin it with one finger. Pinch to zoom.</p>
-    <div id="view3d"></div>
-    <div class="row"><button type="button" class="btn alt" id="openLid">Open the lid</button></div>
-    <p class="msg bad" id="view3dMsg" role="status"></p>
-  </section>
-
-  <section class="note pane" data-step="5" hidden>
-    <h2><b>5</b>Get your files</h2>
-    <p class="hint" id="fileSize"></p>
-    <div class="row"><button type="button" class="btn" id="dlBox">Box file (STL)</button><button type="button" class="btn" id="dlLid">Lid file (STL)</button></div>
-    <div class="row"><button type="button" class="btn alt" id="dlKnob" hidden>Knob file (STL)</button></div>
-    <p class="msg" id="fileMsg" role="status"></p>
-    <ol class="how">
-      <li>Print both files flat, no supports. PLA works. The box prints open side up.</li>
-      <li>Push the parts through the lid and tighten their nuts. Glue the speaker under its holes. Press the printed knobs onto the knob shafts.</li>
-      <li>Screw the Pico onto its 4 posts, USB toward the side hole.</li>
-      <li>Wire it up, then screw the lid on.</li>
-    </ol>
-    <p class="hint" style="margin-top:14px;font-weight:800;color:var(--ink)">What you need</p>
-    <ul class="parts" id="partsList"></ul>
-    <div class="pc"><b>Next: code it.</b> Writing the code works on your phone. Loading it onto the Pico needs a computer with Chrome or Edge and a USB cable. Coming soon.</div>
-    <p class="tiny">No 3D printer? Send the files to a print service, or print at a library or makerspace.</p>
-  </section>
-
-  <button type="button" class="linkish" id="startOver">Start over</button>
-</div>
-<div class="next-bar"><button type="button" class="btn" id="next">Next</button></div>
-<script type="module" src="builder.js?v=6"></script>
-<script>window.TOOL_HELP = Object.assign(window.TOOL_HELP || {}, {"czb": {"title": "Builder help", "items": [["Does", "Pick what your device does. Each choice adds the real parts it needs, sized from their data sheets."], ["Size", "Pick the case size in 20 mm squares. The height grows to fit the deepest part."], ["Place", "Drag parts onto the lid grid. Yellow means a problem: too close to an edge, a corner post, another part, or the board."], ["3D", "Turn the case with your finger. Open the lid to see inside."], ["Files", "Download the box and lid as STL files for a 3D printer, plus the parts list."], ["Code", "Loading code onto the board needs a computer with Chrome or Edge. An iPhone cannot do that step."], ["Saved", "Your layout saves on this phone as you go."]]}});</script>
-<script src="/tool-help.js" defer></script>
+<header class="top"><a class="back" href="/casezero/" aria-label="Back to Case Zero">&lsaquo;</a><b>Case Zero Builder</b><span class="sp"></span><button class="tb" id="helpTop" aria-label="Help and Learn">?</button></header>
+<section class="stage" id="stage" aria-label="Your device">
+  <canvas id="view"></canvas>
+  <div id="v3" hidden></div>
+  <div class="sb" id="sb" hidden></div>
+  <div class="tag" id="tag">Start with the brain: the parts that make it work</div>
+</section>
+<section class="con" id="con">
+  <div class="pane" id="pane"></div>
+  <div class="tabs"><div class="tl" id="parts" role="tablist"></div><button class="rb drop" id="drop" aria-label="Hide the controls"><svg viewBox="0 0 24 24"><path d="M6 9l6 6 6-6"/></svg></button><button class="rb q" id="help" aria-label="Help and Learn">?</button></div>
+</section>
+<nav class="bbar" id="bbar" aria-label="Steps"></nav>
+<input type="file" id="snapIn" accept="image/*" capture="environment" hidden>
+<div class="sheet" id="sheet" hidden><div class="in" id="sheetIn"></div></div>
+<script type="module" src="builder.js?v=7"></script>
 </body>
 </html>
