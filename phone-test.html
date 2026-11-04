@@ -52,6 +52,9 @@
 // ===== THE TEST LIST. Claude rewrites this block after every delivery. Keep each test to a few taps. =====
 var BATCH = '2026-11-03 pdf and offline';
 var TESTS = [
+  { id: 'czdeep', title: 'Case Zero on the Tools page', where: 'nociv.co/creator-tools.html',
+    steps: ['Scroll past the tool preview to the dashed GO DEEPER line.', 'Tap the red Case Zero button, then tap Hardware.'],
+    expect: 'A clear dashed line, then Want to go deeper with your words. The button opens Hardware and Software (Software says coming soon). Hardware opens nociv.co/casezero.' },
   { id: 'czgrid1', title: 'Parts take real squares', where: 'nociv.co/casezero/build, step 1 and 3',
     steps: ['In step 1 add 3 buttons, 2 knobs, 4 lights and a speaker. Read the takes ... mm line under each.', 'Go to step 3 and look at the lid.'],
     expect: 'The lid has a 20 mm grid split into 10 mm halves. A light takes 1 half square, a button or knob 2 x 2, the speaker 3 x 3, the big button 4 x 4. Corner screw spots are never used.' },
