@@ -311,6 +311,7 @@ function pPublish() {
     '<button type="button" class="big" data-act="zip">Download my site (.zip)</button><p class="help" id="zipmsg"></p>' +
     '<div class="steps"><h3>Then put it online</h3><ol><li>Buy your domain. About $11 a year at cost on Cloudflare.</li><li>In Cloudflare: Workers and Pages, Create, Pages, Upload assets. Drop in the zip.</li><li>Add your domain under Custom domains.</li><li>Make your buy links in Stripe and paste them in.</li></ol><a class="sm" href="' + GUIDE + '" target="_blank" rel="noopener">Full guide with every tap</a></div>' +
     '<h3>To change it later</h3><p class="help">Open yourname.com/admin.html, edit, download a new zip and upload it again. Your live site only changes when you upload.</p>' +
+    '<h3>Share your look</h3><p class="help">A link with your colors, type, menu, motion and page layout. Never your words, photos, prices or email. Nothing is stored anywhere, it all rides in the link. Whoever opens it starts their own site from your look, and their footer credits you.</p><button type="button" class="sm wide" data-act="remix">Copy my remix link</button><p class="help" id="remixMsg"></p>' +
     '<h3>Backup</h3><div class="ch"><button type="button" class="sm" data-act="backup">Save backup</button><label class="sm up">Open backup<input type="file" accept=".json,application/json" data-restore="1"></label><button type="button" class="sm" data-act="live">Load live site</button><button type="button" class="sm danger" data-act="reset">Start over</button></div>';
 }
 
@@ -408,6 +409,32 @@ function download(blob, name) {
   document.body.appendChild(a); a.click(); setTimeout(function () { URL.revokeObjectURL(a.href); a.remove(); }, 4000);
 }
 
+
+/* ---------- remix: look and layout only, carried in the link, stored nowhere ---------- */
+var REMIX_URL = 'https://nociv.co/scratch/studio.html';
+function b64e(str) { return btoa(unescape(encodeURIComponent(str))).replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, ''); }
+function b64d(str) { str = str.replace(/-/g, '+').replace(/_/g, '/'); while (str.length % 4) str += '='; return decodeURIComponent(escape(atob(str))); }
+function remixPack() {
+  return { v: 1, from: D.name || 'someone', base: D.base, style: clone(D.style),
+    tabs: D.tabs.map(function (t) { return { type: t.type, name: t.name, icon: t.icon || '', hidden: !!t.hidden, n: (t.items || []).length }; }) };
+}
+function remixApply(r) {
+  var d = PRESETS.blank();
+  d.base = r.base || 'shop'; d.style = Object.assign(d.style, r.style || {});
+  d.tabs = (r.tabs || []).filter(function (t) { return TYPES[t.type]; }).slice(0, 12).map(function (t) {
+    var x = tab(t.type, String(t.name || '').slice(0, 24) || TYPES[t.type][0]);
+    if (t.icon) x.icon = String(t.icon); if (t.hidden) x.hidden = true;
+    var n = Math.min(+t.n || 0, 12);
+    if (t.type === 'grid' || t.type === 'gallery') for (var i = 0; i < n; i++) x.items.push(it('Item ' + (i + 1)));
+    if (t.type === 'links') for (var j = 0; j < n; j++) x.items.push({ id: rid(), title: 'Link ' + (j + 1), buy: '', images: [] });
+    if (t.type === 'home') { x.headline = 'Your name here'; x.button = ''; x.buttonTo = null; }
+    return x;
+  });
+  if (!d.tabs.length) d.tabs = PRESETS.blank().tabs;
+  d.remixFrom = String(r.from || 'someone').slice(0, 40);
+  return d;
+}
+
 /* ---------- events ---------- */
 function onAct(b) {
   var a = b.dataset.act, i = +b.dataset.i, j = +b.dataset.j, t = D.tabs[editTab];
@@ -440,6 +467,11 @@ function onAct(b) {
       var m = $('#zipmsg'); b.disabled = true; m.textContent = 'Packing your site...';
       buildZip().then(function (z) { download(z, slug(D.name || 'my-site') + '-site.zip'); m.textContent = 'Done. ' + (z.size / 1048576).toFixed(1) + ' MB. Look in your Downloads (Files app on iPhone).'; })
         .catch(function (e) { m.textContent = 'Could not pack it: ' + e.message; }).then(function () { b.disabled = false; });
+      return;
+    case 'remix':
+      var link = REMIX_URL + '#remix=' + b64e(JSON.stringify(remixPack())), msg = $('#remixMsg');
+      if (navigator.share) { navigator.share({ title: 'Remix my look', url: link }).catch(function () {}); msg.textContent = 'Share sheet opened.'; return; }
+      (navigator.clipboard ? navigator.clipboard.writeText(link) : Promise.reject()).then(function () { msg.textContent = 'Copied. Text it to anyone.'; }).catch(function () { prompt('Copy this link:', link); });
       return;
     case 'backup': var c = clone(D); delete c._touched; download(new Blob([JSON.stringify(c, null, 2)], { type: 'application/json' }), 'site.json'); return;
     case 'live':
@@ -490,6 +522,14 @@ function bind() {
 function boot() {
   idb().then(loadImgs).then(function () {
     var saved = null; try { saved = JSON.parse(localStorage.getItem(KEY) || 'null'); } catch (e) {}
+    var rm = (location.hash.match(/remix=([A-Za-z0-9_-]+)/) || [])[1];
+    if (rm) {
+      history.replaceState(null, '', location.pathname + location.search);
+      try {
+        var pack = JSON.parse(b64d(rm));
+        if (!saved || !saved._touched || confirm('Start a new site from ' + (pack.from || 'this') + '\'s look? What you have here gets replaced. Save a backup first if you want it.')) { pane = 'pages'; var nd = remixApply(pack); nd._touched = true; try { localStorage.setItem(KEY, JSON.stringify(nd)); } catch (e) {} return nd; }
+      } catch (e) { alert('That remix link is broken or cut off.'); }
+    }
     if (saved && saved.tabs) return saved;
     var want = (location.search.match(/base=(\w+)/) || [])[1];
     if (/studio\.html$/.test(location.pathname)) { var b0 = PRESETS[want] ? want : 'shop', p0 = PRESETS[b0](); p0._preset = b0; return p0; }

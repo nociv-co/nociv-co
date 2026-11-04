@@ -52,6 +52,12 @@
 // ===== THE TEST LIST. Claude rewrites this block after every delivery. Keep each test to a few taps. =====
 var BATCH = '2026-11-03 from scratch';
 var TESTS = [
+  { id: 'remix', title: 'Remix a look (From Scratch)', where: 'nociv.co/scratch/studio.html, Publish',
+    steps: ['Make a site with your colors and pages.', 'Publish tab, tap Copy my remix link (or the share sheet opens).', 'Text the link to yourself and open it in a private Safari tab.'],
+    expect: 'The private tab opens the studio with your colors, type, menu and page names, but none of your words, photos, prices or email. Its footer says Remixed from your site name.' },
+  { id: 'storage', title: 'Clear unused files', where: 'Admin, Tools and Setup, Storage',
+    steps: ['Open Storage.', 'Tap Delete unused files, then OK.'],
+    expect: 'Before: about 566 MB used, 20 unused files about 289 MB. After: about 277 MB used, no unused files. Nothing on the site changes.' },
   { id: 'speed', title: 'Tools page loads faster', where: 'nociv.co/creator-tools.html',
     steps: ['Open Tools once, then close Safari fully.', 'Open Tools again and pull down to refresh.', 'Tap between Paper, Wear and Video.'],
     expect: 'Header and buttons show right away on the second visit. Switching categories feels instant. Header and BASE tab look the same as before.' },

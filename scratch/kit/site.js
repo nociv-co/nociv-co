@@ -107,7 +107,7 @@ function shell() {
   h += '<div class="body">';
   if (nav === 'side') h += '<aside class="rail"><nav aria-label="Main">' + navLinks('rl') + '</nav></aside>';
   h += '<main id="main" class="view" tabindex="-1"></main></div>';
-  h += '<footer class="ft"><div>' + esc(S.footer || ('© ' + new Date().getFullYear() + ' ' + (S.name || ''))) + '</div>' +
+  h += '<footer class="ft"><div>' + esc(S.footer || ('© ' + new Date().getFullYear() + ' ' + (S.name || ''))) + (S.remixFrom ? '<br><small>Remixed from ' + esc(S.remixFrom) + '</small>' : '') + '</div>' +
     (S.email ? '<a href="mailto:' + esc(S.email) + '">' + esc(S.email) + '</a>' : '') + '</footer>';
   if (nav === 'bottom') {
     var all = tabs(), sl = slugs(), max = all.length > 5 ? 4 : all.length, bh = '';
