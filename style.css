@@ -120,6 +120,13 @@ nav.tabs a.img-tab:hover {
 /* Selected Tab: stays black, the clear "you are here" marker against the
    lighter grey field. The nav images are light/white hand-written graphics,
    so they read fine on their own against black; no color swap needed. */
+/* Phones: four tabs share the width evenly with room on both sides, so About and Base never touch the edge. */
+@media (max-width: 640px) {
+  nav.tabs { gap: 6px; padding: 18px 14px 0; }
+  nav.tabs a.img-tab { flex: 1 1 0; min-width: 0; padding: 10px 6px 8px; }
+  nav.tabs a.img-tab img { width: 100%; height: 26px; max-height: none; object-fit: contain; }
+}
+
 nav.tabs a.img-tab.active {
   background: #000000;
   color: #ffffff !important;
