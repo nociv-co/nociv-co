@@ -52,6 +52,9 @@
 // ===== THE TEST LIST. Claude rewrites this block after every delivery. Keep each test to a few taps. =====
 var BATCH = '2026-11-03 from scratch';
 var TESTS = [
+  { id: 'textures', title: 'Category buttons with texture', where: 'nociv.co/creator-tools.html, Select a category',
+    steps: ['Look at Paper, Wear and Video.', 'Tap each one.'],
+    expect: 'Paper is graph paper, Wear is denim with orange stitching, Video is TV lines with a red and blue split. The one you tap lifts up and its word sits on a solid tilted label. Video glitches a little.' },
   { id: 'footer', title: 'New simple footer', where: 'Bottom of Home, Tools and Shop',
     steps: ['Scroll to the very bottom of each page.', 'Tap Add to home screen.'],
     expect: 'A thin line, then one small quiet line and a small outline button, centered. Smaller than the page content, same color as the page above. Tapping shows the Share steps and the details.' },
