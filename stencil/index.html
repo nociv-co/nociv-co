@@ -1067,9 +1067,14 @@ html.nvlock main > aside:not(.right){padding-top:0!important}
 })();
 </script>
 <!--NV-STENCIL-V2-END-->
-<!--NV-STENCIL-RAIL-START: floating symbol toolbar that changes the console, so no step scrolls-->
+<!--NV-STENCIL-RAIL-START: steps in a bottom bar, parts in a floating symbol toolbar, Learn inside ?-->
 <style>
-.rail{position:absolute;top:8px;right:8px;bottom:56px;z-index:7;display:flex;flex-direction:column;flex-wrap:wrap-reverse;align-content:flex-start;align-items:flex-end;gap:6px;pointer-events:none}
+.rail{position:absolute;top:8px;right:8px;left:8px;z-index:7;display:flex;flex-direction:row;flex-wrap:nowrap;justify-content:flex-end;align-items:center;gap:5px;pointer-events:none}
+.rail button{height:38px!important;min-width:38px!important;padding:0 9px!important}
+@media(max-width:370px){.rail{gap:3px}.rail button{height:34px!important;min-width:34px!important;padding:0 7px!important}}
+/* the Artboard / On a shirt switch moves to the bottom left so the top belongs to the toolbar */
+.canvasWrap .viewt{top:auto!important;bottom:8px!important;left:8px!important;transform:scale(.82);transform-origin:bottom left}
+.canvasWrap:has(.shirtbar:not([hidden])) .viewt{bottom:56px!important}
 .rail[hidden]{display:none}
 .rail button{pointer-events:auto;display:flex;align-items:center;gap:6px;height:40px;min-width:40px;width:auto!important;padding:0 10px!important;margin:0!important;border:1.5px solid rgba(26,26,26,.55)!important;border-radius:12px!important;background:rgba(255,255,255,.72)!important;color:#1a1a1a!important;-webkit-backdrop-filter:blur(6px);backdrop-filter:blur(6px);font:800 12px/1 -apple-system,BlinkMacSystemFont,"Helvetica Neue",Arial,sans-serif!important;cursor:pointer;-webkit-tap-highlight-color:transparent;box-shadow:0 2px 6px rgba(0,0,0,.12)}
 .rail button svg{width:20px;height:20px;flex:none;fill:none;stroke:currentColor;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
@@ -1104,110 +1109,181 @@ section.grouped{padding-top:12px!important;padding-bottom:10px!important}
 section.grouped::before{display:none!important}
 section.grouped .row{margin-top:8px!important}
 section.grouped .filebtn{padding:12px!important}
+
+/* steps live in a bottom bar with names and a progress line, like the Cartoon maker */
+.c-head .stabs{display:none!important}
+.bbar{flex:none;position:relative;display:grid;background:#fff;border-top:1.5px solid #1a1a1a;padding:0 0 env(safe-area-inset-bottom)}
+.bbar .bprog{position:absolute;top:-1.5px;left:0;height:4px;background:#c8412f;transition:width .3s ease}
+.bbar button{all:unset;box-sizing:border-box;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:4px;min-height:62px;padding:6px 2px;cursor:pointer;color:#8d887d;font:800 12px/1 -apple-system,BlinkMacSystemFont,"Helvetica Neue",Arial,sans-serif;letter-spacing:.02em;-webkit-tap-highlight-color:transparent}
+.bbar button svg{width:24px;height:24px;fill:none;stroke:currentColor;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
+.bbar button[aria-current=step]{color:#1a1a1a}
+.bbar button:focus-visible{outline:3px solid #c8412f;outline-offset:-3px}
+.c-title{flex:1;min-width:0;font:900 13px/1.1 -apple-system,BlinkMacSystemFont,"Helvetica Neue",Arial,sans-serif;letter-spacing:.08em;text-transform:uppercase;color:#1a1a1a;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.c-title small{font-weight:700;color:#8d887d;letter-spacing:.04em}
+.c-head .modes.off{display:none!important}
+/* dot styles: named buttons, the picked one opens to a big picture of that style */
+.dlist{display:flex;flex-direction:column;gap:6px;margin:4px 0 6px}
+.drow{all:unset;box-sizing:border-box;display:flex;flex-direction:column;border:2px solid #1a1a1a;border-radius:12px;background:#fff;cursor:pointer;overflow:hidden;-webkit-tap-highlight-color:transparent}
+.drow .dh{display:flex;align-items:center;justify-content:space-between;gap:10px;padding:11px 14px;font:800 15px/1 -apple-system,BlinkMacSystemFont,"Helvetica Neue",Arial,sans-serif;color:#1a1a1a}
+.drow .dh i{font-style:normal;font-weight:600;font-size:12px;color:#8d887d}
+.drow .db{display:none;padding:0 14px 12px}
+.drow .db svg{display:block;width:100%;height:96px;border-radius:8px;background:#f2efe8}
+.drow .db p{margin:8px 0 0;font:500 13px/1.4 -apple-system,BlinkMacSystemFont,"Helvetica Neue",Arial,sans-serif;color:#3a3a3a}
+.drow[aria-pressed=true]{background:#1a1a1a}
+.drow[aria-pressed=true] .dh{color:#fff}
+.drow[aria-pressed=true] .dh i{color:#cfc9bb}
+.drow[aria-pressed=true] .db{display:block}
+.drow[aria-pressed=true] .db svg{background:#fff}
+.drow[aria-pressed=true] .db p{color:#e9e5da}
 </style>
 <script>
 (function () {
   'use strict';
-  var $ = function (x) { return document.getElementById(x); }, aside = document.querySelector('main > aside:not(.right)'), wrap = $('wrap');
+  var $ = function (x) { return document.getElementById(x); }, aside = document.querySelector('main > aside:not(.right)'), wrap = $('wrap'), main = document.querySelector('main');
   if (!aside || !wrap) return;
-  // symbols (own drawings)
   var I = {
     photo: '<rect x="3" y="5" width="18" height="14" rx="2"/><circle cx="9" cy="11" r="2"/><path d="M21 16l-5-5-8 8"/>',
     crop: '<path d="M6 2v16h16"/><path d="M2 6h16v16"/>',
+    shape: '<circle cx="7" cy="7" r="3.2"/><rect x="14" y="3.8" width="6.4" height="6.4"/><path d="M7 13.5l3.6 3.6L7 20.7l-3.6-3.6z"/><path d="M14 17h7"/>',
+    ruler: '<rect x="2" y="8" width="20" height="8" rx="1"/><path d="M6 8v3M10 8v4M14 8v3M18 8v4"/>',
     palette: '<path d="M12 3a9 9 0 1 0 0 18c1.2 0 1.6-.9 1.2-1.8-.5-1-.1-2.2 1.2-2.2H17a4 4 0 0 0 4-4c0-5.5-4-10-9-10z"/><circle cx="7.5" cy="11" r="1.2"/><circle cx="11" cy="7" r="1.2"/><circle cx="15.5" cy="8" r="1.2"/>',
     drop: '<path d="M12 3s6 7 6 11a6 6 0 0 1-12 0c0-4 6-11 6-11z"/>',
-    shape: '<circle cx="7" cy="7" r="3.2"/><rect x="14" y="3.8" width="6.4" height="6.4"/><path d="M7 13.5l3.6 3.6L7 20.7l-3.6-3.6z"/><path d="M14 17h7"/>',
+    stack: '<path d="M12 3l9 5-9 5-9-5z"/><path d="M3 13l9 5 9-5"/>',
     dots: '<circle cx="5" cy="6" r="1.2"/><circle cx="12" cy="6" r="2"/><circle cx="19" cy="6" r="2.8"/><circle cx="5" cy="15" r="1.2"/><circle cx="12" cy="15" r="2"/><circle cx="19" cy="15" r="2.8"/>',
     sun: '<circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M2 12h2M20 12h2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M4.9 19.1l1.4-1.4M17.7 6.3l1.4-1.4"/>',
     limits: '<circle cx="6" cy="12" r="1.5"/><circle cx="17" cy="12" r="5"/><path d="M2 5h20M2 19h20" stroke-dasharray="2 2.5"/>',
+    contrast: '<circle cx="12" cy="12" r="9"/><path d="M12 3a9 9 0 0 1 0 18z" fill="currentColor"/>',
     eye: '<path d="M2 12s4-7 10-7 10 7 10 7-4 7-10 7-10-7-10-7z"/><circle cx="12" cy="12" r="3"/>',
     bridge: '<path d="M3 18V9a9 6 0 0 1 18 0v9"/><path d="M3 13h18M8 13v5M16 13v5"/>',
     brush: '<path d="M18 3l3 3-9.5 9.5-3-3z"/><path d="M8.5 12.5c-2 0-3.5 1.5-3.5 3.5 0 1.5-1 2.5-2 3 2.5 1 6.5.5 7.5-2.5"/>',
-    stack: '<path d="M12 3l9 5-9 5-9-5z"/><path d="M3 13l9 5 9-5"/>',
     list: '<path d="M8 6h13M8 12h13M8 18h13"/><circle cx="4" cy="6" r="1"/><circle cx="4" cy="12" r="1"/><circle cx="4" cy="18" r="1"/>',
-    ruler: '<rect x="2" y="8" width="20" height="8" rx="1"/><path d="M6 8v3M10 8v4M14 8v3M18 8v4"/>',
+    target: '<circle cx="12" cy="12" r="8"/><circle cx="12" cy="12" r="3"/><path d="M12 1v5M12 18v5M1 12h5M18 12h5"/>',
     file: '<path d="M6 2h9l5 5v15H6z"/><path d="M14 2v6h6M10 13v6M7 16l3 3 3-3"/>',
     share: '<circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><path d="M8.6 10.5l6.8-4M8.6 13.5l6.8 4"/>',
+    check: '<path d="M4 12.5l5 5L20 6.5"/>',
+    cut: '<circle cx="6" cy="6" r="3"/><circle cx="6" cy="18" r="3"/><path d="M8.1 8.1L20 20M8.1 15.9L20 4"/>',
     info: '<circle cx="12" cy="12" r="9"/><path d="M12 11v6M12 7.5v.5"/>'
   };
   function ico(n) { return '<svg viewBox="0 0 24 24" aria-hidden="true">' + I[n] + '</svg>'; }
   function sec(name) { return Array.prototype.filter.call(aside.querySelectorAll('section'), function (s) { var h = s.querySelector('h2'); return h && h.textContent.trim() === name; })[0]; }
   function kids(s) { return Array.prototype.slice.call(s.children).filter(function (c) { return c.tagName !== 'H2'; }); }
-  function kc(id) { var k = document.querySelector('.kb[aria-label]') && document.getElementById(id); var r = document.getElementById(id); var card = null; Array.prototype.forEach.call(document.querySelectorAll('.kc'), function (c) { if (c._rng === r) card = c; }); return card; }
-  // tag the knob cards with the slider they drive
-  Array.prototype.forEach.call(document.querySelectorAll('.kgrid'), function (g) {
-    var sec = g.closest('section'), rs = sec.querySelectorAll('.range > input[type=range]'), cards = g.querySelectorAll('.kc');
-    Array.prototype.forEach.call(cards, function (c, i) { if (rs[i]) c._rng = rs[i]; });
-  });
-  // groups per step: [key, symbol, label, function(section) -> list of elements]
-  var G = {
-    'Photo': [['pick', 'photo', 'Photo', function (s) { return kids(s).filter(function (c) { return c.id !== 'frameBox'; }); }],
-      ['shape', 'shape', 'Shape', function () { var fb = $('frameBox'), k = Array.prototype.slice.call(fb.children), i = k.indexOf(document.querySelector('#frameBox .pchips') || $('fShape')); return [fb].concat(k.slice(0, i + 2)); }, function () { return !$('frameBox').hidden; }],
-      ['crop', 'crop', 'Crop + turn', function () { var fb = $('frameBox'), k = Array.prototype.slice.call(fb.children), i = k.indexOf($('fShape')); return [fb].concat(k.slice(i + 1)); }, function () { return !$('frameBox').hidden; }]],
-    'Ink': [['type', 'palette', 'Ink', function (s) { return kids(s).filter(function (c) { return c.id !== 'hOneBox'; }); }], ['colors', 'drop', 'Colors', function () { return [$('hOneBox')]; }, function () { return $('hInk').value === 'one'; }]],
-    'Dots': [['style', 'shape', 'Style', function (s) { var k = kids(s), i = k.indexOf($('hShape')); return k.slice(0, i + 1); }],
-      ['size', 'dots', 'Size', function (s) { var lp = $('hLpi').closest('section').querySelectorAll('.pchips')[1]; return [lp, s.querySelector('.kgrid'), kc('hLpi')]; }],
-      ['tone', 'sun', 'Tone', function (s) { return [s.querySelector('.kgrid'), kc('hBri'), kc('hCon'), kc('hAng'), $('hAngleBox'), $('hCmykAng')]; }],
-      ['limits', 'limits', 'Limits', function (s) { var k = kids(s); return [s.querySelector('.kgrid'), kc('hMin'), kc('hMax'), k[k.length - 1]]; }]],
-    'Bridges': [['show', 'eye', 'Find', function (s) { var k = kids(s); return [k[0], k[1], $('islN')]; }],
-      ['auto', 'bridge', 'Bridges', function (s) { return [s.querySelector('.kgrid'), kc('bw'), $('autoB').parentNode, $('bPer')]; }],
-      ['hand', 'brush', 'By hand', function (s) { var k = kids(s), i = k.indexOf($('tools')); return [k[i - 1], $('tools'), $('toolHelp'), $('edUndo').parentNode]; }]],
-    'Layers': [['count', 'stack', 'How many', function (s) { var k = kids(s), i = k.indexOf($('list')); return k.slice(0, i).concat([]); }], ['list', 'list', 'Layers', function (s) { var k = kids(s), i = k.indexOf($('list')); return k.slice(i); }]],
-    'Save': [['size', 'ruler', 'Size', function (s) { var k = kids(s); return [k[0], s.querySelector('.kgrid'), kc('wi'), k.filter(function (c) { return c.classList.contains('check'); })[0]]; }],
-      ['files', 'file', 'Files', function () { var h = $('files').nextElementSibling; return [$('make'), $('files'), h]; }],
-      ['share', 'share', 'Share', function (s) { var k = kids(s), ch = k.filter(function (c) { return c.classList.contains('check'); }); return [ch[1], $('shareBtn'), $('shareMsg')]; }]]
-  };
-  var rail = document.createElement('div'); rail.className = 'rail'; rail.hidden = true; rail.setAttribute('role', 'toolbar'); rail.setAttribute('aria-label', 'Controls for this step');
-  wrap.appendChild(rail);
-  var pick = {}, cur = null;
-  function apply(name, s, key) {
-    var groups = G[name], g = groups.filter(function (x) { return x[0] === key; })[0] || groups[0];
-    pick[name] = g[0];
-    var on = g[3](s).filter(Boolean);
-    var all = kids(s); if ($('frameBox') && s.contains($('frameBox'))) all = all.concat(Array.prototype.slice.call($('frameBox').children));
-    all.forEach(function (c) { c.classList.toggle('g-off', on.indexOf(c) < 0); });
-    Array.prototype.forEach.call(s.querySelectorAll('.kc'), function (c) { c.classList.toggle('g-off', on.indexOf(c) < 0); });
-    Array.prototype.forEach.call(rail.querySelectorAll('button[data-g]'), function (b) { b.setAttribute('aria-pressed', String(b.dataset.g === g[0])); b.disabled = !!(groups.filter(function (x) { return x[0] === b.dataset.g; })[0][4] && !groups.filter(function (x) { return x[0] === b.dataset.g; })[0][4]()); });
-    aside.scrollTop = 0;
-    fitConsole(s);
-  }
-  function fitConsole(s) {
-    var C = window.__nvConsole; if (!C) return;
-    var sn = C.snaps(); if (C.now() <= sn[0] + 2) return; // tucked stays tucked
-    requestAnimationFrame(function () {
-      var was = aside.style.height; aside.classList.add('c-drag'); aside.style.height = 'auto'; var need = aside.offsetHeight + 2; aside.style.height = was;
-      C.setH(Math.min(Math.round(window.innerHeight * 0.72), Math.max(sn[0] + 40, need)), true);
+  Array.prototype.forEach.call(document.querySelectorAll('.kgrid'), function (g) { var sc = g.closest('section'), rs = sc.querySelectorAll('.range > input[type=range]'); Array.prototype.forEach.call(g.querySelectorAll('.kc'), function (c, i) { if (rs[i]) c._rng = rs[i]; }); });
+  function kc(id) { var r = $(id), card = null; Array.prototype.forEach.call(document.querySelectorAll('.kc'), function (c) { if (c._rng === r) card = c; }); return card; }
+  function all(s) { return kids(s); }
+
+  /* ---- dot styles: named rows that open to a big picture ---- */
+  var shapeSel = $('hShape'), dlist = null;
+  if (shapeSel) {
+    var DESC = { round: 'Classic newspaper dots. Works for almost anything.', ellipse: 'Dots stretched into ovals. Smoother on skin and soft fades.', square: 'Blocky and graphic. A strong poster feel.', diamond: 'Sharp points. Punchy on bold art and type.', line: 'Lines instead of dots, like an old woodcut or engraving.', grain: 'No pattern at all. Random grain like film.' };
+    var big = function (shape) {
+      var g = '', seed = 11;
+      if (shape === 'line') { for (var i = 0; i < 9; i++) g += '<rect x="0" y="' + (4 + i * 10.4) + '" width="320" height="' + (0.8 + i * 0.85).toFixed(2) + '"/>'; }
+      else if (shape === 'grain') { for (var j = 0; j < 900; j++) { seed = (seed * 9301 + 49297) % 233280; var px = seed / 233280 * 320; seed = (seed * 9301 + 49297) % 233280; var py = seed / 233280 * 96; if (Math.random() < px / 330) g += '<circle cx="' + px.toFixed(1) + '" cy="' + py.toFixed(1) + '" r="1.1"/>'; } }
+      else for (var y = 6; y < 96; y += 11) for (var x = 6; x < 320; x += 11) { var r = 0.6 + (x / 320) * 4.6, cx = x + ((y / 11) % 2 ? 5.5 : 0);
+        if (shape === 'round') g += '<circle cx="' + cx.toFixed(1) + '" cy="' + y + '" r="' + r.toFixed(2) + '"/>';
+        else if (shape === 'ellipse') g += '<ellipse cx="' + cx.toFixed(1) + '" cy="' + y + '" rx="' + (r * 1.3).toFixed(2) + '" ry="' + (r * .75).toFixed(2) + '" transform="rotate(-35 ' + cx.toFixed(1) + ' ' + y + ')"/>';
+        else if (shape === 'square') g += '<rect x="' + (cx - r).toFixed(1) + '" y="' + (y - r).toFixed(1) + '" width="' + (2 * r).toFixed(2) + '" height="' + (2 * r).toFixed(2) + '"/>';
+        else if (shape === 'diamond') g += '<path d="M' + cx.toFixed(1) + ' ' + (y - r * 1.3).toFixed(1) + 'L' + (cx + r * 1.3).toFixed(1) + ' ' + y + 'L' + cx.toFixed(1) + ' ' + (y + r * 1.3).toFixed(1) + 'L' + (cx - r * 1.3).toFixed(1) + ' ' + y + 'Z"/>'; }
+      return '<svg viewBox="0 0 320 96" preserveAspectRatio="none" aria-hidden="true"><g fill="#1a1a1a">' + g + '</g></svg>';
+    };
+    dlist = document.createElement('div'); dlist.className = 'dlist'; dlist.setAttribute('role', 'listbox'); dlist.setAttribute('aria-label', 'Dot style');
+    Array.prototype.forEach.call(shapeSel.options, function (o) {
+      var b = document.createElement('button'); b.type = 'button'; b.className = 'drow'; b.dataset.v = o.value; b.setAttribute('role', 'option');
+      b.innerHTML = '<span class="dh">' + o.textContent.replace(/\s*\(.*\)/, '') + '<i>' + (o.value === shapeSel.value ? 'Picked' : 'Tap to see') + '</i></span><span class="db">' + big(o.value) + '<p>' + (DESC[o.value] || '') + '</p></span>';
+      b.onclick = function () { shapeSel.value = o.value; shapeSel.dispatchEvent(new Event('change', { bubbles: true })); shapeSel.dispatchEvent(new Event('input', { bubbles: true })); markD(); refit(); };
+      dlist.appendChild(b);
     });
+    var markD = function () { Array.prototype.forEach.call(dlist.children, function (b) { var on = b.dataset.v === shapeSel.value; b.setAttribute('aria-pressed', String(on)); b.querySelector('.dh i').textContent = on ? 'Picked' : 'Tap to see'; }); };
+    shapeSel.addEventListener('change', markD);
+    var oldChips = shapeSel.previousElementSibling; if (oldChips && oldChips.classList.contains('pchips')) oldChips.remove();
+    shapeSel.parentNode.insertBefore(dlist, shapeSel); markD();
   }
-  function build() {
-    var s = active();
-    var name = s && s.querySelector('h2') ? s.querySelector('h2').textContent.trim() : null;
+
+  /* ---- parts: [section, key, symbol, label, elements(section), enabled] ---- */
+  var P = {
+    photo: ['Photo', 'photo', 'Photo', function (s) { return kids(s).filter(function (c) { return c.id !== 'frameBox'; }); }],
+    shape: ['Photo', 'shape', 'Shape', function () { var fb = $('frameBox'), k = Array.prototype.slice.call(fb.children), i = k.indexOf(document.querySelector('#frameBox .pchips') || $('fShape')); return [fb].concat(k.slice(0, i + 2)); }, function () { return !$('frameBox').hidden; }],
+    crop: ['Photo', 'crop', 'Crop + turn', function () { var fb = $('frameBox'), k = Array.prototype.slice.call(fb.children), i = k.indexOf($('fShape')); return [fb].concat(k.slice(i + 1)); }, function () { return !$('frameBox').hidden; }],
+    size: ['Size', 'ruler', 'Size', all],
+    ink: ['Ink', 'palette', 'Ink', function (s) { return kids(s).filter(function (c) { return c.id !== 'hOneBox'; }); }],
+    colors: ['Ink', 'drop', 'Colors', function () { return [$('hOneBox')]; }, function () { return $('hInk').value === 'one'; }],
+    screens: ['Ink layers', 'stack', 'Screens', all],
+    style: ['Dots', 'shape', 'Style', function (s) { var k = kids(s), i = k.indexOf(shapeSel); return k.slice(0, i + 1); }],
+    dsize: ['Dots', 'dots', 'Dot size', function (s) { var lp = s.querySelectorAll('.pchips'); return [lp[lp.length - 1], s.querySelector('.kgrid'), kc('hLpi')]; }],
+    tone: ['Dots', 'sun', 'Tone', function (s) { return [s.querySelector('.kgrid'), kc('hBri'), kc('hCon'), kc('hAng'), $('hAngleBox'), $('hCmykAng')]; }],
+    limits: ['Dots', 'limits', 'Limits', function (s) { var k = kids(s); return [s.querySelector('.kgrid'), kc('hMin'), kc('hMax'), k[k.length - 1]]; }],
+    light: ['Light and dark', 'contrast', 'Light/dark', all],
+    find: ['Bridges', 'eye', 'Find', function (s) { var k = kids(s); return [k[0], k[1], $('islN')]; }],
+    bridges: ['Bridges', 'bridge', 'Bridges', function (s) { return [s.querySelector('.kgrid'), kc('bw'), $('autoB').parentNode, $('bPer')]; }],
+    hand: ['Bridges', 'brush', 'By hand', function (s) { var k = kids(s), i = k.indexOf($('tools')); return [k[i - 1], $('tools'), $('toolHelp'), $('edUndo').parentNode]; }],
+    count: ['Layers', 'stack', 'How many', function (s) { var k = kids(s), i = k.indexOf($('list')); return k.slice(0, i); }],
+    lyrs: ['Layers', 'list', 'Layers', function (s) { var k = kids(s), i = k.indexOf($('list')); return k.slice(i); }],
+    marks: ['Marks', 'target', 'Marks', all],
+    width: ['Save', 'ruler', 'Print size', function (s) { var k = kids(s); return [k[0], s.querySelector('.kgrid'), kc('wi'), k.filter(function (c) { return c.classList.contains('check'); })[0]]; }],
+    files: ['Save', 'file', 'Files', function () { return [$('make'), $('files'), $('files').nextElementSibling]; }],
+    share: ['Save', 'share', 'Share', function (s) { var k = kids(s), ch = k.filter(function (c) { return c.classList.contains('check'); }); return [ch[1], $('shareBtn'), $('shareMsg')]; }],
+    check: ['Check', 'check', 'Check', all]
+  };
+  var STEPS = {
+    ht: [['Start', 'photo', ['photo', 'shape', 'crop', 'size']], ['Ink', 'drop', ['ink', 'colors', 'screens']], ['Dots', 'dots', ['style', 'dsize', 'tone', 'limits']], ['Print', 'file', ['check', 'marks', 'width', 'files', 'share']]],
+    st: [['Start', 'photo', ['photo', 'shape', 'crop', 'size']], ['Cut', 'cut', ['light', 'find', 'bridges', 'hand']], ['Layers', 'stack', ['count', 'lyrs']], ['Print', 'file', ['check', 'marks', 'width', 'files', 'share']]]
+  };
+  var mode = function () { return document.body.classList.contains('m-ht') ? 'ht' : 'st'; };
+  var stepI = 0, partOf = {}, cur = null;
+
+  /* ---- head: title + help; Stencil/Halftone only on Start ---- */
+  var head = aside.querySelector('.c-head'), row = head && head.querySelector('.c-row'), modes = head && head.querySelector('.modes');
+  var title = document.createElement('div'); title.className = 'c-title'; if (row) row.insertBefore(title, row.firstChild);
+  /* ---- rail (top right of the picture) and bottom bar ---- */
+  var rail = document.createElement('div'); rail.className = 'rail'; rail.setAttribute('role', 'toolbar'); rail.setAttribute('aria-label', 'Parts of this step'); wrap.appendChild(rail);
+  var bbar = document.createElement('nav'); bbar.className = 'bbar'; bbar.setAttribute('aria-label', 'Steps');
+  if (document.documentElement.classList.contains('nvlock')) document.body.appendChild(bbar); else aside.parentNode.insertBefore(bbar, aside);
+
+  function openSection(name) {
+    var b = Array.prototype.filter.call(document.querySelectorAll('#stabs button'), function (x) { return x.textContent.replace(/^\d+/, '').trim() === name; })[0];
+    if (b && b.getAttribute('aria-selected') !== 'true') b.click();
+    return sec(name);
+  }
+  function refit() {
+    var C = window.__nvConsole; if (!C) return; var sn = C.snaps(); if (C.now() <= sn[0] + 2) return;
+    requestAnimationFrame(function () { var was = aside.style.height; aside.classList.add('c-drag'); aside.style.height = 'auto'; var need = aside.offsetHeight + 2; aside.style.height = was; var cap = cur && cur.querySelector('.dlist:not(.g-off)') ? 0.5 : 0.72; C.setH(Math.min(Math.round(window.innerHeight * cap), Math.max(sn[0] + 40, need)), true); });
+  }
+  function showPart(key) {
+    var pt = P[key], s = openSection(pt[0]); if (!s) return;
     if (cur && cur !== s) cur.classList.remove('grouped', 'show-help');
-    cur = s;
-    if (!s) { rail.hidden = true; rail.innerHTML = ''; return; }
-    if (!G[name]) G[name] = [['all', null, name, function (x) { return kids(x); }]];
-    s.classList.add('grouped');
-    rail.innerHTML = G[name].filter(function (g) { return g[1]; }).map(function (g) { return '<button type="button" data-g="' + g[0] + '" aria-label="' + g[2] + '" title="' + g[2] + '"><span>' + g[2] + '</span>' + ico(g[1]) + '</button>'; }).join('') +
-      '<button type="button" class="info" aria-label="Show tips for this step" title="Tips" aria-pressed="' + s.classList.contains('show-help') + '">' + ico('info') + '</button>';
-    rail.hidden = false;
-    apply(name, s, pick[name]);
+    cur = s; s.classList.add('grouped');
+    var on = pt[3](s).filter(Boolean), list = kids(s);
+    if ($('frameBox') && s.contains($('frameBox'))) list = list.concat(Array.prototype.slice.call($('frameBox').children));
+    list.forEach(function (c) { c.classList.toggle('g-off', on.indexOf(c) < 0); });
+    Array.prototype.forEach.call(s.querySelectorAll('.kc'), function (c) { c.classList.toggle('g-off', on.indexOf(c) < 0); });
+    var st = STEPS[mode()][stepI]; partOf[st[0]] = key;
+    title.innerHTML = st[0] + ' <small>' + pt[2] + '</small>';
+    Array.prototype.forEach.call(rail.querySelectorAll('button[data-p]'), function (b) { b.setAttribute('aria-pressed', String(b.dataset.p === key)); var q = P[b.dataset.p]; b.disabled = !!(q[4] && !q[4]()); });
+    var info = rail.querySelector('.info'); if (info) info.setAttribute('aria-pressed', 'false');
+    aside.scrollTop = 0; refit();
   }
+  function showStep(i) {
+    var steps = STEPS[mode()]; stepI = Math.max(0, Math.min(steps.length - 1, i)); var st = steps[stepI];
+    bbar.style.gridTemplateColumns = 'repeat(' + steps.length + ',minmax(0,1fr))';
+    bbar.innerHTML = '<i class="bprog" style="width:' + ((stepI + 1) / steps.length * 100) + '%"></i>' + steps.map(function (x, j) { return '<button type="button" data-s="' + j + '"' + (j === stepI ? ' aria-current="step"' : '') + '>' + ico(x[1]) + '<span>' + x[0] + '</span></button>'; }).join('');
+    rail.innerHTML = st[2].map(function (k) { return '<button type="button" data-p="' + k + '" aria-label="' + P[k][2] + '" title="' + P[k][2] + '"><span>' + P[k][2] + '</span>' + ico(P[k][1]) + '</button>'; }).join('') + '<button type="button" class="info" aria-label="Show tips" title="Tips">' + ico('info') + '</button>';
+    if (modes) modes.classList.toggle('off', stepI !== 0);
+    var want = partOf[st[0]]; if (!want || st[2].indexOf(want) < 0 || (P[want][4] && !P[want][4]())) want = st[2][0];
+    showPart(want);
+    var C = window.__nvConsole; if (C && C.now() <= C.snaps()[0] + 2) C.setH(C.snaps()[1], true);
+  }
+  bbar.addEventListener('click', function (e) { var b = e.target.closest('button[data-s]'); if (b) showStep(+b.dataset.s); });
   rail.addEventListener('click', function (e) {
     var b = e.target.closest('button'); if (!b || !cur) return;
-    if (b.classList.contains('info')) { var on = cur.classList.toggle('show-help'); b.setAttribute('aria-pressed', String(on)); fitConsole(cur); return; }
-    var name = cur.querySelector('h2').textContent.trim(); apply(name, cur, b.dataset.g);
-    try { if (navigator.vibrate) navigator.vibrate(5); } catch (_) {}
+    if (b.classList.contains('info')) { var on = cur.classList.toggle('show-help'); b.setAttribute('aria-pressed', String(on)); refit(); return; }
+    if (b.dataset.p) { showPart(b.dataset.p); try { if (navigator.vibrate) navigator.vibrate(5); } catch (_) {} }
   });
-  // rebuild when the step or mode changes, or when a photo arrives (Crop + shape turns on), or Ink type changes
-  var t = null, force = false;
-  function active() { return Array.prototype.filter.call(aside.querySelectorAll('section'), function (x) { return x.classList.contains('show') && x.offsetParent !== null; })[0]; }
-  function soon(f) { if (f === true) force = true; clearTimeout(t); t = setTimeout(function () { if (force || active() !== cur) build(); force = false; }, 30); }
-  function hard() { soon(true); }
-  try { var mo = new MutationObserver(function () { soon(); }); Array.prototype.forEach.call(aside.querySelectorAll('section'), function (x) { mo.observe(x, { attributes: true, attributeFilter: ['class'] }); }); } catch (_) {}
-  try { new MutationObserver(hard).observe($('frameBox'), { attributes: true, attributeFilter: ['hidden'] }); } catch (_) {}
-  ['mSt', 'mHt'].forEach(function (id) { var b = $(id); if (b) b.addEventListener('click', hard); });
-  if ($('hInk')) $('hInk').addEventListener('change', hard);
-  build();
+  ['mSt', 'mHt'].forEach(function (id) { var b = $(id); if (b) b.addEventListener('click', function () { setTimeout(function () { showStep(stepI); }, 40); }); });
+  if ($('hInk')) $('hInk').addEventListener('change', function () { setTimeout(function () { var st = STEPS[mode()][stepI]; showPart(partOf[st[0]] || st[2][0]); }, 30); });
+  try { new MutationObserver(function () { var st = STEPS[mode()][stepI]; if (st[2].indexOf('shape') >= 0) showPart(partOf[st[0]] || st[2][0]); }).observe($('frameBox'), { attributes: true, attributeFilter: ['hidden'] }); } catch (_) {}
+  // the old Learn step lives inside ? now
+  window.__nvStepTo = showStep;
+  setTimeout(function () { showStep(0); if (window.__nvStFit) window.__nvStFit(); }, 60);
 })();
 </script>
 <!--NV-STENCIL-RAIL-END-->
