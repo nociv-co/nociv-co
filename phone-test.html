@@ -52,6 +52,12 @@
 // ===== THE TEST LIST. Claude rewrites this block after every delivery. Keep each test to a few taps. =====
 var BATCH = '2026-11-03 from scratch';
 var TESTS = [
+  { id: 'fseditor', title: 'From Scratch: tap to select, Layers, Insert, Publish', where: 'nociv.co/scratch/studio.html',
+    steps: ['Tap a product in the preview.', 'Tap the play button at the top, tap a product, then tap the arrow.', 'Open Layers and tap a product under Shop.', 'Open Insert and add a Log page. Tap Publish (top right).'],
+    expect: 'Tapping in the preview draws a red box with a name tag and opens that thing\'s settings below. Play mode lets you click around like a visitor. Layers shows every page with its items nested under it. Insert adds pages. Publish opens the checklist and download.' },
+  { id: 'fsarchive', title: 'From Scratch: Archive versions and real fonts', where: 'nociv.co/scratch/studio.html, Insert',
+    steps: ['Under Archive tap Finds, then Producer, then Log.', 'In Producer, open a beat and add a short mp3. Tap play in the preview.', 'In Design, Fine tune, Type: try Space Grotesk, Syne and Special Elite.'],
+    expect: 'Finds is a numbered collage with "via site" links. Producer is a list with round play buttons and Buy $ buttons. Log is a dated timeline. The real fonts change the headings right away.' },
   { id: 'fslooks', title: 'From Scratch: 30 looks, Shuffle, 8 starts', where: 'nociv.co/scratch/studio.html',
     steps: ['Open Look. Tap Street, then Stencil.', 'Tap Shuffle three times, then Undo last look.', 'Open Start and pick Music, then Food.'],
     expect: 'Each look changes colors, type, buttons and background in the preview while every page and word stays. Shuffle always gives readable text. Music and Food load full starter sites.' },

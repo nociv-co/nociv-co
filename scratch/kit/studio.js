@@ -5,7 +5,7 @@
 'use strict';
 
 var KEY = 'fromscratch-v1', ORIGIN = location.origin, GUIDE = 'https://nociv.co/scratch/#steps';
-var D = null, pane = 'start', editTab = null, editItem = null, URLS = {}, db = null, ready = false, timer = null;
+var D = null, pane = 'start', editTab = null, editItem = null, pvHash = null, mode = 'pick', URLS = {}, db = null, ready = false, timer = null;
 
 function $(s, el) { return (el || document).querySelector(s); }
 function $$(s, el) { return Array.prototype.slice.call((el || document).querySelectorAll(s)); }
@@ -27,8 +27,17 @@ var TYPES = {
   page:    ['Page', 'Words and a photo. About, story, FAQ.'],
   gallery: ['Gallery', 'Photos only. Tap to view big.'],
   links:   ['Links', 'A list of big buttons to anywhere.'],
-  contact: ['Contact', 'How to reach you.']
+  contact: ['Contact', 'How to reach you.'],
+  log:     ['Log', 'Dated entries, newest first. Document anything.'],
+  finds:   ['Finds', 'Curated things from around the internet, each with its link.'],
+  tracks:  ['Tracks', 'Beats, songs or packs with a play button and a buy button.']
 };
+var LISTY = { grid: 1, log: 1, finds: 1, tracks: 1 };
+var T_ICON = { home: 'home', grid: 'grid', page: 'page', gallery: 'image', links: 'link', contact: 'mail', log: 'page', finds: 'star', tracks: 'play' };
+function ico(n) { return '<svg viewBox="0 0 24 24" aria-hidden="true">' + (ICONS[n] || ICONS.star) + '</svg>'; }
+function today(off) { var d = new Date(Date.now() - (off || 0) * 864e5); return d.toISOString().slice(0, 10); }
+function lit(title, date, text) { var x = it(title, '', '', text); x.date = date; return x; }
+function fnd(title, link, tag, text) { var x = it(title, '', tag, text); x.buy = link; return x; }
 var ICONS = {
   home: '<path d="M3 11l9-7 9 7v9a1 1 0 0 1-1 1h-5v-6h-6v6H4a1 1 0 0 1-1-1z"/>', grid: '<rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/>',
   bag: '<path d="M5 8h14l-1 13H6z"/><path d="M9 8V6a3 3 0 0 1 6 0v2"/>', image: '<rect x="3" y="4" width="18" height="16" rx="1"/><circle cx="9" cy="10" r="2"/><path d="M21 17l-5-5-9 8"/>',
@@ -46,26 +55,26 @@ var PALETTES = [
 ];
 /* ---------- looks: 30 ready-made looks in 6 families. Applying one keeps every word, photo and page. ---------- */
 var FONT_H = { clean: 'system-ui,sans-serif', editorial: '"Iowan Old Style",Palatino,Georgia,serif', poster: 'Impact,"Arial Narrow Bold",sans-serif', type: 'ui-monospace,Menlo,monospace', soft: 'ui-rounded,"SF Pro Rounded",system-ui,sans-serif',
-  grotesk: '"Helvetica Neue","Arial Black",Arial,sans-serif', didone: 'Didot,"Bodoni 72",Georgia,serif', slab: 'Rockwell,"Roboto Slab","Courier New",serif', condensed: '"Avenir Next Condensed","Arial Narrow",sans-serif', humanist: 'Optima,Candara,"Gill Sans",sans-serif', marker: '"Marker Felt","Chalkboard SE","Trebuchet MS",sans-serif' };
-var FONT_W = { poster: 400, didone: 400, marker: 400, humanist: 600, grotesk: 900 };
+  grotesk: '"Helvetica Neue","Arial Black",Arial,sans-serif', didone: '"FS DM Serif Display",Didot,Georgia,serif', slab: 'Rockwell,"Roboto Slab","Courier New",serif', condensed: '"Avenir Next Condensed","Arial Narrow",sans-serif', humanist: 'Optima,Candara,"Gill Sans",sans-serif', marker: '"FS Permanent Marker","Marker Felt",sans-serif', space: '"FS Space Grotesk",system-ui,sans-serif', block: '"FS Archivo Black","Arial Black",sans-serif', gallery: '"FS Syne",sans-serif', bricolage: '"FS Bricolage",sans-serif', journal: '"FS Instrument Serif",Georgia,serif', typed: '"FS Special Elite","Courier New",monospace', mono: '"FS Rubik Mono One",monospace' };
+var FONT_W = { poster: 400, didone: 400, marker: 400, humanist: 600, grotesk: 900, space: 700, block: 400, gallery: 800, bricolage: 800, journal: 400, typed: 400, mono: 400 };
 var LOOK_KEYS = ['font', 'bg', 'text', 'accent', 'corner', 'density', 'header', 'layout', 'photo', 'btn', 'case', 'tex', 'card', 'motion'];
 var LOOKS = {
   Clean: [['Gallery White', 'clean,#ffffff,#111111,#111111,sharp,comfy,left,grid,natural,outline,normal,none,plain,fade'], ['Soft Paper', 'humanist,#fafaf7,#1b1b1b,#2f6db5,soft,comfy,center,grid,portrait,solid,normal,none,plain,fade'],
-    ['Swiss', 'grotesk,#f4f4f2,#0a0a0a,#d92d20,sharp,compact,stack,list,square,solid,upper,grid,plain,slide'], ['Air', 'clean,#eef3f7,#10202e,#1f5fd6,round,comfy,left,grid,landscape,pill,normal,none,shadow,rise'],
+    ['Swiss', 'space,#f4f4f2,#0a0a0a,#d92d20,sharp,compact,stack,list,square,solid,upper,grid,plain,slide'], ['Air', 'clean,#eef3f7,#10202e,#1f5fd6,round,comfy,left,grid,landscape,pill,normal,none,shadow,rise'],
     ['Linen', 'didone,#f6f1e9,#22201c,#22201c,sharp,comfy,center,masonry,natural,underline,normal,grain,plain,fade']],
   Street: [['Stencil', 'condensed,#e9e6df,#141414,#b83a2a,sharp,compact,stack,grid,portrait,solid,upper,grain,tape,slide'], ['Denim', 'grotesk,#1f2f45,#f2ecd6,#e0a240,soft,compact,left,grid,square,solid,upper,none,border,slide'],
     ['Sticker', 'marker,#fffbe8,#141414,#d1287a,round,comfy,center,grid,square,pill,normal,dots,shadow,zoom'], ['Concrete', 'condensed,#c9c6bf,#111111,#111111,sharp,compact,stack,list,landscape,outline,upper,grain,border,rise'],
-    ['Skate', 'slab,#141414,#f4f4f0,#f2c230,soft,compact,left,masonry,natural,solid,upper,none,tape,zoom']],
-  Editorial: [['Magazine', 'didone,#ffffff,#111111,#b42318,sharp,comfy,stack,masonry,natural,underline,normal,none,plain,rise'], ['Archive', 'editorial,#f3f1ec,#1d1d1b,#b23d0b,sharp,comfy,stack,masonry,natural,underline,normal,none,plain,rise'],
-    ['Newsprint', 'editorial,#ecebe6,#1a1a1a,#1a1a1a,sharp,compact,center,list,landscape,outline,upper,lines,plain,fade'], ['Typewriter', 'type,#f7f4ec,#222222,#2f5d8a,sharp,comfy,left,list,square,underline,normal,lines,plain,none'],
-    ['Gallery Night', 'didone,#121212,#f1efe9,#c9a96e,sharp,comfy,center,grid,portrait,outline,upper,none,plain,fade']],
+    ['Skate', 'block,#141414,#f4f4f0,#f2c230,soft,compact,left,masonry,natural,solid,upper,none,tape,zoom']],
+  Editorial: [['Magazine', 'didone,#ffffff,#111111,#b42318,sharp,comfy,stack,masonry,natural,underline,normal,none,plain,rise'], ['Archive', 'journal,#f3f1ec,#1d1d1b,#b23d0b,sharp,comfy,stack,masonry,natural,underline,normal,none,plain,rise'],
+    ['Newsprint', 'editorial,#ecebe6,#1a1a1a,#1a1a1a,sharp,compact,center,list,landscape,outline,upper,lines,plain,fade'], ['Typewriter', 'typed,#f7f4ec,#222222,#2f5d8a,sharp,comfy,left,list,square,underline,normal,lines,plain,none'],
+    ['Gallery Night', 'gallery,#121212,#f1efe9,#c9a96e,sharp,comfy,center,grid,portrait,outline,upper,none,plain,fade']],
   Warm: [['Clay', 'humanist,#f3ece2,#2a1f17,#a8432a,soft,comfy,left,grid,portrait,solid,normal,grain,plain,fade'], ['Market', 'slab,#fff6e5,#2b1d10,#2f7d4a,soft,comfy,center,list,square,solid,normal,none,border,rise'],
     ['Peach', 'soft,#ffe9dc,#3a1d12,#c4432c,round,comfy,center,grid,square,pill,normal,dots,shadow,zoom'], ['Olive', 'editorial,#eef0e3,#20251a,#4f5d27,soft,comfy,left,masonry,natural,outline,normal,grain,plain,fade'],
     ['Cocoa', 'humanist,#2b1d16,#f6ead8,#e0a240,soft,comfy,stack,grid,portrait,solid,normal,none,shadow,fade']],
-  Loud: [['Poster', 'poster,#f2c230,#141414,#141414,sharp,compact,stack,grid,square,solid,upper,none,border,zoom'], ['Signal', 'grotesk,#ffffff,#0a0a0a,#d92d20,sharp,compact,stack,grid,square,solid,upper,none,border,slide'],
-    ['Electric', 'grotesk,#1d1dff,#ffffff,#f2ff3b,sharp,compact,stack,grid,square,solid,upper,none,plain,zoom'], ['Bubblegum', 'soft,#ffd6ec,#2a0f1f,#7a1fd1,round,comfy,center,grid,square,pill,normal,dots,shadow,zoom'],
+  Loud: [['Poster', 'block,#f2c230,#141414,#141414,sharp,compact,stack,grid,square,solid,upper,none,border,zoom'], ['Signal', 'grotesk,#ffffff,#0a0a0a,#d92d20,sharp,compact,stack,grid,square,solid,upper,none,border,slide'],
+    ['Electric', 'mono,#1d1dff,#ffffff,#f2ff3b,sharp,compact,stack,grid,square,solid,upper,none,plain,zoom'], ['Bubblegum', 'bricolage,#ffd6ec,#2a0f1f,#7a1fd1,round,comfy,center,grid,square,pill,normal,dots,shadow,zoom'],
     ['Lime', 'condensed,#d7ff3b,#0f0f0f,#0f0f0f,round,compact,left,grid,square,pill,upper,none,plain,slide']],
-  Night: [['Ink', 'clean,#111111,#f4f4f0,#ffd23f,soft,comfy,left,grid,square,solid,normal,none,plain,fade'], ['Neon', 'grotesk,#0f1115,#f2f2f2,#7cf29a,round,compact,left,grid,square,pill,normal,grid,plain,slide'],
+  Night: [['Ink', 'clean,#111111,#f4f4f0,#ffd23f,soft,comfy,left,grid,square,solid,normal,none,plain,fade'], ['Neon', 'space,#0f1115,#f2f2f2,#7cf29a,round,compact,left,grid,square,pill,normal,grid,plain,slide'],
     ['Midnight', 'didone,#0e1726,#eef2f7,#9cc4ff,sharp,comfy,center,masonry,natural,outline,normal,none,plain,rise'], ['Ember', 'slab,#1a1210,#f6e6dc,#ff6a3d,soft,compact,stack,grid,portrait,solid,upper,grain,shadow,fade'],
     ['Studio Black', 'condensed,#0a0a0a,#ffffff,#ffffff,sharp,compact,stack,list,landscape,outline,upper,none,border,slide']]
 };
@@ -106,13 +115,25 @@ var PRESETS = {
       tab('grid', 'Shop', { intro: 'Everything we have right now.', items: [it('Logo Tee', '32', 'Tees', 'Heavy cotton. Printed by hand.\n\nFits true to size.'), it('Pocket Tee', '30', 'Tees'), it('Poster No. 1', '20', 'Prints', '18 x 24 in. Signed.'), it('Sticker Pack', '8', 'Extras')] }),
       tab('page', 'About', { body: 'Tell people who you are and why you make what you make.\n\n# How it started\nOne paragraph is enough. People buy from people.' }),
       tab('contact', 'Contact', { body: 'Questions, custom orders or wholesale. We answer every email.' })] }; },
-  archive: function () { return { v: 1, base: 'archive', name: 'Studio Name', tagline: 'Selected work, 2019 to now.', notice: '', email: '', footer: '', domain: '', description: '', logo: '', shareImage: '',
-    style: { nav: 'side', motion: 'rise', font: 'editorial', bg: '#f3f1ec', text: '#1d1d1b', accent: '#c2410c', corner: 'sharp', density: 'comfy', header: 'stack', layout: 'masonry', photo: 'natural' },
+  archive: function () { return { v: 1, base: 'archive', name: 'Found Things', tagline: 'Things I keep coming back to.', notice: '', email: '', footer: '', domain: '', description: '', logo: '', shareImage: '',
+    style: Object.assign({ nav: 'side' }, lookStyle('gallery,#f4f1ea,#161616,#2a46d6,sharp,comfy,stack,masonry,natural,underline,normal,none,plain,rise')),
     shop: clone(SHIP),
-    tabs: [tab('grid', 'Work', { items: [it('Untitled (Blue)', '', 'Paint', 'Acrylic on panel, 2024.'), it('Night Shift', '', 'Photo'), it('Field Notes', '', 'Print'), it('Signal', '', 'Paint'), it('Overpass', '', 'Photo')] }),
-      tab('gallery', 'Sketchbook', { intro: 'Process, studies, things in between.', items: [it('Study 1'), it('Study 2'), it('Study 3')] }),
-      tab('page', 'About', { body: 'A short bio in your own words.\n\n# Shows\n2025, Group show, City\n2024, Solo show, City' }),
-      tab('contact', 'Contact', { body: 'For commissions and studio visits.' })] }; },
+    tabs: [tab('finds', 'Finds', { intro: 'Collected from around the internet. Tap one to see where it lives.', items: [fnd('Bus stops of the 1970s', 'https://example.com', 'Photo', 'A whole archive of concrete bus shelters. Every one is different.'), fnd('Hand painted shop signs', 'https://example.com', 'Type', 'Letters nobody will ever paint the same way again.'), fnd('An old synth manual', 'https://example.com', 'Sound', 'The diagrams alone are worth it.'), fnd('A zine library, scanned', 'https://example.com', 'Print', 'Hundreds of zines, free to read.')] }),
+      tab('log', 'Notes', { items: [lit('Why I keep this', today(2), 'Things worth seeing get buried fast. This is where I keep them.')] }),
+      tab('page', 'About', { body: 'What you collect and why. One short paragraph.' }),
+      tab('links', 'Elsewhere', { items: [{ id: rid(), title: 'Email me a find', buy: 'mailto:you@example.com', images: [] }] })] }; },
+  archiveProducer: function () { return { v: 1, base: 'archive', name: 'Producer Name', tagline: 'Beats, packs and leftovers from the studio.', notice: '', email: '', footer: '', domain: '', description: '', logo: '', shareImage: '',
+    style: Object.assign({ nav: 'tabs' }, lookStyle('space,#0d0d0d,#f2f2f2,#ff5c00,soft,compact,left,list,square,solid,upper,grain,plain,slide')),
+    shop: clone(SHIP),
+    tabs: [tab('tracks', 'Beats', { intro: 'Tap play to hear it. Buy to get the files.', items: [it('Night Drive', '30', 'Beat', '92 BPM, A minor. Lease or exclusive.'), it('Dust Kit', '25', 'Sample pack', '120 one shots and 40 loops.'), it('Warm Tape', '30', 'Beat', '84 BPM, F major.'), it('Studio Tee', '28', 'Merch', 'Heavy cotton. Printed by hand.')] }),
+      tab('gallery', 'Studio', { intro: 'Where it gets made.', items: [it('Desk'), it('Gear'), it('Late night')] }),
+      tab('contact', 'Work with me', { body: 'Custom beats, mixing and collabs. Tell me what you are working on.' })] }; },
+  archiveLog: function () { return { v: 1, base: 'archive', name: 'Field Log', tagline: 'Documenting one thing, week by week.', notice: '', email: '', footer: '', domain: '', description: '', logo: '', shareImage: '',
+    style: Object.assign({ nav: 'tabs' }, lookStyle('typed,#f3efe6,#222222,#2f5d8a,sharp,comfy,left,list,natural,underline,normal,lines,plain,fade')),
+    shop: clone(SHIP),
+    tabs: [tab('log', 'Log', { intro: 'Newest first.', items: [lit('Week 3: the roof', today(0), 'The roof came off today. You can see the old beams for the first time.'), lit('Week 2: first walls down', today(7), 'Two walls gone. The light changed the whole room.'), lit('Week 1: before', today(14), 'Taking pictures of everything before it changes.')] }),
+      tab('gallery', 'Photos', { items: [it('Before'), it('During'), it('Detail')] }),
+      tab('page', 'About', { body: 'What you are documenting, where, and why it matters to you.' })] }; },
   app: function () { return { v: 1, base: 'app', name: 'Pocket', tagline: 'Everything in one place.', notice: '', email: '', footer: '', domain: '', description: '', logo: '', shareImage: '',
     style: { nav: 'bottom', motion: 'slide', font: 'soft', bg: '#0f1115', text: '#f2f2f2', accent: '#7cf29a', corner: 'round', density: 'compact', header: 'left', layout: 'grid', photo: 'square' },
     shop: clone(SHIP),
@@ -155,7 +176,7 @@ var PRESETS = {
 };
 var BASES = [
   ['shop', 'Shop', 'Sell anything. Home, product pages, shipping info, buy buttons.'],
-  ['archive', 'Archive', 'Show your work. Portfolio, sketchbook, bio. Prices optional.'],
+  ['archive', 'Archive', 'Three versions: Finds (curated things with links), Producer (beats and packs with a play button), Log (dated entries documenting something).'],
   ['app', 'App', 'Feels like a phone app. Bottom bar, cards, dark mode.'],
   ['music', 'Music', 'Releases, shows, where to listen, booking.'],
   ['food', 'Food', 'Menu with prices, hours, catering. For a truck, cart or kitchen.'],
@@ -203,14 +224,37 @@ function slugOf(ti) {
   return out;
 }
 function hashFor() {
+  if (pvHash) return pvHash;
   if (editTab == null) return null;
   var s = slugOf(editTab); if (!s) return null;
   var t = D.tabs[editTab];
-  if (editItem != null && t.type === 'grid' && t.items[editItem]) return '#/' + s + '/' + t.items[editItem].id;
+  if (editItem != null && LISTY[t.type] && t.items[editItem]) return '#/' + s + '/' + t.items[editItem].id;
   return '#/' + s;
 }
-function push() { if (!ready || !D) return; $('#pv').contentWindow.postMessage({ type: 'site', site: D, images: URLS, hash: hashFor() }, ORIGIN); }
-window.addEventListener('message', function (e) { if (e.origin === ORIGIN && e.data && e.data.type === 'ready') { ready = true; push(); } });
+function markFor() {
+  if (pane === 'info') return { kind: 'site', label: 'Site: ' + (D.name || 'name') };
+  if (pane !== 'pages' || editTab == null || !D.tabs[editTab]) return null;
+  var t = D.tabs[editTab], sl = slugOf(editTab); if (!sl) return null;
+  var x = editItem != null && t.items && t.items[editItem];
+  return x ? { kind: 'item', slug: sl, item: x.id, label: 'Item: ' + (x.title || 'Untitled') } : { kind: 'tab', slug: sl, label: 'Page: ' + (t.name || 'Untitled') };
+}
+function post(m) { if (ready) try { $('#pv').contentWindow.postMessage(m, ORIGIN); } catch (e) {} }
+function push() { if (!ready || !D) return; post({ type: 'site', site: D, images: URLS, hash: hashFor(), mark: markFor() }); post({ type: 'mode', pick: mode === 'pick' }); }
+window.addEventListener('message', function (e) {
+  if (e.origin !== ORIGIN || !e.data) return;
+  if (e.data.type === 'ready') { ready = true; push(); return; }
+  if (e.data.type === 'pick') {
+    var d = e.data; pvHash = d.hash || null;
+    if (d.kind === 'site') { pane = 'info'; editTab = editItem = null; }
+    else {
+      var ti = -1; D.tabs.forEach(function (t, i) { if (slugOf(i) === d.slug) ti = i; });
+      if (ti < 0) return;
+      pane = 'pages'; editTab = ti; editItem = null;
+      if (d.item) (D.tabs[ti].items || []).forEach(function (x, j) { if (x.id === d.item) editItem = j; });
+    }
+    draw(true); $('.st-ed').scrollTop = 0;
+  }
+});
 
 function demoMotion() {
   var list = vis(), i = 0;
@@ -249,9 +293,12 @@ function group(title, key, opts, note) {
 
 /* ---------- panes ---------- */
 function pStart() {
-  return '<h2>Pick a base</h2><p class="lede">This is your starting point. You can change every word, color and page after.</p><div class="bases">' +
-    BASES.map(function (b) { return '<button type="button" class="base' + (D.base === b[0] && D._preset === b[0] ? ' on' : '') + '" data-act="base" data-v="' + b[0] + '"><b>' + b[1] + '</b><span>' + b[2] + '</span></button>'; }).join('') +
-    '</div><p class="help">Your work saves on this device as you go. Use Publish to get your site files.</p>';
+  return '<h2>Insert</h2><p class="lede">Add a page to your site. It shows up in the menu and in Layers.</p><div class="tools">' +
+    Object.keys(TYPES).map(function (k) { return '<button type="button" data-act="add" data-v="' + k + '">' + ico(T_ICON[k]) + '<b>' + TYPES[k][0] + '</b><span>' + TYPES[k][1] + '</span></button>'; }).join('') + '</div>' +
+    '<h2 class="sec2">Start from a template</h2><p class="lede">Replaces your whole site. Your work saves on this device as you go.</p><div class="bases">' +
+    BASES.map(function (b) { var h = '<button type="button" class="base' + (D._preset === b[0] ? ' on' : '') + '" data-act="base" data-v="' + b[0] + '"><b>' + b[1] + '</b><span>' + b[2] + '</span></button>';
+      if (b[0] === 'archive') h = '<div class="base base-ver' + (/^archive/.test(D._preset || '') ? ' on' : '') + '"><b>Archive</b><span>Pick a version:</span><div class="vers">' + [['archive', 'Finds'], ['archiveProducer', 'Producer'], ['archiveLog', 'Log']].map(function (v) { return '<button type="button" class="c' + (D._preset === v[0] ? ' on' : '') + '" data-act="base" data-v="' + v[0] + '">' + v[1] + '</button>'; }).join('') + '</div><span>' + b[2] + '</span></div>';
+      return h; }).join('') + '</div>';
 }
 
 function pLook() {
@@ -267,11 +314,11 @@ function pLook() {
     '<button type="button" class="lk lk-sh" data-act="shuffle"><b>Shuffle</b><small>New colors and type, same pages</small></button></div>' +
     (D._prevStyle ? '<button type="button" class="sm wide" data-act="lookundo">Undo last look</button>' : '') +
     '<p class="note">Looks change colors, type, buttons and spacing. Your words, photos and pages stay.</p>';
-  return '<h2>Look</h2>' + gal + '<details class="fine"' + (fineOpen ? ' open' : '') + '><summary>Fine tune</summary>' +
+  return '<h2>Design</h2>' + gal + '<details class="fine"' + (fineOpen ? ' open' : '') + '><summary>Fine tune</summary>' +
     group('Menu', 'nav', [['tabs', 'Tabs', 'on top'], ['menu', 'Menu', 'button'], ['bottom', 'Bottom bar', 'like an app'], ['side', 'Side list', 'computer']], navNote) +
     group('Page change', 'motion', [['none', 'None'], ['fade', 'Fade'], ['slide', 'Slide'], ['rise', 'Rise'], ['zoom', 'Zoom']]) +
     '<button type="button" class="sm wide" data-act="demo">▶ Watch it</button>' +
-    group('Type', 'font', [['clean', 'Clean'], ['grotesk', 'Grotesk'], ['condensed', 'Condensed'], ['humanist', 'Humanist'], ['soft', 'Soft'], ['editorial', 'Editorial'], ['didone', 'Fashion'], ['slab', 'Slab'], ['type', 'Typewriter'], ['poster', 'POSTER'], ['marker', 'Marker']].map(function (f) { return [f[0], f[1], '', 'font-family:' + FONT_H[f[0]].replace(/"/g, "'") + ';font-weight:' + (FONT_W[f[0]] || 800)]; })) +
+    group('Type', 'font', [['clean', 'Clean'], ['space', 'Space Grotesk'], ['block', 'Archivo Black'], ['gallery', 'Syne'], ['bricolage', 'Bricolage'], ['grotesk', 'Grotesk'], ['condensed', 'Condensed'], ['humanist', 'Humanist'], ['soft', 'Soft'], ['editorial', 'Editorial'], ['journal', 'Instrument Serif'], ['didone', 'DM Serif'], ['slab', 'Slab'], ['type', 'Typewriter'], ['typed', 'Special Elite'], ['mono', 'Rubik Mono'], ['marker', 'Marker']].map(function (f) { return [f[0], f[1], '', 'font-family:' + FONT_H[f[0]].replace(/"/g, "'") + ';font-weight:' + (FONT_W[f[0]] || 800)]; })) +
     '<div class="g"><h3>Colors</h3><div class="pal">' + PALETTES.map(function (p) {
       return '<button type="button" data-act="pal" data-v="' + p.slice(1).join(',') + '" aria-label="' + p[0] + '" style="background:' + p[1] + ';color:' + p[2] + '"><i style="background:' + p[3] + '"></i>' + p[0] + '</button>';
     }).join('') + '</div><div class="cols">' +
@@ -294,18 +341,22 @@ function pPages() {
   if (editTab != null && D.tabs[editTab]) return editItem != null ? pItem() : pTab();
   editTab = null;
   var rows = D.tabs.map(function (t, i) {
-    return '<li class="row' + (t.hidden ? ' off' : '') + '"><button type="button" class="row-main" data-act="open" data-i="' + i + '"><b>' + esc(t.name || 'Untitled') + '</b><small>' + TYPES[t.type][0] + (t.items && t.type !== 'page' && t.type !== 'home' && t.type !== 'contact' ? ' · ' + t.items.length : '') + (t.hidden ? ' · hidden' : '') + '</small></button>' +
-      '<button type="button" class="ic" data-act="up" data-i="' + i + '" aria-label="Move up"' + (i ? '' : ' disabled') + '>↑</button>' +
-      '<button type="button" class="ic" data-act="down" data-i="' + i + '" aria-label="Move down"' + (i < D.tabs.length - 1 ? '' : ' disabled') + '>↓</button>' +
-      '<button type="button" class="ic" data-act="hide" data-i="' + i + '" aria-label="' + (t.hidden ? 'Show' : 'Hide') + '">' + (t.hidden ? '◌' : '●') + '</button>' +
-      '<button type="button" class="ic" data-act="del" data-i="' + i + '" aria-label="Delete">×</button></li>';
+    var kids = (LISTY[t.type] || t.type === 'gallery' || t.type === 'links') ? (t.items || []) : [];
+    var k = kids.slice(0, 8).map(function (x, j) {
+      return '<li><button type="button" class="ly-k" data-act="pick" data-i="' + i + '" data-j="' + j + '"><i></i>' + esc(x.title || (t.type === 'gallery' ? 'Photo ' + (j + 1) : 'Untitled')) + '</button></li>';
+    }).join('') + (kids.length > 8 ? '<li><button type="button" class="ly-k ly-more" data-act="open" data-i="' + i + '">+ ' + (kids.length - 8) + ' more</button></li>' : '');
+    return '<li class="ly' + (t.hidden ? ' off' : '') + '"><div class="ly-row"><button type="button" class="ly-main" data-act="open" data-i="' + i + '">' + ico(t.icon || T_ICON[t.type]) + '<b>' + esc(t.name || 'Untitled') + '</b><small>' + TYPES[t.type][0] + (t.hidden ? ' . hidden' : '') + '</small></button>' +
+      '<button type="button" class="ic" data-act="hide" data-i="' + i + '" aria-label="' + (t.hidden ? 'Show page' : 'Hide page') + '">' + (t.hidden ? '<svg viewBox="0 0 24 24"><path d="M3 3l18 18M10.6 6.1A9.8 9.8 0 0 1 12 6c5 0 9 6 9 6a17 17 0 0 1-2.6 3.2M6.6 7.6C4.4 9.2 3 12 3 12s4 6 9 6c1.4 0 2.7-.4 3.9-1"/></svg>' : '<svg viewBox="0 0 24 24"><path d="M3 12s4-6 9-6 9 6 9 6-4 6-9 6-9-6-9-6z"/><circle cx="12" cy="12" r="3"/></svg>') + '</button>' +
+      '<button type="button" class="ic" data-act="up" data-i="' + i + '" aria-label="Move up"' + (i ? '' : ' disabled') + '>&uarr;</button>' +
+      '<button type="button" class="ic" data-act="down" data-i="' + i + '" aria-label="Move down"' + (i < D.tabs.length - 1 ? '' : ' disabled') + '>&darr;</button>' +
+      '<button type="button" class="ic" data-act="del" data-i="' + i + '" aria-label="Delete page">&times;</button></div>' + (k ? '<ul class="ly-kids">' + k + '</ul>' : '') + '</li>';
   }).join('');
-  return '<h2>Pages</h2><p class="lede">These are your tabs. Name them anything. Tap one to fill it in.</p><ul class="rows">' + rows + '</ul>' +
-    '<h3>Add a page</h3><div class="types">' + Object.keys(TYPES).map(function (k) { return '<button type="button" data-act="add" data-v="' + k + '"><b>' + TYPES[k][0] + '</b><span>' + TYPES[k][1] + '</span></button>'; }).join('') + '</div>';
+  return '<h2>Layers</h2><p class="lede">Every page and everything on it. Tap a layer to edit it, or tap anything in the preview.</p><ul class="lys">' + rows + '</ul>' +
+    '<button type="button" class="add" data-act="pane" data-v="start">+ Insert a page</button>';
 }
 
 function pTab() {
-  var t = D.tabs[editTab], P = 'tabs.' + editTab, h = '<button type="button" class="back" data-act="close">‹ All pages</button><h2>' + esc(t.name || 'Untitled') + ' <small>' + TYPES[t.type][0] + '</small></h2>';
+  var t = D.tabs[editTab], P = 'tabs.' + editTab, h = '<button type="button" class="back" data-act="close">‹ Layers</button><h2>' + esc(t.name || 'Untitled') + ' <small>' + TYPES[t.type][0] + '</small></h2>';
   h += fld('Page name', P + '.name', { max: 24, help: 'Short works best. One or two words.' });
   if (D.style.nav === 'bottom') h += '<div class="f"><span class="lab">Icon</span><div class="icons">' + ICON_NAMES.map(function (n) { return '<button type="button" class="' + ((t.icon || '') === n ? 'on' : '') + '" data-act="icon" data-v="' + n + '" aria-label="' + n + '"><svg viewBox="0 0 24 24">' + ICONS[n] + '</svg></button>'; }).join('') + '</div></div>';
   if (t.type === 'home') {
@@ -318,14 +369,14 @@ function pTab() {
     h += fld('Intro', P + '.intro', { area: true, rows: 2 }) + fld('Email', P + '.email', { type: 'email', mode: 'email', ph: D.email || 'you@yourname.com', help: 'Leave empty to use the email in Info.' }) + fld('More words', P + '.body', { area: true, rows: 4 });
   } else {
     h += fld('Intro', P + '.intro', { area: true, rows: 2, ph: 'Optional line at the top' });
-    if (t.type === 'grid') {
-      h += '<h3>Items <small>' + t.items.length + '</small></h3><ul class="rows">' + t.items.map(function (x, j) {
+    if (LISTY[t.type]) {
+      h += '<h3>' + ({ log: 'Entries', finds: 'Finds', tracks: 'Tracks' }[t.type] || 'Items') + ' <small>' + t.items.length + '</small></h3><ul class="rows">' + t.items.map(function (x, j) {
         var p = x.images && x.images[0];
-        return '<li class="row"><button type="button" class="row-main" data-act="item" data-j="' + j + '">' + (p ? '<img src="' + esc(url(p)) + '" alt="">' : '<span class="nopic"></span>') + '<span><b>' + esc(x.title || 'Untitled') + '</b><small>' + (x.price ? '$' + esc(x.price) : '') + (x.soldout ? ' · sold out' : '') + (x.price && !x.buy && !x.soldout ? ' · no buy link' : '') + '</small></span></button>' +
+        return '<li class="row"><button type="button" class="row-main" data-act="item" data-j="' + j + '">' + (p ? '<img src="' + esc(url(p)) + '" alt="">' : '<span class="nopic"></span>') + '<span><b>' + esc(x.title || 'Untitled') + '</b><small>' + (t.type === 'log' ? esc(x.date || 'no date') : t.type === 'finds' ? esc((String(x.buy || '').match(/^https?:\/\/(?:www\.)?([^\/]+)/) || [, 'no link'])[1]) : (x.price ? '$' + esc(x.price) : '') + (t.type === 'tracks' ? (x.audio ? ' . has preview' : ' . no preview') : '') + (x.soldout ? ' . sold out' : '') + (x.price && !x.buy && !x.soldout ? ' . no buy link' : '')) + '</small></span></button>' +
           '<button type="button" class="ic" data-act="iup" data-j="' + j + '" aria-label="Move up"' + (j ? '' : ' disabled') + '>↑</button>' +
           '<button type="button" class="ic" data-act="idel" data-j="' + j + '" aria-label="Delete">×</button></li>';
-      }).join('') + '</ul><button type="button" class="add" data-act="iadd">+ Add item</button>';
-      h += '<p class="help">Tags become filter buttons when you use two or more.</p>';
+      }).join('') + '</ul><button type="button" class="add" data-act="iadd">+ Add ' + ({ log: 'entry', finds: 'find', tracks: 'track' }[t.type] || 'item') + '</button>';
+      if (t.type === 'grid') h += '<p class="help">Tags become filter buttons when you use two or more.</p>';
     } else if (t.type === 'gallery') {
       h += '<h3>Photos <small>' + t.items.length + '</small></h3><div class="gthumbs">' + t.items.map(function (x, j) {
         var p = x.images && x.images[0];
@@ -343,26 +394,33 @@ function pTab() {
 function pItem() {
   var t = D.tabs[editTab], x = t.items[editItem], P = 'tabs.' + editTab + '.items.' + editItem;
   if (!x) { editItem = null; return pTab(); }
-  var bad = x.buy && !/^https:\/\//i.test(x.buy);
-  return '<button type="button" class="back" data-act="iclose">‹ ' + esc(t.name) + '</button><h2>' + esc(x.title || 'Untitled') + '</h2>' +
-    '<div class="f"><span class="lab">Photos</span><div class="pics">' + (x.images || []).map(function (p, k) {
+  var bad = x.buy && !/^(https:\/\/|mailto:)/i.test(x.buy);
+  var pics = '<div class="f"><span class="lab">' + (t.type === 'tracks' ? 'Cover art' : 'Photos') + '</span><div class="pics">' + (x.images || []).map(function (p, k) {
       return '<div class="pic"><img src="' + esc(url(p)) + '" alt=""><div><button type="button" class="ic" data-act="pleft" data-k="' + k + '" aria-label="Move left"' + (k ? '' : ' disabled') + '>‹</button><button type="button" class="ic" data-act="pdel" data-k="' + k + '" aria-label="Remove">×</button></div></div>';
     }).join('') + '<label class="pic up">+<input type="file" accept="image/*" multiple data-many="' + P + '.images"></label></div>' +
-    '<p class="help">First photo is the cover. Add one that shows the real size, like it in a hand or on a person. Shoppers look for that.</p></div>' +
+    (t.type === 'grid' ? '<p class="help">First photo is the cover. Add one that shows the real size, like it in a hand or on a person. Shoppers look for that.</p>' : '') + '</div>';
+  var top = '<button type="button" class="back" data-act="iclose">‹ ' + esc(t.name) + '</button><h2>' + esc(x.title || 'Untitled') + '</h2>';
+  var del = '<button type="button" class="danger" data-act="idel" data-j="' + editItem + '">Delete this ' + ({ log: 'entry', finds: 'find', tracks: 'track' }[t.type] || 'item') + '</button>';
+  if (t.type === 'log') return top + fld('Title', P + '.title') + fld('Date', P + '.date', { type: 'date', help: 'Entries sort newest first by this date.' }) + pics +
+    fld('What happened', P + '.text', { area: true, rows: 8, help: 'Blank line for a new paragraph. Start a line with # for a heading.' }) + fld('Link (optional)', P + '.buy', { type: 'url', mode: 'url', ph: 'https://' }) + del;
+  if (t.type === 'finds') return top + fld('What it is', P + '.title') + fld('Where it lives', P + '.buy', { type: 'url', mode: 'url', ph: 'https://', help: bad ? '<b class="warn">Links must start with https://</b>' : 'The page you found it on. People see "via" and the site name.' }) + pics +
+    fld('Why you picked it', P + '.text', { area: true, rows: 5 }) + fld('Tag', P + '.tag', { ph: 'Photo, Type, Sound...' }) + del;
+  var audio = t.type === 'tracks' ? '<div class="f"><span class="lab">Preview sound</span>' + (x.audio ? '<div class="aud"><audio controls src="' + esc(url(x.audio)) + '"></audio><button type="button" class="sm" data-act="imgclear" data-p="' + P + '.audio">Remove</button></div>' : '') +
+    '<label class="add up">' + (x.audio ? 'Replace sound' : '+ Add an mp3 or m4a') + '<input type="file" accept="audio/mpeg,audio/mp4,audio/x-m4a,audio/aac,audio/wav" data-audio="' + P + '.audio"></label><p class="help">Use a short tagged preview, 30 to 60 seconds. Sell the full file through your buy link. Up to 12 MB.</p></div>' : '';
+  return top + audio + pics +
     fld('Name', P + '.title') +
     fld('Price', P + '.price', { mode: 'decimal', ph: 'Leave empty if not for sale' }) +
     fld('Buy link', P + '.buy', { type: 'url', mode: 'url', ph: 'https://buy.stripe.com/...', help: bad ? '<b class="warn">Links must start with https://</b>' : 'Paste a Stripe Payment Link. Stripe runs the checkout, asks for the shipping address and emails the receipt. Any link works too, like a booking or a preorder form.' }) +
     fld('Button words', P + '.cta', { ph: x.price ? 'Buy' : 'Open' }) +
-    fld('Tag', P + '.tag', { ph: 'Tees, Prints, 2024...', help: 'Groups items. Two or more tags make filter buttons.' }) +
-    fld('Badge', P + '.badge', { ph: 'New, Last one, Preorder', max: 16 }) +
-    fld('Describe it', P + '.text', { area: true, rows: 6, help: 'Size, material, how it is made. Blank line for a new paragraph.' }) +
-    chk('Sold out', P + '.soldout') +
-    '<button type="button" class="danger" data-act="idel" data-j="' + editItem + '">Delete this item</button>';
+    fld('Tag', P + '.tag', { ph: t.type === 'tracks' ? 'Beat, Sample pack, Merch' : 'Tees, Prints, 2024...', help: 'Groups items. Two or more tags make filter buttons.' }) +
+    (t.type === 'grid' ? fld('Badge', P + '.badge', { ph: 'New, Last one, Preorder', max: 16 }) : '') +
+    fld(t.type === 'tracks' ? 'Details' : 'Describe it', P + '.text', { area: true, rows: 6, help: t.type === 'tracks' ? 'BPM, key, what is in the pack, lease terms.' : 'Size, material, how it is made. Blank line for a new paragraph.' }) +
+    chk('Sold out', P + '.soldout') + del;
 }
 
 function pInfo() {
   var c = ['USD', 'CAD', 'MXN', 'EUR', 'GBP', 'AUD', 'JPY'];
-  return '<h2>Info</h2>' + fld('Name', 'name', { max: 40 }) + fld('Tagline', 'tagline', { max: 90 }) + imgf('Logo', 'logo') +
+  return '<h2>Site</h2>' + fld('Name', 'name', { max: 40 }) + fld('Tagline', 'tagline', { max: 90 }) + imgf('Logo', 'logo') +
     fld('Top banner', 'notice', { max: 70, ph: 'Free shipping over $50', help: 'A short line across the very top. Leave empty to hide.' }) +
     fld('Email', 'email', { type: 'email', mode: 'email', ph: 'you@yourname.com', help: 'Shown in the footer and on Contact.' }) +
     fld('Footer', 'footer', { ph: '© ' + new Date().getFullYear() + ' ' + (D.name || 'Your Name') }) +
@@ -410,7 +468,8 @@ function pPublish() {
     '<h3>Backup</h3><div class="ch"><button type="button" class="sm" data-act="backup">Save backup</button><label class="sm up">Open backup<input type="file" accept=".json,application/json" data-restore="1"></label><button type="button" class="sm" data-act="live">Load live site</button><button type="button" class="sm danger" data-act="reset">Start over</button></div>';
 }
 
-function draw() {
+function draw(fromPick) {
+  if (!fromPick) post({ type: 'mark', mark: markFor() });
   var P = { start: pStart, look: pLook, pages: pPages, info: pInfo, publish: pPublish };
   $('#pane').innerHTML = P[pane]();
   $$('.st-tabs button').forEach(function (b) { var on = b.dataset.p === pane; b.classList.toggle('on', on); b.setAttribute('aria-selected', on); });
@@ -475,9 +534,9 @@ function indexHtml() {
 function firstImage() { var f = ''; D.tabs.some(function (t) { if (t.image) { f = t.image; return true; } return (t.items || []).some(function (x) { if (x.images && x.images[0]) { f = x.images[0]; return true; } return false; }); }); return f; }
 function usedImages() {
   var s = {};
-  function add(p) { if (p && /^images\//.test(p)) s[p] = 1; }
+  function add(p) { if (p && /^(images|audio)\//.test(p)) s[p] = 1; }
   add(D.logo); add(D.shareImage);
-  D.tabs.forEach(function (t) { add(t.image); (t.items || []).forEach(function (x) { (x.images || []).forEach(add); }); });
+  D.tabs.forEach(function (t) { add(t.image); (t.items || []).forEach(function (x) { (x.images || []).forEach(add); add(x.audio); }); });
   return Object.keys(s);
 }
 var README = 'YOUR SITE\n=========\n\nThis folder is your whole website. You own it.\n\nindex.html     the site\nsite.json      everything you typed: pages, items, colors\nimages/        your photos\nadmin.html     the studio, to change things later\nkit/           the engine. You do not need to touch it.\n\nPUT IT ONLINE (Cloudflare, free hosting)\n1. Make a free Cloudflare account. Buy your domain there (sold at cost, about $11 a year for .com).\n2. Workers and Pages > Create > Pages > Upload assets. Name it, then drop in this zip or folder. Deploy.\n3. Custom domains > Set up a domain > type your domain. Cloudflare connects it for you.\n\nSELL THINGS (Stripe)\n1. Make a Stripe account. Stripe is who pays you.\n2. Payment Links > New. Add the product and price. Turn on: collect shipping address, shipping rates.\n3. Copy the link and paste it into the item\'s Buy link in admin.html.\nStripe sends the receipt email. You see orders in Stripe and buy labels at USPS or Pirate Ship.\n\nCHANGE IT LATER\nGo to yourdomain.com/admin.html. Edit. Download a new zip. Upload it again in Cloudflare (Create deployment).\nYour live site only changes when you upload.\n\nFull guide: ' + GUIDE + '\n';
@@ -492,7 +551,7 @@ function buildZip() {
   files.push({ name: 'index.html', data: enc.encode(html) }, { name: '404.html', data: enc.encode(html) },
     { name: 'site.json', data: enc.encode(JSON.stringify(json, null, 2)) }, { name: 'README.txt', data: enc.encode(README) },
     { name: 'LICENSE.txt', data: enc.encode(LICENSE) }, { name: 'robots.txt', data: enc.encode('User-agent: *\nDisallow: /admin.html\nDisallow: /preview.html\n') });
-  var kit = [['kit/site.js', 'kit/site.js'], ['kit/site.css', 'kit/site.css'], ['kit/studio.js', 'kit/studio.js'], ['kit/studio.css', 'kit/studio.css'], ['preview.html', 'preview.html'], ['admin.html', self]];
+  var kit = [['kit/site.js', 'kit/site.js'], ['kit/site.css', 'kit/site.css'], ['kit/studio.js', 'kit/studio.js'], ['kit/studio.css', 'kit/studio.css'], ['preview.html', 'preview.html'], ['admin.html', self], ['kit/fonts/archivo-black.woff', 'kit/fonts/archivo-black.woff'], ['kit/fonts/bricolage-grotesque-800.woff', 'kit/fonts/bricolage-grotesque-800.woff'], ['kit/fonts/dm-serif-display.woff', 'kit/fonts/dm-serif-display.woff'], ['kit/fonts/instrument-serif.woff', 'kit/fonts/instrument-serif.woff'], ['kit/fonts/permanent-marker.woff', 'kit/fonts/permanent-marker.woff'], ['kit/fonts/rubik-mono-one.woff', 'kit/fonts/rubik-mono-one.woff'], ['kit/fonts/space-grotesk-400.woff', 'kit/fonts/space-grotesk-400.woff'], ['kit/fonts/space-grotesk-700.woff', 'kit/fonts/space-grotesk-700.woff'], ['kit/fonts/special-elite.woff', 'kit/fonts/special-elite.woff'], ['kit/fonts/syne-800.woff', 'kit/fonts/syne-800.woff'], ['kit/fonts/LICENSE-spacegrotesk.txt', 'kit/fonts/LICENSE-spacegrotesk.txt'], ['kit/fonts/LICENSE-archivoblack.txt', 'kit/fonts/LICENSE-archivoblack.txt'], ['kit/fonts/LICENSE-dmserifdisplay.txt', 'kit/fonts/LICENSE-dmserifdisplay.txt'], ['kit/fonts/LICENSE-syne.txt', 'kit/fonts/LICENSE-syne.txt'], ['kit/fonts/LICENSE-instrumentserif.txt', 'kit/fonts/LICENSE-instrumentserif.txt'], ['kit/fonts/LICENSE-rubikmonoone.txt', 'kit/fonts/LICENSE-rubikmonoone.txt'], ['kit/fonts/LICENSE-bricolagegrotesque.txt', 'kit/fonts/LICENSE-bricolagegrotesque.txt'], ['kit/fonts/LICENSE-specialelite.txt', 'kit/fonts/LICENSE-specialelite.txt'], ['kit/fonts/LICENSE-permanentmarker.txt', 'kit/fonts/LICENSE-permanentmarker.txt']];
   var jobs = kit.map(function (k) { return fetchBytes(k[1]).then(function (d) { files.push({ name: k[0], data: d }); }); });
   usedImages().forEach(function (p) {
     jobs.push(getBlob(p).then(function (b) { return b ? bytes(b) : fetchBytes(p); }).then(function (d) { files.push({ name: p, data: d }); }));
@@ -520,7 +579,7 @@ function remixApply(r) {
     var x = tab(t.type, String(t.name || '').slice(0, 24) || TYPES[t.type][0]);
     if (t.icon) x.icon = String(t.icon); if (t.hidden) x.hidden = true;
     var n = Math.min(+t.n || 0, 12);
-    if (t.type === 'grid' || t.type === 'gallery') for (var i = 0; i < n; i++) x.items.push(it('Item ' + (i + 1)));
+    if (LISTY[t.type] || t.type === 'gallery') for (var i = 0; i < n; i++) x.items.push(t.type === 'log' ? lit('Entry ' + (i + 1), today(i)) : it('Item ' + (i + 1)));
     if (t.type === 'links') for (var j = 0; j < n; j++) x.items.push({ id: rid(), title: 'Link ' + (j + 1), buy: '', images: [] });
     if (t.type === 'home') { x.headline = 'Your name here'; x.button = ''; x.buttonTo = null; }
     return x;
@@ -536,7 +595,7 @@ function onAct(b) {
   var a = b.dataset.act, i = +b.dataset.i, j = +b.dataset.j, t = D.tabs[editTab];
   switch (a) {
     case 'base':
-      if (D._touched && !confirm('Start from the ' + b.dataset.v + ' base? What you have now gets replaced. Save a backup first if you want it.')) return;
+      if (D._touched && !confirm('Start from the ' + b.textContent.trim().split(/\s/)[0] + ' start? What you have now gets replaced. Save a backup first if you want it.')) return;
       D = PRESETS[b.dataset.v](); D._preset = b.dataset.v; editTab = editItem = null; save(); D._touched = false; localStorage.setItem(KEY, JSON.stringify(D)); break;
     case 'style': D.style[b.dataset.k] = b.dataset.v; save(); break;
     case 'fam': lookFam = b.dataset.v; break;
@@ -545,24 +604,25 @@ function onAct(b) {
     case 'lookundo': if (D._prevStyle) { D.style = D._prevStyle; delete D._prevStyle; save(); } break;
     case 'pal': var v = b.dataset.v.split(','); D.style.bg = v[0]; D.style.text = v[1]; D.style.accent = v[2]; save(); break;
     case 'demo': demoMotion(); return;
-    case 'open': editTab = i; editItem = null; push(); break;
-    case 'close': editTab = editItem = null; push(); break;
+    case 'open': pvHash = null; editTab = i; editItem = null; pane = 'pages'; push(); break;
+    case 'pick': pvHash = null; editTab = i; editItem = j; pane = 'pages'; push(); break;
+    case 'close': pvHash = null; editTab = editItem = null; push(); break;
     case 'up': D.tabs.splice(i - 1, 0, D.tabs.splice(i, 1)[0]); save(); break;
     case 'down': D.tabs.splice(i + 1, 0, D.tabs.splice(i, 1)[0]); save(); break;
     case 'hide': D.tabs[i].hidden = !D.tabs[i].hidden; save(); break;
     case 'del': if (D.tabs.length < 2) { alert('Keep at least one page.'); return; } if (!confirm('Delete the page "' + D.tabs[i].name + '"?')) return; D.tabs.splice(i, 1); save(); break;
-    case 'add': D.tabs.push(tab(b.dataset.v)); editTab = D.tabs.length - 1; editItem = null; save(); break;
+    case 'add': D.tabs.push(tab(b.dataset.v)); pvHash = null; editTab = D.tabs.length - 1; editItem = null; pane = 'pages'; save(); break;
     case 'icon': t.icon = b.dataset.v; save(); break;
-    case 'item': editItem = j; push(); break;
-    case 'iclose': editItem = null; push(); break;
-    case 'iadd': t.items.push(it('New item')); editItem = t.items.length - 1; save(); break;
+    case 'item': pvHash = null; editItem = j; push(); break;
+    case 'iclose': pvHash = null; editItem = null; push(); break;
+    case 'iadd': t.items.push(t.type === 'log' ? lit('New entry', today()) : it(t.type === 'finds' ? 'New find' : t.type === 'tracks' ? 'New track' : 'New item')); editItem = t.items.length - 1; save(); break;
     case 'ladd': t.items.push({ id: rid(), title: '', buy: '', images: [] }); save(); break;
     case 'iup': t.items.splice(j - 1, 0, t.items.splice(j, 1)[0]); save(); break;
     case 'idel': if (!confirm('Delete "' + (t.items[j].title || 'this') + '"?')) return; t.items.splice(j, 1); editItem = null; save(); break;
     case 'pleft': var im = t.items[editItem].images, k = +b.dataset.k; im.splice(k - 1, 0, im.splice(k, 1)[0]); save(); break;
     case 'pdel': t.items[editItem].images.splice(+b.dataset.k, 1); save(); break;
     case 'imgclear': set(b.dataset.p, ''); save(); break;
-    case 'pane': pane = b.dataset.v; break;
+    case 'pane': pane = b.dataset.v; if (pane === 'pages') { editTab = editItem = null; pvHash = null; } break;
     case 'zip':
       var m = $('#zipmsg'); b.disabled = true; m.textContent = 'Packing your site...';
       buildZip().then(function (z) { download(z, slug(D.name || 'my-site') + '-site.zip'); m.textContent = 'Done. ' + (z.size / 1048576).toFixed(1) + ' MB. Look in your Downloads (Files app on iPhone).'; })
@@ -587,7 +647,8 @@ function onAct(b) {
 function bind() {
   document.addEventListener('click', function (e) {
     var b = e.target.closest('[data-act]'); if (b && !b.disabled) { e.preventDefault(); onAct(b); return; }
-    var p = e.target.closest('.st-tabs button'); if (p) { pane = p.dataset.p; draw(); $('.st-ed').scrollTop = 0; }
+    var p = e.target.closest('.st-tabs button'); if (p) { pane = p.dataset.p; if (pane === 'pages' && editTab != null) { editTab = editItem = null; pvHash = null; push(); } draw(); $('.st-ed').scrollTop = 0; }
+    var md = e.target.closest('[data-mode]'); if (md) { mode = md.dataset.mode; $$('[data-mode]').forEach(function (x) { var on = x === md; x.classList.toggle('on', on); x.setAttribute('aria-pressed', on); }); post({ type: 'mode', pick: mode === 'pick' }); document.body.classList.toggle('viewing', mode !== 'pick'); }
     var d = e.target.closest('[data-dev]'); if (d) { $$('[data-dev]').forEach(function (x) { x.classList.toggle('on', x === d); }); document.body.dataset.dev = d.dataset.dev; }
     if (e.target.closest('#full')) { document.body.classList.toggle('full'); $('#full').textContent = document.body.classList.contains('full') ? 'Close' : 'Full view'; }
   });
@@ -610,6 +671,11 @@ function bind() {
       r.onload = function () { try { var d = JSON.parse(r.result); if (!d.tabs || !d.style) throw 0; D = d; editTab = editItem = null; save(); draw(); } catch (x) { alert('That file is not a site backup.'); } };
       r.readAsText(files[0]); return;
     }
+    if (el.dataset.audio) {
+      var af = files[0]; if (af.size > 12 * 1048576) { alert('That sound is ' + (af.size / 1048576).toFixed(1) + ' MB. Keep previews under 12 MB.'); return; }
+      var ext = (af.name.match(/\.(mp3|m4a|aac|wav)$/i) || [, 'mp3'])[1].toLowerCase(), ak = 'audio/' + rid() + '.' + ext;
+      URLS[ak] = URL.createObjectURL(af); putImg(ak, af).then(function () { set(el.dataset.audio, ak); save(); draw(); }); return;
+    }
     addPhotos(files).then(function (keys) {
       if (el.dataset.up) set(el.dataset.up, keys[0]);
       if (el.dataset.many) { var arr = get(el.dataset.many) || []; set(el.dataset.many, arr.concat(keys)); }
@@ -631,8 +697,12 @@ function boot() {
         if (!saved || !saved._touched || confirm('Start a new site from ' + (pack.from || 'this') + '\'s look? What you have here gets replaced. Save a backup first if you want it.')) { pane = 'pages'; var nd = remixApply(pack); nd._touched = true; try { localStorage.setItem(KEY, JSON.stringify(nd)); } catch (e) {} return nd; }
       } catch (e) { alert('That remix link is broken or cut off.'); }
     }
-    if (saved && saved.tabs) return saved;
     var want = (location.search.match(/base=(\w+)/) || [])[1];
+    if (want && PRESETS[want]) {
+      history.replaceState(null, '', location.pathname);
+      if (!saved || !saved._touched || confirm('Start a new site from this template? What you have here gets replaced. Save a backup first if you want it.')) { var bp = PRESETS[want](); bp._preset = want; return bp; }
+    }
+    if (saved && saved.tabs) { pane = 'pages'; return saved; }
     if (/studio\.html$/.test(location.pathname)) { var b0 = PRESETS[want] ? want : 'shop', p0 = PRESETS[b0](); p0._preset = b0; return p0; }
     return fetch('site.json', { cache: 'no-cache' }).then(function (r) { if (!r.ok) throw 0; return r.json(); })
       .then(function (d) { pane = 'pages'; return d; })

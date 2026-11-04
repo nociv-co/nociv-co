@@ -10,11 +10,18 @@ var FONTS = {
   type:      ['ui-monospace,"SF Mono",Menlo,Consolas,"Courier New",monospace', 'ui-monospace,"SF Mono",Menlo,Consolas,"Courier New",monospace'],
   soft:      ['ui-rounded,"SF Pro Rounded","Arial Rounded MT Bold",system-ui,sans-serif', 'ui-rounded,"SF Pro Rounded",system-ui,sans-serif'],
   grotesk:   ['"Helvetica Neue","Arial Black",Arial,sans-serif', '"Helvetica Neue",Arial,sans-serif'],
-  didone:    ['Didot,"Bodoni 72","Bodoni MT","Bodoni 72 Oldstyle",Georgia,serif', 'system-ui,-apple-system,"Segoe UI",Roboto,Arial,sans-serif'],
+  didone:    ['"FS DM Serif Display",Didot,"Bodoni 72",Georgia,serif', 'system-ui,-apple-system,"Segoe UI",Roboto,Arial,sans-serif'],
   slab:      ['Rockwell,"Rockwell Extra Bold","Roboto Slab","Courier New",serif', 'system-ui,-apple-system,"Segoe UI",Roboto,Arial,sans-serif'],
   condensed: ['"Avenir Next Condensed","Arial Narrow","Roboto Condensed","Helvetica Neue",sans-serif', '"Avenir Next","Avenir",system-ui,sans-serif'],
   humanist:  ['Optima,Candara,"Gill Sans","Noto Sans",sans-serif', 'Optima,Candara,"Gill Sans","Noto Sans",sans-serif'],
-  marker:    ['"Marker Felt","Chalkboard SE","Comic Neue","Trebuchet MS",sans-serif', 'system-ui,-apple-system,"Segoe UI",Roboto,Arial,sans-serif']
+  marker:    ['"FS Permanent Marker","Marker Felt","Chalkboard SE",sans-serif', 'system-ui,-apple-system,"Segoe UI",Roboto,Arial,sans-serif'],
+  space:     ['"FS Space Grotesk",system-ui,sans-serif', '"FS Space Grotesk",system-ui,sans-serif'],
+  block:     ['"FS Archivo Black","Arial Black",sans-serif', 'system-ui,-apple-system,"Segoe UI",Roboto,Arial,sans-serif'],
+  gallery:   ['"FS Syne","Helvetica Neue",sans-serif', 'system-ui,-apple-system,"Segoe UI",Roboto,Arial,sans-serif'],
+  bricolage: ['"FS Bricolage","Helvetica Neue",sans-serif', 'system-ui,-apple-system,"Segoe UI",Roboto,Arial,sans-serif'],
+  journal:   ['"FS Instrument Serif",Georgia,serif', 'system-ui,-apple-system,"Segoe UI",Roboto,Arial,sans-serif'],
+  typed:     ['"FS Special Elite","Courier New",monospace', '"FS Special Elite","Courier New",monospace'],
+  mono:      ['"FS Rubik Mono One",ui-monospace,monospace', 'ui-monospace,"SF Mono",Menlo,Consolas,monospace']
 };
 var RADIUS = { sharp: '0px', soft: '10px', round: '22px' };
 var ICONS = {
@@ -30,7 +37,8 @@ var ICONS = {
   play:  '<circle cx="12" cy="12" r="9"/><path d="M10 8l6 4-6 4z"/>',
   more:  '<circle cx="5" cy="12" r="1.6"/><circle cx="12" cy="12" r="1.6"/><circle cx="19" cy="12" r="1.6"/>'
 };
-var TYPE_ICON = { home: 'home', grid: 'grid', page: 'page', gallery: 'image', links: 'link', contact: 'mail' };
+var TYPE_ICON = { home: 'home', grid: 'grid', page: 'page', gallery: 'image', links: 'link', contact: 'mail', log: 'page', finds: 'star', tracks: 'play' };
+var LISTY = { grid: 1, log: 1, finds: 1, tracks: 1 };
 
 var S = null, IMG = {}, lastIndex = 0, booted = false;
 var reduce = window.matchMedia && matchMedia('(prefers-reduced-motion: reduce)').matches;
@@ -191,8 +199,8 @@ function vItem(t, r) {
   g += '</div>';
   var buy;
   if (it.soldout) buy = '<span class="btn is-off" aria-disabled="true">Sold out</span>';
-  else if (it.buy) buy = '<a class="btn" href="' + esc(it.buy) + '" target="_blank" rel="noopener">' + esc(it.cta || (it.price ? 'Buy' : 'Open')) + '</a>';
-  else if (S.email) buy = '<a class="btn ghost" href="mailto:' + esc(S.email) + '?subject=' + encodeURIComponent(it.title || '') + '">Ask about this</a>';
+  else if (it.buy) buy = '<a class="btn" href="' + esc(it.buy) + '" target="_blank" rel="noopener">' + esc(it.cta || (it.price ? 'Buy' : t.type === 'finds' ? 'See it' : 'Open')) + '</a>';
+  else if (S.email && t.type !== 'log') buy = '<a class="btn ghost" href="mailto:' + esc(S.email) + '?subject=' + encodeURIComponent(it.title || '') + '">Ask about this</a>';
   else buy = '';
   var sh = S.shop || {}, more = '';
   if (it.price || it.buy) {
@@ -200,7 +208,9 @@ function vItem(t, r) {
     if (sh.returns) more += '<details><summary>Returns</summary><p>' + esc(sh.returns).replace(/\n/g, '<br>') + '</p></details>';
   }
   return '<a class="back" href="' + href(r.i) + '">‹ ' + esc(t.name) + '</a><article class="item">' + g +
-    '<div class="item-tx"><h1 class="ttl">' + esc(it.title || 'Untitled') + '</h1>' +
+    '<div class="item-tx">' + (it.date ? '<p class="item-tag">' + day(it.date) + '</p>' : '') + '<h1 class="ttl">' + esc(it.title || 'Untitled') + '</h1>' +
+    (it.audio ? '<div class="trk trk-one"><button type="button" class="trk-play" data-audio="' + esc(src(it.audio)) + '" aria-label="Play">' + PLAY + '</button><span class="trk-tx"><b>Preview</b></span><i class="trk-bar" aria-hidden="true"><i></i></i></div>' : '') +
+    (t.type === 'finds' && via(it.buy) ? '<p class="item-tag">via ' + esc(via(it.buy)) + '</p>' : '') +
     (it.price ? '<p class="item-p">' + money(it.price) + '</p>' : '') + (it.tag ? '<p class="item-tag">' + esc(it.tag) + '</p>' : '') +
     (buy ? '<div class="buybar">' + buy + '</div>' : '') +
     (it.text ? '<div class="prose">' + para(it.text) + '</div>' : '') + more + '</div></article>';
@@ -237,11 +247,55 @@ function vContact(t) {
     (em ? '<a class="btn" href="mailto:' + esc(em) + '">Email ' + esc(em) + '</a>' : '<p class="empty">Add your email in Info.</p>');
 }
 
+/* ---------- Archive versions: Log (dated entries), Finds (curated links), Tracks (play button + buy) ---------- */
+function day(d) { if (!d) return ''; var x = new Date(d + 'T12:00:00'); return isNaN(x) ? esc(d) : x.toLocaleDateString(undefined, { month: 'short', day: 'numeric', year: 'numeric' }); }
+function via(u) { var m = String(u || '').match(/^https?:\/\/(?:www\.)?([^\/?#]+)/i); return m ? m[1] : ''; }
+function firstLine(t, n) { t = String(t || '').split(/\n/)[0]; return t.length > n ? t.slice(0, n - 1) + '...' : t; }
+var PLAY = '<svg viewBox="0 0 24 24" aria-hidden="true"><path class="pl" d="M8 5l12 7-12 7z"/><path class="pa" d="M7 5h4v14H7zM13 5h4v14h-4z"/></svg>';
+function vLog(t, r) {
+  var items = (t.items || []).slice().sort(function (a, b) { return String(b.date || '').localeCompare(String(a.date || '')); });
+  if (!items.length) return head(t) + '<p class="empty">No entries yet.</p>';
+  return head(t) + '<p class="log-n">' + items.length + ' entr' + (items.length === 1 ? 'y' : 'ies') + '</p><ol class="log">' + items.map(function (it) {
+    var p = it.images && it.images[0];
+    return '<li><a class="log-e" href="' + href(r.i, it.id) + '"><time class="log-d" datetime="' + esc(it.date || '') + '">' + day(it.date) + '</time><span class="log-b"><b class="log-t">' + esc(it.title || 'Untitled') + '</b>' +
+      (it.text ? '<span class="log-x">' + esc(firstLine(it.text, 160)) + '</span>' : '') + (p ? '<img src="' + esc(src(p)) + '" alt="" loading="lazy">' : '') + '</span></a></li>';
+  }).join('') + '</ol>';
+}
+function vFinds(t, r) {
+  var items = t.items || [];
+  if (!items.length) return head(t) + '<p class="empty">Nothing found yet.</p>';
+  return head(t) + '<div class="finds">' + items.map(function (it, k) {
+    return '<a class="find" href="' + href(r.i, it.id) + '"><span class="find-n">' + String(k + 1).padStart(2, '0') + '</span><span class="find-img">' + pic(it) + '</span><b class="find-t">' + esc(it.title || 'Untitled') + '</b>' +
+      (it.text ? '<span class="find-x">' + esc(firstLine(it.text, 110)) + '</span>' : '') + (via(it.buy) ? '<span class="find-v">via ' + esc(via(it.buy)) + ' &#8599;</span>' : '') + '</a>';
+  }).join('') + '</div>';
+}
+function vTracks(t, r) {
+  var items = t.items || [];
+  if (!items.length) return head(t) + '<p class="empty">Nothing here yet.</p>';
+  return head(t) + '<div class="tracks">' + items.map(function (it, k) {
+    var p = it.images && it.images[0];
+    return '<div class="trk">' + (it.audio ? '<button type="button" class="trk-play" data-audio="' + esc(src(it.audio)) + '" aria-label="Play ' + esc(it.title || 'track') + '">' + PLAY + '</button>' : '<span class="trk-play is-off" title="No preview">' + PLAY + '</span>') +
+      (p ? '<img class="trk-art" src="' + esc(src(p)) + '" alt="" loading="lazy">' : '') +
+      '<a class="trk-tx" href="' + href(r.i, it.id) + '"><b>' + esc(it.title || 'Untitled') + '</b><small>' + esc([it.tag, firstLine(it.text, 60)].filter(Boolean).join(' \u00b7 ')) + '</small></a>' +
+      (it.price && (!it.buy || it.soldout) ? '<span class="trk-p">' + money(it.price) + '</span>' : '') +
+      (it.soldout ? '<span class="btn is-off trk-buy">Sold</span>' : it.buy ? '<a class="btn trk-buy" href="' + esc(it.buy) + '" target="_blank" rel="noopener">' + esc(it.cta || (it.price ? 'Buy' : 'Get')) + (it.price ? ' ' + money(it.price) : '') + '</a>' : '') +
+      '<i class="trk-bar" aria-hidden="true"><i></i></i></div>';
+  }).join('') + '</div>';
+}
+var AUD = null, AUDB = null;
+function playToggle(b) {
+  if (!AUD) { AUD = new Audio(); AUD.addEventListener('timeupdate', function () { if (!AUDB) return; var bar = AUDB.closest('.trk, .item'); var f = bar && $('.trk-bar i', bar); if (f) f.style.width = (AUD.duration ? AUD.currentTime / AUD.duration * 100 : 0) + '%'; }); AUD.addEventListener('ended', function () { if (AUDB) AUDB.classList.remove('on'); AUDB = null; }); }
+  if (AUDB === b && !AUD.paused) { AUD.pause(); b.classList.remove('on'); return; }
+  if (AUDB && AUDB !== b) AUDB.classList.remove('on');
+  if (AUDB !== b) { AUD.src = b.getAttribute('data-audio'); }
+  AUDB = b; AUD.play().then(function () { b.classList.add('on'); }).catch(function () { b.classList.remove('on'); });
+}
+
 function vMissing() { return '<h1 class="ttl">Not found</h1><p class="intro">That page moved or never existed.</p><a class="btn" href="#/">Go home</a>'; }
 
 function render(r) {
   if (!r.tab) return vMissing();
-  if (r.item && r.item !== '~' && r.tab.type === 'grid') return vItem(r.tab, r);
+  if (r.item && r.item !== '~' && LISTY[r.tab.type]) return vItem(r.tab, r);
   switch (r.tab.type) {
     case 'home': return vHome(r.tab, r);
     case 'grid': return vGrid(r.tab, r);
@@ -249,6 +303,9 @@ function render(r) {
     case 'gallery': return vGallery(r.tab);
     case 'links': return vLinks(r.tab);
     case 'contact': return vContact(r.tab);
+    case 'log': return vLog(r.tab, r);
+    case 'finds': return vFinds(r.tab, r);
+    case 'tracks': return vTracks(r.tab, r);
   }
   return vMissing();
 }
@@ -284,6 +341,7 @@ function wire(v, r) {
     var it = (r.tab.items || []).filter(function (x) { return x.id === r.item; })[0];
     $$('.gal-slide', v).forEach(function (b) { b.onclick = function () { if (it && it.images && it.images.length) lightbox(it.images.map(function (p) { return { p: p, c: it.title }; }), +b.dataset.k); }; });
   }
+  $$('.trk-play[data-audio]', v).forEach(function (b) { b.onclick = function () { playToggle(b); }; });
   $$('.m-it', v).forEach(function (b) {
     b.onclick = function () { lightbox((r.tab.items || []).map(function (x) { return { p: x.images && x.images[0], c: x.title, t: x.title }; }), +b.dataset.k); };
   });
@@ -332,17 +390,68 @@ function start(data, images) {
   if (!booted) { booted = true; window.addEventListener('hashchange', function () { go(false); }); }
 }
 
+/* ---------- Studio select mode (preview only): tap anything to select it, like a design tool.
+   Menus, play buttons and photo thumbs still work. The studio opens the matching settings. ---------- */
+var PICK = true, LAST = null, BOX = null, HOV = null;
+var PASS = '.tt,.bt,.panel a,.menu-btn,.back,.chip,.gal-th button,.trk-play,.lb,.lb *';
+var PICKABLE = '.card,.find,.log-e,.trk,.m-it,.lnk,.tile,.hero,.ttl,.intro,.prose,.page-img,.brand,.notice,.item,.gal,.feat .row-h,.links,.tracks,.empty';
+function pickInfo(el) {
+  var r = route(), sl = slugs(), t = r.tab, k = 'tab', slug = sl[r.i], item = null, name = t ? t.name : '';
+  if (el.closest('.brand,.notice')) return { kind: 'site', label: 'Site: ' + (S.name || 'name') };
+  var a = el.matches('a') ? el : el.querySelector('a[href^="#/"]');
+  var hm = a && (a.getAttribute('href') || '').match(/^#\/([^\/]+)(?:\/([^\/]+))?/);
+  if (el.closest('.tile') && hm) { slug = hm[1]; var ti = sl.indexOf(slug); return { kind: 'tab', slug: slug, label: 'Page: ' + (tabs()[ti] ? tabs()[ti].name : slug) }; }
+  if (hm && hm[2] && hm[2] !== '~') { slug = hm[1]; item = decodeURIComponent(hm[2]); }
+  if (el.closest('.item') && r.item) item = r.item;
+  var mi = el.closest('.m-it'); if (mi && t && t.items && t.items[+mi.dataset.k]) item = t.items[+mi.dataset.k].id;
+  var ln = el.closest('.lnk'); if (ln && t) { var idx = $$('.lnk').indexOf(ln); if (t.items && t.items[idx]) item = t.items[idx].id; }
+  if (item) { k = 'item'; var tt = tabs()[sl.indexOf(slug)], x = tt && (tt.items || []).filter(function (q) { return q.id === item; })[0]; name = x ? (x.title || 'Untitled') : 'Item'; }
+  return { kind: k, slug: slug, item: item, label: (k === 'item' ? 'Item: ' : 'Page: ') + name };
+}
+function outline(el, label, hover) {
+  var b = hover ? HOV : BOX;
+  if (!b) { b = document.createElement('div'); b.className = hover ? 'fs-hov' : 'fs-sel'; b.innerHTML = hover ? '' : '<span></span>'; document.body.appendChild(b); if (hover) HOV = b; else BOX = b; }
+  if (!el) { b.hidden = true; return; }
+  var q = el.getBoundingClientRect();
+  b.hidden = false; b.style.left = (q.left + scrollX - 2) + 'px'; b.style.top = (q.top + scrollY - 2) + 'px'; b.style.width = (q.width + 4) + 'px'; b.style.height = (q.height + 4) + 'px';
+  if (!hover) { b.firstChild.textContent = label; var hd = $('.hd'), hb = hd ? hd.getBoundingClientRect().bottom : 0, inn = q.top < hb + 22; b.classList.toggle('in', inn); b.firstChild.style.top = inn ? Math.max(0, hb - q.top + 2) + 'px' : ''; }
+}
+function findPicked() {
+  if (!LAST) return null;
+  if (LAST.kind === 'site') return $('.brand');
+  if (LAST.kind === 'item') { var a = $$('a[href]').filter(function (x) { return /\/[^\/]+\/([^\/]+)$/.test(x.getAttribute('href')) && decodeURIComponent(x.getAttribute('href').split('/').pop()) === LAST.item; })[0]; if (a) return a.closest('.card,.find,.log-e,.trk') || a; return $('.item') || null; }
+  return $('.hero') || $('.ttl');
+}
+function remark() { if (PICK && LAST) outline(findPicked(), LAST.label); }
+function initPick() {
+  document.addEventListener('click', function (e) {
+    if (!PICK || e.target.closest(PASS)) return;
+    var el = e.target.closest(PICKABLE); if (!el) return;
+    e.preventDefault(); e.stopPropagation();
+    var box = el.closest('.card,.find,.log-e,.trk,.m-it,.lnk,.tile') || el;
+    LAST = pickInfo(box); outline(box, LAST.label); outline(null, '', true);
+    parent.postMessage({ type: 'pick', kind: LAST.kind, slug: LAST.slug, item: LAST.item, hash: location.hash }, location.origin);
+  }, true);
+  document.addEventListener('mouseover', function (e) { if (!PICK || !matchMedia('(hover:hover)').matches) return; var el = e.target.closest(PICKABLE); if (el && !e.target.closest(PASS)) outline(el.closest('.card,.find,.log-e,.trk,.m-it,.lnk,.tile') || el, '', true); else outline(null, '', true); });
+  window.addEventListener('resize', remark); window.addEventListener('hashchange', function () { LAST = null; outline(null); });
+}
+
 /* Preview mode: the studio sends the site in a message. Live mode: read site.json. */
 window.SiteKit = { contrast: contrast, mix: mix, onColor: onColor, slug: slug, FONTS: FONTS, ICONS: ICONS };
 if (document.documentElement.hasAttribute('data-preview')) {
   window.addEventListener('message', function (e) {
     if (e.origin !== location.origin || !e.data) return;
     if (e.data.type === 'go') { if (booted) location.hash = e.data.hash; return; }
+    if (e.data.type === 'mode') { PICK = !!e.data.pick; document.documentElement.classList.toggle('fs-picking', PICK); if (!PICK) { outline(null); outline(null, '', true); } return; }
+    if (e.data.type === 'mark') { LAST = e.data.mark; requestAnimationFrame(remark); return; }
     if (e.data.type !== 'site') return;
     var keepHash = e.data.hash;
     if (keepHash != null && keepHash !== location.hash) history.replaceState(null, '', keepHash || '#/');
     start(e.data.site, e.data.images);
+    if (e.data.mark !== undefined) LAST = e.data.mark;
+    requestAnimationFrame(function () { requestAnimationFrame(remark); });
   });
+  initPick(); document.documentElement.classList.add('fs-picking');
   parent.postMessage({ type: 'ready' }, location.origin);
 } else {
   fetch('site.json', { cache: 'no-cache' }).then(function (r) { return r.json(); }).then(function (d) { start(d, {}); })

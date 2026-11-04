@@ -1,4 +1,15 @@
 /* From Scratch site styles. Free to use, change and share (MIT). */
+/* Fonts: all free for commercial use (SIL Open Font License or Apache 2.0). Licenses in kit/fonts. A font only downloads when your look uses it. */
+@font-face{font-family:'FS Space Grotesk';src:url('fonts/space-grotesk-400.woff') format('woff');font-weight:400;font-style:normal;font-display:swap}
+@font-face{font-family:'FS Space Grotesk';src:url('fonts/space-grotesk-700.woff') format('woff');font-weight:700;font-style:normal;font-display:swap}
+@font-face{font-family:'FS Archivo Black';src:url('fonts/archivo-black.woff') format('woff');font-weight:400;font-style:normal;font-display:swap}
+@font-face{font-family:'FS DM Serif Display';src:url('fonts/dm-serif-display.woff') format('woff');font-weight:400;font-style:normal;font-display:swap}
+@font-face{font-family:'FS Syne';src:url('fonts/syne-800.woff') format('woff');font-weight:800;font-style:normal;font-display:swap}
+@font-face{font-family:'FS Instrument Serif';src:url('fonts/instrument-serif.woff') format('woff');font-weight:400;font-style:normal;font-display:swap}
+@font-face{font-family:'FS Rubik Mono One';src:url('fonts/rubik-mono-one.woff') format('woff');font-weight:400;font-style:normal;font-display:swap}
+@font-face{font-family:'FS Bricolage';src:url('fonts/bricolage-grotesque-800.woff') format('woff');font-weight:800;font-style:normal;font-display:swap}
+@font-face{font-family:'FS Special Elite';src:url('fonts/special-elite.woff') format('woff');font-weight:400;font-style:normal;font-display:swap}
+@font-face{font-family:'FS Permanent Marker';src:url('fonts/permanent-marker.woff') format('woff');font-weight:400;font-style:normal;font-display:swap}
 *,*::before,*::after{box-sizing:border-box}
 html{-webkit-text-size-adjust:100%;scroll-behavior:smooth}
 body{margin:0;background:var(--bg,#fff);color:var(--tx,#111);font-family:var(--bf);font-size:17px;line-height:1.55;-webkit-font-smoothing:antialiased;min-height:100dvh}
@@ -226,3 +237,61 @@ body.t-dots{background-image:radial-gradient(var(--tex) 1.3px,transparent 1.6px)
 .k-tape .card{position:relative}
 .k-tape .card::before{content:'';position:absolute;top:-8px;left:50%;width:58px;height:18px;margin-left:-29px;background:var(--ac);opacity:.75;transform:rotate(-3deg);z-index:2;pointer-events:none}
 .k-tape .card-img{box-shadow:0 4px 10px rgba(0,0,0,.12)}
+
+/* real fonts: one weight each, so headings never get fake bold */
+.f-space .ttl,.f-space .hero-h,.f-space h2,.f-space .brand{font-weight:700;letter-spacing:-.03em}
+.f-block .ttl,.f-block .hero-h,.f-block h2,.f-block .brand,.f-didone .ttl,.f-didone .hero-h,.f-didone h2,.f-didone .brand,.f-journal .ttl,.f-journal .hero-h,.f-journal h2,.f-journal .brand,.f-mono .ttl,.f-mono .hero-h,.f-mono h2,.f-mono .brand,.f-typed .ttl,.f-typed .hero-h,.f-typed h2,.f-typed .brand,.f-marker .ttl,.f-marker .hero-h,.f-marker h2,.f-marker .brand{font-weight:400}
+.f-gallery .ttl,.f-gallery .hero-h,.f-gallery h2,.f-gallery .brand,.f-bricolage .ttl,.f-bricolage .hero-h,.f-bricolage h2,.f-bricolage .brand{font-weight:800;letter-spacing:-.02em}
+.f-block .ttl,.f-block .hero-h{letter-spacing:-.03em}
+.f-mono .ttl,.f-mono .hero-h{letter-spacing:-.04em;line-height:1.05}
+.f-journal .ttl,.f-journal .hero-h{letter-spacing:-.02em;line-height:1}
+
+/* ---------- Log ---------- */
+.log-n{color:var(--mute);font-size:14px;margin:-4px 0 14px}
+.log{list-style:none;margin:0;padding:0;border-left:2px solid var(--line);margin-left:6px}
+.log li{position:relative;padding:0 0 var(--sec) 22px}
+.log li::before{content:'';position:absolute;left:-7px;top:6px;width:12px;height:12px;border-radius:50%;background:var(--bg);border:2px solid var(--ac)}
+.log-e{display:block;text-decoration:none}
+.log-d{display:block;font-size:13px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:var(--mute);margin-bottom:4px}
+.log-b{display:flex;flex-direction:column;gap:6px}
+.log-t{font-family:var(--hf);font-size:22px;line-height:1.2}
+.log-x{color:var(--mute)}
+.log-b img{margin-top:6px;border-radius:var(--r);max-height:340px;width:100%;object-fit:cover}
+/* ---------- Finds ---------- */
+.finds{columns:2;column-gap:var(--gap)}
+@media(min-width:760px){.finds{columns:3}}
+.find{position:relative;display:flex;flex-direction:column;gap:4px;break-inside:avoid;margin-bottom:calc(var(--gap) + 10px);text-decoration:none}
+.find-n{font-family:var(--hf);font-size:13px;color:var(--mute);letter-spacing:.06em}
+.find-img{display:block;overflow:hidden;border-radius:var(--r);background:var(--sf)}
+.find-img img{width:100%;height:auto;display:block;transition:transform .4s ease}
+@media(hover:hover){.find:hover .find-img img{transform:scale(1.035)}}
+.find-t{font-family:var(--hf);line-height:1.2;margin-top:4px}
+.find-x{color:var(--mute);font-size:14px;line-height:1.4}
+.find-v{font-size:13px;font-weight:700;color:var(--ac);text-decoration:underline;text-underline-offset:3px}
+/* ---------- Tracks ---------- */
+.tracks{display:flex;flex-direction:column;border-top:1px solid var(--line)}
+.trk{position:relative;display:flex;align-items:center;gap:12px;padding:12px 0;border-bottom:1px solid var(--line)}
+.trk-play{flex:none;width:48px;height:48px;border-radius:50%;border:2px solid var(--tx);background:transparent;display:grid;place-items:center;cursor:pointer;padding:0}
+.trk-play svg{width:20px;height:20px;fill:currentColor}
+.trk-play .pa,.trk-play.on .pl{display:none}
+.trk-play.on .pa{display:block}
+.trk-play.on{background:var(--ac);color:var(--acx);border-color:var(--ac)}
+.trk-play.is-off{opacity:.3;cursor:default}
+.trk-art{width:48px;height:48px;object-fit:cover;border-radius:calc(var(--r) / 2);flex:none}
+.trk-tx{flex:1;min-width:0;display:flex;flex-direction:column;text-decoration:none}
+.trk-tx b{font-family:var(--hf);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.trk-tx small{color:var(--mute);font-size:13px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.trk-p{font-weight:700;flex:none}
+.trk-buy{min-height:44px;padding:0 16px;flex:none}
+.trk-bar{position:absolute;left:0;right:0;bottom:-1px;height:2px;background:transparent}
+.trk-bar i{display:block;height:100%;width:0;background:var(--ac);transition:width .25s linear}
+.trk-one{border:0;padding:4px 0 14px}
+@media(max-width:420px){.trk-art{display:none}}
+
+/* studio select mode, preview only */
+.fs-sel,.fs-hov{position:absolute;z-index:19;pointer-events:none;box-sizing:border-box}
+.fs-sel{border:2px solid #e0442c;border-radius:2px}
+.fs-sel span{position:absolute;left:-2px;bottom:100%;margin-bottom:2px;background:#e0442c;color:#fff;font:700 11px/1 system-ui,-apple-system,sans-serif;padding:4px 6px;white-space:nowrap;max-width:240px;overflow:hidden;text-overflow:ellipsis;border-radius:2px 2px 0 0}
+.fs-sel.in span{bottom:auto;top:0;margin:0;border-radius:0 0 2px 0}
+.fs-hov{border:1.5px dashed #e0442c;opacity:.8}
+.fs-picking .card,.fs-picking .find,.fs-picking .log-e,.fs-picking .tile,.fs-picking .lnk{cursor:default}

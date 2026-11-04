@@ -13,23 +13,23 @@
   <a class="st-back" href="/scratch/" aria-label="Back to From Scratch">&lsaquo;</a><b class="st-logo">From<span>Scratch</span></b>
   <span class="st-saved" id="saved" aria-live="polite">Saved</span>
   <span class="sp"></span>
-  <div class="st-dev" role="group" aria-label="Preview size"><button type="button" data-dev="phone" class="on">Phone</button><button type="button" data-dev="wide">Wide</button></div>
+  <div class="st-tool" role="group" aria-label="Mode"><button type="button" data-mode="pick" class="on" aria-pressed="true" aria-label="Select: tap things in the preview to edit them"><svg viewBox="0 0 24 24"><path d="M5 2.5l13.5 11.2-6.1.6 3.6 6.9-2.6 1.3-3.6-7-4.8 3.9z"/></svg></button><button type="button" data-mode="view" aria-pressed="false" aria-label="Preview: use the site like a visitor"><svg viewBox="0 0 24 24"><path d="M8 5l11 7-11 7z"/></svg></button></div>
   <button type="button" class="th-q st-q" data-help="studio" aria-label="Studio help">?</button>
+  <button type="button" class="st-pub" data-act="pane" data-v="publish">Publish</button>
 </header>
 <section class="st-prev" aria-label="Live preview">
-  <div class="st-frame"><iframe id="pv" src="preview.html" title="Live preview of your site"></iframe><button type="button" id="full">Full view</button></div>
+  <div class="st-frame"><iframe id="pv" src="preview.html" title="Live preview of your site"></iframe><button type="button" id="full">Full view</button><div class="st-dev" role="group" aria-label="Preview size"><button type="button" data-dev="phone" class="on">Phone</button><button type="button" data-dev="wide">Wide</button></div></div>
 </section>
 <section class="st-ed">
   <nav class="st-tabs" role="tablist" aria-label="Studio">
-    <button type="button" role="tab" data-p="start">Start</button>
-    <button type="button" role="tab" data-p="look">Look</button>
-    <button type="button" role="tab" data-p="pages">Pages</button>
-    <button type="button" role="tab" data-p="info">Info</button>
-    <button type="button" role="tab" data-p="publish">Publish</button>
+    <button type="button" role="tab" data-p="pages">Layers</button>
+    <button type="button" role="tab" data-p="start">Insert</button>
+    <button type="button" role="tab" data-p="look">Design</button>
+    <button type="button" role="tab" data-p="info">Site</button>
   </nav>
   <div id="pane"></div>
 </section>
-<script>window.TOOL_HELP = Object.assign(window.TOOL_HELP || {}, {"studio": {"title": "Studio help", "items": [["Start", "Pick a starting point. Switching replaces what you have, so save a backup first."], ["Look", "Tap a look to try it. Your pages stay. Shuffle mixes new colors and type. Fine tune has every setting. Undo last look takes you back."], ["Pages", "Add, rename, hide or reorder pages. Tap a page to edit its words, items and photos."], ["Info", "Your site name, email, domain and the words people see when you share your link."], ["Publish", "Fix anything on the checklist, then Download my site. Upload that zip to your host."], ["Saved", "Everything saves on this device as you work, photos too. Make a backup file if you switch phones."]]}});</script>
+<script>window.TOOL_HELP = Object.assign(window.TOOL_HELP || {}, {"studio": {"title": "Studio help", "items": [["Tap to select", "With the arrow on (top bar), tap anything in the preview: a product, a title, your name. A red box shows what is selected and its settings open below."], ["Preview", "Tap the play button in the top bar to use your site like a visitor would. Tap the arrow to go back to editing."], ["Layers", "Every page and everything on it, in order. Tap one to edit. The eye hides a page, the arrows move it."], ["Insert", "Add a page: shop items, a log, finds, tracks, a gallery, links and more. Or start over from a template."], ["Design", "Tap a look, or Shuffle for a new mix. Your words and photos stay. Fine tune has every font, color and setting."], ["Site", "Your site name, logo, email and domain."], ["Publish", "Top right. Fix anything on the checklist, then download your site and upload it to your host."], ["Saved", "Everything saves on this device as you work, photos and sounds too. Make a backup file if you switch phones."]]}});</script>
 <script src="/tool-help.js" defer></script>
 <script src="kit/studio.js"></script>
 </body>

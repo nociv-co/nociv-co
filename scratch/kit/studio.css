@@ -1,3 +1,13 @@
+@font-face{font-family:'FS Space Grotesk';src:url('fonts/space-grotesk-400.woff') format('woff');font-weight:400;font-style:normal;font-display:swap}
+@font-face{font-family:'FS Space Grotesk';src:url('fonts/space-grotesk-700.woff') format('woff');font-weight:700;font-style:normal;font-display:swap}
+@font-face{font-family:'FS Archivo Black';src:url('fonts/archivo-black.woff') format('woff');font-weight:400;font-style:normal;font-display:swap}
+@font-face{font-family:'FS DM Serif Display';src:url('fonts/dm-serif-display.woff') format('woff');font-weight:400;font-style:normal;font-display:swap}
+@font-face{font-family:'FS Syne';src:url('fonts/syne-800.woff') format('woff');font-weight:800;font-style:normal;font-display:swap}
+@font-face{font-family:'FS Instrument Serif';src:url('fonts/instrument-serif.woff') format('woff');font-weight:400;font-style:normal;font-display:swap}
+@font-face{font-family:'FS Rubik Mono One';src:url('fonts/rubik-mono-one.woff') format('woff');font-weight:400;font-style:normal;font-display:swap}
+@font-face{font-family:'FS Bricolage';src:url('fonts/bricolage-grotesque-800.woff') format('woff');font-weight:800;font-style:normal;font-display:swap}
+@font-face{font-family:'FS Special Elite';src:url('fonts/special-elite.woff') format('woff');font-weight:400;font-style:normal;font-display:swap}
+@font-face{font-family:'FS Permanent Marker';src:url('fonts/permanent-marker.woff') format('woff');font-weight:400;font-style:normal;font-display:swap}
 /* From Scratch Studio. Free to use, change and share (MIT). */
 *,*::before,*::after{box-sizing:border-box}
 :root{--ink:#161616;--paper:#efeee9;--card:#fbfaf6;--line:#d6d3c8;--mute:#6d6a62;--hi:#f2c230;--bad:#b42318;--ok:#1f7a3a;--mono:ui-monospace,"SF Mono",Menlo,Consolas,monospace}
@@ -161,3 +171,45 @@ details.fine[open] summary::after{transform:rotate(-135deg);margin-top:4px}
 /* back and help in the top bar */
 .st-top .st-back{border:0;padding:0 6px 0 0;min-height:44px;font-size:28px;line-height:1;font-weight:400}
 .st-top .st-q{width:36px;height:36px;border:2px solid var(--paper);color:var(--paper);font-size:16px;padding:0}
+
+.base-ver{cursor:default}
+.vers{display:flex;gap:6px;margin:6px 0}
+.vers .c{flex:1;align-items:center}
+.vers .c.on{background:var(--ink);color:var(--paper);border-color:var(--ink)}
+.aud{display:flex;align-items:center;gap:8px;margin-bottom:8px}
+.aud audio{flex:1;min-width:0;height:40px}
+
+/* top bar: select / preview mode and Publish, like a design tool */
+.st-tool{display:flex;border:1px solid #555;border-radius:8px;overflow:hidden}
+.st-top .st-tool button{border:0;border-radius:0;width:40px;min-height:36px;padding:0;justify-content:center}
+.st-tool svg{width:16px;height:16px;fill:currentColor}
+.st-top .st-tool button.on{background:var(--paper);color:var(--ink)}
+.st-top .st-pub{background:#e0442c;border-color:#e0442c;color:#fff;font-weight:800}
+.st-logo{font-size:12px}
+@media(max-width:380px){.st-logo{display:none}}
+.st-frame .st-dev{position:absolute;left:10px;bottom:10px;display:flex;background:rgba(22,22,22,.85);border-radius:999px;padding:3px;gap:2px}
+.st-frame .st-dev button{border:0;background:transparent;color:#efeee9;font-size:12px;font-weight:700;min-height:30px;padding:0 10px;border-radius:999px}
+.st-frame .st-dev button.on{background:#efeee9;color:#161616}
+/* layers */
+.lys{list-style:none;margin:0 0 12px;padding:0;border:1.5px solid var(--line);border-radius:10px;background:var(--card);overflow:hidden}
+.ly+.ly{border-top:1px solid var(--line)}
+.ly-row{display:flex;align-items:center;gap:2px;padding-right:4px}
+.ly-main{flex:1;min-width:0;display:flex;align-items:center;gap:10px;background:none;border:0;text-align:left;padding:10px 12px;min-height:52px;font:inherit;color:inherit;cursor:pointer}
+.ly-main svg{width:20px;height:20px;flex:none;fill:none;stroke:currentColor;stroke-width:1.8;stroke-linejoin:round;stroke-linecap:round}
+.ly-main b{flex:1;min-width:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.ly-main small{color:var(--mute);font-size:12px;flex:none}
+.ly .ic svg{width:18px;height:18px;fill:none;stroke:currentColor;stroke-width:1.8;stroke-linecap:round}
+.ly.off .ly-main{opacity:.45}
+.ly-kids{list-style:none;margin:0;padding:0 0 6px 22px;border-left:1.5px solid var(--line);margin-left:21px}
+.ly-k{display:flex;align-items:center;gap:8px;width:100%;background:none;border:0;text-align:left;font:inherit;font-size:14px;color:var(--ink);min-height:40px;padding:0 8px;border-radius:6px;cursor:pointer;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.ly-k i{width:7px;height:7px;border:1.5px solid var(--mute);border-radius:2px;flex:none}
+.ly-k:active,.ly-main:active{background:rgba(0,0,0,.05)}
+.ly-more{color:var(--mute)}
+/* insert: page types as tools */
+.tools{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px;margin-bottom:8px}
+.tools button{display:flex;flex-direction:column;align-items:flex-start;gap:3px;text-align:left;background:var(--card);border:1.5px solid var(--line);border-radius:10px;padding:12px;min-height:96px;font:inherit;color:inherit;cursor:pointer}
+.tools svg{width:22px;height:22px;fill:none;stroke:currentColor;stroke-width:1.8;stroke-linejoin:round;stroke-linecap:round;margin-bottom:4px}
+.tools b{font-size:15px}
+.tools span{font-size:12px;color:var(--mute);line-height:1.3}
+.tools button:active{transform:scale(.98)}
+h2.sec2{margin-top:22px;padding-top:16px;border-top:1.5px dashed var(--line)}
