@@ -204,17 +204,17 @@
   .sp-arrow path { fill: none; stroke: #1a1a1a; stroke-width: 2.5; stroke-linecap: round; stroke-linejoin: round; }
   .sp-icon { position: absolute; top: 40px; left: 0; width: 56px; height: 48px; pointer-events: none; }
   .sp-desc { margin: 4px 0 0; font-size: .92rem; line-height: 1.5; color: #2b2b2b; max-width: 560px; }
-  .sp-desc b { display: block; font-size: .78rem; letter-spacing: .12em; text-transform: uppercase; margin-bottom: 2px; }
+  .sp-desc .sp-name { display: inline-flex; align-items: center; justify-content: center; min-width: 120px; height: 44px; padding: 0 12px; margin: 0 0 10px; border: 2.5px solid #1a1a1a; border-radius: 12px; box-shadow: 0 6px 12px rgba(0,0,0,.2); position: relative; overflow: hidden; }
+  .sp-desc .sp-name span { position: relative; z-index: 1; background: #1a1a1a; color: #f2ecd6; padding: 3px 9px; font-weight: 900; font-size: .9rem; letter-spacing: .1em; text-transform: uppercase; transform: rotate(-1.5deg); box-shadow: 0 2px 6px rgba(0,0,0,.3); }
+  .sp-desc .sp-name.t-clothingPanel { background-color: #3b5878; background-image: repeating-linear-gradient(45deg, rgba(255,255,255,.08) 0 2px, transparent 2px 4px), repeating-linear-gradient(-45deg, rgba(0,0,0,.14) 0 1px, transparent 1px 3px); }
+  .sp-desc .sp-name.t-clothingPanel::after { content: ''; position: absolute; inset: 4px; border: 1.5px dashed #e0a240; border-radius: 8px; }
+  .sp-desc .sp-name.t-artPanel { background-color: #f7f2e1; background-image: radial-gradient(circle at 18% 30%, #c8412f 0 7px, transparent 8px), radial-gradient(circle at 82% 70%, #2f6db5 0 8px, transparent 9px), radial-gradient(circle at 65% 22%, #f2c230 0 6px, transparent 7px), radial-gradient(circle at 30% 78%, #3f8a4f 0 6px, transparent 7px); }
+  .sp-desc .sp-name.t-zinesPanel { background-color: #f7f2e1; background-image: linear-gradient(rgba(58,110,170,.24) 1px, transparent 1px), linear-gradient(90deg, rgba(58,110,170,.24) 1px, transparent 1px); background-size: 9px 9px; }
+
   .sp-icon svg { width: 100%; height: 100%; overflow: visible; filter: drop-shadow(0 8px 7px rgba(0,0,0,.28)); transform: rotate(-3deg); }
   .sp-icon .f { fill: #c8412f; stroke: #1a1a1a; stroke-width: 2.4; stroke-linejoin: round; }
   .sp-icon .l { fill: none; stroke: #1a1a1a; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
   .sp-icon .k { fill: #1a1a1a; }
-  /* Product card label bars: black like before, with a thin stripe of texture on top by section */
-  .catalog-card .card-body { position: relative; padding-top: 18px; }
-  .catalog-card .card-body::before { content: ''; position: absolute; left: 0; right: 0; top: 0; height: 7px; }
-  #clothingPanel .catalog-card .card-body::before { background-color: #39577a; background-image: repeating-linear-gradient(45deg, rgba(255,255,255,.14) 0 1.5px, transparent 1.5px 3.5px); border-bottom: 1.5px dashed #e0a240; }
-  #artPanel .catalog-card .card-body::before { background: linear-gradient(90deg, #c8412f 0 22%, #f2c230 22% 41%, #3f8a4f 41% 63%, #2f6db5 63% 82%, #f2ecd6 82%); }
-  #zinesPanel .catalog-card .card-body::before { background-color: #f4efdf; background-image: linear-gradient(90deg, rgba(58,110,170,.35) 1px, transparent 1px); background-size: 7px 7px; }
   .catalog-empty { opacity: .5; font-style: italic; padding: 20px; text-align: center; }
 
   /* --- Product detail modal (tap a card to zoom + read the description) --- */
@@ -723,7 +723,7 @@
     const pick = document.getElementById('shopPick'), act = document.querySelector('.subnav-one button.active'); if (!pick || !act) return;
     const k = act.dataset.panel, D = SP_DESC[k] || ['', ''];
     document.getElementById('spIcon').innerHTML = '<svg viewBox="0 0 48 40">' + (SP_ICON[k] || '') + '</svg>';
-    document.getElementById('spDesc').innerHTML = '<b>' + D[0] + '</b>' + D[1];
+    document.getElementById('spDesc').innerHTML = '<span class="sp-name t-' + k + '"><span>' + D[0] + '</span></span><br>' + D[1];
     const P = pick.getBoundingClientRect(), b = act.getBoundingClientRect(), iconEl = document.getElementById('spIcon');
     const cx = Math.max(34, Math.min(P.width - 34, b.left + b.width / 2 - P.left));
     iconEl.style.left = (cx - 28) + 'px';
