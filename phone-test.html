@@ -52,18 +52,18 @@
 // ===== THE TEST LIST. Claude rewrites this block after every delivery. Keep each test to a few taps. =====
 var BATCH = '2026-11-03 pdf and offline';
 var TESTS = [
-  { id: 'pdfbook', title: 'PDF to booklet', where: 'Tools, Zine Builder, Set up',
-    steps: ['Tap Bring a PDF and pick a PDF from your phone (try one that is not a multiple of 4 pages).', 'Check the page grid. Tap a page, then use Earlier, Later, Remove. Tap + Blank page, + PDF, + Photo.', 'Turn on Page numbers. Tap Make my booklet and send it to your printer or Print from the share sheet.'],
-    expect: 'It tells you how many blank pages it added and how many sheets you need. The booklet is a landscape PDF with 2 pages per side. Printed double sided, flip on the short edge, folded and stapled, the pages read in order with a small number at the bottom of each. Not tested on a real printer.' },
-  { id: 'pdfcap', title: 'Cap warning and book file', where: 'Tools, Zine Builder, Bring a PDF',
-    steps: ['Pick a PDF over 44 pages, or add one PDF to another.', 'Read the red message, then tap Make the book inside file.'],
-    expect: 'A red warning suggests making it a book. You can still make the booklet. The book file downloads with an even page count. Upload it to Lulu and check it is accepted, that part is not tested.' },
-  { id: 'offline', title: 'Tools work offline', where: 'The NOCIV shop app from your home screen',
-    steps: ['Open the app once with signal, open Tools, wait 30 seconds.', 'Turn on Airplane Mode.', 'Open the app, tap Tools, open Zine Builder, Cards, QR and Stencil. Bring a PDF in the zine builder.'],
-    expect: 'The tools open and work with no signal. The shop and saving to the directory say you are offline. If a tool does not open, tell me which one.' },
-  { id: 'footer', title: 'Footer offline line', where: 'Bottom of any page in Safari',
-    steps: ['Scroll to the grey block at the bottom.'],
-    expect: 'It says Works with no signal under the home screen line, then the Add to home screen button.' }
+  { id: 'czlink', title: 'Quiet Case Zero link', where: 'Safari, nociv.co/shop.html',
+    steps: ['Scroll to the very bottom of the Shop page, just above the grey Keep NOCIV in your pocket block.', 'Tap the small Case Zero button.'],
+    expect: 'A small faded box that says CASE ZERO. It opens nociv.co/casezero.' },
+  { id: 'czpage', title: 'Case Zero page', where: 'nociv.co/casezero',
+    steps: ['Read the top note and the three kit cards.', 'Check nothing runs off the right edge.', 'Put your own email in Tell me first and tap the button.'],
+    expect: 'Base, Premium and FACETYPE cards, each with a red stage label and Price not set. The build log says photos are coming (until you post one). The signup says you are on the list and shows a free shipping code.' },
+  { id: 'czpost', title: 'Post to the build log', where: 'Admin, Case Zero room',
+    steps: ['Open Admin, tap the Case Zero room.', 'Tap Post to the build log. Check Case Zero is already picked. Post one photo.', 'Open nociv.co/casezero again.'],
+    expect: 'The photo shows under From the bench and opens big when tapped. It does NOT show in the Clothing, Art or Zines album.' },
+  { id: 'cznotes', title: 'Private notes save', where: 'Admin, Case Zero room',
+    steps: ['Type a note under Case Zero Base, add a link, tap Save Case Zero notes.', 'Close Admin, open it again, open the Case Zero room.'],
+    expect: 'It says Saved with the time, and your note and link are still there after reopening.' }
 ];
 // ===== end of list =====
 

@@ -1,93 +1,214 @@
-<!doctype html>
-<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="robots" content="noindex">
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<!-- Site Created & Designed by Jasilyn A. Anderson | NOCIV.CO -->
 <title>Case Zero | NOCIV.CO</title>
+<meta name="robots" content="noindex">
+<meta name="description" content="Case Zero is NOCIV hardware. Kits you build, open and change. Follow the build.">
+<link rel="stylesheet" href="/style.css?v=4.1">
+<link rel="manifest" href="/manifest.webmanifest">
+<meta name="theme-color" content="#f2ecd6">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="NOCIV">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<link rel="apple-touch-icon" href="/icons/shop-180.png">
+<link rel="icon" type="image/png" sizes="192x192" href="/icons/shop-192.png">
 <style>
-@font-face{font-family:ZAnton;src:url('../fonts/anton.woff') format('woff');font-display:swap}
-:root{--ink:#111;--paper:#f2ecd6;--red:#c8412f;--soft:#5d594e;--line:#d6cdb0}
-*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
-html,body{margin:0;background:var(--paper);color:var(--ink);font-family:-apple-system,BlinkMacSystemFont,"Helvetica Neue",Arial,sans-serif;-webkit-text-size-adjust:100%}
-main{max-width:560px;margin:0 auto;padding:20px 16px 60px}
-h1{font-family:ZAnton,Impact,sans-serif;font-size:3.2rem;letter-spacing:.04em;margin:8px 0 0;line-height:1;text-transform:uppercase}
-.tag{margin:6px 0 20px;color:var(--soft)}
-.card{background:#fff;border:2px solid var(--ink);padding:16px;margin-bottom:14px}
-label{display:block;font-weight:800;font-size:.78rem;letter-spacing:.06em;text-transform:uppercase;margin:12px 0 4px}
-input,select{width:100%;font:inherit;font-size:16px;border:2px solid var(--ink);border-radius:0;padding:12px;background:#fff}
-.host{display:flex;align-items:stretch}.host input{border-right:0}.host span{display:flex;align-items:center;border:2px solid var(--ink);padding:0 10px;background:var(--paper);font-weight:700;white-space:nowrap}
-.msg{margin:10px 0 0;font-weight:700;font-size:.9rem}.bad{color:var(--red)}.ok{color:#1c6b36}
-pre{background:var(--ink);color:#f2ecd6;padding:12px;overflow:auto;font-size:.8rem;margin:8px 0 0;white-space:pre-wrap;word-break:break-word}
-.muted{color:var(--soft);font-size:.88rem;line-height:1.45}
-button{font:inherit;font-weight:900;letter-spacing:.06em;text-transform:uppercase;background:var(--ink);color:#fff;border:0;padding:14px;width:100%;margin-top:12px;cursor:pointer}
-a{color:inherit}
-</style></head><body><main>
-<h1>Case Zero</h1>
-<p class="tag">Claim your own name on the internet. Free. Requests are saved and a person reviews each one. No names go live yet.</p>
-<div class="card">
-  <label for="n">Name you want</label>
-  <div class="host"><input id="n" autocomplete="off" autocapitalize="off" spellcheck="false" placeholder="yourname" maxlength="40"><span id="dom">.yourdomain</span></div>
-  <label for="t">What should it do</label>
-  <select id="t"><option value="CNAME">Show my website (CNAME)</option><option value="A">Point at an IP address (A)</option><option value="URL">Send visitors to another address (redirect)</option></select>
-  <label for="v" id="vl">Where it points</label>
-  <input id="v" autocomplete="off" autocapitalize="off" spellcheck="false" placeholder="yourname.github.io">
-  <label for="o">Who you are (GitHub name or email)</label>
-  <input id="o" autocomplete="off" autocapitalize="off" spellcheck="false" placeholder="@yourname">
-  <p class="msg" id="msg" role="status"></p>
-  <button id="send" type="button" hidden>Request this name</button>
-  <p class="msg" id="sendmsg" role="status"></p>
-</div>
-<div class="card" id="out" hidden>
-  <strong>What would happen</strong>
-  <p class="muted" id="prev"></p>
-  <strong>Your request file</strong>
-  <pre id="file"></pre>
-  <p class="muted">In the real version you send this file to GitHub. It is checked by the same rules you just saw, a person approves it, and the name goes live in a few minutes.</p>
-  <button id="copy" type="button">Copy the file</button>
-</div>
-<p class="muted">Test version. No real domain is connected yet, so approved names do not go live. Your request is saved so we can review it. We keep only what you type here.</p>
+@font-face { font-family: CZAnton; src: url('/fonts/anton.woff') format('woff'); font-display: swap; }
+.cz { --ink: #111; --paper: #f2ecd6; --red: #c8412f; --soft: #5d594e; max-width: 560px; margin: 0 auto; padding: 22px 16px 40px; color: var(--ink); box-sizing: border-box; }
+.cz * { box-sizing: border-box; }
+.cz-note { position: relative; background: var(--paper); border: 2px solid var(--ink); padding: 26px 18px 18px; margin: 18px 0; }
+.cz-note::before { content: ''; position: absolute; top: -11px; left: 20px; width: 70px; height: 20px; background: #111; opacity: .85; transform: rotate(-3deg); }
+.cz h1 { font-family: CZAnton, Impact, sans-serif; font-size: 3.4rem; line-height: .95; letter-spacing: .03em; text-transform: uppercase; margin: 0; }
+.cz-lede { font-size: 1rem; line-height: 1.5; margin: 10px 0 0; }
+.cz-state { display: inline-block; margin-top: 12px; font-size: .74rem; font-weight: 900; letter-spacing: .08em; text-transform: uppercase; border: 2px solid var(--ink); padding: 5px 8px; background: #fff; }
+.cz h2 { font-family: CZAnton, Impact, sans-serif; font-size: 1.9rem; letter-spacing: .03em; text-transform: uppercase; margin: 0; line-height: 1; }
+.cz-sec { font-size: .74rem; font-weight: 900; letter-spacing: .1em; text-transform: uppercase; margin: 32px 0 0; color: var(--soft); }
+.cz-kit-top { display: flex; align-items: flex-start; justify-content: space-between; gap: 10px; }
+.cz-num { flex: none; background: var(--red); color: #fff; font-weight: 900; width: 30px; height: 30px; display: flex; align-items: center; justify-content: center; font-size: .9rem; }
+.cz-one { margin: 8px 0 10px; font-weight: 700; line-height: 1.4; }
+.cz ul { margin: 0; padding-left: 18px; line-height: 1.5; font-size: .93rem; }
+.cz li { margin: 3px 0; }
+.cz-meta { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 12px; }
+.cz-chip { font-size: .7rem; font-weight: 900; letter-spacing: .06em; text-transform: uppercase; border: 2px solid var(--ink); padding: 4px 7px; background: #fff; }
+.cz-chip.red { background: var(--red); border-color: var(--red); color: #fff; }
+.cz-log { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 6px; margin-top: 12px; }
+.cz-log button { padding: 0; border: 2px solid var(--ink); background: #fff; aspect-ratio: 1; overflow: hidden; cursor: pointer; display: block; width: 100%; }
+.cz-log img, .cz-log video { width: 100%; height: 100%; object-fit: cover; display: block; }
+.cz-empty { margin: 10px 0 0; color: var(--soft); font-size: .92rem; line-height: 1.45; }
+.cz form { display: flex; flex-direction: column; gap: 8px; margin-top: 12px; }
+.cz input { font: inherit; font-size: 16px; border: 2px solid var(--ink); border-radius: 0; padding: 13px; background: #fff; width: 100%; }
+.cz-go { font: inherit; font-weight: 900; letter-spacing: .08em; text-transform: uppercase; background: var(--red); color: #fff; border: 0; border-radius: 0; padding: 15px; cursor: pointer; width: 100%; font-size: .95rem; }
+.cz-go:disabled { opacity: .5; }
+.cz-msg { font-weight: 700; font-size: .9rem; margin: 8px 0 0; line-height: 1.4; }
+.cz-msg.bad { color: var(--red); }
+.cz-code { display: inline-block; font-family: ui-monospace, Menlo, monospace; background: #111; color: var(--paper); padding: 4px 8px; margin-top: 4px; user-select: all; -webkit-user-select: all; }
+.cz-small { font-size: .85rem; color: var(--soft); line-height: 1.45; margin: 10px 0 0; }
+.cz-view { position: fixed; inset: 0; background: rgba(0,0,0,.92); z-index: 1000; display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 16px; }
+.cz-view[hidden] { display: none; }
+.cz-view img, .cz-view video { max-width: 100%; max-height: 72vh; object-fit: contain; }
+.cz-view p { color: #f2ecd6; margin: 12px 0 0; text-align: center; font-size: .95rem; line-height: 1.4; max-width: 520px; }
+.cz-view-bar { display: flex; gap: 8px; margin-top: 14px; }
+.cz-view-bar button { font: inherit; font-weight: 900; text-transform: uppercase; letter-spacing: .06em; background: #f2ecd6; color: #111; border: 0; padding: 12px 16px; cursor: pointer; }
+</style>
+<script>if('serviceWorker' in navigator){window.addEventListener('load',function(){navigator.serviceWorker.register('/sw.js').catch(function(){})})}</script>
+</head>
+<body>
+
+<header class="nociv-header">
+  <a href="/index.html"><img class="torn-header-img" src="/header.png" alt="NOCIV.CO: Nothing Of Civilization"></a>
+</header>
+
+<nav class="tabs">
+  <a href="/about.html" class="img-tab"><img src="/nav-about.png" alt="About"></a>
+  <a href="/shop.html" class="img-tab active"><img src="/nav-shop.png" alt="Shop"></a>
+  <a href="/creator-tools.html" class="img-tab"><img src="/nav-tools.png" alt="Tools"></a>
+  <a href="/community.html" class="img-tab"><img src="/base-button.png" alt="Base"></a>
+</nav>
+
+<main class="cz">
+
+  <div class="cz-note">
+    <h1>Case<br>Zero</h1>
+    <p class="cz-lede">NOCIV hardware. Kits you build with your own hands, open up, and change. You own the thing, not a subscription to it.</p>
+    <span class="cz-state">Build log. Nothing for sale yet.</span>
+  </div>
+
+  <p class="cz-sec">On the bench</p>
+
+  <div class="cz-note">
+    <div class="cz-kit-top"><h2>Case Zero Base</h2><span class="cz-num">1</span></div>
+    <p class="cz-one">A flat pack wooden case you put together yourself.</p>
+    <ul>
+      <li>Basswood plywood panels, in Small and Medium.</li>
+      <li>A scored grid on the panels, so you cut your own openings with an X-Acto knife.</li>
+      <li>All wood joinery: finger joints, a dowel hinge, a turn latch and kickstands.</li>
+      <li>A fabric and paracord handle.</li>
+      <li>A finishing kit, sold on its own.</li>
+    </ul>
+    <div class="cz-meta"><span class="cz-chip red">Prototyping</span><span class="cz-chip">Price not set</span></div>
+  </div>
+
+  <div class="cz-note">
+    <div class="cz-kit-top"><h2>Case Zero Premium</h2><span class="cz-num">2</span></div>
+    <p class="cz-one">A briefcase style case for microcontroller builds.</p>
+    <ul>
+      <li>Made for Arduino, Raspberry Pi and ESP32 projects.</li>
+      <li>Built on a 20 mm square grid, so parts mount where you want them.</li>
+      <li>Right now the focus is the case itself.</li>
+      <li>First batch planned: 50 units.</li>
+    </ul>
+    <div class="cz-meta"><span class="cz-chip red">Designing</span><span class="cz-chip">Price not set</span></div>
+  </div>
+
+  <div class="cz-note">
+    <div class="cz-kit-top"><h2>FACETYPE</h2><span class="cz-num">3</span></div>
+    <p class="cz-one">A handheld instrument for making your own fonts.</p>
+    <ul>
+      <li>A DIY kit with a mechanical keyboard feel.</li>
+      <li>Designed left handed first.</li>
+      <li>The prototype boots on a Raspberry Pi Pico.</li>
+    </ul>
+    <div class="cz-meta"><span class="cz-chip red">Working prototype</span><span class="cz-chip">Price not set</span></div>
+  </div>
+
+  <p class="cz-sec">Build log</p>
+  <div class="cz-note">
+    <h2>From the bench</h2>
+    <div class="cz-log" id="czLog"></div>
+    <p class="cz-empty" id="czEmpty">Loading the build photos...</p>
+  </div>
+
+  <p class="cz-sec">When it is ready</p>
+  <div class="cz-note">
+    <h2>Tell me first</h2>
+    <p class="cz-small" style="margin-top:8px">Leave your email or phone number. You get one message when a kit is ready, and free shipping on your first NOCIV order. No ads, no spam, no selling your info.</p>
+    <form id="czForm" novalidate>
+      <input id="czContact" type="text" inputmode="email" autocomplete="email" autocapitalize="off" spellcheck="false" placeholder="Email or phone" maxlength="200" aria-label="Email or phone">
+      <button class="cz-go" id="czGo" type="submit">Tell me first</button>
+    </form>
+    <p class="cz-msg" id="czMsg" role="status"></p>
+  </div>
+
 </main>
-<script src="validate.js"></script>
+
+<div class="cz-view" id="czView" hidden role="dialog" aria-modal="true" aria-label="Build photo">
+  <div id="czViewMedia"></div>
+  <p id="czViewCap"></p>
+  <div class="cz-view-bar">
+    <button type="button" id="czPrev" aria-label="Previous">Back</button>
+    <button type="button" id="czNext" aria-label="Next">Next</button>
+    <button type="button" id="czClose">Close</button>
+  </div>
+</div>
+
+<footer class="nociv-footer">NOCIV.CO: Nothing Of Civilization<br>© 2023–2026 NOCIV.CO. Established 2023. All rights reserved.</footer>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="/supabase.js"></script>
 <script>
 (function () {
-  var $ = function (i) { return document.getElementById(i); }, domain = '';
-  var SB = 'https://vscombrgcdtrfndqyugb.supabase.co', KEY = 'sb_publishable_Ys6mf0Uyop7Mq6p3k68C7A_5GA3RusI';
-  function rpc(name, args) {
-    return fetch(SB + '/rest/v1/rpc/' + name, { method: 'POST', headers: { apikey: KEY, Authorization: 'Bearer ' + KEY, 'Content-Type': 'application/json' }, body: JSON.stringify(args) })
-      .then(function (r) { if (!r.ok) throw new Error('bad'); return r.json(); });
-  }
-  fetch('config.json', { cache: 'no-store' }).then(function (r) { return r.json(); }).then(function (c) { domain = (c && c.domain) || ''; draw(); }).catch(function () {});
-  var hints = { CNAME: ['Where it points', 'yourname.github.io'], A: ['IP address', '185.199.108.153'], URL: ['Full address', 'https://example.com'] };
-  var REASON = { bad_name: 'That name does not follow the rules.', reserved: 'That name is saved for NOCIV.', bad_type: 'Pick a type.', bad_value: 'Check where it points.', bad_owner: 'Add your GitHub name or email.', too_many: 'You have 5 requests waiting. Wait for those first.', taken: 'Someone already asked for that name.' };
-  var taken = null, takenFor = '', tT = 0, good = false, sentName = '';
-  function req() { return { name: $('n').value.trim().toLowerCase(), type: $('t').value, value: $('v').value.trim(), owner: $('o').value.trim() }; }
-  function checkTaken(name) {
-    clearTimeout(tT); if (name === takenFor) return;
-    tT = setTimeout(function () { rpc('casezero_name_taken', { p_name: name }).then(function (t) { takenFor = name; taken = !!t; if ($('n').value.trim().toLowerCase() === name) draw(); }).catch(function () { takenFor = name; taken = null; }); }, 350);
-  }
+  var $ = function (id) { return document.getElementById(id); };
+  var esc = function (s) { return String(s == null ? '' : s).replace(/[&<>"']/g, function (c) { return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]; }); };
+  var okUrl = function (u) { return /^https:\/\//.test(String(u || '')); };
+
+  // ---- Build log: posts from Admin, Post, shop "Case Zero" (album_photos.shop = 'casezero') ----
+  var items = [], at = 0;
   function draw() {
-    $('dom').textContent = '.' + (domain || 'yourdomain');
-    var h = hints[$('t').value]; $('vl').textContent = h[0]; $('v').placeholder = h[1];
-    var r = req(), touched = r.name || r.value, res = CaseZero.validate(r), m = $('msg'); good = false;
-    $('send').hidden = true;
-    if (!touched) { m.textContent = ''; m.className = 'msg'; $('out').hidden = true; return; }
-    if (!res.ok) { m.textContent = res.errors[0]; m.className = 'msg bad'; $('out').hidden = true; return; }
-    if (r.owner.length < 3) { m.textContent = 'Add your GitHub name or email so we know who it is.'; m.className = 'msg bad'; $('out').hidden = true; return; }
-    if (sentName === r.name) { m.textContent = 'Your request is in.'; m.className = 'msg ok'; $('out').hidden = true; return; }
-    checkTaken(r.name);
-    if (takenFor === r.name && taken) { m.textContent = 'Someone already asked for that name.'; m.className = 'msg bad'; $('out').hidden = true; return; }
-    m.textContent = 'That name looks free.'; m.className = 'msg ok'; good = true; $('send').hidden = false;
-    $('prev').textContent = CaseZero.dnsPreview(r, domain);
-    $('file').textContent = JSON.stringify(CaseZero.requestFile(r, domain), null, 2);
-    $('out').hidden = false;
+    if (!items.length) { $('czEmpty').textContent = 'First build photos are coming. Check back.'; return; }
+    $('czEmpty').hidden = true;
+    $('czLog').innerHTML = items.map(function (m, i) {
+      return '<button type="button" data-i="' + i + '" aria-label="Open build photo ' + (i + 1) + '">' +
+        (m.type === 'video' ? '<video src="' + esc(m.url) + '#t=0.1" muted playsinline preload="metadata"></video>' : '<img src="' + esc(m.url) + '" alt="" loading="lazy">') + '</button>';
+    }).join('');
   }
-  ['n', 't', 'v', 'o'].forEach(function (i) { $(i).addEventListener('input', function () { $('sendmsg').textContent = ''; draw(); }); });
-  $('send').onclick = function () {
-    if (!good) return; var r = req(), b = this; b.disabled = true; $('sendmsg').className = 'msg'; $('sendmsg').textContent = 'Sending...';
-    rpc('casezero_request', { p_name: r.name, p_type: r.type, p_value: r.value, p_owner: r.owner }).then(function (x) {
-      if (x === 'ok') { $('sendmsg').className = 'msg ok'; $('sendmsg').textContent = 'Sent. A person reviews it. Keep your name: ' + r.name; takenFor = r.name; taken = true; sentName = r.name; }
-      else { $('sendmsg').className = 'msg bad'; $('sendmsg').textContent = REASON[x] || 'That did not work.'; }
-      b.disabled = false; draw();
-    }).catch(function () { $('sendmsg').className = 'msg bad'; $('sendmsg').textContent = 'No signal or the service is down. Try again.'; b.disabled = false; });
-  };
-  $('copy').onclick = function () { var b = this; var t = $('file').textContent; (navigator.clipboard ? navigator.clipboard.writeText(t) : Promise.reject()).then(function () { b.textContent = 'Copied'; }, function () { b.textContent = 'Press and hold the file to copy'; }); setTimeout(function () { b.textContent = 'Copy the file'; }, 2000); };
-  draw();
+  function show(i) {
+    at = (i + items.length) % items.length;
+    var m = items[at];
+    $('czViewMedia').innerHTML = m.type === 'video' ? '<video src="' + esc(m.url) + '" controls playsinline autoplay muted></video>' : '<img src="' + esc(m.url) + '" alt="">';
+    $('czViewCap').textContent = [m.caption, m.date].filter(Boolean).join(' . ');
+    $('czView').hidden = false;
+  }
+  $('czLog').addEventListener('click', function (e) { var b = e.target.closest('button[data-i]'); if (b) show(+b.dataset.i); });
+  $('czClose').addEventListener('click', function () { $('czView').hidden = true; $('czViewMedia').innerHTML = ''; });
+  $('czPrev').addEventListener('click', function () { show(at - 1); });
+  $('czNext').addEventListener('click', function () { show(at + 1); });
+  $('czPrev').hidden = $('czNext').hidden = false;
+
+  if (typeof supabaseClient === 'undefined') { $('czEmpty').textContent = 'Build photos need signal. Check back.'; }
+  else {
+    supabaseClient.from('album_photos').select('caption, created_at, media, image_url').eq('shop', 'casezero').order('created_at', { ascending: false }).limit(60)
+      .then(function (r) {
+        if (r.error) { $('czEmpty').textContent = 'Could not load build photos right now.'; return; }
+        (r.data || []).forEach(function (p) {
+          var media = Array.isArray(p.media) && p.media.length ? p.media : (p.image_url ? [{ url: p.image_url, type: 'image' }] : []);
+          var d = p.created_at ? new Date(p.created_at).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }) : '';
+          media.forEach(function (m) { if (m && okUrl(m.url)) items.push({ url: m.url, type: m.type === 'video' ? 'video' : 'image', caption: p.caption || '', date: d }); });
+        });
+        if (items.length < 2) { $('czPrev').hidden = $('czNext').hidden = true; }
+        draw();
+      });
+  }
+
+  // ---- Tell me first: same mailing list as the shop (join_list), gives their free shipping code ----
+  $('czForm').addEventListener('submit', function (e) {
+    e.preventDefault();
+    var v = $('czContact').value.trim(), msg = $('czMsg');
+    msg.className = 'cz-msg';
+    if (v.length < 3) { msg.className = 'cz-msg bad'; msg.textContent = 'Put in your email or phone number.'; return; }
+    if (typeof supabaseClient === 'undefined') { msg.className = 'cz-msg bad'; msg.textContent = 'No signal. Try again in a minute.'; return; }
+    $('czGo').disabled = true; msg.textContent = 'Saving...';
+    supabaseClient.rpc('join_list', { p_contact: v }).then(function (r) {
+      if (r.error) { $('czGo').disabled = false; msg.className = 'cz-msg bad'; msg.textContent = r.error.message || 'Could not save. Try again.'; return; }
+      $('czContact').disabled = true;
+      msg.innerHTML = 'You are on the list. You will hear when a kit is ready.' + (r.data ? '<br>Free shipping on your first order:<br><span class="cz-code">' + esc(r.data) + '</span>' : '');
+    });
+  });
 })();
-</script></body></html>
+</script>
+<script src="/install-app.js?v=8" defer></script>
+</body>
+</html>

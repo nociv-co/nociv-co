@@ -138,7 +138,7 @@
       <textarea id="caption" rows="2" maxlength="1000" placeholder="what is it, where's it at, whatever"></textarea>
 
       <span class="post-label">Post it on</span>
-      <div class="tag-row" id="shopRow"><button type="button" class="tag-chip on" data-shop="clothing">Clothing</button><button type="button" class="tag-chip" data-shop="art">Art</button><button type="button" class="tag-chip" data-shop="zines">Zines</button></div>
+      <div class="tag-row" id="shopRow"><button type="button" class="tag-chip on" data-shop="clothing">Clothing</button><button type="button" class="tag-chip" data-shop="art">Art</button><button type="button" class="tag-chip" data-shop="zines">Zines</button><button type="button" class="tag-chip" data-shop="casezero">Case Zero</button></div>
 
       <span class="post-label">Tag it (optional)</span>
       <div class="tag-row" id="tagRow"></div>
@@ -202,6 +202,7 @@
 
   // ===== TAGS =====
   let chosenTag = null, chosenShop = 'clothing';
+  { const want = new URLSearchParams(location.search).get('shop'); const wb = want && document.querySelector('#shopRow .tag-chip[data-shop="' + want.replace(/[^a-z]/g, '') + '"]'); if (wb) { chosenShop = wb.dataset.shop; document.querySelectorAll('#shopRow .tag-chip').forEach(x => x.classList.toggle('on', x === wb)); } }
   document.addEventListener('click', (e) => { const b = e.target.closest('#shopRow .tag-chip'); if (!b) return; chosenShop = b.dataset.shop; document.querySelectorAll('#shopRow .tag-chip').forEach(x => x.classList.toggle('on', x === b)); });
   $('tagRow').innerHTML = Object.entries(TAGS)
     .map(([k, v]) => `<button type="button" class="tag-chip" data-tag="${k}">${esc(v)}</button>`).join('');
