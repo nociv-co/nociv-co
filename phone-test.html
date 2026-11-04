@@ -52,6 +52,9 @@
 // ===== THE TEST LIST. Claude rewrites this block after every delivery. Keep each test to a few taps. =====
 var BATCH = '2026-11-03 from scratch';
 var TESTS = [
+  { id: 'aboutcopy', title: 'About: new words', where: 'nociv.co/about.html',
+    steps: ['Open Philosophy, then Participate, then Founder.', 'On Participate tap Tools in the Build card.'],
+    expect: 'Philosophy opens with Black-owned creator brand from Arizona, then We Are All Creators. Participate lists the real tools and Base sections, and the link opens Tools. Founder is short and ends with Own what you make.' },
   { id: 'aboutlist', title: 'About: to-do list on lined paper', where: 'nociv.co/about.html',
     steps: ['Tap the box next to Founder.', 'Scroll to the bottom and tap Back to About.', 'Open Culture, then swipe back from the left edge.'],
     expect: 'No dark bar under the tabs. The box ticks, then Founder opens on its own page with a Back to About button at the top and bottom. Back lands on the list with Founder and Culture checked and greyed.' },
