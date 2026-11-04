@@ -21,6 +21,8 @@ export function homography(src, dst) { // src px -> dst mm, 4 point pairs
   return ([x, y]) => { const w = h[6] * x + h[7] * y + 1; return [(h[0] * x + h[1] * y + h[2]) / w, (h[3] * x + h[4] * y + h[5]) / w]; };
 }
 const dist = (a, b) => Math.hypot(a[0] - b[0], a[1] - b[1]);
+// parts are made to round numbers: 2.98 mm is really 3 mm (Zack Freedman's tip). Snap to the nearest half mm when close.
+const nominal = (v) => { const r = Math.round(v * 2) / 2; return Math.abs(v - r) <= 0.15 ? r : Math.round(v * 10) / 10; };
 
 const CSS = `
 .mz{position:fixed;inset:0;z-index:80;background:#111;color:#fff;display:flex;flex-direction:column;font:600 14px/1.35 -apple-system,BlinkMacSystemFont,Arial,sans-serif}
@@ -60,7 +62,7 @@ export function openMeasure(done) {
     shell('Measure with your phone', '<div class="say" style="position:static;padding:22px 16px;text-align:left;font-weight:600;font-size:15px">' +
       '<p style="margin:0 0 12px"><b>You need any bank, ID, gift or library card.</b> They are all the same size, 85.6 x 54 mm, so the card is your ruler.</p>' +
       '<p style="margin:0 0 12px">1. Lay the card flat right next to your part, on a plain table.<br>2. Hold your phone flat over both. Follow the arrows. It snaps by itself when it is level.<br>3. Flip the part over like a page (left to right) for the back.<br>4. Drag the dots onto the corners and tap the holes.</p>' +
-      '<p style="margin:0;color:#aaa">Photos stay on your phone. Good light, no flash.</p></div>',
+      '<p style="margin:0;color:#aaa">Step back a little and zoom in 2x: the edges bend less. Plain table, good light, no flash. Photos stay on your phone.</p></div>',
       '<input class="nm" id="mzName" value="' + M.name + '" aria-label="What is it" placeholder="What is it? (My board)"><div class="rowb"><button class="bt go" id="mzGo">Start the camera</button></div><div class="rowb"><label class="bt" style="position:relative">Use photos I have<input type="file" accept="image/*" id="mzFile" style="position:absolute;inset:0;opacity:0"></label></div>');
     $('mzName').oninput = (e) => { M.name = e.target.value || 'My board'; };
     $('mzGo').onclick = async () => {
@@ -180,7 +182,7 @@ export function openMeasure(done) {
       if (st < stage.length - 1) { st++; draw(); return; }
       if (which === 'side') { const s = CARD[1] / dist(pts.card2[0], pts.card2[1]); M.depth = dist(pts.part2[0], pts.part2[1]) * s; return result(); }
       const m = partMM(); shot.card = pts.card; shot.part = pts.part; shot.holes = holes;
-      shot.mm = m ? { w: m.w, h: m.h, holes: holes.map((h) => { const c = holeMM(h.p); return { x: c[0], y: c[1], d: h.d }; }) } : null;
+      shot.mm = m ? { w: nominal(m.w), h: nominal(m.h), holes: holes.map((h) => { const c = holeMM(h.p); return { x: c[0], y: c[1], d: nominal(h.d) }; }) } : null;
       if (which === 'front') return askNext();
       return result();
     };

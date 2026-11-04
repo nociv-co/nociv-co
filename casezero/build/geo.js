@@ -101,11 +101,32 @@ export function buildHalf(o) {
   const posts = postSpots(out, o.W * o.D > 30000 ? 6 : 4);
   const H = o.H, deckZ = H - R.LT - (o.recess || 0); // a recess leaves room for caps and knobs when the lid closes
   const tray = [], deck = [], extra = [];
-  tray.push({ polys: out, z0: 0, z1: R.F, tag: 'floor' });
-  // walls, with an open notch at the top for the USB cable if asked
-  let wall = diff(out, innerWall);
-  if (o.port) { const n = o.port, notch = [rect(n.x0, n.y0, n.x1, n.y1)]; tray.push({ polys: wall, z0: R.F, z1: n.z }); tray.push({ polys: diff(wall, notch), z0: n.z, z1: H }); }
-  else tray.push({ polys: wall, z0: R.F, z1: H });
+  const inlay = [], stick = [], D = 0.6; // D = how deep a mark or texture goes (3 layers at 0.2 mm)
+  // floor, with marks on the bottom face: dips (filled with a second color or paint), cut throughs (vents), pockets for glue-on pieces
+  const bm = marks(o.bottom), floorCut = diff(out, bm.cut);
+  if (bm.recess.length) { tray.push({ polys: diff(floorCut, bm.recess), z0: 0, z1: D, tag: 'floor' }); tray.push({ polys: floorCut, z0: D, z1: R.F, tag: 'floor' }); if (bm.fill.length) inlay.push({ polys: inter(bm.fill, floorCut), z0: 0, z1: D, tag: 'inlayB' }); }
+  else tray.push({ polys: floorCut, z0: 0, z1: R.F, tag: 'floor' });
+  bm.stick.forEach((sp) => { sp.layers.forEach((l) => { const h = l.z1; l.z0 = -(h - D); l.z1 = D; }); sp.face = 'bottom'; stick.push(sp); });
+  // walls: split into height bands where the USB notch, the snap groove or a texture changes the outline
+  const wallBase = diff(out, innerWall), wt = o.walls && o.walls.kind && o.walls.kind !== 'none' ? o.walls : null;
+  const snapOK = o.snap && deckZ - 10.6 > R.F + 1, gz = [deckZ - 10.4, deckZ - 7.6];
+  const zs = new Set([R.F, H]); if (o.port) zs.add(o.port.z); if (snapOK) { zs.add(gz[0]); zs.add(gz[1]); }
+  if (wt && wt.kind !== 'vstripe') { const bh = Math.max(1, wt.sp / 2); for (let z = R.F + bh; z < H - 0.3; z += bh) zs.add(+z.toFixed(2)); }
+  const Z = [...zs].filter((z) => z >= R.F && z <= H).sort((x, y) => x - y);
+  const ringOut = wt ? diff(offset(out, wt.depth), out) : [];
+  for (let i = 0; i < Z.length - 1; i++) {
+    const z0 = Z[i], z1 = Z[i + 1], mid = (z0 + z1) / 2; if (z1 - z0 < 0.05) continue;
+    let w = wallBase;
+    if (wt) {
+      const band = wt.kind === 'vstripe' ? 0 : Math.floor((mid - R.F) / Math.max(1, wt.sp / 2));
+      if ((wt.kind === 'hstripe' || wt.kind === 'grid') && band % 2 === 0) w = union(w, ringOut);
+      if (wt.kind === 'vstripe' || wt.kind === 'grid') w = union(w, ribs(out, wt.sp, wt.depth, wt.kind === 'grid' ? Math.max(0.8, wt.sp * 0.22) : wt.sp / 2, 0));
+      if (wt.kind === 'checks') w = union(w, ribs(out, wt.sp, wt.depth, wt.sp / 2, band % 2 ? wt.sp / 2 : 0));
+    }
+    if (snapOK && mid > gz[0] && mid < gz[1]) w = diff(w, offset(out, -(R.T - 1.2)));
+    if (o.port && mid > o.port.z) w = diff(w, [rect(o.port.x0, o.port.y0, o.port.x1, o.port.y1)]);
+    tray.push({ polys: w, z0, z1, tag: 'wall' });
+  }
   // screw posts: deck sits on top of them, flush with the wall
   const postPolys = posts.map(([x, y]) => circle(x, y, R.POSTR, 32)), pilots = posts.map(([x, y]) => circle(x, y, R.PILOT / 2, 20));
   tray.push({ polys: diff(union(postPolys), pilots), z0: R.F, z1: deckZ });
@@ -124,11 +145,30 @@ export function buildHalf(o) {
     q.P.holes.forEach(([hx, hy]) => { const p = rot([[q.x - P.w / 2 + hx, q.y - P.h / 2 + hy]], (q.r || 0) * Math.PI / 2, q.x, q.y)[0]; tray.push({ polys: diff([circle(p[0], p[1], 2.6, 24)], [circle(p[0], p[1], (P.hole || 2.1) * 0.8 / 2, 16)]), z0: R.F, z1: R.F + 5 }); });
   });
   // the deck: outline minus every cut and the post screw holes
-  const cuts = [];
-  o.parts.forEach((q) => cuts.push(...cutShape(q.P, q.x, q.y, q.r || 0)));
-  posts.forEach(([x, y]) => cuts.push(circle(x, y, R.HOLE / 2, 24)));
-  const deckFlat = diff(deckPoly, union(cuts));
-  deck.push({ polys: deckFlat, z0: deckZ, z1: deckZ + R.LT, tag: 'deck' });
+  const cuts = [], thin = [], nubs = [];
+  o.parts.forEach((q) => {
+    if (q.spring) { // printed spring button (a living hinge): a C shaped slot leaves the pad on one arm, a nub presses the switch
+      const pad = circle(q.x, q.y, 6.2, 32), arm = rect(q.x - 2.2, q.y - 8.2, q.x + 2.2, q.y);
+      cuts.push(...diff([circle(q.x, q.y, 7.4, 36)], union([pad, rect(q.x - 2.2, q.y - 9, q.x + 2.2, q.y)])));
+      thin.push(pad, arm); nubs.push(circle(q.x, q.y, 1.6, 16)); return;
+    }
+    cuts.push(...cutShape(q.P, q.x, q.y, q.r || 0));
+  });
+  if (!snapOK) posts.forEach(([x, y]) => cuts.push(circle(x, y, R.HOLE / 2, 24)));
+  const tm = marks(o.top), deckFlat = diff(diff(deckPoly, union(cuts)), tm.cut), top = deckZ + R.LT;
+  const thinU = thin.length ? inter(union(thin), deckFlat) : [];
+  deck.push({ polys: diff(deckFlat, thinU), z0: deckZ, z1: top - 1.2, tag: 'deck' });
+  if (tm.recess.length) { deck.push({ polys: deckFlat, z0: top - 1.2, z1: top - D, tag: 'deck' }); deck.push({ polys: diff(deckFlat, tm.recess), z0: top - D, z1: top, tag: 'deck' }); if (tm.fill.length) inlay.push({ polys: inter(tm.fill, deckFlat), z0: top - D, z1: top, tag: 'inlayT' }); }
+  else deck.push({ polys: deckFlat, z0: top - 1.2, z1: top, tag: 'deck' });
+  tm.stick.forEach((sp) => { sp.layers.forEach((l) => { l.z0 += top - D; l.z1 += top - D; }); sp.face = 'top'; stick.push(sp); });
+  if (nubs.length) deck.push({ polys: union(nubs), z0: deckZ - 1.5, z1: top - 1.2, tag: 'nub' });
+  // snap clips (Slant 3D style cantilever): four arms hang from the deck edge, their lips catch a groove in the wall. No screws.
+  if (snapOK) {
+    const b = bbox(deckPoly), cx = (b.x0 + b.x1) / 2, cy = (b.y0 + b.y1) / 2, win = [rect(cx - 6, b.y0 - 5, cx + 6, b.y0 + 8), rect(cx - 6, b.y1 - 8, cx + 6, b.y1 + 5), rect(b.x0 - 5, cy - 6, b.x0 + 8, cy + 6), rect(b.x1 - 8, cy - 6, b.x1 + 5, cy + 6)];
+    const armRing = diff(offset(out, -(R.T + R.CLR)), offset(out, -(R.T + R.CLR + 1.6))), lipRing = diff(offset(out, -(R.T - 0.8)), offset(out, -(R.T + R.CLR + 1.6)));
+    deck.push({ polys: inter(armRing, win), z0: deckZ - 10, z1: deckZ, tag: 'clip' });
+    deck.push({ polys: inter(lipRing, win), z0: deckZ - 10, z1: deckZ - 8, tag: 'clip' });
+  }
   // screen frames hang under the deck so the board sits square behind its window
   o.parts.forEach((q) => {
     const P = q.P; if (!P.screen) return;
@@ -145,7 +185,19 @@ export function buildHalf(o) {
   });
   // printed hinge knuckles on the hinge edge
   if (o.hinge && o.hinge.on) extra.push(...knuckles(out, o.hinge, H, o.hingeSet));
-  return { out, tray, deck, extra, posts, H, deckZ };
+  return { out, tray, deck, extra, posts, H, deckZ, inlay, stick, snap: snapOK };
+}
+// marks on a face: [{ polys, how }] how = dip (second color or paint), cut (all the way through), glue (a pocket now, a separate piece to glue in)
+function marks(list) {
+  const r = { recess: [], fill: [], cut: [], stick: [] };
+  (list || []).forEach((m) => {
+    if (!m.polys || !m.polys.length) return;
+    if (m.how === 'cut') r.cut.push(...m.polys);
+    else if (m.how === 'glue') { r.recess.push(...offset(m.polys, 0.1)); r.stick.push({ name: m.name || 'piece', layers: [{ polys: offset(m.polys, -0.05), z0: 0, z1: 0.6 + (m.up || 1.0) }] }); }
+    else { r.recess.push(...m.polys); if (m.fill !== false) r.fill.push(...m.polys); }
+  });
+  r.recess = r.recess.length ? union(r.recess) : []; r.fill = r.fill.length ? union(r.fill) : []; r.cut = r.cut.length ? union(r.cut) : [];
+  return r;
 }
 function nearestInside(polys, p) { if (inside([circle(p[0], p[1], RULE.MAG / 2 + 1.6, 24)], offset(polys, 1.4))) return p; for (let s = 1; s < 30; s++) { const q = [p[0], p[1] + s]; if (inside([circle(q[0], q[1], RULE.MAG / 2 + 1.6, 24)], offset(polys, 1.4))) return q; } return null; }
 
@@ -236,8 +288,8 @@ export function fitsBed(f, bed) { const m = 4; return (f.w + m <= bed[0] && f.h 
 
 // ---------- triangles ----------
 function exPolys(polys) {
-  const c = new CL.Clipper(), tree = new CL.PolyTree();
-  c.AddPaths(polys.map(toC), CL.PolyType.ptSubject, true);
+  const c = new CL.Clipper(), tree = new CL.PolyTree(); c.StrictlySimple = true; // no two rings may touch, or the triangles leave gaps
+  c.AddPaths(CL.Clipper.CleanPolygons(polys.map(toC), 0.004 * SC), CL.PolyType.ptSubject, true);
   c.Execute(CL.ClipType.ctUnion, tree, CL.PolyFillType.pftNonZero, CL.PolyFillType.pftNonZero);
   return CL.JS.PolyTreeToExPolygons(tree).map((e) => ({ outer: fromC(e.outer), holes: e.holes.map(fromC) }));
 }
@@ -252,7 +304,17 @@ export function layerGeos(layers, extra) {
   const geos = [];
   layers.forEach((l) => {
     if (l.z1 - l.z0 < 0.01) return;
+    const all = [];
     exPolys(l.polys).forEach((ex) => {
+      // a face with lots of little holes (textures) is cut into 12 mm strips first: the triangulator gets every strip right
+      if (ex.holes.length > 24) {
+        // cut on a line through the middle of every hole, so no piece has a hole left: simple shapes always triangulate cleanly
+        const b = bbox([ex.outer]), xs = [b.x0 - 1]; ex.holes.map((h) => { const hb = bbox([h]); return (hb.x0 + hb.x1) / 2; }).sort((p, q) => p - q).forEach((x) => { if (x - xs[xs.length - 1] > 0.4) xs.push(x); }); xs.push(b.x1 + 1);
+        for (let i = 0; i < xs.length - 1; i++) exPolys(inter([ex.outer, ...ex.holes], [rect(xs[i], b.y0 - 1, xs[i + 1], b.y1 + 1)])).forEach((e) => { if (!e.holes.length) all.push(e); else { const bb = bbox([e.outer]), m = (bb.y0 + bb.y1) / 2; [[bb.y0 - 1, m], [m, bb.y1 + 1]].forEach(([y0, y1]) => all.push(...exPolys(inter([e.outer, ...e.holes], [rect(bb.x0 - 1, y0, bb.x1 + 1, y1)])))); } });
+      }
+      else all.push(ex);
+    });
+    all.forEach((ex) => {
       if (Math.abs(CL.Clipper.Area(toC(ex.outer))) < 50) return; // skip crumbs under 0.05 mm2
       const g = new THREE.ExtrudeGeometry(toShape(ex), { depth: l.z1 - l.z0, bevelEnabled: false, curveSegments: 1 });
       g.translate(0, 0, l.z0); geos.push(g);
@@ -266,7 +328,7 @@ export function trisOf(geos) {
   const out = new Float32Array(n); let o = 0; parts.forEach((a) => { out.set(a, o); o += a.length; }); return out;
 }
 // Flip a half upside down (for the deck, which prints face down) and drop it to z = 0.
-export function flipZ(tris) { let zmax = -1e9; for (let i = 2; i < tris.length; i += 3) zmax = Math.max(zmax, tris[i]); const o = new Float32Array(tris.length); for (let i = 0; i < tris.length; i += 3) { o[i] = tris[i]; o[i + 1] = -tris[i + 1]; o[i + 2] = zmax - tris[i + 2]; } return o; } // a half turn about x, so faces keep pointing out
+export function flipZ(tris, zTop) { let zmax = -1e9; for (let i = 2; i < tris.length; i += 3) zmax = Math.max(zmax, tris[i]); if (zTop != null) zmax = zTop; const o = new Float32Array(tris.length); for (let i = 0; i < tris.length; i += 3) { o[i] = tris[i]; o[i + 1] = -tris[i + 1]; o[i + 2] = zmax - tris[i + 2]; } return o; } // a half turn about x, so faces keep pointing out
 export function dropZ(tris) { let z0 = 1e9; for (let i = 2; i < tris.length; i += 3) z0 = Math.min(z0, tris[i]); const o = new Float32Array(tris); for (let i = 2; i < o.length; i += 3) o[i] -= z0; return o; }
 export function stl(tris, name) {
   const n = tris.length / 9, buf = new ArrayBuffer(84 + n * 50), dv = new DataView(buf), head = ('NOCIV Case Zero ' + name).slice(0, 80);
@@ -297,4 +359,69 @@ export function svgOf(polys, title) {
   const b = bbox(polys), pad = 5, W = b.w + pad * 2, H = b.h + pad * 2;
   const d = polys.map((p) => 'M' + p.map(([x, y]) => (x - b.x0 + pad).toFixed(2) + ' ' + (b.y1 - y + pad).toFixed(2)).join('L') + 'Z').join('');
   return '<?xml version="1.0" encoding="UTF-8"?>\n<svg xmlns="http://www.w3.org/2000/svg" width="' + W.toFixed(2) + 'mm" height="' + H.toFixed(2) + 'mm" viewBox="0 0 ' + W.toFixed(2) + ' ' + H.toFixed(2) + '">\n<!-- NOCIV Case Zero ' + title + '. Real size in mm. Print at 100 percent, or send to a laser cutter. Red = cut. -->\n<path d="' + d + '" fill="none" stroke="#ff0000" stroke-width="0.2" fill-rule="evenodd"/>\n<path d="M' + pad + ' ' + (H - 2) + 'h10" stroke="#000" stroke-width="0.4"/><text x="' + pad + '" y="' + (H - 2.6) + '" font-size="2.4" font-family="Arial">10 mm</text>\n</svg>';
+}
+
+// ---------- looks: logos, labels, textures (all flat layers, so they cut and split like the rest) ----------
+// Trace a picture into polygons: every dark or solid pixel row becomes a strip, strips are joined, edges smoothed.
+export function traceCanvas(cv, mmWide, invert) {
+  const max = 260, k = Math.min(1, max / Math.max(cv.width, cv.height)), w = Math.max(1, Math.round(cv.width * k)), h = Math.max(1, Math.round(cv.height * k));
+  const c = document.createElement('canvas'); c.width = w; c.height = h; const g = c.getContext('2d'); g.drawImage(cv, 0, 0, w, h);
+  const d = g.getImageData(0, 0, w, h).data, s = mmWide / w, strips = [];
+  let anyAlpha = false; for (let i = 3; i < d.length; i += 16) if (d[i] < 200) { anyAlpha = true; break; }
+  for (let y = 0; y < h; y++) {
+    let run = -1;
+    for (let x = 0; x <= w; x++) {
+      let on = false;
+      if (x < w) { const i = (y * w + x) * 4, a = d[i + 3], L = (d[i] * .3 + d[i + 1] * .59 + d[i + 2] * .11); on = anyAlpha ? a > 128 && L < 245 : L < 128; if (invert) on = !on && a > 20; }
+      if (on && run < 0) run = x; if (!on && run >= 0) { strips.push(rect(run * s, (h - y - 1) * s, x * s, (h - y) * s)); run = -1; }
+    }
+  }
+  if (!strips.length) return [];
+  const u = union(strips), sm = offset(offset(u, -s * 0.35), s * 0.35);
+  return sm.map((p) => p.map(([x, y]) => [x - mmWide / 2, y - h * s / 2])).filter((p) => Math.abs(CL.Clipper.Area(toC(p))) / SC / SC > 0.2);
+}
+export function textCanvas(txt, font) {
+  const c = document.createElement('canvas'), g = c.getContext('2d'), fs = 120; g.font = '900 ' + fs + 'px ' + (font || '-apple-system,Arial');
+  c.width = Math.max(10, Math.ceil(g.measureText(txt).width) + 20); c.height = Math.round(fs * 1.25);
+  g.fillStyle = '#fff'; g.fillRect(0, 0, c.width, c.height); g.fillStyle = '#000'; g.font = '900 ' + fs + 'px ' + (font || '-apple-system,Arial'); g.textBaseline = 'middle'; g.textAlign = 'center'; g.fillText(txt, c.width / 2, c.height / 2 + 4);
+  // trim to the ink
+  const d = g.getImageData(0, 0, c.width, c.height).data; let x0 = c.width, x1 = 0, y0 = c.height, y1 = 0;
+  for (let y = 0; y < c.height; y++) for (let x = 0; x < c.width; x++) if (d[(y * c.width + x) * 4] < 128) { x0 = Math.min(x0, x); x1 = Math.max(x1, x); y0 = Math.min(y0, y); y1 = Math.max(y1, y); }
+  if (x1 < x0) return c; const t = document.createElement('canvas'); t.width = x1 - x0 + 3; t.height = y1 - y0 + 3; t.getContext('2d').fillStyle = '#fff'; t.getContext('2d').fillRect(0, 0, t.width, t.height); t.getContext('2d').drawImage(c, -x0 + 1, -y0 + 1); return t;
+}
+export function place(polys, x, y, scale, rotq) { const a = (rotq || 0) * Math.PI / 2, c = Math.cos(a), s = Math.sin(a); return polys.map((p) => p.map(([u, v]) => [x + (u * c - v * s) * (scale || 1), y + (u * s + v * c) * (scale || 1)])); }
+// Flat textures for a face. kind: grid, checks, diamond, hstripe, vstripe, dots, wood. sp = spacing in mm.
+export function texture(kind, b, sp, seed) {
+  const out = [], x0 = b.x0 - sp, x1 = b.x1 + sp, y0 = b.y0 - sp, y1 = b.y1 + sp, lw = Math.max(0.8, sp * 0.22);
+  if (kind === 'grid' || kind === 'vstripe') for (let x = x0; x < x1; x += sp) out.push(rect(x, y0, x + (kind === 'grid' ? lw : sp / 2), y1));
+  if (kind === 'grid' || kind === 'hstripe') for (let y = y0; y < y1; y += sp) out.push(rect(x0, y, x1, y + (kind === 'grid' ? lw : sp / 2)));
+  if (kind === 'checks') { let j = 0; for (let y = y0; y < y1; y += sp, j++) { let i = 0; for (let x = x0; x < x1; x += sp, i++) if ((i + j) % 2 === 0) out.push(rect(x, y, x + sp, y + sp)); } }
+  if (kind === 'dots') for (let y = y0; y < y1; y += sp) for (let x = x0 + (Math.round((y - y0) / sp) % 2) * sp / 2; x < x1; x += sp) out.push(circle(x, y, sp * 0.22, 14));
+  if (kind === 'diamond') { // tread plate: long thin diamonds that alternate direction, like the metal sheet
+    let j = 0; for (let y = y0; y < y1; y += sp, j++) { let i = 0; for (let x = x0; x < x1; x += sp, i++) { const cx = x + sp / 2, cy = y + sp / 2, L = sp * 0.42, W = sp * 0.11, a = ((i + j) % 2 ? 1 : -1) * Math.PI / 4; out.push(rot([[cx - L, cy], [cx, cy - W], [cx + L, cy], [cx, cy + W]], a, cx, cy)); } }
+  }
+  if (kind === 'wood') { // grain: wavy lines that drift and bunch, plus a couple of knots
+    const r = (() => { let s = seed || 7; return () => ((s = (s * 16807) % 2147483647) / 2147483647); })();
+    for (let y = y0; y < y1; y += sp * (0.6 + r() * 0.8)) {
+      const amp = sp * (0.2 + r() * 0.5), f = (0.02 + r() * 0.03), ph = r() * 6, line = [];
+      for (let x = x0; x <= x1; x += 1.5) line.push({ X: Math.round(x * SC), Y: Math.round((y + Math.sin(x * f + ph) * amp + Math.sin(x * f * 3.1 + ph) * amp * 0.25) * SC) });
+      const co = new CL.ClipperOffset(2, 0.05 * SC), o = new CL.Paths(); co.AddPath(line, CL.JoinType.jtRound, CL.EndType.etOpenRound); co.Execute(o, (lw * 0.45) * SC); out.push(...o.map(fromC));
+    }
+  }
+  return union(out);
+}
+// Ribs on the outside of a wall, walked along the outline. Returns polygons that sit on the outer face.
+export function ribs(out, sp, depth, width, phase) {
+  const ring = out.reduce((a, p) => (p.length > a.length ? p : a), out[0]), pts = [], segs = [];
+  let L = 0; for (let i = 0; i < ring.length; i++) { const a = ring[i], b = ring[(i + 1) % ring.length], l = Math.hypot(b[0] - a[0], b[1] - a[1]); segs.push([a, b, l, L]); L += l; }
+  const ccw = CL.Clipper.Area(toC(ring)) > 0, res = [];
+  for (let t = (phase || 0) + sp / 2; t < L; t += sp) {
+    const s = segs.find((q) => t >= q[3] && t <= q[3] + q[2]); if (!s || s[2] < 0.01) continue;
+    const u = (t - s[3]) / s[2], px = s[0][0] + (s[1][0] - s[0][0]) * u, py = s[0][1] + (s[1][1] - s[0][1]) * u;
+    let tx = (s[1][0] - s[0][0]) / s[2], ty = (s[1][1] - s[0][1]) / s[2], nx = ccw ? ty : -ty, ny = ccw ? -tx : tx;
+    const hw = width / 2, a = [px - tx * hw - nx * 0.4, py - ty * hw - ny * 0.4], b = [px + tx * hw - nx * 0.4, py + ty * hw - ny * 0.4];
+    res.push([a, b, [b[0] + nx * (depth + 0.4), b[1] + ny * (depth + 0.4)], [a[0] + nx * (depth + 0.4), a[1] + ny * (depth + 0.4)]]);
+    void pts;
+  }
+  return union(res);
 }
