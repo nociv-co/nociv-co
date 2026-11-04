@@ -293,6 +293,14 @@
         <span class="tool-foot"><span class="tool-get">You leave with: Pattern, tech pack, flats</span><span class="tool-open">Open</span></span>
       </span>
     </button>
+    <button type="button" class="tool-card" data-sec="projects" data-key="pattern" data-poster="img/tools/pattern.webp" data-made="Repeating Pattern" data-panel="patternPanel">
+      <span class="tool-art"><svg viewBox="0 0 320 180" xmlns="http://www.w3.org/2000/svg" aria-hidden="true" preserveAspectRatio="xMidYMid slice"><image href="img/tools/pattern.webp" width="320" height="180" preserveAspectRatio="xMidYMid slice"/></svg></span>
+      <span class="tool-body">
+        <span class="tool-name">Repeating Pattern</span>
+        <span class="tool-desc">Turn your logo, a picture or your halftone into fabric. Plaids, stripes, checks and camo too. See it on twill, canvas or flannel, then take a mood board to the print shop.</span>
+        <span class="tool-foot"><span class="tool-get">You leave with: Fabric tile at 150 DPI, mood board, logo</span><span class="tool-open">Open</span></span>
+      </span>
+    </button>
   </template>
   <section class="cz-deep" aria-label="Advanced">
     <button type="button" class="cz-toggle" id="czMoreBtn" aria-expanded="false" aria-controls="czMore"><span class="cz-cut"><span>Advanced</span></span><i class="cz-chev" aria-hidden="true"></i></button>
@@ -313,6 +321,27 @@
 </section>
 
 <!-- ===== CUT & SEW (clothing pattern tool, repo nociv-clothing-builder) ===== -->
+<div class="subpanel" id="patternPanel">
+  <div class="wrap">
+    <span class="hub-back" data-back="buildHub">&larr; Back to The Build</span>
+    <div class="build-header">
+      <div>
+        <h2 style="margin: 0 0 4px; font-size: 1.3rem; letter-spacing: 0.05em;">REPEATING PATTERN</h2>
+        <p>Logos, pictures, plaids, stripes, checks and camo, made into a fabric tile you can print.</p>
+      </div>
+      <a href="pattern/" target="_blank" rel="noopener" class="fullscreen-btn">
+        Full screen &#10530;
+      </a>
+    </div>
+    <iframe
+      data-src="pattern/"
+      class="builder-iframe"
+      title="NOCIV Repeating Pattern"
+      allow="web-share; fullscreen">
+    </iframe>
+  </div>
+</div>
+
 <div class="subpanel" id="clothingBuilderPanel">
   <div class="wrap" style="text-align:center; padding-bottom:0;">
     <span class="hub-back" data-back="buildHub">&larr; Back to The Build</span>
@@ -508,7 +537,7 @@
       { id: 'projects', name: 'Wear', color: '#8a6a4a', ci: '#ffffff', icon: '<path d="M4 20V4l16 16z"/><path d="M4 14h3M4 9h2M10 20v-3M15 20v-2"/>' },
       { id: 'real', name: 'Video', color: '#3f8a4f', ci: '#ffffff', icon: '<rect x="3" y="7" width="12" height="10" rx="2"/><path d="M15 11l6-3v8l-6-3z"/>' }
     ];
-    const ORDER = { paper: ['zine', 'cards', 'qr'], projects: ['stencil', 'cutsew'], real: ['video', 'toon', 'sign'] };
+    const ORDER = { paper: ['zine', 'cards', 'qr'], projects: ['stencil', 'pattern', 'cutsew'], real: ['video', 'toon', 'sign'] };
     // Each app button is shaped like what it makes. f = filled shape, l = lines on top.
     const APP_ICON = {
       zine: '<path class="f" d="M5 8l19 4 19-4v26l-19 4-19-4z"/><path class="l" d="M24 12v26M10 15l9 2M10 20l9 2M29 17l9-2M29 22l9-2"/><path class="k" d="M23 18h2v3h-2zM23 28h2v3h-2z"/>',

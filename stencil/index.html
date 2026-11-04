@@ -1511,7 +1511,7 @@ aside.mixing #mixPanel{display:block;flex:1 1 auto;min-height:0;overflow-y:auto}
 .mixprint button{all:unset;box-sizing:border-box;text-align:center;padding:10px 4px;border:1.5px solid #1a1a1a;border-radius:10px;background:#fff;font:800 12.5px/1.2 -apple-system,BlinkMacSystemFont,"Helvetica Neue",Arial,sans-serif;cursor:pointer}
 .mixprint button.dark{background:#1a1a1a;color:#fff}
 .mixprint .mfiles{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:6px;margin-top:6px}
-section.mix-on > :not(.mixprint):not(h2){display:none!important}
+section.mix-on > :not(.mixprint):not(h2):not(.topattern){display:none!important}
 </style>
 <script>
 (function () {
@@ -1732,6 +1732,7 @@ section.mix-on > :not(.mixprint):not(h2){display:none!important}
   window.__nvMix = {
     show: function (k) { if (!box.parentNode) aside.appendChild(box); part = k; active = true; cache = { ver: (cache.ver || 0) + 1 }; build(); render(); },
     leave: function () { if (!active) return; active = false; start = null; if (typeof redraw === 'function') redraw(); },
+    picture: function () { if (!X.applied || !has) return null; var z = size(1600), t = document.createElement('canvas'); t.width = z[0]; t.height = z[1]; cache = { ver: (cache.ver || 0) + 1 }; compose(t.getContext('2d'), z[0], z[1]); return t; },
     state: X
   };
 })();
@@ -1994,4 +1995,37 @@ section.grouped .kgrid{margin-top:0!important}
 })();
 </script>
 <!--NV-STENCIL-CLOSEUP-END-->
+<!--NV-STENCIL-PATTERN-START: send what you made to the Repeating Pattern app-->
+<style>
+.topattern{all:unset;box-sizing:border-box;display:flex;align-items:center;gap:10px;width:100%;margin:0 0 8px;padding:10px 12px;border:2px solid #1a1a1a;border-radius:12px;background:#f2c230;color:#1a1a1a;font:800 13.5px/1.2 -apple-system,BlinkMacSystemFont,"Helvetica Neue",Arial,sans-serif;cursor:pointer}
+.topattern svg{width:26px;height:26px;flex:none;fill:none;stroke:#1a1a1a;stroke-width:2}
+.topattern small{display:block;font-weight:600;font-size:11.5px;color:#3a3a3a}
+</style>
+<script>
+(function () {
+  'use strict';
+  var btn = document.createElement('button'); btn.type = 'button'; btn.className = 'topattern';
+  btn.innerHTML = '<svg viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="7" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/></svg><span>Make it a repeating pattern<small>Fabric, monogram or watermark from this</small></span>';
+  function put(blob) {
+    return new Promise(function (res) {
+      try { var r = indexedDB.open('nocivPattern', 1); r.onupgradeneeded = function () { r.result.createObjectStore('img'); };
+        r.onsuccess = function () { var t = r.result.transaction('img', 'readwrite'); t.objectStore('img').put(blob, 'incoming'); t.oncomplete = function () { res(true); }; t.onerror = function () { res(false); }; };
+        r.onerror = function () { res(false); }; } catch (e) { res(false); }
+    });
+  }
+  btn.addEventListener('click', function () {
+    if (!has) return; btn.disabled = true; btn.querySelector('small').textContent = 'Getting it ready...';
+    var cv = (window.__nvMix && window.__nvMix.picture && window.__nvMix.picture()) || designCanvas();
+    cv.toBlob(function (b) { put(b).then(function () { location.href = '../pattern/?from=stencil'; }); }, 'image/png');
+  });
+  window.addEventListener('nvpart', function (e) {
+    if (btn.parentNode) btn.remove();
+    if (e.detail !== 'files') return;
+    var sec = Array.prototype.filter.call(document.querySelectorAll('main > aside section'), function (s2) { return s2.classList.contains('grouped'); })[0];
+    if (!sec) return; var h = sec.querySelector('h2'); btn.disabled = false; btn.querySelector('small').textContent = 'Fabric, monogram or watermark from this';
+    sec.insertBefore(btn, h ? h.nextSibling : sec.firstChild);
+  });
+})();
+</script>
+<!--NV-STENCIL-PATTERN-END-->
 </body></html>
