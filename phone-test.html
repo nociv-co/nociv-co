@@ -60,7 +60,10 @@ var TESTS = [
     expect: 'Preview changes as you tap. Watch it flips through the pages with the slide. Your photo shows on the item page in the preview.' },
   { id: 'fszip', title: 'Download and upload the zip', where: 'Studio, Publish tab',
     steps: ['Tap Download my site.', 'Open Files, Downloads and check the zip is there.', 'Optional: in Cloudflare, Workers and Pages, Create, Pages, Upload assets, pick the zip.'],
-    expect: 'A zip named after your site lands in Downloads. If you try Cloudflare, tell me if it took the zip from your phone. That is the one step I could not test.' }
+    expect: 'A zip named after your site lands in Downloads. If you try Cloudflare, tell me if it took the zip from your phone. That is the one step I could not test.' },
+  { id: 'hometools', title: 'Free tools line on the home page', where: 'nociv.co home, under Shop clothing',
+    steps: ['Scroll to the red Shop clothing button.', 'Read the part under the dashed line.', 'Tap See the tools.'],
+    expect: 'We sell clothes. Then We give away tools. on yellow tape. Free, no sign up. Because you are a creator too. The button opens the Tools page.' }
 ];
 // ===== end of list =====
 
