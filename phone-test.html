@@ -52,9 +52,9 @@
 // ===== THE TEST LIST. Claude rewrites this block after every delivery. Keep each test to a few taps. =====
 var BATCH = '2026-11-03 from scratch';
 var TESTS = [
-  { id: 'shopbar', title: 'Shop sections with texture and torn page', where: 'nociv.co/shop.html',
-    steps: ['Look at the bar under SHOP.', 'Tap Art, then Zines, then Clothing.', 'Scroll to the products.'],
-    expect: 'Not picked: denim, canvas or graph paper with the word on a cream tag. Picked: a torn piece of paper. A drawn arrow goes from it to a red icon (shirt, framed canvas, booklet). Product cards: the name and price area is soft denim in Clothing, soft canvas in Art, soft graph paper in Zines.' },
+  { id: 'shopbar', title: 'Shop: arrow, icon and two lines per section', where: 'nociv.co/shop.html',
+    steps: ['Tap Clothing, Art, then Zines.', 'Scroll to a product card.'],
+    expect: 'Bar looks like before (picked one red). A drawn arrow goes down from the picked button to a red icon under it, with two sentences about that section. Product cards are black with a thin stripe on top: denim for Clothing, paint colors for Art, graph paper for Zines.' },
   { id: 'remix', title: 'Remix a look (From Scratch)', where: 'nociv.co/scratch/studio.html, Publish',
     steps: ['Make a site with your colors and pages.', 'Publish tab, tap Copy my remix link (or the share sheet opens).', 'Text the link to yourself and open it in a private Safari tab.'],
     expect: 'The private tab opens the studio with your colors, type, menu and page names, but none of your words, photos, prices or email. Its footer says Remixed from your site name.' },

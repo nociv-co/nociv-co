@@ -198,34 +198,23 @@
   .catalog-card button.card-action.vote { background: transparent; color: var(--gold); border-color: var(--gold); }
   .catalog-card button.card-action.voted { background: #222; color: #888; cursor: default; }
 
-  /* Shop sections: texture buttons, the picked one is a torn page with an arrow to a red icon (2026-11-04) */
-  .subnav.subnav-one button[data-tex] { position: relative; overflow: hidden; color: #1a1a1a; border: 1.5px solid #1a1a1a; display: flex; align-items: center; justify-content: center; min-height: 44px; padding: 6px; }
-  .subnav.subnav-one button[data-tex] span { background: #f2ecd6; color: #1a1a1a; padding: 3px 8px; box-shadow: 0 1px 3px rgba(0,0,0,.25); position: relative; z-index: 1; }
-  .subnav.subnav-one button[data-tex="denim"] { background-color: #3b5878; background-image: repeating-linear-gradient(45deg, rgba(255,255,255,.08) 0 2px, transparent 2px 4px), repeating-linear-gradient(-45deg, rgba(0,0,0,.14) 0 1px, transparent 1px 3px); }
-  .subnav.subnav-one button[data-tex="denim"]::after { content: ''; position: absolute; inset: 3px; border: 1.5px dashed #e0a240; pointer-events: none; }
-  .subnav.subnav-one button[data-tex="canvas"] { background-color: #cdbf9f; background-image: repeating-linear-gradient(0deg, rgba(90,70,40,.16) 0 1px, transparent 1px 3px), repeating-linear-gradient(90deg, rgba(90,70,40,.16) 0 1px, transparent 1px 3px); }
-  .subnav.subnav-one button[data-tex="paper"] { background-color: #f7f2e1; background-image: linear-gradient(rgba(58,110,170,.24) 1px, transparent 1px), linear-gradient(90deg, rgba(58,110,170,.24) 1px, transparent 1px); background-size: 9px 9px; }
-  .subnav.subnav-one button[data-tex]:hover { filter: brightness(1.05); }
-  .subnav.subnav-one button[data-tex].active { background: #f2ecd6; background-image: none; border: 0; transform: rotate(-1.5deg) translateY(-1px);
-    clip-path: polygon(0 6%, 6% 0, 13% 7%, 21% 1%, 30% 6%, 38% 0, 47% 5%, 56% 1%, 64% 7%, 73% 2%, 81% 6%, 90% 0, 100% 5%, 100% 95%, 93% 100%, 85% 94%, 76% 99%, 67% 93%, 58% 100%, 49% 95%, 40% 100%, 31% 94%, 22% 99%, 13% 93%, 5% 100%, 0 94%);
-    filter: drop-shadow(0 3px 4px rgba(0,0,0,.35)); }
-  .subnav.subnav-one button[data-tex].active::after { display: none; }
-  .subnav.subnav-one button[data-tex].active span { background: none; box-shadow: none; font-size: .92rem; font-weight: 900; letter-spacing: .08em; }
-  .shop-pick { position: relative; max-width: var(--max); margin: 0 auto; height: 74px; pointer-events: none; }
+  /* Shop sections: original buttons, the picked one gets a drawn arrow down to a red icon and two lines about the section */
+  .shop-pick { position: relative; max-width: var(--max); margin: 0 auto; padding: 94px 20px 6px; box-sizing: border-box; }
   .sp-arrow { position: absolute; inset: 0; width: 100%; height: 100%; overflow: visible; }
   .sp-arrow path { fill: none; stroke: #1a1a1a; stroke-width: 2.5; stroke-linecap: round; stroke-linejoin: round; }
-  .sp-icon { position: absolute; right: 22px; top: 12px; width: 56px; height: 48px; }
-  .sp-icon.left { right: auto; left: 22px; }
-  .sp-icon.left svg { transform: rotate(4deg); }
-  .sp-icon svg { width: 100%; height: 100%; overflow: visible; filter: drop-shadow(0 8px 7px rgba(0,0,0,.28)); transform: rotate(-4deg); }
+  .sp-icon { position: absolute; top: 40px; left: 0; width: 56px; height: 48px; pointer-events: none; }
+  .sp-desc { margin: 4px 0 0; font-size: .92rem; line-height: 1.5; color: #2b2b2b; max-width: 560px; }
+  .sp-desc b { display: block; font-size: .78rem; letter-spacing: .12em; text-transform: uppercase; margin-bottom: 2px; }
+  .sp-icon svg { width: 100%; height: 100%; overflow: visible; filter: drop-shadow(0 8px 7px rgba(0,0,0,.28)); transform: rotate(-3deg); }
   .sp-icon .f { fill: #c8412f; stroke: #1a1a1a; stroke-width: 2.4; stroke-linejoin: round; }
   .sp-icon .l { fill: none; stroke: #1a1a1a; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
   .sp-icon .k { fill: #1a1a1a; }
-  /* Product card label bars: soft texture by section, words sit right on it */
-  #clothingPanel .catalog-card .card-body { background-color: #2c4058; background-image: repeating-linear-gradient(45deg, rgba(255,255,255,.045) 0 2px, transparent 2px 4px), repeating-linear-gradient(-45deg, rgba(0,0,0,.10) 0 1px, transparent 1px 3px); color: #f4f1ea; }
-  #artPanel .catalog-card .card-body { background-color: #3a342b; background-image: repeating-linear-gradient(0deg, rgba(255,240,210,.05) 0 1px, transparent 1px 3px), repeating-linear-gradient(90deg, rgba(255,240,210,.05) 0 1px, transparent 1px 3px); color: #f4f1ea; }
-  #zinesPanel .catalog-card .card-body { background-color: #f4efdf; background-image: linear-gradient(rgba(58,110,170,.10) 1px, transparent 1px), linear-gradient(90deg, rgba(58,110,170,.10) 1px, transparent 1px); background-size: 12px 12px; color: #1a1a1a; }
-  #zinesPanel .catalog-card .card-body .card-meta { opacity: .7; }
+  /* Product card label bars: black like before, with a thin stripe of texture on top by section */
+  .catalog-card .card-body { position: relative; padding-top: 18px; }
+  .catalog-card .card-body::before { content: ''; position: absolute; left: 0; right: 0; top: 0; height: 7px; }
+  #clothingPanel .catalog-card .card-body::before { background-color: #39577a; background-image: repeating-linear-gradient(45deg, rgba(255,255,255,.14) 0 1.5px, transparent 1.5px 3.5px); border-bottom: 1.5px dashed #e0a240; }
+  #artPanel .catalog-card .card-body::before { background: linear-gradient(90deg, #c8412f 0 22%, #f2c230 22% 41%, #3f8a4f 41% 63%, #2f6db5 63% 82%, #f2ecd6 82%); }
+  #zinesPanel .catalog-card .card-body::before { background-color: #f4efdf; background-image: linear-gradient(90deg, rgba(58,110,170,.35) 1px, transparent 1px); background-size: 7px 7px; }
   .catalog-empty { opacity: .5; font-style: italic; padding: 20px; text-align: center; }
 
   /* --- Product detail modal (tap a card to zoom + read the description) --- */
@@ -525,11 +514,11 @@
 
 <!-- SUB-NAV: Clothing leads, Art and Zines are secondary, "also from the collective" -->
 <nav class="subnav subnav-one" aria-label="Shop sections">
-  <button data-panel="clothingPanel" data-tex="denim" class="active"><span>Clothing</span></button>
-  <button data-panel="artPanel" data-tex="canvas"><span>Art</span></button>
-  <button data-panel="zinesPanel" data-tex="paper"><span>Zines</span></button>
+  <button data-panel="clothingPanel" class="active"><span>Clothing</span></button>
+  <button data-panel="artPanel"><span>Art</span></button>
+  <button data-panel="zinesPanel"><span>Zines</span></button>
 </nav>
-<div class="shop-pick" id="shopPick" aria-hidden="true"><svg class="sp-arrow"><path id="spPath"/></svg><span class="sp-icon" id="spIcon"></span></div>
+<div class="shop-pick" id="shopPick"><svg class="sp-arrow" aria-hidden="true"><path id="spPath"/></svg><span class="sp-icon" id="spIcon" aria-hidden="true"></span><p class="sp-desc" id="spDesc" role="status"></p></div>
 
 <div class="free-ship-bar" id="freeShipBar" role="status" hidden></div>
 <div class="shop-banner" id="shopBanner" role="status" hidden>
@@ -725,15 +714,21 @@
     artPanel: '<rect class="f" x="4" y="3" width="40" height="34" rx="1"/><rect x="9" y="8" width="30" height="24" fill="#f2ecd6" stroke="#1a1a1a" stroke-width="2"/><path class="l" d="M10 30l9-10 6 6 5-5 8 9"/><circle class="k" cx="31" cy="14" r="3"/>',
     zinesPanel: '<path class="f" d="M5 8l19 4 19-4v26l-19 4-19-4z"/><path class="l" d="M24 12v26M10 15l9 2M10 20l9 2M29 17l9-2M29 22l9-2"/>'
   };
+  const SP_DESC = {
+    clothingPanel: ['Clothing', 'Pieces made by NOCIV, printed and stenciled by hand. Wear the art, start the conversation.'],
+    artPanel: ['Art', 'Prints, posters and original pieces from NOCIV. Art made to live on your wall, not in a feed.'],
+    zinesPanel: ['Zines', 'Read them free, right here on your phone. Stories, sketches and how-tos, made by hand to pass on.']
+  };
   function drawShopPick() {
     const pick = document.getElementById('shopPick'), act = document.querySelector('.subnav-one button.active'); if (!pick || !act) return;
-    document.getElementById('spIcon').innerHTML = '<svg viewBox="0 0 48 40">' + (SP_ICON[act.dataset.panel] || '') + '</svg>';
-    const P0 = pick.getBoundingClientRect(), b = act.getBoundingClientRect(), iconEl = document.getElementById('spIcon');
-    const left = (b.left + b.width / 2 - P0.left) > P0.width * 0.6; iconEl.classList.toggle('left', left);
-    const P = pick.getBoundingClientRect(), ic = iconEl.getBoundingClientRect();
-    const sx = b.left + b.width / 2 - P.left, sy = b.bottom - P.top + 2, ty = ic.top + ic.height / 2 - P.top;
-    const tx = left ? ic.right - P.left + 6 : ic.left - P.left - 6, d = left ? -1 : 1;
-    document.getElementById('spPath').setAttribute('d', 'M' + sx + ' ' + sy + ' C' + sx + ' ' + (sy + 34) + ' ' + (tx - 40 * d) + ' ' + ty + ' ' + tx + ' ' + ty + ' M' + (tx - 8 * d) + ' ' + (ty - 7) + ' L' + tx + ' ' + ty + ' L' + (tx - 8 * d) + ' ' + (ty + 7));
+    const k = act.dataset.panel, D = SP_DESC[k] || ['', ''];
+    document.getElementById('spIcon').innerHTML = '<svg viewBox="0 0 48 40">' + (SP_ICON[k] || '') + '</svg>';
+    document.getElementById('spDesc').innerHTML = '<b>' + D[0] + '</b>' + D[1];
+    const P = pick.getBoundingClientRect(), b = act.getBoundingClientRect(), iconEl = document.getElementById('spIcon');
+    const cx = Math.max(34, Math.min(P.width - 34, b.left + b.width / 2 - P.left));
+    iconEl.style.left = (cx - 28) + 'px';
+    const sx = b.left + b.width / 2 - P.left, sy = b.bottom - P.top + 4, ty = 36;
+    document.getElementById('spPath').setAttribute('d', 'M' + sx + ' ' + sy + ' C' + (sx + 10) + ' ' + (sy + 8) + ' ' + (cx - 10) + ' ' + (ty - 8) + ' ' + cx + ' ' + ty + ' M' + (cx - 6) + ' ' + (ty - 7) + ' L' + cx + ' ' + ty + ' L' + (cx + 6) + ' ' + (ty - 7));
   }
   subnavBtns.forEach(b => b.addEventListener('click', () => requestAnimationFrame(drawShopPick)));
   window.addEventListener('resize', drawShopPick); window.addEventListener('load', drawShopPick); if (document.fonts && document.fonts.ready) document.fonts.ready.then(drawShopPick);
