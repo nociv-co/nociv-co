@@ -52,8 +52,11 @@
 // ===== THE TEST LIST. Claude rewrites this block after every delivery. Keep each test to a few taps. =====
 var BATCH = '2026-11-03 from scratch';
 var TESTS = [
+  { id: 'advanced', title: 'Advanced line on Tools', where: 'nociv.co/creator-tools.html, under the zine preview',
+    steps: ['Scroll down past the preview.', 'Tap the small arrow under ADVANCED.', 'Tap TECH.'],
+    expect: 'More space above a dashed line with ADVANCED in the middle. Only an arrow shows until you tap it. Then Want to go deeper opens, and TECH shows Case Zero and From Scratch.' },
   { id: 'fsguide', title: 'From Scratch page', where: 'Tools, TECH, From Scratch (nociv.co/scratch)',
-    steps: ['Tap TECH under the dashed line, then From Scratch.', 'Scroll the whole page.'],
+    steps: ['Tap the arrow under ADVANCED, then TECH, then From Scratch.', 'Scroll the whole page.'],
     expect: 'Three cards (Shop, Archive, App), a cost table, two accounts, and 8 steps. Looks like the Case Zero page.' },
   { id: 'fsstudio', title: 'Build a site in the studio', where: 'From Scratch, tap the Shop card',
     steps: ['Preview on top, editor under it.', 'Look: tap Menu, then Slide, then Watch it.', 'Pages: tap Shop, tap an item, add a photo from your camera roll, type a price.', 'Tap Full view, then Close.'],

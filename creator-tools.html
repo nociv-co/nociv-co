@@ -94,8 +94,16 @@
   @media (max-width: 370px) { .b-tabs button, .b-apps button { font-size: .64rem; letter-spacing: .06em; gap: 4px; padding: 0 2px; } }
   @media (prefers-reduced-motion: reduce) { .b-swap, .b-apps.b-in button { animation: none; } }
   /* --- TECH: under the preview. Dashed cut line, words, then one drop down that holds the tech tools --- */
-  .cz-deep { max-width: 740px; margin: 10px auto 40px; padding: 0 2px; color: #1a1a1a; }
-  .cz-cut { height: 0; border-top: 3px dashed #1a1a1a; margin: 0 0 26px; }
+  .cz-deep { max-width: 740px; margin: 72px auto 40px; padding: 0 2px; color: #1a1a1a; }
+  .cz-cut { display: flex; align-items: center; gap: 12px; margin: 0; }
+  .cz-cut::before, .cz-cut::after { content: ''; flex: 1; border-top: 3px dashed #1a1a1a; }
+  .cz-cut span { font-family: NocivAnton, Impact, "Arial Narrow", sans-serif; font-size: 1.05rem; letter-spacing: .14em; text-transform: uppercase; }
+  .cz-more { all: unset; box-sizing: border-box; display: grid; place-items: center; width: 48px; height: 48px; margin: 6px auto 0; cursor: pointer; color: #1a1a1a; -webkit-tap-highlight-color: transparent; }
+  .cz-more i { width: 12px; height: 12px; border-right: 3px solid currentColor; border-bottom: 3px solid currentColor; transform: translateY(-3px) rotate(45deg); transition: transform .2s ease; }
+  .cz-more[aria-expanded="true"] i { transform: translateY(3px) rotate(-135deg); }
+  .cz-more:focus-visible { outline: 3px solid #c8412f; outline-offset: 2px; }
+  .cz-more-in { padding-top: 14px; animation: czIn .25s ease-out; }
+  .cz-more-in[hidden] { display: none; }
   .cz-deep h2 { margin: 0; font-family: NocivAnton, Impact, "Arial Narrow", sans-serif; font-size: clamp(2rem, 9vw, 3rem); line-height: .95; text-transform: uppercase; letter-spacing: .02em; }
   .cz-deep p { margin: 12px 0 0; font-size: 1rem; line-height: 1.5; max-width: 560px; }
   .cz-deep .cz-quote { display: inline-block; background: rgba(242,194,48,.75); color: #1a1a1a; padding: 2px 8px; font-weight: 800; transform: rotate(-1deg); box-shadow: 0 2px 6px rgba(0,0,0,.12); }
@@ -236,7 +244,9 @@
     </button>
   </div>
   <section class="cz-deep" aria-labelledby="czDeepTitle">
-    <div class="cz-cut" role="separator"></div>
+    <div class="cz-cut" role="separator"><span>Advanced</span></div>
+    <button type="button" class="cz-more" id="czMoreBtn" aria-expanded="false" aria-controls="czMore" aria-label="Show advanced"><i aria-hidden="true"></i></button>
+    <div class="cz-more-in" id="czMore" hidden>
     <h2 id="czDeepTitle">Want to go deeper?</h2>
     <p>Make a site. Build your own device.</p>
     <p>Maybe you do not like where big tech is going. <span class="cz-quote">"Own nothing and be happy."</span></p>
@@ -247,6 +257,7 @@
         <a href="/casezero/"><span class="cz-tag">CZ</span><span><b>Case Zero</b><small>Build your own device. The brain: parts, cost, code. The body: a case to print or cut from wood.</small></span><span class="cz-go" aria-hidden="true">&rarr;</span></a>
         <a href="/scratch/"><span class="cz-tag">FS</span><span><b>From Scratch</b><small>Build your own website. Pick a base, make it yours, own the files. About $11 a year.</small></span><span class="cz-go" aria-hidden="true">&rarr;</span></a>
       </div>
+    </div>
     </div>
   </section>
   <p class="build-note">Made something? Show it at the Base. That is how this spreads.</p>
@@ -547,6 +558,8 @@
 <script src="install-app.js?v=8" defer></script>
 <script>
 (function () {
+  var m = document.getElementById('czMoreBtn'), mo = document.getElementById('czMore');
+  if (m && mo) m.addEventListener('click', function () { var open = m.getAttribute('aria-expanded') !== 'true'; m.setAttribute('aria-expanded', open ? 'true' : 'false'); m.setAttribute('aria-label', open ? 'Hide advanced' : 'Show advanced'); mo.hidden = !open; });
   var b = document.getElementById('czBtn'), o = document.getElementById('czOpen'); if (!b || !o) return;
   b.addEventListener('click', function () { var open = b.getAttribute('aria-expanded') !== 'true'; b.setAttribute('aria-expanded', open ? 'true' : 'false'); o.hidden = !open; });
 })();
