@@ -14,7 +14,7 @@
 
   var st = document.createElement('style');
   st.textContent =
-    '#installApp{background:#808080;color:#fff;padding:20px 16px 24px;text-align:center}' +
+    '#installApp{background:#808080;color:#fff;padding:20px 16px 24px;text-align:center;margin-top:72px}' +
     '#installApp .ia-in{max-width:480px;margin:0 auto}' +
     '#installApp h2{font-family:NocivAnton,Anton,Impact,sans-serif;font-weight:400;font-size:1.45rem;letter-spacing:.06em;margin:0 0 4px;text-transform:uppercase;color:#fff}' +
     '#installApp p{margin:0 0 14px;font-size:.9rem;line-height:1.4;font-weight:600;color:#fff}' +
