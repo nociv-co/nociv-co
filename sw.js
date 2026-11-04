@@ -2,7 +2,7 @@
 // Pages and data: network first, so you always get the newest. If there is no signal, you get the saved copy.
 // Tools: every creator tool is saved on the phone when the app is added to the home screen, so they work with no signal.
 // It never touches Supabase, Stripe or any other site, only files from nociv.co.
-var CACHE = 'nociv-v4';
+var CACHE = 'nociv-v5';
 var TOOLS = [
   '/card/fonts/abrilfatface.woff',
   '/card/fonts/anton.woff',
@@ -39,12 +39,12 @@ var TOOLS = [
   '/crop.js',
   '/install-app.js',
   '/supabase.js',
-  '/header.png',
+  '/header.webp',
   '/nav-about.png',
   '/nav-shop.png',
   '/nav-tools.png',
-  '/base-button.png',
-  '/img/type/build-something.png',
+  '/base-button.webp',
+  '/img/type/build-something.webp',
   '/img/tools/cartoon-card.webp',
   '/img/tools/cartoon-strip.webp',
   '/img/tools/stop-hero.webp',
@@ -69,10 +69,20 @@ self.addEventListener('fetch', function (e) {
   var r = e.request, u = new URL(r.url);
   if (r.method !== 'GET' || u.origin !== location.origin || u.pathname.indexOf('/functions/') === 0 || r.headers.has('range')) return;
   var saved = function () { return caches.match(r, { ignoreSearch: true }); };
+  // Pictures and fonts: show the saved copy right away, refresh it quietly for next time.
+  var d = r.destination;
+  if (d === 'image' || d === 'font') {
+    e.respondWith(saved().then(function (hit) {
+      var net = fetch(r).then(function (res) { if (res && res.ok) { var copy = res.clone(); caches.open(CACHE).then(function (c) { c.put(r.url.split('#')[0], copy); }); } return res; }).catch(function () { return hit || Response.error(); });
+      if (hit) { e.waitUntil(net.catch(function () {})); return hit; }
+      return net;
+    }));
+    return;
+  }
+  // Pages, code and styles: newest copy first. Weak signal: after 3 seconds, show the saved copy if there is one.
   e.respondWith(new Promise(function (resolve) {
     var done = false;
-    // Weak signal: after 6 seconds, show the saved copy if there is one.
-    var t = setTimeout(function () { saved().then(function (hit) { if (hit && !done) { done = true; resolve(hit); } }); }, 6000);
+    var t = setTimeout(function () { saved().then(function (hit) { if (hit && !done) { done = true; resolve(hit); } }); }, 3000);
     fetch(r).then(function (res) {
       clearTimeout(t);
       if (res && res.ok && keepable(r)) { var copy = res.clone(); caches.open(CACHE).then(function (c) { c.put(r.url.split('#')[0], copy); }); }

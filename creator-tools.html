@@ -78,13 +78,13 @@
   /* App buttons: floating icons shaped like what they make */
   .b-apps { align-items: flex-end; }
   .b-apps button[data-app] { height: auto; min-height: 84px; border: 0; border-radius: 0; background: none; box-shadow: none; flex-direction: column; justify-content: flex-end; gap: 5px; padding: 4px 0; color: var(--ink); transform: none; }
-  .b-apps button[data-app] svg { width: 52px; height: 44px; overflow: visible; filter: drop-shadow(0 5px 6px rgba(0,0,0,.22)); transition: transform .2s ease, filter .2s ease; }
+  .b-apps button[data-app] svg { width: 52px; height: 44px; overflow: visible; filter: drop-shadow(0 5px 6px rgba(0,0,0,.22)); transition: transform .2s ease; will-change: transform; }
   .b-apps button[data-app] svg .f { fill: #f2ecd6; stroke: #1a1a1a; stroke-width: 2.4; stroke-linejoin: round; }
   .b-apps button[data-app] svg .l { fill: none; stroke: #1a1a1a; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
   .b-apps button[data-app] svg .k { fill: #1a1a1a; }
   .b-apps button[data-app] span { padding: 3px 7px; transition: background .16s ease, color .16s ease, transform .16s ease; }
   .b-apps button[data-app][aria-selected="true"] { background: none; box-shadow: none; transform: none; }
-  .b-apps button[data-app][aria-selected="true"] svg { transform: translateY(-5px) rotate(-3deg) scale(1.08); filter: drop-shadow(0 10px 8px rgba(0,0,0,.28)); animation: bFloat 2.8s ease-in-out infinite; }
+  .b-apps button[data-app][aria-selected="true"] svg { transform: translateY(-5px) rotate(-3deg) scale(1.08); animation: bFloat 2.8s ease-in-out infinite; }
   .b-apps button[data-app][aria-selected="true"] svg .f { fill: var(--c); }
   .b-apps button[data-app][aria-selected="true"] span { background: #1a1a1a; color: #f2ecd6; transform: rotate(-1.5deg); box-shadow: 0 2px 6px rgba(0,0,0,.25); }
   @keyframes bFloat { 0%, 100% { transform: translateY(-5px) rotate(-3deg) scale(1.08); } 50% { transform: translateY(-9px) rotate(-1deg) scale(1.08); } }
@@ -177,7 +177,7 @@
 <body>
 
 <header class="nociv-header">
-  <a href="index.html"><img class="torn-header-img" src="header.png" alt="NOCIV.CO: Nothing Of Civilization"></a>
+  <a href="index.html"><img class="torn-header-img" src="header.webp" alt="NOCIV.CO: Nothing Of Civilization"></a>
 </header>
 
 <!-- MAIN TABS -->
@@ -185,12 +185,12 @@
   <a href="about.html" class="img-tab"><img src="nav-about.png" alt="About"></a>
   <a href="shop.html" class="img-tab"><img src="nav-shop.png" alt="Shop"></a>
   <a href="creator-tools.html" class="img-tab active"><img src="nav-tools.png" alt="Tools"></a>
-  <a href="community.html" class="img-tab"><img src="base-button.png" alt="Base"></a>
+  <a href="community.html" class="img-tab"><img src="base-button.webp" alt="Base"></a>
 </nav>
 
 <section class="build" id="buildWrap">
   <div class="build-hero">
-    <h2 class="build-title"><img class="type-img" src="img/type/build-something.png" alt="Build something." width="712" height="298"></h2>
+    <h2 class="build-title"><img class="type-img" src="img/type/build-something.webp" alt="Build something." width="712" height="298"></h2>
     <p class="build-lede">Pick a tool. Come out with a finished thing you can print, wear or pass on.</p>
     <ul class="build-points"><li>Free</li><li>No sign up</li><li>No paywall</li><li>Works on your phone</li></ul>
   </div>
@@ -215,7 +215,7 @@
       </div>
     </div>
   </div>
-  <div id="toolData" hidden>
+  <template id="toolData">
     <button type="button" class="tool-card" data-sec="paper" data-key="zine" data-poster="img/tools/zine.webp?v=2" data-made="the Zine Builder" data-panel="zineBuilderPanel">
       <span class="tool-art"><svg viewBox="0 0 320 180" xmlns="http://www.w3.org/2000/svg" aria-hidden="true" preserveAspectRatio="xMidYMid slice"><rect width="320" height="180" fill="#d9cfb8"/><g transform="translate(92 26) rotate(-9)"><rect width="80" height="124" fill="#fff" stroke="#1a1a1a" stroke-width="2.5"/><rect x="10" y="12" width="60" height="44" fill="#1a1a1a"/><path d="M10 70h60M10 80h48M10 90h56M10 100h36" stroke="#1a1a1a" stroke-width="3"/></g><g transform="translate(150 22) rotate(6)"><rect width="80" height="124" fill="#fff" stroke="#1a1a1a" stroke-width="2.5"/><circle cx="40" cy="44" r="24" fill="#c8412f"/><path d="M14 84h52M14 94h40M14 104h46" stroke="#1a1a1a" stroke-width="3"/><rect x="48" y="-6" width="34" height="13" fill="#f2c230" opacity=".9" transform="rotate(14 60 0)"/></g><g transform="translate(116 26) rotate(-1)"><image href="img/zine-cover.jpg" width="88" height="137" preserveAspectRatio="xMidYMid slice"/><rect width="88" height="137" fill="none" stroke="#1a1a1a" stroke-width="2.5"/></g></svg></span>
       <span class="tool-body">
@@ -280,7 +280,7 @@
         <span class="tool-foot"><span class="tool-get">You leave with: Pattern, tech pack, flats</span><span class="tool-open">Open</span></span>
       </span>
     </button>
-  </div>
+  </template>
   <section class="cz-deep" aria-labelledby="czDeepTitle">
     <div class="cz-cut" role="separator"><span>Advanced</span></div>
     <button type="button" class="cz-more" id="czMoreBtn" aria-expanded="false" aria-controls="czMore" aria-label="Show advanced"><i aria-hidden="true"></i></button>
@@ -514,7 +514,7 @@
     function setPlay(on) { const pb = el('bPlay'); pb.classList.toggle('on', on); pb.setAttribute('aria-label', on ? 'Stop the preview' : 'Play the preview'); }
     const SHORT = { zine: 'Zine', cards: 'Cards', qr: 'QR', toon: 'Cartoon', video: 'Camera', sign: 'Billboard', stencil: 'Stencil', cutsew: 'Cut & Sew' };
     const el = id => document.getElementById(id), data = {};
-    document.querySelectorAll('#toolData .tool-card').forEach(c => { data[c.dataset.key] = { key: c.dataset.key, sec: c.dataset.sec, panel: c.dataset.panel, poster: c.dataset.poster, video: c.dataset.video || '', made: c.dataset.made, art: c.querySelector('.tool-art').innerHTML, name: c.querySelector('.tool-name').textContent.trim(), desc: c.querySelector('.tool-desc').textContent.trim(), get: c.querySelector('.tool-get').textContent.trim() }; });
+    document.getElementById('toolData').content.querySelectorAll('.tool-card').forEach(c => { data[c.dataset.key] = { key: c.dataset.key, sec: c.dataset.sec, panel: c.dataset.panel, poster: c.dataset.poster, video: c.dataset.video || '', made: c.dataset.made, art: c.querySelector('.tool-art').innerHTML, name: c.querySelector('.tool-name').textContent.trim(), desc: c.querySelector('.tool-desc').textContent.trim(), get: c.querySelector('.tool-get').textContent.trim() }; });
     let sec = 0, idx = 0;
     try { sec = Math.min(SECS.length - 1, Math.max(0, +sessionStorage.getItem('toolSec') || 0)); idx = Math.max(0, +sessionStorage.getItem('toolIdx') || 0); } catch (e) {}
     const tabs = el('bTabs'), nums = el('bNums');

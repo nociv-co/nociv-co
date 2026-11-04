@@ -52,6 +52,9 @@
 // ===== THE TEST LIST. Claude rewrites this block after every delivery. Keep each test to a few taps. =====
 var BATCH = '2026-11-03 from scratch';
 var TESTS = [
+  { id: 'speed', title: 'Tools page loads faster', where: 'nociv.co/creator-tools.html',
+    steps: ['Open Tools once, then close Safari fully.', 'Open Tools again and pull down to refresh.', 'Tap between Paper, Wear and Video.'],
+    expect: 'Header and buttons show right away on the second visit. Switching categories feels instant. Header and BASE tab look the same as before.' },
   { id: 'textures', title: 'Category buttons with texture', where: 'nociv.co/creator-tools.html, Select a category',
     steps: ['Look at Paper, Wear and Video.', 'Tap each one.'],
     expect: 'Paper is graph paper, Wear is denim with orange stitching, Video is black and white TV static. The one you tap lifts up and its word sits on a solid tilted label (Video is white on black like NO SIGNAL). Nothing moves on Video.' },
