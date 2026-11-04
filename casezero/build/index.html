@@ -1,0 +1,134 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<!-- Site Created & Designed by Jasilyn A. Anderson | NOCIV.CO -->
+<meta charset="UTF-8">
+<title>Case Zero Builder | NOCIV.CO</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, viewport-fit=cover">
+<meta name="robots" content="noindex">
+<meta name="description" content="Pick what your device does, place the parts, download a case to 3D print. Free.">
+<meta name="theme-color" content="#e9e6df">
+<link rel="apple-touch-icon" href="/icons/shop-180.png">
+<link rel="icon" type="image/png" sizes="192x192" href="/icons/shop-192.png">
+<style>
+  @font-face { font-family: CZAnton; src: url('/fonts/anton.woff') format('woff'); font-display: swap; }
+  :root { --paper: #e9e6df; --note: #f2ecd6; --ink: #1a1a1a; --red: #c8412f; --green: #2f7a4b; --muted: #6b665c; }
+  * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+  html, body { margin: 0; background: var(--paper); color: var(--ink); }
+  body { font-family: -apple-system, BlinkMacSystemFont, "Helvetica Neue", Arial, sans-serif; -webkit-text-size-adjust: 100%; }
+  .wrap { max-width: 640px; margin: 0 auto; padding: 18px 14px 120px; }
+  .top { display: flex; align-items: flex-end; justify-content: space-between; gap: 10px; margin-bottom: 14px; }
+  .top h1 { margin: 0; font-family: CZAnton, Impact, sans-serif; font-size: clamp(30px, 9vw, 42px); line-height: .95; letter-spacing: .03em; text-transform: uppercase; }
+  .top h1 span { background: var(--ink); color: #fff; padding: 2px 8px; display: inline-block; transform: rotate(-1.5deg); }
+  .top a { font-size: .8rem; font-weight: 800; color: var(--ink); white-space: nowrap; }
+  .steps { display: flex; gap: 6px; overflow-x: auto; scrollbar-width: none; padding: 4px 2px 10px; margin: 0 -2px; }
+  .steps::-webkit-scrollbar { display: none; }
+  .st { flex: none; font: inherit; font-size: .78rem; font-weight: 900; letter-spacing: .06em; text-transform: uppercase; border: 2px solid var(--ink); background: #fff; color: var(--ink); padding: 9px 11px; border-radius: 0; cursor: pointer; display: flex; align-items: center; gap: 6px; }
+  .st b { background: var(--red); color: #fff; width: 20px; height: 20px; display: inline-flex; align-items: center; justify-content: center; font-size: .75rem; }
+  .st[aria-current="step"] { background: var(--ink); color: #fff; }
+  .note { background: var(--note); padding: 24px 16px 18px; position: relative; box-shadow: 0 6px 16px rgba(0,0,0,0.16); margin-top: 14px; }
+  .note::before { content: ''; position: absolute; top: -11px; left: 22px; width: 64px; height: 22px; background: var(--ink); opacity: .85; transform: rotate(-3deg); }
+  .note h2 { margin: 0 0 6px; font-size: 1rem; font-weight: 900; letter-spacing: .08em; text-transform: uppercase; }
+  .note h2 b { background: var(--red); color: #fff; padding: 1px 7px; margin-right: 6px; }
+  .hint { margin: 0 0 12px; font-size: .9rem; line-height: 1.45; color: var(--muted); }
+  .fn { display: flex; align-items: center; justify-content: space-between; gap: 10px; padding: 11px 0; border-top: 1.5px solid rgba(0,0,0,.12); }
+  .fn-t b { display: block; font-size: .98rem; }
+  .fn-t span { font-size: .78rem; color: var(--muted); }
+  .fn-n { display: flex; align-items: center; gap: 8px; flex: none; }
+  .nb { width: 40px; height: 40px; font: inherit; font-size: 1.3rem; font-weight: 900; border: 2px solid var(--ink); background: #fff; color: var(--ink); border-radius: 0; cursor: pointer; }
+  .nb:disabled { opacity: .35; }
+  .nv { min-width: 18px; text-align: center; font-weight: 900; }
+  .chips { display: flex; flex-wrap: wrap; gap: 8px; }
+  .chip { font: inherit; font-size: .85rem; font-weight: 700; padding: 10px 13px; border: 2px solid var(--ink); background: #fff; color: var(--ink); cursor: pointer; border-radius: 0; }
+  .chip[aria-pressed="true"] { background: var(--ink); color: #fff; }
+  .msg { font-size: .88rem; font-weight: 700; margin: 10px 0 0; line-height: 1.45; min-height: 1.2em; }
+  .bad { color: var(--red); } .ok { color: var(--green); }
+  #board { display: block; width: 100%; height: auto; max-height: 62vh; touch-action: none; user-select: none; -webkit-user-select: none; background: #fff; border: 2px solid var(--ink); }
+  #board .part { cursor: grab; }
+  .selbar { display: flex; align-items: center; justify-content: space-between; gap: 10px; margin-top: 10px; background: #fff; border: 2px solid var(--ink); padding: 8px 10px; font-weight: 800; font-size: .9rem; }
+  .selbar[hidden] { display: none; }
+  .selbar button { font: inherit; font-weight: 900; font-size: .8rem; text-transform: uppercase; letter-spacing: .06em; border: 2px solid var(--ink); background: var(--ink); color: #fff; padding: 8px 12px; border-radius: 0; cursor: pointer; }
+  #view3d { width: 100%; height: min(62vh, 440px); background: #fff; border: 2px solid var(--ink); touch-action: none; }
+  #view3d canvas { display: block; width: 100%; height: 100%; }
+  .row { display: flex; gap: 8px; margin-top: 10px; flex-wrap: wrap; }
+  .btn { font: inherit; font-weight: 900; letter-spacing: .08em; text-transform: uppercase; font-size: .9rem; border: 0; background: var(--red); color: #fff; padding: 15px 14px; border-radius: 0; cursor: pointer; flex: 1; }
+  .btn.alt { background: #fff; color: var(--ink); border: 2px solid var(--ink); }
+  .btn:disabled { opacity: .4; cursor: default; }
+  ul.parts { margin: 10px 0 0; padding-left: 18px; line-height: 1.45; font-size: .92rem; }
+  ul.parts li { margin: 6px 0; } ul.parts small { color: var(--muted); } ul.parts a { color: var(--ink); font-weight: 800; }
+  .how { font-size: .88rem; line-height: 1.5; margin: 12px 0 0; padding-left: 18px; }
+  .pc { background: var(--ink); color: var(--note); padding: 12px 14px; margin-top: 14px; font-size: .88rem; line-height: 1.45; }
+  .pc b { color: #fff; }
+  .next-bar { position: fixed; left: 0; right: 0; bottom: 0; padding: 10px 14px calc(10px + env(safe-area-inset-bottom)); background: linear-gradient(rgba(233,230,223,0), var(--paper) 30%); }
+  .next-bar .btn { display: block; width: 100%; max-width: 612px; margin: 0 auto; }
+  .next-bar .btn[hidden], .next-bar[hidden] { display: none; }
+  .tiny { font-size: .78rem; color: var(--muted); margin: 14px 0 0; line-height: 1.45; }
+  .linkish { background: none; border: 0; font: inherit; font-size: .8rem; text-decoration: underline; color: var(--muted); padding: 6px 0; cursor: pointer; }
+</style>
+<script type="importmap">{ "imports": { "three": "/vendor/three/three.module.js", "three/addons/": "/vendor/three/" } }</script>
+</head>
+<body>
+<div class="wrap">
+  <div class="top"><h1><span>Case Zero</span><br>Builder</h1><a href="/casezero/">Back</a></div>
+
+  <nav class="steps" aria-label="Steps">
+    <button type="button" class="st" data-step="1"><b>1</b>Does</button>
+    <button type="button" class="st" data-step="2"><b>2</b>Size</button>
+    <button type="button" class="st" data-step="3"><b>3</b>Place</button>
+    <button type="button" class="st" data-step="4"><b>4</b>3D</button>
+    <button type="button" class="st" data-step="5"><b>5</b>Files</button>
+  </nav>
+
+  <section class="note pane" data-step="1">
+    <h2><b>1</b>What should it do?</h2>
+    <p class="hint">Tap + for each thing you want. We pick the parts. The brain is a Raspberry Pi Pico.</p>
+    <div id="funcList"></div>
+    <p class="msg bad" id="fnMsg" role="status"></p>
+  </section>
+
+  <section class="note pane" data-step="2" hidden>
+    <h2><b>2</b>How big?</h2>
+    <p class="hint">Outside size of the box, on a 20 mm grid.</p>
+    <div class="chips" id="sizeList"></div>
+    <p class="msg" id="sizeInfo"></p>
+  </section>
+
+  <section class="note pane" data-step="3" hidden>
+    <h2><b>3</b>Place your parts</h2>
+    <p class="hint">This is the lid, seen from the top. Drag a part to move it. Yellow means it does not fit there.</p>
+    <svg id="board" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Lid layout"></svg>
+    <div class="selbar" id="selBar" hidden><span id="selName"></span><button type="button" id="selRemove">Remove</button></div>
+    <p class="msg" id="placeMsg" role="status"></p>
+  </section>
+
+  <section class="note pane" data-step="4" hidden>
+    <h2><b>4</b>Look at it</h2>
+    <p class="hint">Spin it with one finger. Pinch to zoom.</p>
+    <div id="view3d"></div>
+    <div class="row"><button type="button" class="btn alt" id="openLid">Open the lid</button></div>
+    <p class="msg bad" id="view3dMsg" role="status"></p>
+  </section>
+
+  <section class="note pane" data-step="5" hidden>
+    <h2><b>5</b>Get your files</h2>
+    <p class="hint" id="fileSize"></p>
+    <div class="row"><button type="button" class="btn" id="dlBox">Box file (STL)</button><button type="button" class="btn" id="dlLid">Lid file (STL)</button></div>
+    <p class="msg" id="fileMsg" role="status"></p>
+    <ol class="how">
+      <li>Print both files flat, no supports. PLA works. The box prints open side up.</li>
+      <li>Push the parts through the lid and tighten their nuts. Glue the speaker under its holes.</li>
+      <li>Screw the Pico onto its 4 posts, USB toward the side hole.</li>
+      <li>Wire it up, then screw the lid on.</li>
+    </ol>
+    <p class="hint" style="margin-top:14px;font-weight:800;color:var(--ink)">What you need</p>
+    <ul class="parts" id="partsList"></ul>
+    <div class="pc"><b>Next: code it.</b> Writing the code works on your phone. Loading it onto the Pico needs a computer with Chrome or Edge and a USB cable. Coming soon.</div>
+    <p class="tiny">No 3D printer? Send the files to a print service, or print at a library or makerspace.</p>
+  </section>
+
+  <button type="button" class="linkish" id="startOver">Start over</button>
+</div>
+<div class="next-bar"><button type="button" class="btn" id="next">Next</button></div>
+<script type="module" src="builder.js?v=4"></script>
+</body>
+</html>

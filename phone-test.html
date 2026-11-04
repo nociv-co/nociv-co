@@ -52,18 +52,18 @@
 // ===== THE TEST LIST. Claude rewrites this block after every delivery. Keep each test to a few taps. =====
 var BATCH = '2026-11-03 pdf and offline';
 var TESTS = [
-  { id: 'czlink', title: 'Quiet Case Zero link', where: 'Safari, nociv.co/shop.html',
-    steps: ['Scroll to the very bottom of the Shop page, just above the grey Keep NOCIV in your pocket block.', 'Tap the small Case Zero button.'],
-    expect: 'A small faded box that says CASE ZERO. It opens nociv.co/casezero.' },
-  { id: 'czpage', title: 'Case Zero page', where: 'nociv.co/casezero',
-    steps: ['Read the top note and the three kit cards.', 'Check nothing runs off the right edge.'],
-    expect: 'Base, Premium and FACETYPE cards, each with a red stage label and Price not set. The build log says photos are coming (until you post one).' },
-  { id: 'czpost', title: 'Post to the build log', where: 'Admin, Case Zero room',
-    steps: ['Open Admin, tap the Case Zero room.', 'Tap Post to the build log. Check Case Zero is already picked. Post one photo.', 'Open nociv.co/casezero again.'],
-    expect: 'The photo shows under From the bench and opens big when tapped. It does NOT show in the Clothing, Art or Zines album.' },
-  { id: 'cznotes', title: 'Private notes save', where: 'Admin, Case Zero room',
-    steps: ['Type a note under Case Zero Base, add a link, tap Save Case Zero notes.', 'Close Admin, open it again, open the Case Zero room.'],
-    expect: 'It says Saved with the time, and your note and link are still there after reopening.' }
+  { id: 'czbuild1', title: 'Builder opens', where: 'nociv.co/casezero',
+    steps: ['Tap the red Build your own case box.', 'In step 1 tap + on a few things (button, big button, light, sound).'],
+    expect: 'The Builder opens with 5 numbered steps. The numbers go up when you tap +. If there is no room it tells you to pick a bigger case.' },
+  { id: 'czbuild2', title: 'Place parts with your finger', where: 'Builder, step 3',
+    steps: ['Drag a part around the red lid with one finger.', 'Drag one on top of another one.'],
+    expect: 'The part follows your finger and snaps. The page does not scroll or zoom while you drag. On top of another part it turns yellow and says why.' },
+  { id: 'czbuild3', title: '3D view', where: 'Builder, step 4',
+    steps: ['Spin the case with one finger, pinch to zoom.', 'Tap Open the lid.'],
+    expect: 'You see the box with the red lid. Open the lid shows the green Pico inside and the USB hole in the side.' },
+  { id: 'czbuild4', title: 'Download the files', where: 'Builder, step 5',
+    steps: ['Tap Box file, then Lid file.', 'Close the Builder and open it again.'],
+    expect: 'Two STL files download (they open in the Files app or any 3D viewer). Your parts are still there when you come back. Tell me if Safari shows the file as text instead.' }
 ];
 // ===== end of list =====
 

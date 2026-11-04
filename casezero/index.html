@@ -39,6 +39,9 @@
 .cz-log button { padding: 0; border: 2px solid var(--ink); background: #fff; aspect-ratio: 1; overflow: hidden; cursor: pointer; display: block; width: 100%; }
 .cz-log img, .cz-log video { width: 100%; height: 100%; object-fit: cover; display: block; }
 .cz-empty { margin: 10px 0 0; color: var(--soft); font-size: .92rem; line-height: 1.45; }
+.cz-build { display: block; background: #c8412f; color: #fff; text-decoration: none; border: 2px solid #111; padding: 16px 18px; margin: 18px 0; box-shadow: 4px 4px 0 #111; }
+.cz-build b { display: block; font-family: CZAnton, Impact, sans-serif; font-size: 1.7rem; text-transform: uppercase; letter-spacing: .03em; line-height: 1; }
+.cz-build span { display: block; margin-top: 6px; font-size: .92rem; line-height: 1.4; }
 .cz-view { position: fixed; inset: 0; background: rgba(0,0,0,.92); z-index: 1000; display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 16px; }
 .cz-view[hidden] { display: none; }
 .cz-view img, .cz-view video { max-width: 100%; max-height: 72vh; object-fit: contain; }
@@ -68,6 +71,11 @@
     <p class="cz-lede">NOCIV hardware. Kits you build with your own hands, open up, and change. You own the thing, not a subscription to it.</p>
     <span class="cz-state">Build log. Nothing for sale yet.</span>
   </div>
+
+  <a class="cz-build" href="/casezero/build/">
+    <b>Build your own case</b>
+    <span>Pick what your device does, place the parts, download a case to 3D print. Free.</span>
+  </a>
 
   <p class="cz-sec">On the bench</p>
 
