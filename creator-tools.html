@@ -75,6 +75,21 @@
   .b-tabs button[data-tex="real"][aria-selected="true"] span { background: #fff; color: #111; text-shadow: -1.5px 0 rgba(255,42,79,.75), 1.5px 0 rgba(42,214,255,.75); animation: bGlitch 2.6s steps(1) infinite; }
   @keyframes bGlitch { 0%, 88%, 100% { transform: rotate(-1.5deg) translateX(0); } 90% { transform: rotate(-1.5deg) translateX(-2px); } 93% { transform: rotate(-1.5deg) translateX(2px); } 96% { transform: rotate(-1.5deg) translateX(-1px); } }
   @media (prefers-reduced-motion: reduce) { .b-tabs button[data-tex="real"][aria-selected="true"] span { animation: none; } }
+  /* App buttons: floating icons shaped like what they make */
+  .b-apps { align-items: flex-end; }
+  .b-apps button[data-app] { height: auto; min-height: 84px; border: 0; border-radius: 0; background: none; box-shadow: none; flex-direction: column; justify-content: flex-end; gap: 5px; padding: 4px 0; color: var(--ink); transform: none; }
+  .b-apps button[data-app] svg { width: 52px; height: 44px; overflow: visible; filter: drop-shadow(0 5px 6px rgba(0,0,0,.22)); transition: transform .2s ease, filter .2s ease; }
+  .b-apps button[data-app] svg .f { fill: #f2ecd6; stroke: #1a1a1a; stroke-width: 2.4; stroke-linejoin: round; }
+  .b-apps button[data-app] svg .l { fill: none; stroke: #1a1a1a; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
+  .b-apps button[data-app] svg .k { fill: #1a1a1a; }
+  .b-apps button[data-app] span { padding: 3px 7px; transition: background .16s ease, color .16s ease, transform .16s ease; }
+  .b-apps button[data-app][aria-selected="true"] { background: none; box-shadow: none; transform: none; }
+  .b-apps button[data-app][aria-selected="true"] svg { transform: translateY(-5px) rotate(-3deg) scale(1.08); filter: drop-shadow(0 10px 8px rgba(0,0,0,.28)); animation: bFloat 2.8s ease-in-out infinite; }
+  .b-apps button[data-app][aria-selected="true"] svg .f { fill: var(--c); }
+  .b-apps button[data-app][aria-selected="true"] span { background: #1a1a1a; color: #f2ecd6; transform: rotate(-1.5deg); box-shadow: 0 2px 6px rgba(0,0,0,.25); }
+  @keyframes bFloat { 0%, 100% { transform: translateY(-5px) rotate(-3deg) scale(1.08); } 50% { transform: translateY(-9px) rotate(-1deg) scale(1.08); } }
+  @media (hover: hover) { .b-apps button[data-app]:hover svg { transform: translateY(-3px); } }
+  @media (prefers-reduced-motion: reduce) { .b-apps button[data-app][aria-selected="true"] svg { animation: none; } }
   .b-tabs button:focus-visible, .b-apps button:focus-visible { outline: 3px solid #c8412f; outline-offset: 2px; }
   .b-rule { width: 56px; height: 3px; background: var(--ink); margin: 0 auto; }
   .b-row { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 42%); gap: 22px; align-items: start; }
@@ -475,6 +490,17 @@
       { id: 'real', name: 'Video', color: '#c8412f', ci: '#ffffff', icon: '<rect x="3" y="7" width="12" height="10" rx="2"/><path d="M15 11l6-3v8l-6-3z"/>' }
     ];
     const ORDER = { paper: ['zine', 'cards', 'qr'], projects: ['stencil', 'cutsew'], real: ['video', 'toon', 'sign'] };
+    // Each app button is shaped like what it makes. f = filled shape, l = lines on top.
+    const APP_ICON = {
+      zine: '<path class="f" d="M5 8l19 4 19-4v26l-19 4-19-4z"/><path class="l" d="M24 12v26M10 15l9 2M10 20l9 2M29 17l9-2M29 22l9-2"/><path class="k" d="M23 18h2v3h-2zM23 28h2v3h-2z"/>',
+      cards: '<path class="f" d="M4 9h34l6 6v18H4z"/><path class="l" d="M38 9v6h6M9 17h14M9 22h20M9 27h10"/>',
+      qr: '<rect class="f" x="8" y="2" width="32" height="36" rx="2"/><path class="k" d="M12 6h9v9h-9zM27 6h9v9h-9zM12 25h9v9h-9zM27 25h3v3h-3zM33 25h3v3h-3zM30 28h3v3h-3zM27 31h3v3h-3zM33 31h3v3h-3zM24 18h3v3h-3zM18 19h3v3h-3z"/>',
+      stencil: '<rect class="f" x="5" y="5" width="38" height="30" rx="2"/><path class="k" d="M24 10l3.6 7.4 8.1 1.2-5.9 5.7 1.4 8.1L24 28.6l-7.2 3.8 1.4-8.1-5.9-5.7 8.1-1.2z"/>',
+      cutsew: '<path class="f" d="M17 4l-11 6 4 8 5-2v20h18V16l5 2 4-8-11-6c-1 4-4 6-7 6s-6-2-7-6z"/><path class="l" d="M15 16v20M33 16v20" stroke-dasharray="2 2.5"/>',
+      video: '<rect class="f" x="4" y="12" width="28" height="20" rx="3"/><path class="f" d="M32 18l12-6v20l-12-6z"/><circle class="f" cx="11" cy="8" r="5"/><circle class="f" cx="24" cy="8" r="5"/><circle class="k" cx="11" cy="22" r="2.4"/>',
+      toon: '<circle class="f" cx="24" cy="20" r="16"/><circle class="k" cx="18" cy="17" r="2.6"/><circle class="k" cx="30" cy="17" r="2.6"/><path class="l" d="M16 25c4 5 12 5 16 0"/>',
+      sign: '<rect class="f" x="3" y="3" width="42" height="22" rx="1"/><path class="l" d="M14 25v13M34 25v13M9 10h20M9 16h28"/>'
+    };
     const SHORT = { zine: 'Zine', cards: 'Cards', qr: 'QR', toon: 'Cartoon', video: 'Camera', sign: 'Billboard', stencil: 'Stencil', cutsew: 'Cut & Sew' };
     const el = id => document.getElementById(id), data = {};
     document.querySelectorAll('#toolData .tool-card').forEach(c => { data[c.dataset.key] = { key: c.dataset.key, sec: c.dataset.sec, panel: c.dataset.panel, poster: c.dataset.poster, video: c.dataset.video || '', made: c.dataset.made, art: c.querySelector('.tool-art').innerHTML, name: c.querySelector('.tool-name').textContent.trim(), desc: c.querySelector('.tool-desc').textContent.trim(), get: c.querySelector('.tool-get').textContent.trim() }; });
@@ -487,7 +513,7 @@
       sec = si; const list = ORDER[SECS[sec].id]; idx = Math.min(list.length - 1, Math.max(0, ti)); const T = cur(), S = SECS[sec];
       tabs.querySelectorAll('button').forEach((b, k) => b.setAttribute('aria-selected', k === sec ? 'true' : 'false'));
       nums.classList.remove('b-in'); void nums.offsetWidth; nums.classList.add('b-in');
-      nums.innerHTML = ''; list.forEach((k, i) => { const b = document.createElement('button'); b.type = 'button'; b.setAttribute('role', 'tab'); b.setAttribute('aria-label', data[k].name); b.setAttribute('aria-selected', i === idx ? 'true' : 'false'); b.style.setProperty('--c', S.color); b.style.setProperty('--ci', S.ci); b.textContent = SHORT[k] || data[k].name; b.addEventListener('click', () => show(sec, i, i > idx ? 1 : -1)); nums.appendChild(b); });
+      nums.innerHTML = ''; list.forEach((k, i) => { const b = document.createElement('button'); b.type = 'button'; b.setAttribute('role', 'tab'); b.setAttribute('aria-label', data[k].name); b.setAttribute('aria-selected', i === idx ? 'true' : 'false'); b.style.setProperty('--c', S.color); b.style.setProperty('--ci', S.ci); b.dataset.app = k; b.innerHTML = '<svg viewBox="0 0 48 40" aria-hidden="true">' + (APP_ICON[k] || '') + '</svg><span></span>'; b.querySelector('span').textContent = SHORT[k] || data[k].name; b.addEventListener('click', () => show(sec, i, i > idx ? 1 : -1)); nums.appendChild(b); });
       el('bSay1').textContent = 'Select a category'; el('bTool').textContent = T.name; el('bCard').innerHTML = T.art; el('bCap').textContent = T.get; el('bDesc').textContent = T.desc;
       el('bMade').innerHTML = T.made; const img = el('bPoster'), vid = el('bVid'); img.alt = 'A finished piece made with ' + T.name; img.src = T.poster; const rowEl = document.querySelector('.b-row'); const fit = () => rowEl.classList.toggle('b-wide', (T.video ? vid.videoWidth > vid.videoHeight * 1.1 : img.naturalWidth > img.naturalHeight * 1.1)); img.onload = fit; if (img.complete && img.naturalWidth) fit();
       if (T.video) { img.hidden = true; vid.hidden = false; vid.poster = T.poster; vid.onloadedmetadata = fit; if (vid.getAttribute('src') !== T.video) vid.src = T.video; vid.muted = true; try { const pr = vid.play(); if (pr && pr.catch) pr.catch(() => {}); } catch (e) {} } else { vid.pause(); vid.hidden = true; img.hidden = false; }
