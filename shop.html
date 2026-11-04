@@ -200,13 +200,14 @@
 
   /* Shop sections: original buttons, the picked one gets a drawn arrow down to a red icon and two lines about the section */
   /* Shop sections: floating icons like the Tools apps. Cream when not picked, red and floating when picked, the word gets a dashed ring. */
-  .subnav.subnav-one { grid-template-columns: 1fr 1fr 1fr; gap: 8px; padding: 16px 10px 0; background: transparent; border: none; margin-top: 0; align-items: end; }
+  .subnav.subnav-one { grid-template-columns: 1fr 1fr 1fr; gap: 8px; padding: 16px 10px 14px; background: transparent; border: none; margin-top: 0; align-items: end; }
   .subnav.subnav-one button, .subnav.subnav-one button:hover, .subnav.subnav-one button.active { all: unset; box-sizing: border-box; display: flex; flex-direction: column; align-items: center; justify-content: flex-end; gap: 6px; min-height: 104px; padding: 6px 0; cursor: pointer; -webkit-tap-highlight-color: transparent; color: #1a1a1a; font-weight: 900; font-size: .82rem; letter-spacing: .1em; text-transform: uppercase; text-align: center; }
   .subnav.subnav-one button svg { width: 66px; height: 56px; overflow: visible; filter: drop-shadow(0 6px 7px rgba(0,0,0,.22)); transition: transform .2s ease; will-change: transform; }
   .subnav.subnav-one svg .f { fill: #f2ecd6; stroke: #1a1a1a; stroke-width: 2.4; stroke-linejoin: round; transition: fill .16s ease; }
   .subnav.subnav-one svg .p { fill: #fff; stroke: #1a1a1a; stroke-width: 2; }
   .subnav.subnav-one svg .l { fill: none; stroke: #1a1a1a; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
   .subnav.subnav-one svg .k { fill: #1a1a1a; }
+  .subnav.subnav-one svg .pl { fill: none; stroke: #5a5a5a; stroke-width: 1.2; stroke-linecap: round; }
   .subnav.subnav-one button span { padding: 4px 12px; border: 2px dashed transparent; border-radius: 999px; transition: border-color .16s ease; }
   .subnav.subnav-one button.active svg { transform: translateY(-5px) rotate(-3deg) scale(1.08); animation: spFloat 2.8s ease-in-out infinite; }
   .subnav.subnav-one button.active svg .f { fill: #c8412f; }
@@ -215,8 +216,6 @@
   @keyframes spFloat { 0%, 100% { transform: translateY(-5px) rotate(-3deg) scale(1.08); } 50% { transform: translateY(-9px) rotate(-1deg) scale(1.08); } }
   @media (hover: hover) { .subnav.subnav-one button:not(.active):hover svg { transform: translateY(-3px); } }
   @media (prefers-reduced-motion: reduce) { .subnav.subnav-one button.active svg { animation: none; } }
-  .shop-pick { max-width: var(--max); margin: 0 auto; padding: 10px 20px 6px; box-sizing: border-box; }
-  .sp-desc { margin: 0 auto; font-size: .92rem; line-height: 1.5; color: #2b2b2b; max-width: 560px; text-align: center; }
   .catalog-empty { opacity: .5; font-style: italic; padding: 20px; text-align: center; }
 
   /* --- Product detail modal (tap a card to zoom + read the description) --- */
@@ -516,11 +515,10 @@
 
 <!-- SUB-NAV: Clothing leads, Art and Zines are secondary, "also from the collective" -->
 <nav class="subnav subnav-one" aria-label="Shop sections">
-  <button data-panel="clothingPanel" class="active"><svg viewBox="0 0 48 40" aria-hidden="true"><path class="f" d="M17 4l-11 6 4 8 5-2v20h18V16l5 2 4-8-11-6c-1 4-4 6-7 6s-6-2-7-6z"/><path class="l" d="M15 16v20M33 16v20" stroke-dasharray="2 2.5"/></svg><span>Clothing</span></button>
-  <button data-panel="artPanel"><svg viewBox="0 0 48 40" aria-hidden="true"><rect class="f" x="4" y="3" width="40" height="34" rx="1"/><rect class="p" x="9" y="8" width="30" height="24"/><path class="l" d="M10 30l9-10 6 6 5-5 8 9"/><circle class="k" cx="31" cy="14" r="3"/></svg><span>Art</span></button>
+  <button data-panel="clothingPanel" class="active"><svg viewBox="0 0 48 40" aria-hidden="true"><path class="k pants" d="M26 9h17v5H26z M26 14h17l1.5 25h-7.5l-2.2-17-2.2 17h-7.5z"/><path class="pl" d="M26.5 14h16M34.5 15v5"/><g transform="translate(-2 4) scale(.8)"><path class="f" d="M17 4l-11 6 4 8 5-2v20h18V16l5 2 4-8-11-6c-1 4-4 6-7 6s-6-2-7-6z"/></g></svg><span>Clothing</span></button>
+  <button data-panel="artPanel"><svg viewBox="0 0 48 40" aria-hidden="true"><path class="l" d="M24 2v4M24 6L11 39M24 6l13 33M24 30v9"/><rect class="f" x="8" y="7" width="32" height="21" rx="1"/><path class="l" d="M12 24l6-7 5 5 4-4 7 6"/><circle class="k" cx="31" cy="12.5" r="2.4"/><rect class="k" x="7" y="28" width="34" height="3" rx="1"/></svg><span>Art</span></button>
   <button data-panel="zinesPanel"><svg viewBox="0 0 48 40" aria-hidden="true"><path class="f" d="M5 8l19 4 19-4v26l-19 4-19-4z"/><path class="l" d="M24 12v26M10 15l9 2M10 20l9 2M29 17l9-2M29 22l9-2"/></svg><span>Zines</span></button>
 </nav>
-<div class="shop-pick" id="shopPick"><p class="sp-desc" id="spDesc" role="status"></p></div>
 
 <div class="free-ship-bar" id="freeShipBar" role="status" hidden></div>
 <div class="shop-banner" id="shopBanner" role="status" hidden>
@@ -710,18 +708,6 @@
   });
 
 
-  // Shop sections: two sentences about the picked section under the icons
-  const SP_DESC = {
-    clothingPanel: 'Pieces made by NOCIV, printed and stenciled by hand. Wear the art, start the conversation.',
-    artPanel: 'Prints, posters and original pieces from NOCIV. Art made to live on your wall, not in a feed.',
-    zinesPanel: 'Read them free, right here on your phone. Stories, sketches and how-tos, made by hand to pass on.'
-  };
-  function drawShopPick() {
-    const act = document.querySelector('.subnav-one button.active'); if (!act) return;
-    document.getElementById('spDesc').textContent = SP_DESC[act.dataset.panel] || '';
-  }
-  subnavBtns.forEach(b => b.addEventListener('click', () => requestAnimationFrame(drawShopPick)));
-  drawShopPick();
 
   // The post area (goal + NOW + album) sits under the shopping area on every Shop tab.
   // Clothing keeps its spot under the catalog. Art and Zines get it at the bottom of their page.
