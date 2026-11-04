@@ -72,7 +72,7 @@
   .b-tabs button[data-tex][aria-selected="true"] span { font-size: 1.12em; transform: rotate(-1.5deg); box-shadow: 0 2px 6px rgba(0,0,0,.25); }
   .b-tabs button[data-tex="paper"][aria-selected="true"] span { background: #1a1a1a; color: #f7f2e1; }
   .b-tabs button[data-tex="projects"][aria-selected="true"] span { background: #f2ecd6; color: #1f3550; }
-  .b-tabs button[data-tex="real"][aria-selected="true"] span { background: #fff; color: #111; text-shadow: -1.5px 0 rgba(255,42,79,.75), 1.5px 0 rgba(42,214,255,.75); animation: bGlitch 2.6s steps(1) infinite; }
+  .b-tabs button[data-tex="real"][aria-selected="true"] span { background: #fff; color: #111; text-shadow: -1.5px 0 rgba(255,42,79,.75), 1.5px 0 rgba(42,214,255,.75); }
   @keyframes bGlitch { 0%, 88%, 100% { transform: rotate(-1.5deg) translateX(0); } 90% { transform: rotate(-1.5deg) translateX(-2px); } 93% { transform: rotate(-1.5deg) translateX(2px); } 96% { transform: rotate(-1.5deg) translateX(-1px); } }
   @media (prefers-reduced-motion: reduce) { .b-tabs button[data-tex="real"][aria-selected="true"] span { animation: none; } }
   /* App buttons: floating icons shaped like what they make */
@@ -89,9 +89,10 @@
   .b-apps button[data-app][aria-selected="true"] span { background: #1a1a1a; color: #f2ecd6; transform: rotate(-1.5deg); box-shadow: 0 2px 6px rgba(0,0,0,.25); }
   @keyframes bFloat { 0%, 100% { transform: translateY(-5px) rotate(-3deg) scale(1.08); } 50% { transform: translateY(-9px) rotate(-1deg) scale(1.08); } }
   @media (hover: hover) { .b-apps button[data-app]:hover svg { transform: translateY(-3px); } }
+  .b-apps button[data-app="video"][aria-selected="true"] svg, .b-apps button[data-app="toon"][aria-selected="true"] svg, .b-apps button[data-app="sign"][aria-selected="true"] svg { animation: none; }
   @media (prefers-reduced-motion: reduce) { .b-apps button[data-app][aria-selected="true"] svg { animation: none; } }
   .b-tabs button:focus-visible, .b-apps button:focus-visible { outline: 3px solid #c8412f; outline-offset: 2px; }
-  .b-rule { width: 56px; height: 3px; background: var(--ink); margin: 0 auto; }
+  .b-rule { width: 100%; height: 0; border-top: 2px dashed rgba(26,26,26,.28); margin: 0 auto; }
   .b-row { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 42%); gap: 22px; align-items: start; }
   .b-prev { text-align: center; min-width: 0; }
   .b-prev-l { display: block; margin-bottom: 8px; font-family: NocivAnton, Impact, "Arial Narrow", sans-serif; font-size: 1rem; letter-spacing: .14em; text-transform: uppercase; line-height: 1; }
@@ -487,7 +488,7 @@
     const SECS = [
       { id: 'paper', name: 'Paper', color: '#f2c230', ci: '#1a1a1a', icon: '<path d="M6 3h8l4 4v14H6z"/><path d="M14 3v4h4"/><path d="M9 12h6M9 16h6"/>' },
       { id: 'projects', name: 'Wear', color: '#8a6a4a', ci: '#ffffff', icon: '<path d="M4 20V4l16 16z"/><path d="M4 14h3M4 9h2M10 20v-3M15 20v-2"/>' },
-      { id: 'real', name: 'Video', color: '#c8412f', ci: '#ffffff', icon: '<rect x="3" y="7" width="12" height="10" rx="2"/><path d="M15 11l6-3v8l-6-3z"/>' }
+      { id: 'real', name: 'Video', color: '#3f8a4f', ci: '#ffffff', icon: '<rect x="3" y="7" width="12" height="10" rx="2"/><path d="M15 11l6-3v8l-6-3z"/>' }
     ];
     const ORDER = { paper: ['zine', 'cards', 'qr'], projects: ['stencil', 'cutsew'], real: ['video', 'toon', 'sign'] };
     // Each app button is shaped like what it makes. f = filled shape, l = lines on top.
@@ -501,6 +502,7 @@
       toon: '<circle class="f" cx="24" cy="20" r="16"/><circle class="k" cx="18" cy="17" r="2.6"/><circle class="k" cx="30" cy="17" r="2.6"/><path class="l" d="M16 25c4 5 12 5 16 0"/>',
       sign: '<rect class="f" x="3" y="3" width="42" height="22" rx="1"/><path class="l" d="M14 25v13M34 25v13M9 10h20M9 16h28"/>'
     };
+    const SLOW = { video: 0.6, toon: 0.6 };
     const SHORT = { zine: 'Zine', cards: 'Cards', qr: 'QR', toon: 'Cartoon', video: 'Camera', sign: 'Billboard', stencil: 'Stencil', cutsew: 'Cut & Sew' };
     const el = id => document.getElementById(id), data = {};
     document.querySelectorAll('#toolData .tool-card').forEach(c => { data[c.dataset.key] = { key: c.dataset.key, sec: c.dataset.sec, panel: c.dataset.panel, poster: c.dataset.poster, video: c.dataset.video || '', made: c.dataset.made, art: c.querySelector('.tool-art').innerHTML, name: c.querySelector('.tool-name').textContent.trim(), desc: c.querySelector('.tool-desc').textContent.trim(), get: c.querySelector('.tool-get').textContent.trim() }; });
@@ -516,7 +518,7 @@
       nums.innerHTML = ''; list.forEach((k, i) => { const b = document.createElement('button'); b.type = 'button'; b.setAttribute('role', 'tab'); b.setAttribute('aria-label', data[k].name); b.setAttribute('aria-selected', i === idx ? 'true' : 'false'); b.style.setProperty('--c', S.color); b.style.setProperty('--ci', S.ci); b.dataset.app = k; b.innerHTML = '<svg viewBox="0 0 48 40" aria-hidden="true">' + (APP_ICON[k] || '') + '</svg><span></span>'; b.querySelector('span').textContent = SHORT[k] || data[k].name; b.addEventListener('click', () => show(sec, i, i > idx ? 1 : -1)); nums.appendChild(b); });
       el('bSay1').textContent = 'Select a category'; el('bTool').textContent = T.name; el('bCard').innerHTML = T.art; el('bCap').textContent = T.get; el('bDesc').textContent = T.desc;
       el('bMade').innerHTML = T.made; const img = el('bPoster'), vid = el('bVid'); img.alt = 'A finished piece made with ' + T.name; img.src = T.poster; const rowEl = document.querySelector('.b-row'); const fit = () => rowEl.classList.toggle('b-wide', (T.video ? vid.videoWidth > vid.videoHeight * 1.1 : img.naturalWidth > img.naturalHeight * 1.1)); img.onload = fit; if (img.complete && img.naturalWidth) fit();
-      if (T.video) { img.hidden = true; vid.hidden = false; vid.poster = T.poster; vid.onloadedmetadata = fit; if (vid.getAttribute('src') !== T.video) vid.src = T.video; vid.muted = true; try { const pr = vid.play(); if (pr && pr.catch) pr.catch(() => {}); } catch (e) {} } else { vid.pause(); vid.hidden = true; img.hidden = false; }
+      if (T.video) { img.hidden = true; vid.hidden = false; vid.poster = T.poster; vid.onloadedmetadata = fit; if (vid.getAttribute('src') !== T.video) vid.src = T.video; vid.muted = true; vid.defaultPlaybackRate = vid.playbackRate = (SLOW[T.key] || 1); vid.onloadeddata = () => { vid.playbackRate = SLOW[T.key] || 1; }; try { const pr = vid.play(); if (pr && pr.catch) pr.catch(() => {}); } catch (e) {} } else { vid.pause(); vid.hidden = true; img.hidden = false; }
       if (dir) ['bHero', 'bPoster'].forEach(id => { const n = el(id); n.style.setProperty('--from', (dir > 0 ? 16 : -16) + 'px'); n.classList.remove('b-swap'); void n.offsetWidth; n.classList.add('b-swap'); });
       requestAnimationFrame(drawArrows);
       try { sessionStorage.setItem('toolSec', sec); sessionStorage.setItem('toolIdx', idx); } catch (e) {}
