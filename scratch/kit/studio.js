@@ -79,6 +79,22 @@ var LOOKS = {
     ['Studio Black', 'condensed,#0a0a0a,#ffffff,#ffffff,sharp,compact,stack,list,landscape,outline,upper,none,border,slide']]
 };
 var LOOK_FAMS = Object.keys(LOOKS);
+var KIND_ICON = {"shop": "<path d=\"M5 8h14l-1 13H6z\"/><path d=\"M9 8V6a3 3 0 0 1 6 0v2\"/>", "archive": "<rect x=\"3\" y=\"4\" width=\"18\" height=\"5\" rx=\"1\"/><path d=\"M5 9v11h14V9\"/><path d=\"M10 13h4\"/>", "app": "<rect x=\"6\" y=\"2.5\" width=\"12\" height=\"19\" rx=\"3\"/><path d=\"M10.5 18.5h3\"/>", "music": "<path d=\"M9 18V5l11-2v13\"/><circle cx=\"6.5\" cy=\"18\" r=\"2.5\"/><circle cx=\"17.5\" cy=\"16\" r=\"2.5\"/>", "food": "<path d=\"M4 11h16a8 8 0 0 1-16 0z\"/><path d=\"M8 7c0-1.5 1-2 1-3.5M12 7c0-1.5 1-2 1-3.5M16 7c0-1.5 1-2 1-3.5\"/>", "event": "<path d=\"M4 7a2 2 0 0 0 2-2h12a2 2 0 0 0 2 2v3a2 2 0 0 0 0 4v3a2 2 0 0 0-2 2H6a2 2 0 0 0-2-2v-3a2 2 0 0 0 0-4z\"/><path d=\"M14 5v14\" stroke-dasharray=\"2 2\"/>", "links": "<path d=\"M10 14a4 4 0 0 0 6 0l3-3a4 4 0 0 0-6-6l-1 1\"/><path d=\"M14 10a4 4 0 0 0-6 0l-3 3a4 4 0 0 0 6 6l1-1\"/>", "blank": "<rect x=\"4\" y=\"3\" width=\"16\" height=\"18\" rx=\"1.5\" stroke-dasharray=\"3 2.5\"/><path d=\"M12 9v6M9 12h6\"/>"};
+var KINDS = [["shop", "Shop", "Sell your stuff"], ["archive", "Archive", "Finds, beats or a log"], ["app", "App", "Feels like a phone app"], ["music", "Music", "Songs, shows, links"], ["food", "Food", "Menu, hours, orders"], ["event", "Event", "One date, tickets"], ["links", "Links", "One page of buttons"], ["blank", "Blank", "Start empty"]];
+// each kind opens to picture tiles: [template, look ("Family:index" or null), name]
+var VARIANTS = {
+  shop: [['shop', null, 'Corner store'], ['shop', 'Street:0', 'Stencil'], ['shop', 'Night:0', 'Ink'], ['shop', 'Clean:0', 'Gallery']],
+  archive: [['archive', null, 'Finds'], ['archiveProducer', null, 'Producer'], ['archiveLog', null, 'Log']],
+  app: [['app', null, 'Pocket'], ['app', 'Loud:3', 'Bubblegum'], ['app', 'Clean:3', 'Air'], ['app', 'Night:1', 'Neon']],
+  music: [['music', null, 'Record'], ['music', 'Loud:2', 'Electric'], ['music', 'Editorial:4', 'Gallery night'], ['music', 'Street:4', 'Skate']],
+  food: [['food', null, 'Kitchen'], ['food', 'Warm:2', 'Peach'], ['food', 'Night:3', 'Ember'], ['food', 'Editorial:2', 'Newsprint']],
+  event: [['event', null, 'Night market'], ['event', 'Street:2', 'Sticker'], ['event', 'Night:1', 'Neon'], ['event', 'Clean:2', 'Swiss']],
+  links: [['links', null, 'Bubble'], ['links', 'Clean:0', 'Gallery'], ['links', 'Street:1', 'Denim'], ['links', 'Night:2', 'Midnight']],
+  blank: [['blank', null, 'Blank']]
+};
+function kindOf(preset) { if (!preset) return 'shop'; if (/^archive/.test(preset)) return 'archive'; return VARIANTS[preset] ? preset : 'shop'; }
+function variantStyle(v) { var st = clone(PRESETS[v[0]]().style); if (v[1]) { var f = v[1].split(':'); Object.assign(st, lookStyle(LOOKS[f[0]][+f[1]][1])); } return st; }
+
 function lookStyle(spec) { var v = spec.split(','), o = {}; LOOK_KEYS.forEach(function (k, i) { o[k] = v[i]; }); return o; }
 function lookTile(name, st, act, v) {
   var bt = st.btn === 'outline' || st.btn === 'underline' ? 'background:transparent;border:2px solid ' + (st.btn === 'underline' ? 'transparent;border-bottom-color:' + st.accent : st.text) : 'background:' + st.accent + ';border:2px solid ' + st.accent;
@@ -293,12 +309,29 @@ function group(title, key, opts, note) {
 
 /* ---------- panes ---------- */
 function pStart() {
-  return '<h2>Insert</h2><p class="lede">Add a page to your site. It shows up in the menu and in Layers.</p><div class="tools">' +
-    Object.keys(TYPES).map(function (k) { return '<button type="button" data-act="add" data-v="' + k + '">' + ico(T_ICON[k]) + '<b>' + TYPES[k][0] + '</b><span>' + TYPES[k][1] + '</span></button>'; }).join('') + '</div>' +
-    '<h2 class="sec2">Start from a template</h2><p class="lede">Replaces your whole site. Your work saves on this device as you go.</p><div class="bases">' +
-    BASES.map(function (b) { var h = '<button type="button" class="base' + (D._preset === b[0] ? ' on' : '') + '" data-act="base" data-v="' + b[0] + '"><b>' + b[1] + '</b><span>' + b[2] + '</span></button>';
-      if (b[0] === 'archive') h = '<div class="base base-ver' + (/^archive/.test(D._preset || '') ? ' on' : '') + '"><b>Archive</b><span>Pick a version:</span><div class="vers">' + [['archive', 'Finds'], ['archiveProducer', 'Producer'], ['archiveLog', 'Log']].map(function (v) { return '<button type="button" class="c' + (D._preset === v[0] ? ' on' : '') + '" data-act="base" data-v="' + v[0] + '">' + v[1] + '</button>'; }).join('') + '</div><span>' + b[2] + '</span></div>';
-      return h; }).join('') + '</div>';
+  var k = kindSel || kindOf(D._preset);
+  var row = '<div class="kinds-row" role="tablist" aria-label="What are you making">' + KINDS.map(function (x) {
+    return '<button type="button" class="kd' + (x[0] === k ? ' on' : '') + '" data-act="kind" data-v="' + x[0] + '" role="tab" aria-selected="' + (x[0] === k) + '"><svg viewBox="0 0 24 24" aria-hidden="true">' + KIND_ICON[x[0]] + '</svg><b>' + x[1] + '</b></button>';
+  }).join('') + '</div>';
+  var tiles = '<div class="vtiles">' + VARIANTS[k].map(function (v, i) {
+    var key = k + ':' + i, t = lookTile(v[2], variantStyle(v), 'variant', key);
+    var sel = D._variant ? D._variant === key : (v[0] === D._preset && !v[1]);
+    return sel ? t.replace('class="lk"', 'class="lk on"') : t;
+  }).join('') + '</div>';
+  var cur = D.style, pal = '<div class="dots">' + PALETTES.map(function (q) {
+    var on = q[1] === cur.bg && q[3] === cur.accent;
+    return '<button type="button" class="dot' + (on ? ' on' : '') + '" data-act="pal" data-v="' + q.slice(1).join(',') + '" aria-label="' + q[0] + '" style="background:linear-gradient(135deg,' + q[1] + ' 50%,' + q[3] + ' 50%);border-color:' + q[2] + '"></button>';
+  }).join('') + '</div>';
+  return '<p class="step-h">What are you making?</p>' + row +
+    '<p class="step-h">Pick a starting point</p>' + tiles +
+    '<p class="step-h">Color</p>' + pal +
+    '<p class="help">Tap a tile to start. Tap a color any time, your words stay. Next, fill in your pages.</p>' +
+    '<button type="button" class="next" data-act="pane" data-v="pages">Next: fill in your pages &rarr;</button>';
+}
+
+function pAdd() {
+  return '<button type="button" class="back" data-act="pane" data-v="pages">&lsaquo; Pages</button><h2>Add a page</h2><p class="lede">It shows up in your menu.</p><div class="tools">' +
+    Object.keys(TYPES).map(function (k) { return '<button type="button" data-act="add" data-v="' + k + '">' + ico(T_ICON[k]) + '<b>' + TYPES[k][0] + '</b><span>' + TYPES[k][1] + '</span></button>'; }).join('') + '</div>';
 }
 
 function pLook() {
@@ -314,7 +347,7 @@ function pLook() {
     '<button type="button" class="lk lk-sh" data-act="shuffle"><b>Shuffle</b><small>New colors and type, same pages</small></button></div>' +
     (D._prevStyle ? '<button type="button" class="sm wide" data-act="lookundo">Undo last look</button>' : '') +
     '<p class="note">Looks change colors, type, buttons and spacing. Your words, photos and pages stay.</p>';
-  return '<h2>Design</h2>' + gal + '<details class="fine"' + (fineOpen ? ' open' : '') + '><summary>Fine tune</summary>' +
+  return '<h2>Look</h2>' + gal + '<details class="fine"' + (fineOpen ? ' open' : '') + '><summary>Fine tune</summary>' +
     group('Menu', 'nav', [['tabs', 'Tabs', 'on top'], ['menu', 'Menu', 'button'], ['bottom', 'Bottom bar', 'like an app'], ['side', 'Side list', 'computer']], navNote) +
     group('Page change', 'motion', [['none', 'None'], ['fade', 'Fade'], ['slide', 'Slide'], ['rise', 'Rise'], ['zoom', 'Zoom']]) +
     '<button type="button" class="sm wide" data-act="demo">▶ Watch it</button>' +
@@ -351,12 +384,12 @@ function pPages() {
       '<button type="button" class="ic" data-act="down" data-i="' + i + '" aria-label="Move down"' + (i < D.tabs.length - 1 ? '' : ' disabled') + '>&darr;</button>' +
       '<button type="button" class="ic" data-act="del" data-i="' + i + '" aria-label="Delete page">&times;</button></div>' + (k ? '<ul class="ly-kids">' + k + '</ul>' : '') + '</li>';
   }).join('');
-  return '<h2>Layers</h2><p class="lede">Every page and everything on it. Tap a layer to edit it, or tap anything in the preview.</p><ul class="lys">' + rows + '</ul>' +
-    '<button type="button" class="add" data-act="pane" data-v="start">+ Insert a page</button>';
+  return '<h2>Pages</h2><p class="lede">Tap a page or anything in it to fill it in. You can also tap things right in the preview.</p><ul class="lys">' + rows + '</ul>' +
+    '<button type="button" class="add" data-act="pane" data-v="add">+ Add a page</button>';
 }
 
 function pTab() {
-  var t = D.tabs[editTab], P = 'tabs.' + editTab, h = '<button type="button" class="back" data-act="close">‹ Layers</button><h2>' + esc(t.name || 'Untitled') + ' <small>' + TYPES[t.type][0] + '</small></h2>';
+  var t = D.tabs[editTab], P = 'tabs.' + editTab, h = '<button type="button" class="back" data-act="close">‹ Pages</button><h2>' + esc(t.name || 'Untitled') + ' <small>' + TYPES[t.type][0] + '</small></h2>';
   h += fld('Page name', P + '.name', { max: 24, help: 'Short works best. One or two words.' });
   if (D.style.nav === 'bottom') h += '<div class="f"><span class="lab">Icon</span><div class="icons">' + ICON_NAMES.map(function (n) { return '<button type="button" class="' + ((t.icon || '') === n ? 'on' : '') + '" data-act="icon" data-v="' + n + '" aria-label="' + n + '"><svg viewBox="0 0 24 24">' + ICONS[n] + '</svg></button>'; }).join('') + '</div></div>';
   if (t.type === 'home') {
@@ -420,7 +453,7 @@ function pItem() {
 
 function pInfo() {
   var c = ['USD', 'CAD', 'MXN', 'EUR', 'GBP', 'AUD', 'JPY'];
-  return '<h2>Site</h2>' + fld('Name', 'name', { max: 40 }) + fld('Tagline', 'tagline', { max: 90 }) + imgf('Logo', 'logo') +
+  return '<h2>Info</h2>' + fld('Name', 'name', { max: 40 }) + fld('Tagline', 'tagline', { max: 90 }) + imgf('Logo', 'logo') +
     fld('Top banner', 'notice', { max: 70, ph: 'Free shipping over $50', help: 'A short line across the very top. Leave empty to hide.' }) +
     fld('Email', 'email', { type: 'email', mode: 'email', ph: 'you@yourname.com', help: 'Shown in the footer and on Contact.' }) +
     fld('Footer', 'footer', { ph: '© ' + new Date().getFullYear() + ' ' + (D.name || 'Your Name') }) +
@@ -470,9 +503,9 @@ function pPublish() {
 
 function draw(fromPick) {
   if (!fromPick) post({ type: 'mark', mark: markFor() });
-  var P = { start: pStart, look: pLook, pages: pPages, info: pInfo, publish: pPublish };
+  var P = { start: pStart, add: pAdd, look: pLook, pages: pPages, info: pInfo, publish: pPublish };
   $('#pane').innerHTML = P[pane]();
-  $$('.st-tabs button').forEach(function (b) { var on = b.dataset.p === pane; b.classList.toggle('on', on); b.setAttribute('aria-selected', on); });
+  $$('.st-tabs button').forEach(function (b) { var on = b.dataset.p === pane || (pane === 'add' && b.dataset.p === 'pages'); b.classList.toggle('on', on); b.setAttribute('aria-selected', on); });
 }
 
 /* ---------- images ---------- */
@@ -590,7 +623,7 @@ function remixApply(r) {
 }
 
 /* ---------- events ---------- */
-var lookFam = null, fineOpen = false;
+var lookFam = null, fineOpen = false, kindSel = null;
 function onAct(b) {
   var a = b.dataset.act, i = +b.dataset.i, j = +b.dataset.j, t = D.tabs[editTab];
   switch (a) {
@@ -599,6 +632,13 @@ function onAct(b) {
       D = PRESETS[b.dataset.v](); D._preset = b.dataset.v; editTab = editItem = null; save(); D._touched = false; localStorage.setItem(KEY, JSON.stringify(D)); break;
     case 'style': D.style[b.dataset.k] = b.dataset.v; save(); break;
     case 'fam': lookFam = b.dataset.v; break;
+    case 'kind': kindSel = b.dataset.v; if (VARIANTS[kindSel].length === 1 || kindSel !== kindOf(D._preset)) { /* show tiles, nothing replaced yet */ } break;
+    case 'variant':
+      var vk = b.dataset.v.split(':'), vv = VARIANTS[vk[0]][+vk[1]];
+      if (D._touched && D._preset !== vv[0] && !confirm('Start a new ' + vv[2] + ' site? What you have now gets replaced. Save a backup first if you want it.')) return;
+      if (D._preset === vv[0] && D._touched) { D._prevStyle = clone(D.style); D.style = Object.assign({}, D.style, variantStyle(vv)); }
+      else { D = PRESETS[vv[0]](); D.style = variantStyle(vv); }
+      D._preset = vv[0]; D._variant = b.dataset.v; kindSel = vk[0]; editTab = editItem = null; pvHash = null; save(); break;
     case 'look': var lv = b.dataset.v.split(':'); D._prevStyle = clone(D.style); D.style = Object.assign({}, D.style, lookStyle(LOOKS[lv[0]][+lv[1]][1])); save(); break;
     case 'shuffle': D._prevStyle = clone(D.style); D.style = shuffleStyle(D.style); save(); break;
     case 'lookundo': if (D._prevStyle) { D.style = D._prevStyle; delete D._prevStyle; save(); } break;
