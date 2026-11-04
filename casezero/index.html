@@ -39,14 +39,6 @@
 .cz-log button { padding: 0; border: 2px solid var(--ink); background: #fff; aspect-ratio: 1; overflow: hidden; cursor: pointer; display: block; width: 100%; }
 .cz-log img, .cz-log video { width: 100%; height: 100%; object-fit: cover; display: block; }
 .cz-empty { margin: 10px 0 0; color: var(--soft); font-size: .92rem; line-height: 1.45; }
-.cz form { display: flex; flex-direction: column; gap: 8px; margin-top: 12px; }
-.cz input { font: inherit; font-size: 16px; border: 2px solid var(--ink); border-radius: 0; padding: 13px; background: #fff; width: 100%; }
-.cz-go { font: inherit; font-weight: 900; letter-spacing: .08em; text-transform: uppercase; background: var(--red); color: #fff; border: 0; border-radius: 0; padding: 15px; cursor: pointer; width: 100%; font-size: .95rem; }
-.cz-go:disabled { opacity: .5; }
-.cz-msg { font-weight: 700; font-size: .9rem; margin: 8px 0 0; line-height: 1.4; }
-.cz-msg.bad { color: var(--red); }
-.cz-code { display: inline-block; font-family: ui-monospace, Menlo, monospace; background: #111; color: var(--paper); padding: 4px 8px; margin-top: 4px; user-select: all; -webkit-user-select: all; }
-.cz-small { font-size: .85rem; color: var(--soft); line-height: 1.45; margin: 10px 0 0; }
 .cz-view { position: fixed; inset: 0; background: rgba(0,0,0,.92); z-index: 1000; display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 16px; }
 .cz-view[hidden] { display: none; }
 .cz-view img, .cz-view video { max-width: 100%; max-height: 72vh; object-fit: contain; }
@@ -122,16 +114,6 @@
     <p class="cz-empty" id="czEmpty">Loading the build photos...</p>
   </div>
 
-  <p class="cz-sec">When it is ready</p>
-  <div class="cz-note">
-    <h2>Tell me first</h2>
-    <p class="cz-small" style="margin-top:8px">Leave your email or phone number. You get one message when a kit is ready, and free shipping on your first NOCIV order. No ads, no spam, no selling your info.</p>
-    <form id="czForm" novalidate>
-      <input id="czContact" type="text" inputmode="email" autocomplete="email" autocapitalize="off" spellcheck="false" placeholder="Email or phone" maxlength="200" aria-label="Email or phone">
-      <button class="cz-go" id="czGo" type="submit">Tell me first</button>
-    </form>
-    <p class="cz-msg" id="czMsg" role="status"></p>
-  </div>
 
 </main>
 
@@ -193,20 +175,6 @@
       });
   }
 
-  // ---- Tell me first: same mailing list as the shop (join_list), gives their free shipping code ----
-  $('czForm').addEventListener('submit', function (e) {
-    e.preventDefault();
-    var v = $('czContact').value.trim(), msg = $('czMsg');
-    msg.className = 'cz-msg';
-    if (v.length < 3) { msg.className = 'cz-msg bad'; msg.textContent = 'Put in your email or phone number.'; return; }
-    if (typeof supabaseClient === 'undefined') { msg.className = 'cz-msg bad'; msg.textContent = 'No signal. Try again in a minute.'; return; }
-    $('czGo').disabled = true; msg.textContent = 'Saving...';
-    supabaseClient.rpc('join_list', { p_contact: v }).then(function (r) {
-      if (r.error) { $('czGo').disabled = false; msg.className = 'cz-msg bad'; msg.textContent = r.error.message || 'Could not save. Try again.'; return; }
-      $('czContact').disabled = true;
-      msg.innerHTML = 'You are on the list. You will hear when a kit is ready.' + (r.data ? '<br>Free shipping on your first order:<br><span class="cz-code">' + esc(r.data) + '</span>' : '');
-    });
-  });
 })();
 </script>
 <script src="/install-app.js?v=8" defer></script>
