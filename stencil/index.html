@@ -1413,6 +1413,14 @@ section.grouped .filebtn{padding:12px!important}
  section.grouped label:has(+ .dlist){display:none!important}
  .dprev svg{display:block;width:100%;height:62px;border-radius:8px;background:#fff;border:1.5px solid #1a1a1a}
  .dprev p{margin:6px 0 0;font:500 12px/1.35 -apple-system,BlinkMacSystemFont,"Helvetica Neue",Arial,sans-serif;color:#3a3a3a}
+ /* tabs sit at the bottom of the console, right above the step bar; the console can drop down to show more picture */
+ html.nvlock main > aside:not(.right) .ctabs{order:9;border-bottom:0!important;border-top:1px solid #d9d4c8}
+ html.nvlock main > aside:not(.right).cdown{height:auto!important}
+ html.nvlock main > aside:not(.right).cdown > :not(.ctabs){display:none!important}
+ html.nvlock main > aside:not(.right).cdown .ctabs{border-top:0}
+ .ctabs .cdrop{all:unset;flex:0 0 34px;display:flex;align-items:center;justify-content:center;align-self:center;width:34px;height:34px;border-radius:50%;border:1.5px solid #1a1a1a;background:#fff;cursor:pointer;-webkit-tap-highlight-color:transparent}
+ .ctabs .cdrop svg{width:18px;height:18px;fill:none;stroke:#1a1a1a;stroke-width:2.4;stroke-linecap:round;stroke-linejoin:round}
+ aside.cdown .ctabs .cdrop svg{transform:rotate(180deg)}
  /* the picture keeps only the Artboard switch and the magnifier */
  .canvasWrap .viewt{bottom:8px!important}
  .status{font-size:11px!important;padding:3px 64px 3px 2px!important}
@@ -1430,6 +1438,13 @@ section.grouped .filebtn{padding:12px!important}
   bar.appendChild(rail);
   if (help) { help.classList.add('qb'); help.classList.remove('learnTop'); bar.appendChild(help); }
   aside.insertBefore(bar, aside.firstChild);
+  // drop the console down to see more of the picture, tap again (or any tab) to bring it back
+  var drop = document.createElement('button'); drop.type = 'button'; drop.className = 'cdrop'; drop.setAttribute('aria-label', 'Hide the controls'); drop.innerHTML = '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 9l6 6 6-6"/></svg>';
+  bar.insertBefore(drop, help && help.parentNode === bar ? help : null);
+  function setDown(on) { aside.classList.toggle('cdown', on); drop.setAttribute('aria-label', on ? 'Show the controls' : 'Hide the controls'); }
+  drop.addEventListener('click', function () { setDown(!aside.classList.contains('cdown')); });
+  rail.addEventListener('click', function (e) { if (e.target.closest('button[data-p]')) setDown(false); }, true);
+  document.addEventListener('click', function (e) { if (e.target.closest && e.target.closest('.bbar button')) setDown(false); }, true);
   // Stencil / Halftone goes into the Photo part
   var photo = Array.prototype.filter.call(aside.querySelectorAll('section'), function (s) { var h = s.querySelector('h2'); return h && h.textContent.trim() === 'Photo'; })[0];
   if (modes && photo) { modes.classList.add('inphoto'); modes.classList.remove('off'); var h = photo.querySelector('h2'); photo.insertBefore(modes, h ? h.nextSibling : photo.firstChild); }
