@@ -12,7 +12,7 @@ if (window.self !== window.top) document.documentElement.classList.add('embedded
 
 // ---------- state ----------
 const KEY = 'nociv-casezero-v7', SIZES = { clam: [9, 6], small: [5, 7], slate: [6, 4], calc: [5, 9], hand: [5, 8], pad: [10, 5], groove: [10, 5], face: [7, 7] };
-let S = { step: 0, tab: {}, cat: 'brain', items: [], mine: {}, style: 'clam', cols: 9, rows: 6, add: 0, hinge: 'printed', hside: 'back', magnets: true,
+let S = { step: 2, tab: {}, cat: 'brain', items: [], mine: {}, style: 'clam', cols: 9, rows: 6, add: 0, hinge: 'printed', hside: 'back', magnets: true,
   printer: 'a1', bed: [256, 256], material: 'pla', join: 'dovetail', sdir: 'auto', sn: 'auto', tab3: 'dovetail', open: true, snap: false, spring: false,
   look: null };
 const LOOK0 = () => ({ logo: { on: false, src: 'text', text: 'NOCIV', face: 'lidout', x: null, y: null, size: 40, how: 'dip' }, labels: { on: false, place: 'below', size: 4, how: 'dip', text: {} }, tex: { top: { kind: 'none', sp: 6, bump: false }, bottom: { kind: 'none', sp: 6, bump: false }, walls: { kind: 'none', sp: 6 }, lidout: { kind: 'none', sp: 6, bump: false }, lidin: { kind: 'none', sp: 6, bump: false } }, texFace: 'top', colors: 1, c1: '#e9e2cc', c2: '#1a1a1a', single: 'paint' });
@@ -245,17 +245,19 @@ function texSvg(k) {
 }
 // ---------- steps and tabs ----------
 const STEPS = [['Brain', 'brain'], ['Arrange', 'arrange'], ['Body', 'body'], ['Style', 'style'], ['Print', 'print'], ['Files', 'files']];
+// her order (11-04): Body first, then its look (color, texture, buttons), then the Brain inside, then Arrange
+const ORDER = [2, 3, 0, 1, 4, 5];
 function tabsFor(step) {
   if (step === 0) return [['snap', 'Snap', 'snap'], ['parts', 'Parts', 'parts'], ['picks', 'Picks', 'picks']];
   if (step === 1) return panels().map((p) => [p, PNAME[p], p]).concat([['size', 'Size', 'size']]);
   if (step === 2) return [['shape', 'Shape', 'shape'], ['fit', 'Fit', 'fit'], ['measure', 'Measure', 'measure']];
-  if (step === 3) return [['logo', 'Logo', 'logo'], ['labels', 'Labels', 'labels'], ['tex', 'Texture', 'tex'], ['colors', 'Colors', 'colors']];
+  if (step === 3) return [['colors', 'Color', 'colors'], ['tex', 'Texture', 'tex'], ['labels', 'Buttons', 'labels'], ['logo', 'Logo', 'logo']];
   if (step === 4) return [['printer', 'Printer', 'printer'], ['mat', 'Material', 'mat'], ['split', 'Split', 'split']];
   return [['3d', '3D', 'cube'], ['files', 'Files', 'file'], ['wire', 'Wire it', 'wire']];
 }
 function curTab() { const t = tabsFor(S.step), c = S.tab[S.step]; return t.some((x) => x[0] === c) ? c : t[S.step === 0 ? 1 : 0][0]; }
 function render() {
-  const bb = $('bbar'); bb.innerHTML = '<i style="width:' + ((S.step + 1) / 6 * 100) + '%"></i>' + STEPS.map((s, i) => '<button type="button" data-s="' + i + '"' + (i === S.step ? ' aria-current="step"' : '') + '>' + ico(s[1]) + '<span>' + s[0] + '</span></button>').join('');
+  const bb = $('bbar'); bb.innerHTML = '<i style="width:' + ((ORDER.indexOf(S.step) + 1) / 6 * 100) + '%"></i>' + ORDER.map((i) => [STEPS[i], i]).map(([s, i]) => '<button type="button" data-s="' + i + '"' + (i === S.step ? ' aria-current="step"' : '') + '>' + ico(s[1]) + '<span>' + s[0] + '</span></button>').join('');
   const t = curTab(); $('parts').innerHTML = tabsFor(S.step).map((x) => '<button type="button" data-t="' + x[0] + '" aria-pressed="' + (x[0] === t) + '">' + ico(x[2]) + '<span>' + x[1] + '</span></button>').join('');
   $('pane').innerHTML = pane(t); $('pane').scrollTop = 0; after(t); draw();
 }
