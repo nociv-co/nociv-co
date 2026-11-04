@@ -8,7 +8,13 @@ var FONTS = {
   editorial: ['"Iowan Old Style","Palatino Linotype",Palatino,Georgia,serif', 'system-ui,-apple-system,"Segoe UI",Roboto,Arial,sans-serif'],
   poster:    ['Impact,Haettenschweiler,"Arial Narrow Bold","Franklin Gothic Bold",sans-serif', 'system-ui,-apple-system,"Segoe UI",Roboto,Arial,sans-serif'],
   type:      ['ui-monospace,"SF Mono",Menlo,Consolas,"Courier New",monospace', 'ui-monospace,"SF Mono",Menlo,Consolas,"Courier New",monospace'],
-  soft:      ['ui-rounded,"SF Pro Rounded","Arial Rounded MT Bold",system-ui,sans-serif', 'ui-rounded,"SF Pro Rounded",system-ui,sans-serif']
+  soft:      ['ui-rounded,"SF Pro Rounded","Arial Rounded MT Bold",system-ui,sans-serif', 'ui-rounded,"SF Pro Rounded",system-ui,sans-serif'],
+  grotesk:   ['"Helvetica Neue","Arial Black",Arial,sans-serif', '"Helvetica Neue",Arial,sans-serif'],
+  didone:    ['Didot,"Bodoni 72","Bodoni MT","Bodoni 72 Oldstyle",Georgia,serif', 'system-ui,-apple-system,"Segoe UI",Roboto,Arial,sans-serif'],
+  slab:      ['Rockwell,"Rockwell Extra Bold","Roboto Slab","Courier New",serif', 'system-ui,-apple-system,"Segoe UI",Roboto,Arial,sans-serif'],
+  condensed: ['"Avenir Next Condensed","Arial Narrow","Roboto Condensed","Helvetica Neue",sans-serif', '"Avenir Next","Avenir",system-ui,sans-serif'],
+  humanist:  ['Optima,Candara,"Gill Sans","Noto Sans",sans-serif', 'Optima,Candara,"Gill Sans","Noto Sans",sans-serif'],
+  marker:    ['"Marker Felt","Chalkboard SE","Comic Neue","Trebuchet MS",sans-serif', 'system-ui,-apple-system,"Segoe UI",Roboto,Arial,sans-serif']
 };
 var RADIUS = { sharp: '0px', soft: '10px', round: '22px' };
 var ICONS = {
@@ -73,12 +79,14 @@ function applyStyle() {
   var r = document.documentElement.style;
   r.setProperty('--bg', bg); r.setProperty('--tx', tx); r.setProperty('--ac', ac);
   r.setProperty('--acx', onColor(ac));
+  r.setProperty('--tex', mix(bg, tx, 0.09));
   r.setProperty('--sf', mix(bg, tx, 0.05)); r.setProperty('--line', mix(bg, tx, 0.16)); r.setProperty('--mute', mix(tx, bg, 0.38));
   r.setProperty('--hf', f[0]); r.setProperty('--bf', f[1]);
   r.setProperty('--r', RADIUS[c.corner] || RADIUS.soft);
   var b = document.body;
   b.className = ['nav-' + (c.nav || 'tabs'), 'm-' + (reduce ? 'none' : (c.motion || 'fade')), 'f-' + (c.font || 'clean'), 'd-' + (c.density || 'comfy'),
-    'h-' + (c.header || 'left'), 'g-' + (c.layout || 'grid'), 'p-' + (c.photo || 'square'), 'base-' + (S.base || 'shop')].join(' ');
+    'h-' + (c.header || 'left'), 'g-' + (c.layout || 'grid'), 'p-' + (c.photo || 'square'), 'base-' + (S.base || 'shop'),
+    'b-' + (c.btn || 'solid'), 'c-' + (c.case || 'normal'), 't-' + (c.tex || 'none'), 'k-' + (c.card || 'plain')].join(' ');
   var tc = $('meta[name="theme-color"]'); if (tc) tc.setAttribute('content', bg);
 }
 

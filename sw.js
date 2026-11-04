@@ -2,7 +2,7 @@
 // Pages and data: network first, so you always get the newest. If there is no signal, you get the saved copy.
 // Tools: every creator tool is saved on the phone when the app is added to the home screen, so they work with no signal.
 // It never touches Supabase, Stripe or any other site, only files from nociv.co.
-var CACHE = 'nociv-v5';
+var CACHE = 'nociv-v6';
 var TOOLS = [
   '/card/fonts/abrilfatface.woff',
   '/card/fonts/anton.woff',
@@ -38,6 +38,7 @@ var TOOLS = [
   '/style.css',
   '/crop.js',
   '/install-app.js',
+  '/tool-help.js',
   '/supabase.js',
   '/header.webp',
   '/nav-about.png',

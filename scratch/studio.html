@@ -10,11 +10,11 @@
 </head>
 <body data-dev="phone">
 <header class="st-top">
-  <b class="st-logo">From<span>Scratch</span></b>
+  <a class="st-back" href="/scratch/" aria-label="Back to From Scratch">&lsaquo;</a><b class="st-logo">From<span>Scratch</span></b>
   <span class="st-saved" id="saved" aria-live="polite">Saved</span>
   <span class="sp"></span>
   <div class="st-dev" role="group" aria-label="Preview size"><button type="button" data-dev="phone" class="on">Phone</button><button type="button" data-dev="wide">Wide</button></div>
-  <a href="https://nociv.co/scratch/" target="_blank" rel="noopener">Guide</a>
+  <button type="button" class="th-q st-q" data-help="studio" aria-label="Studio help">?</button>
 </header>
 <section class="st-prev" aria-label="Live preview">
   <div class="st-frame"><iframe id="pv" src="preview.html" title="Live preview of your site"></iframe><button type="button" id="full">Full view</button></div>
@@ -29,6 +29,8 @@
   </nav>
   <div id="pane"></div>
 </section>
+<script>window.TOOL_HELP = Object.assign(window.TOOL_HELP || {}, {"studio": {"title": "Studio help", "items": [["Start", "Pick a starting point. Switching replaces what you have, so save a backup first."], ["Look", "Tap a look to try it. Your pages stay. Shuffle mixes new colors and type. Fine tune has every setting. Undo last look takes you back."], ["Pages", "Add, rename, hide or reorder pages. Tap a page to edit its words, items and photos."], ["Info", "Your site name, email, domain and the words people see when you share your link."], ["Publish", "Fix anything on the checklist, then Download my site. Upload that zip to your host."], ["Saved", "Everything saves on this device as you work, photos too. Make a backup file if you switch phones."]]}});</script>
+<script src="/tool-help.js" defer></script>
 <script src="kit/studio.js"></script>
 </body>
 </html>

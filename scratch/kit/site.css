@@ -204,3 +204,25 @@ details p{margin:0 0 14px;color:var(--mute)}
 .ft a{min-height:44px;display:inline-flex;align-items:center}
 
 @media(prefers-reduced-motion:reduce){*,*::before,*::after{animation:none!important;transition:none!important;scroll-behavior:auto!important}}
+
+/* ---------- look knobs: fonts, buttons, heading case, background texture, card frame ---------- */
+.f-grotesk .ttl,.f-grotesk .hero-h,.f-grotesk h2,.f-grotesk .brand{font-weight:900;letter-spacing:-.03em}
+.f-didone .ttl,.f-didone .hero-h,.f-didone h2,.f-didone .brand{font-weight:400;letter-spacing:-.01em}
+.f-slab .ttl,.f-slab .hero-h,.f-slab h2,.f-slab .brand{font-weight:800;letter-spacing:-.01em}
+.f-condensed .ttl,.f-condensed .hero-h,.f-condensed h2,.f-condensed .brand{font-weight:800;text-transform:uppercase;letter-spacing:0}
+.f-humanist .ttl,.f-humanist .hero-h,.f-humanist h2{font-weight:600;letter-spacing:0}
+.f-marker .ttl,.f-marker .hero-h,.f-marker h2,.f-marker .brand{font-weight:400;letter-spacing:0}
+.c-upper .ttl,.c-upper .hero-h,.c-upper h2,.c-upper .brand,.c-upper .tt,.c-upper .btn{text-transform:uppercase;letter-spacing:.04em}
+.b-outline .btn{background:transparent;color:var(--tx);border-color:var(--tx)}
+.b-pill .btn{border-radius:999px}
+.b-underline .btn{background:transparent;color:var(--tx);border:0;border-bottom:3px solid var(--ac);border-radius:0;padding:0 4px;min-height:44px}
+.b-outline .btn.is-off,.b-underline .btn.is-off{color:var(--mute);border-color:var(--line)}
+body.t-grain{background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='140' height='140'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.9' numOctaves='2' stitchTiles='stitch'/%3E%3CfeColorMatrix values='0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 .07 0'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E")}
+body.t-grid{background-image:linear-gradient(var(--tex) 1px,transparent 1px),linear-gradient(90deg,var(--tex) 1px,transparent 1px);background-size:24px 24px}
+body.t-lines{background-image:repeating-linear-gradient(to bottom,transparent 0 31px,var(--tex) 31px 32px)}
+body.t-dots{background-image:radial-gradient(var(--tex) 1.3px,transparent 1.6px);background-size:18px 18px}
+.k-border .card-img{border:1.5px solid var(--tx)}
+.k-shadow .card-img{box-shadow:0 10px 24px rgba(0,0,0,.16)}
+.k-tape .card{position:relative}
+.k-tape .card::before{content:'';position:absolute;top:-8px;left:50%;width:58px;height:18px;margin-left:-29px;background:var(--ac);opacity:.75;transform:rotate(-3deg);z-index:2;pointer-events:none}
+.k-tape .card-img{box-shadow:0 4px 10px rgba(0,0,0,.12)}

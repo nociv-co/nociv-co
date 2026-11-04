@@ -43,6 +43,9 @@ a.tool-card { text-decoration: none; color: inherit; }
 @media (prefers-reduced-motion: reduce) { .fs-how i { transition: none; } }
 .fs-go { display: inline-flex; align-items: center; justify-content: center; min-height: 52px; padding: 0 24px; margin-top: 14px; background: var(--bi); color: #f2ecd6; font-weight: 900; text-transform: uppercase; letter-spacing: .06em; text-decoration: none; box-shadow: 4px 4px 0 rgba(242,194,48,.9); }
 .build-note a { color: inherit; text-decoration: underline; text-underline-offset: 3px; text-decoration-thickness: 2px; }
+.fs-more-starts { grid-column: 1 / -1; display: flex; flex-wrap: wrap; align-items: center; gap: 8px; }
+.fs-more-starts span { font-weight: 800; font-size: .85rem; margin-right: 4px; }
+.fs-more-starts a { min-height: 44px; padding: 0 16px; display: inline-flex; align-items: center; border: 2px solid #1a1a1a; background: #f2ecd6; color: #1a1a1a; font-weight: 900; font-size: .8rem; letter-spacing: .06em; text-transform: uppercase; text-decoration: none; }
 </style>
 <script>if('serviceWorker' in navigator){window.addEventListener('load',function(){navigator.serviceWorker.register('/sw.js').catch(function(){})})}</script>
 </head>
@@ -58,6 +61,8 @@ a.tool-card { text-decoration: none; color: inherit; }
   <a href="/creator-tools.html" class="img-tab active"><img src="/nav-tools.png" alt="Tools"></a>
   <a href="/community.html" class="img-tab"><img src="/base-button.webp" alt="Base"></a>
 </nav>
+<div class="th-row"><a class="th-back" href="/creator-tools.html">&lsaquo; Back to Tools</a><button type="button" class="th-q" data-help="fs" aria-label="From Scratch help">?</button></div>
+
 
 <section class="build">
   <div class="build-hero">
@@ -93,6 +98,7 @@ a.tool-card { text-decoration: none; color: inherit; }
         <span class="tool-foot"><span class="tool-get">Inside: bottom bar, feed, links</span><span class="tool-open">Open</span></span>
       </span>
     </a>
+    <div class="fs-more-starts"><span>More starts:</span><a href="/scratch/studio.html?base=music">Music</a><a href="/scratch/studio.html?base=food">Food</a><a href="/scratch/studio.html?base=event">Event</a><a href="/scratch/studio.html?base=links">Links</a><a href="/scratch/studio.html?base=blank">Blank</a></div>
   </div>
 
   <button type="button" class="fs-how" id="fsHow" aria-expanded="false" aria-controls="fsMore">How it works <i aria-hidden="true"></i></button>
@@ -155,5 +161,7 @@ a.tool-card { text-decoration: none; color: inherit; }
   if (location.hash === '#steps') { set(true); setTimeout(function () { var t = document.getElementById('steps'); if (t) t.scrollIntoView(); }, 50); }
 })();
 </script>
+<script>window.TOOL_HELP = Object.assign(window.TOOL_HELP || {}, {"fs": {"title": "From Scratch", "items": [["What it is", "A free kit to make your own website. We do not host it. You download the files and they are yours."], ["Pick a start", "Shop, Archive, App, Music, Food, Event, Links or Blank. You can change every word, color and page after."], ["Make it yours", "In the Studio, tap a Look or Shuffle. Your words, photos and pages stay when you switch."], ["Put it online", "You need a domain name, about $11 a year from a domain seller. Hosting on Cloudflare Pages is free. Every step is under How it works."], ["What it costs", "Nothing from us. Ever."]]}});</script>
+<script src="/tool-help.js" defer></script>
 </body>
 </html>

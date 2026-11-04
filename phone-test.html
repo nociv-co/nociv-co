@@ -52,6 +52,12 @@
 // ===== THE TEST LIST. Claude rewrites this block after every delivery. Keep each test to a few taps. =====
 var BATCH = '2026-11-03 from scratch';
 var TESTS = [
+  { id: 'fslooks', title: 'From Scratch: 30 looks, Shuffle, 8 starts', where: 'nociv.co/scratch/studio.html',
+    steps: ['Open Look. Tap Street, then Stencil.', 'Tap Shuffle three times, then Undo last look.', 'Open Start and pick Music, then Food.'],
+    expect: 'Each look changes colors, type, buttons and background in the preview while every page and word stays. Shuffle always gives readable text. Music and Food load full starter sites.' },
+  { id: 'advhelp', title: 'Back and help on Case Zero and From Scratch', where: 'nociv.co/casezero, the Builder, nociv.co/scratch, the Studio',
+    steps: ['On each page tap the ? button, read, tap Done.', 'Tap Back.'],
+    expect: 'A cream help sheet slides up with numbered steps. Back goes one level up: Case Zero and From Scratch go to Tools, the Builder goes to Case Zero, the Studio goes to From Scratch.' },
   { id: 'nofont', title: 'Tall poster font gone, section lines', where: 'nociv.co/about.html, Tools, Case Zero, From Scratch',
     steps: ['Open About, Philosophy.', 'Open Tools, then Case Zero and From Scratch.'],
     expect: 'Big headings use the same heavy bold letters as the Directory card name, not the tall skinny poster font. On About a thin grey line runs between sections. Nothing is cut off on the sides.' },

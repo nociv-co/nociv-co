@@ -21,6 +21,7 @@
   .top h1 { margin: 0; font-family: -apple-system, BlinkMacSystemFont, "Helvetica Neue", Arial, sans-serif; font-weight: 900; font-size: clamp(30px, 9vw, 42px); line-height: 1.02; letter-spacing: .03em; text-transform: uppercase; }
   .top h1 span { background: var(--ink); color: #fff; padding: 2px 8px; display: inline-block; transform: rotate(-1.5deg); }
   .top a { font-size: .8rem; font-weight: 800; color: var(--ink); white-space: nowrap; }
+  .top-r { display: flex; align-items: center; gap: 8px; }
   .steps { display: flex; gap: 6px; overflow-x: auto; scrollbar-width: none; padding: 4px 2px 10px; margin: 0 -2px; }
   .steps::-webkit-scrollbar { display: none; }
   .st { flex: none; font: inherit; font-size: .78rem; font-weight: 900; letter-spacing: .06em; text-transform: uppercase; border: 2px solid var(--ink); background: #fff; color: var(--ink); padding: 9px 11px; border-radius: 0; cursor: pointer; display: flex; align-items: center; gap: 6px; }
@@ -70,7 +71,7 @@
 </head>
 <body>
 <div class="wrap">
-  <div class="top"><h1><span>Case Zero</span><br>Builder</h1><a href="/casezero/">Back</a></div>
+  <div class="top"><h1><span>Case Zero</span><br>Builder</h1><span class="top-r"><a class="th-back" href="/casezero/">&lsaquo; Back</a><button type="button" class="th-q" data-help="czb" aria-label="Builder help">?</button></span></div>
 
   <nav class="steps" aria-label="Steps">
     <button type="button" class="st" data-step="1"><b>1</b>Does</button>
@@ -132,5 +133,7 @@
 </div>
 <div class="next-bar"><button type="button" class="btn" id="next">Next</button></div>
 <script type="module" src="builder.js?v=6"></script>
+<script>window.TOOL_HELP = Object.assign(window.TOOL_HELP || {}, {"czb": {"title": "Builder help", "items": [["Does", "Pick what your device does. Each choice adds the real parts it needs, sized from their data sheets."], ["Size", "Pick the case size in 20 mm squares. The height grows to fit the deepest part."], ["Place", "Drag parts onto the lid grid. Yellow means a problem: too close to an edge, a corner post, another part, or the board."], ["3D", "Turn the case with your finger. Open the lid to see inside."], ["Files", "Download the box and lid as STL files for a 3D printer, plus the parts list."], ["Code", "Loading code onto the board needs a computer with Chrome or Edge. An iPhone cannot do that step."], ["Saved", "Your layout saves on this phone as you go."]]}});</script>
+<script src="/tool-help.js" defer></script>
 </body>
 </html>

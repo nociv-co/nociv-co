@@ -40,8 +40,61 @@ var ICON_NAMES = Object.keys(ICONS);
 var PALETTES = [
   ['Paper', '#fafaf7', '#141414', '#141414'], ['Ink', '#111111', '#f4f4f0', '#ffd23f'], ['Clay', '#f3ece2', '#2a1f17', '#b5482d'],
   ['Moss', '#eef1e8', '#1e2a1c', '#3f6b3a'], ['Ocean', '#eaf2f8', '#0e2233', '#1f6feb'], ['Night', '#0f1115', '#f2f2f2', '#7cf29a'],
-  ['Blush', '#fbeff0', '#2b1418', '#d6336c'], ['Mono', '#ffffff', '#000000', '#000000']
+  ['Blush', '#fbeff0', '#2b1418', '#d6336c'], ['Mono', '#ffffff', '#000000', '#000000'],
+  ['Denim', '#1f2f45', '#f2ecd6', '#e0a240'], ['Poster', '#f2c230', '#141414', '#141414'], ['Linen', '#f6f1e9', '#22201c', '#7a5c3e'], ['Lime', '#d7ff3b', '#0f0f0f', '#0f0f0f'],
+  ['Peach', '#ffe9dc', '#3a1d12', '#e2553d'], ['Midnight', '#0e1726', '#eef2f7', '#9cc4ff'], ['Ember', '#1a1210', '#f6e6dc', '#ff6a3d'], ['Electric', '#1d1dff', '#ffffff', '#f2ff3b']
 ];
+/* ---------- looks: 30 ready-made looks in 6 families. Applying one keeps every word, photo and page. ---------- */
+var FONT_H = { clean: 'system-ui,sans-serif', editorial: '"Iowan Old Style",Palatino,Georgia,serif', poster: 'Impact,"Arial Narrow Bold",sans-serif', type: 'ui-monospace,Menlo,monospace', soft: 'ui-rounded,"SF Pro Rounded",system-ui,sans-serif',
+  grotesk: '"Helvetica Neue","Arial Black",Arial,sans-serif', didone: 'Didot,"Bodoni 72",Georgia,serif', slab: 'Rockwell,"Roboto Slab","Courier New",serif', condensed: '"Avenir Next Condensed","Arial Narrow",sans-serif', humanist: 'Optima,Candara,"Gill Sans",sans-serif', marker: '"Marker Felt","Chalkboard SE","Trebuchet MS",sans-serif' };
+var FONT_W = { poster: 400, didone: 400, marker: 400, humanist: 600, grotesk: 900 };
+var LOOK_KEYS = ['font', 'bg', 'text', 'accent', 'corner', 'density', 'header', 'layout', 'photo', 'btn', 'case', 'tex', 'card', 'motion'];
+var LOOKS = {
+  Clean: [['Gallery White', 'clean,#ffffff,#111111,#111111,sharp,comfy,left,grid,natural,outline,normal,none,plain,fade'], ['Soft Paper', 'humanist,#fafaf7,#1b1b1b,#2f6db5,soft,comfy,center,grid,portrait,solid,normal,none,plain,fade'],
+    ['Swiss', 'grotesk,#f4f4f2,#0a0a0a,#d92d20,sharp,compact,stack,list,square,solid,upper,grid,plain,slide'], ['Air', 'clean,#eef3f7,#10202e,#1f5fd6,round,comfy,left,grid,landscape,pill,normal,none,shadow,rise'],
+    ['Linen', 'didone,#f6f1e9,#22201c,#22201c,sharp,comfy,center,masonry,natural,underline,normal,grain,plain,fade']],
+  Street: [['Stencil', 'condensed,#e9e6df,#141414,#b83a2a,sharp,compact,stack,grid,portrait,solid,upper,grain,tape,slide'], ['Denim', 'grotesk,#1f2f45,#f2ecd6,#e0a240,soft,compact,left,grid,square,solid,upper,none,border,slide'],
+    ['Sticker', 'marker,#fffbe8,#141414,#d1287a,round,comfy,center,grid,square,pill,normal,dots,shadow,zoom'], ['Concrete', 'condensed,#c9c6bf,#111111,#111111,sharp,compact,stack,list,landscape,outline,upper,grain,border,rise'],
+    ['Skate', 'slab,#141414,#f4f4f0,#f2c230,soft,compact,left,masonry,natural,solid,upper,none,tape,zoom']],
+  Editorial: [['Magazine', 'didone,#ffffff,#111111,#b42318,sharp,comfy,stack,masonry,natural,underline,normal,none,plain,rise'], ['Archive', 'editorial,#f3f1ec,#1d1d1b,#b23d0b,sharp,comfy,stack,masonry,natural,underline,normal,none,plain,rise'],
+    ['Newsprint', 'editorial,#ecebe6,#1a1a1a,#1a1a1a,sharp,compact,center,list,landscape,outline,upper,lines,plain,fade'], ['Typewriter', 'type,#f7f4ec,#222222,#2f5d8a,sharp,comfy,left,list,square,underline,normal,lines,plain,none'],
+    ['Gallery Night', 'didone,#121212,#f1efe9,#c9a96e,sharp,comfy,center,grid,portrait,outline,upper,none,plain,fade']],
+  Warm: [['Clay', 'humanist,#f3ece2,#2a1f17,#a8432a,soft,comfy,left,grid,portrait,solid,normal,grain,plain,fade'], ['Market', 'slab,#fff6e5,#2b1d10,#2f7d4a,soft,comfy,center,list,square,solid,normal,none,border,rise'],
+    ['Peach', 'soft,#ffe9dc,#3a1d12,#c4432c,round,comfy,center,grid,square,pill,normal,dots,shadow,zoom'], ['Olive', 'editorial,#eef0e3,#20251a,#4f5d27,soft,comfy,left,masonry,natural,outline,normal,grain,plain,fade'],
+    ['Cocoa', 'humanist,#2b1d16,#f6ead8,#e0a240,soft,comfy,stack,grid,portrait,solid,normal,none,shadow,fade']],
+  Loud: [['Poster', 'poster,#f2c230,#141414,#141414,sharp,compact,stack,grid,square,solid,upper,none,border,zoom'], ['Signal', 'grotesk,#ffffff,#0a0a0a,#d92d20,sharp,compact,stack,grid,square,solid,upper,none,border,slide'],
+    ['Electric', 'grotesk,#1d1dff,#ffffff,#f2ff3b,sharp,compact,stack,grid,square,solid,upper,none,plain,zoom'], ['Bubblegum', 'soft,#ffd6ec,#2a0f1f,#7a1fd1,round,comfy,center,grid,square,pill,normal,dots,shadow,zoom'],
+    ['Lime', 'condensed,#d7ff3b,#0f0f0f,#0f0f0f,round,compact,left,grid,square,pill,upper,none,plain,slide']],
+  Night: [['Ink', 'clean,#111111,#f4f4f0,#ffd23f,soft,comfy,left,grid,square,solid,normal,none,plain,fade'], ['Neon', 'grotesk,#0f1115,#f2f2f2,#7cf29a,round,compact,left,grid,square,pill,normal,grid,plain,slide'],
+    ['Midnight', 'didone,#0e1726,#eef2f7,#9cc4ff,sharp,comfy,center,masonry,natural,outline,normal,none,plain,rise'], ['Ember', 'slab,#1a1210,#f6e6dc,#ff6a3d,soft,compact,stack,grid,portrait,solid,upper,grain,shadow,fade'],
+    ['Studio Black', 'condensed,#0a0a0a,#ffffff,#ffffff,sharp,compact,stack,list,landscape,outline,upper,none,border,slide']]
+};
+var LOOK_FAMS = Object.keys(LOOKS);
+function lookStyle(spec) { var v = spec.split(','), o = {}; LOOK_KEYS.forEach(function (k, i) { o[k] = v[i]; }); return o; }
+function lookTile(name, st, act, v) {
+  var bt = st.btn === 'outline' || st.btn === 'underline' ? 'background:transparent;border:2px solid ' + (st.btn === 'underline' ? 'transparent;border-bottom-color:' + st.accent : st.text) : 'background:' + st.accent + ';border:2px solid ' + st.accent;
+  var tex = { grid: 'background-image:linear-gradient(rgba(127,127,127,.18) 1px,transparent 1px),linear-gradient(90deg,rgba(127,127,127,.18) 1px,transparent 1px);background-size:10px 10px;', lines: 'background-image:repeating-linear-gradient(transparent 0 11px,rgba(127,127,127,.22) 11px 12px);', dots: 'background-image:radial-gradient(rgba(127,127,127,.35) 1px,transparent 1.3px);background-size:8px 8px;' }[st.tex] || '';
+  var r = { sharp: '0', soft: '5px', round: '12px' }[st.corner] || '5px';
+  var cards = '<span class="lk-c"><i style="border-radius:' + r + ';background:' + st.text + '"></i><i style="border-radius:' + r + ';background:' + st.text + '"></i></span>';
+  return '<button type="button" class="lk" data-act="' + act + '" data-v="' + v + '" style="background-color:' + st.bg + ';color:' + st.text + ';' + tex + '">' +
+    '<span class="lk-h" style="font-family:' + esc(FONT_H[st.font] || FONT_H.clean) + ';font-weight:' + (FONT_W[st.font] || 800) + ';' + (st.case === 'upper' ? 'text-transform:uppercase;' : '') + '">Aa</span>' +
+    '<span class="lk-b" style="' + bt + ';border-radius:' + (st.btn === 'pill' ? '99px' : st.btn === 'underline' ? '0' : r) + '"></span>' + cards + '<small>' + esc(name) + '</small></button>';
+}
+function shuffleStyle(cur) {
+  var pals = PALETTES.map(function (p) { return p.slice(1); });
+  LOOK_FAMS.forEach(function (f) { LOOKS[f].forEach(function (l) { var x = lookStyle(l[1]); pals.push([x.bg, x.text, x.accent]); }); });
+  function pick(a) { return a[Math.floor(Math.random() * a.length)]; }
+  for (var n = 0; n < 40; n++) {
+    var p = pick(pals), o = Object.assign({}, cur, {
+      bg: p[0], text: p[1], accent: p[2], font: pick(Object.keys(FONT_H)), btn: pick(['solid', 'solid', 'outline', 'pill', 'underline']),
+      case: pick(['normal', 'normal', 'upper']), tex: pick(['none', 'none', 'none', 'grain', 'grid', 'lines', 'dots']), card: pick(['plain', 'plain', 'border', 'shadow', 'tape']), corner: pick(['sharp', 'soft', 'round'])
+    });
+    if (o.bg === cur.bg && o.font === cur.font) continue;
+    if (ratio(o.bg, o.text) >= 4.5 && ratio(o.accent, onColor(o.accent)) >= 4.5 && (o.btn === 'solid' || o.btn === 'pill' ? ratio(o.accent, o.bg) >= 1.6 : true)) return o;
+  }
+  return cur;
+}
+
 function it(title, price, tag, text) { return { id: rid(), title: title, price: price || '', tag: tag || '', text: text || '', images: [], buy: '', soldout: false }; }
 function tab(type, name, extra) { var t = { id: rid(), type: type, name: name || TYPES[type][0], intro: '', items: [] }; for (var k in extra) t[k] = extra[k]; return t; }
 var SHIP = { currency: 'USD', shipping: 'Ships in 3 to 5 business days. US only for now.', returns: 'Unused items can come back within 30 days. Email us first.' };
@@ -68,6 +121,34 @@ var PRESETS = {
       tab('gallery', 'Feed', { icon: 'image', items: [it('Today'), it('Studio'), it('Show')] }),
       tab('links', 'Links', { icon: 'link', items: [{ id: rid(), title: 'My music', buy: 'https://example.com', images: [] }, { id: rid(), title: 'Newsletter', buy: 'https://example.com', images: [] }] }),
       tab('page', 'Me', { icon: 'user', body: 'Who you are, in two lines.' })] }; },
+  music: function () { return { v: 1, base: 'music', name: 'Band Name', tagline: 'New record out now.', notice: '', email: '', footer: '', domain: '', description: '', logo: '', shareImage: '',
+    style: Object.assign({ nav: 'tabs' }, lookStyle('condensed,#0f0f0f,#f4f4f0,#ff3b30,sharp,compact,stack,grid,square,solid,upper,grain,plain,slide')),
+    shop: clone(SHIP),
+    tabs: [tab('home', 'Home', { headline: 'New record out now.', intro: 'Listen everywhere. See us live.', button: 'Listen', buttonTo: 3 }),
+      tab('grid', 'Music', { items: [it('First Album', '', 'Album', 'Released 2026. 10 songs.'), it('Night EP', '', 'EP'), it('Single', '', 'Single')] }),
+      tab('page', 'Shows', { body: '# Coming up\nMar 14, The Venue, City\nApr 2, Backyard show, City\n\n# Past\nDec 9, Record store set, City' }),
+      tab('links', 'Listen', { items: [{ id: rid(), title: 'Bandcamp', buy: 'https://example.com', images: [] }, { id: rid(), title: 'Apple Music', buy: 'https://example.com', images: [] }, { id: rid(), title: 'Spotify', buy: 'https://example.com', images: [] }] }),
+      tab('contact', 'Booking', { body: 'Shows, press and collabs.' })] }; },
+  food: function () { return { v: 1, base: 'food', name: 'Corner Kitchen', tagline: 'Open Tue to Sun, 11 to 8.', notice: 'Call ahead for big orders', email: '', footer: '', domain: '', description: '', logo: '', shareImage: '',
+    style: Object.assign({ nav: 'tabs' }, lookStyle('slab,#fff6e5,#2b1d10,#2f7d4a,soft,comfy,center,list,square,solid,normal,none,border,rise')),
+    shop: clone(SHIP),
+    tabs: [tab('home', 'Home', { headline: 'Made fresh, every day.', intro: 'Order at the window or call ahead.', button: 'See the menu', buttonTo: 1 }),
+      tab('grid', 'Menu', { intro: 'Prices include tax.', items: [it('Street Tacos', '3', 'Mains', 'Corn tortilla, onion, cilantro.'), it('Big Burrito', '11', 'Mains'), it('Elote', '5', 'Sides'), it('Agua Fresca', '4', 'Drinks')] }),
+      tab('page', 'Hours', { body: 'Tue to Fri: 11 to 8\nSat and Sun: 10 to 9\nClosed Mondays\n\n# Find us\nStreet name, City' }),
+      tab('contact', 'Catering', { body: 'Parties, offices and events. Tell us the date and how many people.' })] }; },
+  event: function () { return { v: 1, base: 'event', name: 'Night Market', tagline: 'Sat, May 3. 6 to 11 pm.', notice: '', email: '', footer: '', domain: '', description: '', logo: '', shareImage: '',
+    style: Object.assign({ nav: 'tabs' }, lookStyle('grotesk,#f2c230,#141414,#141414,sharp,compact,stack,grid,landscape,solid,upper,none,border,zoom')),
+    shop: clone(SHIP),
+    tabs: [tab('home', 'Home', { headline: 'One night only.', intro: 'Food, music and 40 local makers.', button: 'Get tickets', buttonTo: 3 }),
+      tab('page', 'Schedule', { body: '# Saturday\n6 pm, Doors\n7 pm, DJ set\n9 pm, Live band\n11 pm, Lights out' }),
+      tab('grid', 'Vendors', { items: [it('Maker One', '', 'Food'), it('Maker Two', '', 'Art'), it('Maker Three', '', 'Clothes'), it('Maker Four', '', 'Art')] }),
+      tab('links', 'Tickets', { items: [{ id: rid(), title: 'Get tickets', buy: 'https://example.com', images: [] }, { id: rid(), title: 'Become a vendor', buy: 'https://example.com', images: [] }] }),
+      tab('gallery', 'Last year', { items: [it('Crowd'), it('Stage'), it('Stalls')] })] }; },
+  links: function () { return { v: 1, base: 'links', name: 'Your Name', tagline: 'Artist. Your city.', notice: '', email: '', footer: '', domain: '', description: '', logo: '', shareImage: '',
+    style: Object.assign({ nav: 'tabs' }, lookStyle('soft,#ffd6ec,#2a0f1f,#7a1fd1,round,comfy,center,list,square,pill,normal,dots,shadow,zoom')),
+    shop: clone(SHIP),
+    tabs: [tab('links', 'Links', { intro: 'Everything I do, in one place.', items: [{ id: rid(), title: 'New drop', buy: 'https://example.com', images: [] }, { id: rid(), title: 'My shop', buy: 'https://example.com', images: [] }, { id: rid(), title: 'Mailing list', buy: 'https://example.com', images: [] }, { id: rid(), title: 'Book me', buy: 'mailto:you@example.com', images: [] }] }),
+      tab('page', 'About', { body: 'Two lines about you. What you make and where.' })] }; },
   blank: function () { return { v: 1, base: 'shop', name: '', tagline: '', notice: '', email: '', footer: '', domain: '', description: '', logo: '', shareImage: '',
     style: { nav: 'tabs', motion: 'fade', font: 'clean', bg: '#ffffff', text: '#111111', accent: '#111111', corner: 'soft', density: 'comfy', header: 'left', layout: 'grid', photo: 'square' },
     shop: clone(SHIP), tabs: [tab('home', 'Home', { headline: 'Hello', button: '', buttonTo: null })] }; }
@@ -76,6 +157,10 @@ var BASES = [
   ['shop', 'Shop', 'Sell anything. Home, product pages, shipping info, buy buttons.'],
   ['archive', 'Archive', 'Show your work. Portfolio, sketchbook, bio. Prices optional.'],
   ['app', 'App', 'Feels like a phone app. Bottom bar, cards, dark mode.'],
+  ['music', 'Music', 'Releases, shows, where to listen, booking.'],
+  ['food', 'Food', 'Menu with prices, hours, catering. For a truck, cart or kitchen.'],
+  ['event', 'Event', 'One date. Schedule, vendors, tickets, photos.'],
+  ['links', 'Links', 'One page of big buttons. Put it in your bio or on a sticker.'],
   ['blank', 'Blank', 'One empty page. Build it your way.']
 ];
 
@@ -176,11 +261,17 @@ function pLook() {
   if (s.nav === 'side') navNote = 'Side list on computers, tabs on phones.';
   var tr = ratio(s.bg, s.text), ar = ratio(s.accent, onColor(s.accent)), ab = ratio(s.accent, s.bg);
   function rd(r, need, what) { var ok = r >= need; return '<li class="' + (ok ? 'ok' : 'bad') + '">' + (ok ? '✓ ' : '! ') + what + ' <b>' + r.toFixed(1) + ':1</b>' + (ok ? '' : ' needs ' + need + ':1') + '</li>'; }
-  return '<h2>Look</h2>' +
+  var fam = lookFam || 'Clean';
+  var gal = '<div class="lk-fams" role="tablist">' + LOOK_FAMS.map(function (f) { return '<button type="button" class="c' + (f === fam ? ' on' : '') + '" data-act="fam" data-v="' + f + '">' + f + '</button>'; }).join('') + '</div>' +
+    '<div class="lk-grid">' + LOOKS[fam].map(function (l, i) { return lookTile(l[0], lookStyle(l[1]), 'look', fam + ':' + i); }).join('') +
+    '<button type="button" class="lk lk-sh" data-act="shuffle"><b>Shuffle</b><small>New colors and type, same pages</small></button></div>' +
+    (D._prevStyle ? '<button type="button" class="sm wide" data-act="lookundo">Undo last look</button>' : '') +
+    '<p class="note">Looks change colors, type, buttons and spacing. Your words, photos and pages stay.</p>';
+  return '<h2>Look</h2>' + gal + '<details class="fine"' + (fineOpen ? ' open' : '') + '><summary>Fine tune</summary>' +
     group('Menu', 'nav', [['tabs', 'Tabs', 'on top'], ['menu', 'Menu', 'button'], ['bottom', 'Bottom bar', 'like an app'], ['side', 'Side list', 'computer']], navNote) +
     group('Page change', 'motion', [['none', 'None'], ['fade', 'Fade'], ['slide', 'Slide'], ['rise', 'Rise'], ['zoom', 'Zoom']]) +
     '<button type="button" class="sm wide" data-act="demo">▶ Watch it</button>' +
-    group('Type', 'font', [['clean', 'Clean', '', 'font-family:system-ui,sans-serif'], ['editorial', 'Editorial', '', 'font-family:Georgia,serif'], ['poster', 'POSTER', '', 'font-family:Impact,sans-serif'], ['type', 'Typewriter', '', 'font-family:ui-monospace,Menlo,monospace'], ['soft', 'Soft', '', 'font-family:ui-rounded,system-ui,sans-serif']]) +
+    group('Type', 'font', [['clean', 'Clean'], ['grotesk', 'Grotesk'], ['condensed', 'Condensed'], ['humanist', 'Humanist'], ['soft', 'Soft'], ['editorial', 'Editorial'], ['didone', 'Fashion'], ['slab', 'Slab'], ['type', 'Typewriter'], ['poster', 'POSTER'], ['marker', 'Marker']].map(function (f) { return [f[0], f[1], '', 'font-family:' + FONT_H[f[0]].replace(/"/g, "'") + ';font-weight:' + (FONT_W[f[0]] || 800)]; })) +
     '<div class="g"><h3>Colors</h3><div class="pal">' + PALETTES.map(function (p) {
       return '<button type="button" data-act="pal" data-v="' + p.slice(1).join(',') + '" aria-label="' + p[0] + '" style="background:' + p[1] + ';color:' + p[2] + '"><i style="background:' + p[3] + '"></i>' + p[0] + '</button>';
     }).join('') + '</div><div class="cols">' +
@@ -192,7 +283,11 @@ function pLook() {
     group('Spacing', 'density', [['comfy', 'Roomy'], ['compact', 'Tight']]) +
     group('Name at top', 'header', [['left', 'Left'], ['center', 'Center'], ['stack', 'Big']]) +
     group('Item layout', 'layout', [['grid', 'Grid'], ['masonry', 'Stagger'], ['list', 'List']]) +
-    group('Photo shape', 'photo', [['square', 'Square'], ['portrait', 'Tall'], ['landscape', 'Wide'], ['natural', 'As is']]);
+    group('Photo shape', 'photo', [['square', 'Square'], ['portrait', 'Tall'], ['landscape', 'Wide'], ['natural', 'As is']]) +
+    group('Buttons', 'btn', [['solid', 'Solid'], ['outline', 'Outline'], ['pill', 'Pill'], ['underline', 'Underline']]) +
+    group('Headings', 'case', [['normal', 'As typed'], ['upper', 'ALL CAPS']]) +
+    group('Background', 'tex', [['none', 'Plain'], ['grain', 'Grain'], ['grid', 'Graph'], ['lines', 'Lined'], ['dots', 'Dots']]) +
+    group('Photo frame', 'card', [['plain', 'None'], ['border', 'Line'], ['shadow', 'Shadow'], ['tape', 'Tape']]) + '</details>';
 }
 
 function pPages() {
@@ -436,6 +531,7 @@ function remixApply(r) {
 }
 
 /* ---------- events ---------- */
+var lookFam = null, fineOpen = false;
 function onAct(b) {
   var a = b.dataset.act, i = +b.dataset.i, j = +b.dataset.j, t = D.tabs[editTab];
   switch (a) {
@@ -443,6 +539,10 @@ function onAct(b) {
       if (D._touched && !confirm('Start from the ' + b.dataset.v + ' base? What you have now gets replaced. Save a backup first if you want it.')) return;
       D = PRESETS[b.dataset.v](); D._preset = b.dataset.v; editTab = editItem = null; save(); D._touched = false; localStorage.setItem(KEY, JSON.stringify(D)); break;
     case 'style': D.style[b.dataset.k] = b.dataset.v; save(); break;
+    case 'fam': lookFam = b.dataset.v; break;
+    case 'look': var lv = b.dataset.v.split(':'); D._prevStyle = clone(D.style); D.style = Object.assign({}, D.style, lookStyle(LOOKS[lv[0]][+lv[1]][1])); save(); break;
+    case 'shuffle': D._prevStyle = clone(D.style); D.style = shuffleStyle(D.style); save(); break;
+    case 'lookundo': if (D._prevStyle) { D.style = D._prevStyle; delete D._prevStyle; save(); } break;
     case 'pal': var v = b.dataset.v.split(','); D.style.bg = v[0]; D.style.text = v[1]; D.style.accent = v[2]; save(); break;
     case 'demo': demoMotion(); return;
     case 'open': editTab = i; editItem = null; push(); break;
@@ -491,6 +591,7 @@ function bind() {
     var d = e.target.closest('[data-dev]'); if (d) { $$('[data-dev]').forEach(function (x) { x.classList.toggle('on', x === d); }); document.body.dataset.dev = d.dataset.dev; }
     if (e.target.closest('#full')) { document.body.classList.toggle('full'); $('#full').textContent = document.body.classList.contains('full') ? 'Close' : 'Full view'; }
   });
+  document.addEventListener('toggle', function (e) { if (e.target.classList && e.target.classList.contains('fine')) fineOpen = e.target.open; }, true);
   document.addEventListener('input', function (e) {
     var el = e.target, p = el.dataset.b; if (!p) return;
     var v = el.type === 'checkbox' ? el.checked : el.value;

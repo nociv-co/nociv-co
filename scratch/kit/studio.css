@@ -135,3 +135,29 @@ body.full .st-prev{height:calc(100dvh - 52px)}
   body[data-dev="phone"] .st-frame,body:not([data-dev]) .st-frame{width:390px;height:min(844px,100%);border:10px solid var(--ink);border-radius:40px;overflow:hidden;box-shadow:0 20px 50px rgba(0,0,0,.25)}
   #full{display:none}
 }
+
+/* looks gallery: one screen, no scrolling */
+.lk-fams{display:flex;gap:6px;overflow-x:auto;scrollbar-width:none;margin:0 0 10px;padding-bottom:2px}
+.lk-fams::-webkit-scrollbar{display:none}
+.lk-fams .c{flex:0 0 auto;min-height:38px}
+.lk-fams .c.on{background:var(--ink);color:var(--paper);border-color:var(--ink)}
+.lk-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px;margin-bottom:8px}
+.lk{position:relative;border:1.5px solid var(--line);border-radius:10px;min-height:118px;padding:10px 9px 8px;display:flex;flex-direction:column;align-items:flex-start;gap:6px;text-align:left;overflow:hidden;cursor:pointer}
+.lk-h{font-size:26px;line-height:1}
+.lk-b{display:block;width:62%;height:12px}
+.lk-c{display:flex;gap:5px;width:100%;margin-top:auto}
+.lk-c i{flex:1;height:22px;opacity:.16}
+.lk small{font-size:11px;font-weight:700;line-height:1.1;font-family:system-ui,sans-serif;text-transform:none;letter-spacing:0}
+.lk:active{transform:scale(.97)}
+.lk-sh{background:var(--ink);color:var(--paper);border-color:var(--ink);justify-content:center}
+.lk-sh b{font-size:16px}
+.lk-sh small{opacity:.75;font-weight:500}
+details.fine{border-top:1.5px dashed var(--line);margin-top:14px;padding-top:6px}
+details.fine summary{min-height:44px;display:flex;align-items:center;font-weight:800;cursor:pointer;list-style:none}
+details.fine summary::-webkit-details-marker{display:none}
+details.fine summary::after{content:'';width:8px;height:8px;border-right:2px solid currentColor;border-bottom:2px solid currentColor;transform:rotate(45deg);margin-left:10px;margin-top:-4px;transition:transform .2s}
+details.fine[open] summary::after{transform:rotate(-135deg);margin-top:4px}
+
+/* back and help in the top bar */
+.st-top .st-back{border:0;padding:0 6px 0 0;min-height:44px;font-size:28px;line-height:1;font-weight:400}
+.st-top .st-q{width:36px;height:36px;border:2px solid var(--paper);color:var(--paper);font-size:16px;padding:0}
