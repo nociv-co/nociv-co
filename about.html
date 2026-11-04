@@ -11,38 +11,23 @@
   .participate-grid {
     display: grid;
     grid-template-columns: 1fr;
-    gap: 14px;
+    gap: 26px;
     max-width: 640px;
-    margin: 24px auto 0;
+    margin: 30px auto 0;
     text-align: left;
   }
   @media (min-width: 640px) {
     .participate-grid { grid-template-columns: repeat(3, 1fr); }
   }
-  .participate-card {
-    background: var(--paper-dim, #d8d8d8);
-    border: 1px solid #bbb;
-    border-left: 4px solid var(--red);
-    border-radius: 4px;
-    padding: 18px;
-    color: var(--ink, #1a1a1a);
-  }
-  .participate-card.build { border-left-color: var(--gold); }
-  .participate-card.share { border-left-color: var(--green); }
-  .participate-card h3 {
-    margin: 0 0 8px;
-    font-size: 1rem;
-    letter-spacing: 0.05em;
-    text-transform: uppercase;
-    color: var(--ink, #1a1a1a);
-  }
-  .participate-card a { color: inherit; font-weight: 800; white-space: nowrap; }
-  .participate-card p {
-    margin: 0;
-    font-size: 0.9rem;
-    line-height: 1.6;
-    opacity: .9;
-  }
+  .participate-card { position: relative; background: #f7f2e1; border: 2px solid #1a1a1a; border-radius: 3px; padding: 26px 16px 16px; color: #1a1a1a; box-shadow: 0 5px 12px rgba(0,0,0,.14); transform: rotate(-0.6deg); }
+  .participate-card.build { transform: rotate(0.5deg); }
+  .participate-card.share { transform: rotate(-0.3deg); }
+  .participate-card::before { content: ''; position: absolute; top: -11px; left: 18px; width: 62px; height: 20px; background: var(--red); opacity: .9; transform: rotate(-3deg); }
+  .participate-card.build::before { background: var(--gold); left: auto; right: 22px; transform: rotate(2deg); }
+  .participate-card.share::before { background: var(--green); }
+  .participate-card h3 { display: inline-block; margin: 0 0 10px; padding: 3px 9px; background: #1a1a1a; color: #f2ecd6; font-size: .95rem; letter-spacing: .1em; text-transform: uppercase; transform: rotate(-1.5deg); }
+  .participate-card a { display: inline-block; margin-top: 6px; color: inherit; font-weight: 800; white-space: nowrap; text-decoration: underline; text-underline-offset: 3px; padding: 6px 0; }
+  .participate-card p { margin: 0; font-size: 0.92rem; line-height: 1.6; }
   .participate-note {
     max-width: 640px;
     margin: 18px auto 0;
@@ -85,7 +70,10 @@
   .about-back { display: block; max-width: 640px; margin: 22px auto 0; padding: 0 20px; box-sizing: border-box; }
   .about-back a { display: inline-flex; align-items: center; gap: 8px; min-height: 44px; padding: 0 16px; border: 2px solid #1a1a1a; color: #1a1a1a; text-decoration: none; font-weight: 900; font-size: .8rem; letter-spacing: .1em; text-transform: uppercase; background: transparent; }
   .about-back a:active { background: #1a1a1a; color: #fff; }
-  .about-back.bottom { margin: 10px auto 30px; }
+  .about-back.bottom { margin: 10px auto 30px; display: flex; justify-content: space-between; gap: 10px; }
+  .about-back a.ab-next { background: #1a1a1a; color: #f2ecd6; }
+  .todo-clear { display: block; margin: 12px auto 0; background: none; border: none; font: inherit; font-size: .8rem; color: #777; text-decoration: underline; cursor: pointer; min-height: 44px; padding: 0 10px; }
+  .todo-clear[hidden] { display: none; }
 
   /* --- Contact: a posted note, same paper and tape as the rest of the site --- */
   .contact-note {
@@ -153,8 +141,9 @@
     <li><a href="#contact" data-k="contact"><span class="todo-box"><svg viewBox="0 0 34 34" aria-hidden="true"><path d="M6 18 L14 26 L30 4"/></svg></span><span class="todo-t">Contact</span><span class="todo-d">Write to me directly</span><span class="todo-go" aria-hidden="true">&rarr;</span></a></li>
     </ul>
   </div>
+  <button type="button" class="todo-clear" id="todoClear" hidden>Uncheck all</button>
 </section>
-<div class="about-back top" id="backTop" hidden><a href="#">&larr; Back to About</a></div>
+<div class="about-back top" id="backTop" hidden><a href="#" class="ab-back">&larr; Back to About</a></div>
 
 
 <!-- ===== PHILOSOPHY ===== -->
@@ -229,15 +218,15 @@
     <div class="participate-grid">
       <div class="participate-card buy">
         <h3>Buy</h3>
-        <p>Get something made by NOCIV: clothing, prints and art. Support the brand and take home something real. <a href="shop.html">Shop</a></p>
+        <p>Get something made by NOCIV: clothing, prints and art. Support the brand and take home something real.<br><a href="shop.html">Go to Shop &rarr;</a></p>
       </div>
       <div class="participate-card build">
         <h3>Build</h3>
-        <p>Use the free tools: Zine, Cut &amp; Sew, Stencil, Cards, Camera, Cartoon and Billboard. Go deeper with Case Zero hardware, or From Scratch to make your own website. <a href="creator-tools.html">Tools</a></p>
+        <p>Use the free tools: Zine, Cut &amp; Sew, Stencil, Cards, Camera, Cartoon and Billboard. Go deeper with Case Zero hardware, or From Scratch to make your own website.<br><a href="creator-tools.html">Go to Tools &rarr;</a></p>
       </div>
       <div class="participate-card share">
         <h3>Share</h3>
-        <p>Show up at the Base: the Stall Wall, the Directory and Spread the Word. No purchase required. <a href="community.html">Base</a></p>
+        <p>Show up at the Base: the Stall Wall, the Directory and Spread the Word. No purchase required.<br><a href="community.html">Go to Base &rarr;</a></p>
       </div>
     </div>
   </div>
@@ -345,7 +334,7 @@
   </div>
 </div>
 
-<div class="about-back bottom" id="backBottom" hidden><a href="#">&larr; Back to About</a></div>
+<div class="about-back bottom" id="backBottom" hidden><a href="#" class="ab-back">&larr; Back to About</a><a href="#" class="ab-next" id="abNext">Next</a></div>
 
 <footer class="nociv-footer">NOCIV.CO: Nothing Of Civilization<br>© 2023–2026 NOCIV.CO. Established 2023. All rights reserved.</footer>
 
@@ -358,7 +347,12 @@
   let done = [];
   try { done = JSON.parse(localStorage.getItem('aboutDone') || '[]'); } catch (e) {}
   const listEl = document.getElementById('aboutList');
-  function markDone() { document.querySelectorAll('.todo-list a').forEach(a => a.classList.toggle('done', done.includes(a.dataset.k))); }
+  const NAMES = { philosophy: 'Philosophy', participate: 'Participate', culture: 'Culture', founder: 'Founder', contact: 'Contact' };
+  function markDone() {
+    document.querySelectorAll('.todo-list a').forEach(a => a.classList.toggle('done', done.includes(a.dataset.k)));
+    document.getElementById('todoClear').hidden = !done.length;
+  }
+  document.getElementById('todoClear').addEventListener('click', () => { done = []; try { localStorage.removeItem('aboutDone'); } catch (e) {} markDone(); });
   function route() {
     const k = location.hash.slice(1).replace(/Panel$/, '');
     const on = PAGES.includes(k) ? k : null;
@@ -366,6 +360,7 @@
     document.getElementById('backTop').hidden = !on;
     document.getElementById('backBottom').hidden = !on;
     PAGES.forEach(p => { document.getElementById(p + 'Panel').hidden = p !== on; });
+    if (on) { const nx = PAGES[(PAGES.indexOf(on) + 1) % PAGES.length], n = document.getElementById('abNext'); n.href = '#' + nx; n.textContent = 'Next: ' + NAMES[nx] + ' \u2192'; }
     if (on && !done.includes(on)) { done.push(on); try { localStorage.setItem('aboutDone', JSON.stringify(done)); } catch (e) {} }
     markDone();
     window.scrollTo(0, 0);
@@ -377,12 +372,22 @@
     setTimeout(() => { a.classList.remove('ticking'); location.hash = a.dataset.k; }, 260);
   }));
   // Back buttons: go back in history when we came from the list, so the list keeps its place.
-  document.querySelectorAll('.about-back a').forEach(a => a.addEventListener('click', e => {
+  // Back always lands on the list, even after Next, Next, Next. depth = how many section pages since the list.
+  let depth = 0, toList = false;
+  document.querySelectorAll('.about-back a.ab-back').forEach(a => a.addEventListener('click', e => {
     e.preventDefault();
-    if (history.state && history.state.fromList) history.back();
+    if (depth > 0) { toList = true; history.go(-depth); }
     else { history.replaceState(null, '', location.pathname); route(); }
   }));
-  window.addEventListener('hashchange', () => { if (location.hash.length > 1) history.replaceState({ fromList: true }, ''); route(); });
+  window.addEventListener('hashchange', () => {
+    // Came in on a section from a link, then went back: still land on the list.
+    if (toList) { toList = false; depth = 0; if (location.hash.length > 1) history.replaceState(null, '', location.pathname); route(); return; }
+    if (location.hash.length > 1) {
+      if (history.state && typeof history.state.depth === 'number') depth = history.state.depth;
+      else { depth = depth + 1; history.replaceState({ depth }, ''); }
+    } else depth = 0;
+    route();
+  });
   route();
 
   // ===== CONTACT (table: contact_messages, read in Admin, Messages) =====
