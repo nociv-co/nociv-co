@@ -1,1 +1,11 @@
-{ "items": [] }
+{
+ "items": [
+  {
+   "name": "REA (Reverse Engineer Anything), NOCIV fork",
+   "what": "Toolkit that lets an AI agent inspect apps, binaries and firmware. Our copy is in your GitHub account with the NOCIV clean room method added in docs/nociv.",
+   "license": "MIT, keep the license file and morluto copyright notice",
+   "borrow": "The workflow instructions and how it gathers evidence before building.",
+   "url": "https://github.com/nociv-co/rea"
+  }
+ ]
+}
