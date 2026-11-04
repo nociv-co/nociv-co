@@ -52,21 +52,15 @@
 // ===== THE TEST LIST. Claude rewrites this block after every delivery. Keep each test to a few taps. =====
 var BATCH = '2026-11-03 pdf and offline';
 var TESTS = [
-  { id: 'czdeep', title: 'Case Zero on the Tools page', where: 'nociv.co/creator-tools.html',
-    steps: ['Scroll past the tool preview to the dashed GO DEEPER line.', 'Tap the red Case Zero button, then tap Hardware.'],
-    expect: 'A clear dashed line, then Want to go deeper with your words. The button opens Hardware and Software (Software says coming soon). Hardware opens nociv.co/casezero.' },
-  { id: 'czgrid1', title: 'Parts take real squares', where: 'nociv.co/casezero/build, step 1 and 3',
-    steps: ['In step 1 add 3 buttons, 2 knobs, 4 lights and a speaker. Read the takes ... mm line under each.', 'Go to step 3 and look at the lid.'],
-    expect: 'The lid has a 20 mm grid split into 10 mm halves. A light takes 1 half square, a button or knob 2 x 2, the speaker 3 x 3, the big button 4 x 4. Corner screw spots are never used.' },
-  { id: 'czgrid2', title: 'Drag snaps to the grid', where: 'Builder, step 3',
-    steps: ['Drag a part with one finger.', 'Drop it on top of another part.'],
-    expect: 'It jumps square by square and the page does not scroll or zoom. On top of another part it turns yellow and says it is sharing squares.' },
-  { id: 'czknob', title: 'Printed knobs', where: 'Builder, step 1 and 5',
-    steps: ['With a knob added, check Print my knobs says yes.', 'In step 5 tap Knob file. Then set Print my knobs to no and check step 5 again.'],
-    expect: 'The knob file downloads with one knob per knob part. With no, the knob file button goes away and the list says to buy a knob for a 6 mm shaft.' },
-  { id: 'czfiles', title: 'Box and lid files', where: 'Builder, step 5',
-    steps: ['Tap Box file and Lid file.'],
-    expect: 'Both STL files download. Tell me if Safari shows text instead of a file.' }
+  { id: 'techmenu', title: 'Tech drop down on Tools', where: 'nociv.co/creator-tools.html',
+    steps: ['Scroll under the preview to the dashed line.', 'Check the quote looks like yellow masking tape.', 'Tap TECH. Tap Case Zero.'],
+    expect: 'Only a dashed line (no words on it). TECH opens Case Zero and From Scratch (coming soon). Case Zero opens nociv.co/casezero.' },
+  { id: 'czcards', title: 'Case Zero cards', where: 'nociv.co/casezero',
+    steps: ['Look at the page top to bottom.', 'Tap The Body.'],
+    expect: 'Cards like the Base page: 01 The Brain (Being built), 02 The Body (Open). No prices, nothing for sale. The Body opens the Builder.' },
+  { id: 'toonscene', title: 'Cartoon starts with sky and grass', where: 'Tools, Cartoon, scene step (on a phone that never set a scene)',
+    steps: ['Open Cartoon and go to the scene part.'],
+    expect: 'Background starts sky blue with a green grass floor. If you saved a scene before, yours stays.' }
 ];
 // ===== end of list =====
 

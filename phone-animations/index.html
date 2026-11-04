@@ -1384,7 +1384,7 @@ body { animation: nvIn .3s ease both; }
   };
   const SKI = {};
   Object.keys(SKS).forEach(k => { const im = new Image(); im.onload = () => { pup.dirty = true; try { renderStill(); } catch (e) {} }; im.src = 'data:image/svg+xml;utf8,' + encodeURIComponent('<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 200" stroke="#1a1a1a" stroke-width="6" stroke-linejoin="round" stroke-linecap="round">' + SKS[k] + '</svg>'); SKI[k] = im; });
-  const SCE = { cur: { color: null, bg: null, bgBlob: null, bgv: 0, floor: { on: false, color: '#9b9a94' }, st: [], cx: 0, cz: 1, px: 0, pz: 1 }, frozen: null, sel: -1 };
+  const SCE = { cur: { color: '#9fc3e0', bg: null, bgBlob: null, bgv: 0, floor: { on: true, color: '#6fa35a' }, st: [], cx: 0, cz: 1, px: 0, pz: 1 }, frozen: null, sel: -1 };
   Object.defineProperty(pup, 'bg', { get() { return SCE.cur.bg; }, set(v) { SCE.cur.bg = v; SCE.cur.bgv++; } });
   Object.defineProperty(pup, 'bgBlob', { get() { return SCE.cur.bgBlob; }, set(v) { SCE.cur.bgBlob = v; } });
   const scSig = s => JSON.stringify([s.color, s.bgv, s.floor, s.st, s.cx || 0, s.cz || 1, s.px || 0, s.pz || 1]);
