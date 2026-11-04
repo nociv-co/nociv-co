@@ -20,7 +20,7 @@ button{font:inherit;font-weight:900;letter-spacing:.06em;text-transform:uppercas
 a{color:inherit}
 </style></head><body><main>
 <h1>Case Zero</h1>
-<p class="tag">Claim your own name on the internet. Free. This is the test version, nothing is created yet.</p>
+<p class="tag">Claim your own name on the internet. Free. Requests are saved and a person reviews each one. No names go live yet.</p>
 <div class="card">
   <label for="n">Name you want</label>
   <div class="host"><input id="n" autocomplete="off" autocapitalize="off" spellcheck="false" placeholder="yourname" maxlength="40"><span id="dom">.yourdomain</span></div>
@@ -31,6 +31,8 @@ a{color:inherit}
   <label for="o">Who you are (GitHub name or email)</label>
   <input id="o" autocomplete="off" autocapitalize="off" spellcheck="false" placeholder="@yourname">
   <p class="msg" id="msg" role="status"></p>
+  <button id="send" type="button" hidden>Request this name</button>
+  <p class="msg" id="sendmsg" role="status"></p>
 </div>
 <div class="card" id="out" hidden>
   <strong>What would happen</strong>
@@ -40,27 +42,51 @@ a{color:inherit}
   <p class="muted">In the real version you send this file to GitHub. It is checked by the same rules you just saw, a person approves it, and the name goes live in a few minutes.</p>
   <button id="copy" type="button">Copy the file</button>
 </div>
-<p class="muted">Test version. No real domain is connected yet, so no names are created and nothing is saved.</p>
+<p class="muted">Test version. No real domain is connected yet, so approved names do not go live. Your request is saved so we can review it. We keep only what you type here.</p>
 </main>
 <script src="validate.js"></script>
 <script>
 (function () {
   var $ = function (i) { return document.getElementById(i); }, domain = '';
+  var SB = 'https://vscombrgcdtrfndqyugb.supabase.co', KEY = 'sb_publishable_Ys6mf0Uyop7Mq6p3k68C7A_5GA3RusI';
+  function rpc(name, args) {
+    return fetch(SB + '/rest/v1/rpc/' + name, { method: 'POST', headers: { apikey: KEY, Authorization: 'Bearer ' + KEY, 'Content-Type': 'application/json' }, body: JSON.stringify(args) })
+      .then(function (r) { if (!r.ok) throw new Error('bad'); return r.json(); });
+  }
   fetch('config.json', { cache: 'no-store' }).then(function (r) { return r.json(); }).then(function (c) { domain = (c && c.domain) || ''; draw(); }).catch(function () {});
   var hints = { CNAME: ['Where it points', 'yourname.github.io'], A: ['IP address', '185.199.108.153'], URL: ['Full address', 'https://example.com'] };
+  var REASON = { bad_name: 'That name does not follow the rules.', reserved: 'That name is saved for NOCIV.', bad_type: 'Pick a type.', bad_value: 'Check where it points.', bad_owner: 'Add your GitHub name or email.', too_many: 'You have 5 requests waiting. Wait for those first.', taken: 'Someone already asked for that name.' };
+  var taken = null, takenFor = '', tT = 0, good = false, sentName = '';
   function req() { return { name: $('n').value.trim().toLowerCase(), type: $('t').value, value: $('v').value.trim(), owner: $('o').value.trim() }; }
+  function checkTaken(name) {
+    clearTimeout(tT); if (name === takenFor) return;
+    tT = setTimeout(function () { rpc('casezero_name_taken', { p_name: name }).then(function (t) { takenFor = name; taken = !!t; if ($('n').value.trim().toLowerCase() === name) draw(); }).catch(function () { takenFor = name; taken = null; }); }, 350);
+  }
   function draw() {
     $('dom').textContent = '.' + (domain || 'yourdomain');
     var h = hints[$('t').value]; $('vl').textContent = h[0]; $('v').placeholder = h[1];
-    var r = req(), touched = r.name || r.value, res = CaseZero.validate(r), m = $('msg');
+    var r = req(), touched = r.name || r.value, res = CaseZero.validate(r), m = $('msg'); good = false;
+    $('send').hidden = true;
     if (!touched) { m.textContent = ''; m.className = 'msg'; $('out').hidden = true; return; }
     if (!res.ok) { m.textContent = res.errors[0]; m.className = 'msg bad'; $('out').hidden = true; return; }
-    m.textContent = 'That works. ' + r.name + '.' + (domain || 'yourdomain') + ' is open in this test.'; m.className = 'msg ok';
+    if (r.owner.length < 3) { m.textContent = 'Add your GitHub name or email so we know who it is.'; m.className = 'msg bad'; $('out').hidden = true; return; }
+    if (sentName === r.name) { m.textContent = 'Your request is in.'; m.className = 'msg ok'; $('out').hidden = true; return; }
+    checkTaken(r.name);
+    if (takenFor === r.name && taken) { m.textContent = 'Someone already asked for that name.'; m.className = 'msg bad'; $('out').hidden = true; return; }
+    m.textContent = 'That name looks free.'; m.className = 'msg ok'; good = true; $('send').hidden = false;
     $('prev').textContent = CaseZero.dnsPreview(r, domain);
     $('file').textContent = JSON.stringify(CaseZero.requestFile(r, domain), null, 2);
     $('out').hidden = false;
   }
-  ['n', 't', 'v', 'o'].forEach(function (i) { $(i).addEventListener('input', draw); });
+  ['n', 't', 'v', 'o'].forEach(function (i) { $(i).addEventListener('input', function () { $('sendmsg').textContent = ''; draw(); }); });
+  $('send').onclick = function () {
+    if (!good) return; var r = req(), b = this; b.disabled = true; $('sendmsg').className = 'msg'; $('sendmsg').textContent = 'Sending...';
+    rpc('casezero_request', { p_name: r.name, p_type: r.type, p_value: r.value, p_owner: r.owner }).then(function (x) {
+      if (x === 'ok') { $('sendmsg').className = 'msg ok'; $('sendmsg').textContent = 'Sent. A person reviews it. Keep your name: ' + r.name; takenFor = r.name; taken = true; sentName = r.name; }
+      else { $('sendmsg').className = 'msg bad'; $('sendmsg').textContent = REASON[x] || 'That did not work.'; }
+      b.disabled = false; draw();
+    }).catch(function () { $('sendmsg').className = 'msg bad'; $('sendmsg').textContent = 'No signal or the service is down. Try again.'; b.disabled = false; });
+  };
   $('copy').onclick = function () { var b = this; var t = $('file').textContent; (navigator.clipboard ? navigator.clipboard.writeText(t) : Promise.reject()).then(function () { b.textContent = 'Copied'; }, function () { b.textContent = 'Press and hold the file to copy'; }); setTimeout(function () { b.textContent = 'Copy the file'; }, 2000); };
   draw();
 })();
