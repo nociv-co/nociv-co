@@ -27,7 +27,8 @@
     '#installApp ol{margin:0;padding-left:18px;line-height:1.45}#installApp li{margin:3px 0}' +
     '#installApp .ia-steps p{margin:10px 0 0;font-size:.78rem}' +
     '#installApp .ia-small{margin:10px 0 0;font-size:.74rem}' +
-    '#installApp .ia-msg{margin:8px 0 0}';
+    '#installApp .ia-msg{margin:8px 0 0}' +
+    '#installApp .build-note{margin:0 0 18px;padding:0;font-size:.9rem;font-weight:800;line-height:1.4;color:#1a1a1a;max-width:none}#installApp .build-note::before,#installApp .build-note::after{display:none}';
   document.head.appendChild(st);
 
   var box = document.createElement('section');
@@ -40,6 +41,9 @@
     '<p class="ia-msg" id="iaMsg" role="status"></p>' +
     '<p class="ia-small" id="iaSmall" style="display:none">We save only your phone\'s alert address. No name, no email.</p></div>';
 
+  // the page's 'Made something? Show it at the Base' line moves under the footer line
+  var note = document.querySelector('.build-note');
+  if (note) { var inner = box.querySelector('.ia-in'); inner.insertBefore(note, inner.firstChild); box.style.paddingTop = '8px'; }
   var foot = document.querySelector('footer');
   if (foot && foot.parentNode) foot.parentNode.insertBefore(box, foot); else document.body.appendChild(box);
 
