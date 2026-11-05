@@ -84,12 +84,14 @@
     }
     // mix and match: several motifs (your logo, your picture, an icon, empty space) take turns. The tile repeats n times across.
     // turns run both across and down, so neighbors are never the same motif
+    // gap down can differ from gap across: stretch the rows (not for the mirror-in-shape kinds)
+    var sy = o.tileInY ? Math.max(8, Math.round(o.tileInY * P)) / T : 1; H = Math.round(H * sy);
     var ms = o.motifs && o.motifs.length > 1 ? o.motifs : [m], n = ms.length, SW = W * n, SH = H * n;
     c = cv(SW, SH); g = c.getContext('2d'); if (o.bg) { g.fillStyle = o.bg; g.fillRect(0, 0, SW, SH); }
     if (t === 'diamond') { spots = [[W / 2, H / 2, 0, 0, 0], [0, 0, 0, 0, 0]]; }
     for (var cy = 0; cy < n; cy++) for (var cp = 0; cp < n; cp++) spots.forEach(function (s, i) {
       var alt = o.flip === 'alt' && (i % 2 === 1), fx = !!s[3] !== alt, fy = !!s[4], mm = ms[(cp + cy + i) % n]; if (!mm) return;
-      wrapDraw(g, SW, SH, s[0] + cp * W, s[1] + cy * H, size * .75, function (gg) { placeMotif(gg, mm, size, ang + s[2], fx, fy); });
+      wrapDraw(g, SW, SH, s[0] + cp * W, s[1] * sy + cy * H, size * .75, function (gg) { placeMotif(gg, mm, size, ang + s[2], fx, fy); });
     });
     return c;
   };

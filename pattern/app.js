@@ -66,7 +66,7 @@
   function idb() { return new Promise(function (res) { if (DB) return res(DB); try { var r = indexedDB.open('nocivPattern', 1); r.onupgradeneeded = function () { r.result.createObjectStore('img'); }; r.onsuccess = function () { DB = r.result; res(DB); }; r.onerror = function () { res(null); }; } catch (e) { res(null); } }); }
   function idbGet(k) { return idb().then(function (db) { return new Promise(function (res) { if (!db) return res(null); var q = db.transaction('img').objectStore('img').get(k); q.onsuccess = function () { res(q.result || null); }; q.onerror = function () { res(null); }; }); }); }
   function idbSet(k, v) { return idb().then(function (db) { return new Promise(function (res) { if (!db) return res(); var t = db.transaction('img', 'readwrite'); t.objectStore('img').put(v, k); t.oncomplete = res; t.onerror = res; }); }); }
-  var PIC = null; // the uploaded or halftone picture, as a canvas
+  var PIC = null, PICSRC = null; // the picture as a canvas, and the original file so it can be cropped again
   function blobToCanvas(b) { return new Promise(function (res) { var u = URL.createObjectURL(b), im = new Image(); im.onload = function () { var k = Math.min(1, 1400 / Math.max(im.width, im.height)), c = E.cv(im.width * k, im.height * k); c.getContext('2d').drawImage(im, 0, 0, c.width, c.height); URL.revokeObjectURL(u); res(c); }; im.onerror = function () { res(null); }; im.src = u; }); }
 
   /* ---------- logo maker ---------- */
@@ -387,7 +387,7 @@
     var key = stateKey() + '@' + Math.round(ppi * 10) + (big ? 'B' : '');
     if (tcache.k === key) return tcache.t;
     var cols = colors(), t = null, k = S.kind;
-    if (k === 'logo' || k === 'picture') { var m = motif(); if (m) t = E.repeatTile({ motif: m, motifs: motifs(), type: S.rep.type, tileIn: S.rep.tileIn, ppi: ppi, scale: S.rep.scale, angle: S.rep.angle, flip: S.rep.flip, bg: cols[0], seed: S.rep.seed, density: S.rep.density }); }
+    if (k === 'logo' || k === 'picture') { var m = motif(); if (m) t = E.repeatTile({ motif: m, motifs: motifs(), type: S.rep.type, tileIn: S.rep.tileIn, tileInY: S.rep.tileInY || null, ppi: ppi, scale: S.rep.scale, angle: S.rep.angle, flip: S.rep.flip, bg: S.rep.clear ? null : cols[0], seed: S.rep.seed, density: S.rep.density }); }
     else if (k === 'plaid') t = E.plaidTile({ sett: S.plaid.sett, mirror: S.plaid.mirror, threadIn: S.plaid.threadIn, ppi: ppi, colors: cols, weave: S.plaid.weave });
     else if (k === 'stripes') t = E.stripeTile({ bands: S.stripes.bands.map(function (b) { return [b[0], b[1] * S.stripes.scale, b[2] || 'solid']; }), dir: S.stripes.dir, ppi: ppi, colors: cols, logo: S.stripes.bands.some(function (b) { return b[2] === 'logo'; }) ? renderLogo(S.logo, cols, 300) : null });
     else if (k === 'checks') t = E.checkTile({ kind: S.checks.kind, cellIn: S.checks.cellIn, fill: S.checks.fill, mix: mixOf(), point: S.checks.point, ppi: ppi, colors: cols, logo: S.checks.point === 'logo' || (mixOf() || []).indexOf('logo') >= 0 ? renderLogo(S.logo, cols, 300) : null });
@@ -408,9 +408,22 @@
   /* ---------- the picture on top ---------- */
   var view = $('view'), vg = view.getContext('2d'), texCache = {};
   function fit() { var r = view.getBoundingClientRect(), d = Math.min(2, window.devicePixelRatio || 1); view.width = Math.max(1, Math.round(r.width * d)); view.height = Math.max(1, Math.round(r.height * d)); }
+  function bgRow() { return S.kind === 'logo' || S.kind === 'picture' ? '<div class="row"><b>Background</b>' + seg('clear', [['0', 'A color'], ['1', 'None, clear']], S.rep.clear ? '1' : '0') + '</div>' : ''; }
+  function clearBg() { return (S.kind === 'logo' || S.kind === 'picture') && S.rep.clear; }
+  function showBorder() { return S.kind && S.kind !== 'hardware' && S.step < 4 && (S.border || S.part['1:' + S.kind] === 'gap' && S.step === 1); }
+  // gaps: the space between one motif and the next, in inches
+  function motifAspect() { var m = motif(); if (!m) return [1, 1]; var mx = Math.max(m.width, m.height); return [m.width / mx, m.height / mx]; }
+  function gaps() { var a = motifAspect(), w = S.rep.scale * S.rep.tileIn * a[0], h = S.rep.scale * S.rep.tileIn * a[1]; return { w: w, h: h, x: S.rep.tileIn - w, y: (S.rep.tileInY || S.rep.tileIn) - h }; }
+  function gapTxt(v) { return v < -.01 ? 'Overlap ' + fmtIn(-v) : fmtIn(Math.max(0, v)); }
   function fillPattern(g, W, H, ppi, withFabric) {
-    var t = tileAt(ppi); if (!t) return false;
+    var t = tileAt(ppi); if (!t) return false; g.clearRect(0, 0, W, H);
+    if (clearBg() && S.step < 4) { var ck = E.checkTile({ kind: 'board', cellIn: .125, fill: 'solid', point: 'none', ppi: Math.max(ppi, 64), colors: ['#ffffff', '#e4e1da'] }); g.fillStyle = g.createPattern(ck, 'repeat'); g.fillRect(0, 0, W, H); }
     g.fillStyle = g.createPattern(t, 'repeat'); g.fillRect(0, 0, W, H);
+    if (showBorder()) { // the tile border: every repeat edge dashed, the first tile solid
+      var tw = t.width, th = t.height; g.save(); g.strokeStyle = '#c8412f'; g.lineWidth = Math.max(1, W / 360); g.setLineDash([g.lineWidth * 4, g.lineWidth * 3]);
+      for (var bx = tw; bx < W; bx += tw) { g.beginPath(); g.moveTo(bx, 0); g.lineTo(bx, H); g.stroke(); } for (var by = th; by < H; by += th) { g.beginPath(); g.moveTo(0, by); g.lineTo(W, by); g.stroke(); }
+      g.setLineDash([]); g.lineWidth *= 2.2; g.strokeRect(g.lineWidth / 2, g.lineWidth / 2, Math.min(tw, W) - g.lineWidth, Math.min(th, H) - g.lineWidth); g.restore();
+    }
     if (withFabric) {
       var key = S.fabric + Math.round(ppi); if (!texCache[key]) texCache[key] = E.fabricTexture(S.fabric, 256, ppi);
       g.save(); g.globalCompositeOperation = 'multiply'; g.fillStyle = g.createPattern(texCache[key], 'repeat'); g.fillRect(0, 0, W, H); g.restore();
@@ -422,7 +435,7 @@
   function draw() { if (raf) return; raf = requestAnimationFrame(function () { raf = 0; drawNow(); }); }
   function drawNow() {
     fit(); var W = view.width, H = view.height, g = vg; g.setTransform(1, 0, 0, 1, 0, 0); g.clearRect(0, 0, W, H);
-    $('views').hidden = !S.kind || S.step === 4;
+    $('views').hidden = !S.kind || S.step === 4; var bbtn = document.querySelector('#views [data-b]'); if (bbtn) { bbtn.hidden = S.kind === 'hardware'; bbtn.setAttribute('aria-pressed', String(!!S.border)); }
     if (S.step === 4 && S.kind) { var b = boardCanvas(900); var k = Math.min(W / b.width, H / b.height) * .96; g.fillStyle = '#e7e2d6'; g.fillRect(0, 0, W, H); g.drawImage(b, (W - b.width * k) / 2, (H - b.height * k) / 2, b.width * k, b.height * k); tag('Your mood board for the tech pack'); return; }
     if (!S.kind) { welcome(g, W, H); tag('Pick what you are making'); return; }
     if (S.kind === 'hardware') { $('views').hidden = true; hwDrawView(g, W, H); return; }
@@ -447,8 +460,8 @@
     if (step === 0) return [['what', 'What', 'spark']];
     if (step === 1) {
       var k = S.kind;
-      if (k === 'logo') return [['shape', 'Shape', 'shape'], ['words', 'Words', 'words'], ['icon', 'Icon', 'icon'], ['repeat', 'Repeat', 'repeat'], ['size', 'Size', 'size']];
-      if (k === 'picture') return [['pic', 'Picture', 'pic'], ['repeat', 'Repeat', 'repeat'], ['size', 'Size', 'size']];
+      if (k === 'logo') return [['shape', 'Shape', 'shape'], ['words', 'Words', 'words'], ['icon', 'Icon', 'icon'], ['repeat', 'Repeat', 'repeat'], ['size', 'Size', 'size'], ['gap', 'Gaps', 'size']];
+      if (k === 'picture') return [['pic', 'Picture', 'pic'], ['repeat', 'Repeat', 'repeat'], ['size', 'Size', 'size'], ['gap', 'Gaps', 'size']];
       if (k === 'plaid') return [['pstyle', 'Style', 'style'], ['threads', 'Threads', 'threads'], ['weave', 'Weave', 'weave']];
       if (k === 'stripes') return [['sstyle', 'Style', 'style'], ['bands', 'Bands', 'threads'], ['lay', 'Lay', 'size']];
       if (k === 'checks') return [['cstyle', 'Style', 'style'], ['fill', 'Fill', 'fill'], ['corner', 'Corners', 'corner'], ['csize', 'Size', 'size']];
@@ -481,7 +494,9 @@
     if (p === 'shape') return '<p class="h">Pick a shape for your logo</p>' + picks(SHAPES, S.logo.shape, 'shape', 5, function (x) { return mini('shape:' + x[0]); }, true) + '<div class="row" style="margin-top:8px"><b>Inner ring</b>' + seg('ring', [['0', 'Off'], ['1', 'On']], S.logo.ring ? '1' : '0') + '</div>';
     if (p === 'words') return '<div class="row"><b>Words</b><input class="txt" id="ltext" maxlength="14" value="' + esc(S.logo.text) + '" placeholder="Your initials" autocomplete="off"></div><p class="h">Letters</p>' + picks(FONTS, S.logo.font, 'font', 4, function (x) { return '<span style="font:19px/1.1 \'' + x[0] + '\',sans-serif">' + esc((S.logo.text || 'Aa').slice(0, 3)) + '</span>'; }, true);
     if (p === 'icon') return '<p class="h">Add a little picture</p>' + picks(ICONS, S.logo.icon, 'icon', 5, function (x) { return mini('icon:' + x[0]); }, true) + '<p class="note">Colors come from the Color step. Your logo saves as a PNG on the Board.</p>';
-    if (p === 'pic') return '<button type="button" class="btn dark" data-act="choose">' + (PIC ? 'Choose another picture' : 'Choose a picture') + '</button><p class="note" style="margin:6px 0 10px">PNG with a clear background works best. A halftone from Stencil + Halftone comes in here too.</p>' +
+    if (p === 'gap') { var gp = gaps(); return '<p class="h">Space between each one</p>' + stepper('gapx', 'Across', 0, gapTxt(gp.x)) + stepper('gapy', 'Down', 0, gapTxt(gp.y)) +
+      '<div class="row"><b>Border</b>' + seg('border', [['1', 'Show'], ['0', 'Hide']], S.border ? '1' : '0') + '</div><button type="button" class="btn" data-act="evengap">Make down the same as across</button><p class="note">The red box is one tile, the piece that repeats. It shows here while you set gaps. Border Show keeps it on everywhere.</p>'; }
+    if (p === 'pic') return (PIC ? '<div class="grid g2"><button type="button" class="btn dark" data-act="choose">New picture</button><button type="button" class="btn" data-act="recrop">Crop it</button></div>' : '<button type="button" class="btn dark" data-act="choose">Choose a picture</button>') + '<p class="note" style="margin:6px 0 10px">PNG with a clear background works best. A halftone from Stencil + Halftone comes in here too.</p>' +
       '<div class="row"><b>White</b>' + seg('white', [['1', 'Remove white'], ['0', 'Keep it']], S.rep.white ? '1' : '0') + '</div>' +
       '<div class="row"><b>Color</b>' + seg('tint', [['0', 'As it is'], ['1', 'One color']], S.rep.tint ? '1' : '0') + '</div><p class="note">One color turns it into a monogram or watermark in your ink.</p>';
     if (p === 'repeat') return '<p class="h">How it repeats</p>' + picks(E.REPEATS, S.rep.type, 'rep', 5, function (x) { return mini('rep:' + x[0]); }, true) + '<div class="row" style="margin-top:8px"><b>Mix</b>' + seg('ralt', [['none', 'Just one'], ['icon', 'Icon'], ['space', 'Space'], ['other', S.kind === 'logo' ? 'Picture' : 'Logo']], S.rep.alt || 'none') + '</div>';
@@ -502,8 +517,8 @@
     if (p === 'csize') return stepper('cell', 'Square', S.checks.cellIn, fmtIn(S.checks.cellIn));
     if (p === 'mstyle') return picks(E.CAMOS, S.camo.type, 'camo', 3, function (x) { return mini('camo:' + x[0]); }, true) + '<p class="note">' + esc((presetOf(E.CAMOS, S.camo.type) || [0, 0, ''])[2]) + '</p>';
     if (p === 'msize') return stepper('cscale', 'Blobs', S.camo.scale, Math.round(S.camo.scale * 100) + '%') + stepper('ctile', 'Repeat', S.camo.tileIn, fmtIn(S.camo.tileIn)) + '<button type="button" class="btn dark" data-act="camoseed">Shuffle the shapes</button><p class="note">Bigger repeats hide the seam on big pieces like jackets.</p>';
-    if (p === 'pals') { var key = PALKEY[S.kind]; return '<p class="h">Ready-made colors</p><div class="pals' + (E.PALETTES[key].length > 4 ? ' two' : '') + '">' + E.PALETTES[key].map(function (pl, i) { return '<button type="button" class="pal" data-pal="' + i + '" aria-pressed="' + (S.palBy[S.kind] === pl[0]) + '">' + esc(pl[0]) + '<span>' + pl[1].map(function (h) { return '<i style="background:' + h + '"></i>'; }).join('') + '</span></button>'; }).join('') + '</div>'; }
-    if (p === 'mine') return '<p class="h">Your own colors</p><div class="mine">' + cols.map(function (h, i) { return '<label><input type="color" data-ci="' + i + '" value="' + toHex(h) + '">' + colorName(i) + '</label>'; }).join('') + '</div><p class="note">' + (S.kind === 'logo' || S.kind === 'picture' ? 'Ground is the fabric color, Ink is your logo or one color picture.' : 'Each number is one color in your pattern.') + '</p>';
+    if (p === 'pals') { var key = PALKEY[S.kind]; return (bgRow() || '<p class="h">Ready-made colors</p>') + '<div class="pals' + (E.PALETTES[key].length > 4 ? ' two' : '') + '">' + E.PALETTES[key].map(function (pl, i) { return '<button type="button" class="pal" data-pal="' + i + '" aria-pressed="' + (S.palBy[S.kind] === pl[0]) + '">' + esc(pl[0]) + '<span>' + pl[1].map(function (h) { return '<i style="background:' + h + '"></i>'; }).join('') + '</span></button>'; }).join('') + '</div>'; }
+    if (p === 'mine') return (bgRow() || '<p class="h">Your own colors</p>') + '<div class="mine">' + cols.map(function (h, i) { return '<label><input type="color" data-ci="' + i + '" value="' + toHex(h) + '">' + colorName(i) + '</label>'; }).join('') + '</div><p class="note">' + (S.kind === 'logo' || S.kind === 'picture' ? 'Ground is the fabric color, Ink is your logo or one color picture.' : 'Each number is one color in your pattern.') + '</p>';
     if (p === 'fabric') { var sug = E.SUGGEST[PALKEY[S.kind] === 'repeat' ? 'repeat' : PALKEY[S.kind]] || []; return '<div class="grid g4 tight fabs">' + E.FABRICS.map(function (f) { return '<button type="button" class="pick' + (sug.indexOf(f[0]) >= 0 ? ' fit' : '') + '" data-fab="' + f[0] + '" aria-pressed="' + (S.fabric === f[0]) + '">' + mini('fab:' + f[0]) + esc(f[1].replace('Cotton ', '').replace('Jersey knit', 'Jersey')) + '</button>'; }).join('') + '</div><p class="note">' + esc((presetOf(E.FABRICS, S.fabric) || [0, 0, ''])[2]) + ' Red dot = good fit. ' + esc(E.SUGGEST_WHY[PALKEY[S.kind] === 'repeat' ? 'repeat' : PALKEY[S.kind]] || '') + '</p>'; }
     if (p === 'board') return '<div class="row"><input class="txt" data-bd="name" value="' + esc(S.board.name) + '" placeholder="Name: ' + esc(repeatName()) + '" aria-label="Name"><input class="txt" data-bd="by" value="' + esc(S.board.by) + '" placeholder="Made by" aria-label="Made by"></div><div class="row"><input class="txt" aria-label="Notes" data-bd="notes" value="' + esc(S.board.notes) + '" placeholder="Notes: season, garment, trims"></div><p class="h" style="margin-top:4px">Pantone codes, if you matched them (? explains)</p><div class="pcodes">' + cols.map(function (h, i) { return '<div class="pcode"><i style="background:' + h + '"></i><code>' + toHex(h).toUpperCase() + '</code><input data-pt="' + i + '" value="' + esc(S.board.pantone[toHex(h)] || '') + '" placeholder="19-4052 TCX"></div>'; }).join('') + '</div>';
     if (p === 'files' && S.kind === 'hardware') return '<button type="button" class="btn dark" data-act="make">Make my files</button><p class="note" style="margin:6px 0 8px">Cut file (SVG in mm), the mark at 1000 DPI, a render and the spec sheet.</p><div class="files" id="files"></div>';
@@ -552,10 +567,12 @@
   $('bbar').addEventListener('click', function (e) { var b = e.target.closest('button[data-s]'); if (b && !b.disabled) go(+b.dataset.s); });
   $('parts').addEventListener('click', function (e) { var b = e.target.closest('button[data-p]'); if (!b) return; S.part[S.step + ':' + S.kind] = b.dataset.p; $('con').classList.remove('down'); keep(); render(); });
   $('drop').addEventListener('click', function () { var d = $('con').classList.toggle('down'); this.setAttribute('aria-label', d ? 'Show the controls' : 'Hide the controls'); draw(); });
-  $('views').addEventListener('click', function (e) { var b = e.target.closest('button[data-v]'); if (!b) return; S.view = b.dataset.v; Array.prototype.forEach.call(this.children, function (x) { x.setAttribute('aria-pressed', String(x === b)); }); keep(); draw(); });
+  $('views').addEventListener('click', function (e) { var bb = e.target.closest('button[data-b]'); if (bb) { S.border = !S.border; bb.setAttribute('aria-pressed', String(S.border)); keep(); render(); return; } var b = e.target.closest('button[data-v]'); if (!b) return; S.view = b.dataset.v; Array.prototype.forEach.call(this.children, function (x) { x.setAttribute('aria-pressed', String(x === b)); }); keep(); draw(); });
   var STEPV = {
-    tileIn: function (d) { S.rep.tileIn = clamp(S.rep.tileIn + d * .5, 1, 12); },
-    scale: function (d) { S.rep.scale = clamp(Math.round((S.rep.scale + d * .05) * 100) / 100, .15, 1); },
+    tileIn: function (d) { var o = S.rep.tileIn; S.rep.tileIn = clamp(S.rep.tileIn + d * .5, 1, 12); if (S.rep.tileInY) S.rep.tileInY = S.rep.tileInY * S.rep.tileIn / o; },
+    gapx: function (d) { var g0 = gaps(), nt = clamp(g0.w + g0.x + d * .25, Math.max(.25, g0.w * .5), 24); if (!S.rep.tileInY) S.rep.tileInY = S.rep.tileIn; S.rep.scale = clamp(S.rep.scale * S.rep.tileIn / nt, .05, 1.6); S.rep.tileIn = nt; },
+    gapy: function (d) { var g0 = gaps(); S.rep.tileInY = clamp(g0.h + g0.y + d * .25, Math.max(.25, g0.h * .5), 24); },
+    scale: function (d) { S.rep.scale = clamp(Math.round((S.rep.scale + d * .05) * 100) / 100, .15, 1.6); },
     angle: function (d) { S.rep.angle = (S.rep.angle + d * 15 + 360) % 360; },
     thread: function (d) { var per = Math.round(1 / S.plaid.threadIn) - d * 4; S.plaid.threadIn = 1 / clamp(per, 8, 96); },
     sscale: function (d) { S.stripes.scale = clamp(Math.round((S.stripes.scale + d * .1) * 10) / 10, .3, 4); },
@@ -587,6 +604,8 @@
     if (d.pal != null) { var pl = E.PALETTES[PALKEY[S.kind]][+d.pal]; S.colorsBy[S.kind] = pl[1].slice(); S.palBy[S.kind] = pl[0]; return changed(true); }
     if (d.fab) { S.fabric = d.fab; return changed(true); }
     if (d.act === 'choose') { $('file').click(); return; }
+    if (d.act === 'recrop') { var src = PICSRC ? Promise.resolve(PICSRC) : new Promise(function (r) { PIC.toBlob(r, 'image/png'); }); src.then(function (f2) { return window.nocivCrop(f2, { title: 'Crop your picture', aspects: [['free', 'Free'], ['orig', 'Original'], [1, 'Square']], maxPx: 1600 }); }).then(function (c) { if (!c) return; PIC = c; PIC._id = Date.now(); c.toBlob(function (b2) { if (b2) idbSet('pic', b2); }, 'image/png'); keep(); render(); }).catch(function () {}); return; }
+    if (d.act === 'evengap') { var g0 = gaps(); S.rep.tileInY = Math.max(.25, g0.h + g0.x); return changed(true); }
     if (d.act === 'toss') { S.rep.seed = Math.floor(Math.random() * 1e6); return changed(false); }
     if (d.act === 'camoseed') { S.camo.seed = Math.floor(Math.random() * 1e6); return changed(false); }
     if (d.act === 'addband') { var arr = curPart() === 'threads' ? S.plaid.sett : S.stripes.bands; arr.push([arr.length % cols.length, curPart() === 'threads' ? 4 : .25]); S.plaid.preset = curPart() === 'threads' ? 'mine' : S.plaid.preset; return changed(true); }
@@ -604,6 +623,7 @@
       if (k.charAt(0) === 'h' && k !== 'hx') { var hw = HW(); if (k === 'hmk') hw.mark = v; else if (k === 'hlogo') hw.logo = v; else if (k === 'hbd') hw.border = v; else if (k === 'hfix') hw.fix = v; else if (k === 'hthk') hw.thick = +v; else if (k === 'hlook') hw.look = v; else if (k === 'hst') hw.stitch = v === '1'; return changed(true); }
       if (k === 'ring') S.logo.ring = v === '1'; else if (k === 'white') S.rep.white = v === '1'; else if (k === 'tint') S.rep.tint = v === '1';
       else if (k === 'flip') S.rep.flip = v; else if (k === 'fade') S.rep.fade = +v; else if (k === 'pmirror') S.plaid.mirror = v === '1';
+      else if (k === 'border') S.border = v === '1'; else if (k === 'clear') S.rep.clear = v === '1';
       else if (k === 'weave') S.plaid.weave = v; else if (k === 'sdir') S.stripes.dir = v;
       else if (k === 'ralt') { if (v === 'other' && S.kind === 'logo' && !PIC) { S.rep.alt = 'other'; keep(); $('file')._keepKind = true; $('file').click(); return; } S.rep.alt = v; }
       else if (k === 'cmix') { var nn = +v; S.checks.mix = nn > 1 ? ['dots', 'hatch', 'logo', 'solid'].slice(0, nn).map(function (x, i) { return (S.checks.mix && S.checks.mix[i]) || x; }) : null; }
@@ -627,7 +647,7 @@
   $('pane').addEventListener('change', function (e) { if (e.target.dataset.ci != null) changed(true); });
   $('file').addEventListener('change', function () {
     var f = this.files && this.files[0]; if (!f) return; this.value = '';
-    var keepKind = this._keepKind; this._keepKind = false;
+    var keepKind = this._keepKind; this._keepKind = false; PICSRC = f; idbSet('picsrc', f);
     // crop first (free, as it is or square), then use the cropped picture everywhere
     var crop = window.nocivCrop ? window.nocivCrop(f, { title: 'Crop your picture', aspects: [['free', 'Free'], ['orig', 'Original'], [1, 'Square']], maxPx: 1600 }).catch(function () { return null; }) : blobToCanvas(f);
     crop.then(function (c) {
@@ -744,7 +764,7 @@
   (from ? idbGet('incoming') : idbGet('pic')).then(function (b) {
     var p = b ? blobToCanvas(b) : Promise.resolve(null);
     return p.then(function (c) {
-      if (c) { PIC = c; PIC._id = Date.now(); }
+      if (c) { PIC = c; PIC._id = Date.now(); if (!from) idbGet('picsrc').then(function (s0) { if (s0) PICSRC = s0; }); }
       if (from && c) { idbSet('pic', b); S.kind = 'picture'; S.step = 1; S.part['1:picture'] = 'repeat'; S.rep.white = true; history.replaceState(null, '', location.pathname); keep(); }
       if (S.kind === 'picture' && !PIC) { S.step = 0; }
     });

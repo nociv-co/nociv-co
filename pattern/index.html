@@ -36,6 +36,7 @@ html.embedded .top{display:none}
 .stage .views{position:absolute;right:8px;top:8px;display:flex;border:1.5px solid var(--ink);border-radius:10px;overflow:hidden;background:#fff}
 .stage .views button{all:unset;cursor:pointer;padding:7px 10px;font:800 12px/1 var(--sys)}
 .stage .views button[aria-pressed=true]{background:var(--ink);color:#fff}
+.stage .views .vb{border-left:1.5px solid var(--ink)}.stage .views .vb[aria-pressed=true]{background:#c8412f;color:#fff}.stage .views .vb[hidden]{display:none}
 /* console */
 .con{flex:none;height:318px;display:flex;flex-direction:column;background:var(--panel);border-top:1.5px solid var(--ink)}
 .con.down{height:auto}
@@ -144,7 +145,7 @@ html.embedded .top{display:none}
 <section class="stage" id="stage" aria-label="Your pattern">
   <canvas id="view"></canvas>
   <div class="tag" id="tag">Pick what you are making</div>
-  <div class="views" id="views" role="group" aria-label="How close"><button data-v="close">Close</button><button data-v="swatch" aria-pressed="true">Swatch</button><button data-v="yard">Yard</button></div>
+  <div class="views" id="views" role="group" aria-label="How close"><button data-v="close">Close</button><button data-v="swatch" aria-pressed="true">Swatch</button><button data-v="yard">Yard</button><button data-b="1" class="vb" aria-pressed="false" aria-label="Show the tile border">Border</button></div>
 </section>
 <section class="con" id="con">
   <div class="pane" id="pane"></div>
