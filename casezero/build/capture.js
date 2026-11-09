@@ -56,7 +56,9 @@ const CSS = `
 .mz input.nm{height:44px;border-radius:12px;border:2px solid #fff;background:#000;color:#fff;padding:0 12px;font:700 16px inherit}
 .mz [hidden]{display:none!important}
 .mz{-webkit-user-select:none;user-select:none;-webkit-touch-callout:none}.mz canvas{-webkit-user-select:none;user-select:none;-webkit-touch-callout:none;-webkit-tap-highlight-color:transparent}
-.mz .pick{position:absolute;left:0;right:0;bottom:0;max-height:78%;overflow:auto;background:#161616;border-top:2px solid #fff;border-radius:16px 16px 0 0;padding:12px 12px 16px}.mz .pick h3{margin:2px 0 8px;font:900 15px/1 inherit;text-transform:uppercase;letter-spacing:.06em}.mz .pick h4{margin:10px 0 6px;font:800 12px/1 inherit;color:#aaa;text-transform:uppercase;letter-spacing:.06em}
+.mz .zfit{all:unset;cursor:pointer;margin-left:6px;padding:4px 9px;border:1.5px solid #fff;border-radius:8px;font:800 12px/1 inherit}
+.mz .pick .pkh{flex:none;display:flex;gap:6px;align-items:center;padding:0 0 8px}.mz .pick .pkb{flex:1;min-height:0;overflow:auto;-webkit-overflow-scrolling:touch}.mz .pick .chips{justify-content:flex-start}.mz .pick .pkh h3{flex:1;margin:0;text-align:left}.mz .pick .pkt{all:unset;cursor:pointer;padding:9px 12px;border:1.5px solid #fff;border-radius:10px;font:800 13px/1 inherit}.mz .pick.small{max-height:none;overflow:hidden}.mz .pick.small .pkb{display:none}
+.mz .pick{position:absolute;left:0;right:0;bottom:0;max-height:58%;overflow:hidden;display:flex;flex-direction:column;text-align:left;background:#161616;border-top:2px solid #fff;border-radius:16px 16px 0 0;padding:12px 12px 16px}.mz .pick h3{margin:2px 0 8px;font:900 15px/1 inherit;text-transform:uppercase;letter-spacing:.06em}.mz .pick h4{margin:10px 0 6px;font:800 12px/1 inherit;color:#aaa;text-transform:uppercase;letter-spacing:.06em}
 .mz .mzsel{display:flex;gap:6px;align-items:center;min-height:42px}.mz .mzsel b{flex:1;font:800 14px/1.2 inherit}.mz .mzsel i{flex:1;font:600 13px/1.3 inherit;font-style:normal;color:#aaa}.mz #mzTags{min-height:36px}.mz .mzsel button{all:unset;cursor:pointer;padding:10px 12px;border:1.5px solid #fff;border-radius:10px;font:800 13px/1 inherit}
 .mz .chips{display:flex;gap:6px;flex-wrap:wrap}.mz .chips.scroll{flex-wrap:nowrap;overflow-x:auto;-webkit-overflow-scrolling:touch;padding-bottom:2px}.mz .chips.scroll button{flex:none;min-height:24px}.mz .chips button{all:unset;cursor:pointer;padding:9px 12px;border-radius:999px;border:1.5px solid #fff;font:700 13px/1 inherit}.mz .chips button[aria-pressed=true]{background:#fff;color:#111}
 `;
@@ -152,7 +154,9 @@ export function openMeasure(done) {
       '<div class="lst" id="mzInfo"></div><div class="mzsel" id="mzSel" hidden></div><div class="chips scroll" id="mzTags" hidden></div><div class="rowb" id="mzHoleSize" hidden><button class="bt" data-hd="-1">Smaller</button><button class="bt" data-hd="1">Bigger</button><button class="bt" id="mzUndo">Undo</button></div><div class="rowb"><button class="bt" id="mzBack">Back</button><button class="bt go" id="mzNext">Next</button></div>');
     const cv = $('mzC'), g = cv.getContext('2d');
     let k = 1, ox = 0, oy = 0, hd = which === 'front' ? 12 : 3;
-    function fit() { if (!document.body.contains(cv)) return; const r = cv.getBoundingClientRect(), d = Math.min(2, devicePixelRatio || 1); cv.width = r.width * d; cv.height = r.height * d; k = Math.min(cv.width / W0, cv.height / H0); ox = (cv.width - W0 * k) / 2; oy = (cv.height - H0 * k) / 2; draw(); }
+    let Z = 1, PX = 0, PY = 0; /* pinch zoom: Z times the fitted size, PX PY = how far the photo is moved, in canvas px */
+    function place() { const k0 = Math.min(cv.width / W0, cv.height / H0); k = k0 * Z; ox = (cv.width - W0 * k) / 2 + PX; oy = (cv.height - H0 * k) / 2 + PY; }
+    function fit() { if (!document.body.contains(cv)) return; const r = cv.getBoundingClientRect(), d = Math.min(2, devicePixelRatio || 1); cv.width = r.width * d; cv.height = r.height * d; place(); draw(); }
     const S = (p) => [ox + p[0] * k, oy + p[1] * k], I = (x, y) => [(x - ox) / k, (y - oy) / k];
     function H() { return homography(pts.card, [[0, 0], [CARD[0], 0], [CARD[0], CARD[1]], [0, CARD[1]]]); }
     function partMM() {
@@ -191,6 +195,7 @@ export function openMeasure(done) {
           }
           if (h.kind) { const nm = SHORT[h.kind] || h.kind; g.font = '800 ' + 10 * d + 'px Arial'; g.textAlign = 'center'; g.lineWidth = 3 * d; g.strokeStyle = '#000'; g.strokeText(nm, s0[0], s0[1] - 8 * d); g.fillStyle = col; g.fillText(nm, s0[0], s0[1] - 8 * d); }
         });
+        if (pending) { const s1 = S(pending); g.strokeStyle = '#2bd46b'; g.lineWidth = 3 * d; g.beginPath(); g.arc(s1[0], s1[1], 14 * d, 0, 7); g.stroke(); g.beginPath(); g.moveTo(s1[0] - 20 * d, s1[1]); g.lineTo(s1[0] + 20 * d, s1[1]); g.moveTo(s1[0], s1[1] - 20 * d); g.lineTo(s1[0], s1[1] + 20 * d); g.stroke(); }
         if (drag && drag.kind === 'new') { const s1 = S(drag.p); g.strokeStyle = '#fff'; g.lineWidth = 2 * d; g.beginPath(); g.arc(s1[0], s1[1], 10 * d, 0, 7); g.stroke(); }
       }
       $('mzSay').textContent = say[key];
@@ -199,6 +204,7 @@ export function openMeasure(done) {
       if (m) info.innerHTML = '<b>' + M.name + ': ' + m.w.toFixed(1) + ' x ' + m.h.toFixed(1) + ' mm</b>' + (key === 'holes' ? '. ' + holes.length + (tagged ? ' tagged.' : ' holes, next one ' + hd + ' mm') : '');
       else if (key === 'part2') { const s2 = CARD[1] / dist(pts.card2[0], pts.card2[1]); info.innerHTML = '<b>Height: ' + (dist(pts.part2[0], pts.part2[1]) * s2).toFixed(1) + ' mm</b>'; }
       else info.textContent = 'Card = 85.6 x 54 mm.';
+      if (Z > 1.01) info.insertAdjacentHTML('beforeend', ' <button type="button" class="zfit" id="mzFit">Fit photo</button>');
       const sb = $('mzSel'), tl = $('mzTags');
       sb.hidden = !tagged; tl.hidden = !tagged; /* both rows stay on the tag step so the photo never jumps */
       if (tagged && !picked) sb.innerHTML = '<i>' + (holes.length ? 'Tap a tag to change, turn or remove it.' : 'Nothing tagged yet.') + '</i>';
@@ -210,7 +216,7 @@ export function openMeasure(done) {
       wireBar();
     }
     // magnifier: while a finger is down, a round close-up shows exactly where the dot or tag lands (the finger hides it)
-    let loupe = null, drag = null, picked = null;
+    let loupe = null, drag = null, picked = null, pending = null;
     const esc = (t) => String(t).replace(/[&<>"]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
     function drawLoupe(q, d) {
       const R = 64 * d, Z = 4, s = S(q), cx = s[0] < cv.width / 2 ? cv.width - R - 10 * d : R + 10 * d, cy = R + 10 * d, r = R / (k * Z);
@@ -231,8 +237,16 @@ export function openMeasure(done) {
         else if (Math.hypot(p[0] - s0[0], p[1] - s0[1]) < Math.max(16 * dpr, ((h.kind && KP(h.kind) && KP(h.kind).cut && KP(h.kind).cut.d) || h.d || 6) / 2 * ppm)) return h; }
       return null;
     };
+    const touches = new Map(); let pinch = null, hold = false;
+    const inBoard = (q) => { const P4 = pts.part; let c = false; for (let i = 0, j = 3; i < 4; j = i++) { const a = P4[i], b = P4[j]; if ((a[1] > q[1]) !== (b[1] > q[1]) && q[0] < (b[0] - a[0]) * (q[1] - a[1]) / (b[1] - a[1]) + a[0]) c = !c; } return c; };
+    const note = (t) => { const n = $('mzSay'); if (n) { n.textContent = t; clearTimeout(note.t); note.t = setTimeout(() => draw(), 1600); } };
     cv.onpointerdown = (e) => {
-      e.preventDefault(); const key = stage[st], p = evp(e); cv.setPointerCapture(e.pointerId);
+      e.preventDefault(); const key = stage[st], p = evp(e); try { cv.setPointerCapture(e.pointerId); } catch (er) { /* not a real pointer */ } touches.set(e.pointerId, p);
+      if (touches.size === 2) { /* second finger: pinch to zoom, cancel whatever the first finger started */
+        const [a, b] = [...touches.values()], m = [(a[0] + b[0]) / 2, (a[1] + b[1]) / 2];
+        drag = null; loupe = null; sel = -1; hold = true; pinch = { d0: Math.hypot(a[0] - b[0], a[1] - b[1]) || 1, Z0: Z, ip: I(m[0], m[1]) }; draw(); return;
+      }
+      if (hold) return;
       if (key === 'holes') {
         const h = hitTag(p);
         if (h) { picked = which === 'front' ? h : null; drag = { kind: 'move', t: h, off: [h.p[0] - I(p[0], p[1])[0], h.p[1] - I(p[0], p[1])[1]], f0: p, moved: false }; loupe = h.p; }
@@ -243,6 +257,13 @@ export function openMeasure(done) {
       drag = { kind: 'dot', key, i: sel, last: p }; loupe = pts[key][sel]; draw();
     };
     cv.onpointermove = (e) => {
+      if (touches.has(e.pointerId)) touches.set(e.pointerId, evp(e));
+      if (pinch && touches.size >= 2) {
+        const [a, b] = [...touches.values()], m = [(a[0] + b[0]) / 2, (a[1] + b[1]) / 2];
+        Z = Math.max(1, Math.min(5, pinch.Z0 * Math.hypot(a[0] - b[0], a[1] - b[1]) / pinch.d0));
+        const k0 = Math.min(cv.width / W0, cv.height / H0); k = k0 * Z; PX = m[0] - pinch.ip[0] * k - (cv.width - W0 * k) / 2; PY = m[1] - pinch.ip[1] * k - (cv.height - H0 * k) / 2;
+        if (Z === 1) { PX = 0; PY = 0; } place(); draw(); return;
+      }
       if (!drag) return; const p = evp(e), dpr = Math.min(2, devicePixelRatio || 1);
       if (drag.kind === 'dot') {
         const dx = p[0] - drag.last[0], dy = p[1] - drag.last[1], v = Math.hypot(dx, dy) / dpr, gain = v > 14 ? 1 : 0.3 + 0.7 * v / 14;
@@ -251,25 +272,30 @@ export function openMeasure(done) {
       else { drag.p = I(p[0], p[1]); loupe = drag.p; }
       draw();
     };
-    const endDrag = (place) => {
+    const endDrag = (ok) => {
       const dr = drag; drag = null; loupe = null; sel = -1; if (!dr) return;
-      if (place && dr.kind === 'new') { if (which === 'front') { openPick(dr.p); return; } holes.push({ p: dr.p, d: hd }); }
-      if (place && dr.kind === 'move' && !dr.moved && which !== 'front') holes.splice(holes.indexOf(dr.t), 1);
+      if (ok && dr.kind === 'new' && !inBoard(dr.p)) { draw(); note('Tags go on your board, inside the green dots. Two fingers zoom.'); return; }
+      if (ok && dr.kind === 'new') { if (which === 'front') { draw(); openPick(dr.p); return; } holes.push({ p: dr.p, d: hd }); }
+      if (ok && dr.kind === 'move' && !dr.moved && which !== 'front') holes.splice(holes.indexOf(dr.t), 1);
       draw();
     };
-    cv.onpointerup = () => endDrag(true);
-    cv.onpointercancel = () => endDrag(false);
+    const lift = (e, ok) => { touches.delete(e.pointerId); if (pinch) { if (touches.size < 2) pinch = null; if (!touches.size) hold = false; return; } if (!touches.size) hold = false; endDrag(ok); };
+    cv.onpointerup = (e) => lift(e, true);
+    cv.onpointercancel = (e) => lift(e, false);
     // "What is it?": a sheet over the photo with every kind in groups. The last kind used is first, for speed.
     function openPick(pt) {
       const mv = box.querySelector('.mv'), old = mv.querySelector('.pick'); if (old) old.remove();
-      const el = document.createElement('div'); el.className = 'pick';
-      el.innerHTML = '<h3>What is it?</h3>' + (M.kind && pt ? '<div class="chips"><button type="button" data-k="' + M.kind + '" aria-pressed="true">Same as last: ' + esc(KNAME(M.kind)) + '</button></div>' : '') +
-        GROUPS.map((gr) => '<h4>' + gr[0] + '</h4><div class="chips">' + gr[1].map((x) => '<button type="button" data-k="' + x[0] + '">' + x[1] + '</button>').join('') + '</div>').join('') + '<div class="rowb" style="margin-top:12px"><button class="bt" data-k="">Cancel</button></div>';
+      const el = document.createElement('div'); el.className = 'pick'; pending = pt; draw();
+      el.innerHTML = '<div class="pkh"><h3>What is it?</h3><button type="button" class="pkt" data-hide="1">Hide</button><button type="button" class="pkt" data-k="">Cancel</button></div><div class="pkb">' + (M.kind && pt ? '<div class="chips"><button type="button" data-k="' + M.kind + '" aria-pressed="true">Same as last: ' + esc(KNAME(M.kind)) + '</button></div>' : '') +
+        GROUPS.map((gr) => '<h4>' + gr[0] + '</h4><div class="chips">' + gr[1].map((x) => '<button type="button" data-k="' + x[0] + '">' + x[1] + '</button>').join('') + '</div>').join('') + '</div>';
       mv.appendChild(el);
-      el.onclick = (ev) => { const b = ev.target.closest('[data-k]'); if (!b) return; const kd = b.dataset.k; el.remove(); if (!kd) { draw(); return; }
+      el.onclick = (ev) => {
+        const hb = ev.target.closest('[data-hide]'); if (hb) { const sm = el.classList.toggle('small'); hb.textContent = sm ? 'Show' : 'Hide'; return; } /* drop it down to see the photo */
+        const b = ev.target.closest('[data-k]'); if (!b) return; const kd = b.dataset.k; el.remove(); pending = null; if (!kd) { draw(); return; }
         M.kind = kd; if (pt) { const t = { p: pt, kind: kd, d: hd, r: 0 }; holes.push(t); picked = t; } else if (picked) { picked.kind = kd; picked.r = picked.r || 0; } draw(); };
     }
     function wireBar() {
+      const zf = $('mzFit'); if (zf) zf.onclick = () => { Z = 1; PX = 0; PY = 0; place(); draw(); };
       const c = $('mzChg'), t = $('mzTurn'), x = $('mzDel');
       if (c) c.onclick = () => openPick(null); if (t) t.onclick = () => { picked.r = ((picked.r || 0) + 1) % 4; draw(); }; if (x) x.onclick = () => { holes.splice(holes.indexOf(picked), 1); picked = null; draw(); };
       box.querySelectorAll('[data-tag]').forEach((b) => { b.onclick = () => { picked = holes[+b.dataset.tag]; draw(); }; });
