@@ -52,6 +52,9 @@
 // ===== THE TEST LIST. Claude rewrites this block after every delivery. Keep each test to a few taps. =====
 var BATCH = '2026-11-03 from scratch';
 var TESTS = [
+  { id: 'czwiring', title: 'Case Zero: wiring map and starter code for the Pico', where: 'Case Zero Builder, Brain, Wiring',
+    steps: ['Close the site fully and reopen it. Brain, Parts: add a Pico, the 2.8 in screen, 4 Tact 12 buttons and a Knob.', 'Tap Wiring. Look at the Pico picture and the list.', 'Change one button to the pin you really soldered.', 'Tap Save code.py. On a computer: put CircuitPython on the Pico, copy the libraries named at the top of the file into CIRCUITPY/lib, save code.py on the drive.'],
+    expect: 'The picture shows every used pin in red with its part number. Changing a pin moves it in the picture and the code. On the Pico: the screen says NOCIV, each button shows its name when pressed, the knob shows 0 to 100.' },
   { id: 'toolspattern', title: 'Tools page: Patterns icon, card and preview', where: 'nociv.co Tools, Clothes, Patterns',
     steps: ['Close the site fully and reopen it once (new version).', 'Tap Tools. The categories read PRINTOUTS, CLOTHES, VIDEO. Tap Clothes.', 'Look at the middle button over the word PATTERNS, then tap it.'],
     expect: 'The Patterns button shows three fabric rolls (a striped one leaning left with fabric coming off it, a tall dotted one, a short one leaning right). Picked, the rolls turn brown and float. The big card is three flat panels side by side: red plaid, NC logo repeat, camo. The Preview is the small tall picture of fabric rolls to the right of the words, like the other tools.' },
