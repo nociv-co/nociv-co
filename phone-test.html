@@ -52,6 +52,9 @@
 // ===== THE TEST LIST. Claude rewrites this block after every delivery. Keep each test to a few taps. =====
 var BATCH = '2026-11-03 from scratch';
 var TESTS = [
+  { id: 'toolspattern', title: 'Tools page: Patterns icon, card and preview', where: 'nociv.co Tools, Wear, Patterns',
+    steps: ['Close the site fully and reopen it once (new version).', 'Tap Tools, then Wear.', 'Look at the middle button over the word PATTERNS, then tap it.'],
+    expect: 'The Patterns button shows three fabric rolls (a striped one leaning left with fabric coming off it, a tall dotted one, a short one leaning right). Picked, the rolls turn brown and float. The big card shows three pinked swatches: red plaid, NC logo repeat, camo. The Preview under OPEN is the wide picture of three fabric rolls.' },
   { id: 'czpanel', title: 'Case Zero: a panel for a box you already have (your briefcase screen panel)', where: 'Case Zero Builder, Body, Shape, Panel',
     steps: ['Body, Shape: tap Panel (last tile).', 'Size: tap Measure the inside of my box, card in the lid, drag the green dots to the inside corners, Next, Done. Or type the size.', 'Brain: add Screens, 7 in (or photo your screen). Arrange: drag it where it sits.', 'Notches: Add a notch, pick Bottom, Rounded, move it with From left until it sits over your wires. Add a Round one too.', 'Print, Split, then Files.'],
     expect: 'One flat panel that fills the lid, with a screen window, corner screw holes and the notches where your wires go. On your 220 mm bed it prints as 2 puzzle pieces that lock together. The 3D box shows the notches and your logo.' },
