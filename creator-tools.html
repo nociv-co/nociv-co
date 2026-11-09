@@ -60,7 +60,7 @@
   @media (max-width: 480px) { .b-tabs button svg { display: none; } }
   .b-tabs button svg { width: 20px; height: 20px; flex: none; fill: none; stroke: currentColor; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
   .b-tabs button[aria-selected="true"], .b-apps button[aria-selected="true"] { background: var(--ink); color: var(--note); box-shadow: inset 0 2px 6px rgba(0,0,0,.5); transform: translateY(1px); }
-  /* Category textures: Paper = graph paper, Wear = denim with stitching, Video = TV scanlines with a color split. Selected = word on a solid label, lifted. */
+  /* Category textures: Printouts = graph paper, Clothes = denim with stitching, Video = TV scanlines with a color split. Selected = word on a solid label, lifted. */
   .b-tabs button[data-tex] { position: relative; overflow: hidden; }
   .b-tabs button[data-tex] span { position: relative; z-index: 1; padding: 3px 7px; background: #f2ecd6; color: #1a1a1a; box-shadow: 0 1px 3px rgba(0,0,0,.18); transition: background .16s ease, color .16s ease, transform .16s ease, font-size .16s ease; }
   .b-tabs button[data-tex="paper"], .b-tabs button[data-tex="paper"][aria-selected="true"] { background-color: #f7f2e1; background-image: linear-gradient(rgba(58,110,170,.24) 1px, transparent 1px), linear-gradient(90deg, rgba(58,110,170,.24) 1px, transparent 1px); background-size: 9px 9px; color: #1a1a1a; }
@@ -293,8 +293,8 @@
         <span class="tool-foot"><span class="tool-get">You leave with: Pattern, tech pack, flats</span><span class="tool-open">Open</span></span>
       </span>
     </button>
-    <button type="button" class="tool-card" data-sec="projects" data-key="pattern" data-poster="img/tools/patterns.webp?v=2" data-made="Patterns" data-panel="patternPanel">
-      <span class="tool-art"><svg viewBox="0 0 320 180" xmlns="http://www.w3.org/2000/svg" aria-hidden="true" preserveAspectRatio="xMidYMid slice"><image href="img/tools/patterns-card.webp?v=1" width="320" height="180" preserveAspectRatio="xMidYMid slice"/></svg></span>
+    <button type="button" class="tool-card" data-sec="projects" data-key="pattern" data-poster="img/tools/patterns-preview.webp?v=1" data-made="Patterns" data-panel="patternPanel">
+      <span class="tool-art"><svg viewBox="0 0 320 180" xmlns="http://www.w3.org/2000/svg" aria-hidden="true" preserveAspectRatio="xMidYMid slice"><image href="img/tools/patterns-card.webp?v=2" width="320" height="180" preserveAspectRatio="xMidYMid slice"/></svg></span>
       <span class="tool-body">
         <span class="tool-name">Patterns</span>
         <span class="tool-desc">Turn your logo, a picture or your halftone into fabric. Plaids, stripes, checks and camo too. See it on twill, canvas or flannel, then take a mood board to the print shop.</span>
@@ -533,8 +533,8 @@
   }
   (function () {
     const SECS = [
-      { id: 'paper', name: 'Paper', color: '#f2c230', ci: '#1a1a1a', icon: '<path d="M6 3h8l4 4v14H6z"/><path d="M14 3v4h4"/><path d="M9 12h6M9 16h6"/>' },
-      { id: 'projects', name: 'Wear', color: '#8a6a4a', ci: '#ffffff', icon: '<path d="M4 20V4l16 16z"/><path d="M4 14h3M4 9h2M10 20v-3M15 20v-2"/>' },
+      { id: 'paper', name: 'Printouts', color: '#f2c230', ci: '#1a1a1a', icon: '<path d="M6 3h8l4 4v14H6z"/><path d="M14 3v4h4"/><path d="M9 12h6M9 16h6"/>' },
+      { id: 'projects', name: 'Clothes', color: '#8a6a4a', ci: '#ffffff', icon: '<path d="M4 20V4l16 16z"/><path d="M4 14h3M4 9h2M10 20v-3M15 20v-2"/>' },
       { id: 'real', name: 'Video', color: '#3f8a4f', ci: '#ffffff', icon: '<rect x="3" y="7" width="12" height="10" rx="2"/><path d="M15 11l6-3v8l-6-3z"/>' }
     ];
     const ORDER = { paper: ['zine', 'cards', 'qr'], projects: ['stencil', 'pattern', 'cutsew'], real: ['video', 'toon', 'sign'] };
