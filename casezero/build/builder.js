@@ -4,7 +4,7 @@
 import * as THREE from 'three';
 import { OrbitControls } from 'three/addons/OrbitControls.js';
 import * as G from './geo.js?v=18';
-import { openMeasure } from './capture.js?v=18';
+import { openMeasure } from './capture.js?v=19';
 import { planWiring, codeFor, PICO_LEFT, PICO_RIGHT, PICO_PINS, PICO_BRAINS, NEED } from './wiring.js?v=18';
 
 const CZ = window.CZ, R = G.RULE, $ = (id) => document.getElementById(id);
@@ -139,7 +139,7 @@ function syncKids(b) {
 }
 function syncAll() { S.items.filter((i) => PP(i) && PP(i).board).forEach(syncKids); }
 function unSync(k) { const b = boardOf(k); if (!b) return; const a = -(b.r || 0) * Math.PI / 2, x = k.x - b.x, y = k.y - b.y; k.dx = x * Math.cos(a) - y * Math.sin(a); k.dy = x * Math.sin(a) + y * Math.cos(a); k.dr = (((k.r || 0) - (b.r || 0)) % 4 + 4) % 4; }
-function setBoardTop(P, top) { P.top = Math.max(4, Math.min(40, top)); P.hang = Math.max(2, P.top - 1.5 - R.LT); P.depth = +(P.hang + 1.6 + 10).toFixed(1); }
+function setBoardTop(P, top) { P.top = Math.max(4, Math.min(40, top)); P.hang = Math.max(2, P.top - 1.5 - R.LT); P.depth = +(P.hang + 1.6 + (P.under != null ? P.under + 1.5 : 10)).toFixed(1); } /* under = measured space below the board (pins, solder, wires), plus 1.5 mm clearance; 10 mm when not measured */
 function kidH(k) { const b = boardOf(k), P = b && PP(b); return k.h != null ? k.h : (P && P.top) || 9; } /* height of this part above the board, she can change it per part */
 function pokeNote(k) {
   const b = boardOf(k), P = b && PP(b); if (!P || !P.board) return '';
@@ -391,7 +391,7 @@ function pane(t) {
   if (t === 'lid' || t === 'base' || t === 'top') {
     const mine = S.items.filter((i) => i.panel === t || (t !== 'lid' && i.panel === 'inside')), s = S.items.find((i) => i.id === sel), probs = allProblems(), N = numbers();
     let h = s && s.of != null ? '<div class="selbar"><b>' + esc(label(s)) + '</b><select class="pin" data-kidtype="' + s.id + '" aria-label="What it is">' + KID_TYPES.filter((t) => CZ.PARTS[t]).map((t) => '<option value="' + t + '"' + (t === s.type ? ' selected' : '') + '>' + esc(CZ.PARTS[t].short) + '</option>').join('') + '</select><button data-act="unlock">' + (s.free ? 'Lock' : 'Unlock') + '</button><button data-act="del">Remove</button></div><p class="note" style="margin:-2px 0 8px">' + (s.free ? 'Unlocked: drag it on its own. Lock puts it back on the board where you leave it.' : 'On your board: dragging it moves the whole board. Unlock to nudge it alone.') + '</p>' + (s.panel !== 'inside' ? stepper('kh', 'Height', kidH(s) + ' mm above board') + '<p class="note" style="margin:-2px 0 8px">' + esc(pokeNote(s)) + '</p>' : '') : s ? '<div class="selbar"><b>' + esc(label(s)) + '</b><button data-act="rot">Turn</button>' + (isClam() && s.panel !== 'inside' && !(PP(s) && PP(s).board) ? '<button data-act="swap">To ' + (s.panel === 'lid' ? 'base' : 'lid') + '</button>' : '') + '<button data-act="del">Remove</button></div>' : '';
-    if (s && PP(s) && PP(s).board) h += stepper('btop', 'Tallest', (PP(s).top || 9) + ' mm button') + '<p class="note" style="margin:-2px 0 8px">Your board hangs under the top so a ' + (PP(s).top || 9) + ' mm button pokes through 1.5 mm. Tap a part to see how far it pokes through.</p>';
+    if (s && PP(s) && PP(s).board) h += stepper('btop', 'Tallest', (PP(s).top || 9) + ' mm button') + '<p class="note" style="margin:-2px 0 8px">Your board hangs under the top so a ' + (PP(s).top || 9) + ' mm button pokes through 1.5 mm. Tap a part to see how far it pokes through.</p>' + stepper('bund', 'Under', (PP(s).under != null ? PP(s).under : 8.5) + ' mm below') + '<p class="note" style="margin:-2px 0 8px">Space under the board for pins, solder and wires' + (PP(s).under != null ? ', from your side photo' : ', a guess: take the side photo to measure it') + '.</p>';
     h += '<p class="h">' + (t === 'lid' ? 'The lid: screens live here' : t === 'base' ? 'The base: controls, the brain sits under it' : 'The top') + '</p>';
     h += mine.length ? '<div class="chosen">' + mine.map((i) => '<span data-sel="' + i.id + '" style="cursor:pointer' + (i.id === sel ? ';background:#1a1a1a;color:#fff' : '') + '">' + esc(N[i.id] + ' ' + PP(i).short) + (problems(i).length ? ' <i>!</i>' : '') + '</span>').join('') + '</div>' : '<p class="note">No parts here yet. Add some in Brain.</p>';
     h += '<div class="grid g2" style="margin-top:8px"><button class="btn dark" data-act="auto">Arrange for me</button><button class="btn" data-act="toBrain">Add parts</button></div>';
@@ -550,7 +550,7 @@ $('pane').addEventListener('click', (e) => {
     if (k === 'lbsize') { S.look.labels.size = Math.max(2.5, Math.min(10, S.look.labels.size + v * 0.5)); markCache = {}; }
     const nn = (S.notches || [])[S.nsel];
     if (k === 'plift') S.plift = Math.max(3, Math.min(60, S.plift + v));
-    { const si = S.items.find((i) => i.id === sel); if (si && k === 'kh') si.h = Math.max(0, Math.min(60, kidH(si) + v * 0.5)); if (si && k === 'btop' && PP(si) && PP(si).board) setBoardTop(PP(si), (PP(si).top || 9) + v * 0.5); }
+    { const si = S.items.find((i) => i.id === sel); if (si && k === 'kh') si.h = Math.max(0, Math.min(60, kidH(si) + v * 0.5)); if (si && k === 'btop' && PP(si) && PP(si).board) setBoardTop(PP(si), (PP(si).top || 9) + v * 0.5); if (si && k === 'bund' && PP(si) && PP(si).board) { const B = PP(si); B.under = Math.max(0, Math.min(40, (B.under != null ? B.under : 8.5) + v * 0.5)); setBoardTop(B, B.top || 9); } }
     const X = xp(); if (k === 'xs_t') { X.stand.auto = false; X.stand.t = Math.max(6, Math.min(80, X.stand.t + v)); } if (k === 'xf_h') X.feet.h = Math.max(2, Math.min(15, X.feet.h + v)); if (k === 'xo_h') X.standoff.h = Math.max(2, Math.min(40, X.standoff.h + v)); if (k === 'xc_d') X.clip.d = Math.max(2, Math.min(16, X.clip.d + v));
     if (nn && k === 'nw') nn.w = Math.max(4, Math.min(120, nn.w + v * 2)); if (nn && k === 'nd') nn.d = Math.max(2, Math.min(60, nn.d + v)); if (nn && k === 'nat') nn.at = Math.max(0, Math.min(nn.edge === 'left' || nn.edge === 'right' ? dims().D : dims().W, nn.at + v * 5));
     if (k === 'txsp') { const tx = S.look.tex[S.look.texFace]; tx.sp = Math.max(2, Math.min(30, tx.sp + v)); }
