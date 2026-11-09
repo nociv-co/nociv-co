@@ -52,6 +52,9 @@
 // ===== THE TEST LIST. Claude rewrites this block after every delivery. Keep each test to a few taps. =====
 var BATCH = '2026-11-03 from scratch';
 var TESTS = [
+  { id: 'czpanel', title: 'Case Zero: a panel for a box you already have (your briefcase screen panel)', where: 'Case Zero Builder, Body, Shape, Panel',
+    steps: ['Body, Shape: tap Panel (last tile).', 'Size: tap Measure the inside of my box, card in the lid, drag the green dots to the inside corners, Next, Done. Or type the size.', 'Brain: add Screens, 7 in (or photo your screen). Arrange: drag it where it sits.', 'Notches: Add a notch, pick Bottom, Rounded, move it with From left until it sits over your wires. Add a Round one too.', 'Print, Split, then Files.'],
+    expect: 'One flat panel that fills the lid, with a screen window, corner screw holes and the notches where your wires go. On your 220 mm bed it prints as 2 puzzle pieces that lock together. The 3D box shows the notches and your logo.' },
   { id: 'czboard', title: 'Case Zero: photo your built board, front and back', where: 'Case Zero Builder, Brain, Snap',
     steps: ['Close the site fully and reopen it once (new version).', 'Brain, Snap: tap Photo my board, front and back. Card next to the board, hold the phone flat until it snaps.', 'Drag the orange dots onto the card, the green dots onto the board, Next.', 'Pick Screen, tap 2 opposite corners of the screen. Pick Button 12, tap each button. Pick Knob, tap the knob. Next.', 'Now the back: tap every screw hole. Done, Add it to my parts.'],
     expect: 'Arrange opens on the Base with YOUR board photo, straightened, and a yellow ring on every part you tagged. If the board was too big the case grew to fit. The 3D box top right shows the screen and buttons in place. Files has a knob file if you tagged a knob.' },

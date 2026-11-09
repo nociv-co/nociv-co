@@ -11,10 +11,11 @@ const esc = (s) => String(s == null ? '' : s).replace(/[&<>"']/g, (c) => ({ '&':
 if (window.self !== window.top) document.documentElement.classList.add('embedded');
 
 // ---------- state ----------
-const KEY = 'nociv-casezero-v7', SIZES = { clam: [9, 6], small: [5, 7], slate: [6, 4], calc: [5, 9], hand: [5, 8], pad: [10, 5], groove: [10, 5], face: [7, 7] };
+const KEY = 'nociv-casezero-v7', SIZES = { clam: [9, 6], small: [5, 7], slate: [6, 4], calc: [5, 9], hand: [5, 8], pad: [10, 5], groove: [10, 5], face: [7, 7], panel: [15, 9] };
 let S = { step: 2, tab: {}, cat: 'brain', items: [], mine: {}, style: 'clam', cols: 9, rows: 6, add: 0, hinge: 'printed', hside: 'back', magnets: true,
   printer: 'a1', bed: [256, 256], material: 'pla', join: 'dovetail', sdir: 'auto', sn: 'auto', tab3: 'dovetail', open: true, snap: false, spring: false,
-  walls: 'normal', layer: 'normal', brand: null, look: null };
+  walls: 'normal', layer: 'normal', brand: null, look: null,
+  pw: 300, pd: 190, pt: 3, prad: 3, pholes: true, notches: [], nsel: 0 }; // Panel: real size in mm, thickness, corners, corner screw holes, wire notches
 const LOOK0 = () => ({ logo: { on: false, src: 'text', text: 'NOCIV', face: 'lidout', x: null, y: null, size: 40, how: 'dip' }, labels: { on: false, place: 'below', size: 4, how: 'dip', text: {} }, tex: { top: { kind: 'none', sp: 6, bump: false }, bottom: { kind: 'none', sp: 6, bump: false }, walls: { kind: 'none', sp: 6 }, lidout: { kind: 'none', sp: 6, bump: false }, lidin: { kind: 'none', sp: 6, bump: false } }, texFace: 'top', colors: 1, c1: '#e9e2cc', c2: '#1a1a1a', single: 'paint' });
 try { const s = JSON.parse(localStorage.getItem(KEY) || 'null'); if (s && Array.isArray(s.items)) S = Object.assign(S, s); } catch (e) {}
 if (!S.look) S.look = LOOK0();
@@ -29,20 +30,40 @@ const PARTS = () => Object.assign({}, CZ.PARTS, S.mine);
 const PP = (it) => PARTS()[it.type];
 const styleRow = () => CZ.STYLES.find((s) => s[0] === S.style) || CZ.STYLES[0];
 const isClam = () => styleRow()[3] === 'clam';
+const isPanel = () => S.style === 'panel';
 const panels = () => (isClam() ? ['lid', 'base'] : ['top']);
 const homePanel = () => (isClam() ? 'base' : 'top');
 const PNAME = { lid: 'Lid', base: 'Base', top: 'Top', inside: 'Inside' };
 const PLET = { lid: 'L', base: 'B', top: 'T', inside: 'I' };
 
 // ---------- sizes ----------
-function dims() { const W = S.cols * 20 + 2 * (R.T + R.CLR + 1), D = S.rows * 20 + 2 * (R.T + R.CLR + 1); return { W, D }; }
-function outline() { const d = dims(); return G.outline(S.style, d.W, d.D); }
-function deckArea() { return G.offset(outline(), -(R.T + R.CLR + 0.8)); }
-function posts() { const d = dims(); return G.postSpots(outline(), d.W * d.D > 30000 ? 6 : 4); }
+function dims() { if (isPanel()) return { W: S.pw, D: S.pd }; const W = S.cols * 20 + 2 * (R.T + R.CLR + 1), D = S.rows * 20 + 2 * (R.T + R.CLR + 1); return { W, D }; }
+function outline() {
+  const d = dims(); if (!isPanel()) return G.outline(S.style, d.W, d.D);
+  const base = [G.rrect(0, 0, d.W, d.D, Math.max(0.01, Math.min(S.prad, d.W / 2 - 1, d.D / 2 - 1)))], nt = notchPolys();
+  return nt.length ? G.diff(base, G.union(nt)) : base;
+}
+const EDGE = { bottom: 'Bottom', top: 'Top', left: 'Left', right: 'Right' };
+function notchPolys() { // wire notches: each one bites into one edge. at = mm from the left (top, bottom) or from the bottom (sides)
+  const W = S.pw, D = S.pd, out = [];
+  (S.notches || []).forEach((n) => {
+    const side = n.edge === 'left' || n.edge === 'right', L = side ? D : W, w = Math.max(2, Math.min(n.w, L - 2)), s = Math.max(w / 2, Math.min(L - w / 2, n.at)), dd = Math.max(1, n.d);
+    let loc;
+    if (n.shape === 'round') { const r = w / 2, cy = dd - r; loc = cy > 0 ? G.union([G.circle(s, cy, r, 40), G.rect(s - r, -2, s + r, cy)]) : [G.circle(s, cy, r, 40)]; }
+    else if (n.shape === 'rrect') loc = [G.rrect(s - w / 2, -4, s + w / 2, dd, Math.max(0.01, Math.min(3, w / 2 - 0.01, (dd + 4) / 2 - 0.01)))];
+    else loc = [G.rect(s - w / 2, -2, s + w / 2, dd)];
+    const flip = n.edge === 'top' || n.edge === 'left', map = ([a, t]) => (n.edge === 'bottom' ? [a, t] : n.edge === 'top' ? [a, D - t] : n.edge === 'left' ? [t, a] : [W - t, a]);
+    loc.forEach((p) => { const q = p.map(map); out.push(flip ? q.reverse() : q); });
+  });
+  return out;
+}
+function deckArea() { return G.offset(outline(), isPanel() ? -1 : -(R.T + R.CLR + 0.8)); }
+function posts() { const d = dims(); if (isPanel()) return S.pholes ? [[6, 6], [d.W - 6, 6], [d.W - 6, d.D - 6], [6, d.D - 6]] : []; return G.postSpots(outline(), d.W * d.D > 30000 ? 6 : 4); }
 function itemsOn(panel) { return S.items.filter((i) => i.panel === panel); }
 function depthOf(panel) { return itemsOn(panel).reduce((m, i) => Math.max(m, PP(i) ? PP(i).depth : 0), 0); }
 function upOf(panel) { return itemsOn(panel).reduce((m, i) => Math.max(m, PP(i) ? (PP(i).up || 0) : 0), 0); }
 function heights() {
+  if (isPanel()) return { H: S.pt, Hl: 0, recess: 0, recessL: 0 };
   // base: floor + deepest part or brain + deck, plus room for caps when the lid closes
   const home = homePanel(), inside = S.items.filter((i) => i.panel === 'inside').reduce((m, i) => Math.max(m, 5 + (PP(i) ? PP(i).depth : 0)), 0);
   const recess = isClam() ? Math.ceil(upOf(home) + 1) : 0;
@@ -95,7 +116,7 @@ function reflow() { // style or size changed: move parts onto the panels this sh
 // ---------- looks: logo, labels, textures, per face ----------
 // A face is what you see from outside. Each maps to one side of one half in its own print frame.
 const SHORTF = { lidout: 'Lid out', lidin: 'Lid in', top: 'Top', bottom: 'Bottom', walls: 'Sides' };
-function faces() { return isClam() ? [['lidout', 'Lid outside'], ['lidin', 'Lid inside'], ['top', 'Base top'], ['bottom', 'Bottom']] : [['top', 'Top'], ['bottom', 'Bottom']]; }
+function faces() { if (isPanel()) return [['top', 'Front']]; return isClam() ? [['lidout', 'Lid outside'], ['lidin', 'Lid inside'], ['top', 'Base top'], ['bottom', 'Bottom']] : [['top', 'Top'], ['bottom', 'Bottom']]; }
 function faceHalf(f) { return f === 'lidout' || f === 'lidin' ? 'lid' : homePanel(); }
 function faceSide(f) { return f === 'lidin' || f === 'top' ? 'top' : 'bottom'; }
 function toOwn(f, polys) {
@@ -155,6 +176,7 @@ function looksFor(panel) {
 
 // ---------- the halves ----------
 function halfFor(panel, h) {
+  if (isPanel()) return panelBuilt();
   const d = dims(), lid = panel === 'lid', flip = (it) => ({ P: PP(it), x: lid ? d.W - it.x : it.x, y: lid ? d.D - it.y : it.y, r: ((it.r || 0) + (lid ? 2 : 0)) % 4 });
   const parts = itemsOn(panel).filter((i) => PP(i)).map((i) => Object.assign(flip(i), { spring: S.spring && i.type === 'tact12' })), inside = lid ? [] : S.items.filter((i) => i.panel === 'inside' && PP(i)).map(flip);
   let port = null;
@@ -169,6 +191,21 @@ function halfFor(panel, h) {
   return G.buildHalf({ style: S.style, W: d.W, D: d.D, H: lid ? h.Hl : h.H, recess: lid ? h.recessL : h.recess, parts, inside, port,
     top: lk.top, bottom: lk.bottom, walls: lk.walls, snap: S.snap,
     magnets: isClam() && S.magnets, hinge: { on: hingeOn, side: S.style === 'small' ? (S.hside === 'right' ? 'right' : 'left') : 'back' }, hingeSet: lid ? 'b' : 'a' });
+}
+function panelBuilt() {
+  // one flat plate: outline with notches, minus every part's hole, the screen screws and the corner screws. Marks pressed into the front.
+  const o = outline(), T = S.pt, D = 0.6, cuts = [];
+  itemsOn('top').filter((i) => PP(i)).forEach((i) => {
+    const P = PP(i), a = (i.r || 0) * Math.PI / 2; cuts.push(...G.cutShape(P, i.x, i.y, i.r || 0));
+    (P.mountHoles || []).forEach((m) => cuts.push(G.circle(i.x + m.x * Math.cos(a) - m.y * Math.sin(a), i.y + m.x * Math.sin(a) + m.y * Math.cos(a), m.d / 2 + 0.2, 24)));
+  });
+  posts().forEach(([x, y]) => cuts.push(G.circle(x, y, R.HOLE / 2, 24)));
+  const dip = [], thru = [], fill = [];
+  looksFor('top').top.forEach((m) => { if (m.how === 'cut') thru.push(...m.polys); else { dip.push(...m.polys); if (m.fill || m.how === 'glue') fill.push(...m.polys); } });
+  const holes = cuts.concat(thru), plate = holes.length ? G.diff(o, G.union(holes)) : o, tray = [], inlay = [];
+  if (dip.length && T > 1.2) { const rec = G.union(dip); tray.push({ polys: plate, z0: 0, z1: T - D, tag: 'floor' }, { polys: G.diff(plate, rec), z0: T - D, z1: T, tag: 'floor' }); if (fill.length) inlay.push({ polys: G.inter(G.union(fill), plate), z0: T - D, z1: T, tag: 'inlayB' }); }
+  else tray.push({ polys: plate, z0: 0, z1: T, tag: 'floor' });
+  return { out: o, tray, deck: [], extra: [], posts: [], H: T, deckZ: T - R.LT, inlay, stick: [], snap: false };
 }
 function halves() { const h = heights(); return panels().map((p) => ({ key: p, name: PNAME[p], built: halfFor(p, h) })); }
 
@@ -255,7 +292,8 @@ const STEPS = [['Brain', 'brain'], ['Arrange', 'arrange'], ['Body', 'body'], ['S
 const ORDER = [2, 3, 0, 1, 4, 5];
 function tabsFor(step) {
   if (step === 0) return [['snap', 'Snap', 'snap'], ['parts', 'Parts', 'parts'], ['picks', 'Picks', 'picks']];
-  if (step === 1) return panels().map((p) => [p, PNAME[p], p]).concat([['size', 'Size', 'size']]);
+  if (step === 1) return panels().map((p) => [p, PNAME[p], p]).concat([[isPanel() ? 'psize' : 'size', 'Size', 'size']]);
+  if (step === 2 && isPanel()) return [['shape', 'Shape', 'shape'], ['psize', 'Size', 'size'], ['notch', 'Notches', 'notch'], ['measure', 'Measure', 'measure']];
   if (step === 2) return [['shape', 'Shape', 'shape'], ['fit', 'Fit', 'fit'], ['measure', 'Measure', 'measure']];
   if (step === 3) return [['colors', 'Color', 'colors'], ['tex', 'Texture', 'tex'], ['labels', 'Buttons', 'labels'], ['logo', 'Logo', 'logo']];
   if (step === 4) return [['printer', 'Printer', 'printer'], ['strong', 'Strength', 'strong'], ['mat', 'Material', 'mat'], ['split', 'Split', 'split']];
@@ -263,6 +301,8 @@ function tabsFor(step) {
 }
 function curTab() { const t = tabsFor(S.step), c = S.tab[S.step]; return t.some((x) => x[0] === c) ? c : t[S.step === 0 ? 1 : 0][0]; }
 function render() {
+  PNAME.top = isPanel() ? 'Panel' : 'Top';
+  if (isPanel()) { const L = S.look; if (L.logo.face !== 'top') { L.logo.face = 'top'; L.logo.x = L.logo.y = null; } if (L.texFace !== 'top') L.texFace = 'top'; }
   const bb = $('bbar'); bb.innerHTML = '<i style="width:' + ((ORDER.indexOf(S.step) + 1) / 6 * 100) + '%"></i>' + ORDER.map((i) => [STEPS[i], i]).map(([s, i]) => '<button type="button" data-s="' + i + '"' + (i === S.step ? ' aria-current="step"' : '') + '>' + ico(s[1]) + '<span>' + s[0] + '</span></button>').join('');
   const t = curTab(); $('parts').innerHTML = tabsFor(S.step).map((x) => '<button type="button" data-t="' + x[0] + '" aria-pressed="' + (x[0] === t) + '">' + ico(x[2]) + '<span>' + x[1] + '</span></button>').join('');
   $('pane').innerHTML = pane(t); $('pane').scrollTop = 0; after(t); draw();
@@ -299,6 +339,15 @@ function pane(t) {
     h += '<div class="grid g2" style="margin-top:8px"><button class="btn dark" data-act="auto">Arrange for me</button><button class="btn" data-act="toBrain">Add parts</button></div>';
     h += '<p class="note">' + (probs.length ? probs.map((x) => '<span class="bad">' + esc(label(x.it)) + ' is ' + esc(x.list[0]) + '.</span>').join(' ') : (S.items.length ? '<span class="ok">Everything fits.</span> Drag a part to move it. Tap to pick it.' : '')) + '</p>';
     return h;
+  }
+  if (t === 'psize') return '<div class="row"><b>Wide</b><input class="num" id="pw" type="number" inputmode="decimal" step="0.5" value="' + S.pw + '"><span class="u">mm</span></div><div class="row"><b>Tall</b><input class="num" id="pd" type="number" inputmode="decimal" step="0.5" value="' + S.pd + '"><span class="u">mm</span></div>' +
+    '<div class="row"><b>Thick</b>' + seg('pt', [['2', '2 mm'], ['3', '3 mm'], ['4', '4 mm']], String(S.pt)) + '</div><div class="row"><b>Corners</b>' + seg('prad', [['0', 'Square'], ['3', 'Soft'], ['8', 'Round']], String(S.prad)) + '</div><div class="row"><b>Screws</b>' + seg('pholes', [['1', 'In the corners'], ['0', 'None']], S.pholes ? '1' : '0') + '</div>' +
+    '<button class="btn dark" data-act="measureLid">Measure the inside of my box</button><p class="note">Type the inside size of the box, or measure it: drag the green dots onto the inside corners, then Next and Done. We take off 1 mm so it drops in.' + (S.pw > S.bed[0] || S.pd > S.bed[1] ? ' Bigger than your bed: it prints as puzzle pieces that lock together (Print, Split).' : '') + '</p>';
+  if (t === 'notch') {
+    const N = S.notches || [], i = Math.min(S.nsel || 0, N.length - 1), n = N[i], along = n && (n.edge === 'left' || n.edge === 'right') ? 'From bottom' : 'From left';
+    return '<div class="grid g2"><button class="btn dark" data-act="addNotch">Add a notch</button>' + (n ? '<button class="btn" data-act="delNotch">Remove N' + (i + 1) + '</button>' : '<span></span>') + '</div>' +
+      (N.length ? '<div class="chosen" style="margin:6px 0 8px">' + N.map((x, j) => '<span data-nsel="' + j + '" style="cursor:pointer' + (j === i ? ';background:#1a1a1a;color:#fff' : '') + '">N' + (j + 1) + ' ' + EDGE[x.edge] + '</span>').join('') + '</div>' : '') +
+      (n ? '<div class="row"><b>Edge</b>' + seg('n_edge', [['bottom', 'Bottom'], ['top', 'Top'], ['left', 'Left'], ['right', 'Right']], n.edge) + '</div><div class="row"><b>Shape</b>' + seg('n_shape', [['round', 'Round'], ['rrect', 'Rounded'], ['rect', 'Square']], n.shape) + '</div>' + stepper('nw', 'Wide', n.w + ' mm') + stepper('nd', 'Deep', n.d + ' mm') + stepper('nat', along, n.at + ' mm') : '<p class="note">A notch lets wires and plugs pass the edge of the panel. Pick the edge, the shape and the size.</p>');
   }
   if (t === 'size') { const d = dims(); return stepper('cols', 'Wide', S.cols + ' squares') + stepper('rows', 'Tall', S.rows + ' squares') + '<p class="note">Each square is 20 mm, like your Panel Layout v1. Outside: <b>' + d.W.toFixed(0) + ' x ' + d.D.toFixed(0) + ' mm</b>, ' + heights().H + ' mm deep' + (isClam() ? ' + ' + heights().Hl + ' mm lid' : '') + '.</p>'; }
   if (t === 'shape') return '<div class="grid g4">' + CZ.STYLES.map((s) => '<button type="button" class="pick" data-style="' + s[0] + '" aria-pressed="' + (S.style === s[0]) + '">' + styleSvg(s[0]) + esc(s[1]) + '</button>').join('') + '</div><p class="note">' + esc(styleRow()[2]) + '.' + (S.style === 'face' ? ' Round screens make eyes or a watch face. Want it to move? Add a servo in Brain (Movement), then plan the moves in the <a href="/creator-tools.html#cartoon">Cartoon maker</a>.' : '') + (S.style === 'hand' || S.style === 'pad' ? ' Our own shape, not a copy of any console.' : '') + '</p>';
@@ -346,7 +395,7 @@ function pane(t) {
   if (t === 'wire') return wireHtml();
   return '';
 }
-function summaryLine() { const d = dims(), h = heights(); return esc(styleRow()[1]) + ', ' + d.W.toFixed(0) + ' x ' + d.D.toFixed(0) + ' x ' + (h.H + h.Hl) + ' mm closed. ' + S.items.length + ' parts.'; }
+function summaryLine() { const d = dims(), h = heights(); if (isPanel()) return 'Panel, ' + d.W + ' x ' + d.D + ' x ' + S.pt + ' mm. ' + S.items.length + (S.items.length === 1 ? ' part.' : ' parts.'); return esc(styleRow()[1]) + ', ' + d.W.toFixed(0) + ' x ' + d.D.toFixed(0) + ' x ' + (h.H + h.Hl) + ' mm closed. ' + S.items.length + ' parts.'; }
 const WIRES = { tact12: 2, button16: 2, arcade24: 2, arcade30: 2, dpad: 5, pot: 3, encoder: 5, thumb: 5, stick: 5, slider: 3, led5: 2, ring12: 3, speaker28: 2, servo: 3, tft28: 9, round128: 8, oled096: 4, cyd: 0, hdmi5: 0, hdmi7: 0 };
 function wireHtml() {
   const c = counts(), P = PARTS(), N = numbers(); let jumpers = 0, solder = 0;
@@ -356,12 +405,14 @@ function wireHtml() {
 }
 $('pane').addEventListener('input', (e) => {
   const t = e.target;
+  if (t.id === 'pw' || t.id === 'pd') { const v = parseFloat(t.value); if (v >= 30 && v <= 600) { S[t.id] = Math.round(v * 2) / 2; save(); draw(); } return; }
   if (t.id === 'lgText') { S.look.logo.text = t.value; markCache = {}; save(); draw(); }
   if (t.dataset.lbl) { S.look.labels.text[t.dataset.lbl] = t.value; markCache = {}; save(); draw(); }
   if (t.id === 'c1') { S.look.c1 = t.value; save(); if (T3) T3.key = ''; draw(); }
   if (t.id === 'c2') { S.look.c2 = t.value; save(); if (T3) T3.key = ''; draw(); }
 });
 $('pane').addEventListener('change', (e) => {
+  if (e.target.id === 'pw' || e.target.id === 'pd') { reflow(); save(); render(); return; }
   if (e.target.id === 'qrIn') { const f = e.target.files[0]; e.target.value = ''; if (f) scanPrinter(f); return; }
   if (e.target.id !== 'lgFile') return; const f = e.target.files[0]; if (!f) return;
   const im = new Image(); im.onload = () => { const c = document.createElement('canvas'), k = Math.min(1, 600 / Math.max(im.width, im.height)); c.width = im.width * k; c.height = im.height * k; c.getContext('2d').drawImage(im, 0, 0, c.width, c.height); const url = c.toDataURL('image/png'); LOGOIMG = new Image(); LOGOIMG.onload = () => { markCache = {}; render(); }; LOGOIMG.src = url; try { localStorage.setItem(KEY + ':logo', url); } catch (er) {} };
@@ -374,7 +425,8 @@ function after(t) {
 
 // ---------- taps ----------
 $('pane').addEventListener('click', (e) => {
-  const b = e.target.closest('button, [data-sel], [data-delmine], [data-sub]'); if (!b) return; const d = b.dataset;
+  const b = e.target.closest('button, [data-sel], [data-delmine], [data-sub], [data-nsel]'); if (!b) return; const d = b.dataset;
+  if (d.nsel != null) { S.nsel = +d.nsel; save(); render(); return; }
   if (d.sub) { e.stopPropagation(); removePart(d.sub); render(); return; }
   if (d.add) { const it = addPart(d.add); const P = PP(it); const tip = $('partTip'); render(); if ($('partTip')) $('partTip').textContent = P.tip; void tip; return; }
   if (d.sel) { sel = +d.sel; render(); return; }
@@ -386,13 +438,16 @@ $('pane').addEventListener('click', (e) => {
   if (d.join) { S.join = d.join; S.tab3 = d.join === 'dovetail' ? 'dovetail' : 'flat'; save(); render(); return; }
   const act = d.act;
   if (act === 'snap') { $('snapIn').click(); return; }
+  if (act === 'addNotch') { S.notches = S.notches || []; S.notches.push({ edge: 'bottom', shape: 'rrect', w: 20, d: 8, at: Math.round(S.pw / 2) }); S.nsel = S.notches.length - 1; reflow(); save(); render(); return; }
+  if (act === 'delNotch') { S.notches.splice(S.nsel, 1); S.nsel = Math.max(0, S.nsel - 1); save(); render(); return; }
+  if (act === 'measureLid') { openMeasure((P) => { S.pw = Math.round((P.w - 1) * 2) / 2; S.pd = Math.round((P.h - 1) * 2) / 2; reflow(); save(); render(); }); return; }
   if (act === 'nophoto') { PHOTO = null; try { localStorage.removeItem(KEY + ':photo'); } catch (er) {} render(); return; }
   if (act === 'toParts') { S.tab[0] = 'parts'; render(); return; }
   if (act === 'toBrain') { S.tab[0] = 'parts'; go(0); return; }
   if (act === 'measure') { openMeasure((P) => {
     const k = 'mine' + Date.now().toString(36); S.mine[k] = P; S.cat = 'mine'; const it = addPart(k);
     // the case is built around your board: if it does not fit, grow the case (turned or not, whichever is smaller)
-    if (problems(it).length) {
+    if (problems(it).length && !isPanel()) {
       const room = 2 * (R.T + R.CLR + 1) + 2 * (R.T + R.CLR + 0.8) + 8, need = (w, h) => [Math.max(S.cols, Math.ceil((w + room) / 20)), Math.max(S.rows, Math.ceil((h + room) / 20))];
       const a = need(P.w, P.h), b = need(P.h, P.w), pick = a[0] * a[1] <= b[0] * b[1] ? a : b;
       S.cols = Math.min(16, pick[0]); S.rows = Math.min(16, pick[1]); reflow(); autoPlace(it);
@@ -415,6 +470,8 @@ $('pane').addEventListener('click', (e) => {
     if (k === 'bedw') S.bed[0] = Math.max(80, Math.min(400, S.bed[0] + v * 10)); if (k === 'bedd') S.bed[1] = Math.max(80, Math.min(400, S.bed[1] + v * 10));
     if (k === 'lgsize') { S.look.logo.size = Math.max(6, Math.min(160, S.look.logo.size + v * (S.look.logo.size >= 20 ? 5 : 2))); markCache = {}; }
     if (k === 'lbsize') { S.look.labels.size = Math.max(2.5, Math.min(10, S.look.labels.size + v * 0.5)); markCache = {}; }
+    const nn = (S.notches || [])[S.nsel];
+    if (nn && k === 'nw') nn.w = Math.max(4, Math.min(120, nn.w + v * 2)); if (nn && k === 'nd') nn.d = Math.max(2, Math.min(60, nn.d + v)); if (nn && k === 'nat') nn.at = Math.max(0, Math.min(nn.edge === 'left' || nn.edge === 'right' ? S.pd : S.pw, nn.at + v * 5));
     if (k === 'txsp') { const tx = S.look.tex[S.look.texFace]; tx.sp = Math.max(2, Math.min(30, tx.sp + v)); }
     if (k === 'cols' || k === 'rows') reflow();
     save(); render(); return;
@@ -422,6 +479,8 @@ $('pane').addEventListener('click', (e) => {
   const sg = b.closest('[data-sg]');
   if (sg && d.v != null) {
     const k = sg.dataset.sg, v = d.v, L = S.look; markCache = k.startsWith('lg_') || k.startsWith('lb_') ? {} : markCache;
+    if (k === 'pt') { S.pt = +v; save(); render(); return; } if (k === 'prad') { S.prad = +v; save(); render(); return; } if (k === 'pholes') { S.pholes = v === '1'; reflow(); save(); render(); return; }
+    const nn = (S.notches || [])[S.nsel]; if (nn && k === 'n_edge') { if ((nn.edge === 'left' || nn.edge === 'right') !== (v === 'left' || v === 'right')) nn.at = Math.round((v === 'left' || v === 'right' ? S.pd : S.pw) / 2); nn.edge = v; reflow(); save(); render(); return; } if (nn && k === 'n_shape') { nn.shape = v; save(); render(); return; }
     if (k === 'brand') { S.brand = v; save(); render(); return; }
     if (k === 'walls') { S.walls = v; applyWalls(); reflow(); save(); render(); return; }
     if (k === 'layer') { S.layer = v; save(); render(); return; }
@@ -446,8 +505,8 @@ let view = null; // current 2D mapping for taps
 function fit() { const r = cv.getBoundingClientRect(), d = Math.min(2, devicePixelRatio || 1); cv.width = Math.max(1, Math.round(r.width * d)); cv.height = Math.max(1, Math.round(r.height * d)); }
 // The 3D box: steps that show a flat picture also show the case in 3D in the top right corner. Tap it to make it big.
 let BIG3D = false, miniTimer = 0;
-const native3d = () => { const t = curTab(); return S.step === 2 || (S.step === 5 && t === '3d') || (S.step === 3 && t === 'colors'); };
-const wantsMini = () => (S.step === 0 || S.step === 1 || S.step === 3 || S.step === 4) && (S.items.length > 0 || S.step === 3) && !$('con').classList.contains('down');
+const native3d = () => { const t = curTab(); return (S.step === 2 && !isPanel()) || (S.step === 5 && t === '3d') || (S.step === 3 && t === 'colors'); };
+const wantsMini = () => (S.step === 0 || S.step === 1 || S.step === 3 || S.step === 4 || (S.step === 2 && isPanel())) && (S.items.length > 0 || S.step === 3) && !$('con').classList.contains('down');
 function draw() {
   const big = native3d() || BIG3D, mini = !big && wantsMini(), v3 = $('v3');
   v3.hidden = !(big || mini); v3.classList.toggle('mini', mini); cv.style.visibility = big ? 'hidden' : 'visible';
@@ -456,7 +515,8 @@ function draw() {
   if (mini && !drag) { clearTimeout(miniTimer); miniTimer = setTimeout(() => draw3d(true), 160); }
   fit(); const W = cv.width, H = cv.height; g.setTransform(1, 0, 0, 1, 0, 0); g.clearRect(0, 0, W, H); g.fillStyle = '#e7e2d6'; g.fillRect(0, 0, W, H);
   if (S.step === 0) return drawBrain(W, H);
-  if (S.step === 1) { const t = curTab(); return drawPanel(t === 'size' ? homePanel() : t, W, H); }
+  if (S.step === 1) { const t = curTab(); return drawPanel(t === 'size' || t === 'psize' ? homePanel() : t, W, H); }
+  if (S.step === 2) return drawPanel(homePanel(), W, H);
   if (S.step === 3) return drawFace(W, H);
   if (S.step === 4) return drawBeds(W, H);
   drawBrain(W, H);
@@ -543,7 +603,8 @@ function drawPanel(panel, W, H) {
     g.fillStyle = ins ? '#1a1a1a' : '#fff'; g.fillRect(X(f.x0), Y(f.y1), tw, 15 * px()); g.fillStyle = ins ? '#fff' : '#1a1a1a'; g.textAlign = 'left'; g.fillText(lb, X(f.x0) + 4 * px(), Y(f.y1) + 11 * px());
   });
   const probs = allProblems();
-  tag(PNAME[panel] + ', ' + S.cols + ' x ' + S.rows + ' squares (20 mm). ' + (probs.length ? probs.length + ' to fix (yellow).' : 'Drag to move. Dashed = inside, under the deck.'));
+  if (isPanel()) (S.notches || []).forEach((n, j) => { const L = n.edge === 'left' || n.edge === 'right' ? d.D : d.W, s = Math.max(n.w / 2, Math.min(L - n.w / 2, n.at)), q = n.edge === 'bottom' ? [s, n.d + 6] : n.edge === 'top' ? [s, d.D - n.d - 6] : n.edge === 'left' ? [n.d + 7, s] : [d.W - n.d - 7, s]; g.fillStyle = j === S.nsel ? '#ffd23a' : '#fff'; g.font = '900 ' + 11 * px() + 'px -apple-system,Arial'; g.textAlign = 'center'; g.fillText('N' + (j + 1), X(q[0]), Y(q[1]) + 4 * px()); });
+  tag(PNAME[panel] + ', ' + (isPanel() ? d.W + ' x ' + d.D + ' x ' + S.pt + ' mm' + ((S.notches || []).length ? ', ' + S.notches.length + ' notch' + (S.notches.length > 1 ? 'es' : '') : '') + '. ' : S.cols + ' x ' + S.rows + ' squares (20 mm). ') + (probs.length ? probs.length + ' to fix (yellow).' : isPanel() ? 'Drag a part to move it.' : 'Drag to move. Dashed = inside, under the deck.'));
 }
 // drag on the panel
 let drag = null;
@@ -755,7 +816,7 @@ function makeFiles() {
       }
       const tray = G.cutLayers(x.built.tray, x.built.extra, pl.regs), deck = G.cutLayers(x.built.deck, [], pl.regs), top = x.built.deckZ + R.LT;
       const inB = G.cutLayers(x.built.inlay.filter((l) => l.tag === 'inlayB'), [], pl.regs), inT = G.cutLayers(x.built.inlay.filter((l) => l.tag === 'inlayT'), [], pl.regs);
-      tray.forEach((p, i) => { const tris = G.trisOf(G.layerGeos(p.layers, p.extra)); if (tris.length) files.push({ label: x.name + ' box ' + (i + 1) + (n > 1 ? ' of ' + n : ''), name: 'casezero-' + nm + '-box-' + (i + 1) + '.stl', blob: G.stl(tris, nm + ' box ' + (i + 1)) }); });
+      tray.forEach((p, i) => { const tris = G.trisOf(G.layerGeos(p.layers, p.extra)); if (tris.length) files.push({ label: x.name + (isPanel() ? ' piece ' : ' box ') + (i + 1) + (n > 1 ? ' of ' + n : ''), name: 'casezero-' + nm + (isPanel() ? '-' : '-box-') + (i + 1) + '.stl', blob: G.stl(tris, nm + ' box ' + (i + 1)) }); });
       deck.forEach((p, i) => { const tris = G.trisOf(G.layerGeos(p.layers)); if (tris.length) files.push({ label: x.name + ' deck ' + (i + 1) + (n > 1 ? ' of ' + n : ''), name: 'casezero-' + nm + '-deck-' + (i + 1) + '.stl', blob: G.stl(G.flipZ(tris, top), nm + ' deck ' + (i + 1)) }); });
       inB.forEach((p, i) => { const tris = G.trisOf(G.layerGeos(p.layers)); if (tris.length) files.push({ label: x.name + ' box ' + (i + 1) + ' marks color', name: 'casezero-' + nm + '-box-' + (i + 1) + '-color2.stl', blob: G.stl(tris, nm + ' box marks') }); });
       inT.forEach((p, i) => { const tris = G.trisOf(G.layerGeos(p.layers)); if (tris.length) files.push({ label: x.name + ' deck ' + (i + 1) + ' marks color', name: 'casezero-' + nm + '-deck-' + (i + 1) + '-color2.stl', blob: G.stl(G.flipZ(tris, top), nm + ' deck marks') }); });
@@ -774,12 +835,12 @@ function makeFiles() {
 function partsText() {
   const N = numbers(), P = PARTS(), d = dims(), h = heights(), lines = ['NOCIV Case Zero', styleRow()[1] + ', ' + d.W.toFixed(0) + ' x ' + d.D.toFixed(0) + ' mm, ' + h.H + ' mm deep' + (isClam() ? ' + ' + h.Hl + ' mm lid' : ''), ''];
   lines.push('PARTS'); S.items.filter((i) => P[i.type]).sort((a, b) => (N[a.id] > N[b.id] ? 1 : -1)).forEach((i) => { const p = P[i.type]; lines.push(N[i.id] + '  ' + p.name + '  [' + LK[p.link] + ']  ' + (p.src || '')); });
-  lines.push('', 'HARDWARE', posts().length * panels().length + ' x M3 screws, 8 mm (deck to box)');
+  lines.push('', 'HARDWARE', isPanel() ? (posts().length ? posts().length + ' x M3 screws to fix the panel in the box' : 'No screws: the panel drops in') : posts().length * panels().length + ' x M3 screws, 8 mm (deck to box)');
   if (isClam() && S.magnets) lines.push('4 x round magnets 6 x 3 mm (press in, glue if loose. Check they attract before gluing the second pair)');
   if (isClam() && S.hinge === 'printed') lines.push('1 x 1.75 mm filament, cut ' + Math.round((S.style === 'small' ? d.D : d.W) - 12) + ' mm long, as the hinge pin');
   if (isClam() && S.hinge === 'metal') lines.push('2 x 25 mm butt hinges + short wood screws');
   if (S.items.some((i) => P[i.type] && P[i.type].inside)) lines.push('4 x M2 screws, 5 mm (brain to its posts)');
-  lines.push('', 'PRINTING', 'Material: ' + S.material.toUpperCase() + '. Join: ' + CZ.JOINS[S.join][0] + '. Bed: ' + S.bed[0] + ' x ' + S.bed[1] + ' mm.', 'Box: open side up, no supports' + (isClam() && S.hinge === 'printed' ? ' (turn on supports for the hinge barrels only)' : '') + '. Deck: face down, no supports. ' + LAYER[S.layer] + ' mm layers, 4 walls, 15 percent infill. Walls: ' + (S.walls === 'tough' ? 'thick (3.2 mm)' : 'normal (2.4 mm)') + '.', (S.material === 'wood' ? '' : 'Time on ' + printerRow()[1] + ': about ' + hm(estimate().sec) + ', ' + Math.round(estimate().grams) + ' g. Your slicer has the exact time.'), 'Print the deck first and check every part fits its hole.');
+  lines.push('', 'PRINTING', 'Material: ' + S.material.toUpperCase() + '. Join: ' + CZ.JOINS[S.join][0] + '. Bed: ' + S.bed[0] + ' x ' + S.bed[1] + ' mm.', (isPanel() ? 'Panel: flat, front face up, no supports' : 'Box: open side up, no supports') + (isClam() && S.hinge === 'printed' ? ' (turn on supports for the hinge barrels only)' : '') + '. Deck: face down, no supports. ' + LAYER[S.layer] + ' mm layers, 4 walls, 15 percent infill. Walls: ' + (S.walls === 'tough' ? 'thick (3.2 mm)' : 'normal (2.4 mm)') + '.', (S.material === 'wood' ? '' : 'Time on ' + printerRow()[1] + ': about ' + hm(estimate().sec) + ', ' + Math.round(estimate().grams) + ' g. Your slicer has the exact time.'), 'Print the deck first and check every part fits its hole.');
   return lines.join('\n');
 }
 function saveFile(f) {
@@ -798,6 +859,7 @@ const LEARN = [
   ['Community picks and why', '<ul><li><b>Cheap Yellow Display</b> (ESP32-2432S028R): brain, 2.8 in touch screen, SD card and speaker plug on one board for about $15. The biggest community of any cheap screen. <a href="https://www.atomic14.com/esp32/boards/esp32-2432s028r/" target="_blank" rel="noopener">atomic14 guide</a></li><li><b>Round 1.28 in GC9A01</b>: watch faces, gauges, robot eyes. <a href="https://www.waveshare.com/1.28inch-lcd-module.htm" target="_blank" rel="noopener">Waveshare</a></li><li><b>Pico + 2.8 in screen</b>: your build, the cheapest handheld.</li><li><b>Pi Zero 2 W</b>: RetroPie for arcade builds, like the AdventurePi.</li></ul>'],
   ['AdventurePi, filtered', '<p>The AdventurePi (howchoo) put a Raspberry Pi, screen, battery and controls in a rugged hard case, with swappable Arcade and Console inserts. What we kept: the case that closes, screen in the lid, controls in the base, swappable decks. What is new: you print the case to fit your parts, any shape, cut to your printer.</p>'],
   ['Photo your built board', '<ul><li>Your board is soldered, everything is where it is. The case should fit it, not the other way around.</li><li>Front photo: pick what it is (Button 12, Knob, Screen...) and tap it. Each gets the real hole size from our parts list, at the spot you tapped. A screen is 2 taps, opposite corners of the part that lights up.</li><li>Back photo: tap the screw holes. They become posts under the deck that hold your board.</li><li>No AI looks at your photos. You tap, it measures. Nothing leaves your phone, nothing costs money.</li><li>If the board is bigger than the case, the case grows to fit it.</li></ul>'],
+  ['A panel for a box you have', '<ul><li>Body, Shape, Panel: one flat piece that fills a box you already have, like a briefcase lid. It replaces loose wood or cardboard pieces.</li><li>Size: type the inside size of the box or measure it with a card. We take off 1 mm so it drops in.</li><li>Notches let wires out at the edges: Round, Rounded or Square, any edge, any size.</li><li>Bigger than your bed? It prints in pieces with puzzle tabs that lock in the middle. A drop of glue keeps them.</li><li>3 mm is stiff enough for a screen panel in PLA. 2 mm flexes, 4 mm takes longer.</li></ul>'],
   ['Print time and strength', '<ul><li>The time is worked out from the real plastic in your case and how fast your printer really prints. Your slicer has the exact number, this is within about a third.</li><li>Older bed slingers like the Ender-3 S1 print about 3 times slower than a Bambu, K1 or Ender-3 V3.</li><li>A case is a shell with 2.4 mm walls. Infill does not matter much because 4 walls already fill them. Want it tougher? Thick walls (3.2 mm).</li><li>Fast (0.28 mm layers) shows lines and saves about a quarter of the time. Smooth (0.12 mm) takes about twice as long.</li><li>The QR sticker: if your sticker only holds a serial number, pick your printer by hand. Tell NOCIV what it says and we teach the scanner.</li></ul>'],
   ['Measuring with your phone', '<ul><li>Any bank, ID, gift or library card is 85.6 x 54 mm. It is the ruler.</li><li>Lay it flat right next to the part, same table. Good light, no flash, no shadows.</li><li>The green outline goes solid when your phone is level, then it snaps by itself.</li><li>A hand in the photo is a nice size guide for people, but hands differ by a lot. The card is accurate to about 1 mm.</li><li>Flip the part like a page for the back so the screw holes line up.</li></ul>'],
   ['Printing and joining', '<ul><li>Bigger than your bed? Pick where the seams go (up and down, across, both, or diagonal) and how many. Puzzle tabs lock the pieces, a drop of super glue keeps them.</li><li>Magnets: 6 x 3 mm, press in, glue if loose. Check which way they attract before gluing the second one.</li><li>Screws + heat set inserts: press brass inserts in with a soldering iron, then it can come apart forever.</li><li>Printed hinge: slide 1.75 mm filament through the barrels as the pin, melt the ends a little to keep it in.</li><li>Wood (Case Zero Base): print the templates at 100 percent, check the 10 mm line with a ruler, tape on, cut.</li></ul>'],

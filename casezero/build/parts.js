@@ -81,7 +81,8 @@
     ['hand', 'Handheld', 'Tall, screen on top, buttons below', 'slate'],
     ['pad', 'Controller', 'Two grips', 'slate'],
     ['groove', 'Groovebox', 'Flat, rows of knobs', 'slate'],
-    ['face', 'Character', 'Round face, eyes, can move', 'slate']
+    ['face', 'Character', 'Round face, eyes, can move', 'slate'],
+    ['panel', 'Panel', 'A flat panel for a box you already have: screen window, holes, notches for wires', 'panel']
   ];
   // Printers: [id, name, bed wide, bed deep, tall, brand, speed]. Sizes are the makers' published build volumes (checked Nov 2026).
   // speed = how fast it really lays plastic on a normal case, in cubic mm per second (outer walls slow everything down):

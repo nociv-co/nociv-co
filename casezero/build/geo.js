@@ -54,6 +54,7 @@ export function outline(style, W, D) {
     return union([body, gl, gr]);
   }
   if (style === 'groove') return [rrect(0, 0, W, D, 3)];
+  if (style === 'panel') return [rrect(0, 0, W, D, 3)];
   return [rrect(0, 0, W, D, 6)];
 }
 // Where the screw posts go: inside the walls, near the far left, right, top and bottom of the outline.
