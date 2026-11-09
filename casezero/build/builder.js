@@ -3,22 +3,23 @@
 // Print: your printer and bed, material, how it joins, where the puzzle seams go. Files: STL per piece, wood templates, wiring.
 import * as THREE from 'three';
 import { OrbitControls } from 'three/addons/OrbitControls.js';
-import * as G from './geo.js?v=10';
-import { openMeasure } from './capture.js?v=10';
+import * as G from './geo.js?v=12';
+import { openMeasure } from './capture.js?v=12';
 
 const CZ = window.CZ, R = G.RULE, $ = (id) => document.getElementById(id);
 const esc = (s) => String(s == null ? '' : s).replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
 if (window.self !== window.top) document.documentElement.classList.add('embedded');
 
 // ---------- state ----------
-const KEY = 'nociv-casezero-v7', SIZES = { clam: [9, 6], small: [5, 7], slate: [6, 4], calc: [5, 9], hand: [5, 8], pad: [10, 5], groove: [10, 5], face: [7, 7], panel: [15, 9] };
+const KEY = 'nociv-casezero-v7', SIZES = { clam: [9, 6], small: [5, 7], slate: [6, 4], calc: [5, 9], hand: [5, 8], pad: [10, 5], groove: [10, 5], face: [7, 7], panel: [15, 9], deck: [14, 10] };
 let S = { step: 2, tab: {}, cat: 'brain', items: [], mine: {}, style: 'clam', cols: 9, rows: 6, add: 0, hinge: 'printed', hside: 'back', magnets: true,
   printer: 'a1', bed: [256, 256], material: 'pla', join: 'dovetail', sdir: 'auto', sn: 'auto', tab3: 'dovetail', open: true, snap: false, spring: false,
   walls: 'normal', layer: 'normal', brand: null, look: null,
-  pw: 300, pd: 190, pt: 3, prad: 3, pholes: true, notches: [], nsel: 0 }; // Panel: real size in mm, thickness, corners, corner screw holes, wire notches
+  pw: 300, pd: 190, pt: 3, prad: 3, pholes: true, phold: null, plift: 0, notches: [], nsel: 0, started: false }; // Panel: real size in mm, thickness, corners, corner screw holes, wire notches
 const LOOK0 = () => ({ logo: { on: false, src: 'text', text: 'NOCIV', face: 'lidout', x: null, y: null, size: 40, how: 'dip' }, labels: { on: false, place: 'below', size: 4, how: 'dip', text: {} }, tex: { top: { kind: 'none', sp: 6, bump: false }, bottom: { kind: 'none', sp: 6, bump: false }, walls: { kind: 'none', sp: 6 }, lidout: { kind: 'none', sp: 6, bump: false }, lidin: { kind: 'none', sp: 6, bump: false } }, texFace: 'top', colors: 1, c1: '#e9e2cc', c2: '#1a1a1a', single: 'paint' });
 try { const s = JSON.parse(localStorage.getItem(KEY) || 'null'); if (s && Array.isArray(s.items)) S = Object.assign(S, s); } catch (e) {}
 if (!S.look) S.look = LOOK0();
+if (!S.phold) S.phold = S.pholes === false ? 'drop' : 'screws';
 // Walls: Normal 2.4 mm sides and 2.0 mm floor, Thick 3.2 and 2.8. The deck stays 2.4 mm so buttons still reach through it.
 function applyWalls() { R.T = S.walls === 'tough' ? 3.2 : 2.4; R.F = S.walls === 'tough' ? 2.8 : 2.0; }
 applyWalls();
@@ -37,15 +38,24 @@ const PNAME = { lid: 'Lid', base: 'Base', top: 'Top', inside: 'Inside' };
 const PLET = { lid: 'L', base: 'B', top: 'T', inside: 'I' };
 
 // ---------- sizes ----------
-function dims() { if (isPanel()) return { W: S.pw, D: S.pd }; const W = S.cols * 20 + 2 * (R.T + R.CLR + 1), D = S.rows * 20 + 2 * (R.T + R.CLR + 1); return { W, D }; }
+// Panel: pw, pd = the inside of the box; the panel is 1 mm smaller so it drops in
+function dims() { if (isPanel()) return { W: S.pw - 1, D: S.pd - 1 }; const W = S.cols * 20 + 2 * (R.T + R.CLR + 1), D = S.rows * 20 + 2 * (R.T + R.CLR + 1); return { W, D }; }
 function outline() {
   const d = dims(); if (!isPanel()) return G.outline(S.style, d.W, d.D);
-  const base = [G.rrect(0, 0, d.W, d.D, Math.max(0.01, Math.min(S.prad, d.W / 2 - 1, d.D / 2 - 1)))], nt = notchPolys();
+  let base = [G.rrect(0, 0, d.W, d.D, Math.max(0.01, Math.min(S.prad, d.W / 2 - 1, d.D / 2 - 1)))]; const nt = notchPolys();
+  if (S.phold === 'ribs') base = G.union(base.concat(ribPolys(d.W, d.D)));
   return nt.length ? G.diff(base, G.union(nt)) : base;
+}
+function ribPolys(W, D) {
+  // snug ribs: little half round bumps on every edge that stand out 0.8 mm and crush a bit against the box, so the panel holds without screws
+  const out = [], c = Math.max(S.prad, 3) + 8, along = (L) => { const n = Math.max(2, Math.round((L - 2 * c) / 45) + 1), st = (L - 2 * c) / (n - 1); return Array.from({ length: n }, (_, i) => c + i * st); };
+  along(W).forEach((x) => { out.push(G.circle(x, 0.7, 1.5, 20), G.circle(x, D - 0.7, 1.5, 20)); });
+  along(D).forEach((y) => { out.push(G.circle(0.7, y, 1.5, 20), G.circle(W - 0.7, y, 1.5, 20)); });
+  return out;
 }
 const EDGE = { bottom: 'Bottom', top: 'Top', left: 'Left', right: 'Right' };
 function notchPolys() { // wire notches: each one bites into one edge. at = mm from the left (top, bottom) or from the bottom (sides)
-  const W = S.pw, D = S.pd, out = [];
+  const d0 = dims(), W = d0.W, D = d0.D, out = [];
   (S.notches || []).forEach((n) => {
     const side = n.edge === 'left' || n.edge === 'right', L = side ? D : W, w = Math.max(2, Math.min(n.w, L - 2)), s = Math.max(w / 2, Math.min(L - w / 2, n.at)), dd = Math.max(1, n.d);
     let loc;
@@ -58,12 +68,12 @@ function notchPolys() { // wire notches: each one bites into one edge. at = mm f
   return out;
 }
 function deckArea() { return G.offset(outline(), isPanel() ? -1 : -(R.T + R.CLR + 0.8)); }
-function posts() { const d = dims(); if (isPanel()) return S.pholes ? [[6, 6], [d.W - 6, 6], [d.W - 6, d.D - 6], [6, d.D - 6]] : []; return G.postSpots(outline(), d.W * d.D > 30000 ? 6 : 4); }
+function posts() { const d = dims(); if (isPanel()) { const k = S.plift > 0 ? 8.5 : 6.5; /* half mm: never in line with a notch edge (whole mm), which breaks the mesh */ return S.phold === 'screws' ? [[k, k], [d.W - k, k], [d.W - k, d.D - k], [k, d.D - k]] : []; } return G.postSpots(outline(), d.W * d.D > 30000 ? 6 : 4); }
 function itemsOn(panel) { return S.items.filter((i) => i.panel === panel); }
 function depthOf(panel) { return itemsOn(panel).reduce((m, i) => Math.max(m, PP(i) ? PP(i).depth : 0), 0); }
 function upOf(panel) { return itemsOn(panel).reduce((m, i) => Math.max(m, PP(i) ? (PP(i).up || 0) : 0), 0); }
 function heights() {
-  if (isPanel()) return { H: S.pt, Hl: 0, recess: 0, recessL: 0 };
+  if (isPanel()) return { H: S.pt + (S.plift || 0), Hl: 0, recess: 0, recessL: 0 };
   // base: floor + deepest part or brain + deck, plus room for caps when the lid closes
   const home = homePanel(), inside = S.items.filter((i) => i.panel === 'inside').reduce((m, i) => Math.max(m, 5 + (PP(i) ? PP(i).depth : 0)), 0);
   const recess = isClam() ? Math.ceil(upOf(home) + 1) : 0;
@@ -196,7 +206,9 @@ function panelBuilt() {
   // one flat plate: outline with notches, minus every part's hole, the screen screws and the corner screws. Marks pressed into the front.
   const o = outline(), T = S.pt, D = 0.6, cuts = [];
   itemsOn('top').filter((i) => PP(i)).forEach((i) => {
-    const P = PP(i), a = (i.r || 0) * Math.PI / 2; cuts.push(...G.cutShape(P, i.x, i.y, i.r || 0));
+    const P = PP(i), a = (i.r || 0) * Math.PI / 2;
+    // on the floor of the box the whole screen comes up through the panel; raised, the panel sits on top and shows only the picture
+    if (P.screen && !S.plift) { const w = (i.r % 2 ? P.h : P.w) + 1, h = (i.r % 2 ? P.w : P.h) + 1; cuts.push(G.rrect(i.x - w / 2, i.y - h / 2, i.x + w / 2, i.y + h / 2, 1.5)); } else cuts.push(...G.cutShape(P, i.x, i.y, i.r || 0));
     (P.mountHoles || []).forEach((m) => cuts.push(G.circle(i.x + m.x * Math.cos(a) - m.y * Math.sin(a), i.y + m.x * Math.sin(a) + m.y * Math.cos(a), m.d / 2 + 0.2, 24)));
   });
   posts().forEach(([x, y]) => cuts.push(G.circle(x, y, R.HOLE / 2, 24)));
@@ -205,6 +217,12 @@ function panelBuilt() {
   const holes = cuts.concat(thru), plate = holes.length ? G.diff(o, G.union(holes)) : o, tray = [], inlay = [];
   if (dip.length && T > 1.2) { const rec = G.union(dip); tray.push({ polys: plate, z0: 0, z1: T - D, tag: 'floor' }, { polys: G.diff(plate, rec), z0: T - D, z1: T, tag: 'floor' }); if (fill.length) inlay.push({ polys: G.inter(G.union(fill), plate), z0: T - D, z1: T, tag: 'inlayB' }); }
   else tray.push({ polys: plate, z0: 0, z1: T, tag: 'floor' });
+  if (S.plift > 0) { // legs under the panel: in the corners and along long edges, each with a screw hole when it screws down
+    const d = dims(), sp = [], xs = [8.5, d.W - 8.5], ys = [8.5, d.D - 8.5]; if (d.W > 150) xs.push(d.W / 3, d.W * 2 / 3); if (d.D > 150) ys.push(d.D / 3, d.D * 2 / 3); // thirds, so a seam in the middle never cuts a leg
+    xs.forEach((x) => ys.forEach((y) => { if ((x > 9 && x < d.W - 9) && (y > 9 && y < d.D - 9)) return; sp.push([x, y]); }));
+    const legs = []; sp.forEach(([x, y]) => { const c = G.circle(x, y, 4.5, 28); if (G.area(G.inter([c], plate)) < G.area([c]) - 0.5) return; legs.push(S.phold === 'screws' ? G.diff([c], [G.circle(x, y, R.HOLE / 2, 20)])[0] : c); });
+    if (legs.length) tray.push({ polys: G.union(legs), z0: -S.plift, z1: 0, tag: 'leg' });
+  }
   return { out: o, tray, deck: [], extra: [], posts: [], H: T, deckZ: T - R.LT, inlay, stick: [], snap: false };
 }
 function halves() { const h = heights(); return panels().map((p) => ({ key: p, name: PNAME[p], built: halfFor(p, h) })); }
@@ -297,7 +315,7 @@ function tabsFor(step) {
   if (step === 2) return [['shape', 'Shape', 'shape'], ['fit', 'Fit', 'fit'], ['measure', 'Measure', 'measure']];
   if (step === 3) return [['colors', 'Color', 'colors'], ['tex', 'Texture', 'tex'], ['labels', 'Buttons', 'labels'], ['logo', 'Logo', 'logo']];
   if (step === 4) return [['printer', 'Printer', 'printer'], ['strong', 'Strength', 'strong'], ['mat', 'Material', 'mat'], ['split', 'Split', 'split']];
-  return [['3d', '3D', 'cube'], ['files', 'Files', 'file'], ['wire', 'Wire it', 'wire']];
+  return [['3d', '3D', 'cube'], ['files', 'Files', 'file'], ['extras', 'Add-ons', 'parts'], ['wire', 'Wire it', 'wire']];
 }
 function curTab() { const t = tabsFor(S.step), c = S.tab[S.step]; return t.some((x) => x[0] === c) ? c : t[S.step === 0 ? 1 : 0][0]; }
 function render() {
@@ -340,17 +358,20 @@ function pane(t) {
     h += '<p class="note">' + (probs.length ? probs.map((x) => '<span class="bad">' + esc(label(x.it)) + ' is ' + esc(x.list[0]) + '.</span>').join(' ') : (S.items.length ? '<span class="ok">Everything fits.</span> Drag a part to move it. Tap to pick it.' : '')) + '</p>';
     return h;
   }
-  if (t === 'psize') return '<div class="row"><b>Wide</b><input class="num" id="pw" type="number" inputmode="decimal" step="0.5" value="' + S.pw + '"><span class="u">mm</span></div><div class="row"><b>Tall</b><input class="num" id="pd" type="number" inputmode="decimal" step="0.5" value="' + S.pd + '"><span class="u">mm</span></div>' +
-    '<div class="row"><b>Thick</b>' + seg('pt', [['2', '2 mm'], ['3', '3 mm'], ['4', '4 mm']], String(S.pt)) + '</div><div class="row"><b>Corners</b>' + seg('prad', [['0', 'Square'], ['3', 'Soft'], ['8', 'Round']], String(S.prad)) + '</div><div class="row"><b>Screws</b>' + seg('pholes', [['1', 'In the corners'], ['0', 'None']], S.pholes ? '1' : '0') + '</div>' +
-    '<button class="btn dark" data-act="measureLid">Measure the inside of my box</button><p class="note">Type the inside size of the box, or measure it: drag the green dots onto the inside corners, then Next and Done. We take off 1 mm so it drops in.' + (S.pw > S.bed[0] || S.pd > S.bed[1] ? ' Bigger than your bed: it prints as puzzle pieces that lock together (Print, Split).' : '') + '</p>';
+  if (t === 'psize') { const d = dims(), scr = S.items.some((i) => PP(i) && PP(i).screen);
+    return '<button class="btn dark" data-act="measureLid" style="margin-bottom:8px">Measure the inside of my box</button><div class="row"><b>Box inside</b><input class="num" id="pw" type="number" inputmode="decimal" step="0.5" value="' + S.pw + '" aria-label="Inside width in mm"><span class="u">x</span><input class="num" id="pd" type="number" inputmode="decimal" step="0.5" value="' + S.pd + '" aria-label="Inside height in mm"><span class="u">mm</span></div>' +
+    '<div class="row"><b>Holds by</b>' + seg('phold', [['screws', 'Screws'], ['ribs', 'Snug ribs'], ['drop', 'Drops in']], S.phold) + '</div><div class="row"><b>Sits</b>' + seg('plift', [['0', 'On the floor'], ['1', 'Raised']], S.plift > 0 ? '1' : '0') + '</div>' + (S.plift > 0 ? stepper('plift', 'Legs', S.plift + ' mm tall') : '') +
+    '<div class="row"><b>Thick</b>' + seg('pt', [['2', '2 mm'], ['3', '3 mm'], ['4', '4 mm']], String(S.pt)) + '</div><div class="row"><b>Corners</b>' + seg('prad', [['0', 'Square'], ['3', 'Soft'], ['8', 'Round']], String(S.prad)) + '</div>' +
+    '<p class="note">Panel: <b>' + d.W + ' x ' + d.D + ' mm</b>, 1 mm smaller than the box so it drops in. ' + ({ screws: 'M3 screws in the corners' + (S.plift > 0 ? ' go through the legs.' : '.'), ribs: 'Little ribs on every edge press against the box and hold it, no screws.', drop: 'It just lies in the box.' })[S.phold] + ' ' +
+    (S.plift > 0 ? 'Raised: legs lift it to the front of your screen and the window shows only the picture. Set the legs to the height of the screen front above the floor. It prints face down, legs up.' : scr ? 'On the floor: the whole screen comes up through the window, like your wood panels.' : '') + (d.W > S.bed[0] || d.D > S.bed[1] ? ' Bigger than your bed: it prints as puzzle pieces that lock together (Print, Split).' : '') + '</p>'; }
   if (t === 'notch') {
     const N = S.notches || [], i = Math.min(S.nsel || 0, N.length - 1), n = N[i], along = n && (n.edge === 'left' || n.edge === 'right') ? 'From bottom' : 'From left';
     return '<div class="grid g2"><button class="btn dark" data-act="addNotch">Add a notch</button>' + (n ? '<button class="btn" data-act="delNotch">Remove N' + (i + 1) + '</button>' : '<span></span>') + '</div>' +
       (N.length ? '<div class="chosen" style="margin:6px 0 8px">' + N.map((x, j) => '<span data-nsel="' + j + '" style="cursor:pointer' + (j === i ? ';background:#1a1a1a;color:#fff' : '') + '">N' + (j + 1) + ' ' + EDGE[x.edge] + '</span>').join('') + '</div>' : '') +
-      (n ? '<div class="row"><b>Edge</b>' + seg('n_edge', [['bottom', 'Bottom'], ['top', 'Top'], ['left', 'Left'], ['right', 'Right']], n.edge) + '</div><div class="row"><b>Shape</b>' + seg('n_shape', [['round', 'Round'], ['rrect', 'Rounded'], ['rect', 'Square']], n.shape) + '</div>' + stepper('nw', 'Wide', n.w + ' mm') + stepper('nd', 'Deep', n.d + ' mm') + stepper('nat', along, n.at + ' mm') : '<p class="note">A notch lets wires and plugs pass the edge of the panel. Pick the edge, the shape and the size.</p>');
+      (n ? '<div class="row"><b>Edge</b>' + seg('n_edge', [['bottom', 'Bottom'], ['top', 'Top'], ['left', 'Left'], ['right', 'Right']], n.edge) + '</div><div class="row"><b>Shape</b>' + seg('n_shape', [['round', 'Round'], ['rrect', 'Rounded'], ['rect', 'Square']], n.shape) + '</div>' + stepper('nw', 'Wide', n.w + ' mm') + stepper('nd', 'Deep', n.d + ' mm') + stepper('nat', along, n.at + ' mm') : '<p class="note">A notch lets wires and plugs pass the edge of the panel. Tap Add a notch, or tap an edge on the picture.</p>') + (n ? '<p class="note">Drag on the picture to move N' + (i + 1) + ' along any edge.</p>' : '');
   }
   if (t === 'size') { const d = dims(); return stepper('cols', 'Wide', S.cols + ' squares') + stepper('rows', 'Tall', S.rows + ' squares') + '<p class="note">Each square is 20 mm, like your Panel Layout v1. Outside: <b>' + d.W.toFixed(0) + ' x ' + d.D.toFixed(0) + ' mm</b>, ' + heights().H + ' mm deep' + (isClam() ? ' + ' + heights().Hl + ' mm lid' : '') + '.</p>'; }
-  if (t === 'shape') return '<div class="grid g4">' + CZ.STYLES.map((s) => '<button type="button" class="pick" data-style="' + s[0] + '" aria-pressed="' + (S.style === s[0]) + '">' + styleSvg(s[0]) + esc(s[1]) + '</button>').join('') + '</div><p class="note">' + esc(styleRow()[2]) + '.' + (S.style === 'face' ? ' Round screens make eyes or a watch face. Want it to move? Add a servo in Brain (Movement), then plan the moves in the <a href="/creator-tools.html#cartoon">Cartoon maker</a>.' : '') + (S.style === 'hand' || S.style === 'pad' ? ' Our own shape, not a copy of any console.' : '') + '</p>';
+  if (t === 'shape') return '<button class="btn" data-act="start" style="margin-bottom:8px">What am I making? Case, panel or one part</button><div class="grid g4">' + CZ.STYLES.map((s) => '<button type="button" class="pick" data-style="' + s[0] + '" aria-pressed="' + (S.style === s[0]) + '">' + styleSvg(s[0]) + esc(s[1]) + '</button>').join('') + '</div><p class="note">' + esc(styleRow()[2]) + '.' + (S.style === 'face' ? ' Round screens make eyes or a watch face. Want it to move? Add a servo in Brain (Movement), then plan the moves in the <a href="/creator-tools.html#cartoon">Cartoon maker</a>.' : '') + (S.style === 'hand' || S.style === 'pad' ? ' Our own shape, not a copy of any console.' : '') + '</p>';
   if (t === 'fit') {
     const h = heights();
     let o = stepper('cols', 'Wide', S.cols + ' squares (' + dims().W.toFixed(0) + ' mm)') + stepper('rows', 'Tall', S.rows + ' squares (' + dims().D.toFixed(0) + ' mm)') + stepper('add', 'Height', h.H + ' mm' + (S.add ? ' (+' + S.add + ')' : ''));
@@ -393,6 +414,14 @@ function pane(t) {
   if (t === '3d') return '<p class="h">Spin it with one finger, pinch to zoom</p>' + (isClam() ? '<button class="btn" data-act="open">' + (S.open ? 'Close the lid' : 'Open the lid') + '</button>' : '') + '<p class="note">' + summaryLine() + '</p>';
   if (t === 'files') { const probs = allProblems(); return '<button class="btn red" data-act="make"' + (probs.length || !S.items.length ? ' aria-disabled="true"' : '') + '>Make my files</button><p class="note">' + (!S.items.length ? 'Add parts in Brain first.' : probs.length ? '<span class="bad">Fix the parts marked ! in Arrange first.</span>' : (S.material === 'wood' ? 'Wood: real size templates (SVG) to print at 100 percent or laser cut, plus the cut list.' : 'One STL per piece, numbered. Print the deck face down, the tray open side up.')) + '</p><div class="files" id="fileList" style="margin-top:8px"></div>'; }
   if (t === 'wire') return wireHtml();
+  if (t === 'extras') { const X = xp();
+    const card = (id, title, txt, ctl) => '<div class="it"><b>' + title + '</b>' + txt + ctl + '<div class="grid g2" style="margin-top:6px"><button class="btn dark" data-xsave="' + id + '">Save STL</button><span class="note" style="margin:0;align-self:center">' + XINFO[id]() + '</span></div></div>';
+    return '<p class="note" style="margin-top:0">Print one piece at a time. Each is sized to your case.</p><div class="list" style="margin-top:6px">' +
+      card('stand', 'Clip-on stand', 'Clips onto the bottom edge, leans it back. Stronger than a hinged kickstand: no pin to snap.', stepper('xs_t', 'Fits', X.stand.t + ' mm thick' + (X.stand.auto ? ' (your case)' : '')) + '<div class="row"><b>Leans</b>' + seg('xs_a', [['15', '15'], ['25', '25'], ['35', '35 deg']], String(X.stand.a)) + '</div>') +
+      card('feet', 'Feet', 'Little round feet so it does not slide. Screw on, or glue with no hole.', '<div class="row"><b>Fix</b>' + seg('xf_hole', [['1', 'Screw hole'], ['0', 'Glue']], X.feet.hole ? '1' : '0') + '</div>' + stepper('xf_h', 'Tall', X.feet.h + ' mm')) +
+      card('standoff', 'Standoffs', 'Lift a board off the floor. The screw cuts its own thread in the plastic.', '<div class="row"><b>Screw</b>' + seg('xo_s', [['m25', 'M2.5 (Pi)'], ['m3', 'M3']], X.standoff.s) + '</div>' + stepper('xo_h', 'Tall', X.standoff.h + ' mm')) +
+      card('clip', 'Cable clips', 'Keep wires tidy inside. Stick on with double sided tape or glue.', stepper('xc_d', 'Cable', X.clip.d + ' mm')) + '</div>';
+  }
   return '';
 }
 function summaryLine() { const d = dims(), h = heights(); if (isPanel()) return 'Panel, ' + d.W + ' x ' + d.D + ' x ' + S.pt + ' mm. ' + S.items.length + (S.items.length === 1 ? ' part.' : ' parts.'); return esc(styleRow()[1]) + ', ' + d.W.toFixed(0) + ' x ' + d.D.toFixed(0) + ' x ' + (h.H + h.Hl) + ' mm closed. ' + S.items.length + ' parts.'; }
@@ -438,9 +467,11 @@ $('pane').addEventListener('click', (e) => {
   if (d.join) { S.join = d.join; S.tab3 = d.join === 'dovetail' ? 'dovetail' : 'flat'; save(); render(); return; }
   const act = d.act;
   if (act === 'snap') { $('snapIn').click(); return; }
-  if (act === 'addNotch') { S.notches = S.notches || []; S.notches.push({ edge: 'bottom', shape: 'rrect', w: 20, d: 8, at: Math.round(S.pw / 2) }); S.nsel = S.notches.length - 1; reflow(); save(); render(); return; }
+  if (d.xsave) { const f = addonFile(d.xsave); if (f) saveFile(f); return; }
+  if (act === 'start') { showStart(); return; }
+  if (act === 'addNotch') { S.notches = S.notches || []; S.notches.push({ edge: 'bottom', shape: 'rrect', w: 20, d: 8, at: Math.round(dims().W / 2) }); S.nsel = S.notches.length - 1; reflow(); save(); render(); return; }
   if (act === 'delNotch') { S.notches.splice(S.nsel, 1); S.nsel = Math.max(0, S.nsel - 1); save(); render(); return; }
-  if (act === 'measureLid') { openMeasure((P) => { S.pw = Math.round((P.w - 1) * 2) / 2; S.pd = Math.round((P.h - 1) * 2) / 2; reflow(); save(); render(); }); return; }
+  if (act === 'measureLid') { openMeasure((P) => { S.pw = Math.round(P.w * 2) / 2; S.pd = Math.round(P.h * 2) / 2; reflow(); save(); render(); }); return; }
   if (act === 'nophoto') { PHOTO = null; try { localStorage.removeItem(KEY + ':photo'); } catch (er) {} render(); return; }
   if (act === 'toParts') { S.tab[0] = 'parts'; render(); return; }
   if (act === 'toBrain') { S.tab[0] = 'parts'; go(0); return; }
@@ -450,7 +481,7 @@ $('pane').addEventListener('click', (e) => {
     if (problems(it).length && !isPanel()) {
       const room = 2 * (R.T + R.CLR + 1) + 2 * (R.T + R.CLR + 0.8) + 8, need = (w, h) => [Math.max(S.cols, Math.ceil((w + room) / 20)), Math.max(S.rows, Math.ceil((h + room) / 20))];
       const a = need(P.w, P.h), b = need(P.h, P.w), pick = a[0] * a[1] <= b[0] * b[1] ? a : b;
-      S.cols = Math.min(16, pick[0]); S.rows = Math.min(16, pick[1]); reflow(); autoPlace(it);
+      S.cols = Math.min(24, pick[0]); S.rows = Math.min(24, pick[1]); reflow(); autoPlace(it);
     }
     S.tab[1] = it.panel === 'inside' ? homePanel() : it.panel; save(); render();
   }); return; }
@@ -465,13 +496,15 @@ $('pane').addEventListener('click', (e) => {
   const st = b.closest('[data-st]');
   if (st && d.d) {
     const k = st.dataset.st, v = +d.d;
-    if (k === 'cols') S.cols = Math.max(2, Math.min(16, S.cols + v)); if (k === 'rows') S.rows = Math.max(2, Math.min(16, S.rows + v));
+    if (k === 'cols') S.cols = Math.max(2, Math.min(24, S.cols + v)); if (k === 'rows') S.rows = Math.max(2, Math.min(24, S.rows + v));
     if (k === 'add') S.add = Math.max(0, Math.min(80, S.add + v * 5));
     if (k === 'bedw') S.bed[0] = Math.max(80, Math.min(400, S.bed[0] + v * 10)); if (k === 'bedd') S.bed[1] = Math.max(80, Math.min(400, S.bed[1] + v * 10));
     if (k === 'lgsize') { S.look.logo.size = Math.max(6, Math.min(160, S.look.logo.size + v * (S.look.logo.size >= 20 ? 5 : 2))); markCache = {}; }
     if (k === 'lbsize') { S.look.labels.size = Math.max(2.5, Math.min(10, S.look.labels.size + v * 0.5)); markCache = {}; }
     const nn = (S.notches || [])[S.nsel];
-    if (nn && k === 'nw') nn.w = Math.max(4, Math.min(120, nn.w + v * 2)); if (nn && k === 'nd') nn.d = Math.max(2, Math.min(60, nn.d + v)); if (nn && k === 'nat') nn.at = Math.max(0, Math.min(nn.edge === 'left' || nn.edge === 'right' ? S.pd : S.pw, nn.at + v * 5));
+    if (k === 'plift') S.plift = Math.max(3, Math.min(60, S.plift + v));
+    const X = xp(); if (k === 'xs_t') { X.stand.auto = false; X.stand.t = Math.max(6, Math.min(80, X.stand.t + v)); } if (k === 'xf_h') X.feet.h = Math.max(2, Math.min(15, X.feet.h + v)); if (k === 'xo_h') X.standoff.h = Math.max(2, Math.min(40, X.standoff.h + v)); if (k === 'xc_d') X.clip.d = Math.max(2, Math.min(16, X.clip.d + v));
+    if (nn && k === 'nw') nn.w = Math.max(4, Math.min(120, nn.w + v * 2)); if (nn && k === 'nd') nn.d = Math.max(2, Math.min(60, nn.d + v)); if (nn && k === 'nat') nn.at = Math.max(0, Math.min(nn.edge === 'left' || nn.edge === 'right' ? dims().D : dims().W, nn.at + v * 5));
     if (k === 'txsp') { const tx = S.look.tex[S.look.texFace]; tx.sp = Math.max(2, Math.min(30, tx.sp + v)); }
     if (k === 'cols' || k === 'rows') reflow();
     save(); render(); return;
@@ -479,8 +512,9 @@ $('pane').addEventListener('click', (e) => {
   const sg = b.closest('[data-sg]');
   if (sg && d.v != null) {
     const k = sg.dataset.sg, v = d.v, L = S.look; markCache = k.startsWith('lg_') || k.startsWith('lb_') ? {} : markCache;
-    if (k === 'pt') { S.pt = +v; save(); render(); return; } if (k === 'prad') { S.prad = +v; save(); render(); return; } if (k === 'pholes') { S.pholes = v === '1'; reflow(); save(); render(); return; }
-    const nn = (S.notches || [])[S.nsel]; if (nn && k === 'n_edge') { if ((nn.edge === 'left' || nn.edge === 'right') !== (v === 'left' || v === 'right')) nn.at = Math.round((v === 'left' || v === 'right' ? S.pd : S.pw) / 2); nn.edge = v; reflow(); save(); render(); return; } if (nn && k === 'n_shape') { nn.shape = v; save(); render(); return; }
+    if (k === 'pt') { S.pt = +v; save(); render(); return; } if (k === 'prad') { S.prad = +v; save(); render(); return; } if (k === 'phold') { S.phold = v; reflow(); save(); render(); return; } if (k === 'plift') { S.plift = v === '1' ? (S.plift || 12) : 0; reflow(); save(); render(); return; }
+    const nn = (S.notches || [])[S.nsel]; if (nn && k === 'n_edge') { if ((nn.edge === 'left' || nn.edge === 'right') !== (v === 'left' || v === 'right')) nn.at = Math.round((v === 'left' || v === 'right' ? dims().D : dims().W) / 2); nn.edge = v; reflow(); save(); render(); return; } if (nn && k === 'n_shape') { nn.shape = v; save(); render(); return; }
+    { const X = xp(); if (k === 'xs_a') { X.stand.a = +v; save(); render(); return; } if (k === 'xf_hole') { X.feet.hole = v === '1'; save(); render(); return; } if (k === 'xo_s') { X.standoff.s = v; save(); render(); return; } }
     if (k === 'brand') { S.brand = v; save(); render(); return; }
     if (k === 'walls') { S.walls = v; applyWalls(); reflow(); save(); render(); return; }
     if (k === 'layer') { S.layer = v; save(); render(); return; }
@@ -549,7 +583,7 @@ function drawBrain(W, H) {
     drawPartAt(p, cx, cy, k, 0, false);
     g.fillStyle = '#1a1a1a'; g.font = '800 ' + 10 * d + 'px -apple-system,Arial'; g.textAlign = 'center'; let lb = (N[o.i.id] || '') + ' ' + p.short; if (g.measureText(lb).width > o.w - 6 * d) lb = N[o.i.id] || p.short.slice(0, 5); g.fillText(lb, cx, y + o.h - 6 * d);
   });
-  tag(list.length + ' parts, shown at the same scale. Next: Arrange.');
+  tag(list.length + (list.length === 1 ? ' part' : ' parts') + ', shown at the same scale. Next: Arrange.');
 }
 const PIMG = new Map();
 function pimg(src) { let im = PIMG.get(src); if (!im) { im = new Image(); im.onload = () => draw(); im.src = src; PIMG.set(src, im); } return im.complete && im.naturalWidth ? im : null; }
@@ -609,7 +643,13 @@ function drawPanel(panel, W, H) {
 // drag on the panel
 let drag = null;
 const mm = (e) => { const r = cv.getBoundingClientRect(), d = cv.width / r.width, x = (e.clientX - r.left) * d, y = (e.clientY - r.top) * d; return [(x - view.ox) / view.k, view.D - (y - view.oy) / view.k]; };
+function notchTo(p) { // tap or drag near an edge: the picked notch jumps there
+  const d = dims(), n = (S.notches || [])[S.nsel]; if (!n) return;
+  const dist = { bottom: p[1], top: d.D - p[1], left: p[0], right: d.W - p[0] }, edge = Object.keys(dist).sort((a, b) => dist[a] - dist[b])[0];
+  n.edge = edge; n.at = Math.round(Math.max(0, Math.min(edge === 'left' || edge === 'right' ? d.D : d.W, edge === 'left' || edge === 'right' ? p[1] : p[0])));
+}
 cv.addEventListener('pointerdown', (e) => {
+  if (S.step === 2 && isPanel() && view && curTab() === 'notch') { if (!(S.notches || []).length) { S.notches = [{ edge: 'bottom', shape: 'rrect', w: 20, d: 8, at: 0 }]; S.nsel = 0; } notchTo(mm(e)); drag = { notch: true }; cv.setPointerCapture(e.pointerId); draw(); return; }
   if (S.step === 3 && view && curTab() === 'logo' && S.look.logo.on) { const p = mm(e); S.look.logo.x = p[0]; S.look.logo.y = p[1]; drag = { logo: true }; cv.setPointerCapture(e.pointerId); draw(); return; }
   if (S.step !== 1 || !view) return; const p = mm(e), panel = view.panel;
   const hits = S.items.filter((i) => PP(i) && (i.panel === panel || (panel !== 'lid' && i.panel === 'inside'))).filter((i) => { const f = fp(i); return p[0] >= f.x0 && p[0] <= f.x1 && p[1] >= f.y0 && p[1] <= f.y1; });
@@ -617,7 +657,7 @@ cv.addEventListener('pointerdown', (e) => {
   const it = hits[0]; if (!it) { sel = null; render(); return; }
   sel = it.id; drag = { it, dx: it.x - p[0], dy: it.y - p[1] }; cv.setPointerCapture(e.pointerId); render();
 });
-cv.addEventListener('pointermove', (e) => { if (!drag) return; const p = mm(e); if (drag.logo) { S.look.logo.x = Math.round(p[0] * 2) / 2; S.look.logo.y = Math.round(p[1] * 2) / 2; draw(); return; } drag.it.x = Math.round((p[0] + drag.dx) / 2.5) * 2.5; drag.it.y = Math.round((p[1] + drag.dy) / 2.5) * 2.5; draw(); });
+cv.addEventListener('pointermove', (e) => { if (!drag) return; const p = mm(e); if (drag.notch) { notchTo(p); draw(); return; } if (drag.logo) { S.look.logo.x = Math.round(p[0] * 2) / 2; S.look.logo.y = Math.round(p[1] * 2) / 2; draw(); return; } drag.it.x = Math.round((p[0] + drag.dx) / 2.5) * 2.5; drag.it.y = Math.round((p[1] + drag.dy) / 2.5) * 2.5; draw(); });
 ['pointerup', 'pointercancel'].forEach((t) => cv.addEventListener(t, () => { if (drag) { drag = null; save(); render(); } }));
 
 function curFace() { const t = curTab(), L = S.look; if (t === 'logo') return L.logo.face; if (t === 'tex') return L.texFace === 'walls' ? 'top' : L.texFace; return 'top'; }
@@ -801,6 +841,48 @@ async function scanPrinter(file) {
   } catch (e) { note('<span class="bad">Could not read that photo.</span> Pick your printer below.'); }
 }
 
+// ---------- add-ons: one piece at a time ----------
+function xp() { if (!S.xp) S.xp = {}; const X = S.xp; X.stand = X.stand || { t: null, a: 25 }; if (X.stand.t == null) X.stand.auto = true; if (X.stand.auto) X.stand.t = isPanel() ? 20 : Math.round(heights().H); /* follows the case until she sets it */ X.feet = X.feet || { hole: true, h: 4 }; X.standoff = X.standoff || { s: 'm25', h: 8 }; X.clip = X.clip || { d: 6 }; return X; }
+const XINFO = { stand: () => '2 stands, print on their side', feet: () => '4 feet', standoff: () => '4 standoffs', clip: () => '6 clips' };
+function addonPolys(id) {
+  // every add-on is a flat shape pushed up into 3D (prints flat, strongest way for each one). Returns { polys, h, n, gap }
+  const X = xp();
+  if (id === 'stand') {
+    const w = X.stand.t + 0.6, wall = 3.2, dep = 16, a = X.stand.a * Math.PI / 180, ca = Math.cos(a), sa = Math.sin(a);
+    const rot = ([x, y]) => [x * ca + y * sa, -x * sa + y * ca], W = w + 2 * wall;
+    let U = G.diff([G.rect(0, 0, W, dep + wall)], [G.rect(wall, wall, wall + w, dep + wall + 1)]).map((p) => p.map(rot));
+    const bb = G.bbox(U), mv = ([x, y]) => [x - bb.x0, y - bb.y0 + 4]; U = U.map((p) => p.map(mv));
+    const bBot = mv(rot([W, 0])), bTop = mv(rot([W, dep + wall])), far = bBot[0] + (bTop[1] + 4) * 0.9;
+    const brace = [bBot, [far, 0], [far, 4], bTop].map((p) => p.slice());
+    return { polys: G.union(U.concat([G.rect(0, 0, far, 4), brace])), h: 30, n: 2 };
+  }
+  if (id === 'feet') { const c = G.circle(0, 0, 7, 40); return { polys: X.feet.hole ? G.diff([c], [G.circle(0, 0, 1.7, 20)]) : [c], h: X.feet.h, n: 4 }; }
+  if (id === 'standoff') return { polys: G.diff([G.circle(0, 0, 3.2, 32)], [G.circle(0, 0, X.standoff.s === 'm3' ? 1.3 : 1.1, 20)]), h: X.standoff.h, n: 4 };
+  if (id === 'clip') { const ro = X.clip.d / 2 + 1.8, ri = X.clip.d / 2 + 0.3, gap = X.clip.d * 0.75;
+    const ring = G.diff([G.circle(0, 0, ro, 48)], [G.circle(0, 0, ri, 48), G.rect(-gap / 2, 0, gap / 2, ro + 1)]);
+    return { polys: G.union(ring.concat([G.rect(-ro - 5, -ro, ro + 5, -ro + 2.4)])), h: 8, n: 6 }; }
+  return null;
+}
+function addonFile(id) {
+  const a = addonPolys(id); if (!a) return null; const geos = [], b = G.bbox(a.polys), step = b.w + 4;
+  for (let i = 0; i < a.n; i++) geos.push(...G.layerGeos([{ polys: a.polys.map((p) => p.map(([x, y]) => [x + i * step, y])), z0: 0, z1: a.h }]));
+  return { name: 'casezero-' + id + '.stl', blob: G.stl(G.trisOf(geos), id) };
+}
+// ---------- start: what are you making ----------
+function showStart() {
+  $('sheetIn').innerHTML = '<h2>What are you making?</h2><div class="list">' +
+    '<button class="btn start" data-go="case"><b>A whole case</b>Box, lid, handheld, controller, cyberdeck. Built around your parts.</button>' +
+    '<button class="btn start" data-go="panel"><b>A panel for a box I have</b>One flat piece with a screen window, holes and notches for wires.</button>' +
+    '<button class="btn start" data-go="part"><b>One part</b>Stand, feet, standoffs, cable clips, knobs.</button></div>';
+  $('sheet').hidden = false;
+}
+$('sheetIn').addEventListener('click', (e) => {
+  const b = e.target.closest('[data-go]'); if (!b) return; const g = b.dataset.go; S.started = true; $('sheet').hidden = true;
+  if (g === 'panel') { if (!isPanel()) { S.style = 'panel'; reflow(); } S.tab[2] = 'psize'; go(2); }
+  else if (g === 'part') { S.tab[5] = 'extras'; go(5); }
+  else { if (isPanel()) { S.style = 'clam'; S.cols = 9; S.rows = 6; reflow(); } S.tab[2] = 'shape'; go(2); }
+});
+
 // ---------- files ----------
 let FILES = [];
 function makeFiles() {
@@ -816,9 +898,9 @@ function makeFiles() {
       }
       const tray = G.cutLayers(x.built.tray, x.built.extra, pl.regs), deck = G.cutLayers(x.built.deck, [], pl.regs), top = x.built.deckZ + R.LT;
       const inB = G.cutLayers(x.built.inlay.filter((l) => l.tag === 'inlayB'), [], pl.regs), inT = G.cutLayers(x.built.inlay.filter((l) => l.tag === 'inlayT'), [], pl.regs);
-      tray.forEach((p, i) => { const tris = G.trisOf(G.layerGeos(p.layers, p.extra)); if (tris.length) files.push({ label: x.name + (isPanel() ? ' piece ' : ' box ') + (i + 1) + (n > 1 ? ' of ' + n : ''), name: 'casezero-' + nm + (isPanel() ? '-' : '-box-') + (i + 1) + '.stl', blob: G.stl(tris, nm + ' box ' + (i + 1)) }); });
+      tray.forEach((p, i) => { let tris = G.trisOf(G.layerGeos(p.layers, p.extra)); if (isPanel() && S.plift > 0) tris = G.flipZ(tris, S.pt); if (tris.length) files.push({ label: x.name + (isPanel() ? ' piece ' : ' box ') + (i + 1) + (n > 1 ? ' of ' + n : ''), name: 'casezero-' + nm + (isPanel() ? '-' : '-box-') + (i + 1) + '.stl', blob: G.stl(tris, nm + ' box ' + (i + 1)) }); });
       deck.forEach((p, i) => { const tris = G.trisOf(G.layerGeos(p.layers)); if (tris.length) files.push({ label: x.name + ' deck ' + (i + 1) + (n > 1 ? ' of ' + n : ''), name: 'casezero-' + nm + '-deck-' + (i + 1) + '.stl', blob: G.stl(G.flipZ(tris, top), nm + ' deck ' + (i + 1)) }); });
-      inB.forEach((p, i) => { const tris = G.trisOf(G.layerGeos(p.layers)); if (tris.length) files.push({ label: x.name + ' box ' + (i + 1) + ' marks color', name: 'casezero-' + nm + '-box-' + (i + 1) + '-color2.stl', blob: G.stl(tris, nm + ' box marks') }); });
+      inB.forEach((p, i) => { let tris = G.trisOf(G.layerGeos(p.layers)); if (isPanel() && S.plift > 0) tris = G.flipZ(tris, S.pt); if (tris.length) files.push({ label: x.name + ' box ' + (i + 1) + ' marks color', name: 'casezero-' + nm + '-box-' + (i + 1) + '-color2.stl', blob: G.stl(tris, nm + ' box marks') }); });
       inT.forEach((p, i) => { const tris = G.trisOf(G.layerGeos(p.layers)); if (tris.length) files.push({ label: x.name + ' deck ' + (i + 1) + ' marks color', name: 'casezero-' + nm + '-deck-' + (i + 1) + '-color2.stl', blob: G.stl(G.flipZ(tris, top), nm + ' deck marks') }); });
       if (x.built.stick.length) { const geos = []; let ox = 0; x.built.stick.forEach((st) => { const gs = G.layerGeos(st.layers.map((l) => ({ polys: l.polys, z0: 0, z1: l.z1 - l.z0 }))); gs.forEach((gg) => { gg.translate(ox, 0, 0); geos.push(gg); }); ox += 2; }); files.push({ label: x.name + ' glue-on pieces', name: 'casezero-' + nm + '-glue-pieces.stl', blob: G.stl(G.trisOf(geos), nm + ' glue pieces') }); }
       const dks = x.built.deck.filter((l) => l.tag === 'deck'); if (dks.length) files.push({ label: x.name + ' test fit (1 mm)', name: 'casezero-' + nm + '-test-fit.stl', blob: G.stl(G.trisOf(G.layerGeos([{ polys: dks[dks.length - 1].polys, z0: 0, z1: 1 }])), nm + ' test fit') });
@@ -859,7 +941,9 @@ const LEARN = [
   ['Community picks and why', '<ul><li><b>Cheap Yellow Display</b> (ESP32-2432S028R): brain, 2.8 in touch screen, SD card and speaker plug on one board for about $15. The biggest community of any cheap screen. <a href="https://www.atomic14.com/esp32/boards/esp32-2432s028r/" target="_blank" rel="noopener">atomic14 guide</a></li><li><b>Round 1.28 in GC9A01</b>: watch faces, gauges, robot eyes. <a href="https://www.waveshare.com/1.28inch-lcd-module.htm" target="_blank" rel="noopener">Waveshare</a></li><li><b>Pico + 2.8 in screen</b>: your build, the cheapest handheld.</li><li><b>Pi Zero 2 W</b>: RetroPie for arcade builds, like the AdventurePi.</li></ul>'],
   ['AdventurePi, filtered', '<p>The AdventurePi (howchoo) put a Raspberry Pi, screen, battery and controls in a rugged hard case, with swappable Arcade and Console inserts. What we kept: the case that closes, screen in the lid, controls in the base, swappable decks. What is new: you print the case to fit your parts, any shape, cut to your printer.</p>'],
   ['Photo your built board', '<ul><li>Your board is soldered, everything is where it is. The case should fit it, not the other way around.</li><li>Front photo: pick what it is (Button 12, Knob, Screen...) and tap it. Each gets the real hole size from our parts list, at the spot you tapped. A screen is 2 taps, opposite corners of the part that lights up.</li><li>Back photo: tap the screw holes. They become posts under the deck that hold your board.</li><li>No AI looks at your photos. You tap, it measures. Nothing leaves your phone, nothing costs money.</li><li>If the board is bigger than the case, the case grows to fit it.</li></ul>'],
-  ['A panel for a box you have', '<ul><li>Body, Shape, Panel: one flat piece that fills a box you already have, like a briefcase lid. It replaces loose wood or cardboard pieces.</li><li>Size: type the inside size of the box or measure it with a card. We take off 1 mm so it drops in.</li><li>Notches let wires out at the edges: Round, Rounded or Square, any edge, any size.</li><li>Bigger than your bed? It prints in pieces with puzzle tabs that lock in the middle. A drop of glue keeps them.</li><li>3 mm is stiff enough for a screen panel in PLA. 2 mm flexes, 4 mm takes longer.</li></ul>'],
+  ['A panel for a box you have', '<ul><li>Body, Shape, Panel (or pick it on the start screen): one flat piece that fills a box you already have, like a briefcase lid.</li><li>Box inside: type it or measure it with a card. The panel comes out 1 mm smaller so it drops in.</li><li>Holds by: Screws (M3 in the corners), Snug ribs (little bumps on every edge press against the box, no screws) or Drops in.</li><li>Sits: On the floor, and the whole screen comes up through the window. Raised, and legs lift the panel to the front of the screen, the window shows only the picture. Measure from the floor of the box to the front of the screen for the leg height. A raised panel prints face down, legs up.</li><li>Notches let wires out: Round, Rounded or Square, any edge. Tap an edge on the picture or drag to move one.</li><li>Bigger than your bed? It prints in pieces with puzzle tabs that lock in the middle.</li></ul>'],
+  ['Add-ons', '<ul><li>Files, Add-ons: pieces you print one at a time, sized to your case.</li><li>Clip-on stand: grabs the bottom edge and leans it back 15, 25 or 35 degrees. Prints on its side so the layers run the strong way. No hinge pin to snap.</li><li>Feet, standoffs (the screw cuts its own thread), cable clips (tape or glue them on).</li></ul>'],
+  ['Deck (cyberdeck or laptop)', '<p>A big Case Zero: screen in the lid, keyboard and controls in the base. Sizes go up to 24 squares (480 mm). Keyboards vary a lot, so photo yours with the card in Brain (Snap). On a small bed it prints as puzzle pieces.</p>'],
   ['Print time and strength', '<ul><li>The time is worked out from the real plastic in your case and how fast your printer really prints. Your slicer has the exact number, this is within about a third.</li><li>Older bed slingers like the Ender-3 S1 print about 3 times slower than a Bambu, K1 or Ender-3 V3.</li><li>A case is a shell with 2.4 mm walls. Infill does not matter much because 4 walls already fill them. Want it tougher? Thick walls (3.2 mm).</li><li>Fast (0.28 mm layers) shows lines and saves about a quarter of the time. Smooth (0.12 mm) takes about twice as long.</li><li>The QR sticker: if your sticker only holds a serial number, pick your printer by hand. Tell NOCIV what it says and we teach the scanner.</li></ul>'],
   ['Measuring with your phone', '<ul><li>Any bank, ID, gift or library card is 85.6 x 54 mm. It is the ruler.</li><li>Lay it flat right next to the part, same table. Good light, no flash, no shadows.</li><li>The green outline goes solid when your phone is level, then it snaps by itself.</li><li>A hand in the photo is a nice size guide for people, but hands differ by a lot. The card is accurate to about 1 mm.</li><li>Flip the part like a page for the back so the screw holes line up.</li></ul>'],
   ['Printing and joining', '<ul><li>Bigger than your bed? Pick where the seams go (up and down, across, both, or diagonal) and how many. Puzzle tabs lock the pieces, a drop of super glue keeps them.</li><li>Magnets: 6 x 3 mm, press in, glue if loose. Check which way they attract before gluing the second one.</li><li>Screws + heat set inserts: press brass inserts in with a soldering iron, then it can come apart forever.</li><li>Printed hinge: slide 1.75 mm filament through the barrels as the pin, melt the ends a little to keep it in.</li><li>Wood (Case Zero Base): print the templates at 100 percent, check the 10 mm line with a ruler, tape on, cut.</li></ul>'],
@@ -873,5 +957,6 @@ $('help').onclick = openHelp; $('helpTop').onclick = openHelp;
 $('sheet').addEventListener('click', (e) => { if (e.target === $('sheet')) $('sheet').hidden = true; });
 window.addEventListener('resize', draw);
 
-window.__cz = { get S() { return S; }, halves, plan, makeFiles, get FILES() { return FILES; }, allProblems, G, addPart, go, render, dims, heights };
+window.__cz = { get S() { return S; }, halves, plan, makeFiles, get FILES() { return FILES; }, allProblems, G, addPart, go, render, dims, heights, addonFile, showStart };
 render();
+if (!S.started && !S.items.length) showStart();

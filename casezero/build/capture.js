@@ -5,6 +5,7 @@
 const CARD = [85.6, 53.98];
 // What you can tag on the front photo of a built board. Each one takes its hole size from the parts catalog (parts.js).
 const KINDS = [['tact12', 'Button 12'], ['button16', 'Button 16'], ['arcade24', 'Arcade 24'], ['arcade30', 'Arcade 30'], ['dpad', 'D-pad'], ['pot', 'Knob'], ['encoder', 'Click wheel'], ['thumb', 'Thumb stick'], ['led5', 'LED'], ['speaker28', 'Speaker'], ['screen', 'Screen'], ['hole', 'Other hole']];
+const SHORT = { tact12: 'B12', button16: 'B16', arcade24: 'A24', arcade30: 'A30', dpad: 'DP', pot: 'K', encoder: 'CW', thumb: 'TS', led5: 'LED', speaker28: 'SPK', screen: 'SCREEN' }; // short tags on the photo so close parts do not overlap
 const KP = (k) => (window.CZ && window.CZ.PARTS && window.CZ.PARTS[k]) || null;
 const $ = (id) => document.getElementById(id);
 
@@ -169,7 +170,7 @@ export function openMeasure(done) {
           else { const c = h.kind && h.kind !== 'hole' && KP(h.kind) ? KP(h.kind).cut : { o: 'circle', d: h.d };
             if (c.o === 'cross') { const a = c.w / 2 * ppm, t = c.t / 2 * ppm; g.strokeRect(s[0] - a, s[1] - t, 2 * a, 2 * t); g.strokeRect(s[0] - t, s[1] - a, 2 * t, 2 * a); }
             else { g.beginPath(); g.arc(s[0], s[1], Math.max(4, (c.d || 6) / 2 * ppm), 0, 7); g.stroke(); } }
-          if (h.kind && h.kind !== 'hole') { const nm = (KINDS.find((k) => k[0] === h.kind) || [0, ''])[1]; g.font = '800 ' + 11 * d + 'px Arial'; g.textAlign = 'center'; g.lineWidth = 3 * d; g.strokeStyle = '#000'; g.strokeText(nm, s[0], s[1] - 8 * d); g.fillStyle = '#ffd23a'; g.fillText(nm, s[0], s[1] - 8 * d); }
+          if (h.kind && h.kind !== 'hole') { const nm = SHORT[h.kind] || h.kind; g.font = '800 ' + 10 * d + 'px Arial'; g.textAlign = 'center'; g.lineWidth = 3 * d; g.strokeStyle = '#000'; g.strokeText(nm, s[0], s[1] - 8 * d); g.fillStyle = '#ffd23a'; g.fillText(nm, s[0], s[1] - 8 * d); }
         });
       }
       $('mzSay').textContent = say[key];
