@@ -46,13 +46,14 @@ const CSS = `
 .mz .lst{font:600 13px/1.4 inherit;color:#ddd}
 .mz .lst b{color:#fff}
 .mz input.nm{height:44px;border-radius:12px;border:2px solid #fff;background:#000;color:#fff;padding:0 12px;font:700 16px inherit}
+.mz [hidden]{display:none!important}
 .mz .chips{display:flex;gap:6px;flex-wrap:wrap}.mz .chips.scroll{flex-wrap:nowrap;overflow-x:auto;-webkit-overflow-scrolling:touch;padding-bottom:2px}.mz .chips.scroll button{flex:none;min-height:24px}.mz .chips button{all:unset;cursor:pointer;padding:9px 12px;border-radius:999px;border:1.5px solid #fff;font:700 13px/1 inherit}.mz .chips button[aria-pressed=true]{background:#fff;color:#111}
 `;
 
 export function openMeasure(done) {
   if (!document.getElementById('mzcss')) { const st = document.createElement('style'); st.id = 'mzcss'; st.textContent = CSS; document.head.appendChild(st); }
   const box = document.createElement('div'); box.className = 'mz'; document.body.appendChild(box);
-  const M = { name: 'My board', shots: {}, step: 'intro', stream: null, tilt: null, holes: [], depth: 12, hang: 8, kind: 'tact12' };
+  const M = { name: 'My board', shots: {}, step: 'intro', stream: null, tilt: null, holes: [], depth: 12, hang: 8, kind: 'tact12', brain: null };
   const close = () => { stopCam(); window.removeEventListener('deviceorientation', onTilt); box.remove(); };
   function stopCam() { if (M.stream) { M.stream.getTracks().forEach((t) => t.stop()); M.stream = null; } }
   function onTilt(e) { M.tilt = [e.beta || 0, e.gamma || 0]; }
@@ -130,9 +131,9 @@ export function openMeasure(done) {
     pts.card2 = [[W0 * 0.2, H0 * 0.35], [W0 * 0.2, H0 * 0.65]]; pts.part2 = [[W0 * 0.6, H0 * 0.35], [W0 * 0.6, H0 * 0.6]];
     const holes = shot.holes || [];
     const say = {
-      card: 'Drag the 4 orange dots onto the corners of the card. Top left first, then around.',
-      part: 'Now drag the 4 green dots onto the corners of your part.',
-      holes: which === 'front' ? 'Pick what it is below, then tap it on the photo. Tap it again to take it off.' : 'Tap every screw hole.',
+      card: 'Drag the 4 orange dots onto the corners of the card. Watch the close-up. Move slowly for small steps.',
+      part: 'Now the 4 green dots onto the corners of your board. Move slowly for small steps.',
+      holes: which === 'front' ? 'Pick what it is below. Press on the photo, slide until the cross is on it, let go.' : 'Press on each screw hole, slide until the cross is on it, let go.',
       card2: 'Card standing on its long edge: drag the 2 dots to its top and bottom.',
       part2: 'Drag the 2 green dots to the top and bottom of your part.'
     };
@@ -182,22 +183,47 @@ export function openMeasure(done) {
       $('mzHoleSize').hidden = key !== 'holes';
       const kb = $('mzKinds'); kb.hidden = !tagged; kb.querySelectorAll('[data-kind]').forEach((b) => b.setAttribute('aria-pressed', String(b.dataset.kind === M.kind)));
       $('mzHoleSize').querySelectorAll('[data-hd]').forEach((b) => { b.style.display = tagged && M.kind !== 'hole' ? 'none' : ''; });
+      if (loupe) drawLoupe(loupe, d);
+    }
+    // magnifier: while a finger is down, a round close-up shows exactly where the dot or tag lands (the finger hides it)
+    let loupe = null, drag = null;
+    function drawLoupe(q, d) {
+      const R = 64 * d, Z = 4, s = S(q), cx = s[0] < cv.width / 2 ? cv.width - R - 10 * d : R + 10 * d, cy = R + 10 * d, r = R / (k * Z);
+      g.save(); g.beginPath(); g.arc(cx, cy, R, 0, 7); g.closePath(); g.fillStyle = '#000'; g.fill(); g.clip();
+      g.drawImage(img, q[0] - r, q[1] - r, 2 * r, 2 * r, cx - R, cy - R, 2 * R, 2 * R);
+      g.strokeStyle = '#ff3b6b'; g.lineWidth = 1.5 * d; g.beginPath(); g.moveTo(cx - R, cy); g.lineTo(cx - 5 * d, cy); g.moveTo(cx + 5 * d, cy); g.lineTo(cx + R, cy); g.moveTo(cx, cy - R); g.lineTo(cx, cy - 5 * d); g.moveTo(cx, cy + 5 * d); g.lineTo(cx, cy + R); g.stroke();
+      g.restore(); g.beginPath(); g.arc(cx, cy, R, 0, 7); g.strokeStyle = '#fff'; g.lineWidth = 3 * d; g.stroke();
     }
     const near = (p, arr) => { let b = -1, bd = 1e9; arr.forEach((q, i) => { const s = S(q), dd = Math.hypot(s[0] - p[0], s[1] - p[1]); if (dd < bd) { bd = dd; b = i; } }); return bd < 46 * Math.min(2, devicePixelRatio || 1) ? b : -1; };
     const evp = (e) => { const r = cv.getBoundingClientRect(), d = cv.width / r.width; return [(e.clientX - r.left) * d, (e.clientY - r.top) * d]; };
+    // Corners: the dot does not jump to the finger, it moves with it from where it was. Slow finger = slow dot (down to a third), for exact corners.
+    // Tags: press, slide while the close-up shows the spot, let go to place it. A tap on a tag without sliding takes it off.
     cv.onpointerdown = (e) => {
-      const key = stage[st], p = evp(e);
-      if (key === 'holes') {
-        const tagged = which === 'front', last = holes[holes.length - 1];
-        if (tagged && M.kind === 'screen' && last && last.kind === 'screen' && !last.p2) { last.p2 = I(p[0], p[1]); draw(); return; }
-        const hit = holes.findIndex((h) => { const s = S(h.p); return Math.hypot(s[0] - p[0], s[1] - p[1]) < 30; });
-        if (hit > -1) holes.splice(hit, 1); else holes.push(tagged ? { p: I(p[0], p[1]), d: hd, kind: M.kind } : { p: I(p[0], p[1]), d: hd });
-        draw(); return;
-      }
-      sel = near(p, pts[key]); if (sel > -1) cv.setPointerCapture(e.pointerId);
+      const key = stage[st], p = evp(e); cv.setPointerCapture(e.pointerId);
+      if (key === 'holes') { const hit = holes.findIndex((h) => { const s2 = S(h.p); return Math.hypot(s2[0] - p[0], s2[1] - p[1]) < 30; }); drag = { kind: 'tag', p: I(p[0], p[1]), hit, f0: p, moved: false }; loupe = drag.p; draw(); return; }
+      sel = near(p, pts[key]); if (sel < 0) return;
+      drag = { kind: 'dot', key, i: sel, last: p }; loupe = pts[key][sel]; draw();
     };
-    cv.onpointermove = (e) => { if (sel < 0) return; const p = evp(e); pts[stage[st]][sel] = I(p[0], p[1]); draw(); };
-    cv.onpointerup = () => { sel = -1; };
+    cv.onpointermove = (e) => {
+      if (!drag) return; const p = evp(e), dpr = Math.min(2, devicePixelRatio || 1);
+      if (drag.kind === 'dot') {
+        const dx = p[0] - drag.last[0], dy = p[1] - drag.last[1], v = Math.hypot(dx, dy) / dpr, gain = v > 14 ? 1 : 0.3 + 0.7 * v / 14;
+        const q = pts[drag.key][drag.i]; q[0] = Math.max(0, Math.min(W0, q[0] + dx * gain / k)); q[1] = Math.max(0, Math.min(H0, q[1] + dy * gain / k)); drag.last = p; loupe = q;
+      } else { if (Math.hypot(p[0] - drag.f0[0], p[1] - drag.f0[1]) > 8 * dpr) drag.moved = true; drag.p = I(p[0], p[1]); loupe = drag.p; }
+      draw();
+    };
+    const endDrag = (place) => {
+      const dr = drag; drag = null; loupe = null; sel = -1; if (!dr) return;
+      if (dr.kind === 'tag' && place) {
+        const tagged = which === 'front', last = holes[holes.length - 1];
+        if (dr.hit > -1 && !dr.moved) holes.splice(dr.hit, 1);
+        else if (tagged && M.kind === 'screen' && last && last.kind === 'screen' && !last.p2) last.p2 = dr.p;
+        else holes.push(tagged ? { p: dr.p, d: hd, kind: M.kind } : { p: dr.p, d: hd });
+      }
+      draw();
+    };
+    cv.onpointerup = () => endDrag(true);
+    cv.onpointercancel = () => endDrag(false);
     box.querySelectorAll('[data-hd]').forEach((b) => { b.onclick = () => { hd = Math.max(1, hd + (+b.dataset.hd) * (hd >= 6 ? 1 : 0.5)); draw(); }; });
     $('mzUndo').onclick = () => { holes.pop(); draw(); };
     box.querySelectorAll('[data-kind]').forEach((b) => { b.onclick = () => { M.kind = b.dataset.kind; draw(); }; });
@@ -242,12 +268,15 @@ export function openMeasure(done) {
   function result() {
     const f = M.shots.front && M.shots.front.mm; if (!f) return intro();
     const b = M.shots.back && M.shots.back.mm;
+    const BR = [['pico', 'Pico'], ['picow', 'Pico W'], ['pico2', 'Pico 2'], ['esp32', 'ESP32'], ['other', 'Other'], ['none', 'None']];
     shell('Your part', '<div class="say" style="position:static;padding:22px 16px;text-align:left">' + summary() + '<p style="color:#aaa;font-weight:600">Phone measuring is good to about 1 mm when the card lies right next to the part. Check one number with a ruler before a long print.</p></div>',
+      '<div class="lst"><b>What brain is on this board?</b> So Wiring knows its pins.</div><div class="chips" id="mzBrain">' + BR.map((x) => '<button type="button" data-br="' + x[0] + '" aria-pressed="' + (M.brain === x[0]) + '">' + x[1] + '</button>').join('') + '</div>' +
       '<div class="rowb"><button class="bt" id="mzAgain">Measure again</button><button class="bt go" id="mzUse">Add it to my parts</button></div>');
+    box.querySelectorAll('[data-br]').forEach((x) => { x.onclick = () => { M.brain = x.dataset.br; box.querySelectorAll('[data-br]').forEach((y) => y.setAttribute('aria-pressed', String(y === x))); }; });
     $('mzAgain').onclick = intro;
     $('mzUse').onclick = () => {
       const P = { cat: 'mine', name: M.name, short: M.name.slice(0, 12), w: +f.w.toFixed(1), h: +f.h.toFixed(1), depth: +M.depth.toFixed(1), link: 'pins', measured: true,
-        cut: { o: 'none' }, userHoles: f.holes, userCuts: f.cuts || [], img: f.img || null, mountHoles: b ? b.holes.map((h) => ({ x: -h.x, y: h.y, d: h.d })) : [], hang: M.hang,
+        brain: M.brain, cut: { o: 'none' }, userHoles: f.holes, userCuts: f.cuts || [], img: f.img || null, mountHoles: b ? b.holes.map((h) => ({ x: -h.x, y: h.y, d: h.d })) : [], hang: M.hang,
         up: (f.cuts || []).reduce((mx, c) => Math.max(mx, (KP(c.kind) && KP(c.kind).up) || 0), 0),
         prints: { knob: (f.cuts || []).filter((c) => KP(c.kind) && KP(c.kind).printed === 'knob').length, dpad: (f.cuts || []).filter((c) => c.kind === 'dpad').length },
         tip: 'Your built board, measured with your phone. Every part you tagged gets its real hole in the deck, the back screw holes get posts under the deck.', src: 'Measured with a card as the ruler' };
