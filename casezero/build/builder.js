@@ -3,9 +3,9 @@
 // Print: your printer and bed, material, how it joins, where the puzzle seams go. Files: STL per piece, wood templates, wiring.
 import * as THREE from 'three';
 import { OrbitControls } from 'three/addons/OrbitControls.js';
-import * as G from './geo.js?v=15';
-import { openMeasure } from './capture.js?v=15';
-import { planWiring, codeFor, PICO_LEFT, PICO_RIGHT, PICO_PINS, PICO_BRAINS, NEED } from './wiring.js?v=15';
+import * as G from './geo.js?v=16';
+import { openMeasure } from './capture.js?v=16';
+import { planWiring, codeFor, PICO_LEFT, PICO_RIGHT, PICO_PINS, PICO_BRAINS, NEED } from './wiring.js?v=16';
 
 const CZ = window.CZ, R = G.RULE, $ = (id) => document.getElementById(id);
 const esc = (s) => String(s == null ? '' : s).replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
@@ -71,12 +71,12 @@ function notchPolys() { // wire notches: each one bites into one edge. at = mm f
 function deckArea() { return G.offset(outline(), isPanel() ? -1 : -(R.T + R.CLR + 0.8)); }
 function posts() { const d = dims(); if (isPanel()) { const k = S.plift > 0 && S.pbase !== 'rim' ? 8.5 : 6.5; /* half mm: never in line with a notch edge (whole mm), which breaks the mesh */ return S.phold === 'screws' ? [[k, k], [d.W - k, k], [d.W - k, d.D - k], [k, d.D - k]] : []; } return G.postSpots(outline(), d.W * d.D > 30000 ? 6 : 4); }
 function itemsOn(panel) { return S.items.filter((i) => i.panel === panel); }
-function depthOf(panel) { return itemsOn(panel).reduce((m, i) => Math.max(m, PP(i) ? PP(i).depth : 0), 0); }
+function depthOf(panel) { return itemsOn(panel).filter((i) => i.of == null).reduce((m, i) => Math.max(m, PP(i) ? PP(i).depth : 0), 0); } /* parts on a board: the board sets the depth */
 function upOf(panel) { return itemsOn(panel).reduce((m, i) => Math.max(m, PP(i) ? (PP(i).up || 0) : 0), 0); }
 function heights() {
   if (isPanel()) return { H: S.pt + (S.plift || 0), Hl: 0, recess: 0, recessL: 0 };
   // base: floor + deepest part or brain + deck, plus room for caps when the lid closes
-  const home = homePanel(), inside = S.items.filter((i) => i.panel === 'inside').reduce((m, i) => Math.max(m, 5 + (PP(i) ? PP(i).depth : 0)), 0);
+  const home = homePanel(), inside = S.items.filter((i) => i.panel === 'inside' && i.of == null).reduce((m, i) => Math.max(m, 5 + (PP(i) ? PP(i).depth : 0)), 0);
   const recess = isClam() ? Math.ceil(upOf(home) + 1) : 0;
   const H = Math.max(isClam() ? 18 : 20, Math.ceil(R.F + Math.max(depthOf(home), inside) + 3 + R.LT + recess)) + S.add;
   const Hl = isClam() ? Math.max(12, Math.ceil(R.F + depthOf('lid') + 2 + R.LT + Math.ceil(upOf('lid')))) : 0;
@@ -90,10 +90,14 @@ function problems(it) {
   const P = PP(it); if (!P) return ['unknown part'];
   const f = fp(it), out = [];
   const area = it.panel === 'inside' ? G.offset(outline(), -(R.T + 0.6)) : deckArea();
-  if (!G.inside(rectPoly(f), area)) out.push('over the edge');
-  posts().forEach(([x, y]) => { if (G.area(G.inter(rectPoly(f), [G.circle(x, y, R.POSTR + 0.8, 16)])) > 0.5) out.push('on a screw post'); });
+  const body = it.of != null && !it.free && it.panel !== 'inside' ? G.cutShape(P, it.x, it.y, it.r || 0) : rectPoly(f); /* a part soldered on a board only needs its hole to fit, not its module size */
+  if (body.length && !G.inside(body, area)) out.push('over the edge');
+  posts().forEach(([x, y]) => { if (body.length && G.area(G.inter(body, [G.circle(x, y, R.POSTR + 0.8, 16)])) > 0.5) out.push('on a screw post'); });
+  const fam = (a) => (a.of != null ? a.of : a.id); /* a board and the parts on it are one family: the photo already proved they fit together */
   S.items.forEach((q) => {
     if (q === it || !PP(q)) return;
+    if ((it.of != null || q.of != null || PP(it).board || PP(q).board) && fam(it) === fam(q)) return;
+    if (PP(it).board || PP(q).board) return; /* the board hangs under the top: only its own parts come through */
     const g = fp(q), hit = f.x0 < g.x1 - 0.1 && f.x1 > g.x0 + 0.1 && f.y0 < g.y1 - 0.1 && f.y1 > g.y0 + 0.1; if (!hit) return;
     if (q.panel === it.panel) out.push('on top of ' + label(q));
     else if ((it.panel === 'inside' && q.panel === homePanel()) || (q.panel === 'inside' && it.panel === homePanel())) {
@@ -121,8 +125,21 @@ function addPart(type) { const P = PARTS()[type]; const it = { id: ++uid, type, 
 function removePart(type) { for (let i = S.items.length - 1; i >= 0; i--) if (S.items[i].type === type) { S.items.splice(i, 1); break; } save(); }
 function reflow() { // style or size changed: move parts onto the panels this shape has, re-place anything that no longer fits
   S.items.forEach((it) => { if (it.panel !== 'inside' && panels().indexOf(it.panel) < 0) it.panel = defaultPanel(PP(it)) === 'inside' ? 'inside' : homePanel(); });
-  S.items.forEach((it) => { if (problems(it).length) autoPlace(it); });
+  S.items.forEach((it) => { if (it.of == null && problems(it).length) autoPlace(it); });
+  syncAll();
 }
+// ---------- a built board and the parts on it ----------
+// The board item hangs under the top. Each part on it is its own item with an offset (dx, dy, dr) in the board's frame,
+// locked to the board unless she unlocks it. Moving or turning the board moves them all.
+const kidsOf = (b) => S.items.filter((i) => i.of === b.id);
+const boardOf = (k) => S.items.find((i) => i.id === k.of);
+function syncKids(b) {
+  const a = (b.r || 0) * Math.PI / 2, c = Math.cos(a), sn = Math.sin(a);
+  kidsOf(b).forEach((k) => { if (k.free) return; k.x = b.x + k.dx * c - k.dy * sn; k.y = b.y + k.dx * sn + k.dy * c; k.r = ((b.r || 0) + (k.dr || 0)) % 4; if (PP(k) && PP(k).cat !== 'brain') k.panel = b.panel; });
+}
+function syncAll() { S.items.filter((i) => PP(i) && PP(i).board).forEach(syncKids); }
+function unSync(k) { const b = boardOf(k); if (!b) return; const a = -(b.r || 0) * Math.PI / 2, x = k.x - b.x, y = k.y - b.y; k.dx = x * Math.cos(a) - y * Math.sin(a); k.dy = x * Math.sin(a) + y * Math.cos(a); k.dr = (((k.r || 0) - (b.r || 0)) % 4 + 4) % 4; }
+const KID_TYPES = ['tact12', 'button16', 'arcade24', 'arcade30', 'dpad', 'pot', 'encoder', 'thumb', 'slider', 'led5', 'ring12', 'speaker28', 'tft28', 'round128', 'oled096', 'cyd', 'hdmi5', 'hdmi7', 'pico', 'picow', 'pico2', 'esp32'];
 
 // ---------- looks: logo, labels, textures, per face ----------
 // A face is what you see from outside. Each maps to one side of one half in its own print frame.
@@ -189,10 +206,12 @@ function looksFor(panel) {
 function halfFor(panel, h) {
   if (isPanel()) return panelBuilt();
   const d = dims(), lid = panel === 'lid', flip = (it) => ({ P: PP(it), x: lid ? d.W - it.x : it.x, y: lid ? d.D - it.y : it.y, r: ((it.r || 0) + (lid ? 2 : 0)) % 4 });
-  const parts = itemsOn(panel).filter((i) => PP(i)).map((i) => Object.assign(flip(i), { spring: S.spring && i.type === 'tact12' })), inside = lid ? [] : S.items.filter((i) => i.panel === 'inside' && PP(i)).map(flip);
+  const parts = itemsOn(panel).filter((i) => PP(i)).map((i) => Object.assign(flip(i), { spring: S.spring && i.type === 'tact12' })), inside = lid ? [] : S.items.filter((i) => i.panel === 'inside' && PP(i) && i.of == null).map(flip);
   let port = null;
-  if (!lid && inside.length) {
-    const b = inside[0], P = b.P, r = b.r % 4, o = G.bbox(outline()), z = R.F + 3;
+  const onBoard = lid ? null : S.items.find((i) => i.of != null && PP(i) && PP(i).cat === 'brain'), bp = onBoard && boardOf(onBoard) && PP(boardOf(onBoard));
+  if (!lid && (inside.length || onBoard)) {
+    /* USB opening in the wall the brain's USB end points at. A brain on a board sits just under the top, so the opening starts lower than the top by the board's hang */
+    const b = onBoard ? flip(onBoard) : inside[0], P = b.P, r = b.r % 4, o = G.bbox(outline()), z = onBoard && bp ? Math.max(R.F + 1, (h.H - R.LT - h.recess) - (bp.hang || 6) - 4) : R.F + 3;
     if (r === 0) port = { x0: o.x0 - 1, x1: b.x - P.w / 2 + 2, y0: b.y - 7, y1: b.y + 7, z };
     else if (r === 2) port = { x0: b.x + P.w / 2 - 2, x1: o.x1 + 1, y0: b.y - 7, y1: b.y + 7, z };
     else if (r === 1) port = { x0: b.x - 7, x1: b.x + 7, y0: o.y0 - 1, y1: b.y - P.w / 2 + 2, z };
@@ -347,7 +366,7 @@ function counts() { const c = {}; S.items.forEach((i) => { c[i.type] = (c[i.type
 function chosenChips() { const c = counts(), P = PARTS(); const k = Object.keys(c); return k.length ? '<div class="chosen">' + k.map((t) => '<span>' + esc(P[t] ? P[t].short : t) + ' <i>x' + c[t] + '</i></span>').join('') + '</div><button class="btn' + (Date.now() - CLEARARM < 4000 ? ' red' : '') + '" data-act="clearall" style="margin-top:8px;padding:8px">' + (Date.now() - CLEARARM < 4000 ? 'Tap again to remove ' + (S.items.length === 1 ? 'the part' : 'all ' + S.items.length + ' parts') : 'Start over: remove all parts') + '</button>' : '<p class="note">Nothing yet. Tap a part to add it, tap its number to take one away.</p>'; }
 function pane(t) {
   const P = PARTS(), c = counts();
-  if (t === 'snap') return '<p class="h">Already built and soldered?</p><button class="btn red" data-act="measure">Photo my board, front and back</button><p class="note" style="margin-bottom:10px">A card next to it is the ruler. Tap each button, knob and screen on the photo and say what it is. The case gets every hole in the right spot and posts at your screw holes. Photos stay on your phone.</p>' +
+  if (t === 'snap') return '<p class="h">Already built and soldered?</p><button class="btn red" data-act="measure">Photo my board, front and back</button><p class="note" style="margin-bottom:10px">A card next to it is the ruler. Press on each part on the photo, say what it is, do the brain too. Your board goes inside the case, every part on it becomes its own part you can change. Photos stay on your phone.</p>' +
     '<p class="h">Not built yet</p><div class="grid g2"><button class="btn dark" data-act="snap">' + (PHOTO ? 'Take another photo' : 'Take a photo of my parts') + '</button><button class="btn" data-act="toParts">Pick from the list</button></div>' +
     '<p class="note">Lay your parts out on a table and snap them. The photo stays here on your phone so you can match each one to the list. Then tap Parts and add each one you see.</p>' + (PHOTO ? '<button class="btn" data-act="nophoto" style="margin-top:8px">Remove the photo</button>' : '') + chosenChips();
   if (t === 'parts') {
@@ -361,7 +380,7 @@ function pane(t) {
   if (t === 'picks') return '<p class="h">Cheap, loved by the maker community</p><div class="list">' + CZ.PICKS.map((p) => '<div class="it"><b>' + esc(p[1]) + (c[p[0]] ? ' <span class="ok">added</span>' : '') + '</b>' + esc(p[2]) + '<div style="margin-top:6px"><button class="btn" data-add="' + p[0] + '" style="display:inline-block;padding:7px 12px">+ Add ' + esc(P[p[0]].short) + '</button></div></div>').join('') + '</div><p class="note">From Reddit (r/esp32, r/raspberry_pi), Instructables and maker blogs. Sources in the ? help.</p>';
   if (t === 'lid' || t === 'base' || t === 'top') {
     const mine = S.items.filter((i) => i.panel === t || (t !== 'lid' && i.panel === 'inside')), s = S.items.find((i) => i.id === sel), probs = allProblems(), N = numbers();
-    let h = s ? '<div class="selbar"><b>' + esc(label(s)) + '</b><button data-act="rot">Turn</button>' + (isClam() && s.panel !== 'inside' ? '<button data-act="swap">To ' + (s.panel === 'lid' ? 'base' : 'lid') + '</button>' : '') + '<button data-act="del">Remove</button></div>' : '';
+    let h = s && s.of != null ? '<div class="selbar"><b>' + esc(label(s)) + '</b><select class="pin" data-kidtype="' + s.id + '" aria-label="What it is">' + KID_TYPES.filter((t) => CZ.PARTS[t]).map((t) => '<option value="' + t + '"' + (t === s.type ? ' selected' : '') + '>' + esc(CZ.PARTS[t].short) + '</option>').join('') + '</select><button data-act="unlock">' + (s.free ? 'Lock' : 'Unlock') + '</button><button data-act="del">Remove</button></div><p class="note" style="margin:-2px 0 8px">' + (s.free ? 'Unlocked: drag it on its own. Lock puts it back on the board where you leave it.' : 'On your board: dragging it moves the whole board. Unlock to nudge it alone.') + '</p>' : s ? '<div class="selbar"><b>' + esc(label(s)) + '</b><button data-act="rot">Turn</button>' + (isClam() && s.panel !== 'inside' && !(PP(s) && PP(s).board) ? '<button data-act="swap">To ' + (s.panel === 'lid' ? 'base' : 'lid') + '</button>' : '') + '<button data-act="del">Remove</button></div>' : '';
     h += '<p class="h">' + (t === 'lid' ? 'The lid: screens live here' : t === 'base' ? 'The base: controls, the brain sits under it' : 'The top') + '</p>';
     h += mine.length ? '<div class="chosen">' + mine.map((i) => '<span data-sel="' + i.id + '" style="cursor:pointer' + (i.id === sel ? ';background:#1a1a1a;color:#fff' : '') + '">' + esc(N[i.id] + ' ' + PP(i).short) + (problems(i).length ? ' <i>!</i>' : '') + '</span>').join('') + '</div>' : '<p class="note">No parts here yet. Add some in Brain.</p>';
     h += '<div class="grid g2" style="margin-top:8px"><button class="btn dark" data-act="auto">Arrange for me</button><button class="btn" data-act="toBrain">Add parts</button></div>';
@@ -451,6 +470,7 @@ $('pane').addEventListener('input', (e) => {
   if (t.id === 'c2') { S.look.c2 = t.value; save(); if (T3) T3.key = ''; draw(); }
 });
 $('pane').addEventListener('change', (e) => {
+  if (e.target.dataset && e.target.dataset.kidtype) { const k = S.items.find((i) => i.id === +e.target.dataset.kidtype); if (k) { k.type = e.target.value; k.panel = CZ.PARTS[k.type].cat === 'brain' ? 'inside' : (boardOf(k) ? boardOf(k).panel : homePanel()); S.pins = {}; } save(); render(); return; }
   if (e.target.dataset && e.target.dataset.pin) { if (!S.pins) S.pins = {}; S.pins[e.target.dataset.pin] = +e.target.value; save(); render(); return; }
   if (e.target.id === 'pw' || e.target.id === 'pd') { reflow(); save(); render(); return; }
   if (e.target.id === 'qrIn') { const f = e.target.files[0]; e.target.value = ''; if (f) scanPrinter(f); return; }
@@ -498,11 +518,14 @@ $('pane').addEventListener('click', (e) => {
     $('sheet').hidden = false;
     $('sheetIn').querySelectorAll('[data-board]').forEach((x) => { x.onclick = () => { $('sheet').hidden = true; addBoard(P, x.dataset.board === 'replace'); }; });
   }); return; }
-  if (act === 'auto') { const list = S.items.slice(); list.forEach((i) => { i.x = -999; i.y = -999; }); list.sort((a, b) => (fp(b).w * fp(b).h) - (fp(a).w * fp(a).h)).forEach((i) => autoPlace(i)); save(); render(); return; }
+  if (act === 'auto') { const list = S.items.filter((i) => i.of == null || i.free); list.forEach((i) => { i.x = -999; i.y = -999; }); list.sort((a, b) => (fp(b).w * fp(b).h) - (fp(a).w * fp(a).h)).forEach((i) => { autoPlace(i); if (PP(i) && PP(i).board) syncKids(i); }); save(); render(); return; }
   const s = S.items.find((i) => i.id === sel);
+  if (act === 'rot' && s && s.of != null && !s.free) { const b = boardOf(s); if (b) { b.r = ((b.r || 0) + 1) % 4; syncKids(b); if (problems(b).length) autoPlace(b); syncKids(b); } save(); render(); return; }
+  if (act === 'rot' && s && PP(s) && PP(s).board) { s.r = ((s.r || 0) + 1) % 4; syncKids(s); if (problems(s).length) { autoPlace(s); syncKids(s); } save(); render(); return; }
   if (act === 'rot' && s) { s.r = ((s.r || 0) + 1) % 4; if (problems(s).length) { const keep = [s.x, s.y]; if (!autoPlace(s)) { s.x = keep[0]; s.y = keep[1]; } } save(); render(); return; }
   if (act === 'swap' && s) { s.panel = s.panel === 'lid' ? 'base' : 'lid'; autoPlace(s); S.tab[1] = s.panel; save(); render(); return; }
-  if (act === 'del' && s) { S.items = S.items.filter((i) => i !== s); sel = null; save(); render(); return; }
+  if (act === 'del' && s) { S.items = S.items.filter((i) => i !== s && i.of !== s.id); sel = null; save(); render(); return; }
+  if (act === 'unlock' && s) { s.free = !s.free; if (!s.free) unSync(s); save(); render(); return; }
   if (act === 'open') { S.open = !S.open; save(); render(); return; }
   if (act === 'make') { if (b.getAttribute('aria-disabled') === 'true') return; makeFiles(); return; }
   if (d.f != null) { saveFile(FILES[+d.f]); return; }
@@ -636,16 +659,16 @@ function drawPanel(panel, W, H) {
   posts().forEach(([x, y]) => { g.fillStyle = 'rgba(0,0,0,.35)'; g.beginPath(); g.arc(X(x), Y(y), R.POSTR * k, 0, 7); g.fill(); g.fillStyle = '#f3efe6'; g.beginPath(); g.arc(X(x), Y(y), R.HOLE / 2 * k, 0, 7); g.fill(); });
   const N = numbers(), bad = new Set(allProblems().map((x) => x.it.id));
   const show = S.items.filter((i) => PP(i) && (i.panel === panel || (panel !== 'lid' && i.panel === 'inside')));
-  show.sort((a, b) => (a.panel === 'inside' ? -1 : 0) - (b.panel === 'inside' ? -1 : 0));
+  const under = (i) => i.panel === 'inside' || (PP(i) && PP(i).board); show.sort((a, b) => (under(a) ? -1 : 0) - (under(b) ? -1 : 0)); /* what sits under the top is drawn first */
   show.forEach((it) => {
-    const P = PP(it), f = fp(it), ins = it.panel === 'inside', isSel = it.id === sel;
+    const P = PP(it), f = fp(it), ins = it.panel === 'inside' || !!P.board, isSel = it.id === sel;
     g.save();
     if (ins) { g.setLineDash([5 * px(), 4 * px()]); }
     g.fillStyle = bad.has(it.id) ? 'rgba(255,214,0,.55)' : ins ? 'rgba(47,122,75,.28)' : 'rgba(255,255,255,.18)';
     g.fillRect(X(f.x0), Y(f.y1), f.w * k, f.h * k);
     g.strokeStyle = isSel ? '#fff' : bad.has(it.id) ? '#ffd23a' : ins ? '#1a1a1a' : 'rgba(255,255,255,.75)'; g.lineWidth = (isSel ? 3 : 1.5) * px(); g.strokeRect(X(f.x0), Y(f.y1), f.w * k, f.h * k);
     g.restore();
-    if (!ins) drawPartAt(P, X(it.x), Y(it.y), k, it.r, false);
+    if (!ins || P.board) drawPartAt(P, X(it.x), Y(it.y), k, it.r, !!P.board);
     const lb = N[it.id] || ''; g.font = '900 ' + 11 * px() + 'px -apple-system,Arial'; const tw = g.measureText(lb).width + 8 * px();
     g.fillStyle = ins ? '#1a1a1a' : '#fff'; g.fillRect(X(f.x0), Y(f.y1), tw, 15 * px()); g.fillStyle = ins ? '#fff' : '#1a1a1a'; g.textAlign = 'left'; g.fillText(lb, X(f.x0) + 4 * px(), Y(f.y1) + 11 * px());
   });
@@ -667,12 +690,13 @@ cv.addEventListener('pointerdown', (e) => {
   if (S.step === 3 && view && curTab() === 'logo' && S.look.logo.on) { const p = mm(e); S.look.logo.x = p[0]; S.look.logo.y = p[1]; drag = { logo: true }; cv.setPointerCapture(e.pointerId); draw(); return; }
   if (S.step !== 1 || !view) return; const p = mm(e), panel = view.panel;
   const hits = S.items.filter((i) => PP(i) && (i.panel === panel || (panel !== 'lid' && i.panel === 'inside'))).filter((i) => { const f = fp(i); return p[0] >= f.x0 && p[0] <= f.x1 && p[1] >= f.y0 && p[1] <= f.y1; });
-  hits.sort((a, b) => (a.panel === 'inside') - (b.panel === 'inside'));
+  const rank = (i) => (i.panel === 'inside' ? 2 : 0) + (PP(i).board ? 1 : 0); hits.sort((a, b) => rank(a) - rank(b));
   const it = hits[0]; if (!it) { sel = null; render(); return; }
-  sel = it.id; drag = { it, dx: it.x - p[0], dy: it.y - p[1] }; cv.setPointerCapture(e.pointerId); render();
+  const mover = it.of != null && !it.free && boardOf(it) ? boardOf(it) : it; /* a locked part moves its whole board */
+  sel = it.id; drag = { it: mover, dx: mover.x - p[0], dy: mover.y - p[1] }; cv.setPointerCapture(e.pointerId); render();
 });
-cv.addEventListener('pointermove', (e) => { if (!drag) return; const p = mm(e); if (drag.notch) { notchTo(p); draw(); return; } if (drag.logo) { S.look.logo.x = Math.round(p[0] * 2) / 2; S.look.logo.y = Math.round(p[1] * 2) / 2; draw(); return; } drag.it.x = Math.round((p[0] + drag.dx) / 2.5) * 2.5; drag.it.y = Math.round((p[1] + drag.dy) / 2.5) * 2.5; draw(); });
-['pointerup', 'pointercancel'].forEach((t) => cv.addEventListener(t, () => { if (drag) { drag = null; save(); render(); } }));
+cv.addEventListener('pointermove', (e) => { if (!drag) return; const p = mm(e); if (drag.notch) { notchTo(p); draw(); return; } if (drag.logo) { S.look.logo.x = Math.round(p[0] * 2) / 2; S.look.logo.y = Math.round(p[1] * 2) / 2; draw(); return; } drag.it.x = Math.round((p[0] + drag.dx) / 2.5) * 2.5; drag.it.y = Math.round((p[1] + drag.dy) / 2.5) * 2.5; if (PP(drag.it) && PP(drag.it).board) syncKids(drag.it); draw(); });
+['pointerup', 'pointercancel'].forEach((t) => cv.addEventListener(t, () => { if (drag) { if (drag.it && drag.it.free) unSync(drag.it); drag = null; save(); render(); } }));
 
 function curFace() { const t = curTab(), L = S.look; if (t === 'logo') return L.logo.face; if (t === 'tex') return L.texFace === 'walls' ? 'top' : L.texFace; return 'top'; }
 function drawFace(W, H) {
@@ -771,6 +795,7 @@ function draw3d(isMini) {
         const P = PP(it); if (!P) return; const px0 = lid ? d.W - it.x : it.x, py0 = lid ? d.D - it.y : it.y, rq = ((it.r || 0) + (lid ? 2 : 0)) % 4;
         const f = fp(it), ins = it.panel === 'inside', dep = ins ? P.depth + 2 : P.depth + (P.up || 0);
         r.slots[it.id] = { grp, x: px0, y: py0, z: ins ? R.F + 2 + P.depth / 2 : top - P.depth / 2 + (P.up || 0) / 2, w: f.w, h: f.h, dep };
+        if (P.board) { const bw = rq % 2 ? P.h : P.w, bh = rq % 2 ? P.w : P.h, pl = new THREE.Mesh(new THREE.BoxGeometry(bw, bh, 1.6), new THREE.MeshStandardMaterial({ color: 0x2f7a4b })); pl.position.set(px0, py0, top - R.LT - (P.hang || 6) - 0.8); grp.add(pl); return; } /* her board, inside under the top */
         if (ins) return;
         const m = standIn(P, px0, py0, rq, top); if (m) grp.add(m);
         // a board measured from a photo: every tagged part gets its stand-in too
@@ -817,12 +842,21 @@ function draw3d(isMini) {
 
 function addBoard(P, replace) {
   if (replace) { S.items = S.items.filter((i) => PP(i) && PP(i).cat === 'mine'); S.pins = {}; sel = null; }
-  const k = 'mine' + Date.now().toString(36); S.mine[k] = P; S.cat = 'mine'; const it = addPart(k);
+  const k = 'mine' + Date.now().toString(36);
+  if (P.board) { P.hang = Math.max(2, (P.top || 9) - 1.5 - R.LT); P.depth = +(P.hang + 1.6 + 10).toFixed(1); } /* the top sits so the tallest button pokes through 1.5 mm; 10 mm under the board for pins and solder */
+  S.mine[k] = P; S.cat = 'mine'; const it = addPart(k);
+  if (P.board) {
+    const kids = (P.kids || []).slice();
+    if (!kids.some((c) => CZ.PARTS[c.type] && CZ.PARTS[c.type].cat === 'brain') && P.brain && CZ.PARTS[P.brain]) kids.push({ type: P.brain, x: 0, y: 0, r: 0 });
+    kids.forEach((c) => { if (!CZ.PARTS[c.type]) return; S.items.push({ id: ++uid, type: c.type, panel: CZ.PARTS[c.type].cat === 'brain' ? 'inside' : homePanel(), of: it.id, dx: c.x, dy: c.y, dr: c.r || 0, x: 0, y: 0, r: 0 }); });
+    syncKids(it);
+  }
   if (problems(it).length && !isPanel()) {
     const room = 2 * (R.T + R.CLR + 1) + 2 * (R.T + R.CLR + 0.8) + 8, need = (w, h) => [Math.max(replace ? 2 : S.cols, Math.ceil((w + room) / 20)), Math.max(replace ? 2 : S.rows, Math.ceil((h + room) / 20))];
     const a = need(P.w, P.h), b = need(P.h, P.w), pick = a[0] * a[1] <= b[0] * b[1] ? a : b;
     S.cols = Math.min(24, pick[0]); S.rows = Math.min(24, pick[1]); reflow(); autoPlace(it);
   }
+  syncAll(); sel = it.id;
   S.tab[1] = it.panel === 'inside' ? homePanel() : it.panel; save(); render();
 }
 let CLEARARM = 0;
@@ -1024,7 +1058,8 @@ const LEARN = [
   ['Community picks and why', '<ul><li><b>Cheap Yellow Display</b> (ESP32-2432S028R): brain, 2.8 in touch screen, SD card and speaker plug on one board for about $15. The biggest community of any cheap screen. <a href="https://www.atomic14.com/esp32/boards/esp32-2432s028r/" target="_blank" rel="noopener">atomic14 guide</a></li><li><b>Round 1.28 in GC9A01</b>: watch faces, gauges, robot eyes. <a href="https://www.waveshare.com/1.28inch-lcd-module.htm" target="_blank" rel="noopener">Waveshare</a></li><li><b>Pico + 2.8 in screen</b>: your build, the cheapest handheld.</li><li><b>Pi Zero 2 W</b>: RetroPie for arcade builds, like the AdventurePi.</li></ul>'],
   ['AdventurePi, filtered', '<p>The AdventurePi (howchoo) put a Raspberry Pi, screen, battery and controls in a rugged hard case, with swappable Arcade and Console inserts. What we kept: the case that closes, screen in the lid, controls in the base, swappable decks. What is new: you print the case to fit your parts, any shape, cut to your printer.</p>'],
   ['Wiring and starter code', '<ul><li>Brain, Wiring: every part gets its pins on the Pico by the real rules. Screens get the fast pins (GP18 and GP19), knobs and sticks the 3 analog pins (GP26 to 28), click wheels two pins side by side, sound and motors pins that do not fight each other.</li><li>Already soldered? Pick the pins you used in each part. Taken pins have a *. Pick pins for me starts over.</li><li>Save code.py: CircuitPython for the Pico, Pico W or Pico 2. Put CircuitPython on the board (circuitpython.org), copy the libraries named at the top of the file into CIRCUITPY/lib, save code.py on the drive. Buttons print their name and show on the screen, knobs show 0 to 100.</li><li>Every part also needs GND. Buttons need nothing else: the Pico pulls the pin up inside.</li></ul>'],
-  ['Photo your built board', '<ul><li>Your board is soldered, everything is where it is. The case should fit it, not the other way around.</li><li>Front photo: pick what it is (Button 12, Knob, Screen...) and tap it. Each gets the real hole size from our parts list, at the spot you tapped. A screen is 2 taps, opposite corners of the part that lights up.</li><li>Back photo: tap the screw holes. They become posts under the deck that hold your board.</li><li>No AI looks at your photos. You tap, it measures. Nothing leaves your phone, nothing costs money.</li><li>If the board is bigger than the case, the case grows to fit it.</li></ul>'],
+  ['Photo your built board', '<ul><li>Your board is soldered, everything is where it is. The case fits it, not the other way around.</li><li>Front photo: drag the dots onto the card and the board (watch the close-up). Then press on a part, slide until the cross is on its middle, let go, and say what it is. Screens and the brain appear at their real size: slide them over the photo and Turn them to match. The brain has a USB arrow: point it where the plug is.</li><li>Tap a tag to change what it is, turn it or remove it.</li><li>Back photo: tap the screw holes. They become posts that hold the board under the top.</li><li>Tell it the tallest button height. The top of the case sits so buttons poke through 1.5 mm.</li><li>In the case: your board is dashed, underneath. Every part on it is its own part: tap one to change what it is. Dragging one moves the whole board; Unlock to nudge one alone. The USB opening goes in the wall the arrow points at.</li><li>No AI looks at your photos. Nothing leaves your phone.</li></ul>'],
+
   ['A panel for a box you have', '<ul><li>Body, Shape, Panel (or pick it on the start screen): one flat piece that fills a box you already have, like a briefcase lid.</li><li>Box inside: type it or measure it with a card. The panel comes out 1 mm smaller so it drops in.</li><li>Holds by: Screws (M3 in the corners), Snug ribs (little bumps on every edge press against the box, no screws) or Drops in.</li><li>Sits: On the floor, and the whole screen comes up through the window. On legs or On a lip, and the panel is lifted to the front of the screen so the window shows only the picture. Measure from the floor of the box to the front of the screen for the height. A lip is a wall under the whole edge: stiffer than legs, hides the wires, notches cut through it. Raised panels print face down.</li><li>Holds by: Screws (M3 in the corners, through the legs or lip into the box; line them up with screws you already have), Glue (no holes, E6000 or CA on the bottom of the lip or legs), Snug ribs, or Drops in.</li><li>Notches let wires out: Round, Rounded or Square, any edge. Tap an edge on the picture or drag to move one.</li><li>Bigger than your bed? It prints in pieces with puzzle tabs that lock in the middle.</li></ul>'],
   ['Add-ons', '<ul><li>Files, Add-ons: pieces you print one at a time, sized to your case.</li><li>Clip-on stand: grabs the bottom edge and leans it back 15, 25 or 35 degrees. Prints on its side so the layers run the strong way. No hinge pin to snap.</li><li>Feet, standoffs (the screw cuts its own thread), cable clips (tape or glue them on).</li></ul>'],
   ['Deck (cyberdeck or laptop)', '<p>A big Case Zero: screen in the lid, keyboard and controls in the base. Sizes go up to 24 squares (480 mm). Keyboards vary a lot, so photo yours with the card in Brain (Snap). On a small bed it prints as puzzle pieces.</p>'],
