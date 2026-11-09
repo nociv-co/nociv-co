@@ -144,7 +144,7 @@ export function openMeasure(done) {
     pts.card2 = [[W0 * 0.2, H0 * 0.35], [W0 * 0.2, H0 * 0.65]]; pts.part2 = [[W0 * 0.6, H0 * 0.35], [W0 * 0.6, H0 * 0.6]];
     const holes = shot.holes || [];
     const say = {
-      card: 'Drag the 4 orange dots onto the corners of the card. Watch the close-up. Move slowly for small steps.',
+      card: 'Move the 4 orange dots until the white outline sits on the card edges, rounded corners too. Watch the close-up.',
       part: 'Now the 4 green dots onto the corners of your board. Move slowly for small steps.',
       holes: which === 'front' ? 'Press on a part, slide until the cross is on its middle, let go. Then say what it is. Do the brain too.' : 'Press on each screw hole, slide until the cross is on it, let go.',
       card2: 'Card standing on its long edge: drag the 2 dots to its top and bottom.',
@@ -170,12 +170,20 @@ export function openMeasure(done) {
       const ex = [(q[1][0] - q[0][0] + q[2][0] - q[3][0]) / 2, (q[1][1] - q[0][1] + q[2][1] - q[3][1]) / 2], el = Math.hypot(ex[0], ex[1]); ex[0] /= el; ex[1] /= el;
       const d = [P[0] - c[0], P[1] - c[1]]; return [d[0] * ex[0] + d[1] * ex[1], -(d[0] * -ex[1] + d[1] * ex[0])];
     }
+    // The real card outline, rounded corners included (ID-1 cards: 85.6 x 54 mm, corner radius 3.18 mm), mapped onto the photo through the 4 dots.
+    // The dots are where the straight edges would meet; matching the curves puts them there.
+    function cardOutline() {
+      const T = homography([[0, 0], [CARD[0], 0], [CARD[0], CARD[1]], [0, CARD[1]]], pts.card); if (!T) return null;
+      const r = 3.18, out = [], corner = (cx, cy, a0) => { for (let i = 0; i <= 8; i++) { const a = a0 + i / 8 * Math.PI / 2; out.push(T([cx + r * Math.cos(a), cy + r * Math.sin(a)])); } };
+      corner(CARD[0] - r, r, -Math.PI / 2); corner(CARD[0] - r, CARD[1] - r, 0); corner(r, CARD[1] - r, Math.PI / 2); corner(r, r, Math.PI);
+      return out;
+    }
     function draw() {
       if (!document.body.contains(cv) || !$('mzSay')) return; // this screen is gone
       g.clearRect(0, 0, cv.width, cv.height); g.drawImage(img, ox, oy, W0 * k, H0 * k);
       const key = stage[st], d = Math.min(2, devicePixelRatio || 1);
       const poly = (arr, col, close) => { g.beginPath(); arr.forEach((p, i) => { const s = S(p); i ? g.lineTo(s[0], s[1]) : g.moveTo(s[0], s[1]); }); if (close) g.closePath(); g.strokeStyle = col; g.lineWidth = 3 * d; g.stroke(); arr.forEach((p, i) => { const s = S(p); g.beginPath(); g.arc(s[0], s[1], 13 * d, 0, 7); g.fillStyle = col; g.globalAlpha = .35; g.fill(); g.globalAlpha = 1; g.lineWidth = 3 * d; g.stroke(); g.fillStyle = '#fff'; g.font = '800 ' + 12 * d + 'px Arial'; g.textAlign = 'center'; g.fillText(String(i + 1), s[0], s[1] + 4 * d); }); };
-      if (stage.indexOf('card') > -1) poly(pts.card, '#ff9a2b', true);
+      if (stage.indexOf('card') > -1) { poly(pts.card, '#ff9a2b', true); if (key === 'card') { const ol = cardOutline(); if (ol) { g.beginPath(); ol.forEach((q2, i) => { const s2 = S(q2); i ? g.lineTo(s2[0], s2[1]) : g.moveTo(s2[0], s2[1]); }); g.closePath(); g.strokeStyle = '#fff'; g.lineWidth = 2 * d; g.stroke(); } } }
       if (key === 'part' || key === 'holes') poly(pts.part, '#2bd46b', true);
       if (key === 'card2' || key === 'part2') { poly(pts.card2, '#ff9a2b', false); if (key === 'part2') poly(pts.part2, '#2bd46b', false); }
       if (key === 'holes') {
@@ -222,6 +230,7 @@ export function openMeasure(done) {
       const R = 64 * d, Z = 4, s = S(q), cx = s[0] < cv.width / 2 ? cv.width - R - 10 * d : R + 10 * d, cy = R + 10 * d, r = R / (k * Z);
       g.save(); g.beginPath(); g.arc(cx, cy, R, 0, 7); g.closePath(); g.fillStyle = '#000'; g.fill(); g.clip();
       g.drawImage(img, q[0] - r, q[1] - r, 2 * r, 2 * r, cx - R, cy - R, 2 * R, 2 * R);
+      if (stage[st] === 'card') { const ol = cardOutline(); if (ol) { const zz = R / r; g.beginPath(); ol.forEach((p2, i) => { const x = cx + (p2[0] - q[0]) * zz, y = cy + (p2[1] - q[1]) * zz; i ? g.lineTo(x, y) : g.moveTo(x, y); }); g.closePath(); g.strokeStyle = '#fff'; g.lineWidth = 2 * d; g.stroke(); } } /* the card outline in the close-up too */
       g.strokeStyle = '#ff3b6b'; g.lineWidth = 1.5 * d; g.beginPath(); g.moveTo(cx - R, cy); g.lineTo(cx - 5 * d, cy); g.moveTo(cx + 5 * d, cy); g.lineTo(cx + R, cy); g.moveTo(cx, cy - R); g.lineTo(cx, cy - 5 * d); g.moveTo(cx, cy + 5 * d); g.lineTo(cx, cy + R); g.stroke();
       g.restore(); g.beginPath(); g.arc(cx, cy, R, 0, 7); g.strokeStyle = '#fff'; g.lineWidth = 3 * d; g.stroke();
     }
