@@ -41,13 +41,18 @@
     var k = size / Math.max(m.width, m.height), w = m.width * k, h = m.height * k;
     g.rotate(angle * Math.PI / 180); g.scale(flipX ? -1 : 1, flipY ? -1 : 1); g.drawImage(m, -w / 2, -h / 2, w, h);
   }
+  // undo the flip that placeMotif applied, then draw the words the right way round
+  function placeMotifUp(g, t, size, fx, fy) {
+    g.scale(fx ? -1 : 1, fy ? -1 : 1);
+    var k = size / Math.max(t.width, t.height), w = t.width * k, h = t.height * k; g.drawImage(t, -w / 2, -h / 2, w, h);
+  }
   // one kaleidoscope slice: the motif seen through a wedge of angle `a`, then mirrored around the center
-  function kaleCell(m, R, slices, angle, tri) {
+  function kaleCell(m, R, slices, angle, tri, nudge) {
     var c = cv(R * 2, R * 2), g = c.getContext('2d'), a = Math.PI * 2 / slices;
     var w = cv(R * 2, R * 2), wg = w.getContext('2d');
     // tri: the wedge is a real equilateral triangle (straight outer edge), so every edge of every triangle is a mirror
     wg.translate(R, R); wg.beginPath(); wg.moveTo(0, 0); var e2 = a / 2 + .012; if (tri) { wg.lineTo(Math.cos(-e2) * R * 1.05, Math.sin(-e2) * R * 1.05); wg.lineTo(Math.cos(e2) * R * 1.05, Math.sin(e2) * R * 1.05); } else wg.arc(0, 0, R * 1.02, -e2, e2); wg.closePath(); wg.clip();
-    wg.save(); wg.translate(R * 0.55, 0); placeMotif(wg, m, R * 0.9, angle, false, false); wg.restore();
+    wg.save(); wg.translate(R * (0.55 + (nudge ? nudge[0] : 0)), R * (nudge ? nudge[1] : 0)); placeMotif(wg, m, R * 0.9, angle, false, false); wg.restore();
     g.translate(R, R);
     for (var i = 0; i < slices; i++) { g.save(); g.rotate(i * a); if (i % 2) g.scale(1, -1); g.drawImage(w, -R, -R); g.restore(); }
     return c;
@@ -56,9 +61,15 @@
     var m = o.motif, P = o.ppi, T = Math.max(8, Math.round(o.tileIn * P)), size = T * (o.scale || .7), ang = o.angle || 0, t = o.type;
     var W = T, H = T, spots = [];
     if (t === 'grid') spots = [[T / 2, T / 2, 0, 0, 0]];
-    else if (t === 'halfdrop') { W = 2 * T; spots = [[T / 2, T / 2, 0, 0, 0], [1.5 * T, T, 0, 1, 0]]; }
-    else if (t === 'halfbrick') { H = 2 * T; spots = [[T / 2, T / 2, 0, 0, 0], [T, 1.5 * T, 0, 1, 0]]; }
-    else if (t === 'mirror') { W = H = 2 * T; spots = [[T / 2, T / 2, 0, 0, 0], [1.5 * T, T / 2, 0, 1, 0], [T / 2, 1.5 * T, 0, 0, 1], [1.5 * T, 1.5 * T, 0, 1, 1]]; }
+    // half-drop and half-brick only shift, they never flip (that is the textile meaning, and words stay readable)
+    else if (t === 'halfdrop') { W = 2 * T; spots = [[T / 2, T / 2, 0, 0, 0], [1.5 * T, T, 0, 0, 0]]; }
+    else if (t === 'halfbrick') { H = 2 * T; spots = [[T / 2, T / 2, 0, 0, 0], [T, 1.5 * T, 0, 0, 0]]; }
+    else if (t === 'mirror') {
+      var md = o.mirrorDir || 'both';
+      if (md === 'lr') { W = 2 * T; spots = [[T / 2, T / 2, 0, 0, 0], [1.5 * T, T / 2, 0, 1, 0]]; }
+      else if (md === 'ud') { H = 2 * T; spots = [[T / 2, T / 2, 0, 0, 0], [T / 2, 1.5 * T, 0, 0, 1]]; }
+      else { W = H = 2 * T; spots = [[T / 2, T / 2, 0, 0, 0], [1.5 * T, T / 2, 0, 1, 0], [T / 2, 1.5 * T, 0, 0, 1], [1.5 * T, 1.5 * T, 0, 1, 1]]; }
+    }
     else if (t === 'spin') { W = H = 2 * T; spots = [[T / 2, T / 2, 0, 0, 0], [1.5 * T, T / 2, 90, 0, 0], [1.5 * T, 1.5 * T, 180, 0, 0], [T / 2, 1.5 * T, 270, 0, 0]]; }
     else if (t === 'diamond') { spots = [[T / 2, T / 2, 0, 0, 0], [0, 0, 0, 0, 0]]; size *= .7; }
     else if (t === 'toss') {
@@ -70,12 +81,12 @@
     if (t === 'kaleSquare' || t === 'kaleHex' || t === 'kaleTri') {
       if (t === 'kaleSquare') {
         c = cv(T, T); g = c.getContext('2d'); if (o.bg) { g.fillStyle = o.bg; g.fillRect(0, 0, T, T); }
-        var cell = kaleCell(m, T / 2 * 1.415, 8, ang); g.save(); g.beginPath(); g.rect(0, 0, T, T); g.clip(); g.drawImage(cell, T / 2 - cell.width / 2, T / 2 - cell.height / 2); g.restore(); return c;
+        var cell = kaleCell(m, T / 2 * 1.415, 8, ang, false, o.nudge); g.save(); g.beginPath(); g.rect(0, 0, T, T); g.clip(); g.drawImage(cell, T / 2 - cell.width / 2, T / 2 - cell.height / 2); g.restore(); return c;
       }
       // hexagons sit on a lattice; the rectangle of 2 hexes across and 2 rows down repeats cleanly
       var Rh = T / 2, hw = Math.round(Math.sqrt(3) * Rh), hh = Math.round(3 * Rh);
       c = cv(hw, hh); g = c.getContext('2d'); if (o.bg) { g.fillStyle = o.bg; g.fillRect(0, 0, hw, hh); }
-      var slices = t === 'kaleHex' ? 12 : 6, cellH = t === 'kaleTri' ? kaleCell(m, Rh, 6, ang, true) : kaleCell(m, Rh * 1.16, slices, ang);
+      var slices = t === 'kaleHex' ? 12 : 6, cellH = t === 'kaleTri' ? kaleCell(m, Rh, 6, ang, true, o.nudge) : kaleCell(m, Rh * 1.16, slices, ang, false, o.nudge);
       var hexPath = function (gg, r) { gg.beginPath(); for (var k = 0; k < 6; k++) { var aa = Math.PI / 6 + k * Math.PI / 3; gg.lineTo(Math.cos(aa) * r, Math.sin(aa) * r); } gg.closePath(); };
       [[0, 0], [hw / 2, hh / 2]].forEach(function (p) {
         wrapDraw(g, hw, hh, p[0], p[1], Rh * 1.2, function (gg) { hexPath(gg, Rh + 1); gg.clip(); gg.drawImage(cellH, -cellH.width / 2, -cellH.height / 2); });
@@ -89,9 +100,19 @@
     var ms = o.motifs && o.motifs.length > 1 ? o.motifs : [m], n = ms.length, SW = W * n, SH = H * n;
     c = cv(SW, SH); g = c.getContext('2d'); if (o.bg) { g.fillStyle = o.bg; g.fillRect(0, 0, SW, SH); }
     if (t === 'diamond') { spots = [[W / 2, H / 2, 0, 0, 0], [0, 0, 0, 0, 0]]; }
+    // nudge: move the motif inside its spot. Mirrored copies move the mirrored way, so you pick where the copies meet.
+    // words: 'flip' flips everything, 'readable' mirrors the layout but draws every copy the right way round,
+    // 'shapes' flips the motif but lays the words (o.textLayer) on top unflipped.
+    var nu = o.nudge || [0, 0], words = o.words || 'flip';
     for (var cy = 0; cy < n; cy++) for (var cp = 0; cp < n; cp++) spots.forEach(function (s, i) {
       var alt = o.flip === 'alt' && (i % 2 === 1), fx = !!s[3] !== alt, fy = !!s[4], mm = ms[(cp + cy + i) % n]; if (!mm) return;
-      wrapDraw(g, SW, SH, s[0] + cp * W, s[1] * sy + cy * H, size * .75, function (gg) { placeMotif(gg, mm, size, ang + s[2], fx, fy); });
+      var ox = nu[0] * T * (s[3] ? -1 : 1), oy = nu[1] * T * (s[4] ? -1 : 1);
+      if (s[2]) { var ra = s[2] * Math.PI / 180, rx = ox * Math.cos(ra) - oy * Math.sin(ra), ry = ox * Math.sin(ra) + oy * Math.cos(ra); ox = rx; oy = ry; }
+      var tx = words === 'readable' ? false : fx, ty = words === 'readable' ? false : fy, sa = words === 'readable' && (fx !== fy) ? -1 : 1;
+      wrapDraw(g, SW, SH, s[0] + cp * W + ox, s[1] * sy + cy * H + oy, size * .75 + Math.abs(ox) + Math.abs(oy), function (gg) {
+        placeMotif(gg, mm, size, (ang * sa) + s[2], tx, ty);
+        if (words === 'shapes' && o.textLayer && mm === m) placeMotifUp(gg, o.textLayer, size, fx, fy);
+      });
     });
     return c;
   };

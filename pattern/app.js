@@ -41,14 +41,14 @@
   function esc(s) { return String(s == null ? '' : s).replace(/[&<>"]/g, function (c) { return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]; }); }
 
   /* ---------- state ---------- */
-  var KINDS = [['logo', 'Logo', 'Make a simple logo, then repeat it'], ['picture', 'My picture', 'A PNG or photo you have'], ['plaid', 'Plaid', 'Flannel, tartan, gingham'], ['stripes', 'Stripes', 'Breton to club tie'], ['checks', 'Checks', 'Checkerboard to houndstooth'], ['camo', 'Camo', 'Woodland to bubble'], ['hardware', 'Hardware', 'Plaques and cut out emblems']];
-  var KIND_ICON = { logo: 'logo', picture: 'pic', plaid: 'plaid', stripes: 'stripes', checks: 'checks', camo: 'camo', halftone: 'halftone', hardware: 'plate' };
+  var KINDS = [['logo', 'Logo', 'Make a simple logo, then repeat it'], ['picture', 'My picture', 'A PNG or photo you have'], ['plaid', 'Plaid', 'Flannel, tartan, gingham'], ['stripes', 'Stripes', 'Breton to club tie'], ['checks', 'Checks', 'Checkerboard to houndstooth'], ['camo', 'Camo', 'Woodland to bubble'], ['hardware', 'Hardware', 'Plaques and cut out emblems'], ['block', 'Block', 'Many pictures on a grid']];
+  var KIND_ICON = { logo: 'logo', picture: 'pic', plaid: 'plaid', stripes: 'stripes', checks: 'checks', camo: 'camo', halftone: 'halftone', hardware: 'plate', block: 'make' };
   function presetOf(list, id) { return list.filter(function (x) { return x[0] === id; })[0]; }
   var S = {
     kind: null, step: 0, part: {}, view: 'swatch', fabric: 'poplin',
     colorsBy: {}, palBy: {},
     logo: { shape: 'circle', text: 'NC', font: 'FS Archivo Black', icon: 'none', ring: false },
-    rep: { type: 'halfdrop', tileIn: 3, scale: .6, angle: 0, flip: 'none', seed: 7, density: 1, tint: false, white: true, fade: 100 },
+    rep: { words: 'flip', mdir: 'both', nudge: [0, 0], type: 'halfdrop', tileIn: 3, scale: .6, angle: 0, flip: 'none', seed: 7, density: 1, tint: false, white: true, fade: 100 },
     plaid: { preset: 'farmer', sett: presetOf(E.PLAIDS, 'farmer')[3].slice(), mirror: true, threadIn: 1 / 36, weave: 'twill' },
     stripes: { preset: 'breton', bands: presetOf(E.STRIPES, 'breton')[3].slice(), dir: 'h', scale: 1 },
     checks: { kind: 'board', cellIn: .5, fill: 'solid', point: 'none' },
@@ -56,9 +56,10 @@
     board: { name: '', notes: '', by: '', pantone: {} }
   };
   try { var saved = JSON.parse(localStorage.getItem('nocivPattern') || 'null'); if (saved && saved.v === 1) Object.assign(S, saved.s); } catch (e) {}
+  if (!S.rep.nudge) S.rep.nudge = [0, 0]; if (!S.rep.words) S.rep.words = 'flip'; if (!S.rep.mdir) S.rep.mdir = 'both';
   function keep() { try { localStorage.setItem('nocivPattern', JSON.stringify({ v: 1, s: S })); } catch (e) {} }
-  var PALKEY = { logo: 'repeat', picture: 'repeat', halftone: 'repeat', plaid: 'plaid', stripes: 'stripes', checks: 'checks', camo: 'camo' };
-  function colors() { if (S.kind === 'hardware') return hwCols(); var k = S.kind || 'logo'; if (!S.colorsBy[k]) { var p = E.PALETTES[PALKEY[k]][k === 'camo' ? camoPalIndex() : 0]; S.colorsBy[k] = p[1].slice(); S.palBy[k] = p[0]; } return S.colorsBy[k]; }
+  var PALKEY = { block: 'checks', logo: 'repeat', picture: 'repeat', halftone: 'repeat', plaid: 'plaid', stripes: 'stripes', checks: 'checks', camo: 'camo' };
+  function colors() { if (S.kind === 'hardware') return hwCols(); if (S.kind === 'block') return BLK.colorsList(); var k = S.kind || 'logo'; if (!S.colorsBy[k]) { var p = E.PALETTES[PALKEY[k]][k === 'camo' ? camoPalIndex() : 0]; S.colorsBy[k] = p[1].slice(); S.palBy[k] = p[0]; } return S.colorsBy[k]; }
   function camoPalIndex() { var t = presetOf(E.CAMOS, S.camo.type), name = t ? t[3] : 'Woodland', i = 0; E.PALETTES.camo.forEach(function (p, j) { if (p[0] === name) i = j; }); return i; }
 
   /* ---------- pictures kept on this phone (IndexedDB) ---------- */
@@ -66,6 +67,7 @@
   function idb() { return new Promise(function (res) { if (DB) return res(DB); try { var r = indexedDB.open('nocivPattern', 1); r.onupgradeneeded = function () { r.result.createObjectStore('img'); }; r.onsuccess = function () { DB = r.result; res(DB); }; r.onerror = function () { res(null); }; } catch (e) { res(null); } }); }
   function idbGet(k) { return idb().then(function (db) { return new Promise(function (res) { if (!db) return res(null); var q = db.transaction('img').objectStore('img').get(k); q.onsuccess = function () { res(q.result || null); }; q.onerror = function () { res(null); }; }); }); }
   function idbSet(k, v) { return idb().then(function (db) { return new Promise(function (res) { if (!db) return res(); var t = db.transaction('img', 'readwrite'); t.objectStore('img').put(v, k); t.oncomplete = res; t.onerror = res; }); }); }
+  function idbDel(k) { return idb().then(function (db) { return new Promise(function (res) { if (!db) return res(); var t = db.transaction('img', 'readwrite'); t.objectStore('img').delete(k); t.oncomplete = res; t.onerror = res; }); }); }
   var PIC = null, PICSRC = null; // the picture as a canvas, and the original file so it can be cropped again
   function blobToCanvas(b) { return new Promise(function (res) { var u = URL.createObjectURL(b), im = new Image(); im.onload = function () { var k = Math.min(1, 1400 / Math.max(im.width, im.height)), c = E.cv(im.width * k, im.height * k); c.getContext('2d').drawImage(im, 0, 0, c.width, c.height); URL.revokeObjectURL(u); res(c); }; im.onerror = function () { res(null); }; im.src = u; }); }
 
@@ -96,15 +98,16 @@
     else if (kind === 'flower') { for (var i = 0; i < 6; i++) { g.save(); g.rotate(i * Math.PI / 3); g.beginPath(); g.ellipse(0, -r * .55, r * .3, r * .5, 0, 0, 7); g.fill(); g.restore(); } }
     else if (kind === 'sun') { g.beginPath(); g.arc(0, 0, r * .45, 0, 7); g.fill(); for (var j = 0; j < 8; j++) { g.save(); g.rotate(j * Math.PI / 4); g.beginPath(); g.moveTo(0, -r * .65); g.lineTo(0, -r); g.stroke(); g.restore(); } }
   }
-  function renderLogo(L, cols, size) {
+  // part: undefined = whole logo, 'shape' = shape and icon only, 'text' = words only (so a mirror can flip the shape and keep the words readable)
+  function renderLogo(L, cols, size, part) {
     size = size || 600; var c = E.cv(size, size), g = c.getContext('2d'), R = size * .46, has = L.shape !== 'none';
     var main = cols[1], knock = cols[0];
     g.translate(size / 2, size / 2);
-    if (has) { shapePath(g, L.shape, R); g.fillStyle = main; g.fill(); if (L.ring) { g.save(); g.scale(.86, .86); shapePath(g, L.shape, R); g.restore(); g.strokeStyle = knock; g.lineWidth = size * .018; g.stroke(); } }
+    if (has && part !== 'text') { shapePath(g, L.shape, R); g.fillStyle = main; g.fill(); if (L.ring) { g.save(); g.scale(.86, .86); shapePath(g, L.shape, R); g.restore(); g.strokeStyle = knock; g.lineWidth = size * .018; g.stroke(); } }
     var txtCol = has ? knock : main, iconOn = L.icon !== 'none', text = (L.text || '').slice(0, 14);
     var box = has ? (L.shape === 'star' || L.shape === 'diamond' ? R * .95 : R * 1.35) : size * .92;
-    if (iconOn) { g.save(); g.translate(0, text ? -R * .32 : 0); iconDraw(g, L.icon, text ? R * .26 : R * .55, txtCol); g.restore(); }
-    if (text) {
+    if (iconOn && part !== 'text') { g.save(); g.translate(0, text ? -R * .32 : 0); iconDraw(g, L.icon, text ? R * .26 : R * .55, txtCol); g.restore(); }
+    if (text && part !== 'shape') {
       var fs = size * .5, fam = "'" + L.font + "', " + 'sans-serif';
       g.font = fs + 'px ' + fam; var w = g.measureText(text).width; fs = Math.min(fs, fs * box / Math.max(1, w), (iconOn ? R * .5 : R * .8)); g.font = fs + 'px ' + fam;
       g.fillStyle = txtCol; g.textAlign = 'center'; g.textBaseline = 'middle'; g.fillText(text, 0, iconOn ? R * .3 : (L.shape === 'shield' ? -R * .08 : 0));
@@ -138,11 +141,20 @@
     return undefined;
   }
   function motifs() { var m = motif(); if (!m || !S.rep.alt || S.rep.alt === 'none') return null; var b = altMotif(colors()); if (b === undefined || (S.rep.alt === 'other' && !b)) return null; return [m, b]; }
+  function wordsMode() { return S.rep.type === 'mirror' ? (S.rep.words || 'flip') : 'flip'; }
+  function textLayer() { if (S.kind !== 'logo' || wordsMode() !== 'shapes') return null; return fadeIt(renderLogo(S.logo, colors(), 600, 'text')); }
   function motif() {
-    var cols = colors(), m = S.kind === 'logo' ? renderLogo(S.logo, cols) : picMotif(cols);
+    var cols = colors(), m = S.kind === 'logo' ? renderLogo(S.logo, cols, 600, wordsMode() === 'shapes' ? 'shape' : undefined) : picMotif(cols);
     if (m && S.rep.fade < 100) { var c = E.cv(m.width, m.height), g = c.getContext('2d'); g.globalAlpha = S.rep.fade / 100; g.drawImage(m, 0, 0); m = c; }
     return m;
   }
+
+  /* ---------- block builder (block.js) ---------- */
+  var BLK = window.PatternBlock({
+    E: E, S: S, esc: esc, idbGet: idbGet, idbSet: idbSet, idbDel: idbDel, blobToCanvas: blobToCanvas, renderLogo: renderLogo, shapePath: shapePath, iconDraw: iconDraw,
+    ICONS: ICONS, FONTS: FONTS, seg: seg, stepper: stepper, toHex: toHex, fmtIn: fmtIn, tag: tag, step: function () { return S.step; },
+    draw: draw, changed: changed, keep: keep, pickFiles: function () { $('bfile').click(); }
+  });
 
   /* ---------- hardware: plaques, emblems, cut out logos ---------- */
   // Everything is drawn in millimeters, so the cut file and the spec match the picture.
@@ -382,12 +394,13 @@
 
   /* ---------- tiles ---------- */
   var tcache = {};
-  function stateKey() { return JSON.stringify([S.kind, colors(), S.logo, S.rep, S.plaid, S.stripes, S.checks, S.camo, !!PIC && PIC.width + 'x' + PIC.height + (PIC._id || '')]); }
+  function stateKey() { if (S.kind === 'block') return 'B' + BLK.key(); return JSON.stringify([S.kind, colors(), S.logo, S.rep, S.plaid, S.stripes, S.checks, S.camo, !!PIC && PIC.width + 'x' + PIC.height + (PIC._id || '')]); }
   function tileAt(ppi, big) {
     var key = stateKey() + '@' + Math.round(ppi * 10) + (big ? 'B' : '');
     if (tcache.k === key) return tcache.t;
     var cols = colors(), t = null, k = S.kind;
-    if (k === 'logo' || k === 'picture') { var m = motif(); if (m) t = E.repeatTile({ motif: m, motifs: motifs(), type: S.rep.type, tileIn: S.rep.tileIn, tileInY: S.rep.tileInY || null, ppi: ppi, scale: S.rep.scale, angle: S.rep.angle, flip: S.rep.flip, bg: S.rep.clear ? null : cols[0], seed: S.rep.seed, density: S.rep.density }); }
+    if (k === 'block') t = BLK.tile(ppi);
+    else if (k === 'logo' || k === 'picture') { var m = motif(); if (m) t = E.repeatTile({ motif: m, motifs: motifs(), words: wordsMode(), textLayer: textLayer(), mirrorDir: S.rep.mdir, nudge: S.rep.nudge, type: S.rep.type, tileIn: S.rep.tileIn, tileInY: S.rep.tileInY || null, ppi: ppi, scale: S.rep.scale, angle: S.rep.angle, flip: S.rep.flip, bg: S.rep.clear ? null : cols[0], seed: S.rep.seed, density: S.rep.density }); }
     else if (k === 'plaid') t = E.plaidTile({ sett: S.plaid.sett, mirror: S.plaid.mirror, threadIn: S.plaid.threadIn, ppi: ppi, colors: cols, weave: S.plaid.weave });
     else if (k === 'stripes') t = E.stripeTile({ bands: S.stripes.bands.map(function (b) { return [b[0], b[1] * S.stripes.scale, b[2] || 'solid']; }), dir: S.stripes.dir, ppi: ppi, colors: cols, logo: S.stripes.bands.some(function (b) { return b[2] === 'logo'; }) ? renderLogo(S.logo, cols, 300) : null });
     else if (k === 'checks') t = E.checkTile({ kind: S.checks.kind, cellIn: S.checks.cellIn, fill: S.checks.fill, mix: mixOf(), point: S.checks.point, ppi: ppi, colors: cols, logo: S.checks.point === 'logo' || (mixOf() || []).indexOf('logo') >= 0 ? renderLogo(S.logo, cols, 300) : null });
@@ -402,6 +415,7 @@
     if (k === 'stripes') return (presetOf(E.STRIPES, S.stripes.preset) || [0, 'My stripe'])[1];
     if (k === 'checks') return (presetOf(E.CHECKS, S.checks.kind) || [0, 'Checks'])[1];
     if (k === 'hardware') return (HW().text || 'Custom') + ' plate';
+    if (k === 'block') return BLK.B().n + ' x ' + BLK.B().n + ' block';
     return (presetOf(E.CAMOS, S.camo.type) || [0, 'Camo'])[1] + ' camo';
   }
 
@@ -435,17 +449,34 @@
   function draw() { if (raf) return; raf = requestAnimationFrame(function () { raf = 0; drawNow(); }); }
   function drawNow() {
     fit(); var W = view.width, H = view.height, g = vg; g.setTransform(1, 0, 0, 1, 0, 0); g.clearRect(0, 0, W, H);
-    $('views').hidden = !S.kind || S.step === 4; var bbtn = document.querySelector('#views [data-b]'); if (bbtn) { bbtn.hidden = S.kind === 'hardware'; bbtn.setAttribute('aria-pressed', String(!!S.border)); }
+    $('views').hidden = !S.kind || S.step === 4; $('zoomer').hidden = true; Array.prototype.forEach.call(document.querySelectorAll('#views [data-v]'), function (x) { x.setAttribute('aria-pressed', String(x.dataset.v === S.view)); }); var bbtn = document.querySelector('#views [data-b]'); if (bbtn) { bbtn.hidden = S.kind === 'hardware'; bbtn.setAttribute('aria-pressed', String(!!S.border)); }
     if (S.step === 4 && S.kind) { var b = boardCanvas(900); var k = Math.min(W / b.width, H / b.height) * .96; g.fillStyle = '#e7e2d6'; g.fillRect(0, 0, W, H); g.drawImage(b, (W - b.width * k) / 2, (H - b.height * k) / 2, b.width * k, b.height * k); tag('Your mood board for the tech pack'); return; }
     if (!S.kind) { welcome(g, W, H); tag('Pick what you are making'); return; }
     if (S.kind === 'hardware') { $('views').hidden = true; hwDrawView(g, W, H); return; }
-    var across = { close: 3, swatch: 10, yard: 42 }[S.view] || 10, ppi = W / across;
+    if (S.view === 'tile') { if (S.kind === 'block') BLK.drawTile(g, W, H); else tileView(g, W, H); zoomer(); return; }
+    var across = { close: 3, swatch: 8, yard: 42 }[S.view] || 8, ppi = W / across; zoomer();
     if (!fillPattern(g, W, H, ppi, S.step >= 3 || S.view === 'close')) { g.fillStyle = '#e7e2d6'; g.fillRect(0, 0, W, H); tag(S.kind === 'picture' ? 'Choose a picture to repeat' : 'Loading'); return; }
     if (S.view === 'yard') { g.fillStyle = 'rgba(26,26,26,.85)'; for (var x = 0; x <= 42; x += 6) { var px = x * ppi; g.fillRect(px, 0, Math.max(1, ppi * .05), ppi * (x % 12 ? .6 : 1.2)); } }
     var ti = tileInches();
-    tag(repeatName() + '. Repeats every ' + fmtIn(ti[0]) + (Math.abs(ti[0] - ti[1]) > .01 ? ' by ' + fmtIn(ti[1]) : '') + '. ' + (S.view === 'yard' ? 'Showing 42 in across.' : S.view === 'close' ? 'Showing 3 in across.' : 'Showing 10 in across.') + (S.step >= 3 ? ' On ' + (presetOf(E.FABRICS, S.fabric) || [0, ''])[1].toLowerCase() + '.' : ''));
+    tag(repeatName() + '. Repeats every ' + fmtIn(ti[0]) + (Math.abs(ti[0] - ti[1]) > .01 ? ' by ' + fmtIn(ti[1]) : '') + '. ' + (S.view === 'yard' ? 'Showing 42 in across.' : S.view === 'close' ? 'Showing 3 in across.' : 'Swatch, 8 in across.') + (S.step >= 3 ? ' On ' + (presetOf(E.FABRICS, S.fabric) || [0, ''])[1].toLowerCase() + '.' : ''));
   }
   function fmtIn(v) { return (Math.round(v * 100) / 100) + ' in'; }
+  // Tile view: one tile big in the middle, its neighbors faded around it so you see exactly what repeats and where the seams meet
+  var TV = null;
+  function tileView(g, W, H) {
+    var ti = tileInches(); if (!ti[0]) { g.fillStyle = '#e7e2d6'; g.fillRect(0, 0, W, H); tag(S.kind === 'picture' ? 'Choose a picture to repeat' : 'Loading'); return; }
+    var ppi = Math.min(600, W * .78 / ti[0], H * .78 / ti[1]), t = tileAt(ppi); if (!t) return;
+    var tw = t.width, th = t.height, ox = (W - tw) / 2, oy = (H - th) / 2;
+    g.fillStyle = '#e7e2d6'; g.fillRect(0, 0, W, H);
+    g.save(); g.translate(((ox % tw) + tw) % tw - tw, ((oy % th) + th) % th - th); g.fillStyle = g.createPattern(t, 'repeat'); g.fillRect(0, 0, W + tw * 2, H + th * 2); g.restore();
+    g.fillStyle = 'rgba(243,239,230,.6)'; g.fillRect(0, 0, W, Math.max(0, oy)); g.fillRect(0, oy + th, W, H); g.fillRect(0, oy, Math.max(0, ox), th); g.fillRect(ox + tw, oy, W, th);
+    var u = W / 390; g.strokeStyle = '#c8412f'; g.lineWidth = 2.2 * u; g.setLineDash([6 * u, 4 * u]); g.strokeRect(ox, oy, tw, th); g.setLineDash([]);
+    TV = { tpx: S.rep.tileIn * ppi };
+    tag('One tile, ' + fmtIn(ti[0]) + (Math.abs(ti[0] - ti[1]) > .01 ? ' by ' + fmtIn(ti[1]) : '') + '. Faded copies show the seams.' + ((S.kind === 'logo' || S.kind === 'picture') ? ' Drag to nudge.' : ''));
+  }
+  // + and - on the picture: makes the repeat bigger or smaller in every view
+  var ZK = { logo: 'tileIn', picture: 'tileIn', plaid: 'thread', stripes: 'sscale', checks: 'cell', camo: 'ctile', block: 'btile' };
+  function zoomer() { var z = $('zoomer'), k = ZK[S.kind]; z.hidden = !k || S.step === 4; if (!k) return; var ti = tileInches(); $('zval').textContent = S.kind === 'block' ? fmtIn(BLK.B().tileIn) : fmtIn(ti[0]); }
   function tag(t) { $('tag').textContent = t; }
   function welcome(g, W, H) {
     var cols = ['#f3efe6', '#1a1a1a'], t = E.checkTile({ kind: 'board', cellIn: .5, fill: 'dots', point: 'none', ppi: W / 8, colors: ['#ece6d6', '#d9d1bd'] });
@@ -467,6 +498,7 @@
       if (k === 'checks') return [['cstyle', 'Style', 'style'], ['fill', 'Fill', 'fill'], ['corner', 'Corners', 'corner'], ['csize', 'Size', 'size']];
       if (k === 'camo') return [['mstyle', 'Style', 'style'], ['msize', 'Size', 'size']];
       if (k === 'hardware') return [['hplate', 'Plate', 'plate'], ['hmark', 'Mark', 'words'], ['hdetail', 'Details', 'edge']];
+      if (k === 'block') return [['blk', BLK.toolName(), 'make']];
       return [['what', 'What', 'spark']];
     }
     if (step === 2) return S.kind === 'hardware' ? [['hmetal', 'Metal', 'pal']] : [['pals', 'Palettes', 'pal'], ['mine', 'My colors', 'mine']];
@@ -490,6 +522,7 @@
   function paneHtml(p) {
     var cols = colors();
     if (p.charAt(0) === 'h' && p !== 'help') { var hp = hwPane(p); if (hp) return hp; }
+    if (p === 'blk') return BLK.paneHtml();
     if (p === 'what') return '<p class="h">What are you making?</p><div class="grid g4 kinds">' + KINDS.map(function (k) { return '<button type="button" class="pick big" data-kind="' + k[0] + '" aria-pressed="' + (S.kind === k[0]) + '">' + ico(KIND_ICON[k[0]]) + k[1] + '<small>' + k[2] + '</small></button>'; }).join('') + '</div>';
     if (p === 'shape') return '<p class="h">Pick a shape for your logo</p>' + picks(SHAPES, S.logo.shape, 'shape', 5, function (x) { return mini('shape:' + x[0]); }, true) + '<div class="row" style="margin-top:8px"><b>Inner ring</b>' + seg('ring', [['0', 'Off'], ['1', 'On']], S.logo.ring ? '1' : '0') + '</div>';
     if (p === 'words') return '<div class="row"><b>Words</b><input class="txt" id="ltext" maxlength="14" value="' + esc(S.logo.text) + '" placeholder="Your initials" autocomplete="off"></div><p class="h">Letters</p>' + picks(FONTS, S.logo.font, 'font', 4, function (x) { return '<span style="font:19px/1.1 \'' + x[0] + '\',sans-serif">' + esc((S.logo.text || 'Aa').slice(0, 3)) + '</span>'; }, true);
@@ -499,10 +532,14 @@
     if (p === 'pic') return (PIC ? '<div class="grid g2"><button type="button" class="btn dark" data-act="choose">New picture</button><button type="button" class="btn" data-act="recrop">Crop it</button></div>' : '<button type="button" class="btn dark" data-act="choose">Choose a picture</button>') + '<p class="note" style="margin:6px 0 10px">PNG with a clear background works best. A halftone from Stencil + Halftone comes in here too.</p>' +
       '<div class="row"><b>White</b>' + seg('white', [['1', 'Remove white'], ['0', 'Keep it']], S.rep.white ? '1' : '0') + '</div>' +
       '<div class="row"><b>Color</b>' + seg('tint', [['0', 'As it is'], ['1', 'One color']], S.rep.tint ? '1' : '0') + '</div><p class="note">One color turns it into a monogram or watermark in your ink.</p>';
-    if (p === 'repeat') return '<p class="h">How it repeats</p>' + picks(E.REPEATS, S.rep.type, 'rep', 5, function (x) { return mini('rep:' + x[0]); }, true) + '<div class="row" style="margin-top:8px"><b>Mix</b>' + seg('ralt', [['none', 'Just one'], ['icon', 'Icon'], ['space', 'Space'], ['other', S.kind === 'logo' ? 'Picture' : 'Logo']], S.rep.alt || 'none') + '</div>';
+    if (p === 'repeat') return '<p class="h">How it repeats</p>' + picks(E.REPEATS, S.rep.type, 'rep', 5, function (x) { return mini('rep:' + x[0]); }, true) +
+      (S.rep.type === 'mirror' ? '<div class="row" style="margin-top:8px"><b>Mirror</b>' + seg('mdir', [['both', 'Both ways'], ['lr', 'Left-right'], ['ud', 'Up-down']], S.rep.mdir) + '</div><div class="row"><b>Words</b>' + seg('words', [['readable', 'Readable'], ['shapes', S.kind === 'logo' ? 'Shapes only' : 'Shapes (logo)'], ['flip', 'True mirror']], S.rep.words) + '</div><p class="note" style="margin:-2px 0 8px">' + { readable: 'The layout mirrors, the motif stays the right way round. Size, Nudge (or drag on Tile view) sets where the copies meet.', shapes: S.kind === 'logo' ? 'The shape and icon flip, the words stay readable.' : 'Shapes only works on the Logo maker logo, because a picture is one layer. Use Readable.', flip: 'Everything flips like a real mirror. Words read backwards.' }[S.rep.words] + '</p>'
+        : /^kale/.test(S.rep.type) ? '<p class="note" style="margin:6px 0 8px">Nudge in Size (or drag on Tile view) moves the motif inside the mirror, so you pick where the reflections meet.</p>' : '') +
+      '<div class="row" style="margin-top:8px"><b>Mix</b>' + seg('ralt', [['none', 'Just one'], ['icon', 'Icon'], ['space', 'Space'], ['other', S.kind === 'logo' ? 'Picture' : 'Logo']], S.rep.alt || 'none') + '</div><button type="button" class="btn" data-act="toblock" style="padding:9px">Many pictures? Build a block (grid)</button>';
     if (p === 'size') return stepper('tileIn', 'Repeat', S.rep.tileIn, fmtIn(S.rep.tileIn)) + stepper('scale', 'Motif', S.rep.scale, Math.round(S.rep.scale * 100) + '%') + stepper('angle', 'Turn', S.rep.angle, S.rep.angle + '°') +
       '<div class="row"><b>Flip</b>' + seg('flip', [['none', 'All same'], ['alt', 'Every other']], S.rep.flip) + '</div>' +
-      '<div class="row"><b>Fade</b>' + seg('fade', [['100', 'Solid'], ['60', '60%'], ['30', 'Watermark']], String(S.rep.fade)) + '</div>' + (S.rep.type === 'toss' ? '<button type="button" class="btn" data-act="toss">Shuffle the toss</button>' : '');
+      '<div class="row"><b>Fade</b>' + seg('fade', [['100', 'Solid'], ['60', '60%'], ['30', 'Watermark']], String(S.rep.fade)) + '</div>' +
+      stepper('nux', 'Nudge', 0, 'Across ' + Math.round(S.rep.nudge[0] * 100) + '%') + stepper('nuy', 'Nudge', 0, 'Down ' + Math.round(S.rep.nudge[1] * 100) + '%') + (S.rep.nudge[0] || S.rep.nudge[1] ? '<button type="button" class="btn" data-act="nureset" style="padding:9px">Center it again</button>' : '') + (S.rep.type === 'toss' ? '<button type="button" class="btn" data-act="toss">Shuffle the toss</button>' : '');
     if (p === 'pstyle') return picks(E.PLAIDS, S.plaid.preset, 'plaid', 4, function (x) { return mini('plaid:' + x[0]); }, true) + '<p class="note">' + esc((presetOf(E.PLAIDS, S.plaid.preset) || [0, 0, ''])[2]) + '</p>';
     if (p === 'threads') return bandsHtml(S.plaid.sett, cols, 'threads') + '';
     if (p === 'weave') return '<div class="row"><b>Mirror</b>' + seg('pmirror', [['1', 'Like tartan'], ['0', 'No']], S.plaid.mirror ? '1' : '0') + '</div><div class="row"><b>Weave</b>' + seg('weave', [['twill', 'Twill'], ['plain', 'Plain'], ['flat', 'Printed']], S.plaid.weave) + '</div><p class="note" style="margin:-2px 0 10px">Twill is the diagonal you see on flannel. Printed is a flat color mix.</p>' + stepper('thread', 'Thread', S.plaid.threadIn, Math.round(1 / S.plaid.threadIn) + ' per in') + '<p class="note">More threads per inch makes the plaid smaller.</p>';
@@ -542,7 +579,7 @@
 
   /* ---------- small pictures inside buttons ---------- */
   function afterPane() {
-    var cols = colors();
+    var cols = colors(); BLK.afterPane($('pane')); drawTools();
     Array.prototype.forEach.call($('pane').querySelectorAll('canvas[data-mini]'), function (c) {
       var id = c.dataset.mini.split(':'), what = id[0], v = id[1], g = c.getContext('2d'), W = c.width, H = c.height, t = null;
       g.fillStyle = '#fff'; g.fillRect(0, 0, W, H);
@@ -563,7 +600,7 @@
   }
 
   /* ---------- taps ---------- */
-  var DEF = { logo: 'shape', picture: 'pic', plaid: 'pstyle', stripes: 'sstyle', checks: 'cstyle', camo: 'mstyle', hardware: 'hplate' };
+  var DEF = { block: 'blk', logo: 'shape', picture: 'pic', plaid: 'pstyle', stripes: 'sstyle', checks: 'cstyle', camo: 'mstyle', hardware: 'hplate' };
   $('bbar').addEventListener('click', function (e) { var b = e.target.closest('button[data-s]'); if (b && !b.disabled) go(+b.dataset.s); });
   $('parts').addEventListener('click', function (e) { var b = e.target.closest('button[data-p]'); if (!b) return; S.part[S.step + ':' + S.kind] = b.dataset.p; $('con').classList.remove('down'); keep(); render(); });
   $('drop').addEventListener('click', function () { var d = $('con').classList.toggle('down'); this.setAttribute('aria-label', d ? 'Show the controls' : 'Hide the controls'); draw(); });
@@ -579,12 +616,19 @@
     cell: function (d) { S.checks.cellIn = clamp(Math.round((S.checks.cellIn + d * .125) * 1000) / 1000, .125, 3); },
     cscale: function (d) { S.camo.scale = clamp(Math.round((S.camo.scale + d * .1) * 10) / 10, .4, 2.5); },
     ctile: function (d) { S.camo.tileIn = clamp(S.camo.tileIn + d * 2, 4, 24); },
+    nux: function (d) { S.rep.nudge[0] = clamp(Math.round((S.rep.nudge[0] + d * .05) * 100) / 100, -.5, .5); },
+    nuy: function (d) { S.rep.nudge[1] = clamp(Math.round((S.rep.nudge[1] + d * .05) * 100) / 100, -.5, .5); },
     hw: function (d) { var h = HW(); h.w = clamp(h.w + d * (h.w >= 40 ? 5 : 2), 10, 200); },
     hh: function (d) { var h = HW(); h.h = clamp(h.h + d * (h.h >= 40 ? 5 : 2), 8, 200); }
   };
   function clamp(v, a, b) { return Math.max(a, Math.min(b, v)); }
+  Object.keys(BLK.steps).forEach(function (k) { STEPV[k] = BLK.steps[k]; });
   $('pane').addEventListener('click', function (e) {
     var b = e.target.closest('button'); if (!b) return; var d = b.dataset, cols = colors();
+    if (S.kind === 'block' && BLK.onClick(b)) return;
+    if (d.act === 'toblock') { toBlock(); return; }
+    if (d.act === 'nureset') { S.rep.nudge = [0, 0]; return changed(true); }
+    if (d.kind === 'block') { toBlock(true); return; }
     if (d.kind) { var was = S.kind; S.kind = d.kind; if (d.kind === 'picture' && !PIC) { $('file').click(); } keep(); if (was !== d.kind || true) { S.step = 1; S.part['1:' + S.kind] = S.part['1:' + S.kind] || DEF[S.kind]; } render(); return; }
     if (d.hshape) { HW().shape = d.hshape; if (/circle|badge|hex|shield|diamond/.test(d.hshape) && HW().w > HW().h * 1.4) HW().h = HW().w = Math.max(HW().h, 30); if (/rect|rounded|pill/.test(d.hshape) && HW().w === HW().h) { HW().w = 60; HW().h = 20; } return changed(true); }
     if (d.hfont) { HW().font = d.hfont; return changed(true); }
@@ -601,6 +645,7 @@
     if (d.cfill) { S.checks.fill = d.cfill; return changed(true); }
     if (d.point) { S.checks.point = d.point; return changed(true); }
     if (d.camo) { S.camo.type = d.camo; var cp = E.PALETTES.camo[camoPalIndex()]; S.colorsBy.camo = cp[1].slice(); S.palBy.camo = cp[0]; return changed(true); }
+    if (d.pal != null && S.kind === 'block') { var bp = E.PALETTES.checks[+d.pal]; BLK.applyPal(bp[1]); S.palBy.block = bp[0]; return changed(true); }
     if (d.pal != null) { var pl = E.PALETTES[PALKEY[S.kind]][+d.pal]; S.colorsBy[S.kind] = pl[1].slice(); S.palBy[S.kind] = pl[0]; return changed(true); }
     if (d.fab) { S.fabric = d.fab; return changed(true); }
     if (d.act === 'choose') { $('file').click(); return; }
@@ -625,6 +670,8 @@
       else if (k === 'flip') S.rep.flip = v; else if (k === 'fade') S.rep.fade = +v; else if (k === 'pmirror') S.plaid.mirror = v === '1';
       else if (k === 'border') S.border = v === '1'; else if (k === 'clear') S.rep.clear = v === '1';
       else if (k === 'weave') S.plaid.weave = v; else if (k === 'sdir') S.stripes.dir = v;
+      else if (k === 'mdir') S.rep.mdir = v;
+      else if (k === 'words') { S.rep.words = v; if (v === 'readable' && !S.rep.nudge[0] && !S.rep.nudge[1]) S.rep.nudge = [.2, .2]; }
       else if (k === 'ralt') { if (v === 'other' && S.kind === 'logo' && !PIC) { S.rep.alt = 'other'; keep(); $('file')._keepKind = true; $('file').click(); return; } S.rep.alt = v; }
       else if (k === 'cmix') { var nn = +v; S.checks.mix = nn > 1 ? ['dots', 'hatch', 'logo', 'solid'].slice(0, nn).map(function (x, i) { return (S.checks.mix && S.checks.mix[i]) || x; }) : null; }
       else if (k.indexOf('slot') === 0) { S.checks.mix[+k.slice(4)] = v; }
@@ -640,11 +687,25 @@
     if (t.id === 'hwtext' || t.id === 'hwline2') { HW()[t.id === 'hwtext' ? 'text' : 'line2'] = t.value; keep(); draw(); return; }
     if (t.dataset.hen) { HW().enamel = t.value; keep(); draw(); return; }
     if (t.dataset.hbc) { HW().backCol = t.value; keep(); draw(); return; }
+    if (S.kind === 'block' && BLK.onInput(t)) return;
+    if (t.dataset.ci != null && S.kind === 'block') { BLK.setColor(+t.dataset.ci, t.value); S.palBy.block = ''; keep(); draw(); return; }
     if (t.dataset.ci != null) { colors()[+t.dataset.ci] = t.value; S.palBy[S.kind] = ''; keep(); draw(); return; }
     if (t.dataset.bd) { S.board[t.dataset.bd] = t.value; keep(); draw(); return; }
     if (t.dataset.pt != null) { S.board.pantone[toHex(colors()[+t.dataset.pt])] = t.value; keep(); draw(); }
   });
-  $('pane').addEventListener('change', function (e) { if (e.target.dataset.ci != null) changed(true); });
+  $('pane').addEventListener('change', function (e) { if (e.target.dataset.ci != null || e.target.dataset.bpk) changed(true); });
+  // block builder: open it, bring the picture you already have, add many pictures
+  function toBlock(fromStart) {
+    S.kind = 'block'; S.step = 1; S.part['1:block'] = 'blk'; S.view = 'tile'; var b = BLK.B();
+    var seed = PIC && !b.lib.length ? BLK.addCanvas(PIC) : Promise.resolve(null);
+    seed.then(function (id) { if (id && !fromStart) b.cells.forEach(function (c, i) { if (i % 2 === 0) c.el = 'p:' + id; }); keep(); render(); });
+  }
+  $('bfile').addEventListener('change', function () {
+    var fs = this.files; if (!fs || !fs.length) return; var list = Array.prototype.slice.call(fs); this.value = '';
+    BLK.addFiles(list).then(function (id) { var b = BLK.B(); if (id && b.sel.length && b.tool === 'el') { b.sel.forEach(function (i) { b.cells[i].el = 'p:' + id; }); b.tool = 'ink'; } else if (id) { b.picSel = id; } keep(); render(); });
+  });
+  $('ltools').addEventListener('click', function (e) { var b = e.target.closest('button[data-bt]'); if (b) BLK.onClick(b); });
+  function drawTools() { var on = S.kind === 'block' && S.step === 1; $('ltools').hidden = !on; if (on) $('ltools').innerHTML = BLK.toolbar(); document.body.classList.toggle('blk', S.kind === 'block'); document.body.classList.toggle('mk', S.step === 1); }
   $('file').addEventListener('change', function () {
     var f = this.files && this.files[0]; if (!f) return; this.value = '';
     var keepKind = this._keepKind; this._keepKind = false; PICSRC = f; idbSet('picsrc', f);
@@ -669,9 +730,9 @@
     g.fillText('Mood board and print spec' + (S.board.by ? '  |  ' + S.board.by : '') + '  |  ' + date, 5 * u, 11.4 * u);
     g.fillRect(5 * u, 14.6 * u, 90 * u, .25 * u);
     // big swatch on the fabric
-    var sw = 54 * u, sx = 5 * u, sy = 17 * u, sc = E.cv(sw, sw), sg = sc.getContext('2d'); fillPattern(sg, sw, sw, sw / 10, true);
+    var sw = 54 * u, sx = 5 * u, sy = 17 * u, sc = E.cv(sw, sw), sg = sc.getContext('2d'); fillPattern(sg, sw, sw, sw / 8, true);
     g.drawImage(sc, sx, sy); g.strokeStyle = '#1a1a1a'; g.lineWidth = .3 * u; g.strokeRect(sx, sy, sw, sw);
-    g.fillStyle = '#1a1a1a'; g.font = '800 ' + 1.6 * u + 'px ' + sys; g.fillText('10 IN SWATCH ON ' + ((presetOf(E.FABRICS, S.fabric) || [0, ''])[1]).toUpperCase(), sx, sy + sw + 1.2 * u);
+    g.fillStyle = '#1a1a1a'; g.font = '800 ' + 1.6 * u + 'px ' + sys; g.fillText('8 IN SWATCH ON ' + ((presetOf(E.FABRICS, S.fabric) || [0, ''])[1]).toUpperCase(), sx, sy + sw + 1.2 * u);
     // the repeat tile with its edge
     var rx = 63 * u, ry = 17 * u, rs = 32 * u, ti = tileInches(), k = Math.min(rs / 3 / Math.max(ti[0], .1), rs / 3 / Math.max(ti[1], .1)), rc = E.cv(rs, rs), rg = rc.getContext('2d');
     fillPattern(rg, rs, rs, k, false); g.drawImage(rc, rx, ry); g.strokeRect(rx, ry, rs, rs);
@@ -741,8 +802,10 @@
 
   /* ---------- help and learn ---------- */
   var LEARN = [
-    ['How to use it', '<ul><li><b>Start</b>: pick what you are making. Logo makes a simple logo first. My picture takes any PNG or your halftone.</li><li><b>Make</b>: the tabs above the step bar change with what you picked. Tap the picture view buttons (Close, Swatch, Yard) to see it at real scale.</li><li><b>Color</b>: ready-made palettes or your own.</li><li><b>Fabric</b>: lays a cloth texture over it so you see twill, canvas, flannel and more.</li><li><b>Board</b>: your mood board and print spec, plus the files.</li><li>The round arrow hides the controls for a big look. Everything saves on this phone.</li></ul>'],
+    ['How to use it', '<ul><li><b>Start</b>: pick what you are making. Logo makes a simple logo first. My picture takes any PNG or your halftone.</li><li><b>Make</b>: the tabs above the step bar change with what you picked. Tap the picture view buttons (Close, Swatch, Yard) to see it at real scale.</li><li><b>Color</b>: ready-made palettes or your own.</li><li><b>Fabric</b>: lays a cloth texture over it so you see twill, canvas, flannel and more.</li><li><b>Board</b>: your mood board and print spec, plus the files.</li><li><b>Tile</b> view shows one tile, <b>Swatch</b> shows 8 x 8 in (a sample swatch), <b>Yard</b> shows 42 in. The + and - on the picture make the repeat bigger or smaller.</li><li>The round arrow hides the controls for a big look. Everything saves on this phone.</li></ul>'],
     ['Repeats, explained', '<ul><li><b>Grid</b> (block): straight rows and columns. Easy, can look stiff.</li><li><b>Half-drop</b>: every other column drops half a step. The most common repeat in fabric because it hides the grid.</li><li><b>Half-brick</b>: every other row slides half a step, like bricks.</li><li><b>Mirror</b>: four copies facing each other. Great for monograms.</li><li><b>Spin</b>: a quarter turn each time, a pinwheel.</li><li><b>Diamond</b>: the grid on a 45 degree angle, like a monogram canvas.</li><li><b>Toss</b>: random angles and spots, still seamless.</li><li><b>Mirror inside a shape</b>: square (8 slices, quilt block), hexagon (12 slices, snowflake), triangle (every edge reflects). Turn the motif to get totally different results.</li></ul>'],
+    ['Block builder', '<ul><li><b>Start, Block</b> (or Many pictures? in Repeat) opens a grid, 2 x 2 up to 9 x 9.</li><li><b>Tile view</b> shows the block big with its repeats faded around it, so you see the seams. Tap a square: it zooms in. Tap outside the block to come back.</li><li>The <b>left toolbar</b> changes with what is picked. Nothing picked: Grid, Mix, Repeat, Ground, Pictures. A square picked: Element, Ink, Shape, Back, Size. After you pick one, it moves you to the next.</li><li><b>Change</b>: Square, Row, Column, All, or Same (every square with the same element). Ink on a Row recolors only that row.</li><li><b>Layers</b>: Ground under everything, then each square\'s backdrop shape, then the element. A big element sits on top of its neighbor.</li><li><b>Mix</b> lays out the different squares you made: Checker, Rows, Columns, Diagonal, Frame, Random.</li><li><b>Drag</b> on a zoomed square to nudge its element, or use Size, Across and Down for exact numbers.</li><li><b>Color step</b> lists every color in the block. Change one and it changes everywhere: fast colorways.</li></ul>'],
+    ['Mirror and words', '<ul><li>A real mirror flips letters, so words read backwards. There is no way around that in a true mirror.</li><li><b>Readable</b>: the layout mirrors (copies face each other and meet at the line) but each copy is drawn the right way round. Nudge decides where they meet.</li><li><b>Shapes only</b>: on the Logo maker logo, the shape and icon flip and the words do not.</li><li><b>True mirror</b>: everything flips. Best for symbols and pictures without words.</li><li><b>Left-right</b> or <b>Up-down</b> mirrors one way only.</li><li>Half-drop and half-brick only shift, they never flip.</li></ul>'],
     ['Sizing for fabric', '<ul><li>Fabric printers print at <b>150 DPI</b>. Your tile is saved at 150 DPI so the inches come out right.</li><li>A yard is 36 in long. Widths run 42 to 58 in.</li><li>Small repeats (1 to 3 in) for tees, shirts and kids. Medium (4 to 8 in) for hoodies and dresses. Big (10 in and up) for jackets, bags and blankets.</li><li>When you upload, pick <b>Basic repeat</b>. The half-drop or mirror is already built into our tile.</li><li>Order a swatch or fat quarter first. Screens lie about color.</li></ul>'],
     ['Where to print, cheaper', '<ul><li>Spoonflower runs about $20 a yard for basic cotton, with sale days near $15. No minimum.</li><li>Fabric On Demand, Little Cocalico and Contrado print from one yard. Compare the same fabric weight, not just price.</li><li>Polyester sublimation is usually the cheapest per yard, and many local print shops do it.</li><li>The more yards you print at once, the lower the price. Some printers have wholesale programs once you sell.</li><li>Big runs (100 m and up) go to converters and mills. Ask for a strike-off (a test print) before the run.</li></ul>'],
     ['Sourcing materials cheaply', '<ul><li><b>Swatch first, always.</b> Mood Fabrics swatches are about $1 each. It saves you from a $60 mistake.</li><li><b>Jobbers</b> buy leftover mill fabric and sell it with very low minimums, often one yard. Cheap, but you usually cannot reorder, so buy everything you need at once.</li><li><b>Deadstock</b> is unused fabric from big brands. FabScrap (NYC) and fabric districts like LA sell it for less. Great for drops and samples.</li><li><b>Mill stock programs</b> (ready-made colors) have lower minimums than custom fabric.</li><li>Wider fabric (58 to 60 in) can save yardage. Count yards per piece: a tee is about 1 to 1.5 yd, a hoodie about 2 yd, a tote under 1 yd.</li><li>Buy the whole order in one dye lot, and prewash a sample to check shrinkage.</li></ul>'],
@@ -758,6 +821,23 @@
   $('help').onclick = openHelp; $('helpTop').onclick = openHelp;
   $('sheet').addEventListener('click', function (e) { if (e.target === this) this.hidden = true; });
 
+  /* ---------- touch on the picture: block taps and drags, nudge drags ---------- */
+  function vpt(e) { var r = view.getBoundingClientRect(); return [(e.clientX - r.left) * view.width / r.width, (e.clientY - r.top) * view.height / r.height]; }
+  var ND = null;
+  view.addEventListener('pointerdown', function (e) {
+    if (S.view !== 'tile' || S.step !== 1) return; var p = vpt(e);
+    if (S.kind === 'block') { BLK.down(p[0], p[1]); view.setPointerCapture(e.pointerId); }
+    else if ((S.kind === 'logo' || S.kind === 'picture') && TV) { ND = { x: p[0], y: p[1] }; view.setPointerCapture(e.pointerId); }
+  });
+  view.addEventListener('pointermove', function (e) {
+    var p = vpt(e);
+    if (S.kind === 'block') { BLK.move(p[0], p[1]); return; }
+    if (ND && TV) { S.rep.nudge[0] = clamp(S.rep.nudge[0] + (p[0] - ND.x) / TV.tpx, -.5, .5); S.rep.nudge[1] = clamp(S.rep.nudge[1] + (p[1] - ND.y) / TV.tpx, -.5, .5); ND = { x: p[0], y: p[1] }; draw(); }
+  });
+  function vup() { if (S.kind === 'block') BLK.up(); if (ND) { ND = null; S.rep.nudge = S.rep.nudge.map(function (v) { return Math.round(v * 100) / 100; }); changed(true); } }
+  view.addEventListener('pointerup', vup); view.addEventListener('pointercancel', vup);
+  $('zoomer').addEventListener('click', function (e) { var b = e.target.closest('button[data-z]'); if (!b) return; var k = ZK[S.kind]; if (k && STEPV[k]) { STEPV[k](+b.dataset.z); changed(true); } });
+
   /* ---------- start ---------- */
   window.addEventListener('resize', draw);
   var from = (location.search.match(/from=(\w+)/) || [])[1];
@@ -771,6 +851,7 @@
   }).then(function () {
     if (document.fonts && document.fonts.ready) document.fonts.ready.then(function () { tcache = {}; draw(); afterPane(); });
     render();
+    if (S.blk) BLK.loadLib().then(function () { tcache = {}; render(); });
   });
-  window.__pattern = { S: S, tileAt: tileAt, boardCanvas: boardCanvas, render: render, hwSvg: hwSvg, go: go };
+  window.__pattern = { BLK: BLK, S: S, tileAt: tileAt, boardCanvas: boardCanvas, render: render, hwSvg: hwSvg, go: go };
 })();

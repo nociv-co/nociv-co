@@ -120,6 +120,29 @@ html.embedded .top{display:none}
 .pcode i{width:22px;height:22px;border-radius:50%;border:1.5px solid rgba(0,0,0,.3);flex:none}
 .pcode code{font:700 11.5px/1 ui-monospace,Menlo,monospace;flex:0 0 66px}
 .pcode input{flex:1;min-width:0;height:32px;border:1.5px solid var(--ink);border-radius:8px;padding:0 8px;font:600 14px var(--sys)}
+/* block builder: floating left toolbar, + and - on the picture, swatches */
+.ltools{position:absolute;left:8px;top:8px;display:flex;flex-direction:column;gap:4px;z-index:2}
+.ltools[hidden]{display:none}
+.ltools button{all:unset;box-sizing:border-box;cursor:pointer;width:46px;height:44px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px;border:1.5px solid var(--ink);border-radius:11px;background:#fff;color:var(--ink);font:800 9px/1 var(--sys);-webkit-tap-highlight-color:transparent;box-shadow:0 1px 3px rgba(0,0,0,.18)}
+.ltools button svg{width:20px;height:20px;fill:none;stroke:currentColor;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
+.ltools button[aria-pressed=true]{background:var(--ink);color:#fff}
+.ltools button.out{background:var(--red);border-color:var(--red);color:#fff}
+.zoomer{position:absolute;right:8px;bottom:8px;display:flex;flex-direction:column;align-items:center;border:1.5px solid var(--ink);border-radius:12px;background:#fff;overflow:hidden;z-index:2}
+.zoomer[hidden]{display:none}
+.zoomer button{all:unset;cursor:pointer;width:44px;height:38px;display:grid;place-items:center;font:900 20px/1 var(--sys)}
+.zoomer output{font:800 10.5px/1 var(--sys);padding:5px 2px;border-top:1.5px solid var(--ink);border-bottom:1.5px solid var(--ink);width:100%;text-align:center;box-sizing:border-box}
+.stage .tag{max-width:calc(100% - 70px)}
+body.blk .stage .tag{left:62px;max-width:calc(100% - 124px)}
+body.blk.mk .con{height:252px}body.blk .views .vc,body.blk .views .vb{display:none!important}body.blk.mk .tabs{display:none}
+.ltools button{height:41px}.ltools{gap:3px}
+.g6{grid-template-columns:repeat(6,minmax(0,1fr))}
+.bels .pick{font-size:10px!important;padding:4px 2px!important}.bels .pick canvas{height:30px!important}
+.bsw{display:flex;flex-wrap:wrap;gap:6px;align-items:center}
+.bsw button{all:unset;cursor:pointer;width:30px;height:30px;border-radius:50%;border:2px solid #fff;box-shadow:0 0 0 1.5px #b9b5ab}
+.bsw button[aria-pressed=true]{box-shadow:0 0 0 3px var(--ink)}
+.bsw .hwpick{width:30px;height:30px}
+@media(max-height:620px){.ltools button{height:32px;width:42px}.ltools{gap:3px;top:6px}.ltools button span{display:none}}
+@media(max-height:700px){body.blk.mk .con{height:236px}.bsw button,.bsw .hwpick{width:26px;height:26px}}
 /* help + learn sheet */
 .sheet{position:fixed;inset:0;z-index:50;background:rgba(0,0,0,.45);display:flex;align-items:flex-end}
 .sheet[hidden]{display:none}
@@ -145,7 +168,9 @@ html.embedded .top{display:none}
 <section class="stage" id="stage" aria-label="Your pattern">
   <canvas id="view"></canvas>
   <div class="tag" id="tag">Pick what you are making</div>
-  <div class="views" id="views" role="group" aria-label="How close"><button data-v="close">Close</button><button data-v="swatch" aria-pressed="true">Swatch</button><button data-v="yard">Yard</button><button data-b="1" class="vb" aria-pressed="false" aria-label="Show the tile border">Border</button></div>
+  <div class="ltools" id="ltools" hidden></div>
+  <div class="zoomer" id="zoomer" hidden><button type="button" data-z="1" aria-label="Bigger repeat">+</button><output id="zval"></output><button type="button" data-z="-1" aria-label="Smaller repeat">&minus;</button></div>
+  <div class="views" id="views" role="group" aria-label="How close"><button data-v="tile">Tile</button><button data-v="close" class="vc">Close</button><button data-v="swatch" aria-pressed="true">Swatch</button><button data-v="yard">Yard</button><button data-b="1" class="vb" aria-pressed="false" aria-label="Show the tile border">Border</button></div>
 </section>
 <section class="con" id="con">
   <div class="pane" id="pane"></div>
@@ -153,9 +178,11 @@ html.embedded .top{display:none}
 </section>
 <nav class="bbar" id="bbar" aria-label="Steps"></nav>
 <input type="file" id="file" accept="image/*" hidden>
+<input type="file" id="bfile" accept="image/*" multiple hidden>
 <div class="sheet" id="sheet" hidden><div class="in" id="sheetIn"></div></div>
 <script src="/crop.js"></script>
 <script src="engine.js"></script>
+<script src="block.js"></script>
 <script src="app.js"></script>
 </body>
 </html>
