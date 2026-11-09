@@ -4,7 +4,7 @@
 import * as THREE from 'three';
 import { OrbitControls } from 'three/addons/OrbitControls.js';
 import * as G from './geo.js?v=18';
-import { openMeasure } from './capture.js?v=19';
+import { openMeasure, GROUPS } from './capture.js?v=20';
 import { planWiring, codeFor, PICO_LEFT, PICO_RIGHT, PICO_PINS, PICO_BRAINS, NEED } from './wiring.js?v=18';
 
 const CZ = window.CZ, R = G.RULE, $ = (id) => document.getElementById(id);
@@ -26,6 +26,7 @@ function applyWalls() { R.T = S.walls === 'tough' ? 3.2 : 2.4; R.F = S.walls ===
 applyWalls();
 const save = () => { try { localStorage.setItem(KEY, JSON.stringify(S)); } catch (e) {} };
 let LOGOIMG = null; try { const li = localStorage.getItem(KEY + ':logo'); if (li) { LOGOIMG = new Image(); LOGOIMG.onload = () => { markCache = {}; draw(); }; LOGOIMG.src = li; } } catch (e) {}
+const AZ = { z: 1, px: 0, py: 0 }; let PEND = null; /* Arrange zoom, and the spot waiting for "What is here?" */
 let uid = S.items.reduce((m, p) => Math.max(m, p.id || 0), 0), sel = null, PHOTO = null;
 try { const ph = localStorage.getItem(KEY + ':photo'); if (ph) { PHOTO = new Image(); PHOTO.src = ph; PHOTO.onload = () => draw(); } } catch (e) {}
 const PARTS = () => Object.assign({}, CZ.PARTS, S.mine);
@@ -137,7 +138,7 @@ function syncKids(b) {
   const a = (b.r || 0) * Math.PI / 2, c = Math.cos(a), sn = Math.sin(a);
   kidsOf(b).forEach((k) => { if (k.free) return; k.x = b.x + k.dx * c - k.dy * sn; k.y = b.y + k.dx * sn + k.dy * c; k.r = ((b.r || 0) + (k.dr || 0)) % 4; if (PP(k) && PP(k).cat !== 'brain') k.panel = b.panel; });
 }
-function syncAll() { S.items.filter((i) => PP(i) && PP(i).board).forEach(syncKids); }
+function syncAll() { S.items.forEach((k) => { if (k.free && boardOf(k)) { unSync(k); k.free = false; } }); S.items.filter((i) => PP(i) && PP(i).board).forEach(syncKids); } /* parts on a board always stay with it now; old unlocked ones are put back where they are */
 function unSync(k) { const b = boardOf(k); if (!b) return; const a = -(b.r || 0) * Math.PI / 2, x = k.x - b.x, y = k.y - b.y; k.dx = x * Math.cos(a) - y * Math.sin(a); k.dy = x * Math.sin(a) + y * Math.cos(a); k.dr = (((k.r || 0) - (b.r || 0)) % 4 + 4) % 4; }
 function setBoardTop(P, top) { P.top = Math.max(4, Math.min(40, top)); P.hang = Math.max(2, P.top - 1.5 - R.LT); P.depth = +(P.hang + 1.6 + (P.under != null ? P.under + 1.5 : 10)).toFixed(1); } /* under = measured space below the board (pins, solder, wires), plus 1.5 mm clearance; 10 mm when not measured */
 function kidH(k) { const b = boardOf(k), P = b && PP(b); return k.h != null ? k.h : (P && P.top) || 9; } /* height of this part above the board, she can change it per part */
@@ -356,6 +357,12 @@ function tabsFor(step) {
   return [['3d', '3D', 'cube'], ['files', 'Files', 'file'], ['extras', 'Add-ons', 'parts'], ['wire', 'Wire it', 'wire']];
 }
 function curTab() { const t = tabsFor(S.step), c = S.tab[S.step]; return t.some((x) => x[0] === c) ? c : t[S.step === 0 ? 1 : 0][0]; }
+function nudgeRow() { return '<div class="selbar nud"><b>Nudge</b><button data-act="nudge" data-nx="-1" data-ny="0" aria-label="Left">&larr;</button><button data-act="nudge" data-nx="0" data-ny="1" aria-label="Up">&uarr;</button><button data-act="nudge" data-nx="0" data-ny="-1" aria-label="Down">&darr;</button><button data-act="nudge" data-nx="1" data-ny="0" aria-label="Right">&rarr;</button></div>'; }
+const RECTK = (it) => { const P = PP(it); return !!(P && (P.cat === 'brain' || P.cat === 'screen' || P.screen || (P.cut && (P.cut.o === 'rect' || P.cut.o === 'slot')))); };
+/* undo: the last 40 changes in Arrange */
+const UNDO = [];
+function snapU() { UNDO.push(JSON.stringify({ items: S.items, b: Object.keys(S.mine || {}).map((k) => [k, S.mine[k].top, S.mine[k].under]) })); if (UNDO.length > 40) UNDO.shift(); zmBar(); }
+function undo() { const u = UNDO.pop(); if (!u) return; const o = JSON.parse(u); S.items = o.items; o.b.forEach(([k, t, un]) => { const P = S.mine[k]; if (P && P.board) { P.under = un; setBoardTop(P, t || 9); } }); if (!S.items.some((i) => i.id === sel)) sel = null; syncAll(); save(); render(); }
 function render() {
   PNAME.top = isPanel() ? 'Panel' : 'Top';
   if (isPanel()) { const L = S.look; if (L.logo.face !== 'top') { L.logo.face = 'top'; L.logo.x = L.logo.y = null; } if (L.texFace !== 'top') L.texFace = 'top'; }
@@ -390,12 +397,12 @@ function pane(t) {
   if (t === 'picks') return '<p class="h">Cheap, loved by the maker community</p><div class="list">' + CZ.PICKS.map((p) => '<div class="it"><b>' + esc(p[1]) + (c[p[0]] ? ' <span class="ok">added</span>' : '') + '</b>' + esc(p[2]) + '<div style="margin-top:6px"><button class="btn" data-add="' + p[0] + '" style="display:inline-block;padding:7px 12px">+ Add ' + esc(P[p[0]].short) + '</button></div></div>').join('') + '</div><p class="note">From Reddit (r/esp32, r/raspberry_pi), Instructables and maker blogs. Sources in the ? help.</p>';
   if (t === 'lid' || t === 'base' || t === 'top') {
     const mine = S.items.filter((i) => i.panel === t || (t !== 'lid' && i.panel === 'inside')), s = S.items.find((i) => i.id === sel), probs = allProblems(), N = numbers();
-    let h = s && s.of != null ? '<div class="selbar"><b>' + esc(label(s)) + '</b><select class="pin" data-kidtype="' + s.id + '" aria-label="What it is">' + KID_TYPES.filter((t) => CZ.PARTS[t]).map((t) => '<option value="' + t + '"' + (t === s.type ? ' selected' : '') + '>' + esc(CZ.PARTS[t].short) + '</option>').join('') + '</select><button data-act="unlock">' + (s.free ? 'Lock' : 'Unlock') + '</button><button data-act="del">Remove</button></div><p class="note" style="margin:-2px 0 8px">' + (s.free ? 'Unlocked: drag it on its own. Lock puts it back on the board where you leave it.' : 'On your board: dragging it moves the whole board. Unlock to nudge it alone.') + '</p>' + (s.panel !== 'inside' ? stepper('kh', 'Height', kidH(s) + ' mm above board') + '<p class="note" style="margin:-2px 0 8px">' + esc(pokeNote(s)) + '</p>' : '') : s ? '<div class="selbar"><b>' + esc(label(s)) + '</b><button data-act="rot">Turn</button>' + (isClam() && s.panel !== 'inside' && !(PP(s) && PP(s).board) ? '<button data-act="swap">To ' + (s.panel === 'lid' ? 'base' : 'lid') + '</button>' : '') + '<button data-act="del">Remove</button></div>' : '';
-    if (s && PP(s) && PP(s).board) h += stepper('btop', 'Tallest', (PP(s).top || 9) + ' mm button') + '<p class="note" style="margin:-2px 0 8px">Your board hangs under the top so a ' + (PP(s).top || 9) + ' mm button pokes through 1.5 mm. Tap a part to see how far it pokes through.</p>' + stepper('bund', 'Under', (PP(s).under != null ? PP(s).under : 8.5) + ' mm below') + '<p class="note" style="margin:-2px 0 8px">Space under the board for pins, solder and wires' + (PP(s).under != null ? ', from your side photo' : ', a guess: take the side photo to measure it') + '.</p>';
+    let h = s && s.of != null ? '<div class="selbar"><b>' + esc(label(s)) + '</b><select class="pin" data-kidtype="' + s.id + '" aria-label="What it is">' + KID_TYPES.filter((t) => CZ.PARTS[t]).map((t) => '<option value="' + t + '"' + (t === s.type ? ' selected' : '') + '>' + esc(CZ.PARTS[t].short) + '</option>').join('') + '</select>' + (RECTK(s) ? '<button data-act="rot">Turn</button>' : '') + '<button data-act="del">Remove</button></div>' + nudgeRow() + '<p class="note" style="margin:-2px 0 8px">Drag it, or use the arrows (0.5 mm), until the outline sits on the real part in your photo. Your board stays put.</p>' + (s.panel !== 'inside' ? stepper('kh', 'Height', kidH(s) + ' mm above board') + '<p class="note" style="margin:-2px 0 8px">' + esc(pokeNote(s)) + '</p>' : '') : s ? '<div class="selbar"><b>' + esc(label(s)) + '</b><button data-act="rot">Turn</button>' + (isClam() && s.panel !== 'inside' && !(PP(s) && PP(s).board) ? '<button data-act="swap">To ' + (s.panel === 'lid' ? 'base' : 'lid') + '</button>' : '') + '<button data-act="del">Remove</button></div>' : '';
+    if (s && PP(s) && PP(s).board) h += '<div class="selbar"><b>Photo</b>' + ['clear', 'faded', 'off'].map((m) => '<button data-photo="' + m + '"' + ((S.photo || 'clear') === m ? ' style="background:#1a1a1a;color:#fff"' : '') + '>' + m[0].toUpperCase() + m.slice(1) + '</button>').join('') + '</div><div class="selbar"><b>Board</b><button data-act="bmove">' + (s.move ? 'Unlocked: drag moves it' : 'Locked in place') + '</button></div>' + (s.move ? nudgeRow() : '') + '<p class="note" style="margin:-2px 0 8px">Tap an empty spot on your photo to add a part right there.</p>' + stepper('btop', 'Tallest', (PP(s).top || 9) + ' mm button') + '<p class="note" style="margin:-2px 0 8px">Your board hangs under the top so a ' + (PP(s).top || 9) + ' mm button pokes through 1.5 mm. Tap a part to see how far it pokes through.</p>' + stepper('bund', 'Under', (PP(s).under != null ? PP(s).under : 8.5) + ' mm below') + '<p class="note" style="margin:-2px 0 8px">Space under the board for pins, solder and wires' + (PP(s).under != null ? ', from your side photo' : ', a guess: take the side photo to measure it') + '.</p>';
     h += '<p class="h">' + (t === 'lid' ? 'The lid: screens live here' : t === 'base' ? 'The base: controls, the brain sits under it' : 'The top') + '</p>';
     h += mine.length ? '<div class="chosen">' + mine.map((i) => '<span data-sel="' + i.id + '" style="cursor:pointer' + (i.id === sel ? ';background:#1a1a1a;color:#fff' : '') + '">' + esc(N[i.id] + ' ' + PP(i).short) + (problems(i).length ? ' <i>!</i>' : '') + '</span>').join('') + '</div>' : '<p class="note">No parts here yet. Add some in Brain.</p>';
     h += '<div class="grid g2" style="margin-top:8px"><button class="btn dark" data-act="auto">Arrange for me</button><button class="btn" data-act="toBrain">Add parts</button></div>';
-    h += '<p class="note">' + (probs.length ? probs.map((x) => '<span class="bad">' + esc(label(x.it)) + ' is ' + esc(x.list[0]) + '.</span>').join(' ') : (S.items.length ? '<span class="ok">Everything fits.</span> Drag a part to move it. Tap to pick it.' : '')) + '</p>';
+    h += '<p class="note">' + (probs.length ? probs.map((x) => '<span class="bad">' + esc(label(x.it)) + ' is ' + esc(x.list[0]) + '.</span>').join(' ') : (S.items.length ? '<span class="ok">Everything fits.</span> ' + (S.items.some((i) => PP(i) && PP(i).board) ? 'Tap your board photo to add a part there. Drag a part to line it up. Two fingers zoom.' : 'Drag a part to move it. Tap to pick it.') : '')) + '</p>';
     return h;
   }
   if (t === 'psize') { const d = dims(), scr = S.items.some((i) => PP(i) && PP(i).screen);
@@ -481,7 +488,7 @@ $('pane').addEventListener('input', (e) => {
   if (t.id === 'c2') { S.look.c2 = t.value; save(); if (T3) T3.key = ''; draw(); }
 });
 $('pane').addEventListener('change', (e) => {
-  if (e.target.dataset && e.target.dataset.kidtype) { const k = S.items.find((i) => i.id === +e.target.dataset.kidtype); if (k) { k.type = e.target.value; k.panel = CZ.PARTS[k.type].cat === 'brain' ? 'inside' : (boardOf(k) ? boardOf(k).panel : homePanel()); S.pins = {}; } save(); render(); return; }
+  if (e.target.dataset && e.target.dataset.kidtype) { const k = S.items.find((i) => i.id === +e.target.dataset.kidtype); if (k) { snapU(); k.type = e.target.value; k.panel = CZ.PARTS[k.type].cat === 'brain' ? 'inside' : (boardOf(k) ? boardOf(k).panel : homePanel()); S.pins = {}; } save(); render(); return; }
   if (e.target.dataset && e.target.dataset.pin) { if (!S.pins) S.pins = {}; S.pins[e.target.dataset.pin] = +e.target.value; save(); render(); return; }
   if (e.target.id === 'pw' || e.target.id === 'pd') { reflow(); save(); render(); return; }
   if (e.target.id === 'qrIn') { const f = e.target.files[0]; e.target.value = ''; if (f) scanPrinter(f); return; }
@@ -529,14 +536,17 @@ $('pane').addEventListener('click', (e) => {
     $('sheet').hidden = false;
     $('sheetIn').querySelectorAll('[data-board]').forEach((x) => { x.onclick = () => { $('sheet').hidden = true; addBoard(P, x.dataset.board === 'replace'); }; });
   }); return; }
-  if (act === 'auto') { const list = S.items.filter((i) => i.of == null || i.free); list.forEach((i) => { i.x = -999; i.y = -999; }); list.sort((a, b) => (fp(b).w * fp(b).h) - (fp(a).w * fp(a).h)).forEach((i) => { autoPlace(i); if (PP(i) && PP(i).board) syncKids(i); }); save(); render(); return; }
+  if (act === 'auto') { snapU(); const list = S.items.filter((i) => i.of == null); /* parts on your board stay where the photo put them */ list.forEach((i) => { i.x = -999; i.y = -999; }); list.sort((a, b) => (fp(b).w * fp(b).h) - (fp(a).w * fp(a).h)).forEach((i) => { autoPlace(i); if (PP(i) && PP(i).board) syncKids(i); }); save(); render(); return; }
   const s = S.items.find((i) => i.id === sel);
-  if (act === 'rot' && s && s.of != null && !s.free) { const b = boardOf(s); if (b) { b.r = ((b.r || 0) + 1) % 4; syncKids(b); if (problems(b).length) autoPlace(b); syncKids(b); } save(); render(); return; }
-  if (act === 'rot' && s && PP(s) && PP(s).board) { s.r = ((s.r || 0) + 1) % 4; syncKids(s); if (problems(s).length) { autoPlace(s); syncKids(s); } save(); render(); return; }
+  if (act === 'rot' && s && s.of != null) { snapU(); const b = boardOf(s); s.dr = ((s.dr || 0) + 1) % 4; if (b) syncKids(b); save(); render(); return; }
+  if (act === 'nudge' && s) { snapU(); const st2 = 0.5; s.x += (+d.nx) * st2; s.y += (+d.ny) * st2; if (s.of != null) unSync(s); if (PP(s) && PP(s).board) syncKids(s); save(); render(); return; }
+  if (act === 'bmove' && s) { s.move = !s.move; save(); render(); return; }
+  if (d.photo) { S.photo = d.photo; save(); render(); return; }
+  if (act === 'rot' && s && PP(s) && PP(s).board) { snapU(); s.r = ((s.r || 0) + 1) % 4; syncKids(s); if (problems(s).length) { autoPlace(s); syncKids(s); } save(); render(); return; }
   if (act === 'rot' && s) { s.r = ((s.r || 0) + 1) % 4; if (problems(s).length) { const keep = [s.x, s.y]; if (!autoPlace(s)) { s.x = keep[0]; s.y = keep[1]; } } save(); render(); return; }
   if (act === 'swap' && s) { s.panel = s.panel === 'lid' ? 'base' : 'lid'; autoPlace(s); S.tab[1] = s.panel; save(); render(); return; }
-  if (act === 'del' && s) { S.items = S.items.filter((i) => i !== s && i.of !== s.id); sel = null; save(); render(); return; }
-  if (act === 'unlock' && s) { s.free = !s.free; if (!s.free) unSync(s); save(); render(); return; }
+  if (act === 'del' && s) { snapU(); S.items = S.items.filter((i) => i !== s && i.of !== s.id); sel = null; save(); render(); return; }
+  
   if (act === 'open') { S.open = !S.open; save(); render(); return; }
   if (act === 'make') { if (b.getAttribute('aria-disabled') === 'true') return; makeFiles(); return; }
   if (d.f != null) { saveFile(FILES[+d.f]); return; }
@@ -550,6 +560,7 @@ $('pane').addEventListener('click', (e) => {
     if (k === 'lbsize') { S.look.labels.size = Math.max(2.5, Math.min(10, S.look.labels.size + v * 0.5)); markCache = {}; }
     const nn = (S.notches || [])[S.nsel];
     if (k === 'plift') S.plift = Math.max(3, Math.min(60, S.plift + v));
+    if (['kh', 'btop', 'bund'].includes(k)) snapU();
     { const si = S.items.find((i) => i.id === sel); if (si && k === 'kh') si.h = Math.max(0, Math.min(60, kidH(si) + v * 0.5)); if (si && k === 'btop' && PP(si) && PP(si).board) setBoardTop(PP(si), (PP(si).top || 9) + v * 0.5); if (si && k === 'bund' && PP(si) && PP(si).board) { const B = PP(si); B.under = Math.max(0, Math.min(40, (B.under != null ? B.under : 8.5) + v * 0.5)); setBoardTop(B, B.top || 9); } }
     const X = xp(); if (k === 'xs_t') { X.stand.auto = false; X.stand.t = Math.max(6, Math.min(80, X.stand.t + v)); } if (k === 'xf_h') X.feet.h = Math.max(2, Math.min(15, X.feet.h + v)); if (k === 'xo_h') X.standoff.h = Math.max(2, Math.min(40, X.standoff.h + v)); if (k === 'xc_d') X.clip.d = Math.max(2, Math.min(16, X.clip.d + v));
     if (nn && k === 'nw') nn.w = Math.max(4, Math.min(120, nn.w + v * 2)); if (nn && k === 'nd') nn.d = Math.max(2, Math.min(60, nn.d + v)); if (nn && k === 'nat') nn.at = Math.max(0, Math.min(nn.edge === 'left' || nn.edge === 'right' ? dims().D : dims().W, nn.at + v * 5));
@@ -595,7 +606,7 @@ function draw() {
   if (T3) T3.controls.enabled = big;
   if (big) { requestAnimationFrame(() => draw3d(false)); return; }
   if (mini && !drag) { clearTimeout(miniTimer); miniTimer = setTimeout(() => draw3d(true), 160); }
-  fit(); const W = cv.width, H = cv.height; g.setTransform(1, 0, 0, 1, 0, 0); g.clearRect(0, 0, W, H); g.fillStyle = '#e7e2d6'; g.fillRect(0, 0, W, H);
+  zmBar(); fit(); const W = cv.width, H = cv.height; g.setTransform(1, 0, 0, 1, 0, 0); g.clearRect(0, 0, W, H); g.fillStyle = '#e7e2d6'; g.fillRect(0, 0, W, H);
   if (S.step === 0) return curTab() === 'pins' ? drawPinout(W, H) : drawBrain(W, H);
   if (S.step === 1) { const t = curTab(); return drawPanel(t === 'size' || t === 'psize' ? homePanel() : t, W, H); }
   if (S.step === 2) return drawPanel(homePanel(), W, H);
@@ -638,9 +649,9 @@ function pimg(src) { let im = PIMG.get(src); if (!im) { im = new Image(); im.onl
 function drawPartAt(P, cx, cy, k, rq, dim) {
   // real size drawing of a part: board, then what shows through the deck
   g.save(); g.translate(cx, cy); g.rotate(-(rq || 0) * Math.PI / 2);
-  const c = P.cut || {}, d = px();
-  if (P.screen || P.inside || P.measured || !P.cut || c.o === 'rect' || c.o === 'slot') { g.fillStyle = P.screen ? '#22262a' : '#2f7a4b'; g.globalAlpha = dim ? 0.35 : 0.9; g.fillRect(-P.w * k / 2, -P.h * k / 2, P.w * k, P.h * k); g.globalAlpha = 1; }
-  const ph = P.img ? pimg(P.img) : null; if (ph) { g.globalAlpha = dim ? 0.4 : 1; g.drawImage(ph, -P.w * k / 2, -P.h * k / 2, P.w * k, P.h * k); g.globalAlpha = 1; }
+  const c = P.cut || {}, d = px(), GA = drawPartAt.ga || 1; g.globalAlpha = GA;
+  if (P.screen || P.inside || P.measured || !P.cut || c.o === 'rect' || c.o === 'slot') { g.fillStyle = P.screen ? '#22262a' : '#2f7a4b'; g.globalAlpha = (dim ? 0.35 : 0.9) * GA; g.fillRect(-P.w * k / 2, -P.h * k / 2, P.w * k, P.h * k); g.globalAlpha = GA; }
+  const ph = P.img ? pimg(P.img) : null, pa = !dim ? 1 : S.step === 1 ? ({ clear: 0.95, faded: 0.4, off: 0 })[S.photo || 'clear'] : 0.4; if (ph && pa) { g.globalAlpha = pa * GA; g.drawImage(ph, -P.w * k / 2, -P.h * k / 2, P.w * k, P.h * k); g.globalAlpha = GA; }
   (P.userCuts || []).forEach((u) => { const cc = u.cut, x = u.x * k, y = -u.y * k; g.fillStyle = cc.o === 'rect' ? 'rgba(143,211,255,.55)' : 'rgba(26,26,26,.55)'; g.strokeStyle = '#ffd23a'; g.lineWidth = 1.5 * d; g.beginPath();
     if (cc.o === 'rect') g.rect(x - cc.w / 2 * k, y - cc.h / 2 * k, cc.w * k, cc.h * k); else if (cc.o === 'cross') { g.rect(x - cc.w / 2 * k, y - cc.t / 2 * k, cc.w * k, cc.t * k); g.rect(x - cc.t / 2 * k, y - cc.w / 2 * k, cc.t * k, cc.w * k); } else g.arc(x, y, (cc.d || 6) / 2 * k, 0, 7);
     g.fill(); g.stroke(); });
@@ -656,9 +667,10 @@ function drawPartAt(P, cx, cy, k, rq, dim) {
   void d; g.restore();
 }
 function drawPanel(panel, W, H) {
-  const d = dims(), o = outline(), deck = deckArea(), fr = frame(W, H, d.W, d.D), k = fr.k;
-  const ox = fr.ox, oy = fr.oy, X = (x) => ox + x * k, Y = (y) => oy + (d.D - y) * k;
-  view = { k, ox, oy, D: d.D, panel };
+  const zt = S.step === 1 && !$('zm').hidden ? 50 * px() : 0, d = dims(), o = outline(), deck = deckArea(), fr = frame(W, H - zt, d.W, d.D), z = S.step === 1 ? AZ.z : 1, k = fr.k * z;
+  fr.oy += zt; /* room for the zoom row */
+  const ox = fr.ox + d.W * (fr.k - k) / 2 + (z > 1 ? AZ.px : 0), oy = fr.oy + d.D * (fr.k - k) / 2 + (z > 1 ? AZ.py : 0), X = (x) => ox + x * k, Y = (y) => oy + (d.D - y) * k;
+  view = { k, ox, oy, D: d.D, W: d.W, panel, k0: fr.k, ox0: fr.ox, oy0: fr.oy };
   const path = (polys) => { g.beginPath(); polys.forEach((p) => p.forEach(([x, y], i) => (i ? g.lineTo(X(x), Y(y)) : g.moveTo(X(x), Y(y))))); g.closePath(); };
   path(o); g.fillStyle = '#e9e2cc'; g.fill(); g.strokeStyle = '#1a1a1a'; g.lineWidth = 2 * px(); g.stroke();
   path(deck); g.fillStyle = panel === 'lid' ? '#2a2a2a' : '#c8412f'; g.fill('evenodd');
@@ -680,10 +692,13 @@ function drawPanel(panel, W, H) {
     g.fillRect(X(f.x0), Y(f.y1), f.w * k, f.h * k);
     g.strokeStyle = isSel ? '#fff' : bad.has(it.id) ? '#ffd23a' : ins ? '#1a1a1a' : 'rgba(255,255,255,.75)'; g.lineWidth = (isSel ? 3 : 1.5) * px(); g.strokeRect(X(f.x0), Y(f.y1), f.w * k, f.h * k);
     g.restore();
+    drawPartAt.ga = it.of != null && S.step === 1 && (S.photo || 'clear') !== 'off' ? 0.55 : 1; /* see-through over the photo, so the real part shows under it */
     if (!ins || P.board) drawPartAt(P, X(it.x), Y(it.y), k, it.r, !!P.board);
+    drawPartAt.ga = 1;
     const lb = N[it.id] || ''; g.font = '900 ' + 11 * px() + 'px -apple-system,Arial'; const tw = g.measureText(lb).width + 8 * px();
     g.fillStyle = ins ? '#1a1a1a' : '#fff'; g.fillRect(X(f.x0), Y(f.y1), tw, 15 * px()); g.fillStyle = ins ? '#fff' : '#1a1a1a'; g.textAlign = 'left'; g.fillText(lb, X(f.x0) + 4 * px(), Y(f.y1) + 11 * px());
   });
+  if (PEND && S.step === 1) { const q = [X(PEND[0]), Y(PEND[1])], dd = px(); g.strokeStyle = '#2bd46b'; g.lineWidth = 3 * dd; g.beginPath(); g.arc(q[0], q[1], 12 * dd, 0, 7); g.moveTo(q[0] - 20 * dd, q[1]); g.lineTo(q[0] + 20 * dd, q[1]); g.moveTo(q[0], q[1] - 20 * dd); g.lineTo(q[0], q[1] + 20 * dd); g.stroke(); }
   const probs = allProblems();
   if (isPanel() && S.plift > 0) { const lg = panelBuilt().tray.filter((l) => l.tag === 'leg'); g.save(); g.setLineDash([4 * px(), 3 * px()]); g.strokeStyle = '#1a1a1a'; g.lineWidth = 1.5 * px(); lg.forEach((l) => { path(l.polys); g.stroke(); }); g.restore(); } /* the lip or legs underneath, dashed */
   if (isPanel()) (S.notches || []).forEach((n, j) => { const L = n.edge === 'left' || n.edge === 'right' ? d.D : d.W, s = Math.max(n.w / 2, Math.min(L - n.w / 2, n.at)), q = n.edge === 'bottom' ? [s, n.d + 6] : n.edge === 'top' ? [s, d.D - n.d - 6] : n.edge === 'left' ? [n.d + 7, s] : [d.W - n.d - 7, s]; g.fillStyle = j === S.nsel ? '#ffd23a' : '#fff'; g.font = '900 ' + 11 * px() + 'px -apple-system,Arial'; g.textAlign = 'center'; g.fillText('N' + (j + 1), X(q[0]), Y(q[1]) + 4 * px()); });
@@ -697,18 +712,78 @@ function notchTo(p) { // tap or drag near an edge: the picked notch jumps there
   const dist = { bottom: p[1], top: d.D - p[1], left: p[0], right: d.W - p[0] }, edge = Object.keys(dist).sort((a, b) => dist[a] - dist[b])[0];
   n.edge = edge; n.at = Math.round(Math.max(0, Math.min(edge === 'left' || edge === 'right' ? d.D : d.W, edge === 'left' || edge === 'right' ? p[1] : p[0])));
 }
+/* Arrange: zoom and pan (AZ), tap the board photo to add a part there, drag one part on its own. The board is locked unless she unlocks it. */
+const TOUCH = new Map(); let pinch = null;
+const cpx = (e) => { const r = cv.getBoundingClientRect(), d = cv.width / r.width; return [(e.clientX - r.left) * d, (e.clientY - r.top) * d]; };
+function zoomAt(z, m) { /* keep the spot under m (canvas px) still while zooming */
+  if (!view || view.k0 == null) return; const w = [(m[0] - view.ox) / view.k, view.D - (m[1] - view.oy) / view.k];
+  AZ.z = Math.max(1, Math.min(8, z)); const k = view.k0 * AZ.z;
+  AZ.px = m[0] - w[0] * k - view.ox0 - view.W * (view.k0 - k) / 2; AZ.py = m[1] - (view.D - w[1]) * k - view.oy0 - view.D * (view.k0 - k) / 2;
+  if (AZ.z === 1) { AZ.px = 0; AZ.py = 0; } draw();
+}
+function zmBar() {
+  const z = $('zm'); if (!z) return; const on = S.step === 1 && !(native3d() || BIG3D) && !isPanel(); z.hidden = !on; if (!on) return;
+  const u = z.querySelector('[data-z=u]'); if (u) u.disabled = !UNDO.length;
+}
+$('zm').addEventListener('click', (e) => {
+  const b = e.target.closest('[data-z]'); if (!b) return; const v = b.dataset.z, c = [cv.width / 2, cv.height / 2];
+  if (v === '1') zoomAt(AZ.z * 1.6, c); if (v === '-1') zoomAt(AZ.z / 1.6, c); if (v === '0') { AZ.z = 1; AZ.px = 0; AZ.py = 0; draw(); } if (v === 'u') undo();
+});
+function addKidAt(b, p, type) {
+  snapU(); const P = CZ.PARTS[type]; if (!P) return;
+  const it = { id: ++uid, type, panel: P.cat === 'brain' ? 'inside' : b.panel, of: b.id, x: p[0], y: p[1], r: b.r || 0, dr: 0 };
+  S.items.push(it); unSync(it); syncKids(b); sel = it.id; LAST = it.id; S.lastKid = type; S.pins = {}; save(); render();
+}
+function pickAt(b, p) { /* the same "What is it?" sheet as the photo page, over the bottom of the picture so the spot stays visible */
+  const old = document.querySelector('.apick'); if (old) old.remove(); PEND = p; draw();
+  const el = document.createElement('div'); el.className = 'apick'; const last = S.lastKid && CZ.PARTS[S.lastKid];
+  el.innerHTML = '<div class="pkh"><b>What is here?</b><button type="button" data-hide="1">Hide</button><button type="button" data-k="">Cancel</button></div><div class="pkb">' + (last ? '<div class="chips"><button type="button" data-k="' + S.lastKid + '" class="on">Same as last: ' + esc(last.short) + '</button></div>' : '') +
+    GROUPS.map((gr) => { const ok = gr[1].filter((x) => CZ.PARTS[x[0]]); return ok.length ? '<h4>' + gr[0] + '</h4><div class="chips">' + ok.map((x) => '<button type="button" data-k="' + x[0] + '">' + esc(x[1]) + '</button>').join('') + '</div>' : ''; }).join('') + '</div>';
+  el.style.top = Math.round($('con').getBoundingClientRect().top) + 'px'; document.body.appendChild(el); /* over the controls, so the whole picture and the green cross stay visible */
+  el.onclick = (ev) => {
+    const hb = ev.target.closest('[data-hide]'); if (hb) { const sm = el.classList.toggle('small'); hb.textContent = sm ? 'Show' : 'Hide'; return; }
+    const x = ev.target.closest('[data-k]'); if (!x) return; el.remove(); PEND = null; if (x.dataset.k) addKidAt(b, p, x.dataset.k); else draw();
+  };
+}
 cv.addEventListener('pointerdown', (e) => {
   if (S.step === 2 && isPanel() && view && curTab() === 'notch') { if (!(S.notches || []).length) { S.notches = [{ edge: 'bottom', shape: 'rrect', w: 20, d: 8, at: 0 }]; S.nsel = 0; } notchTo(mm(e)); drag = { notch: true }; cv.setPointerCapture(e.pointerId); draw(); return; }
   if (S.step === 3 && view && curTab() === 'logo' && S.look.logo.on) { const p = mm(e); S.look.logo.x = p[0]; S.look.logo.y = p[1]; drag = { logo: true }; cv.setPointerCapture(e.pointerId); draw(); return; }
-  if (S.step !== 1 || !view) return; const p = mm(e), panel = view.panel;
+  if (S.step !== 1 || !view) return;
+  try { cv.setPointerCapture(e.pointerId); } catch (er) { /* not a real pointer */ }
+  TOUCH.set(e.pointerId, cpx(e));
+  if (TOUCH.size === 2) { /* second finger: zoom, and undo whatever the first finger had started moving */
+    if (drag && drag.moved && drag.it) { const u = UNDO.pop(); if (u) { UNDO.push(u); undo(); } }
+    const [a, b] = [...TOUCH.values()]; drag = null; pinch = { d0: Math.hypot(a[0] - b[0], a[1] - b[1]) || 1, z0: AZ.z }; return;
+  }
+  if (TOUCH.size > 2) return;
+  const p = mm(e), panel = view.panel, s0 = cpx(e);
   const hits = S.items.filter((i) => PP(i) && (i.panel === panel || (panel !== 'lid' && i.panel === 'inside'))).filter((i) => { const f = fp(i); return p[0] >= f.x0 && p[0] <= f.x1 && p[1] >= f.y0 && p[1] <= f.y1; });
-  const rank = (i) => (i.panel === 'inside' ? 2 : 0) + (PP(i).board ? 1 : 0); hits.sort((a, b) => rank(a) - rank(b));
-  const it = hits[0]; if (!it) { sel = null; render(); return; }
-  const mover = it.of != null && !it.free && boardOf(it) ? boardOf(it) : it; /* a locked part moves its whole board */
-  sel = it.id; drag = { it: mover, dx: mover.x - p[0], dy: mover.y - p[1] }; cv.setPointerCapture(e.pointerId); render();
+  const rank = (i) => (i.of != null ? 0 : PP(i).board ? 3 : i.panel === 'inside' ? 2 : 1); hits.sort((a, b) => rank(a) - rank(b));
+  const it = hits[0];
+  if (!it) { drag = { pan: true, s0, p0: [AZ.px, AZ.py], moved: false, desel: true }; return; }
+  if (PP(it).board && !it.move) { drag = { pan: true, s0, p0: [AZ.px, AZ.py], moved: false, add: p, board: it }; return; }
+  drag = { it, dx: it.x - p[0], dy: it.y - p[1], s0, moved: false, fine: it.of != null };
+  if (sel !== it.id) { sel = it.id; render(); }
 });
-cv.addEventListener('pointermove', (e) => { if (!drag) return; const p = mm(e); if (drag.notch) { notchTo(p); draw(); return; } if (drag.logo) { S.look.logo.x = Math.round(p[0] * 2) / 2; S.look.logo.y = Math.round(p[1] * 2) / 2; draw(); return; } drag.it.x = Math.round((p[0] + drag.dx) / 2.5) * 2.5; drag.it.y = Math.round((p[1] + drag.dy) / 2.5) * 2.5; if (PP(drag.it) && PP(drag.it).board) syncKids(drag.it); draw(); });
-['pointerup', 'pointercancel'].forEach((t) => cv.addEventListener(t, () => { if (drag) { if (drag.it && drag.it.free) unSync(drag.it); drag = null; save(); render(); } }));
+cv.addEventListener('pointermove', (e) => {
+  if (S.step === 1 && TOUCH.has(e.pointerId)) TOUCH.set(e.pointerId, cpx(e));
+  if (pinch && TOUCH.size >= 2) { const [a, b] = [...TOUCH.values()]; zoomAt(pinch.z0 * Math.hypot(a[0] - b[0], a[1] - b[1]) / pinch.d0, [(a[0] + b[0]) / 2, (a[1] + b[1]) / 2]); return; }
+  if (!drag) return; const p = mm(e);
+  if (drag.notch) { notchTo(p); draw(); return; }
+  if (drag.logo) { S.look.logo.x = Math.round(p[0] * 2) / 2; S.look.logo.y = Math.round(p[1] * 2) / 2; draw(); return; }
+  const c = cpx(e), far = Math.hypot(c[0] - drag.s0[0], c[1] - drag.s0[1]) > 8 * px();
+  if (drag.pan) { if (far) drag.moved = true; if (drag.moved && AZ.z > 1) { AZ.px = drag.p0[0] + c[0] - drag.s0[0]; AZ.py = drag.p0[1] + c[1] - drag.s0[1]; draw(); } return; }
+  if (!drag.moved) { if (!far) return; drag.moved = true; snapU(); } /* a tap never nudges a part by accident */
+  const sn = drag.fine ? 0.5 : 2.5; drag.it.x = Math.round((p[0] + drag.dx) / sn) * sn; drag.it.y = Math.round((p[1] + drag.dy) / sn) * sn;
+  if (drag.it.of != null) unSync(drag.it); if (PP(drag.it) && PP(drag.it).board) syncKids(drag.it); draw();
+});
+['pointerup', 'pointercancel'].forEach((t) => cv.addEventListener(t, (e) => {
+  TOUCH.delete(e.pointerId); if (pinch) { if (TOUCH.size < 2) pinch = null; drag = null; return; }
+  const dr = drag; drag = null; if (!dr) return;
+  if (dr.notch || dr.logo) { save(); render(); return; }
+  if (dr.pan) { if (!dr.moved && t === 'pointerup') { if (dr.add) { sel = dr.board.id; render(); pickAt(dr.board, dr.add); return; } if (dr.desel) { sel = null; render(); } } return; }
+  if (dr.moved) { save(); render(); }
+}));
 
 function curFace() { const t = curTab(), L = S.look; if (t === 'logo') return L.logo.face; if (t === 'tex') return L.texFace === 'walls' ? 'top' : L.texFace; return 'top'; }
 function drawFace(W, H) {
@@ -1088,6 +1163,6 @@ $('help').onclick = openHelp; $('helpTop').onclick = openHelp;
 $('sheet').addEventListener('click', (e) => { if (e.target === $('sheet')) $('sheet').hidden = true; });
 window.addEventListener('resize', draw);
 
-window.__cz = { wiring, codeFor, get S() { return S; }, halves, plan, makeFiles, get FILES() { return FILES; }, allProblems, G, addPart, go, render, dims, heights, addonFile, showStart };
+window.__cz = { wiring, codeFor, get S() { return S; }, get view() { return view; }, AZ, get UNDO() { return UNDO.length; }, halves, plan, makeFiles, get FILES() { return FILES; }, allProblems, G, addPart, go, render, dims, heights, addonFile, showStart };
 render();
 if (!S.started && !S.items.length) showStart();

@@ -31,6 +31,11 @@ html.embedded .top{display:none}
 .stage #v3.mini::before{content:'Tap to zoom';position:absolute;left:0;right:0;bottom:4px;text-align:center;color:var(--mute);font:800 9.5px/1 var(--sys);pointer-events:none}
 .stage #v3 canvas{display:block;width:100%;height:100%}
 .stage .tag{position:absolute;left:8px;bottom:8px;padding:4px 8px;border-radius:8px;background:rgba(26,26,26,.82);color:#fff;font:700 11.5px/1.2 var(--sys);pointer-events:none;max-width:calc(100% - 16px)}
+.stage .zm{position:absolute;left:8px;top:8px;display:flex;gap:5px;z-index:2}.stage .zm[hidden]{display:none}.stage .zm button{all:unset;cursor:pointer;min-width:40px;height:36px;padding:0 9px;box-sizing:border-box;text-align:center;border-radius:9px;background:rgba(26,26,26,.86);color:#fff;font:900 14px/36px var(--sys)}.stage .zm button[disabled]{opacity:.35}
+.apick{position:fixed;left:0;right:0;bottom:0;display:flex;flex-direction:column;background:#161616;color:#fff;border-top:2px solid #fff;border-radius:16px 16px 0 0;padding:12px 12px 14px;z-index:3;-webkit-user-select:none;user-select:none}.apick.small .pkb{display:none}
+.apick .pkh{display:flex;gap:6px;align-items:center;padding-bottom:8px}.apick .pkh b{flex:1;font:900 15px/1 var(--sys);text-transform:uppercase;letter-spacing:.06em}.apick .pkh button{all:unset;cursor:pointer;padding:9px 12px;border:1.5px solid #fff;border-radius:10px;font:800 13px/1 var(--sys)}
+.apick .pkb{overflow:auto;-webkit-overflow-scrolling:touch;min-height:0}.apick h4{margin:10px 0 6px;font:800 12px/1 var(--sys);color:#aaa;text-transform:uppercase;letter-spacing:.06em}.apick .chips{display:flex;gap:6px;flex-wrap:wrap}.apick .chips button{all:unset;cursor:pointer;padding:9px 12px;border-radius:999px;border:1.5px solid #fff;font:700 13px/1 var(--sys)}.apick .chips button.on{background:#fff;color:#111}
+.selbar.nud button{min-width:44px;font-size:17px}
 .stage .sb{position:absolute;right:8px;top:8px;display:flex;gap:6px}
 .stage .sb button{all:unset;cursor:pointer;padding:8px 11px;border:1.5px solid var(--ink);border-radius:10px;background:#fff;font:800 12px/1 var(--sys)}
 .stage .sb button[aria-pressed=true]{background:var(--ink);color:#fff}
@@ -123,6 +128,7 @@ html.embedded .top{display:none}
   <canvas id="view"></canvas>
   <div id="v3" hidden></div>
   <div class="sb" id="sb" hidden></div>
+  <div class="zm" id="zm" hidden><button type="button" data-z="1" aria-label="Zoom in">+</button><button type="button" data-z="-1" aria-label="Zoom out">&minus;</button><button type="button" data-z="0">Fit</button><button type="button" data-z="u">Undo</button></div>
   <div class="tag" id="tag">Start with the brain: the parts that make it work</div>
 </section>
 <section class="con" id="con">
@@ -132,6 +138,6 @@ html.embedded .top{display:none}
 <nav class="bbar" id="bbar" aria-label="Steps"></nav>
 <input type="file" id="snapIn" accept="image/*" capture="environment" hidden>
 <div class="sheet" id="sheet" hidden><div class="in" id="sheetIn"></div></div>
-<script type="module" src="builder.js?v=19"></script>
+<script type="module" src="builder.js?v=20"></script>
 </body>
 </html>

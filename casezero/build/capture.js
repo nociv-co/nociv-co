@@ -5,8 +5,8 @@
 const CARD = [85.6, 53.98];
 // What you can tag on the front photo of a built board. Each one takes its hole size from the parts catalog (parts.js).
 // What you can tag on the front photo of a built board, in groups. Each takes its real size from the parts catalog (parts.js).
-const GROUPS = [['Brain', [['pico', 'Pico'], ['picow', 'Pico W'], ['pico2', 'Pico 2'], ['esp32', 'ESP32']]],
-  ['Buttons', [['tact12', 'Button 12'], ['button16', 'Button 16'], ['arcade24', 'Arcade 24'], ['arcade30', 'Arcade 30'], ['dpad', 'D-pad']]],
+export const GROUPS = [['Brain', [['pico', 'Pico'], ['picow', 'Pico W'], ['pico2', 'Pico 2'], ['esp32', 'ESP32']]],
+  ['Buttons', [['tact12', 'Small button 12 mm'], ['button16', 'Panel button 16 mm'], ['arcade24', 'Arcade 24'], ['arcade30', 'Arcade 30'], ['dpad', 'D-pad']]],
   ['Turn and slide', [['pot', 'Knob'], ['encoder', 'Click wheel'], ['thumb', 'Thumb stick'], ['slider', 'Slider']]],
   ['Screens', [['tft28', '2.8 in'], ['round128', 'Round 1.28'], ['oled096', 'OLED 0.96'], ['hdmi5', '5 in'], ['hdmi7', '7 in']]],
   ['Other', [['led5', 'LED'], ['speaker28', 'Speaker'], ['hole', 'Other hole']]]];
