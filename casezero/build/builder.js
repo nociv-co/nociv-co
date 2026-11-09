@@ -3,8 +3,8 @@
 // Print: your printer and bed, material, how it joins, where the puzzle seams go. Files: STL per piece, wood templates, wiring.
 import * as THREE from 'three';
 import { OrbitControls } from 'three/addons/OrbitControls.js';
-import * as G from './geo.js?v=12';
-import { openMeasure } from './capture.js?v=12';
+import * as G from './geo.js?v=13';
+import { openMeasure } from './capture.js?v=13';
 
 const CZ = window.CZ, R = G.RULE, $ = (id) => document.getElementById(id);
 const esc = (s) => String(s == null ? '' : s).replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
@@ -68,7 +68,7 @@ function notchPolys() { // wire notches: each one bites into one edge. at = mm f
   return out;
 }
 function deckArea() { return G.offset(outline(), isPanel() ? -1 : -(R.T + R.CLR + 0.8)); }
-function posts() { const d = dims(); if (isPanel()) { const k = S.plift > 0 ? 8.5 : 6.5; /* half mm: never in line with a notch edge (whole mm), which breaks the mesh */ return S.phold === 'screws' ? [[k, k], [d.W - k, k], [d.W - k, d.D - k], [k, d.D - k]] : []; } return G.postSpots(outline(), d.W * d.D > 30000 ? 6 : 4); }
+function posts() { const d = dims(); if (isPanel()) { const k = S.plift > 0 && S.pbase !== 'rim' ? 8.5 : 6.5; /* half mm: never in line with a notch edge (whole mm), which breaks the mesh */ return S.phold === 'screws' ? [[k, k], [d.W - k, k], [d.W - k, d.D - k], [k, d.D - k]] : []; } return G.postSpots(outline(), d.W * d.D > 30000 ? 6 : 4); }
 function itemsOn(panel) { return S.items.filter((i) => i.panel === panel); }
 function depthOf(panel) { return itemsOn(panel).reduce((m, i) => Math.max(m, PP(i) ? PP(i).depth : 0), 0); }
 function upOf(panel) { return itemsOn(panel).reduce((m, i) => Math.max(m, PP(i) ? (PP(i).up || 0) : 0), 0); }
@@ -217,7 +217,15 @@ function panelBuilt() {
   const holes = cuts.concat(thru), plate = holes.length ? G.diff(o, G.union(holes)) : o, tray = [], inlay = [];
   if (dip.length && T > 1.2) { const rec = G.union(dip); tray.push({ polys: plate, z0: 0, z1: T - D, tag: 'floor' }, { polys: G.diff(plate, rec), z0: T - D, z1: T, tag: 'floor' }); if (fill.length) inlay.push({ polys: G.inter(G.union(fill), plate), z0: T - D, z1: T, tag: 'inlayB' }); }
   else tray.push({ polys: plate, z0: 0, z1: T, tag: 'floor' });
-  if (S.plift > 0) { // legs under the panel: in the corners and along long edges, each with a screw hole when it screws down
+  if (S.plift > 0 && S.pbase === 'rim') { // a lip: one wall under the whole edge, bosses in the corners for screws, gaps where the notches are so wires pass
+    const d = dims(), wall = 2.4; let rim = G.diff(o, G.offset(o, -wall));
+    if (S.phold === 'screws') rim = G.diff(G.offset(G.offset(G.union(rim.concat(posts().map(([x, y]) => G.circle(x, y, 4.5, 28)))), 1), -1), posts().map(([x, y]) => G.circle(x, y, R.HOLE / 2, 20))); /* 1 mm fillet where a boss meets the wall: stronger, and no straight run the mesh maker trips on */
+    const gaps = []; (S.notches || []).forEach((n) => { const side = n.edge === 'left' || n.edge === 'right', L = side ? d.D : d.W, w = Math.max(2, Math.min(n.w, L - 2)), sAt = Math.max(w / 2, Math.min(L - w / 2, n.at)), deep = n.d + wall + 2;
+      gaps.push(n.edge === 'bottom' ? G.rect(sAt - w / 2, -1, sAt + w / 2, deep) : n.edge === 'top' ? G.rect(sAt - w / 2, d.D - deep, sAt + w / 2, d.D + 1) : n.edge === 'left' ? G.rect(-1, sAt - w / 2, deep, sAt + w / 2) : G.rect(d.W - deep, sAt - w / 2, d.W + 1, sAt + w / 2)); });
+    if (gaps.length) rim = G.diff(rim, gaps);
+    rim = G.inter(rim, holes.length ? G.diff(o, G.union(holes)) : o);
+    if (rim.length) tray.push({ polys: rim, z0: -S.plift, z1: 0, tag: 'leg' });
+  } else if (S.plift > 0) { // legs under the panel: in the corners and along long edges, each with a screw hole when it screws down
     const d = dims(), sp = [], xs = [8.5, d.W - 8.5], ys = [8.5, d.D - 8.5]; if (d.W > 150) xs.push(d.W / 3, d.W * 2 / 3); if (d.D > 150) ys.push(d.D / 3, d.D * 2 / 3); // thirds, so a seam in the middle never cuts a leg
     xs.forEach((x) => ys.forEach((y) => { if ((x > 9 && x < d.W - 9) && (y > 9 && y < d.D - 9)) return; sp.push([x, y]); }));
     const legs = []; sp.forEach(([x, y]) => { const c = G.circle(x, y, 4.5, 28); if (G.area(G.inter([c], plate)) < G.area([c]) - 0.5) return; legs.push(S.phold === 'screws' ? G.diff([c], [G.circle(x, y, R.HOLE / 2, 20)])[0] : c); });
@@ -360,10 +368,10 @@ function pane(t) {
   }
   if (t === 'psize') { const d = dims(), scr = S.items.some((i) => PP(i) && PP(i).screen);
     return '<button class="btn dark" data-act="measureLid" style="margin-bottom:8px">Measure the inside of my box</button><div class="row"><b>Box inside</b><input class="num" id="pw" type="number" inputmode="decimal" step="0.5" value="' + S.pw + '" aria-label="Inside width in mm"><span class="u">x</span><input class="num" id="pd" type="number" inputmode="decimal" step="0.5" value="' + S.pd + '" aria-label="Inside height in mm"><span class="u">mm</span></div>' +
-    '<div class="row"><b>Holds by</b>' + seg('phold', [['screws', 'Screws'], ['ribs', 'Snug ribs'], ['drop', 'Drops in']], S.phold) + '</div><div class="row"><b>Sits</b>' + seg('plift', [['0', 'On the floor'], ['1', 'Raised']], S.plift > 0 ? '1' : '0') + '</div>' + (S.plift > 0 ? stepper('plift', 'Legs', S.plift + ' mm tall') : '') +
+    '<div class="row"><b>Sits</b>' + seg('plift', [['0', 'On the floor'], ['legs', 'On legs'], ['rim', 'On a lip']], S.plift > 0 ? (S.pbase || 'legs') : '0') + '</div>' + (S.plift > 0 ? stepper('plift', S.pbase === 'rim' ? 'Lip' : 'Legs', S.plift + ' mm tall') : '') + '<div class="row"><b>Holds by</b>' + seg('phold', [['screws', 'Screws'], ['glue', 'Glue'], ['ribs', 'Snug ribs'], ['drop', 'Drops in']], S.phold) + '</div>' +
     '<div class="row"><b>Thick</b>' + seg('pt', [['2', '2 mm'], ['3', '3 mm'], ['4', '4 mm']], String(S.pt)) + '</div><div class="row"><b>Corners</b>' + seg('prad', [['0', 'Square'], ['3', 'Soft'], ['8', 'Round']], String(S.prad)) + '</div>' +
-    '<p class="note">Panel: <b>' + d.W + ' x ' + d.D + ' mm</b>, 1 mm smaller than the box so it drops in. ' + ({ screws: 'M3 screws in the corners' + (S.plift > 0 ? ' go through the legs.' : '.'), ribs: 'Little ribs on every edge press against the box and hold it, no screws.', drop: 'It just lies in the box.' })[S.phold] + ' ' +
-    (S.plift > 0 ? 'Raised: legs lift it to the front of your screen and the window shows only the picture. Set the legs to the height of the screen front above the floor. It prints face down, legs up.' : scr ? 'On the floor: the whole screen comes up through the window, like your wood panels.' : '') + (d.W > S.bed[0] || d.D > S.bed[1] ? ' Bigger than your bed: it prints as puzzle pieces that lock together (Print, Split).' : '') + '</p>'; }
+    '<p class="note">Panel: <b>' + d.W + ' x ' + d.D + ' mm</b>, 1 mm smaller than the box so it drops in. ' + ({ screws: 'M3 screws in the corners' + (S.plift > 0 ? ' go down through the ' + (S.pbase === 'rim' ? 'lip' : 'legs') + ' into the box. Already have screws or posts in the box? Line the corner holes up with them, or tag them on a photo.' : '. Already have screws in the box? Line the corner holes up with them.'), glue: 'No holes. ' + (S.plift > 0 ? 'A thin line of glue on the bottom of the ' + (S.pbase === 'rim' ? 'lip' : 'legs') : 'Glue or double sided tape on the back') + ' (E6000 or CA for wood and PLA). It is forever.', ribs: 'Little ribs on every edge press against the box and hold it, no screws.', drop: 'It just lies in the box.' })[S.phold] + ' ' +
+    (S.plift > 0 ? (S.pbase === 'rim' ? 'On a lip: a wall under the whole edge holds it up, stiffer than legs and hides the wires. Notches cut through the lip too. ' : 'On legs: posts at the corners and along the edges hold it up. ') + 'The window shows only the picture. Set the height to the front of the screen above the floor. It prints face down.' : scr ? 'On the floor: the whole screen comes up through the window, like your wood panels.' : '') + (d.W > S.bed[0] || d.D > S.bed[1] ? ' Bigger than your bed: it prints as puzzle pieces that lock together (Print, Split).' : '') + '</p>'; }
   if (t === 'notch') {
     const N = S.notches || [], i = Math.min(S.nsel || 0, N.length - 1), n = N[i], along = n && (n.edge === 'left' || n.edge === 'right') ? 'From bottom' : 'From left';
     return '<div class="grid g2"><button class="btn dark" data-act="addNotch">Add a notch</button>' + (n ? '<button class="btn" data-act="delNotch">Remove N' + (i + 1) + '</button>' : '<span></span>') + '</div>' +
@@ -512,7 +520,7 @@ $('pane').addEventListener('click', (e) => {
   const sg = b.closest('[data-sg]');
   if (sg && d.v != null) {
     const k = sg.dataset.sg, v = d.v, L = S.look; markCache = k.startsWith('lg_') || k.startsWith('lb_') ? {} : markCache;
-    if (k === 'pt') { S.pt = +v; save(); render(); return; } if (k === 'prad') { S.prad = +v; save(); render(); return; } if (k === 'phold') { S.phold = v; reflow(); save(); render(); return; } if (k === 'plift') { S.plift = v === '1' ? (S.plift || 12) : 0; reflow(); save(); render(); return; }
+    if (k === 'pt') { S.pt = +v; save(); render(); return; } if (k === 'prad') { S.prad = +v; save(); render(); return; } if (k === 'phold') { S.phold = v; reflow(); save(); render(); return; } if (k === 'plift') { if (v === '0') S.plift = 0; else { S.plift = S.plift || 12; S.pbase = v; } reflow(); save(); render(); return; }
     const nn = (S.notches || [])[S.nsel]; if (nn && k === 'n_edge') { if ((nn.edge === 'left' || nn.edge === 'right') !== (v === 'left' || v === 'right')) nn.at = Math.round((v === 'left' || v === 'right' ? dims().D : dims().W) / 2); nn.edge = v; reflow(); save(); render(); return; } if (nn && k === 'n_shape') { nn.shape = v; save(); render(); return; }
     { const X = xp(); if (k === 'xs_a') { X.stand.a = +v; save(); render(); return; } if (k === 'xf_hole') { X.feet.hole = v === '1'; save(); render(); return; } if (k === 'xo_s') { X.standoff.s = v; save(); render(); return; } }
     if (k === 'brand') { S.brand = v; save(); render(); return; }
@@ -637,6 +645,7 @@ function drawPanel(panel, W, H) {
     g.fillStyle = ins ? '#1a1a1a' : '#fff'; g.fillRect(X(f.x0), Y(f.y1), tw, 15 * px()); g.fillStyle = ins ? '#fff' : '#1a1a1a'; g.textAlign = 'left'; g.fillText(lb, X(f.x0) + 4 * px(), Y(f.y1) + 11 * px());
   });
   const probs = allProblems();
+  if (isPanel() && S.plift > 0) { const lg = panelBuilt().tray.filter((l) => l.tag === 'leg'); g.save(); g.setLineDash([4 * px(), 3 * px()]); g.strokeStyle = '#1a1a1a'; g.lineWidth = 1.5 * px(); lg.forEach((l) => { path(l.polys); g.stroke(); }); g.restore(); } /* the lip or legs underneath, dashed */
   if (isPanel()) (S.notches || []).forEach((n, j) => { const L = n.edge === 'left' || n.edge === 'right' ? d.D : d.W, s = Math.max(n.w / 2, Math.min(L - n.w / 2, n.at)), q = n.edge === 'bottom' ? [s, n.d + 6] : n.edge === 'top' ? [s, d.D - n.d - 6] : n.edge === 'left' ? [n.d + 7, s] : [d.W - n.d - 7, s]; g.fillStyle = j === S.nsel ? '#ffd23a' : '#fff'; g.font = '900 ' + 11 * px() + 'px -apple-system,Arial'; g.textAlign = 'center'; g.fillText('N' + (j + 1), X(q[0]), Y(q[1]) + 4 * px()); });
   tag(PNAME[panel] + ', ' + (isPanel() ? d.W + ' x ' + d.D + ' x ' + S.pt + ' mm' + ((S.notches || []).length ? ', ' + S.notches.length + ' notch' + (S.notches.length > 1 ? 'es' : '') : '') + '. ' : S.cols + ' x ' + S.rows + ' squares (20 mm). ') + (probs.length ? probs.length + ' to fix (yellow).' : isPanel() ? 'Drag a part to move it.' : 'Drag to move. Dashed = inside, under the deck.'));
 }
@@ -822,22 +831,31 @@ function printerFromText(txt) {
   return null;
 }
 function loadJsQR() { return window.jsQR ? Promise.resolve(window.jsQR) : new Promise((ok, no) => { const sc = document.createElement('script'); sc.src = '/vendor/jsqr/jsQR.js'; sc.onload = () => ok(window.jsQR); sc.onerror = no; document.head.appendChild(sc); }); }
+const BRAND_WORDS = [['creality', 'creality'], ['bambulab', 'bambu'], ['bambu', 'bambu'], ['prusa', 'prusa'], ['elegoo', 'other'], ['anycubic', 'other']];
 async function scanPrinter(file) {
+  // Reads every QR on the sticker (stickers often have 2: a link and a serial). Tested on her Ender-3 S1:
+  // the big code is only https://qr.creality.com and the small one is the serial, so the model comes from a name if there is one, else the brand.
   const note = (m) => { QRMSG = m; const n = $('qrNote'); if (n) n.innerHTML = m; };
-  note('Reading the code...');
+  note('Reading the codes...');
   try {
     const jsQR = await loadJsQR(), im = await new Promise((ok, no) => { const i = new Image(); i.onload = () => ok(i); i.onerror = no; i.src = URL.createObjectURL(file); });
-    let code = null;
-    for (const side of [1600, 1000, 640]) { // a QR far away needs the big picture, a close one reads faster small
-      const k = Math.min(1, side / Math.max(im.width, im.height)), c = document.createElement('canvas'); c.width = Math.round(im.width * k); c.height = Math.round(im.height * k);
-      const cg = c.getContext('2d'); cg.drawImage(im, 0, 0, c.width, c.height); const dd = cg.getImageData(0, 0, c.width, c.height);
-      code = jsQR(dd.data, c.width, c.height, { inversionAttempts: 'attemptBoth' }); if (code) break;
+    const W = im.width, H = im.height, found = [], boxes = [[0, 0, 1], [0, 0, 1]];
+    [[1, 0], [0.6, 0.4], [0.42, 0.29]].forEach(([f, st]) => { if (f === 1) return; for (let y = 0; y + f <= 1.001; y += st) for (let x = 0; x + f <= 1.001; x += st) boxes.push([x, y, f]); });
+    for (const [bx, by, f] of boxes) { // the whole photo, then overlapping pieces, so a small or far code gets enough pixels
+      const sw = W * f, sh = H * f, k = Math.min(2.5, 1000 / Math.max(sw, sh)), c = document.createElement('canvas'); c.width = Math.round(sw * k); c.height = Math.round(sh * k);
+      const cg = c.getContext('2d'); cg.drawImage(im, bx * W, by * H, sw, sh, 0, 0, c.width, c.height);
+      const dd = cg.getImageData(0, 0, c.width, c.height);
+      let q = jsQR(dd.data, c.width, c.height, { inversionAttempts: 'attemptBoth' }); if (q && q.data && found.indexOf(q.data) < 0) found.push(q.data);
+      const px = dd.data; for (let i = 0; i < px.length; i += 4) { const L = 255 - (px[i] * 0.3 + px[i + 1] * 0.59 + px[i + 2] * 0.11); px[i] = px[i + 1] = px[i + 2] = L; } /* white on black stickers read only flipped */
+      q = jsQR(px, c.width, c.height, { inversionAttempts: 'dontInvert' }); if (q && q.data && found.indexOf(q.data) < 0) found.push(q.data);
     }
     URL.revokeObjectURL(im.src);
-    if (!code) { note('<span class="bad">No QR code found in that photo.</span> Get closer, fill the frame with the sticker, no glare. Or pick your printer below.'); return; }
-    const id = printerFromText(code.data), shown = esc(String(code.data).slice(0, 90));
+    if (!found.length) { note('<span class="bad">No QR code found in that photo.</span> Get closer, fill the frame with the sticker, no glare. Or pick your printer below.'); return; }
+    const all = found.join(' '), id = printerFromText(all);
     if (id) { setPrinter(id); save(); const p = printerRow(); QRMSG = '<span class="ok">Found your ' + esc(p[1]) + '.</span> Bed set to ' + p[2] + ' x ' + p[3] + ' mm.'; render(); return; }
-    note('<span class="bad">The code says "' + shown + '" but no model name.</span> Pick your printer below. (Send this text to NOCIV and we will teach the scanner your sticker.)');
+    const flat = all.toLowerCase().replace(/[^a-z0-9]/g, ''), br = BRAND_WORDS.find((w) => flat.includes(w[0]));
+    if (br) { S.brand = br[1]; save(); QRMSG = '<span class="ok">' + esc((CZ.BRANDS.find((x) => x[0] === br[1]) || [0, 'Your brand'])[1]) + ' printer.</span> Its codes hold a link and a serial number, not the model. The model is printed on the sticker (Model Number): tap it below.'; render(); return; }
+    note('<span class="bad">The code says "' + esc(found[0].slice(0, 60)) + '", no brand or model.</span> That is usually a serial number. The model is printed on the sticker: pick it below.');
   } catch (e) { note('<span class="bad">Could not read that photo.</span> Pick your printer below.'); }
 }
 
@@ -941,10 +959,10 @@ const LEARN = [
   ['Community picks and why', '<ul><li><b>Cheap Yellow Display</b> (ESP32-2432S028R): brain, 2.8 in touch screen, SD card and speaker plug on one board for about $15. The biggest community of any cheap screen. <a href="https://www.atomic14.com/esp32/boards/esp32-2432s028r/" target="_blank" rel="noopener">atomic14 guide</a></li><li><b>Round 1.28 in GC9A01</b>: watch faces, gauges, robot eyes. <a href="https://www.waveshare.com/1.28inch-lcd-module.htm" target="_blank" rel="noopener">Waveshare</a></li><li><b>Pico + 2.8 in screen</b>: your build, the cheapest handheld.</li><li><b>Pi Zero 2 W</b>: RetroPie for arcade builds, like the AdventurePi.</li></ul>'],
   ['AdventurePi, filtered', '<p>The AdventurePi (howchoo) put a Raspberry Pi, screen, battery and controls in a rugged hard case, with swappable Arcade and Console inserts. What we kept: the case that closes, screen in the lid, controls in the base, swappable decks. What is new: you print the case to fit your parts, any shape, cut to your printer.</p>'],
   ['Photo your built board', '<ul><li>Your board is soldered, everything is where it is. The case should fit it, not the other way around.</li><li>Front photo: pick what it is (Button 12, Knob, Screen...) and tap it. Each gets the real hole size from our parts list, at the spot you tapped. A screen is 2 taps, opposite corners of the part that lights up.</li><li>Back photo: tap the screw holes. They become posts under the deck that hold your board.</li><li>No AI looks at your photos. You tap, it measures. Nothing leaves your phone, nothing costs money.</li><li>If the board is bigger than the case, the case grows to fit it.</li></ul>'],
-  ['A panel for a box you have', '<ul><li>Body, Shape, Panel (or pick it on the start screen): one flat piece that fills a box you already have, like a briefcase lid.</li><li>Box inside: type it or measure it with a card. The panel comes out 1 mm smaller so it drops in.</li><li>Holds by: Screws (M3 in the corners), Snug ribs (little bumps on every edge press against the box, no screws) or Drops in.</li><li>Sits: On the floor, and the whole screen comes up through the window. Raised, and legs lift the panel to the front of the screen, the window shows only the picture. Measure from the floor of the box to the front of the screen for the leg height. A raised panel prints face down, legs up.</li><li>Notches let wires out: Round, Rounded or Square, any edge. Tap an edge on the picture or drag to move one.</li><li>Bigger than your bed? It prints in pieces with puzzle tabs that lock in the middle.</li></ul>'],
+  ['A panel for a box you have', '<ul><li>Body, Shape, Panel (or pick it on the start screen): one flat piece that fills a box you already have, like a briefcase lid.</li><li>Box inside: type it or measure it with a card. The panel comes out 1 mm smaller so it drops in.</li><li>Holds by: Screws (M3 in the corners), Snug ribs (little bumps on every edge press against the box, no screws) or Drops in.</li><li>Sits: On the floor, and the whole screen comes up through the window. On legs or On a lip, and the panel is lifted to the front of the screen so the window shows only the picture. Measure from the floor of the box to the front of the screen for the height. A lip is a wall under the whole edge: stiffer than legs, hides the wires, notches cut through it. Raised panels print face down.</li><li>Holds by: Screws (M3 in the corners, through the legs or lip into the box; line them up with screws you already have), Glue (no holes, E6000 or CA on the bottom of the lip or legs), Snug ribs, or Drops in.</li><li>Notches let wires out: Round, Rounded or Square, any edge. Tap an edge on the picture or drag to move one.</li><li>Bigger than your bed? It prints in pieces with puzzle tabs that lock in the middle.</li></ul>'],
   ['Add-ons', '<ul><li>Files, Add-ons: pieces you print one at a time, sized to your case.</li><li>Clip-on stand: grabs the bottom edge and leans it back 15, 25 or 35 degrees. Prints on its side so the layers run the strong way. No hinge pin to snap.</li><li>Feet, standoffs (the screw cuts its own thread), cable clips (tape or glue them on).</li></ul>'],
   ['Deck (cyberdeck or laptop)', '<p>A big Case Zero: screen in the lid, keyboard and controls in the base. Sizes go up to 24 squares (480 mm). Keyboards vary a lot, so photo yours with the card in Brain (Snap). On a small bed it prints as puzzle pieces.</p>'],
-  ['Print time and strength', '<ul><li>The time is worked out from the real plastic in your case and how fast your printer really prints. Your slicer has the exact number, this is within about a third.</li><li>Older bed slingers like the Ender-3 S1 print about 3 times slower than a Bambu, K1 or Ender-3 V3.</li><li>A case is a shell with 2.4 mm walls. Infill does not matter much because 4 walls already fill them. Want it tougher? Thick walls (3.2 mm).</li><li>Fast (0.28 mm layers) shows lines and saves about a quarter of the time. Smooth (0.12 mm) takes about twice as long.</li><li>The QR sticker: if your sticker only holds a serial number, pick your printer by hand. Tell NOCIV what it says and we teach the scanner.</li></ul>'],
+  ['Print time and strength', '<ul><li>The time is worked out from the real plastic in your case and how fast your printer really prints. Your slicer has the exact number, this is within about a third.</li><li>Older bed slingers like the Ender-3 S1 print about 3 times slower than a Bambu, K1 or Ender-3 V3.</li><li>A case is a shell with 2.4 mm walls. Infill does not matter much because 4 walls already fill them. Want it tougher? Thick walls (3.2 mm).</li><li>Fast (0.28 mm layers) shows lines and saves about a quarter of the time. Smooth (0.12 mm) takes about twice as long.</li><li>The QR sticker: Creality stickers hold a link (qr.creality.com) and a serial number, not the model. The scanner reads both and opens the Creality list; the model is printed on the sticker next to Model Number.</li></ul>'],
   ['Measuring with your phone', '<ul><li>Any bank, ID, gift or library card is 85.6 x 54 mm. It is the ruler.</li><li>Lay it flat right next to the part, same table. Good light, no flash, no shadows.</li><li>The green outline goes solid when your phone is level, then it snaps by itself.</li><li>A hand in the photo is a nice size guide for people, but hands differ by a lot. The card is accurate to about 1 mm.</li><li>Flip the part like a page for the back so the screw holes line up.</li></ul>'],
   ['Printing and joining', '<ul><li>Bigger than your bed? Pick where the seams go (up and down, across, both, or diagonal) and how many. Puzzle tabs lock the pieces, a drop of super glue keeps them.</li><li>Magnets: 6 x 3 mm, press in, glue if loose. Check which way they attract before gluing the second one.</li><li>Screws + heat set inserts: press brass inserts in with a soldering iron, then it can come apart forever.</li><li>Printed hinge: slide 1.75 mm filament through the barrels as the pin, melt the ends a little to keep it in.</li><li>Wood (Case Zero Base): print the templates at 100 percent, check the 10 mm line with a ruler, tape on, cut.</li></ul>'],
   ['Logos, labels and textures', '<ul><li><b>Pressed in</b>: the mark is a 0.6 mm dip. One color printer: wipe paint in, scrape the top. Two or more colors: you get a second file that fills the dip in your marks color.</li><li><b>Raised</b>: printed as its own piece that drops into a 0.6 mm pocket, a dot of glue holds it. The deck prints face down, so nothing can stick up from it in the same print.</li><li><b>Cut out</b>: goes all the way through, the inside or a light shows behind it.</li><li>Textures: each side gets its own. Tread, wood grain, grid, checks, dots and stripes on the flat sides, ribs and bands on the walls. Spacing is up to you.</li><li>Logos: a PNG with a clear or white background traces cleanest. Thin lines under about 0.8 mm are too fine to print.</li></ul>'],
