@@ -83,10 +83,22 @@
     ['groove', 'Groovebox', 'Flat, rows of knobs', 'slate'],
     ['face', 'Character', 'Round face, eyes, can move', 'slate']
   ];
+  // Printers: [id, name, bed wide, bed deep, tall, brand, speed]. Sizes are the makers' published build volumes (checked Nov 2026).
+  // speed = how fast it really lays plastic on a normal case, in cubic mm per second (outer walls slow everything down):
+  // classic bed slinger about 3.5, newer budget about 6, fast CoreXY or Klipper machines about 10. Used only for the time estimate.
   C.PRINTERS = [
-    ['a1mini', 'Bambu A1 mini', 180, 180], ['a1', 'Bambu A1 / P1S / X1', 256, 256], ['mk4', 'Prusa MK4', 250, 210], ['mini', 'Prusa MINI', 180, 180],
-    ['ender3', 'Ender 3 (V2, S1)', 220, 220], ['k1', 'Creality K1', 220, 220], ['k1max', 'Creality K1 Max', 300, 300], ['neptune', 'Elegoo Neptune 4', 225, 225], ['custom', 'Mine is different', 200, 200]
+    ['a1mini', 'A1 mini', 180, 180, 180, 'bambu', 10], ['a1', 'A1', 256, 256, 256, 'bambu', 10], ['p1s', 'P1S / P1P', 256, 256, 256, 'bambu', 10], ['x1c', 'X1 Carbon', 256, 256, 256, 'bambu', 10], ['h2s', 'H2S', 340, 320, 340, 'bambu', 10], ['h2d', 'H2D (one nozzle)', 325, 320, 325, 'bambu', 10],
+    ['ender3', 'Ender-3 / V2', 220, 220, 250, 'creality', 3.5], ['s1', 'Ender-3 S1 / S1 Pro', 220, 220, 270, 'creality', 3.5], ['s1plus', 'Ender-3 S1 Plus', 300, 300, 300, 'creality', 3.5], ['v3se', 'Ender-3 V3 SE', 220, 220, 250, 'creality', 6], ['v3ke', 'Ender-3 V3 KE', 220, 220, 240, 'creality', 8], ['v3', 'Ender-3 V3', 220, 220, 250, 'creality', 10], ['v3plus', 'Ender-3 V3 Plus', 300, 300, 330, 'creality', 10],
+    ['k1', 'K1 / K1C / K1 SE', 220, 220, 250, 'creality', 10], ['k1max', 'K1 Max', 300, 300, 300, 'creality', 10], ['k2', 'K2', 260, 260, 260, 'creality', 10], ['k2plus', 'K2 Plus', 350, 350, 350, 'creality', 10],
+    ['mk4', 'MK4 / MK4S', 250, 210, 220, 'prusa', 8], ['coreone', 'CORE One', 250, 220, 270, 'prusa', 10], ['mini', 'MINI', 180, 180, 180, 'prusa', 6],
+    ['neptune', 'Elegoo Neptune 4 / 4 Pro', 225, 225, 265, 'other', 8], ['centauri', 'Elegoo Centauri Carbon', 256, 256, 256, 'other', 10], ['kobra3', 'Anycubic Kobra 3', 250, 250, 260, 'other', 10],
+    ['custom', 'Mine is different', 200, 200, 200, 'other', 5]
   ];
+  C.BRANDS = [['bambu', 'Bambu Lab'], ['creality', 'Creality'], ['prusa', 'Prusa'], ['other', 'Other']];
+  // Words to look for in the QR code on a printer's sticker. Longer names first so "S1 Plus" wins over "S1".
+  C.PRINTER_WORDS = [['ender3s1plus', 's1plus'], ['ender3s1pro', 's1'], ['ender3s1', 's1'], ['ender3v3plus', 'v3plus'], ['ender3v3se', 'v3se'], ['ender3v3ke', 'v3ke'], ['ender3v3', 'v3'], ['ender3v2', 'ender3'], ['ender3', 'ender3'],
+    ['k2plus', 'k2plus'], ['k1max', 'k1max'], ['k1c', 'k1'], ['k1se', 'k1'], ['a1mini', 'a1mini'], ['x1carbon', 'x1c'], ['coreone', 'coreone'], ['mk4s', 'mk4'], ['neptune4', 'neptune'], ['centauricarbon', 'centauri'], ['kobra3', 'kobra3'],
+    ['p1s', 'p1s'], ['p1p', 'p1s'], ['x1c', 'x1c'], ['x1e', 'x1c'], ['h2d', 'h2d'], ['h2s', 'h2s'], ['mk4', 'mk4'], ['k2', 'k2'], ['k1', 'k1'], ['a1', 'a1']];
   C.MATERIALS = [
     ['pla', 'PLA', 'Easiest. Fine indoors, softens in a hot car.', ['dovetail', 'glue', 'screws', 'magnets']],
     ['petg', 'PETG', 'Tougher, handles heat better. Strings a little.', ['dovetail', 'screws', 'magnets', 'snap']],

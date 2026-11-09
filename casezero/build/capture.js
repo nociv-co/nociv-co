@@ -3,6 +3,9 @@
 // Then you drag corners onto the card and the part. Perspective is undone with a homography, so the phone does not
 // need to be perfectly square. Nothing leaves the phone.
 const CARD = [85.6, 53.98];
+// What you can tag on the front photo of a built board. Each one takes its hole size from the parts catalog (parts.js).
+const KINDS = [['tact12', 'Button 12'], ['button16', 'Button 16'], ['arcade24', 'Arcade 24'], ['arcade30', 'Arcade 30'], ['dpad', 'D-pad'], ['pot', 'Knob'], ['encoder', 'Click wheel'], ['thumb', 'Thumb stick'], ['led5', 'LED'], ['speaker28', 'Speaker'], ['screen', 'Screen'], ['hole', 'Other hole']];
+const KP = (k) => (window.CZ && window.CZ.PARTS && window.CZ.PARTS[k]) || null;
 const $ = (id) => document.getElementById(id);
 
 function solve(A, b) { // gaussian elimination, 8 x 8
@@ -42,13 +45,13 @@ const CSS = `
 .mz .lst{font:600 13px/1.4 inherit;color:#ddd}
 .mz .lst b{color:#fff}
 .mz input.nm{height:44px;border-radius:12px;border:2px solid #fff;background:#000;color:#fff;padding:0 12px;font:700 16px inherit}
-.mz .chips{display:flex;gap:6px;flex-wrap:wrap}.mz .chips button{all:unset;cursor:pointer;padding:9px 12px;border-radius:999px;border:1.5px solid #fff;font:700 13px/1 inherit}.mz .chips button[aria-pressed=true]{background:#fff;color:#111}
+.mz .chips{display:flex;gap:6px;flex-wrap:wrap}.mz .chips.scroll{flex-wrap:nowrap;overflow-x:auto;-webkit-overflow-scrolling:touch;padding-bottom:2px}.mz .chips.scroll button{flex:none;min-height:24px}.mz .chips button{all:unset;cursor:pointer;padding:9px 12px;border-radius:999px;border:1.5px solid #fff;font:700 13px/1 inherit}.mz .chips button[aria-pressed=true]{background:#fff;color:#111}
 `;
 
 export function openMeasure(done) {
   if (!document.getElementById('mzcss')) { const st = document.createElement('style'); st.id = 'mzcss'; st.textContent = CSS; document.head.appendChild(st); }
   const box = document.createElement('div'); box.className = 'mz'; document.body.appendChild(box);
-  const M = { name: 'My board', shots: {}, step: 'intro', stream: null, tilt: null, holes: [], depth: 12, hang: 8 };
+  const M = { name: 'My board', shots: {}, step: 'intro', stream: null, tilt: null, holes: [], depth: 12, hang: 8, kind: 'tact12' };
   const close = () => { stopCam(); window.removeEventListener('deviceorientation', onTilt); box.remove(); };
   function stopCam() { if (M.stream) { M.stream.getTracks().forEach((t) => t.stop()); M.stream = null; } }
   function onTilt(e) { M.tilt = [e.beta || 0, e.gamma || 0]; }
@@ -61,7 +64,7 @@ export function openMeasure(done) {
   function intro() {
     shell('Measure with your phone', '<div class="say" style="position:static;padding:22px 16px;text-align:left;font-weight:600;font-size:15px">' +
       '<p style="margin:0 0 12px"><b>You need any bank, ID, gift or library card.</b> They are all the same size, 85.6 x 54 mm, so the card is your ruler.</p>' +
-      '<p style="margin:0 0 12px">1. Lay the card flat right next to your part, on a plain table.<br>2. Hold your phone flat over both. Follow the arrows. It snaps by itself when it is level.<br>3. Flip the part over like a page (left to right) for the back.<br>4. Drag the dots onto the corners and tap the holes.</p>' +
+      '<p style="margin:0 0 12px">1. Lay the card flat right next to your board, on a plain table.<br>2. Hold your phone flat over both. Follow the arrows. It snaps by itself when it is level.<br>3. Drag the dots onto the card and the board. Then pick what each part is (button, knob, screen) and tap it on the photo. It gets the real hole size.<br>4. Flip the board over like a page (left to right) and tap the screw holes on the back.</p>' +
       '<p style="margin:0;color:#aaa">Step back a little and zoom in 2x: the edges bend less. Plain table, good light, no flash. Photos stay on your phone.</p></div>',
       '<input class="nm" id="mzName" value="' + M.name + '" aria-label="What is it" placeholder="What is it? (My board)"><div class="rowb"><button class="bt go" id="mzGo">Start the camera</button></div><div class="rowb"><label class="bt" style="position:relative">Use photos I have<input type="file" accept="image/*" id="mzFile" style="position:absolute;inset:0;opacity:0"></label></div>');
     $('mzName').oninput = (e) => { M.name = e.target.value || 'My board'; };
@@ -128,12 +131,12 @@ export function openMeasure(done) {
     const say = {
       card: 'Drag the 4 orange dots onto the corners of the card. Top left first, then around.',
       part: 'Now drag the 4 green dots onto the corners of your part.',
-      holes: which === 'front' ? 'Tap every button, knob or light that pokes up. Use the size buttons.' : 'Tap every screw hole.',
+      holes: which === 'front' ? 'Pick what it is below, then tap it on the photo. Tap it again to take it off.' : 'Tap every screw hole.',
       card2: 'Card standing on its long edge: drag the 2 dots to its top and bottom.',
       part2: 'Drag the 2 green dots to the top and bottom of your part.'
     };
     shell(which === 'front' ? 'Front' : which === 'back' ? 'Back' : 'Side', '<canvas class="ph" id="mzC"></canvas><div class="say" id="mzSay"></div>',
-      '<div class="lst" id="mzInfo"></div><div class="rowb" id="mzHoleSize" hidden><button class="bt" data-hd="-1">Smaller</button><button class="bt" data-hd="1">Bigger</button><button class="bt" id="mzUndo">Undo</button></div><div class="rowb"><button class="bt" id="mzBack">Back</button><button class="bt go" id="mzNext">Next</button></div>');
+      '<div class="lst" id="mzInfo"></div><div class="chips scroll" id="mzKinds" hidden>' + KINDS.map((k) => '<button type="button" data-kind="' + k[0] + '">' + k[1] + '</button>').join('') + '</div><div class="rowb" id="mzHoleSize" hidden><button class="bt" data-hd="-1">Smaller</button><button class="bt" data-hd="1">Bigger</button><button class="bt" id="mzUndo">Undo</button></div><div class="rowb"><button class="bt" id="mzBack">Back</button><button class="bt go" id="mzNext">Next</button></div>');
     const cv = $('mzC'), g = cv.getContext('2d');
     let k = 1, ox = 0, oy = 0, hd = which === 'front' ? 12 : 3;
     function fit() { if (!document.body.contains(cv)) return; const r = cv.getBoundingClientRect(), d = Math.min(2, devicePixelRatio || 1); cv.width = r.width * d; cv.height = r.height * d; k = Math.min(cv.width / W0, cv.height / H0); ox = (cv.width - W0 * k) / 2; oy = (cv.height - H0 * k) / 2; draw(); }
@@ -158,31 +161,64 @@ export function openMeasure(done) {
       if (stage.indexOf('card') > -1) poly(pts.card, '#ff9a2b', true);
       if (key === 'part' || key === 'holes') poly(pts.part, '#2bd46b', true);
       if (key === 'card2' || key === 'part2') { poly(pts.card2, '#ff9a2b', false); if (key === 'part2') poly(pts.part2, '#2bd46b', false); }
-      if (key === 'holes') { const m = partMM(); holes.forEach((h) => { const s = S(h.p), r = m ? h.d / 2 / (m.w / dist(S(pts.part[0]), S(pts.part[1]))) : 10; g.beginPath(); g.arc(s[0], s[1], Math.max(4, r), 0, 7); g.strokeStyle = '#ff3b6b'; g.lineWidth = 3 * d; g.stroke(); }); }
+      if (key === 'holes') {
+        const m = partMM(), ppm = m ? dist(S(pts.part[0]), S(pts.part[1])) / m.w : 3; // screen px per mm
+        holes.forEach((h) => {
+          const s = S(h.p); g.strokeStyle = h.kind && h.kind !== 'hole' ? '#ffd23a' : '#ff3b6b'; g.lineWidth = 3 * d;
+          if (h.kind === 'screen') { const s2 = h.p2 ? S(h.p2) : s; g.strokeRect(Math.min(s[0], s2[0]), Math.min(s[1], s2[1]), Math.abs(s2[0] - s[0]) || 8 * d, Math.abs(s2[1] - s[1]) || 8 * d); }
+          else { const c = h.kind && h.kind !== 'hole' && KP(h.kind) ? KP(h.kind).cut : { o: 'circle', d: h.d };
+            if (c.o === 'cross') { const a = c.w / 2 * ppm, t = c.t / 2 * ppm; g.strokeRect(s[0] - a, s[1] - t, 2 * a, 2 * t); g.strokeRect(s[0] - t, s[1] - a, 2 * t, 2 * a); }
+            else { g.beginPath(); g.arc(s[0], s[1], Math.max(4, (c.d || 6) / 2 * ppm), 0, 7); g.stroke(); } }
+          if (h.kind && h.kind !== 'hole') { const nm = (KINDS.find((k) => k[0] === h.kind) || [0, ''])[1]; g.font = '800 ' + 11 * d + 'px Arial'; g.textAlign = 'center'; g.lineWidth = 3 * d; g.strokeStyle = '#000'; g.strokeText(nm, s[0], s[1] - 8 * d); g.fillStyle = '#ffd23a'; g.fillText(nm, s[0], s[1] - 8 * d); }
+        });
+      }
       $('mzSay').textContent = say[key];
       const info = $('mzInfo'), m = (key === 'part' || key === 'holes') ? partMM() : null;
-      if (m) info.innerHTML = '<b>' + M.name + ': ' + m.w.toFixed(1) + ' x ' + m.h.toFixed(1) + ' mm</b>' + (key === 'holes' ? '. ' + holes.length + ' holes, next one ' + hd + ' mm' : '');
+      const tagged = which === 'front' && key === 'holes';
+      if (m) info.innerHTML = '<b>' + M.name + ': ' + m.w.toFixed(1) + ' x ' + m.h.toFixed(1) + ' mm</b>' + (key === 'holes' ? (tagged ? '. ' + holes.length + ' tagged. Next tap: ' + (M.kind === 'hole' ? 'a ' + hd + ' mm hole' : M.kind === 'screen' ? 'screen corner ' + (holes.length && holes[holes.length - 1].kind === 'screen' && !holes[holes.length - 1].p2 ? '2 of 2' : '1 of 2') : (KINDS.find((k) => k[0] === M.kind) || [0, ''])[1]) : '. ' + holes.length + ' holes, next one ' + hd + ' mm') : '');
       else if (key === 'part2') { const s = CARD[1] / dist(pts.card2[0], pts.card2[1]); info.innerHTML = '<b>Height: ' + (dist(pts.part2[0], pts.part2[1]) * s).toFixed(1) + ' mm</b>'; }
       else info.textContent = 'Card = 85.6 x 54 mm.';
       $('mzHoleSize').hidden = key !== 'holes';
+      const kb = $('mzKinds'); kb.hidden = !tagged; kb.querySelectorAll('[data-kind]').forEach((b) => b.setAttribute('aria-pressed', String(b.dataset.kind === M.kind)));
+      $('mzHoleSize').querySelectorAll('[data-hd]').forEach((b) => { b.style.display = tagged && M.kind !== 'hole' ? 'none' : ''; });
     }
     const near = (p, arr) => { let b = -1, bd = 1e9; arr.forEach((q, i) => { const s = S(q), dd = Math.hypot(s[0] - p[0], s[1] - p[1]); if (dd < bd) { bd = dd; b = i; } }); return bd < 46 * Math.min(2, devicePixelRatio || 1) ? b : -1; };
     const evp = (e) => { const r = cv.getBoundingClientRect(), d = cv.width / r.width; return [(e.clientX - r.left) * d, (e.clientY - r.top) * d]; };
     cv.onpointerdown = (e) => {
       const key = stage[st], p = evp(e);
-      if (key === 'holes') { const hit = holes.findIndex((h) => { const s = S(h.p); return Math.hypot(s[0] - p[0], s[1] - p[1]) < 30; }); if (hit > -1) holes.splice(hit, 1); else holes.push({ p: I(p[0], p[1]), d: hd }); draw(); return; }
+      if (key === 'holes') {
+        const tagged = which === 'front', last = holes[holes.length - 1];
+        if (tagged && M.kind === 'screen' && last && last.kind === 'screen' && !last.p2) { last.p2 = I(p[0], p[1]); draw(); return; }
+        const hit = holes.findIndex((h) => { const s = S(h.p); return Math.hypot(s[0] - p[0], s[1] - p[1]) < 30; });
+        if (hit > -1) holes.splice(hit, 1); else holes.push(tagged ? { p: I(p[0], p[1]), d: hd, kind: M.kind } : { p: I(p[0], p[1]), d: hd });
+        draw(); return;
+      }
       sel = near(p, pts[key]); if (sel > -1) cv.setPointerCapture(e.pointerId);
     };
     cv.onpointermove = (e) => { if (sel < 0) return; const p = evp(e); pts[stage[st]][sel] = I(p[0], p[1]); draw(); };
     cv.onpointerup = () => { sel = -1; };
     box.querySelectorAll('[data-hd]').forEach((b) => { b.onclick = () => { hd = Math.max(1, hd + (+b.dataset.hd) * (hd >= 6 ? 1 : 0.5)); draw(); }; });
     $('mzUndo').onclick = () => { holes.pop(); draw(); };
+    box.querySelectorAll('[data-kind]').forEach((b) => { b.onclick = () => { M.kind = b.dataset.kind; draw(); }; });
+    function rectify() { // the board, straightened and cropped, so you see your own board in the layout
+      const m = partMM(); if (!m || !(m.w > 1) || !(m.h > 1)) return null;
+      const k = Math.min(4, 360 / Math.max(m.w, m.h)), ow = Math.max(8, Math.round(m.w * k)), oh = Math.max(8, Math.round(m.h * k));
+      const T = homography([[0, 0], [ow, 0], [ow, oh], [0, oh]], pts.part); if (!T) return null;
+      const sd = img.getContext('2d').getImageData(0, 0, W0, H0).data, out = document.createElement('canvas'); out.width = ow; out.height = oh;
+      const og = out.getContext('2d'), id = og.createImageData(ow, oh), od = id.data;
+      for (let y = 0; y < oh; y++) for (let x = 0; x < ow; x++) { const q = T([x + 0.5, y + 0.5]), u = Math.max(0, Math.min(W0 - 1, q[0] | 0)), v = Math.max(0, Math.min(H0 - 1, q[1] | 0)), si = (v * W0 + u) * 4, oi = (y * ow + x) * 4; od[oi] = sd[si]; od[oi + 1] = sd[si + 1]; od[oi + 2] = sd[si + 2]; od[oi + 3] = 255; }
+      og.putImageData(id, 0, 0); return out.toDataURL('image/jpeg', 0.72);
+    }
     $('mzBack').onclick = () => { if (st > 0) { st--; draw(); } else intro(); };
     $('mzNext').onclick = () => {
       if (st < stage.length - 1) { st++; draw(); return; }
       if (which === 'side') { const s = CARD[1] / dist(pts.card2[0], pts.card2[1]); M.depth = dist(pts.part2[0], pts.part2[1]) * s; return result(); }
       const m = partMM(); shot.card = pts.card; shot.part = pts.part; shot.holes = holes;
-      shot.mm = m ? { w: nominal(m.w), h: nominal(m.h), holes: holes.map((h) => { const c = holeMM(h.p); return { x: c[0], y: c[1], d: nominal(h.d) }; }) } : null;
+      const plain = holes.filter((h) => !h.kind || h.kind === 'hole'), tags = holes.filter((h) => h.kind && h.kind !== 'hole' && (h.kind !== 'screen' || h.p2));
+      shot.mm = m ? { w: nominal(m.w), h: nominal(m.h), holes: plain.map((h) => { const c = holeMM(h.p); return { x: c[0], y: c[1], d: nominal(h.d) }; }),
+        cuts: tags.map((h) => { if (h.kind === 'screen') { const a = holeMM(h.p), b = holeMM(h.p2); return { kind: 'screen', x: (a[0] + b[0]) / 2, y: (a[1] + b[1]) / 2, cut: { o: 'rect', w: nominal(Math.abs(a[0] - b[0])), h: nominal(Math.abs(a[1] - b[1])) } }; }
+          const c = holeMM(h.p); return { kind: h.kind, x: c[0], y: c[1], cut: Object.assign({}, KP(h.kind).cut) }; }),
+        img: which === 'front' ? rectify() : null } : null;
       if (which === 'front') return askNext();
       return result();
     };
@@ -196,7 +232,8 @@ export function openMeasure(done) {
   function summary() {
     const f = M.shots.front && M.shots.front.mm, b = M.shots.back && M.shots.back.mm;
     let s = '<b>' + M.name + '</b><br>';
-    if (f) s += 'Size: ' + f.w.toFixed(1) + ' x ' + f.h.toFixed(1) + ' mm<br>Holes on the front: ' + f.holes.length + '<br>';
+    if (f) { const cnt = {}; (f.cuts || []).forEach((c) => { const nm = (KINDS.find((k) => k[0] === c.kind) || [0, c.kind])[1]; cnt[nm] = (cnt[nm] || 0) + 1; });
+      s += 'Size: ' + f.w.toFixed(1) + ' x ' + f.h.toFixed(1) + ' mm<br>On the front: ' + (Object.keys(cnt).map((k) => cnt[k] + ' ' + k).join(', ') || 'nothing tagged') + (f.holes.length ? ', ' + f.holes.length + ' other hole' + (f.holes.length > 1 ? 's' : '') : '') + '<br>'; }
     if (b) s += 'Screw holes on the back: ' + b.holes.length + '<br>';
     s += 'Height: ' + M.depth.toFixed(1) + ' mm' + (M.shots.side ? '' : ' (guess, take the side photo to measure)');
     return s;
@@ -209,8 +246,10 @@ export function openMeasure(done) {
     $('mzAgain').onclick = intro;
     $('mzUse').onclick = () => {
       const P = { cat: 'mine', name: M.name, short: M.name.slice(0, 12), w: +f.w.toFixed(1), h: +f.h.toFixed(1), depth: +M.depth.toFixed(1), link: 'pins', measured: true,
-        cut: { o: 'none' }, userHoles: f.holes, mountHoles: b ? b.holes.map((h) => ({ x: -h.x, y: h.y, d: h.d })) : [], hang: M.hang,
-        tip: 'Measured with your phone. The front holes are cut in the deck, the back screw holes get posts under the deck.', src: 'Measured with a card as the ruler' };
+        cut: { o: 'none' }, userHoles: f.holes, userCuts: f.cuts || [], img: f.img || null, mountHoles: b ? b.holes.map((h) => ({ x: -h.x, y: h.y, d: h.d })) : [], hang: M.hang,
+        up: (f.cuts || []).reduce((mx, c) => Math.max(mx, (KP(c.kind) && KP(c.kind).up) || 0), 0),
+        prints: { knob: (f.cuts || []).filter((c) => KP(c.kind) && KP(c.kind).printed === 'knob').length, dpad: (f.cuts || []).filter((c) => c.kind === 'dpad').length },
+        tip: 'Your built board, measured with your phone. Every part you tagged gets its real hole in the deck, the back screw holes get posts under the deck.', src: 'Measured with a card as the ruler' };
       close(); done(P);
     };
   }

@@ -80,6 +80,8 @@ export function cutShape(P, x, y, rotq, extra) {
   else if (c.o === 'grille') { out.push(circle(x, y, 1.5, 16)); for (let i = 0; i < 6; i++) { const an = i * Math.PI / 3; out.push(circle(x + 6 * Math.cos(an), y + 6 * Math.sin(an), 1.5, 16)); } for (let i = 0; i < 10; i++) { const an = i * Math.PI / 5 + 0.3; out.push(circle(x + 10.5 * Math.cos(an), y + 10.5 * Math.sin(an), 1.25, 16)); } }
   if (P.bolts) P.bolts.forEach(([bx, by]) => { const p = rot([[x + bx, y + by]], a, x, y)[0]; out.push(circle(p[0], p[1], 2.2, 20)); });
   (P.userHoles || []).forEach((h) => { const p = rot([[x + h.x, y + h.y]], a, x, y)[0]; out.push(circle(p[0], p[1], h.d / 2 + 0.2, 28)); });
+  // parts tagged on a photo of a built board: each one cuts its catalog hole at the spot that was tapped
+  (P.userCuts || []).forEach((u) => { const p = rot([[x + u.x, y + u.y]], a, x, y)[0]; out.push(...cutShape({ cut: u.cut, w: 1, h: 1 }, p[0], p[1], rotq, tol)); });
   return out;
 }
 // The room a part takes on the deck (for overlap checks and the layout picture).
@@ -364,15 +366,31 @@ export function svgOf(polys, title) {
 // ---------- looks: logos, labels, textures (all flat layers, so they cut and split like the rest) ----------
 // Trace a picture into polygons: every dark or solid pixel row becomes a strip, strips are joined, edges smoothed.
 export function traceCanvas(cv, mmWide, invert) {
+  // What counts as the logo: with a clear background, every solid pixel. Without one, every pixel that differs
+  // from the background color (read from the picture's edges), so white on black, colored and photo logos all work.
   const max = 260, k = Math.min(1, max / Math.max(cv.width, cv.height)), w = Math.max(1, Math.round(cv.width * k)), h = Math.max(1, Math.round(cv.height * k));
   const c = document.createElement('canvas'); c.width = w; c.height = h; const g = c.getContext('2d'); g.drawImage(cv, 0, 0, w, h);
-  const d = g.getImageData(0, 0, w, h).data, s = mmWide / w, strips = [];
-  let anyAlpha = false; for (let i = 3; i < d.length; i += 16) if (d[i] < 200) { anyAlpha = true; break; }
+  const d = g.getImageData(0, 0, w, h).data, s = mmWide / w, strips = [], n = w * h, ink = new Uint8Array(n);
+  let solid = 0; for (let i = 0; i < n; i++) if (d[i * 4 + 3] > 128) solid++;
+  if (solid > n * 0.02 && solid < n * 0.9) { for (let i = 0; i < n; i++) ink[i] = d[i * 4 + 3] > 128 ? 1 : 0; }
+  else {
+    const px = (i) => { const a = d[i * 4 + 3] / 255; return [d[i * 4] * a + 255 * (1 - a), d[i * 4 + 1] * a + 255 * (1 - a), d[i * 4 + 2] * a + 255 * (1 - a)]; };
+    const edge = []; for (let x = 0; x < w; x++) { edge.push(px(x), px((h - 1) * w + x)); } for (let y = 0; y < h; y++) { edge.push(px(y * w), px(y * w + w - 1)); }
+    const med = (j) => { const v = edge.map((e) => e[j]).sort((a, b) => a - b); return v[v.length >> 1]; }, bg = [med(0), med(1), med(2)];
+    const dist = new Float32Array(n), hist = new Array(256).fill(0);
+    for (let i = 0; i < n; i++) { const p = px(i); dist[i] = Math.hypot(p[0] - bg[0], p[1] - bg[1], p[2] - bg[2]); hist[Math.min(255, dist[i] * 255 / 442 | 0)]++; }
+    // Otsu: the cut that best splits background from ink
+    let sum = 0; for (let i = 0; i < 256; i++) sum += i * hist[i];
+    let sB = 0, wB = 0, best = 0, thr = 40;
+    for (let t = 0; t < 256; t++) { wB += hist[t]; if (!wB) continue; const wF = n - wB; if (!wF) break; sB += t * hist[t]; const mB = sB / wB, mF = (sum - sB) / wF, v = wB * wF * (mB - mF) * (mB - mF); if (v > best) { best = v; thr = t; } }
+    const cut = Math.max(40, (thr + 0.5) * 442 / 255);
+    for (let i = 0; i < n; i++) ink[i] = dist[i] > cut ? 1 : 0;
+  }
   for (let y = 0; y < h; y++) {
     let run = -1;
     for (let x = 0; x <= w; x++) {
       let on = false;
-      if (x < w) { const i = (y * w + x) * 4, a = d[i + 3], L = (d[i] * .3 + d[i + 1] * .59 + d[i + 2] * .11); on = anyAlpha ? a > 128 && L < 245 : L < 128; if (invert) on = !on && a > 20; }
+      if (x < w) { const i = y * w + x; on = !!ink[i]; if (invert) on = !on && d[i * 4 + 3] > 20; }
       if (on && run < 0) run = x; if (!on && run >= 0) { strips.push(rect(run * s, (h - y - 1) * s, x * s, (h - y) * s)); run = -1; }
     }
   }
