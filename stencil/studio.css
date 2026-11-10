@@ -1,6 +1,6 @@
 /* NOCIV Stencil studio front end. Stencil colors (cream paper, black ink, red accent), studio hierarchy and motion. */
 html.sd-on,html.sd-on body{height:100%;overflow:hidden;overscroll-behavior:none}
-html.sd-on body > header,html.sd-on main > aside,html.sd-on aside.right,html.sd-on .bbar,html.sd-on .rail,html.sd-on .stage > .status,html.sd-on .nv-fl.bl ~ .viewt + .shirtbar{display:none!important}
+html.sd-on body > header,html.sd-on main > aside,html.sd-on aside.right,html.sd-on .bbar,html.sd-on .rail,html.sd-on .stage > .status{display:none!important}
 html.sd-on main{display:none!important}
 .sd{--ink:#1a1a1a;--paper:#efece5;--card:#fbf9f4;--line:#d9d4c8;--mute:#7a756b;--red:#c8412f;--cream:#f3ead7;--spring:cubic-bezier(.34,1.4,.5,1);--sys:-apple-system,BlinkMacSystemFont,"Helvetica Neue",Arial,sans-serif;position:fixed;inset:0;z-index:50;display:flex;flex-direction:column;background:var(--paper);color:var(--ink);font:500 15px/1.35 var(--sys)}
 .sd button{font-family:var(--sys)}
@@ -117,4 +117,31 @@ html.sd-on main{display:none!important}
 .sd-why{margin:5px 2px 0;font:600 12px/1.3 var(--sys);color:var(--mute)}
 .sd-mini{display:flex;gap:22px;flex-wrap:wrap}
 .sd-mini .sd-inks button,.sd-mini .sd-inks label{width:32px;height:32px}
-.sd-q{all:unset;cursor:pointer;position:absolute;top:8px;right:160px;z-index:8;width:40px;height:40px;display:grid;place-items:center;border-radius:50%;background:rgba(251,249,244,.92);border:1.5px solid rgba(26,26,26,.55);font:900 17px/1 var(--sys);box-shadow:0 2px 6px rgba(0,0,0,.12)}
+.sd-q{all:unset;cursor:pointer;position:absolute;top:8px;right:150px;z-index:8;width:40px;height:40px;display:grid;place-items:center;border-radius:50%;background:rgba(251,249,244,.92);border:1.5px solid rgba(26,26,26,.55);font:900 17px/1 var(--sys);box-shadow:0 2px 6px rgba(0,0,0,.12)}
+
+/* type hierarchy: 1 console title, 2 section heading, 3 choices, 4 helper text */
+.sd-title{font:900 15px/1.1 var(--sys);letter-spacing:.08em}
+.sd-title small{font:700 12px/1 var(--sys);letter-spacing:.04em;margin-left:4px}
+.sd-h{margin:14px 0 7px;display:flex;align-items:center;gap:8px;font:900 12px/1 var(--sys);letter-spacing:.1em;color:var(--ink)}
+.sd-h::after{content:"";flex:1;height:1px;background:var(--line)}
+.sd-h:first-child{margin-top:4px}
+.sd-pill{font:700 13px/1.1 var(--sys);color:#3b3832}
+.sd-pill[aria-pressed=true]{font-weight:900;color:var(--ink)}
+.sd-why,.sd-note{font:500 12px/1.35 var(--sys);color:var(--mute)}
+.sd-chip span{font:800 13.5px/1 var(--sys)}
+.sd-row > b{font:700 12.5px/1.15 var(--sys);color:#3b3832}
+/* shirt picker sits along the bottom of the picture, above nothing else */
+.sd .shirtbar{position:absolute!important;left:56px!important;right:56px!important;bottom:8px!important;top:auto!important;z-index:8;display:flex;flex-wrap:wrap;gap:5px;justify-content:center;align-items:center;padding:6px;border-radius:14px;background:rgba(251,249,244,.94);border:1.5px solid rgba(26,26,26,.2)}
+.sd .shirtbar[hidden]{display:none!important}
+.sd .shirtbar .gch{all:unset;cursor:pointer;padding:6px 9px;border-radius:9px;background:#ece8df;font:800 11.5px/1 var(--sys)}
+.sd .shirtbar .gch[aria-pressed=true]{background:var(--cream);box-shadow:inset 0 0 0 1.5px var(--ink)}
+.sd .shirtbar span{font:900 10.5px/1 var(--sys);letter-spacing:.08em;text-transform:uppercase;color:var(--mute);margin-left:4px}
+.sd .shirtbar .sc{all:unset;cursor:pointer;width:24px;height:24px;border-radius:50%;box-shadow:inset 0 0 0 1.5px rgba(0,0,0,.25)}
+.sd .shirtbar .sc[aria-pressed=true]{box-shadow:0 0 0 2px #fff,0 0 0 3.5px var(--ink)}
+.sd .canvasWrap .viewt{top:8px!important;bottom:auto!important;left:auto!important;right:8px!important;transform:none!important;padding:2px!important;height:auto!important;width:auto!important;border-radius:999px!important;background:rgba(251,249,244,.94)!important}
+.sd .canvasWrap .viewt button{all:unset!important;box-sizing:border-box!important;cursor:pointer!important;height:32px!important;padding:0 12px!important;display:grid!important;place-items:center!important;border-radius:999px!important;font:800 12px/1 -apple-system,BlinkMacSystemFont,"Helvetica Neue",Arial,sans-serif!important;color:#1a1a1a!important}
+.sd .canvasWrap .viewt button[aria-pressed=true]{background:#1a1a1a!important;color:#fff!important}
+.sd .shirtbar{padding:4px!important;gap:4px!important}
+.sd .shirtbar .gch{padding:5px 7px!important;font-size:11px!important}
+.sd .shirtbar .sc{width:20px!important;height:20px!important}
+.sd .canvasWrap:has(.shirtbar:not([hidden])) .viewt,.sd .canvasWrap:has(.shirtbar) .viewt{bottom:auto!important;top:8px!important}

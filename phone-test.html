@@ -51,7 +51,11 @@
 <script>
 // ===== THE TEST LIST. Claude rewrites this block after every delivery. Keep each test to a few taps. =====
 var BATCH = '2026-11-03 from scratch';
-var TESTS = [];
+var TESTS = [
+  { id: 'stencilstudio', title: 'Stencil studio: sample, layers, Vintage, On a shirt, Save', where: 'Tools, Stencil + Halftone',
+    steps: ['Close the site fully and reopen it. Open Stencil. The MAKE ART sample is already there.', 'Make: tap Vintage three times. Tap layer B, then Halftone, then 156. Open Fine tune and move Contrast. Tap Done.', 'Tap On a shirt (top right). Try Tee back and a black shirt. Tap Artboard.', 'Start: tap Add your art, pick your Genius Child design, crop, Done.', 'Save: tap Save one screen film, tap again when green, open the PDF.'],
+    expect: 'Headings in the panel are bold with a thin line, choices are lighter, helper text is grey. The layer tools sit in a row above Make. The shirt shows your layers (Vintage included) and the shirt buttons do not cover the toggle. The film is black on white at true size.' }
+];
 // ===== end of list =====
 
 var KEY = 'nocivPhoneTest:' + BATCH;

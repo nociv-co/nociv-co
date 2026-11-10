@@ -209,7 +209,7 @@
     chipsUI(); railUI();
     if (step === 'start') startUI(); else if (step === 'make') makeUI(); else saveUI();
     $('sdEmpty').hidden = !!has;
-    $('sdPills').hidden = !has || step !== 'make';
+    $('sdPills').hidden = !has || step !== 'make' || M.mock;
     $('sdVint').hidden = cut();
   }
   window.__nvStudioRefresh = function () { setTimeout(ui, 20); };
@@ -280,6 +280,18 @@
   body.addEventListener('input', onSlide); body.addEventListener('change', onSlide);
   body.addEventListener('input', function (e) { var k = e.target.dataset && e.target.dataset.inkc; if (!k) return; if (k === 'one') { X.ink1 = e.target.value; oneInk(); } else X.L[X.sel].c = e.target.value; MX.render(true); });
   body.addEventListener('change', function (e) { if (e.target.dataset && e.target.dataset.inkc) { later(); ui(); } });
+
+  /* ---------- On a shirt: the garment shows the layers you made, not the classic view ---------- */
+  var classicDesign = designCanvas;
+  designCanvas = function () {
+    if (cut() || !MX.isOn()) return classicDesign();
+    var k = Math.min(1, 1400 / Math.max(src.width, src.height)), W = Math.round(src.width * k), Hh = Math.round(src.height * k), t = document.createElement('canvas'); t.width = W; t.height = Hh;
+    var g = t.getContext('2d'); MX.compose(g, W, Hh);
+    var im = g.getImageData(0, 0, W, Hh), d = im.data, dark = X.paper === '#1a1a1a';
+    for (var q = 0; q < d.length; q += 4) { if (dark ? (d[q] < 6 && d[q + 1] < 6 && d[q + 2] < 6) : (d[q] > 249 && d[q + 1] > 249 && d[q + 2] > 249)) d[q + 3] = 0; }
+    g.putImageData(im, 0, 0); return t;
+  };
+  ['vArt', 'vShirt'].forEach(function (id) { var b = $(id); if (b) b.addEventListener('click', function () { setTimeout(function () { $('sdPills').hidden = !has || step !== 'make' || M.mock; if (MX.isOn()) MX.render(true); }, 30); }); });
 
   /* ---------- the picture ---------- */
   $('sdAddArt').onclick = function () { $('file').click(); };

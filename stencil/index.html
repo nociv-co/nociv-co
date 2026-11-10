@@ -1630,6 +1630,7 @@ section.mix-on > :not(.mixprint):not(h2):not(.topattern){display:none!important}
     if (!active) return; if (!has) { $('status').textContent = 'Add a photo first, then come back to Mix.'; return; }
     if (rq) return; rq = requestAnimationFrame(function () {
       rq = 0; if (!active) return;
+      if (M.mock && typeof showMock === 'function') { showMock(); return; } // On a shirt shows the mix on the garment
       var z = size(dragOn ? 640 : 1000); c.width = z[0]; c.height = z[1]; c.style.width = '';
       var w = $('wrap'); if (w) w.classList.remove('zoom'); var zb = $('zoom'); if (zb) zb.hidden = true;
       compose(ctx, z[0], z[1]);
