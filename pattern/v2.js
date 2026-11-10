@@ -394,7 +394,9 @@
     if (L && NUMS) { var ctn = content(L, 1000), pn = pos(L); lbl('Across ' + inch(pn[0] * D.tileIn) + ', down ' + inch(pn[1] * D.tileIn) + ', ' + inch(ctn ? ctn.w / 1000 * D.tileIn : 0) + ' wide'); }
     else lbl(L ? '' : D.layers.length ? 'Tap a piece to change it' : 'Tap + to add art, words or a symbol');
   }
-  function lbl(t) { $('lbl').textContent = t; }
+  var FLASH = null;
+  function lbl(t) { if (FLASH && Date.now() < FLASH.until) t = FLASH.t; $('lbl').textContent = t; }
+  function flash(t) { FLASH = { t: t, until: Date.now() + 4500 }; lbl(t); setTimeout(draw, 4600); }
   function inch(v) { return (Math.round(v * 100) / 100) + ' in'; }
   // Yard view: a ruler in inches along the top with the repeat marked, and the selvage down the left edge
   function yardMarks(g, W, H, ppi, u, big, top) {
@@ -634,7 +636,7 @@
     {
       var tabs = [['art', 'My art'], ['words', 'Words'], ['sym', 'Symbols'], ['shape', 'Shapes'], ['fab', 'Fabrics']], at = U.addTab;
       var h = '<div class="tabs5" data-tabs="1">' + tabs.map(function (x) { return '<button type="button" data-tab="' + x[0] + '" aria-pressed="' + (x[0] === at) + '">' + x[1] + '</button>'; }).join('') + '</div>';
-      if (at === 'art') h += '<div class="grid g4">' + ART.map(function (a) { return '<button type="button" class="pick" data-addart="' + a.id + '"><canvas data-mini="art:' + a.id + '" width="120" height="72"></canvas></button>'; }).join('') + '<button type="button" class="pick" data-a="upload">' + ico('add') + 'Add art</button></div>';
+      if (at === 'art') h += '<div class="grid g4">' + ART.map(function (a) { return '<div class="artw"><button type="button" class="pick" data-addart="' + a.id + '"><canvas data-mini="art:' + a.id + '" width="120" height="72"></canvas></button><button type="button" class="artx" data-delart="' + a.id + '" aria-label="Remove this art">&times;</button></div>'; }).join('') + '<button type="button" class="pick" data-a="upload">' + ico('add') + 'Add art</button></div>';
       if (at === 'words') h += '<div class="grid g4">' + LAYS.map(function (x) { return '<button type="button" class="pick" data-addw="' + x[0] + '"><canvas data-mini="lay:' + x[0] + '" width="120" height="72"></canvas>' + x[1] + '</button>'; }).join('') + '</div>';
       if (at === 'sym') h += '<div class="grid g4">' + SYMS.map(function (x) { return '<button type="button" class="pick" data-adds="' + x[0] + '"><canvas data-mini="sym:' + x[0] + '" width="120" height="72"></canvas>' + x[1] + '</button>'; }).join('') + '</div>';
       if (at === 'shape') h += '<div class="grid g5">' + SHAPES.map(function (x) { return '<button type="button" class="pick" data-addsh="' + x[0] + '"><canvas data-mini="shape:' + x[0] + '" width="96" height="72"></canvas>' + x[1] + '</button>'; }).join('') + '</div>';
@@ -743,10 +745,16 @@
   var panelClick;
   function openAdd() { $('addIn').innerHTML = addHtml(); minis($('addIn')); $('addSheet').hidden = false; $('fab').classList.remove('pulse'); try { localStorage.setItem('nocivPattern2Fab', '1'); } catch (e) {} }
   $('fab').addEventListener('click', openAdd);
+  $('trash').addEventListener('click', function () {
+    if (sel()) { act('del'); return; }
+    if (!D.layers.length && !D.fab) return;
+    shelve(false); commit(); D = freshDoc(); U.cur = null; U.sel = null; U.tool = null; U.ptool = 'repeat'; U.view = 'tile'; flash('Fresh start. Last design saved in My patterns.'); changed();
+  });
   $('addSheet').addEventListener('click', function (e) {
     if (e.target === $('addSheet')) { $('addSheet').hidden = true; return; }
     var b = e.target.closest('button'); if (!b) return;
     if (b.dataset.tab) { U.addTab = b.dataset.tab; $('addIn').innerHTML = addHtml(); minis($('addIn')); return; }
+    if (b.dataset.delart) { var id = b.dataset.delart; commit(); ART = ART.filter(function (a) { return a.id !== id; }); D.layers = D.layers.filter(function (x) { return !(x.t === 'art' && x.aid === id); }); if (U.sel && !layer(U.sel)) { U.sel = null; U.tool = null; } idbDel('lib:' + id); idbDel('src:' + id); artVer++; changed(); $('addIn').innerHTML = addHtml(); minis($('addIn')); return; }
     $('addSheet').hidden = true; if (b.dataset.fab) { U.sel = null; U.ptool = 'ground'; } panelClick(e);
   });
   $('panel').addEventListener('click', panelClick = function (e) {
@@ -965,7 +973,7 @@
   function render() {
     document.documentElement.classList.toggle('righty', HAND === 'right');
     $('home').hidden = true; // no first page: it always opens straight into the canvas
-    toolbar(); $('fab').hidden = U.step !== 'make'; if (U.step !== 'make' || U.view !== 'tile') placeCtx(0, 0, false);
+    toolbar(); $('fab').hidden = U.step !== 'make'; $('trash').hidden = U.step !== 'make'; $('trash').setAttribute('aria-label', sel() ? 'Delete this piece' : 'Start fresh'); $('trash').classList.toggle('piece', !!sel()); if (U.step !== 'make' || U.view !== 'tile') placeCtx(0, 0, false);
     var pn = $('panel'), s = pn.scrollTop; pn.innerHTML = panelHtml(); pn.scrollTop = s; minis();
     var cv2 = U.view !== 'tile'; $('clothChip').hidden = !cv2; $('clothChip').textContent = clothShort(D.cloth); $('clothChip').setAttribute('aria-pressed', String(cv2 && U.clothOpen));
     var co = cv2 && U.clothOpen && U.step !== 'look', cl = $('cloths'); cl.hidden = !co;
