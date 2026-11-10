@@ -928,7 +928,7 @@
   function changed() { tcache = {}; keep(); render(); }
   function render() {
     document.documentElement.classList.toggle('righty', HAND === 'right');
-    $('home').hidden = U.started || D.layers.length > 0;
+    $('home').hidden = true; // no first page: it always opens straight into the canvas
     toolbar();
     var pn = $('panel'), s = pn.scrollTop; pn.innerHTML = panelHtml(); pn.scrollTop = s; minis();
     var cv2 = U.view !== 'tile'; $('clothChip').hidden = !cv2; $('clothChip').textContent = clothShort(D.cloth); $('clothChip').setAttribute('aria-pressed', String(cv2 && U.clothOpen));
