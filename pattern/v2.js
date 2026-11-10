@@ -248,9 +248,10 @@
   function fabColors(doc) { doc = doc || D; var f = doc.fab; return (f && f.c) || [gHex(doc)].concat(doc.pal.length ? doc.pal : ['#1a1a1a', '#c8412f']).concat(['#1c2b45', '#d4af37', '#2a9d8f']); }
   function fabTile(f, ppi, cols) {
     cols = cols || fabColors(); var sc = f.sz || 1;
-    if (f.k === 'plaid') { var p = E.PLAIDS.filter(function (x) { return x[0] === f.p; })[0] || E.PLAIDS[0]; return E.plaidTile({ sett: p[3], mirror: p[4], threadIn: .02 * sc, ppi: ppi, colors: cols, weave: 'twill', step: 1 }); }
-    if (f.k === 'stripes') { var st = E.STRIPES.filter(function (x) { return x[0] === f.p; })[0] || E.STRIPES[0]; return E.stripeTile({ bands: st[3].map(function (b) { return [b[0], b[1] * sc]; }), dir: st[4], ppi: ppi, colors: cols }); }
-    if (f.p === 'gingham') return E.plaidTile({ sett: [[0, 6], [1, 6]], mirror: false, threadIn: .02 * sc, ppi: ppi, colors: cols, weave: 'plain', step: 1 });
+    var tIn = sc / (f.tpi || 50);
+    if (f.k === 'plaid') { var p = E.PLAIDS.filter(function (x) { return x[0] === f.p; })[0] || E.PLAIDS[0]; return E.plaidTile({ sett: f.sett || p[3], mirror: f.mirror != null ? f.mirror : p[4], threadIn: tIn, ppi: ppi, colors: cols, weave: f.weave || 'twill', step: 1 }); }
+    if (f.k === 'stripes') { var st = E.STRIPES.filter(function (x) { return x[0] === f.p; })[0] || E.STRIPES[0]; return E.stripeTile({ bands: (f.bands || st[3]).map(function (b) { return [b[0], b[1] * sc]; }), dir: f.dir || st[4], ppi: ppi, colors: cols }); }
+    if (f.p === 'gingham') return E.plaidTile({ sett: f.sett || [[0, 6], [1, 6]], mirror: f.mirror || false, threadIn: tIn, ppi: ppi, colors: cols, weave: f.weave || 'plain', step: 1 });
     return E.checkTile({ kind: f.p, cellIn: .5 * sc, ppi: ppi, colors: cols, fill: 'solid', scale: 1, seed: 3 });
   }
   var fcache = {};
@@ -373,7 +374,7 @@
     }
     if (U.view !== 'tile' || U.step !== 'make') {
       var across = (U.view === 'yard' ? 42 : U.view === 'swatch' ? 8 : D.tileIn * 1.6) / (U.zoom || 1), ppi = W / across, t = tile(ppi);
-      g.fillStyle = g.createPattern(t, 'repeat'); g.fillRect(0, 0, W, H); HIT = null;
+      g.fillStyle = g.createPattern(t, 'repeat'); g.fillRect(0, 0, W, H); HIT = null; placeCtx(0, 0, false);
       if (U.view !== 'tile') laycloth(g, W, H, D.cloth, ppi);
       if (U.view === 'yard') yardMarks(g, W, H, ppi, u, false, 50 * u);
       var ti = tileInches();
@@ -489,7 +490,7 @@
     if (!G.moved && Math.hypot(dx, dy) < 8 * (HIT ? HIT.u : 1)) return;
     G.moved = true; clearTimeout(lpTimer);
     if (G.mode === 'tap' && (U.zoom || 1) > 1) { U.panX = (G.px0 || 0) + dx; U.panY = (G.py0 || 0) + dy; draw(); return; }
-    if (G.mode === 'drag' && G.L && !G.L.hug) {
+    if (G.mode === 'drag' && G.L && !G.L.hug && G.L.gcell == null) {
       if (!G.committed) { commit(); G.committed = true; if (U.sel !== G.L.id) { U.sel = G.L.id; U.tool = null; } }
       var s = snapPos(G.lx + dx / HIT.B, G.ly + dy / HIT.B, G.L); G.L.x = s[0]; G.L.y = s[1]; draw();
     }
@@ -501,7 +502,16 @@
     G = null; GUIDES = [];
     if (g.mode === 'none') { changed(true); return; }
     if (g.mode === 'handle' || g.mode === 'pinch') { g.L.auto = false; g.L.s = Math.round(g.L.s * 1000) / 1000; changed(true); return; }
-    if (!g.moved) { var was = U.sel; U.sel = g.L ? g.L.id : null; if (U.sel) U.addOpen = null; if (U.sel !== was) U.tool = U.sel ? firstTool(g.L) : null; render(); return; }
+    if (!g.moved && D.gs && D.grid > 1 && HIT && (!g.L || g.L.gcell != null)) {
+      var bx = (g.x0 - HIT.ox) / HIT.B, by = (g.y0 - HIT.oy) / HIT.B;
+      if (bx >= 0 && by >= 0 && bx < 1 && by < 1) {
+        var gn = D.gs.n, cell = Math.floor(by * gn) * gn + Math.floor(bx * gn); gselect(cell); U.addOpen = null; U.gtool = U.gtool || 'gel';
+        var B0 = HIT.B / (U.zoom || 1), Z = Math.min(3, Math.max(1.5, gn / 2)), B1 = B0 * Z; U.zoom = Z; U.panX = -(((cell % gn) + .5) / gn - .5) * B1; U.panY = -((Math.floor(cell / gn) + .5) / gn - .5) * B1;
+        render(); return;
+      }
+      if (U.gsel) { U.gsel = null; U.zoom = 1; U.panX = 0; U.panY = 0; render(); return; }
+    }
+    if (!g.moved) { var was = U.sel; U.gsel = null; U.sel = g.L ? g.L.id : null; if (U.sel) U.addOpen = null; if (U.sel !== was) U.tool = U.sel ? firstTool(g.L) : null; render(); return; }
     if (g.L) { g.L.x = Math.round(g.L.x * 1000) / 1000; g.L.y = Math.round(g.L.y * 1000) / 1000; }
     changed(true);
   }
@@ -611,6 +621,7 @@
   function toolsFor() {
     var L = sel();
     if (U.step !== 'make') return [];
+    if (U.gsel && U.gsel.length) return [['done', 'Done'], ['gel', 'Piece'], ['gink', 'Ink'], ['gback', 'Back'], ['gsize', 'Size']];
     if (!L) return [];
     var t = [['done', 'Done']];
     if (L.t === 'words') t.push(['text', 'Text'], ['font', 'Font']);
@@ -622,12 +633,13 @@
   function toolbar() {
     var list = toolsFor(), tool = curTool();
     $('tools').classList.toggle('on', list.length > 0); if (!list.length) return;
-    $('tools').innerHTML = list.map(function (x) { return '<button type="button" data-t="' + x[0] + '" aria-pressed="' + (x[0] === tool) + '"' + (x[0] === 'done' ? ' class="done"' : '') + '>' + ico(x[0] === 'shape' ? 'ground' : x[0]) + '<span>' + x[1] + '</span></button>'; }).join('');
+    $('tools').innerHTML = list.map(function (x) { return '<button type="button" data-t="' + x[0] + '" aria-pressed="' + (x[0] === tool) + '"' + (x[0] === 'done' ? ' class="done"' : '') + '>' + ico({ shape: 'ground', gel: 'art', gink: 'color', gback: 'ground', gsize: 'size' }[x[0]] || x[0]) + '<span>' + x[1] + '</span></button>'; }).join('');
   }
-  function curTool() { if (!sel()) return U.ptool === 'ground' || U.ptool === 'ideas' ? U.ptool : 'ground'; var list = toolsFor().map(function (x) { return x[0]; }); if (U.tool && list.indexOf(U.tool) >= 0) return U.tool; return sel() ? firstTool(sel()) : U.ptool; }
+  function curTool() { if (U.gsel && U.gsel.length) return ['gel', 'gink', 'gback', 'gsize'].indexOf(U.gtool) >= 0 ? U.gtool : 'gel'; if (!sel()) return U.ptool === 'ground' || U.ptool === 'grid' ? U.ptool : 'ground'; var list = toolsFor().map(function (x) { return x[0]; }); if (U.tool && list.indexOf(U.tool) >= 0) return U.tool; return sel() ? firstTool(sel()) : U.ptool; }
   $('tools').addEventListener('click', function (e) {
     var b = e.target.closest('button[data-t]'); if (!b) return; var t = b.dataset.t;
-    if (t === 'done') { U.sel = null; U.tool = null; render(); return; }
+    if (t === 'done') { U.sel = null; U.tool = null; U.gsel = null; U.zoom = 1; U.panX = 0; U.panY = 0; render(); return; }
+    if (/^g(el|ink|back|size)$/.test(t)) { U.gtool = t; render(); return; }
     if (t === 'crop') { cropArt(); return; }
     if (t === 'ideas') { if (ART.length) showStarters(); else { WANT = 'start'; $('artfile').click(); } return; }
     U.tool = t; render();
@@ -636,10 +648,12 @@
   function panelHtml() {
     if (U.step === 'look') return lookHtml();
     if (U.step === 'repeat') return repeatHtml();
+    if (U.step === 'fabric') return fabricHtml();
     if (U.step === 'save') return saveHtml();
     var L = sel(), t = curTool();
+    if (U.gsel && U.gsel.length && D.gs) return squareHtml(t);
     if (U.addOpen) { U.addTab = U.addOpen; return addHtml(true); }
-    if (!L) return '<p class="ptitle">Pattern</p><div class="tiles">' + [['ground', 'Color', 'ground'], ['ideas', 'Ideas', 'ideas']].map(function (x) { return '<button type="button" class="tile" data-pt="' + x[0] + '" aria-pressed="' + (t === x[0]) + '">' + ico(x[2]) + '<small>' + x[1] + '</small></button>'; }).join('') + '</div>' + toolHtml(t, null);
+    if (!L) return '<p class="ptitle">Pattern</p><div class="tiles">' + [['ground', 'Color', 'ground'], ['grid', 'Grid', 'grid']].map(function (x) { return '<button type="button" class="tile" data-pt="' + x[0] + '" aria-pressed="' + (t === x[0]) + '">' + ico(x[2]) + '<small>' + x[1] + '</small></button>'; }).join('') + '</div>' + toolHtml(t, null);
     return '<p class="ptitle">' + esc(pieceName(L)) + '</p>' + toolHtml(t, L);
   }
   function pieceName(L) { if (L.t === 'art') return 'Your art'; if (L.t === 'words') return 'Words'; if (L.t === 'sym') return (SYMS.filter(function (x) { return x[0] === L.k; })[0] || ['', 'Symbol'])[1]; return (SHAPES.filter(function (x) { return x[0] === L.k; })[0] || ['', 'Shape'])[1]; }
@@ -665,7 +679,8 @@
       (D.rep === 'kale' ? '<div class="row"><b>Slices</b>' + seg('kale', [['kaleSquare', 'Square'], ['kaleHex', 'Hexagon'], ['kaleTri', 'Triangle']], D.kale) + '</div>' : '') +
       stepper('tile', 'Tile', fmtIn(D.tileIn));
     if (t === 'ground') return '<p class="h">Background color</p><button type="button" class="pick nocol" data-gnd="none" aria-pressed="' + (D.ground === 'none') + '" style="min-height:40px;margin-bottom:8px;flex-direction:row;gap:8px"><i class="clear"></i>No color, just my art</button>' + swatches('gnd', D.ground === 'none' ? '' : D.ground) + (D.fab ? '<div style="height:8px"></div>' + stepper('fsz', 'Fabric', Math.round((D.fab.sz || 1) * 100) + '%') + '<button type="button" class="btn" data-a="fabcols">Mix up fabric colors</button><button type="button" class="btn" data-fab="none">Remove fabric</button>' : '<p class="note" style="margin-top:8px">Plaid, stripes and checks are under +, Fabrics.</p>');
-    if (t === 'grid') return stepper('grid', 'Grid', D.grid > 1 ? D.grid + ' x ' + D.grid : 'Off') + '<p class="note">A guide for placing pieces. Pieces snap to it. It never prints.</p>';
+    if (t === 'grid') return stepper('grid', 'Grid', D.grid > 1 ? D.grid + ' x ' + D.grid : 'Off') + (D.grid > 1 ? '<div class="row"><b>Squares</b>' + seg('gsq', [['0', 'Guide only'], ['1', 'Use squares']], D.gs ? '1' : '0') + '</div>' : '') + '<p class="note">' + (D.gs ? 'Tap a square on the picture to style it. Change one, a row, a column, all, or every square with the same piece.' : 'A guide for placing pieces. Use squares turns it into a grid you fill and style square by square.') + '</p>';
+    if (t === 'xgrid') return stepper('grid', 'Grid', D.grid > 1 ? D.grid + ' x ' + D.grid : 'Off') + '<p class="note">A guide for placing pieces. Pieces snap to it. It never prints.</p>';
     if (!L) return '';
     if (t === 'text') {
       var hugOK = /arc|circle|seal/.test(L.lay), shapes = D.layers.filter(function (x) { return x.t === 'shape'; });
@@ -730,7 +745,11 @@
   function gridBuild() {
     var gs = D.gs; D.layers = D.layers.filter(function (x) { return x.gcell == null; }); if (!gs) return;
     gs.cells.forEach(function (k, i) {
-      if (k < 0 || !gs.tpl[k]) return; var t = clone(gs.tpl[k]); t.id = uid(); t.gcell = i; t.x = ((i % gs.n) + .5) / gs.n; t.y = (Math.floor(i / gs.n) + .5) / gs.n; delete t.grp; D.layers.push(t);
+      var o = (gs.ov && gs.ov[i]) || {}, cx = ((i % gs.n) + .5) / gs.n, cy = (Math.floor(i / gs.n) + .5) / gs.n;
+      if (o.back && o.back !== 'none') D.layers.push({ id: uid(), t: 'shape', k: o.back === 'rounded' ? 'square' : o.back, c: o.bc || '#f3efe6', s: (o.back === 'square' ? 1.08 : .98) / gs.n, x: cx, y: cy, r: 0, op: 1, gcell: i, gback: 1 });
+      if (k < 0 || !gs.tpl[k]) return; var t = clone(gs.tpl[k]); t.id = uid(); t.gcell = i; t.x = cx + (o.nx || 0) / gs.n; t.y = cy + (o.ny || 0) / gs.n; delete t.grp;
+      if (o.sm) t.s *= o.sm; if (o.r != null) t.r = o.r; if (o.c) { if (t.t === 'art') t.tint = o.c; else t.c = o.c; }
+      D.layers.push(t);
     });
   }
   function gridFill() {
@@ -742,12 +761,66 @@
     D.layers = D.layers.filter(function (x) { return ids.indexOf(x.id) < 0; });
     D.gs = { n: n, mix: mix, order: ids, tpl: tpl, cells: cells }; U.slots = null; gridBuild(); changed();
   }
+  /* ---------- squares: the grid as plug and play (like the Block builder) ---------- */
+  var BACKS = [['none', 'None'], ['square', 'Square'], ['rounded', 'Rounded'], ['circle', 'Circle'], ['diamond', 'Diamond'], ['hex', 'Hexagon'], ['star', 'Star'], ['shield', 'Shield'], ['arch', 'Arch']];
+  var GSCOPE = [['cell', 'Square'], ['row', 'Row'], ['col', 'Column'], ['all', 'All'], ['same', 'Same']];
+  function gselect(a) {
+    var gs = D.gs, n = gs.n, r = Math.floor(a / n), c = a % n, sc = U.gscope || 'cell', out = [];
+    for (var i = 0; i < n * n; i++) { var ok = sc === 'all' || (sc === 'row' && Math.floor(i / n) === r) || (sc === 'col' && i % n === c) || (sc === 'cell' && i === a) || (sc === 'same' && gs.cells[i] === gs.cells[a]); if (ok) out.push(i); }
+    U.gsel = out; U.ganchor = a; U.sel = null;
+  }
+  function gov(i) { var gs = D.gs; gs.ov = gs.ov || {}; return gs.ov[i] || (gs.ov[i] = {}); }
+  function gsetAll(fn) { commit(); U.gsel.forEach(function (i) { fn(gov(i), i); }); gridBuild(); changed(); }
+  function squareHtml(t) {
+    var gs = D.gs, a = U.ganchor, o = (gs.ov && gs.ov[a]) || {}, k = gs.cells[a], tp = gs.tpl[k], n = gs.n;
+    var name = (U.gscope || 'cell') === 'cell' ? 'Square ' + (Math.floor(a / n) + 1) + '-' + (a % n + 1) : ({ row: 'Row ' + (Math.floor(a / n) + 1), col: 'Column ' + (a % n + 1), all: 'All squares', same: 'Every ' + (k < 0 ? 'empty' : 'ABCDEFGH'[k]) + ' square' })[U.gscope];
+    var h = '<p class="ptitle">' + name + '</p><div class="row">' + seg('gscope', GSCOPE, U.gscope || 'cell') + '</div>';
+    if (t === 'gel') {
+      h += '<div class="grid g5">' + gs.tpl.map(function (x, i) { return '<button type="button" class="pick" data-gpick="' + i + '" aria-pressed="' + (k === i) + '"><canvas data-mini="tpl:' + i + '" width="80" height="60"></canvas>' + 'ABCDEFGH'[i] + '</button>'; }).join('') + '<button type="button" class="pick" data-gpick="-1" aria-pressed="' + (k < 0) + '"><span class="clear"></span>Empty</button></div>';
+      var fp = freePieces(), lib = ART.slice(0, 8);
+      h += fold('gnew', 'Add a new piece', 'art, symbol, shape', (fp.length ? '<p class="h">On your canvas</p><div class="grid g5" style="margin-bottom:8px">' + fp.map(function (L) { return '<button type="button" class="pick" data-gnewl="' + L.id + '"><canvas data-mini="piece:' + L.id + '" width="80" height="60"></canvas></button>'; }).join('') + '</div>' : '') +
+        (lib.length ? '<p class="h">My art</p><div class="grid g5" style="margin-bottom:8px">' + lib.map(function (x) { return '<button type="button" class="pick" data-gnewa="' + x.id + '"><canvas data-mini="art:' + x.id + '" width="80" height="60"></canvas></button>'; }).join('') + '</div>' : '') +
+        '<p class="h">Symbols</p><div class="grid g4" style="margin-bottom:8px">' + SYMS.map(function (x) { return '<button type="button" class="pick" data-gnews="' + x[0] + '"><canvas data-mini="sym:' + x[0] + '" width="80" height="50"></canvas>' + x[1] + '</button>'; }).join('') + '</div>' +
+        '<p class="h">Shapes</p><div class="grid g5">' + SHAPES.map(function (x) { return '<button type="button" class="pick" data-gnewh="' + x[0] + '"><canvas data-mini="shape:' + x[0] + '" width="80" height="50"></canvas></button>'; }).join('') + '</div>');
+      return h;
+    }
+    if (t === 'gink') return h + (tp && tp.t === 'art' ? '<div class="row"><b>Art</b>' + seg('gtint', [['0', 'As it is'], ['1', 'One color']], o.c ? '1' : '0') + '</div>' : '') + swatches('gcol', o.c || (tp && (tp.c || tp.tint)) || '#1f2a44');
+    if (t === 'gback') return h + '<div class="grid g5" style="margin-bottom:8px">' + BACKS.map(function (x) { return '<button type="button" class="pick" data-gbk="' + x[0] + '" aria-pressed="' + ((o.back || 'none') === x[0]) + '"><canvas data-mini="shape:' + (x[0] === 'none' ? 'ring' : x[0] === 'rounded' ? 'square' : x[0]) + '" width="80" height="50"></canvas>' + x[1] + '</button>'; }).join('') + '</div>' + swatches('gbc', o.bc || '#f3efe6');
+    if (t === 'gsize') return h + stepper('gs_s', 'Size', Math.round((o.sm || 1) * 100) + '%') + stepper('gs_r', 'Turn', (o.r || 0) + '°') + stepper('gs_x', 'Across', Math.round((o.nx || 0) * 100) + '%') + stepper('gs_y', 'Down', Math.round((o.ny || 0) * 100) + '%') + '<button type="button" class="btn" data-a="greset">Reset these squares</button>';
+    return h;
+  }
   function lookHtml() {
     var cols = colorsInUse(), ks = wayKinds();
     return '<div class="ways">' + [['now', 'Now']].concat(ks).map(function (k, i) { return '<button type="button" class="pick" data-way="' + i + '" aria-pressed="' + (i === 0) + '"><canvas data-mini="way:' + i + '" data-lazy="1" width="150" height="150"></canvas>' + k[1] + '</button>'; }).join('') + '</div>' +
       '<button type="button" class="btn" data-a="wayshuf" style="margin:8px 0">Other colorways</button>' +
       '<p class="h">Colors in your pattern</p><p class="note">Change one and every colorway changes with it.</p><div class="sw">' + cols.map(function (h, i) { return '<label style="background:' + h + ';border-style:solid" aria-label="Color ' + (i + 1) + '"><input type="color" data-ci="' + i + '" value="' + h + '"></label>' + (NUMS ? '<span class="hex">' + h + '</span>' : ''); }).join('') + '</div>' +
-      '<p class="h" style="margin-top:12px">Printed on</p>' + clothRow();
+      '';
+  }
+  /* ---------- Fabric step: simple on top, depth one tap away ---------- */
+  var FKINDS = [['none', 'None'], ['plaid', 'Plaid'], ['stripes', 'Stripes'], ['checks', 'Checks']];
+  function presetOf(f) { if (!f) return null; if (f.k === 'plaid') return E.PLAIDS.filter(function (x) { return x[0] === f.p; })[0]; if (f.k === 'stripes') return E.STRIPES.filter(function (x) { return x[0] === f.p; })[0]; return null; }
+  function fBands(f) { if (f.k === 'stripes') return f.bands || (presetOf(f) || E.STRIPES[0])[3]; if (f.k === 'plaid') return f.sett || (presetOf(f) || E.PLAIDS[0])[3]; if (f.p === 'gingham') return f.sett || [[0, 6], [1, 6]]; return null; }
+  function fColorCount(f) { var b = fBands(f), m = 1; if (b) b.forEach(function (x) { m = Math.max(m, x[0]); }); return Math.max(2, m + 1); }
+  function fold(id, label, summary, inner) {
+    var open = U.fopen === id;
+    return '<button type="button" class="fold" data-fold="' + id + '" aria-expanded="' + open + '"><b>' + label + '</b><span>' + summary + '</span><svg viewBox="0 0 24 24"><path d="M6 9l6 6 6-6"/></svg></button>' + (open ? '<div class="foldin">' + inner + '</div>' : '');
+  }
+  function fabricHtml() {
+    var f = D.fab, kind = f ? f.k : 'none';
+    var h = '<p class="ptitle">Fabric</p><div class="row">' + seg('fkind', FKINDS, kind) + '</div>';
+    if (f) {
+      var list = kind === 'plaid' ? E.PLAIDS.filter(function (x) { return x[0] !== 'gingham'; }) : kind === 'stripes' ? E.STRIPES : CHECKS;
+      h += '<div class="crow" style="margin-bottom:10px">' + list.map(function (x) { return '<button type="button" class="pick" data-fab="' + kind + ':' + x[0] + '" aria-pressed="' + (f.p === x[0]) + '"><canvas data-mini="fab:' + kind + ':' + x[0] + '" width="120" height="72"></canvas>' + x[1] + '</button>'; }).join('') + '</div>';
+      var cols = fabColors(), nC = fColorCount(f), fci = Math.min(U.fci || 0, nC - 1);
+      h += fold('cols', 'Thread colors', nC + ' colors', '<div class="sw" style="margin-bottom:8px">' + cols.slice(0, nC).map(function (c, i) { return '<button type="button" data-fci="' + i + '" style="background:' + c + '" aria-pressed="' + (i === fci) + '" aria-label="Thread color ' + (i + 1) + '"></button>'; }).join('') + '</div><p class="note">Pick a thread above, then its new color.</p>' + swatches('fcol', cols[fci]));
+      var bands = fBands(f);
+      if (bands) h += fold('bands', f.k === 'stripes' ? 'Stripes' : 'Bands', bands.length + ' bands', '<div class="bandl">' + bands.map(function (b, i) { return '<div class="bandr"><button type="button" class="bchip" data-bcyc="' + i + '" style="background:' + cols[b[0]] + '" aria-label="Change color"></button><div class="st"><button type="button" data-bw="' + i + ':-1">&minus;</button><output>' + (f.k === 'stripes' ? Math.round(b[1] * 100) / 100 + ' in' : b[1] + ' threads') + '</output><button type="button" data-bw="' + i + ':1">+</button></div><button type="button" class="bx" data-brm="' + i + '" aria-label="Remove">&times;</button></div>'; }).join('') + '</div><button type="button" class="btn" data-a="badd">Add a band</button>');
+      if (f.k === 'plaid' || f.p === 'gingham') h += fold('weave', 'Weave', ({ twill: 'Twill', plain: 'Plain', flat: 'Printed' })[f.weave || (f.p === 'gingham' ? 'plain' : 'twill')] + ', ' + (f.tpi || 50) + ' per in', '<div class="row"><b>Weave</b>' + seg('fweave', [['twill', 'Twill'], ['plain', 'Plain'], ['flat', 'Printed']], f.weave || (f.p === 'gingham' ? 'plain' : 'twill')) + '</div><div class="row"><b>Mirror</b>' + seg('fmir', [['1', 'Mirror'], ['0', 'Repeat']], String((f.mirror != null ? f.mirror : (presetOf(f) || [])[4]) ? 1 : 0)) + '</div>' + stepper('ftpi', 'Threads', (f.tpi || 50) + ' per in'));
+      if (f.k === 'stripes') h += fold('weave', 'Direction', ({ h: 'Across', v: 'Up and down', d: 'Diagonal' })[f.dir || (presetOf(f) || [])[4] || 'h'], '<div class="row">' + seg('fdir', [['h', 'Across'], ['v', 'Up and down'], ['d', 'Diagonal']], f.dir || (presetOf(f) || [])[4] || 'h') + '</div>');
+      h += fold('size', 'Size', Math.round((f.sz || 1) * 100) + '%', stepper('fsz', 'Size', Math.round((f.sz || 1) * 100) + '%'));
+    } else h += '<p class="note">Pick Plaid, Stripes or Checks to weave a fabric under your art.</p>';
+    h += fold('cloth', 'Printed on', clothShort(D.cloth), clothRow());
+    return h;
   }
   function clothRow() {
     var sug = E.SUGGEST[clothKey()] || [];
@@ -794,6 +867,7 @@
         else if (what === 'lay') { var L = { tx: v === 'seal' ? 'TOP' : 'WORDS', tx2: 'BOTTOM', f: 'FS Archivo Black', lay: v, sp: .04, bend: 70, c: '#1a1a1a', s: 1 }, wc = wordsCanvas(L, 26, 0), k2 = Math.min(W / wc.width, H / wc.height) * .92; g.drawImage(wc, (W - wc.width * k2) / 2, (H - wc.height * k2) / 2, wc.width * k2, wc.height * k2); }
         else if (what === 'rep') { var dv = clone(D); dv.rep = v; withDoc(dv, function () { var ti = tileInches(); swatchInto(c, Math.max(ti[0], ti[1]) * 2.2, null); }); }
         else if (what === 'mix') { var cl = ['#1f2a44', '#d9dce6', '#8b8ea8'], nn2 = 4, cs = Math.min(W / nn2, H / nn2), ox2 = (W - cs * nn2) / 2, oy2 = (H - cs * nn2) / 2, Rm = E.rng(5); for (var yy = 0; yy < nn2; yy++) for (var xx = 0; xx < nn2; xx++) { g.fillStyle = cl[mixSlot(v, yy, xx, nn2, v === 'same' ? 1 : 2, Rm)]; g.fillRect(ox2 + xx * cs + 1, oy2 + yy * cs + 1, cs - 2, cs - 2); } }
+        else if (what === 'tpl') { var tq = D.gs && D.gs.tpl[+v]; if (tq) { var lq = clone(tq), ctq = content(lq, 100), kq = ctq ? Math.min(W / ctq.w, H / ctq.h) * .8 : 1; g.save(); g.translate(W / 2, H / 2); g.scale(kq, kq); lq.r = 0; drawLayer(g, lq, 100, false, false, 'flip'); g.restore(); } }
         else if (what === 'piece') { var Lp = layer(v); if (Lp) { var lp = clone(Lp), ctp = content(lp, 100), kp = ctp ? Math.min(W / ctp.w, H / ctp.h) * .8 : 1; g.save(); g.translate(W / 2, H / 2); g.scale(kp, kp); lp.r = 0; drawLayer(g, lp, 100, false, false, 'flip'); g.restore(); } }
         else if (what === 'fab') { var p = v.split(':'), sv = D.fab; D.fab = { k: p[0], p: p[1], sz: 1, c: sv && sv.c }; var t = fabTile(D.fab, 40); D.fab = sv; g.fillStyle = g.createPattern(t, 'repeat'); g.fillRect(0, 0, W, H); }
         else if (what === 'mine') { var col = getComputedStyle(c.closest('button')).color; if (!LETTERS) { g.fillStyle = col; g.font = '800 15px ' + getComputedStyle(document.body).fontFamily; g.textAlign = 'center'; g.textBaseline = 'middle'; g.fillText('+ Yours', W / 2, H / 2); } else { var w2 = NocivLetters.word(v || 'Aa', LETTERS.dna, 60, col), k3 = Math.min(W * .9 / w2.width, H * .9 / w2.height); g.drawImage(w2, (W - w2.width * k3) / 2, (H - w2.height * k3) / 2, w2.width * k3, w2.height * k3); } }
@@ -831,6 +905,40 @@
   $('panel').addEventListener('click', panelClick = function (e) {
     var b = e.target.closest('button'); if (!b) return; var d = b.dataset, L = sel(), sg = b.closest('[data-sg]'), st = b.closest('[data-st]');
     if (d.pt) { U.ptool = d.pt; return render(); }
+    if (d.fold) { U.fopen = U.fopen === d.fold ? null : d.fold; return render(); }
+    if (d.fci != null) { U.fci = +d.fci; return render(); }
+    if (d.fcol && D.fab) { commit(); D.fab.c = fabColors().slice(); D.fab.c[U.fci || 0] = d.fcol; fcache = {}; return changed(); }
+    if ((d.bcyc != null || d.bw || d.brm != null || d.a === 'badd') && D.fab) {
+      commit(); var f = D.fab, key = f.k === 'stripes' ? 'bands' : 'sett', bl = clone(fBands(f)), nC = fColorCount(f), cl = fabColors();
+      if (d.bcyc != null) { var bi = +d.bcyc; bl[bi][0] = (bl[bi][0] + 1) % Math.min(cl.length, nC + 1); }
+      else if (d.bw) { var pr = d.bw.split(':'), wi = +pr[0], dw = +pr[1]; bl[wi][1] = f.k === 'stripes' ? clamp(Math.round((bl[wi][1] + dw * .05) * 100) / 100, .02, 4) : clamp(bl[wi][1] + dw * 2, 1, 120); }
+      else if (d.brm != null) { if (bl.length > 2) bl.splice(+d.brm, 1); }
+      else { var last = bl[bl.length - 1]; bl.push([(last[0] + 1) % nC, f.k === 'stripes' ? .25 : 6]); }
+      f[key] = bl; fcache = {}; return changed();
+    }
+    if (d.gpick != null && D.gs && U.gsel) { commit(); U.gsel.forEach(function (i) { D.gs.cells[i] = +d.gpick; }); gridBuild(); return changed(); }
+    if ((d.gnewl || d.gnewa || d.gnews || d.gnewh) && D.gs && U.gsel) {
+      var nt = d.gnewl ? clone(layer(d.gnewl)) : d.gnewa ? { t: 'art', aid: d.gnewa, s: .5, r: 0, op: 1 } : d.gnews ? { t: 'sym', k: d.gnews, c: accent(), s: .5, r: 0, op: 1 } : { t: 'shape', k: d.gnewh, c: accent(), s: .5, r: 0, op: 1 };
+      if (!nt) return; delete nt.id; delete nt.gcell; var ctn = content(nt, 1000), big = ctn ? Math.max(ctn.w, ctn.h) / 1000 : nt.s; nt.s = nt.s * .82 / D.gs.n / Math.max(.01, big);
+      commit(); D.gs.tpl.push(nt); var ni = D.gs.tpl.length - 1; U.gsel.forEach(function (i) { D.gs.cells[i] = ni; }); U.fopen = null; gridBuild(); return changed();
+    }
+    if (d.gcol && U.gsel) { gsetAll(function (o) { o.c = d.gcol; }); return; }
+    if (d.gbk && U.gsel) { gsetAll(function (o) { o.back = d.gbk; if (!o.bc) o.bc = '#f3efe6'; }); return; }
+    if (d.gbc && U.gsel) { gsetAll(function (o) { o.bc = d.gbc; if (!o.back || o.back === 'none') o.back = 'square'; }); return; }
+    if (d.a === 'greset' && U.gsel) { commit(); U.gsel.forEach(function (i) { if (D.gs.ov) D.gs.ov[i] = {}; }); gridBuild(); return changed(); }
+    if (sg && d.v != null && /^(fkind|fweave|fmir|fdir|gsq|gscope|gtint)$/.test(sg.dataset.sg)) {
+      var k0 = sg.dataset.sg, v0 = d.v;
+      if (k0 === 'gscope') { U.gscope = v0; gselect(U.ganchor); return render(); }
+      commit();
+      if (k0 === 'fkind') { if (v0 === 'none') D.fab = null; else if (!D.fab || D.fab.k !== v0) { var first = v0 === 'plaid' ? 'buffalo' : v0 === 'stripes' ? 'breton' : 'gingham'; D.fab = { k: v0 === 'checks' ? 'checks' : v0, p: first, sz: 1, c: D.fab && D.fab.c }; } }
+      else if (k0 === 'fweave') D.fab.weave = v0; else if (k0 === 'fmir') D.fab.mirror = v0 === '1'; else if (k0 === 'fdir') D.fab.dir = v0;
+      else if (k0 === 'gtint') { U.gsel.forEach(function (i) { var o = gov(i); o.c = v0 === '1' ? (o.c || swatchMain()) : null; }); gridBuild(); }
+      else if (k0 === 'gsq') {
+        if (v0 === '1' && !D.gs) { var fp0 = freePieces(); if (fp0.length) { U.slots = fp0.slice(0, 2).map(function (x) { return x.id; }); U.mix = 'checker'; HIST.pop(); gridFill(); return; } var nn = D.grid > 1 ? D.grid : 3, cc = []; for (var q = 0; q < nn * nn; q++) cc.push(-1); D.gs = { n: nn, mix: 'checker', order: [], tpl: [], cells: cc, ov: {} }; }
+        else if (v0 === '0') { D.layers.forEach(function (x) { delete x.gcell; delete x.gback; }); D.gs = null; U.gsel = null; }
+      }
+      fcache = {}; return changed();
+    }
     if (d.rp) { commit(); D.rep = d.rp; return changed(); }
     if (d.mix) { U.mix = d.mix; if (D.gs) { commit(); var R2 = E.rng(Math.floor(Math.random() * 1e6)); D.gs.mix = d.mix; D.gs.cells = D.gs.cells.map(function (_, i) { return mixSlot(d.mix, Math.floor(i / D.gs.n), i % D.gs.n, D.gs.n, D.gs.tpl.length, R2); }); gridBuild(); return changed(); } return render(); }
     if (d.slot) { var sl = (U.slots || []).slice(), at = sl.indexOf(d.slot); if (at >= 0) sl.splice(at, 1); else if (sl.length < 4) sl.push(d.slot); U.slots = sl; return render(); }
@@ -874,6 +982,8 @@
     if (st && d.d) {
       var n = st.dataset.st, dd = +d.d; commit();
       if (n === 'tile') D.tileIn = clamp(Math.round((D.tileIn + dd * .5) * 10) / 10, 1, 24);
+      else if (n === 'ftpi' && D.fab) { D.fab.tpi = clamp((D.fab.tpi || 50) + dd * 5, 10, 120); fcache = {}; }
+      else if (/^gs_[srxy]$/.test(n) && U.gsel) { U.gsel.forEach(function (i) { var o = gov(i); if (n === 'gs_s') o.sm = clamp(Math.round(((o.sm || 1) + dd * .1) * 10) / 10, .2, 3); else if (n === 'gs_r') o.r = ((o.r || 0) + dd * 15 + 360) % 360; else if (n === 'gs_x') o.nx = clamp(Math.round(((o.nx || 0) + dd * .05) * 100) / 100, -.5, .5); else o.ny = clamp(Math.round(((o.ny || 0) + dd * .05) * 100) / 100, -.5, .5); }); gridBuild(); }
       else if (n === 'grid') {
         var og = D.grid; D.grid = D.grid <= 1 ? (dd > 0 ? 3 : 0) : (D.grid + dd < 2 ? 0 : clamp(D.grid + dd, 2, 9));
         if (D.gs) { if (D.grid < 2) D.gs = null; else { var on = D.gs.n, nn = D.grid, R3 = E.rng(7); D.gs.tpl.forEach(function (t) { t.s = t.s * on / nn; }); D.gs.n = nn; D.gs.cells = []; for (var gi2 = 0; gi2 < nn * nn; gi2++) D.gs.cells.push(mixSlot(D.gs.mix, Math.floor(gi2 / nn), gi2 % nn, nn, D.gs.tpl.length, R3)); } gridBuild(); }
@@ -903,7 +1013,9 @@
     if (t.id === 'wtx' && L) { if (!t._c) { commit(); t._c = 1; } L.tx = t.value; fitWords(L); keep(); draw(); return; }
     if (t.id === 'wtx2' && L) { if (!t._c) { commit(); t._c = 1; } L.tx2 = t.value; keep(); draw(); return; }
     if (t.id === 'pname') { D.name = t.value.slice(0, 40); keep(); return; }
-    if (t.dataset.pk) { if (!t._c) { commit(); t._c = 1; } var a = t.dataset.pk, v = t.value; if (a === 'gnd') D.ground = v; else if (L && a === 'olc' && L.ol) L.ol.c = v; else if (L && a === 'col') { if (L.t === 'art') L.tint = v; else L.c = v; } keep(); draw(); return; }
+    if (t.dataset.pk) { if (!t._c) { commit(); t._c = 1; } var a = t.dataset.pk, v = t.value; if (a === 'fcol' && D.fab) { D.fab.c = fabColors().slice(); D.fab.c[U.fci || 0] = v; keep(); tcache = {}; fcache = {}; draw(); return; }
+      if ((a === 'gcol' || a === 'gbc') && D.gs && U.gsel) { U.gsel.forEach(function (i) { var o = gov(i); if (a === 'gcol') o.c = v; else { o.bc = v; if (!o.back || o.back === 'none') o.back = 'square'; } }); gridBuild(); keep(); tcache = {}; draw(); return; }
+      if (a === 'gnd') D.ground = v; else if (L && a === 'olc' && L.ol) L.ol.c = v; else if (L && a === 'col') { if (L.t === 'art') L.tint = v; else L.c = v; } keep(); draw(); return; }
     if (t.dataset.ci != null) { if (!t._c) { commit(); t._c = 1; t._old = colorsInUse()[+t.dataset.ci]; } swapColor(t._old, t.value); t._old = toHex(t.value); keep(); draw(); }
   });
   $('panel').addEventListener('change', function (e) { if (e.target.dataset.pk || e.target.dataset.ci != null) render(); });
@@ -1043,7 +1155,7 @@
   });
 
   /* ---------- steps, views, undo ---------- */
-  $('steps').addEventListener('click', function (e) { var b = e.target.closest('button[data-s]'); if (!b) return; U.step = b.dataset.s; U.msg = ''; U.clothOpen = false; U.shelfSel = null; U.delAsk = false; if (U.step !== 'make') { U.sel = null; } if (U.step === 'look' && U.view === 'tile') U.view = 'swatch'; render(); });
+  $('steps').addEventListener('click', function (e) { var b = e.target.closest('button[data-s]'); if (!b) return; U.step = b.dataset.s; U.msg = ''; U.clothOpen = false; U.shelfSel = null; U.delAsk = false; if (U.step !== 'make') { U.sel = null; } if ((U.step === 'look' || U.step === 'fabric') && U.view === 'tile') U.view = 'swatch'; render(); });
   $('views').addEventListener('click', function (e) { var b = e.target.closest('button[data-v]'); if (!b) return; U.view = b.dataset.v; render(); });
   // the cloth chip on the picture: tap it for a row of the 11 cloths, each showing your pattern
   $('clothChip').addEventListener('click', function () { U.clothOpen = !U.clothOpen; render(); });
@@ -1056,7 +1168,7 @@
     document.documentElement.classList.toggle('righty', HAND === 'right');
     $('home').hidden = true; // no first page: it always opens straight into the canvas
     $('addbar').hidden = U.step !== 'make'; $('addbar').innerHTML = [['art', 'My art'], ['fab', 'Fabrics'], ['words', 'Words'], ['sym', 'Symbols'], ['shape', 'Shapes']].map(function (x) { return '<button type="button" data-tab="' + x[0] + '" aria-pressed="' + (U.addOpen === x[0]) + '">' + x[1] + '</button>'; }).join('');
-    toolbar(); $('fab').hidden = true; $('views').parentNode.style.visibility = U.step === 'repeat' ? 'hidden' : ''; $('zoom').hidden = U.step === 'look' && false; $('trash').hidden = U.step !== 'make' || (!!sel() && $('stage').clientHeight < 400); // short screens: the side rail needs the room, Delete is on the floating bar $('trash').setAttribute('aria-label', sel() ? 'Delete this piece' : 'Start fresh'); $('trash').classList.toggle('piece', !!sel()); if (U.step !== 'make' || U.view !== 'tile') placeCtx(0, 0, false);
+    toolbar(); $('fab').hidden = true; $('views').parentNode.style.visibility = U.step === 'repeat' ? 'hidden' : ''; $('zoom').hidden = U.step === 'look' && false; $('trash').hidden = U.step !== 'make' || (!!sel() && $('stage').clientHeight < 400) || !!(U.gsel && U.gsel.length); // short screens: the side rail needs the room, Delete is on the floating bar $('trash').setAttribute('aria-label', sel() ? 'Delete this piece' : 'Start fresh'); $('trash').classList.toggle('piece', !!sel()); if (U.step !== 'make' || U.view !== 'tile') placeCtx(0, 0, false);
     var pn = $('panel'), s = pn.scrollTop; pn.innerHTML = panelHtml(); pn.scrollTop = s; minis();
     var cv2 = U.view !== 'tile'; $('clothChip').hidden = !cv2; $('clothChip').textContent = clothShort(D.cloth); $('clothChip').setAttribute('aria-pressed', String(cv2 && U.clothOpen));
     var co = cv2 && U.clothOpen && U.step !== 'look', cl = $('cloths'); cl.hidden = !co;
