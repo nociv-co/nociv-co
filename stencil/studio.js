@@ -42,6 +42,8 @@
     '<div class="sd-rail" id="sdRail" role="toolbar" aria-label="Layer tools"></div>' +
     '<nav class="sd-dock" id="sdDock" aria-label="Steps"></nav>';
   document.body.appendChild(app);
+  var framed = false; try { framed = window.top !== window; } catch (_) { framed = true; }
+  if (framed) { app.querySelector('.sd-top').remove(); var q = document.createElement('button'); q.type = 'button'; q.id = 'sdHelp'; q.className = 'sd-q'; q.setAttribute('aria-label', 'Help'); q.textContent = '?'; app.querySelector('#sdStage').appendChild(q); }
   var stage = $('sdStage'), wrap = $('wrap'), body = $('sdBody'), add = $('sdAdd'), rail = $('sdRail'), con = $('sdCon');
   stage.insertBefore(wrap, stage.firstChild);
   // keep the old parts we reuse out of the hidden column
@@ -93,11 +95,12 @@
   /* ---------- START ---------- */
   var JOBS = [['digital', 'Digital', 'Post it, stickers, DTF'], ['one', 'One screen', 'Every layer in one ink'], ['multi', 'Screen per color', 'One screen per layer'], ['cut', 'Cut stencil', 'Cut it from a sheet']];
   function startUI() {
-    var sizes = Array.prototype.map.call(document.querySelectorAll('#sizePick button'), function (b, i) { return '<button type="button" class="sd-tile c" data-size="' + i + '" aria-pressed="' + b.getAttribute('aria-pressed') + '"><b>' + esc(b.childNodes[0].textContent) + '</b><span>' + esc(b.querySelector('small') ? b.querySelector('small').textContent : '') + '</span></button>'; }).join('');
+    var sizes = Array.prototype.map.call(document.querySelectorAll('#sizePick button'), function (b, i) { var w = b.querySelector('small') ? b.querySelector('small').textContent.replace(/ wide/, '') : ''; return '<button type="button" class="sd-pill" data-size="' + i + '" aria-pressed="' + b.getAttribute('aria-pressed') + '">' + esc(b.childNodes[0].textContent.replace(/ front| back| or hat| or cut-out| page/, '')) + ' <small>' + esc(w) + '</small></button>'; }).join('');
+    var jb = JOBS.filter(function (j) { return j[0] === job(); })[0] || JOBS[1];
     body.innerHTML =
-      '<div class="sd-tiles"><button type="button" class="sd-tile big" data-a="art"><b>Add your art</b><span>' + (window.__nvPicN > 1 || !sampleOn() ? 'Swap in a new picture' : 'This is a sample. Put yours in') + '</span></button><button type="button" class="sd-tile" data-a="sample"><b>Sample</b><span>Try the tools on ours</span></button></div>' +
-      '<p class="sd-h">What are you making?</p><div class="sd-tiles">' + JOBS.map(function (j) { return '<button type="button" class="sd-tile" data-job="' + j[0] + '" aria-pressed="' + (job() === j[0]) + '"><b>' + j[1] + '</b><span>' + j[2] + '</span></button>'; }).join('') + '</div>' +
-      '<p class="sd-h">How big</p><div class="sd-tiles t4">' + sizes + '</div>';
+      '<div class="sd-lead"><button type="button" class="sd-main" data-a="art">' + ic('start') + '<span><b>Add your art</b><small>' + (sampleOn() ? 'You are looking at our sample' : 'Swap in a new picture') + '</small></span></button><button type="button" class="sd-link" data-a="sample">Sample</button></div>' +
+      '<p class="sd-h">Making</p><div class="sd-pills4">' + JOBS.map(function (j) { return '<button type="button" class="sd-pill" data-job="' + j[0] + '" aria-pressed="' + (job() === j[0]) + '">' + j[1] + '</button>'; }).join('') + '</div><p class="sd-why">' + jb[2] + '</p>' +
+      '<p class="sd-h">Size</p><div class="sd-pills4">' + sizes + '</div>';
   }
 
   /* ---------- MAKE: layers ---------- */
@@ -127,12 +130,11 @@
     if (!tool) { // nothing picked: the whole project
       var paper = X.paper || '#ffffff';
       body.innerHTML =
-        '<div class="sd-tiles"><button type="button" class="sd-tile red" data-a="vintage"><b>Vintage</b><span>Your gritty one ink stack. Tap again for a new one</span></button><button type="button" class="sd-tile" data-a="clean"><b>Clean</b><span>One solid layer</span></button></div>' +
-        '<p class="sd-h">Looks</p><div class="sd-tiles t3">' +
-          [['shadow', 'Red shadow'], ['misprint', 'Misprint'], ['ghost', 'Ghost'], ['pop', 'Pop dots'], ['double', 'Double'], ['comic', 'Comic']].map(function (k) { return '<button type="button" class="sd-tile c" data-look="' + k[0] + '"><b>' + k[1] + '</b></button>'; }).join('') + '</div>' +
-        (job() === 'one' ? '<p class="sd-h">Your one ink</p>' + inks(X.ink1 || '#1a1a1a', 'one') : '') +
-        '<p class="sd-h">Paper</p><div class="sd-tiles t3">' + [['#ffffff', 'White'], ['#f3ead7', 'Cream'], ['#1a1a1a', 'Black']].map(function (p) { return '<button type="button" class="sd-tile c" data-paper="' + p[0] + '" aria-pressed="' + (paper === p[0]) + '"><b>' + p[1] + '</b></button>'; }).join('') + '</div>' +
-        '<p class="sd-note">Tap a layer above to change it. Drag the picture to move the picked layer.</p>';
+        '<div class="sd-lead"><button type="button" class="sd-main red" data-a="vintage">' + ic('spark') + '<span><b>Vintage</b><small>Worn one ink print. Tap again for a new one</small></span></button><button type="button" class="sd-link" data-a="clean">Clean</button></div>' +
+        '<p class="sd-h">Looks</p><div class="sd-pills4 t3">' +
+          [['shadow', 'Red shadow'], ['misprint', 'Misprint'], ['ghost', 'Ghost'], ['pop', 'Pop dots'], ['double', 'Double'], ['comic', 'Comic']].map(function (k) { return '<button type="button" class="sd-pill" data-look="' + k[0] + '">' + k[1] + '</button>'; }).join('') + '</div>' +
+        '<div class="sd-mini">' + (job() === 'one' ? '<span><p class="sd-h">Ink</p>' + inks(X.ink1 || '#1a1a1a', 'one') + '</span>' : '') +
+        '<span><p class="sd-h">Paper</p><div class="sd-inks">' + [['#ffffff', 'White'], ['#f3ead7', 'Cream'], ['#1a1a1a', 'Black']].map(function (p) { return '<button type="button" data-paper="' + p[0] + '" style="background:' + p[0] + '" aria-label="' + p[1] + ' paper" aria-pressed="' + (paper === p[0]) + '"></button>'; }).join('') + '</div></span></div>';
       return;
     }
     var l = X.L[X.sel], h = '';
