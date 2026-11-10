@@ -364,6 +364,7 @@
     fit(); var g = VG, W = view.width, H = view.height; if (!W || !H) return;
     g.setTransform(1, 0, 0, 1, 0, 0); g.fillStyle = '#ffffff'; g.fillRect(0, 0, W, H);
     var u = W / 390;
+    if (U.adj) { drawAdj(g, W, H, u); return; }
     if (U.step === 'repeat') {
       var ti0 = tileInches(), acr = Math.max(ti0[0], ti0[1]) * 2.4 / (U.zoom || 1), pp = W / acr, tt = tile(pp);
       g.fillStyle = g.createPattern(tt, 'repeat'); g.fillRect(0, 0, W, H); HIT = null; placeCtx(0, 0, false);
@@ -469,6 +470,7 @@
     return [x, y];
   }
   view.addEventListener('pointerdown', function (e) {
+    if (U.adj) { adjDown(e); return; }
     if (U.step !== 'make' || U.view !== 'tile') return;
     view.setPointerCapture(e.pointerId); var p = cpt(e); PT[e.pointerId] = p; hideMenu();
     var ids = Object.keys(PT);
@@ -483,6 +485,7 @@
     }
   });
   view.addEventListener('pointermove', function (e) {
+    if (AG) { adjMove(e); return; }
     if (!PT[e.pointerId] || !G) return; var p = cpt(e); PT[e.pointerId] = p;
     if (G.mode === 'handle') { var d = Math.hypot(p[0] - G.cx, p[1] - G.cy), a = Math.atan2(p[1] - G.cy, p[0] - G.cx); G.L.s = clamp(G.s0 * d / Math.max(1, G.d0), .03, 3); G.L.r = Math.round((G.r0 + (a - G.a0) * 180 / Math.PI) / 1) % 360; snapAngle(G.L); draw(); return; }
     if (G.mode === 'pinch') { var ids = Object.keys(PT); if (ids.length < 2) return; var A = PT[ids[0]], Bq = PT[ids[1]]; G.L.s = clamp(G.s0 * Math.hypot(A[0] - Bq[0], A[1] - Bq[1]) / Math.max(1, G.d0), .03, 3); G.L.r = Math.round(G.r0 + (Math.atan2(Bq[1] - A[1], Bq[0] - A[0]) - G.a0) * 180 / Math.PI) % 360; snapAngle(G.L); draw(); return; }
@@ -497,6 +500,7 @@
   });
   function snapAngle(L) { [0, 90, 180, 270, -90, -180, -270, 360].forEach(function (v) { if (Math.abs(L.r - v) < 4) L.r = v % 360; }); }
   function up(e) {
+    if (AG) { adjUp(); return; }
     delete PT[e.pointerId]; clearTimeout(lpTimer); if (!G) return; var g = G;
     if (Object.keys(PT).length) { if (g.mode === 'pinch') G = { mode: 'none' }; return; }
     G = null; GUIDES = [];
@@ -646,6 +650,7 @@
   });
 
   function panelHtml() {
+    if (U.adj) return adjHtml();
     if (U.step === 'look') return lookHtml();
     if (U.step === 'repeat') return repeatHtml();
     if (U.step === 'fabric') return fabricHtml();
@@ -829,15 +834,22 @@
   function shelf() { try { return JSON.parse(localStorage.getItem('nocivPatternShelf') || '[]'); } catch (e) { return []; } }
   function shelfSet(list) { try { localStorage.setItem('nocivPatternShelf', JSON.stringify(list)); return true; } catch (e) { return false; } }
   function saveHtml() {
-    var sh = shelf(), ti = tileInches(), on = U.shelfSel ? sh.filter(function (x) { return x.id === U.shelfSel; })[0] : null;
-    return '<div class="row"><b>Name</b><input class="txt" id="pname" maxlength="40" value="' + esc(D.name || '') + '" placeholder="Name this pattern" autocomplete="off"></div>' +
+    var sh = shelf(), ti = tileInches(), on = U.shelfSel ? sh.filter(function (x) { return x.id === U.shelfSel; })[0] : null, ask = '';
+    if (U.delAsk) { var it = U.delAsk === 'cur' ? { name: D.name || 'this pattern' } : sh.filter(function (x) { return x.id === U.delAsk; })[0]; if (it) ask = '<div class="ask"><b>Delete ' + esc(it.name || 'this pattern') + '?</b><span>' + (U.delAsk === 'cur' ? 'It leaves My patterns and the canvas goes blank. ' : '') + 'This cannot be undone.</span><div class="grid g2"><button type="button" class="btn red" data-a="sdelok">Delete</button><button type="button" class="btn" data-a="sdelno">Keep</button></div></div>'; }
+    var warn = sharpNotes(), big = ti[0] * ti[1] * 90000 > MAXPX;
+    return ask + '<div class="row"><b>Name</b><input class="txt" id="pname" maxlength="40" value="' + esc(D.name || '') + '" placeholder="Name this pattern" autocomplete="off"></div>' +
       '<div class="grid g3"><button type="button" class="btn dark" data-a="shelve">' + (U.cur && sh.some(function (x) { return x.id === U.cur; }) ? 'Save changes' : 'Save to My patterns') + '</button><button type="button" class="btn" data-a="dupe">Make a copy</button><button type="button" class="btn" data-a="newp">New pattern</button></div>' +
       (U.msg ? '<p class="note" style="color:var(--ink)"><b>' + esc(U.msg) + '</b></p>' : '') +
-      '<p class="h">My patterns</p>' + (sh.length ? '<div class="shelf">' + sh.map(function (x) { return '<button type="button" class="pick" data-shelf="' + x.id + '" aria-pressed="' + (x.id === U.shelfSel) + '"><img src="' + x.th + '" alt="">' + esc(x.name || 'Pattern') + (x.id === U.cur ? ' (open)' : '') + '</button>'; }).join('') + '</div>' : '<p class="note">Saved patterns show here, on this phone.</p>') +
-      (on ? '<div class="grid g3" style="margin-top:8px">' + (on.id !== U.cur ? '<button type="button" class="btn dark" data-a="sopen">Open</button><button type="button" class="btn" data-a="scomp">Compare</button>' : '<button type="button" class="btn" data-a="scomp" disabled style="opacity:.4">It is open</button><span></span>') + '<button type="button" class="btn red" data-a="sdel">' + (U.delAsk ? 'Tap again' : 'Delete') + '</button></div>' : '') +
-      '<p class="h" style="margin-top:12px">Files</p><button type="button" class="btn dark" data-a="png">Tile for printing (PNG, 150 DPI)</button><div class="grid g3"><button type="button" class="btn" data-a="pdf">Tile PDF</button><button type="button" class="btn" data-a="sw">8 in swatch</button><button type="button" class="btn" data-a="yardpic">Yard on cloth</button></div><button type="button" class="btn" data-a="mood">Mood board</button>' +
-      '<p class="note">The tile repeats on its own. Upload it as a basic repeat to any fabric printer. Tile size: ' + fmtIn(ti[0]) + ' by ' + fmtIn(ti[1]) + (NUMS ? ', ' + Math.round(ti[0] * 150) + ' x ' + Math.round(ti[1] * 150) + ' px at 150 DPI, sRGB' : '') + '.</p>';
+      '<p class="h">My patterns</p>' + (sh.length ? '<div class="shelf">' + sh.map(function (x) { return '<div class="artw"><button type="button" class="pick" data-shelf="' + x.id + '" aria-pressed="' + (x.id === U.shelfSel) + '"><img src="' + x.th + '" alt="">' + esc(x.name || 'Pattern') + (x.id === U.cur ? ' (open)' : '') + '</button><button type="button" class="artx" data-sdelx="' + x.id + '" aria-label="Delete this pattern">&times;</button></div>'; }).join('') + '</div>' : '<p class="note">Saved patterns show here, on this phone.</p>') +
+      (on ? '<div class="grid g3" style="margin-top:8px">' + (on.id !== U.cur ? '<button type="button" class="btn dark" data-a="sopen">Open</button><button type="button" class="btn" data-a="scomp">Compare</button>' : '<button type="button" class="btn" data-a="scomp" disabled style="opacity:.4">It is open</button><span></span>') + '<button type="button" class="btn red" data-a="sdel">Delete</button></div>' : '') +
+      '<p class="h" style="margin-top:12px">Files</p><button type="button" class="btn dark" data-a="png">Tile for printing (PNG, ' + (big ? 'high quality' : '300 DPI') + ')</button>' +
+      (warn.length ? '<p class="note warn">' + warn.map(esc).join('<br>') + '</p>' : '') +
+      '<div class="grid g3"><button type="button" class="btn" data-a="pdf">Tile PDF</button><button type="button" class="btn" data-a="sw">8 in swatch</button><button type="button" class="btn" data-a="yardpic">Yard on cloth</button></div><div class="grid g2"><button type="button" class="btn" data-a="mood">Mood board</button><button type="button" class="btn" data-a="png150">Smaller file (150 DPI)</button></div>' +
+      '<p class="note">The tile repeats on its own. Tile size: ' + fmtIn(ti[0]) + ' by ' + fmtIn(ti[1]) + (NUMS ? ', ' + Math.round(ti[0] * fileDpi(300)) + ' x ' + Math.round(ti[1] * fileDpi(300)) + ' px at ' + fileDpi(300) + ' DPI, sRGB' : '') + '.</p>' +
+      fold('print', 'Get it printed', '4 shops, from about $16 a yard', printHtml());
   }
+  var MAXPX = 16e6;
+  function fileDpi(want) { var ti = tileInches(); return Math.min(want, Math.floor(Math.sqrt(MAXPX / Math.max(.01, ti[0] * ti[1])))); }
   function tileInches() { if (D.rep === 'kale') { var t = tile(20); return [t.width / 20, t.height / 20]; } var cp = copies(); return [D.tileIn * cp.w, D.tileIn * cp.h]; }
   function colorsInUse() {
     var out = []; function push(h) { if (!h) return; h = toHex(h); if (out.indexOf(h) < 0) out.push(h); }
@@ -891,6 +903,7 @@
     $('zval').textContent = Math.round(U.zoom * 100) + '%'; draw();
   });
   $('trash').addEventListener('click', function () {
+    if (U.step === 'save') { if (!D.layers.length && !U.cur) return; U.delAsk = 'cur'; U.shelfSel = null; render(); $('panel').scrollTop = 0; return; }
     if (sel()) { act('del'); return; }
     if (!D.layers.length && !D.fab) return;
     shelve(false); commit(); D = freshDoc(); U.cur = null; U.sel = null; U.tool = null; U.ptool = 'ground'; U.view = 'tile'; flash('Fresh start. Last design saved in My patterns.'); changed();
@@ -904,6 +917,21 @@
   });
   $('panel').addEventListener('click', panelClick = function (e) {
     var b = e.target.closest('button'); if (!b) return; var d = b.dataset, L = sel(), sg = b.closest('[data-sg]'), st = b.closest('[data-st]');
+    if (U.adj) {
+      if (d.a === 'adjok') return adjClose(true); if (d.a === 'adjno') return adjClose(false);
+      if (d.a === 'adjfit') { adjFit(); return render(); }
+      if (st && st.dataset.st === 'adjs' && d.d) { var a0 = U.adj, k0 = a0.s, kk = (adjIn(a0) + d.d * .25) / D.tileIn, lim0 = adjLimits(); kk = clamp(kk, lim0[0], lim0[1]); a0.fx -= (kk - k0) / 2; a0.fy -= (kk - k0) / 2; a0.s = kk; return render(); }
+      return;
+    }
+    if (st && st.dataset.st === 'yards' && d.d) { U.yards = clamp((U.yards || 1) + +d.d, 1, 50); return render(); }
+    if (d.sdelx) { U.delAsk = d.sdelx; U.shelfSel = null; render(); $('panel').scrollTop = 0; return; }
+    if (d.a === 'sdelno') { U.delAsk = false; return render(); }
+    if (d.a === 'sdelok') {
+      var did = U.delAsk; U.delAsk = false; if (!did) return render();
+      if (did === 'cur') { if (U.cur) shelfSet(shelf().filter(function (x) { return x.id !== U.cur; })); var palk = D.pal.slice(); D = freshDoc(); D.pal = palk; U.cur = null; U.sel = null; U.tool = null; HIST = []; FUT = []; U.msg = 'Deleted. You have a blank canvas.'; return changed(); }
+      shelfSet(shelf().filter(function (x) { return x.id !== did; })); if (U.cur === did) U.cur = null; U.shelfSel = null; U.msg = 'Deleted.'; keep(); return render();
+    }
+    if (d.a === 'png150') { saveFile('png150'); return; }
     if (d.pt) { U.ptool = d.pt; return render(); }
     if (d.fold) { U.fopen = U.fopen === d.fold ? null : d.fold; return render(); }
     if (d.fci != null) { U.fci = +d.fci; return render(); }
@@ -966,7 +994,7 @@
     if (d.shelf) { U.shelfSel = U.shelfSel === d.shelf ? null : d.shelf; U.delAsk = false; return render(); }
     if (d.a === 'sopen') { var it = shelf().filter(function (x) { return x.id === U.shelfSel; })[0]; if (!it) return; shelve(false); D = Object.assign(freshDoc(), clone(it.d)); U.cur = it.id; U.shelfSel = null; U.sel = null; U.tool = null; HIST = []; FUT = []; U.msg = 'Opened ' + (D.name || 'pattern') + '.'; return changed(); }
     if (d.a === 'scomp') { compare(U.shelfSel); return; }
-    if (d.a === 'sdel') { if (!U.delAsk) { U.delAsk = true; return render(); } shelfSet(shelf().filter(function (x) { return x.id !== U.shelfSel; })); if (U.cur === U.shelfSel) U.cur = null; U.shelfSel = null; U.delAsk = false; U.msg = 'Deleted.'; keep(); return render(); }
+    if (d.a === 'sdel') { U.delAsk = U.shelfSel; render(); $('panel').scrollTop = 0; return; }
     if (sg && sg.dataset.sg === 'sfill' && L) { commit(); L.fab = d.v === 'fab' ? (L.fab || { k: 'checks', p: 'gingham', sz: 1 }) : null; return changed(); }
     if (sg && sg.dataset.sg === 'ol' && L) { commit(); L.ol = d.v ? { c: (L.ol && L.ol.c) || (contrast('#1a1a1a', L.c) > 3 ? '#1a1a1a' : '#ffffff'), w: d.v } : null; return changed(); }
     if (d.sfab && L) { commit(); var sp2 = d.sfab.split(':'); L.fab = { k: sp2[0], p: sp2[1], sz: 1 }; return changed(); }
@@ -1084,6 +1112,93 @@
   $('lsheet').addEventListener('change', function (e) { if (e.target.id === 'lsay' && LS.img) lsMeasure(); });
   $('lfile').addEventListener('change', function () { var f = this.files && this.files[0]; this.value = ''; if (!f) return; blobToCanvas(f).then(function (c) { LS.img = c; idbSet('letters:src', f); if ((LS.say || '').trim()) lsMeasure(); else lsRender(); }); });
 
+
+  /* ---------- Adjust tile: a crop frame on the tile; art keeps its real size ---------- */
+  var ADJ = null, AG = null;
+  function wrap1(v) { v = v - Math.floor(v); return v > .9995 ? 0 : v; }
+  function adjLimits() { return [Math.max(.15, 1 / D.tileIn), Math.min(2, 24 / D.tileIn)]; }
+  function adjDoc(a) {
+    var d = clone(D), k = a.s;
+    d.layers.forEach(function (L) { if (!L.hug) { L.x = Math.round(wrap1((L.x - a.fx) / k) * 1000) / 1000; L.y = Math.round(wrap1((L.y - a.fy) / k) * 1000) / 1000; } L.s = Math.round(L.s / k * 1000) / 1000; });
+    d.tileIn = Math.round(D.tileIn * k * 100) / 100; return d;
+  }
+  function adjIn(a) { return Math.round(D.tileIn * a.s * 100) / 100; }
+  function drawAdj(g, W, H, u) {
+    var a = U.adj, top = 52 * u, ah = H - top - 34 * u, aw = W - 16 * u, Bo = Math.min(aw, ah) * .5, ppi = Bo / D.tileIn;
+    var ox = W / 2 - Bo / 2, oy = top + ah / 2 - Bo / 2, Fx = ox + a.fx * Bo, Fy = oy + a.fy * Bo, Fs = a.s * Bo;
+    if (Object.keys(tcache).length > 80) tcache = {};
+    var tc = withDoc(adjDoc(a), function () { return tile(ppi); });
+    g.save(); g.translate(((Fx % tc.width) + tc.width) % tc.width - tc.width, ((Fy % tc.height) + tc.height) % tc.height - tc.height); g.fillStyle = g.createPattern(tc, 'repeat'); g.fillRect(0, 0, W + tc.width * 2, H + tc.height * 2); g.restore();
+    g.fillStyle = 'rgba(242,242,247,.68)'; g.fillRect(0, 0, W, Fy); g.fillRect(0, Fy + Fs, W, H); g.fillRect(0, Fy, Fx, Fs); g.fillRect(Fx + Fs, Fy, W, Fs);
+    g.strokeStyle = '#1f2a44'; g.lineWidth = 2 * u; g.strokeRect(Fx, Fy, Fs, Fs);
+    var L0 = Math.min(22 * u, Fs / 3); g.lineWidth = 5 * u; g.lineCap = 'round';
+    [[Fx, Fy, 1, 1], [Fx + Fs, Fy, -1, 1], [Fx, Fy + Fs, 1, -1], [Fx + Fs, Fy + Fs, -1, -1]].forEach(function (c) { g.beginPath(); g.moveTo(c[0] + c[2] * L0, c[1]); g.lineTo(c[0], c[1]); g.lineTo(c[0], c[1] + c[3] * L0); g.stroke(); });
+    g.lineCap = 'butt';
+    ADJ = { ox: ox, oy: oy, Bo: Bo, Fx: Fx, Fy: Fy, Fs: Fs, u: u };
+    HIT = null; placeCtx(0, 0, false); lbl('Tile ' + inch(adjIn(a)) + ' square. Your art keeps its size.');
+  }
+  function adjSet(fx, fy, k) { var lim = adjLimits(); k = clamp(k, lim[0], lim[1]); if (Math.abs(k - 1) < .03) k = 1; if (Math.abs(fx) < .02) fx = 0; if (Math.abs(fy) < .02) fy = 0; U.adj.s = k; U.adj.fx = clamp(fx, -1.5, 1.5); U.adj.fy = clamp(fy, -1.5, 1.5); }
+  function adjDown(e) {
+    if (!ADJ) return; view.setPointerCapture(e.pointerId); var p = cpt(e), A = ADJ, a = U.adj, best = null, bd = 34 * A.u;
+    [[A.Fx, A.Fy, A.Fx + A.Fs, A.Fy + A.Fs], [A.Fx + A.Fs, A.Fy, A.Fx, A.Fy + A.Fs], [A.Fx, A.Fy + A.Fs, A.Fx + A.Fs, A.Fy], [A.Fx + A.Fs, A.Fy + A.Fs, A.Fx, A.Fy]].forEach(function (c) { var d = Math.hypot(p[0] - c[0], p[1] - c[1]); if (d < bd) { bd = d; best = c; } });
+    AG = best ? { mode: 'size', ax: best[2], ay: best[3], sx: best[0] > best[2] ? 1 : -1, sy: best[1] > best[3] ? 1 : -1 } : { mode: 'move', x0: p[0], y0: p[1], fx0: a.fx, fy0: a.fy };
+  }
+  function adjMove(e) {
+    if (!AG || !ADJ) return; var p = cpt(e), A = ADJ, a = U.adj;
+    if (AG.mode === 'move') { adjSet(AG.fx0 + (p[0] - AG.x0) / A.Bo, AG.fy0 + (p[1] - AG.y0) / A.Bo, a.s); }
+    else {
+      var lim = adjLimits(), size = clamp(Math.max(AG.sx * (p[0] - AG.ax), AG.sy * (p[1] - AG.ay)), lim[0] * A.Bo, lim[1] * A.Bo);
+      var Fx = AG.sx > 0 ? AG.ax : AG.ax - size, Fy = AG.sy > 0 ? AG.ay : AG.ay - size;
+      adjSet((Fx - A.ox) / A.Bo, (Fy - A.oy) / A.Bo, size / A.Bo);
+    }
+    draw();
+  }
+  function adjUp() { if (!AG) return; AG = null; render(); }
+  function adjFit() {
+    var x0 = 1e9, y0 = 1e9, x1 = -1e9, y1 = -1e9;
+    D.layers.forEach(function (L) { var ct = content(L, 1000); if (!ct) return; var p = pos(L), w = ct.w / 1000, h = ct.h / 1000, r = (L.r || 0) * Math.PI / 180, ww = Math.abs(w * Math.cos(r)) + Math.abs(h * Math.sin(r)), hh = Math.abs(w * Math.sin(r)) + Math.abs(h * Math.cos(r)); x0 = Math.min(x0, p[0] - ww / 2); x1 = Math.max(x1, p[0] + ww / 2); y0 = Math.min(y0, p[1] - hh / 2); y1 = Math.max(y1, p[1] + hh / 2); });
+    if (x1 < x0) return; var k = Math.max(x1 - x0, y1 - y0) * 1.1, lim = adjLimits(); k = clamp(k, lim[0], lim[1]);
+    U.adj.s = k; U.adj.fx = (x0 + x1) / 2 - k / 2; U.adj.fy = (y0 + y1) / 2 - k / 2;
+  }
+  function adjOpen() {
+    if (U.adj) { adjClose(false); return; }
+    if (!D.layers.length) { flash('Add some art first, then adjust the tile.'); return; }
+    if (D.gs) { flash('Squares fill the whole tile. Turn Use squares off to adjust it.'); return; }
+    U.adj = { s: 1, fx: 0, fy: 0, prev: U.view }; U.sel = null; U.tool = null; U.gsel = null; U.addOpen = null; U.zoom = 1; U.panX = 0; U.panY = 0; $('zoom').classList.remove('open'); render();
+  }
+  function adjClose(apply) {
+    var a = U.adj; if (!a) return; U.adj = null; ADJ = null; AG = null; U.view = a.prev || 'tile';
+    if (apply && (a.s !== 1 || a.fx || a.fy)) { commit(); var nd = adjDoc(a); D.layers = nd.layers; D.tileIn = nd.tileIn; changed(); flash('Tile is now ' + inch(D.tileIn) + ' square.'); return; }
+    render();
+  }
+  function adjHtml() {
+    var a = U.adj;
+    return '<p class="ptitle">Adjust tile</p>' + stepper('adjs', 'Size', inch(adjIn(a))) +
+      '<div class="grid g3"><button type="button" class="btn" data-a="adjfit">Fit to my art</button><button type="button" class="btn" data-a="adjno">Cancel</button><button type="button" class="btn dark" data-a="adjok">Done</button></div>' +
+      '<p class="note">Drag a corner to size it. Drag inside to move it. Pieces off the edge wrap into the next copy.</p>';
+  }
+  $('adjBtn').addEventListener('click', adjOpen);
+
+  /* ---------- sharp enough for 300 DPI? ---------- */
+  function sharpNotes() {
+    var worst = {};
+    D.layers.forEach(function (L) { if (L.t !== 'art') return; var src = IMG[L.aid]; if (!src) return; var px = Math.max(src.width, src.height), size = L.s * D.tileIn; if (size <= 0) return; if (px / size < 285 && (!worst[L.aid] || worst[L.aid][1] < size)) worst[L.aid] = [px / 300, size]; });
+    return Object.keys(worst).map(function (id) { var n = 0; ART.forEach(function (a, i) { if (a.id === id) n = i + 1; }); return 'Picture ' + (n || '') + ' is sharp up to ' + inch(Math.floor(worst[id][0] * 10) / 10) + '. It is ' + inch(Math.round(worst[id][1] * 10) / 10) + ' here. Upload a bigger file or make it smaller.'; });
+  }
+
+  /* ---------- where to get it printed (prices checked Nov 10, 2026) ---------- */
+  var SHOPS = [
+    ['Spoonflower', 20, 'Basic cotton $20 a yard, sale days near $15. No minimum.', 'https://www.spoonflower.com'],
+    ['Fabric On Demand', 16.25, 'From about $16.25 a yard. They email a proof first.', 'https://www.fabricondemand.com'],
+    ['Little Cocalico', 23.5, 'Poplin $23.50 a yard. Free shipping on 10+ items.', 'https://littlecocalico.com'],
+    ['Contrado', 24.98, 'Quilting cotton from $24.98 a yard. Swatches under $1.', 'https://www.contrado.com/fabric-printing']
+  ];
+  function printHtml() {
+    var y = U.yards || 1;
+    return stepper('yards', 'Yards', y + ' yd') + '<div class="shops">' + SHOPS.map(function (x) { return '<a class="shop" href="' + x[3] + '" target="_blank" rel="noopener"><b>' + x[0] + '</b><em>about $' + Math.round(x[1] * y) + ' for ' + y + ' yd</em><span>' + x[2] + '</span></a>'; }).join('') + '</div>' +
+      '<p class="note">Estimates, checked Nov 10, 2026. Shipping and tax not included. Upload your tile as a basic repeat.</p>';
+  }
+
   /* ---------- My patterns shelf (on this phone) ---------- */
   function thumb() { var c = E.cv(160, 160); swatchInto(c, Math.max(3, D.tileIn * 1.5), D.cloth, 200); return c.toDataURL('image/jpeg', .8); }
   function shelve(asNew) {
@@ -1114,7 +1229,7 @@
     var t = tile(Math.min(380 / ti[0], 380 / ti[1])); g.drawImage(t, 800, 180); g.strokeRect(800, 180, t.width, t.height); g.fillText('ONE REPEAT', 800, 180 + t.height + 32);
     var y = 180 + t.height + 80; g.font = '900 18px ' + sys; g.fillStyle = '#6f6a60'; g.fillText('COLORS', 800, y); y += 18;
     cols.slice(0, 8).forEach(function (h, i) { var yy = y + i * 50; g.fillStyle = h; g.fillRect(800, yy, 40, 40); g.strokeStyle = 'rgba(0,0,0,.3)'; g.lineWidth = 1.5; g.strokeRect(800, yy, 40, 40); g.fillStyle = '#1a1a1a'; g.font = '800 20px ' + sys; g.fillText(h.toUpperCase(), 856, yy + 28); });
-    var facts = [['Repeat', (REPS.filter(function (x) { return x[0] === D.rep; })[0] || ['', ''])[1] + (D.rep === 'mirror' ? ' (' + ({ both: 'both ways', lr: 'left-right', ud: 'up-down' })[D.mdir] + ')' : '')], ['Repeat size', inch(ti[0]) + ' x ' + inch(ti[1])], ['Printed on', clothName(D.cloth)], ['File', Math.round(ti[0] * 150) + ' x ' + Math.round(ti[1] * 150) + ' px, 150 DPI, sRGB PNG'], ['Upload as', 'Basic repeat']];
+    var facts = [['Repeat', (REPS.filter(function (x) { return x[0] === D.rep; })[0] || ['', ''])[1] + (D.rep === 'mirror' ? ' (' + ({ both: 'both ways', lr: 'left-right', ud: 'up-down' })[D.mdir] + ')' : '')], ['Repeat size', inch(ti[0]) + ' x ' + inch(ti[1])], ['Printed on', clothName(D.cloth)], ['File', Math.round(ti[0] * fileDpi(300)) + ' x ' + Math.round(ti[1] * fileDpi(300)) + ' px, ' + fileDpi(300) + ' DPI, sRGB PNG'], ['Upload as', 'Basic repeat']];
     var fy = 980; facts.forEach(function (f) { g.fillStyle = '#6f6a60'; g.font = '900 18px ' + sys; g.fillText(f[0].toUpperCase(), 60, fy); g.fillStyle = '#1a1a1a'; g.font = '800 26px ' + sys; g.fillText(f[1], 300, fy); fy += 46; });
     g.fillStyle = '#6f6a60'; g.font = '900 18px ' + sys; g.fillText('COLORWAYS', 60, 1250);
     [0, 1, 2, 3].forEach(function (i) { var m = E.cv(250, 250); withDoc(wayDoc(i), function () { swatchInto(m, Math.max(3, D.tileIn * 1.4), D.cloth, 200); }); g.drawImage(m, 60 + i * 276, 1270); g.strokeStyle = '#1a1a1a'; g.lineWidth = 2; g.strokeRect(60 + i * 276, 1270, 250, 250); g.fillStyle = '#1a1a1a'; g.font = '800 18px ' + sys; g.fillText(i ? wayKinds()[i - 1][1] : 'Now', 60 + i * 276, 1548); });
@@ -1125,10 +1240,10 @@
     if (kind === 'sw') { var sw = E.cv(1200, 1200), g = sw.getContext('2d'); g.fillStyle = g.createPattern(tile(150), 'repeat'); g.fillRect(0, 0, 1200, 1200); t = sw; name += '-swatch-8in'; }
     else if (kind === 'yardpic') { t = yardCanvas(); name += '-yard-on-' + D.cloth; }
     else if (kind === 'mood') { t = moodBoard(); name += '-mood-board'; }
-    else { t = tile(150); name += '-tile'; }
+    else { var dpi = fileDpi(kind === 'png150' ? 150 : 300); t = tile(dpi); name += '-tile'; if (dpi < (kind === 'png150' ? 150 : 300)) { U.msg = 'Saved at ' + dpi + ' DPI, the most this phone can make for a tile this big.'; render(); } }
     var go = function (blob, ext) { var file = new File([blob], name + ext, { type: blob.type }); if (matchMedia('(pointer:coarse)').matches && navigator.canShare && navigator.canShare({ files: [file] })) { navigator.share({ files: [file] }).catch(function () {}); return; } var u = URL.createObjectURL(blob), a = document.createElement('a'); a.href = u; a.download = name + ext; document.body.appendChild(a); a.click(); a.remove(); setTimeout(function () { URL.revokeObjectURL(u); }, 4000); };
     if (kind === 'pdf') { var ti = kind === 'sw' ? [8, 8] : tileInches(); Promise.resolve(E.pdfOf(t, ti[0], ti[1])).then(function (b) { go(b, '.pdf'); }); }
-    else Promise.resolve(E.pngWithDpi(t, 150)).then(function (b) { go(b, '.png'); });
+    else Promise.resolve(E.pngWithDpi(t, kind === 'sw' || kind === 'yardpic' || kind === 'mood' ? 150 : dpi)).then(function (b) { go(b, '.png'); });
   }
 
   /* ---------- help ---------- */
@@ -1140,10 +1255,12 @@
       '<h2 style="margin-top:14px">How it works</h2><ul>' +
       '<li><b>Make</b>: Add your art, words, symbols, shapes or a fabric. Tap a piece to change it. Drag to move, pinch to size, two fingers to turn. The red dot sizes and turns with one finger. Hold a piece for Copy, Front, Back, Delete.</li>' +
       '<li><b>Repeat</b>: Grid, Half-drop, Half-brick, Mirror (Readable keeps words reading the right way), Toss, Kaleidoscope.</li>' +
-      '<li><b>Grid</b> is a guide to line pieces up. <b>Copies</b> fills it with one piece: checker, rows, frame.</li>' +
+      '<li><b>Grid</b> is a guide to line pieces up. Turn on <b>Use squares</b> to fill it: tap a square, then change one square, a row, a column, all, or every square with the same piece.</li>' +
+      '<li><b>Adjust tile</b> (the corners button at the top): drag a corner to make the tile smaller or bigger, drag inside to move it. Your art keeps its size, so copies sit closer or farther apart. Fit to my art trims the empty space.</li>' +
+      '<li><b>Fabric</b>: plaid, stripes or checks under your art. Open Thread colors, Bands, Weave and Printed on to change each one.</li>' +
       '<li><b>Words</b>: straight, arc over, arc under, circle, seal, stacked, vertical. Wrap words around a shape and they hug it.</li>' +
-      '<li><b>Look</b>: colorways (tap one to use it), change any color everywhere at once, and Printed on: the cloth it will be printed on. The cloth is a preview, it is never in your files.</li><li><b>Save</b>: name it and keep it in My patterns, make a copy to try a variation, compare two. Files: the tile at 150 DPI repeats on its own, plus an 8 in swatch, a yard on cloth and a mood board.</li>' +
-      '<li><b>Where to print</b>: Spoonflower, Fabric On Demand, Contrado, Little Cocalico, or a local sublimation shop. Upload the tile as a basic repeat.</li>' +
+      '<li><b>Look</b>: colorways (tap one to use it) and change any color everywhere at once. Printed on is in Fabric. The cloth is a preview, it is never in your files.</li><li><b>Save</b>: name it and keep it in My patterns, make a copy to try a variation, compare two, or tap the x to delete one. Files: the tile at 300 DPI repeats on its own (Smaller file is 150 DPI), plus an 8 in swatch, a yard on cloth and a mood board. If a picture is too small to be sharp, Save tells you.</li>' +
+      '<li><b>Get it printed</b> (in Save): pick your yards and see an estimate from Spoonflower, Fabric On Demand, Little Cocalico and Contrado, with links. Upload the tile as a basic repeat.</li>' +
       '<li>Your art stays on this phone.</li></ul>';
     $('helpSheet').hidden = false;
   }
@@ -1155,8 +1272,8 @@
   });
 
   /* ---------- steps, views, undo ---------- */
-  $('steps').addEventListener('click', function (e) { var b = e.target.closest('button[data-s]'); if (!b) return; U.step = b.dataset.s; U.msg = ''; U.clothOpen = false; U.shelfSel = null; U.delAsk = false; if (U.step !== 'make') { U.sel = null; } if ((U.step === 'look' || U.step === 'fabric') && U.view === 'tile') U.view = 'swatch'; render(); });
-  $('views').addEventListener('click', function (e) { var b = e.target.closest('button[data-v]'); if (!b) return; U.view = b.dataset.v; render(); });
+  $('steps').addEventListener('click', function (e) { var b = e.target.closest('button[data-s]'); if (!b) return; if (U.adj) { U.adj = null; ADJ = null; AG = null; } U.step = b.dataset.s; U.msg = ''; U.clothOpen = false; U.shelfSel = null; U.delAsk = false; if (U.step !== 'make') { U.sel = null; } if ((U.step === 'look' || U.step === 'fabric') && U.view === 'tile') U.view = 'swatch'; render(); });
+  $('views').addEventListener('click', function (e) { var b = e.target.closest('button[data-v]'); if (!b) return; if (U.adj) { U.adj = null; ADJ = null; AG = null; } U.view = b.dataset.v; render(); });
   // the cloth chip on the picture: tap it for a row of the 11 cloths, each showing your pattern
   $('clothChip').addEventListener('click', function () { U.clothOpen = !U.clothOpen; render(); });
   $('cloths').addEventListener('click', function (e) { var b = e.target.closest('button[data-cloth]'); if (!b) return; commit(); D.cloth = b.dataset.cloth; changed(); });
@@ -1168,7 +1285,7 @@
     document.documentElement.classList.toggle('righty', HAND === 'right');
     $('home').hidden = true; // no first page: it always opens straight into the canvas
     $('addbar').hidden = U.step !== 'make'; $('addbar').innerHTML = [['art', 'My art'], ['fab', 'Fabrics'], ['words', 'Words'], ['sym', 'Symbols'], ['shape', 'Shapes']].map(function (x) { return '<button type="button" data-tab="' + x[0] + '" aria-pressed="' + (U.addOpen === x[0]) + '">' + x[1] + '</button>'; }).join('');
-    toolbar(); $('fab').hidden = true; $('views').parentNode.style.visibility = U.step === 'repeat' ? 'hidden' : ''; $('zoom').hidden = U.step === 'look' && false; $('trash').hidden = U.step !== 'make' || (!!sel() && $('stage').clientHeight < 400) || !!(U.gsel && U.gsel.length); // short screens: the side rail needs the room, Delete is on the floating bar $('trash').setAttribute('aria-label', sel() ? 'Delete this piece' : 'Start fresh'); $('trash').classList.toggle('piece', !!sel()); if (U.step !== 'make' || U.view !== 'tile') placeCtx(0, 0, false);
+    toolbar(); $('fab').hidden = true; $('views').parentNode.style.visibility = U.step === 'repeat' ? 'hidden' : ''; $('zoom').hidden = U.step === 'look' && false; $('trash').hidden = !!U.adj || (U.step === 'save' ? false : U.step !== 'make') || (!!sel() && $('stage').clientHeight < 400) || !!(U.gsel && U.gsel.length); // short screens: the side rail needs the room, Delete is on the floating bar $('trash').setAttribute('aria-label', sel() ? 'Delete this piece' : 'Start fresh'); $('trash').classList.toggle('piece', !!sel()); if (U.step !== 'make' || U.view !== 'tile') placeCtx(0, 0, false);
     var pn = $('panel'), s = pn.scrollTop; pn.innerHTML = panelHtml(); pn.scrollTop = s; minis();
     var cv2 = U.view !== 'tile'; $('clothChip').hidden = !cv2; $('clothChip').textContent = clothShort(D.cloth); $('clothChip').setAttribute('aria-pressed', String(cv2 && U.clothOpen));
     var co = cv2 && U.clothOpen && U.step !== 'look', cl = $('cloths'); cl.hidden = !co;
@@ -1176,6 +1293,8 @@
     Array.prototype.forEach.call(document.querySelectorAll('#steps button'), function (b) { b.setAttribute('aria-pressed', String(b.dataset.s === U.step)); });
     Array.prototype.forEach.call(document.querySelectorAll('#views button'), function (b) { b.setAttribute('aria-pressed', String(b.dataset.v === U.view)); });
     $('undo').disabled = !HIST.length; $('redo').disabled = !FUT.length;
+    $('adjBtn').setAttribute('aria-pressed', String(!!U.adj)); $('zoom').hidden = !!U.adj; $('addbar').hidden = !!U.adj || U.step !== 'make';
+    if (U.step === 'save' && !U.adj) { $('trash').setAttribute('aria-label', 'Delete this pattern'); $('trash').classList.remove('piece'); }
     draw();
   }
 
