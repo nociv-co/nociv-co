@@ -34,7 +34,7 @@
   // 'none' = no background color: the art repeats on a clear tile (prints on the fabric's own color)
   function gHex(doc) { var g = (doc || D).ground; return !g || g === 'none' ? '#ffffff' : g; }
   function freshDoc() { return { tileIn: 4, rep: 'grid', mdir: 'both', mword: 'readable', kale: 'kaleSquare', ground: 'none', fab: null, grid: 0, layers: [], pal: [], cloth: 'poplin', name: 'My pattern', artMap: {} }; }
-  var D = freshDoc(), U = { step: 'make', view: 'tile', sel: null, tool: null, ptool: 'repeat', addTab: 'art', started: false, cur: null, waySeed: 1, clothOpen: false, shelfSel: null }, ART = [], LETTERS = null, HAND = 'left', NUMS = false;
+  var D = freshDoc(), U = { step: 'make', view: 'tile', sel: null, tool: null, ptool: 'ground', addTab: 'art', started: false, cur: null, waySeed: 1, clothOpen: false, shelfSel: null }, ART = [], LETTERS = null, HAND = 'left', NUMS = false;
   function keep() { try { localStorage.setItem('nocivPattern2', JSON.stringify({ d: D, art: ART, letters: LETTERS, hand: HAND, nums: NUMS, started: U.started, cur: U.cur })); } catch (e) {} }
   try { var sv = JSON.parse(localStorage.getItem('nocivPattern2') || 'null'); if (sv) { D = Object.assign(freshDoc(), sv.d || {}); ART = sv.art || []; LETTERS = sv.letters || null; HAND = sv.hand || 'left'; NUMS = !!sv.nums; U.started = !!sv.started; U.cur = sv.cur || null; } } catch (e) {}
   var HIST = [], FUT = [];
@@ -363,6 +363,14 @@
     fit(); var g = VG, W = view.width, H = view.height; if (!W || !H) return;
     g.setTransform(1, 0, 0, 1, 0, 0); g.fillStyle = '#ffffff'; g.fillRect(0, 0, W, H);
     var u = W / 390;
+    if (U.step === 'repeat') {
+      var ti0 = tileInches(), acr = Math.max(ti0[0], ti0[1]) * 2.4 / (U.zoom || 1), pp = W / acr, tt = tile(pp);
+      g.fillStyle = g.createPattern(tt, 'repeat'); g.fillRect(0, 0, W, H); HIT = null; placeCtx(0, 0, false);
+      g.save(); g.strokeStyle = 'rgba(31,42,68,.35)'; g.lineWidth = u; g.setLineDash([5 * u, 4 * u]);
+      for (var sx = 0; sx <= W; sx += tt.width) { g.beginPath(); g.moveTo(sx, 0); g.lineTo(sx, H); g.stroke(); }
+      for (var sy = 0; sy <= H; sy += tt.height) { g.beginPath(); g.moveTo(0, sy); g.lineTo(W, sy); g.stroke(); }
+      g.restore(); lbl('One repeat is ' + inch(ti0[0]) + ' x ' + inch(ti0[1]) + '. Dashed lines are the seams.'); return;
+    }
     if (U.view !== 'tile' || U.step !== 'make') {
       var across = (U.view === 'yard' ? 42 : U.view === 'swatch' ? 8 : D.tileIn * 1.6) / (U.zoom || 1), ppi = W / across, t = tile(ppi);
       g.fillStyle = g.createPattern(t, 'repeat'); g.fillRect(0, 0, W, H); HIT = null;
@@ -616,7 +624,7 @@
     $('tools').classList.toggle('on', list.length > 0); if (!list.length) return;
     $('tools').innerHTML = list.map(function (x) { return '<button type="button" data-t="' + x[0] + '" aria-pressed="' + (x[0] === tool) + '"' + (x[0] === 'done' ? ' class="done"' : '') + '>' + ico(x[0] === 'shape' ? 'ground' : x[0]) + '<span>' + x[1] + '</span></button>'; }).join('');
   }
-  function curTool() { if (!sel()) return U.ptool; var list = toolsFor().map(function (x) { return x[0]; }); if (U.tool && list.indexOf(U.tool) >= 0) return U.tool; return sel() ? firstTool(sel()) : U.ptool; }
+  function curTool() { if (!sel()) return U.ptool === 'ground' || U.ptool === 'ideas' ? U.ptool : 'ground'; var list = toolsFor().map(function (x) { return x[0]; }); if (U.tool && list.indexOf(U.tool) >= 0) return U.tool; return sel() ? firstTool(sel()) : U.ptool; }
   $('tools').addEventListener('click', function (e) {
     var b = e.target.closest('button[data-t]'); if (!b) return; var t = b.dataset.t;
     if (t === 'done') { U.sel = null; U.tool = null; render(); return; }
@@ -627,10 +635,11 @@
 
   function panelHtml() {
     if (U.step === 'look') return lookHtml();
+    if (U.step === 'repeat') return repeatHtml();
     if (U.step === 'save') return saveHtml();
     var L = sel(), t = curTool();
     if (U.addOpen) { U.addTab = U.addOpen; return addHtml(true); }
-    if (!L) return '<p class="ptitle">Pattern</p><div class="tiles">' + [['repeat', 'Repeat', 'repeat'], ['ground', 'Color', 'ground'], ['grid', 'Grid', 'grid'], ['ideas', 'Ideas', 'ideas']].map(function (x) { return '<button type="button" class="tile" data-pt="' + x[0] + '" aria-pressed="' + (t === x[0]) + '">' + ico(x[2]) + '<small>' + x[1] + '</small></button>'; }).join('') + '</div>' + toolHtml(t, null);
+    if (!L) return '<p class="ptitle">Pattern</p><div class="tiles">' + [['ground', 'Color', 'ground'], ['ideas', 'Ideas', 'ideas']].map(function (x) { return '<button type="button" class="tile" data-pt="' + x[0] + '" aria-pressed="' + (t === x[0]) + '">' + ico(x[2]) + '<small>' + x[1] + '</small></button>'; }).join('') + '</div>' + toolHtml(t, null);
     return '<p class="ptitle">' + esc(pieceName(L)) + '</p>' + toolHtml(t, L);
   }
   function pieceName(L) { if (L.t === 'art') return 'Your art'; if (L.t === 'words') return 'Words'; if (L.t === 'sym') return (SYMS.filter(function (x) { return x[0] === L.k; })[0] || ['', 'Symbol'])[1]; return (SHAPES.filter(function (x) { return x[0] === L.k; })[0] || ['', 'Shape'])[1]; }
@@ -688,6 +697,51 @@
     return '';
   }
   function sb(name) { return function (x) { var cur = name === 'rep' ? D.rep : ''; return '<button type="button" data-v="' + x[0] + '" aria-pressed="' + (cur === x[0]) + '">' + x[1] + '</button>'; }; }
+  /* ---------- Repeat step: see your pattern in every repeat, and fill a grid like the Block builder ---------- */
+  var MIXES = [['same', 'Same'], ['checker', 'Checker'], ['rows', 'Rows'], ['cols', 'Columns'], ['diag', 'Diagonal'], ['frame', 'Frame'], ['random', 'Random']];
+  function freePieces() { return D.layers.filter(function (x) { return x.gcell == null && !x.hug; }); }
+  function repeatHtml() {
+    var gs = D.gs, n = D.grid > 1 ? D.grid : 0;
+    var h = '<p class="ptitle">Repeat</p><div class="grid g3" style="margin-bottom:10px">' + REPS.map(function (x) { return '<button type="button" class="pick" data-rp="' + x[0] + '" aria-pressed="' + (D.rep === x[0]) + '"><canvas data-mini="rep:' + x[0] + '" width="150" height="96" style="height:60px"></canvas>' + x[1] + '</button>'; }).join('') + '</div>' +
+      (D.rep === 'mirror' ? '<div class="row"><b>Mirror</b>' + seg('mdir', [['both', 'Both ways'], ['lr', 'Left-right'], ['ud', 'Up-down']], D.mdir) + '</div><div class="row"><b>Words</b>' + seg('mword', [['readable', 'Readable'], ['flip', 'True mirror']], D.mword) + '</div>' : '') +
+      (D.rep === 'kale' ? '<div class="row"><b>Slices</b>' + seg('kale', [['kaleSquare', 'Square'], ['kaleHex', 'Hexagon'], ['kaleTri', 'Triangle']], D.kale) + '</div>' : '') +
+      stepper('tile', 'Tile', fmtIn(D.tileIn)) +
+      '<p class="h" style="margin-top:14px">Grid</p>' + stepper('grid', 'Squares', n ? n + ' x ' + n : 'Off');
+    if (!n) return h + '<p class="note">Turn the grid on to fill squares with your pieces: checker, rows, frame and more.</p>';
+    var pieces = freePieces(), slots = U.slots || (gs ? gs.order : []);
+    h += '<div class="grid g4" style="margin-bottom:8px">' + MIXES.map(function (x) { var on = (U.mix || (gs && gs.mix) || 'checker') === x[0]; return '<button type="button" class="pick" data-mix="' + x[0] + '" aria-pressed="' + on + '" style="min-height:48px"><canvas data-mini="mix:' + x[0] + '" width="80" height="44" style="height:26px"></canvas>' + x[1] + '</button>'; }).join('') + '</div>';
+    if (pieces.length) h += '<p class="note">Tap your pieces in order: the first is A, the next B, up to D.</p><div class="grid g5" style="margin-bottom:8px">' + pieces.map(function (L) { var k = slots.indexOf(L.id); return '<button type="button" class="pick" data-slot="' + L.id + '" aria-pressed="' + (k >= 0) + '" style="position:relative"><canvas data-mini="piece:' + L.id + '" width="80" height="60"></canvas>' + (k >= 0 ? 'ABCD'[k] : '&nbsp;') + '</button>'; }).join('') + '</div>';
+    else if (!gs) h += '<p class="note">Add pieces in Make first (art, words, symbols, shapes), then fill the grid with them.</p>';
+    if (pieces.length) h += '<button type="button" class="btn dark" data-a="gfill">Fill the grid</button>';
+    if (gs) {
+      h += '<p class="note">Tap a square to change what is in it. Tap a row or column number to change the whole line.</p><div class="gmap" style="grid-template-columns:28px repeat(' + gs.n + ',1fr)"><span></span>';
+      for (var c = 0; c < gs.n; c++) h += '<button type="button" class="gline" data-gcol="' + c + '">' + (c + 1) + '</button>';
+      for (var r = 0; r < gs.n; r++) { h += '<button type="button" class="gline" data-grow="' + r + '">' + (r + 1) + '</button>'; for (var c2 = 0; c2 < gs.n; c2++) { var k2 = gs.cells[r * gs.n + c2]; h += '<button type="button" class="gcell" data-gc="' + (r * gs.n + c2) + '">' + (k2 < 0 ? '' : 'ABCD'[k2]) + '</button>'; } }
+      h += '</div><button type="button" class="btn" data-a="gclear" style="margin-top:8px">Take the grid off</button>';
+    }
+    return h;
+  }
+  function mixSlot(mix, r, c, n, k, R) {
+    if (mix === 'same') return 0; if (mix === 'checker') return (r + c) % Math.min(2, k); if (mix === 'rows') return r % k; if (mix === 'cols') return c % k; if (mix === 'diag') return (r + c) % k;
+    if (mix === 'frame') { var e = r === 0 || c === 0 || r === n - 1 || c === n - 1; return e ? 0 : Math.min(1, k - 1); }
+    return Math.floor(R() * k);
+  }
+  // the grid keeps one template per letter and a letter per square; the squares become real pieces you can still edit in Make
+  function gridBuild() {
+    var gs = D.gs; D.layers = D.layers.filter(function (x) { return x.gcell == null; }); if (!gs) return;
+    gs.cells.forEach(function (k, i) {
+      if (k < 0 || !gs.tpl[k]) return; var t = clone(gs.tpl[k]); t.id = uid(); t.gcell = i; t.x = ((i % gs.n) + .5) / gs.n; t.y = (Math.floor(i / gs.n) + .5) / gs.n; delete t.grp; D.layers.push(t);
+    });
+  }
+  function gridFill() {
+    var ids = (U.slots && U.slots.length ? U.slots : freePieces().slice(0, 2).map(function (x) { return x.id; })), n = D.grid > 1 ? D.grid : 3, mix = U.mix || (D.gs && D.gs.mix) || 'checker';
+    if (!ids.length) return; commit(); D.grid = n;
+    var tpl = ids.map(function (id) { var L = layer(id), t = clone(L); var ct = content(t, 1000), big = ct ? Math.max(ct.w, ct.h) / 1000 : t.s; t.s = t.s * Math.min(1, .82 / n / Math.max(.01, big)); t.r = t.r || 0; return t; });
+    var k = tpl.length, R = E.rng(D.seed || 7), cells = [];
+    for (var i = 0; i < n * n; i++) cells.push(mixSlot(mix, Math.floor(i / n), i % n, n, k, R));
+    D.layers = D.layers.filter(function (x) { return ids.indexOf(x.id) < 0; });
+    D.gs = { n: n, mix: mix, order: ids, tpl: tpl, cells: cells }; U.slots = null; gridBuild(); changed();
+  }
   function lookHtml() {
     var cols = colorsInUse(), ks = wayKinds();
     return '<div class="ways">' + [['now', 'Now']].concat(ks).map(function (k, i) { return '<button type="button" class="pick" data-way="' + i + '" aria-pressed="' + (i === 0) + '"><canvas data-mini="way:' + i + '" data-lazy="1" width="150" height="150"></canvas>' + k[1] + '</button>'; }).join('') + '</div>' +
@@ -738,6 +792,9 @@
         else if (what === 'sym') { g.translate(W / 2, H / 2); iconDraw(g, v, m * .36, '#1a1a1a'); }
         else if (what === 'shape') { g.translate(W / 2, H / 2); shapePath(g, v, m * .38); if (v === 'ring') { g.lineWidth = m * .07; g.strokeStyle = '#1a1a1a'; g.stroke(); } else { g.fillStyle = '#1a1a1a'; g.fill(); } }
         else if (what === 'lay') { var L = { tx: v === 'seal' ? 'TOP' : 'WORDS', tx2: 'BOTTOM', f: 'FS Archivo Black', lay: v, sp: .04, bend: 70, c: '#1a1a1a', s: 1 }, wc = wordsCanvas(L, 26, 0), k2 = Math.min(W / wc.width, H / wc.height) * .92; g.drawImage(wc, (W - wc.width * k2) / 2, (H - wc.height * k2) / 2, wc.width * k2, wc.height * k2); }
+        else if (what === 'rep') { var dv = clone(D); dv.rep = v; withDoc(dv, function () { var ti = tileInches(); swatchInto(c, Math.max(ti[0], ti[1]) * 2.2, null); }); }
+        else if (what === 'mix') { var cl = ['#1f2a44', '#d9dce6', '#8b8ea8'], nn2 = 4, cs = Math.min(W / nn2, H / nn2), ox2 = (W - cs * nn2) / 2, oy2 = (H - cs * nn2) / 2, Rm = E.rng(5); for (var yy = 0; yy < nn2; yy++) for (var xx = 0; xx < nn2; xx++) { g.fillStyle = cl[mixSlot(v, yy, xx, nn2, v === 'same' ? 1 : 2, Rm)]; g.fillRect(ox2 + xx * cs + 1, oy2 + yy * cs + 1, cs - 2, cs - 2); } }
+        else if (what === 'piece') { var Lp = layer(v); if (Lp) { var lp = clone(Lp), ctp = content(lp, 100), kp = ctp ? Math.min(W / ctp.w, H / ctp.h) * .8 : 1; g.save(); g.translate(W / 2, H / 2); g.scale(kp, kp); lp.r = 0; drawLayer(g, lp, 100, false, false, 'flip'); g.restore(); } }
         else if (what === 'fab') { var p = v.split(':'), sv = D.fab; D.fab = { k: p[0], p: p[1], sz: 1, c: sv && sv.c }; var t = fabTile(D.fab, 40); D.fab = sv; g.fillStyle = g.createPattern(t, 'repeat'); g.fillRect(0, 0, W, H); }
         else if (what === 'mine') { var col = getComputedStyle(c.closest('button')).color; if (!LETTERS) { g.fillStyle = col; g.font = '800 15px ' + getComputedStyle(document.body).fontFamily; g.textAlign = 'center'; g.textBaseline = 'middle'; g.fillText('+ Yours', W / 2, H / 2); } else { var w2 = NocivLetters.word(v || 'Aa', LETTERS.dna, 60, col), k3 = Math.min(W * .9 / w2.width, H * .9 / w2.height); g.drawImage(w2, (W - w2.width * k3) / 2, (H - w2.height * k3) / 2, w2.width * k3, w2.height * k3); } }
       } catch (e) {}
@@ -762,7 +819,7 @@
   $('trash').addEventListener('click', function () {
     if (sel()) { act('del'); return; }
     if (!D.layers.length && !D.fab) return;
-    shelve(false); commit(); D = freshDoc(); U.cur = null; U.sel = null; U.tool = null; U.ptool = 'repeat'; U.view = 'tile'; flash('Fresh start. Last design saved in My patterns.'); changed();
+    shelve(false); commit(); D = freshDoc(); U.cur = null; U.sel = null; U.tool = null; U.ptool = 'ground'; U.view = 'tile'; flash('Fresh start. Last design saved in My patterns.'); changed();
   });
   $('addSheet').addEventListener('click', function (e) {
     if (e.target === $('addSheet')) { $('addSheet').hidden = true; return; }
@@ -774,6 +831,13 @@
   $('panel').addEventListener('click', panelClick = function (e) {
     var b = e.target.closest('button'); if (!b) return; var d = b.dataset, L = sel(), sg = b.closest('[data-sg]'), st = b.closest('[data-st]');
     if (d.pt) { U.ptool = d.pt; return render(); }
+    if (d.rp) { commit(); D.rep = d.rp; return changed(); }
+    if (d.mix) { U.mix = d.mix; if (D.gs) { commit(); var R2 = E.rng(Math.floor(Math.random() * 1e6)); D.gs.mix = d.mix; D.gs.cells = D.gs.cells.map(function (_, i) { return mixSlot(d.mix, Math.floor(i / D.gs.n), i % D.gs.n, D.gs.n, D.gs.tpl.length, R2); }); gridBuild(); return changed(); } return render(); }
+    if (d.slot) { var sl = (U.slots || []).slice(), at = sl.indexOf(d.slot); if (at >= 0) sl.splice(at, 1); else if (sl.length < 4) sl.push(d.slot); U.slots = sl; return render(); }
+    if (d.a === 'gfill') { gridFill(); return; }
+    if (d.a === 'gclear') { commit(); D.gs = null; gridBuild(); return changed(); }
+    if (d.gc != null && D.gs) { commit(); var gi = +d.gc, kk = D.gs.tpl.length; D.gs.cells[gi] = D.gs.cells[gi] + 1 >= kk ? -1 : D.gs.cells[gi] + 1; gridBuild(); return changed(); }
+    if ((d.grow != null || d.gcol != null) && D.gs) { commit(); var gn = D.gs.n, line = []; for (var q = 0; q < gn; q++) line.push(d.grow != null ? (+d.grow) * gn + q : q * gn + (+d.gcol)); var nx = D.gs.cells[line[0]] + 1 >= D.gs.tpl.length ? -1 : D.gs.cells[line[0]] + 1; line.forEach(function (ci) { D.gs.cells[ci] = nx; }); gridBuild(); return changed(); }
     if (d.delart) { delArt(d.delart); return; }
     if (d.a === 'ideas') { if (ART.length) showStarters(); else { WANT = 'start'; $('artfile').click(); } return; }
     if (d.a === 'upload') { WANT = null; $('artfile').click(); return; }
@@ -810,7 +874,10 @@
     if (st && d.d) {
       var n = st.dataset.st, dd = +d.d; commit();
       if (n === 'tile') D.tileIn = clamp(Math.round((D.tileIn + dd * .5) * 10) / 10, 1, 24);
-      else if (n === 'grid') D.grid = D.grid <= 1 ? (dd > 0 ? 2 : 0) : (D.grid + dd < 2 ? 0 : clamp(D.grid + dd, 2, 9));
+      else if (n === 'grid') {
+        var og = D.grid; D.grid = D.grid <= 1 ? (dd > 0 ? 3 : 0) : (D.grid + dd < 2 ? 0 : clamp(D.grid + dd, 2, 9));
+        if (D.gs) { if (D.grid < 2) D.gs = null; else { var on = D.gs.n, nn = D.grid, R3 = E.rng(7); D.gs.tpl.forEach(function (t) { t.s = t.s * on / nn; }); D.gs.n = nn; D.gs.cells = []; for (var gi2 = 0; gi2 < nn * nn; gi2++) D.gs.cells.push(mixSlot(D.gs.mix, Math.floor(gi2 / nn), gi2 % nn, nn, D.gs.tpl.length, R3)); } gridBuild(); }
+      }
       else if (n === 'fsz' && D.fab) D.fab.sz = clamp(Math.round(((D.fab.sz || 1) + dd * .25) * 100) / 100, .25, 4);
       else if (L && n === 'size') L.auto = false, L.s = clamp(Math.round((L.s + dd * .02) * 100) / 100, .03, 3);
       else if (L && n === 'turn') L.r = ((L.r || 0) + dd * 15 + 360) % 360;
@@ -989,7 +1056,7 @@
     document.documentElement.classList.toggle('righty', HAND === 'right');
     $('home').hidden = true; // no first page: it always opens straight into the canvas
     $('addbar').hidden = U.step !== 'make'; $('addbar').innerHTML = [['art', 'My art'], ['fab', 'Fabrics'], ['words', 'Words'], ['sym', 'Symbols'], ['shape', 'Shapes']].map(function (x) { return '<button type="button" data-tab="' + x[0] + '" aria-pressed="' + (U.addOpen === x[0]) + '">' + x[1] + '</button>'; }).join('');
-    toolbar(); $('fab').hidden = true; $('zoom').hidden = U.step === 'look' && false; $('trash').hidden = U.step !== 'make' || (!!sel() && $('stage').clientHeight < 400); // short screens: the side rail needs the room, Delete is on the floating bar $('trash').setAttribute('aria-label', sel() ? 'Delete this piece' : 'Start fresh'); $('trash').classList.toggle('piece', !!sel()); if (U.step !== 'make' || U.view !== 'tile') placeCtx(0, 0, false);
+    toolbar(); $('fab').hidden = true; $('views').parentNode.style.visibility = U.step === 'repeat' ? 'hidden' : ''; $('zoom').hidden = U.step === 'look' && false; $('trash').hidden = U.step !== 'make' || (!!sel() && $('stage').clientHeight < 400); // short screens: the side rail needs the room, Delete is on the floating bar $('trash').setAttribute('aria-label', sel() ? 'Delete this piece' : 'Start fresh'); $('trash').classList.toggle('piece', !!sel()); if (U.step !== 'make' || U.view !== 'tile') placeCtx(0, 0, false);
     var pn = $('panel'), s = pn.scrollTop; pn.innerHTML = panelHtml(); pn.scrollTop = s; minis();
     var cv2 = U.view !== 'tile'; $('clothChip').hidden = !cv2; $('clothChip').textContent = clothShort(D.cloth); $('clothChip').setAttribute('aria-pressed', String(cv2 && U.clothOpen));
     var co = cv2 && U.clothOpen && U.step !== 'look', cl = $('cloths'); cl.hidden = !co;
