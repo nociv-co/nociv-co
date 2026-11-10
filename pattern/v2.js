@@ -55,7 +55,7 @@
   var IMG = {}, artVer = 0;
   function loadArt() { return Promise.all(ART.map(function (a) { return idbGet('lib:' + a.id).then(function (b) { return b ? blobToCanvas(b) : null; }).then(function (c) { if (c) IMG[a.id] = c; }); })).then(function () { ART = ART.filter(function (a) { return IMG[a.id]; }); artVer++; }); }
   function addArtCanvas(c) {
-    var k = Math.min(1, 1200 / Math.max(c.width, c.height)), c2 = E.cv(c.width * k, c.height * k); c2.getContext('2d').drawImage(c, 0, 0, c2.width, c2.height);
+    var k = Math.min(1, 3000 / Math.max(c.width, c.height)), c2 = E.cv(c.width * k, c.height * k); c2.getContext('2d').drawImage(c, 0, 0, c2.width, c2.height);
     var id = uid(); IMG[id] = c2; ART.push({ id: id, white: true }); artVer++;
     return new Promise(function (res) { c2.toBlob(function (b) { if (b) idbSet('lib:' + id, b).then(function () { res(id); }); else res(id); }, 'image/png'); });
   }
@@ -63,7 +63,7 @@
     var list = Array.prototype.slice.call(files || []).slice(0, Math.max(0, 30 - ART.length)), ids = [];
     return list.reduce(function (p, f) {
       return p.then(function () {
-        var cr = window.nocivCrop ? window.nocivCrop(f, { title: 'Crop your art', aspects: [['free', 'Free'], ['orig', 'Original'], [1, 'Square']], maxPx: 1600 }).catch(function () { return null; }) : blobToCanvas(f);
+        var cr = window.nocivCrop ? window.nocivCrop(f, { title: 'Crop your art', aspects: [['free', 'Free'], ['orig', 'Original'], [1, 'Square']], maxPx: 3000 }).catch(function () { return null; }) : blobToCanvas(f);
         return cr.then(function (c) { if (c) return addArtCanvas(c).then(function (id) { ids.push(id); return idbSet('src:' + id, f); }); });
       });
     }, Promise.resolve()).then(function () { keep(); return ids; });
@@ -72,7 +72,7 @@
   function cropArt() {
     var L = sel(); if (!L || L.t !== 'art' || !window.nocivCrop) return; var old = L.aid;
     idbGet('src:' + old).then(function (b) { return b || new Promise(function (r) { IMG[old].toBlob(r, 'image/png'); }); }).then(function (src) {
-      return window.nocivCrop(src, { title: 'Crop your art', aspects: [['free', 'Free'], ['orig', 'Original'], [1, 'Square']], maxPx: 1600 }).then(function (c) {
+      return window.nocivCrop(src, { title: 'Crop your art', aspects: [['free', 'Free'], ['orig', 'Original'], [1, 'Square']], maxPx: 3000 }).then(function (c) {
         if (!c) return; return addArtCanvas(c).then(function (id) { idbSet('src:' + id, src); var a = artInfo(old), n = artInfo(id); if (a && n) n.white = a.white; commit(); D.layers.forEach(function (x) { if (x.t === 'art' && x.aid === old) x.aid = id; }); changed(); });
       });
     }).catch(function () {});
@@ -462,7 +462,7 @@
   // snaps: the center, the guide grid, lined up with another piece, and equal spacing
   // (half way between two pieces, or one more step past them)
   function snapPos(x, y, me) {
-    GUIDES = []; if (!HIT) return [x, y]; var tol = 9 * HIT.u / HIT.B, xs = [.5], ys = [.5];
+    GUIDES = []; if (!HIT) return [x, y]; var tol = 9 * HIT.u / HIT.B, tolY = 9 * HIT.u / (HIT.Bh || HIT.B), xs = [.5], ys = [.5];
     if (D.grid > 1) for (var k = 0; k <= D.grid * 2; k++) { xs.push(k / (D.grid * 2)); ys.push(k / (D.grid * 2)); }
     var others = D.layers.filter(function (o) { return o !== me && !hugShape(o); }).slice(-24);
     others.forEach(function (o, i) {
@@ -471,8 +471,8 @@
         [[o.x, q.x, xs], [o.y, q.y, ys]].forEach(function (p) { var a = p[0], b = p[1]; if (Math.abs(a - b) < .02) return; p[2].push((a + b) / 2, 2 * b - a, 2 * a - b); });
       });
     });
-    function best(v, list) { var bv = null, bd = tol; list.forEach(function (c) { if (c < -.05 || c > 1.05) return; var d = Math.abs(v - c); if (d < bd) { bd = d; bv = c; } }); return bv; }
-    var bx = best(x, xs), by = best(y, ys);
+    function best(v, list, tl) { var bv = null, bd = tl; list.forEach(function (c) { if (c < -.05 || c > 1.05) return; var d = Math.abs(v - c); if (d < bd) { bd = d; bv = c; } }); return bv; }
+    var bx = best(x, xs, tol), by = best(y, ys, tolY);
     if (bx != null) { x = bx; GUIDES.push(['x', bx]); } if (by != null) { y = by; GUIDES.push(['y', by]); }
     return [x, y];
   }
@@ -537,7 +537,7 @@
   function hideMenu() { $('menu').hidden = true; }
   $('menu').addEventListener('click', function (e) { var b = e.target.closest('button[data-m]'); if (!b) return; act(b.dataset.m); hideMenu(); });
   $('ctx').addEventListener('click', function (e) { var b = e.target.closest('button[data-m]'); if (!b) return; act(b.dataset.m); });
-  function placeCtx(x, y, on) { var c = $('ctx'); c.classList.toggle('on', !!on); if (!on) return; var r = view.getBoundingClientRect(), k = r.width / view.width, w = c.offsetWidth || 220; c.style.left = clamp(x * k, w / 2 + 6, r.width - w / 2 - 6) + 'px'; c.style.top = clamp(y * k - 54, 50, r.height - 110) + 'px'; }
+  function placeCtx(x, y, on) { var c = $('ctx'); c.classList.toggle('on', !!on); if (!on) return; var r = view.getBoundingClientRect(), k = r.width / view.width, w = c.offsetWidth || 220, tl = $('tools'), rw = tl && tl.classList.contains('on') ? tl.offsetWidth + 14 : 0, lo = (HAND === 'left' ? rw : 0) + w / 2 + 6, hi = r.width - (HAND === 'left' ? 0 : rw) - w / 2 - 6; c.style.left = (hi < lo ? r.width / 2 : clamp(x * k, lo, hi)) + 'px'; c.style.top = clamp(y * k - 54, 50, r.height - 110) + 'px'; }
   function act(m) {
     var L = sel(); if (!L) return; commit(); var i = D.layers.indexOf(L);
     if (m === 'copy') { var c = clone(L); c.id = uid(); c.x = clamp(L.x + .08, 0, 1); c.y = clamp(L.y + .08, 0, 1); delete c.grp; D.layers.push(c); U.sel = c.id; }
@@ -758,7 +758,7 @@
     var gs = D.gs; D.layers = D.layers.filter(function (x) { return x.gcell == null; }); if (!gs) return;
     gs.cells.forEach(function (k, i) {
       var o = (gs.ov && gs.ov[i]) || {}, cx = ((i % gs.n) + .5) / gs.n, cy = (Math.floor(i / gs.n) + .5) / gs.n;
-      if (o.back && o.back !== 'none') D.layers.push({ id: uid(), t: 'shape', k: o.back === 'rounded' ? 'square' : o.back, c: o.bc || '#f3efe6', s: (o.back === 'square' ? 1.08 : .98) / gs.n, x: cx, y: cy, r: 0, op: 1, gcell: i, gback: 1 });
+      if (o.back && o.back !== 'none') D.layers.push({ id: uid(), t: 'shape', k: o.back === 'rounded' ? 'square' : o.back, c: o.bc || '#f3efe6', s: (o.back === 'square' ? 1.08 : .98) * Math.min(1, asp()) / gs.n, x: cx, y: cy, r: 0, op: 1, gcell: i, gback: 1 });
       if (k < 0 || !gs.tpl[k]) return; var t = clone(gs.tpl[k]); t.id = uid(); t.gcell = i; t.x = cx + (o.nx || 0) / gs.n; t.y = cy + (o.ny || 0) / gs.n; delete t.grp;
       if (o.sm) t.s *= o.sm; if (o.r != null) t.r = o.r; if (o.c) { if (t.t === 'art') t.tint = o.c; else t.c = o.c; }
       D.layers.push(t);
@@ -767,7 +767,7 @@
   function gridFill() {
     var ids = (U.slots && U.slots.length ? U.slots : freePieces().slice(0, 2).map(function (x) { return x.id; })), n = D.grid > 1 ? D.grid : 3, mix = U.mix || (D.gs && D.gs.mix) || 'checker';
     if (!ids.length) return; commit(); D.grid = n;
-    var tpl = ids.map(function (id) { var L = layer(id), t = clone(L); var ct = content(t, 1000), big = ct ? Math.max(ct.w, ct.h) / 1000 : t.s; t.s = t.s * Math.min(1, .82 / n / Math.max(.01, big)); t.r = t.r || 0; return t; });
+    var ar = asp(), tpl = ids.map(function (id) { var L = layer(id), t = clone(L); var ct = content(t, 1000), cw = ct ? ct.w / 1000 : t.s, ch = ct ? ct.h / 1000 : t.s; t.s = t.s * Math.min(1, .82 / n / Math.max(.01, cw), .82 * ar / n / Math.max(.01, ch)); t.r = t.r || 0; return t; });
     var k = tpl.length, R = E.rng(D.seed || 7), cells = [];
     for (var i = 0; i < n * n; i++) cells.push(mixSlot(mix, Math.floor(i / n), i % n, n, k, R));
     D.layers = D.layers.filter(function (x) { return ids.indexOf(x.id) < 0; });
@@ -960,7 +960,7 @@
     if (d.gpick != null && D.gs && U.gsel) { commit(); U.gsel.forEach(function (i) { D.gs.cells[i] = +d.gpick; }); gridBuild(); return changed(); }
     if ((d.gnewl || d.gnewa || d.gnews || d.gnewh) && D.gs && U.gsel) {
       var nt = d.gnewl ? clone(layer(d.gnewl)) : d.gnewa ? { t: 'art', aid: d.gnewa, s: .5, r: 0, op: 1 } : d.gnews ? { t: 'sym', k: d.gnews, c: accent(), s: .5, r: 0, op: 1 } : { t: 'shape', k: d.gnewh, c: accent(), s: .5, r: 0, op: 1 };
-      if (!nt) return; delete nt.id; delete nt.gcell; var ctn = content(nt, 1000), big = ctn ? Math.max(ctn.w, ctn.h) / 1000 : nt.s; nt.s = nt.s * .82 / D.gs.n / Math.max(.01, big);
+      if (!nt) return; delete nt.id; delete nt.gcell; var ctn = content(nt, 1000), cw2 = ctn ? ctn.w / 1000 : nt.s, ch2 = ctn ? ctn.h / 1000 : nt.s; nt.s = nt.s * Math.min(.82 / D.gs.n / Math.max(.01, cw2), .82 * asp() / D.gs.n / Math.max(.01, ch2));
       commit(); D.gs.tpl.push(nt); var ni = D.gs.tpl.length - 1; U.gsel.forEach(function (i) { D.gs.cells[i] = ni; }); U.fopen = null; gridBuild(); return changed();
     }
     if (d.gcol && U.gsel) { gsetAll(function (o) { o.c = d.gcol; }); return; }
@@ -1196,9 +1196,20 @@
     draw();
   }
   function adjUp() { if (!AG) return; AG = null; render(); }
+  // the inked part of a picture (clear or white edges ignored), as fractions of its size
+  var abox = {};
+  function artBox(L) {
+    var c = artCanvas(L.aid, L.tint); if (!c) return [0, 0, 1, 1]; var key = L.aid + ':' + artVer + ':' + (L.tint || ''); if (abox[key]) return abox[key];
+    var k = Math.min(1, 400 / Math.max(c.width, c.height)), w = Math.max(1, Math.round(c.width * k)), h = Math.max(1, Math.round(c.height * k)), m = E.cv(w, h), g = m.getContext('2d'); g.drawImage(c, 0, 0, w, h);
+    var d = g.getImageData(0, 0, w, h).data, x0 = w, y0 = h, x1 = -1, y1 = -1;
+    for (var y = 0; y < h; y++) for (var x = 0; x < w; x++) if (d[(y * w + x) * 4 + 3] > 20) { if (x < x0) x0 = x; if (x > x1) x1 = x; if (y < y0) y0 = y; if (y > y1) y1 = y; }
+    return (abox[key] = x1 < 0 ? [0, 0, 1, 1] : [x0 / w, y0 / h, (x1 + 1) / w, (y1 + 1) / h]);
+  }
   function adjFit() {
     var x0 = 1e9, y0 = 1e9, x1 = -1e9, y1 = -1e9, W0 = D.tileIn, H0 = tileHt();
-    D.layers.forEach(function (L) { var ct = content(L, 1000); if (!ct) return; var p = pos(L), w = ct.w / 1000 * W0, h = ct.h / 1000 * W0, r = (L.r || 0) * Math.PI / 180, ww = Math.abs(w * Math.cos(r)) + Math.abs(h * Math.sin(r)), hh = Math.abs(w * Math.sin(r)) + Math.abs(h * Math.cos(r)), cx = p[0] * W0, cy = p[1] * H0; x0 = Math.min(x0, cx - ww / 2); x1 = Math.max(x1, cx + ww / 2); y0 = Math.min(y0, cy - hh / 2); y1 = Math.max(y1, cy + hh / 2); });
+    D.layers.forEach(function (L) { var ct = content(L, 1000); if (!ct) return; var p = pos(L), w = ct.w / 1000 * W0, h = ct.h / 1000 * W0, r = (L.r || 0) * Math.PI / 180, ox0 = 0, oy0 = 0;
+      if (L.t === 'art') { var bx = artBox(L), fxs = L.fl === 'x' ? -1 : 1, fys = L.fl === 'y' ? -1 : 1, lx = ((bx[0] + bx[2]) / 2 - .5) * w * fxs, ly = ((bx[1] + bx[3]) / 2 - .5) * h * fys; ox0 = lx * Math.cos(r) - ly * Math.sin(r); oy0 = lx * Math.sin(r) + ly * Math.cos(r); w = (bx[2] - bx[0]) * w; h = (bx[3] - bx[1]) * h; }
+      var ww = Math.abs(w * Math.cos(r)) + Math.abs(h * Math.sin(r)), hh = Math.abs(w * Math.sin(r)) + Math.abs(h * Math.cos(r)), cx = p[0] * W0 + ox0, cy = p[1] * H0 + oy0; x0 = Math.min(x0, cx - ww / 2); x1 = Math.max(x1, cx + ww / 2); y0 = Math.min(y0, cy - hh / 2); y1 = Math.max(y1, cy + hh / 2); });
     if (x1 < x0) return; var m = Math.max(x1 - x0, y1 - y0) * .06, wi = x1 - x0 + m * 2, hi = y1 - y0 + m * 2;
     if (adjLock()) wi = hi = Math.max(wi, hi);
     var a = U.adj; a.w = wi / W0; a.h = hi / H0; a.fx = ((x0 + x1) / 2 - wi / 2) / W0; a.fy = ((y0 + y1) / 2 - hi / 2) / H0; adjFix(a);
