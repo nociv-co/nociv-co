@@ -636,7 +636,7 @@
   function pieceName(L) { if (L.t === 'art') return 'Your art'; if (L.t === 'words') return 'Words'; if (L.t === 'sym') return (SYMS.filter(function (x) { return x[0] === L.k; })[0] || ['', 'Symbol'])[1]; return (SHAPES.filter(function (x) { return x[0] === L.k; })[0] || ['', 'Shape'])[1]; }
   function addHtml(noTabs) {
     {
-      var tabs = [['art', 'My art'], ['words', 'Words'], ['sym', 'Symbols'], ['shape', 'Shapes'], ['fab', 'Fabrics']], at = U.addTab;
+      var tabs = [['art', 'My art'], ['fab', 'Fabrics'], ['words', 'Words'], ['sym', 'Symbols'], ['shape', 'Shapes']], at = U.addTab;
       var h = noTabs ? '' : '<div class="tabs5" data-tabs="1">' + tabs.map(function (x) { return '<button type="button" data-tab="' + x[0] + '" aria-pressed="' + (x[0] === at) + '">' + x[1] + '</button>'; }).join('') + (noTabs ? '' : '</div>');
       if (at === 'art') h += '<div class="grid g4">' + ART.map(function (a) { return '<div class="artw"><button type="button" class="pick" data-addart="' + a.id + '"><canvas data-mini="art:' + a.id + '" width="120" height="72"></canvas></button><button type="button" class="artx" data-delart="' + a.id + '" aria-label="Remove this art">&times;</button></div>'; }).join('') + '<button type="button" class="pick" data-a="upload">' + ico('add') + 'Add art</button></div>';
       if (at === 'words') h += '<div class="grid g4">' + LAYS.map(function (x) { return '<button type="button" class="pick" data-addw="' + x[0] + '"><canvas data-mini="lay:' + x[0] + '" width="120" height="72"></canvas>' + x[1] + '</button>'; }).join('') + '</div>';
@@ -988,7 +988,7 @@
   function render() {
     document.documentElement.classList.toggle('righty', HAND === 'right');
     $('home').hidden = true; // no first page: it always opens straight into the canvas
-    $('addbar').hidden = U.step !== 'make'; $('addbar').innerHTML = [['art', 'My art'], ['words', 'Words'], ['sym', 'Symbols'], ['shape', 'Shapes'], ['fab', 'Fabrics']].map(function (x) { return '<button type="button" data-tab="' + x[0] + '" aria-pressed="' + (U.addOpen === x[0]) + '">' + x[1] + '</button>'; }).join('');
+    $('addbar').hidden = U.step !== 'make'; $('addbar').innerHTML = [['art', 'My art'], ['fab', 'Fabrics'], ['words', 'Words'], ['sym', 'Symbols'], ['shape', 'Shapes']].map(function (x) { return '<button type="button" data-tab="' + x[0] + '" aria-pressed="' + (U.addOpen === x[0]) + '">' + x[1] + '</button>'; }).join('');
     toolbar(); $('fab').hidden = true; $('zoom').hidden = U.step === 'look' && false; $('trash').hidden = U.step !== 'make' || (!!sel() && $('stage').clientHeight < 400); // short screens: the side rail needs the room, Delete is on the floating bar $('trash').setAttribute('aria-label', sel() ? 'Delete this piece' : 'Start fresh'); $('trash').classList.toggle('piece', !!sel()); if (U.step !== 'make' || U.view !== 'tile') placeCtx(0, 0, false);
     var pn = $('panel'), s = pn.scrollTop; pn.innerHTML = panelHtml(); pn.scrollTop = s; minis();
     var cv2 = U.view !== 'tile'; $('clothChip').hidden = !cv2; $('clothChip').textContent = clothShort(D.cloth); $('clothChip').setAttribute('aria-pressed', String(cv2 && U.clothOpen));
