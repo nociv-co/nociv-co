@@ -525,7 +525,7 @@
   }
   function saveHtml() {
     return '<button type="button" class="btn dark" data-a="png">Save the tile (PNG, 150 DPI)</button><button type="button" class="btn" data-a="pdf">Save the tile as a PDF</button><button type="button" class="btn" data-a="sw">Save an 8 in swatch picture</button>' +
-      '<p class="note">The tile repeats on its own. Upload it as a basic repeat to any fabric printer. Tile size: ' + fmtIn(tileInches()[0]) + ' by ' + fmtIn(tileInches()[1]) + '.</p><a class="btn" href="classic.html" style="text-decoration:none">Hardware and classic tools</a>';
+      '<p class="note">The tile repeats on its own. Upload it as a basic repeat to any fabric printer. Tile size: ' + fmtIn(tileInches()[0]) + ' by ' + fmtIn(tileInches()[1]) + '.</p>';
   }
   function tileInches() { if (D.rep === 'kale') { var t = tile(20); return [t.width / 20, t.height / 20]; } var cp = copies(); return [D.tileIn * cp.w, D.tileIn * cp.h]; }
   function colorsInUse() {
