@@ -221,6 +221,16 @@ html.righty #tools{transform:translateX(140%)}html.righty #tools.on{transform:no
 .console .panel{border-radius:0!important;box-shadow:none!important;padding-top:6px;transition:height .4s var(--spring),padding .3s}
 .console .panel{height:196px}@media(max-height:620px){.console .panel{height:150px}}
 body.cdown .console .panel{height:0!important;padding-top:0;padding-bottom:0;overflow:hidden}
+/* zoom: the magnifier opens + and - above it, tap it again to close */
+#zoom{position:absolute;z-index:3;right:14px;bottom:18px;display:flex;flex-direction:column;align-items:center;gap:6px}
+#zoom[hidden]{display:none}
+#zoom button{all:unset;cursor:pointer;width:50px;height:50px;border-radius:50%;background:var(--card);color:var(--navy);display:grid;place-items:center;font:600 24px/1 var(--sys);box-shadow:0 4px 14px rgba(31,42,68,.18);transition:transform .2s var(--spring),opacity .2s}
+#zoom button:active{transform:scale(.9)}
+#zoom svg{width:23px;height:23px;fill:none;stroke:currentColor;stroke-width:2.2;stroke-linecap:round}
+#zoom #zplus,#zoom #zmin,#zoom output{opacity:0;transform:translateY(24px) scale(.6);pointer-events:none;transition:transform .35s var(--spring),opacity .2s}
+#zoom output{font:700 11px/1 var(--sys);color:var(--sub);background:var(--card);padding:4px 7px;border-radius:8px;box-shadow:0 2px 8px rgba(31,42,68,.12)}
+#zoom.open #zplus,#zoom.open #zmin,#zoom.open output{opacity:1;transform:none;pointer-events:auto}
+#zoom.open #zbtn{background:var(--cream);box-shadow:0 0 0 1.5px var(--navy),0 4px 14px rgba(31,42,68,.18)}
 </style>
 </head>
 <body>
@@ -236,6 +246,7 @@ body.cdown .console .panel{height:0!important;padding-top:0;padding-bottom:0;ove
   <div class="menu" id="menu" hidden></div>
   <div id="ctx"><button data-m="copy">Copy</button><button data-m="front">Front</button><button data-m="back">Back</button><button data-m="del" class="del">Delete</button></div>
   <button id="trash" aria-label="Start fresh"><svg viewBox="0 0 24 24"><path d="M4 7h16M10 11v6M14 11v6M6 7l1 13h10l1-13M9 7V4h6v3"/></svg></button>
+  <div id="zoom"><button id="zplus" aria-label="Zoom in">+</button><output id="zval">100%</output><button id="zmin" aria-label="Zoom out">&minus;</button><button id="zbtn" aria-label="Zoom"><svg viewBox="0 0 24 24"><circle cx="10.5" cy="10.5" r="6.5"/><path d="M15.5 15.5L21 21"/></svg></button></div>
   <button id="fab" aria-label="Add"><svg viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></svg></button>
   <div class="home" id="home" hidden>
     <a class="alt" href="/creator-tools.html" style="position:absolute;left:14px;top:max(14px,env(safe-area-inset-top))">&lsaquo; Tools</a><h1>Patterns</h1>

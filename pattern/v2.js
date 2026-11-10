@@ -364,7 +364,7 @@
     g.setTransform(1, 0, 0, 1, 0, 0); g.fillStyle = '#ffffff'; g.fillRect(0, 0, W, H);
     var u = W / 390;
     if (U.view !== 'tile' || U.step !== 'make') {
-      var across = U.view === 'yard' ? 42 : U.view === 'swatch' ? 8 : D.tileIn * 1.6, ppi = W / across, t = tile(ppi);
+      var across = (U.view === 'yard' ? 42 : U.view === 'swatch' ? 8 : D.tileIn * 1.6) / (U.zoom || 1), ppi = W / across, t = tile(ppi);
       g.fillStyle = g.createPattern(t, 'repeat'); g.fillRect(0, 0, W, H); HIT = null;
       if (U.view !== 'tile') laycloth(g, W, H, D.cloth, ppi);
       if (U.view === 'yard') yardMarks(g, W, H, ppi, u, false, 50 * u);
@@ -373,7 +373,7 @@
     }
     // Tile view: the block big in the middle, its repeats faded around it
     var side = (HAND === 'left' ? 64 : 8) * u, aw = W - side - (HAND === 'left' ? 8 : 64) * u, top = 52 * u, ah = H - top - 34 * u;
-    var Bp = Math.min(aw, ah) * .9, ppi2 = Bp / D.tileIn, t2 = tile(ppi2), B = blockB(ppi2), ox = side + (aw - B) / 2, oy = top + (ah - B) / 2;
+    var ZM = U.zoom || 1, Bp = Math.min(aw, ah) * .9 * ZM, ppi2 = Bp / D.tileIn, t2 = tile(ppi2), B = blockB(ppi2), ox = side + (aw - B) / 2 + (ZM > 1 ? (U.panX || 0) : 0), oy = top + (ah - B) / 2 + (ZM > 1 ? (U.panY || 0) : 0);
     g.save(); g.translate(((ox % t2.width) + t2.width) % t2.width - t2.width, ((oy % t2.height) + t2.height) % t2.height - t2.height); g.fillStyle = g.createPattern(t2, 'repeat'); g.fillRect(0, 0, W + t2.width * 2, H + t2.height * 2); g.restore();
     g.fillStyle = 'rgba(242,242,247,.66)'; g.fillRect(0, 0, W, oy); g.fillRect(0, oy + B, W, H); g.fillRect(0, oy, ox, B); g.fillRect(ox + B, oy, W, B);
     if (D.grid > 1) { g.save(); g.strokeStyle = 'rgba(26,26,26,.28)'; g.lineWidth = u; g.setLineDash([4 * u, 3 * u]); for (var k = 1; k < D.grid; k++) { var q = B * k / D.grid; g.beginPath(); g.moveTo(ox + q, oy); g.lineTo(ox + q, oy + B); g.moveTo(ox, oy + q); g.lineTo(ox + B, oy + q); g.stroke(); } g.restore(); }
@@ -466,7 +466,7 @@
     if (ids.length === 1) {
       if (onHandle(p[0], p[1])) { var L0 = sel(), pp = pos(L0); commit(); G = { mode: 'handle', L: L0, cx: HIT.ox + pp[0] * HIT.B, cy: HIT.oy + pp[1] * HIT.B, d0: 0, a0: 0, s0: L0.s, r0: L0.r || 0 }; G.d0 = Math.hypot(p[0] - G.cx, p[1] - G.cy); G.a0 = Math.atan2(p[1] - G.cy, p[0] - G.cx); return; }
       var L = hitLayer(p[0], p[1]);
-      G = { mode: L ? 'drag' : 'tap', L: L, x0: p[0], y0: p[1], moved: false, lx: L ? L.x : 0, ly: L ? L.y : 0, committed: false };
+      G = { mode: L ? 'drag' : 'tap', L: L, x0: p[0], y0: p[1], px0: U.panX || 0, py0: U.panY || 0, moved: false, lx: L ? L.x : 0, ly: L ? L.y : 0, committed: false };
       clearTimeout(lpTimer); if (L) lpTimer = setTimeout(function () { if (G && !G.moved && G.L) { U.sel = G.L.id; G = null; showMenu(p); render(); } }, 520);
     } else if (ids.length === 2 && sel()) {
       clearTimeout(lpTimer); var a = PT[ids[0]], b = PT[ids[1]], L2 = sel(); if (!G || !G.committed) commit();
@@ -480,6 +480,7 @@
     var dx = p[0] - G.x0, dy = p[1] - G.y0;
     if (!G.moved && Math.hypot(dx, dy) < 8 * (HIT ? HIT.u : 1)) return;
     G.moved = true; clearTimeout(lpTimer);
+    if (G.mode === 'tap' && (U.zoom || 1) > 1) { U.panX = (G.px0 || 0) + dx; U.panY = (G.py0 || 0) + dy; draw(); return; }
     if (G.mode === 'drag' && G.L && !G.L.hug) {
       if (!G.committed) { commit(); G.committed = true; if (U.sel !== G.L.id) { U.sel = G.L.id; U.tool = null; } }
       var s = snapPos(G.lx + dx / HIT.B, G.ly + dy / HIT.B, G.L); G.L.x = s[0]; G.L.y = s[1]; draw();
@@ -751,6 +752,13 @@
   $('addbar').addEventListener('click', function (e) { var b = e.target.closest('button[data-tab]'); if (!b) return; var t = b.dataset.tab; U.addOpen = U.addOpen === t ? null : t; U.addTab = t; if (U.addOpen) { U.sel = null; U.tool = null; } if (U.down) setDown(false); render(); });
   function openAdd() { U.addOpen = U.addTab || 'art'; U.sel = null; U.tool = null; if (U.down) setDown(false); render(); $('fab').classList.remove('pulse'); try { localStorage.setItem('nocivPattern2Fab', '1'); } catch (e) {} }
   $('fab').addEventListener('click', openAdd);
+  var ZOOMS = [.5, .75, 1, 1.5, 2, 3];
+  $('zoom').addEventListener('click', function (e) {
+    var b = e.target.closest('button'); if (!b) return;
+    if (b.id === 'zbtn') { $('zoom').classList.toggle('open'); return; }
+    var i = ZOOMS.indexOf(U.zoom || 1); if (i < 0) i = 2; i = clamp(i + (b.id === 'zplus' ? 1 : -1), 0, ZOOMS.length - 1); U.zoom = ZOOMS[i]; if (U.zoom <= 1) { U.panX = 0; U.panY = 0; }
+    $('zval').textContent = Math.round(U.zoom * 100) + '%'; draw();
+  });
   $('trash').addEventListener('click', function () {
     if (sel()) { act('del'); return; }
     if (!D.layers.length && !D.fab) return;
@@ -981,7 +989,7 @@
     document.documentElement.classList.toggle('righty', HAND === 'right');
     $('home').hidden = true; // no first page: it always opens straight into the canvas
     $('addbar').hidden = U.step !== 'make'; $('addbar').innerHTML = [['art', 'My art'], ['words', 'Words'], ['sym', 'Symbols'], ['shape', 'Shapes'], ['fab', 'Fabrics']].map(function (x) { return '<button type="button" data-tab="' + x[0] + '" aria-pressed="' + (U.addOpen === x[0]) + '">' + x[1] + '</button>'; }).join('');
-    toolbar(); $('fab').hidden = U.step !== 'make'; $('trash').hidden = U.step !== 'make' || (!!sel() && $('stage').clientHeight < 400); // short screens: the side rail needs the room, Delete is on the floating bar $('trash').setAttribute('aria-label', sel() ? 'Delete this piece' : 'Start fresh'); $('trash').classList.toggle('piece', !!sel()); if (U.step !== 'make' || U.view !== 'tile') placeCtx(0, 0, false);
+    toolbar(); $('fab').hidden = true; $('zoom').hidden = U.step === 'look' && false; $('trash').hidden = U.step !== 'make' || (!!sel() && $('stage').clientHeight < 400); // short screens: the side rail needs the room, Delete is on the floating bar $('trash').setAttribute('aria-label', sel() ? 'Delete this piece' : 'Start fresh'); $('trash').classList.toggle('piece', !!sel()); if (U.step !== 'make' || U.view !== 'tile') placeCtx(0, 0, false);
     var pn = $('panel'), s = pn.scrollTop; pn.innerHTML = panelHtml(); pn.scrollTop = s; minis();
     var cv2 = U.view !== 'tile'; $('clothChip').hidden = !cv2; $('clothChip').textContent = clothShort(D.cloth); $('clothChip').setAttribute('aria-pressed', String(cv2 && U.clothOpen));
     var co = cv2 && U.clothOpen && U.step !== 'look', cl = $('cloths'); cl.hidden = !co;
