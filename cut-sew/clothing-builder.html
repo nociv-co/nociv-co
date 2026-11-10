@@ -371,7 +371,7 @@ html.app .wrap > nav.steps.cs-dock button:active { transform: scale(.9); }
 /* console title in the CUT & SEW heading style, with ? and Next on the same row */
 html.app .grid > section.note h2 { display: flex; align-items: center; gap: 8px; margin: 0 0 14px; }
 html.app .grid > section.note h2 b { display: none; }
-html.app .grid > section.note h2 .cs-ttl { flex: 1; min-width: 0; font-size: 19px; font-weight: 900; line-height: 1.08; letter-spacing: .02em; text-transform: uppercase; color: #fff; -webkit-text-stroke: 1.3px var(--ink); paint-order: stroke fill; text-shadow: 2px 2px 0 var(--ink); }
+html.app .grid > section.note h2 .cs-ttl { flex: 1; min-width: 0; font-size: 19px; font-weight: 900; line-height: 1.08; letter-spacing: .02em; text-transform: uppercase; color: #e2d2a2; -webkit-text-stroke: 1.3px var(--ink); paint-order: stroke fill; text-shadow: 2px 2px 0 var(--ink); }
 html.app .grid > section.note h2 .cs-act { flex: none; display: flex; align-items: center; gap: 6px; }
 .cs-q2 { width: 34px; height: 34px; border: 2px solid var(--ink); background: #fff; color: var(--ink); font: inherit; font-weight: 900; font-size: 1rem; cursor: pointer; padding: 0; box-shadow: 2px 2px 0 var(--ink); transition: transform .15s var(--nv-ease); }
 .cs-q2:active { transform: scale(.88); }
@@ -400,6 +400,32 @@ html.app section.note .btn:active { transform: scale(.97); }
 .cs-bigtile:active { transform: scale(.98); }
 .cs-wrap { display: block; }
 @media (prefers-reduced-motion: reduce) { html.app.stepped .grid > section.note.on > *, html.app .dd.open > :not(.group-name) { animation: none; } }
+/* softer console (11-10 evening): warm white cards, thin lines, round corners, soft lift; hard shadow only on the big button and the titles */
+html.app { --cs-card: #fffcf4; --cs-edge: rgba(26,26,26,.13); --cs-lift: 0 1px 2px rgba(70,55,20,.06), 0 6px 16px rgba(70,55,20,.06); }
+html.app .grid > section.note.on { scrollbar-width: none; -webkit-mask-image: linear-gradient(to bottom, transparent 0, #000 12px, #000 calc(100% - 34px), transparent 100%); mask-image: linear-gradient(to bottom, transparent 0, #000 12px, #000 calc(100% - 34px), transparent 100%); }
+html.app .grid > section.note.on::-webkit-scrollbar { display: none; }
+html.app .dd { margin: 0 0 10px; border-radius: 16px; }
+html.app .dd > .group-name { background: var(--cs-card); border: 1.5px solid var(--cs-edge); border-radius: 16px; box-shadow: var(--cs-lift); padding: 15px 14px; font-size: .74rem; letter-spacing: .1em; font-weight: 800; transition: background .2s, border-color .2s; }
+html.app .dd > .group-name::after { font-weight: 600; color: var(--soft); }
+html.app .dd.open { background: var(--cs-card); border: 1.5px solid var(--ink); border-radius: 16px; box-shadow: 0 10px 26px rgba(70,55,20,.12); overflow: hidden; }
+html.app .dd.open > .group-name { background: transparent; border: 0; border-bottom: 1px solid var(--cs-edge); border-radius: 0; box-shadow: none; }
+html.app .dd.open > :not(.group-name) { margin-left: 12px !important; margin-right: 12px !important; }
+html.app .dd.open > :last-child { margin-bottom: 12px !important; }
+html.app section.note .chip, html.app .fams button, html.app .refs button, html.app .srcpick button { border: 1.5px solid var(--cs-edge); border-radius: 12px; background: var(--cs-card); box-shadow: var(--cs-lift); }
+html.app section.note .chip[aria-pressed="true"], html.app .fams button[aria-pressed="true"], html.app .refs button[aria-pressed="true"], html.app .srcpick button[aria-pressed="true"] { background: #ead9a8; border-color: var(--ink); box-shadow: inset 0 0 0 .5px var(--ink), 0 4px 12px rgba(70,55,20,.14); }
+html.app .famlist, html.app .srccard, html.app .tipbox { border: 1.5px solid var(--cs-edge); border-radius: 16px; background: var(--cs-card); box-shadow: var(--cs-lift); overflow: hidden; }
+html.app .famlist button + button { border-top: 1px solid var(--cs-edge); }
+html.app .famlist button[aria-pressed="true"] { background: #f3e8c8; }
+html.app .field input, html.app .field select, html.app .field textarea, html.app section.note textarea { border: 1.5px solid var(--cs-edge); border-radius: 12px; background: var(--cs-card); transition: border-color .2s, box-shadow .2s; }
+html.app .field input:focus, html.app .field select:focus, html.app section.note textarea:focus { outline: none; border-color: var(--ink); box-shadow: 0 0 0 3px rgba(226,210,162,.8); }
+html.app section.note .tip { border-radius: 0 12px 12px 0; background: var(--cs-card); }
+html.app .cs-bigtile { border: 1.5px solid var(--ink); border-radius: 16px; background: var(--cs-card); box-shadow: 0 8px 22px rgba(70,55,20,.12); }
+html.app section.note .btn { border-radius: 14px; }
+html.app section.note .btn#make { box-shadow: 3px 3px 0 var(--ink); }
+html.app section.note .btn:not(#make) { box-shadow: var(--cs-lift); }
+.cs-q2 { border-radius: 10px; box-shadow: var(--cs-lift) !important; border-width: 1.5px !important; }
+html.app .grid > section.note h2 .next-step { border-radius: 10px !important; }
+html.app .wrap > nav.steps.cs-dock button[aria-selected="true"] { border-width: 1.5px; border-radius: 14px; background: #ead9a8; box-shadow: 0 4px 12px rgba(70,55,20,.16); }
 html.app .stage.cs-flat .sum { display: none; }
 @media (max-width: 374px) { html.app .grid > section.note h2 .cs-ttl { font-size: 16px; } }
 /*NV-CUTSEW-STUDIO-CSS-END*/
