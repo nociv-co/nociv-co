@@ -27,6 +27,7 @@
   function esc(t) { return String(t).replace(/[&<>"]/g, function (c) { return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]; }); }
   var INKS = ['#1a1a1a', '#e2342a', '#1d4ed8', '#2f7a4b', '#f2b705', '#ffffff'];
   var LET = 'ABCD';
+  function sampleOn() { var f = $('fname'); return !f || /JPG or PNG/.test(f.textContent); }
   function job() { return window.__nvJob || 'one'; }
   function cut() { return job() === 'cut'; }
 
@@ -36,9 +37,9 @@
   app.innerHTML =
     '<div class="sd-top"><a href="/creator-tools.html" aria-label="Back to tools">&#8249;</a><b>Stencil + Halftone</b><button type="button" id="sdHelp" aria-label="Help">?</button></div>' +
     '<div class="sd-stage" id="sdStage"><div class="sd-empty" id="sdEmpty"><button type="button" id="sdAddArt">Add your art<small>JPG or PNG. Stays on your phone.</small></button></div>' +
-    '<div class="sd-rail" id="sdRail" role="toolbar" aria-label="Layer tools"></div>' +
     '<div class="sd-pills" id="sdPills"><button type="button" id="sdCrop">' + ic('crop') + 'Crop</button><button type="button" id="sdVint">' + ic('spark') + 'Vintage</button></div></div>' +
     '<div class="sd-con" id="sdCon"><button type="button" class="sd-grip" id="sdGrip" aria-label="Open or close the panel"></button><div class="sd-head"><div class="sd-title" id="sdTitle"></div></div><div class="sd-add" id="sdAdd"></div><div class="sd-body" id="sdBody"></div></div>' +
+    '<div class="sd-rail" id="sdRail" role="toolbar" aria-label="Layer tools"></div>' +
     '<nav class="sd-dock" id="sdDock" aria-label="Steps"></nav>';
   document.body.appendChild(app);
   var stage = $('sdStage'), wrap = $('wrap'), body = $('sdBody'), add = $('sdAdd'), rail = $('sdRail'), con = $('sdCon');
@@ -94,7 +95,7 @@
   function startUI() {
     var sizes = Array.prototype.map.call(document.querySelectorAll('#sizePick button'), function (b, i) { return '<button type="button" class="sd-tile c" data-size="' + i + '" aria-pressed="' + b.getAttribute('aria-pressed') + '"><b>' + esc(b.childNodes[0].textContent) + '</b><span>' + esc(b.querySelector('small') ? b.querySelector('small').textContent : '') + '</span></button>'; }).join('');
     body.innerHTML =
-      '<div class="sd-tiles"><button type="button" class="sd-tile big" data-a="art"><b>' + (has ? 'New art' : 'Add your art') + '</b><span>JPG or PNG, stays on your phone</span></button><button type="button" class="sd-tile" data-a="sample"><b>Sample</b><span>Try it first</span></button></div>' +
+      '<div class="sd-tiles"><button type="button" class="sd-tile big" data-a="art"><b>Add your art</b><span>' + (window.__nvPicN > 1 || !sampleOn() ? 'Swap in a new picture' : 'This is a sample. Put yours in') + '</span></button><button type="button" class="sd-tile" data-a="sample"><b>Sample</b><span>Try the tools on ours</span></button></div>' +
       '<p class="sd-h">What are you making?</p><div class="sd-tiles">' + JOBS.map(function (j) { return '<button type="button" class="sd-tile" data-job="' + j[0] + '" aria-pressed="' + (job() === j[0]) + '"><b>' + j[1] + '</b><span>' + j[2] + '</span></button>'; }).join('') + '</div>' +
       '<p class="sd-h">How big</p><div class="sd-tiles t4">' + sizes + '</div>';
   }
@@ -294,5 +295,6 @@
   var lastN = window.__nvPicN || 0;
   setInterval(function () { var n = window.__nvPicN || 0; if (n !== lastN) { lastN = n; if (step === 'start') go('make'); else ui(); } }, 400);
 
+  if (!has) { var sb = $('sample'); if (sb) { sb.click(); setTimeout(function () { lastN = window.__nvPicN || 0; ui(); }, 120); } }
   ui();
 })();

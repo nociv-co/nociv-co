@@ -24,14 +24,14 @@ html.sd-on main{display:none!important}
 .sd-pills button:active{transform:scale(.92)}
 .sd-pills button.hot{background:var(--ink);color:#fff;border-color:var(--ink)}
 .sd svg{width:20px;height:20px;fill:none;stroke:currentColor;stroke-width:2;stroke-linecap:round;stroke-linejoin:round;flex:none}
-/* side rail: springs in when a layer is picked */
-.sd-rail{position:absolute;top:56px;right:8px;z-index:9;display:flex;flex-direction:column;gap:5px;padding:5px;border-radius:16px;background:rgba(251,249,244,.95);border:1.5px solid rgba(26,26,26,.25);box-shadow:0 6px 18px rgba(0,0,0,.16);transform:translateX(calc(100% + 16px));transition:transform .32s var(--spring)}
-.sd-rail.on{transform:none}
-.sd-rail button{all:unset;cursor:pointer;width:54px;min-height:46px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:3px;border-radius:11px;font:800 10.5px/1 var(--sys);color:var(--ink);transition:transform .15s var(--spring)}
+/* layer tools: a row on top of the dock, slides up when a layer is picked */
+.sd-rail{flex:none;display:none;grid-auto-flow:column;grid-auto-columns:minmax(0,1fr);gap:4px;padding:6px 8px;background:var(--card);border-top:1px solid var(--line)}
+.sd-rail.on{display:grid;animation:sdUp .3s var(--spring)}
+@keyframes sdUp{from{transform:translateY(14px);opacity:0}to{transform:none;opacity:1}}
+.sd-rail button{all:unset;cursor:pointer;min-height:46px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:3px;border-radius:11px;font:800 10.5px/1 var(--sys);color:var(--ink);transition:transform .15s var(--spring)}
 .sd-rail button:active{transform:scale(.9)}
 .sd-rail button[aria-pressed=true]{background:var(--cream);box-shadow:inset 0 0 0 1.5px var(--ink)}
 .sd-rail button.done{background:var(--ink);color:#fff}
-@media(max-height:700px){.sd-rail{top:50px}.sd-rail button{min-height:38px;width:50px}.sd-rail button span{display:none}}
 /* console */
 .sd-con{flex:none;position:relative;background:var(--card);border-top:1.5px solid var(--ink);border-radius:18px 18px 0 0;box-shadow:0 -4px 14px rgba(0,0,0,.08);transition:max-height .35s var(--spring)}
 .sd-grip{all:unset;display:block;width:100%;height:18px;cursor:pointer;touch-action:none}
