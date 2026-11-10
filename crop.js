@@ -41,7 +41,10 @@
         function clampV() { var s0 = Math.max(F.w / pic.width, F.h / pic.height); if (V.s < s0) { var cx = (F.x + F.w / 2 - V.x) / V.s, cy = (F.y + F.h / 2 - V.y) / V.s; V.s = s0; V.x = F.x + F.w / 2 - cx * V.s; V.y = F.y + F.h / 2 - cy * V.s; } V.x = Math.min(F.x, Math.max(F.x + F.w - pic.width * V.s, V.x)); V.y = Math.min(F.y, Math.max(F.y + F.h - pic.height * V.s, V.y)); }
         function draw() {
           g.setTransform(1, 0, 0, 1, 0, 0); g.fillStyle = '#141312'; g.fillRect(0, 0, cv.width, cv.height);
-          g.drawImage(pic, V.x, V.y, pic.width * V.s, pic.height * V.s);
+          // light checker under the picture so black art on a clear background still shows on this dark screen
+          var iw = pic.width * V.s, ih = pic.height * V.s, q = 12 * dpr; g.save(); g.beginPath(); g.rect(V.x, V.y, iw, ih); g.clip(); g.fillStyle = '#ffffff'; g.fillRect(V.x, V.y, iw, ih); g.fillStyle = '#e4e0d8';
+          for (var yy = 0; yy * q < ih; yy++) for (var xx = (yy % 2); xx * q < iw; xx += 2) g.fillRect(V.x + xx * q, V.y + yy * q, q, q); g.restore();
+          g.drawImage(pic, V.x, V.y, iw, ih);
           g.fillStyle = 'rgba(20,19,18,.68)'; g.beginPath(); g.rect(0, 0, cv.width, cv.height); g.rect(F.x, F.y + F.h, F.w, -F.h); g.fill('evenodd');
           g.strokeStyle = '#fff'; g.lineWidth = 2 * dpr; g.strokeRect(F.x, F.y, F.w, F.h);
           g.strokeStyle = 'rgba(255,255,255,.35)'; g.lineWidth = 1 * dpr; g.beginPath(); for (var i = 1; i < 3; i++) { g.moveTo(F.x + F.w * i / 3, F.y); g.lineTo(F.x + F.w * i / 3, F.y + F.h); g.moveTo(F.x, F.y + F.h * i / 3); g.lineTo(F.x + F.w, F.y + F.h * i / 3); } g.stroke();

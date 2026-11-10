@@ -107,7 +107,10 @@
     var txtCol = has ? knock : main, iconOn = L.icon !== 'none', text = (L.text || '').slice(0, 14);
     var box = has ? (L.shape === 'star' || L.shape === 'diamond' ? R * .95 : R * 1.35) : size * .92;
     if (iconOn && part !== 'text') { g.save(); g.translate(0, text ? -R * .32 : 0); iconDraw(g, L.icon, text ? R * .26 : R * .55, txtCol); g.restore(); }
-    if (text && part !== 'shape') {
+    if (text && part !== 'shape' && L.font === '@mine' && S.letters && window.NocivLetters) {
+      var fs2 = Math.min(size * .5, iconOn ? R * .5 : R * .8), wc = NocivLetters.word(text, S.letters.dna, 200, txtCol), k2 = Math.min(box / wc.width, fs2 * .72 / 200), yy = iconOn ? R * .3 : (L.shape === 'shield' ? -R * .08 : 0);
+      g.drawImage(wc, -wc.width * k2 / 2, yy - wc.height * k2 / 2, wc.width * k2, wc.height * k2);
+    } else if (text && part !== 'shape') {
       var fs = size * .5, fam = "'" + L.font + "', " + 'sans-serif';
       g.font = fs + 'px ' + fam; var w = g.measureText(text).width; fs = Math.min(fs, fs * box / Math.max(1, w), (iconOn ? R * .5 : R * .8)); g.font = fs + 'px ' + fam;
       g.fillStyle = txtCol; g.textAlign = 'center'; g.textBaseline = 'middle'; g.fillText(text, 0, iconOn ? R * .3 : (L.shape === 'shield' ? -R * .08 : 0));
@@ -153,7 +156,8 @@
   var BLK = window.PatternBlock({
     E: E, S: S, esc: esc, idbGet: idbGet, idbSet: idbSet, idbDel: idbDel, blobToCanvas: blobToCanvas, renderLogo: renderLogo, shapePath: shapePath, iconDraw: iconDraw,
     ICONS: ICONS, FONTS: FONTS, seg: seg, stepper: stepper, toHex: toHex, fmtIn: fmtIn, tag: tag, step: function () { return S.step; },
-    draw: draw, changed: changed, keep: keep, pickFiles: function () { $('bfile').click(); }
+    draw: draw, changed: changed, keep: keep, pickFiles: function () { $('bfile').click(); },
+    letters: function () { return S.letters; }, openLetters: function () { openLetters('block'); }
   });
 
   /* ---------- hardware: plaques, emblems, cut out logos ---------- */
@@ -394,7 +398,7 @@
 
   /* ---------- tiles ---------- */
   var tcache = {};
-  function stateKey() { if (S.kind === 'block') return 'B' + BLK.key(); return JSON.stringify([S.kind, colors(), S.logo, S.rep, S.plaid, S.stripes, S.checks, S.camo, !!PIC && PIC.width + 'x' + PIC.height + (PIC._id || '')]); }
+  function stateKey() { if (S.kind === 'block') return 'B' + BLK.key() + JSON.stringify(S.letters || 0); return JSON.stringify([S.kind, colors(), S.logo, S.letters || 0, S.rep, S.plaid, S.stripes, S.checks, S.camo, !!PIC && PIC.width + 'x' + PIC.height + (PIC._id || '')]); }
   function tileAt(ppi, big) {
     var key = stateKey() + '@' + Math.round(ppi * 10) + (big ? 'B' : '');
     if (tcache.k === key) return tcache.t;
@@ -525,7 +529,7 @@
     if (p === 'blk') return BLK.paneHtml();
     if (p === 'what') return '<p class="h">What are you making?</p><div class="grid g4 kinds">' + KINDS.map(function (k) { return '<button type="button" class="pick big" data-kind="' + k[0] + '" aria-pressed="' + (S.kind === k[0]) + '">' + ico(KIND_ICON[k[0]]) + k[1] + '<small>' + k[2] + '</small></button>'; }).join('') + '</div>';
     if (p === 'shape') return '<p class="h">Pick a shape for your logo</p>' + picks(SHAPES, S.logo.shape, 'shape', 5, function (x) { return mini('shape:' + x[0]); }, true) + '<div class="row" style="margin-top:8px"><b>Inner ring</b>' + seg('ring', [['0', 'Off'], ['1', 'On']], S.logo.ring ? '1' : '0') + '</div>';
-    if (p === 'words') return '<div class="row"><b>Words</b><input class="txt" id="ltext" maxlength="14" value="' + esc(S.logo.text) + '" placeholder="Your initials" autocomplete="off"></div><p class="h">Letters</p>' + picks(FONTS, S.logo.font, 'font', 4, function (x) { return '<span style="font:19px/1.1 \'' + x[0] + '\',sans-serif">' + esc((S.logo.text || 'Aa').slice(0, 3)) + '</span>'; }, true);
+    if (p === 'words') return '<div class="row"><b>Words</b><input class="txt" id="ltext" maxlength="14" value="' + esc(S.logo.text) + '" placeholder="Your initials" autocomplete="off"></div><p class="h">Letters</p>' + picks(FONTS.concat([['@mine', 'Mine']]), S.logo.font, 'font', 4, function (x) { return x[0] === '@mine' ? '<canvas data-lmini="' + esc((S.logo.text || 'Aa').slice(0, 3)) + '" width="120" height="44"></canvas>' : '<span style="font:19px/1.1 \'' + x[0] + '\',sans-serif">' + esc((S.logo.text || 'Aa').slice(0, 3)) + '</span>'; }, true) + '<button type="button" class="btn" data-act="letters" style="padding:9px;margin-top:8px">' + (S.letters ? 'Change my lettering match' : 'Match my lettering (from your PNG)') + '</button>';
     if (p === 'icon') return '<p class="h">Add a little picture</p>' + picks(ICONS, S.logo.icon, 'icon', 5, function (x) { return mini('icon:' + x[0]); }, true) + '<p class="note">Colors come from the Color step. Your logo saves as a PNG on the Board.</p>';
     if (p === 'gap') { var gp = gaps(); return '<p class="h">Space between each one</p>' + stepper('gapx', 'Across', 0, gapTxt(gp.x)) + stepper('gapy', 'Down', 0, gapTxt(gp.y)) +
       '<div class="row"><b>Border</b>' + seg('border', [['1', 'Show'], ['0', 'Hide']], S.border ? '1' : '0') + '</div><button type="button" class="btn" data-act="evengap">Make down the same as across</button><p class="note">The red box is one tile, the piece that repeats. It shows here while you set gaps. Border Show keeps it on everywhere.</p>'; }
@@ -579,7 +583,7 @@
 
   /* ---------- small pictures inside buttons ---------- */
   function afterPane() {
-    var cols = colors(); BLK.afterPane($('pane')); drawTools();
+    var cols = colors(); BLK.afterPane($('pane')); drawTools(); lettersMini($('pane'));
     Array.prototype.forEach.call($('pane').querySelectorAll('canvas[data-mini]'), function (c) {
       var id = c.dataset.mini.split(':'), what = id[0], v = id[1], g = c.getContext('2d'), W = c.width, H = c.height, t = null;
       g.fillStyle = '#fff'; g.fillRect(0, 0, W, H);
@@ -636,7 +640,9 @@
     if (d.hback) { HW().back = d.hback; if (d.hback !== 'none') HW().backCol = presetOf(HW_BACK, d.hback)[2]; return changed(true); }
     if (d.hcol) { HW().backCol = d.hcol; return changed(true); }
     if (d.shape) { S.logo.shape = d.shape; return changed(true); }
+    if (d.font === '@mine' && !S.letters) { openLetters('logo'); return; }
     if (d.font) { S.logo.font = d.font; return changed(true); }
+    if (d.act === 'letters') { openLetters('logo'); return; }
     if (d.icon) { S.logo.icon = d.icon; return changed(true); }
     if (d.rep) { S.rep.type = d.rep; return changed(true); }
     if (d.plaid) { var p = presetOf(E.PLAIDS, d.plaid); S.plaid.preset = d.plaid; S.plaid.sett = p[3].map(function (x) { return x.slice(); }); S.plaid.mirror = p[4]; ensureCols(p[3]); return changed(true); }
@@ -805,6 +811,7 @@
     ['How to use it', '<ul><li><b>Start</b>: pick what you are making. Logo makes a simple logo first. My picture takes any PNG or your halftone.</li><li><b>Make</b>: the tabs above the step bar change with what you picked. Tap the picture view buttons (Close, Swatch, Yard) to see it at real scale.</li><li><b>Color</b>: ready-made palettes or your own.</li><li><b>Fabric</b>: lays a cloth texture over it so you see twill, canvas, flannel and more.</li><li><b>Board</b>: your mood board and print spec, plus the files.</li><li><b>Tile</b> view shows one tile, <b>Swatch</b> shows 8 x 8 in (a sample swatch), <b>Yard</b> shows 42 in. The + and - on the picture make the repeat bigger or smaller.</li><li>The round arrow hides the controls for a big look. Everything saves on this phone.</li></ul>'],
     ['Repeats, explained', '<ul><li><b>Grid</b> (block): straight rows and columns. Easy, can look stiff.</li><li><b>Half-drop</b>: every other column drops half a step. The most common repeat in fabric because it hides the grid.</li><li><b>Half-brick</b>: every other row slides half a step, like bricks.</li><li><b>Mirror</b>: four copies facing each other. Great for monograms.</li><li><b>Spin</b>: a quarter turn each time, a pinwheel.</li><li><b>Diamond</b>: the grid on a 45 degree angle, like a monogram canvas.</li><li><b>Toss</b>: random angles and spots, still seamless.</li><li><b>Mirror inside a shape</b>: square (8 slices, quilt block), hexagon (12 slices, snowflake), triangle (every edge reflects). Turn the motif to get totally different results.</li></ul>'],
     ['Block builder', '<ul><li><b>Start, Block</b> (or Many pictures? in Repeat) opens a grid, 2 x 2 up to 9 x 9.</li><li><b>Tile view</b> shows the block big with its repeats faded around it, so you see the seams. Tap a square: it zooms in. Tap outside the block to come back.</li><li>The <b>left toolbar</b> changes with what is picked. Nothing picked: Grid, Mix, Repeat, Ground, Pictures. A square picked: Element, Ink, Shape, Back, Size. After you pick one, it moves you to the next.</li><li><b>Change</b>: Square, Row, Column, All, or Same (every square with the same element). Ink on a Row recolors only that row.</li><li><b>Layers</b>: Ground under everything, then each square\'s backdrop shape, then the element. A big element sits on top of its neighbor.</li><li><b>Mix</b> lays out the different squares you made: Checker, Rows, Columns, Diagonal, Frame, Random.</li><li><b>Drag</b> on a zoomed square to nudge its element, or use Size, Across and Down for exact numbers.</li><li><b>Color step</b> lists every color in the block. Change one and it changes everywhere: fast colorways.</li></ul>'],
+    ['Match my lettering', '<ul><li>For when you made the words for a brand but do not own the font, and need more words that look the same.</li><li>Logo, Words, tap <b>Mine</b> (or Change my lettering match). In Block, Words, tap the last font.</li><li>Upload your PNG, type exactly what it says. We measure height, weight, thick and thin, width, round or square corners, ends, serifs, slant and spacing.</li><li>YOURS, OURS and TRY sit on top of each other so you can compare. Nudge the dials until OURS looks like YOURS.</li><li>Capitals only if your picture is capitals, lowercase only if it is lowercase. Letters A to Z, no numbers or symbols.</li><li>It is our own alphabet dressed in your measurements, not a copy of the font, and no font file is made.</li><li>Script and joined up lettering will not match well yet.</li></ul>'],
     ['Mirror and words', '<ul><li>A real mirror flips letters, so words read backwards. There is no way around that in a true mirror.</li><li><b>Readable</b>: the layout mirrors (copies face each other and meet at the line) but each copy is drawn the right way round. Nudge decides where they meet.</li><li><b>Shapes only</b>: on the Logo maker logo, the shape and icon flip and the words do not.</li><li><b>True mirror</b>: everything flips. Best for symbols and pictures without words.</li><li><b>Left-right</b> or <b>Up-down</b> mirrors one way only.</li><li>Half-drop and half-brick only shift, they never flip.</li></ul>'],
     ['Sizing for fabric', '<ul><li>Fabric printers print at <b>150 DPI</b>. Your tile is saved at 150 DPI so the inches come out right.</li><li>A yard is 36 in long. Widths run 42 to 58 in.</li><li>Small repeats (1 to 3 in) for tees, shirts and kids. Medium (4 to 8 in) for hoodies and dresses. Big (10 in and up) for jackets, bags and blankets.</li><li>When you upload, pick <b>Basic repeat</b>. The half-drop or mirror is already built into our tile.</li><li>Order a swatch or fat quarter first. Screens lie about color.</li></ul>'],
     ['Where to print, cheaper', '<ul><li>Spoonflower runs about $20 a yard for basic cotton, with sale days near $15. No minimum.</li><li>Fabric On Demand, Little Cocalico and Contrado print from one yard. Compare the same fabric weight, not just price.</li><li>Polyester sublimation is usually the cheapest per yard, and many local print shops do it.</li><li>The more yards you print at once, the lower the price. Some printers have wholesale programs once you sell.</li><li>Big runs (100 m and up) go to converters and mills. Ask for a strike-off (a test print) before the run.</li></ul>'],
@@ -820,6 +827,75 @@
   }
   $('help').onclick = openHelp; $('helpTop').onclick = openHelp;
   $('sheet').addEventListener('click', function (e) { if (e.target === this) this.hidden = true; });
+
+  /* ---------- Match my lettering (letters.js) ---------- */
+  function lettersMini(root) {
+    Array.prototype.forEach.call(root.querySelectorAll('canvas[data-lmini]'), function (c) {
+      var g = c.getContext('2d'), col = getComputedStyle(c.closest('button') || c).color || '#1a1a1a'; g.clearRect(0, 0, c.width, c.height);
+      if (!S.letters) { g.fillStyle = col; g.font = '800 15px ' + getComputedStyle(document.body).fontFamily; g.textAlign = 'center'; g.textBaseline = 'middle'; g.fillText('+ Yours', c.width / 2, c.height / 2); return; }
+      var w = NocivLetters.word(c.dataset.lmini || 'Aa', S.letters.dna, 80, col), k = Math.min(c.width * .9 / w.width, c.height * .9 / w.height);
+      g.drawImage(w, (c.width - w.width * k) / 2, (c.height - w.height * k) / 2, w.width * k, w.height * k);
+    });
+  }
+  var LS = { ctx: 'logo', img: null, res: null, dna: null, say: '', tryW: '' };
+  var LDIAL = { lw: ['weight', .01, .02, .42, 'Weight'], lc: ['contrast', .1, 0, .85, 'Thick and thin'], lwd: ['width', .05, .6, 1.8, 'Width'], lsq: ['square', 1, 2, 10, 'Corners'], lsl: ['slant', 2, -20, 20, 'Slant'], ltr: ['track', .02, -.05, .8, 'Spacing'], lxh: ['xh', .02, .38, .75, 'x-height'] };
+  function openLetters(ctx) {
+    LS.ctx = ctx; LS.dna = S.letters ? Object.assign({}, S.letters.dna) : Object.assign({}, NocivLetters.DEF); LS.say = S.letters ? S.letters.say : ''; LS.tryW = LS.tryW || '';
+    idbGet('letters:src').then(function (b) { return b ? blobToCanvas(b) : null; }).then(function (c) { LS.img = c; lsRender(); });
+    $('lsheet').hidden = false; lsRender();
+  }
+  function lsDialTxt(k) { var d = LDIAL[k], v = LS.dna[d[0]]; if (k === 'lsq') return v <= 2 ? 'Round' : v >= 8 ? 'Square' : 'Between ' + v; if (k === 'lsl') return v + '°'; if (k === 'lwd' || k === 'lw' || k === 'lxh') return Math.round(v * 100) + '%'; if (k === 'lc') return v ? Math.round(v * 100) + '%' : 'None'; return Math.round(v * 100) + '%'; }
+  function lsRender() {
+    var d = LS.dna, low = d.kase === 'lower', status = '';
+    if (LS.res) status = LS.res.found === LS.res.typed ? 'Found ' + LS.res.found + ' letters. Measured.' : 'Found ' + LS.res.found + ' shapes but you typed ' + LS.res.typed + ' letters. Check the spelling, or touching letters may be read as one.';
+    $('lsIn').innerHTML = '<button type="button" class="x" data-lx="close" aria-label="Close">&times;</button><h2>Match my lettering</h2>' +
+      '<p class="note" style="margin:0 0 8px">Upload the words you made. We measure the letters and redraw a whole alphabet in the same style. It will look like it comes from the same place. It is not the font itself.</p>' +
+      '<div class="row"><button type="button" class="btn dark" data-lx="up" style="padding:10px">' + (LS.img ? 'Use another PNG' : 'Upload your words (PNG)') + '</button></div>' +
+      '<div class="row"><b>It says</b><input class="txt" id="lsay" maxlength="24" value="' + esc(LS.say) + '" placeholder="Type exactly what it says" autocomplete="off"></div>' +
+      (LS.img ? '<button type="button" class="btn" data-lx="measure" style="padding:9px">Measure it</button>' : '') + (status ? '<p class="note">' + esc(status) + '</p>' : '') +
+      '<canvas id="lcv" width="760" height="420" style="width:100%;height:auto;border:1.5px solid var(--ink);border-radius:12px;background:#fff;margin:6px 0"></canvas>' +
+      '<div class="row"><b>Try</b><input class="txt" id="ltry" maxlength="24" value="' + esc(LS.tryW) + '" placeholder="Type the client\'s words" autocomplete="off"></div>' +
+      '<p class="note" style="margin:0 0 6px">' + (d.kase === 'upper' ? 'Capitals only, like your picture.' : d.kase === 'lower' ? 'Lowercase only, like your picture.' : 'Capitals and lowercase, as you type them.') + ' Letters A to Z only.</p>' +
+      ['lw', 'lc', 'lwd', 'lsq', 'lsl', 'ltr'].concat(low || d.kase === 'mixed' ? ['lxh'] : []).map(function (k) { return stepper(k, LDIAL[k][4], 0, lsDialTxt(k)); }).join('') +
+      '<div class="row"><b>Ends</b>' + seg('lends', [['flat', 'Flat'], ['round', 'Round']], d.ends) + '</div>' +
+      '<div class="row"><b>Serifs</b>' + seg('lserif', [['none', 'None'], ['thin', 'Thin'], ['slab', 'Slab']], d.serif) + '</div>' +
+      (low || d.kase === 'mixed' ? '<div class="row"><b>a</b>' + seg('la', [['0', 'Two story a'], ['1', 'One story a']], d.a1 ? '1' : '0') + '</div>' : '') +
+      '<button type="button" class="btn dark" data-lx="use" style="padding:12px;margin-top:6px">Use my lettering</button>';
+    lsDraw();
+  }
+  function lsDraw() {
+    var c = $('lcv'); if (!c) return; var g = c.getContext('2d'), W = c.width, H = c.height; g.fillStyle = '#fff'; g.fillRect(0, 0, W, H);
+    g.fillStyle = '#8a8780'; g.font = '700 20px ' + getComputedStyle(document.body).fontFamily; g.fillText('YOURS', 14, 26); g.fillText('OURS', 14, H / 3 + 26); g.fillText('TRY', 14, H * 2 / 3 + 26);
+    function fit(im, y0) { if (!im) return; var k = Math.min((W - 28) / im.width, (H / 3 - 40) / im.height); g.drawImage(im, (W - im.width * k) / 2, y0 + 34 + (H / 3 - 40 - im.height * k) / 2, im.width * k, im.height * k); }
+    fit(LS.img, 0);
+    var say = (LS.say || '').trim(); if (say) fit(NocivLetters.word(say, LS.dna, 160), H / 3);
+    var tw = (LS.tryW || '').trim() || (LS.dna.kase === 'lower' ? 'the quick fox' : 'THE QUICK FOX'); fit(NocivLetters.word(tw, LS.dna, 160), H * 2 / 3);
+    g.strokeStyle = '#e4e0d8'; g.lineWidth = 2; g.beginPath(); g.moveTo(0, H / 3); g.lineTo(W, H / 3); g.moveTo(0, H * 2 / 3); g.lineTo(W, H * 2 / 3); g.stroke();
+  }
+  function lsMeasure() { if (!LS.img || !(LS.say || '').trim()) return; LS.res = NocivLetters.measure(LS.img, LS.say); LS.dna = LS.res.dna; lsRender(); }
+  $('lsheet').addEventListener('click', function (e) {
+    if (e.target === $('lsheet')) { $('lsheet').hidden = true; return; }
+    var b = e.target.closest('button'); if (!b) return; var d = b.dataset, sg = b.closest('[data-sg]'), st = b.closest('[data-st]');
+    if (d.lx === 'close') { $('lsheet').hidden = true; return; }
+    if (d.lx === 'up') { $('lfile').click(); return; }
+    if (d.lx === 'measure') { lsMeasure(); return; }
+    if (d.lx === 'use') {
+      S.letters = { dna: LS.dna, say: LS.say };
+      if (LS.ctx === 'logo') S.logo.font = '@mine'; else { var bb = BLK.B(); bb.sel.forEach(function (i) { bb.cells[i].font = '@mine'; }); }
+      $('lsheet').hidden = true; tcache = {}; return changed(true);
+    }
+    if (st && d.d) { var k = st.dataset.st, dl = LDIAL[k]; if (dl) { var v = LS.dna[dl[0]] + (+d.d) * dl[1]; LS.dna[dl[0]] = Math.round(Math.max(dl[2], Math.min(dl[3], v)) * 1000) / 1000; lsRender(); } return; }
+    if (sg && d.v != null) { var k2 = sg.dataset.sg; if (k2 === 'lends') LS.dna.ends = d.v; else if (k2 === 'lserif') LS.dna.serif = d.v; else if (k2 === 'la') LS.dna.a1 = d.v === '1'; lsRender(); }
+  });
+  $('lsheet').addEventListener('input', function (e) {
+    var t = e.target; if (t.id === 'lsay') { LS.say = t.value; var k = /[a-z]/.test(t.value), K = /[A-Z]/.test(t.value); LS.dna.kase = k && K ? 'mixed' : k ? 'lower' : 'upper'; lsDraw(); }
+    if (t.id === 'ltry') { LS.tryW = t.value; lsDraw(); }
+  });
+  $('lsheet').addEventListener('change', function (e) { if (e.target.id === 'lsay' && LS.img) lsMeasure(); });
+  $('lfile').addEventListener('change', function () {
+    var f = this.files && this.files[0]; this.value = ''; if (!f) return;
+    blobToCanvas(f).then(function (c) { LS.img = c; idbSet('letters:src', f); if ((LS.say || '').trim()) lsMeasure(); else { lsRender(); var n = $('lsay'); if (n) n.focus(); } });
+  });
 
   /* ---------- touch on the picture: block taps and drags, nudge drags ---------- */
   function vpt(e) { var r = view.getBoundingClientRect(); return [(e.clientX - r.left) * view.width / r.width, (e.clientY - r.top) * view.height / r.height]; }

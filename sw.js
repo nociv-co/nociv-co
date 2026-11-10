@@ -34,6 +34,7 @@ var TOOLS = [
   '/pattern/',
   '/pattern/engine.js',
   '/pattern/block.js',
+  '/pattern/letters.js',
   '/pattern/app.js',
   '/phone-animations/',
   '/phone-animations/character/',

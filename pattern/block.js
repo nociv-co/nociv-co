@@ -119,6 +119,9 @@
       var ux = (mx ? -1 : 1) * (r.flip === 'x' ? -1 : 1), uy = (my ? -1 : 1) * (r.flip === 'y' ? -1 : 1); g.scale(ux, uy);
       g.fillStyle = r.ink; g.strokeStyle = r.ink;
       if (r.el === 'logo') { var lc = logoCanvas(r.back !== 'none' ? r.bcol : ground, r.ink); g.drawImage(lc, -sz / 2, -sz / 2, sz, sz); }
+      else if (r.el === 'text' && r.font === '@mine' && X.letters() && window.NocivLetters) {
+        var t2 = (r.txt || '').slice(0, 16); if (t2) { var wc = NocivLetters.word(t2, X.letters().dna, 160, r.ink), kk = Math.min(sz / wc.width, sz * .62 * .72 / 160); g.drawImage(wc, -wc.width * kk / 2, -wc.height * kk / 2, wc.width * kk, wc.height * kk); }
+      }
       else if (r.el === 'text') {
         var t = (r.txt || '').slice(0, 16); if (t) { var fs = sz * .62, fam = "'" + r.font + "', sans-serif"; g.font = fs + 'px ' + fam; var w = g.measureText(t).width; fs = Math.min(fs, fs * sz / Math.max(1, w)); g.font = fs + 'px ' + fam; g.textAlign = 'center'; g.textBaseline = 'middle'; g.fillText(t, 0, 0); }
       }
@@ -286,7 +289,7 @@
       }
       if (t === 'el') return pickRow() + '<div class="grid g6 tight bels">' + elList().map(function (x) { return '<button type="button" class="pick" data-bel="' + x[0] + '" aria-pressed="' + (r.el === x[0]) + '"><canvas data-bmini="el:' + x[0] + '" width="72" height="56"></canvas>' + esc(x[1]) + '</button>'; }).join('') +
         (b.lib.length < MAXPICS ? '<button type="button" class="pick" data-bact="addpic"><svg class="sm" viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></svg>Picture</button>' : '') + '</div>';
-      if (t === 'words') return pickRow() + '<div class="row"><input class="txt" id="btext" maxlength="16" value="' + esc(r.txt) + '" placeholder="Type words" autocomplete="off"></div><div class="grid g5 tight">' + X.FONTS.map(function (f) { return '<button type="button" class="pick" data-bfont="' + f[0] + '" aria-pressed="' + (r.font === f[0]) + '"><span style="font:17px/1.1 \'' + f[0] + '\',sans-serif">' + esc((r.txt || 'Aa').slice(0, 3)) + '</span></button>'; }).join('') + '</div><button type="button" class="btn dark" data-bt="ink" style="margin-top:8px;padding:10px">Next: Ink</button>';
+      if (t === 'words') return pickRow() + '<div class="row"><input class="txt" id="btext" maxlength="16" value="' + esc(r.txt) + '" placeholder="Type words" autocomplete="off"></div><div class="grid g5 tight">' + X.FONTS.map(function (f) { return '<button type="button" class="pick" data-bfont="' + f[0] + '" aria-pressed="' + (r.font === f[0]) + '"><span style="font:17px/1.1 \'' + f[0] + '\',sans-serif">' + esc((r.txt || 'Aa').slice(0, 3)) + '</span></button>'; }).join('') + '<button type="button" class="pick" data-bfont="@mine" aria-pressed="' + (r.font === '@mine') + '"><canvas data-lmini="' + esc((r.txt || 'Aa').slice(0, 3)) + '" width="72" height="30"></canvas></button></div>' + (r.font === '@mine' ? '<button type="button" class="btn" data-bact="letters" style="padding:8px;margin-top:6px">Change my lettering match</button>' : '') + '<button type="button" class="btn dark" data-bt="ink" style="margin-top:8px;padding:10px">Next: Ink</button>';
       if (t === 'ink') return pickRow() + swatches('bink', r.ink) + (r.el.indexOf('p:') === 0 ? '<div class="row"><b>Picture</b>' + X.seg('btint', [['0', 'As it is'], ['1', 'One color']], r.tint ? '1' : '0') + '</div>' : '');
       if (t === 'shape') return pickRow() + '<div class="grid g5 tight">' + SHAPES.map(function (x) { return '<button type="button" class="pick" data-bshape="' + x[0] + '" aria-pressed="' + (r.back === x[0]) + '"><canvas data-bmini="shape:' + x[0] + '" width="72" height="56"></canvas>' + x[1] + '</button>'; }).join('') + '</div><p class="note">The backdrop sits behind the element, inside the square.</p>';
       if (t === 'back') return pickRow() + (r.back === 'none' ? '<p class="note" style="margin:0 0 8px">No backdrop yet. Picking a color here gives it a square.</p>' : '') + swatches('bbk', r.bcol);
@@ -327,6 +330,8 @@
       }
       if (d.brule) { b.rule = d.brule; applyRule(); X.changed(true); return true; }
       if (d.bel) { setF('el', d.bel); if (d.bel === 'text') b.tool = 'words'; else after('el'); X.changed(true); return true; }
+      if (d.bfont === '@mine' && !X.letters()) { X.openLetters(); return true; }
+      if (d.bact === 'letters') { X.openLetters(); return true; }
       if (d.bfont) { setF('font', d.bfont); X.changed(true); return true; }
       if (d.bink) { setF('ink', d.bink); after('ink'); X.changed(true); return true; }
       if (d.bshape) { setF('back', d.bshape); after('shape'); X.changed(true); return true; }
