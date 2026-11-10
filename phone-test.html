@@ -52,6 +52,9 @@
 // ===== THE TEST LIST. Claude rewrites this block after every delivery. Keep each test to a few taps. =====
 var BATCH = '2026-11-03 from scratch';
 var TESTS = [
+  { id: 'advopen', title: 'Tools page: Advanced always open', where: 'nociv.co Tools, scroll to the bottom',
+    steps: ['Close the site fully and reopen it once (new version).', 'Tap Tools and scroll past the tool cards.', 'Tap Case Zero, then From Scratch.'],
+    expect: 'A big gap, then the dashed ADVANCED line. It is a label, not a button, and there is no arrow. Case Zero and From Scratch already show under it without tapping anything. Tapping each one swaps the words and OPEN goes to that tool.' },
   { id: 'patternletters', title: 'Patterns: Match my lettering, and black art on a clear PNG', where: 'Tools, Wear, Patterns, Logo, Words',
     steps: ['Close the site fully and reopen it. Tap My picture and pick a PNG with black art and a clear background.', 'Check you can see the art on the crop screen, then Done.', 'Go to Start, Logo, Words. Tap Mine (the last letters tile).', 'Tap Upload your words, pick a PNG of a brand word. In It says, type exactly what it says, then tap Measure it.', 'In Try, type a client word. Move Weight, Width, Corners and Ends until OURS looks like YOURS.', 'Tap Use my lettering. Type new Words for the logo.', 'Start, Block, tap a square, Element, Words, type a word, tap the last font.'],
     expect: 'The black art shows on a light checker in the crop screen. It finds the right number of letters. OURS looks like it comes from the same place as YOURS. Capitals stay capitals if your PNG was capitals. The logo and the block square both use your lettering. Nothing breaks if you type numbers (they are left out).' },
