@@ -492,7 +492,7 @@
     G = null; GUIDES = [];
     if (g.mode === 'none') { changed(true); return; }
     if (g.mode === 'handle' || g.mode === 'pinch') { g.L.auto = false; g.L.s = Math.round(g.L.s * 1000) / 1000; changed(true); return; }
-    if (!g.moved) { var was = U.sel; U.sel = g.L ? g.L.id : null; if (U.sel !== was) U.tool = U.sel ? firstTool(g.L) : null; render(); return; }
+    if (!g.moved) { var was = U.sel; U.sel = g.L ? g.L.id : null; if (U.sel) U.addOpen = null; if (U.sel !== was) U.tool = U.sel ? firstTool(g.L) : null; render(); return; }
     if (g.L) { g.L.x = Math.round(g.L.x * 1000) / 1000; g.L.y = Math.round(g.L.y * 1000) / 1000; }
     changed(true);
   }
@@ -520,7 +520,7 @@
   /* ---------- adding pieces ---------- */
   function swatchMain() { return D.pal[0] || '#1a1a1a'; }
   function accent() { return D.pal[1] || (contrast('#c8412f', gHex()) > 2 ? '#c8412f' : '#1a1a1a'); }
-  function addLayer(L) { commit(); L.id = uid(); if (L.x == null) { L.x = .5; L.y = .5; } if (L.r == null) L.r = 0; if (L.op == null) L.op = 1; D.layers.push(L); U.sel = L.id; U.tool = firstTool(L); changed(); }
+  function addLayer(L) { U.addOpen = null; commit(); L.id = uid(); if (L.x == null) { L.x = .5; L.y = .5; } if (L.r == null) L.r = 0; if (L.op == null) L.op = 1; D.layers.push(L); U.sel = L.id; U.tool = firstTool(L); changed(); }
   function firstTool(L) { return L.t === 'words' ? 'text' : L.t === 'art' ? 'size' : 'color'; }
   function inkFor() { var c = ['#1a1a1a', '#ffffff'].concat(D.pal); c.sort(function (a, b) { return contrast(b, gHex()) - contrast(a, gHex()); }); return c[0]; }
   function addWords(lay) {
@@ -628,14 +628,15 @@
     if (U.step === 'look') return lookHtml();
     if (U.step === 'save') return saveHtml();
     var L = sel(), t = curTool();
+    if (U.addOpen) { U.addTab = U.addOpen; return addHtml(true); }
     if (!L) return '<p class="ptitle">Pattern</p><div class="tiles">' + [['repeat', 'Repeat', 'repeat'], ['ground', 'Color', 'ground'], ['grid', 'Grid', 'grid'], ['ideas', 'Ideas', 'ideas']].map(function (x) { return '<button type="button" class="tile" data-pt="' + x[0] + '" aria-pressed="' + (t === x[0]) + '">' + ico(x[2]) + '<small>' + x[1] + '</small></button>'; }).join('') + '</div>' + toolHtml(t, null);
     return '<p class="ptitle">' + esc(pieceName(L)) + '</p>' + toolHtml(t, L);
   }
   function pieceName(L) { if (L.t === 'art') return 'Your art'; if (L.t === 'words') return 'Words'; if (L.t === 'sym') return (SYMS.filter(function (x) { return x[0] === L.k; })[0] || ['', 'Symbol'])[1]; return (SHAPES.filter(function (x) { return x[0] === L.k; })[0] || ['', 'Shape'])[1]; }
-  function addHtml() {
+  function addHtml(noTabs) {
     {
       var tabs = [['art', 'My art'], ['words', 'Words'], ['sym', 'Symbols'], ['shape', 'Shapes'], ['fab', 'Fabrics']], at = U.addTab;
-      var h = '<div class="tabs5" data-tabs="1">' + tabs.map(function (x) { return '<button type="button" data-tab="' + x[0] + '" aria-pressed="' + (x[0] === at) + '">' + x[1] + '</button>'; }).join('') + '</div>';
+      var h = noTabs ? '' : '<div class="tabs5" data-tabs="1">' + tabs.map(function (x) { return '<button type="button" data-tab="' + x[0] + '" aria-pressed="' + (x[0] === at) + '">' + x[1] + '</button>'; }).join('') + (noTabs ? '' : '</div>');
       if (at === 'art') h += '<div class="grid g4">' + ART.map(function (a) { return '<div class="artw"><button type="button" class="pick" data-addart="' + a.id + '"><canvas data-mini="art:' + a.id + '" width="120" height="72"></canvas></button><button type="button" class="artx" data-delart="' + a.id + '" aria-label="Remove this art">&times;</button></div>'; }).join('') + '<button type="button" class="pick" data-a="upload">' + ico('add') + 'Add art</button></div>';
       if (at === 'words') h += '<div class="grid g4">' + LAYS.map(function (x) { return '<button type="button" class="pick" data-addw="' + x[0] + '"><canvas data-mini="lay:' + x[0] + '" width="120" height="72"></canvas>' + x[1] + '</button>'; }).join('') + '</div>';
       if (at === 'sym') h += '<div class="grid g4">' + SYMS.map(function (x) { return '<button type="button" class="pick" data-adds="' + x[0] + '"><canvas data-mini="sym:' + x[0] + '" width="120" height="72"></canvas>' + x[1] + '</button>'; }).join('') + '</div>';
@@ -743,7 +744,12 @@
 
   /* ---------- panel taps ---------- */
   var panelClick;
-  function openAdd() { $('addIn').innerHTML = addHtml(); minis($('addIn')); $('addSheet').hidden = false; $('fab').classList.remove('pulse'); try { localStorage.setItem('nocivPattern2Fab', '1'); } catch (e) {} }
+  function delArt(id) { commit(); ART = ART.filter(function (a) { return a.id !== id; }); D.layers = D.layers.filter(function (x) { return !(x.t === 'art' && x.aid === id); }); if (U.sel && !layer(U.sel)) { U.sel = null; U.tool = null; } idbDel('lib:' + id); idbDel('src:' + id); artVer++; changed(); }
+  function setDown(on) { document.body.classList.toggle('cdown', on); U.down = on; var t0 = Date.now(); (function tick() { draw(); if (Date.now() - t0 < 500) requestAnimationFrame(tick); })(); }
+  $('grip').addEventListener('click', function () { setDown(!U.down); });
+  (function () { var y0 = null; $('grip').addEventListener('pointerdown', function (e) { y0 = e.clientY; }); window.addEventListener('pointerup', function (e) { if (y0 == null) return; var dy = e.clientY - y0; y0 = null; if (dy > 24) setDown(true); else if (dy < -24) setDown(false); }); })();
+  $('addbar').addEventListener('click', function (e) { var b = e.target.closest('button[data-tab]'); if (!b) return; var t = b.dataset.tab; U.addOpen = U.addOpen === t ? null : t; U.addTab = t; if (U.addOpen) { U.sel = null; U.tool = null; } if (U.down) setDown(false); render(); });
+  function openAdd() { U.addOpen = U.addTab || 'art'; U.sel = null; U.tool = null; if (U.down) setDown(false); render(); $('fab').classList.remove('pulse'); try { localStorage.setItem('nocivPattern2Fab', '1'); } catch (e) {} }
   $('fab').addEventListener('click', openAdd);
   $('trash').addEventListener('click', function () {
     if (sel()) { act('del'); return; }
@@ -754,19 +760,20 @@
     if (e.target === $('addSheet')) { $('addSheet').hidden = true; return; }
     var b = e.target.closest('button'); if (!b) return;
     if (b.dataset.tab) { U.addTab = b.dataset.tab; $('addIn').innerHTML = addHtml(); minis($('addIn')); return; }
-    if (b.dataset.delart) { var id = b.dataset.delart; commit(); ART = ART.filter(function (a) { return a.id !== id; }); D.layers = D.layers.filter(function (x) { return !(x.t === 'art' && x.aid === id); }); if (U.sel && !layer(U.sel)) { U.sel = null; U.tool = null; } idbDel('lib:' + id); idbDel('src:' + id); artVer++; changed(); $('addIn').innerHTML = addHtml(); minis($('addIn')); return; }
+    if (b.dataset.delart) { delArt(b.dataset.delart); $('addIn').innerHTML = addHtml(); minis($('addIn')); return; var id = b.dataset.delart; commit(); ART = ART.filter(function (a) { return a.id !== id; }); D.layers = D.layers.filter(function (x) { return !(x.t === 'art' && x.aid === id); }); if (U.sel && !layer(U.sel)) { U.sel = null; U.tool = null; } idbDel('lib:' + id); idbDel('src:' + id); artVer++; changed(); $('addIn').innerHTML = addHtml(); minis($('addIn')); return; }
     $('addSheet').hidden = true; if (b.dataset.fab) { U.sel = null; U.ptool = 'ground'; } panelClick(e);
   });
   $('panel').addEventListener('click', panelClick = function (e) {
     var b = e.target.closest('button'); if (!b) return; var d = b.dataset, L = sel(), sg = b.closest('[data-sg]'), st = b.closest('[data-st]');
     if (d.pt) { U.ptool = d.pt; return render(); }
+    if (d.delart) { delArt(d.delart); return; }
     if (d.a === 'ideas') { if (ART.length) showStarters(); else { WANT = 'start'; $('artfile').click(); } return; }
     if (d.a === 'upload') { WANT = null; $('artfile').click(); return; }
     if (d.addart) { if (!D.pal.length && IMG[d.addart]) D.pal = artColors(IMG[d.addart]).slice(0, 4); addLayer({ t: 'art', aid: d.addart, s: .5 }); return; }
     if (d.addw) { addWords(d.addw); return; }
     if (d.adds) { addLayer({ t: 'sym', k: d.adds, c: accent(), s: .2 }); return; }
     if (d.addsh) { addLayer({ t: 'shape', k: d.addsh, c: accent(), s: .5 }); return; }
-    if (d.fab) { commit(); if (d.fab === 'none') D.fab = null; else { var p = d.fab.split(':'); D.fab = { k: p[0], p: p[1], sz: D.fab ? D.fab.sz : 1, c: D.fab && D.fab.c }; } return changed(); }
+    if (d.fab) { U.addOpen = null; if (d.fab !== 'none') { U.sel = null; U.ptool = 'ground'; } commit(); if (d.fab === 'none') D.fab = null; else { var p = d.fab.split(':'); D.fab = { k: p[0], p: p[1], sz: D.fab ? D.fab.sz : 1, c: D.fab && D.fab.c }; } return changed(); }
     if (d.a === 'fabcols') { commit(); var fc = fabColors().slice(), first = fc.shift(); fc.push(first); D.fab.c = fc; return changed(); }
     if (d.a === 'letters') { openLetters(); return; }
     if (d.a === 'png' || d.a === 'pdf' || d.a === 'sw' || d.a === 'yardpic' || d.a === 'mood') { saveFile(d.a); return; }
@@ -973,7 +980,8 @@
   function render() {
     document.documentElement.classList.toggle('righty', HAND === 'right');
     $('home').hidden = true; // no first page: it always opens straight into the canvas
-    toolbar(); $('fab').hidden = U.step !== 'make'; $('trash').hidden = U.step !== 'make'; $('trash').setAttribute('aria-label', sel() ? 'Delete this piece' : 'Start fresh'); $('trash').classList.toggle('piece', !!sel()); if (U.step !== 'make' || U.view !== 'tile') placeCtx(0, 0, false);
+    $('addbar').hidden = U.step !== 'make'; $('addbar').innerHTML = [['art', 'My art'], ['words', 'Words'], ['sym', 'Symbols'], ['shape', 'Shapes'], ['fab', 'Fabrics']].map(function (x) { return '<button type="button" data-tab="' + x[0] + '" aria-pressed="' + (U.addOpen === x[0]) + '">' + x[1] + '</button>'; }).join('');
+    toolbar(); $('fab').hidden = U.step !== 'make'; $('trash').hidden = U.step !== 'make' || (!!sel() && $('stage').clientHeight < 400); // short screens: the side rail needs the room, Delete is on the floating bar $('trash').setAttribute('aria-label', sel() ? 'Delete this piece' : 'Start fresh'); $('trash').classList.toggle('piece', !!sel()); if (U.step !== 'make' || U.view !== 'tile') placeCtx(0, 0, false);
     var pn = $('panel'), s = pn.scrollTop; pn.innerHTML = panelHtml(); pn.scrollTop = s; minis();
     var cv2 = U.view !== 'tile'; $('clothChip').hidden = !cv2; $('clothChip').textContent = clothShort(D.cloth); $('clothChip').setAttribute('aria-pressed', String(cv2 && U.clothOpen));
     var co = cv2 && U.clothOpen && U.step !== 'look', cl = $('cloths'); cl.hidden = !co;

@@ -211,6 +211,16 @@ html.righty #tools{transform:translateX(140%)}html.righty #tools.on{transform:no
 .artw{position:relative}.artw .pick{width:100%}
 .artx{all:unset;cursor:pointer;position:absolute;top:-6px;right:-6px;width:24px;height:24px;border-radius:50%;background:var(--card);color:var(--navy);display:grid;place-items:center;font:700 16px/1 var(--sys);box-shadow:0 1px 6px rgba(31,42,68,.25)}
 .lbl{max-width:calc(100% - 150px);white-space:normal!important;text-align:center}
+/* the console: grip, add bar always on top, panel that collapses like Fraqtals */
+.console{flex:none;position:relative;z-index:2;background:var(--card);border-radius:22px 22px 0 0;box-shadow:0 -6px 24px rgba(31,42,68,.10)}
+#grip{all:unset;display:grid;place-items:center;width:100%;height:22px;cursor:grab;touch-action:none}
+#grip i{width:40px;height:5px;border-radius:3px;background:#d6d8e3;transition:background .2s,width .2s}
+#grip:active i{background:var(--navy);width:48px}
+.addbar{margin:0 12px 6px!important}
+.addbar[hidden]{display:none!important}
+.console .panel{border-radius:0!important;box-shadow:none!important;padding-top:6px;transition:height .4s var(--spring),padding .3s}
+.console .panel{height:196px}@media(max-height:620px){.console .panel{height:150px}}
+body.cdown .console .panel{height:0!important;padding-top:0;padding-bottom:0;overflow:hidden}
 </style>
 </head>
 <body>
@@ -238,7 +248,7 @@ html.righty #tools{transform:translateX(140%)}html.righty #tools.on{transform:no
     <div class="bar"><button class="btn" id="shuffle">Shuffle</button><button class="btn" id="sclose">Keep mine</button></div>
   </div>
 </div>
-<div class="panel" id="panel"></div>
+<div class="console" id="console"><button id="grip" aria-label="Show or hide the controls"><i></i></button><div class="addbar tabs5" id="addbar"></div><div class="panel" id="panel"></div></div>
 <nav class="steps" id="steps"><button data-s="make"><svg viewBox="0 0 24 24"><path d="M12 20l8-8-4-4-8 8v4z"/><path d="M14 6l4 4"/></svg>Make</button><button data-s="look"><svg viewBox="0 0 24 24"><path d="M2 12s3.5-7 10-7 10 7 10 7-3.5 7-10 7S2 12 2 12z"/><circle cx="12" cy="12" r="3"/></svg>Look</button><button data-s="save"><svg viewBox="0 0 24 24"><path d="M12 3v12M7 10l5 5 5-5"/><path d="M4 19h16"/></svg>Save</button></nav>
 <input type="file" id="artfile" accept="image/*" multiple hidden>
 <input type="file" id="lfile" accept="image/png,image/*" hidden>
