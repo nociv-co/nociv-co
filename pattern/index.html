@@ -102,6 +102,24 @@ html.righty #tools{left:auto;right:8px}
 .sheet .x{all:unset;cursor:pointer;position:absolute;right:12px;top:10px;width:36px;height:36px;display:grid;place-items:center;border:1.5px solid var(--ink);border-radius:50%;font:900 18px/1}
 .sheet li{margin:0 0 6px}
 .note{margin:0 0 8px;font:600 12px/1.35 var(--sys);color:var(--mute)}
+/* session 2: colorways, cloths, shelf */
+#clothChip::before{content:'';width:9px;height:9px;margin-right:6px;border-radius:2px;background:repeating-linear-gradient(45deg,#1a1a1a 0 1.5px,#fff 1.5px 3px);display:inline-block;vertical-align:-1px}
+#clothChip{display:block;line-height:33px}
+#clothChip[hidden]{display:none}
+.ways{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:6px}
+.ways .pick canvas{height:auto;aspect-ratio:1;border-radius:6px}
+.crow{display:flex;gap:6px;overflow-x:auto;padding:2px 2px 4px;-webkit-overflow-scrolling:touch}
+.crow .pick{flex:0 0 74px;min-height:0;position:relative}
+.crow .pick canvas{position:static;width:100%;height:54px;border-radius:6px}
+.pick.fit::after{content:'';position:absolute;right:5px;top:5px;width:9px;height:9px;border-radius:50%;background:var(--red);box-shadow:0 0 0 2px #fff}
+.cloths{position:absolute;left:0;right:0;bottom:0;z-index:3;background:rgba(251,249,244,.97);border-top:1.5px solid var(--ink);padding:8px}
+.cloths[hidden]{display:none}
+.shelf{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:6px}
+.shelf .pick img{width:100%;aspect-ratio:1;object-fit:cover;border-radius:6px;display:block}
+.shelf .pick{min-height:0;font-size:10.5px}
+.sw .hex{font:700 10px/1 ui-monospace,Menlo,monospace;color:var(--mute);margin:0 4px 0 -3px}
+.cmp{display:grid;grid-template-columns:1fr 1fr;gap:8px}.cmp figure{margin:0}.cmp canvas{width:100%;height:auto;border:1.5px solid var(--ink);border-radius:8px;display:block}.cmp figcaption{font:800 12px/1.2 var(--sys);margin-top:4px}
+.btn:disabled{opacity:.4}
 @media(max-height:620px){.panel{height:190px}#tools button{height:34px;width:44px}#tools button span{display:none}#tools{top:48px;gap:3px}}
 </style>
 </head>
@@ -111,7 +129,9 @@ html.righty #tools{left:auto;right:8px}
   <canvas id="view"></canvas>
   <div class="fl" style="left:8px;top:8px"><button class="chip" id="undo" aria-label="Undo"><svg viewBox="0 0 24 24"><path d="M9 14L4 9l5-5"/><path d="M4 9h10a6 6 0 0 1 0 12h-3"/></svg></button><button class="chip" id="redo" aria-label="Redo"><svg viewBox="0 0 24 24"><path d="M15 14l5-5-5-5"/><path d="M20 9H10a6 6 0 0 0 0 12h3"/></svg></button></div>
   <div class="fl" style="right:8px;top:8px"><div class="seg3" id="views"><button data-v="tile">Tile</button><button data-v="swatch">Swatch</button><button data-v="yard">Yard</button></div><button class="chip" id="help" aria-label="Help">?</button></div>
+  <div class="fl" style="right:8px;top:50px"><button class="chip" id="clothChip" hidden aria-label="Printed on">Poplin</button></div>
   <div class="fl" id="tools"></div>
+  <div class="cloths" id="cloths" hidden></div>
   <div class="lbl" id="lbl"></div>
   <div class="menu" id="menu" hidden></div>
   <div class="home" id="home" hidden>
