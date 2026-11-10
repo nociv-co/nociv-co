@@ -52,6 +52,9 @@
 // ===== THE TEST LIST. Claude rewrites this block after every delivery. Keep each test to a few taps. =====
 var BATCH = '2026-11-03 from scratch';
 var TESTS = [
+  { id: 'cutsewpreview', title: 'Tools page: Cut and Sew preview', where: 'Tools, Clothes, Cut & Sew',
+    steps: ['Close the site fully and reopen it.', 'Tap Tools, then Clothes, then Cut & Sew.', 'Look at the Preview on the right. Then tap Stencil and compare.'],
+    expect: 'The preview is a small tall picture on the right, same size and spot as Stencil. It shows only the front of the pants, no tech pack text, and the tape does not cover the waistband.' },
   { id: 'stencilstudioA', title: 'Stencil: Start, Make, Save, jobs, Undo and Redo', where: 'Tools, Stencil + Halftone',
     steps: ['Close the site fully and reopen it. Open Stencil. Tap Sample (or add your colorful design).', 'Start: tap One screen. Then tap Cut stencil, then Halftone (it should be greyed out on Cut stencil). Tap Digital.', 'Make: move Light/dark a few times. Tap Undo top left twice, then Redo once.', 'Make: tap Mix, try Looks, Layers, Move. Tap Apply to print.', 'Save: tap Save PNG, no background. When it turns green, tap again and save to Photos or Files.', 'Start: tap One screen. Save: tap Save one screen film, then tap again when green. Open the PDF.', 'Tap the trash bottom left, then Undo.'],
     expect: 'Only three steps at the bottom: Start, Make, Save. Cut stencil shows Find, Bridges and By hand; the other jobs hide them. Undo and Redo bring back exactly what you had. The PNG has no white background. The film is black on white at true size. The trash resets the settings and Undo brings them back. The share sheet opens on each green tap.' },
