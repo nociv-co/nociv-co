@@ -929,9 +929,14 @@
       if (d.a === 'adjok') return adjClose(true); if (d.a === 'adjno') return adjClose(false);
       if (d.a === 'adjfit') { adjFit(); return render(); }
       if (sg && sg.dataset.sg === 'adjsq') { aa.sq = d.v === '1'; if (aa.sq) { var cw = aa.w, ch = aa.h; adjFix(aa); aa.fx += (cw - aa.w) / 2; aa.fy += (ch - aa.h) / 2; } return render(); }
+      if (st && d.d && st.dataset.st === 'adjk') {
+        var Lm = mainArt(), base = Lm ? artWidthIn(Lm) : 0; if (!base) return;
+        var cur = base * (aa.k || 1), stp = cur < 2 ? .25 : .5, nv = Math.max(.25, Math.round((cur + d.d * stp) / stp) * stp);
+        aa.k = adjClampK(aa, nv / base); AV = null; return render();
+      }
       if (st && d.d && (st.dataset.st === 'adjw' || st.dataset.st === 'adjh')) {
-        var isW = st.dataset.st === 'adjw', ow = aa.w, oh = aa.h, ins = adjIns(aa);
-        if (isW) aa.w = (ins[0] + d.d * .25) / D.tileIn; else aa.h = (ins[1] + d.d * .25) / tileHt();
+        var isW = st.dataset.st === 'adjw', ow = aa.w, oh = aa.h, ins = adjOut(aa), kq = aa.k || 1;
+        if (isW) aa.w = (ins[0] + d.d * .25) / kq / D.tileIn; else aa.h = (ins[1] + d.d * .25) / kq / tileHt();
         adjFix(aa, isW ? 'w' : 'h'); aa.fx -= (aa.w - ow) / 2; aa.fy -= (aa.h - oh) / 2; return render();
       }
       return;
@@ -1132,6 +1137,11 @@
   function wrap1(v) { v = v - Math.floor(v); return v > .9995 ? 0 : v; }
   function adjLock() { return D.rep === 'kale' || (U.adj && U.adj.sq); }
   function adjIns(a) { return [Math.round(D.tileIn * a.w * 100) / 100, Math.round(tileHt() * a.h * 100) / 100]; }
+  // size on fabric: k scales the whole tile with the art in it
+  function adjOut(a) { var k = a.k || 1; return [Math.round(D.tileIn * a.w * k * 100) / 100, Math.round(tileHt() * a.h * k * 100) / 100]; }
+  function mainArt() { var best = null; D.layers.forEach(function (L) { if (L.gback) return; if (!best || (L.t === 'art') > (best.t === 'art') || ((L.t === 'art') === (best.t === 'art') && L.s > best.s)) best = L; }); return best; }
+  function artWidthIn(L) { var ct = content(L, 1000); if (!ct) return 0; var w = ct.w / 1000 * D.tileIn; if (L.t === 'art') { var bx = artBox(L); w *= bx[2] - bx[0]; } return w; }
+  function adjClampK(a, k) { var lo = 0, hi = 1e9; [D.tileIn * a.w, tileHt() * a.h].forEach(function (v) { lo = Math.max(lo, .5 / v); hi = Math.min(hi, 24 / v); }); return clamp(k, lo, hi); }
   function adjDoc(a) {
     var d = clone(D), ins = adjIns(a), k = ins[0] / D.tileIn;
     d.layers.forEach(function (L) { if (!L.hug) { L.x = Math.round(wrap1((L.x - a.fx) / a.w) * 1000) / 1000; L.y = Math.round(wrap1((L.y - a.fy) / a.h) * 1000) / 1000; } L.s = Math.round(L.s / k * 1000) / 1000; });
@@ -1167,9 +1177,9 @@
     [[Fx, Fy, 1, 1], [Fx + Fw, Fy, -1, 1], [Fx, Fy + Fh, 1, -1], [Fx + Fw, Fy + Fh, -1, -1]].forEach(function (c) { g.beginPath(); g.moveTo(c[0] + c[2] * L0, c[1]); g.lineTo(c[0], c[1]); g.lineTo(c[0], c[1] + c[3] * L0); g.strokeStyle = '#fff'; g.lineWidth = 10 * u; g.stroke(); g.strokeStyle = '#1f2a44'; g.lineWidth = 6 * u; g.stroke(); });
     if (!adjLock()) { var e = Math.min(30 * u, Fw / 4, Fh / 4); [[Fx + Fw / 2 - e / 2, Fy, Fx + Fw / 2 + e / 2, Fy], [Fx + Fw / 2 - e / 2, Fy + Fh, Fx + Fw / 2 + e / 2, Fy + Fh], [Fx, Fy + Fh / 2 - e / 2, Fx, Fy + Fh / 2 + e / 2], [Fx + Fw, Fy + Fh / 2 - e / 2, Fx + Fw, Fy + Fh / 2 + e / 2]].forEach(function (c) { g.beginPath(); g.moveTo(c[0], c[1]); g.lineTo(c[2], c[3]); g.strokeStyle = '#fff'; g.lineWidth = 10 * u; g.stroke(); g.strokeStyle = '#1f2a44'; g.lineWidth = 6 * u; g.stroke(); }); }
     g.lineCap = 'butt';
-    var ins = adjIns(a); pill(g, inch(ins[0]), Fx + Fw / 2, Math.max(14 * u, Fy - 18 * u), u); pill(g, inch(ins[1]), Math.max(14 * u, Fx - 18 * u), Fy + Fh / 2, u, -Math.PI / 2);
+    var ins = adjOut(a); pill(g, inch(ins[0]), Fx + Fw / 2, Math.max(14 * u, Fy - 18 * u), u); pill(g, inch(ins[1]), Math.max(14 * u, Fx - 18 * u), Fy + Fh / 2, u, -Math.PI / 2);
     ADJ = { ox: AV.ox, oy: AV.oy, Bw: Bw, Bh: Bh, Fx: Fx, Fy: Fy, Fw: Fw, Fh: Fh, u: u };
-    HIT = null; placeCtx(0, 0, false); lbl('Tile ' + inch(ins[0]) + ' x ' + inch(ins[1]) + '. Your art keeps its size.');
+    HIT = null; placeCtx(0, 0, false); lbl('Repeat ' + inch(ins[0]) + ' x ' + inch(ins[1]) + ' on the fabric.');
   }
   function adjDown(e) {
     if (!ADJ) return; view.setPointerCapture(e.pointerId); var p = cpt(e), A = ADJ, a = U.adj, u = A.u, best = null, bd = 34 * u;
@@ -1218,19 +1228,28 @@
     if (U.adj) { adjClose(false); return; }
     if (!D.layers.length) { flash('Add some art first, then adjust the tile.'); return; }
     if (D.gs) { flash('Squares fill the whole tile. Turn Use squares off to adjust it.'); return; }
-    U.adj = { w: 1, h: 1, fx: 0, fy: 0, sq: false, prev: U.view }; AV = null; U.sel = null; U.tool = null; U.gsel = null; U.addOpen = null; U.zoom = 1; U.panX = 0; U.panY = 0; $('zoom').classList.remove('open'); render();
+    U.adj = { w: 1, h: 1, k: 1, fx: 0, fy: 0, sq: false, prev: U.view }; AV = null; U.sel = null; U.tool = null; U.gsel = null; U.addOpen = null; U.zoom = 1; U.panX = 0; U.panY = 0; $('zoom').classList.remove('open'); render();
   }
   function adjClose(apply) {
     var a = U.adj; if (!a) return; U.adj = null; ADJ = null; AG = null; AV = null; U.view = a.prev || 'tile';
-    if (apply && (a.w !== 1 || a.h !== 1 || a.fx || a.fy)) { commit(); var nd = adjDoc(a); D.layers = nd.layers; D.tileIn = nd.tileIn; if (nd.tileH) D.tileH = nd.tileH; else delete D.tileH; changed(); flash('Tile is now ' + tileLabel() + '.'); return; }
+    if (apply && (a.w !== 1 || a.h !== 1 || a.fx || a.fy || (a.k || 1) !== 1)) { commit(); var nd = adjDoc(a), kk = a.k || 1; D.layers = nd.layers; D.tileIn = Math.round(nd.tileIn * kk * 100) / 100; if (nd.tileH) D.tileH = Math.round(nd.tileH * kk * 100) / 100; else delete D.tileH; changed(); flash('Tile is now ' + tileLabel() + '.'); return; }
     render();
   }
   function adjHtml() {
-    var a = U.adj, ins = adjIns(a), kale = D.rep === 'kale';
-    return '<p class="ptitle">Adjust tile</p>' + stepper('adjw', 'Width', inch(ins[0])) + stepper('adjh', 'Height', inch(ins[1])) +
-      (kale ? '<p class="note">Kaleidoscope tiles stay square.</p>' : '<div class="row"><b>Shape</b>' + seg('adjsq', [['0', 'Any size'], ['1', 'Square']], a.sq ? '1' : '0') + '</div>') +
+    var a = U.adj, out = adjOut(a), kale = D.rep === 'kale', L = mainArt(), k = a.k || 1, aw = L ? artWidthIn(L) * k : 0, cp = copies(), across = Math.floor(42 / Math.max(.1, out[0] * cp.w)), warn = '';
+    if (L && L.t === 'art' && IMG[L.aid]) { var px = Math.max(IMG[L.aid].width, IMG[L.aid].height), full = L.s * D.tileIn * k; if (px / full < 285) warn = ' Your picture is sharp up to ' + inch(Math.floor(aw * px / full / 300 * 10) / 10) + ' wide.'; }
+    return '<p class="ptitle">Adjust tile</p>' +
+      (L ? stepper('adjk', L.t === 'art' ? 'Art size' : 'Size', inch(Math.round(aw * 100) / 100) + ' wide') : '') +
+      '<div class="adjsw"><figure><canvas id="adjsw" width="240" height="240"></canvas><figcaption>8 in on fabric</figcaption></figure><p class="note' + (warn ? ' warn' : '') + '">Repeat ' + inch(out[0]) + ' x ' + inch(out[1]) + '. About ' + across + ' across a 42 in yard.' + warn + '</p></div>' +
       '<div class="grid g3"><button type="button" class="btn" data-a="adjfit">Fit to my art</button><button type="button" class="btn" data-a="adjno">Cancel</button><button type="button" class="btn dark" data-a="adjok">Done</button></div>' +
-      '<p class="note">Drag a corner or an edge to size it. Drag inside to move it. Pieces off the edge wrap into the next copy.</p>';
+      '<p class="h" style="margin-top:10px">Space around it</p>' + stepper('adjw', 'Width', inch(out[0])) + stepper('adjh', 'Height', inch(out[1])) +
+      (kale ? '<p class="note">Kaleidoscope tiles stay square.</p>' : '<div class="row"><b>Shape</b>' + seg('adjsq', [['0', 'Any size'], ['1', 'Square']], a.sq ? '1' : '0') + '</div>') +
+      '<p class="note">Art size makes everything bigger or smaller together. Drag a corner or an edge to change the space around it, drag inside to move it.</p>';
+  }
+  // a true-size 8 in swatch of what Done will make, so the size on fabric is easy to judge
+  function adjSwatch() {
+    var c = $('adjsw'); if (!c || !U.adj) return; var a = U.adj, k = a.k || 1, nd = adjDoc(a); nd.tileIn = nd.tileIn * k; if (nd.tileH) nd.tileH = nd.tileH * k;
+    withDoc(nd, function () { swatchInto(c, 8, null); });
   }
   $('adjBtn').addEventListener('click', adjOpen);
 
@@ -1311,7 +1330,7 @@
       '<li><b>Make</b>: Add your art, words, symbols, shapes or a fabric. Tap a piece to change it. Drag to move, pinch to size, two fingers to turn. The red dot sizes and turns with one finger. Hold a piece for Copy, Front, Back, Delete.</li>' +
       '<li><b>Repeat</b>: Grid, Half-drop, Half-brick, Mirror (Readable keeps words reading the right way), Toss, Kaleidoscope.</li>' +
       '<li><b>Grid</b> is a guide to line pieces up. Turn on <b>Use squares</b> to fill it: tap a square, then change one square, a row, a column, all, or every square with the same piece.</li>' +
-      '<li><b>Adjust tile</b> (the corners button at the top): drag a corner or an edge to size it, wide, tall or square. Drag inside to move it. Your art keeps its size, so copies sit closer or farther apart. Fit to my art hugs your art. Kaleidoscope stays square. Toss turns copies a half turn on a rectangle.</li>' +
+      '<li><b>Adjust tile</b> (the corners button at the top): drag a corner or an edge to size it, wide, tall or square. Drag inside to move it. Your art keeps its size, so copies sit closer or farther apart. Fit to my art hugs your art. Art size makes the whole thing bigger or smaller on the fabric, with an 8 in preview and how many fit across a yard. Kaleidoscope stays square. Toss turns copies a half turn on a rectangle.</li>' +
       '<li><b>Fabric</b>: plaid, stripes or checks under your art. Open Thread colors, Bands, Weave and Printed on to change each one.</li>' +
       '<li><b>Words</b>: straight, arc over, arc under, circle, seal, stacked, vertical. Wrap words around a shape and they hug it.</li>' +
       '<li><b>Look</b>: colorways (tap one to use it) and change any color everywhere at once. Printed on is in Fabric. The cloth is a preview, it is never in your files.</li><li><b>Save</b>: name it and keep it in My patterns, make a copy to try a variation, compare two, or tap the x to delete one. Files: the tile at 300 DPI repeats on its own (Smaller file is 150 DPI), plus an 8 in swatch, a yard on cloth and a mood board. If a picture is too small to be sharp, Save tells you.</li>' +
@@ -1341,7 +1360,7 @@
     $('home').hidden = true; // no first page: it always opens straight into the canvas
     $('addbar').hidden = U.step !== 'make'; $('addbar').innerHTML = [['art', 'My art'], ['fab', 'Fabrics'], ['words', 'Words'], ['sym', 'Symbols'], ['shape', 'Shapes']].map(function (x) { return '<button type="button" data-tab="' + x[0] + '" aria-pressed="' + (U.addOpen === x[0]) + '">' + x[1] + '</button>'; }).join('');
     toolbar(); $('fab').hidden = true; $('views').parentNode.style.visibility = U.step === 'repeat' ? 'hidden' : ''; $('zoom').hidden = U.step === 'look' && false; $('trash').hidden = !!U.adj || (U.step === 'save' ? false : U.step !== 'make') || (!!sel() && $('stage').clientHeight < 400) || !!(U.gsel && U.gsel.length); // short screens: the side rail needs the room, Delete is on the floating bar $('trash').setAttribute('aria-label', sel() ? 'Delete this piece' : 'Start fresh'); $('trash').classList.toggle('piece', !!sel()); if (U.step !== 'make' || U.view !== 'tile') placeCtx(0, 0, false);
-    var pn = $('panel'), s = pn.scrollTop; pn.innerHTML = panelHtml(); pn.scrollTop = s; minis();
+    var pn = $('panel'), s = pn.scrollTop; pn.innerHTML = panelHtml(); pn.scrollTop = s; minis(); adjSwatch();
     var cv2 = U.view !== 'tile'; $('clothChip').hidden = !cv2; $('clothChip').textContent = clothShort(D.cloth); $('clothChip').setAttribute('aria-pressed', String(cv2 && U.clothOpen));
     var co = cv2 && U.clothOpen && U.step !== 'look', cl = $('cloths'); cl.hidden = !co;
     if (co) { var cx = cl.scrollLeft; cl.innerHTML = clothRow().replace(/<p class="note">.*<\/p>$/, ''); cl.scrollLeft = cx; minis(cl); }
