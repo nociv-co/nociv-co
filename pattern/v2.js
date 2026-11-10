@@ -25,6 +25,7 @@
     ground: '<path d="M3 17h18M3 21h18"/><path d="M12 3s5 5.5 5 8.5a5 5 0 0 1-10 0C7 8.5 12 3 12 3z"/>', grid: '<rect x="3" y="3" width="18" height="18"/><path d="M9 3v18M15 3v18M3 9h18M3 15h18"/>',
     ideas: '<path d="M4 4h7v7H4zM13 4h7v7h-7zM4 13h7v7H4zM13 13h7v7h-7z"/>', done: '<path d="M5 12l5 5 9-10"/>', color: '<path d="M12 20l8-8-4-4-8 8v4z"/><path d="M14 6l4 4"/>',
     size: '<path d="M3 21L21 3M3 21h6M3 21v-6M21 3h-6M21 3v6"/>', copies: '<rect x="3" y="3" width="6" height="6"/><rect x="15" y="3" width="6" height="6"/><rect x="9" y="15" width="6" height="6"/>',
+    crop: '<path d="M6 2v16h16"/><path d="M2 6h16v16"/>',
     text: '<path d="M5 6V4h14v2M12 4v16M9 20h6"/>', font: '<path d="M4 20L10 4h1l6 16M6.5 14h8"/>', art: '<rect x="3" y="5" width="18" height="14" rx="2"/><circle cx="9" cy="10" r="1.6"/><path d="M21 16l-5-5-9 8"/>'
   };
   function ico(n) { return '<svg viewBox="0 0 24 24">' + (IC[n] || '') + '</svg>'; }
@@ -61,9 +62,18 @@
     return list.reduce(function (p, f) {
       return p.then(function () {
         var cr = window.nocivCrop ? window.nocivCrop(f, { title: 'Crop your art', aspects: [['free', 'Free'], ['orig', 'Original'], [1, 'Square']], maxPx: 1600 }).catch(function () { return null; }) : blobToCanvas(f);
-        return cr.then(function (c) { if (c) return addArtCanvas(c).then(function (id) { ids.push(id); }); });
+        return cr.then(function (c) { if (c) return addArtCanvas(c).then(function (id) { ids.push(id); return idbSet('src:' + id, f); }); });
       });
     }, Promise.resolve()).then(function () { keep(); return ids; });
+  }
+  // crop a picture on the canvas again, from the full original. Every copy of it changes; Undo brings the old crop back.
+  function cropArt() {
+    var L = sel(); if (!L || L.t !== 'art' || !window.nocivCrop) return; var old = L.aid;
+    idbGet('src:' + old).then(function (b) { return b || new Promise(function (r) { IMG[old].toBlob(r, 'image/png'); }); }).then(function (src) {
+      return window.nocivCrop(src, { title: 'Crop your art', aspects: [['free', 'Free'], ['orig', 'Original'], [1, 'Square']], maxPx: 1600 }).then(function (c) {
+        if (!c) return; return addArtCanvas(c).then(function (id) { idbSet('src:' + id, src); var a = artInfo(old), n = artInfo(id); if (a && n) n.white = a.white; commit(); D.layers.forEach(function (x) { if (x.t === 'art' && x.aid === old) x.aid = id; }); changed(); });
+      });
+    }).catch(function () {});
   }
   function artInfo(id) { for (var i = 0; i < ART.length; i++) if (ART[i].id === id) return ART[i]; return null; }
   var pcache = {};
@@ -589,6 +599,7 @@
     var t = [['done', 'Done']];
     if (L.t === 'words') t.push(['text', 'Text'], ['font', 'Font']);
     if (L.t === 'shape') t.push(['shape', 'Shape']);
+    if (L.t === 'art') t.push(['crop', 'Crop']);
     t.push(['color', 'Color'], ['size', 'Size'], ['copies', 'Copies']);
     return t;
   }
@@ -600,6 +611,7 @@
   $('tools').addEventListener('click', function (e) {
     var b = e.target.closest('button[data-t]'); if (!b) return; var t = b.dataset.t;
     if (t === 'done') { U.sel = null; U.tool = null; render(); return; }
+    if (t === 'crop') { cropArt(); return; }
     if (t === 'ideas') { if (ART.length) showStarters(); else { WANT = 'start'; $('artfile').click(); } return; }
     U.tool = t; render();
   });
