@@ -167,6 +167,7 @@ select,button,.layer{border-width:2px}
 </style></head><body class="m-st"><header><div class="brand"><span>STENCIL</span> + HALFTONE</div><button id="learnTop" class="learnTop" aria-label="Learn: how to print it" title="Learn: how to print it">?</button><div class="muted hsub">Your photos never leave your phone.</div></header><main><aside>
 <div class="modes" role="tablist"><button id="mSt" class="on" role="tab" aria-selected="true">Stencil</button><button id="mHt" role="tab" aria-selected="false">Halftone</button></div>
 <div class="stabs" id="stabs" role="tablist"></div>
+<section id="jobSec"><h2>Job</h2><div class="jobs" id="jobs"></div></section>
 <section><h2>Photo</h2><input id="file" type="file" accept="image/*"><label class="filebtn" for="file">Choose a photo</label><span class="fname" id="fname">JPG or PNG. A drawing on white paper works great.</span><div class="row"><button id="sample">Sample</button><button id="reset">Reset</button></div><p class="help">Images are processed in this browser and are not uploaded.</p>
 <div id="frameBox" hidden><label for="fShape">Cut it to a shape</label><select id="fShape"><option value="full">Whole photo</option><option value="square">Square</option><option value="circle">Circle</option><option value="rounded">Rounded square</option><option value="heart">Heart</option><option value="star">Star</option></select>
 <div class="row"><button id="fCrop" type="button" class="primary" style="grid-column:1/-1">Crop again</button></div><div class="row"><button id="fRot90" type="button">Turn 90°</button><button id="fFlip" type="button">Flip</button></div><div class="row"><button id="fReset" type="button" style="grid-column:1/-1">Back to the full photo</button></div><p class="help">Crop again opens your whole photo, so you can always get back what you cropped off.</p></div></section>
@@ -200,7 +201,7 @@ select,button,.layer{border-width:2px}
 <section><h2>Marks</h2><p class="help" style="margin-top:0">Registration marks are little targets printed in the same spot on every layer. Line up the marks on layer B with layer A and your colors land where they should.</p><div class="regs" id="regPick"></div><div class="check"><input id="lblOn" type="checkbox" checked><label for="lblOn">Print the letter and color on each file</label></div></section>
 <section><h2>Save</h2><label>How wide it prints</label><div class="range"><input id="wi" type="range" min="2" max="24" step=".25" value="8"><output id="wio">8 in</output></div>
 <div class="check"><input id="clearBg" type="checkbox"><label for="clearBg">See-through background (PNG)</label></div>
-<button id="make" class="primary">Make print files</button><div id="files" class="files"></div><p class="help">You get one file per layer (A, B, C...), one PDF with every layer on its own page at true size, <span class="st-only">cut files for machines, </span>and a shirt mockup to show people. Print at 100% (actual size).</p><div class="check" style="margin-top:18px"><input id="shareMark" type="checkbox" checked><label for="shareMark">Add "Made with nociv.co" and the link</label></div>
+<div id="nvSave"></div><button id="make" class="primary">Make print files</button><div id="files" class="files"></div><p class="help">You get one file per layer (A, B, C...), one PDF with every layer on its own page at true size, <span class="st-only">cut files for machines, </span>and a shirt mockup to show people. Print at 100% (actual size).</p><div class="check" style="margin-top:18px"><input id="shareMark" type="checkbox" checked><label for="shareMark">Add "Made with nociv.co" and the link</label></div>
 <button id="shareBtn" class="primary" style="background:var(--ink,#111);border-color:var(--ink,#111)">Share what you made</button><p class="help" id="shareMsg" aria-live="polite">Shares the shirt mockup. No hashtags, no tracking.</p></section>
 </aside><div class="stage"><div class="canvasWrap" id="wrap"><canvas id="c"></canvas><button id="pick" class="primary">Add a photo</button><div class="viewt" id="viewT" hidden><button id="vArt" aria-pressed="true">Artboard</button><button id="vShirt" aria-pressed="false">On a shirt</button></div><div class="shirtbar" id="shirtBar" hidden></div></div><div class="status"><span id="status" class="muted">Load artwork to begin.</span><span id="size" class="muted"></span><button id="zoom" class="ht-only" hidden>Zoom in</button></div></div><aside class="right"><section><h2>Check</h2><div class="metric"><span>Input</span><b id="mi">-</b></div><div class="metric"><span class="st-only">Layers</span><span class="ht-only">Ink layers</span><b id="ml">-</b></div><div class="metric"><span class="st-only">Black area</span><span class="ht-only">Ink coverage</span><b id="ma">-</b></div><div class="metric"><span>Print width</span><b id="mw">-</b></div><div class="metric ht-only"><span>Dot spacing</span><b id="md">-</b></div><div class="metric ht-only"><span>Print file</span><b id="mx">-</b></div></section><section><h2>Learn</h2><p class="help" style="margin-top:0">Never made a screen? Start here. Cheap ways, real steps.</p><div class="learnlist" id="learnList"></div></section></aside></main><div class="learn" id="learn" hidden role="dialog" aria-modal="true" aria-labelledby="learnTitle">
 <div class="lhead"><h2 id="learnTitle">How to print it</h2><button id="learnClose" class="lclose" aria-label="Close">Done</button></div>
@@ -1222,18 +1223,25 @@ section.grouped .filebtn{padding:12px!important}
     count: ['Layers', 'stack', 'How many', function (s) { var k = kids(s), i = k.indexOf($('list')); return k.slice(0, i); }],
     lyrs: ['Layers', 'list', 'Layers', function (s) { var k = kids(s), i = k.indexOf($('list')); return k.slice(i); }],
     marks: ['Marks', 'target', 'Marks', all],
-    width: ['Save', 'ruler', 'Print size', function (s) { var k = kids(s); return [k[0], s.querySelector('.kgrid'), kc('wi'), k.filter(function (c) { return c.classList.contains('check'); })[0]]; }],
-    files: ['Save', 'file', 'Files', function () { return [$('make'), $('files'), $('files').nextElementSibling]; }],
+    width: ['Save', 'ruler', 'Print size', function (s) { var k = kids(s); return [k[0], s.querySelector('.kgrid'), kc('wi')]; }],
+    files: ['Save', 'file', 'Files', function () { return [$('nvSave'), $('make'), $('files')]; }],
+    job: ['Job', 'target', 'Job', all],
+    lyrs2: ['Layers', 'stack', 'Layers', all],
+    tone2: ['Dots', 'sun', 'Tone', function (s) { var k = kids(s); return [s.querySelector('.kgrid'), kc('hBri'), kc('hCon'), kc('hAng'), $('hAngleBox'), $('hCmykAng'), kc('hMin'), kc('hMax'), k[k.length - 1]]; }],
+    mix: ['Mix', 'mix', 'Mix', null],
     share: ['Save', 'share', 'Share', function (s) { var k = kids(s), ch = k.filter(function (c) { return c.classList.contains('check'); }); return [ch[1], $('shareBtn'), $('shareMsg')]; }],
     check: ['Check', 'check', 'Check', all],
     color: ['Ink', 'palette', 'Colors', function (s) { var pl = $('plist'); if (pl && pl.parentNode !== s) s.appendChild(pl); return kids(s); }],
     mlook: ['Mix', 'spark', 'Looks', null], mlay: ['Mix', 'stack', 'Layers', null], mmove: ['Mix', 'move', 'Move', null]
   };
-  var MIXK = { mlook: 1, mlay: 1, mmove: 1 };
+  var MIXK = { mlook: 1, mlay: 1, mmove: 1, mix: 1 };
   var STEPS = {
-    ht: [['Start', 'photo', ['photo', 'shape', 'crop', 'size']], ['Ink', 'drop', ['color']], ['Dots', 'dots', ['style', 'dsize', 'tone', 'limits']], ['Mix', 'mix', ['mlook', 'mlay', 'mmove']], ['Print', 'file', ['check', 'marks', 'width', 'files', 'share']]],
-    st: [['Start', 'photo', ['photo', 'shape', 'crop', 'size']], ['Cut', 'cut', ['light', 'find', 'bridges', 'hand']], ['Layers', 'stack', ['count', 'lyrs']], ['Mix', 'mix', ['mlook', 'mlay', 'mmove']], ['Print', 'file', ['check', 'marks', 'width', 'files', 'share']]]
+    ht: [['Start', 'photo', ['job', 'photo', 'crop', 'size']], ['Make', 'brush', ['color', 'style', 'dsize', 'tone2', 'mix']], ['Save', 'file', ['files', 'width', 'marks', 'share']]],
+    st: [['Start', 'photo', ['job', 'photo', 'crop', 'size']], ['Make', 'brush', ['light', 'lyrs2', 'find', 'bridges', 'hand', 'mix']], ['Save', 'file', ['files', 'width', 'marks', 'share']]]
   };
+  /* parts each job does not need (NV-STENCIL-STUDIO sets window.__nvJob) */
+  var JOBOFF = { digital: { find: 1, bridges: 1, hand: 1, marks: 1 }, one: { find: 1, bridges: 1, hand: 1, marks: 1 }, multi: { find: 1, bridges: 1, hand: 1 }, cut: { mix: 1 } };
+  function partsOf(st) { var off = JOBOFF[window.__nvJob || 'one'] || {}; return st[2].filter(function (k) { return !off[k]; }); }
   var mode = function () { return document.body.classList.contains('m-ht') ? 'ht' : 'st'; };
   var stepI = 0, partOf = {}, cur = null;
 
@@ -1282,9 +1290,9 @@ section.grouped .filebtn{padding:12px!important}
     var steps = STEPS[mode()]; stepI = Math.max(0, Math.min(steps.length - 1, i)); var st = steps[stepI];
     bbar.style.gridTemplateColumns = 'repeat(' + steps.length + ',minmax(0,1fr))';
     bbar.innerHTML = '<i class="bprog" style="width:' + ((stepI + 1) / steps.length * 100) + '%"></i>' + steps.map(function (x, j) { return '<button type="button" data-s="' + j + '"' + (j === stepI ? ' aria-current="step"' : '') + '>' + ico(x[1]) + '<span>' + x[0] + '</span></button>'; }).join('');
-    rail.innerHTML = st[2].map(function (k) { return '<button type="button" data-p="' + k + '" aria-label="' + P[k][2] + '" title="' + P[k][2] + '"><span>' + P[k][2] + '</span>' + ico(P[k][1]) + '</button>'; }).join('') + '<button type="button" class="info" aria-label="Show tips" title="Tips">' + ico('info') + '</button>';
+    rail.innerHTML = partsOf(st).map(function (k) { return '<button type="button" data-p="' + k + '" aria-label="' + P[k][2] + '" title="' + P[k][2] + '"><span>' + P[k][2] + '</span>' + ico(P[k][1]) + '</button>'; }).join('') + '<button type="button" class="info" aria-label="Show tips" title="Tips">' + ico('info') + '</button>';
     if (modes) modes.classList.toggle('off', stepI !== 0);
-    var want = partOf[st[0]]; if (!want || st[2].indexOf(want) < 0 || (P[want][4] && !P[want][4]())) want = st[2][0];
+    var pl = partsOf(st), want = partOf[st[0]]; if (!want || pl.indexOf(want) < 0 || (P[want][4] && !P[want][4]())) want = pl[0];
     showPart(want);
   }
   bbar.addEventListener('click', function (e) { var b = e.target.closest('button[data-s]'); if (b) showStep(+b.dataset.s); });
@@ -1297,7 +1305,7 @@ section.grouped .filebtn{padding:12px!important}
   if ($('hInk')) $('hInk').addEventListener('change', function () { setTimeout(function () { var st = STEPS[mode()][stepI]; showPart(partOf[st[0]] || st[2][0]); }, 30); });
   try { new MutationObserver(function () { var st = STEPS[mode()][stepI]; if (st[2].indexOf('shape') >= 0) showPart(partOf[st[0]] || st[2][0]); }).observe($('frameBox'), { attributes: true, attributeFilter: ['hidden'] }); } catch (_) {}
   // the old Learn step lives inside ? now
-  window.__nvStepTo = showStep;
+  window.__nvStepTo = showStep; window.__nvStepNow = function () { return stepI; };
   setTimeout(function () { showStep(0); if (window.__nvStFit) window.__nvStFit(); }, 60);
 })();
 </script>
@@ -1619,6 +1627,7 @@ section.mix-on > :not(.mixprint):not(h2):not(.topattern){display:none!important}
     if (l.pic === 'new') srcOpts[0][2] = true;
     box.innerHTML =
       '<div class="mx-top"><button type="button" data-act="current" aria-pressed="' + cur + '">' + (cur ? 'Using mine' : 'Use mine') + '</button><button type="button" class="apply" data-act="apply" aria-pressed="' + X.applied + '">' + (X.applied ? 'Applied' : 'Apply to print') + '</button></div>' +
+      seg('part', [['mlook', 'Looks'], ['mlay', 'Layers'], ['mmove', 'Move']], part, 'big mx-parts') +
       '<div class="mx" data-p="mlook"><div class="mx-looks">' + LOOKS.map(function (L, i) { return '<button type="button" data-look="' + i + '" aria-pressed="' + (X.look === i) + '">' + lookSvg(L) + L[0] + '</button>'; }).join('') + '</div></div>' +
       '<div class="mx" data-p="mlay">' +
         '<div class="mx-row">' + seg('sel', [[0, 'Layer 1'], [1, 'Layer 2']], X.sel, 'big') + '</div>' +
@@ -1643,6 +1652,7 @@ section.mix-on > :not(.mixprint):not(h2):not(.topattern){display:none!important}
     var sg = b.closest('.seg, .inks');
     if (sg && b.dataset.v != null) {
       var k = sg.dataset.k, v = b.dataset.v, l = X.L[X.sel];
+      if (k === 'part') { part = v; build(); return; }
       if (k === 'sel') X.sel = +v;
       else if (k === 'src') { l.src = v; X.look = -1; }
       else if (k === 'pic') { if (v === 'new') { file.click(); return; } l.pic = 'same'; X.look = -1; }
@@ -1725,14 +1735,14 @@ section.mix-on > :not(.mixprint):not(h2):not(.topattern){display:none!important}
     }
   });
 
-  function inPrint() { var b = document.querySelector('.bbar button[aria-current=step]'); return !!(b && /Print/.test(b.textContent)); }
+  function inPrint() { var b = document.querySelector('.bbar button[aria-current=step]'); return !!(b && /Print|Save/.test(b.textContent)); }
   function paintApplied() { if (active || !X.applied || !has || !inPrint()) return; cache = { ver: (cache.ver || 0) + 1 }; var z = size(1000); c.width = z[0]; c.height = z[1]; c.style.width = ''; compose(ctx, z[0], z[1]); var st0 = $('status'); if (st0) st0.textContent = 'Your Mix, ready to print'; }
   ['drawHTnow', 'draw'].forEach(function (n) { var f = window[n]; if (typeof f !== 'function') return; window[n] = function () { var r = f.apply(this, arguments); setTimeout(paintApplied, 0); return r; }; });
   window.addEventListener('nvpart', function () { setTimeout(paintApplied, 60); });
   window.__nvMix = {
-    show: function (k) { if (!box.parentNode) aside.appendChild(box); part = k; active = true; cache = { ver: (cache.ver || 0) + 1 }; build(); render(); },
+    show: function (k) { if (k === 'mix') k = (part && part !== 'mix') ? part : 'mlook'; if (!box.parentNode) aside.appendChild(box); part = k; active = true; cache = { ver: (cache.ver || 0) + 1 }; build(); render(); },
     leave: function () { if (!active) return; active = false; start = null; if (typeof redraw === 'function') redraw(); },
-    picture: function () { if (!X.applied || !has) return null; var z = size(1600), t = document.createElement('canvas'); t.width = z[0]; t.height = z[1]; cache = { ver: (cache.ver || 0) + 1 }; compose(t.getContext('2d'), z[0], z[1]); return t; },
+    refresh: function () { keep(); if (active) { build(); render(); } }, compose: function (g, W, H2) { cache = { ver: (cache.ver || 0) + 1 }; compose(g, W, H2); }, picture: function () { if (!X.applied || !has) return null; var z = size(1600), t = document.createElement('canvas'); t.width = z[0]; t.height = z[1]; cache = { ver: (cache.ver || 0) + 1 }; compose(t.getContext('2d'), z[0], z[1]); return t; },
     state: X
   };
 })();
@@ -2028,4 +2038,217 @@ section.grouped .kgrid{margin-top:0!important}
 })();
 </script>
 <!--NV-STENCIL-PATTERN-END-->
+<!--NV-STENCIL-STUDIO-START: job picker, Start/Make/Save, Undo/Redo, Start over, Save by job (combined PNG, one screen film)-->
+<style>
+#edUndo{display:none!important}
+.jobs{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin:4px 0 6px}
+.jobs button{all:unset;box-sizing:border-box;display:flex;flex-direction:column;gap:5px;min-height:62px;padding:10px 12px;border:2px solid #1a1a1a;border-radius:12px;background:#fff;color:#1a1a1a;cursor:pointer;-webkit-tap-highlight-color:transparent;transition:transform .15s}
+.jobs button:active{transform:scale(.96)}
+.jobs button b{font:900 14px/1.1 -apple-system,BlinkMacSystemFont,"Helvetica Neue",Arial,sans-serif;text-transform:uppercase;letter-spacing:.03em}
+.jobs button span{font:600 12px/1.3 -apple-system,BlinkMacSystemFont,"Helvetica Neue",Arial,sans-serif;color:#5d584f}
+.jobs button[aria-pressed=true]{background:#1a1a1a;color:#fff}
+.jobs button[aria-pressed=true] span{color:#d9d3c6}
+@media(max-width:370px){.jobs button{min-height:0;padding:8px 10px}.jobs button span{font-size:11px}#nvSave .sv{padding:9px 12px}#nvSave .sv b{font-size:14px}}
+#mHt.nv-off{opacity:.35;pointer-events:none}
+.nv-fl{position:absolute;z-index:8;display:flex;gap:6px}
+.nv-fl.tl{top:8px;left:8px}.nv-fl.bl{bottom:8px;left:8px}
+.nv-fl button{all:unset;box-sizing:border-box;display:grid;place-items:center;width:40px;height:40px;border-radius:50%;border:1.5px solid rgba(26,26,26,.55);background:rgba(255,255,255,.78);-webkit-backdrop-filter:blur(6px);backdrop-filter:blur(6px);color:#1a1a1a;cursor:pointer;box-shadow:0 2px 6px rgba(0,0,0,.12);-webkit-tap-highlight-color:transparent;transition:transform .15s}
+.nv-fl button:active{transform:scale(.9)}
+.nv-fl button:disabled{opacity:.3}
+.nv-fl svg{width:20px;height:20px;fill:none;stroke:currentColor;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
+.canvasWrap .viewt{left:56px!important}
+#mixPanel .mx-parts{margin:0 0 8px}
+#nvSave{display:flex;flex-direction:column;gap:6px;margin:0 0 10px}
+#nvSave .sv{all:unset;box-sizing:border-box;display:flex;flex-direction:column;gap:4px;padding:11px 14px;border:2px solid #1a1a1a;border-radius:12px;background:#fff;color:#1a1a1a;cursor:pointer;-webkit-tap-highlight-color:transparent;transition:transform .15s}
+#nvSave .sv:active{transform:scale(.97)}
+#nvSave .sv b{font:900 15px/1.1 -apple-system,BlinkMacSystemFont,"Helvetica Neue",Arial,sans-serif;text-transform:uppercase;letter-spacing:.02em}
+#nvSave .sv span{font:600 12px/1.3 -apple-system,BlinkMacSystemFont,"Helvetica Neue",Arial,sans-serif;color:#5d584f}
+#nvSave .sv.main{background:#1a1a1a;color:#fff}#nvSave .sv.main span{color:#d9d3c6}
+#nvSave .sv.ready{background:#2f7a4b;border-color:#2f7a4b;color:#fff}#nvSave .sv.ready span{color:#e3f1e7}
+#nvSave .sv[hidden]{display:none}
+.nv-toast{position:fixed;left:50%;bottom:calc(96px + env(safe-area-inset-bottom));transform:translateX(-50%) translateY(10px);z-index:10000;max-width:86vw;padding:10px 14px;border-radius:12px;background:#1a1a1a;color:#fff;font:700 13px/1.3 -apple-system,BlinkMacSystemFont,"Helvetica Neue",Arial,sans-serif;opacity:0;pointer-events:none;transition:opacity .2s,transform .25s cubic-bezier(.34,1.4,.5,1)}
+.nv-toast.on{opacity:1;transform:translateX(-50%) translateY(0)}
+</style>
+<script>
+(function () {
+  'use strict';
+  var $ = function (x) { return document.getElementById(x); }, wrap = $('wrap'), aside = document.querySelector('main > aside:not(.right)');
+  if (!wrap || !aside) return;
+  var SV = function (d) { return '<svg viewBox="0 0 24 24" aria-hidden="true">' + d + '</svg>'; };
+
+  /* ---------- little message ---------- */
+  var toastEl = document.createElement('div'); toastEl.className = 'nv-toast'; toastEl.setAttribute('role', 'status'); document.body.appendChild(toastEl);
+  var tt = 0; function say(t) { toastEl.textContent = t; toastEl.classList.add('on'); clearTimeout(tt); tt = setTimeout(function () { toastEl.classList.remove('on'); }, 2600); }
+
+  /* ---------- job ---------- */
+  var JOBS = [['digital', 'Digital', 'Post it, stickers, DTF'], ['one', 'One screen', 'Every layer in one ink'], ['multi', 'Screen per color', 'One screen for each color'], ['cut', 'Cut stencil', 'Cut it from a sheet']];
+  var job = 'one'; try { job = localStorage.getItem('nocivStJob') || 'one'; } catch (_) {}
+  if (!JOBS.some(function (j) { return j[0] === job; })) job = 'one';
+  window.__nvJob = job;
+  function jobsUI() {
+    $('jobs').innerHTML = JOBS.map(function (j) { return '<button type="button" data-j="' + j[0] + '" aria-pressed="' + (j[0] === job) + '"><b>' + j[1] + '</b><span>' + j[2] + '</span></button>'; }).join('');
+    var ht = $('mHt'); if (ht) ht.classList.toggle('nv-off', job === 'cut');
+    saveUI();
+  }
+  function fire(el, ev) { el.dispatchEvent(new Event(ev, { bubbles: true })); }
+  function setJob(j, quiet) {
+    job = j; window.__nvJob = j; try { localStorage.setItem('nocivStJob', j); } catch (_) {}
+    if (!quiet) {
+      if (j === 'cut' && mode === 'ht') { $('mSt').click(); say('Cut stencils are solid shapes, so this uses Stencil.'); }
+      if (j === 'one' && mode === 'ht' && H.ink === 'cmyk') { $('hInk').value = 'gray'; fire($('hInk'), 'change'); say('One screen means one ink, so CMYK became black.'); }
+      if (j === 'one' && mode === 'st' && S.n > 1) { $('layers').value = '1'; fire($('layers'), 'change'); say('One screen, one layer. Undo brings the layers back.'); }
+    }
+    jobsUI(); if (window.__nvStepTo && window.__nvStepNow) window.__nvStepTo(window.__nvStepNow());
+  }
+  $('jobs').addEventListener('click', function (e) { var b = e.target.closest('button[data-j]'); if (b) setJob(b.dataset.j); });
+
+  /* ---------- Save by job ---------- */
+  var sv = $('nvSave');
+  sv.innerHTML =
+    '<button type="button" class="sv main" data-s="comb"><b>Save PNG, no background</b><span>All layers in one picture. DTF, stickers, posting</span></button>' +
+    '<button type="button" class="sv" data-s="film"><b>Save one screen film</b><span>Every layer in black, true size. Burn one screen</span></button>';
+  var ready = {};
+  function saveUI() {
+    var f = sv.querySelector('[data-s=film]'), c2 = sv.querySelector('[data-s=comb]'), mk = $('make');
+    c2.hidden = job === 'cut';
+    f.hidden = !(job === 'one' || job === 'digital') || (mode === 'ht' && H.ink === 'cmyk');
+    f.classList.toggle('main', job === 'one'); c2.classList.toggle('main', job !== 'one');
+    if (mk) mk.textContent = job === 'cut' ? 'Make cut files' : job === 'multi' ? 'Make one file per color' : 'Other files: one per layer, PDF, mockup';
+    if (mk) mk.classList.toggle('primary', job === 'cut' || job === 'multi');
+    reset();
+  }
+  function reset() { ready = {}; Array.prototype.forEach.call(sv.querySelectorAll('.sv'), function (b) { b.classList.remove('ready'); var t = b.querySelector('b'); t.textContent = b.dataset.s === 'comb' ? 'Save PNG, no background' : 'Save one screen film'; }); }
+  function combined() { // what you made, every layer in its color, see-through paper, at print size
+    var o = outSize(), W = o.W, Hh = o.H, t = document.createElement('canvas'); t.width = W; t.height = Hh; var g = t.getContext('2d');
+    var X = window.__nvMix && window.__nvMix.state;
+    if (X && X.applied && window.__nvMix.compose) {
+      window.__nvMix.compose(g, W, Hh);
+      var im = g.getImageData(0, 0, W, Hh), d = im.data, dark = X.paper === '#1a1a1a';
+      for (var k = 0; k < d.length; k += 4) { var a = d[k], b = d[k + 1], c3 = d[k + 2]; if (dark ? (a < 6 && b < 6 && c3 < 6) : (a > 249 && b > 249 && c3 > 249)) d[k + 3] = 0; }
+      g.putImageData(im, 0, 0); return { cv: t, dpi: o.dpi };
+    }
+    if (mode === 'st') { var dc = designCanvas(); g.imageSmoothingEnabled = false; g.drawImage(dc, 0, 0, W, Hh); dc.width = dc.height = 0; return { cv: t, dpi: o.dpi }; }
+    var cv = H.cov || buildCov(), ps = plates().map(function (p, i) { return Object.assign({}, p, { idx: i }); }), cell = o.dpi / H.lpi;
+    if (H.ink === 'cmyk') {
+      var u = document.createElement('canvas'); u.width = W; u.height = Hh; var ug = u.getContext('2d');
+      g.fillStyle = '#fff'; g.fillRect(0, 0, W, Hh);
+      ps.forEach(function (p) { ug.clearRect(0, 0, W, Hh); renderPlate(ug, cv, p, W, Hh, cell, p.color); g.globalCompositeOperation = 'multiply'; g.drawImage(u, 0, 0); });
+      g.globalCompositeOperation = 'source-over'; u.width = u.height = 0;
+      var im2 = g.getImageData(0, 0, W, Hh), d2 = im2.data; for (var q = 0; q < d2.length; q += 4) if (d2[q] > 250 && d2[q + 1] > 250 && d2[q + 2] > 250) d2[q + 3] = 0; g.putImageData(im2, 0, 0);
+    } else ps.forEach(function (p) { renderPlate(g, cv, p, W, Hh, cell, p.color); });
+    return { cv: t, dpi: o.dpi };
+  }
+  function film(r) { // every bit of ink becomes black, the rest white
+    var W = r.cv.width, Hh = r.cv.height, g = r.cv.getContext('2d'), im = g.getImageData(0, 0, W, Hh), d = im.data;
+    for (var k = 0; k < d.length; k += 4) { var v = d[k + 3] >= 128 ? 0 : 255; d[k] = d[k + 1] = d[k + 2] = v; d[k + 3] = 255; }
+    g.putImageData(im, 0, 0); return r;
+  }
+  function blob(cv) { return new Promise(function (res) { cv.toBlob(res, 'image/png'); }); }
+  var kind = function () { return mode === 'st' ? 'stencil' : 'halftone'; };
+  sv.addEventListener('click', function (e) {
+    var b = e.target.closest('.sv'); if (!b) return;
+    if (!has) { say('Add a photo first.'); return; }
+    var k = b.dataset.s;
+    if (ready[k]) { ready[k].forEach(function (f, i) { setTimeout(function () { saveFile(f); }, i * 400); }); return; }
+    var t = b.querySelector('b'); t.textContent = 'Making...'; b.disabled = true;
+    setTimeout(function () {
+      var r;
+      try { r = combined(); } catch (err) { console.error(err); t.textContent = 'Too big for this phone. Try a smaller width.'; b.disabled = false; return; }
+      var out = [];
+      var done = function () { r.cv.width = r.cv.height = 0; ready[k] = out; b.disabled = false; b.classList.add('ready'); t.textContent = 'Ready. Tap to save'; };
+      if (k === 'comb') blob(r.cv).then(function (bl) { out.push({ name: 'nociv-' + kind() + '-combined.png', blob: bl, type: 'image/png' }); done(); });
+      else {
+        film(r); var W = r.cv.width, Hh = r.cv.height, g = r.cv.getContext('2d'), pages = [{ w: W, h: Hh, dpi: r.dpi, bits: packBits(g, W, Hh) }];
+        out.push({ name: 'nociv-' + kind() + '-one-screen-film.pdf', blob: makePDF(pages), type: 'application/pdf' });
+        if (tileIt(W, Hh, r.dpi)) out.push({ name: 'nociv-' + kind() + '-one-screen-letter-tiles.pdf', blob: makePDF(makeTiles(r.cv, W, Hh, r.dpi, '1')), type: 'application/pdf' });
+        blob(r.cv).then(function (bl) { out.push({ name: 'nociv-' + kind() + '-one-screen-film.png', blob: bl, type: 'image/png' }); done(); });
+      }
+    }, 30);
+  });
+  // anything changed makes the ready files stale
+  aside.addEventListener('change', function (e) { if (!sv.contains(e.target)) reset(); }, true);
+  aside.addEventListener('input', function (e) { if (!sv.contains(e.target)) reset(); }, true);
+
+  /* ---------- Undo / Redo / Start over ---------- */
+  var tl = document.createElement('div'); tl.className = 'nv-fl tl';
+  tl.innerHTML = '<button type="button" id="nvUndo" aria-label="Undo" title="Undo">' + SV('<path d="M9 14L4 9l5-5"/><path d="M4 9h10a6 6 0 0 1 0 12h-3"/>') + '</button>' +
+    '<button type="button" id="nvRedo" aria-label="Redo" title="Redo">' + SV('<path d="M15 14l5-5-5-5"/><path d="M20 9H10a6 6 0 0 0 0 12h3"/>') + '</button>';
+  var bl = document.createElement('div'); bl.className = 'nv-fl bl';
+  bl.innerHTML = '<button type="button" id="nvTrash" aria-label="Start over" title="Start over">' + SV('<path d="M4 7h16M9 7V4h6v3M6 7l1 13h10l1-13M10 11v6M14 11v6"/>') + '</button>';
+  wrap.appendChild(tl); wrap.appendChild(bl);
+
+  function ctrls() { return Array.prototype.filter.call(aside.querySelectorAll('input[id], select[id]'), function (el) { return el.type !== 'file' && el.id !== 'active' && !sv.contains(el); }); }
+  function snap() {
+    var v = {}; ctrls().forEach(function (el) { v[el.id] = el.type === 'checkbox' ? el.checked : el.value; });
+    var X = window.__nvMix && window.__nvMix.state;
+    return { key: JSON.stringify({ v: v, F: F, X: X ? { L: X.L, dots: X.dots, paper: X.paper, look: X.look, applied: X.applied } : null, mode: mode, job: job, M: { s: M.style, l: M.label } }), src: src.width + 'x' + src.height, E: E, EW: EW, EH: EH };
+  }
+  var hist = [], at = -1, busy = false, rq = 0;
+  function sameE(a, b) { if (!a || !b) return a === b; if (a.length !== b.length) return false; for (var i = 0; i < a.length; i++) { var x = a[i], y = b[i]; if (x.length !== y.length) return false; for (var j = 0; j < x.length; j++) if (x[j] !== y[j]) return false; } return true; }
+  function record() {
+    if (busy) return; var s = snap(), top = hist[at];
+    if (top && top.src !== s.src) { hist = []; at = -1; top = null; }
+    var eq = top && sameE(top.E, s.E);
+    if (top && top.key === s.key && eq) return;
+    s.E = eq ? top.E : (s.E ? s.E.map(function (a) { return a.slice(); }) : null);
+    hist = hist.slice(0, at + 1); hist.push(s);
+    // keep memory low: at most 8 different brush states, 40 steps
+    var seen = []; for (var i = hist.length - 1; i >= 0; i--) { var e = hist[i].E; if (e && seen.indexOf(e) < 0) seen.push(e); if (seen.length > 8 || hist.length - i > 40) { hist = hist.slice(i + 1); break; } }
+    at = hist.length - 1; ui();
+  }
+  function later() { if (busy) return; clearTimeout(rq); rq = setTimeout(record, 300); }
+  function ui() { $('nvUndo').disabled = at <= 0; $('nvRedo').disabled = at >= hist.length - 1; }
+  function restore(s) {
+    busy = true;
+    try {
+      var o = JSON.parse(s.key);
+      if (o.mode !== mode) $(o.mode === 'ht' ? 'mHt' : 'mSt').click();
+      if (o.job !== job) setJob(o.job, true);
+      ctrls().forEach(function (el) {
+        if (!(el.id in o.v)) return; var want = o.v[el.id];
+        if (el.type === 'checkbox') { if (el.checked !== want) { el.checked = want; fire(el, 'change'); } }
+        else if (String(el.value) !== String(want)) { el.value = want; fire(el, 'input'); fire(el, 'change'); }
+      });
+      if (o.M) { M.style = o.M.s; M.label = o.M.l; if (typeof regUI === 'function') regUI(); }
+      Object.assign(F, o.F); if (typeof applyFrame === 'function') applyFrame();
+      var X = window.__nvMix && window.__nvMix.state; if (X && o.X) { Object.assign(X, JSON.parse(JSON.stringify(o.X))); window.__nvMix.refresh(); }
+      E = s.E ? s.E.map(function (a) { return a.slice(); }) : null; EW = s.EW; EH = s.EH; UNDO = [];
+      clearFiles(); redraw(); if (typeof edUI === 'function') edUI(); reset();
+      if (window.__nvStepTo && window.__nvStepNow) window.__nvStepTo(window.__nvStepNow());
+    } catch (err) { console.error(err); }
+    setTimeout(function () { busy = false; }, 400);
+  }
+  $('nvUndo').onclick = function () { clearTimeout(rq); record(); if (at <= 0) return; at--; restore(hist[at]); ui(); };
+  $('nvRedo').onclick = function () { if (at >= hist.length - 1) return; at++; restore(hist[at]); ui(); };
+  $('nvTrash').onclick = function () {
+    if (!has) return; record(); busy = true;
+    ctrls().forEach(function (el) {
+      if (el.type === 'checkbox') { if (el.checked !== el.defaultChecked) { el.checked = el.defaultChecked; fire(el, 'change'); } return; }
+      var d = el.tagName === 'SELECT' ? (Array.prototype.filter.call(el.options, function (op) { return op.defaultSelected; })[0] || el.options[0]).value : el.defaultValue;
+      if (String(el.value) !== String(d)) { el.value = d; fire(el, 'input'); fire(el, 'change'); }
+    });
+    Object.assign(F, { zoom: 1, px: 0, py: 0, rot: 0, flip: false, shape: 'full' }); applyFrame();
+    var X = window.__nvMix && window.__nvMix.state;
+    if (X) { X.L = [{ src: 'st', pic: 'same', c: '#1a1a1a', dx: 0, dy: 0, op: 100 }, { src: 'ht', pic: 'same', c: '#e2342a', dx: 2.5, dy: 2, op: 100 }]; X.dots = 'm'; X.paper = '#ffffff'; X.look = 0; X.sel = 1; X.applied = false; window.__nvMix.refresh(); }
+    E = null; UNDO = []; clearFiles(); redraw(); edUI(); reset();
+    setTimeout(function () { busy = false; record(); say('Started over. Undo brings it back.'); }, 450);
+  };
+  ['change', 'input'].forEach(function (ev) { aside.addEventListener(ev, function (e) { if (!sv.contains(e.target)) later(); }, true); });
+  aside.addEventListener('click', function (e) { if (e.target.closest('button') && !sv.contains(e.target)) later(); }, true);
+  ['pointerup', 'pointercancel'].forEach(function (ev) { $('c').addEventListener(ev, later); wrap.addEventListener(ev, function (e) { if (!e.target.closest('.nv-fl')) later(); }); });
+  ['mSt', 'mHt'].forEach(function (id) { $(id).addEventListener('click', function () { setTimeout(saveUI, 60); later(); }); });
+  if ($('hInk')) $('hInk').addEventListener('change', function () { setTimeout(saveUI, 60); });
+
+  /* ---------- Shape is gone: always the whole photo ---------- */
+  if (F.shape !== 'full') { F.shape = 'full'; if (has) applyFrame(); }
+  var fs = $('fShape'); if (fs) { fs.value = 'full'; fs.hidden = true; var lb = document.querySelector('label[for=fShape]'); if (lb) lb.hidden = true; }
+
+  // Save comes first in Save; Make it a pattern sits under the files
+  window.addEventListener('nvpart', function (e) { if (e.detail !== 'files') return; setTimeout(function () { var tp = document.querySelector('.topattern'), fl = $('files'); if (tp && fl && fl.parentNode) fl.parentNode.insertBefore(tp, fl.nextSibling); }, 0); });
+  var md = document.querySelector('.modes'); if (md) { $('jobSec').insertBefore(md, $('jobs')); }
+  jobsUI(); ui();
+  setTimeout(function () { record(); if (window.__nvStepTo) window.__nvStepTo(0); }, 300);
+})();
+</script>
+<!--NV-STENCIL-STUDIO-END-->
 </body></html>
