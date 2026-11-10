@@ -2,10 +2,10 @@
 <html lang="en">
 <head>
 <meta charset="utf-8">
-<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no,viewport-fit=cover">
 <title>Patterns | NOCIV</title>
-<meta name="theme-color" content="#161616">
-<link rel="manifest" href="/manifest.webmanifest">
+<meta name="theme-color" content="#1a1a1a">
+<link rel="icon" href="/favicon.ico">
 <style>
 @font-face{font-family:'FS Archivo Black';src:url('../scratch/kit/fonts/archivo-black.woff') format('woff');font-display:swap}
 @font-face{font-family:'FS Syne';src:url('../scratch/kit/fonts/syne-800.woff') format('woff');font-weight:800;font-display:swap}
@@ -20,172 +20,121 @@
 :root{--ink:#1a1a1a;--paper:#f3efe6;--panel:#fbf9f4;--line:#d9d4c8;--mute:#6f6a60;--red:#c8412f;--sys:-apple-system,BlinkMacSystemFont,"Helvetica Neue",Arial,sans-serif}
 *{box-sizing:border-box}
 html,body{margin:0;height:100%;background:var(--paper);color:var(--ink);font:500 15px/1.35 var(--sys);-webkit-text-size-adjust:100%;overscroll-behavior:none}
-body{display:flex;flex-direction:column;height:100dvh;overflow:hidden}
+body{display:flex;flex-direction:column;height:100dvh;overflow:hidden;-webkit-user-select:none;user-select:none;-webkit-touch-callout:none}
 button{font:inherit;color:inherit}
-/* top bar */
+input{-webkit-user-select:text;user-select:text}
 .top{flex:none;display:flex;align-items:center;gap:8px;padding:8px 10px;padding-top:max(8px,env(safe-area-inset-top));background:var(--ink);color:#fff}
-.top a.back{color:#fff;text-decoration:none;font:800 22px/1 var(--sys);padding:4px 8px}
-.top b{font:900 14px/1 var(--sys);letter-spacing:.1em;text-transform:uppercase}
-.top .sp{flex:1}
-.top .tb{all:unset;cursor:pointer;width:36px;height:36px;display:grid;place-items:center;border:1.5px solid #fff;border-radius:10px;font:900 17px/1 var(--sys)}
+.top a{color:#fff;text-decoration:none;font:800 22px/1 var(--sys);padding:4px 8px}
+.top b{font:900 14px/1 var(--sys);letter-spacing:.1em;text-transform:uppercase;flex:1}
 html.embedded .top{display:none}
-/* the picture: one fixed size while you work */
 .stage{flex:1 1 auto;min-height:0;position:relative;background:#e7e2d6;overflow:hidden}
 .stage canvas{position:absolute;inset:0;width:100%;height:100%;display:block;touch-action:none}
-.stage .tag{position:absolute;left:8px;bottom:8px;padding:4px 8px;border-radius:8px;background:rgba(26,26,26,.82);color:#fff;font:700 11.5px/1.2 var(--sys);pointer-events:none;max-width:calc(100% - 16px)}
-.stage .views{position:absolute;right:8px;top:8px;display:flex;border:1.5px solid var(--ink);border-radius:10px;overflow:hidden;background:#fff}
-.stage .views button{all:unset;cursor:pointer;padding:7px 10px;font:800 12px/1 var(--sys)}
-.stage .views button[aria-pressed=true]{background:var(--ink);color:#fff}
-.stage .views .vb{border-left:1.5px solid var(--ink)}.stage .views .vb[aria-pressed=true]{background:#c8412f;color:#fff}.stage .views .vb[hidden]{display:none}
-/* console */
-.con{flex:none;height:318px;display:flex;flex-direction:column;background:var(--panel);border-top:1.5px solid var(--ink)}
-.con.down{height:auto}
-.con.down .pane{display:none}
-.pane{flex:1 1 auto;min-height:0;overflow-y:auto;padding:10px 12px 10px}
-.tabs{flex:none;display:flex;align-items:stretch;gap:4px;padding:6px 8px;border-top:1px solid var(--line)}
-.con.down .tabs{border-top:0}
-.tabs .tl{flex:1;min-width:0;display:flex;gap:4px}
-.tabs .tl button{all:unset;cursor:pointer;flex:1 1 0;min-width:0;height:54px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:4px;border-radius:10px;color:#6f6a60;font:700 11px/1 var(--sys);-webkit-tap-highlight-color:transparent}
-.tabs .tl button svg{width:23px;height:23px;fill:none;stroke:currentColor;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
-.tabs .tl button span{max-width:100%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
-.tabs .tl button[aria-pressed=true]{background:var(--ink);color:#fff}
-.tabs .rb{all:unset;cursor:pointer;flex:0 0 38px;width:38px;height:38px;align-self:center;display:grid;place-items:center;border-radius:50%;border:1.5px solid var(--ink);background:#fff}
-.tabs .rb svg{width:18px;height:18px;fill:none;stroke:var(--ink);stroke-width:2.4;stroke-linecap:round;stroke-linejoin:round}
-.con.down .tabs .rb.drop svg{transform:rotate(180deg)}
-.tabs .rb.q{background:var(--ink);color:#fff;font:900 18px/1 var(--sys)}
-/* bottom steps */
-.bbar{flex:none;position:relative;display:grid;grid-template-columns:repeat(5,minmax(0,1fr));background:#fff;border-top:1.5px solid var(--ink);padding-bottom:env(safe-area-inset-bottom)}
-.bbar i{position:absolute;top:-1.5px;left:0;height:4px;background:var(--red)}
-.bbar button{all:unset;cursor:pointer;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:3px;min-height:54px;color:#8d887d;font:800 11px/1 var(--sys)}
-.bbar button svg{width:22px;height:22px;fill:none;stroke:currentColor;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
-.bbar button[aria-current=step]{color:var(--ink)}
-.bbar button:disabled{opacity:.35}
-/* controls */
-.h{margin:0 0 6px;font:800 11px/1 var(--sys);letter-spacing:.07em;text-transform:uppercase;color:var(--mute)}
-.grid{display:grid;gap:7px}
-.g2{grid-template-columns:repeat(2,minmax(0,1fr))}.g3{grid-template-columns:repeat(3,minmax(0,1fr))}.g4{grid-template-columns:repeat(4,minmax(0,1fr))}.g5{grid-template-columns:repeat(5,minmax(0,1fr))}
-.pick{all:unset;cursor:pointer;box-sizing:border-box;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:4px;text-align:center;padding:7px 4px;min-height:44px;border:2px solid var(--ink);border-radius:12px;background:#fff;font:800 12.5px/1.15 var(--sys);-webkit-tap-highlight-color:transparent}
-.pick small{font-weight:600;font-size:10.5px;color:var(--mute)}
-.pick canvas,.pick svg.ic{width:100%;height:38px;border-radius:6px;display:block}
-.grid.tight{gap:6px}.grid.tight .pick{padding:5px 3px;min-height:0;font-size:11.5px;border-width:1.5px;border-radius:10px;gap:3px}
-.grid.tight .pick canvas{height:34px}
-.grid.fabs{grid-template-columns:repeat(6,minmax(0,1fr))}.fabs .pick{font-size:10px!important;padding:4px 2px!important}.fabs .pick canvas{height:30px}.fabs .pick{position:relative}.fabs .pick.fit::after{content:'';position:absolute;top:4px;right:4px;width:9px;height:9px;border-radius:50%;background:var(--red);border:1.5px solid #fff}
-.bands{gap:3px}.bands + .btn{padding:7px!important;margin-top:4px!important}.band .step button{height:28px}.band .step output{padding:6px 2px}.band .sw button{width:20px;height:20px}
-.pick svg.sm{width:26px;height:26px;fill:none;stroke:currentColor;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
-.pick[aria-pressed=true]{background:var(--ink);color:#fff;border-color:var(--ink)}
-.pick[aria-pressed=true] small{color:#d8d2c4}
-.pick.big{min-height:86px;font-size:14px}
-.pick.big svg.sm{width:32px;height:32px}
+.fl{position:absolute;z-index:2;display:flex;gap:4px}
+.chip{all:unset;box-sizing:border-box;cursor:pointer;height:36px;min-width:36px;padding:0 10px;display:grid;place-items:center;border:1.5px solid var(--ink);border-radius:10px;background:#fff;font:800 12px/1 var(--sys);box-shadow:0 1px 3px rgba(0,0,0,.15)}
+.chip[aria-pressed=true]{background:var(--ink);color:#fff}
+.chip:disabled{opacity:.35}
+.chip svg{width:18px;height:18px;fill:none;stroke:currentColor;stroke-width:2.2;stroke-linecap:round;stroke-linejoin:round}
+.seg3{display:flex;border:1.5px solid var(--ink);border-radius:10px;overflow:hidden;background:#fff;box-shadow:0 1px 3px rgba(0,0,0,.15)}
+.seg3 button{all:unset;cursor:pointer;padding:0 10px;height:33px;display:grid;place-items:center;font:800 12px/1 var(--sys)}
+.seg3 button[aria-pressed=true]{background:var(--ink);color:#fff}
+#tools{left:8px;top:52px;flex-direction:column}
+html.righty #tools{left:auto;right:8px}
+#tools button{all:unset;box-sizing:border-box;cursor:pointer;width:50px;height:46px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px;border:1.5px solid var(--ink);border-radius:12px;background:#fff;font:800 9.5px/1 var(--sys);box-shadow:0 1px 3px rgba(0,0,0,.18)}
+#tools button svg{width:20px;height:20px;fill:none;stroke:currentColor;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
+#tools button[aria-pressed=true]{background:var(--ink);color:#fff}
+#tools button.done{background:var(--red);border-color:var(--red);color:#fff}
+.lbl{position:absolute;left:50%;bottom:8px;transform:translateX(-50%);padding:4px 9px;border-radius:8px;background:rgba(26,26,26,.82);color:#fff;font:700 11.5px/1.2 var(--sys);pointer-events:none;white-space:nowrap;z-index:2}
+.lbl:empty{display:none}
+.menu{position:absolute;z-index:4;display:flex;gap:2px;padding:3px;border-radius:12px;background:var(--ink);box-shadow:0 4px 14px rgba(0,0,0,.3)}
+.menu button{all:unset;cursor:pointer;color:#fff;padding:9px 10px;font:800 12px/1 var(--sys);border-radius:9px}
+.menu[hidden]{display:none}
+.panel{flex:none;height:222px;overflow-y:auto;background:var(--panel);border-top:1.5px solid var(--ink);padding:10px 12px}
+.steps{flex:none;display:grid;grid-template-columns:repeat(3,1fr);background:#fff;border-top:1.5px solid var(--ink);padding-bottom:env(safe-area-inset-bottom)}
+.steps button{all:unset;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:6px;min-height:50px;color:#8d887d;font:900 13px/1 var(--sys);letter-spacing:.08em;text-transform:uppercase}
+.steps button[aria-pressed=true]{color:var(--ink);box-shadow:inset 0 4px 0 var(--red)}
+.h{margin:0 0 6px;font:900 11px/1 var(--sys);letter-spacing:.12em;text-transform:uppercase;color:var(--mute)}
 .row{display:flex;align-items:center;gap:8px;margin:0 0 8px}
-.row > b{flex:0 0 76px;font:800 12px/1.15 var(--sys)}
-.step{display:flex;align-items:center;flex:1;border:1.5px solid var(--ink);border-radius:10px;overflow:hidden;background:#fff}
-.step button{all:unset;cursor:pointer;width:44px;height:38px;display:grid;place-items:center;font:900 20px/1 var(--sys);-webkit-tap-highlight-color:transparent}
-.step output{flex:1;text-align:center;font:800 14px/1 var(--sys);border-left:1.5px solid var(--ink);border-right:1.5px solid var(--ink);padding:11px 2px}
-.seg{display:flex;flex:1;min-width:0;border:1.5px solid var(--ink);border-radius:10px;overflow:hidden}
-.seg button{all:unset;cursor:pointer;flex:1;text-align:center;padding:10px 2px;font:700 12.5px/1 var(--sys);background:#fff;white-space:nowrap}
-.seg button + button{border-left:1.5px solid var(--ink)}
+.row>b{flex:0 0 64px;font:800 12.5px/1.1 var(--sys)}
+.seg{flex:1;display:flex;border:1.5px solid var(--ink);border-radius:10px;overflow:hidden;background:#fff;min-width:0}
+.seg button{all:unset;cursor:pointer;flex:1 1 0;min-width:0;text-align:center;padding:9px 2px;font:800 12px/1.1 var(--sys);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.seg button+button{border-left:1.5px solid var(--ink)}
 .seg button[aria-pressed=true]{background:var(--ink);color:#fff}
-.txt{flex:1;min-width:0;height:40px;border:1.5px solid var(--ink);border-radius:10px;padding:0 10px;font:700 16px var(--sys);background:#fff}
-.btn{all:unset;cursor:pointer;box-sizing:border-box;display:block;text-align:center;padding:12px 8px;border:2px solid var(--ink);border-radius:12px;background:#fff;font:800 13.5px/1.15 var(--sys)}
-.btn.dark{background:var(--ink);color:#fff}.btn.red{background:var(--red);border-color:var(--red);color:#fff}
-.note{margin:6px 0 0;font:500 12px/1.35 var(--sys);color:var(--mute)}
-.pals{display:flex;flex-direction:column;gap:6px}
-.pals.two{display:grid;grid-template-columns:1fr 1fr}.pals.two .pal i{width:15px;height:15px}.pals.two .pal span{gap:2px}
-.pal{all:unset;cursor:pointer;display:flex;align-items:center;gap:10px;padding:5px 10px;border:2px solid var(--ink);border-radius:12px;background:#fff;font:800 13px/1 var(--sys)}
-.pal span{display:flex;gap:4px;margin-left:auto}.pal i{width:20px;height:20px;border-radius:50%;border:1.5px solid rgba(0,0,0,.25)}
-.pal[aria-pressed=true]{outline:3px solid var(--red);outline-offset:1px}
-.mine{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px}
-.mine label{display:flex;align-items:center;gap:6px;padding:5px 7px;border:1.5px solid var(--ink);border-radius:10px;background:#fff;font:800 11.5px/1 var(--sys)}
-.mine input[type=color]{width:30px;height:30px;border:0;padding:0;background:none;flex:none}
-.bands{display:flex;flex-direction:column;gap:5px}
-.band{display:flex;align-items:center;gap:6px}
-.band .sw{display:flex;gap:4px}.band .sw button{all:unset;cursor:pointer;width:24px;height:24px;border-radius:50%;border:2px solid #fff;box-shadow:0 0 0 1.5px #b9b5ab}
-.band .sw button[aria-pressed=true]{box-shadow:0 0 0 2.5px var(--ink)}
-.hwcols{display:flex;gap:4px;flex-wrap:wrap;align-items:center}.hwcols button{all:unset;cursor:pointer;width:24px;height:24px;border-radius:50%;border:2px solid #fff;box-shadow:0 0 0 1.5px #b9b5ab}.hwcols button[aria-pressed=true]{box-shadow:0 0 0 2.5px var(--ink)}
-.hwpick{position:relative;width:24px;height:24px;border-radius:50%;border:1.5px dashed var(--ink);display:grid;place-items:center;font:900 15px/1 var(--sys);overflow:hidden}.hwpick input{position:absolute;inset:0;opacity:0;width:100%;height:100%}
-.stage .views[hidden]{display:none}.pcode{min-width:0}
-.hrow{display:grid;grid-auto-flow:column;grid-auto-columns:64px;gap:5px;overflow-x:auto;scrollbar-width:none;padding-bottom:2px}.hrow::-webkit-scrollbar{display:none}.hrow .pick{min-height:40px;padding:4px}
-.hbacks canvas{height:30px!important}.hbacks .pick{min-height:0}
-.kinds .pick.big{min-height:74px;font-size:13px}.kinds .pick.big small{font-size:10px}
-@media(max-height:700px){.kinds .pick.big small{display:none}.kinds .pick.big{min-height:64px}}
-.band .step{flex:1}.band .step button{width:36px;height:32px;font-size:17px}.band .step output{padding:8px 2px;font-size:12.5px}
-.band .x{all:unset;cursor:pointer;width:30px;height:30px;display:grid;place-items:center;font:900 16px var(--sys);color:var(--mute)}
-.list{display:flex;flex-direction:column;gap:6px}
-.list.two{display:grid;grid-template-columns:1fr 1fr;gap:5px}.list.two a{font-size:11px;padding:6px 8px;line-height:1.3}.list.two b{font-size:12.5px}
-.list a,.list .it{display:block;padding:9px 11px;border:1.5px solid var(--ink);border-radius:11px;background:#fff;color:var(--ink);text-decoration:none;font:600 12.5px/1.35 var(--sys)}
-.list b{display:block;font:800 13.5px/1.2 var(--sys);margin-bottom:2px}
-.files{display:grid;grid-template-columns:1fr 1fr;gap:7px}
-.pcodes{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:4px 8px}.pcodes .pcode code{display:none}
-.pcode{display:flex;align-items:center;gap:6px;margin:0 0 5px}
-.pcode i{width:22px;height:22px;border-radius:50%;border:1.5px solid rgba(0,0,0,.3);flex:none}
-.pcode code{font:700 11.5px/1 ui-monospace,Menlo,monospace;flex:0 0 66px}
-.pcode input{flex:1;min-width:0;height:32px;border:1.5px solid var(--ink);border-radius:8px;padding:0 8px;font:600 14px var(--sys)}
-/* block builder: floating left toolbar, + and - on the picture, swatches */
-.ltools{position:absolute;left:8px;top:8px;display:flex;flex-direction:column;gap:4px;z-index:2}
-.ltools[hidden]{display:none}
-.ltools button{all:unset;box-sizing:border-box;cursor:pointer;width:46px;height:44px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px;border:1.5px solid var(--ink);border-radius:11px;background:#fff;color:var(--ink);font:800 9px/1 var(--sys);-webkit-tap-highlight-color:transparent;box-shadow:0 1px 3px rgba(0,0,0,.18)}
-.ltools button svg{width:20px;height:20px;fill:none;stroke:currentColor;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
-.ltools button[aria-pressed=true]{background:var(--ink);color:#fff}
-.ltools button.out{background:var(--red);border-color:var(--red);color:#fff}
-.zoomer{position:absolute;right:8px;bottom:8px;display:flex;flex-direction:column;align-items:center;border:1.5px solid var(--ink);border-radius:12px;background:#fff;overflow:hidden;z-index:2}
-.zoomer[hidden]{display:none}
-.zoomer button{all:unset;cursor:pointer;width:44px;height:38px;display:grid;place-items:center;font:900 20px/1 var(--sys)}
-.zoomer output{font:800 10.5px/1 var(--sys);padding:5px 2px;border-top:1.5px solid var(--ink);border-bottom:1.5px solid var(--ink);width:100%;text-align:center;box-sizing:border-box}
-.stage .tag{max-width:calc(100% - 70px)}
-body.blk .stage .tag{left:62px;max-width:calc(100% - 124px)}
-body.blk.mk .con{height:252px}body.blk .views .vc,body.blk .views .vb{display:none!important}body.blk.mk .tabs{display:none}
-.ltools button{height:41px}.ltools{gap:3px}
-.g6{grid-template-columns:repeat(6,minmax(0,1fr))}
-.bels .pick{font-size:10px!important;padding:4px 2px!important}.bels .pick canvas{height:30px!important}
-.bsw{display:flex;flex-wrap:wrap;gap:6px;align-items:center}
-.bsw button{all:unset;cursor:pointer;width:30px;height:30px;border-radius:50%;border:2px solid #fff;box-shadow:0 0 0 1.5px #b9b5ab}
-.bsw button[aria-pressed=true]{box-shadow:0 0 0 3px var(--ink)}
-.bsw .hwpick{width:30px;height:30px}
-@media(max-height:620px){.ltools button{height:32px;width:42px}.ltools{gap:3px;top:6px}.ltools button span{display:none}}
-@media(max-height:700px){body.blk.mk .con{height:236px}.bsw button,.bsw .hwpick{width:26px;height:26px}}
-/* help + learn sheet */
-.sheet{position:fixed;inset:0;z-index:50;background:rgba(0,0,0,.45);display:flex;align-items:flex-end}
+.st{flex:1;display:flex;border:1.5px solid var(--ink);border-radius:10px;overflow:hidden;background:#fff}
+.st button{all:unset;cursor:pointer;width:44px;height:36px;display:grid;place-items:center;font:900 18px/1 var(--sys)}
+.st output{flex:1;display:grid;place-items:center;border-left:1.5px solid var(--ink);border-right:1.5px solid var(--ink);font:800 13px/1 var(--sys)}
+.grid{display:grid;gap:6px}
+.g4{grid-template-columns:repeat(4,minmax(0,1fr))}.g5{grid-template-columns:repeat(5,minmax(0,1fr))}.g3{grid-template-columns:repeat(3,minmax(0,1fr))}
+.pick{all:unset;box-sizing:border-box;cursor:pointer;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:3px;min-height:58px;padding:4px;border:1.5px solid var(--line);border-radius:10px;background:#fff;font:700 11px/1.1 var(--sys);text-align:center;overflow:hidden}
+.pick canvas{width:100%;height:36px;display:block}
+.pick[aria-pressed=true]{border-color:var(--ink);box-shadow:0 0 0 2px var(--ink)}
+.pick svg{width:22px;height:22px;fill:none;stroke:currentColor;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
+.sw{display:flex;flex-wrap:wrap;gap:7px;align-items:center}
+.sw button{all:unset;cursor:pointer;width:30px;height:30px;border-radius:50%;border:2px solid #fff;box-shadow:0 0 0 1.5px #b9b5ab}
+.sw button[aria-pressed=true]{box-shadow:0 0 0 3px var(--ink)}
+.sw label{position:relative;width:30px;height:30px;border-radius:50%;border:1.5px dashed var(--ink);display:grid;place-items:center;font:900 16px/1 var(--sys);overflow:hidden}
+.sw label input{position:absolute;inset:0;opacity:0;width:100%;height:100%}
+.txt{flex:1;min-width:0;height:40px;padding:0 10px;border:1.5px solid var(--ink);border-radius:10px;background:#fff;font:700 16px/1 var(--sys)}
+.btn{all:unset;box-sizing:border-box;cursor:pointer;display:block;width:100%;text-align:center;padding:11px;border:1.5px solid var(--ink);border-radius:10px;background:#fff;font:900 13px/1 var(--sys);margin:0 0 8px}
+.btn.dark{background:var(--ink);color:#fff}
+.btn.red{background:var(--red);border-color:var(--red);color:#fff}
+.tabs5{display:flex;gap:4px;margin:0 0 8px}
+.tabs5 button{all:unset;cursor:pointer;flex:1;text-align:center;padding:8px 0;border-radius:9px;font:800 11.5px/1 var(--sys);color:var(--mute)}
+.tabs5 button[aria-pressed=true]{background:var(--ink);color:#fff}
+/* first screen and starters */
+.home{position:fixed;inset:0;z-index:8;padding-top:max(24px,env(safe-area-inset-top));display:flex;flex-direction:column;align-items:center;justify-content:center;gap:12px;padding:24px;background:var(--paper);text-align:center}
+.home[hidden]{display:none}
+.home h1{margin:0;font:900 22px/1.1 var(--sys);letter-spacing:.06em;text-transform:uppercase}
+.home .drop{all:unset;cursor:pointer;width:min(320px,86%);padding:30px 16px;border:2px dashed var(--ink);border-radius:18px;background:#fff;font:900 17px/1.2 var(--sys)}
+.home .drop small{display:block;margin-top:6px;font:600 12.5px/1.3 var(--sys);color:var(--mute)}
+.home .alt{all:unset;cursor:pointer;font:800 13px/1 var(--sys);text-decoration:underline;color:var(--mute);padding:6px}
+.starters{position:fixed;inset:0;z-index:8;display:flex;flex-direction:column;background:var(--paper);padding:12px;padding-top:max(12px,env(safe-area-inset-top));padding-bottom:max(12px,env(safe-area-inset-bottom))}
+.starters[hidden]{display:none}
+.starters .grid{flex:1;min-height:0;overflow-y:auto;grid-template-columns:repeat(2,minmax(0,1fr));align-content:start}
+.starters .grid button{all:unset;cursor:pointer;display:flex;flex-direction:column;gap:4px;font:800 12px/1 var(--sys);text-align:center}
+.starters .grid canvas{position:static;height:auto;width:100%;aspect-ratio:1;border:1.5px solid var(--ink);border-radius:12px;display:block}
+.starters .bar{display:flex;gap:8px;margin-top:10px}
+.starters .bar .btn{margin:0}
+/* help sheet */
+.sheet{position:fixed;inset:0;z-index:9;background:rgba(0,0,0,.4);display:flex;align-items:flex-end}
 .sheet[hidden]{display:none}
-.sheet .in{width:100%;max-height:88dvh;overflow:auto;background:var(--panel);border-radius:18px 18px 0 0;padding:14px 14px calc(18px + env(safe-area-inset-bottom))}
-.sheet h2{margin:0 0 8px;font:900 18px/1.1 var(--sys);text-transform:uppercase;letter-spacing:.04em}
-.sheet .x{float:right;all:unset;cursor:pointer;float:right;width:36px;height:36px;display:grid;place-items:center;border:1.5px solid var(--ink);border-radius:50%;font:900 16px var(--sys)}
-.sheet details{border:1.5px solid var(--ink);border-radius:12px;background:#fff;margin:0 0 8px;padding:0 12px}
-.sheet summary{cursor:pointer;padding:12px 0;font:800 14.5px/1.2 var(--sys)}
-.sheet details p,.sheet details li{font:500 13.5px/1.45 var(--sys);color:#2c2a26}
-.sheet details ul{padding-left:18px;margin:0 0 12px}
-.sheet a{color:var(--ink)}
-.slots .row{margin:0 0 5px}.slots .row b{flex:0 0 14px}.slots .seg button{padding:8px 1px;font-size:11.5px}
-.band .bf{all:unset;cursor:pointer;flex:none;width:42px;height:30px;display:grid;place-items:center;border:1.5px solid var(--ink);border-radius:8px;background:#fff;font:800 10.5px/1 var(--sys)}
-@media(max-width:360px){.band .sw{gap:2px}.band .sw button{width:20px;height:20px}.band .step button{width:30px}}
-/* small phones: keep every panel on one screen, no scrolling */
-@media(max-height:700px){.con{height:346px}.row{margin:0 0 6px}.seg button{padding:8px 2px}.step button{height:34px}.note{font-size:11px;margin-top:4px}.h{margin-bottom:4px}.pane{padding:8px 10px}.grid.tight .pick canvas{height:28px}}
-@media(max-height:620px){.con{height:320px}.pick.big{min-height:70px}}
-@media(min-width:900px){body{max-width:560px;margin:0 auto;border-left:1.5px solid var(--ink);border-right:1.5px solid var(--ink)}}
+.sheet .in{width:100%;max-height:86%;overflow-y:auto;background:var(--panel);border-radius:18px 18px 0 0;padding:16px 16px calc(16px + env(safe-area-inset-bottom));position:relative}
+.sheet h2{margin:0 0 8px;font:900 16px/1.2 var(--sys);letter-spacing:.06em;text-transform:uppercase}
+.sheet .x{all:unset;cursor:pointer;position:absolute;right:12px;top:10px;width:36px;height:36px;display:grid;place-items:center;border:1.5px solid var(--ink);border-radius:50%;font:900 18px/1}
+.sheet li{margin:0 0 6px}
+.note{margin:0 0 8px;font:600 12px/1.35 var(--sys);color:var(--mute)}
+@media(max-height:620px){.panel{height:190px}#tools button{height:34px;width:44px}#tools button span{display:none}#tools{top:48px;gap:3px}}
 </style>
 </head>
 <body>
-<header class="top"><a class="back" href="/creator-tools.html" aria-label="Back to tools">&lsaquo;</a><b>Patterns</b><span class="sp"></span><button class="tb" id="helpTop" aria-label="Help and Learn">?</button></header>
-<section class="stage" id="stage" aria-label="Your pattern">
+<header class="top"><a href="/creator-tools.html" aria-label="Back to tools">&lsaquo;</a><b>Patterns</b></header>
+<div class="stage" id="stage">
   <canvas id="view"></canvas>
-  <div class="tag" id="tag">Pick what you are making</div>
-  <div class="ltools" id="ltools" hidden></div>
-  <div class="zoomer" id="zoomer" hidden><button type="button" data-z="1" aria-label="Bigger repeat">+</button><output id="zval"></output><button type="button" data-z="-1" aria-label="Smaller repeat">&minus;</button></div>
-  <div class="views" id="views" role="group" aria-label="How close"><button data-v="tile">Tile</button><button data-v="close" class="vc">Close</button><button data-v="swatch" aria-pressed="true">Swatch</button><button data-v="yard">Yard</button><button data-b="1" class="vb" aria-pressed="false" aria-label="Show the tile border">Border</button></div>
-</section>
-<section class="con" id="con">
-  <div class="pane" id="pane"></div>
-  <div class="tabs"><div class="tl" id="parts" role="tablist"></div><button class="rb drop" id="drop" aria-label="Hide the controls"><svg viewBox="0 0 24 24"><path d="M6 9l6 6 6-6"/></svg></button><button class="rb q" id="help" aria-label="Help and Learn">?</button></div>
-</section>
-<nav class="bbar" id="bbar" aria-label="Steps"></nav>
-<input type="file" id="file" accept="image/*" hidden>
-<input type="file" id="bfile" accept="image/*" multiple hidden>
+  <div class="fl" style="left:8px;top:8px"><button class="chip" id="undo" aria-label="Undo"><svg viewBox="0 0 24 24"><path d="M9 14L4 9l5-5"/><path d="M4 9h10a6 6 0 0 1 0 12h-3"/></svg></button><button class="chip" id="redo" aria-label="Redo"><svg viewBox="0 0 24 24"><path d="M15 14l5-5-5-5"/><path d="M20 9H10a6 6 0 0 0 0 12h3"/></svg></button></div>
+  <div class="fl" style="right:8px;top:8px"><div class="seg3" id="views"><button data-v="tile">Tile</button><button data-v="swatch">Swatch</button><button data-v="yard">Yard</button></div><button class="chip" id="help" aria-label="Help">?</button></div>
+  <div class="fl" id="tools"></div>
+  <div class="lbl" id="lbl"></div>
+  <div class="menu" id="menu" hidden></div>
+  <div class="home" id="home" hidden>
+    <a class="alt" href="/creator-tools.html" style="position:absolute;left:14px;top:max(14px,env(safe-area-inset-top))">&lsaquo; Tools</a><h1>Patterns</h1>
+    <button class="drop" id="drop">Drop your logo or art<small>PNG works best. We make 6 patterns from it.</small></button>
+    <button class="alt" id="blank">Start blank</button>
+    <a class="alt" href="classic.html">Hardware and classic tools</a>
+  </div>
+  <div class="starters" id="starters" hidden>
+    <p class="h" style="margin:4px 0 10px">Pick one to start</p>
+    <div class="grid" id="sgrid"></div>
+    <div class="bar"><button class="btn" id="shuffle">Shuffle</button><button class="btn" id="sclose">Keep mine</button></div>
+  </div>
+</div>
+<div class="panel" id="panel"></div>
+<nav class="steps" id="steps"><button data-s="make">Make</button><button data-s="look">Look</button><button data-s="save">Save</button></nav>
+<input type="file" id="artfile" accept="image/*" multiple hidden>
 <input type="file" id="lfile" accept="image/png,image/*" hidden>
+<div class="sheet" id="helpSheet" hidden><div class="in" id="helpIn"></div></div>
 <div class="sheet" id="lsheet" hidden><div class="in" id="lsIn"></div></div>
-<div class="sheet" id="sheet" hidden><div class="in" id="sheetIn"></div></div>
 <script src="/crop.js"></script>
 <script src="engine.js"></script>
 <script src="letters.js"></script>
-<script src="block.js"></script>
-<script src="app.js"></script>
+<script src="v2.js"></script>
 </body>
 </html>

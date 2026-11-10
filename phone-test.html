@@ -52,6 +52,9 @@
 // ===== THE TEST LIST. Claude rewrites this block after every delivery. Keep each test to a few taps. =====
 var BATCH = '2026-11-03 from scratch';
 var TESTS = [
+  { id: 'patternv2', title: 'Patterns v2: start from your logo, layers, words, repeats', where: 'Tools, Wear, Patterns',
+    steps: ['Close the site fully and reopen it. Open Patterns. Tap Drop your logo or art and pick your logo PNG, crop it.', 'Six patterns show. Tap Shuffle once, then tap one you like.', 'Tap your logo on the picture: drag it, pinch it bigger, turn it with two fingers, or drag the red dot. Hold it for Copy, Front, Back, Delete.', 'Undo and Redo top left.', 'Done, then Add, Shapes, Circle. Done, then Add, Words, Seal. Type a phrase and bottom words. They wrap the circle.', 'Add, Words, Straight, type a long phrase: it fits the tile. Font: try a few, and Mine.', 'Repeat: try Half-drop, Mirror (Readable), Toss, Kaleidoscope. Add, Fabrics, Gingham.', 'Swatch and Yard at the top. Look: change one color. Save: Save the tile.'],
+    expect: 'No screen asks what kind of pattern. The six starters use your logo colors. Every piece moves, sizes and turns with your fingers. Words read the right way in Readable mirror. Long words stay inside the tile. Undo goes back one step every time. The tile saves as a PNG. Classic tools (Hardware) open from Save.' },
   { id: 'advopen', title: 'Tools page: Advanced always open', where: 'nociv.co Tools, scroll to the bottom',
     steps: ['Close the site fully and reopen it once (new version).', 'Tap Tools and scroll past the tool cards.', 'Tap Case Zero, then From Scratch.'],
     expect: 'A big gap, then the dashed ADVANCED line. It is a label, not a button, and there is no arrow. Case Zero and From Scratch already show under it without tapping anything. Tapping each one swaps the words and OPEN goes to that tool.' },
