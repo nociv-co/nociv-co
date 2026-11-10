@@ -31,7 +31,9 @@
   function ico(n) { return '<svg viewBox="0 0 24 24">' + (IC[n] || '') + '</svg>'; }
 
   /* ---------- state: D is the pattern (undo works on it), U is the screen ---------- */
-  function freshDoc() { return { tileIn: 4, rep: 'grid', mdir: 'both', mword: 'readable', kale: 'kaleSquare', ground: '#ffffff', fab: null, grid: 0, layers: [], pal: [], cloth: 'poplin', name: 'My pattern', artMap: {} }; }
+  // 'none' = no background color: the art repeats on a clear tile (prints on the fabric's own color)
+  function gHex(doc) { var g = (doc || D).ground; return !g || g === 'none' ? '#ffffff' : g; }
+  function freshDoc() { return { tileIn: 4, rep: 'grid', mdir: 'both', mword: 'readable', kale: 'kaleSquare', ground: 'none', fab: null, grid: 0, layers: [], pal: [], cloth: 'poplin', name: 'My pattern', artMap: {} }; }
   var D = freshDoc(), U = { step: 'make', view: 'tile', sel: null, tool: null, ptool: 'repeat', addTab: 'art', started: false, cur: null, waySeed: 1, clothOpen: false, shelfSel: null }, ART = [], LETTERS = null, HAND = 'left', NUMS = false;
   function keep() { try { localStorage.setItem('nocivPattern2', JSON.stringify({ d: D, art: ART, letters: LETTERS, hand: HAND, nums: NUMS, started: U.started, cur: U.cur })); } catch (e) {} }
   try { var sv = JSON.parse(localStorage.getItem('nocivPattern2') || 'null'); if (sv) { D = Object.assign(freshDoc(), sv.d || {}); ART = sv.art || []; LETTERS = sv.letters || null; HAND = sv.hand || 'left'; NUMS = !!sv.nums; U.started = !!sv.started; U.cur = sv.cur || null; } } catch (e) {}
@@ -243,7 +245,7 @@
   function reach(L, B) { var ct = content(L, B); return ct ? Math.hypot(ct.w, ct.h) / 2 + 2 : 0; }
 
   /* ---------- fabric ground ---------- */
-  function fabColors(doc) { doc = doc || D; var f = doc.fab; return (f && f.c) || [doc.ground].concat(doc.pal.length ? doc.pal : ['#1a1a1a', '#c8412f']).concat(['#1c2b45', '#d4af37', '#2a9d8f']); }
+  function fabColors(doc) { doc = doc || D; var f = doc.fab; return (f && f.c) || [gHex(doc)].concat(doc.pal.length ? doc.pal : ['#1a1a1a', '#c8412f']).concat(['#1c2b45', '#d4af37', '#2a9d8f']); }
   function fabTile(f, ppi, cols) {
     cols = cols || fabColors(); var sc = f.sz || 1;
     if (f.k === 'plaid') { var p = E.PLAIDS.filter(function (x) { return x[0] === f.p; })[0] || E.PLAIDS[0]; return E.plaidTile({ sett: p[3], mirror: p[4], threadIn: .02 * sc, ppi: ppi, colors: cols, weave: 'twill', step: 1 }); }
@@ -253,7 +255,7 @@
   }
   var fcache = {};
   function fillGround(g, W, H, B, ppi, By) {
-    By = By || B; g.fillStyle = D.ground; g.fillRect(0, 0, W, H); if (!D.fab) return;
+    By = By || B; if (D.ground !== 'none') { g.fillStyle = D.ground; g.fillRect(0, 0, W, H); } if (!D.fab) return;
     var key = JSON.stringify([D.fab, fabColors(), Math.round(ppi * 100)]), t = fcache.k === key ? fcache.t : (fcache = { k: key, t: fabTile(D.fab, ppi) }).t; if (!t) return;
     // fit a whole number of fabric repeats into the block so it stays seamless
     var nx = t.width <= 4 ? 0 : Math.max(1, Math.round(B / t.width)), ny = t.height <= 4 ? 0 : Math.max(1, Math.round(By / t.height));
@@ -319,7 +321,7 @@
   // a piece of the pattern on cloth: across = inches shown, tex = thread zoom for the texture
   function swatchInto(c, across, cloth, tex) {
     var g = c.getContext('2d'), ppi = c.width / across, t = tile(ppi);
-    g.fillStyle = g.createPattern(t, 'repeat'); g.fillRect(0, 0, c.width, c.height); laycloth(g, c.width, c.height, cloth, tex || ppi);
+    g.fillStyle = '#ffffff'; g.fillRect(0, 0, c.width, c.height); g.fillStyle = g.createPattern(t, 'repeat'); g.fillRect(0, 0, c.width, c.height); laycloth(g, c.width, c.height, cloth, tex || ppi);
   }
 
   /* ---------- colorways: Now plus three others made from your colors ---------- */
@@ -347,7 +349,7 @@
     var arts = {}; doc.layers.forEach(function (L) { if (L.t === 'art' && !L.tint) arts[L.aid] = 1; });
     var am = doc.artMap || (doc.artMap = {});
     Object.keys(arts).forEach(function (aid) { artBase(aid).forEach(function (k) { var cur = am[k] || k; if (map[cur]) am[k] = map[cur]; }); });
-    doc.ground = f(doc.ground); if (doc.fab) doc.fab.c = fabColors(doc).map(f);
+    if (doc.ground !== 'none') doc.ground = f(doc.ground); if (doc.fab) doc.fab.c = fabColors(doc).map(f);
     doc.layers.forEach(function (L) { if (L.c) L.c = f(L.c); if (L.tint) L.tint = f(L.tint); if (L.ol) L.ol.c = f(L.ol.c); });
     doc.pal = doc.pal.map(f);
   }
@@ -359,7 +361,7 @@
   function draw() { if (raf) return; raf = requestAnimationFrame(function () { raf = 0; drawNow(); }); }
   function drawNow() {
     fit(); var g = VG, W = view.width, H = view.height; if (!W || !H) return;
-    g.setTransform(1, 0, 0, 1, 0, 0); g.fillStyle = '#f2f2f7'; g.fillRect(0, 0, W, H);
+    g.setTransform(1, 0, 0, 1, 0, 0); g.fillStyle = '#ffffff'; g.fillRect(0, 0, W, H);
     var u = W / 390;
     if (U.view !== 'tile' || U.step !== 'make') {
       var across = U.view === 'yard' ? 42 : U.view === 'swatch' ? 8 : D.tileIn * 1.6, ppi = W / across, t = tile(ppi);
@@ -515,10 +517,10 @@
 
   /* ---------- adding pieces ---------- */
   function swatchMain() { return D.pal[0] || '#1a1a1a'; }
-  function accent() { return D.pal[1] || (contrast('#c8412f', D.ground) > 2 ? '#c8412f' : '#1a1a1a'); }
+  function accent() { return D.pal[1] || (contrast('#c8412f', gHex()) > 2 ? '#c8412f' : '#1a1a1a'); }
   function addLayer(L) { commit(); L.id = uid(); if (L.x == null) { L.x = .5; L.y = .5; } if (L.r == null) L.r = 0; if (L.op == null) L.op = 1; D.layers.push(L); U.sel = L.id; U.tool = firstTool(L); changed(); }
   function firstTool(L) { return L.t === 'words' ? 'text' : L.t === 'art' ? 'size' : 'color'; }
-  function inkFor() { var c = ['#1a1a1a', '#ffffff'].concat(D.pal); c.sort(function (a, b) { return contrast(b, D.ground) - contrast(a, D.ground); }); return c[0]; }
+  function inkFor() { var c = ['#1a1a1a', '#ffffff'].concat(D.pal); c.sort(function (a, b) { return contrast(b, gHex()) - contrast(a, gHex()); }); return c[0]; }
   function addWords(lay) {
     var hug = null; if (/arc|circle|seal/.test(lay)) { var sh = D.layers.filter(function (x) { return x.t === 'shape'; }).pop(); if (sh) hug = sh.id; }
     addLayer({ t: 'words', tx: 'YOUR WORDS', tx2: lay === 'seal' ? 'EST 2026' : '', f: 'FS Archivo Black', lay: lay, sp: .04, bend: 60, c: inkFor(), y: hug ? .5 : (D.layers.some(function (x) { return Math.hypot(x.x - .5, x.y - .5) < .2; }) ? .86 : .5), x: .5, s: lay === 'line' ? .12 : .09, s0: lay === 'line' ? .12 : .09, auto: true, hug: hug }); fitWords(sel());
@@ -567,7 +569,7 @@
     var cvs = $('sgrid').querySelectorAll('canvas');
     STARTS.forEach(function (s, i) {
       D = s[1]; tcache = {}; var c = cvs[i], g = c.getContext('2d'), t = tile(c.width / (D.tileIn * 1.9));
-      g.fillStyle = g.createPattern(t, 'repeat'); g.fillRect(0, 0, c.width, c.height);
+      g.fillStyle = '#ffffff'; g.fillRect(0, 0, c.width, c.height); g.fillStyle = g.createPattern(t, 'repeat'); g.fillRect(0, 0, c.width, c.height);
     });
     D = saved; tcache = {};
   }
@@ -649,7 +651,7 @@
       (D.rep === 'mirror' ? '<div class="row"><b>Mirror</b>' + seg('mdir', [['both', 'Both ways'], ['lr', 'Left-right'], ['ud', 'Up-down']], D.mdir) + '</div><div class="row"><b>Words</b>' + seg('mword', [['readable', 'Readable'], ['flip', 'True mirror']], D.mword) + '</div>' : '') +
       (D.rep === 'kale' ? '<div class="row"><b>Slices</b>' + seg('kale', [['kaleSquare', 'Square'], ['kaleHex', 'Hexagon'], ['kaleTri', 'Triangle']], D.kale) + '</div>' : '') +
       stepper('tile', 'Tile', fmtIn(D.tileIn));
-    if (t === 'ground') return '<p class="h">Background color</p>' + swatches('gnd', D.ground) + (D.fab ? '<div style="height:8px"></div>' + stepper('fsz', 'Fabric', Math.round((D.fab.sz || 1) * 100) + '%') + '<button type="button" class="btn" data-a="fabcols">Mix up fabric colors</button><button type="button" class="btn" data-fab="none">Remove fabric</button>' : '<p class="note" style="margin-top:8px">Plaid, stripes and checks are under +, Fabrics.</p>');
+    if (t === 'ground') return '<p class="h">Background color</p><button type="button" class="pick nocol" data-gnd="none" aria-pressed="' + (D.ground === 'none') + '" style="min-height:40px;margin-bottom:8px;flex-direction:row;gap:8px"><i class="clear"></i>No color, just my art</button>' + swatches('gnd', D.ground === 'none' ? '' : D.ground) + (D.fab ? '<div style="height:8px"></div>' + stepper('fsz', 'Fabric', Math.round((D.fab.sz || 1) * 100) + '%') + '<button type="button" class="btn" data-a="fabcols">Mix up fabric colors</button><button type="button" class="btn" data-fab="none">Remove fabric</button>' : '<p class="note" style="margin-top:8px">Plaid, stripes and checks are under +, Fabrics.</p>');
     if (t === 'grid') return stepper('grid', 'Grid', D.grid > 1 ? D.grid + ' x ' + D.grid : 'Off') + '<p class="note">A guide for placing pieces. Pieces snap to it. It never prints.</p>';
     if (!L) return '';
     if (t === 'text') {
@@ -708,7 +710,7 @@
   function tileInches() { if (D.rep === 'kale') { var t = tile(20); return [t.width / 20, t.height / 20]; } var cp = copies(); return [D.tileIn * cp.w, D.tileIn * cp.h]; }
   function colorsInUse() {
     var out = []; function push(h) { if (!h) return; h = toHex(h); if (out.indexOf(h) < 0) out.push(h); }
-    push(D.ground); if (D.fab) fabColors().slice(0, 4).forEach(push);
+    if (D.ground !== 'none') push(D.ground); if (D.fab) fabColors().slice(0, 4).forEach(push);
     var am = D.artMap || {};
     D.layers.forEach(function (L) { if (L.t === 'art') { if (L.tint) push(L.tint); else artBase(L.aid).forEach(function (k) { push(am[k] || k); }); } else { push(L.c); if (L.ol) push(L.ol.c); } });
     return out;
