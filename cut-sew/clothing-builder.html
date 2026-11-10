@@ -339,6 +339,70 @@ html.app.stepped .grid > section.note.on { transition: flex-basis .42s var(--nv-
 html.app.stepped.cdown .grid > section.note.on { flex: 0 0 0 !important; padding-top: 0 !important; padding-bottom: 0 !important; overflow: hidden !important; border-top-width: 0 !important; }
 html.app.stepped.cdown .grid > section.note.on::after { display: none; }
 /*NV-CUTSEW-CSS-END*/
+/*NV-CUTSEW-STUDIO-CSS-START studio layout pass 11-10: dock at the bottom, round buttons on the picture, CUT & SEW heading style in the console*/
+html.app .csbar { padding: 6px 12px 6px 14px; }
+.csmenu-btn .cs-q { font-weight: 900; font-size: 24px; line-height: 1; }
+html.app .preview-col { padding: 8px 8px 8px !important; }
+html.app .stage > .cs-views { position: absolute; top: 8px; left: 50%; transform: translateX(-50%); z-index: 6; display: flex; align-items: center; border: 2px solid var(--ink); background: #fff; box-shadow: 2px 2px 0 var(--ink); }
+.cs-views button { font: inherit; font-size: 13px; font-weight: 900; border: none; background: none; color: var(--ink); width: 34px; height: 34px; cursor: pointer; -webkit-tap-highlight-color: transparent; padding: 0; transition: transform .15s var(--nv-ease); }
+.cs-views button:active { transform: scale(.85); }
+.cs-views b { font-family: "SF Mono", Menlo, Consolas, monospace; font-size: 11px; min-width: 52px; text-align: center; }
+html.app .stage .sum { top: 52px; left: 50%; transform: translateX(-50%); max-width: calc(100% - 120px); text-align: center; border-color: rgba(15,15,15,.35); }
+.cs-ur { position: absolute; left: 8px; top: 8px; z-index: 6; display: flex; gap: 6px; }
+.cs-fab { width: 40px; height: 40px; border-radius: 50%; border: 2px solid var(--ink); background: #fff; color: var(--ink); display: grid; place-items: center; box-shadow: 2px 2px 0 var(--ink); padding: 0; cursor: pointer; -webkit-tap-highlight-color: transparent; transition: transform .15s var(--nv-ease), opacity .2s; }
+.cs-fab svg { width: 20px; height: 20px; }
+.cs-fab:active { transform: scale(.88); }
+.cs-fab:disabled { opacity: .35; box-shadow: none; cursor: default; }
+.cs-trash { position: absolute; left: 8px; bottom: 8px; z-index: 6; }
+html.app .stage > .art-lock { top: 8px; bottom: auto; right: 8px; }
+html.app .stage > .nv-mag { left: auto !important; right: 8px; }
+html.app .stage > .nv-zbar { left: auto; right: 8px; }
+.cs-toast { position: absolute; left: 50%; bottom: 58px; z-index: 8; transform: translate(-50%, 8px); opacity: 0; pointer-events: none; background: var(--ink); color: #fff; font-weight: 800; font-size: .8rem; padding: 8px 12px; white-space: nowrap; transition: opacity .2s, transform .3s var(--nv-spring); }
+.cs-toast.on { opacity: 1; transform: translate(-50%, 0); }
+/* bottom dock: the steps as icon + word, picked full strength, others faded */
+html.app .wrap > nav.steps.cs-dock { flex: none; position: static; display: grid; grid-template-columns: repeat(7, minmax(0, 1fr)); gap: 2px; margin: 0; padding: 6px 6px max(6px, env(safe-area-inset-bottom)); background: var(--paper); border-top: 2px solid var(--ink); overflow: visible; }
+html.app .wrap > nav.steps.cs-dock button { display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 3px; min-width: 0; border: 2px solid transparent; background: none; color: var(--ink); border-radius: 12px; padding: 6px 1px 5px; font-size: .62rem; font-weight: 800; white-space: nowrap; overflow: hidden; opacity: .5; box-shadow: none; transition: transform .15s var(--nv-ease), opacity .2s, background .2s; }
+html.app .wrap > nav.steps.cs-dock button b { display: none; }
+html.app .wrap > nav.steps.cs-dock button svg { display: block; width: 22px; height: 22px; }
+html.app .wrap > nav.steps.cs-dock button[aria-selected="true"] { opacity: 1; background: var(--note); color: var(--ink); border-color: var(--ink); box-shadow: 2px 2px 0 var(--ink); }
+html.app .wrap > nav.steps.cs-dock button:active { transform: scale(.9); }
+@media (max-width: 374px) { html.app .wrap > nav.steps.cs-dock button { font-size: .54rem; } }
+@media (max-height: 620px) and (max-width: 899px) { html.app .wrap > nav.steps.cs-dock button { font-size: 0; gap: 0; } }
+/* console title in the CUT & SEW heading style, with ? and Next on the same row */
+html.app .grid > section.note h2 { display: flex; align-items: center; gap: 8px; margin: 0 0 14px; }
+html.app .grid > section.note h2 b { display: none; }
+html.app .grid > section.note h2 .cs-ttl { flex: 1; min-width: 0; font-size: 19px; font-weight: 900; line-height: 1.08; letter-spacing: .02em; text-transform: uppercase; color: #fff; -webkit-text-stroke: 1.3px var(--ink); paint-order: stroke fill; text-shadow: 2px 2px 0 var(--ink); }
+html.app .grid > section.note h2 .cs-act { flex: none; display: flex; align-items: center; gap: 6px; }
+.cs-q2 { width: 34px; height: 34px; border: 2px solid var(--ink); background: #fff; color: var(--ink); font: inherit; font-weight: 900; font-size: 1rem; cursor: pointer; padding: 0; box-shadow: 2px 2px 0 var(--ink); transition: transform .15s var(--nv-ease); }
+.cs-q2:active { transform: scale(.88); }
+html.app .grid > section.note h2 .next-step { position: static; margin: 0 !important; width: auto !important; padding: 8px 10px !important; font-size: .7rem !important; letter-spacing: .06em !important; box-shadow: 2px 2px 0 var(--red) !important; white-space: nowrap; transition: transform .15s var(--nv-ease); }
+html.app .grid > section.note h2 .next-step:active { transform: scale(.92); }
+html.app .meta.help { display: none; }
+@keyframes cs-in { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: none; } }
+html.app.stepped .grid > section.note.on > * { animation: cs-in .3s var(--nv-spring); }
+/* picked = cream with a dark ring, not picked = soft white tile */
+html.app section.note .chip, html.app .fams button, html.app .refs button, html.app .srcpick button { border-color: var(--line); transition: transform .12s var(--nv-ease), background .2s, box-shadow .2s; }
+html.app section.note .chip[aria-pressed="true"], html.app .fams button[aria-pressed="true"], html.app .refs button[aria-pressed="true"], html.app .srcpick button[aria-pressed="true"] { background: var(--note); color: var(--ink); border-color: var(--ink); box-shadow: inset 0 0 0 1px var(--ink), 2px 2px 0 var(--ink); }
+html.app .refs button[aria-pressed="true"] small, html.app .srcpick button[aria-pressed="true"] small { color: var(--soft); }
+html.app .refs button[aria-pressed="true"] svg * { stroke: var(--ink); }
+html.app section.note .chip:active, html.app .fams button:active, html.app .refs button:active, html.app .srcpick button:active { transform: scale(.95); }
+/* folds: hard shadow like the heading, open fold header turns cream */
+html.app .dd > .group-name { box-shadow: 2px 2px 0 var(--ink); }
+html.app .dd.open { background: #fff; box-shadow: 3px 3px 0 var(--ink); }
+html.app .dd.open > .group-name { background: var(--note); color: var(--ink); box-shadow: none; border-bottom: 2px solid var(--ink); }
+html.app .dd.open > .group-name::after { color: var(--soft); }
+html.app .dd.open > :not(.group-name) { animation: cs-in .28s var(--nv-spring); }
+html.app section.note .btn { box-shadow: 3px 3px 0 var(--ink); transition: transform .15s var(--nv-ease); }
+html.app section.note .btn:active { transform: scale(.97); }
+.cs-bigtile { display: grid; gap: 3px; width: 100%; text-align: left; font: inherit; background: #fff; color: var(--ink); border: 2px solid var(--ink); box-shadow: 3px 3px 0 var(--ink); padding: 13px 14px; margin: 0 0 14px; cursor: pointer; -webkit-tap-highlight-color: transparent; transition: transform .15s var(--nv-ease); }
+.cs-bigtile b { font-weight: 900; text-transform: uppercase; letter-spacing: .06em; font-size: .92rem; }
+.cs-bigtile small { font-size: .78rem; font-weight: 700; color: var(--soft); }
+.cs-bigtile:active { transform: scale(.98); }
+.cs-wrap { display: block; }
+@media (prefers-reduced-motion: reduce) { html.app.stepped .grid > section.note.on > *, html.app .dd.open > :not(.group-name) { animation: none; } }
+html.app .stage.cs-flat .sum { display: none; }
+@media (max-width: 374px) { html.app .grid > section.note h2 .cs-ttl { font-size: 16px; } }
+/*NV-CUTSEW-STUDIO-CSS-END*/
 
 </style>
 </head>
@@ -387,7 +451,7 @@ html.app.stepped.cdown .grid > section.note.on::after { display: none; }
       <div id="garments"></div>
       <div class="group-name">Or start from a proven style</div>
       <div class="refs" id="refStyles"></div>
-      <p class="meta">Each style sets the cut, details and tech pack fabric to match a blank you can buy. Tap one, then fix anything.</p>
+      <p class="meta help">Each style sets the cut, details and tech pack fabric to match a blank you can buy. Tap one, then fix anything.</p>
     </section>
 
     <section class="note" data-step="Fit">
@@ -401,6 +465,7 @@ html.app.stepped.cdown .grid > section.note.on::after { display: none; }
 
     <section class="note" data-step="Size">
       <h2><b>3</b> Your measurements</h2>
+      <button type="button" class="cs-bigtile" id="csMeasureTile"><b>Measure a piece I own</b><small>Photo of your favorite garment, we measure it</small></button>
       <div class="chips" id="units">
         <button type="button" class="chip" data-v="in" aria-pressed="true">Inches</button>
         <button type="button" class="chip" data-v="cm" aria-pressed="false">Centimeters</button>
@@ -410,13 +475,13 @@ html.app.stepped.cdown .grid > section.note.on::after { display: none; }
         <div class="chips" id="sizes"></div>
       </div>
       <div class="fields" id="fields"></div>
-      <p class="meta">Measure your body with a soft tape, the room to move you picked in the Fit step gets added to them. Or match a piece you already own: tap "Measure a piece you own" up top.</p>
+      <p class="meta help">Measure your body with a soft tape, the room to move you picked in the Fit step gets added to them. Or match a piece you already own: tap "Measure a piece you own" up top.</p>
       <p class="done-note" id="pmDone" hidden></p>
     </section>
 
     <section class="note" data-step="Specs">
       <h2><b>4</b> Tech pack</h2>
-      <p class="meta" style="margin-top:0">Everything a factory or sample maker needs: flats, measurements for every size, materials, how it is sewn. Same numbers as your pattern, so they always match. Skip it if you are only sewing for you.</p>
+      <p class="meta help" style="margin-top:0">Everything a factory or sample maker needs: flats, measurements for every size, materials, how it is sewn. Same numbers as your pattern, so they always match. Skip it if you are only sewing for you.</p>
       <div class="group-name">Style</div>
       <div class="fields two">
         <div class="field"><label for="tpStyle">Style name</label><div class="row"><input id="tpStyle" type="text"></div></div>
@@ -436,13 +501,13 @@ html.app.stepped.cdown .grid > section.note.on::after { display: none; }
         <div class="field"><label for="tpContent">Content</label><div class="row"><input id="tpContent" type="text"></div></div>
         <div class="field"><label for="tpWeight">Weight</label><div class="row"><input id="tpWeight" type="text"></div></div>
       </div>
+      <div class="group-name">Print or embroidery</div>
+      <p class="meta help">Add a placement for each spot that gets art. Front and back each get their own artwork, size and method.</p>
+      <div class="cs-wrap"><div id="tpPlaces"></div>
+      <button type="button" class="btn" id="tpAddPlace" style="margin-top:10px">+ Add another placement (back, left chest...)</button></div>
+      <p class="meta help">Starting points only. Check them on a real garment, every body and every size is different.</p>
       <div class="group-name">Main label</div><div class="chips" id="tpLabel"></div>
       <div class="group-name">Care label</div><div class="chips" id="tpCare"></div>
-      <div class="group-name">Print or embroidery</div>
-      <p class="meta">Add a placement for each spot that gets art. Front and back each get their own artwork, size and method.</p>
-      <div id="tpPlaces"></div>
-      <button type="button" class="btn" id="tpAddPlace" style="margin-top:10px">+ Add another placement (back, left chest...)</button>
-      <p class="meta">Starting points only. Check them on a real garment, every body and every size is different.</p>
       <details class="tpmore"><summary>Tolerances and sample size</summary>
         <div class="field" style="margin-top:10px"><label for="tpSample">Sample size name</label><div class="row"><input id="tpSample" type="text"></div><p>The size your measurements make. Leave it blank and we pick the closest size.</p></div>
         <div class="group-name">Tolerance (+/-) for each measurement</div>
@@ -451,7 +516,7 @@ html.app.stepped.cdown .grid > section.note.on::after { display: none; }
       </details>
       <div class="group-name">Notes for the factory</div>
       <textarea id="tpNotes" class="tparea" rows="3"></textarea>
-      <p class="meta">Tap FLAT on the viewer to see your tech flats. Red letters show where each measurement is taken.</p>
+      <p class="meta help">This step shows your tech flats on the picture. Red letters show where each measurement is taken.</p>
     </section>
 
     <section class="note" data-step="Source">
@@ -465,6 +530,7 @@ html.app.stepped.cdown .grid > section.note.on::after { display: none; }
 
     <section class="note" data-step="Save">
       <h2><b>6</b> Save</h2>
+      <div class="group-name">What to make</div><div class="chips" id="outPick"><button type="button" class="chip" data-v="both" aria-pressed="true">Pattern + tech pack</button><button type="button" class="chip" data-v="pattern" aria-pressed="false">Pattern only</button><button type="button" class="chip" data-v="tp" aria-pressed="false">Tech pack only</button></div>
       <div class="group-name">Paper</div>
       <div class="chips" id="paper">
         <button type="button" class="chip" data-v="letter" aria-pressed="true">Letter <small>home printer</small></button>
@@ -474,16 +540,17 @@ html.app.stepped.cdown .grid > section.note.on::after { display: none; }
         <button type="button" class="chip" data-v="a0" aria-pressed="false">A0 <small>copy shop</small></button>
       </div>
       <p class="meta" id="paperNote"></p>
-      <div class="group-name">What to make</div><div class="chips" id="outPick"><button type="button" class="chip" data-v="both" aria-pressed="true">Pattern + tech pack</button><button type="button" class="chip" data-v="pattern" aria-pressed="false">Pattern only</button><button type="button" class="chip" data-v="tp" aria-pressed="false">Tech pack only</button></div>
       <button type="button" class="btn" id="make">Make my files</button>
       <p class="meta" id="working" hidden>Making your files...</p>
       <div class="files" id="files"></div>
+      <div class="tip">Print at <b>100%</b> or <b>Actual size</b>, never "Fit to page". Then measure the test square on page 1. If it is not exactly 2 inches, the printer shrank it.</div>
       <div class="group-name">Share what you made</div>
+      <div class="cs-wrap">
       <p class="meta">Shares a picture of your garment drawing (front and back, in your colors). No hashtags, no tracking.</p>
       <label class="meta" style="display:flex;gap:10px;align-items:center;font-weight:700;margin:8px 0"><input type="checkbox" id="shareMark" checked style="width:22px;height:22px"> Add "Made with nociv.co" and the link</label>
       <button type="button" class="btn" id="shareBtn" style="background:var(--ink)">Share my design</button>
       <p class="meta" id="shareMsg" aria-live="polite"></p>
-      <div class="tip">Print at <b>100%</b> or <b>Actual size</b>, never "Fit to page". Then measure the test square on page 1. If it is not exactly 2 inches, the printer shrank it.</div>
+      </div>
     </section>
 
     <section class="note" data-step="Sew">
@@ -1414,6 +1481,7 @@ html.app.stepped.cdown .grid > section.note.on::after { display: none; }
     o: { waist: 'fly', fpock: true, bpock: true, dknee: false, cuff: true, tpock: false, neck: 'crew', btn: 3, cpock: false, pack: 'reg', straps: 2 },
     m: { waist: 31, seat: 39, rise: 10.5, inseam: 31, chest: 40, shoulder: 17.5, length: 28, head: 22, width: 14, height: 15, depth: 4, strap: 24 }
   };
+  var DEF0 = JSON.parse(JSON.stringify(state));
   try {
     var saved = JSON.parse(localStorage.getItem('nocivCutSew') || 'null');
     if (saved && saved.m) {
@@ -1978,8 +2046,8 @@ html.app.stepped.cdown .grid > section.note.on::after { display: none; }
     var P = PAPERS[state.paper];
     $('sum').innerHTML = (state.paper === 'roll'
       ? 'One sheet, 36 in wide by ' + Math.ceil(L.H + 1) + ' in long'
-      : L.pages.length + ' ' + (P.home ? 'pages' : 'sheets') + ' <span>(' + (L.all.length - L.pages.length) + ' blank left out)</span>') +
-      '<br><span>About ' + fabricYards(res) + ' yd of fabric</span>';
+      : L.pages.length + ' ' + (P.home ? 'pages' : 'sheets')) +
+      ' <span>&middot; ' + fabricYards(res) + ' yd of fabric</span>';
     $('pieceList').textContent = 'Pieces: ' + res.pieces.map(function (p) { return p.name.charAt(0) + p.name.slice(1).toLowerCase() + ' (' + p.cut.replace('Cut ', '').toLowerCase() + ')'; }).join(', ');
     $('checks').innerHTML = '';
     res.checks.forEach(function (c) { var li = document.createElement('li'); li.textContent = c[0]; if (!c[1]) li.className = 'no'; $('checks').appendChild(li); });
@@ -3251,6 +3319,22 @@ html.app.stepped.cdown .grid > section.note.on::after { display: none; }
 
   // Exposed for testing only.
   window.__cs = { flatsSVG: function () { return flatsFileSVG(current.res, true); }, tpPages: function () { return tpPages(current.res, null); }, poms: function () { return poms(current.res.spec, flatGeo(current.res.spec)); }, graded: function () { return graded(poms(current.res.spec, flatGeo(current.res.spec))); }, state: state, draft: draft, layout: layout, outline: outline, offset: offset, plen: plen, files: function () { return files; }, current: function () { return current; }, render: render, buildAll: buildAll };
+  // Studio: one snapshot of everything she set, for Undo, Redo and Start over
+  function fill(dst, src) { Object.keys(dst).forEach(function (k) { delete dst[k]; }); Object.assign(dst, JSON.parse(JSON.stringify(src))); }
+  window.__csUndo = {
+    snap: function () { return JSON.stringify({ g: state.g, units: state.units, fit: state.fit, paper: state.paper, m: state.m, o: state.o, tp: state.tp }); },
+    restore: function (str) {
+      var d = JSON.parse(str); ['g', 'units', 'fit', 'paper'].forEach(function (k) { state[k] = d[k]; });
+      fill(state.m, d.m); fill(state.o, d.o); fill(state.tp, d.tp);
+      $('paper').querySelectorAll('[data-v]').forEach(function (b) { b.setAttribute('aria-pressed', String(b.dataset.v === state.paper)); });
+      $('units').querySelectorAll('[data-v]').forEach(function (b) { b.setAttribute('aria-pressed', String(b.dataset.v === state.units)); });
+      save(); saveTP(); clearFiles(); buildAll();
+    },
+    fresh: function () {
+      var t = JSON.parse(JSON.stringify(TP_DEF)); t.places = [{ print: 'none', printW: 10, printH: 12, printFrom: 3, method: 'screen' }];
+      return JSON.stringify({ g: state.g, units: state.units, fit: DEF0.fit, paper: state.paper, m: DEF0.m, o: DEF0.o, tp: t });
+    }
+  };
   // put the remembered paper and view back on the buttons
   ['paper', 'view'].forEach(function (id) { $(id).querySelectorAll('[data-v]').forEach(function (b) { b.setAttribute('aria-pressed', String(b.dataset.v === state[id])); }); });
   if (window.nocivFocus) window.nocivFocus(document.querySelector('.preview-col'), $('stage'), 'Screen locked. Drag to look around, pinch to zoom.');
@@ -3374,6 +3458,64 @@ html.app.stepped.cdown .grid > section.note.on::after { display: none; }
   if (lb && sp) { var up = function () { sp.textContent = lb.textContent; sp.style.cssText = 'text-align:center;font-weight:900;letter-spacing:.06em'; }; up(); try { new MutationObserver(up).observe(lb, { childList: true, characterData: true, subtree: true }); } catch (e) {} }
 })();
 /*NV-CUTSEW-END*/
+/*NV-CUTSEW-STUDIO-START studio layout pass 11-10*/
+(function () {
+  var $ = function (id) { return document.getElementById(id); };
+  var mt = $('csMeasureTile'); if (mt) mt.addEventListener('click', function () { $('measureBtn').click(); });
+  var root = document.documentElement; if (!root.classList.contains('app')) return;
+  var wrap = document.querySelector('.wrap'), stage = $('stage'), nav = document.querySelector('nav.steps');
+  // steps move to a dock at the bottom of the screen
+  function dock() { if (nav && nav.parentNode !== wrap) wrap.appendChild(nav); if (nav) nav.classList.add('cs-dock'); }
+  dock(); var mq = matchMedia('(max-width: 899px)'); if (mq.addEventListener) mq.addEventListener('change', function () { setTimeout(dock, 0); });
+  // header keeps the CUT & SEW heading and a ? (same menu: Learn, Copy a piece, How to sew)
+  var mb = $('csMenuBtn'); if (mb) { mb.innerHTML = '<span class="cs-q">?</span>'; mb.setAttribute('aria-label', 'Help'); }
+  // views ride on the picture, top middle
+  var vn = $('vNow'); if (vn && stage) { var fl = function () { stage.classList.toggle('cs-flat', vn.textContent.trim() === 'FLAT'); }; fl(); new MutationObserver(fl).observe(vn, { childList: true, characterData: true, subtree: true }); }
+  var cshow = document.querySelector('.cshow'); if (cshow && stage) { var v = cshow.querySelector('div'); v.classList.add('cs-views'); stage.appendChild(v); cshow.remove(); }
+  // Undo, Redo top left, Start over bottom left
+  var U = window.__csUndo; if (!U || !stage) return;
+  var SV = function (d) { return '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">' + d + '</svg>'; };
+  var ur = document.createElement('div'); ur.className = 'cs-ur';
+  ur.innerHTML = '<button type="button" class="cs-fab" id="csUndo" aria-label="Undo">' + SV('<path d="M9 14L4 9l5-5"/><path d="M4 9h10a6 6 0 010 12h-3"/>') + '</button><button type="button" class="cs-fab" id="csRedo" aria-label="Redo">' + SV('<path d="M15 14l5-5-5-5"/><path d="M20 9H10a6 6 0 000 12h3"/>') + '</button>';
+  stage.appendChild(ur);
+  var tr = document.createElement('button'); tr.type = 'button'; tr.className = 'cs-fab cs-trash'; tr.setAttribute('aria-label', 'Start over'); tr.innerHTML = SV('<path d="M4 7h16M9 7V4h6v3M6 7l1 13h10l1-13M10 11v6M14 11v6"/>'); stage.appendChild(tr);
+  var toast = document.createElement('div'); toast.className = 'cs-toast'; stage.appendChild(toast); var tt;
+  function say(t) { toast.textContent = t; toast.classList.add('on'); clearTimeout(tt); tt = setTimeout(function () { toast.classList.remove('on'); }, 2400); }
+  var cur = U.snap(), undo = [], redo = [], busy = false, tm = null;
+  function btns() { $('csUndo').disabled = !undo.length; $('csRedo').disabled = !redo.length; }
+  function check() { if (busy) return; var n = U.snap(); if (n !== cur) { undo.push(cur); if (undo.length > 40) undo.shift(); redo = []; cur = n; btns(); } }
+  function later() { clearTimeout(tm); tm = setTimeout(check, 350); }
+  ['click', 'change', 'input'].forEach(function (ev) { document.addEventListener(ev, later, true); });
+  function apply(s) { busy = true; try { U.restore(s); } finally { busy = false; } btns(); }
+  function flush() { clearTimeout(tm); check(); }
+  $('csUndo').addEventListener('click', function (e) { e.stopPropagation(); flush(); if (!undo.length) return; redo.push(cur); cur = undo.pop(); apply(cur); });
+  $('csRedo').addEventListener('click', function (e) { e.stopPropagation(); flush(); if (!redo.length) return; undo.push(cur); cur = redo.pop(); apply(cur); });
+  tr.addEventListener('click', function (e) { e.stopPropagation(); flush(); var f = U.fresh(); if (f === cur) { say('Already a fresh start'); return; } undo.push(cur); redo = []; cur = f; apply(f); say('Started over. Undo brings it back.'); });
+  btns();
+  // console titles: heading style, ? for the explanations, Next on the same row
+  document.querySelectorAll('.grid > section.note').forEach(function (sec) {
+    var h = sec.querySelector('h2'); if (!h) return;
+    var t = document.createElement('span'); t.className = 'cs-ttl';
+    Array.prototype.slice.call(h.childNodes).forEach(function (n) { if (!(n.nodeType === 1 && n.tagName === 'B')) t.appendChild(n); });
+    h.appendChild(t);
+    var act = document.createElement('span'); act.className = 'cs-act'; h.appendChild(act);
+    var helps = sec.querySelectorAll('.meta.help');
+    if (helps.length) {
+      var box = document.createElement('div');
+      helps.forEach(function (p) { var c = p.cloneNode(true); c.classList.remove('help'); c.removeAttribute('style'); c.style.cssText = 'font-size:.95rem;line-height:1.45;margin:0 0 12px'; box.appendChild(c); });
+      var q = document.createElement('button'); q.type = 'button'; q.className = 'cs-q2'; q.textContent = '?'; q.setAttribute('aria-label', 'Help for this step');
+      q.addEventListener('click', function () { NV.sheet(t.textContent.trim(), box); }); act.appendChild(q);
+    }
+    var nx = sec.querySelector('.next-step'); if (nx) act.appendChild(nx);
+  });
+  // picking a step moves the picture to what it needs: Specs shows the flat, Save shows the pages
+  var notes = Array.prototype.slice.call(document.querySelectorAll('.grid > section.note'));
+  document.addEventListener('nociv-step', function (e) {
+    var sec = notes[e.detail], want = sec && { Specs: 'flat', Save: 'pages' }[sec.dataset.step];
+    if (want) { var b = document.querySelector('#view [data-v="' + want + '"]'); if (b && b.getAttribute('aria-pressed') !== 'true') b.click(); }
+  });
+})();
+/*NV-CUTSEW-STUDIO-END*/
 
 </script>
 </body>
