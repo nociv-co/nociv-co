@@ -52,6 +52,9 @@
 // ===== THE TEST LIST. Claude rewrites this block after every delivery. Keep each test to a few taps. =====
 var BATCH = '2026-11-03 from scratch';
 var TESTS = [
+  { id: 'stencilstudioB', title: 'Stencil studio: layers, Vintage, Halftone, Save', where: 'Tools, Stencil + Halftone',
+    steps: ['Close the site fully and reopen it. Open Stencil. Tap Add your art and pick your Genius Child design. Crop, Done.', 'It jumps to Make. Tap Vintage. Tap it again two times. Each one is a new worn version.', 'Tap layer B. The side rail slides in. Tap Halftone. Pick 156 under mesh. Open Fine tune, move Contrast. Tap Done.', 'Drag the picture a little to knock a layer off register. Undo, then Redo.', 'Tap + to add a layer, then Layer on the rail and Delete it.', 'Save: tap Save one screen film, tap again when green, open the PDF. Then Save PNG, no background.', 'Start: tap Cut stencil, then Make. Tap Add bridges for me.'],
+    expect: 'The picture stays still and big enough to work on. The rail springs in and out. Vintage looks like an old worn print with solid centers and rough edges. Halftone dots change with the mesh. The film is all black on white at true size. Cut stencil shows Light to dark, Layers and Bridges. Old screen still at nociv.co/stencil/classic.html if anything breaks.' },
   { id: 'cutsewpreview', title: 'Tools page: Cut and Sew preview', where: 'Tools, Clothes, Cut & Sew',
     steps: ['Close the site fully and reopen it.', 'Tap Tools, then Clothes, then Cut & Sew.', 'Look at the Preview on the right. Then tap Stencil and compare.'],
     expect: 'The preview is a small tall picture on the right, same size and spot as Stencil. It shows only the front of the pants, no tech pack text, and the tape does not cover the waistband.' },

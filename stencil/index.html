@@ -1555,16 +1555,17 @@ section.mix-on > :not(.mixprint):not(h2):not(.topattern){display:none!important}
     return { w: w, h: h, sat: [s2], avg: [0] };
   }
   function picOf(l) { return l.pic === 'new' && pic2 ? pic2 : src; }
-  function stMask(cv0, W, H2) {
-    var k = 'st' + (cv0 === src ? 'a' : 'b') + W + 'x' + H2 + ':' + S.t + S.inv + ':' + cache.ver;
+  function stMask(cv0, W, H2, tt) {
+    if (tt == null) tt = S.t;
+    var k = 'st' + (cv0 === src ? 'a' : 'b') + W + 'x' + H2 + ':' + tt + S.inv + ':' + cache.ver;
     if (cache[k]) return cache[k];
     var t = document.createElement('canvas'); t.width = W; t.height = H2; var g = t.getContext('2d', { willReadFrequently: true }); g.drawImage(cv0, 0, 0, W, H2);
     var d = g.getImageData(0, 0, W, H2).data, m = new Uint8Array(W * H2);
-    for (var i = 0, j = 0; j < m.length; i += 4, j++) { if (d[i + 3] < 128) continue; var v = .2126 * d[i] + .7152 * d[i + 1] + .0722 * d[i + 2]; if (S.inv) v = 255 - v; if (v < S.t) m[j] = 1; }
+    for (var i = 0, j = 0; j < m.length; i += 4, j++) { if (d[i + 3] < 128) continue; var v = .2126 * d[i] + .7152 * d[i + 1] + .0722 * d[i + 2]; if (S.inv) v = 255 - v; if (v < tt) m[j] = 1; }
     return (cache[k] = m);
   }
   function htMask(cv0, W, H2) {
-    var cell = Math.max(2, W / DOTS[X.dots]), k = 'ht' + (cv0 === src ? 'a' : 'b') + W + 'x' + H2 + ':' + cell + H.shape + H.ang + H.min + H.max + H.bri + H.con + ':' + cache.ver;
+    var cell = X.lpi ? Math.max(1.5, W / (S.w * X.lpi)) : Math.max(2, W / DOTS[X.dots]), k = 'ht' + (cv0 === src ? 'a' : 'b') + W + 'x' + H2 + ':' + cell + H.shape + H.ang + H.min + H.max + H.bri + H.con + ':' + cache.ver;
     if (cache[k]) return cache[k];
     var ck = 'cov' + (cv0 === src ? 'a' : 'b') + H.bri + ':' + H.con + ':' + cache.ver, cv = cache[ck] || (cache[ck] = grayCovOf(cv0));
     return (cache[k] = H.shape === 'grain' ? grainMask(cv, { idx: 0, angle: H.ang }, W, H2, cell) : dotMask(cv, { idx: 0, angle: H.ang }, W, H2, cell));
@@ -1577,7 +1578,41 @@ section.mix-on > :not(.mixprint):not(h2):not(.topattern){display:none!important}
   function current() { var k = 'cur:' + cache.ver; return cache[k] || (cache[k] = designCanvas()); } // exactly what you made, your colors and dot sizes
   function layerCanvas(l, W, H2) {
     if (l.src === 'cur') { var t = document.createElement('canvas'); t.width = W; t.height = H2; t.getContext('2d').drawImage(current(), 0, 0, W, H2); return t; }
-    var cv0 = picOf(l); return tint(l.src === 'st' ? stMask(cv0, W, H2) : htMask(cv0, W, H2), W, H2, l.c);
+    return tint(maskOf(l, W, H2), W, H2, l.c);
+  }
+  /* ---------- grit: noise that eats the ink (her vintage move) ---------- */
+  function hash(x, y, sd) { var h = (x * 374761393 + y * 668265263 + sd * 2147483647) | 0; h = (h ^ (h >>> 13)) * 1274126177 | 0; return ((h ^ (h >>> 16)) >>> 0) / 4294967296; }
+  function vnoise(W, H2, sc, sd) { // smooth value noise, sc = cell size in px
+    var out = new Float32Array(W * H2), gw = Math.ceil(W / sc) + 2, gh = Math.ceil(H2 / sc) + 2, G = new Float32Array(gw * gh);
+    for (var i = 0; i < G.length; i++) G[i] = hash(i % gw, (i / gw) | 0, sd);
+    for (var y = 0; y < H2; y++) { var fy = y / sc, y0 = fy | 0, ty = fy - y0; ty = ty * ty * (3 - 2 * ty);
+      for (var x = 0; x < W; x++) { var fx = x / sc, x0 = fx | 0, tx = fx - x0; tx = tx * tx * (3 - 2 * tx); var o = y0 * gw + x0, a = G[o] + (G[o + 1] - G[o]) * tx, b = G[o + gw] + (G[o + gw + 1] - G[o + gw]) * tx; out[y * W + x] = a + (b - a) * ty; } }
+    return out;
+  }
+  function gritField(W, H2, kind, sd) {
+    var k = 'gf' + W + 'x' + H2 + kind + sd; if (cache[k]) return cache[k];
+    var u = W / 1000, f = new Float32Array(W * H2), i, A, B, C;
+    if (kind === 'crack') { A = vnoise(W, H2, 26 * u, sd); B = vnoise(W, H2, 7 * u, sd + 3); for (i = 0; i < f.length; i++) { var r = Math.abs(A[i] - .5) * 2; f[i] = r * .8 + B[i] * .2; } }
+    else if (kind === 'wear') { A = vnoise(W, H2, 90 * u, sd); B = vnoise(W, H2, 9 * u, sd + 5); C = vnoise(W, H2, 2.2 * u, sd + 9); for (i = 0; i < f.length; i++) f[i] = A[i] * .5 + B[i] * .3 + C[i] * .2; }
+    else if (kind === 'copy') { A = vnoise(W, H2, 3 * u, sd); B = vnoise(W, H2, 40 * u, sd + 2); for (i = 0; i < f.length; i++) f[i] = A[i] * .7 + B[i] * .3; }
+    else { A = vnoise(W, H2, 1.6 * u, sd); B = vnoise(W, H2, 14 * u, sd + 7); for (i = 0; i < f.length; i++) f[i] = A[i] * .75 + B[i] * .25; }
+    return (cache[k] = f);
+  }
+  function gritMask(m, W, H2, l) {
+    var amt = (l.grit || 0) / 100; if (amt <= 0) return m;
+    var kind = l.gk || 'speck', f = gritField(W, H2, kind, l.seed || 1), out = new Uint8Array(m.length), cut = kind === 'crack' ? amt * .22 : .18 + amt * .5;
+    for (var i = 0; i < m.length; i++) {
+      if (kind === 'crack') out[i] = m[i] && f[i] > cut ? 1 : 0;
+      else out[i] = m[i] && f[i] > cut ? 1 : 0;
+      if (kind === 'copy' && !m[i] && f[i] > 1 - amt * .12) out[i] = 1; // toner specks land in the white too
+    }
+    return out;
+  }
+  function maskOf(l, W, H2) {
+    var cv0 = picOf(l), m = l.src === 'st' ? stMask(cv0, W, H2, l.t) : htMask(cv0, W, H2);
+    if (!(l.grit > 0)) return m;
+    var k = 'g' + (l.src === 'st' ? 's' + l.t : 'h') + W + 'x' + H2 + (l.gk || 'speck') + l.grit + ':' + (l.seed || 1) + ':' + S.t + H.shape + H.bri + H.con + H.min + H.max + X.lpi + X.dots + ':' + cache.ver;
+    return cache[k] || (cache[k] = gritMask(m, W, H2, l));
   }
   function size(max) { var k = Math.min(1, max / Math.max(src.width, src.height)); return [Math.max(1, Math.round(src.width * k)), Math.max(1, Math.round(src.height * k))]; }
   function compose(g, W, H2) {
@@ -1689,7 +1724,7 @@ section.mix-on > :not(.mixprint):not(h2):not(.topattern){display:none!important}
   function blobOf(cv) { return new Promise(function (res) { cv.toBlob(function (b) { res(b); }, 'image/png'); }); }
   function screensOf(l, W, H2) { // black on white film for each screen of one layer
     if (l.src === 'off') return [];
-    if (l.src !== 'cur') return [[l.src === 'st' ? 'stencil' : 'dots', l.src === 'st' ? stMask(picOf(l), W, H2) : htMask(picOf(l), W, H2)]];
+    if (l.src !== 'cur') return [[l.src === 'st' ? 'stencil' : 'dots', maskOf(l, W, H2)]];
     if (mode === 'st') { var r = masks(); return r.m.map(function (mk, q) { var t = document.createElement('canvas'); t.width = r.w; t.height = r.h; t.getContext('2d').drawImage(tint(mk, r.w, r.h, '#000000'), 0, 0); var u = document.createElement('canvas'); u.width = W; u.height = H2; u.getContext('2d').drawImage(t, 0, 0, W, H2); return ['layer ' + stLetter(q), u]; }); }
     var o = outSize(), cv = H.cov || buildCov(), cell = o.dpi / H.lpi * (W / o.W);
     return plates().map(function (p, i) { var t = document.createElement('canvas'); t.width = W; t.height = H2; renderPlate(t.getContext('2d'), cv, Object.assign({}, p, { idx: i }), W, H2, cell, '#000000'); return [p.letter + ' ' + p.name.toLowerCase(), t]; });
@@ -1737,12 +1772,12 @@ section.mix-on > :not(.mixprint):not(h2):not(.topattern){display:none!important}
 
   function inPrint() { var b = document.querySelector('.bbar button[aria-current=step]'); return !!(b && /Print|Save/.test(b.textContent)); }
   function paintApplied() { if (active || !X.applied || !has || !inPrint()) return; cache = { ver: (cache.ver || 0) + 1 }; var z = size(1000); c.width = z[0]; c.height = z[1]; c.style.width = ''; compose(ctx, z[0], z[1]); var st0 = $('status'); if (st0) st0.textContent = 'Your Mix, ready to print'; }
-  ['drawHTnow', 'draw'].forEach(function (n) { var f = window[n]; if (typeof f !== 'function') return; window[n] = function () { var r = f.apply(this, arguments); setTimeout(paintApplied, 0); return r; }; });
+  ['drawHTnow', 'draw'].forEach(function (n) { var f = window[n]; if (typeof f !== 'function') return; window[n] = function () { var r = f.apply(this, arguments); setTimeout(function () { if (active) { cache = { ver: (cache.ver || 0) + 1 }; render(); } else paintApplied(); }, 0); return r; }; });
   window.addEventListener('nvpart', function () { setTimeout(paintApplied, 60); });
   window.__nvMix = {
     show: function (k) { if (k === 'mix') k = (part && part !== 'mix') ? part : 'mlook'; if (!box.parentNode) aside.appendChild(box); part = k; active = true; cache = { ver: (cache.ver || 0) + 1 }; build(); render(); },
     leave: function () { if (!active) return; active = false; start = null; if (typeof redraw === 'function') redraw(); },
-    refresh: function () { keep(); if (active) { build(); render(); } }, compose: function (g, W, H2) { cache = { ver: (cache.ver || 0) + 1 }; compose(g, W, H2); }, picture: function () { if (!X.applied || !has) return null; var z = size(1600), t = document.createElement('canvas'); t.width = z[0]; t.height = z[1]; cache = { ver: (cache.ver || 0) + 1 }; compose(t.getContext('2d'), z[0], z[1]); return t; },
+    refresh: function () { keep(); if (active) { if (box.parentNode) build(); render(); } }, enter: function () { active = true; cache = { ver: (cache.ver || 0) + 1 }; render(); }, render: function (fresh) { keep(); if (fresh) cache = { ver: (cache.ver || 0) + 1 }; render(); }, isOn: function () { return active; }, makeFiles: function (out) { make(out); out.onclick = function (e) { var b = e.target.closest('button[data-f]'); if (b) save(files[+b.dataset.f]); }; }, compose: function (g, W, H2) { cache = { ver: (cache.ver || 0) + 1 }; compose(g, W, H2); }, picture: function () { if (!X.applied || !has) return null; var z = size(1600), t = document.createElement('canvas'); t.width = z[0]; t.height = z[1]; cache = { ver: (cache.ver || 0) + 1 }; compose(t.getContext('2d'), z[0], z[1]); return t; },
     state: X
   };
 })();
@@ -2181,7 +2216,7 @@ section.grouped .kgrid{margin-top:0!important}
   function snap() {
     var v = {}; ctrls().forEach(function (el) { v[el.id] = el.type === 'checkbox' ? el.checked : el.value; });
     var X = window.__nvMix && window.__nvMix.state;
-    return { key: JSON.stringify({ v: v, F: F, X: X ? { L: X.L, dots: X.dots, paper: X.paper, look: X.look, applied: X.applied } : null, mode: mode, job: job, M: { s: M.style, l: M.label } }), src: src.width + 'x' + src.height, E: E, EW: EW, EH: EH };
+    return { key: JSON.stringify({ v: v, F: F, X: X ? { L: X.L, dots: X.dots, paper: X.paper, look: X.look, applied: X.applied, lpi: X.lpi || 0, ink1: X.ink1 || '#1a1a1a' } : null, mode: mode, job: job, M: { s: M.style, l: M.label } }), src: src.width + 'x' + src.height, E: E, EW: EW, EH: EH };
   }
   var hist = [], at = -1, busy = false, rq = 0;
   function sameE(a, b) { if (!a || !b) return a === b; if (a.length !== b.length) return false; for (var i = 0; i < a.length; i++) { var x = a[i], y = b[i]; if (x.length !== y.length) return false; for (var j = 0; j < x.length; j++) if (x[j] !== y[j]) return false; } return true; }
@@ -2197,6 +2232,7 @@ section.grouped .kgrid{margin-top:0!important}
     at = hist.length - 1; ui();
   }
   function later() { if (busy) return; clearTimeout(rq); rq = setTimeout(record, 300); }
+  window.__nvLater = later; window.__nvSay = say;
   function ui() { $('nvUndo').disabled = at <= 0; $('nvRedo').disabled = at >= hist.length - 1; }
   function restore(s) {
     busy = true;
@@ -2214,6 +2250,7 @@ section.grouped .kgrid{margin-top:0!important}
       var X = window.__nvMix && window.__nvMix.state; if (X && o.X) { Object.assign(X, JSON.parse(JSON.stringify(o.X))); window.__nvMix.refresh(); }
       E = s.E ? s.E.map(function (a) { return a.slice(); }) : null; EW = s.EW; EH = s.EH; UNDO = [];
       clearFiles(); redraw(); if (typeof edUI === 'function') edUI(); reset();
+      if (window.__nvStudioRefresh) window.__nvStudioRefresh();
       if (window.__nvStepTo && window.__nvStepNow) window.__nvStepTo(window.__nvStepNow());
     } catch (err) { console.error(err); }
     setTimeout(function () { busy = false; }, 400);
@@ -2231,7 +2268,7 @@ section.grouped .kgrid{margin-top:0!important}
     var X = window.__nvMix && window.__nvMix.state;
     if (X) { X.L = [{ src: 'st', pic: 'same', c: '#1a1a1a', dx: 0, dy: 0, op: 100 }, { src: 'ht', pic: 'same', c: '#e2342a', dx: 2.5, dy: 2, op: 100 }]; X.dots = 'm'; X.paper = '#ffffff'; X.look = 0; X.sel = 1; X.applied = false; window.__nvMix.refresh(); }
     E = null; UNDO = []; clearFiles(); redraw(); edUI(); reset();
-    setTimeout(function () { busy = false; record(); say('Started over. Undo brings it back.'); }, 450);
+    if (window.__nvStudioRefresh) window.__nvStudioRefresh(); setTimeout(function () { busy = false; record(); say('Started over. Undo brings it back.'); }, 450);
   };
   ['change', 'input'].forEach(function (ev) { aside.addEventListener(ev, function (e) { if (!sv.contains(e.target)) later(); }, true); });
   aside.addEventListener('click', function (e) { if (e.target.closest('button') && !sv.contains(e.target)) later(); }, true);
@@ -2251,4 +2288,6 @@ section.grouped .kgrid{margin-top:0!important}
 })();
 </script>
 <!--NV-STENCIL-STUDIO-END-->
+<link rel="stylesheet" href="studio.css">
+<script src="studio.js"></script>
 </body></html>
