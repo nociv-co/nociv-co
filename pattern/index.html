@@ -121,6 +121,88 @@ html.righty #tools{left:auto;right:8px}
 .cmp{display:grid;grid-template-columns:1fr 1fr;gap:8px}.cmp figure{margin:0}.cmp canvas{width:100%;height:auto;border:1.5px solid var(--ink);border-radius:8px;display:block}.cmp figcaption{font:800 12px/1.2 var(--sys);margin-top:4px}
 .btn:disabled{opacity:.4}
 @media(max-height:620px){.panel{height:190px}#tools button{height:34px;width:44px}#tools button span{display:none}#tools{top:48px;gap:3px}}
+/* v2 look (11-10): soft white-grey ground, white cards, navy icons, cream only on what is picked, springy controls (Fraqtals style) */
+:root{--bg:#f2f2f7;--card:#ffffff;--tile:#eef0f6;--navy:#1f2a44;--sub:#6b7390;--line:#e3e5ee;--cream:#f3efe6;--yel:#fdee4f;--spring:cubic-bezier(.34,1.4,.5,1);--ink:#1f2a44;--mute:#6b7390;--paper:#f2f2f7;--panel:#ffffff}
+html,body{background:var(--bg);color:var(--navy)}
+*{-webkit-tap-highlight-color:transparent}
+.top{background:var(--card);color:var(--navy);border-bottom:1px solid var(--line)}
+.top a{color:var(--navy)}.top b{letter-spacing:.04em}
+.stage{background:var(--bg)}
+.chip{border:0!important;border-radius:13px!important;background:var(--card)!important;color:var(--navy)!important;box-shadow:0 2px 10px rgba(31,42,68,.12)!important;transition:transform .18s var(--spring)}
+.chip:active{transform:scale(.93)}
+.chip[aria-pressed=true]{background:var(--cream)!important;box-shadow:0 0 0 1.5px var(--navy)!important}
+.seg3{border:0!important;padding:3px;gap:2px;border-radius:13px!important;background:var(--card)!important;box-shadow:0 2px 10px rgba(31,42,68,.12)}
+.seg3 button{border-radius:10px;color:var(--sub)!important;transition:background .2s,color .2s}
+.seg3 button[aria-pressed=true]{background:var(--cream)!important;color:var(--navy)!important;box-shadow:0 0 0 1.5px var(--navy)}
+#tools{gap:4px!important;padding:5px;border-radius:18px;background:var(--card);box-shadow:0 2px 14px rgba(31,42,68,.14);transform:translateX(-140%);opacity:0;pointer-events:none;transition:transform .42s var(--spring),opacity .25s}
+#tools.on{transform:none;opacity:1;pointer-events:auto}
+html.righty #tools{transform:translateX(140%)}html.righty #tools.on{transform:none}
+#tools button{border:0!important;box-shadow:none!important;background:transparent!important;color:var(--navy)!important;border-radius:13px!important;transition:background .2s,transform .18s var(--spring)}
+#tools button span{color:var(--sub)}
+#tools button:active{transform:scale(.93)}
+#tools button[aria-pressed=true]{background:var(--cream)!important;box-shadow:0 0 0 1.5px var(--navy)!important}
+#tools button[aria-pressed=true] span{color:var(--navy)}
+#tools button.done{background:var(--tile)!important;color:var(--navy)!important}
+#ctx{position:absolute;z-index:3;left:0;top:0;display:flex;gap:2px;padding:4px;border-radius:15px;background:var(--card);box-shadow:0 4px 18px rgba(31,42,68,.18);opacity:0;transform:translate(-50%,6px) scale(.9);pointer-events:none;transition:opacity .2s,transform .3s var(--spring)}
+#ctx.on{opacity:1;transform:translate(-50%,0) scale(1);pointer-events:auto}
+#ctx button{all:unset;cursor:pointer;height:36px;padding:0 10px;border-radius:11px;color:var(--navy);font:700 12px/36px var(--sys)}
+#ctx button:active{background:var(--tile)}
+#ctx button.del{color:#e5484d}
+#fab{all:unset;position:absolute;z-index:3;right:14px;bottom:14px;width:58px;height:58px;border-radius:50%;background:var(--yel);color:var(--navy);display:grid;place-items:center;box-shadow:0 4px 16px rgba(31,42,68,.24);cursor:pointer;transition:transform .2s var(--spring)}
+#fab:active{transform:scale(.9)}
+#fab svg{width:28px;height:28px;fill:none;stroke:currentColor;stroke-width:2.6;stroke-linecap:round}
+#fab[hidden]{display:none}
+#fab.pulse{animation:pulse 1.4s ease 2}
+@keyframes pulse{50%{transform:scale(1.14)}}
+.lbl{background:var(--card)!important;color:var(--sub)!important;box-shadow:0 2px 10px rgba(31,42,68,.10);border-radius:11px!important;bottom:14px!important}
+.panel{background:var(--card)!important;border-top:0!important;border-radius:22px 22px 0 0;box-shadow:0 -6px 24px rgba(31,42,68,.10);position:relative;z-index:2}
+.ptitle{margin:0 0 10px;font:800 13px/1 var(--sys);color:var(--sub);letter-spacing:.02em}
+.tiles{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:8px;margin:0 0 12px}
+.tile{all:unset;cursor:pointer;height:62px;border-radius:16px;background:var(--tile);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:5px;color:var(--navy);transition:transform .18s var(--spring),box-shadow .2s,background .2s}
+.tile svg{width:22px;height:22px;fill:none;stroke:currentColor;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
+.tile small{font:650 11px/1 var(--sys);color:var(--sub)}
+.tile:active{transform:scale(.93)}
+.tile[aria-pressed=true]{background:var(--cream);box-shadow:0 0 0 1.5px var(--navy)}
+.tile[aria-pressed=true] small{color:var(--navy)}
+.steps{background:var(--card)!important;border-top:1px solid var(--line)!important;height:calc(62px + env(safe-area-inset-bottom))}
+.steps button{flex-direction:column!important;gap:3px!important;color:var(--navy)!important;opacity:.55;box-shadow:none!important;font:650 10.5px/1 var(--sys)!important;letter-spacing:0!important;text-transform:none!important;transition:opacity .25s}
+.steps button svg{width:22px;height:22px;fill:none;stroke:currentColor;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
+.steps button[aria-pressed=true]{opacity:1}
+.h{color:var(--sub)!important}
+.row>b{color:var(--sub)!important;font-weight:650!important}
+.seg{border:0!important;padding:3px;gap:2px;border-radius:12px!important;background:var(--tile)!important}
+.seg button{border:0!important;border-radius:9px!important;color:var(--navy)!important;transition:background .2s}
+.seg button[aria-pressed=true]{background:var(--cream)!important;box-shadow:0 0 0 1.5px var(--navy)}
+.st{border:0!important;border-radius:12px!important;background:var(--tile)!important}
+.st button{color:var(--navy);transition:transform .18s var(--spring)}.st button:active{transform:scale(.88)}
+.st output{border:0!important}
+.pick{border:0!important;border-radius:14px!important;background:var(--tile)!important;color:var(--navy)!important;transition:transform .18s var(--spring),box-shadow .2s}
+.pick:active{transform:scale(.93)}
+.pick[aria-pressed=true]{background:var(--cream)!important;box-shadow:0 0 0 1.5px var(--navy)!important}
+.sw button{border:0!important;box-shadow:inset 0 0 0 1px rgba(31,42,68,.14)!important;transition:transform .18s var(--spring)}
+.sw button:active{transform:scale(.88)}
+.sw button[aria-pressed=true]{box-shadow:0 0 0 2.5px #fff,0 0 0 4px var(--navy)!important}
+.sw label{border:0!important;background:var(--tile);color:var(--navy)}
+.txt{border:0!important;background:var(--tile)!important;color:var(--navy)}
+.txt:focus{outline:none;box-shadow:0 0 0 1.5px var(--navy)}
+.btn{border:0!important;border-radius:14px!important;background:var(--tile)!important;color:var(--navy)!important;transition:transform .18s var(--spring)}
+.btn:active{transform:scale(.97)}
+.btn.dark{background:var(--navy)!important;color:#fff!important}
+.btn.red{background:var(--tile)!important;color:#e5484d!important}
+.btn.yel{background:var(--yel)!important}
+.tabs5{padding:3px;border-radius:13px;background:var(--tile)}
+.tabs5 button{color:var(--navy)!important;transition:background .2s}
+.tabs5 button[aria-pressed=true]{background:var(--cream)!important;color:var(--navy)!important;box-shadow:0 0 0 1.5px var(--navy)}
+.note{color:var(--sub)!important}
+.sheet{background:rgba(20,24,40,.32)!important;z-index:50!important}
+.sheet .in{background:var(--card)!important;border-radius:26px 26px 0 0!important;box-shadow:0 -10px 40px rgba(31,42,68,.14);animation:sheetUp .42s var(--spring)}
+@keyframes sheetUp{from{transform:translateY(100%)}to{transform:none}}
+.sheet h2{color:var(--navy);letter-spacing:.02em!important;text-transform:none!important}
+.sheet .x{border:0!important;background:var(--tile)!important;color:var(--navy)}
+.sheet .grip{width:40px;height:5px;border-radius:3px;background:var(--line);margin:0 auto 10px}
+.starters{background:var(--bg)!important}
+.starters .grid canvas{border:0!important;border-radius:16px!important;box-shadow:0 2px 10px rgba(31,42,68,.12)}
+.cloths{background:rgba(255,255,255,.97)!important;border-top:0!important;box-shadow:0 -6px 24px rgba(31,42,68,.10)}
 </style>
 </head>
 <body>
@@ -134,6 +216,8 @@ html.righty #tools{left:auto;right:8px}
   <div class="cloths" id="cloths" hidden></div>
   <div class="lbl" id="lbl"></div>
   <div class="menu" id="menu" hidden></div>
+  <div id="ctx"><button data-m="copy">Copy</button><button data-m="front">Front</button><button data-m="back">Back</button><button data-m="del" class="del">Delete</button></div>
+  <button id="fab" aria-label="Add"><svg viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></svg></button>
   <div class="home" id="home" hidden>
     <a class="alt" href="/creator-tools.html" style="position:absolute;left:14px;top:max(14px,env(safe-area-inset-top))">&lsaquo; Tools</a><h1>Patterns</h1>
     <button class="drop" id="drop">Drop your logo or art<small>PNG works best. We make 6 patterns from it.</small></button>
@@ -146,11 +230,12 @@ html.righty #tools{left:auto;right:8px}
   </div>
 </div>
 <div class="panel" id="panel"></div>
-<nav class="steps" id="steps"><button data-s="make">Make</button><button data-s="look">Look</button><button data-s="save">Save</button></nav>
+<nav class="steps" id="steps"><button data-s="make"><svg viewBox="0 0 24 24"><path d="M12 20l8-8-4-4-8 8v4z"/><path d="M14 6l4 4"/></svg>Make</button><button data-s="look"><svg viewBox="0 0 24 24"><path d="M2 12s3.5-7 10-7 10 7 10 7-3.5 7-10 7S2 12 2 12z"/><circle cx="12" cy="12" r="3"/></svg>Look</button><button data-s="save"><svg viewBox="0 0 24 24"><path d="M12 3v12M7 10l5 5 5-5"/><path d="M4 19h16"/></svg>Save</button></nav>
 <input type="file" id="artfile" accept="image/*" multiple hidden>
 <input type="file" id="lfile" accept="image/png,image/*" hidden>
 <div class="sheet" id="helpSheet" hidden><div class="in" id="helpIn"></div></div>
 <div class="sheet" id="lsheet" hidden><div class="in" id="lsIn"></div></div>
+<div class="sheet" id="addSheet" hidden><div class="in"><div class="grip"></div><div id="addIn"></div></div></div>
 <script src="/crop.js"></script>
 <script src="engine.js"></script>
 <script src="letters.js"></script>
