@@ -1521,8 +1521,11 @@ html.app .stage.cs-flat .sum { display: none; }
   function famOf(g) { for (var i = 0; i < GROUPS.length; i++) for (var j = 0; j < GROUPS[i].items.length; j++) if (GROUPS[i].items[j][0] === g) return GROUPS[i].id; return 'pants'; }
   function baseName(g) { for (var i = 0; i < GROUPS.length; i++) for (var j = 0; j < GROUPS[i].items.length; j++) if (GROUPS[i].items[j][0] === g) return GROUPS[i].items[j][1]; return g; }
   // The name follows the neck pick on tops: a tee with a polo collar is a polo.
+  // Pants with a short inseam are shorts: the name follows the length (under 15 in, above the knee).
+  function isShorts() { return famOf(state.g) === 'pants' && state.m.inseam < 15; }
   function nameOf(g) {
     var n = baseName(g);
+    if (g === state.g && isShorts()) return n + ' shorts';
     if (g === state.g && famOf(g) === 'tops' && g !== 'tank' && g !== 'muscle') {
       var k = state.o.neck;
       if (k === 'polo') return g === 'boxy' ? 'Boxy polo' : g === 'crop' ? 'Cropped polo' : 'Polo shirt';
@@ -1990,7 +1993,7 @@ html.app .stage.cs-flat .sum { display: none; }
     var g = GROUPS.filter(function (x) { return x.id === fam; })[0], list = document.createElement('div'); list.className = 'famlist'; box.appendChild(list);
     g.items.forEach(function (it) {
       var b = document.createElement('button'); b.type = 'button'; b.setAttribute('aria-pressed', String(it[0] === state.g));
-      b.textContent = it[1]; if (it[2]) { b.disabled = true; b.insertAdjacentHTML('beforeend', '<small>soon</small>'); }
+      b.textContent = it[1] + (it[0] === state.g && isShorts() ? ' shorts' : ''); if (it[2]) { b.disabled = true; b.insertAdjacentHTML('beforeend', '<small>soon</small>'); }
       b.onclick = function () { pickGarment(it[0]); };
       list.appendChild(b);
     });
@@ -2008,7 +2011,7 @@ html.app .stage.cs-flat .sum { display: none; }
         var inch = u === 'cm' ? x / 2.54 : x, bad = inch < f[3] || inch > f[4];
         d.classList.toggle('bad', bad);
         warn.textContent = bad ? 'That looks off, check it' : ''; warn.className = bad ? 'warn' : '';
-        state.m[f[0]] = inch; save(); renderSoon();
+        var wasShort = isShorts(); state.m[f[0]] = inch; save(); renderSoon(); if (isShorts() !== wasShort) { buildGarments(); buildSrc(); }
       }
       inp.addEventListener('input', check);
       box.appendChild(d);
@@ -2259,7 +2262,7 @@ html.app .stage.cs-flat .sum { display: none; }
       P('E', 'Inseam', 'From the crotch seam down the inside leg seam to the leg opening.', spec.inseam, 0.375, 'front', [G.cx0 + 0.2, spec.crotchDepth], G.hemIn);
       P('F', 'Outseam', 'From the top of the waistband down the side seam to the leg opening.', spec.outseam, 0.375, 'list');
       P('G', 'Thigh, 1 in below crotch', 'Straight across the leg, 1 in below the crotch seam, square to the leg.', spec.thigh, 0.25, 'front', G.tIn, G.tOut);
-      P('H', 'Knee, ' + fv(spec.kneeAt) + ' ' + unitName() + ' below crotch', 'Straight across the leg, ' + fv(spec.kneeAt) + ' ' + unitName() + ' below the crotch seam.', spec.knee, 0.25, 'front', G.kIn, G.kOut);
+      if (spec.inseam >= 15) P('H', 'Knee, ' + fv(spec.kneeAt) + ' ' + unitName() + ' below crotch', 'Straight across the leg, ' + fv(spec.kneeAt) + ' ' + unitName() + ' below the crotch seam.', spec.knee, 0.25, 'front', G.kIn, G.kOut);
       P('I', 'Leg opening', 'Straight across the bottom of the leg, edge to edge.', spec.legOpen, 0.25, 'front', [G.hemIn[0], G.yh + 0.6], [G.hemOut[0], G.yh + 0.6]);
       P('J', 'Waistband height', 'Finished height of the waistband' + (spec.elastic ? ' casing' : '') + '.', spec.band, 0.125, 'list');
       P('K', 'Hem height', 'Finished leg hem, turned 1/2 in then 1 in.', spec.hem, 0.125, 'list');
@@ -3319,7 +3322,7 @@ html.app .stage.cs-flat .sum { display: none; }
     Array.prototype.forEach.call($('srcMode').children, function (b) { b.setAttribute('aria-pressed', String(b.dataset.v === srcMode)); });
     var nm = nameOf(state.g);
     if (srcMode === 'blank') {
-      var keys = extraBlank ? [extraBlank] : Object.keys(BLANKS).filter(function (k) { return BLANKS[k][5].indexOf(state.g) > -1; });
+      var keys = extraBlank ? [extraBlank] : Object.keys(BLANKS).filter(function (k) { if (BLANKS[k][5].indexOf(state.g) < 0) return false; if (famOf(state.g) !== 'pants') return true; return /short/i.test(BLANKS[k][2]) === isShorts(); });
       var h = document.createElement('p'); h.className = 'srchead'; h.textContent = extraBlank ? 'Blank for this style' : 'Blanks that match your ' + nm.toLowerCase(); box.appendChild(h);
       keys.forEach(function (k) { box.appendChild(blankCard(k)); });
       if (!keys.length) { var n = document.createElement('div'); n.className = 'srccard'; n.innerHTML = '<h3>No standard blank yet</h3><p>Decorator wholesalers carry few ' + nm.toLowerCase() + 's. Search "' + nm.toLowerCase() + '" on S&amp;S Activewear or alphabroder, or get it made. Most makers will do a small run of bags.</p>'; box.appendChild(n); }
@@ -3540,6 +3543,10 @@ html.app .stage.cs-flat .sum { display: none; }
     var sec = notes[e.detail], want = sec && { Specs: 'flat', Save: 'pages' }[sec.dataset.step];
     if (want) { var b = document.querySelector('#view [data-v="' + want + '"]'); if (b && b.getAttribute('aria-pressed') !== 'true') b.click(); }
   });
+})();
+(function () {
+  var st = document.getElementById('stage'); if (!st || !window.ResizeObserver) return; var t;
+  new ResizeObserver(function () { clearTimeout(t); t = setTimeout(function () { var sv = st.querySelector('svg'); if (!sv) return; sv.style.visibility = 'hidden'; void sv.getBoundingClientRect(); sv.style.visibility = ''; sv.style.transform = 'translateZ(0)'; requestAnimationFrame(function () { sv.style.transform = ''; }); }, 120); }).observe(st);
 })();
 /*NV-CUTSEW-STUDIO-END*/
 
