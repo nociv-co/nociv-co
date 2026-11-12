@@ -268,6 +268,16 @@ body.cdown .console .panel{height:0!important;padding-top:0;padding-bottom:0;ove
 .repk svg{width:24px;height:24px;fill:none;stroke:currentColor;stroke-width:1.7;stroke-linejoin:round;stroke-linecap:round}
 .rowbtn{all:unset;box-sizing:border-box;cursor:pointer;display:grid;grid-template-columns:auto 1fr 18px;align-items:center;gap:10px;width:100%;padding:12px;margin:0 0 8px;border-radius:14px;background:var(--tile);color:var(--navy);transition:transform .18s var(--spring)}
 .rowbtn:active{transform:scale(.98)}.rowbtn b{font:800 13px/1.2 var(--sys)}.rowbtn span{font:500 12px/1.3 var(--sys);color:var(--sub);text-align:right}.rowbtn svg{width:18px;height:18px;fill:none;stroke:currentColor;stroke-width:2.2;stroke-linecap:round;stroke-linejoin:round}
+#plainBtn svg,#layBtn svg{width:20px;height:20px;fill:none;stroke:currentColor;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
+#plainBtn[aria-pressed=true],#layBtn[aria-pressed=true]{background:var(--cream)!important;box-shadow:0 0 0 1.5px var(--navy)}
+.lays{display:flex;flex-direction:column;gap:6px}.layr{display:grid;grid-template-columns:44px 1fr repeat(4,36px);align-items:center;gap:4px;padding:4px;border-radius:12px;background:var(--tile)}
+.layr.on{background:var(--cream);box-shadow:0 0 0 1.5px var(--navy)}.layr.off canvas,.layr.off .lname{opacity:.4}
+.layr canvas{width:44px;height:44px;border-radius:8px;background:#fff}.lname{all:unset;cursor:pointer;font:800 13px/1.2 var(--sys);color:var(--navy);padding:8px 4px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.lic{all:unset;cursor:pointer;width:36px;height:36px;display:flex;align-items:center;justify-content:center;border-radius:10px;color:var(--navy)}.lic:disabled{opacity:.25}.lic svg{width:19px;height:19px;fill:none;stroke:currentColor;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
+.layr .lname:only-of-type{grid-column:1/6}
+.pmsdot{display:inline-block;width:14px;height:14px;border-radius:4px;margin-right:6px;vertical-align:-2px;box-shadow:0 0 0 1px rgba(0,0,0,.2)}
+#zoom{pointer-events:none}#zoom>*{pointer-events:auto}#zoom:not(.open) #zplus,#zoom:not(.open) #zmin,#zoom:not(.open) #zval{pointer-events:none}
+#ctx{z-index:6}
 </style>
 </head>
 <body>
@@ -275,7 +285,7 @@ body.cdown .console .panel{height:0!important;padding-top:0;padding-bottom:0;ove
 <div class="stage" id="stage">
   <canvas id="view"></canvas>
   <div class="fl" style="left:8px;top:8px"><button class="chip" id="undo" aria-label="Undo"><svg viewBox="0 0 24 24"><path d="M9 14L4 9l5-5"/><path d="M4 9h10a6 6 0 0 1 0 12h-3"/></svg></button><button class="chip" id="redo" aria-label="Redo"><svg viewBox="0 0 24 24"><path d="M15 14l5-5-5-5"/><path d="M20 9H10a6 6 0 0 0 0 12h3"/></svg></button></div>
-  <div class="fl" style="right:8px;top:8px"><button class="chip" id="adjBtn" aria-label="Adjust tile" aria-pressed="false"><svg viewBox="0 0 24 24"><path d="M7 3v4M3 7h4M7 7h10v10"/><path d="M17 21v-4M21 17h-4M17 17H7V7"/></svg></button><div class="seg3" id="views"><button data-v="tile">Tile</button><button data-v="swatch">Swatch</button><button data-v="yard">Yard</button></div><button class="chip" id="help" aria-label="Help">?</button></div>
+  <div class="fl" style="right:8px;top:58px;flex-direction:column"><button class="chip" id="plainBtn" aria-label="Effects off: just my art" aria-pressed="false"><svg viewBox="0 0 24 24"><path d="M2 12s4-7 10-7 10 7 10 7-4 7-10 7S2 12 2 12z"/><circle cx="12" cy="12" r="3"/></svg></button><button class="chip" id="layBtn" aria-label="Layers" aria-pressed="false"><svg viewBox="0 0 24 24"><path d="M12 3l9 5-9 5-9-5z"/><path d="M3 13l9 5 9-5"/></svg></button></div><div class="fl" style="right:8px;top:8px"><button class="chip" id="adjBtn" aria-label="Adjust tile" aria-pressed="false"><svg viewBox="0 0 24 24"><path d="M7 3v4M3 7h4M7 7h10v10"/><path d="M17 21v-4M21 17h-4M17 17H7V7"/></svg></button><div class="seg3" id="views"><button data-v="tile">Tile</button><button data-v="swatch">Swatch</button><button data-v="yard">Yard</button></div><button class="chip" id="help" aria-label="Help">?</button></div>
   <div class="fl" style="right:8px;top:50px"><button class="chip" id="clothChip" hidden aria-label="Printed on">Poplin</button></div>
   <div class="fl" id="tools"></div>
   <div class="cloths" id="cloths" hidden></div>
