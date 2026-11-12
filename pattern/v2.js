@@ -268,9 +268,15 @@
   /* ---------- the repeat tile ---------- */
   function copies() {
     var r = D.rep;
-    if (r === 'halfdrop') return { w: 2, h: 1, c: [[0, 0, 0, 0, 0], [1, .5, 0, 0, 0]] };
-    if (r === 'halfbrick') return { w: 1, h: 2, c: [[0, 0, 0, 0, 0], [.5, 1, 0, 0, 0]] };
-    if (r === 'toss') return { w: 2, h: 2, c: [[0, 0, 0, 0, 0], [1, 0, 0, 0, 180], [0, 1, 0, 0, 90], [1, 1, 0, 0, 270]] };
+    var i, out;
+    if (r === 'halfdrop') { var nd = D.drop || 2; out = { w: nd, h: 1, c: [] }; for (i = 0; i < nd; i++) out.c.push([i, i / nd, 0, 0, 0]); return out; }
+    if (r === 'halfbrick') { var nb = D.shift || 2; out = { w: 1, h: nb, c: [] }; for (i = 0; i < nb; i++) out.c.push([i / nb, i, 0, 0, 0]); return out; }
+    if (r === 'toss') {
+      var tt = D.tturn || 'quarter', rots = tt === 'none' ? [0, 0, 0, 0] : tt === 'half' ? [0, 180, 180, 0] : [0, 180, 90, 270], R = E.rng((D.tseed || 0) * 977 + 13);
+      if (D.tseed) for (i = 3; i > 0; i--) { var j = Math.floor(R() * (i + 1)), tmp = rots[i]; rots[i] = rots[j]; rots[j] = tmp; }
+      out = { w: 2, h: 2, c: [[0, 0], [1, 0], [0, 1], [1, 1]].map(function (q, k) { return [q[0], q[1], 0, 0, rots[k], D.tmix ? [1, .8, 1.15, .9][(k + (D.tseed || 0)) % 4] : 1]; }) };
+      return out;
+    }
     if (r === 'mirror') {
       if (D.mdir === 'lr') return { w: 2, h: 1, c: [[0, 0, 0, 0, 0], [1, 0, 1, 0, 0]] };
       if (D.mdir === 'ud') return { w: 1, h: 2, c: [[0, 0, 0, 0, 0], [0, 1, 0, 1, 0]] };
@@ -293,13 +299,13 @@
       D.layers.forEach(function (L) {
         var p = pos(L), x = fx ? 1 - p[0] : p[0], y = fy ? 1 - p[1] : p[1];
         if (rot) { var dx = x - .5, dy = y - .5; x = .5 + dx * Math.cos(rot) - dy * Math.sin(rot); y = .5 + dx * Math.sin(rot) + dy * Math.cos(rot); }
-        E.wrapDraw(g, W, H, (ox || 0) + (cc[0] + x) * B, (oy || 0) + (cc[1] + y) * Bh, reach(L, B), function (gg) { if (rot) gg.rotate(rot); drawLayer(gg, L, B, fx, fy, mode); });
+        var sc = cc[5] || 1; E.wrapDraw(g, W, H, (ox || 0) + (cc[0] + x) * B, (oy || 0) + (cc[1] + y) * Bh, reach(L, B) * sc, function (gg) { if (rot) gg.rotate(rot); if (sc !== 1) gg.scale(sc, sc); drawLayer(gg, L, B, fx, fy, mode); });
       });
     });
   }
   var tcache = {}, tcount = 0;
   function tile(ppi) {
-    var B = blockB(ppi), key = JSON.stringify([D.tileIn, D.tileH, D.rep, D.mdir, D.mword, D.kale, D.ground, D.fab, D.layers, D.pal, D.artMap, B, artVer, LETTERS]); if (tcache[key]) return tcache[key];
+    var B = blockB(ppi), key = JSON.stringify([D.tileIn, D.tileH, D.rep, D.drop, D.shift, D.tturn, D.tmix, D.tseed, D.mdir, D.mword, D.kale, D.ground, D.fab, D.layers, D.pal, D.artMap, B, artVer, LETTERS]); if (tcache[key]) return tcache[key];
     var t;
     if (D.rep === 'kale') {
       // the slices are cut from your pieces only; the ground (a color or a fabric) goes under the whole tile
@@ -372,13 +378,14 @@
     g.setTransform(1, 0, 0, 1, 0, 0); g.fillStyle = '#ffffff'; g.fillRect(0, 0, W, H);
     var u = W / 390;
     if (U.adj) { drawAdj(g, W, H, u); return; }
-    if (U.step === 'repeat') {
+    if (U.step === 'repeat' && U.view === 'tile') {
       var ti0 = tileInches(), acr = Math.max(ti0[0], ti0[1]) * 2.4 / (U.zoom || 1), pp = W / acr, tt = tile(pp);
-      g.fillStyle = g.createPattern(tt, 'repeat'); g.fillRect(0, 0, W, H); HIT = null; placeCtx(0, 0, false);
+      g.fillStyle = g.createPattern(tt, 'repeat'); g.fillRect(0, 0, W, H); HIT = null; placeCtx(0, 0, false); RV = { pp: pp, tw: tt.width, th: tt.height };
+      if (seamOn()) seamDraw(g, W, H, pp, u);
       g.save(); g.strokeStyle = 'rgba(31,42,68,.35)'; g.lineWidth = u; g.setLineDash([5 * u, 4 * u]);
       for (var sx = 0; sx <= W; sx += tt.width) { g.beginPath(); g.moveTo(sx, 0); g.lineTo(sx, H); g.stroke(); }
       for (var sy = 0; sy <= H; sy += tt.height) { g.beginPath(); g.moveTo(0, sy); g.lineTo(W, sy); g.stroke(); }
-      g.restore(); lbl('One repeat is ' + inch(ti0[0]) + ' x ' + inch(ti0[1]) + '. Dashed lines are the seams.'); return;
+      g.restore(); lbl(seamOn() ? U.seamMsg : 'One repeat is ' + inch(ti0[0]) + ' x ' + inch(ti0[1]) + ', on ' + clothShort(D.cloth).toLowerCase() + '. Tap a piece to edit it.'); return;
     }
     if (U.view !== 'tile' || U.step !== 'make') {
       var across = (U.view === 'yard' ? 42 : U.view === 'swatch' ? 8 : D.tileIn * 1.6) / (U.zoom || 1), ppi = W / across, t = tile(ppi);
@@ -386,7 +393,7 @@
       if (U.view !== 'tile') laycloth(g, W, H, D.cloth, ppi);
       if (U.view === 'yard') yardMarks(g, W, H, ppi, u, false, 50 * u);
       var ti = tileInches();
-      lbl((U.view === 'yard' ? '42 in across' : U.view === 'swatch' ? '8 in swatch' : '') + (NUMS ? (U.view === 'tile' ? '' : ', ') + 'repeat ' + inch(ti[0]) + ' x ' + inch(ti[1]) : '')); return;
+      lbl((U.view === 'yard' ? '42 in across, on ' + clothShort(D.cloth).toLowerCase() : U.view === 'swatch' ? '8 in swatch, on ' + clothShort(D.cloth).toLowerCase() : '') + (NUMS ? (U.view === 'tile' ? '' : ', ') + 'repeat ' + inch(ti[0]) + ' x ' + inch(ti[1]) : '')); return;
     }
     // Tile view: the block big in the middle, its repeats faded around it
     var side = (HAND === 'left' ? 64 : 8) * u, aw = W - side - (HAND === 'left' ? 8 : 64) * u, top = 52 * u, ah = H - top - 34 * u;
@@ -727,14 +734,28 @@
   /* ---------- Repeat step: see your pattern in every repeat, and fill a grid like the Block builder ---------- */
   var MIXES = [['same', 'Same'], ['checker', 'Checker'], ['rows', 'Rows'], ['cols', 'Columns'], ['diag', 'Diagonal'], ['frame', 'Frame'], ['random', 'Random']];
   function freePieces() { return D.layers.filter(function (x) { return x.gcell == null && !x.hug; }); }
+  var REPICON = {
+    grid: '<rect x="3" y="3" width="8" height="8"/><rect x="13" y="3" width="8" height="8"/><rect x="3" y="13" width="8" height="8"/><rect x="13" y="13" width="8" height="8"/>',
+    halfdrop: '<rect x="3" y="2" width="8" height="8"/><rect x="3" y="12" width="8" height="8"/><rect x="13" y="7" width="8" height="8"/><path d="M13 17v5M21 17v5M13 5V2M21 5V2"/>',
+    halfbrick: '<rect x="2" y="3" width="8" height="8"/><rect x="12" y="3" width="8" height="8"/><rect x="7" y="13" width="8" height="8"/><path d="M17 13h5M17 21h5M5 13H2M5 21H2"/>',
+    mirror: '<path d="M12 2v20"/><path d="M4 7l5 5-5 5z"/><path d="M20 7l-5 5 5 5z"/>',
+    toss: '<rect x="3" y="3" width="7" height="7"/><rect x="14" y="4" width="7" height="7" transform="rotate(30 17.5 7.5)"/><rect x="4" y="14" width="7" height="7" transform="rotate(-20 7.5 17.5)"/><rect x="14" y="14" width="7" height="7" transform="rotate(60 17.5 17.5)"/>',
+    kale: '<circle cx="12" cy="12" r="9"/><path d="M12 3v18M3 12h18M5.6 5.6l12.8 12.8M18.4 5.6L5.6 18.4"/>'
+  };
   function repeatHtml() {
-    var gs = D.gs, n = D.grid > 1 ? D.grid : 0;
-    var h = '<p class="ptitle">Repeat</p><div class="grid g3" style="margin-bottom:10px">' + REPS.map(function (x) { return '<button type="button" class="pick" data-rp="' + x[0] + '" aria-pressed="' + (D.rep === x[0]) + '"><canvas data-mini="rep:' + x[0] + '" width="150" height="96" style="height:60px"></canvas>' + x[1] + '</button>'; }).join('') + '</div>' +
+    var gs = D.gs, n = D.grid > 1 ? D.grid : 0, ti = tileInches(), across = Math.floor(42 / Math.max(.1, ti[0]));
+    var h = '<p class="ptitle">Repeat</p><div class="grid g3 repk">' + REPS.map(function (x) { return '<button type="button" class="pick" data-rp="' + x[0] + '" aria-pressed="' + (D.rep === x[0]) + '"><svg viewBox="0 0 24 24">' + REPICON[x[0]] + '</svg>' + x[1] + '</button>'; }).join('') + '</div>' +
+      (D.rep === 'halfdrop' ? '<div class="row"><b>Drop by</b>' + seg('drop', [['2', '1/2'], ['3', '1/3'], ['4', '1/4']], String(D.drop || 2)) + '</div>' : '') +
+      (D.rep === 'halfbrick' ? '<div class="row"><b>Shift by</b>' + seg('shift', [['2', '1/2'], ['3', '1/3'], ['4', '1/4']], String(D.shift || 2)) + '</div>' : '') +
       (D.rep === 'mirror' ? '<div class="row"><b>Mirror</b>' + seg('mdir', [['both', 'Both ways'], ['lr', 'Left-right'], ['ud', 'Up-down']], D.mdir) + '</div><div class="row"><b>Words</b>' + seg('mword', [['readable', 'Readable'], ['flip', 'True mirror']], D.mword) + '</div>' : '') +
+      (D.rep === 'toss' ? '<div class="row"><b>Turns</b>' + seg('tturn', [['none', 'None'], ['half', 'Half'], ['quarter', 'Quarter']], D.tturn || 'quarter') + '</div><div class="row"><b>Sizes</b>' + seg('tmix', [['0', 'All the same'], ['1', 'Mix a little']], D.tmix ? '1' : '0') + '</div><button type="button" class="btn" data-a="tshuf" style="margin-bottom:8px">Shuffle the turns</button>' : '') +
       (D.rep === 'kale' ? '<div class="row"><b>Slices</b>' + seg('kale', [['kaleSquare', 'Square'], ['kaleHex', 'Hexagon'], ['kaleTri', 'Triangle']], D.kale) + '</div>' : '') +
-      stepper('tile', 'Tile', tileLabel()) +
-      '<p class="h" style="margin-top:14px">Grid</p>' + stepper('grid', 'Squares', n ? n + ' x ' + n : 'Off');
-    if (!n) return h + '<p class="note">Turn the grid on to fill squares with your pieces: checker, rows, frame and more.</p>';
+      (D.gs || !D.layers.length ? stepper('tile', 'Tile', tileLabel()) : '<button type="button" class="rowbtn" data-a="adjgo"><b>Size on fabric</b><span>' + inch(ti[0]) + ' x ' + inch(ti[1]) + ', about ' + across + ' across a yard</span><svg viewBox="0 0 24 24"><path d="M9 6l6 6-6 6"/></svg></button>') +
+      '<button type="button" class="rowbtn" data-a="seam"><b>Seam check</b><span>Shows anything that crosses the edge</span><svg viewBox="0 0 24 24"><path d="M9 6l6 6-6 6"/></svg></button>' +
+      (seamOn() ? '<p class="note warn">' + esc(U.seamMsg) + '</p>' : '');
+    var gi = stepper('grid', 'Squares', n ? n + ' x ' + n : 'Off');
+    if (!n) return h + fold('gfill', 'Fill a grid', 'Off', gi + '<p class="note">Turn the grid on to fill squares with your pieces: checker, rows, frame and more.</p>');
+    h += '<!--GFILL-->'; var h0 = h; h = gi;
     var pieces = freePieces(), slots = U.slots || (gs ? gs.order : []);
     h += '<div class="grid g4" style="margin-bottom:8px">' + MIXES.map(function (x) { var on = (U.mix || (gs && gs.mix) || 'checker') === x[0]; return '<button type="button" class="pick" data-mix="' + x[0] + '" aria-pressed="' + on + '" style="min-height:48px"><canvas data-mini="mix:' + x[0] + '" width="80" height="44" style="height:26px"></canvas>' + x[1] + '</button>'; }).join('') + '</div>';
     if (pieces.length) h += '<p class="note">Tap your pieces in order: the first is A, the next B, up to D.</p><div class="grid g5" style="margin-bottom:8px">' + pieces.map(function (L) { var k = slots.indexOf(L.id); return '<button type="button" class="pick" data-slot="' + L.id + '" aria-pressed="' + (k >= 0) + '" style="position:relative"><canvas data-mini="piece:' + L.id + '" width="80" height="60"></canvas>' + (k >= 0 ? 'ABCD'[k] : '&nbsp;') + '</button>'; }).join('') + '</div>';
@@ -746,7 +767,7 @@
       for (var r = 0; r < gs.n; r++) { h += '<button type="button" class="gline" data-grow="' + r + '">' + (r + 1) + '</button>'; for (var c2 = 0; c2 < gs.n; c2++) { var k2 = gs.cells[r * gs.n + c2]; h += '<button type="button" class="gcell" data-gc="' + (r * gs.n + c2) + '">' + (k2 < 0 ? '' : 'ABCD'[k2]) + '</button>'; } }
       h += '</div><button type="button" class="btn" data-a="gclear" style="margin-top:8px">Take the grid off</button>';
     }
-    return h;
+    return h0.replace('<!--GFILL-->', '') + fold('gfill', 'Fill a grid', n + ' x ' + n + (gs ? ', filled' : ''), h);
   }
   function mixSlot(mix, r, c, n, k, R) {
     if (mix === 'same') return 0; if (mix === 'checker') return (r + c) % Math.min(2, k); if (mix === 'rows') return r % k; if (mix === 'cols') return c % k; if (mix === 'diag') return (r + c) % k;
@@ -986,6 +1007,9 @@
       fcache = {}; return changed();
     }
     if (d.rp) { commit(); D.rep = d.rp; return changed(); }
+    if (d.a === 'adjgo') { adjOpen(); if (U.adj) { U.adj.prev = 'tile'; } return; }
+    if (d.a === 'seam') { seamCheck(); return; }
+    if (d.a === 'tshuf') { commit(); D.tseed = (D.tseed || 0) + 1; return changed(); }
     if (d.mix) { U.mix = d.mix; if (D.gs) { commit(); var R2 = E.rng(Math.floor(Math.random() * 1e6)); D.gs.mix = d.mix; D.gs.cells = D.gs.cells.map(function (_, i) { return mixSlot(d.mix, Math.floor(i / D.gs.n), i % D.gs.n, D.gs.n, D.gs.tpl.length, R2); }); gridBuild(); return changed(); } return render(); }
     if (d.slot) { var sl = (U.slots || []).slice(), at = sl.indexOf(d.slot); if (at >= 0) sl.splice(at, 1); else if (sl.length < 4) sl.push(d.slot); U.slots = sl; return render(); }
     if (d.a === 'gfill') { gridFill(); return; }
@@ -1019,7 +1043,7 @@
     if (d.olc && L && L.ol) { commit(); L.ol.c = d.olc; return changed(); }
     if (sg && d.v != null) {
       var k = sg.dataset.sg, v = d.v; commit();
-      if (k === 'rep') D.rep = v; else if (k === 'mdir') D.mdir = v; else if (k === 'mword') D.mword = v; else if (k === 'kale') D.kale = v;
+      if (k === 'rep') D.rep = v; else if (k === 'drop') D.drop = +v; else if (k === 'shift') D.shift = +v; else if (k === 'tturn') D.tturn = v; else if (k === 'tmix') D.tmix = v === '1'; else if (k === 'mdir') D.mdir = v; else if (k === 'mword') D.mword = v; else if (k === 'kale') D.kale = v;
       else if (L && k === 'tint') L.tint = v === '1' ? (L.tint || swatchMain()) : null;
       else if (L && k === 'white') { var a = artInfo(L.aid); if (a) { a.white = v === '1'; artVer++; pcache = {}; } }
       else if (L && k === 'op') L.op = +v; else if (L && k === 'fl') L.fl = v;
@@ -1273,6 +1297,56 @@
       '<p class="note">Estimates, checked Nov 10, 2026. Shipping and tax not included. Upload your tile as a basic repeat.</p>';
   }
 
+
+  /* ---------- seam check: pieces that cross the tile edge ---------- */
+  var RV = null;
+  function seamOn() { return U.seamT && Date.now() - U.seamT < 4500; }
+  function pieceBox(L) {
+    var ct = content(L, 1000); if (!ct) return null; var W0 = D.tileIn, H0 = tileHt(), p = pos(L), w = ct.w / 1000 * W0, h = ct.h / 1000 * W0, r = (L.r || 0) * Math.PI / 180, ox0 = 0, oy0 = 0;
+    if (L.t === 'art') { var bx = artBox(L), lx = ((bx[0] + bx[2]) / 2 - .5) * w * (L.fl === 'x' ? -1 : 1), ly = ((bx[1] + bx[3]) / 2 - .5) * h * (L.fl === 'y' ? -1 : 1); ox0 = lx * Math.cos(r) - ly * Math.sin(r); oy0 = lx * Math.sin(r) + ly * Math.cos(r); w *= bx[2] - bx[0]; h *= bx[3] - bx[1]; }
+    var ww = Math.abs(w * Math.cos(r)) + Math.abs(h * Math.sin(r)), hh = Math.abs(w * Math.sin(r)) + Math.abs(h * Math.cos(r)), cx = p[0] * W0 + ox0, cy = p[1] * H0 + oy0;
+    return [(cx - ww / 2) / W0, (cy - hh / 2) / H0, (cx + ww / 2) / W0, (cy + hh / 2) / H0];
+  }
+  function seamCross() { return D.layers.filter(function (L) { if (L.gback) return false; var b = pieceBox(L); return b && (b[0] < -.003 || b[1] < -.003 || b[2] > 1.003 || b[3] > 1.003); }); }
+  function pieceName(L) { if (L.t === 'art') { var n = 0; ART.forEach(function (a, i) { if (a.id === L.aid) n = i + 1; }); return 'Picture ' + (n || ''); } if (L.t === 'words') return '"' + String(L.text || 'Words').slice(0, 14) + '"'; return L.t === 'sym' ? 'A symbol' : 'A shape'; }
+  function seamCheck() {
+    var c = seamCross(), wraps = D.rep === 'grid' || D.rep === 'halfdrop' || D.rep === 'halfbrick';
+    if (!c.length) U.seamMsg = 'Seam check: nothing crosses the edge. Clean seams.';
+    else U.seamMsg = c.length + (c.length === 1 ? ' piece crosses' : ' pieces cross') + ' the edge: ' + c.slice(0, 3).map(pieceName).join(', ') + '. ' + (wraps ? 'It carries on into the next copy, so it prints fine.' : 'Here it meets a turned or flipped copy. Check the highlight.');
+    U.seamT = Date.now(); U.seamIds = c.map(function (L) { return L.id; }); setTimeout(draw, 4600); render();
+  }
+  function seamDraw(g, W, H, pp, u) {
+    var ids = U.seamIds || []; if (!ids.length) return;
+    var hl = withDoc(Object.assign(clone(D), { layers: D.layers.filter(function (L) { return ids.indexOf(L.id) >= 0; }), ground: 'none', fab: null }), function () { return tile(pp); });
+    var m = E.cv(hl.width, hl.height), mg = m.getContext('2d'); mg.drawImage(hl, 0, 0); mg.globalCompositeOperation = 'source-in'; mg.fillStyle = 'rgba(240,190,40,.75)'; mg.fillRect(0, 0, m.width, m.height);
+    g.save(); g.fillStyle = 'rgba(255,255,255,.55)'; g.fillRect(0, 0, W, H); g.fillStyle = g.createPattern(m, 'repeat'); g.fillRect(0, 0, W, H); g.restore();
+  }
+  // tap a piece on the Repeat picture: go to Make with it picked
+  function repeatTap(px, py) {
+    U.step = 'make'; U.view = 'tile'; U.zoom = 1; U.panX = 0; U.panY = 0; U.addOpen = null;
+    if (!RV || D.rep === 'kale') { render(); return; }
+    var cp = copies(), B = blockB(RV.pp), Bh = blockBh(RV.pp), tx = ((px % RV.tw) + RV.tw) % RV.tw, ty = ((py % RV.th) + RV.th) % RV.th, rect = Math.abs(Bh - B) > 1, hit = null;
+    function md(a, m) { return ((a % m) + m) % m; }
+    cp.c.forEach(function (cc) {
+      if (hit) return; var uu = md(tx / B - cc[0], cp.w), vv = md(ty / Bh - cc[1], cp.h); if (uu >= 1 || vv >= 1) return;
+      var r0 = cc[4] || 0; if (rect && r0 % 180) r0 = (r0 + 90) % 360; var rt = -r0 * Math.PI / 180, sc = cc[5] || 1;
+      if (rt) { var dx = (uu - .5) * B, dy = (vv - .5) * Bh; uu = .5 + (dx * Math.cos(rt) - dy * Math.sin(rt)) / B; vv = .5 + (dx * Math.sin(rt) + dy * Math.cos(rt)) / Bh; }
+      if (cc[2]) uu = 1 - uu; if (cc[3]) vv = 1 - vv;
+      for (var i = D.layers.length - 1; i >= 0 && !hit; i--) {
+        var L = D.layers[i]; if (L.gback) continue; var ct = content(L, B); if (!ct) continue; var p = pos(L);
+        for (var ix = -1; ix <= 1 && !hit; ix++) for (var iy = -1; iy <= 1 && !hit; iy++) {
+          var ex = (uu - p[0] + ix) * B / sc, ey = (vv - p[1] + iy) * Bh / sc, lr = -(L.r || 0) * Math.PI / 180, qx = ex * Math.cos(lr) - ey * Math.sin(lr), qy = ex * Math.sin(lr) + ey * Math.cos(lr);
+          if (Math.abs(qx) <= ct.w / 2 && Math.abs(qy) <= ct.h / 2) hit = L;
+        }
+      }
+    });
+    if (hit) { if (hit.gcell != null && D.gs) { U.gsel = [hit.gcell]; U.sel = null; } else { U.sel = hit.id; U.tool = firstTool(hit); } }
+    render();
+  }
+  var RT = null;
+  view.addEventListener('pointerdown', function (e) { if (U.step === 'repeat' && U.view === 'tile' && !U.adj) { var p = cpt(e); RT = { x: p[0], y: p[1] }; } }, true);
+  view.addEventListener('pointerup', function (e) { if (!RT) return; var p = cpt(e), r = RT; RT = null; if (U.step === 'repeat' && Math.hypot(p[0] - r.x, p[1] - r.y) < 12 * (view.width / 390)) repeatTap(p[0], p[1]); }, true);
+
   /* ---------- My patterns shelf (on this phone) ---------- */
   function thumb() { var c = E.cv(160, 160); swatchInto(c, Math.max(3, D.tileIn * 1.5), D.cloth, 200); return c.toDataURL('image/jpeg', .8); }
   function shelve(asNew) {
@@ -1330,6 +1404,7 @@
       '<li><b>Make</b>: Add your art, words, symbols, shapes or a fabric. Tap a piece to change it. Drag to move, pinch to size, two fingers to turn. The red dot sizes and turns with one finger. Hold a piece for Copy, Front, Back, Delete.</li>' +
       '<li><b>Repeat</b>: Grid, Half-drop, Half-brick, Mirror (Readable keeps words reading the right way), Toss, Kaleidoscope.</li>' +
       '<li><b>Grid</b> is a guide to line pieces up. Turn on <b>Use squares</b> to fill it: tap a square, then change one square, a row, a column, all, or every square with the same piece.</li>' +
+      '<li><b>Repeat</b>: pick how copies sit. Half-drop and Half-brick can drop or shift by 1/2, 1/3 or 1/4. Toss can turn copies and mix their sizes; Shuffle gives a new mix. Tap a piece on the Repeat picture to edit it. <b>Seam check</b> lights up anything that crosses the tile edge.</li>' +
       '<li><b>Adjust tile</b> (the corners button at the top): drag a corner or an edge to size it, wide, tall or square. Drag inside to move it. Your art keeps its size, so copies sit closer or farther apart. Fit to my art hugs your art. Art size makes the whole thing bigger or smaller on the fabric, with an 8 in preview and how many fit across a yard. Kaleidoscope stays square. Toss turns copies a half turn on a rectangle.</li>' +
       '<li><b>Fabric</b>: plaid, stripes or checks under your art. Open Thread colors, Bands, Weave and Printed on to change each one.</li>' +
       '<li><b>Words</b>: straight, arc over, arc under, circle, seal, stacked, vertical. Wrap words around a shape and they hug it.</li>' +
@@ -1359,9 +1434,9 @@
     document.documentElement.classList.toggle('righty', HAND === 'right');
     $('home').hidden = true; // no first page: it always opens straight into the canvas
     $('addbar').hidden = U.step !== 'make'; $('addbar').innerHTML = [['art', 'My art'], ['fab', 'Fabrics'], ['words', 'Words'], ['sym', 'Symbols'], ['shape', 'Shapes']].map(function (x) { return '<button type="button" data-tab="' + x[0] + '" aria-pressed="' + (U.addOpen === x[0]) + '">' + x[1] + '</button>'; }).join('');
-    toolbar(); $('fab').hidden = true; $('views').parentNode.style.visibility = U.step === 'repeat' ? 'hidden' : ''; $('zoom').hidden = U.step === 'look' && false; $('trash').hidden = !!U.adj || (U.step === 'save' ? false : U.step !== 'make') || (!!sel() && $('stage').clientHeight < 400) || !!(U.gsel && U.gsel.length); // short screens: the side rail needs the room, Delete is on the floating bar $('trash').setAttribute('aria-label', sel() ? 'Delete this piece' : 'Start fresh'); $('trash').classList.toggle('piece', !!sel()); if (U.step !== 'make' || U.view !== 'tile') placeCtx(0, 0, false);
+    toolbar(); $('fab').hidden = true; $('views').parentNode.style.visibility = ''; $('zoom').hidden = U.step === 'look' && false; $('trash').hidden = !!U.adj || (U.step === 'save' ? false : U.step !== 'make') || (!!sel() && $('stage').clientHeight < 400) || !!(U.gsel && U.gsel.length); // short screens: the side rail needs the room, Delete is on the floating bar $('trash').setAttribute('aria-label', sel() ? 'Delete this piece' : 'Start fresh'); $('trash').classList.toggle('piece', !!sel()); if (U.step !== 'make' || U.view !== 'tile') placeCtx(0, 0, false);
     var pn = $('panel'), s = pn.scrollTop; pn.innerHTML = panelHtml(); pn.scrollTop = s; minis(); adjSwatch();
-    var cv2 = U.view !== 'tile'; $('clothChip').hidden = !cv2; $('clothChip').textContent = clothShort(D.cloth); $('clothChip').setAttribute('aria-pressed', String(cv2 && U.clothOpen));
+    var cv2 = false; $('clothChip').hidden = true; $('clothChip').textContent = clothShort(D.cloth); $('clothChip').setAttribute('aria-pressed', String(cv2 && U.clothOpen));
     var co = cv2 && U.clothOpen && U.step !== 'look', cl = $('cloths'); cl.hidden = !co;
     if (co) { var cx = cl.scrollLeft; cl.innerHTML = clothRow().replace(/<p class="note">.*<\/p>$/, ''); cl.scrollLeft = cx; minis(cl); }
     Array.prototype.forEach.call(document.querySelectorAll('#steps button'), function (b) { b.setAttribute('aria-pressed', String(b.dataset.s === U.step)); });
