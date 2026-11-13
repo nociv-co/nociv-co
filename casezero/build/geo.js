@@ -113,7 +113,7 @@ export function buildHalf(o) {
   // walls: split into height bands where the USB notch, the snap groove or a texture changes the outline
   const wallBase = diff(out, innerWall), wt = o.walls && o.walls.kind && o.walls.kind !== 'none' ? o.walls : null;
   const snapOK = o.snap && deckZ - 10.6 > R.F + 1, gz = [deckZ - 10.4, deckZ - 7.6];
-  const zs = new Set([R.F, H]); if (o.port) zs.add(o.port.z); if (snapOK) { zs.add(gz[0]); zs.add(gz[1]); }
+  const zs = new Set([R.F, H]); if (o.port) zs.add(o.port.z); if (o.port2) zs.add(o.port2.z); if (snapOK) { zs.add(gz[0]); zs.add(gz[1]); }
   if (wt && wt.kind !== 'vstripe') { const bh = Math.max(1, wt.sp / 2); for (let z = R.F + bh; z < H - 0.3; z += bh) zs.add(+z.toFixed(2)); }
   const Z = [...zs].filter((z) => z >= R.F && z <= H).sort((x, y) => x - y);
   const ringOut = wt ? diff(offset(out, wt.depth), out) : [];
@@ -128,6 +128,7 @@ export function buildHalf(o) {
     }
     if (snapOK && mid > gz[0] && mid < gz[1]) w = diff(w, offset(out, -(R.T - 1.2)));
     if (o.port && mid > o.port.z) w = diff(w, [rect(o.port.x0, o.port.y0, o.port.x1, o.port.y1)]);
+    if (o.port2 && mid > o.port2.z) w = diff(w, [rect(o.port2.x0, o.port2.y0, o.port2.x1, o.port2.y1)]);
     tray.push({ polys: w, z0, z1, tag: 'wall' });
   }
   // screw posts: deck sits on top of them, flush with the wall
