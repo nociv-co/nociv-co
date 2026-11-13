@@ -47,26 +47,33 @@
     var k = size / Math.max(t.width, t.height), w = t.width * k, h = t.height * k; g.drawImage(t, -w / 2, -h / 2, w, h);
   }
   // one kaleidoscope slice: the motif seen through a wedge of angle `a`, then mirrored around the center
-  // win: {x, y, z, r, fill} moves, sizes and turns the art under the slice; fill repeats the art so the slice is never empty
+  // the art under one slice. win: {x, y, z, r, fill} moves, sizes and turns it; fill repeats the art so the slice is never empty.
+  // under: a ground picture the same size as the art (a fabric), repeated under it so the fabric runs with the slices.
+  function kaleArt(wg, m, R, angle, nudge, win, under) {
+    var wz = win && win.z ? win.z : 1, wr = win && win.r ? win.r : 0, mx = Math.max(m.width, m.height), fk = R * 0.9 * wz / mx, far = 4 * R / fk + mx;
+    wg.save(); wg.translate(R * (0.55 + (nudge ? nudge[0] : 0) + (win && win.x ? win.x : 0)), R * ((nudge ? nudge[1] : 0) + (win && win.y ? win.y : 0)));
+    if (under || (win && win.fill)) {
+      wg.save(); wg.rotate((angle + wr) * Math.PI / 180); wg.scale(fk, fk); wg.translate(-m.width / 2, -m.height / 2);
+      if (under) { wg.fillStyle = wg.createPattern(under, 'repeat'); wg.fillRect(-far, -far, far * 2, far * 2); }
+      if (win && win.fill) { wg.fillStyle = wg.createPattern(m, 'repeat'); wg.fillRect(-far, -far, far * 2, far * 2); }
+      wg.restore();
+    }
+    if (!(win && win.fill)) placeMotif(wg, m, R * 0.9 * wz, angle + wr, false, false);
+    wg.restore();
+  }
   // rot0 turns the finished cell (4 slices sit on the axes so the tile edges stay mirrors)
-  function kaleCell(m, R, slices, angle, tri, nudge, win, rot0) {
+  function kaleCell(m, R, slices, angle, tri, nudge, win, rot0, under) {
     var c = cv(R * 2, R * 2), g = c.getContext('2d'), a = Math.PI * 2 / slices;
     var w = cv(R * 2, R * 2), wg = w.getContext('2d');
     // tri: the wedge is a real equilateral triangle (straight outer edge), so every edge of every triangle is a mirror
     wg.translate(R, R); wg.beginPath(); wg.moveTo(0, 0); var e2 = a / 2 + .012; if (tri) { wg.lineTo(Math.cos(-e2) * R * 1.05, Math.sin(-e2) * R * 1.05); wg.lineTo(Math.cos(e2) * R * 1.05, Math.sin(e2) * R * 1.05); } else wg.arc(0, 0, R * 1.02, -e2, e2); wg.closePath(); wg.clip();
-    var wz = win && win.z ? win.z : 1, wr = win && win.r ? win.r : 0;
-    wg.save(); wg.translate(R * (0.55 + (nudge ? nudge[0] : 0) + (win && win.x ? win.x : 0)), R * ((nudge ? nudge[1] : 0) + (win && win.y ? win.y : 0)));
-    if (win && win.fill) {
-      var fk = R * 0.9 * wz / Math.max(m.width, m.height), far = 4 * R / fk + Math.max(m.width, m.height);
-      wg.rotate((angle + wr) * Math.PI / 180); wg.scale(fk, fk); wg.translate(-m.width / 2, -m.height / 2); wg.fillStyle = wg.createPattern(m, 'repeat'); wg.fillRect(-far, -far, far * 2, far * 2);
-    } else placeMotif(wg, m, R * 0.9 * wz, angle + wr, false, false);
-    wg.restore();
+    kaleArt(wg, m, R, angle, nudge, win, under);
     g.translate(R, R);
     for (var i = 0; i < slices; i++) { g.save(); g.rotate(i * a + (rot0 || 0)); if (i % 2) g.scale(1, -1); g.drawImage(w, -R, -R); g.restore(); }
     return c;
   }
-  // the slice of each kaleidoscope: how many, and whether its outer edge is straight (triangle) or round
-  E.kaleGeom = function (type, slices) { return type === 'kaleHex' ? { n: 12, tri: false } : type === 'kaleTri' ? { n: 6, tri: true } : { n: slices === 4 ? 4 : 8, tri: false }; };
+  // the slice of each kaleidoscope: how many, whether its outer edge is straight (triangle) or round, or a plain rectangle
+  E.kaleGeom = function (type, slices) { return type === 'kaleRect' ? { n: 4, rect: true } : type === 'kaleHex' ? { n: 12, tri: false } : type === 'kaleTri' ? { n: 6, tri: true } : { n: slices === 4 ? 4 : 8, tri: false }; };
   E.repeatTile = function (o) {
     var m = o.motif, P = o.ppi, T = Math.max(8, Math.round(o.tileIn * P)), size = T * (o.scale || .7), ang = o.angle || 0, t = o.type;
     var W = T, H = T, spots = [];
@@ -88,15 +95,22 @@
       size *= .8;
     }
     var c, g;
+    if (t === 'kaleRect') { // a rectangle of any proportion, mirrored left-right and up-down: every edge is a mirror, so it always repeats cleanly
+      var ra = Math.max(.3, Math.min(3, o.aspect || 1)), sw = T, sh = Math.max(8, Math.round(T * ra)), rc = cv(sw, sh), rg = rc.getContext('2d');
+      rg.translate(0, sh / 2); kaleArt(rg, m, T, ang, o.nudge, o.win, o.under);
+      c = cv(sw * 2, sh * 2); g = c.getContext('2d'); if (o.bg) { g.fillStyle = o.bg; g.fillRect(0, 0, sw * 2, sh * 2); }
+      [[0, 0, 1, 1], [sw * 2, 0, -1, 1], [0, sh * 2, 1, -1], [sw * 2, sh * 2, -1, -1]].forEach(function (q) { g.save(); g.translate(q[0], q[1]); g.scale(q[2], q[3]); g.drawImage(rc, 0, 0); g.restore(); });
+      return c;
+    }
     if (t === 'kaleSquare' || t === 'kaleHex' || t === 'kaleTri') {
       if (t === 'kaleSquare') {
         c = cv(T, T); g = c.getContext('2d'); if (o.bg) { g.fillStyle = o.bg; g.fillRect(0, 0, T, T); }
-        var cell = o.slices === 4 ? kaleCell(m, T / 2 * 1.415, 4, ang, false, o.nudge, o.win, Math.PI / 4) : kaleCell(m, T / 2 * 1.415, 8, ang, false, o.nudge, o.win); g.save(); g.beginPath(); g.rect(0, 0, T, T); g.clip(); g.drawImage(cell, T / 2 - cell.width / 2, T / 2 - cell.height / 2); g.restore(); return c;
+        var cell = o.slices === 4 ? kaleCell(m, T / 2 * 1.415, 4, ang, false, o.nudge, o.win, Math.PI / 4, o.under) : kaleCell(m, T / 2 * 1.415, 8, ang, false, o.nudge, o.win, 0, o.under); g.save(); g.beginPath(); g.rect(0, 0, T, T); g.clip(); g.drawImage(cell, T / 2 - cell.width / 2, T / 2 - cell.height / 2); g.restore(); return c;
       }
       // hexagons sit on a lattice; the rectangle of 2 hexes across and 2 rows down repeats cleanly
       var Rh = T / 2, hw = Math.round(Math.sqrt(3) * Rh), hh = Math.round(3 * Rh);
       c = cv(hw, hh); g = c.getContext('2d'); if (o.bg) { g.fillStyle = o.bg; g.fillRect(0, 0, hw, hh); }
-      var slices = t === 'kaleHex' ? 12 : 6, cellH = t === 'kaleTri' ? kaleCell(m, Rh, 6, ang, true, o.nudge, o.win) : kaleCell(m, Rh * 1.16, slices, ang, false, o.nudge, o.win);
+      var slices = t === 'kaleHex' ? 12 : 6, cellH = t === 'kaleTri' ? kaleCell(m, Rh, 6, ang, true, o.nudge, o.win, 0, o.under) : kaleCell(m, Rh * 1.16, slices, ang, false, o.nudge, o.win, 0, o.under);
       var hexPath = function (gg, r) { gg.beginPath(); for (var k = 0; k < 6; k++) { var aa = Math.PI / 6 + k * Math.PI / 3; gg.lineTo(Math.cos(aa) * r, Math.sin(aa) * r); } gg.closePath(); };
       [[0, 0], [hw / 2, hh / 2]].forEach(function (p) {
         wrapDraw(g, hw, hh, p[0], p[1], Rh * 1.2, function (gg) { hexPath(gg, Rh + 1); gg.clip(); gg.drawImage(cellH, -cellH.width / 2, -cellH.height / 2); });

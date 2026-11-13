@@ -21,6 +21,7 @@
   var CHECKS = [['board', 'Checkerboard'], ['gingham', 'Gingham'], ['houndstooth', 'Houndstooth'], ['window', 'Windowpane']];
   var BASIC = ['#1a1a1a', '#ffffff', '#f3efe6', '#e9dfcb', '#8a8780', '#c8412f', '#d6336c', '#f2c230', '#d4af37', '#2a9d8f', '#3f4a2c', '#1d6fb8', '#1c2b45', '#6b4f33', '#c6b4f2', '#a8d8f0'];
   var IC = {
+    lsquare: '<rect x="4" y="4" width="16" height="16" rx="1.5"/>', lrect: '<rect x="6.5" y="3" width="11" height="18" rx="1.5"/>', lgrid: '<rect x="3" y="3" width="18" height="18"/><path d="M12 3v18M3 12h18"/>', lslice: '<path d="M3 12L20 4.5a17 17 0 0 1 0 15z"/>',
     add: '<path d="M12 5v14M5 12h14"/>', repeat: '<rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="7" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/>',
     ground: '<path d="M3 17h18M3 21h18"/><path d="M12 3s5 5.5 5 8.5a5 5 0 0 1-10 0C7 8.5 12 3 12 3z"/>', grid: '<rect x="3" y="3" width="18" height="18"/><path d="M9 3v18M15 3v18M3 9h18M3 15h18"/>',
     ideas: '<path d="M4 4h7v7H4zM13 4h7v7h-7zM4 13h7v7H4zM13 13h7v7h-7z"/>', done: '<path d="M5 12l5 5 9-10"/>', color: '<path d="M12 20l8-8-4-4-8 8v4z"/><path d="M14 6l4 4"/>',
@@ -309,16 +310,22 @@
   }
   var tcache = {}, tcount = 0;
   function tile(ppi) {
-    var B = blockB(ppi), key = JSON.stringify([D.tileIn, D.tileH, D.rep, D.drop, D.shift, D.tturn, D.tmix, D.tseed, D.flipAlt, D.fade, D.mdir, D.mword, D.kale, D.kn, D.kw, D.ground, D.fab, D.layers, D.pal, D.artMap, B, artVer, LETTERS]); if (tcache[key]) return tcache[key];
+    var B = blockB(ppi), key = JSON.stringify([D.tileIn, D.tileH, D.rep, D.drop, D.shift, D.tturn, D.tmix, D.tseed, D.flipAlt, D.fade, D.mdir, D.mword, D.kale, D.kn, D.kw, D.ka, D.fabRun, D.ground, D.fab, D.layers, D.pal, D.artMap, B, artVer, LETTERS]); if (tcache[key]) return tcache[key];
     var t;
     if (D.rep === 'kale') {
       // the slices are cut from your pieces only; the ground (a color or a fabric) goes under the whole tile
       var m = E.cv(B, B); drawLayersInto(m.getContext('2d'), B, B, B, { w: 1, h: 1, c: [[0, 0, 0, 0, 0]] });
-      var kt = E.repeatTile({ motif: m, type: D.kale, slices: D.kn, win: D.kw, tileIn: D.tileIn, ppi: ppi, scale: 1, bg: null });
+      var under = null; if (D.fabRun === 'layout' && D.fab) { under = E.cv(B, B); fillGround(under.getContext('2d'), B, B, B, ppi, B); } // the fabric is cut and mirrored with the slices
+      var kt = E.repeatTile({ motif: m, type: D.kale, slices: D.kn, win: D.kw, aspect: ka(), under: under, tileIn: D.tileIn, ppi: ppi, scale: 1, bg: null });
       t = E.cv(kt.width, kt.height); var kg = t.getContext('2d'); fillGround(kg, kt.width, kt.height, kt.width, ppi, kt.height); kg.drawImage(kt, 0, 0);
     } else {
       var Bh = blockBh(ppi), cp = copies(), W = B * cp.w, H = Bh * cp.h; t = E.cv(W, H); var g = t.getContext('2d');
-      fillGround(g, W, H, B, ppi, Bh); drawLayersInto(g, W, H, B, cp, 0, 0, Bh);
+      fillGround(g, W, H, B, ppi, Bh);
+      if (D.fabRun === 'layout' && D.fab && cp.c.some(function (cc) { return cc[2] || cc[3] || cc[4]; })) { // the fabric flips and turns with each copy
+        var gt = E.cv(B, Bh), rct = Math.abs(Bh - B) > 1; fillGround(gt.getContext('2d'), B, Bh, B, ppi, Bh);
+        cp.c.forEach(function (cc) { var r0 = cc[4] || 0; if (rct && r0 % 180) r0 = (r0 + 90) % 360; E.wrapDraw(g, W, H, (cc[0] + .5) * B, (cc[1] + .5) * Bh, Math.hypot(B, Bh) / 2 + 2, function (gg) { if (r0) gg.rotate(r0 * Math.PI / 180); gg.scale(cc[2] ? -1 : 1, cc[3] ? -1 : 1); gg.drawImage(gt, -B / 2, -Bh / 2); }); });
+      }
+      drawLayersInto(g, W, H, B, cp, 0, 0, Bh);
     }
     if (++tcount > 14) { tcache = {}; tcount = 1; }
     tcache[key] = t; return t;
@@ -381,33 +388,42 @@
     fit(); var g = VG, W = view.width, H = view.height; if (!W || !H) return;
     g.setTransform(1, 0, 0, 1, 0, 0); g.fillStyle = '#ffffff'; g.fillRect(0, 0, W, H);
     var u = W / 390;
+    PRV = null;
+    if (U.ktool) { drawKtool(g, W, H, u); return; }
     if (U.adj) { drawAdj(g, W, H, u); return; }
     if (U.view !== 'tile' && !U.plain) {
-      var a44 = (D.rep === 'kale' ? tileInches()[0] : D.tileIn) * 4, across = (U.view === 'yard' ? 42 : U.view === 'swatch' ? a44 : D.tileIn * 1.6) / (U.zoom || 1), ppi = W / across, t = tile(ppi);
+      var across = (U.view === 'yard' ? 42 : U.view === 'swatch' ? 8 : D.tileIn * 1.6) / (U.zoom || 1), ppi = W / across, t = tile(ppi);
       g.fillStyle = g.createPattern(t, 'repeat'); g.fillRect(0, 0, W, H); HIT = null; placeCtx(0, 0, false); SV = { pp: ppi, tw: t.width, th: t.height };
       laycloth(g, W, H, D.cloth, ppi);
       if (U.view === 'yard') yardMarks(g, W, H, ppi, u, false, 50 * u);
-      else if (U.view === 'swatch' && U.step === 'repeat') inchRuler(g, W, ppi, u, 50 * u);
       var ti = tileInches();
-      lbl((U.view === 'yard' ? '42 in across, on ' + clothShort(D.cloth).toLowerCase() : U.view === 'swatch' ? '4 across, ' + inch(Math.round(a44 * 100) / 100) + ' wide, on ' + clothShort(D.cloth).toLowerCase() : '') + (NUMS ? (U.view === 'tile' ? '' : ', ') + 'repeat ' + inch(ti[0]) + ' x ' + inch(ti[1]) : '')); return;
+      lbl((U.view === 'yard' ? '42 in across, on ' + clothShort(D.cloth).toLowerCase() : U.view === 'swatch' ? '8 in swatch, on ' + clothShort(D.cloth).toLowerCase() : '') + (NUMS ? (U.view === 'tile' ? '' : ', ') + 'repeat ' + inch(ti[0]) + ' x ' + inch(ti[1]) : '')); return;
     }
     // Tile view: the block big in the middle, its repeats faded around it
     var side = (HAND === 'left' ? 64 : 8) * u, aw = W - side - (HAND === 'left' ? 8 : 64) * u, top = 52 * u, ah = H - top - 34 * u;
-    var ZM = U.zoom || 1, ppi2 = Math.min(aw * .9 / D.tileIn, ah * .9 / tileHt()) * ZM, t2 = tile(ppi2), B = blockB(ppi2), Bh = blockBh(ppi2), ox = side + (aw - B) / 2 + (ZM > 1 ? (U.panX || 0) : 0), oy = top + (ah - Bh) / 2 + (ZM > 1 ? (U.panY || 0) : 0);
-    var tox = ((ox % t2.width) + t2.width) % t2.width - t2.width, toy = ((oy % t2.height) + t2.height) % t2.height - t2.height;
-    var kpl = !U.plain && D.rep === 'kale' && U.step === 'make';
-    if (U.plain || kpl) { var tp = withDoc(Object.assign(clone(D), { ground: 'none', fab: null, fade: 1, rep: 'grid', flipAlt: false }), function () { return tile(ppi2); }); g.drawImage(tp, 0, 0, B, Bh, ox, oy, B, Bh); }
+    // Make with the Slice layout: the slice is the artboard. It fills the picture and your pieces sit under it.
+    var kpl = !U.plain && D.rep === 'kale' && U.step === 'make', kbox = null;
+    if (kpl) { aw -= 88 * u; if (HAND !== 'left') side += 88 * u; } // room beside the slice for the Result picture
+    var ZM = U.zoom || 1, ppi2 = Math.min(aw * .9 / D.tileIn, ah * .9 / tileHt()) * ZM;
+    if (kpl) { kbox = polyBox(kslPoly()); ppi2 = Math.min(aw * .86 / ((kbox[2] - kbox[0]) * D.tileIn), ah * .86 / ((kbox[3] - kbox[1]) * D.tileIn), W * 2.2 / D.tileIn) * ZM; }
+    var B = blockB(ppi2), Bh = blockBh(ppi2), ox = side + (aw - B) / 2 + (ZM > 1 ? (U.panX || 0) : 0), oy = top + (ah - Bh) / 2 + (ZM > 1 ? (U.panY || 0) : 0);
+    if (kpl) { ox = side + aw / 2 - (kbox[0] + kbox[2]) / 2 * B + (ZM > 1 ? (U.panX || 0) : 0); oy = top + ah / 2 - (kbox[1] + kbox[3]) / 2 * Bh + (ZM > 1 ? (U.panY || 0) : 0); }
+    var t2 = U.plain || kpl ? null : tile(ppi2);
+    var tox = t2 ? ((ox % t2.width) + t2.width) % t2.width - t2.width : 0, toy = t2 ? ((oy % t2.height) + t2.height) % t2.height - t2.height : 0;
+    if (U.plain || kpl) { var tp = withDoc(Object.assign(clone(D), { ground: 'none', fab: null, fade: 1, rep: 'grid', flipAlt: false }, kpl ? { tileH: 0 } : {}), function () { return tile(ppi2); });
+      if (kpl && kw().fill) { g.save(); g.translate(ox, oy); g.fillStyle = g.createPattern(tp, 'repeat'); g.fillRect(-ox, -oy, W, H); g.restore(); } else g.drawImage(tp, 0, 0, B, Bh, ox, oy, B, Bh); }
     else {
       g.save(); g.translate(tox, toy); g.fillStyle = g.createPattern(t2, 'repeat'); g.fillRect(0, 0, W + t2.width * 2, H + t2.height * 2); g.restore();
       if (seamOn()) seamDraw(g, W, H, ppi2, u, tox, toy);
       g.fillStyle = U.step === 'make' ? 'rgba(242,242,247,.66)' : 'rgba(242,242,247,.3)'; g.fillRect(0, 0, W, oy); g.fillRect(0, oy + Bh, W, H); g.fillRect(0, oy, ox, Bh); g.fillRect(ox + B, oy, W, Bh);
     }
     if (D.grid > 1) { g.save(); g.setLineDash([4 * u, 3 * u]); for (var k = 1; k < D.grid; k++) { var q = B * k / D.grid, qh = Bh * k / D.grid; g.beginPath(); g.moveTo(ox + q, oy); g.lineTo(ox + q, oy + Bh); g.moveTo(ox, oy + qh); g.lineTo(ox + B, oy + qh); g.strokeStyle = 'rgba(255,255,255,.9)'; g.lineWidth = 3 * u; g.stroke(); g.strokeStyle = 'rgba(31,42,68,.7)'; g.lineWidth = 1.2 * u; g.stroke(); } g.restore(); }
-    g.strokeStyle = '#fff'; g.lineWidth = 3.5 * u; g.strokeRect(ox, oy, B, Bh); g.strokeStyle = '#1f2a44'; g.lineWidth = 1.5 * u; g.strokeRect(ox, oy, B, Bh);
-    if (kpl) { // the slice, drawn on the art: inside the outline is what gets mirrored
-      var kp = kslPoly(); g.save(); g.beginPath(); g.rect(0, 0, W, H); kp.forEach(function (q, i) { var px = ox + q[0] * B, py = oy + q[1] * Bh; if (i) g.lineTo(px, py); else g.moveTo(px, py); }); g.closePath();
-      g.fillStyle = 'rgba(242,242,247,.72)'; g.fill('evenodd');
-      g.beginPath(); kp.forEach(function (q, i) { var px = ox + q[0] * B, py = oy + q[1] * Bh; if (i) g.lineTo(px, py); else g.moveTo(px, py); }); g.closePath(); g.strokeStyle = '#fff'; g.lineWidth = 4.5 * u; g.stroke(); g.strokeStyle = '#c8412f'; g.lineWidth = 2.2 * u; g.stroke(); g.restore();
+    if (!kpl) { g.strokeStyle = '#fff'; g.lineWidth = 3.5 * u; g.strokeRect(ox, oy, B, Bh); g.strokeStyle = '#1f2a44'; g.lineWidth = 1.5 * u; g.strokeRect(ox, oy, B, Bh); }
+    if (kpl) { // everything outside the slice fades away; inside is what gets mirrored
+      var kp = kslPoly(), kpath = function () { kp.forEach(function (q, i) { var px = ox + q[0] * B, py = oy + q[1] * Bh; if (i) g.lineTo(px, py); else g.moveTo(px, py); }); g.closePath(); };
+      g.save(); g.beginPath(); g.rect(0, 0, W, H); kpath(); g.fillStyle = 'rgba(242,242,247,.86)'; g.fill('evenodd');
+      g.beginPath(); kpath(); g.strokeStyle = '#fff'; g.lineWidth = 5 * u; g.stroke(); g.strokeStyle = '#c8412f'; g.lineWidth = 2.4 * u; g.stroke(); g.restore();
+      drawPrev(g, W, H, u);
     }
     GUIDES.forEach(function (gd) { g.strokeStyle = '#1f2a44'; g.lineWidth = 1.5 * u; g.beginPath(); if (gd[0] === 'x') { g.moveTo(ox + gd[1] * B, oy - 10 * u); g.lineTo(ox + gd[1] * B, oy + Bh + 10 * u); } else { g.moveTo(ox - 10 * u, oy + gd[1] * Bh); g.lineTo(ox + B + 10 * u, oy + gd[1] * Bh); } g.stroke(); });
     var L = sel();
@@ -416,28 +432,23 @@
         g.save(); g.translate(ox + p[0] * B, oy + p[1] * Bh); g.rotate((L.r || 0) * Math.PI / 180);
         g.strokeStyle = '#fff'; g.lineWidth = 4 * u; g.strokeRect(-ct.w / 2 - 4 * u, -ct.h / 2 - 4 * u, ct.w + 8 * u, ct.h + 8 * u);
         g.strokeStyle = '#1f2a44'; g.lineWidth = 2 * u; g.setLineDash([6 * u, 4 * u]); g.strokeRect(-ct.w / 2 - 4 * u, -ct.h / 2 - 4 * u, ct.w + 8 * u, ct.h + 8 * u); g.setLineDash([]);
-        var hx = ct.w / 2 + 4 * u, hy = -ct.h / 2 - 4 * u; g.fillStyle = '#1f2a44'; g.beginPath(); g.arc(hx, hy, 11 * u, 0, 7); g.fill(); g.strokeStyle = '#fff'; g.lineWidth = 2 * u; g.beginPath(); g.arc(hx, hy, 5 * u, -2.4, 1.2); g.stroke();
+        if (!L.lock) { var cxs = ct.w / 2 + 4 * u, cys = ct.h / 2 + 4 * u;
+          [[-1, -1], [1, -1], [1, 1], [-1, 1]].forEach(function (q) { g.fillStyle = '#fff'; g.strokeStyle = '#1f2a44'; g.lineWidth = 2 * u; g.beginPath(); g.arc(q[0] * cxs, q[1] * cys, 7.5 * u, 0, 7); g.fill(); g.stroke(); });
+          g.strokeStyle = '#1f2a44'; g.lineWidth = 1.5 * u; g.beginPath(); g.moveTo(0, cys); g.lineTo(0, cys + 15 * u); g.stroke();
+          g.fillStyle = '#1f2a44'; g.beginPath(); g.arc(0, cys + 26 * u, 11 * u, 0, 7); g.fill(); g.strokeStyle = '#fff'; g.lineWidth = 2 * u; g.beginPath(); g.arc(0, cys + 26 * u, 5 * u, -2.4, 1.2); g.stroke(); }
         g.restore();
       }
     }
     HIT = { ox: ox, oy: oy, B: B, Bh: Bh, u: u };
     if (L && !G) { var ct2 = content(L, B), p2 = pos(L); placeCtx(ox + p2[0] * B, oy + p2[1] * Bh - (ct2 ? Math.max(ct2.w, ct2.h) / 2 : 0), true); } else placeCtx(0, 0, false);
     if (L && NUMS) { var ctn = content(L, 1000), pn = pos(L); lbl('Across ' + inch(pn[0] * D.tileIn) + ', down ' + inch(pn[1] * tileHt()) + ', ' + inch(ctn ? ctn.w / 1000 * D.tileIn : 0) + ' wide'); }
-    else lbl(seamOn() ? U.seamMsg : U.plain ? 'Just your art. Tap the eye to see it all again.' : kpl && !L ? 'Kaleidoscope: what sits inside the red slice gets mirrored. 4 x 4 shows the result.' : L ? '' : !D.layers.length ? 'Tap My art, Words or Symbols to start' : U.step === 'make' ? 'Tap a piece to change it' : 'One repeat is ' + inch(tileInches()[0]) + ' x ' + inch(tileInches()[1]) + ', on ' + clothShort(D.cloth).toLowerCase() + '. Tap a piece to edit it.');
+    else lbl(seamOn() ? U.seamMsg : U.plain ? 'Just your art. Tap the eye to see it all again.' : kpl && !L ? (D.layers.length ? 'Build inside the slice. Drag pieces in or out. Tap Result to see it repeat.' : 'This slice gets mirrored. Tap My art to put a piece in it.') : L ? '' : !D.layers.length ? 'Tap My art, Words or Symbols to start' : U.step === 'make' ? 'Tap a piece to change it' : 'One repeat is ' + inch(tileInches()[0]) + ' x ' + inch(tileInches()[1]) + ', on ' + clothShort(D.cloth).toLowerCase() + '. Tap a piece to edit it.');
   }
   var FLASH = null;
   function lbl(t) { if (FLASH && Date.now() < FLASH.until) t = FLASH.t; $('lbl').textContent = t; }
   function flash(t) { FLASH = { t: t, until: Date.now() + 4500 }; lbl(t); setTimeout(draw, 4600); }
   function inch(v) { return (Math.round(v * 100) / 100) + ' in'; }
   // Yard view: a ruler in inches along the top with the repeat marked, and the selvage down the left edge
-  // a small inch ruler on the 4 x 4 picture, so Size shows up as real inches
-  function inchRuler(g, W, ppi, u, top) {
-    var rh = 20 * u, fs = 9 * u, every = ppi > 26 * u ? 1 : ppi > 12 * u ? 2 : 6;
-    g.save(); g.translate(0, top); g.fillStyle = 'rgba(251,249,244,.94)'; g.fillRect(0, 0, W, rh); g.fillStyle = '#1a1a1a'; g.fillRect(0, rh - Math.max(1, u), W, Math.max(1, u));
-    g.font = '800 ' + fs + 'px ' + getComputedStyle(document.body).fontFamily; g.textAlign = 'center'; g.textBaseline = 'top';
-    for (var i = 0; i * ppi <= W; i++) { var X = i * ppi, len = i % every === 0 ? rh * .5 : rh * .25; g.fillRect(X - Math.max(.5, u * .5), rh - len, Math.max(1, u), len); if (i && i % every === 0 && X < W - 8 * u) g.fillText(i + (i === every ? ' in' : ''), X, 2 * u); }
-    g.restore();
-  }
   function yardMarks(g, W, H, ppi, u, big, top) {
     top = top || 0; var rh = (big ? 34 : 24) * u, sv = .6 * ppi, ti = tileInches(), fs = (big ? 13 : 9) * u;
     // selvage: the finished edge of the cloth, printed with the name and the colors
@@ -462,7 +473,7 @@
     var rx = W - rw - 20 * u; g.fillStyle = 'rgba(251,249,244,.94)'; g.fillRect(rx - 5 * u, rh + 9 * u, rw + 10 * u, fs + 8 * u); g.fillStyle = '#c8412f'; g.fillText(rt, rx, rh + 13 * u); g.restore();
   }
 
-  /* ---------- touch: tap picks, drag moves, pinch sizes, two fingers turn, the red dot sizes and turns with one finger ---------- */
+  /* ---------- touch: tap picks, drag moves, pinch sizes, two fingers turn, any corner sizes it, the knob under it turns it ---------- */
   var PT = {}, G = null, lpTimer = 0;
   function cpt(e) { var r = view.getBoundingClientRect(); return [(e.clientX - r.left) * view.width / r.width, (e.clientY - r.top) * view.height / r.height]; }
   function hitLayer(px, py) {
@@ -476,10 +487,13 @@
     }
     return null;
   }
-  function onHandle(px, py) {
-    var L = sel(); if (!L || !HIT) return false; var ct = content(L, HIT.B), p = pos(L); if (!ct) return false;
-    var a = (L.r || 0) * Math.PI / 180, hx = ct.w / 2 + 4 * HIT.u, hy = -ct.h / 2 - 4 * HIT.u, X = HIT.ox + p[0] * HIT.B + hx * Math.cos(a) - hy * Math.sin(a), Y = HIT.oy + p[1] * HIT.Bh + hx * Math.sin(a) + hy * Math.cos(a);
-    return Math.hypot(px - X, py - Y) < 22 * HIT.u;
+  function onHandle(px, py) { // 'size' on any corner, 'turn' on the knob under the piece
+    var L = sel(); if (!L || !HIT || L.lock) return false; var ct = content(L, HIT.B), p = pos(L); if (!ct) return false;
+    var a = (L.r || 0) * Math.PI / 180, cxs = ct.w / 2 + 4 * HIT.u, cys = ct.h / 2 + 4 * HIT.u, cx = HIT.ox + p[0] * HIT.B, cy = HIT.oy + p[1] * HIT.Bh;
+    var far = function (hx, hy) { return Math.hypot(px - (cx + hx * Math.cos(a) - hy * Math.sin(a)), py - (cy + hx * Math.sin(a) + hy * Math.cos(a))); };
+    if (far(0, cys + 26 * HIT.u) < 20 * HIT.u) return 'turn';
+    var hit = false; [[-1, -1], [1, -1], [1, 1], [-1, 1]].forEach(function (q) { if (far(q[0] * cxs, q[1] * cys) < 19 * HIT.u) hit = true; });
+    return hit ? 'size' : false;
   }
   // snaps: the center, the guide grid, lined up with another piece, and equal spacing
   // (half way between two pieces, or one more step past them)
@@ -499,12 +513,15 @@
     return [x, y];
   }
   view.addEventListener('pointerdown', function (e) {
+    if (U.ktool) { kDown(e); return; }
     if (U.adj) { adjDown(e); return; }
     if (U.view !== 'tile' && !U.plain) return;
     view.setPointerCapture(e.pointerId); var p = cpt(e); PT[e.pointerId] = p; hideMenu();
     var ids = Object.keys(PT);
     if (ids.length === 1) {
-      if (onHandle(p[0], p[1])) { var L0 = sel(), pp = pos(L0); commit(); G = { mode: 'handle', L: L0, cx: HIT.ox + pp[0] * HIT.B, cy: HIT.oy + pp[1] * HIT.Bh, d0: 0, a0: 0, s0: L0.s, r0: L0.r || 0 }; G.d0 = Math.hypot(p[0] - G.cx, p[1] - G.cy); G.a0 = Math.atan2(p[1] - G.cy, p[0] - G.cx); return; }
+      if (PRV && p[0] >= PRV.x && p[0] <= PRV.x + PRV.w && p[1] >= PRV.y && p[1] <= PRV.y + PRV.h) { G = { mode: 'prev', x0: p[0], y0: p[1], moved: false }; return; }
+      var hk = onHandle(p[0], p[1]);
+      if (hk) { var L0 = sel(), pp = pos(L0); commit(); G = { mode: 'handle', kind: hk, L: L0, cx: HIT.ox + pp[0] * HIT.B, cy: HIT.oy + pp[1] * HIT.Bh, d0: 0, a0: 0, s0: L0.s, r0: L0.r || 0 }; G.d0 = Math.hypot(p[0] - G.cx, p[1] - G.cy); G.a0 = Math.atan2(p[1] - G.cy, p[0] - G.cx); return; }
       var L = hitLayer(p[0], p[1]);
       G = { mode: L ? 'drag' : 'tap', L: L, x0: p[0], y0: p[1], px0: U.panX || 0, py0: U.panY || 0, moved: false, lx: L ? L.x : 0, ly: L ? L.y : 0, committed: false };
       clearTimeout(lpTimer); if (L) lpTimer = setTimeout(function () { if (G && !G.moved && G.L) { U.sel = G.L.id; G = null; showMenu(p); render(); } }, 520);
@@ -514,9 +531,10 @@
     }
   });
   view.addEventListener('pointermove', function (e) {
+    if (U.ktool) { kMove(e); return; }
     if (AG) { adjMove(e); return; }
     if (!PT[e.pointerId] || !G) return; var p = cpt(e); PT[e.pointerId] = p; if (G.L && G.L.lock && Object.keys(PT).length < 2) { if (Math.hypot(p[0] - G.x0, p[1] - G.y0) > 10) G.moved = true; return; }
-    if (G.mode === 'handle') { var d = Math.hypot(p[0] - G.cx, p[1] - G.cy), a = Math.atan2(p[1] - G.cy, p[0] - G.cx); G.L.s = clamp(G.s0 * d / Math.max(1, G.d0), .03, 3); G.L.r = Math.round((G.r0 + (a - G.a0) * 180 / Math.PI) / 1) % 360; snapAngle(G.L); draw(); return; }
+    if (G.mode === 'handle') { var d = Math.hypot(p[0] - G.cx, p[1] - G.cy), a = Math.atan2(p[1] - G.cy, p[0] - G.cx); if (G.kind === 'turn') { G.L.r = Math.round(G.r0 + (a - G.a0) * 180 / Math.PI) % 360; snapAngle(G.L); } else G.L.s = clamp(G.s0 * d / Math.max(1, G.d0), .03, 3); draw(); return; }
     if (G.mode === 'pinch') { var ids = Object.keys(PT); if (ids.length < 2) return; var A = PT[ids[0]], Bq = PT[ids[1]]; G.L.s = clamp(G.s0 * Math.hypot(A[0] - Bq[0], A[1] - Bq[1]) / Math.max(1, G.d0), .03, 3); G.L.r = Math.round(G.r0 + (Math.atan2(Bq[1] - A[1], Bq[0] - A[0]) - G.a0) * 180 / Math.PI) % 360; snapAngle(G.L); draw(); return; }
     var dx = p[0] - G.x0, dy = p[1] - G.y0;
     if (!G.moved && Math.hypot(dx, dy) < 8 * (HIT ? HIT.u : 1)) return;
@@ -529,10 +547,12 @@
   });
   function snapAngle(L) { [0, 90, 180, 270, -90, -180, -270, 360].forEach(function (v) { if (Math.abs(L.r - v) < 4) L.r = v % 360; }); }
   function up(e) {
+    if (U.ktool) { kUp(e); return; }
     if (AG) { adjUp(); return; }
     delete PT[e.pointerId]; clearTimeout(lpTimer); if (!G) return; var g = G;
     if (Object.keys(PT).length) { if (g.mode === 'pinch') G = { mode: 'none' }; return; }
     G = null; GUIDES = [];
+    if (g.mode === 'prev') { if (!g.moved) { U.view = 'swatch'; U.sel = null; render(); } return; }
     if (g.mode === 'none') { changed(true); return; }
     if (g.mode === 'handle' || g.mode === 'pinch') { g.L.auto = false; g.L.s = Math.round(g.L.s * 1000) / 1000; changed(true); return; }
     if (!g.moved && D.gs && D.grid > 1 && HIT && (!g.L || g.L.gcell != null)) {
@@ -678,6 +698,7 @@
   });
 
   function panelHtml() {
+    if (U.ktool) return ktoolHtml();
     if (U.adj) return adjHtml();
     if (U.layers) return layersHtml();
     if (U.step !== 'make' && (sel() || (U.gsel && U.gsel.length && D.gs))) { var Lp = sel(), tp = curTool(); if (U.gsel && U.gsel.length && D.gs) return squareHtml(tp); return '<p class="ptitle">' + esc(pieceName(Lp)) + '</p>' + toolHtml(tp, Lp); }
@@ -688,7 +709,7 @@
     var L = sel(), t = curTool();
     if (U.gsel && U.gsel.length && D.gs) return squareHtml(t);
     if (U.addOpen) { U.addTab = U.addOpen; return addHtml(true); }
-    if (!L) return '<p class="ptitle">Pattern</p><div class="tiles">' + [['ground', 'Color', 'ground'], ['grid', 'Grid', 'grid']].map(function (x) { return '<button type="button" class="tile" data-pt="' + x[0] + '" aria-pressed="' + (t === x[0]) + '">' + ico(x[2]) + '<small>' + x[1] + '</small></button>'; }).join('') + '</div>' + toolHtml(t, null);
+    if (!L) return makeHtml();
     return '<p class="ptitle">' + esc(pieceName(L)) + '</p>' + toolHtml(t, L);
   }
   function pieceName(L) { if (L.t === 'art') return 'Your art'; if (L.t === 'words') return 'Words'; if (L.t === 'sym') return (SYMS.filter(function (x) { return x[0] === L.k; })[0] || ['', 'Symbol'])[1]; return (SHAPES.filter(function (x) { return x[0] === L.k; })[0] || ['', 'Shape'])[1]; }
@@ -772,13 +793,16 @@
       '<p class="note">One repeat is ' + inch(ti[0]) + ' x ' + inch(ti[1]) + ', about ' + across + ' across a 42 in yard.</p>' +
       (seamOn() ? '<p class="note warn">' + esc(U.seamMsg) + '</p>' : '') +
       fold('rpro', 'Pro controls', 'Exact space, turn, nudge, seams', proHtml());
-    var gi = stepper('grid', 'Squares', n ? n + ' x ' + n : 'Off');
-    if (!n) return h + fold('gfill', 'Fill a grid', 'Off', gi + '<p class="note">Turn the grid on to fill squares with your pieces: checker, rows, frame and more.</p>');
-    h += '<!--GFILL-->'; var h0 = h; h = gi;
+    return h;
+  }
+  // the Grid layout: squares you fill with your pieces
+  function gridFillHtml() {
+    var gs = D.gs, n = D.grid > 1 ? D.grid : 0, h = stepper('grid', 'Squares', n ? n + ' x ' + n : 'Off');
+    if (!n) return h;
     var pieces = freePieces(), slots = U.slots || (gs ? gs.order : []);
     h += '<div class="grid g4" style="margin-bottom:8px">' + MIXES.map(function (x) { var on = (U.mix || (gs && gs.mix) || 'checker') === x[0]; return '<button type="button" class="pick" data-mix="' + x[0] + '" aria-pressed="' + on + '" style="min-height:48px"><canvas data-mini="mix:' + x[0] + '" width="80" height="44" style="height:26px"></canvas>' + x[1] + '</button>'; }).join('') + '</div>';
     if (pieces.length) h += '<p class="note">Tap your pieces in order: the first is A, the next B, up to D.</p><div class="grid g5" style="margin-bottom:8px">' + pieces.map(function (L) { var k = slots.indexOf(L.id); return '<button type="button" class="pick" data-slot="' + L.id + '" aria-pressed="' + (k >= 0) + '" style="position:relative"><canvas data-mini="piece:' + L.id + '" width="80" height="60"></canvas>' + (k >= 0 ? 'ABCD'[k] : '&nbsp;') + '</button>'; }).join('') + '</div>';
-    else if (!gs) h += '<p class="note">Add pieces in Make first (art, words, symbols, shapes), then fill the grid with them.</p>';
+    else if (!gs) h += '<p class="note">Add pieces first (My art, Words, Symbols, Shapes), then fill the squares with them. The dashed lines are a guide until you do.</p>';
     if (pieces.length) h += '<button type="button" class="btn dark" data-a="gfill">Fill the grid</button>';
     if (gs) {
       h += '<p class="note">Tap a square to change what is in it. Tap a row or column number to change the whole line.</p><div class="gmap" style="grid-template-columns:28px repeat(' + gs.n + ',1fr)"><span></span>';
@@ -786,7 +810,7 @@
       for (var r = 0; r < gs.n; r++) { h += '<button type="button" class="gline" data-grow="' + r + '">' + (r + 1) + '</button>'; for (var c2 = 0; c2 < gs.n; c2++) { var k2 = gs.cells[r * gs.n + c2]; h += '<button type="button" class="gcell" data-gc="' + (r * gs.n + c2) + '">' + (k2 < 0 ? '' : 'ABCD'[k2]) + '</button>'; } }
       h += '</div><button type="button" class="btn" data-a="gclear" style="margin-top:8px">Take the grid off</button>';
     }
-    return h0.replace('<!--GFILL-->', '') + fold('gfill', 'Fill a grid', n + ' x ' + n + (gs ? ', filled' : ''), h);
+    return h;
   }
   function mixSlot(mix, r, c, n, k, R) {
     if (mix === 'same') return 0; if (mix === 'checker') return (r + c) % Math.min(2, k); if (mix === 'rows') return r % k; if (mix === 'cols') return c % k; if (mix === 'diag') return (r + c) % k;
@@ -807,6 +831,11 @@
   function gridFill() {
     var ids = (U.slots && U.slots.length ? U.slots : freePieces().slice(0, 2).map(function (x) { return x.id; })), n = D.grid > 1 ? D.grid : 3, mix = U.mix || (D.gs && D.gs.mix) || 'checker';
     if (!ids.length) return; commit(); D.grid = n;
+    // the tile grows so every piece keeps its real size. Art never shrinks to fit the grid.
+    var ar0 = asp(), gk = 1; ids.forEach(function (id) { var L0 = layer(id); if (!L0) return; var c0 = content(L0, 1000), w0 = c0 ? c0.w / 1000 : L0.s, h0 = c0 ? c0.h / 1000 : L0.s; gk = Math.max(gk, w0 * n / .82, h0 * n / (.82 * ar0)); });
+    gk = Math.min(gk, 24 / D.tileIn, 24 / tileHt());
+    if (gk > 1.01) { D.layers.forEach(function (x) { x.s = Math.round(x.s / gk * 10000) / 10000; }); D.tileIn = Math.round(D.tileIn * gk * 100) / 100; if (D.tileH) D.tileH = Math.round(D.tileH * gk * 100) / 100; }
+    ids = ids.filter(function (id) { return !!layer(id); }); if (!ids.length) return;
     var ar = asp(), tpl = ids.map(function (id) { var L = layer(id), t = clone(L); var ct = content(t, 1000), cw = ct ? ct.w / 1000 : t.s, ch = ct ? ct.h / 1000 : t.s; t.s = t.s * Math.min(1, .82 / n / Math.max(.01, cw), .82 * ar / n / Math.max(.01, ch)); t.r = t.r || 0; return t; });
     var k = tpl.length, R = E.rng(D.seed || 7), cells = [];
     for (var i = 0; i < n * n; i++) cells.push(mixSlot(mix, Math.floor(i / n), i % n, n, k, R));
@@ -864,6 +893,7 @@
     if (f) {
       var list = kind === 'plaid' ? E.PLAIDS.filter(function (x) { return x[0] !== 'gingham'; }) : kind === 'stripes' ? E.STRIPES : CHECKS;
       h += '<div class="crow" style="margin-bottom:10px">' + list.map(function (x) { return '<button type="button" class="pick" data-fab="' + kind + ':' + x[0] + '" aria-pressed="' + (f.p === x[0]) + '"><canvas data-mini="fab:' + kind + ':' + x[0] + '" width="120" height="72"></canvas>' + x[1] + '</button>'; }).join('') + '</div>';
+      if (fabRunMatters()) h += '<p class="h">Fabric runs</p><div class="two" style="margin-bottom:10px">' + [['straight', 'Straight'], ['layout', 'With the layout']].map(function (x) { return '<button type="button" class="pick" data-frun="' + x[0] + '" aria-pressed="' + ((D.fabRun === 'layout') === (x[0] === 'layout')) + '"><canvas data-mini="frun:' + x[0] + '" width="220" height="120"></canvas>' + x[1] + '</button>'; }).join('') + '</div>';
       var cols = fabColors(), nC = fColorCount(f), fci = Math.min(U.fci || 0, nC - 1);
       h += fold('cols', 'Thread colors', nC + ' colors', '<div class="sw" style="margin-bottom:8px">' + cols.slice(0, nC).map(function (c, i) { return '<button type="button" data-fci="' + i + '" style="background:' + c + '" aria-pressed="' + (i === fci) + '" aria-label="Thread color ' + (i + 1) + '"></button>'; }).join('') + '</div><p class="note">Pick a thread above, then its new color.</p>' + swatches('fcol', cols[fci]));
       var bands = fBands(f);
@@ -926,7 +956,8 @@
         else if (what === 'shape') { g.translate(W / 2, H / 2); shapePath(g, v, m * .38); if (v === 'ring') { g.lineWidth = m * .07; g.strokeStyle = '#1a1a1a'; g.stroke(); } else { g.fillStyle = '#1a1a1a'; g.fill(); } }
         else if (what === 'lay') { var L = { tx: v === 'seal' ? 'TOP' : 'WORDS', tx2: 'BOTTOM', f: 'FS Archivo Black', lay: v, sp: .04, bend: 70, c: '#1a1a1a', s: 1 }, wc = wordsCanvas(L, 26, 0), k2 = Math.min(W / wc.width, H / wc.height) * .92; g.drawImage(wc, (W - wc.width * k2) / 2, (H - wc.height * k2) / 2, wc.width * k2, wc.height * k2); }
         else if (what === 'rep') { var dv = clone(D); dv.rep = v; withDoc(dv, function () { var ti = tileInches(); swatchInto(c, Math.max(ti[0], ti[1]) * 2.2, null); }); }
-        else if (what === 'kale') { var kx = KSH[+v], dk = clone(D); dk.kale = kx[0]; if (kx[1] === 4) dk.kn = 4; else delete dk.kn; withDoc(dk, function () { var tk = tileInches(); swatchInto(c, Math.max(tk[0], tk[1]) * 1.25, null); }); }
+        else if (what === 'kale') { var kx = KSH[+v], dk = clone(D); dk.kale = kx[0]; delete dk.kn; withDoc(dk, function () { var tk = tileInches(); swatchInto(c, Math.max(tk[0], tk[1]) * 1.25, null); }); }
+        else if (what === 'frun') { var df = clone(D); if (v === 'layout') df.fabRun = 'layout'; else delete df.fabRun; withDoc(df, function () { var tf = tileInches(); swatchInto(c, Math.max(tf[0], tf[1]) * 1.5, null); }); }
         else if (what === 'mix') { var cl = ['#1f2a44', '#d9dce6', '#8b8ea8'], nn2 = 4, cs = Math.min(W / nn2, H / nn2), ox2 = (W - cs * nn2) / 2, oy2 = (H - cs * nn2) / 2, Rm = E.rng(5); for (var yy = 0; yy < nn2; yy++) for (var xx = 0; xx < nn2; xx++) { g.fillStyle = cl[mixSlot(v, yy, xx, nn2, v === 'same' ? 1 : 2, Rm)]; g.fillRect(ox2 + xx * cs + 1, oy2 + yy * cs + 1, cs - 2, cs - 2); } }
         else if (what === 'L') { var lz = layer(v); if (lz) { var lc = clone(lz), ctz = content(lc, 100), kz = ctz ? Math.min(W / ctz.w, H / ctz.h) * .8 : 1; lc.r = lz.r || 0; lc.hide = false; g.save(); g.translate(W / 2, H / 2); g.scale(kz, kz); drawLayer(g, lc, 100, false, false, 'flip'); g.restore(); } }
         else if (what === 'tpl') { var tq = D.gs && D.gs.tpl[+v]; if (tq) { var lq = clone(tq), ctq = content(lq, 100), kq = ctq ? Math.min(W / ctq.w, H / ctq.h) * .8 : 1; g.save(); g.translate(W / 2, H / 2); g.scale(kq, kq); lq.r = 0; drawLayer(g, lq, 100, false, false, 'flip'); g.restore(); } }
@@ -1029,8 +1060,13 @@
       }
       fcache = {}; return changed();
     }
-    if (d.rp) { commit(); D.rep = d.rp; return changed(); }
-    if (d.ksh != null) { var kx = KSH[+d.ksh]; commit(); D.kale = kx[0]; if (kx[1] === 4) D.kn = 4; else delete D.kn; return changed(); }
+    if (d.rp) { commit(); if (d.rp === 'kale' && D.rep !== 'kale') D.prep = D.rep; D.rep = d.rp; return changed(); }
+    if (d.ksh != null) { var kx = KSH[+d.ksh]; commit(); D.kale = kx[0]; delete D.kn; return changed(); }
+    if (d.lay) return setLayout(d.lay);
+    if (d.a === 'ktool') { if (D.rep !== 'kale') return; U.ktool = true; U.sel = null; U.gsel = null; U.addOpen = null; U.layers = false; U.view = 'tile'; U.plain = false; return render(); }
+    if (d.a === 'kdone') { U.ktool = false; return render(); }
+    if (d.frun) { commit(); if (d.frun === 'layout') D.fabRun = 'layout'; else delete D.fabRun; return changed(); }
+    if (d.rsd) { var ri = b.parentNode.querySelector('input[type=range]'); if (ri) { ri.value = +ri.value + (+d.rsd) * Math.max(+ri.step, ri.dataset.rs === 'space' ? .25 : 0); ri.dispatchEvent(new Event('input', { bubbles: true })); ri.dispatchEvent(new Event('change', { bubbles: true })); } return; }
     if (d.a === 'kshuf') { commit(); var kq = kw(); D.kw = { x: Math.round((Math.random() * 1.2 - .6) * 100) / 100, y: Math.round((Math.random() * .8 - .4) * 100) / 100, z: Math.round((.6 + Math.random() * 1.8) * 20) / 20, r: Math.floor(Math.random() * 72) * 5, fill: kq.fill }; return changed(); }
     if (d.a === 'kreset') { commit(); delete D.kw; return changed(); }
     if (d.a === 'adjgo') { adjOpen(); if (U.adj) { U.adj.prev = 'tile'; } return; }
@@ -1085,7 +1121,7 @@
     if (d.olc && L && L.ol) { commit(); L.ol.c = d.olc; return changed(); }
     if (sg && d.v != null) {
       var k = sg.dataset.sg, v = d.v; commit();
-      if (k === 'rep') D.rep = v; else if (k === 'flipalt') D.flipAlt = v === '1'; else if (k === 'fade') { if (+v === 1) delete D.fade; else D.fade = +v; } else if (k === 'drop') D.drop = +v; else if (k === 'shift') D.shift = +v; else if (k === 'tturn') D.tturn = v; else if (k === 'tmix') D.tmix = v === '1'; else if (k === 'mdir') D.mdir = v; else if (k === 'mword') D.mword = v; else if (k === 'kale') D.kale = v; else if (k === 'kfill') { D.kw = kw(); D.kw.fill = v === '1'; }
+      if (k === 'rep') D.rep = v; else if (k === 'flipalt') D.flipAlt = v === '1'; else if (k === 'fade') { if (+v === 1) delete D.fade; else D.fade = +v; } else if (k === 'drop') D.drop = +v; else if (k === 'shift') D.shift = +v; else if (k === 'tturn') D.tturn = v; else if (k === 'tmix') D.tmix = v === '1'; else if (k === 'mdir') D.mdir = v; else if (k === 'mword') D.mword = v; else if (k === 'kale') D.kale = v; else if (k === 'kfill') { D.kw = kw(); D.kw.fill = v === '1'; } else if (k === 'rsz') applyRs('size', +v); else if (k === 'rshape') D.tileH = Math.round(D.tileIn * (v === 'tall' ? 1.33 : .75) * 100) / 100;
       else if (L && k === 'tint') L.tint = v === '1' ? (L.tint || swatchMain()) : null;
       else if (L && k === 'white') { var a = artInfo(L.aid); if (a) { a.white = v === '1'; artVer++; pcache = {}; } }
       else if (L && k === 'op') L.op = +v; else if (L && k === 'fl') L.fl = v;
@@ -1098,7 +1134,7 @@
       else if (/^gs_[srxy]$/.test(n) && U.gsel) { U.gsel.forEach(function (i) { var o = gov(i); if (n === 'gs_s') o.sm = clamp(Math.round(((o.sm || 1) + dd * .1) * 10) / 10, .2, 3); else if (n === 'gs_r') o.r = ((o.r || 0) + dd * 15 + 360) % 360; else if (n === 'gs_x') o.nx = clamp(Math.round(((o.nx || 0) + dd * .05) * 100) / 100, -.5, .5); else o.ny = clamp(Math.round(((o.ny || 0) + dd * .05) * 100) / 100, -.5, .5); }); gridBuild(); }
       else if (n === 'grid') {
         var og = D.grid; D.grid = D.grid <= 1 ? (dd > 0 ? 3 : 0) : (D.grid + dd < 2 ? 0 : clamp(D.grid + dd, 2, 9));
-        if (D.gs) { if (D.grid < 2) D.gs = null; else { var on = D.gs.n, nn = D.grid, R3 = E.rng(7); D.gs.tpl.forEach(function (t) { t.s = t.s * on / nn; }); D.gs.n = nn; D.gs.cells = []; for (var gi2 = 0; gi2 < nn * nn; gi2++) D.gs.cells.push(mixSlot(D.gs.mix, Math.floor(gi2 / nn), gi2 % nn, nn, D.gs.tpl.length, R3)); } gridBuild(); }
+        if (D.gs) { if (D.grid < 2) gridOff(); else { var on = D.gs.n, nn = D.grid, R3 = E.rng(7); var gf = clamp(nn / on, .25 / D.tileIn, Math.min(24 / D.tileIn, 24 / tileHt())); D.tileIn = Math.round(D.tileIn * gf * 100) / 100; if (D.tileH) D.tileH = Math.round(D.tileH * gf * 100) / 100; D.layers.forEach(function (x) { if (x.gcell == null) x.s = Math.round(x.s / gf * 10000) / 10000; }); D.gs.tpl.forEach(function (t) { t.s = t.s * on / nn; }); D.gs.n = nn; D.gs.cells = []; for (var gi2 = 0; gi2 < nn * nn; gi2++) D.gs.cells.push(mixSlot(D.gs.mix, Math.floor(gi2 / nn), gi2 % nn, nn, D.gs.tpl.length, R3)); } gridBuild(); }
       }
       else if (n === 'fsz' && D.fab) D.fab.sz = clamp(Math.round(((D.fab.sz || 1) + dd * .25) * 100) / 100, .25, 4);
       else if (L && n === 'size') L.auto = false, L.s = clamp(Math.round((L.s + dd * .02) * 100) / 100, .03, 3);
@@ -1126,12 +1162,8 @@
     if (t.id === 'wtx2' && L) { if (!t._c) { commit(); t._c = 1; } L.tx2 = t.value; keep(); draw(); return; }
     if (t.id === 'pname') { D.name = t.value.slice(0, 40); keep(); return; }
     if (t.dataset.rs) {
-      if (!t._c) { commit(); t._c = 1; } var rv = +t.value, ro = t.nextElementSibling, rn = t.dataset.rs, rtxt = '';
-      if (rn === 'size') { var Lr = mainArt(), awr = Lr ? artWidthIn(Lr) : 0; if (awr) { var kr = rv / awr, hr = tileHt(); kr = Math.min(kr, 24 / D.tileIn, 24 / hr); kr = Math.max(kr, .25 / D.tileIn, .25 / hr); D.tileIn = Math.round(D.tileIn * kr * 1000) / 1000; if (D.tileH) D.tileH = Math.round(D.tileH * kr * 1000) / 1000; } rtxt = inch(rv) + ' wide'; }
-      else if (rn === 'space') { var gr2 = gaps(); if (gr2) { var ur = gr2[2]; setTile(ur[2] - ur[0] + rv, ur[3] - ur[1] + rv, (ur[0] + ur[2]) / 2, (ur[1] + ur[3]) / 2); } rtxt = gapTxt(rv); }
-      else if (rn === 'kz') { D.kw = kw(); D.kw.z = rv; rtxt = Math.round(rv * 100) + '%'; kslDraw(); }
-      else if (rn === 'kr') { D.kw = kw(); D.kw.r = rv; rtxt = rv + '°'; kslDraw(); }
-      if (ro) ro.textContent = rtxt; tcache = {}; keep(); draw(); return;
+      if (!t._c) { commit(); t._c = 1; } var rv = +t.value, ro = t.parentNode.querySelector('output'), rnum = t.parentNode.querySelector('input[type=number]'), rtxt = applyRs(t.dataset.rs, rv);
+      if (ro) ro.textContent = rtxt; if (rnum) rnum.value = rv; tcache = {}; keep(); draw(); return;
     }
     if (t.dataset.pms) { D.pms = D.pms || {}; D.pms[t.dataset.pms] = t.value.slice(0, 24); keep(); return; }
     if (t.dataset.pk) { if (!t._c) { commit(); t._c = 1; } var a = t.dataset.pk, v = t.value; if (a === 'fcol' && D.fab) { D.fab.c = fabColors().slice(); D.fab.c[U.fci || 0] = v; keep(); tcache = {}; fcache = {}; draw(); return; }
@@ -1139,7 +1171,7 @@
       if (a === 'gnd') D.ground = v; else if (L && a === 'olc' && L.ol) L.ol.c = v; else if (L && a === 'col') { if (L.t === 'art') L.tint = v; else L.c = v; } keep(); draw(); return; }
     if (t.dataset.ci != null) { if (!t._c) { commit(); t._c = 1; t._old = colorsInUse()[+t.dataset.ci]; } swapColor(t._old, t.value); t._old = toHex(t.value); keep(); draw(); }
   });
-  $('panel').addEventListener('change', function (e) { if (e.target.dataset.pk || e.target.dataset.ci != null || e.target.dataset.rs) render(); });
+  $('panel').addEventListener('change', function (e) { var t = e.target; if (t.dataset.rsn) { var nv = parseFloat(t.value); if (isFinite(nv)) { commit(); applyRs(t.dataset.rsn, clamp(nv, +t.min, +t.max)); } return changed(); } if (t.dataset.pk || t.dataset.ci != null || t.dataset.rs) render(); });
   $('panel').addEventListener('click', function (e) { var b = e.target.closest('button'); if (!b) return; var d = b.dataset, L = sel(); if (d.gnd) { commit(); D.ground = d.gnd; changed(); } });
   // new words start small enough to fit the tile; once you size them yourself they stay your size
   function fitWords(L) {
@@ -1439,11 +1471,24 @@
   function turnAll(deg) { var W0 = D.tileIn, H0 = tileHt(), r = deg * Math.PI / 180; D.layers.forEach(function (L) { if (L.hug) return; var dx = (L.x - .5) * W0, dy = (L.y - .5) * H0; L.x = Math.round(((.5 + (dx * Math.cos(r) - dy * Math.sin(r)) / W0) % 1 + 1) % 1 * 1000) / 1000; L.y = Math.round(((.5 + (dx * Math.sin(r) + dy * Math.cos(r)) / H0) % 1 + 1) % 1 * 1000) / 1000; L.r = ((L.r || 0) + deg) % 360; }); }
   function allCopiesHtml() {
     var Lm = mainArt(), aw = Lm ? artWidthIn(Lm) : 0, gp = gaps(), sq = !!D.gs, rot = Lm ? Math.round(((Lm.r || 0) % 360 + 360) % 360) : 0;
-    var u = gp ? gp[2] : null, lo = u ? -Math.round(Math.min(u[2] - u[0], u[3] - u[1]) * .5 * 8) / 8 : 0, kale = D.rep === 'kale';
-    return (Lm ? range('size', 'Size', .5, Math.max(12, Math.ceil(aw)), .25, Math.round(aw * 100) / 100, inch(Math.round(aw * 100) / 100) + ' wide') : '') +
-      (gp && !sq && !kale ? range('space', 'Space', lo, Math.max(6, Math.ceil(gp[0])), .125, Math.round(gp[0] * 1000) / 1000, gapTxt(gp[0])) : '');
+    var u = gp ? gp[2] : null, lo = u ? -Math.round(Math.min(u[2] - u[0], u[3] - u[1]) * .5 * 8) / 8 : 0, kale = D.rep === 'kale', awr = Math.round(aw * 100) / 100;
+    return (Lm ? '<div class="row"><b>Size</b>' + seg('rsz', [['2', 'Small'], ['4', 'Medium'], ['8', 'Big']], Math.abs(aw - 2) < .06 ? '2' : Math.abs(aw - 4) < .06 ? '4' : Math.abs(aw - 8) < .06 ? '8' : '') + '</div>' + range('size', '', .5, Math.max(12, Math.ceil(aw)), .25, awr, null, [.25, 24]) : '') +
+      (gp && !sq && !kale ? range('space', 'Space', lo, Math.max(6, Math.ceil(gp[0])), .125, Math.round(gp[0] * 100) / 100, null, [lo, 24]) : '');
   }
-  function range(name, label, min, max, step, val, txt) { return '<div class="row"><b>' + label + '</b><input type="range" data-rs="' + name + '" min="' + min + '" max="' + max + '" step="' + step + '" value="' + val + '" aria-label="' + label + '"><output class="ro">' + txt + '</output></div>'; }
+  // a slider with - and + beside it. num: [min, max] adds a box to type exact inches; otherwise txt shows the value.
+  function range(name, label, min, max, step, val, txt, num) {
+    return '<div class="row rr"><b>' + label + '</b><button type="button" class="rb" data-rsd="-1" aria-label="Less">&minus;</button><input type="range" data-rs="' + name + '" min="' + min + '" max="' + max + '" step="' + step + '" value="' + val + '" aria-label="' + (label || name) + '"><button type="button" class="rb" data-rsd="1" aria-label="More">+</button>' +
+      (num ? '<label class="rnum"><input type="number" inputmode="decimal" data-rsn="' + name + '" min="' + num[0] + '" max="' + num[1] + '" step="0.01" value="' + val + '" aria-label="' + (label || name) + ' in inches"><span>in</span></label>' : '<output class="ro">' + txt + '</output>') + '</div>';
+  }
+  // one place that applies a size, space or slice value, from the slider, the - and + buttons, the typed number, or Small Medium Big
+  function applyRs(rn, rv) {
+    if (rn === 'size') { var Lr = mainArt(), aw0 = Lr ? artWidthIn(Lr) : 0; if (aw0) { var kr = rv / aw0, hr = tileHt(); kr = Math.min(kr, 24 / D.tileIn, 24 / hr); kr = Math.max(kr, .25 / D.tileIn, .25 / hr); D.tileIn = Math.round(D.tileIn * kr * 1000) / 1000; if (D.tileH) D.tileH = Math.round(D.tileH * kr * 1000) / 1000; } return ''; }
+    if (rn === 'space') { var gr2 = gaps(); if (gr2) { var ur = gr2[2]; setTile(ur[2] - ur[0] + rv, ur[3] - ur[1] + rv, (ur[0] + ur[2]) / 2, (ur[1] + ur[3]) / 2); } return ''; }
+    if (rn === 'kz') { D.kw = kw(); D.kw.z = rv; return Math.round(rv * 100) + '%'; }
+    if (rn === 'kr') { D.kw = kw(); D.kw.r = rv; return rv + '°'; }
+    if (rn === 'ka') { D.ka = rv; return rv < .95 ? 'Wide' : rv > 1.05 ? 'Tall' : 'Square'; }
+    return '';
+  }
   function proHtml() {
     var Lm = mainArt(), gp = gaps(), sq = !!D.gs, rot = Lm ? Math.round(((Lm.r || 0) % 360 + 360) % 360) : 0;
     if (!D.layers.length) return '<p class="note">Add a piece in Make first.</p>';
@@ -1457,56 +1502,138 @@
       '<button type="button" class="rowbtn" data-a="seam"><b>Seam check</b><span>Shows anything that crosses the edge</span><svg viewBox="0 0 24 24"><path d="M9 6l6 6-6 6"/></svg></button>';
   }
 
-  /* ---------- Kaleidoscope: go inside the slice. Move, size and turn the art under it; what is inside gets mirrored. ---------- */
-  var KSH = [['kaleSquare', 8, 'Quilt'], ['kaleSquare', 4, 'Four-way'], ['kaleHex', 12, 'Snowflake'], ['kaleTri', 6, 'Triangles']];
+  /* ---------- Layout: what you build in. Square, Rectangle, Grid, or a kaleidoscope Slice. ---------- */
+  var LAYOUTS = [['square', 'Square'], ['rect', 'Rectangle'], ['grid', 'Grid'], ['slice', 'Slice']];
+  function layoutOf() { return D.rep === 'kale' ? 'slice' : D.grid > 1 ? 'grid' : D.tileH && Math.abs(D.tileH - D.tileIn) > .01 ? 'rect' : 'square'; }
+  function gridOff() { // leaving the grid: the pieces in it come back as loose pieces, the same size
+    if (D.gs) {
+      var tp = D.gs.tpl || [], gn = D.gs.n || 1, mw = .01; D.gs = null; gridBuild();
+      tp.forEach(function (t, i) { var L = clone(t); L.id = uid(); delete L.gcell; L.x = clamp(.5 + (i - (tp.length - 1) / 2) * .16, .1, .9); L.y = .5; D.layers.push(L); });
+      // the tile comes back down with it, so the pieces are not left small in a big tile
+      D.layers.forEach(function (L) { var ct = content(L, 1000); if (ct) mw = Math.max(mw, ct.w / 1000, ct.h / 1000 / asp()); });
+      var f = clamp(Math.min(gn, .9 / mw), 1, Math.min(D.tileIn / .25, tileHt() / .25));
+      if (f > 1.01) { D.layers.forEach(function (L) { L.s = Math.round(L.s * f * 10000) / 10000; }); D.tileIn = Math.round(D.tileIn / f * 100) / 100; if (D.tileH) D.tileH = Math.round(D.tileH / f * 100) / 100; }
+    }
+    D.grid = 0; U.gsel = null;
+  }
+  function setLayout(k) {
+    var cur = layoutOf(); if (k === cur) return; commit();
+    if (cur === 'slice') D.rep = D.prep && D.prep !== 'kale' ? D.prep : 'grid';
+    if (cur === 'grid') gridOff();
+    if (k === 'square') delete D.tileH;
+    else if (k === 'rect') { if (!D.tileH || Math.abs(D.tileH - D.tileIn) < .01) D.tileH = Math.round(D.tileIn * 1.33 * 100) / 100; }
+    else if (k === 'grid') D.grid = 2;
+    else if (k === 'slice') { D.prep = D.rep; D.rep = 'kale'; U.view = 'tile'; }
+    U.zoom = 1; U.panX = 0; U.panY = 0; changed();
+  }
+  function layRows() { var h = layersHtml(), a = h.indexOf('<div class="lays">'), b = h.lastIndexOf('<button type="button" class="btn" data-a="laydone"'); return a < 0 || b < a ? '' : h.slice(a, b); }
+  function makeHtml() {
+    var lay = layoutOf(), go = '<svg viewBox="0 0 24 24"><path d="M9 6l6 6-6 6"/></svg>';
+    var h = '<p class="ptitle">Layout</p><div class="tiles lay4">' + LAYOUTS.map(function (x) { return '<button type="button" class="tile" data-lay="' + x[0] + '" aria-pressed="' + (lay === x[0]) + '">' + ico('l' + x[0]) + '<small>' + x[1] + '</small></button>'; }).join('') + '</div>';
+    if (lay === 'rect') h += '<div class="row"><b>Shape</b>' + seg('rshape', [['tall', 'Tall'], ['wide', 'Wide']], D.tileH > D.tileIn ? 'tall' : 'wide') + '</div><button type="button" class="rowbtn" data-a="adjgo"><b>Fine tune the tile</b><span>Drag its edges and corners</span>' + go + '</button>';
+    else if (lay === 'grid') h += gridFillHtml();
+    else if (lay === 'slice') h += kshRow() + '<button type="button" class="rowbtn" data-a="ktool"><b>Edit the slice</b><span>Move, zoom, turn, reshape</span>' + go + '</button>';
+    h += toolHtml('ground', null);
+    if (D.layers.filter(function (L) { return L.gcell == null && !L.gback; }).length > 1) h += '<p class="h" style="margin-top:12px">Layers</p>' + layRows();
+    return h;
+  }
+
+  /* ---------- Kaleidoscope: the slice. Build inside it in Make, or open it big to move, zoom, turn and reshape it. ---------- */
+  var KSH = [['kaleSquare', 8, 'Quilt'], ['kaleRect', 0, 'Rectangle'], ['kaleHex', 12, 'Snowflake'], ['kaleTri', 6, 'Triangles']];
   function kw() { return Object.assign({ x: 0, y: 0, z: 1, r: 0, fill: false }, D.kw || {}); }
-  function kshOn(x) { return D.kale === x[0] && (x[0] !== 'kaleSquare' || (D.kn === 4 ? 4 : 8) === x[1]); }
-  function kaleHtml() {
+  function ka() { return clamp(D.ka || .75, .3, 3); }
+  function kshOn(x) { return D.kale === x[0] && (x[0] !== 'kaleSquare' || D.kn !== 4); }
+  function kshRow() { return '<div class="hrow">' + KSH.map(function (x, i) { return '<button type="button" class="pick" data-ksh="' + i + '" aria-pressed="' + kshOn(x) + '"><canvas data-mini="kale:' + i + '" width="150" height="150"></canvas>' + x[2] + '</button>'; }).join('') + '</div>'; }
+  function kaleHtml() { // in Repeat: the shape, one tap ideas, and the door into the tool
     var w = kw();
-    return '<p class="h">Inside the slice</p><canvas class="kslice" id="kslice" width="600" height="300"></canvas>' +
-      '<p class="note">Drag your art under the slice. Whatever is inside the red outline gets mirrored. To move one piece, go to Make.</p>' +
+    return '<p class="h">Slice shape</p>' + kshRow() +
+      '<button type="button" class="rowbtn" data-a="ktool"><b>Edit the slice</b><span>Move, zoom, turn, reshape</span><svg viewBox="0 0 24 24"><path d="M9 6l6 6-6 6"/></svg></button>' +
       '<div class="two"><button type="button" class="btn dark" data-a="kshuf">Surprise me</button><button type="button" class="btn" data-a="kreset">Reset</button></div>' +
+      '<div class="row"><b>Fill</b>' + seg('kfill', [['0', 'One copy'], ['1', 'Fill the slice']], w.fill ? '1' : '0') + '</div>';
+  }
+  function ktoolHtml() { // the tool: the slice is big on the picture, these are its controls
+    var w = kw(), a = ka();
+    return '<p class="ptitle">Kaleidoscope slice</p>' +
+      '<div class="two"><button type="button" class="btn" data-a="kshuf">Surprise me</button><button type="button" class="btn dark" data-a="kdone">Done</button></div>' +
+      kshRow() +
       range('kz', 'Zoom', .3, 4, .05, w.z, Math.round(w.z * 100) + '%') +
       range('kr', 'Turn', 0, 360, 5, w.r, w.r + '°') +
+      (D.kale === 'kaleRect' ? range('ka', 'Shape', .3, 3, .05, a, a < .95 ? 'Wide' : a > 1.05 ? 'Tall' : 'Square') : '') +
       '<div class="row"><b>Fill</b>' + seg('kfill', [['0', 'One copy'], ['1', 'Fill the slice']], w.fill ? '1' : '0') + '</div>' +
-      '<p class="h">Shape</p><div class="hrow">' + KSH.map(function (x, i) { return '<button type="button" class="pick" data-ksh="' + i + '" aria-pressed="' + kshOn(x) + '"><canvas data-mini="kale:' + i + '" data-lazy="1" width="150" height="150"></canvas>' + x[2] + '</button>'; }).join('') + '</div>';
+      '<button type="button" class="btn" data-a="kreset">Reset the slice</button>';
   }
-  // the slice outline in tile units (0..1 across your art), for drawing it on the art in Make
-  function kslPoly() {
-    var G = E.kaleGeom(D.kale, D.kn), a = Math.PI * 2 / G.n, w = kw(), th = -w.r * Math.PI / 180, pts = [[0, 0]], i, n = G.tri ? 1 : 10, R = 1.02;
+  // the slice outline, in slice units: x runs from the point (or left edge) outward, 1 = the slice length
+  function sliceShape() {
+    var G = E.kaleGeom(D.kale, D.kn), i;
+    if (G.rect) { var hh = ka() / 2; return { rect: true, pts: [[0, -hh], [1, -hh], [1, hh], [0, hh]], w: 1, hh: hh }; }
+    var a = Math.PI * 2 / G.n, pts = [[0, 0]], n = G.tri ? 1 : 10, R = 1.02;
     for (i = 0; i <= n; i++) { var an = -a / 2 + a * i / n; pts.push([Math.cos(an) * R, Math.sin(an) * R]); }
-    return pts.map(function (p) { var dx = (p[0] - .55 - w.x) / (.9 * w.z), dy = (p[1] - w.y) / (.9 * w.z); return [.5 + dx * Math.cos(th) - dy * Math.sin(th), .5 + dx * Math.sin(th) + dy * Math.cos(th)]; });
+    return { pts: pts, w: R, hh: Math.sin(a / 2) * R };
   }
+  // the same outline in tile units (0..1 across your pieces), so Make can draw the slice on them
+  function kslPoly() {
+    var w = kw(), th = -w.r * Math.PI / 180;
+    return sliceShape().pts.map(function (p) { var dx = (p[0] - .55 - w.x) / (.9 * w.z), dy = (p[1] - w.y) / (.9 * w.z); return [.5 + dx * Math.cos(th) - dy * Math.sin(th), .5 + dx * Math.sin(th) + dy * Math.cos(th)]; });
+  }
+  function polyBox(pts) { var b = [1e9, 1e9, -1e9, -1e9]; pts.forEach(function (p) { b[0] = Math.min(b[0], p[0]); b[1] = Math.min(b[1], p[1]); b[2] = Math.max(b[2], p[0]); b[3] = Math.max(b[3], p[1]); }); return b; }
   var KM = null, KMK = '';
   function kslMotif() { // her pieces, with nothing else, the same picture the slices are cut from
-    var k = JSON.stringify([D.layers, D.pal, D.artMap, artVer, D.tileIn]); if (KM && KMK === k) return KM;
-    KM = E.cv(360, 360); KMK = k; var sv = FADEV; withDoc(Object.assign(clone(D), { fade: 1 }), function () { drawLayersInto(KM.getContext('2d'), 360, 360, 360, { w: 1, h: 1, c: [[0, 0, 0, 0, 0]] }); }); FADEV = sv; return KM;
+    var k = JSON.stringify([D.layers, D.pal, D.artMap, artVer, D.tileIn, D.grid]); if (KM && KMK === k) return KM;
+    KM = E.cv(720, 720); KMK = k; var sv = FADEV; withDoc(Object.assign(clone(D), { fade: 1 }), function () { drawLayersInto(KM.getContext('2d'), 720, 720, 720, { w: 1, h: 1, c: [[0, 0, 0, 0, 0]] }); }); FADEV = sv; return KM;
   }
-  function kslGeo(c) { var G = E.kaleGeom(D.kale, D.kn), a = Math.PI * 2 / G.n, R = Math.min(c.width * .86, c.height * .92 / (2 * Math.sin(a / 2))), ax = (c.width - R * Math.cos(a / 2)) / 2 - R * (1 - Math.cos(a / 2)) / 2; return { G: G, a: a, R: R, ax: Math.max(8, ax), ay: c.height / 2 }; }
-  function kslDraw() {
-    var c = $('kslice'); if (!c) return; var g = c.getContext('2d'), q = kslGeo(c), w = kw(), m = kslMotif(), R = q.R, a = q.a;
-    g.setTransform(1, 0, 0, 1, 0, 0); g.clearRect(0, 0, c.width, c.height); g.fillStyle = '#eef0f6'; g.fillRect(0, 0, c.width, c.height);
+  // a small live picture of the finished pattern. Tap it to see it repeat.
+  var PRV = null;
+  function drawPrev(g, W, H, u) {
+    var sz = 78 * u, x = HAND === 'left' ? W - sz - 10 * u : 10 * u, y = HAND === 'left' ? 152 * u : 60 * u, ti = tileInches(), t = tile(sz / (Math.max(ti[0], ti[1]) * 1.6));
+    g.save(); g.beginPath(); if (g.roundRect) g.roundRect(x, y, sz, sz, 12 * u); else g.rect(x, y, sz, sz); g.save(); g.clip(); g.fillStyle = '#fff'; g.fillRect(x, y, sz, sz); g.translate(x, y); g.fillStyle = g.createPattern(t, 'repeat'); g.fillRect(0, 0, sz, sz); g.restore();
+    g.strokeStyle = '#fff'; g.lineWidth = 4 * u; g.stroke(); g.strokeStyle = '#1f2a44'; g.lineWidth = 1.5 * u; g.stroke();
+    g.font = '800 ' + 9.5 * u + 'px ' + getComputedStyle(document.body).fontFamily; g.textAlign = 'center'; g.textBaseline = 'middle'; var tw = g.measureText('Result').width + 12 * u;
+    g.fillStyle = '#1f2a44'; g.beginPath(); if (g.roundRect) g.roundRect(x + sz / 2 - tw / 2, y + sz - 9 * u, tw, 17 * u, 8 * u); else g.rect(x + sz / 2 - tw / 2, y + sz - 9 * u, tw, 17 * u); g.fill(); g.fillStyle = '#fff'; g.fillText('Result', x + sz / 2, y + sz - .5 * u);
+    g.restore(); PRV = { x: x, y: y, w: sz, h: sz + 9 * u };
+  }
+  // the tool: the slice big in the middle, the art under it. Drag moves the art, two fingers zoom and turn, the Rectangle has corners to drag.
+  var KT = null, KG = null, KP = {};
+  function drawKtool(g, W, H, u) {
+    var S = sliceShape(), w = kw(), m = kslMotif(), top = 58 * u, pvw = 88 * u, Wa = W - 28 * u - pvw, Ha = H - top - 46 * u;
+    var R = KG && KG.R ? KG.R : Math.min(Wa * .86 / S.w, Ha * .86 / (2 * S.hh)), ax = 14 * u + (HAND === 'left' ? 0 : pvw) + (Wa - S.w * R) / 2, ay = top + Ha / 2;
+    g.fillStyle = '#f2f2f7'; g.fillRect(0, 0, W, H);
     var art = function () {
-      g.save(); g.translate(R * (.55 + w.x), R * w.y); var k = R * .9 * w.z / 360; g.rotate(w.r * Math.PI / 180);
-      if (w.fill) { g.scale(k, k); g.translate(-180, -180); var far = 4 * R / k + 360; g.fillStyle = g.createPattern(m, 'repeat'); g.fillRect(-far, -far, far * 2, far * 2); }
-      else g.drawImage(m, -180 * k, -180 * k, 360 * k, 360 * k);
+      g.save(); g.translate(R * (.55 + w.x), R * w.y); var k = R * .9 * w.z / 720; g.rotate(w.r * Math.PI / 180);
+      if (w.fill) { g.scale(k, k); g.translate(-360, -360); var far = 4 * R / k + 720; g.fillStyle = g.createPattern(m, 'repeat'); g.fillRect(-far, -far, far * 2, far * 2); }
+      else g.drawImage(m, -360 * k, -360 * k, 720 * k, 720 * k);
       g.restore();
     };
-    var path = function () { g.beginPath(); g.moveTo(0, 0); if (q.G.tri) { g.lineTo(Math.cos(-a / 2) * R, Math.sin(-a / 2) * R); g.lineTo(Math.cos(a / 2) * R, Math.sin(a / 2) * R); } else g.arc(0, 0, R, -a / 2, a / 2); g.closePath(); };
-    g.translate(q.ax, q.ay);
-    g.save(); g.globalAlpha = .22; art(); g.restore();                         // the art outside the slice, faint
-    g.save(); path(); g.clip(); g.fillStyle = gHex(); g.fillRect(-R, -R * 2, R * 3, R * 4); art(); g.restore(); // inside the slice, as it will print
-    path(); g.strokeStyle = '#fff'; g.lineWidth = 6; g.stroke(); g.strokeStyle = '#c8412f'; g.lineWidth = 3; g.stroke();
+    var path = function () { g.beginPath(); S.pts.forEach(function (p, i) { if (i) g.lineTo(p[0] * R, p[1] * R); else g.moveTo(p[0] * R, p[1] * R); }); g.closePath(); };
+    g.save(); g.translate(ax, ay);
+    g.save(); g.globalAlpha = .2; art(); g.restore();
+    g.save(); path(); g.clip(); g.fillStyle = gHex(); g.fillRect(-W, -H, W * 3, H * 3); art(); g.restore();
+    path(); g.strokeStyle = '#fff'; g.lineWidth = 5 * u; g.stroke(); g.strokeStyle = '#c8412f'; g.lineWidth = 2.4 * u; g.stroke();
+    if (S.rect) [[1, -S.hh], [1, S.hh], [0, S.hh], [0, -S.hh], [.5, S.hh], [.5, -S.hh]].forEach(function (q) { g.fillStyle = '#fff'; g.strokeStyle = '#1f2a44'; g.lineWidth = 2 * u; g.beginPath(); g.arc(q[0] * R, q[1] * R, 8 * u, 0, 7); g.fill(); g.stroke(); });
+    g.restore();
+    KT = { ax: ax, ay: ay, R: R, S: S, u: u }; HIT = null; placeCtx(0, 0, false);
+    drawPrev(g, W, H, u);
+    lbl(S.rect ? 'Drag your art under the slice. Drag a dot to reshape it.' : 'Drag your art under the slice. Two fingers zoom and turn it.');
   }
-  var KD = null;
-  $('panel').addEventListener('pointerdown', function (e) {
-    if (e.target.id !== 'kslice') return; e.preventDefault(); commit(); var w = kw(), c = e.target, r = c.getBoundingClientRect();
-    KD = { x: e.clientX, y: e.clientY, wx: w.x, wy: w.y, k: c.width / r.width / kslGeo(c).R }; try { c.setPointerCapture(e.pointerId); } catch (_) {}
-  });
-  window.addEventListener('pointermove', function (e) {
-    if (!KD) return; var w = kw(); w.x = Math.round(clamp(KD.wx + (e.clientX - KD.x) * KD.k, -3, 3) * 1000) / 1000; w.y = Math.round(clamp(KD.wy + (e.clientY - KD.y) * KD.k, -3, 3) * 1000) / 1000; D.kw = w; tcache = {}; kslDraw(); draw();
-  });
-  ['pointerup', 'pointercancel'].forEach(function (ev) { window.addEventListener(ev, function () { if (!KD) return; KD = null; keep(); render(); }); });
+  function kDown(e) {
+    try { view.setPointerCapture(e.pointerId); } catch (_) {} var p = cpt(e); KP[e.pointerId] = p; var ids = Object.keys(KP), w = kw(); if (!KT) return;
+    if (!KG) commit();
+    if (ids.length === 1) {
+      var mode = 'move';
+      if (KT.S.rect) [[1, -1], [1, 1], [0, 1], [0, -1], [.5, 1], [.5, -1]].forEach(function (q) { if (Math.hypot(p[0] - (KT.ax + q[0] * KT.R), p[1] - (KT.ay + q[1] * KT.S.hh * KT.R)) < 24 * KT.u) mode = 'shape'; });
+      KG = { mode: mode, x: p[0], y: p[1], wx: w.x, wy: w.y, R: KT.R };
+    } else if (ids.length === 2) { var a = KP[ids[0]], b = KP[ids[1]]; KG = { mode: 'pinch', d0: Math.hypot(a[0] - b[0], a[1] - b[1]), a0: Math.atan2(b[1] - a[1], b[0] - a[0]), z0: w.z, r0: w.r, R: KG ? KG.R : KT.R }; }
+  }
+  function kMove(e) {
+    if (!KP[e.pointerId] || !KG) return; var p = cpt(e); KP[e.pointerId] = p; var w = kw();
+    if (KG.mode === 'move') { w.x = Math.round(clamp(KG.wx + (p[0] - KG.x) / KG.R, -3, 3) * 1000) / 1000; w.y = Math.round(clamp(KG.wy + (p[1] - KG.y) / KG.R, -3, 3) * 1000) / 1000; D.kw = w; }
+    else if (KG.mode === 'shape') D.ka = Math.round(clamp(2 * Math.abs(p[1] - KT.ay) / KG.R, .3, 3) * 100) / 100;
+    else if (KG.mode === 'pinch') { var ids = Object.keys(KP); if (ids.length < 2) return; var A = KP[ids[0]], Bq = KP[ids[1]]; w.z = Math.round(clamp(KG.z0 * Math.hypot(A[0] - Bq[0], A[1] - Bq[1]) / Math.max(1, KG.d0), .3, 4) * 100) / 100; w.r = ((Math.round(KG.r0 + (Math.atan2(Bq[1] - A[1], Bq[0] - A[0]) - KG.a0) * 180 / Math.PI) % 360) + 360) % 360; D.kw = w; }
+    else return;
+    tcache = {}; draw();
+  }
+  function kUp(e) { delete KP[e.pointerId]; if (Object.keys(KP).length) { if (KG && KG.mode === 'pinch') KG = { mode: 'none', R: KG.R }; return; } if (!KG) return; KG = null; keep(); render(); }
+  // fabric under the art: straight like real cloth, or cut and turned with the layout. Only matters when copies flip or turn.
+  function fabRunMatters() { return !!D.fab && (D.rep === 'kale' || D.rep === 'mirror' || (D.rep === 'toss' && (D.tturn || 'quarter') !== 'none') || !!D.flipAlt); }
 
   /* ---------- My patterns shelf (on this phone) ---------- */
   function thumb() { var c = E.cv(160, 160); swatchInto(c, Math.max(3, D.tileIn * 1.5), D.cloth, 200); return c.toDataURL('image/jpeg', .8); }
@@ -1566,8 +1693,9 @@
       '<li><b>Make</b>: Add your art, words, symbols, shapes or a fabric. Tap a piece to change it. Drag to move, pinch to size, two fingers to turn. The red dot sizes and turns with one finger. Hold a piece for Copy, Front, Back, Delete.</li>' +
       '<li><b>Repeat</b>: Grid, Half-drop, Half-brick, Mirror (Readable keeps words reading the right way), Toss, Kaleidoscope.</li>' +
       '<li><b>Grid</b> is a guide to line pieces up. Turn on <b>Use squares</b> to fill it: tap a square, then change one square, a row, a column, all, or every square with the same piece.</li>' +
-      '<li><b>Touch to edit</b> works on every step: tap a piece on Tile to change it, tap one on 4 x 4 or Yard to jump to it. The <b>eye</b> shows just your art on white. <b>Layers</b> lists every piece: hide, lock, move forward or back.</li>' +
-      '<li><b>Repeat</b>: pick how copies sit from the pictures. Size and Space are sliders (Space below zero overlaps). 4 x 4 shows four copies across with an inch ruler. Pro controls hold Space across and down, Turn all, Nudge (where mirror reflections meet), Flip every other, Fade and Fine tune the tile. <b>Kaleidoscope</b>: drag your art under the slice, Zoom and Turn it, or tap Surprise me; in Make the red slice is drawn on your pieces so you can move them in or out. Half-drop and Half-brick can drop or shift by 1/2, 1/3 or 1/4. Toss can turn copies and mix their sizes; Shuffle gives a new mix. Tap a piece on the Repeat picture to edit it. <b>Seam check</b> lights up anything that crosses the tile edge.</li>' +
+      '<li><b>Touch to edit</b> works on every step: tap a piece on Tile to change it, tap one on Swatch or Yard to jump to it. The <b>eye</b> shows just your art on white. <b>Layers</b> lists every piece: hide, lock, move forward or back.</li>' +
+      '<li><b>Layout</b> (in Make, with nothing picked): Square, Rectangle, Grid or Slice. Grid fills squares with your pieces and the tile grows so nothing shrinks. Slice is the kaleidoscope: build inside the slice, and the small picture shows the result.</li>' +
+      '<li><b>Repeat</b>: pick how copies sit from the pictures. Size has Small, Medium and Big, a slider, and a number you can type. Pro controls hold Space across and down, Turn all, Nudge, Flip every other, Fade and Fine tune the tile. <b>Kaleidoscope</b>: Edit the slice opens it big. Drag your art under it, pinch to zoom and turn, drag a corner of the Rectangle to reshape it, or tap Surprise me. Half-drop and Half-brick can drop or shift by 1/2, 1/3 or 1/4. Toss can turn copies and mix their sizes; Shuffle gives a new mix. Tap a piece on the Repeat picture to edit it. <b>Seam check</b> lights up anything that crosses the tile edge.</li>' +
       '<li><b>Adjust tile</b> (the corners button at the top): drag a corner or an edge to size it, wide, tall or square. Drag inside to move it. Your art keeps its size, so copies sit closer or farther apart. Fit to my art hugs your art. Art size makes the whole thing bigger or smaller on the fabric, with an 8 in preview and how many fit across a yard. Kaleidoscope stays square. Toss turns copies a half turn on a rectangle.</li>' +
       '<li><b>Fabric</b>: plaid, stripes or checks under your art. Open Thread colors, Bands, Weave and Printed on to change each one.</li>' +
       '<li><b>Words</b>: straight, arc over, arc under, circle, seal, stacked, vertical. Wrap words around a shape and they hug it.</li>' +
@@ -1584,8 +1712,8 @@
   });
 
   /* ---------- steps, views, undo ---------- */
-  $('steps').addEventListener('click', function (e) { var b = e.target.closest('button[data-s]'); if (!b) return; if (U.adj) { U.adj = null; ADJ = null; AG = null; } U.step = b.dataset.s; U.layers = false; U.msg = ''; U.clothOpen = false; U.shelfSel = null; U.delAsk = false; if (U.step !== 'make') { U.sel = null; } if ((U.step === 'look' || U.step === 'fabric' || U.step === 'repeat') && U.view === 'tile') U.view = 'swatch'; if (U.step === 'make' && D.rep === 'kale') { U.view = 'tile'; } render(); });
-  $('views').addEventListener('click', function (e) { var b = e.target.closest('button[data-v]'); if (!b) return; U.plain = false; if (U.adj) { U.adj = null; ADJ = null; AG = null; } U.view = b.dataset.v; render(); });
+  $('steps').addEventListener('click', function (e) { var b = e.target.closest('button[data-s]'); if (!b) return; if (U.adj) { U.adj = null; ADJ = null; AG = null; } U.ktool = false; U.step = b.dataset.s; U.layers = false; U.msg = ''; U.clothOpen = false; U.shelfSel = null; U.delAsk = false; if (U.step !== 'make') { U.sel = null; } if ((U.step === 'look' || U.step === 'fabric') && U.view === 'tile') U.view = 'swatch'; if (U.step === 'make' && D.rep === 'kale') { U.view = 'tile'; } render(); });
+  $('views').addEventListener('click', function (e) { var b = e.target.closest('button[data-v]'); if (!b) return; U.plain = false; U.ktool = false; if (U.adj) { U.adj = null; ADJ = null; AG = null; } U.view = b.dataset.v; render(); });
   // the cloth chip on the picture: tap it for a row of the 11 cloths, each showing your pattern
   $('clothChip').addEventListener('click', function () { U.clothOpen = !U.clothOpen; render(); });
   $('cloths').addEventListener('click', function (e) { var b = e.target.closest('button[data-cloth]'); if (!b) return; commit(); D.cloth = b.dataset.cloth; changed(); });
@@ -1597,17 +1725,18 @@
     document.documentElement.classList.toggle('righty', HAND === 'right');
     $('home').hidden = true; // no first page: it always opens straight into the canvas
     $('addbar').hidden = U.step !== 'make'; $('addbar').innerHTML = [['art', 'My art'], ['words', 'Words'], ['sym', 'Symbols'], ['shape', 'Shapes']].map(function (x) { return '<button type="button" data-tab="' + x[0] + '" aria-pressed="' + (U.addOpen === x[0]) + '">' + x[1] + '</button>'; }).join('');
-    toolbar(); $('fab').hidden = true; $('views').parentNode.style.visibility = ''; $('zoom').hidden = U.step === 'look' && false; $('trash').hidden = !!U.adj || !!U.layers || (U.step === 'save' || U.step === 'make' || sel() ? false : true) || (!!sel() && $('stage').clientHeight < 400) || !!(U.gsel && U.gsel.length); // short screens: the side rail needs the room, Delete is on the floating bar $('trash').setAttribute('aria-label', sel() ? 'Delete this piece' : 'Start fresh'); $('trash').classList.toggle('piece', !!sel()); if (U.step !== 'make' || U.view !== 'tile') placeCtx(0, 0, false);
-    var pn = $('panel'), s = pn.scrollTop; var wasTall = pn.classList.contains('tall'), nowTall = U.step === 'repeat' && !U.adj && !sel(); pn.classList.toggle('tall', nowTall);
+    if (U.ktool && D.rep !== 'kale') U.ktool = false;
+    toolbar(); $('fab').hidden = true; $('views').parentNode.style.visibility = ''; $('zoom').hidden = U.step === 'look' && false; $('trash').hidden = !!U.ktool || !!U.adj || !!U.layers || (U.step === 'save' || U.step === 'make' || sel() ? false : true) || (!!sel() && $('stage').clientHeight < 400) || !!(U.gsel && U.gsel.length); // short screens: the side rail needs the room, Delete is on the floating bar $('trash').setAttribute('aria-label', sel() ? 'Delete this piece' : 'Start fresh'); $('trash').classList.toggle('piece', !!sel()); if (U.step !== 'make' || U.view !== 'tile') placeCtx(0, 0, false);
+    var pn = $('panel'), s = pn.scrollTop; var wasTall = pn.classList.contains('tall'), nowTall = U.step === 'repeat' && !U.adj && !U.ktool && !sel(); pn.classList.toggle('tall', nowTall);
     if (wasTall !== nowTall) { var tt0 = Date.now(); (function tick() { draw(); if (Date.now() - tt0 < 650) requestAnimationFrame(tick); })(); } // the picture follows the panel as it grows or shrinks
-    pn.innerHTML = panelHtml(); pn.scrollTop = s; minis(); adjSwatch(); kslDraw();
+    pn.innerHTML = panelHtml(); pn.scrollTop = s; minis(); adjSwatch();
     var cv2 = false; $('clothChip').hidden = true; $('clothChip').textContent = clothShort(D.cloth); $('clothChip').setAttribute('aria-pressed', String(cv2 && U.clothOpen));
     var co = cv2 && U.clothOpen && U.step !== 'look', cl = $('cloths'); cl.hidden = !co;
     if (co) { var cx = cl.scrollLeft; cl.innerHTML = clothRow().replace(/<p class="note">.*<\/p>$/, ''); cl.scrollLeft = cx; minis(cl); }
     Array.prototype.forEach.call(document.querySelectorAll('#steps button'), function (b) { b.setAttribute('aria-pressed', String(b.dataset.s === U.step)); });
     Array.prototype.forEach.call(document.querySelectorAll('#views button'), function (b) { b.setAttribute('aria-pressed', String(b.dataset.v === U.view)); });
     $('undo').disabled = !HIST.length; $('redo').disabled = !FUT.length;
-    $('adjBtn').setAttribute('aria-pressed', String(!!U.adj)); $('zoom').hidden = !!U.adj; $('addbar').hidden = !!U.adj || U.step !== 'make';
+    $('adjBtn').setAttribute('aria-pressed', String(!!U.adj)); $('zoom').hidden = !!U.adj || !!U.ktool; $('addbar').hidden = !!U.adj || !!U.ktool || U.step !== 'make';
     if (U.step === 'save' && !U.adj && !sel()) { $('trash').setAttribute('aria-label', 'Delete this pattern'); $('trash').classList.remove('piece'); }
     $('plainBtn').setAttribute('aria-pressed', String(!!U.plain)); $('layBtn').setAttribute('aria-pressed', String(!!U.layers));
     draw();

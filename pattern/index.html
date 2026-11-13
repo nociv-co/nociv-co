@@ -290,6 +290,18 @@ body.cdown .console .panel{height:0!important;padding-top:0;padding-bottom:0;ove
 .two{display:grid;grid-template-columns:1fr 1fr;gap:6px}
 .two .btn{margin:0 0 8px}
 .panel.tall{height:min(42vh,340px)}
+/* layout row in Make, size controls with numbers, fabric switch (11-13b) */
+.tiles.lay4{grid-template-columns:repeat(4,minmax(0,1fr))!important;gap:6px;margin-bottom:10px}
+.tiles.lay4 .tile{height:58px}
+.row.rr{gap:5px}
+.rb{all:unset;cursor:pointer;flex:none;width:30px;height:34px;display:grid;place-items:center;border-radius:10px;background:var(--tile);color:var(--navy);font:900 17px/1 var(--sys);transition:transform .18s var(--spring)}
+.rb:active{transform:scale(.88)}
+.rnum{flex:none;display:flex;align-items:center;gap:3px;background:var(--tile);border-radius:10px;padding:0 8px;height:34px;font:800 12px/1 var(--sys);color:var(--sub)}
+.rnum input{all:unset;width:46px;text-align:right;font:800 16px/1 var(--sys);color:var(--navy);-moz-appearance:textfield}
+.rnum input::-webkit-outer-spin-button,.rnum input::-webkit-inner-spin-button{-webkit-appearance:none;margin:0}
+.row output.ro{flex:0 0 50px}
+.two .pick{min-height:0;padding:5px 5px 7px;gap:5px;font:800 11.5px/1.1 var(--sys)}
+.two .pick canvas{height:64px;border-radius:9px;background:#fff}
 .hrow .pick{flex-basis:78px}
 .kslice{aspect-ratio:300/150}
 </style>
@@ -299,7 +311,7 @@ body.cdown .console .panel{height:0!important;padding-top:0;padding-bottom:0;ove
 <div class="stage" id="stage">
   <canvas id="view"></canvas>
   <div class="fl" style="left:8px;top:8px"><button class="chip" id="undo" aria-label="Undo"><svg viewBox="0 0 24 24"><path d="M9 14L4 9l5-5"/><path d="M4 9h10a6 6 0 0 1 0 12h-3"/></svg></button><button class="chip" id="redo" aria-label="Redo"><svg viewBox="0 0 24 24"><path d="M15 14l5-5-5-5"/><path d="M20 9H10a6 6 0 0 0 0 12h3"/></svg></button></div>
-  <div class="fl" style="right:8px;top:58px;flex-direction:column"><button class="chip" id="plainBtn" aria-label="Effects off: just my art" aria-pressed="false"><svg viewBox="0 0 24 24"><path d="M2 12s4-7 10-7 10 7 10 7-4 7-10 7S2 12 2 12z"/><circle cx="12" cy="12" r="3"/></svg></button><button class="chip" id="layBtn" aria-label="Layers" aria-pressed="false"><svg viewBox="0 0 24 24"><path d="M12 3l9 5-9 5-9-5z"/><path d="M3 13l9 5 9-5"/></svg></button></div><div class="fl" style="right:8px;top:8px"><button class="chip" id="adjBtn" aria-label="Adjust tile" aria-pressed="false"><svg viewBox="0 0 24 24"><path d="M7 3v4M3 7h4M7 7h10v10"/><path d="M17 21v-4M21 17h-4M17 17H7V7"/></svg></button><div class="seg3" id="views"><button data-v="tile">Tile</button><button data-v="swatch">4 x 4</button><button data-v="yard">Yard</button></div><button class="chip" id="help" aria-label="Help">?</button></div>
+  <div class="fl" style="right:8px;top:58px;flex-direction:column"><button class="chip" id="plainBtn" aria-label="Effects off: just my art" aria-pressed="false"><svg viewBox="0 0 24 24"><path d="M2 12s4-7 10-7 10 7 10 7-4 7-10 7S2 12 2 12z"/><circle cx="12" cy="12" r="3"/></svg></button><button class="chip" id="layBtn" aria-label="Layers" aria-pressed="false"><svg viewBox="0 0 24 24"><path d="M12 3l9 5-9 5-9-5z"/><path d="M3 13l9 5 9-5"/></svg></button></div><div class="fl" style="right:8px;top:8px"><button class="chip" id="adjBtn" aria-label="Adjust tile" aria-pressed="false"><svg viewBox="0 0 24 24"><path d="M7 3v4M3 7h4M7 7h10v10"/><path d="M17 21v-4M21 17h-4M17 17H7V7"/></svg></button><div class="seg3" id="views"><button data-v="tile">Tile</button><button data-v="swatch">Swatch</button><button data-v="yard">Yard</button></div><button class="chip" id="help" aria-label="Help">?</button></div>
   <div class="fl" style="right:8px;top:50px"><button class="chip" id="clothChip" hidden aria-label="Printed on">Poplin</button></div>
   <div class="fl" id="tools"></div>
   <div class="cloths" id="cloths" hidden></div>
