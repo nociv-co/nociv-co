@@ -474,10 +474,12 @@ html.app .stage.cs-flat .sum { display: none; }
 
     <section class="note" data-step="What">
       <h2><b>1</b> What are you making?</h2>
+      <div class="cs-path" id="csPath" role="group" aria-label="What do you want to do">
+        <button type="button" data-p="sew" aria-pressed="true"><b>Sew it myself</b><small>Print a pattern in your size</small></button>
+        <button type="button" data-p="made" aria-pressed="false"><b>Get it made</b><small>Tech pack a factory can quote</small></button>
+      </div>
+      <p class="cs-pathnote" id="csPathNote"></p>
       <div id="garments"></div>
-      <div class="group-name">Or start from a proven style</div>
-      <div class="refs" id="refStyles"></div>
-      <p class="meta help">Each style sets the cut, details and tech pack fabric to match a blank you can buy. Tap one, then fix anything.</p>
     </section>
 
     <section class="note" data-step="Fit">
@@ -1383,6 +1385,9 @@ html.app .stage.cs-flat .sum { display: none; }
   // =====================================================================
   // GARMENTS, MEASUREMENTS, STEPS
   // =====================================================================
+  // Which cuts have been sewn from this tool's own printout. Everything else shows as a Draft.
+  // To mark one: TEST_SEWN.wide = { note: 'Sewn in 8 oz twill, size 32', photo: 'wide-leg-test.jpg' };
+  var TEST_SEWN = {};
   var GROUPS = [
     { id: 'pants', name: 'Pants', items: [['straight', 'Straight'], ['wide', 'Wide leg'], ['xwide', 'Extra wide'], ['carpenter', 'Carpenter'], ['army', 'Army fatigue']] },
     { id: 'tops', name: 'Tops', items: [['tee', 'Tee'], ['boxy', 'Boxy tee'], ['crop', 'Cropped tee'], ['tank', 'Tank'], ['muscle', 'Muscle tee']] },
@@ -1994,9 +1999,26 @@ html.app .stage.cs-flat .sum { display: none; }
     g.items.forEach(function (it) {
       var b = document.createElement('button'); b.type = 'button'; b.setAttribute('aria-pressed', String(it[0] === state.g));
       b.textContent = it[1] + (it[0] === state.g && isShorts() ? ' shorts' : ''); if (it[2]) { b.disabled = true; b.insertAdjacentHTML('beforeend', '<small>soon</small>'); }
+      else b.insertAdjacentHTML('beforeend', TEST_SEWN[it[0]] ? '<span class="cs-st ok">Test sewn</span>' : '<span class="cs-st">Draft</span>');
       b.onclick = function () { pickGarment(it[0]); };
       list.appendChild(b);
+      if (it[0] === state.g) list.appendChild(startAs(it[0]));
     });
+  }
+  // under the cut you picked: ways to start it (each one sets the fit, details and fabric), and an honest status
+  function startAs(cut) {
+    var refs = (typeof REFS !== 'undefined' && REFS ? REFS : []).filter(function (r) { return r.g === cut; });
+    var on = refs.some(function (r) { return r.id === refOn; }) ? refOn : null, t = TEST_SEWN[cut], d = document.createElement('div'); d.className = 'cs-startas';
+    var h = '';
+    if (refs.length) h += '<span>Start as</span><div class="cs-sa"><button type="button" data-ref="" aria-pressed="' + (!on) + '">Plain</button>' + refs.map(function (r) { return '<button type="button" data-ref="' + r.id + '" aria-pressed="' + (on === r.id) + '">' + r.name + '</button>'; }).join('') + '</div>';
+    h += '<p class="cs-stnote">' + (t ? '<b>Test sewn.</b> ' + (t.note || 'Sewn from this printout.') + (t.photo ? ' <a href="' + t.photo + '" target="_blank" rel="noopener">See the photo</a>' : '') : '<b>Draft.</b> Drafted from standard pattern blocks, not test sewn yet. Sew one in cheap fabric before you cut the good fabric.') + '</p>';
+    d.innerHTML = h;
+    d.addEventListener('click', function (e) {
+      var b = e.target.closest('button[data-ref]'); if (!b) return; var id = b.getAttribute('data-ref');
+      if (!id) { refOn = null; if (typeof saveRef === 'function') saveRef(); buildGarments(); return; }
+      var r = REFS.filter(function (x) { return x.id === id; })[0]; if (r) useRef(r);
+    });
+    return d;
   }
   function buildFields() {
     var fam = famOf(state.g), box = $('fields'); box.innerHTML = '';
@@ -3241,8 +3263,7 @@ html.app .stage.cs-flat .sum { display: none; }
     { id: 'jerseypolo', name: 'Jersey polo', sub: 'Tee with polo collar', ico: 'polo', g: 'tee', f: 'regular', o: { neck: 'polo', btn: 3, cpock: false }, tp: ['Jersey knit', '50% cotton / 50% polyester', '6 oz'], blank: 'g8800' },
     { id: 'cuffbeanie', name: 'Cuffed beanie', sub: 'Double layer knit', ico: 'beanie', g: 'beanie', o: { cuff: true }, tp: ['Rib knit', '100% acrylic', 'Double layer'], blank: 'ub89' },
     { id: 'canvastote', name: 'Canvas tote', sub: 'Open top, no gusset pocket', ico: 'tote', g: 'tote', o: { tpock: false }, tp: ['Cotton canvas', '100% cotton', '12 oz'], blank: 'q800' },
-    { id: 'cadetcap', name: 'Cadet cap', sub: 'Washed twill, soft crown', ico: 'cadet', g: 'cadet', tp: ['Garment washed cotton twill', '100% cotton', '8 to 10 oz'], blank: 'otto791' },
-    { id: 'mechanic', name: 'Mechanic jacket', sub: 'Blank only, pattern soon', ico: 'jacket', blank: 'shmj' }
+    { id: 'cadetcap', name: 'Cadet cap', sub: 'Washed twill, soft crown', ico: 'cadet', g: 'cadet', tp: ['Garment washed cotton twill', '100% cotton', '8 to 10 oz'], blank: 'otto791' }
   ];
   // Blanks: brand, style, what it is, fabric, approx low price (each, before decoration), which cuts it fits.
   var BLANKS = {
@@ -3550,6 +3571,73 @@ html.app .stage.cs-flat .sum { display: none; }
 })();
 /*NV-CUTSEW-STUDIO-END*/
 
+</script>
+<style>
+/* one list, two paths, calmer picture (11-13) */
+.cs-path{display:grid;grid-template-columns:1fr 1fr;gap:6px;margin:0 0 6px}
+.cs-path button{font:inherit;text-align:left;display:flex;flex-direction:column;gap:3px;padding:11px 12px;border:2px solid var(--line);border-radius:14px;background:#fff;color:var(--ink);cursor:pointer;-webkit-tap-highlight-color:transparent;transition:transform .12s,background .2s,box-shadow .2s}
+.cs-path button:active{transform:scale(.97)}
+.cs-path button b{font-weight:900;font-size:.9rem;letter-spacing:.03em;text-transform:uppercase}
+.cs-path button small{font-weight:600;font-size:.74rem;color:var(--soft);line-height:1.25}
+.cs-path button[aria-pressed="true"]{background:var(--note);border-color:var(--ink);box-shadow:inset 0 0 0 1px var(--ink)}
+.cs-path.cs-compact button{padding:9px 8px;align-items:center;text-align:center}
+.cs-path.cs-compact button small,.cs-path.cs-compact + .cs-pathnote{display:none}
+.cs-path.cs-compact{margin-bottom:10px}
+.cs-pathnote{margin:0 0 12px;font-size:.8rem;font-weight:600;color:var(--soft);line-height:1.35}
+.famlist button .cs-st{margin-left:auto;font-size:.62rem;font-weight:800;letter-spacing:.07em;text-transform:uppercase;color:var(--soft);border:1.5px solid var(--line);border-radius:999px;padding:3px 7px;white-space:nowrap}
+.famlist button .cs-st.ok{color:#fff;background:#2f7a4b;border-color:#2f7a4b}
+.famlist button[aria-pressed="true"]::after{margin-left:8px}
+.famlist .cs-startas{padding:10px 12px 12px;background:var(--note);border-top:1.5px solid var(--line);display:grid;gap:8px}
+.famlist .cs-startas > span{font-size:.66rem;font-weight:900;letter-spacing:.1em;text-transform:uppercase;color:var(--soft)}
+.famlist .cs-sa{display:flex;flex-wrap:wrap;gap:6px}
+.famlist .cs-startas .cs-sa button{flex:none;display:inline-flex;width:auto;padding:8px 13px;border:1.5px solid var(--ink)!important;border-radius:999px;background:#fff;font-size:.82rem;font-weight:800;color:var(--ink)}
+.famlist .cs-startas .cs-sa button[aria-pressed="true"]{background:var(--ink);color:#fff}
+.famlist .cs-startas .cs-sa button::after{content:none!important}
+.famlist .cs-stnote{margin:0;font-size:.76rem;font-weight:600;line-height:1.4;color:var(--soft)}
+.famlist .cs-stnote b{color:var(--ink)}
+.famlist .cs-stnote a{color:var(--ink);font-weight:800}
+.famlist .cs-startas + button{border-top:1.5px solid var(--line)}
+nav.steps button[hidden],.next-step[hidden],section.note.cs-off{display:none!important}
+/* the picture stays quiet until a control is useful */
+#stage.cs-quiet .vmenu,#stage.cs-quiet > .nv-mag,#stage.cs-quiet .nv-zbar{display:none!important}
+#stage:has(#csUndo:disabled):has(#csRedo:disabled) .cs-ur{display:none!important}
+</style>
+<script>
+/* Two paths. Sew it myself: What, Fit, Size, Save, Sew. Get it made: What, Fit, Size, Specs, Source, Save. Only that path's steps show. */
+(function () {
+  var nav = document.querySelector('nav.steps'), box = document.getElementById('csPath'), note = document.getElementById('csPathNote'), stage = document.getElementById('stage');
+  var secs = Array.prototype.slice.call(document.querySelectorAll('.grid > section.note'));
+  if (!nav || !box || !window.nocivSteps || !secs.length) return;
+  var PATHS = { sew: ['What', 'Fit', 'Size', 'Save', 'Sew'], made: ['What', 'Fit', 'Size', 'Specs', 'Source', 'Save'] };
+  var NOTE = { sew: 'You leave with a pattern in your size to print at home or a copy shop, and the steps to sew it.', made: 'You leave with a tech pack and pattern a factory can quote, plus blanks and US makers to start with.' };
+  var names = secs.map(function (x) { return x.getAttribute('data-step'); }), path = 'sew', chosen = false;
+  try { var p0 = localStorage.getItem('nocivCutSewPath'); if (PATHS[p0]) { path = p0; chosen = true; } } catch (e) {}
+  function apply() {
+    var keep = PATHS[path], tabs = Array.prototype.filter.call(nav.children, function (b) { return b.getAttribute('role') === 'tab'; });
+    tabs.forEach(function (b, i) { b.hidden = keep.indexOf(names[i]) < 0; });
+    nav.style.setProperty('grid-template-columns', 'repeat(' + keep.length + ', minmax(0, 1fr))', 'important');
+    secs.forEach(function (x, i) {
+      x.classList.toggle('cs-off', keep.indexOf(names[i]) < 0);
+      var nx = x.querySelector('.next-step'); if (!nx) return; var j = -1;
+      for (var k = i + 1; k < names.length; k++) if (keep.indexOf(names[k]) >= 0) { j = k; break; }
+      nx.hidden = j < 0; if (j >= 0) { nx.textContent = 'Next: ' + names[j] + ' \u2192'; nx.onclick = function () { window.nocivSteps.show(j, true); }; }
+    });
+    Array.prototype.forEach.call(box.children, function (b) { b.setAttribute('aria-pressed', String(b.getAttribute('data-p') === path)); });
+    if (note) note.textContent = NOTE[path];
+    box.classList.toggle('cs-compact', chosen); // once you have picked, it shrinks to one row so the list comes first
+    if (keep.indexOf(names[window.nocivSteps.current()]) < 0) window.nocivSteps.show(0, true);
+  }
+  box.addEventListener('click', function (e) {
+    var b = e.target.closest('button[data-p]'); if (!b) return; var same = b.getAttribute('data-p') === path;
+    path = b.getAttribute('data-p'); chosen = true; try { localStorage.setItem('nocivCutSewPath', path); } catch (_) {}
+    var out = same ? null : document.querySelector('#outPick [data-v="' + (path === 'sew' ? 'pattern' : 'both') + '"]'); if (out) out.click(); // sewing needs the pattern, a factory needs both
+    apply();
+  });
+  apply();
+  // the first step is for choosing: zoom and view options wait until there is something to look closely at
+  function quiet(i) { if (stage) stage.classList.toggle('cs-quiet', names[i] === 'What'); }
+  document.addEventListener('nociv-step', function (e) { quiet(e.detail); }); quiet(window.nocivSteps.current());
+})();
 </script>
 </body>
 </html>
