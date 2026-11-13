@@ -309,12 +309,12 @@
   }
   var tcache = {}, tcount = 0;
   function tile(ppi) {
-    var B = blockB(ppi), key = JSON.stringify([D.tileIn, D.tileH, D.rep, D.drop, D.shift, D.tturn, D.tmix, D.tseed, D.flipAlt, D.fade, D.mdir, D.mword, D.kale, D.ground, D.fab, D.layers, D.pal, D.artMap, B, artVer, LETTERS]); if (tcache[key]) return tcache[key];
+    var B = blockB(ppi), key = JSON.stringify([D.tileIn, D.tileH, D.rep, D.drop, D.shift, D.tturn, D.tmix, D.tseed, D.flipAlt, D.fade, D.mdir, D.mword, D.kale, D.kn, D.kw, D.ground, D.fab, D.layers, D.pal, D.artMap, B, artVer, LETTERS]); if (tcache[key]) return tcache[key];
     var t;
     if (D.rep === 'kale') {
       // the slices are cut from your pieces only; the ground (a color or a fabric) goes under the whole tile
       var m = E.cv(B, B); drawLayersInto(m.getContext('2d'), B, B, B, { w: 1, h: 1, c: [[0, 0, 0, 0, 0]] });
-      var kt = E.repeatTile({ motif: m, type: D.kale, tileIn: D.tileIn, ppi: ppi, scale: 1, bg: null });
+      var kt = E.repeatTile({ motif: m, type: D.kale, slices: D.kn, win: D.kw, tileIn: D.tileIn, ppi: ppi, scale: 1, bg: null });
       t = E.cv(kt.width, kt.height); var kg = t.getContext('2d'); fillGround(kg, kt.width, kt.height, kt.width, ppi, kt.height); kg.drawImage(kt, 0, 0);
     } else {
       var Bh = blockBh(ppi), cp = copies(), W = B * cp.w, H = Bh * cp.h; t = E.cv(W, H); var g = t.getContext('2d');
@@ -383,18 +383,20 @@
     var u = W / 390;
     if (U.adj) { drawAdj(g, W, H, u); return; }
     if (U.view !== 'tile' && !U.plain) {
-      var across = (U.view === 'yard' ? 42 : U.view === 'swatch' ? 8 : D.tileIn * 1.6) / (U.zoom || 1), ppi = W / across, t = tile(ppi);
+      var a44 = (D.rep === 'kale' ? tileInches()[0] : D.tileIn) * 4, across = (U.view === 'yard' ? 42 : U.view === 'swatch' ? a44 : D.tileIn * 1.6) / (U.zoom || 1), ppi = W / across, t = tile(ppi);
       g.fillStyle = g.createPattern(t, 'repeat'); g.fillRect(0, 0, W, H); HIT = null; placeCtx(0, 0, false); SV = { pp: ppi, tw: t.width, th: t.height };
       laycloth(g, W, H, D.cloth, ppi);
       if (U.view === 'yard') yardMarks(g, W, H, ppi, u, false, 50 * u);
+      else if (U.view === 'swatch' && U.step === 'repeat') inchRuler(g, W, ppi, u, 50 * u);
       var ti = tileInches();
-      lbl((U.view === 'yard' ? '42 in across, on ' + clothShort(D.cloth).toLowerCase() : U.view === 'swatch' ? '8 in swatch, on ' + clothShort(D.cloth).toLowerCase() : '') + (NUMS ? (U.view === 'tile' ? '' : ', ') + 'repeat ' + inch(ti[0]) + ' x ' + inch(ti[1]) : '')); return;
+      lbl((U.view === 'yard' ? '42 in across, on ' + clothShort(D.cloth).toLowerCase() : U.view === 'swatch' ? '4 across, ' + inch(Math.round(a44 * 100) / 100) + ' wide, on ' + clothShort(D.cloth).toLowerCase() : '') + (NUMS ? (U.view === 'tile' ? '' : ', ') + 'repeat ' + inch(ti[0]) + ' x ' + inch(ti[1]) : '')); return;
     }
     // Tile view: the block big in the middle, its repeats faded around it
     var side = (HAND === 'left' ? 64 : 8) * u, aw = W - side - (HAND === 'left' ? 8 : 64) * u, top = 52 * u, ah = H - top - 34 * u;
     var ZM = U.zoom || 1, ppi2 = Math.min(aw * .9 / D.tileIn, ah * .9 / tileHt()) * ZM, t2 = tile(ppi2), B = blockB(ppi2), Bh = blockBh(ppi2), ox = side + (aw - B) / 2 + (ZM > 1 ? (U.panX || 0) : 0), oy = top + (ah - Bh) / 2 + (ZM > 1 ? (U.panY || 0) : 0);
     var tox = ((ox % t2.width) + t2.width) % t2.width - t2.width, toy = ((oy % t2.height) + t2.height) % t2.height - t2.height;
-    if (U.plain) { var tp = withDoc(Object.assign(clone(D), { ground: 'none', fab: null, fade: 1, rep: 'grid', flipAlt: false }), function () { return tile(ppi2); }); g.drawImage(tp, 0, 0, B, Bh, ox, oy, B, Bh); }
+    var kpl = !U.plain && D.rep === 'kale' && U.step === 'make';
+    if (U.plain || kpl) { var tp = withDoc(Object.assign(clone(D), { ground: 'none', fab: null, fade: 1, rep: 'grid', flipAlt: false }), function () { return tile(ppi2); }); g.drawImage(tp, 0, 0, B, Bh, ox, oy, B, Bh); }
     else {
       g.save(); g.translate(tox, toy); g.fillStyle = g.createPattern(t2, 'repeat'); g.fillRect(0, 0, W + t2.width * 2, H + t2.height * 2); g.restore();
       if (seamOn()) seamDraw(g, W, H, ppi2, u, tox, toy);
@@ -402,6 +404,11 @@
     }
     if (D.grid > 1) { g.save(); g.setLineDash([4 * u, 3 * u]); for (var k = 1; k < D.grid; k++) { var q = B * k / D.grid, qh = Bh * k / D.grid; g.beginPath(); g.moveTo(ox + q, oy); g.lineTo(ox + q, oy + Bh); g.moveTo(ox, oy + qh); g.lineTo(ox + B, oy + qh); g.strokeStyle = 'rgba(255,255,255,.9)'; g.lineWidth = 3 * u; g.stroke(); g.strokeStyle = 'rgba(31,42,68,.7)'; g.lineWidth = 1.2 * u; g.stroke(); } g.restore(); }
     g.strokeStyle = '#fff'; g.lineWidth = 3.5 * u; g.strokeRect(ox, oy, B, Bh); g.strokeStyle = '#1f2a44'; g.lineWidth = 1.5 * u; g.strokeRect(ox, oy, B, Bh);
+    if (kpl) { // the slice, drawn on the art: inside the outline is what gets mirrored
+      var kp = kslPoly(); g.save(); g.beginPath(); g.rect(0, 0, W, H); kp.forEach(function (q, i) { var px = ox + q[0] * B, py = oy + q[1] * Bh; if (i) g.lineTo(px, py); else g.moveTo(px, py); }); g.closePath();
+      g.fillStyle = 'rgba(242,242,247,.72)'; g.fill('evenodd');
+      g.beginPath(); kp.forEach(function (q, i) { var px = ox + q[0] * B, py = oy + q[1] * Bh; if (i) g.lineTo(px, py); else g.moveTo(px, py); }); g.closePath(); g.strokeStyle = '#fff'; g.lineWidth = 4.5 * u; g.stroke(); g.strokeStyle = '#c8412f'; g.lineWidth = 2.2 * u; g.stroke(); g.restore();
+    }
     GUIDES.forEach(function (gd) { g.strokeStyle = '#1f2a44'; g.lineWidth = 1.5 * u; g.beginPath(); if (gd[0] === 'x') { g.moveTo(ox + gd[1] * B, oy - 10 * u); g.lineTo(ox + gd[1] * B, oy + Bh + 10 * u); } else { g.moveTo(ox - 10 * u, oy + gd[1] * Bh); g.lineTo(ox + B + 10 * u, oy + gd[1] * Bh); } g.stroke(); });
     var L = sel();
     if (L) {
@@ -416,13 +423,21 @@
     HIT = { ox: ox, oy: oy, B: B, Bh: Bh, u: u };
     if (L && !G) { var ct2 = content(L, B), p2 = pos(L); placeCtx(ox + p2[0] * B, oy + p2[1] * Bh - (ct2 ? Math.max(ct2.w, ct2.h) / 2 : 0), true); } else placeCtx(0, 0, false);
     if (L && NUMS) { var ctn = content(L, 1000), pn = pos(L); lbl('Across ' + inch(pn[0] * D.tileIn) + ', down ' + inch(pn[1] * tileHt()) + ', ' + inch(ctn ? ctn.w / 1000 * D.tileIn : 0) + ' wide'); }
-    else lbl(seamOn() ? U.seamMsg : U.plain ? 'Just your art. Tap the eye to see it all again.' : L ? '' : !D.layers.length ? 'Tap My art, Words or Symbols to start' : U.step === 'make' ? 'Tap a piece to change it' : 'One repeat is ' + inch(tileInches()[0]) + ' x ' + inch(tileInches()[1]) + ', on ' + clothShort(D.cloth).toLowerCase() + '. Tap a piece to edit it.');
+    else lbl(seamOn() ? U.seamMsg : U.plain ? 'Just your art. Tap the eye to see it all again.' : kpl && !L ? 'Kaleidoscope: what sits inside the red slice gets mirrored. 4 x 4 shows the result.' : L ? '' : !D.layers.length ? 'Tap My art, Words or Symbols to start' : U.step === 'make' ? 'Tap a piece to change it' : 'One repeat is ' + inch(tileInches()[0]) + ' x ' + inch(tileInches()[1]) + ', on ' + clothShort(D.cloth).toLowerCase() + '. Tap a piece to edit it.');
   }
   var FLASH = null;
   function lbl(t) { if (FLASH && Date.now() < FLASH.until) t = FLASH.t; $('lbl').textContent = t; }
   function flash(t) { FLASH = { t: t, until: Date.now() + 4500 }; lbl(t); setTimeout(draw, 4600); }
   function inch(v) { return (Math.round(v * 100) / 100) + ' in'; }
   // Yard view: a ruler in inches along the top with the repeat marked, and the selvage down the left edge
+  // a small inch ruler on the 4 x 4 picture, so Size shows up as real inches
+  function inchRuler(g, W, ppi, u, top) {
+    var rh = 20 * u, fs = 9 * u, every = ppi > 26 * u ? 1 : ppi > 12 * u ? 2 : 6;
+    g.save(); g.translate(0, top); g.fillStyle = 'rgba(251,249,244,.94)'; g.fillRect(0, 0, W, rh); g.fillStyle = '#1a1a1a'; g.fillRect(0, rh - Math.max(1, u), W, Math.max(1, u));
+    g.font = '800 ' + fs + 'px ' + getComputedStyle(document.body).fontFamily; g.textAlign = 'center'; g.textBaseline = 'top';
+    for (var i = 0; i * ppi <= W; i++) { var X = i * ppi, len = i % every === 0 ? rh * .5 : rh * .25; g.fillRect(X - Math.max(.5, u * .5), rh - len, Math.max(1, u), len); if (i && i % every === 0 && X < W - 8 * u) g.fillText(i + (i === every ? ' in' : ''), X, 2 * u); }
+    g.restore();
+  }
   function yardMarks(g, W, H, ppi, u, big, top) {
     top = top || 0; var rh = (big ? 34 : 24) * u, sv = .6 * ppi, ti = tileInches(), fs = (big ? 13 : 9) * u;
     // selvage: the finished edge of the cloth, printed with the name and the colors
@@ -624,7 +639,7 @@
       if (!ids.length) return; var c = IMG[ids[ids.length - 1]];
       if (WANT === 'start' || !D.pal.length) { var cols = artColors(c); D.pal = cols.slice(0, 4); }
       if (WANT === 'start') { WANT = null; keep(); render(); showStarters(); return; }
-      WANT = null; addLayer({ t: 'art', aid: ids[ids.length - 1], s: .5 });
+      WANT = null; addLayer({ t: 'art', aid: ids[ids.length - 1], s: D.layers.length ? .5 : .9 }); // the first piece fills the tile; Space in Repeat opens it up
     });
   });
 
@@ -745,16 +760,18 @@
   };
   function repeatHtml() {
     var gs = D.gs, n = D.grid > 1 ? D.grid : 0, ti = tileInches(), across = Math.floor(42 / Math.max(.1, ti[0]));
-    var h = '<p class="ptitle">Repeat</p><div class="grid g3 repk">' + REPS.map(function (x) { return '<button type="button" class="pick" data-rp="' + x[0] + '" aria-pressed="' + (D.rep === x[0]) + '"><svg viewBox="0 0 24 24">' + REPICON[x[0]] + '</svg>' + x[1] + '</button>'; }).join('') + '</div>' +
+    var hasP = D.layers.length > 0;
+    var h = '<p class="ptitle">Repeat</p><div class="hrow">' + REPS.map(function (x) { return '<button type="button" class="pick" data-rp="' + x[0] + '" aria-pressed="' + (D.rep === x[0]) + '">' + (hasP ? '<canvas data-mini="rep:' + x[0] + '" width="150" height="150"></canvas>' : '<svg viewBox="0 0 24 24">' + REPICON[x[0]] + '</svg>') + x[1] + '</button>'; }).join('') + '</div>' +
       (D.rep === 'halfdrop' ? '<div class="row"><b>Drop by</b>' + seg('drop', [['2', '1/2'], ['3', '1/3'], ['4', '1/4']], String(D.drop || 2)) + '</div>' : '') +
       (D.rep === 'halfbrick' ? '<div class="row"><b>Shift by</b>' + seg('shift', [['2', '1/2'], ['3', '1/3'], ['4', '1/4']], String(D.shift || 2)) + '</div>' : '') +
       (D.rep === 'mirror' ? '<div class="row"><b>Mirror</b>' + seg('mdir', [['both', 'Both ways'], ['lr', 'Left-right'], ['ud', 'Up-down']], D.mdir) + '</div><div class="row"><b>Words</b>' + seg('mword', [['readable', 'Readable'], ['flip', 'True mirror']], D.mword) + '</div>' : '') +
       (D.rep === 'toss' ? '<div class="row"><b>Turns</b>' + seg('tturn', [['none', 'None'], ['half', 'Half'], ['quarter', 'Quarter']], D.tturn || 'quarter') + '</div><div class="row"><b>Sizes</b>' + seg('tmix', [['0', 'All the same'], ['1', 'Mix a little']], D.tmix ? '1' : '0') + '</div><button type="button" class="btn" data-a="tshuf" style="margin-bottom:8px">Shuffle the turns</button>' : '') +
-      (D.rep === 'kale' ? '<div class="row"><b>Slices</b>' + seg('kale', [['kaleSquare', 'Square'], ['kaleHex', 'Hexagon'], ['kaleTri', 'Triangle']], D.kale) + '</div>' : '') +
-      clashHtml() + '<p class="note">One repeat is ' + inch(ti[0]) + ' x ' + inch(ti[1]) + ', about ' + across + ' across a 42 in yard.</p>' +
-      (D.layers.length ? allCopiesHtml() : stepper('tile', 'Tile', tileLabel())) +
-      '<button type="button" class="rowbtn" data-a="seam"><b>Seam check</b><span>Shows anything that crosses the edge</span><svg viewBox="0 0 24 24"><path d="M9 6l6 6-6 6"/></svg></button>' +
-      (seamOn() ? '<p class="note warn">' + esc(U.seamMsg) + '</p>' : '');
+      (D.rep === 'kale' ? kaleHtml() : '') +
+      clashHtml() +
+      (hasP ? allCopiesHtml() : stepper('tile', 'Tile', tileLabel())) +
+      '<p class="note">One repeat is ' + inch(ti[0]) + ' x ' + inch(ti[1]) + ', about ' + across + ' across a 42 in yard.</p>' +
+      (seamOn() ? '<p class="note warn">' + esc(U.seamMsg) + '</p>' : '') +
+      fold('rpro', 'Pro controls', 'Exact space, turn, nudge, seams', proHtml());
     var gi = stepper('grid', 'Squares', n ? n + ' x ' + n : 'Off');
     if (!n) return h + fold('gfill', 'Fill a grid', 'Off', gi + '<p class="note">Turn the grid on to fill squares with your pieces: checker, rows, frame and more.</p>');
     h += '<!--GFILL-->'; var h0 = h; h = gi;
@@ -909,6 +926,7 @@
         else if (what === 'shape') { g.translate(W / 2, H / 2); shapePath(g, v, m * .38); if (v === 'ring') { g.lineWidth = m * .07; g.strokeStyle = '#1a1a1a'; g.stroke(); } else { g.fillStyle = '#1a1a1a'; g.fill(); } }
         else if (what === 'lay') { var L = { tx: v === 'seal' ? 'TOP' : 'WORDS', tx2: 'BOTTOM', f: 'FS Archivo Black', lay: v, sp: .04, bend: 70, c: '#1a1a1a', s: 1 }, wc = wordsCanvas(L, 26, 0), k2 = Math.min(W / wc.width, H / wc.height) * .92; g.drawImage(wc, (W - wc.width * k2) / 2, (H - wc.height * k2) / 2, wc.width * k2, wc.height * k2); }
         else if (what === 'rep') { var dv = clone(D); dv.rep = v; withDoc(dv, function () { var ti = tileInches(); swatchInto(c, Math.max(ti[0], ti[1]) * 2.2, null); }); }
+        else if (what === 'kale') { var kx = KSH[+v], dk = clone(D); dk.kale = kx[0]; if (kx[1] === 4) dk.kn = 4; else delete dk.kn; withDoc(dk, function () { var tk = tileInches(); swatchInto(c, Math.max(tk[0], tk[1]) * 1.25, null); }); }
         else if (what === 'mix') { var cl = ['#1f2a44', '#d9dce6', '#8b8ea8'], nn2 = 4, cs = Math.min(W / nn2, H / nn2), ox2 = (W - cs * nn2) / 2, oy2 = (H - cs * nn2) / 2, Rm = E.rng(5); for (var yy = 0; yy < nn2; yy++) for (var xx = 0; xx < nn2; xx++) { g.fillStyle = cl[mixSlot(v, yy, xx, nn2, v === 'same' ? 1 : 2, Rm)]; g.fillRect(ox2 + xx * cs + 1, oy2 + yy * cs + 1, cs - 2, cs - 2); } }
         else if (what === 'L') { var lz = layer(v); if (lz) { var lc = clone(lz), ctz = content(lc, 100), kz = ctz ? Math.min(W / ctz.w, H / ctz.h) * .8 : 1; lc.r = lz.r || 0; lc.hide = false; g.save(); g.translate(W / 2, H / 2); g.scale(kz, kz); drawLayer(g, lc, 100, false, false, 'flip'); g.restore(); } }
         else if (what === 'tpl') { var tq = D.gs && D.gs.tpl[+v]; if (tq) { var lq = clone(tq), ctq = content(lq, 100), kq = ctq ? Math.min(W / ctq.w, H / ctq.h) * .8 : 1; g.save(); g.translate(W / 2, H / 2); g.scale(kq, kq); lq.r = 0; drawLayer(g, lq, 100, false, false, 'flip'); g.restore(); } }
@@ -1012,6 +1030,9 @@
       fcache = {}; return changed();
     }
     if (d.rp) { commit(); D.rep = d.rp; return changed(); }
+    if (d.ksh != null) { var kx = KSH[+d.ksh]; commit(); D.kale = kx[0]; if (kx[1] === 4) D.kn = 4; else delete D.kn; return changed(); }
+    if (d.a === 'kshuf') { commit(); var kq = kw(); D.kw = { x: Math.round((Math.random() * 1.2 - .6) * 100) / 100, y: Math.round((Math.random() * .8 - .4) * 100) / 100, z: Math.round((.6 + Math.random() * 1.8) * 20) / 20, r: Math.floor(Math.random() * 72) * 5, fill: kq.fill }; return changed(); }
+    if (d.a === 'kreset') { commit(); delete D.kw; return changed(); }
     if (d.a === 'adjgo') { adjOpen(); if (U.adj) { U.adj.prev = 'tile'; } return; }
     if (d.a === 'laydone') { U.layers = false; return render(); }
     if (d.lpick) { var Lk = layer(d.lpick); U.layers = false; U.view = 'tile'; pickPiece(Lk); return render(); }
@@ -1064,7 +1085,7 @@
     if (d.olc && L && L.ol) { commit(); L.ol.c = d.olc; return changed(); }
     if (sg && d.v != null) {
       var k = sg.dataset.sg, v = d.v; commit();
-      if (k === 'rep') D.rep = v; else if (k === 'flipalt') D.flipAlt = v === '1'; else if (k === 'fade') { if (+v === 1) delete D.fade; else D.fade = +v; } else if (k === 'drop') D.drop = +v; else if (k === 'shift') D.shift = +v; else if (k === 'tturn') D.tturn = v; else if (k === 'tmix') D.tmix = v === '1'; else if (k === 'mdir') D.mdir = v; else if (k === 'mword') D.mword = v; else if (k === 'kale') D.kale = v;
+      if (k === 'rep') D.rep = v; else if (k === 'flipalt') D.flipAlt = v === '1'; else if (k === 'fade') { if (+v === 1) delete D.fade; else D.fade = +v; } else if (k === 'drop') D.drop = +v; else if (k === 'shift') D.shift = +v; else if (k === 'tturn') D.tturn = v; else if (k === 'tmix') D.tmix = v === '1'; else if (k === 'mdir') D.mdir = v; else if (k === 'mword') D.mword = v; else if (k === 'kale') D.kale = v; else if (k === 'kfill') { D.kw = kw(); D.kw.fill = v === '1'; }
       else if (L && k === 'tint') L.tint = v === '1' ? (L.tint || swatchMain()) : null;
       else if (L && k === 'white') { var a = artInfo(L.aid); if (a) { a.white = v === '1'; artVer++; pcache = {}; } }
       else if (L && k === 'op') L.op = +v; else if (L && k === 'fl') L.fl = v;
@@ -1104,13 +1125,21 @@
     if (t.id === 'wtx' && L) { if (!t._c) { commit(); t._c = 1; } L.tx = t.value; fitWords(L); keep(); draw(); return; }
     if (t.id === 'wtx2' && L) { if (!t._c) { commit(); t._c = 1; } L.tx2 = t.value; keep(); draw(); return; }
     if (t.id === 'pname') { D.name = t.value.slice(0, 40); keep(); return; }
+    if (t.dataset.rs) {
+      if (!t._c) { commit(); t._c = 1; } var rv = +t.value, ro = t.nextElementSibling, rn = t.dataset.rs, rtxt = '';
+      if (rn === 'size') { var Lr = mainArt(), awr = Lr ? artWidthIn(Lr) : 0; if (awr) { var kr = rv / awr, hr = tileHt(); kr = Math.min(kr, 24 / D.tileIn, 24 / hr); kr = Math.max(kr, .25 / D.tileIn, .25 / hr); D.tileIn = Math.round(D.tileIn * kr * 1000) / 1000; if (D.tileH) D.tileH = Math.round(D.tileH * kr * 1000) / 1000; } rtxt = inch(rv) + ' wide'; }
+      else if (rn === 'space') { var gr2 = gaps(); if (gr2) { var ur = gr2[2]; setTile(ur[2] - ur[0] + rv, ur[3] - ur[1] + rv, (ur[0] + ur[2]) / 2, (ur[1] + ur[3]) / 2); } rtxt = gapTxt(rv); }
+      else if (rn === 'kz') { D.kw = kw(); D.kw.z = rv; rtxt = Math.round(rv * 100) + '%'; kslDraw(); }
+      else if (rn === 'kr') { D.kw = kw(); D.kw.r = rv; rtxt = rv + '°'; kslDraw(); }
+      if (ro) ro.textContent = rtxt; tcache = {}; keep(); draw(); return;
+    }
     if (t.dataset.pms) { D.pms = D.pms || {}; D.pms[t.dataset.pms] = t.value.slice(0, 24); keep(); return; }
     if (t.dataset.pk) { if (!t._c) { commit(); t._c = 1; } var a = t.dataset.pk, v = t.value; if (a === 'fcol' && D.fab) { D.fab.c = fabColors().slice(); D.fab.c[U.fci || 0] = v; keep(); tcache = {}; fcache = {}; draw(); return; }
       if ((a === 'gcol' || a === 'gbc') && D.gs && U.gsel) { U.gsel.forEach(function (i) { var o = gov(i); if (a === 'gcol') o.c = v; else { o.bc = v; if (!o.back || o.back === 'none') o.back = 'square'; } }); gridBuild(); keep(); tcache = {}; draw(); return; }
       if (a === 'gnd') D.ground = v; else if (L && a === 'olc' && L.ol) L.ol.c = v; else if (L && a === 'col') { if (L.t === 'art') L.tint = v; else L.c = v; } keep(); draw(); return; }
     if (t.dataset.ci != null) { if (!t._c) { commit(); t._c = 1; t._old = colorsInUse()[+t.dataset.ci]; } swapColor(t._old, t.value); t._old = toHex(t.value); keep(); draw(); }
   });
-  $('panel').addEventListener('change', function (e) { if (e.target.dataset.pk || e.target.dataset.ci != null) render(); });
+  $('panel').addEventListener('change', function (e) { if (e.target.dataset.pk || e.target.dataset.ci != null || e.target.dataset.rs) render(); });
   $('panel').addEventListener('click', function (e) { var b = e.target.closest('button'); if (!b) return; var d = b.dataset, L = sel(); if (d.gnd) { commit(); D.ground = d.gnd; changed(); } });
   // new words start small enough to fit the tile; once you size them yourself they stay your size
   function fitWords(L) {
@@ -1410,16 +1439,74 @@
   function turnAll(deg) { var W0 = D.tileIn, H0 = tileHt(), r = deg * Math.PI / 180; D.layers.forEach(function (L) { if (L.hug) return; var dx = (L.x - .5) * W0, dy = (L.y - .5) * H0; L.x = Math.round(((.5 + (dx * Math.cos(r) - dy * Math.sin(r)) / W0) % 1 + 1) % 1 * 1000) / 1000; L.y = Math.round(((.5 + (dx * Math.sin(r) + dy * Math.cos(r)) / H0) % 1 + 1) % 1 * 1000) / 1000; L.r = ((L.r || 0) + deg) % 360; }); }
   function allCopiesHtml() {
     var Lm = mainArt(), aw = Lm ? artWidthIn(Lm) : 0, gp = gaps(), sq = !!D.gs, rot = Lm ? Math.round(((Lm.r || 0) % 360 + 360) % 360) : 0;
-    return '<p class="h" style="margin-top:12px">All copies</p>' +
-      (Lm ? stepper('rsize', 'Size', inch(Math.round(aw * 100) / 100) + ' wide') : '') +
-      (gp && !sq ? stepper('gapx', 'Space across', gapTxt(gp[0])) + (D.rep === 'kale' ? '' : stepper('gapy', 'Space down', gapTxt(gp[1]))) : '') +
+    var u = gp ? gp[2] : null, lo = u ? -Math.round(Math.min(u[2] - u[0], u[3] - u[1]) * .5 * 8) / 8 : 0, kale = D.rep === 'kale';
+    return (Lm ? range('size', 'Size', .5, Math.max(12, Math.ceil(aw)), .25, Math.round(aw * 100) / 100, inch(Math.round(aw * 100) / 100) + ' wide') : '') +
+      (gp && !sq && !kale ? range('space', 'Space', lo, Math.max(6, Math.ceil(gp[0])), .125, Math.round(gp[0] * 1000) / 1000, gapTxt(gp[0])) : '');
+  }
+  function range(name, label, min, max, step, val, txt) { return '<div class="row"><b>' + label + '</b><input type="range" data-rs="' + name + '" min="' + min + '" max="' + max + '" step="' + step + '" value="' + val + '" aria-label="' + label + '"><output class="ro">' + txt + '</output></div>'; }
+  function proHtml() {
+    var Lm = mainArt(), gp = gaps(), sq = !!D.gs, rot = Lm ? Math.round(((Lm.r || 0) % 360 + 360) % 360) : 0;
+    if (!D.layers.length) return '<p class="note">Add a piece in Make first.</p>';
+    return (gp && !sq ? stepper('gapx', 'Space across', gapTxt(gp[0])) + (D.rep === 'kale' ? '' : stepper('gapy', 'Space down', gapTxt(gp[1]))) : '') +
       (Lm ? stepper('rturn', 'Turn all', rot + '°') : '') +
       stepper('nudx', 'Nudge', 'Across') + stepper('nudy', 'Nudge', 'Down') +
       (D.rep === 'mirror' || D.rep === 'kale' ? '' : '<div class="row"><b>Flip every other</b>' + seg('flipalt', [['0', 'Off'], ['1', 'On']], D.flipAlt ? '1' : '0') + '</div>') +
       '<div class="row"><b>Fade</b>' + seg('fade', [['1', 'Solid'], ['0.6', '60%'], ['0.3', 'Watermark']], String(D.fade || 1)) + '</div>' +
       (sq ? '<p class="note">Space across and down are off while the grid squares are on.</p>' : '') +
-      '<button type="button" class="rowbtn" data-a="adjgo"><b>Fine tune the tile</b><span>Drag its edges and corners</span><svg viewBox="0 0 24 24"><path d="M9 6l6 6-6 6"/></svg></button>';
+      '<button type="button" class="rowbtn" data-a="adjgo"><b>Fine tune the tile</b><span>Drag its edges and corners</span><svg viewBox="0 0 24 24"><path d="M9 6l6 6-6 6"/></svg></button>' +
+      '<button type="button" class="rowbtn" data-a="seam"><b>Seam check</b><span>Shows anything that crosses the edge</span><svg viewBox="0 0 24 24"><path d="M9 6l6 6-6 6"/></svg></button>';
   }
+
+  /* ---------- Kaleidoscope: go inside the slice. Move, size and turn the art under it; what is inside gets mirrored. ---------- */
+  var KSH = [['kaleSquare', 8, 'Quilt'], ['kaleSquare', 4, 'Four-way'], ['kaleHex', 12, 'Snowflake'], ['kaleTri', 6, 'Triangles']];
+  function kw() { return Object.assign({ x: 0, y: 0, z: 1, r: 0, fill: false }, D.kw || {}); }
+  function kshOn(x) { return D.kale === x[0] && (x[0] !== 'kaleSquare' || (D.kn === 4 ? 4 : 8) === x[1]); }
+  function kaleHtml() {
+    var w = kw();
+    return '<p class="h">Inside the slice</p><canvas class="kslice" id="kslice" width="600" height="300"></canvas>' +
+      '<p class="note">Drag your art under the slice. Whatever is inside the red outline gets mirrored. To move one piece, go to Make.</p>' +
+      '<div class="two"><button type="button" class="btn dark" data-a="kshuf">Surprise me</button><button type="button" class="btn" data-a="kreset">Reset</button></div>' +
+      range('kz', 'Zoom', .3, 4, .05, w.z, Math.round(w.z * 100) + '%') +
+      range('kr', 'Turn', 0, 360, 5, w.r, w.r + '°') +
+      '<div class="row"><b>Fill</b>' + seg('kfill', [['0', 'One copy'], ['1', 'Fill the slice']], w.fill ? '1' : '0') + '</div>' +
+      '<p class="h">Shape</p><div class="hrow">' + KSH.map(function (x, i) { return '<button type="button" class="pick" data-ksh="' + i + '" aria-pressed="' + kshOn(x) + '"><canvas data-mini="kale:' + i + '" data-lazy="1" width="150" height="150"></canvas>' + x[2] + '</button>'; }).join('') + '</div>';
+  }
+  // the slice outline in tile units (0..1 across your art), for drawing it on the art in Make
+  function kslPoly() {
+    var G = E.kaleGeom(D.kale, D.kn), a = Math.PI * 2 / G.n, w = kw(), th = -w.r * Math.PI / 180, pts = [[0, 0]], i, n = G.tri ? 1 : 10, R = 1.02;
+    for (i = 0; i <= n; i++) { var an = -a / 2 + a * i / n; pts.push([Math.cos(an) * R, Math.sin(an) * R]); }
+    return pts.map(function (p) { var dx = (p[0] - .55 - w.x) / (.9 * w.z), dy = (p[1] - w.y) / (.9 * w.z); return [.5 + dx * Math.cos(th) - dy * Math.sin(th), .5 + dx * Math.sin(th) + dy * Math.cos(th)]; });
+  }
+  var KM = null, KMK = '';
+  function kslMotif() { // her pieces, with nothing else, the same picture the slices are cut from
+    var k = JSON.stringify([D.layers, D.pal, D.artMap, artVer, D.tileIn]); if (KM && KMK === k) return KM;
+    KM = E.cv(360, 360); KMK = k; var sv = FADEV; withDoc(Object.assign(clone(D), { fade: 1 }), function () { drawLayersInto(KM.getContext('2d'), 360, 360, 360, { w: 1, h: 1, c: [[0, 0, 0, 0, 0]] }); }); FADEV = sv; return KM;
+  }
+  function kslGeo(c) { var G = E.kaleGeom(D.kale, D.kn), a = Math.PI * 2 / G.n, R = Math.min(c.width * .86, c.height * .92 / (2 * Math.sin(a / 2))), ax = (c.width - R * Math.cos(a / 2)) / 2 - R * (1 - Math.cos(a / 2)) / 2; return { G: G, a: a, R: R, ax: Math.max(8, ax), ay: c.height / 2 }; }
+  function kslDraw() {
+    var c = $('kslice'); if (!c) return; var g = c.getContext('2d'), q = kslGeo(c), w = kw(), m = kslMotif(), R = q.R, a = q.a;
+    g.setTransform(1, 0, 0, 1, 0, 0); g.clearRect(0, 0, c.width, c.height); g.fillStyle = '#eef0f6'; g.fillRect(0, 0, c.width, c.height);
+    var art = function () {
+      g.save(); g.translate(R * (.55 + w.x), R * w.y); var k = R * .9 * w.z / 360; g.rotate(w.r * Math.PI / 180);
+      if (w.fill) { g.scale(k, k); g.translate(-180, -180); var far = 4 * R / k + 360; g.fillStyle = g.createPattern(m, 'repeat'); g.fillRect(-far, -far, far * 2, far * 2); }
+      else g.drawImage(m, -180 * k, -180 * k, 360 * k, 360 * k);
+      g.restore();
+    };
+    var path = function () { g.beginPath(); g.moveTo(0, 0); if (q.G.tri) { g.lineTo(Math.cos(-a / 2) * R, Math.sin(-a / 2) * R); g.lineTo(Math.cos(a / 2) * R, Math.sin(a / 2) * R); } else g.arc(0, 0, R, -a / 2, a / 2); g.closePath(); };
+    g.translate(q.ax, q.ay);
+    g.save(); g.globalAlpha = .22; art(); g.restore();                         // the art outside the slice, faint
+    g.save(); path(); g.clip(); g.fillStyle = gHex(); g.fillRect(-R, -R * 2, R * 3, R * 4); art(); g.restore(); // inside the slice, as it will print
+    path(); g.strokeStyle = '#fff'; g.lineWidth = 6; g.stroke(); g.strokeStyle = '#c8412f'; g.lineWidth = 3; g.stroke();
+  }
+  var KD = null;
+  $('panel').addEventListener('pointerdown', function (e) {
+    if (e.target.id !== 'kslice') return; e.preventDefault(); commit(); var w = kw(), c = e.target, r = c.getBoundingClientRect();
+    KD = { x: e.clientX, y: e.clientY, wx: w.x, wy: w.y, k: c.width / r.width / kslGeo(c).R }; try { c.setPointerCapture(e.pointerId); } catch (_) {}
+  });
+  window.addEventListener('pointermove', function (e) {
+    if (!KD) return; var w = kw(); w.x = Math.round(clamp(KD.wx + (e.clientX - KD.x) * KD.k, -3, 3) * 1000) / 1000; w.y = Math.round(clamp(KD.wy + (e.clientY - KD.y) * KD.k, -3, 3) * 1000) / 1000; D.kw = w; tcache = {}; kslDraw(); draw();
+  });
+  ['pointerup', 'pointercancel'].forEach(function (ev) { window.addEventListener(ev, function () { if (!KD) return; KD = null; keep(); render(); }); });
 
   /* ---------- My patterns shelf (on this phone) ---------- */
   function thumb() { var c = E.cv(160, 160); swatchInto(c, Math.max(3, D.tileIn * 1.5), D.cloth, 200); return c.toDataURL('image/jpeg', .8); }
@@ -1479,8 +1566,8 @@
       '<li><b>Make</b>: Add your art, words, symbols, shapes or a fabric. Tap a piece to change it. Drag to move, pinch to size, two fingers to turn. The red dot sizes and turns with one finger. Hold a piece for Copy, Front, Back, Delete.</li>' +
       '<li><b>Repeat</b>: Grid, Half-drop, Half-brick, Mirror (Readable keeps words reading the right way), Toss, Kaleidoscope.</li>' +
       '<li><b>Grid</b> is a guide to line pieces up. Turn on <b>Use squares</b> to fill it: tap a square, then change one square, a row, a column, all, or every square with the same piece.</li>' +
-      '<li><b>Touch to edit</b> works on every step: tap a piece on Tile to change it, tap one on Swatch or Yard to jump to it. The <b>eye</b> shows just your art on white. <b>Layers</b> lists every piece: hide, lock, move forward or back.</li>' +
-      '<li><b>Repeat</b>: pick how copies sit. All copies: Size, Space across and down (below zero overlaps), Turn all, Nudge (where mirror and kaleidoscope reflections meet), Flip every other, Fade. Half-drop and Half-brick can drop or shift by 1/2, 1/3 or 1/4. Toss can turn copies and mix their sizes; Shuffle gives a new mix. Tap a piece on the Repeat picture to edit it. <b>Seam check</b> lights up anything that crosses the tile edge.</li>' +
+      '<li><b>Touch to edit</b> works on every step: tap a piece on Tile to change it, tap one on 4 x 4 or Yard to jump to it. The <b>eye</b> shows just your art on white. <b>Layers</b> lists every piece: hide, lock, move forward or back.</li>' +
+      '<li><b>Repeat</b>: pick how copies sit from the pictures. Size and Space are sliders (Space below zero overlaps). 4 x 4 shows four copies across with an inch ruler. Pro controls hold Space across and down, Turn all, Nudge (where mirror reflections meet), Flip every other, Fade and Fine tune the tile. <b>Kaleidoscope</b>: drag your art under the slice, Zoom and Turn it, or tap Surprise me; in Make the red slice is drawn on your pieces so you can move them in or out. Half-drop and Half-brick can drop or shift by 1/2, 1/3 or 1/4. Toss can turn copies and mix their sizes; Shuffle gives a new mix. Tap a piece on the Repeat picture to edit it. <b>Seam check</b> lights up anything that crosses the tile edge.</li>' +
       '<li><b>Adjust tile</b> (the corners button at the top): drag a corner or an edge to size it, wide, tall or square. Drag inside to move it. Your art keeps its size, so copies sit closer or farther apart. Fit to my art hugs your art. Art size makes the whole thing bigger or smaller on the fabric, with an 8 in preview and how many fit across a yard. Kaleidoscope stays square. Toss turns copies a half turn on a rectangle.</li>' +
       '<li><b>Fabric</b>: plaid, stripes or checks under your art. Open Thread colors, Bands, Weave and Printed on to change each one.</li>' +
       '<li><b>Words</b>: straight, arc over, arc under, circle, seal, stacked, vertical. Wrap words around a shape and they hug it.</li>' +
@@ -1497,7 +1584,7 @@
   });
 
   /* ---------- steps, views, undo ---------- */
-  $('steps').addEventListener('click', function (e) { var b = e.target.closest('button[data-s]'); if (!b) return; if (U.adj) { U.adj = null; ADJ = null; AG = null; } U.step = b.dataset.s; U.layers = false; U.msg = ''; U.clothOpen = false; U.shelfSel = null; U.delAsk = false; if (U.step !== 'make') { U.sel = null; } if ((U.step === 'look' || U.step === 'fabric') && U.view === 'tile') U.view = 'swatch'; render(); });
+  $('steps').addEventListener('click', function (e) { var b = e.target.closest('button[data-s]'); if (!b) return; if (U.adj) { U.adj = null; ADJ = null; AG = null; } U.step = b.dataset.s; U.layers = false; U.msg = ''; U.clothOpen = false; U.shelfSel = null; U.delAsk = false; if (U.step !== 'make') { U.sel = null; } if ((U.step === 'look' || U.step === 'fabric' || U.step === 'repeat') && U.view === 'tile') U.view = 'swatch'; if (U.step === 'make' && D.rep === 'kale') { U.view = 'tile'; } render(); });
   $('views').addEventListener('click', function (e) { var b = e.target.closest('button[data-v]'); if (!b) return; U.plain = false; if (U.adj) { U.adj = null; ADJ = null; AG = null; } U.view = b.dataset.v; render(); });
   // the cloth chip on the picture: tap it for a row of the 11 cloths, each showing your pattern
   $('clothChip').addEventListener('click', function () { U.clothOpen = !U.clothOpen; render(); });
@@ -1511,7 +1598,9 @@
     $('home').hidden = true; // no first page: it always opens straight into the canvas
     $('addbar').hidden = U.step !== 'make'; $('addbar').innerHTML = [['art', 'My art'], ['words', 'Words'], ['sym', 'Symbols'], ['shape', 'Shapes']].map(function (x) { return '<button type="button" data-tab="' + x[0] + '" aria-pressed="' + (U.addOpen === x[0]) + '">' + x[1] + '</button>'; }).join('');
     toolbar(); $('fab').hidden = true; $('views').parentNode.style.visibility = ''; $('zoom').hidden = U.step === 'look' && false; $('trash').hidden = !!U.adj || !!U.layers || (U.step === 'save' || U.step === 'make' || sel() ? false : true) || (!!sel() && $('stage').clientHeight < 400) || !!(U.gsel && U.gsel.length); // short screens: the side rail needs the room, Delete is on the floating bar $('trash').setAttribute('aria-label', sel() ? 'Delete this piece' : 'Start fresh'); $('trash').classList.toggle('piece', !!sel()); if (U.step !== 'make' || U.view !== 'tile') placeCtx(0, 0, false);
-    var pn = $('panel'), s = pn.scrollTop; pn.innerHTML = panelHtml(); pn.scrollTop = s; minis(); adjSwatch();
+    var pn = $('panel'), s = pn.scrollTop; var wasTall = pn.classList.contains('tall'), nowTall = U.step === 'repeat' && !U.adj && !sel(); pn.classList.toggle('tall', nowTall);
+    if (wasTall !== nowTall) { var tt0 = Date.now(); (function tick() { draw(); if (Date.now() - tt0 < 650) requestAnimationFrame(tick); })(); } // the picture follows the panel as it grows or shrinks
+    pn.innerHTML = panelHtml(); pn.scrollTop = s; minis(); adjSwatch(); kslDraw();
     var cv2 = false; $('clothChip').hidden = true; $('clothChip').textContent = clothShort(D.cloth); $('clothChip').setAttribute('aria-pressed', String(cv2 && U.clothOpen));
     var co = cv2 && U.clothOpen && U.step !== 'look', cl = $('cloths'); cl.hidden = !co;
     if (co) { var cx = cl.scrollLeft; cl.innerHTML = clothRow().replace(/<p class="note">.*<\/p>$/, ''); cl.scrollLeft = cx; minis(cl); }
