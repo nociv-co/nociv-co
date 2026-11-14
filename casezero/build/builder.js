@@ -6,7 +6,7 @@ import { OrbitControls } from 'three/addons/OrbitControls.js';
 import * as G from './geo.js?v=19';
 import { openMeasure, GROUPS } from './capture.js?v=20';
 import { makeBoard, boardFiles, boardSvg, zip as zipFiles } from './board.js?v=1';
-import { planWiring, codeFor, PICO_LEFT, PICO_RIGHT, PICO_PINS, PICO_BRAINS, NEED } from './wiring.js?v=18';
+import { planWiring, codeFor, PICO_LEFT, PICO_RIGHT, PICO_PINS, PICO_BRAINS, NEED } from './wiring.js?v=19';
 
 const CZ = window.CZ, R = G.RULE, $ = (id) => document.getElementById(id);
 const esc = (s) => String(s == null ? '' : s).replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
@@ -483,11 +483,72 @@ function pane(t) {
 }
 function summaryLine() { const d = dims(), h = heights(); if (isPanel()) return 'Panel, ' + d.W + ' x ' + d.D + ' x ' + S.pt + ' mm. ' + S.items.length + (S.items.length === 1 ? ' part.' : ' parts.'); return esc(styleRow()[1]) + ', ' + d.W.toFixed(0) + ' x ' + d.D.toFixed(0) + ' x ' + (h.H + h.Hl) + ' mm closed. ' + S.items.length + ' parts.'; }
 const WIRES = { tact12: 2, button16: 2, arcade24: 2, arcade30: 2, dpad: 5, pot: 3, encoder: 5, thumb: 5, stick: 5, slider: 3, led5: 2, ring12: 3, speaker28: 2, servo: 3, tft28: 9, round128: 8, oled096: 4, cyd: 0, hdmi5: 0, hdmi7: 0, lipo1200: 0, lipo500: 0, liposhim: 0, tp4056: 4, rocker: 2 };
+// ---------- Wire it: one wire at a time, no breadboard ----------
+// A wire goes from a part to a pin, the pin has a job, and you test it before the next one. Three ways to join: push-on wires, solder, or the board.
+const PIN_OF = {}; PICO_LEFT.forEach((n, i) => { if (PIN_OF[n] == null) PIN_OF[n] = i + 1; }); PICO_RIGHT.forEach((n, j) => { if (PIN_OF[n] == null) PIN_OF[n] = 40 - j; });
+const GND_PINS = [3, 8, 13, 18, 23, 28, 38];
+const pinWhere = (n) => (n <= 20 ? 'left side, pin ' + n + ' counting down from the USB plug' : 'right side, pin ' + (41 - n) + ' counting down from the USB plug');
+function picoSvg(pin) { // the Pico seen from above, USB plug at the top, one pin lit
+  let h = '<svg viewBox="0 0 64 150" style="float:right;width:74px;margin:0 0 4px 8px" aria-hidden="true"><rect x="14" y="8" width="36" height="136" rx="3" fill="#2f7d55"/><rect x="24" y="2" width="16" height="12" rx="2" fill="#b9b9b9"/><text x="32" y="26" text-anchor="middle" font-size="6" font-weight="800" fill="#fff" font-family="sans-serif">USB</text>';
+  for (let i = 0; i < 20; i++) { const y = 14 + i * 6.6, l = i + 1, r = 40 - i; h += '<circle cx="17.5" cy="' + y + '" r="' + (pin === l ? 4.2 : 1.9) + '" fill="' + (pin === l ? '#c8412f' : '#f0cf6b') + '"/><circle cx="46.5" cy="' + y + '" r="' + (pin === r ? 4.2 : 1.9) + '" fill="' + (pin === r ? '#c8412f' : '#f0cf6b') + '"/>'; }
+  if (pin) { const left = pin <= 20, y = 14 + (left ? pin - 1 : 40 - pin) * 6.6; h += '<text x="' + (left ? 10 : 54) + '" y="' + (y + 2.6) + '" text-anchor="' + (left ? 'end' : 'start') + '" font-size="8" font-weight="900" fill="#c8412f" font-family="sans-serif">' + pin + '</text>'; }
+  return h + '</svg>';
+}
+const TESTS = { button: 'Press it. The small light on the Pico turns on while you hold it', knob: 'Turn or slide it. The small light on the Pico blinks as it moves', wheel: 'Turn it and press it. The small light on the Pico blinks', stick: 'Push it around. The small light on the Pico blinks', led: 'Press any button. This light switches on and off', ring: 'Press any button. The ring lights up', sound: 'Press any button. It beeps', servo: 'Press a button or turn a knob. The arm moves', screen: 'It shows NOCIV and the word Ready' };
+function wirePlan() {
+  const bi = brainInfo(); if (bi && PICO_BRAINS.indexOf(bi.type) < 0 && bi.type !== 'pico2') return { why: 'The wire by wire guide is for the Raspberry Pi Pico, Pico W and Pico 2 for now. Yours is the ' + bi.name + '.' };
+  const w = wiring(); if (!w.rows.length) return { why: 'Add buttons, knobs, screens or lights in Brain, Parts first. Each one gets its wires here.' };
+  if (w.problems.length) return { why: 'Fix this in Brain, Wiring first: ' + w.problems[0] };
+  const rows = w.rows.slice().sort((a, b) => ((b.N.spi || b.N.i2c) ? 1 : 0) - ((a.N.spi || a.N.i2c) ? 1 : 0)); /* screens first: the screen is how you see the rest work */
+  const parts = rows.map((row) => ({ row, pads: padsFor(row) }));
+  // power and ground: one pin can take one push-on wire. More wires than pins means a hub (a lever connector) per pin.
+  const want = { GND: 0, '3V3': 0, VBUS: 0 }; parts.forEach((p) => p.pads.forEach(([, net]) => { if (want[net] != null) want[net]++; }));
+  // direct pins first; only the overflow goes through a hub. A hub has 5 holes: 1 in, 4 out. A net with one pin (3.3 V) chains a second hub off the first.
+  const hubs = [], share = {}; ['GND', '3V3', 'VBUS'].forEach((net) => {
+    const pins = net === 'GND' ? GND_PINS : [PIN_OF[net]]; if (want[net] <= pins.length) return;
+    let n; if (pins.length > 1) n = Math.min(pins.length, Math.ceil((want[net] - pins.length) / 3)); else { n = 1; while (4 * n - (n - 1) < want[net]) n++; }
+    const sh = share[net] = { hubs: [], direct: pins.length > 1 ? pins.slice(n) : [] };
+    for (let i = 0; i < n; i++) { const hb = { net, name: (net === 'GND' ? 'ground' : net === 'VBUS' ? '5 V' : '3.3 V') + ' hub ' + String.fromCharCode(65 + i), left: 4, pin: pins.length > 1 ? pins[i] : i === 0 ? pins[0] : null, from: pins.length === 1 && i > 0 ? sh.hubs[i - 1] : null }; if (hb.from) hb.from.left--; hubs.push(hb); sh.hubs.push(hb); }
+  });
+  let g = 0; const steps = [{ k: 'code', kind: 'code' }];
+  hubs.forEach((h) => steps.push({ k: 'hub:' + h.name, kind: 'hub', hub: h, pin: h.pin }));
+  parts.forEach(({ row, pads }) => {
+    const title = row.it.label, it = S.items.find((i) => String(i.id) === String(row.it.key)), P = it && PP(it);
+    pads.forEach(([label, net], m) => {
+      const st = { k: row.it.key + ':' + m, kind: 'wire', title, label, net, link: P ? P.link : 'pins' };
+      if (share[net] && share[net].direct.length) st.pin = share[net].direct.shift();
+      else if (share[net]) { const hb = share[net].hubs.find((x) => x.left > 0) || share[net].hubs[0]; hb.left--; st.hub = hb; }
+      else st.pin = net === 'GND' ? GND_PINS[g++ % GND_PINS.length] : PIN_OF[net];
+      steps.push(st);
+    });
+    steps.push({ k: row.it.key + ':test', kind: 'test', title, what: row.N.what, note: row.note });
+  });
+  return { steps, hubs, rows };
+}
 function wireHtml() {
-  const c = counts(), P = PARTS(), N = numbers(); let jumpers = 0, solder = 0;
-  const rows = S.items.filter((i) => P[i.type]).map((i) => { const p = P[i.type], w = WIRES[i.type] != null ? WIRES[i.type] : 4; if (p.link !== 'plug') jumpers += w; if (p.link === 'solder') solder++; return '<div class="it"><b>' + esc(N[i.id] + ' ' + p.name) + ' <span class="' + (p.link === 'solder' ? 'bad' : 'ok') + '">' + LK[p.link] + '</span></b>' + esc(p.tip) + (p.check ? ' <i>Sizes vary, measure yours.</i>' : '') + '</div>'; });
-  void c;
-  return '<button class="btn dark" data-act="toWiring" style="margin-bottom:8px">Open the wiring map and starter code</button><p class="note" style="margin-top:0"><b>About ' + jumpers + ' jumper wires.</b> Get a 40 pack of female to female (and a few male to female). ' + (solder ? solder + ' part' + (solder > 1 ? 's need' : ' needs') + ' solder, or swap for the no solder version (see ? help, No solder).' : 'Nothing here needs solder.') + '</p><div class="list" style="margin-top:8px">' + rows.join('') + '</div>';
+  const join = S.how || 'push', pl = wirePlan();
+  let h = '<div class="selbar"><b>Join with</b>' + [['push', 'Push-on wires'], ['solder', 'Solder'], ['board', 'The board']].map((m) => '<button data-how="' + m[0] + '"' + (join === m[0] ? ' style="background:#1a1a1a;color:#fff"' : '') + '>' + m[1] + '</button>').join('') + '</div>';
+  if (pl.why) return h + '<p class="note"><span class="bad">' + esc(pl.why) + '</span></p>';
+  if (join === 'board') return h + '<p class="note" style="margin-top:0">One flat board with the Pico on it and named holes under every part. The files are in Files, Board. Solder the Pico on once, then each part\'s wires go straight down into the holes with its name. The pin for each hole is already connected.</p><button class="btn dark" data-act="toBoard" style="width:100%">Open the board</button>';
+  const done = S.wired || {}, steps = pl.steps, nd = steps.filter((x) => done[x.k]).length, cur = steps.find((x) => !done[x.k]);
+  const jumpers = steps.filter((x) => x.kind === 'wire' || x.kind === 'hub').length;
+  h += join === 'push'
+    ? '<p class="note" style="margin-top:0"><b>No solder, no breadboard.</b> Get a Pico with its pins already on (Pico H, Pico WH or Pico 2 with headers) and a pack of 40 female to female jumper wires: you need about ' + jumpers + '. One end pushes onto the part, the other onto a Pico pin.' + (pl.hubs.length ? ' Also ' + pl.hubs.length + ' lever connector' + (pl.hubs.length > 1 ? 's' : '') + ' with 5 holes (the Wago 221 kind): they join wires with a flip of a lever.' : '') + '</p>'
+    : '<p class="note" style="margin-top:0"><b>Solder.</b> One wire at a time: solder one end to the part, the other to the Pico pin shown. About ' + jumpers + ' wires. Test each part before the next one.</p>';
+  h += '<div class="est"><b>' + nd + ' of ' + steps.length + ' done</b><span>' + (cur ? 'Do the one marked Now, test it, then tick it.' : 'All wired and tested. Close it up.') + '</span></div>';
+  const tick = (k, on) => '<button data-wired="' + esc(k) + '" style="all:unset;cursor:pointer;float:right;padding:6px 9px;border:1.5px solid #1a1a1a;border-radius:9px;font:800 11.5px/1 var(--sys);margin-left:6px;' + (on ? 'background:#1a1a1a;color:#fff' : '') + '">' + (on ? 'Done' : 'Tick when done') + '</button>';
+  const pinTxt = (p) => 'Pico pin ' + p + ' (' + pinWhere(p) + ')';
+  h += '<div class="list" style="margin-top:8px">' + steps.map((x) => {
+    const on = !!done[x.k], now = cur && cur.k === x.k, head = (now ? '<span class="bad">Now: </span>' : '');
+    if (x.kind === 'code') return '<div class="it">' + tick(x.k, on) + '<b>' + head + 'First: put the test code on the Pico</b>' + (on && !now ? '' : 'Save code.py, plug the Pico into a computer with its USB cable, and follow the 3 steps at the top of the file. You do this once. After that every part you connect can be tested the moment its wires are on, with any USB charger for power.<br><button class="btn dark" data-act="savecode" style="margin-top:6px">Save code.py</button>') + '</div>';
+    if (x.kind === 'hub') return '<div class="it">' + tick(x.k, on) + (now && x.pin ? picoSvg(x.pin) : '') + '<b>' + head + esc(x.hub.name[0].toUpperCase() + x.hub.name.slice(1)) + '</b>' + (on && !now ? '' : !x.pin ? 'One wire from ' + esc(x.hub.from.name) + ' into a second 5-hole lever connector. Strip 1 cm on both ends.' : (join === 'push' ? 'One wire from ' + pinTxt(x.pin) + ' into a 5-hole lever connector. Cut off the plug on that end, strip 1 cm, lift the lever, push the wire in, close it. The other 4 holes are for parts.' : 'One wire from ' + pinTxt(x.pin) + '. Up to 4 parts join onto this wire.')) + '</div>';
+    if (x.kind === 'test') return '<div class="it">' + tick(x.k, on) + '<b>' + head + 'Test ' + esc(x.title) + '</b>' + (on && !now ? '' : esc(TESTS[x.what] || 'Check it does its job') + '. Nothing? Check its wires against the steps above, one by one.' + (x.note ? '<small>' + esc(x.note) + '</small>' : '')) + '</div>';
+    const to = x.hub ? x.hub.name + ' (any free hole)' : pinTxt(x.pin) + (x.net.indexOf('GP') === 0 ? ', named ' + x.net : x.net === 'GND' ? ', a ground pin' : x.net === 'VBUS' ? ', 5 volts from USB' : ', 3.3 volts');
+    const bare = x.link === 'solder' && join === 'push' ? '<small>This part has bare legs. No-solder ways: buy it with wires already on, use push-on spade plugs, or clamp its leg and a wire together in a lever connector.</small>' : '';
+    return '<div class="it">' + tick(x.k, on) + (now && !x.hub ? picoSvg(x.pin) : '') + '<b>' + head + esc(x.title) + ': ' + esc(x.label) + '</b>' + (on && !now ? '' : 'From the ' + esc(x.label) + ' pin on the part to ' + esc(to) + '.' + bare) + '</div>';
+  }).join('') + '</div>';
+  if (nd) h += '<button class="btn" data-act="unwire" style="margin-top:8px">Start the ticks over</button>';
+  return h + '<button class="btn" data-act="toWiring" style="margin-top:8px">Change which pin a part uses</button>';
 }
 $('pane').addEventListener('input', (e) => {
   const t = e.target;
@@ -536,6 +597,10 @@ $('pane').addEventListener('click', (e) => {
   if (act === 'savecode') { const c = codeFor(wiring(), summaryLine()); saveFile({ name: 'code.py', blob: new Blob([c.text], { type: 'text/x-python' }) }); return; }
   if (act === 'repin') { S.pins = {}; save(); render(); return; }
   if (act === 'toWiring') { S.tab[0] = 'pins'; go(0); return; }
+  if (act === 'toBoard') { S.tab[5] = 'pcb'; go(5); return; }
+  if (act === 'unwire') { S.wired = {}; save(); render(); return; }
+  if (d.how) { S.how = d.how; save(); render(); return; }
+  if (d.wired) { if (!S.wired) S.wired = {}; if (S.wired[d.wired]) delete S.wired[d.wired]; else S.wired[d.wired] = true; save(); const top = $('pane').scrollTop; render(); $('pane').scrollTop = top; return; }
   if (act === 'addNotch') { S.notches = S.notches || []; S.notches.push({ edge: 'bottom', shape: 'rrect', w: 20, d: 8, at: Math.round(dims().W / 2) }); S.nsel = S.notches.length - 1; reflow(); save(); render(); return; }
   if (act === 'delNotch') { S.notches.splice(S.nsel, 1); S.nsel = Math.max(0, S.nsel - 1); save(); render(); return; }
   if (act === 'measureLid') { openMeasure((P) => { S.pw = Math.round(P.w * 2) / 2; S.pd = Math.round(P.h * 2) / 2; reflow(); save(); render(); }); return; }
@@ -1174,6 +1239,7 @@ function shopRows() {
 function extraRows() {
   const P = PARTS(), out = [], loose = S.items.filter((i) => P[i.type] && P[i.type].cat !== 'mine' && i.of == null), wires = loose.some((i) => P[i.type].link !== 'plug' && (WIRES[i.type] == null || WIRES[i.type] > 0));
   if (wires) out.push({ t: 'x_wires', name: 'Jumper wires, 40 pack', each: 4 });
+  if (wires && (S.how || 'push') === 'push') { const wp = wirePlan(); if (wp.hubs && wp.hubs.length) out.push({ t: 'x_lever', name: 'Lever connectors, 5 hole (' + wp.hubs.length + ')', each: Math.max(1, Math.round(wp.hubs.length * 0.7)) }); }
   if (!isPanel() && !S.snap && posts().length) out.push({ t: 'x_m3', name: 'M3 screws, 8 mm (small box)', each: 3 });
   if (isPanel() && S.phold === 'screws') out.push({ t: 'x_m3', name: 'M3 screws (small box)', each: 3 });
   if (isClam() && S.magnets) out.push({ t: 'x_mag', name: 'Round magnets 6 x 3 mm, 4 or more', each: 3 });
@@ -1240,7 +1306,7 @@ function fitAll() { // place every loose part; if they do not all fit, grow the 
 function loadRecipe(id) {
   const r = (CZ.RECIPES || []).find((x) => x.id === id); if (!r) return;
   S.items = []; S.pins = {}; S.have = {}; sel = null; LAST = null; UNDO.length = 0;
-  S.style = r.style; const z = r.size || SIZES[r.style]; S.cols = z[0]; S.rows = z[1]; S.add = r.add || 0; S.recipe = r.id; S.picked = true; S.started = true; S.pcb = false;
+  S.style = r.style; const z = r.size || SIZES[r.style]; S.cols = z[0]; S.rows = z[1]; S.add = r.add || 0; S.recipe = r.id; S.picked = true; S.started = true; S.pcb = false; S.wired = {};
   const mk = (t, x, y, rq) => { const P = CZ.PARTS[t]; if (P) S.items.push({ id: ++uid, type: t, panel: defaultPanel(P), x, y, r: rq || 0 }); };
   if (r.place) r.place.forEach(([t, x, y, rq]) => mk(t, x, y, rq)); /* a hand-made layout, in mm from the bottom left */
   else r.parts.forEach(([t, n]) => { for (let i = 0; i < n; i++) mk(t, -999, -999, 0); });
@@ -1339,6 +1405,7 @@ function saveFile(f) {
 const LEARN = [
   ['Start here', '<ul><li><b>Make something known</b>: pick a recipe. It loads a shape and a parts list, and names the open project its code comes from.</li><li><b>Make something new</b>: an empty body for your own idea.</li><li><b>I already have parts</b>: photo your board. The case is sized to it.</li><li>Then follow the bar at the bottom left to right: Body, Style, Brain, Arrange, Print, Files. The black Next button on every page takes you on.</li><li><b>Files, Shop</b>: what to buy, what it costs, how long a battery lasts. Tap I have this on anything you own.</li></ul>'],
   ['Recipes and credits', '<ul>' + (CZ.RECIPES || []).map((r) => '<li><b>' + r.name + '</b>: ' + r.credit.project + ' by ' + r.credit.by + ', license ' + r.credit.license + '. <a href="' + r.credit.url + '" target="_blank" rel="noopener">Their page</a>. ' + r.note + '</li>').join('') + '<li>We do not copy their code into this app. We send you to it, with their name on it.</li><li>Not test-built by NOCIV yet means we have not built that recipe ourselves. Check their parts list before you buy.</li></ul>'],
+  ['Wire it: no breadboard', '<ul><li>Files, Wire it. Pick how you join things: push-on wires (no solder), solder, or the board.</li><li>You get one wire at a time: from this pin on the part, to this pin on the Pico, with a picture of which pin.</li><li>After each part there is a test. The small light on the Pico turns on when a button is pressed, so you can test with no screen and no computer.</li><li>Tick each step. The count at the top shows how far you are.</li><li>Push-on wires need a Pico with its pins already on (Pico H or WH). Parts with bare legs need wires already on, spade plugs or a lever connector.</li><li>When more parts need ground than the Pico has ground pins, the guide adds a hub: a lever connector that joins wires with no solder.</li><li>You put the test code on the Pico once, from a computer. After that any USB charger powers it.</li></ul>'],
   ['The board (Clean it)', '<ul><li>Files, Board. For a Raspberry Pi Pico, Pico W or Pico 2.</li><li>One flat board. The Pico solders onto it. Every part gets a row of labelled holes right under it, already connected to the right Pico pins.</li><li>The app lays it out from Arrange and from your pins in Brain, Wiring. Move a part or change a pin and the board changes.</li><li>Before you can save, the app measures every gap and follows every connection. If anything is off, there are no files.</li><li>Turn on Use it in my case and the case gets posts for the board.</li><li>Board factories make 5 at a time, so it pays when you build a few or share a batch.</li><li>Not factory tested by NOCIV yet. Order a small batch first.</li></ul>'],
   ['Battery power', '<ul><li>Brain, Parts, Power: a flat LiPo battery, a charger and a switch.</li><li>Easiest for a Pico: the Pico charger. It solders to the back of the Pico and charges through the Pico plug.</li><li>Cheapest: the USB-C charger board. It gets its own opening in the wall: slide it against a wall in Arrange.</li><li>The run time shown is a rough guess from typical numbers.</li><li>With the USB-C charger board, put a 1N5817 diode between the battery side and the Pico VSYS pin, stripe toward the Pico. Without it, USB power can push back into the battery.</li><li>Be careful with LiPo batteries: buy one with a protection circuit, tape it down, never crush, bend or poke it, and check red and black before plugging in.</li><li>A Raspberry Pi needs 5 volts. Use a USB power bank, not a bare LiPo.</li></ul>'],
   ['How it works', '<ol><li><b>Brain</b>: already built? Photo your board front and back and tag each part. Not built yet? Pick each part from the list. Every part has its real size. The 3D box top right shows what you added in yellow, tap it to make it big.</li><li><b>Arrange</b>: place them on the lid and base (or the top). The grid is 20 mm squares, like your Panel Layout. Yellow means it does not fit.</li><li><b>Body</b>: pick a shape, size, hinge and how it closes. Measure a part you have with your phone.</li><li><b>Print</b>: tell us your printer. If the case is bigger than your bed we cut it into puzzle pieces.</li><li><b>Files</b>: one STL per piece, the parts list and how to wire it.</li></ol>'],

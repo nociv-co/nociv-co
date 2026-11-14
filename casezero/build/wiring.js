@@ -1,6 +1,8 @@
 // Case Zero wiring map and starter code. Brain: Raspberry Pi Pico family (Pico, Pico W, Pico 2: same pins).
 // planWiring() gives every part its pins by the real rules; codeFor() writes a CircuitPython code.py from that plan.
 // Every press and turn prints a line like "NOCIV B1 1" so a live test can read it later over USB.
+// The Pico's own small light also turns on with a press, so a part can be tested with no screen and no computer.
+// A screen that is not connected yet never stops the code: its setup sits in one try.
 
 // The Pico header, top to bottom. Left side is pins 1 to 20, right side is pins 40 to 21.
 export const PICO_LEFT = ['GP0', 'GP1', 'GND', 'GP2', 'GP3', 'GP4', 'GP5', 'GND', 'GP6', 'GP7', 'GP8', 'GP9', 'GND', 'GP10', 'GP11', 'GP12', 'GP13', 'GND', 'GP14', 'GP15'];
@@ -95,13 +97,15 @@ export function codeFor(plan, title) {
   if (keys.length) L.push('import keypad');
   if (pots.length) L.push('import analogio');
   if (encs.length) L.push('import rotaryio');
-  if (has('led')) L.push('import digitalio');
+  const inputs = keys.length || pots.length || encs.length;
+  if (has('led') || inputs) L.push('import digitalio');
   if (has('sound') || has('servo')) L.push('import pwmio');
   if (has('ring')) L.push('import neopixel');
   if (has('servo')) L.push('from adafruit_motor import servo');
   L.push('');
+  L.push('status = None', '');
   if (screen) {
-    const S2 = screen.N, R = screen.R, big = S2.w >= 240;
+    const S2 = screen.N, R = screen.R, big = S2.w >= 240, at = L.length;
     L.push('# ---- screen: ' + screen.label + ' ----', 'import busio', 'import displayio', 'import terminalio', 'from adafruit_display_text import label', 'displayio.release_displays()');
     if (S2.spi) {
       L.push('try:', '    from fourwire import FourWire', 'except ImportError:', '    from displayio import FourWire');
@@ -115,8 +119,11 @@ export function codeFor(plan, title) {
     L.push('group = displayio.Group()', 'display.root_group = group',
       'title = label.Label(terminalio.FONT, text="NOCIV", scale=' + (big ? 3 : 2) + ', x=' + (S2.driver === 'gc9a01' ? 70 : 8) + ', y=' + (big ? 40 : 12) + ')',
       'status = label.Label(terminalio.FONT, text="Press a button", scale=' + (big ? 2 : 1) + ', x=' + (S2.driver === 'gc9a01' ? 40 : 8) + ', y=' + (big ? 110 : 44) + ')',
-      'group.append(title)', 'group.append(status)', '', 'def show(text):', '    status.text = text', '');
-  } else L.push('def show(text):', '    pass', '');
+      'group.append(title)', 'group.append(status)');
+    // everything about the screen sits inside one try: with no screen connected yet, the rest still runs and can be tested
+    const body = L.splice(at + 1).map((x) => '    ' + x); L.push('try:'); body.forEach((x) => L.push(x)); L.push('except Exception as err:', '    status = None', '    print("NOCIV screen not found yet:", err)', '');
+  }
+  L.push('def show(text):', '    if status:', '        status.text = text', '');
   if (keys.length) L.push('# ---- buttons (pressed = pin to GND, the Pico pulls it up inside) ----', 'KEYS = (' + keys.map((k) => 'board.GP' + k[0]).join(', ') + ',)', 'NAMES = (' + keys.map((k) => pyStr(k[1])).join(', ') + ',)', 'keys = keypad.Keys(KEYS, value_when_pressed=False, pull=True)', '');
   if (pots.length) L.push('# ---- knobs, sliders and sticks (0 to 100) ----', 'POTS = (' + pots.map((p) => '(analogio.AnalogIn(board.GP' + p[0] + '), ' + pyStr(p[1]) + ')').join(', ') + ',)', 'last = [-10] * len(POTS)', '');
   if (encs.length) L.push('# ---- click wheels (the two pins sit side by side) ----', 'WHEELS = (' + encs.map((e) => '(rotaryio.IncrementalEncoder(board.GP' + e[0] + ', board.GP' + (e[0] + 1) + '), ' + pyStr(e[1]) + ')').join(', ') + ',)', 'spot = [0] * len(WHEELS)', '');
@@ -126,10 +133,11 @@ export function codeFor(plan, title) {
     if (w === 'sound') L.push('# ---- ' + tag + ' sound ----', 'beep = pwmio.PWMOut(board.GP' + pin + ', frequency=440, duty_cycle=0, variable_frequency=True)', '');
     if (w === 'servo') L.push('# ---- ' + tag + ' servo ----', 'arm = servo.Servo(pwmio.PWMOut(board.GP' + pin + ', duty_cycle=2 ** 15, frequency=50))', '');
   });
+  if (inputs) L.push('# ---- the small light on the Pico itself: it shows a press with no screen and no computer ----', 'try:', '    lamp = digitalio.DigitalInOut(board.LED)', '    lamp.direction = digitalio.Direction.OUTPUT', 'except (AttributeError, ValueError):', '    lamp = None', '');
   L.push('show("Ready")', 'print("NOCIV ready")', '', 'while True:');
   let body = 0;
   if (keys.length) {
-    L.push('    event = keys.events.get()', '    if event:', '        name = NAMES[event.key_number]', '        down = 1 if event.pressed else 0', '        print("NOCIV", name.replace(" ", "-"), down)', '        if down:', '            show(name + " pressed")');
+    L.push('    event = keys.events.get()', '    if event:', '        name = NAMES[event.key_number]', '        down = 1 if event.pressed else 0', '        print("NOCIV", name.replace(" ", "-"), down)', '        if lamp:', '            lamp.value = bool(down)', '        if down:', '            show(name + " pressed")');
     if (has('led')) L.push('            led.value = not led.value');
     if (has('ring')) L.push('            ring.fill((200, 40, 30))');
     if (has('sound')) L.push('            beep.frequency = 330 + 60 * event.key_number', '            beep.duty_cycle = 2 ** 14');
@@ -138,11 +146,11 @@ export function codeFor(plan, title) {
     body++;
   }
   if (pots.length) {
-    L.push('    for n, (pot, name) in enumerate(POTS):', '        value = pot.value * 100 // 65535', '        if abs(value - last[n]) >= 2:', '            last[n] = value', '            print("NOCIV", name.replace(" ", "-"), value)', '            show(name + " " + str(value))');
+    L.push('    for n, (pot, name) in enumerate(POTS):', '        value = pot.value * 100 // 65535', '        if abs(value - last[n]) >= 2:', '            last[n] = value', '            print("NOCIV", name.replace(" ", "-"), value)', '            show(name + " " + str(value))', '            if lamp:', '                lamp.value = not lamp.value');
     if (has('servo')) L.push('            if n == 0:', '                arm.angle = value * 180 // 100');
     body++;
   }
-  if (encs.length) { L.push('    for n, (wheel, name) in enumerate(WHEELS):', '        if wheel.position != spot[n]:', '            spot[n] = wheel.position', '            print("NOCIV", name, spot[n])', '            show(name + " " + str(spot[n]))'); body++; }
+  if (encs.length) { L.push('    for n, (wheel, name) in enumerate(WHEELS):', '        if wheel.position != spot[n]:', '            spot[n] = wheel.position', '            print("NOCIV", name, spot[n])', '            show(name + " " + str(spot[n]))', '            if lamp:', '                lamp.value = not lamp.value'); body++; }
   if (!body) L.push('    pass');
   L.push('    time.sleep(0.01)', '');
   return { text: L.join('\n'), libs };
