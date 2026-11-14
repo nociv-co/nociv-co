@@ -5,6 +5,7 @@ import * as THREE from 'three';
 import { OrbitControls } from 'three/addons/OrbitControls.js';
 import * as G from './geo.js?v=19';
 import { openMeasure, GROUPS } from './capture.js?v=20';
+import { makeBoard, boardFiles, boardSvg, zip as zipFiles } from './board.js?v=1';
 import { planWiring, codeFor, PICO_LEFT, PICO_RIGHT, PICO_PINS, PICO_BRAINS, NEED } from './wiring.js?v=18';
 
 const CZ = window.CZ, R = G.RULE, $ = (id) => document.getElementById(id);
@@ -79,8 +80,8 @@ function heights() {
   if (isPanel()) return { H: S.pt + (S.plift || 0), Hl: 0, recess: 0, recessL: 0 };
   // base: floor + deepest part or brain + deck, plus room for caps when the lid closes
   const home = homePanel(), inside = S.items.filter((i) => i.panel === 'inside' && i.of == null).reduce((m, i) => Math.max(m, 5 + (PP(i) ? PP(i).depth : 0)), 0);
-  const recess = isClam() ? Math.ceil(upOf(home) + 1) : 0;
-  const H = Math.max(isClam() ? 18 : 20, Math.ceil(R.F + Math.max(depthOf(home), inside) + 3 + R.LT + recess)) + S.add;
+  const recess = isClam() ? Math.ceil(upOf(home) + 1) : 0, pcb = pcbOn(); /* with the carrier board: it lies on 5 mm posts and is 1.6 mm thick, so the brain rides 1.6 higher and every part on top has to clear the board */
+  const H = Math.max(isClam() ? 18 : 20, Math.ceil(R.F + Math.max(depthOf(home) + (pcb ? 6.6 : 0), inside + (pcb ? 1.6 : 0)) + 3 + R.LT + recess)) + S.add;
   const Hl = isClam() ? Math.max(12, Math.ceil(R.F + depthOf('lid') + 2 + R.LT + Math.ceil(upOf('lid')))) : 0;
   return { H, Hl, recess, recessL: isClam() ? Math.ceil(upOf('lid')) : 0 };
 }
@@ -105,7 +106,7 @@ function problems(it) {
     else if ((it.panel === 'inside' && q.panel === homePanel()) || (q.panel === 'inside' && it.panel === homePanel())) {
       const deck = it.panel === 'inside' ? q : it, brain = it.panel === 'inside' ? it : q, h = heights();
       const bottom = h.H - R.LT - h.recess - PP(deck).depth;
-      if (bottom < R.F + 5 + PP(brain).depth) out.push(it === deck ? 'too deep, it hits ' + label(brain) : 'under ' + label(deck) + ', not enough room');
+      if (bottom < R.F + 5 + PP(brain).depth + (pcbOn() ? 1.6 : 0)) out.push(it === deck ? 'too deep, it hits ' + label(brain) : 'under ' + label(deck) + ', not enough room');
     }
   });
   return out;
@@ -218,7 +219,10 @@ function looksFor(panel) {
 function halfFor(panel, h) {
   if (isPanel()) return panelBuilt();
   const d = dims(), lid = panel === 'lid', flip = (it) => ({ P: PP(it), x: lid ? d.W - it.x : it.x, y: lid ? d.D - it.y : it.y, r: ((it.r || 0) + (lid ? 2 : 0)) % 4 });
-  const parts = itemsOn(panel).filter((i) => PP(i)).map((i) => Object.assign(flip(i), { spring: S.spring && i.type === 'tact12' })), inside = lid ? [] : S.items.filter((i) => i.panel === 'inside' && PP(i) && i.of == null).map(flip);
+  const parts = itemsOn(panel).filter((i) => PP(i)).map((i) => Object.assign(flip(i), { spring: S.spring && i.type === 'tact12' })); let inside = lid ? [] : S.items.filter((i) => i.panel === 'inside' && PP(i) && i.of == null).map(flip);
+  if (!lid && pcbOn()) { const Bd = boardBuild(); if (Bd.ok) { /* the Pico is soldered to the board: no posts for it. The board gets four posts for M2 screws. */
+    inside = inside.map((q) => (q.P.cat === 'brain' ? Object.assign({}, q, { P: Object.assign({}, q.P, { holes: null }) }) : q));
+    const bx = Bd.box; inside.push({ P: { w: bx.w, h: bx.h, cat: 'pcb', holes: Bd.mounts.map((m) => [m.x - bx.x0, m.y - bx.y0]), hole: 2.1 }, x: (bx.x0 + bx.x1) / 2, y: (bx.y0 + bx.y1) / 2, r: 0 }); } }
   let port = null, port2 = null;
   const onBoard = lid ? null : S.items.find((i) => i.of != null && PP(i) && PP(i).cat === 'brain'), bp = onBoard && boardOf(onBoard) && PP(boardOf(onBoard));
   if (!lid) {
@@ -357,7 +361,7 @@ function tabsFor(step) {
   if (step === 2) return [['shape', 'Shape', 'shape'], ['fit', 'Fit', 'fit'], ['measure', 'Measure', 'measure']];
   if (step === 3) return [['colors', 'Color', 'colors'], ['tex', 'Texture', 'tex'], ['labels', 'Buttons', 'labels'], ['logo', 'Logo', 'logo']];
   if (step === 4) return [['printer', 'Printer', 'printer'], ['strong', 'Strength', 'strong'], ['mat', 'Material', 'mat'], ['split', 'Split', 'split']];
-  return [['3d', '3D', 'cube'], ['shop', 'Shopping', 'cart'], ['files', 'Files', 'file'], ['extras', 'Add-ons', 'parts'], ['wire', 'Wire it', 'wire']];
+  return [['3d', '3D', 'cube'], ['shop', 'Shop', 'cart'], ['files', 'Files', 'file'], ['pcb', 'Board', 'brain'], ['extras', 'Extras', 'parts'], ['wire', 'Wire it', 'wire']];
 }
 function curTab() { const t = tabsFor(S.step), c = S.tab[S.step]; return t.some((x) => x[0] === c) ? c : t[S.step === 0 ? 1 : 0][0]; }
 function nudgeRow() { return '<div class="selbar nud"><b>Nudge</b><button data-act="nudge" data-nx="-1" data-ny="0" aria-label="Left">&larr;</button><button data-act="nudge" data-nx="0" data-ny="1" aria-label="Up">&uarr;</button><button data-act="nudge" data-nx="0" data-ny="-1" aria-label="Down">&darr;</button><button data-act="nudge" data-nx="1" data-ny="0" aria-label="Right">&rarr;</button></div>'; }
@@ -384,7 +388,7 @@ function seg(name, opts, val) { return '<div class="seg" data-sg="' + name + '">
 function stepper(name, label, txt) { return '<div class="row"><b>' + label + '</b><div class="step" data-st="' + name + '"><button type="button" data-d="-1" aria-label="Less">&minus;</button><output>' + esc(txt) + '</output><button type="button" data-d="1" aria-label="More">+</button></div></div>'; }
 const LK = { solder: 'SOLDER', pins: 'NO SOLDER', plug: 'PLUG IN' };
 function counts() { const c = {}; S.items.forEach((i) => { c[i.type] = (c[i.type] || 0) + 1; }); return c; }
-function chosenChips() { const c = counts(), P = PARTS(); const k = Object.keys(c); return k.length ? '<p class="note" style="margin-top:8px"><b>About ' + money(cost(true).total) + ' so far</b> in parts. The full bill is in Files, Shopping.</p><div class="chosen">' + k.map((t) => '<span>' + esc(P[t] ? P[t].short : t) + ' <i>x' + c[t] + '</i></span>').join('') + '</div><button class="btn' + (Date.now() - CLEARARM < 4000 ? ' red' : '') + '" data-act="clearall" style="margin-top:8px;padding:8px">' + (Date.now() - CLEARARM < 4000 ? 'Tap again to remove ' + (S.items.length === 1 ? 'the part' : 'all ' + S.items.length + ' parts') : 'Start over: remove all parts') + '</button>' : '<p class="note">Nothing yet. Tap a part to add it, tap its number to take one away.</p>'; }
+function chosenChips() { const c = counts(), P = PARTS(); const k = Object.keys(c); return k.length ? '<p class="note" style="margin-top:8px"><b>About ' + money(cost(true).total) + ' so far</b> in parts. The full bill is in Files, Shop.</p><div class="chosen">' + k.map((t) => '<span>' + esc(P[t] ? P[t].short : t) + ' <i>x' + c[t] + '</i></span>').join('') + '</div><button class="btn' + (Date.now() - CLEARARM < 4000 ? ' red' : '') + '" data-act="clearall" style="margin-top:8px;padding:8px">' + (Date.now() - CLEARARM < 4000 ? 'Tap again to remove ' + (S.items.length === 1 ? 'the part' : 'all ' + S.items.length + ' parts') : 'Start over: remove all parts') + '</button>' : '<p class="note">Nothing yet. Tap a part to add it, tap its number to take one away.</p>'; }
 function pane(t) {
   const P = PARTS(), c = counts();
   if (t === 'snap') return '<p class="h">Already built and soldered?</p><button class="btn red" data-act="measure">Photo my board, front and back</button><p class="note" style="margin-bottom:10px">A card next to it is the ruler. Press on each part on the photo, say what it is, do the brain too. Your board goes inside the case, every part on it becomes its own part you can change. Photos stay on your phone.</p>' +
@@ -464,6 +468,7 @@ function pane(t) {
   }
   if (t === '3d') return '<p class="h">Spin it with one finger, pinch to zoom</p>' + (isClam() ? '<button class="btn" data-act="open">' + (S.open ? 'Close the lid' : 'Open the lid') + '</button>' : '') + '<p class="note">' + summaryLine() + ' <b>' + money(cost().total) + ' to build.</b></p>' + creditHtml();
   if (t === 'shop') return shopHtml();
+  if (t === 'pcb') return pcbHtml();
   if (t === 'files') { const probs = allProblems(); return '<p class="note" style="margin:0 0 8px">No printer? A print service or a library takes these same files. To print from a USB stick, open them in your printer\'s free slicer app first: it turns them into the file your printer reads.</p>' + '<button class="btn red" data-act="make"' + (probs.length || !S.items.length ? ' aria-disabled="true"' : '') + '>Make my files</button><p class="note">' + (!S.items.length ? 'Add parts in Brain first.' : probs.length ? '<span class="bad">Fix the parts marked ! in Arrange first.</span>' : (S.material === 'wood' ? 'Wood: real size templates (SVG) to print at 100 percent or laser cut, plus the cut list.' : 'One STL per piece, numbered. Print the deck face down, the tray open side up.')) + '</p><div class="files" id="fileList" style="margin-top:8px"></div>'; }
   if (t === 'wire') return wireHtml();
   if (t === 'extras') { const X = xp();
@@ -551,6 +556,8 @@ $('pane').addEventListener('click', (e) => {
   if (act === 'nudge' && s) { snapU(); const st2 = 0.5; s.x += (+d.nx) * st2; s.y += (+d.ny) * st2; if (s.of != null) unSync(s); if (PP(s) && PP(s).board) syncKids(s); save(); render(); return; }
   if (act === 'bmove' && s) { s.move = !s.move; save(); render(); return; }
   if (d.photo) { S.photo = d.photo; save(); render(); return; }
+  if (d.pcb) { snapU(); S.pcb = d.pcb === '1'; LAST = null; save(); render(); return; }
+  if (act === 'saveboard') { const Bd = boardBuild(); if (Bd.ok) saveFile({ name: 'casezero-board.zip', blob: new Blob([zipFiles(boardFiles(Bd, 'casezero-board').concat([{ name: 'README.txt', text: boardReadme(Bd) }]))], { type: 'application/zip' }) }); return; }
   if (act === 'rot' && s && PP(s) && PP(s).board) { snapU(); s.r = ((s.r || 0) + 1) % 4; syncKids(s); if (problems(s).length) { autoPlace(s); syncKids(s); } save(); render(); return; }
   if (act === 'rot' && s) { s.r = ((s.r || 0) + 1) % 4; if (problems(s).length) { const keep = [s.x, s.y]; if (!autoPlace(s)) { s.x = keep[0]; s.y = keep[1]; } } save(); render(); return; }
   if (act === 'swap' && s) { s.panel = s.panel === 'lid' ? 'base' : 'lid'; autoPlace(s); S.tab[1] = s.panel; save(); render(); return; }
@@ -1092,6 +1099,70 @@ function addonFile(id) {
   for (let i = 0; i < a.n; i++) geos.push(...G.layerGeos([{ polys: a.polys.map((p) => p.map(([x, y]) => [x + i * step, y])), z0: 0, z1: a.h }]));
   return { name: 'casezero-' + id + '.stl', blob: G.stl(G.trisOf(geos), id) };
 }
+// ---------- the carrier board (Clean it) ----------
+const PICOS = ['pico', 'picow', 'pico2'];
+function pcbOn() { return !!S.pcb && !isPanel() && !S.items.some((i) => i.of != null) && S.items.some((i) => i.type === 'pico' || i.type === 'picow' || i.type === 'pico2'); } /* cheap on purpose: heights() asks this all the time */
+function pcbWhy() { // null when a board can be made, else the plain reason
+  if (isPanel()) return 'A panel has no floor to hold a board.';
+  if (S.items.some((i) => i.of != null)) return 'Your parts are already soldered on your own board, so a second board has nothing to do here.';
+  const b = S.items.find((i) => PP(i) && PP(i).cat === 'brain');
+  if (!b) return 'Add a brain first (Brain, Parts). The board is made for a Raspberry Pi Pico, Pico W or Pico 2.';
+  if (PICOS.indexOf(b.type) < 0) return 'The board is made for a Raspberry Pi Pico, Pico W or Pico 2 for now. Yours is the ' + PP(b).name + '.';
+  const w = wiring(); if (!w.rows.length) return 'Add buttons, knobs, screens or lights first: the board connects them to the brain.';
+  if (w.problems.length) return 'Fix this in Brain, Wiring first: ' + w.problems[0];
+  if (w.rows.some((r) => r.roles.some((x) => x.pin == null))) return 'A part has no pin yet. Fix it in Brain, Wiring first.';
+  return null;
+}
+const PADLBL = { press: 'SW', up: 'UP', down: 'DN', left: 'LT', right: 'RT', turn: 'SIG', slide: 'SIG', x: 'X', y: 'Y', light: 'LED+', data: 'DIN', sound: 'SPK+', signal: 'SIG' };
+function padsFor(row) { // the pads one part gets, in the order its own pins usually sit. [what is printed next to the pad, which Pico pin it goes to]
+  const N = row.N, Rr = {}, gp = (p) => 'GP' + p; row.roles.forEach((r) => { Rr[r.role] = r.pin; });
+  if (N.spi) return [['3V3', '3V3'], ['GND', 'GND'], ['CS', gp(Rr.cs)], ['RST', gp(Rr.rst)], ['DC', gp(Rr.dc)], ['MOSI', gp(Rr.data)], ['SCK', gp(Rr.clock)], ['LED', '3V3']];
+  if (N.i2c) return [['GND', 'GND'], ['3V3', '3V3'], ['SCL', gp(Rr.SCL)], ['SDA', gp(Rr.SDA)]];
+  const out = [];
+  row.roles.forEach((r) => { if (r.two) out.push(['CLK', gp(r.pin)], ['DT', gp(r.pin + 1)]); else out.push([PADLBL[r.role] || String(r.role).toUpperCase().slice(0, 4), gp(r.pin)]); });
+  if (row.power) out.push([row.power === 'VBUS' ? '5V' : '3V3', row.power]);
+  out.push(['GND', 'GND']); return out;
+}
+let PCB = null;
+function boardBuild() {
+  const why = pcbWhy(); if (why) return { ok: false, errors: [why] };
+  const key = JSON.stringify([S.style, S.cols, S.rows, S.magnets, S.items.map((i) => [i.id, i.type, i.panel, Math.round(i.x * 10), Math.round(i.y * 10), i.r || 0]), S.pins]);
+  if (PCB && PCB.key === key) return PCB.b;
+  const d = dims(), br = S.items.find((i) => PP(i) && PP(i).cat === 'brain'), w = wiring(), big = (polys) => polys.slice().sort((a, b) => Math.abs(G.area([b])) - Math.abs(G.area([a])));
+  // the board stays 0.8 mm off the inside of the wall. Magnet lids have bosses on the wall, so stay well clear of those.
+  const keepPolys = big(G.offset(outline(), -(R.T + 0.8 + (isClam() && S.magnets ? 9 : 0)))), ps = posts().map(([x, y]) => ({ x, y, r: R.POSTR + 0.8 }));
+  if (!keepPolys.length) return { ok: false, errors: ['This body is too small for a board.'] };
+  const zones = S.items.filter((i) => i.panel === 'inside' && PP(i) && PP(i).cat !== 'brain').map((i) => { const P = PP(i), odd = (i.r || 0) % 2, hw = (odd ? P.h : P.w) / 2, hh = (odd ? P.w : P.h) / 2; return { x0: i.x - hw, y0: i.y - hh, x1: i.x + hw, y1: i.y + hh }; });
+  const groups = w.rows.map((row) => { const it = S.items.find((i) => String(i.id) === String(row.it.key)); if (!it) return null; return { title: String(row.it.label).toUpperCase().replace(/[^A-Z0-9 +\-./]/g, ' '), x: it.x, y: it.panel === 'lid' ? d.D - 12 : it.y, pads: padsFor(row).map(([label, net]) => ({ label, net })) }; }).filter(Boolean);
+  const pw = powerInfo(), b = makeBoard({ keepin: keepPolys[0], posts: ps, pico: { x: br.x, y: br.y, r: br.r || 0 }, zones, groups, diode: !!pw.mah && !S.items.some((i) => i.type === 'liposhim'),
+    finalize: (r) => { const rc = [G.rect(r.x0, r.y0, r.x1, r.y1)], cut = G.diff(G.diff(keepPolys.slice(0, 1), G.diff(keepPolys.slice(0, 1), rc)), ps.map((q) => G.circle(q.x, q.y, q.r, 32))); return big(cut).filter((p) => Math.abs(G.area([p])) > 4); } });
+  PCB = { key, b }; return b;
+}
+function boardReadme(b) {
+  const L = ['NOCIV Case Zero carrier board', 'Size: ' + b.box.w.toFixed(1) + ' x ' + b.box.h.toFixed(1) + ' mm. 2 layers.', '',
+    'ORDER', 'Upload this zip at a board factory (JLCPCB, PCBWay and others). Pick: 2 layers, 1.6 mm thick, any colour. Leave the rest as it is. They make 5 or more at a time.', 'The price you see there is the real one. Shipping often costs more than the boards.', '',
+    'NOT FACTORY TESTED YET', 'The app checked these files twice (every gap, every connection), but NOCIV has not ordered and built this board yet. Order one small batch and test it before you count on it.', '',
+    'SOLDER', '1. Pico: solder its two rows of pins into the two long rows of holes. The square marks pin 1. The USB plug goes to the end marked USB.'];
+  if (b.diode) L.push('2. D1: a 1N5817 diode in the two holes joined by the arrow. The stripe on the diode goes to the end with the bar.', '3. Battery side (after the charger and the switch): plus to BAT+, minus to the GND next to it.');
+  L.push((b.diode ? '4' : '2') + '. Every part: a short wire from each of its pins to the hole with the same name, right under the part.', '', 'PADS');
+  b.rows.forEach((r) => { L.push(r.g.isDiode ? 'BATTERY IN: BAT+ and GND holes, then diode D1 into the Pico VSYS pin' : r.g.title + ': ' + r.g.pads.map((p) => p.label + ' -> ' + p.net).join(', ')); });
+  L.push('', 'Screws: 4 x M2, 6 mm, into the posts on the case floor.');
+  return L.join('\n');
+}
+function pcbHtml() {
+  let h = '<p class="h" style="margin-top:0">Clean it: one board, no nest of wires</p>';
+  const b = boardBuild();
+  if (!b.ok) return h + '<p class="note"><span class="bad">' + esc(b.errors[0]) + '</span></p><p class="note">The board is one flat piece the Pico solders onto, with labelled holes right under every part. The app lays it out from your Arrange and your pins, then writes the files a board factory needs.</p>';
+  const tall = (() => { const was = S.pcb; S.pcb = false; const a = heights().H; S.pcb = true; const c = heights().H; S.pcb = was; return c - a; })();
+  h += boardSvg(b) + '<p class="note"><span class="ok">All ' + b.check.connected + ' pads connected and checked.</span> ' + b.box.w.toFixed(0) + ' x ' + b.box.h.toFixed(0) + ' mm, 2 layers. Yellow lines run on top, blue underneath. Smallest gap between two pieces of copper: ' + b.check.minGap.toFixed(2) + ' mm (factories need 0.13 to 0.2).</p>';
+  h += '<div class="selbar"><b>Use it in my case</b>' + [['1', 'Yes'], ['0', 'No']].map((m) => '<button data-pcb="' + m[0] + '"' + ((S.pcb ? '1' : '0') === m[0] ? ' style="background:#1a1a1a;color:#fff"' : '') + '>' + m[1] + '</button>').join('') + '</div>';
+  h += '<p class="note">' + (S.pcb ? 'On. The case floor has 4 posts for the board (M2 screws) and no posts for the Pico. ' + (tall > 0 ? 'The case is ' + tall + ' mm taller so the parts clear the board. ' : '') + 'Make your print files again in Files.' : 'Off. Turn it on and the case gets 4 posts for the board' + (tall > 0 ? ' and grows ' + tall + ' mm taller so the parts clear it' : '') + '.') + '</p>';
+  h += '<button class="btn dark" data-act="saveboard" style="width:100%">Save the board files (zip)</button>';
+  h += '<div class="list" style="margin-top:8px"><div class="it"><b>Order</b>Upload the zip at a board factory (JLCPCB, PCBWay). Pick 2 layers, 1.6 mm thick, leave the rest. They make 5 at a time. ' + (b.box.w > 100 || b.box.h > 100 ? 'This board is bigger than 100 x 100 mm, which costs more: a smaller body or parts closer together makes it cheaper.' : 'Boards under 100 x 100 mm like this one are the cheap size.') + ' The price on their page is the real one, and shipping often costs more than the boards.</div>' +
+    '<div class="it"><b>Solder</b>The Pico into the two long rows (the square is pin 1, USB end is marked). Then a short wire from each part straight down to the holes with its name.' + (b.diode ? ' D1 is a 1N5817 diode: stripe to the bar. The battery side goes to BAT+ and the GND next to it.' : '') + '</div>' +
+    '<div class="it"><b>New: not factory tested yet</b>The app checks every gap and every connection twice before it lets you save. But NOCIV has not ordered and built one of these boards yet. Order one small batch and test it before you count on it.</div></div>';
+  return h;
+}
 // ---------- cost, shopping, power ----------
 const money = (n) => '$' + (n >= 100 ? Math.round(n) : n.toFixed(n % 1 ? 2 : 0));
 function shopRows() {
@@ -1107,6 +1178,8 @@ function extraRows() {
   if (isPanel() && S.phold === 'screws') out.push({ t: 'x_m3', name: 'M3 screws (small box)', each: 3 });
   if (isClam() && S.magnets) out.push({ t: 'x_mag', name: 'Round magnets 6 x 3 mm, 4 or more', each: 3 });
   if (isClam() && S.hinge === 'metal') out.push({ t: 'x_hinge', name: '25 mm butt hinges, 2', each: 3 });
+  const pw = powerInfo(); if (pw.mah && !loose.some((i) => i.type === 'liposhim')) out.push({ t: 'x_d1', name: 'Schottky diode 1N5817 (keeps USB power out of the battery)', each: 0.5 });
+  if (pcbOn()) { const Bd = boardBuild(); if (Bd.ok) { out.push({ t: 'x_pcb', name: 'Carrier boards, 5 from a board factory (rough price, shipping extra)', each: Bd.box.w > 100 || Bd.box.h > 100 ? 15 : 4 }); out.push({ t: 'x_m2', name: 'M2 screws, 6 mm, 4 for the board', each: 2 }); } }
   out.forEach((r) => { r.have = !!S.have[r.t]; r.sum = r.have ? 0 : r.each; });
   return out;
 }
@@ -1129,6 +1202,7 @@ function powerNote() {
   if (p.pi) o += ' <span class="bad">A Raspberry Pi needs 5 volts: a bare LiPo cannot run it.</span> Use a USB power bank or a Pi battery board instead.';
   else if (!p.charger) o += ' <span class="bad">Add a charger</span> so you can charge it: the Pico charger (uses the Pico plug) or the USB-C charger board (cheapest).';
   else if (!p.sw) o += ' Add the power switch so off really is off.';
+  if (p.mah && !p.pi && !S.items.some((i) => i.type === 'liposhim')) o += ' <b>Put a 1N5817 diode between the battery side and the Pico VSYS pin</b>, stripe toward the Pico, so USB power can never push back into the battery. The board in Files, Board has the spot for it.';
   if (p.charger && S.items.some((i) => i.type === 'tp4056')) o += ' In Arrange, slide the USB-C charger against a wall and Turn it so its plug faces out.';
   return o;
 }
@@ -1147,7 +1221,7 @@ function shopHtml() {
   h += '<div class="list">' + c.rows.map((r) => '<div class="it">' + haveBtn(r.t, r.have) + '<b>' + r.n + ' x ' + esc(r.p.name) + '</b>' + (r.have ? 'You have it: $0.' : r.own ? (r.own === r.n ? 'Already on your board: $0.' : r.own + ' already on your board. ' + money(r.sum) + ' for the other ' + r.buy + '.') : money(r.p.price || 0) + ' each, ' + money(r.sum) + '.') + ' ' + link(r.p) + (r.p.check ? '<small>Sizes differ by seller. Measure yours before you print.</small>' : '') + '</div>').join('') +
     c.ex.map((r) => '<div class="it">' + haveBtn(r.t, r.have) + '<b>' + esc(r.name) + '</b>' + (r.have ? 'You have it: $0.' : 'About ' + money(r.each) + '.') + '</div>').join('') + '</div>';
   h += '<button class="btn" data-act="savelist" style="margin-top:8px">Save the shopping + build list</button>';
-  h += '<p class="h" style="margin-top:12px">How far to take it</p><div class="list"><div class="it"><b>1. Wire it <span class="ok">this build</span></b>The brain board plus loose wires. Cheapest for one device: ' + money(c.total) + '.</div><div class="it"><b>2. Clean it <span style="color:#6f6a60">coming next</span></b>One flat board the brain plugs into, with every button and the charger already connected. No loose wires. Factories make 5 at a time, so it pays when you build a few or split a batch.</div><div class="it"><b>3. Chip it <span style="color:#6f6a60">later</span></b>Your own board with the bare chip on it, soldered by the factory. The cheapest per device once you make a batch, not for one.</div></div>';
+  h += '<p class="h" style="margin-top:12px">How far to take it</p><div class="list"><div class="it"><b>1. Wire it <span class="ok">this build</span></b>The brain board plus loose wires. Cheapest for one device: ' + money(c.total) + '.</div><div class="it"><b>2. Clean it <span class="ok">' + (pcbOn() ? 'on' : 'ready to try') + '</span></b>One flat board the Pico solders onto, with labelled pads under every part. Short wires straight down, no nest. Factories make 5 at a time, so it pays when you build a few or split a batch. It is in Files, Board.</div><div class="it"><b>3. Chip it <span style="color:#6f6a60">later</span></b>Your own board with the bare chip on it, soldered by the factory. The cheapest per device once you make a batch, not for one.</div></div>';
   return h + creditHtml();
 }
 function fitAll() { // place every loose part; if they do not all fit, grow the body a square at a time, keeping its proportions
@@ -1166,7 +1240,7 @@ function fitAll() { // place every loose part; if they do not all fit, grow the 
 function loadRecipe(id) {
   const r = (CZ.RECIPES || []).find((x) => x.id === id); if (!r) return;
   S.items = []; S.pins = {}; S.have = {}; sel = null; LAST = null; UNDO.length = 0;
-  S.style = r.style; const z = r.size || SIZES[r.style]; S.cols = z[0]; S.rows = z[1]; S.add = r.add || 0; S.recipe = r.id; S.picked = true; S.started = true;
+  S.style = r.style; const z = r.size || SIZES[r.style]; S.cols = z[0]; S.rows = z[1]; S.add = r.add || 0; S.recipe = r.id; S.picked = true; S.started = true; S.pcb = false;
   const mk = (t, x, y, rq) => { const P = CZ.PARTS[t]; if (P) S.items.push({ id: ++uid, type: t, panel: defaultPanel(P), x, y, r: rq || 0 }); };
   if (r.place) r.place.forEach(([t, x, y, rq]) => mk(t, x, y, rq)); /* a hand-made layout, in mm from the bottom left */
   else r.parts.forEach(([t, n]) => { for (let i = 0; i < n; i++) mk(t, -999, -999, 0); });
@@ -1251,6 +1325,7 @@ function partsText() {
   if (isClam() && S.hinge === 'metal') lines.push('2 x 25 mm butt hinges + short wood screws');
   if (S.items.some((i) => P[i.type] && P[i.type].inside)) lines.push('4 x M2 screws, 5 mm (brain to its posts)');
   { const c = cost(), r = recipe(); lines.push('', 'SHOPPING (typical prices, not live. Shipping is extra)'); c.rows.forEach((x) => lines.push((x.buy ? x.buy + ' x ' : 'have  ') + x.p.name + (x.buy ? '  ' + money(x.sum) : '') + (x.p.url ? '  ' + x.p.url : ''))); c.ex.forEach((x) => lines.push((x.have ? 'have  ' : '1 x ') + x.name + (x.have ? '' : '  about ' + money(x.each)))); lines.push('Plastic: about ' + money(c.plastic), 'TOTAL: about ' + money(c.total)); const pw = powerInfo(); if (pw.mah) lines.push('Battery: about ' + hrs(pw.hours) + ' on a charge (rough guess)'); if (r) lines.push('', 'CODE AND CREDIT', r.name + ': ' + r.credit.project + ' by ' + r.credit.by + '. License: ' + r.credit.license + '.', r.credit.url, r.note); }
+  if (pcbOn()) { const Bd = boardBuild(); if (Bd.ok) lines.push('', 'BOARD (Clean it)', 'Carrier board ' + Bd.box.w.toFixed(0) + ' x ' + Bd.box.h.toFixed(0) + ' mm, 2 layers. Save its files in Files, Board. 4 x M2 screws hold it on the floor posts.'); }
   lines.push('', 'PRINTING', 'Material: ' + S.material.toUpperCase() + '. Join: ' + CZ.JOINS[S.join][0] + '. Bed: ' + S.bed[0] + ' x ' + S.bed[1] + ' mm.', (isPanel() ? 'Panel: flat, front face up, no supports' : 'Box: open side up, no supports') + (isClam() && S.hinge === 'printed' ? ' (turn on supports for the hinge barrels only)' : '') + '. Deck: face down, no supports. ' + LAYER[S.layer] + ' mm layers, 4 walls, 15 percent infill. Walls: ' + (S.walls === 'tough' ? 'thick (3.2 mm)' : 'normal (2.4 mm)') + '.', (S.material === 'wood' ? '' : 'Time on ' + printerRow()[1] + ': about ' + hm(estimate().sec) + ', ' + Math.round(estimate().grams) + ' g. Your slicer has the exact time.'), 'Print the deck first and check every part fits its hole.');
   return lines.join('\n');
 }
@@ -1262,9 +1337,10 @@ function saveFile(f) {
 
 // ---------- learn ----------
 const LEARN = [
-  ['Start here', '<ul><li><b>Make something known</b>: pick a recipe. It loads a shape and a parts list, and names the open project its code comes from.</li><li><b>Make something new</b>: an empty body for your own idea.</li><li><b>I already have parts</b>: photo your board. The case is sized to it.</li><li>Then follow the bar at the bottom left to right: Body, Style, Brain, Arrange, Print, Files. The black Next button on every page takes you on.</li><li><b>Files, Shopping</b>: what to buy, what it costs, how long a battery lasts. Tap I have this on anything you own.</li></ul>'],
+  ['Start here', '<ul><li><b>Make something known</b>: pick a recipe. It loads a shape and a parts list, and names the open project its code comes from.</li><li><b>Make something new</b>: an empty body for your own idea.</li><li><b>I already have parts</b>: photo your board. The case is sized to it.</li><li>Then follow the bar at the bottom left to right: Body, Style, Brain, Arrange, Print, Files. The black Next button on every page takes you on.</li><li><b>Files, Shop</b>: what to buy, what it costs, how long a battery lasts. Tap I have this on anything you own.</li></ul>'],
   ['Recipes and credits', '<ul>' + (CZ.RECIPES || []).map((r) => '<li><b>' + r.name + '</b>: ' + r.credit.project + ' by ' + r.credit.by + ', license ' + r.credit.license + '. <a href="' + r.credit.url + '" target="_blank" rel="noopener">Their page</a>. ' + r.note + '</li>').join('') + '<li>We do not copy their code into this app. We send you to it, with their name on it.</li><li>Not test-built by NOCIV yet means we have not built that recipe ourselves. Check their parts list before you buy.</li></ul>'],
-  ['Battery power', '<ul><li>Brain, Parts, Power: a flat LiPo battery, a charger and a switch.</li><li>Easiest for a Pico: the Pico charger. It solders to the back of the Pico and charges through the Pico plug.</li><li>Cheapest: the USB-C charger board. It gets its own opening in the wall: slide it against a wall in Arrange.</li><li>The run time shown is a rough guess from typical numbers.</li><li>Be careful with LiPo batteries: buy one with a protection circuit, tape it down, never crush, bend or poke it, and check red and black before plugging in.</li><li>A Raspberry Pi needs 5 volts. Use a USB power bank, not a bare LiPo.</li></ul>'],
+  ['The board (Clean it)', '<ul><li>Files, Board. For a Raspberry Pi Pico, Pico W or Pico 2.</li><li>One flat board. The Pico solders onto it. Every part gets a row of labelled holes right under it, already connected to the right Pico pins.</li><li>The app lays it out from Arrange and from your pins in Brain, Wiring. Move a part or change a pin and the board changes.</li><li>Before you can save, the app measures every gap and follows every connection. If anything is off, there are no files.</li><li>Turn on Use it in my case and the case gets posts for the board.</li><li>Board factories make 5 at a time, so it pays when you build a few or share a batch.</li><li>Not factory tested by NOCIV yet. Order a small batch first.</li></ul>'],
+  ['Battery power', '<ul><li>Brain, Parts, Power: a flat LiPo battery, a charger and a switch.</li><li>Easiest for a Pico: the Pico charger. It solders to the back of the Pico and charges through the Pico plug.</li><li>Cheapest: the USB-C charger board. It gets its own opening in the wall: slide it against a wall in Arrange.</li><li>The run time shown is a rough guess from typical numbers.</li><li>With the USB-C charger board, put a 1N5817 diode between the battery side and the Pico VSYS pin, stripe toward the Pico. Without it, USB power can push back into the battery.</li><li>Be careful with LiPo batteries: buy one with a protection circuit, tape it down, never crush, bend or poke it, and check red and black before plugging in.</li><li>A Raspberry Pi needs 5 volts. Use a USB power bank, not a bare LiPo.</li></ul>'],
   ['How it works', '<ol><li><b>Brain</b>: already built? Photo your board front and back and tag each part. Not built yet? Pick each part from the list. Every part has its real size. The 3D box top right shows what you added in yellow, tap it to make it big.</li><li><b>Arrange</b>: place them on the lid and base (or the top). The grid is 20 mm squares, like your Panel Layout. Yellow means it does not fit.</li><li><b>Body</b>: pick a shape, size, hinge and how it closes. Measure a part you have with your phone.</li><li><b>Print</b>: tell us your printer. If the case is bigger than your bed we cut it into puzzle pieces.</li><li><b>Files</b>: one STL per piece, the parts list and how to wire it.</li></ol>'],
   ['No solder: how to connect anything', '<ul><li><b>Jumper wires</b> (Dupont): the black plug ends are female (a hole) or male (a pin). Pins on a board are male, so you use <b>female to female</b> wires between two boards. Male to female goes from a breadboard to a board.</li><li><b>Header pins</b>: buy boards with pins already soldered. Pico H and WH, Pi Zero 2 WH. Then jumpers push right on.</li><li><b>HATs</b>: boards that press straight onto a Raspberry Pi\'s 40 pins. Screens, sound and buttons with zero wires.</li><li><b>Qwiic / STEMMA QT</b>: one small 4 wire plug carries power and data. Chain sensors and screens one after another. Grove is the same idea with a bigger plug.</li><li><b>Screw terminals</b>: a breakout board where wires clamp in with a tiny screwdriver.</li><li><b>Arcade parts</b>: buttons use push-on spade plugs, kits come with a plug and play USB encoder.</li><li>Keep it tidy: red for power, black for ground, one color per button. Tape or zip tie the bundle.</li></ul>'],
   ['Solder in 10 minutes', '<ul><li>Iron at about 330 to 350 C (625 to 660 F) for leaded solder, 350 to 380 C for lead free.</li><li>Tin the tip: melt a little solder on it, wipe on a wet sponge or brass wool.</li><li>Touch the iron to the pad AND the pin together for 1 to 2 seconds. Feed solder into the joint, not onto the iron. Pull solder away, then the iron.</li><li>Good joint: shiny little volcano around the pin. Ball = not hot enough. Bridge to the next pin = too much, drag it away with the iron.</li><li>On perfboard, run one bare wire along a row as a ground line (a bus) and connect every button to it. Fewer wires, like a real board.</li><li>Open a window, wash your hands after leaded solder, never touch the tip. A $10 practice kit is worth it.</li></ul>'],
@@ -1276,7 +1352,7 @@ const LEARN = [
   ['Photo your built board', '<ul><li>Your board is soldered, everything is where it is. The case fits it, not the other way around.</li><li>Front photo: drag the dots onto the card and the board (watch the close-up). Then press on a part, slide until the cross is on its middle, let go, and say what it is. Screens and the brain appear at their real size: slide them over the photo and Turn them to match. The brain has a USB arrow: point it where the plug is.</li><li>Tap a tag to change what it is, turn it or remove it.</li><li>Back photo: tap the screw holes. They become posts that hold the board under the top.</li><li>Tell it the tallest button height. The top of the case sits so buttons poke through 1.5 mm.</li><li>In the case: your board is dashed, underneath. Every part on it is its own part: tap one to change what it is. Dragging one moves the whole board; Unlock to nudge one alone. The USB opening goes in the wall the arrow points at.</li><li>No AI looks at your photos. Nothing leaves your phone.</li></ul>'],
 
   ['A panel for a box you have', '<ul><li>Body, Shape, Panel (or pick it on the start screen): one flat piece that fills a box you already have, like a briefcase lid.</li><li>Box inside: type it or measure it with a card. The panel comes out 1 mm smaller so it drops in.</li><li>Holds by: Screws (M3 in the corners), Snug ribs (little bumps on every edge press against the box, no screws) or Drops in.</li><li>Sits: On the floor, and the whole screen comes up through the window. On legs or On a lip, and the panel is lifted to the front of the screen so the window shows only the picture. Measure from the floor of the box to the front of the screen for the height. A lip is a wall under the whole edge: stiffer than legs, hides the wires, notches cut through it. Raised panels print face down.</li><li>Holds by: Screws (M3 in the corners, through the legs or lip into the box; line them up with screws you already have), Glue (no holes, E6000 or CA on the bottom of the lip or legs), Snug ribs, or Drops in.</li><li>Notches let wires out: Round, Rounded or Square, any edge. Tap an edge on the picture or drag to move one.</li><li>Bigger than your bed? It prints in pieces with puzzle tabs that lock in the middle.</li></ul>'],
-  ['Add-ons', '<ul><li>Files, Add-ons: pieces you print one at a time, sized to your case.</li><li>Clip-on stand: grabs the bottom edge and leans it back 15, 25 or 35 degrees. Prints on its side so the layers run the strong way. No hinge pin to snap.</li><li>Feet, standoffs (the screw cuts its own thread), cable clips (tape or glue them on).</li></ul>'],
+  ['Extras', '<ul><li>Files, Extras: pieces you print one at a time, sized to your case.</li><li>Clip-on stand: grabs the bottom edge and leans it back 15, 25 or 35 degrees. Prints on its side so the layers run the strong way. No hinge pin to snap.</li><li>Feet, standoffs (the screw cuts its own thread), cable clips (tape or glue them on).</li></ul>'],
   ['Deck (cyberdeck or laptop)', '<p>A big Case Zero: screen in the lid, keyboard and controls in the base. Sizes go up to 24 squares (480 mm). Keyboards vary a lot, so photo yours with the card in Brain (Snap). On a small bed it prints as puzzle pieces.</p>'],
   ['Print time and strength', '<ul><li>The time is worked out from the real plastic in your case and how fast your printer really prints. Your slicer has the exact number, this is within about a third.</li><li>Older bed slingers like the Ender-3 S1 print about 3 times slower than a Bambu, K1 or Ender-3 V3.</li><li>A case is a shell with 2.4 mm walls. Infill does not matter much because 4 walls already fill them. Want it tougher? Thick walls (3.2 mm).</li><li>Fast (0.28 mm layers) shows lines and saves about a quarter of the time. Smooth (0.12 mm) takes about twice as long.</li><li>The QR sticker: Creality stickers hold a link (qr.creality.com) and a serial number, not the model. The scanner reads both and opens the Creality list; the model is printed on the sticker next to Model Number.</li></ul>'],
   ['Measuring with your phone', '<ul><li>Any bank, ID, gift or library card is 85.6 x 54 mm. It is the ruler.</li><li>Card corners are rounded. Do not put the dots on the curve: move them until the white outline sits on the card edge, rounded corners too. A dot on the curve throws every size off by a few percent.</li><li>Lay it flat right next to the part, same table. Good light, no flash, no shadows.</li><li>The green outline goes solid when your phone is level, then it snaps by itself.</li><li>A hand in the photo is a nice size guide for people, but hands differ by a lot. The card is accurate to about 1 mm.</li><li>Flip the part like a page for the back so the screw holes line up.</li></ul>'],
@@ -1291,6 +1367,6 @@ $('help').onclick = openHelp; $('helpTop').onclick = openHelp;
 $('sheet').addEventListener('click', (e) => { if (e.target === $('sheet')) $('sheet').hidden = true; });
 window.addEventListener('resize', draw);
 
-window.__cz = { wiring, codeFor, get S() { return S; }, get view() { return view; }, AZ, get UNDO() { return UNDO.length; }, halves, plan, makeFiles, get FILES() { return FILES; }, allProblems, G, addPart, go, render, dims, heights, addonFile, showStart, loadRecipe, cost };
+window.__cz = { wiring, codeFor, get S() { return S; }, get view() { return view; }, AZ, get UNDO() { return UNDO.length; }, halves, plan, makeFiles, get FILES() { return FILES; }, allProblems, G, addPart, go, render, dims, heights, addonFile, showStart, loadRecipe, cost, boardBuild, boardFiles, boardReadme };
 render();
 if (!S.started && !S.items.length) showStart();
