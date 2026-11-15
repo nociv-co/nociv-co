@@ -374,14 +374,14 @@ function undo() { const u = UNDO.pop(); if (!u) return; const o = JSON.parse(u);
 // One job per page. A page shows only its own tools; everything else stays out of sight until you go there.
 // A page is a list of [step, tab] pairs from the old six steps, so every pane, action and saved build keeps working. '*' = every tab of that step.
 const PAGES = [
-  { room: 'body', name: 'Shape', hint: 'Pick the body and its size', tabs: [[2, '*']] },
-  { room: 'body', name: 'Style', hint: 'Color, texture, labels, logo', tabs: [[3, '*']] },
-  { room: 'body', name: 'Arrange', hint: 'Drag the parts where you want them', tabs: [[1, '*']] },
-  { room: 'body', name: 'Print', hint: 'Fit it to your printer', tabs: [[4, '*']] },
-  { room: 'body', name: 'Finish', hint: 'See it in 3D, save the files', tabs: [[5, '3d'], [5, 'files'], [5, 'extras']] },
-  { room: 'brain', name: 'Parts', hint: 'Choose what goes inside', tabs: [[0, 'parts'], [0, 'snap'], [0, 'picks']] },
-  { room: 'brain', name: 'Wire it', hint: 'One wire at a time, then test', tall: true, tabs: [[5, 'wire'], [0, 'pins']] },
-  { room: 'brain', name: 'Shop', hint: 'What to buy, what it costs', tall: true, tabs: [[5, 'shop']] },
+  { room: 'body', name: 'Shape', hint: 'Pick a body', tabs: [[2, '*']], more: ['fit', 'measure', 'psize', 'notch'] },
+  { room: 'body', name: 'Style', hint: 'Pick its colors', tabs: [[3, '*']], more: ['tex', 'labels', 'logo'] },
+  { room: 'body', name: 'Arrange', hint: 'Drag the parts into place', tabs: [[1, '*']], more: ['size', 'psize'] },
+  { room: 'body', name: 'Print', hint: 'Pick your printer', tabs: [[4, '*']], more: ['strong', 'mat', 'split'] },
+  { room: 'body', name: 'Finish', hint: 'Look, then save the files', tabs: [[5, '3d'], [5, 'files'], [5, 'extras']], more: ['extras'] },
+  { room: 'brain', name: 'Parts', hint: 'Choose what goes inside', tabs: [[0, 'parts'], [0, 'snap'], [0, 'picks']], more: ['snap', 'picks'] },
+  { room: 'brain', name: 'Wire it', hint: 'One wire at a time', tall: true, tabs: [[5, 'wire'], [0, 'pins']], more: ['pins'] },
+  { room: 'brain', name: 'Shop', hint: 'What to buy', tall: true, tabs: [[5, 'shop']] },
   { room: 'brain', name: 'Board', hint: 'One board, no loose wires', tall: true, tabs: [[5, 'pcb']] }
 ];
 const ROOMS = [['body', 'Body'], ['brain', 'Brain']];
@@ -399,21 +399,32 @@ function render() {
   if (!S.seen) S.seen = {}; S.seen[S.page] = S.step + ':' + t; if (!S.lastIn) S.lastIn = {}; S.lastIn[pg.room] = S.page;
   $('rooms').innerHTML = ROOMS.map((r) => '<button type="button" data-room="' + r[0] + '" aria-pressed="' + (r[0] === pg.room) + '">' + r[1] + '</button>').join('');
   $('ph').innerHTML = '<b class="nb">0' + (at + 1) + '</b><span class="pt">' + pg.name + '</span><span class="hint">' + pg.hint + '</span>';
-  $('parts').innerHTML = list.map((x) => '<button type="button" data-st="' + x[0] + '" data-t="' + x[1] + '" aria-pressed="' + (x[0] === S.step && x[1] === t) + '"><span>' + x[2] + '</span></button>').join('');
-  $('parts').parentNode.hidden = list.length < 2;
+  // the main tool of the page shows by itself. The rest sit behind More, so a first-timer sees one thing and anyone can still reach everything.
+  const extra = pg.more || [], isMore = (x) => extra.indexOf(x[1]) > -1, mains = list.filter((x) => !isMore(x)), rest = list.filter(isMore);
+  if (!S.moreOn) S.moreOn = {}; const open = !!S.moreOn[S.page] || rest.some((x) => x[0] === S.step && x[1] === t);
+  const pill = (x) => '<button type="button" data-st="' + x[0] + '" data-t="' + x[1] + '" aria-pressed="' + (x[0] === S.step && x[1] === t) + '"><span>' + x[2] + '</span></button>';
+  $('parts').innerHTML = (mains.length > 1 || open ? mains.map(pill).join('') : '') + (open ? rest.map(pill).join('') : '') + (rest.length ? '<button type="button" class="mo" data-more="' + (open ? '0' : '1') + '"><span>' + (open ? 'Less' : 'More options') + '</span></button>' : '');
+  $('parts').parentNode.hidden = mains.length < 2 && !rest.length;
   const prev = mine[at - 1], next = mine[at + 1];
   $('bbar').innerHTML = '<button type="button" data-pg="' + (prev ? prev[1] : '') + '"' + (prev ? '' : ' disabled') + '>Back</button><span class="dots">' + mine.map((x) => '<b' + (x[1] === S.page ? ' class="on"' : '') + '></b>').join('') + '</span>' +
     (next ? '<button type="button" class="nx" data-pg="' + next[1] + '">Next: ' + next[0].name + '</button>' : pg.room === 'body' ? '<button type="button" class="nx" data-room="brain">The Brain</button>' : '<button type="button" class="nx" data-room="body">The Body</button>');
   $('con').classList.toggle('tall', !!pg.tall);
   if (SHOWN !== S.page) { if (SHOWN !== -1) { const st = $('stage'), cn = $('con'); st.classList.remove('zin'); cn.classList.remove('pop'); void st.offsetWidth; st.classList.add('zin'); cn.classList.add('pop'); } SHOWN = S.page; }
-  $('pane').innerHTML = pane(t); $('pane').scrollTop = 0; after(t); draw();
+  $('pane').innerHTML = pane(t); $('pane').scrollTop = 0; after(t); tidy(); draw();
 }
+// Less to read: long grey notes show two lines with a 'more' you can tap. Warnings (red) always show in full.
+function tidy() {
+  $('pane').querySelectorAll('.note').forEach((n) => { if (n.querySelector('.bad') || n.id === 'partTip') return; n.classList.add('clamp'); if (n.scrollHeight > n.clientHeight + 3) n.classList.add('cut'); else n.classList.remove('clamp'); });
+  const on = $('pane').querySelector('.hrow [aria-pressed=true]'); if (on && on.scrollIntoView) { const r = on.parentNode; r.scrollLeft = Math.max(0, on.offsetLeft - r.clientWidth / 2 + on.offsetWidth / 2); }
+}
+$('pane').addEventListener('click', (e) => { const n = e.target.closest('.note.cut'); if (n && !e.target.closest('a,button,select,input')) n.classList.toggle('open'); });
 function nextBtn() { return ''; }
 function go(step) { S.step = step; BIG3D = false; save(); $('con').classList.remove('down'); render(); }
 function goRoom(room) { const i = (S.lastIn || {})[room], j = i != null && PAGES[i] && PAGES[i].room === room ? i : PAGES.findIndex((p) => p.room === room); openPage(j); }
 $('bbar').addEventListener('click', (e) => { const r = e.target.closest('[data-room]'); if (r) { goRoom(r.dataset.room); return; } const b = e.target.closest('[data-pg]'); if (b && b.dataset.pg !== '') openPage(+b.dataset.pg); });
 $('rooms').addEventListener('click', (e) => { const r = e.target.closest('[data-room]'); if (r) goRoom(r.dataset.room); });
-$('parts').addEventListener('click', (e) => { const b = e.target.closest('[data-t]'); if (!b) return; S.step = +b.dataset.st; S.tab[S.step] = b.dataset.t; BIG3D = false; save(); $('con').classList.remove('down'); render(); });
+$('parts').addEventListener('click', (e) => { const m = e.target.closest('[data-more]'); if (m) { if (!S.moreOn) S.moreOn = {}; S.moreOn[S.page] = m.dataset.more === '1'; if (!S.moreOn[S.page]) { const p = PAGES[S.page], f = pageTabs(p).find((x) => (p.more || []).indexOf(x[1]) < 0); if (f) { S.step = f[0]; S.tab[f[0]] = f[1]; } } save(); render(); return; }
+  const b = e.target.closest('[data-t]'); if (!b) return; S.step = +b.dataset.st; S.tab[S.step] = b.dataset.t; BIG3D = false; save(); $('con').classList.remove('down'); render(); });
 $('drop').addEventListener('click', () => { $('con').classList.toggle('down'); draw(); });
 
 // ---------- panes ----------
@@ -459,7 +470,7 @@ function pane(t) {
       (n ? '<div class="row"><b>Edge</b>' + seg('n_edge', [['bottom', 'Bottom'], ['top', 'Top'], ['left', 'Left'], ['right', 'Right']], n.edge) + '</div><div class="row"><b>Shape</b>' + seg('n_shape', [['round', 'Round'], ['rrect', 'Rounded'], ['rect', 'Square']], n.shape) + '</div>' + stepper('nw', 'Wide', n.w + ' mm') + stepper('nd', 'Deep', n.d + ' mm') + stepper('nat', along, n.at + ' mm') : '<p class="note">A notch lets wires and plugs pass the edge of the panel. Tap Add a notch, or tap an edge on the picture.</p>') + (n ? '<p class="note">Drag on the picture to move N' + (i + 1) + ' along any edge.</p>' : '');
   }
   if (t === 'size') { const d = dims(); return stepper('cols', 'Wide', S.cols + ' squares') + stepper('rows', 'Tall', S.rows + ' squares') + '<p class="note">Each square is 20 mm, like your Panel Layout v1. Outside: <b>' + d.W.toFixed(0) + ' x ' + d.D.toFixed(0) + ' mm</b>, ' + heights().H + ' mm deep' + (isClam() ? ' + ' + heights().Hl + ' mm lid' : '') + '.</p>'; }
-  if (t === 'shape') return '<button class="btn" data-act="start" style="margin-bottom:8px">Start over: pick what to make</button><div class="grid g4">' + CZ.STYLES.map((s) => '<button type="button" class="pick" data-style="' + s[0] + '" aria-pressed="' + (S.style === s[0]) + '">' + styleSvg(s[0]) + esc(s[1]) + '</button>').join('') + '</div><p class="note">' + esc(styleRow()[2]) + '.' + (S.style === 'face' ? ' Round screens make eyes or a watch face. Want it to move? Add a servo in Brain (Movement), then plan the moves in the <a href="/creator-tools.html#cartoon">Cartoon maker</a>.' : '') + (S.style === 'hand' || S.style === 'pad' ? ' Our own shape, not a copy of any console.' : '') + '</p>';
+  if (t === 'shape') return '<div class="hrow">' + CZ.STYLES.map((s) => '<button type="button" class="pick" data-style="' + s[0] + '" aria-pressed="' + (S.style === s[0]) + '">' + styleSvg(s[0]) + esc(s[1]) + '</button>').join('') + '</div><p class="note">' + esc(styleRow()[2]) + '.' + (S.style === 'face' ? ' Round screens make eyes or a watch face. Want it to move? Add a servo in Brain (Movement), then plan the moves in the <a href="/creator-tools.html#cartoon">Cartoon maker</a>.' : '') + (S.style === 'hand' || S.style === 'pad' ? ' Our own shape, not a copy of any console.' : '') + '</p><button class="btn" data-act="start" style="margin-top:10px">Start over with something else</button>';
   if (t === 'fit') {
     const h = heights();
     let o = stepper('cols', 'Wide', S.cols + ' squares (' + dims().W.toFixed(0) + ' mm)') + stepper('rows', 'Tall', S.rows + ' squares (' + dims().D.toFixed(0) + ' mm)') + stepper('add', 'Height', h.H + ' mm' + (S.add ? ' (+' + S.add + ')' : ''));
@@ -566,20 +577,22 @@ function wireHtml() {
   const done = S.wired || {}, steps = pl.steps, nd = steps.filter((x) => done[x.k]).length, cur = steps.find((x) => !done[x.k]);
   const jumpers = steps.filter((x) => x.kind === 'wire' || x.kind === 'hub').length;
   h += join === 'push'
-    ? '<p class="note" style="margin-top:0"><b>No solder, no breadboard.</b> Get a Pico with its pins already on (Pico H, Pico WH or Pico 2 with headers) and a pack of 40 female to female jumper wires: you need about ' + jumpers + '. One end pushes onto the part, the other onto a Pico pin.' + (pl.hubs.length ? ' Also ' + pl.hubs.length + ' lever connector' + (pl.hubs.length > 1 ? 's' : '') + ' with 5 holes (the Wago 221 kind): they join wires with a flip of a lever.' : '') + '</p>'
+    ? '<p class="note" style="margin-top:0"><b>No solder, no breadboard.</b> You need a Pico with its pins already on (Pico H or WH) and about ' + jumpers + ' push-on jumper wires (female to female). One end pushes onto the part, the other onto a Pico pin.' + (pl.hubs.length ? ' Also ' + pl.hubs.length + ' lever connector' + (pl.hubs.length > 1 ? 's' : '') + ' with 5 holes (the Wago 221 kind): they join wires with a flip of a lever.' : '') + '</p>'
     : '<p class="note" style="margin-top:0"><b>Solder.</b> One wire at a time: solder one end to the part, the other to the Pico pin shown. About ' + jumpers + ' wires. Test each part before the next one.</p>';
-  h += '<div class="est"><b>' + nd + ' of ' + steps.length + ' done</b><span>' + (cur ? 'Do the one marked Now, test it, then tick it.' : 'All wired and tested. Close it up.') + '</span></div>';
+  h += '<div class="prog"><i style="width:' + Math.round(nd / steps.length * 100) + '%"></i><b>' + nd + ' of ' + steps.length + '</b></div>';
   const tick = (k, on) => '<button data-wired="' + esc(k) + '" style="all:unset;cursor:pointer;float:right;padding:6px 9px;border:1.5px solid #1a1a1a;border-radius:9px;font:800 11.5px/1 var(--sys);margin-left:6px;' + (on ? 'background:#1a1a1a;color:#fff' : '') + '">' + (on ? 'Done' : 'Tick when done') + '</button>';
   const pinTxt = (p) => 'Pico pin ' + p + ' (' + pinWhere(p) + ')';
-  h += '<div class="list" style="margin-top:8px">' + steps.map((x) => {
-    const on = !!done[x.k], now = cur && cur.k === x.k, head = (now ? '<span class="bad">Now: </span>' : '');
-    if (x.kind === 'code') return '<div class="it">' + tick(x.k, on) + '<b>' + head + 'First: put the test code on the Pico</b>' + (on && !now ? '' : 'Save code.py, plug the Pico into a computer with its USB cable, and follow the 3 steps at the top of the file. You do this once. After that every part you connect can be tested the moment its wires are on, with any USB charger for power.<br><button class="btn dark" data-act="savecode" style="margin-top:6px">Save code.py</button>') + '</div>';
-    if (x.kind === 'hub') return '<div class="it">' + tick(x.k, on) + (now && x.pin ? picoSvg(x.pin) : '') + '<b>' + head + esc(x.hub.name[0].toUpperCase() + x.hub.name.slice(1)) + '</b>' + (on && !now ? '' : !x.pin ? 'One wire from ' + esc(x.hub.from.name) + ' into a second 5-hole lever connector. Strip 1 cm on both ends.' : (join === 'push' ? 'One wire from ' + pinTxt(x.pin) + ' into a 5-hole lever connector. Cut off the plug on that end, strip 1 cm, lift the lever, push the wire in, close it. The other 4 holes are for parts.' : 'One wire from ' + pinTxt(x.pin) + '. Up to 4 parts join onto this wire.')) + '</div>';
-    if (x.kind === 'test') return '<div class="it">' + tick(x.k, on) + '<b>' + head + 'Test ' + esc(x.title) + '</b>' + (on && !now ? '' : esc(TESTS[x.what] || 'Check it does its job') + '. Nothing? Check its wires against the steps above, one by one.' + (x.note ? '<small>' + esc(x.note) + '</small>' : '')) + '</div>';
+  const card = (x, solo) => { // solo: the one you are on, shown big with the pin picture. In the full list, a short line each.
+    const on = !!done[x.k], full = solo || !on, btn = solo ? '' : tick(x.k, on), end = solo ? '<button class="btn red" data-wired="' + esc(x.k) + '" style="width:100%;margin-top:10px;clear:both">Done. Next one</button>' : '';
+    if (x.kind === 'code') return '<div class="it">' + btn + '<b>First: put the test code on the Pico</b>' + (!full ? '' : 'Save code.py, plug the Pico into a computer with its USB cable, and follow the 3 steps at the top of the file. You do this once. After that every part can be tested the moment its wires are on, powered by any USB charger.<br><button class="btn dark" data-act="savecode" style="margin-top:6px">Save code.py</button>') + end + '</div>';
+    if (x.kind === 'hub') return '<div class="it">' + btn + (solo && x.pin ? picoSvg(x.pin) : '') + '<b>' + esc(x.hub.name[0].toUpperCase() + x.hub.name.slice(1)) + '</b>' + (!full ? '' : !x.pin ? 'One wire from ' + esc(x.hub.from.name) + ' into a second 5-hole lever connector. Strip 1 cm on both ends.' : (join === 'push' ? 'One wire from ' + pinTxt(x.pin) + ' into a 5-hole lever connector. Cut off the plug on that end, strip 1 cm, lift the lever, push the wire in, close it. The other 4 holes are for parts.' : 'One wire from ' + pinTxt(x.pin) + '. Up to 4 parts join onto this wire.')) + end + '</div>';
+    if (x.kind === 'test') return '<div class="it">' + btn + '<b>Test ' + esc(x.title) + '</b>' + (!full ? '' : esc(TESTS[x.what] || 'Check it does its job') + '. Nothing? Check its wires again, one by one.' + (x.note ? '<small>' + esc(x.note) + '</small>' : '')) + end + '</div>';
     const to = x.hub ? x.hub.name + ' (any free hole)' : pinTxt(x.pin) + (x.net.indexOf('GP') === 0 ? ', named ' + x.net : x.net === 'GND' ? ', a ground pin' : x.net === 'VBUS' ? ', 5 volts from USB' : ', 3.3 volts');
     const bare = x.link === 'solder' && join === 'push' ? '<small>This part has bare legs. No-solder ways: buy it with wires already on, use push-on spade plugs, or clamp its leg and a wire together in a lever connector.</small>' : '';
-    return '<div class="it">' + tick(x.k, on) + (now && !x.hub ? picoSvg(x.pin) : '') + '<b>' + head + esc(x.title) + ': ' + esc(x.label) + '</b>' + (on && !now ? '' : 'From the ' + esc(x.label) + ' pin on the part to ' + esc(to) + '.' + bare) + '</div>';
-  }).join('') + '</div>';
+    return '<div class="it">' + btn + (solo && !x.hub ? picoSvg(x.pin) : '') + '<b>' + esc(x.title) + ': ' + esc(x.label) + '</b>' + (!full ? '' : 'From the ' + esc(x.label) + ' pin on the part to ' + esc(to) + '.' + bare) + end + '</div>';
+  };
+  h += '<div class="list" style="margin-top:8px">' + (cur ? card(cur, true) : '<div class="it"><b>All wired and tested.</b>Close it up.</div>') + '</div>';
+  h += '<details class="fold"><summary>All ' + steps.length + ' steps</summary><div class="list">' + steps.map((x) => card(x, false)).join('') + '</div></details>';
   if (nd) h += '<button class="btn" data-act="unwire" style="margin-top:8px">Start the ticks over</button>';
   return h + '<button class="btn" data-act="toWiring" style="margin-top:8px">Change which pin a part uses</button>';
 }
@@ -1252,13 +1265,13 @@ function pcbHtml() {
   const b = boardBuild();
   if (!b.ok) return h + '<p class="note"><span class="bad">' + esc(b.errors[0]) + '</span></p><p class="note">The board is one flat piece the Pico solders onto, with labelled holes right under every part. The app lays it out from your Arrange and your pins, then writes the files a board factory needs.</p>';
   const tall = (() => { const was = S.pcb; S.pcb = false; const a = heights().H; S.pcb = true; const c = heights().H; S.pcb = was; return c - a; })();
-  h += boardSvg(b) + '<p class="note"><span class="ok">All ' + b.check.connected + ' pads connected and checked.</span> ' + b.box.w.toFixed(0) + ' x ' + b.box.h.toFixed(0) + ' mm, 2 layers. Yellow lines run on top, blue underneath. Smallest gap between two pieces of copper: ' + b.check.minGap.toFixed(2) + ' mm (factories need 0.13 to 0.2).</p>';
-  h += '<div class="selbar"><b>Use it in my case</b>' + [['1', 'Yes'], ['0', 'No']].map((m) => '<button data-pcb="' + m[0] + '"' + ((S.pcb ? '1' : '0') === m[0] ? ' style="background:#1a1a1a;color:#fff"' : '') + '>' + m[1] + '</button>').join('') + '</div>';
+  h += boardSvg(b) + '<p class="note"><span class="ok">All ' + b.check.connected + ' pads connected and checked.</span> ' + b.box.w.toFixed(0) + ' x ' + b.box.h.toFixed(0) + ' mm. Yellow lines run on top, blue underneath. Smallest gap between two pieces of copper: ' + b.check.minGap.toFixed(2) + ' mm (factories need 0.13 to 0.2).</p>';
+  h += '<button class="btn dark" data-act="saveboard" style="width:100%;margin-top:8px">Save the board files</button>';
+  h += '<p class="note"><span class="bad">Not factory tested yet.</span> The app checks every gap and connection, but NOCIV has not ordered one of these yet. Order one small batch first.</p>';
+  h += '<div class="selbar" style="margin-top:8px"><b>Make my case fit it</b>' + [['1', 'Yes'], ['0', 'No']].map((m) => '<button data-pcb="' + m[0] + '"' + ((S.pcb ? '1' : '0') === m[0] ? ' style="background:#1a1a1a;color:#fff"' : '') + '>' + m[1] + '</button>').join('') + '</div>';
   h += '<p class="note">' + (S.pcb ? 'On. The case floor has 4 posts for the board (M2 screws) and no posts for the Pico. ' + (tall > 0 ? 'The case is ' + tall + ' mm taller so the parts clear the board. ' : '') + 'Make your print files again in Body, Finish.' : 'Off. Turn it on and the case gets 4 posts for the board' + (tall > 0 ? ' and grows ' + tall + ' mm taller so the parts clear it' : '') + '.') + '</p>';
-  h += '<button class="btn dark" data-act="saveboard" style="width:100%">Save the board files (zip)</button>';
-  h += '<div class="list" style="margin-top:8px"><div class="it"><b>Order</b>Upload the zip at a board factory (JLCPCB, PCBWay). Pick 2 layers, 1.6 mm thick, leave the rest. They make 5 at a time. ' + (b.box.w > 100 || b.box.h > 100 ? 'This board is bigger than 100 x 100 mm, which costs more: a smaller body or parts closer together makes it cheaper.' : 'Boards under 100 x 100 mm like this one are the cheap size.') + ' The price on their page is the real one, and shipping often costs more than the boards.</div>' +
-    '<div class="it"><b>Solder</b>The Pico into the two long rows (the square is pin 1, USB end is marked). Then a short wire from each part straight down to the holes with its name.' + (b.diode ? ' D1 is a 1N5817 diode: stripe to the bar. The battery side goes to BAT+ and the GND next to it.' : '') + '</div>' +
-    '<div class="it"><b>New: not factory tested yet</b>The app checks every gap and every connection twice before it lets you save. But NOCIV has not ordered and built one of these boards yet. Order one small batch and test it before you count on it.</div></div>';
+  h += '<details class="fold"><summary>How to order and solder it</summary><div class="list"><div class="it"><b>Order</b>Upload the zip at a board factory (JLCPCB, PCBWay). Pick 2 layers, 1.6 mm thick, leave the rest. They make 5 at a time. ' + (b.box.w > 100 || b.box.h > 100 ? 'This board is bigger than 100 x 100 mm, which costs more: a smaller body or parts closer together makes it cheaper.' : 'Boards under 100 x 100 mm like this one are the cheap size.') + ' The price on their page is the real one, and shipping often costs more than the boards.</div>' +
+    '<div class="it"><b>Solder</b>The Pico into the two long rows (the square is pin 1, USB end is marked). Then a short wire from each part straight down to the holes with its name.' + (b.diode ? ' D1 is a 1N5817 diode: stripe to the bar. The battery side goes to BAT+ and the GND next to it.' : '') + '</div></div></details>';
   return h;
 }
 // ---------- cost, shopping, power ----------
@@ -1309,18 +1322,19 @@ const hrs = (h) => (h >= 10 ? Math.round(h) + ' hours' : h >= 1 ? (Math.round(h 
 const recipe = () => (S.recipe && (CZ.RECIPES || []).find((r) => r.id === S.recipe)) || null;
 function creditHtml() {
   const r = recipe(); if (!r) return '';
-  return '<div class="list" style="margin-top:8px"><div class="it"><b>' + esc(r.name) + ': the code</b>Comes from <a href="' + esc(r.credit.url) + '" target="_blank" rel="noopener" style="display:inline;padding:0;border:0;text-decoration:underline">' + esc(r.credit.project) + '</a> by ' + esc(r.credit.by) + ' (license: ' + esc(r.credit.license) + '). Their work, their credit. Our starter code in Brain, Wire it, Wiring only proves your wiring works.<small>' + esc(r.note) + (r.tested ? '' : ' Not test-built by NOCIV yet.') + '</small></div></div>';
+  return '<details class="fold"><summary>Code: ' + esc(r.credit.project) + ' by ' + esc(r.credit.by) + '</summary><div class="list"><div class="it"><b>' + esc(r.name) + ': the code</b>Comes from <a href="' + esc(r.credit.url) + '" target="_blank" rel="noopener" style="display:inline;padding:0;border:0;text-decoration:underline">' + esc(r.credit.project) + '</a> by ' + esc(r.credit.by) + ' (license: ' + esc(r.credit.license) + '). Their work, their credit. Our starter code in Brain, Wire it, Wiring only proves your wiring works.<small>' + esc(r.note) + (r.tested ? '' : ' Not test-built by NOCIV yet.') + '</small></div></div></details>';
 }
 function shopHtml() {
   const c = cost(); if (!S.items.length) return '<p class="note" style="margin-top:0">Nothing to buy yet. Add parts in Brain, or pick a recipe on the start screen.</p>';
   const link = (p) => (p.url ? '<a href="' + esc(p.url) + '" target="_blank" rel="noopener" style="display:inline;padding:0;border:0;text-decoration:underline">Maker page</a>' : '<a href="https://www.google.com/search?tbm=shop&q=' + encodeURIComponent(p.find || p.name) + '" target="_blank" rel="noopener" style="display:inline;padding:0;border:0;text-decoration:underline">Search shops</a>');
   const haveBtn = (t, on) => '<button data-have="' + t + '" style="all:unset;cursor:pointer;float:right;padding:6px 9px;border:1.5px solid #1a1a1a;border-radius:9px;font:800 11.5px/1 var(--sys);' + (on ? 'background:#1a1a1a;color:#fff' : '') + '">' + (on ? 'Have it' : 'I have this') + '</button>';
-  let h = '<div class="est"><b>About ' + money(c.total) + ' to build</b><span>' + money(c.parts) + ' parts + ' + money(c.extras) + ' small stuff + ' + money(c.plastic) + ' plastic. Shipping is extra: buy from as few shops as you can so you pay it once. Prices are typical, not live.</span></div>';
+  let h = '<div class="est"><b>About ' + money(c.total) + ' to build</b><span>' + money(c.parts) + ' parts + ' + money(c.extras) + ' small stuff + ' + money(c.plastic) + ' plastic. Shipping is extra. Typical prices, not live.</span></div>';
   h += '<p class="note" style="margin:6px 0 8px">' + powerNote() + '</p>';
-  h += '<div class="list">' + c.rows.map((r) => '<div class="it">' + haveBtn(r.t, r.have) + '<b>' + r.n + ' x ' + esc(r.p.name) + '</b>' + (r.have ? 'You have it: $0.' : r.own ? (r.own === r.n ? 'Already on your board: $0.' : r.own + ' already on your board. ' + money(r.sum) + ' for the other ' + r.buy + '.') : money(r.p.price || 0) + ' each, ' + money(r.sum) + '.') + ' ' + link(r.p) + (r.p.check ? '<small>Sizes differ by seller. Measure yours before you print.</small>' : '') + '</div>').join('') +
+  h += '<div class="list">' + c.rows.map((r) => '<div class="it">' + haveBtn(r.t, r.have) + '<b>' + r.n + ' x ' + esc(r.p.name) + (r.p.check ? ' *' : '') + '</b>' + (r.have ? 'You have it: $0.' : r.own ? (r.own === r.n ? 'Already on your board: $0.' : r.own + ' already on your board. ' + money(r.sum) + ' for the other ' + r.buy + '.') : money(r.p.price || 0) + ' each, ' + money(r.sum) + '.') + ' ' + link(r.p) + '</div>').join('') +
     c.ex.map((r) => '<div class="it">' + haveBtn(r.t, r.have) + '<b>' + esc(r.name) + '</b>' + (r.have ? 'You have it: $0.' : 'About ' + money(r.each) + '.') + '</div>').join('') + '</div>';
+  if (c.rows.some((r) => r.p.check)) h += '<p class="note">* Sizes differ by seller. Measure yours before you print.</p>';
   h += '<button class="btn" data-act="savelist" style="margin-top:8px">Save the shopping + build list</button>';
-  h += '<p class="h" style="margin-top:12px">How far to take it</p><div class="list"><div class="it"><b>1. Wire it <span class="ok">this build</span></b>The brain board plus loose wires. Cheapest for one device: ' + money(c.total) + '.</div><div class="it"><b>2. Clean it <span class="ok">' + (pcbOn() ? 'on' : 'ready to try') + '</span></b>One flat board the Pico solders onto, with labelled pads under every part. Short wires straight down, no nest. Factories make 5 at a time, so it pays when you build a few or split a batch. It is in Brain, Board.</div><div class="it"><b>3. Chip it <span style="color:#6f6a60">later</span></b>Your own board with the bare chip on it, soldered by the factory. The cheapest per device once you make a batch, not for one.</div></div>';
+  h += '<details class="fold"><summary>Ways to build it: wires, a board, your own chip</summary><div class="list"><div class="it"><b>1. Wire it <span class="ok">this build</span></b>The brain board plus loose wires. Cheapest for one device: ' + money(c.total) + '.</div><div class="it"><b>2. Clean it <span class="ok">' + (pcbOn() ? 'on' : 'ready to try') + '</span></b>One flat board the Pico solders onto, with labelled pads under every part. Short wires straight down, no nest. Factories make 5 at a time, so it pays when you build a few or split a batch. It is in Brain, Board.</div><div class="it"><b>3. Chip it <span style="color:#6f6a60">later</span></b>Your own board with the bare chip on it, soldered by the factory. The cheapest per device once you make a batch, not for one.</div></div></details>';
   return h + creditHtml();
 }
 function fitAll() { // place every loose part; if they do not all fit, grow the body a square at a time, keeping its proportions
