@@ -359,7 +359,7 @@ const FUNCS = [['brain', 'Think', 'The brain that runs it', 'pico'], ['screen', 
   ['out', 'Light and sound', 'Lights, a speaker', 'speaker28'], ['move', 'Move', 'A motor that turns an arm', 'servo'], ['power', 'Run on a battery', 'Cut the cord', 'lipo1200'], ['print', 'Printed parts', 'Stand, body, gears', null], ['mine', 'Use my own part', 'Measure it with your phone', null]];
 const FN_STAND = '<svg viewBox="0 0 60 36" aria-hidden="true"><path d="M17 31L29 6l9 4-12 25z" fill="#c8412f" stroke="#1a1a1a" stroke-width="2" stroke-linejoin="round"/><path d="M35 15l11 17" stroke="#1a1a1a" stroke-width="3" stroke-linecap="round"/><path d="M7 33h47" stroke="#1a1a1a" stroke-width="2" stroke-linecap="round"/></svg>';
 const XGROUPS = [['Stand and carry', ['stand', 'handle', 'feet']], ['Character', ['body', 'limbs']], ['Moving parts', ['gears', 'hinge', 'spring', 'clamp']], ['Hardware', ['panel', 'keys', 'standoff', 'clip']]];
-const NEWP = ' New, not test-printed yet.';
+const NEWP = ' Sized from published specs, not from a test print.';
 function xmeta(id) { // one printed part: [short name, what it is and how it goes on, its few settings]
   const X = xp(), fits = stepper('xs_t', 'Fits', X.stand.t + ' mm thick' + (X.stand.auto ? ' (your case)' : ''));
   return {
@@ -368,12 +368,12 @@ function xmeta(id) { // one printed part: [short name, what it is and how it goe
     feet: ['Feet', 'Little round feet so it does not slide. Screw on, or glue.', '<div class="row"><b>Fix</b>' + seg('xf_hole', [['1', 'Screw hole'], ['0', 'Glue']], X.feet.hole ? '1' : '0') + '</div>' + stepper('xf_h', 'Tall', X.feet.h + ' mm')],
     body: ['Body', 'A torso your case sits on like a head. Two arms and two legs screw to its sides and hold a pose when you tighten them. You need 4 M3 x 12 screws (they cut their own thread in the torso) and 2 M3 x 20 with nuts for the feet. A heavy case can tip it: spread the legs.' + NEWP, stepper('xb_h', 'Torso', X.body.h + ' mm tall') + stepper('xl_l', 'Arms, legs', X.limbs.l + ' mm long') + fits],
     limbs: ['Legs or arms', 'No torso: 2 clips grab an edge of the case, then 4 bars and 2 feet. Join them with 6 M3 x 20 screws and nuts, tighten to hold a pose.' + NEWP, stepper('xl_l', 'Bars', X.limbs.l + ' mm long') + fits],
-    gears: ['Gears', 'Two gears on a base with pegs, so they turn the moment they come off the printer. The small one has 16 teeth. Turn the small one and the big one turns ' + (X.gears.n / 16).toFixed(X.gears.n % 16 ? 1 : 0) + ' times slower and stronger. Take them off the base to use them on your own axles, ' + (0.75 * (16 + X.gears.n)).toFixed(0) + ' mm apart.' + NEWP, stepper('xg_n', 'Big gear', X.gears.n + ' teeth')],
+    gears: ['Gears', 'Two gears on a base with pegs, so they turn the moment they come off the printer. The small one has 18 teeth. ' + (X.gears.n === 18 ? 'Same size: they turn at the same speed, in opposite directions.' : 'Turn the small one and the big one turns ' + (X.gears.n / 18).toFixed(X.gears.n % 18 ? 1 : 0) + ' times slower and stronger.') + ' Take them off the base to use them on your own axles, ' + (0.75 * (18 + X.gears.n)).toFixed(1).replace('.0', '') + ' mm apart. Print in PETG if they will do real work.' + NEWP, stepper('xg_n', 'Big gear', X.gears.n + ' teeth')],
     hinge: ['Hinge', 'Two leaves, the same print twice. Flip one over, slide an M3 x 30 screw through both and add a nut. Glue the leaves down: a door, a lid, a flap.' + NEWP, stepper('xhi_l', 'Leaf', X.hinge.l + ' mm long')],
     spring: ['Spring', 'A flat zigzag that pushes back. Good for a button that pops back up or a latch. Light pushes only. PETG lasts longer than PLA, which goes soft over time.' + NEWP, stepper('xsp_n', 'Bends', String(X.spring.n))],
     clamp: ['Clamp', 'Hooks over a shelf or desk edge. Push the wedge in to lock it. The hole in its back takes an M3 screw, so a leg bar or your own part bolts on.' + NEWP, stepper('xcl_t', 'Grips', X.clamp.t + ' mm thick')],
     panel: ['Panel', 'A flat plate with a screw hole in each corner. A door, a cover, a shelf, a base for your own idea.' + NEWP, stepper('xp_w', 'Wide', X.panel.w + ' mm') + stepper('xp_h', 'Tall', X.panel.h + ' mm')],
-    keys: ['Keyboard', 'A plate that MX style keyboard switches click into: ' + X.keys.c + ' across, ' + X.keys.r + ' down, ' + (X.keys.c * X.keys.r) + ' keys. You still buy the switches and caps. The Brain does not plan keyboard wiring yet.' + NEWP, stepper('xk_c', 'Across', X.keys.c + ' keys') + stepper('xk_r', 'Down', X.keys.r + ' keys')],
+    keys: ['Keyboard', 'A plate that MX style keyboard switches click into: ' + X.keys.c + ' across, ' + X.keys.r + ' down, ' + (X.keys.c * X.keys.r) + ' keys. The plate is 1.5 mm, the thickness the switch clips are made for, with a rim underneath so it stays flat. You still buy the switches and caps. The Brain does not plan keyboard wiring yet.' + NEWP, stepper('xk_c', 'Across', X.keys.c + ' keys') + stepper('xk_r', 'Down', X.keys.r + ' keys')],
     standoff: ['Standoffs', 'Lift a board off the floor. The screw cuts its own thread in the plastic.', '<div class="row"><b>Screw</b>' + seg('xo_s', [['m25', 'M2.5 (Pi)'], ['m3', 'M3']], X.standoff.s) + '</div>' + stepper('xo_h', 'Tall', X.standoff.h + ' mm')],
     clip: ['Cable clips', 'Keep wires tidy inside. Stick on with tape or glue.', stepper('xc_d', 'Cable', X.clip.d + ' mm')] }[id];
 }
@@ -749,7 +749,7 @@ $('pane').addEventListener('click', (e) => {
     if (['kh', 'btop', 'bund'].includes(k)) snapU();
     { const si = S.items.find((i) => i.id === sel); if (si && k === 'kh') si.h = Math.max(0, Math.min(60, kidH(si) + v * 0.5)); if (si && k === 'btop' && PP(si) && PP(si).board) setBoardTop(PP(si), (PP(si).top || 9) + v * 0.5); if (si && k === 'bund' && PP(si) && PP(si).board) { const B = PP(si); B.under = Math.max(0, Math.min(40, (B.under != null ? B.under : 8.5) + v * 0.5)); setBoardTop(B, B.top || 9); } }
     const X = xp(); if (k === 'xs_t') { X.stand.auto = false; X.stand.t = Math.max(6, Math.min(80, X.stand.t + v)); } if (k === 'xf_h') X.feet.h = Math.max(2, Math.min(15, X.feet.h + v)); if (k === 'xo_h') X.standoff.h = Math.max(2, Math.min(40, X.standoff.h + v)); if (k === 'xc_d') X.clip.d = Math.max(2, Math.min(16, X.clip.d + v)); if (k === 'xh_l') X.handle.l = Math.max(50, Math.min(140, X.handle.l + v * 10)); if (k === 'xl_l') X.limbs.l = Math.max(25, Math.min(90, X.limbs.l + v * 5)); const cl = (o, f, lo, hi, st) => { o[f] = Math.max(lo, Math.min(hi, o[f] + v * st)); };
-    if (k === 'xb_h') cl(X.body, 'h', 45, 100, 5); if (k === 'xg_n') cl(X.gears, 'n', 16, 48, 8); if (k === 'xhi_l') cl(X.hinge, 'l', 15, 60, 5); if (k === 'xsp_n') cl(X.spring, 'n', 3, 12, 1); if (k === 'xcl_t') cl(X.clamp, 't', 10, 45, 5); if (k === 'xp_w') cl(X.panel, 'w', 30, 200, 10); if (k === 'xp_h') cl(X.panel, 'h', 30, 200, 10); if (k === 'xk_c') cl(X.keys, 'c', 1, 12, 1); if (k === 'xk_r') cl(X.keys, 'r', 1, 6, 1);
+    if (k === 'xb_h') cl(X.body, 'h', 45, 100, 5); if (k === 'xg_n') cl(X.gears, 'n', 18, 54, 9); if (k === 'xhi_l') cl(X.hinge, 'l', 15, 60, 5); if (k === 'xsp_n') cl(X.spring, 'n', 3, 12, 1); if (k === 'xcl_t') cl(X.clamp, 't', 10, 45, 5); if (k === 'xp_w') cl(X.panel, 'w', 30, 200, 10); if (k === 'xp_h') cl(X.panel, 'h', 30, 200, 10); if (k === 'xk_c') cl(X.keys, 'c', 1, 12, 1); if (k === 'xk_r') cl(X.keys, 'r', 1, 6, 1);
     if (nn && k === 'nw') nn.w = Math.max(4, Math.min(120, nn.w + v * 2)); if (nn && k === 'nd') nn.d = Math.max(2, Math.min(60, nn.d + v)); if (nn && k === 'nat') nn.at = Math.max(0, Math.min(nn.edge === 'left' || nn.edge === 'right' ? dims().D : dims().W, nn.at + v * 5));
     if (k === 'txsp') { const tx = S.look.tex[S.look.texFace]; tx.sp = Math.max(2, Math.min(30, tx.sp + v)); }
     if (k === 'cols' || k === 'rows') reflow();
@@ -1266,8 +1266,8 @@ async function scanPrinter(file) {
 }
 
 // ---------- add-ons: one piece at a time ----------
-function xp() { if (!S.xp) S.xp = {}; const X = S.xp; X.stand = X.stand || { t: null, a: 25 }; if (X.stand.t == null) X.stand.auto = true; if (X.stand.auto) X.stand.t = isPanel() ? 20 : Math.round(heights().H); /* follows the case until she sets it */ X.feet = X.feet || { hole: true, h: 4 }; X.standoff = X.standoff || { s: 'm25', h: 8 }; X.clip = X.clip || { d: 6 }; X.handle = X.handle || { l: 80 }; X.limbs = X.limbs || { l: 45 }; X.body = X.body || { h: 60 }; X.gears = X.gears || { n: 32 }; X.hinge = X.hinge || { l: 30 }; X.spring = X.spring || { n: 6 }; X.clamp = X.clamp || { t: 20 }; X.panel = X.panel || { w: 80, h: 60 }; X.keys = X.keys || { c: 4, r: 3 }; return X; }
-const XINFO = { body: () => '7 pieces: torso on its side, the rest flat', gears: () => '3 pieces, print flat', hinge: () => '2 leaves, print standing as saved', spring: () => '2 springs, print flat', clamp: () => '1 clamp and 1 wedge, print flat', panel: () => { const X = xp(); return '1 panel, ' + X.panel.w + ' x ' + X.panel.h + ' mm, 2.4 mm thick'; }, keys: () => { const X = xp(); return '1 plate, ' + (X.keys.c * 19.05 + 10.95).toFixed(0) + ' x ' + (X.keys.r * 19.05 + 10.95).toFixed(0) + ' mm, 1.5 mm thick'; }, handle: () => '1 handle, print on its side', limbs: () => '8 pieces, print flat', stand: () => '2 stands, print on their side', feet: () => '4 feet', standoff: () => '4 standoffs', clip: () => '6 clips' };
+function xp() { if (!S.xp) S.xp = {}; const X = S.xp; X.stand = X.stand || { t: null, a: 25 }; if (X.stand.t == null) X.stand.auto = true; if (X.stand.auto) X.stand.t = isPanel() ? 20 : Math.round(heights().H); /* follows the case until she sets it */ X.feet = X.feet || { hole: true, h: 4 }; X.standoff = X.standoff || { s: 'm25', h: 8 }; X.clip = X.clip || { d: 6 }; X.handle = X.handle || { l: 80 }; X.limbs = X.limbs || { l: 45 }; X.body = X.body || { h: 60 }; X.gears = X.gears || { n: 36 }; X.gears.n = Math.max(18, Math.min(54, Math.round(X.gears.n / 9) * 9)); X.hinge = X.hinge || { l: 30 }; X.spring = X.spring || { n: 6 }; X.clamp = X.clamp || { t: 20 }; X.panel = X.panel || { w: 80, h: 60 }; X.keys = X.keys || { c: 4, r: 3 }; return X; }
+const XINFO = { body: () => '7 pieces: torso on its side, the rest flat', gears: () => '3 pieces, print flat', hinge: () => '2 leaves, print standing as saved', spring: () => '2 springs, print flat', clamp: () => '1 clamp and 1 wedge, print flat', panel: () => { const X = xp(); return '1 panel, ' + X.panel.w + ' x ' + X.panel.h + ' mm, 2.4 mm thick'; }, keys: () => { const X = xp(); return '1 plate, ' + (X.keys.c * 19.05 + 10.95).toFixed(0) + ' x ' + (X.keys.r * 19.05 + 10.95).toFixed(0) + ' mm, rim side up'; }, handle: () => '1 handle, print on its side', limbs: () => '8 pieces, print flat', stand: () => '2 stands, print on their side', feet: () => '4 feet', standoff: () => '4 standoffs', clip: () => '6 clips' };
 function addonPolys(id) {
   // every add-on is a flat shape pushed up into 3D (prints flat, strongest way for each one). Returns { polys, h, n, gap }
   const X = xp();
@@ -1294,19 +1294,19 @@ function addonPolys(id) {
   }
   const hole3 = (x, y) => G.circle(x, y, 1.7, 24);
   const barOf = (L) => G.diff(G.union([G.rect(0, -6, L, 6), G.circle(0, 0, 6, 40), G.circle(L, 0, 6, 40)]), [hole3(0, 0), hole3(L, 0)]);
-  const footOf = () => G.diff(G.union([G.rect(0, 0, 46, 4), G.rect(16.5, 0, 29.5, 11), G.circle(23, 11, 6.5, 40)]), [hole3(23, 11)]);
+  const footOf = (L = 46) => G.diff(G.union([G.rect(0, 0, L, 4), G.rect(L / 2 - 6.5, 0, L / 2 + 6.5, 11), G.circle(L / 2, 11, 6.5, 40)]), [hole3(L / 2, 11)]);
   if (id === 'body') { // seen from the side: a slot on top that the case edge drops into, a shoulder hole and a hip hole. Pushed up 36 mm, that is the width of the chest.
     const t = X.stand.t + 0.6, W = Math.max(26, t + 8), Hb = X.body.h, sx = (W - t) / 2, slot = 14;
-    const torso = G.diff([G.rect(0, 0, W, Hb)], [G.rect(sx, Hb - slot, sx + t, Hb + 1), G.circle(W / 2, Hb - slot - 8, 1.3, 20), G.circle(W / 2, 8, 1.3, 20)]);
-    return { sets: [{ polys: torso, h: 36, n: 1 }, { polys: barOf(X.limbs.l), h: 5, n: 4 }, { polys: footOf(), h: 12, n: 2 }] };
+    const torso = G.diff([G.rect(0, 0, W, Hb)], [G.rect(sx, Hb - slot, sx + t, Hb + 1), G.circle(W / 2, Hb - slot - 8, 1.35, 24), G.circle(W / 2, 8, 1.35, 24)]); /* 2.7 mm: the printed hole size an M3 screw threads itself into. A 12 mm screw through a 5 mm bar leaves 7 mm in the torso, 5 is the least. */
+    return { sets: [{ polys: torso, h: 36, n: 1 }, { polys: barOf(X.limbs.l), h: 5, n: 4 }, { polys: footOf(70), h: 12, n: 2 }] }; /* long feet: the head sits high, so the base has to be long */
   }
-  if (id === 'gears') { // true involute teeth, 20 degree pressure angle, module 1.5, a little thinned so they do not bind
+  if (id === 'gears') { // true involute teeth, 20 degree pressure angle, module 1.5 (the size a 0.4 mm nozzle prints cleanly). Each flank is thinned 0.1 mm, which leaves 0.4 mm of play between meshing teeth, the gap printed gears need so they do not lock.
     const m = 1.5, a0 = 20 * Math.PI / 180, inv = (q) => Math.tan(q) - q;
     const gear = (N) => { const r = m * N / 2, rb = r * Math.cos(a0), ra = r + m, rf = r - 1.25 * m, half = Math.PI / (2 * N) - 0.1 / r, hw = (q) => half + inv(a0) - inv(Math.acos(Math.min(1, rb / Math.max(q, rb))));
       const R = []; if (rf < rb) R.push(rf); const lo = Math.max(rb, rf); for (let i = 0; i <= 8; i++) R.push(lo + (ra - lo) * i / 8);
       const pts = []; for (let i = 0; i < N; i++) { const c = 2 * Math.PI * i / N; R.forEach((q) => { const an = c - hw(q); pts.push([q * Math.cos(an), q * Math.sin(an)]); }); R.slice().reverse().forEach((q) => { const an = c + hw(q); pts.push([q * Math.cos(an), q * Math.sin(an)]); }); }
-      return G.diff([pts], [G.circle(0, 0, 2.7, 32)]); };
-    const N1 = 16, N2 = X.gears.n, r1 = m * N1 / 2, r2 = m * N2 / 2, cd = r1 + r2, plate = G.union([G.rect(0, -8, cd, 8), G.circle(0, 0, 8, 40), G.circle(cd, 0, 8, 40)]);
+      return G.diff([pts], [G.circle(0, 0, 2.75, 32)]); }; /* 5.5 mm bore on a 5.0 mm peg: 0.5 mm of play so it turns free off any printer */
+    const N1 = 18, N2 = X.gears.n, r1 = m * N1 / 2, r2 = m * N2 / 2, cd = r1 + r2, plate = G.union([G.rect(0, -8, cd, 8), G.circle(0, 0, 8, 40), G.circle(cd, 0, 8, 40)]);
     return { sets: [{ layers: [{ polys: plate, z0: 0, z1: 3 }, { polys: [G.circle(0, 0, 2.5, 32), G.circle(cd, 0, 2.5, 32)], z0: 3, z1: 10 }], n: 1 }, { polys: gear(N1), h: 6, n: 1 }, { polys: gear(N2), h: 6, n: 1 }] };
   }
   if (id === 'hinge') { // seen along the pin. The knuckle fills the bottom half only, so a flipped twin fills the other half.
@@ -1316,14 +1316,14 @@ function addonPolys(id) {
   if (id === 'spring') { const n = X.spring.n, W = 18, t = 1.6, p = 5, r = [G.rect(0, -3, W, t), G.rect(0, n * p, W, n * p + t + 3)];
     for (let i = 1; i < n; i++) r.push(G.rect(0, i * p, W, i * p + t)); for (let i = 0; i < n; i++) { const x = i % 2 ? 0 : W - t; r.push(G.rect(x, i * p, x + t, (i + 1) * p + t)); }
     return { polys: G.union(r), h: 8, n: 2 }; }
-  if (id === 'clamp') { const g = X.clamp.t + 9, D = 32, w = 8, Hc = g + 2 * w, my = Hc / 2;
+  if (id === 'clamp') { const g = X.clamp.t + 7.5, D = 32, w = 8, Hc = g + 2 * w, my = Hc / 2;
     const c = G.diff(G.union([G.rect(0, 0, D + w, Hc), G.rect(-7, my - 6.5, 0.5, my + 6.5), G.circle(-7, my, 6.5, 40)]), [G.rect(w, w, D + w + 1, w + g), hole3(-7, my)]);
-    return { sets: [{ polys: c, h: 14, n: 1 }, { polys: [[[0, 0], [44, 0], [44, 13], [0, 4]]], h: 14, n: 1 }] }; }
+    return { sets: [{ polys: c, h: 14, n: 1 }, { polys: [[[0, 0], [50, 0], [50, 11], [0, 4]]], h: 14, n: 1 }] }; } /* the wedge rises 7 mm in 50, an 8 degree slope. Plastic on wood or plastic grips well past that, so it will not back out by itself. */
   if (id === 'panel') { const w = X.panel.w, h = X.panel.h; return { polys: G.diff([G.rect(0, 0, w, h)], [hole3(5, 5), hole3(w - 5, 5), hole3(5, h - 5), hole3(w - 5, h - 5)]), h: 2.4, n: 1 }; }
-  if (id === 'keys') { // MX style switch: 14 mm square hole, 19.05 mm apart, 1.5 mm plate
-    const c = X.keys.c, r = X.keys.r, P = 19.05, b = 8, w = c * P - 5.05 + 2 * b, h = r * P - 5.05 + 2 * b, cut = [hole3(4, 4), hole3(w - 4, 4), hole3(4, h - 4), hole3(w - 4, h - 4)];
-    for (let i = 0; i < c; i++) for (let j = 0; j < r; j++) cut.push(G.rect(b + i * P, b + j * P, b + i * P + 14, b + j * P + 14));
-    return { polys: G.diff([G.rect(0, 0, w, h)], cut), h: 1.5, n: 1 }; }
+  if (id === 'keys') { // Cherry MX data sheet: 14 mm square hole (+-0.05), 19.05 mm apart, plate 1.5 mm (+-0.1) so the clips catch. Printed holes come out a touch small, so the hole is drawn 14.1.
+    const c = X.keys.c, r = X.keys.r, P = 19.05, b = 8, hs = 14.1, o = (hs - 14) / 2, w = c * P - 5.05 + 2 * b, h = r * P - 5.05 + 2 * b, holes = [hole3(4, 4), hole3(w - 4, 4), hole3(4, h - 4), hole3(w - 4, h - 4)], cut = holes.slice();
+    for (let i = 0; i < c; i++) for (let j = 0; j < r; j++) cut.push(G.rect(b + i * P - o, b + j * P - o, b + i * P + 14 + o, b + j * P + 14 + o));
+    return { layers: [{ polys: G.diff([G.rect(0, 0, w, h)], cut), z0: 0, z1: 1.5 }, { polys: G.diff([G.rect(0, 0, w, h)], [G.rect(7, 7, w - 7, h - 7)].concat(holes)), z0: 1.5, z1: 5 }], n: 1 }; }
   if (id === 'feet') { const c = G.circle(0, 0, 7, 40); return { polys: X.feet.hole ? G.diff([c], [G.circle(0, 0, 1.7, 20)]) : [c], h: X.feet.h, n: 4 }; }
   if (id === 'standoff') return { polys: G.diff([G.circle(0, 0, 3.2, 32)], [G.circle(0, 0, X.standoff.s === 'm3' ? 1.3 : 1.1, 20)]), h: X.standoff.h, n: 4 };
   if (id === 'clip') { const ro = X.clip.d / 2 + 1.8, ri = X.clip.d / 2 + 0.3, gap = X.clip.d * 0.75;
