@@ -74,7 +74,7 @@ export function cutShape(P, x, y, rotq, extra) {
   const R = (poly) => rot(poly, a, x, y);
   const tol = extra || 0;
   if (c.o === 'circle') out.push(circle(x, y, c.d / 2 + tol));
-  else if (c.o === 'rect') out.push(R(rrect(x - c.w / 2 - tol, y - c.h / 2 - tol, x + c.w / 2 + tol, y + c.h / 2 + tol, 1.2)));
+  else if (c.o === 'rect') { const oy = y + (c.dy || 0); /* dy: an opening that is not in the middle of its part (a keyboard has a strip above the keys) */ out.push(R(rrect(x - c.w / 2 - tol, oy - c.h / 2 - tol, x + c.w / 2 + tol, oy + c.h / 2 + tol, 1.2))); }
   else if (c.o === 'slot') out.push(R(rrect(x - c.w / 2, y - c.h / 2, x + c.w / 2, y + c.h / 2, c.h / 2 - 0.01)));
   else if (c.o === 'cross') { const w = c.w / 2 + 0.4, t = c.t / 2 + 0.4; out.push(...union([R(rect(x - w, y - t, x + w, y + t)), R(rect(x - t, y - w, x + t, y + w))])); }
   else if (c.o === 'ring') { for (let i = 0; i < 12; i++) { const an = i / 12 * Math.PI * 2, r = c.d / 2 - c.t / 2; out.push(circle(x + Math.cos(an) * r, y + Math.sin(an) * r, 2.2, 20)); } }

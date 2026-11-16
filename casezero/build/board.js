@@ -67,8 +67,9 @@ export function makeBoard(spec) {
   if (!keep || keep.length < 3) return { ok: false, errors: ['No room for a board in this body.'] };
   // grid lined up with the Pico pins
   const pp = spec.pico, picoPads = [];
-  PICO_L.forEach((n, i) => { const [dx, dy] = rotv(-24.13 + i * 2.54, -8.89, pp.r || 0); picoPads.push({ name: n, pin: i + 1, x: pp.x + dx, y: pp.y + dy }); });
-  PICO_R.forEach((n, j) => { const [dx, dy] = rotv(-24.13 + j * 2.54, 8.89, pp.r || 0); picoPads.push({ name: n, pin: 40 - j, x: pp.x + dx, y: pp.y + dy }); });
+  const fl = pp.flip ? -1 : 1; /* flip: the Pico sits on the back of the board, so its two rows trade places */
+  PICO_L.forEach((n, i) => { const [dx, dy] = rotv(-24.13 + i * 2.54, -8.89 * fl, pp.r || 0); picoPads.push({ name: n, pin: i + 1, x: pp.x + dx, y: pp.y + dy }); });
+  PICO_R.forEach((n, j) => { const [dx, dy] = rotv(-24.13 + j * 2.54, 8.89 * fl, pp.r || 0); picoPads.push({ name: n, pin: 40 - j, x: pp.x + dx, y: pp.y + dy }); });
   let bx0 = 1e9, by0 = 1e9, bx1 = -1e9, by1 = -1e9; keep.forEach(([x, y]) => { bx0 = Math.min(bx0, x); by0 = Math.min(by0, y); bx1 = Math.max(bx1, x); by1 = Math.max(by1, y); });
   const ox = picoPads[0].x - Math.floor((picoPads[0].x - bx0) / P) * P, oy = picoPads[0].y - Math.floor((picoPads[0].y - by0) / P) * P;
   const nx = Math.floor((bx1 - ox) / P) + 1, ny = Math.floor((by1 - oy) / P) + 1, N = nx * ny;
@@ -85,7 +86,7 @@ export function makeBoard(spec) {
   const padAt = new Int32Array(N).fill(-1);
   const addPad = (i, j, netName, label, group) => { const k = id(i, j), n = netName ? net(netName) : 0; pads.push({ x: X(i), y: Y(j), i, j, net: n, label: label || '', group }); padAt[k] = pads.length - 1; own[0][k] = own[1][k] = n || -1; kind[0][k] = kind[1][k] = 2; if (n) nets[n].pads.push(k); return k; };
   // which nets the parts use
-  const used = {}; (spec.groups || []).forEach((g) => g.pads.forEach((p) => { used[p.net] = 1; })); if (spec.diode) { used.VSYS = 1; used.GND = 1; }
+  const used = {}; (spec.groups || []).forEach((g) => g.pads.forEach((p) => { used[p.net] = 1; })); (spec.fixed || []).forEach((f) => { if (f.net) used[f.net] = 1; }); if (spec.diode) { used.VSYS = 1; used.GND = 1; }
   // 1. the Pico
   for (const q of picoPads) { const i = I(q.x), j = J(q.y); if (i < 0 || j < 0 || i >= nx || j >= ny || !okCell[id(i, j)]) return { ok: false, errors: ['The brain sits too close to a wall or a corner post for the board to reach all its pins. Move it in a little in Arrange.'] }; }
   const gndSeeds = [];
@@ -93,6 +94,19 @@ export function makeBoard(spec) {
   if (netId.GND) nets[netId.GND].pre = gndSeeds; // the Pico joins all its GND pins inside itself
   const [phx, phy] = rotv(25.5, 10.5, pp.r || 0), prx = Math.abs(phx) + 3.6, pry = Math.abs(phy) + 3.6; /* pad rows keep clear of the Pico, with room for their names */
   const inPico = (x, y) => Math.abs(x - pp.x) < prx && Math.abs(y - pp.y) < pry, inZone = (x, y) => (spec.zones || []).some((z) => x > z.x0 - 1 && x < z.x1 + 1 && y > z.y0 - 1 && y < z.y1 + 1);
+  // 1b. pads that must sit at an exact spot (a keyboard switch, its diode). They have to land on the grid.
+  const noVia = new Uint8Array(N), holes = (spec.holes || []).slice();
+  for (const f of (spec.fixed || [])) {
+    const i = I(f.x), j = J(f.y);
+    if (i < 0 || j < 0 || i >= nx || j >= ny || Math.abs(X(i) - f.x) > 0.01 || Math.abs(Y(j) - f.y) > 0.01 || !okCell[id(i, j)] || kind[0][id(i, j)] === 2) return { ok: false, errors: ['A part does not line up with the board grid at ' + f.x.toFixed(2) + ', ' + f.y.toFixed(2) + '.'] };
+    const k = addPad(i, j, f.net, f.label, 'fixed'), pd = pads[pads.length - 1]; pd.d = f.d || BR.PAD; pd.drill = f.drill || BR.DRILL; void k;
+    if (pd.d > 1.7) { // a wide pad: the four cells beside it may only carry its own net, and no via may sit on its corners
+      const n = pd.net || -1; [[1, 0], [-1, 0], [0, 1], [0, -1]].forEach(([a, b]) => { const ii = i + a, jj = j + b; if (ii < 0 || jj < 0 || ii >= nx || jj >= ny) return; const q = id(ii, jj); if (kind[0][q] === 2) return; if (own[0][q] === 0) { own[0][q] = own[1][q] = n; } else if (own[0][q] !== n) { own[0][q] = own[1][q] = -1; } });
+      [[1, 1], [-1, 1], [1, -1], [-1, -1]].forEach(([a, b]) => { const ii = i + a, jj = j + b; if (ii >= 0 && jj >= 0 && ii < nx && jj < ny) noVia[id(ii, jj)] = 1; });
+    }
+  }
+  // plain holes with no copper (the peg under a switch, a screw): copper keeps away
+  holes.forEach((h) => { const rr = h.d / 2 + 0.9; for (let j = Math.max(0, J(h.y - rr) - 1); j <= Math.min(ny - 1, J(h.y + rr) + 1); j++) for (let i = Math.max(0, I(h.x - rr) - 1); i <= Math.min(nx - 1, I(h.x + rr) + 1); i++) if (Math.hypot(X(i) - h.x, Y(j) - h.y) < rr) { const k = id(i, j); if (kind[0][k] !== 2) { own[0][k] = own[1][k] = -1; } } });
   // 2. pad rows under the parts
   const nearPad = (i, j) => { for (let b = -1; b <= 1; b++) for (let a = -1; a <= 1; a++) { const ii = i + a, jj = j + b; if (ii < 0 || jj < 0 || ii >= nx || jj >= ny) continue; if (kind[0][id(ii, jj)] === 2) return true; } return false; };
   const freeForPad = (i, j) => i >= 0 && j >= 0 && i < nx && j < ny && okCell[id(i, j)] && own[0][id(i, j)] === 0 && !nearPad(i, j) && !inPico(X(i), Y(j)) && !inZone(X(i), Y(j));
@@ -121,14 +135,15 @@ export function makeBoard(spec) {
   const mounts = [], MK = 3.4; // keep copper this far from a screw
   const mountOk = (i, j) => { if (i < 0 || j < 0 || i >= nx || j >= ny) return false; const x = X(i), y = Y(j); if (!pip(keep, x, y) || edgeDist(keep, x, y) < 3 || posts.some((q) => Math.hypot(q.x - x, q.y - y) < q.r + 3.2) || inPico(x, y) || inZone(x, y)) return false; if (pads.some((p) => Math.hypot(p.x - x, p.y - y) < MK + 0.9)) return false; return !mounts.some((m) => Math.hypot(m.x - x, m.y - y) < 20); };
   [[cx0 - 4, cy0 - 4], [cx1 + 4, cy1 + 4], [cx1 + 4, cy0 - 4], [cx0 - 4, cy1 + 4]].forEach(([tx, ty]) => { let best = null, bd = 1e9; for (let j = 0; j < ny; j++) for (let i = 0; i < nx; i++) { const d = Math.hypot(X(i) - tx, Y(j) - ty); if (d < bd && mountOk(i, j)) { bd = d; best = [i, j]; } } if (best) mounts.push({ x: X(best[0]), y: Y(best[1]) }); });
-  if (mounts.length < 3) return { ok: false, errors: ['No room for the screws that hold the board. Make the body a little bigger.'] };
+  if (spec.noMounts) mounts.length = 0;
+  if (!spec.noMounts && mounts.length < 3) return { ok: false, errors: ['No room for the screws that hold the board. Make the body a little bigger.'] };
   mounts.forEach((m) => { for (let j = 0; j < ny; j++) for (let i = 0; i < nx; i++) if (Math.hypot(X(i) - m.x, Y(j) - m.y) < MK) { const k = id(i, j); if (kind[0][k] !== 2) { own[0][k] = own[1][k] = -1; } } });
 
   // 4. route. Dijkstra on the grid, two layers. Top likes to run left-right, bottom up-down, so they stay out of each other's way.
   const snapOwn = () => [own[0].slice(), own[1].slice(), kind[0].slice(), kind[1].slice()], restore = (s) => { own[0].set(s[0]); own[1].set(s[1]); kind[0].set(s[2]); kind[1].set(s[3]); };
   const base = snapOwn(), padNear = new Uint8Array(N);
   for (let j = 0; j < ny; j++) for (let i = 0; i < nx; i++) if (kind[0][id(i, j)] === 2) [[1, 0], [-1, 0], [0, 1], [0, -1]].forEach(([a, b]) => { const ii = i + a, jj = j + b; if (ii >= 0 && jj >= 0 && ii < nx && jj < ny) padNear[id(ii, jj)] = 1; });
-  const viaOk = (k, n) => { const i = k % nx, j = (k / nx) | 0; for (const [a, b] of [[1, 0], [-1, 0], [0, 1], [0, -1]]) { const ii = i + a, jj = j + b; if (ii < 0 || jj < 0 || ii >= nx || jj >= ny) continue; const q = id(ii, jj); for (let l = 0; l < 2; l++) if ((kind[l][q] === 2 || kind[l][q] === 3) && own[l][q] !== n) return false; } return true; };
+  const viaOk = (k, n) => { if (noVia[k]) return false; const i = k % nx, j = (k / nx) | 0; for (const [a, b] of [[1, 0], [-1, 0], [0, 1], [0, -1]]) { const ii = i + a, jj = j + b; if (ii < 0 || jj < 0 || ii >= nx || jj >= ny) continue; const q = id(ii, jj); for (let l = 0; l < 2; l++) if ((kind[l][q] === 2 || kind[l][q] === 3) && own[l][q] !== n) return false; } return true; };
   const DX = [1, -1, 0, 0], DY = [0, 0, 1, -1];
   function routeNet(n, segs, vias) {
     const T = nets[n].pads.slice(); if (!T.length) return true;
@@ -199,7 +214,12 @@ export function makeBoard(spec) {
       line(A[0] + ux * 1.3, A[1] + uy * 1.3, mx - ux * 1.6, my - uy * 1.6); line(p3[0], p3[1], K[0] - ux * 1.3, K[1] - uy * 1.3);
       if (v) textStrokes('1N5817', mx + 2.9, my - textLen('1N5817', 1) / 2, 1.0, 1).forEach((s) => silk.push(s)); else textStrokes('1N5817', mx - textLen('1N5817', 1) / 2, my + 1.9, 1.0, 0).forEach((s) => silk.push(s)); }
   });
-  { const r = pp.r || 0, c = [[-25.5, -10.5], [25.5, -10.5], [25.5, 10.5], [-25.5, 10.5]].map(([x, y]) => { const q = rotv(x, y, r); return [pp.x + q[0], pp.y + q[1]]; });
+  (spec.silk || []).forEach((q) => silk.push(q));
+  if (pp.flip) { const c = [[-25.5, -10.5], [25.5, -10.5], [25.5, 10.5], [-25.5, 10.5]].map(([x, y]) => { const q = rotv(x, y, pp.r || 0); return [pp.x + q[0], pp.y + q[1]]; }); for (let i = 0; i < 4; i++) silkB.push([c[i][0], c[i][1], c[(i + 1) % 4][0], c[(i + 1) % 4][1]]);
+    const u = rotv(-1, 0, pp.r || 0), e = [pp.x + u[0] * 25.5, pp.y + u[1] * 25.5]; silkB.push([e[0], e[1] - 4, e[0] - u[0] * 4.5, e[1] - 4], [e[0] - u[0] * 4.5, e[1] - 4, e[0] - u[0] * 4.5, e[1] + 4], [e[0] - u[0] * 4.5, e[1] + 4, e[0], e[1] + 4]); /* the USB end */
+    textStrokes('PICO HERE', pp.x + textLen('PICO HERE', 1.6) / 2, pp.y - 0.8, 1.6, 0, true).forEach((q) => silkB.push(q));
+    const p1 = picoPads[0]; silkB.push([p1.x - 1.2, p1.y - 1.2, p1.x + 1.2, p1.y - 1.2], [p1.x + 1.2, p1.y - 1.2, p1.x + 1.2, p1.y + 1.2], [p1.x + 1.2, p1.y + 1.2, p1.x - 1.2, p1.y + 1.2], [p1.x - 1.2, p1.y + 1.2, p1.x - 1.2, p1.y - 1.2]); }
+  else { const r = pp.r || 0, c = [[-25.5, -10.5], [25.5, -10.5], [25.5, 10.5], [-25.5, 10.5]].map(([x, y]) => { const q = rotv(x, y, r); return [pp.x + q[0], pp.y + q[1]]; });
     for (let i = 0; i < 4; i++) line(c[i][0], c[i][1], c[(i + 1) % 4][0], c[(i + 1) % 4][1]);
     const u = rotv(-1, 0, r), w = rotv(0, 1, r), m = (a, b) => [pp.x + u[0] * a + w[0] * b, pp.y + u[1] * a + w[1] * b]; // a = toward the USB end, b = across
     const q1 = m(25.5, -4), q2 = m(21, -4), q3 = m(21, 4), q4 = m(25.5, 4); line(q1[0], q1[1], q2[0], q2[1]); line(q2[0], q2[1], q3[0], q3[1]); line(q3[0], q3[1], q4[0], q4[1]); // the USB plug end
@@ -209,7 +229,7 @@ export function makeBoard(spec) {
   }
   { const t = spec.name || 'NOCIV CASE ZERO', h = Math.min(2.2, (ax1 - ax0 - 8) * 6 / (t.length * 5.6)); if (h >= 1) textStrokes(t, (ax0 + ax1) / 2 + textLen(t, h) / 2, ay0 + 4, h, 0, true).forEach((s) => silkB.push(s)); }
 
-  const res = { ok: true, errors, warnings, pads, vias: viaList, tracks, mounts, edges, silk, silkB, rows, diode: !!diode, nets: nets.slice(1).map((n) => n.name), netIds: netId, gndSeeds: gndSeeds.map(cellXY),
+  const res = { ok: true, errors, warnings, pads, vias: viaList, tracks, mounts, holes, edges, silk, silkB, rows, diode: !!diode, nets: nets.slice(1).map((n) => n.name), netIds: netId, gndSeeds: gndSeeds.map(cellXY),
     box: { x0: ax0, y0: ay0, x1: ax1, y1: ay1, w: ax1 - ax0, h: ay1 - ay0 }, grid: { ox, oy, nx, ny } };
   res.check = check(res);
   if (!res.check.ok) { res.ok = false; res.errors = res.check.errors.slice(0, 4); }
@@ -220,7 +240,7 @@ export function makeBoard(spec) {
 // ---------- the second look: measure everything again without the grid ----------
 export function check(b) {
   const errors = [], F = []; // every piece of copper: { l: 0 top, 1 bottom, 2 both, net, c: [x, y, r] circle or s: [x1, y1, x2, y2] with half width w }
-  b.pads.forEach((p, n) => F.push({ l: 2, net: p.net, c: [p.x, p.y, BR.PAD / 2], pad: n }));
+  b.pads.forEach((p, n) => F.push({ l: 2, net: p.net, c: [p.x, p.y, (p.d || BR.PAD) / 2], pad: n }));
   b.vias.forEach((v) => F.push({ l: 2, net: v.net, c: [v.x, v.y, BR.VIA / 2] }));
   b.tracks.forEach((t) => F.push({ l: t.l, net: t.net, s: [t.x1, t.y1, t.x2, t.y2], w: BR.TRACK / 2 }));
   const gap = (a, c) => a.c && c.c ? Math.hypot(a.c[0] - c.c[0], a.c[1] - c.c[1]) - a.c[2] - c.c[2] : a.c ? dPS(a.c[0], a.c[1], c.s[0], c.s[1], c.s[2], c.s[3]) - a.c[2] - c.w : c.c ? dPS(c.c[0], c.c[1], a.s[0], a.s[1], a.s[2], a.s[3]) - c.c[2] - a.w : dSS(a.s, c.s) - a.w - c.w;
@@ -242,7 +262,7 @@ export function check(b) {
   if (open) errors.push(open + ' pad' + (open > 1 ? 's are' : ' is') + ' not connected. Not built.');
   // copper stays inside the edge, away from screws
   const outer = b.edges[0]; let minEdge = 1e9;
-  F.forEach((f) => { const pts = f.c ? [[f.c[0], f.c[1], f.c[2]]] : [[f.s[0], f.s[1], f.w], [f.s[2], f.s[3], f.w]]; pts.forEach(([x, y, r]) => { if (!pip(outer, x, y)) { errors.push('Copper outside the board edge.'); return; } let d = edgeDist(outer, x, y) - r; for (let h = 1; h < b.edges.length; h++) d = Math.min(d, edgeDist(b.edges[h], x, y) - r); b.mounts.forEach((m) => { d = Math.min(d, Math.hypot(m.x - x, m.y - y) - BR.MOUNT / 2 - r); }); if (d < minEdge) minEdge = d; }); });
+  F.forEach((f) => { const pts = f.c ? [[f.c[0], f.c[1], f.c[2]]] : [[f.s[0], f.s[1], f.w], [f.s[2], f.s[3], f.w]]; pts.forEach(([x, y, r]) => { if (!pip(outer, x, y)) { errors.push('Copper outside the board edge.'); return; } let d = edgeDist(outer, x, y) - r; for (let h = 1; h < b.edges.length; h++) d = Math.min(d, edgeDist(b.edges[h], x, y) - r); b.mounts.forEach((m) => { d = Math.min(d, Math.hypot(m.x - x, m.y - y) - BR.MOUNT / 2 - r); }); (b.holes || []).forEach((h) => { d = Math.min(d, Math.hypot(h.x - x, h.y - y) - h.d / 2 - r); }); if (d < minEdge) minEdge = d; }); });
   if (minEdge < 0.25) errors.push('Copper is ' + minEdge.toFixed(2) + ' mm from an edge or screw hole. Not built.');
   const connected = b.pads.filter((p) => p.net).length;
   return { ok: !errors.length, errors: Array.from(new Set(errors)), minGap: minGap > 1e8 ? null : minGap, minEdge, connected, features: F.length };
@@ -266,15 +286,21 @@ function mergeTracks(tracks, l) { // unit steps into long straight lines, so the
 }
 export function boardFiles(b, name) {
   const base = name || 'casezero-board', files = [];
-  const copper = (l) => gerber('Copper,L' + (l + 1) + ',' + (l ? 'Bot' : 'Top'), (g) => { mergeTracks(b.tracks, l).forEach((t) => g.draw(t[0], t[1], t[2], t[3], BR.TRACK)); b.pads.forEach((p) => g.flash(p.x, p.y, BR.PAD)); b.vias.forEach((v) => g.flash(v.x, v.y, BR.VIA)); }, b);
-  const mask = (l) => gerber('Soldermask,' + (l ? 'Bot' : 'Top'), (g) => { b.pads.forEach((p) => g.flash(p.x, p.y, BR.PAD + 0.1)); b.mounts.forEach((m) => g.flash(m.x, m.y, BR.MOUNT + 0.4)); }, b);
+  const copper = (l) => gerber('Copper,L' + (l + 1) + ',' + (l ? 'Bot' : 'Top'), (g) => { mergeTracks(b.tracks, l).forEach((t) => g.draw(t[0], t[1], t[2], t[3], BR.TRACK)); b.pads.forEach((p) => g.flash(p.x, p.y, p.d || BR.PAD)); b.vias.forEach((v) => g.flash(v.x, v.y, BR.VIA)); }, b);
+  const mask = (l) => gerber('Soldermask,' + (l ? 'Bot' : 'Top'), (g) => { b.pads.forEach((p) => g.flash(p.x, p.y, (p.d || BR.PAD) + 0.1)); b.mounts.forEach((m) => g.flash(m.x, m.y, BR.MOUNT + 0.4)); (b.holes || []).forEach((h) => g.flash(h.x, h.y, h.d + 0.3)); }, b);
   files.push({ name: base + '-F_Cu.gtl', text: copper(0) }, { name: base + '-B_Cu.gbl', text: copper(1) }, { name: base + '-F_Mask.gts', text: mask(0) }, { name: base + '-B_Mask.gbs', text: mask(1) });
   files.push({ name: base + '-F_Silkscreen.gto', text: gerber('Legend,Top', (g) => b.silk.forEach((s) => g.draw(s[0], s[1], s[2], s[3], BR.SILK)), b) });
   files.push({ name: base + '-B_Silkscreen.gbo', text: gerber('Legend,Bot', (g) => b.silkB.forEach((s) => g.draw(s[0], s[1], s[2], s[3], BR.SILK)), b) });
   files.push({ name: base + '-Edge_Cuts.gm1', text: gerber('Profile,NP', (g) => b.edges.forEach((poly) => poly.forEach((p, i) => { const q = poly[(i + 1) % poly.length]; g.draw(p[0], p[1], q[0], q[1], 0.1); })), b) });
-  const dr = ['M48', '; DRILL file NOCIV Case Zero board. T1 vias, T2 pin and wire pads, T3 M2 screws', '; FORMAT={-:-/ absolute / metric / decimal}', 'FMAT,2', 'METRIC', 'T1C' + BR.VDRILL.toFixed(3), 'T2C' + BR.DRILL.toFixed(3), 'T3C' + BR.MOUNT.toFixed(3), '%', 'G90', 'G05'];
   const pt = (x, y) => 'X' + (x - b.box.x0).toFixed(3) + 'Y' + (y - b.box.y0).toFixed(3);
-  if (b.vias.length) { dr.push('T1'); b.vias.forEach((v) => dr.push(pt(v.x, v.y))); } dr.push('T2'); b.pads.forEach((p) => dr.push(pt(p.x, p.y))); dr.push('T3'); b.mounts.forEach((m) => dr.push(pt(m.x, m.y))); dr.push('M30');
+  const tools = [], tool = (d) => { let t = tools.find((q) => Math.abs(q.d - d) < 1e-6); if (!t) { t = { d, pts: [] }; tools.push(t); } return t; };
+  const tv = tool(BR.VDRILL), tp = tool(BR.DRILL), tm = tool(BR.MOUNT); /* T1 vias, T2 pin and wire pads, T3 M2 screws: the same three as always, then any other pad size */
+  b.vias.forEach((v) => tv.pts.push(pt(v.x, v.y))); b.pads.forEach((p) => tool(p.drill || BR.DRILL).pts.push(pt(p.x, p.y))); b.mounts.forEach((m) => tm.pts.push(pt(m.x, m.y))); void tp;
+  const drill = (list, note) => { const dr = ['M48', '; DRILL file NOCIV Case Zero board. ' + note, '; FORMAT={-:-/ absolute / metric / decimal}', 'FMAT,2', 'METRIC']; list.forEach((t, i) => dr.push('T' + (i + 1) + 'C' + t.d.toFixed(3))); dr.push('%', 'G90', 'G05'); list.forEach((t, i) => { if (!t.pts.length && i !== 1) return; dr.push('T' + (i + 1)); t.pts.forEach((q) => dr.push(q)); }); dr.push('M30'); return dr.join('\n') + '\n'; };
+  const dr = { join: () => drill(tools, 'Plated holes. T1 vias, T2 pin and wire pads, T3 M2 screws').trimEnd() };
+  if ((b.holes || []).length) { const nt = []; b.holes.forEach((h) => { let t = nt.find((q) => Math.abs(q.d - h.d) < 1e-6); if (!t) { t = { d: h.d, pts: [] }; nt.push(t); } t.pts.push(pt(h.x, h.y)); }); nt.forEach((t) => { if (!t.pts.length) t.pts.push(''); });
+    const L = ['M48', '; DRILL file NOCIV Case Zero board. Holes with NO copper plating (NPTH): switch pegs and screws', '; FORMAT={-:-/ absolute / metric / decimal}', 'FMAT,2', 'METRIC']; nt.forEach((t, i) => L.push('T' + (i + 1) + 'C' + t.d.toFixed(3))); L.push('%', 'G90', 'G05'); nt.forEach((t, i) => { L.push('T' + (i + 1)); t.pts.forEach((q) => L.push(q)); }); L.push('M30');
+    files.push({ name: base + '-NPTH.drl', text: L.join('\n') + '\n' }); }
   files.push({ name: base + '.drl', text: dr.join('\n') + '\n' });
   return files;
 }
@@ -305,7 +331,8 @@ export function boardSvg(b, show) {
   if (show !== 'top') s += lay(1, '#5aa0e6'); if (show !== 'bottom') s += lay(0, '#e9b84a');
   s += '<g stroke="#f4f1e8" stroke-width="' + BR.SILK + '" stroke-linecap="round" fill="none"><path d="' + b.silk.map((t) => 'M' + Xs(t[0]) + ' ' + Ys(t[1]) + 'L' + Xs(t[2]) + ' ' + Ys(t[3])).join('') + '"/></g>';
   b.vias.forEach((v) => { s += '<circle cx="' + Xs(v.x) + '" cy="' + Ys(v.y) + '" r="' + BR.VIA / 2 + '" fill="#c9cfd4"/><circle cx="' + Xs(v.x) + '" cy="' + Ys(v.y) + '" r="' + BR.VDRILL / 2 + '" fill="#1f5a3a"/>'; });
-  b.pads.forEach((p) => { s += '<circle cx="' + Xs(p.x) + '" cy="' + Ys(p.y) + '" r="' + BR.PAD / 2 + '" fill="' + (p.net ? '#f0cf6b' : '#b9b49f') + '"/><circle cx="' + Xs(p.x) + '" cy="' + Ys(p.y) + '" r="' + BR.DRILL / 2 + '" fill="#e6e1d6"/>'; });
+  b.pads.forEach((p) => { s += '<circle cx="' + Xs(p.x) + '" cy="' + Ys(p.y) + '" r="' + (p.d || BR.PAD) / 2 + '" fill="' + (p.net ? '#f0cf6b' : '#b9b49f') + '"/><circle cx="' + Xs(p.x) + '" cy="' + Ys(p.y) + '" r="' + (p.drill || BR.DRILL) / 2 + '" fill="#e6e1d6"/>'; });
+  (b.holes || []).forEach((h) => { s += '<circle cx="' + Xs(h.x) + '" cy="' + Ys(h.y) + '" r="' + h.d / 2 + '" fill="#e6e1d6" stroke="#0e2f1e" stroke-width=".3"/>'; });
   b.mounts.forEach((q) => { s += '<circle cx="' + Xs(q.x) + '" cy="' + Ys(q.y) + '" r="' + BR.MOUNT / 2 + '" fill="#e6e1d6" stroke="#0e2f1e" stroke-width=".3"/>'; });
   return s + '</svg>';
 }

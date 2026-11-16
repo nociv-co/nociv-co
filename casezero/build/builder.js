@@ -3,9 +3,9 @@
 // Print: your printer and bed, material, how it joins, where the puzzle seams go. Files: STL per piece, wood templates, wiring.
 import * as THREE from 'three';
 import { OrbitControls } from 'three/addons/OrbitControls.js';
-import * as G from './geo.js?v=19';
+import * as G from './geo.js?v=20';
 import { openMeasure, GROUPS } from './capture.js?v=20';
-import { makeBoard, boardFiles, boardSvg, zip as zipFiles } from './board.js?v=1';
+import { makeBoard, boardFiles, boardSvg, zip as zipFiles } from './board.js?v=2';
 import { planWiring, codeFor, PICO_LEFT, PICO_RIGHT, PICO_PINS, PICO_BRAINS, NEED } from './wiring.js?v=19';
 
 const CZ = window.CZ, R = G.RULE, $ = (id) => document.getElementById(id);
@@ -31,7 +31,7 @@ let LOGOIMG = null; try { const li = localStorage.getItem(KEY + ':logo'); if (li
 const AZ = { z: 1, px: 0, py: 0 }; let PEND = null; /* Arrange zoom, and the spot waiting for "What is here?" */
 let uid = S.items.reduce((m, p) => Math.max(m, p.id || 0), 0), sel = null, PHOTO = null;
 try { const ph = localStorage.getItem(KEY + ':photo'); if (ph) { PHOTO = new Image(); PHOTO.src = ph; PHOTO.onload = () => draw(); } } catch (e) {}
-const PARTS = () => Object.assign({}, CZ.PARTS, S.mine);
+const PARTS = () => Object.assign({}, CZ.PARTS, S.mine, kbPart());
 const PP = (it) => PARTS()[it.type];
 const styleRow = () => CZ.STYLES.find((s) => s[0] === S.style) || CZ.STYLES[0];
 const isClam = () => styleRow()[3] === 'clam';
@@ -358,7 +358,7 @@ const ORDER = [2, 3, 0, 1, 4, 5];
 const FUNCS = [['brain', 'Think', 'The brain that runs it', 'pico'], ['screen', 'Show things', 'A screen', 'tft28'], ['press', 'Take presses', 'Buttons, a D-pad', 'button16'], ['turn', 'Turn and slide', 'Knobs, a wheel, a stick', 'encoder'],
   ['out', 'Light and sound', 'Lights, a speaker', 'speaker28'], ['move', 'Move', 'A motor that turns an arm', 'servo'], ['power', 'Run on a battery', 'Cut the cord', 'lipo1200'], ['print', 'Printed parts', 'Stand, body, gears', null], ['mine', 'Use my own part', 'Measure it with your phone', null]];
 const FN_STAND = '<svg viewBox="0 0 60 36" aria-hidden="true"><path d="M17 31L29 6l9 4-12 25z" fill="#c8412f" stroke="#1a1a1a" stroke-width="2" stroke-linejoin="round"/><path d="M35 15l11 17" stroke="#1a1a1a" stroke-width="3" stroke-linecap="round"/><path d="M7 33h47" stroke="#1a1a1a" stroke-width="2" stroke-linecap="round"/></svg>';
-const XGROUPS = [['Stand and carry', ['stand', 'handle', 'feet']], ['Character', ['body', 'limbs']], ['Moving parts', ['gears', 'hinge', 'spring', 'clamp']], ['Hardware', ['panel', 'keys', 'standoff', 'clip']]];
+const XGROUPS = [['Stand and carry', ['stand', 'handle', 'feet']], ['Character', ['body', 'limbs']], ['Moving parts', ['gears', 'hinge', 'spring', 'clamp']], ['Keyboard', ['keys']], ['Hardware', ['panel', 'standoff', 'clip']]];
 const NEWP = ' Sized from published specs, not from a test print.';
 function xmeta(id) { // one printed part: [short name, what it is and how it goes on, its few settings]
   const X = xp(), fits = stepper('xs_t', 'Fits', X.stand.t + ' mm thick' + (X.stand.auto ? ' (your case)' : ''));
@@ -373,10 +373,55 @@ function xmeta(id) { // one printed part: [short name, what it is and how it goe
     spring: ['Spring', 'A flat zigzag that pushes back. Good for a button that pops back up or a latch. Light pushes only. PETG lasts longer than PLA, which goes soft over time.' + NEWP, stepper('xsp_n', 'Bends', String(X.spring.n))],
     clamp: ['Clamp', 'Hooks over a shelf or desk edge. Push the wedge in to lock it. The hole in its back takes an M3 screw, so a leg bar or your own part bolts on.' + NEWP, stepper('xcl_t', 'Grips', X.clamp.t + ' mm thick')],
     panel: ['Panel', 'A flat plate with a screw hole in each corner. A door, a cover, a shelf, a base for your own idea.' + NEWP, stepper('xp_w', 'Wide', X.panel.w + ' mm') + stepper('xp_h', 'Tall', X.panel.h + ' mm')],
-    keys: ['Keyboard', 'A plate that MX style keyboard switches click into: ' + X.keys.c + ' across, ' + X.keys.r + ' down, ' + (X.keys.c * X.keys.r) + ' keys. The plate is 1.5 mm, the thickness the switch clips are made for, with a rim underneath so it stays flat. You still buy the switches and caps. The Brain does not plan keyboard wiring yet.' + NEWP, stepper('xk_c', 'Across', X.keys.c + ' keys') + stepper('xk_r', 'Down', X.keys.r + ' keys')],
+    keys: ['Keyboard', 'Your own mechanical keyboard, ' + kb().c + ' across and ' + kb().r + ' down: a printed plate the switches click into, printed key caps, and a board you can order that joins every key to a Pico. Every key is one square, so there is no long space bar. Plate and board follow the Cherry MX data sheet.' + NEWP, kbHtml(), true],
     standoff: ['Standoffs', 'Lift a board off the floor. The screw cuts its own thread in the plastic.', '<div class="row"><b>Screw</b>' + seg('xo_s', [['m25', 'M2.5 (Pi)'], ['m3', 'M3']], X.standoff.s) + '</div>' + stepper('xo_h', 'Tall', X.standoff.h + ' mm')],
     clip: ['Cable clips', 'Keep wires tidy inside. Stick on with tape or glue.', stepper('xc_d', 'Cable', X.clip.d + ' mm')] }[id];
 }
+// ---------- which filament, and is it worth printing ----------
+const FILS = [['pla', 'PLA'], ['petg', 'PETG'], ['abs', 'ABS / ASA'], ['tpu', 'TPU (soft)']];
+const fil = () => (FILS.some((f) => f[0] === S.fil) ? S.fil : (S.material === 'petg' || S.material === 'abs') ? S.material : 'pla');
+const FILNOTE = { pla: 'The easy one. It goes soft at about 55 to 60 C, so keep PLA prints out of a parked car and off a sunny windowsill.', petg: 'Tougher and bends before it breaks. Holds up to about 80 C. It strings a little.', abs: 'Takes about 100 C. It needs an enclosed printer and fresh air, and big flat pieces like to curl.', tpu: 'Soft like rubber. Great where you want grip, wrong where you want stiff.' };
+// 2 = good, 1 = works with a catch, 0 = not worth the plastic. Each with the reason in plain words.
+const SOFT = [0, 'Too soft. It would bend instead of holding.'];
+const FILV = {
+  pla: { stand: [2], handle: [1, 'Carries a light device. PLA snaps instead of bending, so do not swing it around.'], feet: [2], body: [2], limbs: [2], gears: [1, 'Good to play with and for light jobs. Under real work the teeth wear and warm up.'], hinge: [2], spring: [0, 'It pushes back on day one, then goes limp if it stays squeezed. PLA does that.'], clamp: [1, 'It grips, but PLA slowly relaxes under a steady squeeze. Push the wedge in again now and then.'], panel: [2], keys: [2, 'PLA is stiff, and stiff is what a switch plate wants. Key caps too.'], standoff: [2], clip: [1, 'Fine if the cable goes in once. It can snap if you keep opening it.'] },
+  petg: { stand: [2], handle: [2, 'Bends before it breaks, so it is the safer handle.'], feet: [2], body: [2], limbs: [2], gears: [2], hinge: [2], spring: [2, 'The best common filament for a spring.'], clamp: [2], panel: [2], keys: [1, 'PETG gives a little more than PLA, so typing feels softer. The rim keeps it flat. Key caps can come out stringy inside.'], standoff: [2], clip: [2] },
+  abs: { stand: [2], handle: [2], feet: [2], body: [2], limbs: [2], gears: [2], hinge: [2], spring: [1, 'Springy at first, tires faster than PETG.'], clamp: [2], panel: [1, 'Big flat pieces curl at the corners unless the printer is enclosed.'], keys: [1, 'A wide thin plate curls at the corners unless the printer is enclosed.'], standoff: [2], clip: [2] },
+  tpu: { stand: SOFT, handle: [1, 'A soft strap. It stretches, so only for something light.'], feet: [2, 'Grippy. The best filament for feet.'], body: SOFT, limbs: SOFT, gears: SOFT, hinge: SOFT, spring: [1, 'Squashy like rubber, not springy.'], clamp: SOFT, panel: SOFT, keys: SOFT, standoff: SOFT, clip: [2] } };
+const VWORD = ['Skip it', 'With a catch', 'Good'];
+const filV = (id) => (FILV[fil()] || {})[id] || [2];
+function filBar() { const f = fil(), ids = [].concat(...XGROUPS.map((g) => g[1])), n = [0, 0, 0]; ids.forEach((k) => { n[filV(k)[0]]++; }); const nm = FILS.find((x) => x[0] === f)[1];
+  return '<div class="row" style="margin-top:0"><b>My filament</b>' + seg('fil', FILS.map((x) => [x[0], x[1].replace(' (soft)', '')]), f) + '</div><p class="note" style="margin:4px 0 10px">' + FILNOTE[f] + ' <b>With ' + nm + ': ' + n[2] + ' good' + (n[1] ? ', ' + n[1] + ' with a catch' : '') + (n[0] ? ', ' + n[0] + ' not worth printing' : '') + '.</b></p>'; }
+function filLine(id) { const v = filV(id), nm = FILS.find((x) => x[0] === fil())[1]; return '<p class="vline v' + v[0] + '"><b>In ' + nm + ': ' + VWORD[v[0]] + '.</b> ' + (v[1] || (v[0] === 2 ? 'Nothing to watch for.' : '')) + '</p>'; }
+// ---------- print settings: set for you, with what each one changes ----------
+const PQ = { fast: [0.28, 'Faster', 'About a third less time. You will see the layer lines.'], nice: [0.2, 'Quick and nice', 'The usual middle: quick, and it looks clean.'], smooth: [0.12, 'Smoothest', 'About twice as long. Layer lines nearly vanish.'] };
+const PSET = { gears: [4, 40], body: [4, 20], clamp: [4, 40], hinge: [4, 30, 1], handle: [4, 25], limbs: [4, 25], spring: [4, 100], stand: [4, 25] };
+function printCard(id) { const q = PQ[S.pq] ? S.pq : 'nice', P = PSET[id] || [3, 15], lay = id === 'keycaps' ? Math.min(0.16, PQ[q][0]) : PQ[q][0];
+  return '<details class="fold"' + (S.psOpen ? ' open' : '') + ' data-keep="ps"><summary>Print settings: ' + lay + ' mm layers, ' + P[0] + ' walls, ' + P[1] + '% infill' + (P[2] ? ', brim on' : '') + ', no supports</summary>' +
+    '<p class="note" style="margin-top:6px">In your slicer pick the standard profile for your printer and your filament. That sets the heat for you. Then change only these.</p>' +
+    '<div class="row"><b>Finish</b>' + seg('pq', [['fast', 'Faster'], ['nice', 'Quick and nice'], ['smooth', 'Smoothest']], q) + '</div><p class="note" style="margin:2px 0 8px">' + PQ[q][2] + '</p>' +
+    '<div class="list">' +
+    '<div class="it"><b>Layer height: ' + lay + ' mm</b>How thick each layer of plastic is. Thinner looks smoother and takes longer.' + (id === 'keycaps' && lay !== PQ[q][0] ? ' Key caps are tiny, so they stay fine even on Faster.' : '') + '</div>' +
+    '<div class="it"><b>Walls: ' + P[0] + '</b>How many outlines go around the part. This is where the strength comes from. More walls, stronger and a bit slower.</div>' +
+    '<div class="it"><b>Infill: ' + P[1] + '%</b>How full the inside is. ' + (P[1] >= 40 ? 'This part takes force, so it is filled more.' : P[1] === 100 ? 'These strips are thin, so they print solid.' : 'Low is fine here: the walls do the work, and more infill mostly costs time.') + '</div>' +
+    '<div class="it"><b>Supports: off</b>Supports are throwaway scaffolding under overhangs. This part is drawn so it needs none.</div>' +
+    '<div class="it"><b>Brim: ' + (P[2] ? 'on' : 'off') + '</b>A thin skirt stuck to the bed that keeps a part from tipping or lifting. ' + (P[2] ? 'This one stands tall on a small foot, so turn it on and peel it off after.' : 'Not needed here. Turn it on only if corners lift on your printer.') + '</div>' +
+    '</div></details>'; }
+// ---------- the keyboard page ----------
+function kbCase() { const K = kb(), d = dims(), wall = R.T + R.CLR + 1, iw = d.W - 2 * wall, ih = d.D - 2 * wall; return { iw, ih, fits: (K.w <= iw && K.h <= ih) || (K.h <= iw && K.w <= ih), has: S.items.some((i) => i.type === 'kbd') }; }
+function kbHtml() { const K = kb(), X = xp(), n = K.c * K.r, C = kbCase(), cost = kbCost(K);
+  return '<p class="h" style="margin-top:10px">1. Size</p>' + stepper('xk_c', 'Across', K.c + ' keys') + stepper('xk_r', 'Down', K.r + ' keys') +
+    '<p class="note" style="margin:4px 0 6px">It is ' + K.w.toFixed(0) + ' x ' + K.h.toFixed(0) + ' mm with ' + n + ' keys. ' + (C.has ? '<span class="ok">It is in your case.</span>' : C.fits ? '<span class="ok">It fits inside your case.</span>' : 'Your case has ' + C.iw.toFixed(0) + ' x ' + C.ih.toFixed(0) + ' mm inside, so it does not fit yet.') + '</p>' +
+    '<div class="grid g2">' + '<button class="btn" data-act="kbfit" style="padding:9px">Size it to my case</button><button class="btn' + (C.has ? '' : ' dark') + '" data-act="kbadd" style="padding:9px">' + (C.has ? 'Take it out of my case' : 'Put it in my case') + '</button></div>' +
+    '<p class="h" style="margin-top:12px">2. Key caps</p>' + filLine('keys') +
+    '<div class="row"><b>Cap fit</b>' + seg('xkf', [['0', 'Snug'], ['0.1', 'Normal'], ['0.2', 'Loose']], String(X.keys.f)) + '</div>' +
+    '<p class="note" style="margin:2px 0 6px">Print 1 test cap first and push it on a switch. Too tight to go on: pick Loose. Falls off: pick Snug. Then print the rest.</p>' +
+    '<div class="grid g2"><button class="btn" data-xsave="keycap1" style="padding:9px">Save 1 test cap</button><button class="btn" data-xsave="keycaps" style="padding:9px">Save ' + Math.min(24, n) + ' caps</button></div>' + (n > 24 ? '<p class="note" style="margin-top:4px">The file holds 24. Print it ' + Math.ceil(n / 24) + ' times for all ' + n + '.</p>' : '') +
+    '<p class="h" style="margin-top:12px">3. Order the board</p><p class="note" style="margin:0 0 6px">' + cost.txt + ' Shipping and import fees usually cost more than the boards.</p>' +
+    '<button class="btn dark" data-act="kbzip">Get the board files (zip)</button>' +
+    '<p class="note" style="margin-top:6px">The zip has the factory files, the code that makes it type, and a step by step to solder it. <b>You buy:</b> ' + n + ' MX style switches, ' + n + ' small diodes (1N4148), 1 Pico with pins (Pico H), 4 M3 x 12 screws and nuts. About $' + Math.round(n * 0.45 + 9) + ' plus the board.</p>' +
+    '<details class="fold"><summary>See the board</summary><div data-kbsvg="1" style="margin-top:6px"><button class="btn" data-act="kbshow" style="padding:8px">Draw it</button></div></details>' +
+    '<p class="h" style="margin-top:12px">4. Print the plate</p>'; }
 // the picture of a printed part is drawn from the very shape that gets saved, so what you see is what prints
 const XTH = {};
 function xThumb(id) {
@@ -397,10 +442,10 @@ function btnHtml() {
 }
 function partsRoomHtml() {
   const id = S.xsel, T = id && xmeta(id);
-  if (!T) return XGROUPS.map((g) => '<p class="h">' + g[0] + '</p><div class="grid g3" style="margin-bottom:10px">' + g[1].map((k) => '<button type="button" class="pick fn xt" data-xsel="' + k + '">' + xThumb(k) + xmeta(k)[0] + '</button>').join('') + '</div>').join('') +
+  if (!T) return filBar() + XGROUPS.map((g) => '<p class="h">' + g[0] + '</p><div class="grid g3" style="margin-bottom:10px">' + g[1].map((k) => { const v = filV(k)[0]; return '<button type="button" class="pick fn xt" data-xsel="' + k + '">' + xThumb(k) + xmeta(k)[0] + (v < 2 ? '<small class="vd v' + v + '">' + VWORD[v] + '</small>' : '') + '</button>'; }).join('') + '</div>').join('') +
     '<details class="fold"><summary>Printed buttons and knobs</summary>' + btnHtml() + '</details><p class="note">Each one is its own print. Make it now or later, then add it to what you already built.</p>';
-  return '<div class="fnh"><button type="button" class="btn" data-xsel="">&lsaquo; All</button><b>' + T[0] + '</b></div><p class="note" style="margin-top:6px">' + T[1] + '</p>' + T[2] +
-    '<button class="btn red" data-xsave="' + id + '" style="margin-top:10px">Save the print file</button>';
+  return '<div class="fnh"><button type="button" class="btn" data-xsel="">&lsaquo; All</button><b>' + T[0] + '</b></div><p class="note" style="margin-top:6px">' + T[1] + '</p>' + T[2] + (T[3] ? '' : filLine(id)) +
+    '<button class="btn red" data-xsave="' + id + '" style="margin-top:10px">Save the ' + (T[3] ? 'plate' : 'print file') + '</button>' + printCard(id);
 }
 function tabsFor(step) {
   if (step === 0) return [['snap', 'Snap', 'snap'], ['parts', 'Parts', 'parts'], ['picks', 'Picks', 'picks'], ['pins', 'Wiring', 'wire']];
@@ -563,7 +608,8 @@ function pane(t) {
     return '<div class="row"><b>Walls</b>' + seg('walls', [['normal', 'Normal 2.4 mm'], ['tough', 'Thick 3.2 mm']], S.walls) + '</div><div class="row"><b>Finish</b>' + seg('layer', [['draft', 'Fast'], ['normal', 'Normal'], ['fine', 'Smooth']], S.layer) + '</div>' +
       '<div class="est"><b>About ' + hm(e.sec) + '</b><span>' + Math.round(e.grams) + ' g of ' + S.material.toUpperCase() + ', about $' + (e.grams * 0.02).toFixed(2) + ' at $20 a kilo. ' + e.pieces + ' piece' + (e.pieces > 1 ? 's' : '') + '.</span></div>' +
       '<p class="note">Set your slicer to <b>' + LAYER[S.layer] + ' mm layers, 4 walls, 15 percent infill</b>. Its time is the real one, this is within about a third.</p>' +
-      '<p class="note"><b>Hollow or solid?</b> A case is already a hollow shell. Its walls are ' + R.T + ' mm thin, so 4 walls in the slicer print them as solid plastic and infill changes almost nothing. To make it tougher, pick Thick: the sides and floor get thicker (the outside grows ' + (2 * (3.2 - 2.4)).toFixed(1) + ' mm), the deck stays the same so your buttons still reach. Fast shows the layer lines, Smooth takes about twice as long.</p>';
+      '<p class="note"><b>Hollow or solid?</b> A case is already a hollow shell. Its walls are ' + R.T + ' mm thin, so 4 walls in the slicer print them as solid plastic and infill changes almost nothing. To make it tougher, pick Thick: the sides and floor get thicker (the outside grows ' + (2 * (3.2 - 2.4)).toFixed(1) + ' mm), the deck stays the same so your buttons still reach. Fast shows the layer lines, Smooth takes about twice as long.</p>' +
+      '<details class="fold"><summary>What do those slicer words mean?</summary><div class="list" style="margin-top:6px"><div class="it"><b>Layer height</b>How thick each layer of plastic is. Thinner looks smoother and takes longer.</div><div class="it"><b>Walls</b>How many outlines go around each piece. This is where the strength comes from.</div><div class="it"><b>Infill</b>How full the inside is. A case is mostly walls, so 15 percent is plenty.</div><div class="it"><b>Supports</b>Throwaway scaffolding under overhangs. The case is drawn to print without any.</div><div class="it"><b>Brim</b>A thin skirt that keeps corners from lifting. Turn it on only if yours lift.</div></div><p class="note" style="margin-top:6px">In your slicer pick the standard profile for your printer and your filament. That sets the heat for you.</p></details>';
   }
   if (t === 'mat') { const m = CZ.MATERIALS.find((x) => x[0] === S.material); return '<div class="grid g4">' + CZ.MATERIALS.map((x) => '<button type="button" class="pick" data-mat="' + x[0] + '" aria-pressed="' + (S.material === x[0]) + '">' + esc(x[1]) + '</button>').join('') + '</div><p class="note">' + esc(m[2]) + '</p><p class="h" style="margin-top:8px">How the pieces join (best for ' + esc(m[1]) + ' first)</p><div class="grid g3">' + m[3].concat(Object.keys(CZ.JOINS).filter((k) => m[3].indexOf(k) < 0)).map((k, i) => '<button type="button" class="pick" data-join="' + k + '" aria-pressed="' + (S.join === k) + '">' + esc(CZ.JOINS[k][0]) + (i < 2 ? '<small>good fit</small>' : '') + '</button>').join('') + '</div><p class="note">' + esc(CZ.JOINS[S.join][1]) + '</p>'; }
   if (t === 'split') {
@@ -727,6 +773,14 @@ $('pane').addEventListener('click', (e) => {
   if (act === 'bmove' && s) { s.move = !s.move; save(); render(); return; }
   if (d.photo) { S.photo = d.photo; save(); render(); return; }
   if (d.pcb) { snapU(); S.pcb = d.pcb === '1'; LAST = null; save(); render(); return; }
+  if (act === 'kbfit') { const X = xp(), d = dims(), wall = R.T + R.CLR + 1, iw = d.W - 2 * wall, ih = d.D - 2 * wall, c = Math.floor((iw - 2 * KB.M) / KB.P), r = Math.floor((ih - 2 * KB.M - KB.STRIP) / KB.P);
+    if (c < 3 || r < 1) { tag('Your case is too small for a keyboard. It needs at least ' + Math.ceil(3 * KB.P + 2 * KB.M + 2 * wall) + ' x ' + Math.ceil(KB.P + 2 * KB.M + KB.STRIP + 2 * wall) + ' mm.'); return; }
+    X.keys.c = Math.min(12, c); X.keys.r = Math.min(6, r); save(); render(); tag('Sized to your case: ' + X.keys.c + ' x ' + X.keys.r + ' keys'); return; }
+  if (act === 'kbadd') { snapU(); const has = S.items.find((i) => i.type === 'kbd'); if (has) { S.items = S.items.filter((i) => i !== has); save(); render(); tag('Keyboard taken out of your case'); return; }
+    addPart('kbd'); if (allProblems().length) fitAll(); save(); render(); tag(allProblems().length ? 'It is in, but something overlaps. Open Body, Arrange.' : 'In your case. See it in Body, Arrange.'); return; }
+  if (act === 'kbzip' || act === 'kbshow') { tag('Drawing the board...'); setTimeout(() => { const Bd = kbBoard(); if (!Bd.ok) { tag(Bd.errors[0] || 'The board could not be drawn.'); return; }
+      if (act === 'kbshow') { const el = document.querySelector('[data-kbsvg]'); if (el) el.innerHTML = boardSvg(Bd) + '<p class="note" style="margin-top:4px">Gold lines are on the front, blue on the back. Checked: all ' + Bd.check.connected + ' pads joined, nothing closer than ' + Bd.check.minGap.toFixed(2) + ' mm.</p>'; tag('Board ' + Bd.box.w.toFixed(0) + ' x ' + Bd.box.h.toFixed(0) + ' mm'); return; }
+      const nm = 'casezero-keyboard-' + Bd.kb.c + 'x' + Bd.kb.r; saveFile({ name: nm + '.zip', blob: new Blob([zipFiles(boardFiles(Bd, nm).concat([{ name: 'README.txt', text: kbReadme(Bd) }, { name: 'code.py', text: kbCode(Bd) }]))], { type: 'application/zip' }) }); tag('Saved ' + nm + '.zip'); }, 30); return; }
   if (act === 'saveboard') { const Bd = boardBuild(); if (Bd.ok) saveFile({ name: 'casezero-board.zip', blob: new Blob([zipFiles(boardFiles(Bd, 'casezero-board').concat([{ name: 'README.txt', text: boardReadme(Bd) }]))], { type: 'application/zip' }) }); return; }
   if (act === 'rot' && s && PP(s) && PP(s).board) { snapU(); s.r = ((s.r || 0) + 1) % 4; syncKids(s); if (problems(s).length) { autoPlace(s); syncKids(s); } save(); render(); return; }
   if (act === 'rot' && s) { s.r = ((s.r || 0) + 1) % 4; if (problems(s).length) { const keep = [s.x, s.y]; if (!autoPlace(s)) { s.x = keep[0]; s.y = keep[1]; } } save(); render(); return; }
@@ -749,7 +803,7 @@ $('pane').addEventListener('click', (e) => {
     if (['kh', 'btop', 'bund'].includes(k)) snapU();
     { const si = S.items.find((i) => i.id === sel); if (si && k === 'kh') si.h = Math.max(0, Math.min(60, kidH(si) + v * 0.5)); if (si && k === 'btop' && PP(si) && PP(si).board) setBoardTop(PP(si), (PP(si).top || 9) + v * 0.5); if (si && k === 'bund' && PP(si) && PP(si).board) { const B = PP(si); B.under = Math.max(0, Math.min(40, (B.under != null ? B.under : 8.5) + v * 0.5)); setBoardTop(B, B.top || 9); } }
     const X = xp(); if (k === 'xs_t') { X.stand.auto = false; X.stand.t = Math.max(6, Math.min(80, X.stand.t + v)); } if (k === 'xf_h') X.feet.h = Math.max(2, Math.min(15, X.feet.h + v)); if (k === 'xo_h') X.standoff.h = Math.max(2, Math.min(40, X.standoff.h + v)); if (k === 'xc_d') X.clip.d = Math.max(2, Math.min(16, X.clip.d + v)); if (k === 'xh_l') X.handle.l = Math.max(50, Math.min(140, X.handle.l + v * 10)); if (k === 'xl_l') X.limbs.l = Math.max(25, Math.min(90, X.limbs.l + v * 5)); const cl = (o, f, lo, hi, st) => { o[f] = Math.max(lo, Math.min(hi, o[f] + v * st)); };
-    if (k === 'xb_h') cl(X.body, 'h', 45, 100, 5); if (k === 'xg_n') cl(X.gears, 'n', 18, 54, 9); if (k === 'xhi_l') cl(X.hinge, 'l', 15, 60, 5); if (k === 'xsp_n') cl(X.spring, 'n', 3, 12, 1); if (k === 'xcl_t') cl(X.clamp, 't', 10, 45, 5); if (k === 'xp_w') cl(X.panel, 'w', 30, 200, 10); if (k === 'xp_h') cl(X.panel, 'h', 30, 200, 10); if (k === 'xk_c') cl(X.keys, 'c', 1, 12, 1); if (k === 'xk_r') cl(X.keys, 'r', 1, 6, 1);
+    if (k === 'xb_h') cl(X.body, 'h', 45, 100, 5); if (k === 'xg_n') cl(X.gears, 'n', 18, 54, 9); if (k === 'xhi_l') cl(X.hinge, 'l', 15, 60, 5); if (k === 'xsp_n') cl(X.spring, 'n', 3, 12, 1); if (k === 'xcl_t') cl(X.clamp, 't', 10, 45, 5); if (k === 'xp_w') cl(X.panel, 'w', 30, 200, 10); if (k === 'xp_h') cl(X.panel, 'h', 30, 200, 10); if (k === 'xk_c') cl(X.keys, 'c', 3, 12, 1); if (k === 'xk_r') cl(X.keys, 'r', 1, 6, 1);
     if (nn && k === 'nw') nn.w = Math.max(4, Math.min(120, nn.w + v * 2)); if (nn && k === 'nd') nn.d = Math.max(2, Math.min(60, nn.d + v)); if (nn && k === 'nat') nn.at = Math.max(0, Math.min(nn.edge === 'left' || nn.edge === 'right' ? dims().D : dims().W, nn.at + v * 5));
     if (k === 'txsp') { const tx = S.look.tex[S.look.texFace]; tx.sp = Math.max(2, Math.min(30, tx.sp + v)); }
     if (k === 'cols' || k === 'rows') reflow();
@@ -760,7 +814,8 @@ $('pane').addEventListener('click', (e) => {
     const k = sg.dataset.sg, v = d.v, L = S.look; markCache = k.startsWith('lg_') || k.startsWith('lb_') ? {} : markCache;
     if (k === 'pt') { S.pt = +v; save(); render(); return; } if (k === 'prad') { S.prad = +v; save(); render(); return; } if (k === 'phold') { S.phold = v; reflow(); save(); render(); return; } if (k === 'plift') { if (v === '0') S.plift = 0; else { S.plift = S.plift || 12; S.pbase = v; } reflow(); save(); render(); return; }
     const nn = (S.notches || [])[S.nsel]; if (nn && k === 'n_edge') { if ((nn.edge === 'left' || nn.edge === 'right') !== (v === 'left' || v === 'right')) nn.at = Math.round((v === 'left' || v === 'right' ? dims().D : dims().W) / 2); nn.edge = v; reflow(); save(); render(); return; } if (nn && k === 'n_shape') { nn.shape = v; save(); render(); return; }
-    { const X = xp(); if (k === 'xs_a') { X.stand.a = +v; save(); render(); return; } if (k === 'xf_hole') { X.feet.hole = v === '1'; save(); render(); return; } if (k === 'xo_s') { X.standoff.s = v; save(); render(); return; } }
+    if (k === 'fil') { S.fil = v; save(); render(); return; } if (k === 'pq') { S.pq = v; S.psOpen = true; save(); render(); return; }
+    { const X = xp(); if (k === 'xkf') { X.keys.f = +v; save(); render(); return; } if (k === 'xs_a') { X.stand.a = +v; save(); render(); return; } if (k === 'xf_hole') { X.feet.hole = v === '1'; save(); render(); return; } if (k === 'xo_s') { X.standoff.s = v; save(); render(); return; } }
     if (k === 'brand') { S.brand = v; save(); render(); return; }
     if (k === 'walls') { S.walls = v; applyWalls(); reflow(); save(); render(); return; }
     if (k === 'layer') { S.layer = v; save(); render(); return; }
@@ -1266,8 +1321,8 @@ async function scanPrinter(file) {
 }
 
 // ---------- add-ons: one piece at a time ----------
-function xp() { if (!S.xp) S.xp = {}; const X = S.xp; X.stand = X.stand || { t: null, a: 25 }; if (X.stand.t == null) X.stand.auto = true; if (X.stand.auto) X.stand.t = isPanel() ? 20 : Math.round(heights().H); /* follows the case until she sets it */ X.feet = X.feet || { hole: true, h: 4 }; X.standoff = X.standoff || { s: 'm25', h: 8 }; X.clip = X.clip || { d: 6 }; X.handle = X.handle || { l: 80 }; X.limbs = X.limbs || { l: 45 }; X.body = X.body || { h: 60 }; X.gears = X.gears || { n: 36 }; X.gears.n = Math.max(18, Math.min(54, Math.round(X.gears.n / 9) * 9)); X.hinge = X.hinge || { l: 30 }; X.spring = X.spring || { n: 6 }; X.clamp = X.clamp || { t: 20 }; X.panel = X.panel || { w: 80, h: 60 }; X.keys = X.keys || { c: 4, r: 3 }; return X; }
-const XINFO = { body: () => '7 pieces: torso on its side, the rest flat', gears: () => '3 pieces, print flat', hinge: () => '2 leaves, print standing as saved', spring: () => '2 springs, print flat', clamp: () => '1 clamp and 1 wedge, print flat', panel: () => { const X = xp(); return '1 panel, ' + X.panel.w + ' x ' + X.panel.h + ' mm, 2.4 mm thick'; }, keys: () => { const X = xp(); return '1 plate, ' + (X.keys.c * 19.05 + 10.95).toFixed(0) + ' x ' + (X.keys.r * 19.05 + 10.95).toFixed(0) + ' mm, rim side up'; }, handle: () => '1 handle, print on its side', limbs: () => '8 pieces, print flat', stand: () => '2 stands, print on their side', feet: () => '4 feet', standoff: () => '4 standoffs', clip: () => '6 clips' };
+function xp() { if (!S.xp) S.xp = {}; const X = S.xp; X.stand = X.stand || { t: null, a: 25 }; if (X.stand.t == null) X.stand.auto = true; if (X.stand.auto) X.stand.t = isPanel() ? 20 : Math.round(heights().H); /* follows the case until she sets it */ X.feet = X.feet || { hole: true, h: 4 }; X.standoff = X.standoff || { s: 'm25', h: 8 }; X.clip = X.clip || { d: 6 }; X.handle = X.handle || { l: 80 }; X.limbs = X.limbs || { l: 45 }; X.body = X.body || { h: 60 }; X.gears = X.gears || { n: 36 }; X.gears.n = Math.max(18, Math.min(54, Math.round(X.gears.n / 9) * 9)); X.hinge = X.hinge || { l: 30 }; X.spring = X.spring || { n: 6 }; X.clamp = X.clamp || { t: 20 }; X.panel = X.panel || { w: 80, h: 60 }; X.keys = X.keys || { c: 4, r: 3 }; if (X.keys.c < 3) X.keys.c = 3; if (X.keys.f == null) X.keys.f = 0.1; return X; }
+const XINFO = { body: () => '7 pieces: torso on its side, the rest flat', gears: () => '3 pieces, print flat', hinge: () => '2 leaves, print standing as saved', spring: () => '2 springs, print flat', clamp: () => '1 clamp and 1 wedge, print flat', panel: () => { const X = xp(); return '1 panel, ' + X.panel.w + ' x ' + X.panel.h + ' mm, 2.4 mm thick'; }, keys: () => { const K = kb(); return '1 plate, ' + K.w.toFixed(0) + ' x ' + K.h.toFixed(0) + ' mm, print it rim side up'; }, handle: () => '1 handle, print on its side', limbs: () => '8 pieces, print flat', stand: () => '2 stands, print on their side', feet: () => '4 feet', standoff: () => '4 standoffs', clip: () => '6 clips' };
 function addonPolys(id) {
   // every add-on is a flat shape pushed up into 3D (prints flat, strongest way for each one). Returns { polys, h, n, gap }
   const X = xp();
@@ -1320,10 +1375,13 @@ function addonPolys(id) {
     const c = G.diff(G.union([G.rect(0, 0, D + w, Hc), G.rect(-7, my - 6.5, 0.5, my + 6.5), G.circle(-7, my, 6.5, 40)]), [G.rect(w, w, D + w + 1, w + g), hole3(-7, my)]);
     return { sets: [{ polys: c, h: 14, n: 1 }, { polys: [[[0, 0], [50, 0], [50, 11], [0, 4]]], h: 14, n: 1 }] }; } /* the wedge rises 7 mm in 50, an 8 degree slope. Plastic on wood or plastic grips well past that, so it will not back out by itself. */
   if (id === 'panel') { const w = X.panel.w, h = X.panel.h; return { polys: G.diff([G.rect(0, 0, w, h)], [hole3(5, 5), hole3(w - 5, 5), hole3(5, h - 5), hole3(w - 5, h - 5)]), h: 2.4, n: 1 }; }
-  if (id === 'keys') { // Cherry MX data sheet: 14 mm square hole (+-0.05), 19.05 mm apart, plate 1.5 mm (+-0.1) so the clips catch. Printed holes come out a touch small, so the hole is drawn 14.1.
-    const c = X.keys.c, r = X.keys.r, P = 19.05, b = 8, hs = 14.1, o = (hs - 14) / 2, w = c * P - 5.05 + 2 * b, h = r * P - 5.05 + 2 * b, holes = [hole3(4, 4), hole3(w - 4, 4), hole3(4, h - 4), hole3(w - 4, h - 4)], cut = holes.slice();
-    for (let i = 0; i < c; i++) for (let j = 0; j < r; j++) cut.push(G.rect(b + i * P - o, b + j * P - o, b + i * P + 14 + o, b + j * P + 14 + o));
-    return { layers: [{ polys: G.diff([G.rect(0, 0, w, h)], cut), z0: 0, z1: 1.5 }, { polys: G.diff([G.rect(0, 0, w, h)], [G.rect(7, 7, w - 7, h - 7)].concat(holes)), z0: 1.5, z1: 5 }], n: 1 }; }
+  if (id === 'keys') { // the switch plate. Holes drawn 14.1: printed holes come out a touch small and 14 is the size the clips need.
+    const K = kb(), o = KB.HOLE / 2, out = [G.rect(K.x0, K.y0, K.x1, K.y1)], scr = K.screws.map(([x, y]) => hole3(x, y)), cut = scr.slice();
+    K.sw.forEach((q) => cut.push(G.rect(q.x - o, q.y - o, q.x + o, q.y + o)));
+    [-8.89, 8.89].forEach((dy) => cut.push(G.rect(K.pico.x - 25.8, K.pico.y + dy - 1.6, K.pico.x + 25.8, K.pico.y + dy + 1.6))); /* two slots: the Pico's pins poke up through here */
+    const rim = G.union(G.diff(out, [G.rect(K.x0 + 7, K.y0 + 7, K.x1 - 7, K.y1 - 7)]).concat([G.rect(K.x0 + 6, K.H + 0.8, K.x1 - 6, K.H + 2.4)])); /* the rim, and one rib between the keys and the Pico, keep a thin printed plate flat. Its 3.5 mm height is also what holds the board at the right distance. */
+    return { layers: [{ polys: G.diff(out, cut), z0: 0, z1: 1.5 }, { polys: G.diff(rim, scr), z0: 1.5, z1: 5 }], n: 1 }; }
+  if (id === 'keycaps' || id === 'keycap1') { const X2 = xp(), n = id === 'keycap1' ? 1 : Math.min(24, kb().c * kb().r); return { layers: capPolys(X2.keys.f == null ? 0.1 : X2.keys.f), n }; }
   if (id === 'feet') { const c = G.circle(0, 0, 7, 40); return { polys: X.feet.hole ? G.diff([c], [G.circle(0, 0, 1.7, 20)]) : [c], h: X.feet.h, n: 4 }; }
   if (id === 'standoff') return { polys: G.diff([G.circle(0, 0, 3.2, 32)], [G.circle(0, 0, X.standoff.s === 'm3' ? 1.3 : 1.1, 20)]), h: X.standoff.h, n: 4 };
   if (id === 'clip') { const ro = X.clip.d / 2 + 1.8, ri = X.clip.d / 2 + 0.3, gap = X.clip.d * 0.75;
@@ -1340,6 +1398,64 @@ function addonFile(id) {
     y0 += Math.ceil(set.n / per) * (b.h + 4);
   });
   return { name: 'casezero-' + id + '.stl', blob: G.stl(G.trisOf(geos), id) };
+}
+// ---------- the keyboard: one set of numbers shared by the plate, the caps, the board and the hole in the case ----------
+// Cherry MX data sheet: keys 19.05 mm apart, 14 mm square hole in a 1.5 mm plate, 5 mm from plate top to board top.
+// On the board each switch has a 4 mm middle hole, two 1.5 mm pin holes at (-3.81, +2.54) and (+2.54, +5.08) from its middle, and two 1.7 mm peg holes 5.08 to each side.
+// All of those are whole steps of 1.27 mm, the grid the board maker routes on.
+const KB = { P: 19.05, M: 8.5, STRIP: 24, HOLE: 14.1 }, KB_GP = [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 26, 27, 28];
+let KBC = null;
+function kb() {
+  const X = (S.xp && S.xp.keys) || { c: 4, r: 3 }, c = Math.max(3, Math.min(12, X.c || 4)), r = Math.max(1, Math.min(6, X.r || 3)); if (KBC && KBC.c === c && KBC.r === r) return KBC;
+  const P = KB.P, W = c * P, H = r * P, x0 = -KB.M, y0 = -KB.M, x1 = W + KB.M, y1 = H + KB.M + KB.STRIP, sw = [];
+  for (let j = 0; j < r; j++) for (let i = 0; i < c; i++) sw.push({ i, j, n: (r - 1 - j) * c + i, x: (i + 0.5) * P, y: (j + 0.5) * P }); // j 0 is the bottom row. n counts from the top left, the way you read.
+  const px = P / 2 + Math.floor((W - 25.2 - P / 2) / 1.27) * 1.27, py = (r - 0.5) * P + 18 * 1.27; // the Pico, on the back of the strip above the keys
+  return (KBC = { c, r, W, H, x0, y0, x1, y1, w: x1 - x0, h: y1 - y0, sw, pico: { x: px, y: py }, screws: [[x0 + 4, y0 + 4], [x1 - 4, y0 + 4], [x0 + 4, y1 - 4], [x1 - 4, y1 - 4]] });
+}
+let KBP = null;
+function kbPart() { // the keyboard as a part you can put in a case: the case top gets one opening for the keys and four screw holes
+  if (typeof S === 'undefined' || !S) return {}; const K = kb(); if (KBP && KBP.K === K) return KBP.o;
+  const cx = (K.x0 + K.x1) / 2, cy = (K.y0 + K.y1) / 2, n = K.c * K.r;
+  const o = { kbd: { cat: 'press', kb: true, name: 'Keyboard, ' + K.c + ' x ' + K.r + ' keys (printed plate, its own board)', short: 'Keyboard', w: K.w, h: K.h, depth: 14, cut: { o: 'rect', w: K.W + 1, h: K.H + 1, dy: -KB.STRIP / 2 }, userHoles: K.screws.map(([x, y]) => ({ x: x - cx, y: y - cy, d: 3.4 })), link: 'plug',
+    tip: 'Change its size in Parts, Keyboard. It has its own brain and plugs in by USB.', price: Math.round(n * 0.45 + 9), src: 'Sized by Case Zero from the Cherry MX data sheet', url: '', find: 'MX style keyboard switch' } };
+  KBP = { K, o }; return o;
+}
+function capPolys(f) { // one key cap, printed top down. The cross hole takes the switch stem: Cherry gives the hole as 4.1 mm across with 1.17 mm arms; a printed hole closes up a little, so it is drawn wider.
+  const top = [G.rrect(0, 0, 18, 18, 2)], L = 4.2 + f, a = (1.35 + f) / 2, b = (1.15 + f) / 2;
+  const cross = G.union([G.rect(9 - L / 2, 9 - a, 9 + L / 2, 9 + a), G.rect(9 - b, 9 - L / 2, 9 + b, 9 + L / 2)]);
+  return [{ polys: top, z0: 0, z1: 1.6 }, { polys: G.union(G.diff(top, [G.rrect(1.4, 1.4, 16.6, 16.6, 1)]).concat(G.diff([G.circle(9, 9, 2.75, 40)], cross))), z0: 1.6, z1: 8 }];
+}
+const KBB = {};
+function kbBoard() {
+  const K = kb(), key = K.c + 'x' + K.r; if (KBB.key === key) return KBB.b;
+  const fixed = [], holes = [], silk = [], gp = (n) => 'GP' + KB_GP[n];
+  K.sw.forEach((s) => { const col = gp(s.i), row = gp(K.c + (K.r - 1 - s.j)), kn = 'K' + s.n, dx = s.x + 8.89;
+    fixed.push({ x: s.x - 3.81, y: s.y + 2.54, net: col, d: 2.2, drill: 1.5 }, { x: s.x + 2.54, y: s.y + 5.08, net: kn, d: 2.2, drill: 1.5 }, { x: dx, y: s.y + 3.81, net: kn }, { x: dx, y: s.y - 3.81, net: row });
+    holes.push({ x: s.x, y: s.y, d: 4.0 }, { x: s.x - 5.08, y: s.y, d: 1.75 }, { x: s.x + 5.08, y: s.y, d: 1.75 });
+    silk.push([dx - 1, s.y - 2, dx + 1, s.y - 2], [dx + 1, s.y - 2, dx + 1, s.y + 2], [dx + 1, s.y + 2, dx - 1, s.y + 2], [dx - 1, s.y + 2, dx - 1, s.y - 2], [dx - 1, s.y - 1.4, dx + 1, s.y - 1.4], [dx - 1, s.y - 1.1, dx + 1, s.y - 1.1]); /* the diode, with its stripe at the bottom end */ });
+  K.screws.forEach(([x, y]) => holes.push({ x, y, d: 3.4 }));
+  const edge = [[K.x0, K.y0], [K.x1, K.y0], [K.x1, K.y1], [K.x0, K.y1]];
+  const b = makeBoard({ keepin: edge, pico: { x: K.pico.x, y: K.pico.y, r: 2, flip: true }, fixed, holes, silk, noMounts: true, finalize: () => [edge], name: 'NOCIV KEYS ' + K.c + 'X' + K.r });
+  if (b.ok) { b.kb = K; b.cols = K.sw.filter((s) => s.j === 0).map((s) => KB_GP[s.i]); b.rows = []; for (let t = 0; t < K.r; t++) b.rows.push(KB_GP[K.c + t]); }
+  KBB.key = key; KBB.b = b; return b;
+}
+function kbCode(b) { // CircuitPython for the Pico. keypad.KeyMatrix scans the keys; adafruit_hid types them over USB.
+  const K = b.kb, ROWS = ['ONE TWO THREE FOUR FIVE SIX SEVEN EIGHT NINE ZERO MINUS BACKSPACE', 'Q W E R T Y U I O P LEFT_BRACKET BACKSLASH', 'A S D F G H J K L SEMICOLON QUOTE ENTER', 'Z X C V B N M COMMA PERIOD FORWARD_SLASH UP_ARROW RIGHT_SHIFT', 'LEFT_CONTROL LEFT_GUI LEFT_ALT SPACE SPACE SPACE SPACE RIGHT_ALT TAB LEFT_ARROW DOWN_ARROW RIGHT_ARROW', 'ESCAPE F1 F2 F3 F4 F5 F6 F7 F8 F9 F10 DELETE'].map((q) => q.split(' '));
+  const use = K.r >= 6 ? [5, 0, 1, 2, 3, 4] : K.r === 5 ? [0, 1, 2, 3, 4] : K.r === 4 ? [1, 2, 3, 4] : K.r === 3 ? [1, 2, 3] : K.r === 2 ? [1, 2] : [1];
+  const L = ['# NOCIV Case Zero keyboard, ' + K.c + ' x ' + K.r + ' keys. CircuitPython for a Raspberry Pi Pico.', '# 1. Put CircuitPython on the Pico (circuitpython.org, pick your Pico, drag the file on).', '# 2. Copy the adafruit_hid folder from the Adafruit library bundle into the lib folder on the Pico.', '# 3. Save this file on the Pico as code.py. It starts by itself.', '# Not run on real parts by us yet. To change a key, change its name in KEYS below.', '', 'import board', 'import keypad', 'import usb_hid', 'from adafruit_hid.keyboard import Keyboard', 'from adafruit_hid.keycode import Keycode as K', '',
+    'COLS = (' + b.cols.map((g) => 'board.GP' + g).join(', ') + ',)  # left to right', 'ROWS = (' + b.rows.map((g) => 'board.GP' + g).join(', ') + ',)  # top to bottom', '', '# One line per row of keys, top row first. None means the key does nothing.', 'KEYS = ['];
+  use.forEach((u) => L.push('    [' + ROWS[u].slice(0, K.c).map((n) => 'K.' + n).join(', ') + '],')); L.push(']', '', 'matrix = keypad.KeyMatrix(row_pins=ROWS, column_pins=COLS, columns_to_anodes=True)', 'kbd = Keyboard(usb_hid.devices)', '', 'while True:', '    event = matrix.events.get()', '    if event:', '        row, col = divmod(event.key_number, len(COLS))', '        code = KEYS[row][col]', '        if code is None:', '            continue', '        if event.pressed:', '            kbd.press(code)', '        else:', '            kbd.release(code)', '');
+  return L.join('\n');
+}
+function kbCost(K) { const cheap = K.w <= 100 && K.h <= 100; return { cheap, txt: cheap ? 'It fits the cheapest factory size (under 100 x 100 mm): about $2 for 5 boards at JLCPCB before shipping.' : 'It is bigger than 100 x 100 mm, the cheapest factory size, so the price steps up. The factory shows the exact price the moment you upload the file.' }; }
+function kbReadme(b) { const K = b.kb, n = K.c * K.r;
+  return ['NOCIV CASE ZERO KEYBOARD, ' + K.c + ' x ' + K.r + ' = ' + n + ' KEYS', 'Board ' + K.w.toFixed(1) + ' x ' + K.h.toFixed(1) + ' mm, 2 layers, 1.6 mm thick. Made by the Case Zero builder at nociv.co.', '',
+    'HONEST NOTE', 'A computer drew and checked this board (every pad is joined, nothing touches). Nobody has had this exact board made yet. Order the smallest batch first.', '',
+    'ORDER IT', '1. Go to a board factory such as jlcpcb.com or pcbway.com and pick the instant quote.', '2. Upload this whole zip file. Keep their standard settings: 2 layers, 1.6 mm, any color.', '3. ' + kbCost(K).txt, '   Shipping and import fees are usually more than the boards.', '',
+    'WHAT TO BUY', n + ' keyboard switches, MX style (3 pin or 5 pin both fit)', n + ' diodes, type 1N4148 (the small glass ones, through hole)', '1 Raspberry Pi Pico with pins already on (Pico H)', '4 screws M3 x 12 with nuts', n + ' key caps: print them from the builder, or buy any MX caps', '',
+    'PUT IT TOGETHER', '1. Diodes first. They go on the FRONT (the side with the little boxes), lying flat in the gap beside each switch. The black stripe on the diode goes to the end with the two lines. Solder on the back, snip the legs.', '2. The Pico next, while the board is still bare. It goes on the BACK, in the box marked PICO HERE, USB end where the drawing shows it. Its pins poke up through the board. Solder them on the front.', '3. Click every switch into the printed plate. The rim faces the board.', '4. Lower the plate onto the board so each switch drops into its holes. The Pico pins come up through the two slots in the plate. Solder the two metal pins of each switch on the back.', '5. Push the key caps on.', '',
+    'MAKE IT TYPE', 'Open code.py in this zip and follow the 3 steps at its top.', '',
+    'WIRING, IF YOU ARE CURIOUS', 'Columns, left to right: ' + b.cols.map((g) => 'GP' + g).join(' '), 'Rows, top to bottom: ' + b.rows.map((g) => 'GP' + g).join(' '), 'Each key joins its column to its row through one diode. Every key is one square (no long space bar).', ''].join('\n');
 }
 // ---------- the carrier board (Clean it) ----------
 const PICOS = ['pico', 'picow', 'pico2'];
@@ -1614,7 +1730,7 @@ $('helpTop').onclick = openHelp;
 $('sheet').addEventListener('click', (e) => { if (e.target === $('sheet')) $('sheet').hidden = true; });
 window.addEventListener('resize', draw);
 
-window.__cz = { wiring, codeFor, get S() { return S; }, get view() { return view; }, AZ, get UNDO() { return UNDO.length; }, halves, plan, makeFiles, get FILES() { return FILES; }, allProblems, G, addPart, go, render, dims, heights, addonFile, addonPolys, get TRAY() { return TRAY; }, showStart, loadRecipe, cost, boardBuild, boardFiles, boardReadme };
+window.__cz = { wiring, codeFor, get S() { return S; }, get view() { return view; }, AZ, get UNDO() { return UNDO.length; }, halves, plan, makeFiles, get FILES() { return FILES; }, allProblems, G, addPart, go, render, dims, heights, addonFile, addonPolys, kb, kbBoard, kbCode, kbReadme, boardSvg, get TRAY() { return TRAY; }, showStart, loadRecipe, cost, boardBuild, boardFiles, boardReadme };
 render();
 if (!S.started && !S.items.length) showStart();
 // arriving from the Case Zero page: /casezero/build/?room=brain opens that room
