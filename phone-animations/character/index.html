@@ -156,7 +156,7 @@ const HAIRC = ['#1a1a1a', '#3a2616', '#6b4423', '#d8b25a', '#a8422a', '#9a9a9a',
 const CLR = ['#1a1a1a', '#f2ecd6', '#c8412f', '#f2c230', '#d6dccf', '#8a6a4a', '#ffffff', '#2f5d9e', '#e3a3a0', '#3d4a26', '#8a8a8a', '#6a4c93'];
 const EYEC = ['#1a1a1a', '#4a2e1a', '#7a5a2a', '#3f6b4a', '#2f5d9e', '#8a8a8a'];
 const OPTS = {
-  head: ['round', 'square', 'long', 'peanut', 'block', 'tall', 'chin'], eyes: ['e15', 'e18', 'e20', 'e28', 'e31', 'e36', 'e37', 'h6', 'h8', 'h9', 'h40', 'h41', 'h10', 'h25', 'h45', 'h35', 'h30'], brow: ['b129', 'b134', 'b39', 'b145', 'h21', 'h22', 'h16', 'h17', 'h32', 'h33', 'h2a', 'h2b', 'none'], nose: ['n100', 'n112', 'n113', 'n116', 'n121', 'n123', 'n126', 'n131', 'h13', 'h14', 'h18', 'h24', 'h3', 'h15', 'h29'], mouth: ['m7', 'm10', 'm16', 'm30', 'm40', 'm21', 'm33', 'm11', 'm3', 'h12', 'h23', 'h28', 'h34', 'h39', 'h43', 'h44', 'h47', 'h48'],
+  head: ['round', 'square', 'long', 'peanut', 'block', 'tall', 'chin'], eyes: ['z1', 'z2', 'z3', 'z4', 'z5', 'e15', 'e18', 'e20', 'e28', 'e31', 'e36', 'e37', 'h6', 'h8', 'h9', 'h40', 'h41', 'h10', 'h25', 'h45', 'h35', 'h30'], brow: ['b129', 'b134', 'b39', 'b145', 'h21', 'h22', 'h16', 'h17', 'h32', 'h33', 'h2a', 'h2b', 'none'], nose: ['z1', 'z2', 'z3', 'z4', 'n100', 'n112', 'n113', 'n116', 'n121', 'n123', 'n126', 'n131', 'h13', 'h14', 'h18', 'h24', 'h3', 'h15', 'h29'], mouth: ['z1', 'z2', 'z3', 'z4', 'm7', 'm10', 'm16', 'm30', 'm40', 'm21', 'm33', 'm11', 'm3', 'h12', 'h23', 'h28', 'h34', 'h39', 'h43', 'h44', 'h47', 'h48'],
   beard: ['none', 'stubble', 'mustache', 'goatee', 'beard'], glasses: ['none', 'round', 'aviator', 'square', 'shades'],
   hair: ['bald', 'buzz', 'fade', 'highfade', 'waves', 'coily', 'afro', 'puff', 'curls', 'cornrows', 'fulani', 'braidbun', 'boxbraids', 'bobbraids', 'twists', 'locs', 'shortlocs', 'locbun', 'bantu', 'puffs', 'mohawk', 'long', 'bun'], hat: ['none', 'beanie', 'cadet', 'phones'],
   top: ['tee', 'boxy', 'crop', 'polo', 'tank', 'muscle'], bottom: ['straight', 'wide', 'xwide', 'carpenter', 'army'], bag: ['none', 'tote', 'minitote', 'fanny', 'backpack'], shoes: ['sneaker', 'skate', 'boot', 'hightop', 'bare'], hands: ['round', 'open', 'fist', 'thumb'],
@@ -417,6 +417,39 @@ function drawBeard(S, hc, H) {
   else { p.moveTo(-hw + 1, 0); p.bezierCurveTo(-hw - 1, 26, -hw * H.j * .6, H.cy + 8, 0, H.cy + 8); p.bezierCurveTo(hw * H.j * .6, H.cy + 8, hw + 1, 26, hw - 1, 0); p.lineTo(hw * .78, 14); p.bezierCurveTo(hw * .6, 24, 20, 26, 14, 24); p.quadraticCurveTo(0, 18, -14, 24); p.bezierCurveTo(-20, 26, -hw * .6, 24, -hw * .78, 14); p.closePath(); }
   paint(p, hc, { sh: 6 });
 }
+// ---- simple face parts: plain shapes instead of the hand-drawn sheet. Their keys start with z. ----
+function zEye(key, cx, cy, mir, sy, o) {
+  ctx.save(); ctx.translate(cx, cy); ctx.scale(mir ? -1 : 1, 1); ctx.lineCap = 'round'; ctx.lineJoin = 'round';
+  const gx = Math.max(-1, Math.min(1, o.gx || 0)) * 2.2, gy = Math.max(-1, Math.min(1, o.gy || 0)) * 1.6, open = Math.min(1.2, sy);
+  if (sy < .3) { ctx.strokeStyle = INK; ctx.lineWidth = 2.6; ctx.beginPath(); ctx.moveTo(-6, 0); ctx.quadraticCurveTo(0, 2.6, 6, 0); ctx.stroke(); ctx.restore(); return; } /* shut: one soft line */
+  if (key === 'z1') { ctx.fillStyle = INK; ctx.beginPath(); ctx.ellipse(gx * .5, gy * .5, 3.5, 3.5 * open, 0, 0, TAU); ctx.fill(); } /* dot */
+  else if (key === 'z5') { ctx.strokeStyle = INK; ctx.lineWidth = 2.9; ctx.beginPath(); ctx.moveTo(-6.5, 2.5); ctx.quadraticCurveTo(0, -5.5 * open - 1, 6.5, 2.5); ctx.stroke(); } /* happy arc */
+  else { const tall = key === 'z3', rx = tall ? 5.3 : 7.3, ry = Math.max(1.3, (tall ? 7.5 : 5.6) * open), p = new Path2D(); p.ellipse(0, 0, rx, ry, 0, 0, TAU);
+    ctx.fillStyle = '#fff'; ctx.fill(p); ctx.save(); ctx.clip(p);
+    if (tall) { ctx.fillStyle = INK; ctx.beginPath(); ctx.arc(gx, gy + 1.2, 3, 0, TAU); ctx.fill(); }
+    else { ctx.fillStyle = o.iris || '#4a2e1a'; ctx.beginPath(); ctx.arc(gx, gy, 3.8, 0, TAU); ctx.fill(); ctx.fillStyle = INK; ctx.beginPath(); ctx.arc(gx, gy, 1.8, 0, TAU); ctx.fill(); }
+    ctx.fillStyle = 'rgba(255,255,255,.9)'; ctx.beginPath(); ctx.arc(gx - 1.3, gy - 1.3, .85, 0, TAU); ctx.fill();
+    if (key === 'z4') { ctx.fillStyle = o.skin || '#c98a5a'; ctx.fillRect(-rx - 1, -ry - 1, 2 * rx + 2, ry * .82 + 1); } /* a heavy lid over the top */
+    ctx.restore(); ctx.strokeStyle = INK; ctx.lineWidth = 2.2; ctx.stroke(p);
+    if (key === 'z4') { ctx.lineWidth = 2.8; ctx.beginPath(); ctx.moveTo(-rx, -ry * .18); ctx.lineTo(rx, -ry * .18); ctx.stroke(); } }
+  ctx.restore();
+}
+function zNose(key, cx, cy, k, skin) {
+  ctx.save(); ctx.translate(cx, cy); ctx.scale(k, k); ctx.lineCap = 'round'; ctx.lineJoin = 'round'; ctx.strokeStyle = ctx.fillStyle = dk(skin, .5); ctx.lineWidth = 2.6; ctx.beginPath();
+  if (key === 'z1') { ctx.ellipse(-3.5, 4, 1.8, 1.25, 0, 0, TAU); ctx.ellipse(3.5, 4, 1.8, 1.25, 0, 0, TAU); ctx.fill(); } /* two dots */
+  else if (key === 'z2') { ctx.moveTo(1, -8); ctx.lineTo(-3.6, 4); ctx.lineTo(3.2, 4.8); ctx.stroke(); } /* a hook */
+  else if (key === 'z3') { ctx.arc(0, 1, 4.8, .12 * Math.PI, .88 * Math.PI); ctx.stroke(); } /* a button */
+  else { ctx.moveTo(-6.2, 2.5); ctx.quadraticCurveTo(-6.8, 7, -2.6, 6); ctx.quadraticCurveTo(0, 8.4, 2.6, 6); ctx.quadraticCurveTo(6.8, 7, 6.2, 2.5); ctx.stroke(); } /* wide and soft */
+  ctx.restore();
+}
+function zMouth(key, my, lipc, linec, inner) {
+  ctx.save(); ctx.lineCap = 'round'; ctx.lineJoin = 'round'; ctx.strokeStyle = linec; ctx.lineWidth = 3.2; ctx.beginPath();
+  if (key === 'z1') { ctx.moveTo(-10, my - 1); ctx.quadraticCurveTo(0, my + 7.5, 10, my - 1); ctx.stroke(); } /* smile */
+  else if (key === 'z2') { ctx.moveTo(-8, my + 1); ctx.lineTo(8, my + 1); ctx.stroke(); } /* flat */
+  else if (key === 'z3') { ctx.fillStyle = lipc; ctx.moveTo(-10, my); ctx.quadraticCurveTo(-5, my - 5.5, 0, my - 2.6); ctx.quadraticCurveTo(5, my - 5.5, 10, my); ctx.quadraticCurveTo(0, my + 10, -10, my); ctx.closePath(); ctx.fill(); ctx.lineWidth = 1.8; ctx.stroke(); ctx.beginPath(); ctx.moveTo(-10, my); ctx.quadraticCurveTo(0, my + 2.6, 10, my); ctx.stroke(); } /* lips */
+  else { ctx.fillStyle = inner; ctx.moveTo(-11, my - 2); ctx.lineTo(11, my - 2); ctx.quadraticCurveTo(9.5, my + 10, 0, my + 10); ctx.quadraticCurveTo(-9.5, my + 10, -11, my - 2); ctx.closePath(); ctx.fill(); ctx.save(); ctx.clip(); ctx.fillStyle = '#f7f2e2'; ctx.fillRect(-12, my - 3, 24, 5); ctx.restore(); ctx.stroke(); } /* open smile with teeth */
+  ctx.restore();
+}
 function moodMouth(k, my, lipc, inner) {
   ctx.save(); ctx.lineCap = 'round'; ctx.lineJoin = 'round'; ctx.strokeStyle = lipc; ctx.lineWidth = 3.4; ctx.fillStyle = inner || '#4a1618'; ctx.beginPath();
   if (k === 'grin') { ctx.moveTo(-13, my - 1); ctx.quadraticCurveTo(0, my + 4, 13, my - 1); ctx.quadraticCurveTo(0, my + 21, -13, my - 1); ctx.closePath(); ctx.fill(); ctx.stroke(); ctx.fillStyle = '#f7f2e2'; ctx.beginPath(); ctx.moveTo(-9, my + 1); ctx.quadraticCurveTo(0, my + 5, 9, my + 1); ctx.lineTo(8, my + 4.5); ctx.quadraticCurveTo(0, my + 8, -8, my + 4.5); ctx.closePath(); ctx.fill(); }
@@ -437,11 +470,11 @@ function drawFeatures(S, P, o, H) {
   const bl = o.blink ? .12 : Math.max(.12, (m ? m.eye : 1) * (1 + (o.lid || 0) * .6)), gy = ((o.gaze || {}).y || 0) + (m && m.gy || 0);
   [-1, 1].forEach(sd => {
     if (at > .85 && sd === -d) return;
-    const e = { x: sd * 19 * (1 - .3 * at) + shift, y: -1 }; sprc('eyes', S.eyes, e.x, e.y + 1, 33, sd < 0, bl, { fill: '#fff', iris: S.eyeC, gx: (o.gaze || {}).x, gy: gy });
+    const e = { x: sd * 19 * (1 - .3 * at) + shift, y: -1 }; if (S.eyes && S.eyes[0] === 'z') zEye(S.eyes, e.x, e.y + 1, sd < 0, bl, { iris: S.eyeC, gx: (o.gaze || {}).x, gy: gy, skin: skin }); else sprc('eyes', S.eyes, e.x, e.y + 1, 33, sd < 0, bl, { fill: '#fff', iris: S.eyeC, gx: (o.gaze || {}).x, gy: gy });
     if (S.lashes) { const w = 12, h = 6; ctx.save(); ctx.translate(e.x, e.y); [[-w * .55, -h * .85, -w * .7, -h * 1.5], [-w * .05, -h * 1.05, -w * .05, -h * 1.75], [w * .5, -h * .95, w * .75, -h * 1.55]].forEach(q => line([[q[0] * sd, q[1] - 4], [q[2] * sd, q[3] - 5]], 2.6, INK)); ctx.restore(); }
   });
   if (at > .6) paint(ell(d * (hw - 1), 17, 4.5, 5.5), skin, { sh: 3 });
-  spr('noses', S.nose, t * hw * .8, 14, 26 * (1 - .2 * at) * ({ h3: .8, h29: .8 }[S.nose] || 1), false);
+  if (S.nose && S.nose[0] === 'z') zNose(S.nose, t * hw * .8, 14, 1 - .2 * at, skin); else spr('noses', S.nose, t * hw * .8, 14, 26 * (1 - .2 * at) * ({ h3: .8, h29: .8 }[S.nose] || 1), false);
   const my = 33, hasB = S.beard === 'beard' || S.beard === 'goatee', tk = o.talk || (m && m.mouth === 'oh' ? 3 : 0);
   ctx.save(); ctx.translate(t * hw * .55, 0); ctx.scale(1 - .4 * at, 1);
   if (hasB) { paint(ell(0, my, 17, 8), lt(skin, .1), { ns: 1, no: 1 }); }
@@ -450,6 +483,7 @@ function drawFeatures(S, P, o, H) {
     paint(ell(0, my + 1, T[0] + 3.2, T[1] + 3.2), lipc, { no: 1, ns: 1 }); paint(ell(0, my + 1, T[0], T[1]), dk(skin, .62), { no: 1, ns: 1 });
     if (tk === 2) { ctx.save(); ctx.beginPath(); ctx.ellipse(0, my + 1, T[0], T[1], 0, 0, TAU); ctx.clip(); ctx.fillStyle = '#c8412f'; ctx.beginPath(); ctx.ellipse(0, my + T[1] + 1, 6.5, 4.5, 0, 0, TAU); ctx.fill(); ctx.restore(); }
   } else if (m && m.mouth) moodMouth(m.mouth, my, dk(S.lipC || skin, .45), dk(skin, .62));
+  else if (S.mouth && S.mouth[0] === 'z') zMouth(S.mouth, my, S.lipC || dk(skin, .3), dk(S.lipC || skin, .45), dk(skin, .62));
   else sprc('mouths', S.mouth, 0, my, 36, false, 1, { fill: S.lipC || dk(skin, .3), inkC: dk(skin, .66) });
   ctx.restore();
   if (at < .85) {
@@ -588,7 +622,7 @@ function build() {
     const subs = [['eyes', 'Eyes'], ['brow', 'Brows'], ['nose', 'Nose'], ['mouth', 'Mouth'], ['beard', 'Beard'], ['glasses', 'Glasses']];
     panel.appendChild(chips(subs, sub.face, k => { sub.face = k; build(); }));
     if (sub.face === 'eyes') { const w = el('div', 'chips'); w.appendChild(toggle('lashes', 'Lashes')); panel.appendChild(w); }
-    const a = sub.face; panel.appendChild(grid(a, OPT[a], ['eyes', 'brow', 'nose', 'mouth'].includes(a) ? a : 'face', { name: a === 'glasses' || a === 'beard' ? cap1 : ((v, i) => 'No. ' + (OPT[a].indexOf(v) + 1)), patch: () => (a === 'glasses' ? { hat: 'none' } : { hat: 'none', glasses: 'none' }) }));
+    const a = sub.face; panel.appendChild(grid(a, OPT[a], ['eyes', 'brow', 'nose', 'mouth'].includes(a) ? a : 'face', { name: a === 'glasses' || a === 'beard' ? cap1 : ((v, i) => v[0] === 'z' ? 'Simple ' + v.slice(1) : 'No. ' + (OPT[a].filter(x => x[0] !== 'z').indexOf(v) + 1)), patch: () => (a === 'glasses' ? { hat: 'none' } : { hat: 'none', glasses: 'none' }) }));
     if (a === 'mouth') { panel.appendChild(el('div', 'lbl', 'Lip color')); panel.appendChild(swatches('lipC', ['', '#c8412f', '#6b1f1a', '#e46fa6', '#6a4c93', '#f2c230']));} if (a === 'eyes') panel.appendChild(swatches('eyeC', CH.EYEC)); if (a === 'beard') panel.appendChild(el('p', 'note', 'Beard and brows use your hair color. Change it in Hair.'));
   } else if (tab === 'hair') {
     panel.appendChild(grid('hair', OPT.hair, 'hair', { name: v => HN[v] || cap1(v), patch: () => ({ hat: 'none' }) })); panel.appendChild(el('div', 'lbl', 'Hair color')); panel.appendChild(swatches('hairC', CH.HAIRC));

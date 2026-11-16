@@ -356,6 +356,18 @@
   .row > * { flex: 1; }
   label.f { display: block; font-weight: 800; font-size: 0.82rem; margin: 12px 0 5px; }
   input[type=range] { width: 100%; accent-color: var(--red); }
+  .bpmrow { display: flex; gap: 8px; align-items: stretch; margin: 4px 0 8px; } .bpmrow #bTap { flex: 1; margin: 0; } .bpmv { display: flex; align-items: center; gap: 6px; } .bpmv b { min-width: 74px; text-align: center; font: 900 1rem/1 -apple-system, BlinkMacSystemFont, "Helvetica Neue", Arial, sans-serif; } .bpmv .chip { min-width: 40px; justify-content: center; }
+  #bTap.hit { transform: scale(.96); background: var(--red, #c8412f); }
+  #pickOv { position: fixed; inset: 0; z-index: 400; background: rgba(26,26,26,.5); display: none; align-items: flex-end; justify-content: center; }
+  #pickOv.on { display: flex; }
+  #pickOv .pk { width: 100%; max-width: 520px; background: #f2ecd6; border: 2px solid #1a1a1a; border-bottom: 0; border-radius: 18px 18px 0 0; padding: 14px 12px calc(14px + env(safe-area-inset-bottom)); box-sizing: border-box; max-height: 70svh; overflow-y: auto; }
+  #pickOv .pk > b { display: block; font: 900 .82rem/1.2 -apple-system, BlinkMacSystemFont, "Helvetica Neue", Arial, sans-serif; letter-spacing: .08em; margin: 0 2px 10px; }
+  #pickOv .pk-g { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 8px; }
+  #pickOv .pk-b { all: unset; box-sizing: border-box; cursor: pointer; min-height: 58px; padding: 8px 6px; border: 2px solid #1a1a1a; border-radius: 12px; background: #fff; text-align: center; display: flex; flex-direction: column; justify-content: center; gap: 2px; font: 900 .78rem/1.1 -apple-system, BlinkMacSystemFont, "Helvetica Neue", Arial, sans-serif; letter-spacing: .04em; color: #1a1a1a; }
+  #pickOv .pk-b small { font: 600 .66rem/1.2 -apple-system, BlinkMacSystemFont, "Helvetica Neue", Arial, sans-serif; letter-spacing: 0; color: #5d584e; }
+  #pickOv .pk-b[aria-pressed="true"] { background: #1a1a1a; color: #fff; } #pickOv .pk-b[aria-pressed="true"] small { color: #d8d2bf; }
+  #knBub { position: fixed; z-index: 390; transform: translateX(-50%); background: #1a1a1a; color: #fff; font: 900 1rem/1 -apple-system, BlinkMacSystemFont, "Helvetica Neue", Arial, sans-serif; padding: 9px 12px; border-radius: 10px; pointer-events: none; opacity: 0; transition: opacity .12s; white-space: nowrap; }
+  #knBub.on { opacity: 1; }
   textarea { width: 100%; padding: 10px; border: 1.5px solid var(--ink); border-radius: 8px; background: #fff; font-size: 16px; font-family: inherit; resize: none; }
   input[type=text], select { width: 100%; padding: 10px; border: 1.5px solid var(--ink); border-radius: 8px; background: #fff; font-size: 16px; }
   input[type=file] { width: 100%; font-size: 16px; }
@@ -654,12 +666,14 @@ body { animation: nvIn .3s ease both; }
     <button type="button" id="delBtn">Delete</button>
     <button type="button" id="mvR">Later <svg class="ic" viewBox="0 0 10 10" aria-hidden="true"><path d="M2 1v8l7-4z"/></svg></button>
   </div>
+  <input type="range" id="clipSeek" min="0" max="1000" value="0" class="hide" aria-label="Slide through the video" style="margin:6px 10px 0;width:calc(100% - 20px)">
   <div class="info" id="info"></div>
 
   <div class="panels" id="panels">
     <section class="panel on" id="p-shoot">
-      <h2 class="rl">Camera</h2>
-      <p class="tip rl">Prop your phone so it cannot move. Move your subject a tiny bit, tap the red button, repeat.</p>
+      <h2 class="rl">Add pictures</h2>
+      <p class="tip rl">Each picture is one frame. Add a few and they play as a loop.</p>
+      <button type="button" class="btn dark rl" id="addPhotosBig">+ Add photos</button>
       <h2 class="ct">Scene</h2>
       <label class="f">Shape</label>
       <div class="chips" id="aspects">
@@ -668,7 +682,8 @@ body { animation: nvIn .3s ease both; }
         <button type="button" class="chip" data-a="wide" aria-pressed="false">Wide 16:9</button>
       </div>
       <p class="tip" id="aspectNote" style="display:none">The shape is locked once you have a frame. Clear all frames to change it.</p>
-      <button type="button" class="btn dark rl" id="camBtn" style="margin-top:12px">Start camera</button>
+      <p class="tip rl" style="margin:14px 0 4px">Or shoot new ones. Prop your phone so it cannot move, move your subject a tiny bit, tap the red button, repeat.</p>
+      <button type="button" class="btn rl" id="camBtn">Start camera</button>
       <div class="ct">
       <label class="f">Background</label>
       <button type="button" class="btn" id="pupBtn">Choose a background photo</button>
@@ -690,8 +705,7 @@ body { animation: nvIn .3s ease both; }
       <button type="button" class="btn" id="scFresh" style="margin-top:10px">Start fresh</button>
       </div>
       <div class="rl">
-      <label class="f">No camera, or already have photos?</label>
-      <input type="file" id="photoIn" accept="image/*" multiple>
+      <input type="file" id="photoIn" accept="image/*" multiple class="hide">
       <label class="f">Turn a video into frames</label>
       <input type="file" id="videoIn" accept="video/*">
       <div id="vidTrim" class="hide">
@@ -716,7 +730,7 @@ body { animation: nvIn .3s ease both; }
 
     <section class="panel" id="p-pan" hidden>
       <h2>Pan</h2>
-      <p class="tip">Move the camera while they walk. Pick a direction and how many frames the pan lasts, then make your frames.</p>
+      <p class="tip">Move the camera while they move. Tap the picture to pick a direction, then tap MAKE THE PAN.</p>
       <div class="pc-knobs panrow">
         <div class="kc kc-vis"><canvas class="vbox sq" id="panBox" width="112" height="112" aria-label="Pan direction"></canvas><button type="button" class="tb vbtn" id="panDirBtn" aria-label="Change direction">OFF</button><b class="kl">DIRECTION</b></div>
         <div class="kc"><div class="kb" id="knPF" role="slider" tabindex="0" aria-label="How many frames the pan lasts"></div><b class="kl">FRAMES</b><span class="kv" id="vPF"></span></div>
@@ -727,7 +741,7 @@ body { animation: nvIn .3s ease both; }
         <div class="kc"><div class="kb" id="knPS" role="slider" tabindex="0" aria-label="Shift the background"></div><b class="kl">SHIFT</b><span class="kv" id="vPS"></span></div>
         <div class="kc"><div class="kb" id="knPZ" role="slider" tabindex="0" aria-label="Zoom the background"></div><b class="kl">ZOOM</b><span class="kv" id="vPZ"></span></div>
       </div>
-      <div class="panbtns"><button type="button" class="tb" id="panRestart">START HERE</button></div>
+      <div class="panbtns"><button type="button" class="tb tb-make" id="panMake">MAKE THE PAN</button><button type="button" class="tb" id="panRestart">START OVER</button></div>
       <p class="tip" id="panInfo" style="margin-top:8px"></p>
     </section>
 
@@ -844,9 +858,9 @@ body { animation: nvIn .3s ease both; }
           <div class="kc kc-vis"><canvas class="vbox tall" id="emBox" width="140" height="208" aria-label="Preview of the emote"></canvas><button type="button" class="tb vbtn" id="emBtn" aria-label="Change emote">IDLE</button></div>
           <div class="kc kc-vis"><canvas class="vbox sq" id="blinkBox" width="112" height="112" aria-label="Preview of blinking"></canvas><button type="button" class="tb vbtn" id="blinkBtn" aria-label="Change blink">1 IN 4</button><b class="kl">BLINK</b></div>
           <div class="kc kc-vis"><canvas class="vbox sq" id="talkBox" width="112" height="112" aria-label="Preview of talking"></canvas><button type="button" class="tb vbtn" id="talkBtn" aria-label="Change talk">OFF</button><b class="kl">TALK</b></div>
-          <div class="kc"><div class="kb" id="knP" role="slider" tabindex="0" aria-label="Where in the emote"></div><b class="kl">POSITION</b><span class="kv" id="vPh"></span></div>
-          <div class="kc"><div class="kb" id="knS" role="slider" tabindex="0" aria-label="Frames per loop"></div><b class="kl">STEPS</b><span class="kv" id="vSt"></span></div>
-          <div class="kc kc-sw"><button type="button" class="tb tb-make" id="pcMake">MAKE IT</button></div>
+          <div class="kc"><div class="kb" id="knP" role="slider" tabindex="0" aria-label="Where in the emote"></div><b class="kl">START</b><span class="kv" id="vPh"></span></div>
+          <div class="kc"><div class="kb" id="knS" role="slider" tabindex="0" aria-label="Frames per loop"></div><b class="kl">FRAMES</b><span class="kv" id="vSt"></span></div>
+          <div class="kc kc-sw"><button type="button" class="tb tb-make" id="pcMake" aria-label="Make every frame of this move for me">MAKE IT</button></div>
         </div>
         </div>
         <div class="pc-row">
@@ -866,6 +880,14 @@ body { animation: nvIn .3s ease both; }
       <h2>The sign</h2>
       <label class="f">Pick your billboard</label>
       <div class="chips" id="bShapes"></div>
+      <label class="f">Lights</label>
+      <div class="chips" id="bLight"></div>
+      <label class="f">Sound of the slats</label>
+      <div class="chips" id="bSound"></div>
+      <label class="f">Lock it to the music</label>
+      <div class="bpmrow"><button type="button" class="btn dark" id="bTap">TAP THE BEAT</button><div class="bpmv"><button type="button" class="chip" id="bBpmDn" aria-label="Slower">&minus;</button><b id="bBpmV">OFF</b><button type="button" class="chip" id="bBpmUp" aria-label="Faster">+</button></div></div>
+      <div class="chips" id="bBeats"></div>
+      <p class="tip" id="bBpmTip" style="margin-top:4px">Tap along with the song 4 times. Every flip lands on a beat. Tap again any time to line it back up.</p>
       <label class="f">Panels switch</label>
       <div class="chips" id="bStag"></div>
       <label class="f">Slats (the spinning strips)</label>
@@ -910,8 +932,9 @@ body { animation: nvIn .3s ease both; }
 
     <section class="panel" id="p-clip">
       <h2>Edit your video</h2>
-      <p class="tip">Pick a regular video from your camera roll, up to 5 minutes. Cut it, change the speed, add words, then use the deck buttons under the picture. Hit REC to record your edit.</p>
-      <input type="file" id="clipIn" accept="video/*">
+      <p class="tip" id="clipTip">Pick a video from your camera roll, up to 5 minutes. Then run it like a tape: play, rewind, fast forward, pause. REC records what you see.</p>
+      <button type="button" class="btn dark" id="clipPick">Pick a video</button>
+      <input type="file" id="clipIn" accept="video/*" class="hide">
       <div class="msg" id="clipMsg"></div>
       <div id="clipEd" class="hide">
         <label class="f">Cut the start <span id="edAV"></span></label>
@@ -1233,7 +1256,7 @@ body { animation: nvIn .3s ease both; }
     const i = st.sel >= 0 ? st.sel : st.frames.length - 1;
     if (st.frames[i]) { drawFrameAt(i, deck.p / st.fps); stageMsg(''); }
     else if (document.body.classList.contains('toon') && pup.bg) { pupDrawBg(ctx, W, H); stageMsg('Tap Animate to put your cartoon here'); }
-    else { ctx.fillStyle = '#111'; ctx.fillRect(0, 0, W, H); stageMsg(st.camVideo ? '' : document.body.classList.contains('toon') ? 'Pick a background photo, then tap Animate' : 'Start the camera or add photos'); }
+    else { ctx.fillStyle = '#111'; ctx.fillRect(0, 0, W, H); stageMsg(st.camVideo ? '' : document.body.classList.contains('toon') ? 'Pick a background photo, then tap Animate' : st.kind === 'clip' ? 'Pick a video to start' : 'Add photos to start'); }
   }
 
   // ===================== THE DECK =====================
@@ -1277,12 +1300,12 @@ body { animation: nvIn .3s ease both; }
     requestAnimationFrame(tick);
     const dt = lastAdv ? Math.min(0.1, (now - lastAdv) / 1000) : 0; lastAdv = now;
     if (st.kind === 'char') chr.t += dt;
-    else if (st.kind === 'board') { if (board.playing) board.t += dt; }
+    else if (st.kind === 'board') { if (board.playing) board.t += dt; boardSoundStep(); }
     else if (st.kind) advance(dt);
     if (now - lastDraw < 40) return; lastDraw = now;
     if (st.kind === 'char') drawCharView(dt);
     else if (st.kind === 'board') drawBoardView(dt);
-    else if (st.kind === 'clip') { drawClip(); if (st.clip) $('info').textContent = clock(clipV.currentTime) + ' of ' + clock(clipV.duration); }
+    else if (st.kind === 'clip') { drawClip(); $('clipSeek').classList.toggle('hide', !st.clip); if (st.clip) { $('info').textContent = clock(clipV.currentTime) + ' of ' + clock(clipV.duration); if (!seekDrag && clipV.duration) $('clipSeek').value = Math.round(clipV.currentTime / clipV.duration * 1000); } else stageMsg('Pick a video to start'); }
     else if (st.kind === 'stop') {
       if (pup.on && deck.mode === 'pause') drawPuppet();
       else if (pup.on) { stageMsg(''); if (st.frames.length) drawFrameAt(Math.max(0, idxOf(deck.p)), tapeTime()); }
@@ -1319,6 +1342,7 @@ body { animation: nvIn .3s ease both; }
   }));
 
   // ===================== IMPORT =====================
+  $('addPhotosBig').addEventListener('click', () => { buzz(8); $('photoIn').click(); });
   $('photoIn').addEventListener('change', async (e) => {
     const files = [...e.target.files]; e.target.value = ''; if (!files.length) return;
     try {
@@ -1464,7 +1488,16 @@ body { animation: nvIn .3s ease both; }
     if ($('panInfo')) $('panInfo').textContent = PAN.dir === 'off' ? 'Pan is off. Use shift and zoom to set where the background sits.' : 'Panning ' + PAN.dir + ' over ' + PAN.frames + ' frames. ' + Math.min(n, PAN.frames) + ' of ' + PAN.frames + ' done. Your next frame lands further along.';
   }
   function panSave() { try { localStorage.setItem('nocivPan', JSON.stringify({ dir: PAN.dir, frames: PAN.frames, dist: PAN.dist, ghost: PAN.ghost })); } catch (e) {} }
-  $('panDirBtn').addEventListener('click', () => { PAN.dir = PAN_DIRS[(PAN_DIRS.indexOf(PAN.dir) + 1) % PAN_DIRS.length]; PAN.base = st.frames.length; buzz(8); panSave(); panApply(); panSync(); renderStill(); });
+  const panPick = () => pickList('MOVE THE CAMERA', [['left', 'LEFT', 'Slides left'], ['right', 'RIGHT', 'Slides right'], ['in', 'IN', 'Pushes in closer'], ['out', 'OUT', 'Pulls back'], ['off', 'OFF', 'Camera stays put']], PAN.dir, d => { PAN.dir = d; PAN.base = st.frames.length; panSave(); panApply(); panSync(); renderStill(); });
+  $('panDirBtn').addEventListener('click', panPick); $('panBox').addEventListener('click', panPick);
+  // one tap makes the whole pan: the camera moves a step with every frame while your character keeps doing their move
+  $('panMake').addEventListener('click', async () => {
+    if (pup.busy || !pup.w) return; if (PAN.dir === 'off') { msg('pupMsg', 'Pick which way the camera moves first.'); panPick(); return; }
+    pup.busy = true; const n = PAN.frames + 1, steps = Math.max(2, +$('pupSt').value || 4), was = pup.em.auto; pup.em.auto = false; $('panMake').disabled = true; PAN.base = st.frames.length; panApply();
+    try { for (let i = 0; i < n; i++) { $('pupPh').value = (i % steps) / steps; pupEmApply(); msg('pupMsg', 'Pan frame ' + (i + 1) + ' of ' + n); await pupTake(); }
+      $('pupPh').value = 0; pupEmApply(); msg('pupMsg', 'Pan done. Playing it'); if (st.frames.length > 1) { deck.p = 0; setDeck('play'); tbSync(); } }
+    finally { pup.em.auto = was; pup.busy = false; $('panMake').disabled = false; swDraw(); }
+  });
   $('panRestart').addEventListener('click', () => { PAN.base = st.frames.length; buzz(8); panApply(); panSync(); renderStill(); });
   async function scSave() { try { const db = await openDb(); db.transaction('s', 'readwrite').objectStore('s').put({ color: SCE.cur.color, floor: SCE.cur.floor, st: SCE.cur.st, cx: SCE.cur.cx || 0, cz: SCE.cur.cz || 1 }, 'toonscn'); } catch (e) {} }
   const PROPL = [['tree', 'Tree'], ['bush', 'Bush'], ['grass', 'Grass'], ['sun', 'Sun'], ['cloud', 'Cloud'], ['house', 'House'], ['lamp', 'Street lamp'], ['rocks', 'Rocks']];
@@ -1596,16 +1629,25 @@ body { animation: nvIn .3s ease both; }
   $('swEyes').addEventListener('click', () => { buzz(8); document.querySelector('#pfEyes .chip[data-v="' + (pup.face.eyes ? 0 : 1) + '"]').click(); swDraw(); });
   $('swLook').addEventListener('click', () => { buzz(8); document.querySelector('#pfGaze .chip[data-v="' + (pup.face.gx === -1 ? 0 : pup.face.gx === 0 ? 1 : -1) + '"]').click(); swDraw(); });
   // knobs: drag up or right to turn clockwise, tap a stepped knob to click it round to the next stop
+  function pickList(title, items, cur, onPick) {
+    let ov = $('pickOv'); if (!ov) { ov = document.createElement('div'); ov.id = 'pickOv'; document.body.appendChild(ov); ov.addEventListener('click', e => { if (e.target === ov) ov.classList.remove('on'); }); }
+    ov.innerHTML = '<div class="pk" role="dialog" aria-label="' + title + '"><b>' + title + '</b><div class="pk-g"></div></div>'; const g = ov.querySelector('.pk-g');
+    items.forEach(it => { const b = document.createElement('button'); b.type = 'button'; b.className = 'pk-b'; b.setAttribute('aria-pressed', String(it[0]) === String(cur) ? 'true' : 'false'); b.innerHTML = '<span>' + it[1] + '</span>' + (it[2] ? '<small>' + it[2] + '</small>' : ''); b.addEventListener('click', () => { buzz(8); ov.classList.remove('on'); onPick(it[0]); }); g.appendChild(b); });
+    ov.classList.add('on');
+  }
+  // while a knob turns, its value shows big above your finger, so the finger never hides it
+  function knobBub(el, txt) { let b = $('knBub'); if (!b) { b = document.createElement('div'); b.id = 'knBub'; document.body.appendChild(b); } if (txt == null) { b.classList.remove('on'); return; } const r = el.getBoundingClientRect(); b.textContent = txt; b.style.left = (r.left + r.width / 2) + 'px'; b.style.top = Math.max(8, r.top - 46) + 'px'; b.classList.add('on'); }
   function knobSvg(el) {
     el.innerHTML = '<svg viewBox="-50 -50 100 100" aria-hidden="true"><circle class="rim" r="48"/><circle class="cap" r="36"/><circle class="grip" r="41"/><g class="kp"><line class="ptr" x1="0" y1="-12" x2="0" y2="-30"/></g></svg>';
   }
   function mkKnob(el, ad) {
     knobSvg(el); const g = el.querySelector('.kp'); let f = 0, d = null;
     function draw() { f = ad.get(); g.setAttribute('transform', 'rotate(' + (-135 + 270 * f).toFixed(1) + ')'); el.setAttribute('aria-valuenow', Math.round(f * 100)); if (ad.out) $(ad.out).textContent = ad.read(); }
-    function put(nf) { nf = Math.max(0, Math.min(1, nf)); if (ad.n) nf = Math.round(nf * (ad.n - 1)) / (ad.n - 1); if (Math.abs(nf - f) < 1e-6) return; ad.set(nf); draw(); if (ad.n) buzz(8); }
-    el.addEventListener('pointerdown', e => { d = { id: e.pointerId, x: e.clientX, y: e.clientY, acc: f, moved: 0 }; try { el.setPointerCapture(e.pointerId); } catch (x) {} e.preventDefault(); });
+    const say = () => { try { const t = ad.read ? ad.read() : Math.round(f * 100) + '%'; knobBub(el, t); } catch (x) {} };
+    function put(nf) { nf = Math.max(0, Math.min(1, nf)); if (ad.n) nf = Math.round(nf * (ad.n - 1)) / (ad.n - 1); if (Math.abs(nf - f) < 1e-6) return; ad.set(nf); draw(); if (d) say(); if (ad.n) buzz(8); }
+    el.addEventListener('pointerdown', e => { d = { id: e.pointerId, x: e.clientX, y: e.clientY, acc: f, moved: 0 }; try { el.setPointerCapture(e.pointerId); } catch (x) {} e.preventDefault(); say(); });
     el.addEventListener('pointermove', e => { if (!d || d.id !== e.pointerId) return; const dx = e.clientX - d.x, dy = e.clientY - d.y; d.x = e.clientX; d.y = e.clientY; d.moved += Math.abs(dx) + Math.abs(dy); d.acc = Math.max(0, Math.min(1, d.acc + (dx - dy) / 190)); put(d.acc); });
-    const end = e => { if (!d || d.id !== e.pointerId) return; if (d.moved < 6 && ad.n && e.type === 'pointerup') put(((Math.round(f * (ad.n - 1)) + 1) % ad.n) / (ad.n - 1)); d = null; };
+    const end = e => { if (!d || d.id !== e.pointerId) return; if (d.moved < 6 && ad.n && e.type === 'pointerup') put(((Math.round(f * (ad.n - 1)) + 1) % ad.n) / (ad.n - 1)); d = null; setTimeout(() => { if (!d) knobBub(el, null); }, 350); };
     el.addEventListener('pointerup', end); el.addEventListener('pointercancel', end);
     el.addEventListener('keydown', e => { const up = e.key === 'ArrowUp' || e.key === 'ArrowRight', dn = e.key === 'ArrowDown' || e.key === 'ArrowLeft'; if (!up && !dn) return; e.preventDefault(); put(f + (up ? 1 : -1) * (ad.n ? 1 / (ad.n - 1) : 0.04)); });
     KN.push(draw); draw();
@@ -1637,8 +1679,12 @@ body { animation: nvIn .3s ease both; }
   // picture boxes: the emote, the blink and the talk show what they do instead of a knob
   const EMN = ['IDLE', 'WAVE', 'WALK', 'DANCE', 'HYPE', 'SPRAY', 'SCRATCH', 'POINT', 'OLLIE'], BLN = ['NEVER', '1 IN 2', '1 IN 3', '1 IN 4', '1 IN 6', '1 IN 8'], TKN = ['OFF', 'FAST', 'MEDIUM', 'SLOW'];
   const cycSel = id => { const e = $(id); e.selectedIndex = (e.selectedIndex + 1) % e.options.length; e.dispatchEvent(new Event('change')); buzz(8); vbDraw(); };
-  $('emBtn').addEventListener('click', () => cycSel('pupEm')); $('blinkBtn').addEventListener('click', () => cycSel('pfBlink')); $('talkBtn').addEventListener('click', () => cycSel('pfTalk'));
-  $('emBox').addEventListener('click', () => cycSel('pupEm'));
+  const pickSel = (id, title, names, notes) => { const e = $(id); pickList(title, names.map((n, i) => [i, n, notes ? notes[i] : '']), e.selectedIndex, i => { e.selectedIndex = +i; e.dispatchEvent(new Event('change')); vbDraw(); }); }; void cycSel;
+  const EMNOTE = ['Stands and breathes', 'Waves hello', 'Walks in place', 'Dances', 'Jumps, arms up', 'Sprays a can', 'DJ scratch', 'Points', 'Skate jump'];
+  const pickEm = () => pickSel('pupEm', 'PICK A MOVE', EMN, EMNOTE);
+  $('emBtn').addEventListener('click', pickEm); $('emBox').addEventListener('click', pickEm);
+  $('blinkBtn').addEventListener('click', () => pickSel('pfBlink', 'HOW OFTEN THEY BLINK', BLN, ['Eyes stay open', 'Every other frame', 'Every 3rd frame', 'Every 4th frame', 'Every 6th frame', 'Every 8th frame']));
+  $('talkBtn').addEventListener('click', () => pickSel('pfTalk', 'MOUTH MOVES LIKE TALKING', TKN, ['Mouth stays shut', 'Quick chatter', 'Normal talk', 'Slow talk']));
   let vbN = 0;
   let pvDraw = null;
   function vbFace(cv, f, k, fy) { k = k || 1; fy = fy == null ? 0.42 : fy; try { pup.w.__ch.puppet(cv, pupFresh(), cv.width / 2, cv.height * (fy + (2.8 - fy) * k), 2.3 * k, 'none', f); } catch (e) {} }
@@ -1729,7 +1775,7 @@ body { animation: nvIn .3s ease both; }
     pup.wpDraw = wpDraw; wpDraw();
     // pan: the camera controls live in this same console, with the same take-frame and play buttons
     const pan = mkPanel('vpPan', 'PAN'), prow = document.createElement('div'); prow.className = 'pv-row'; pan.appendChild(prow);
-    const rs = document.createElement('div'); rs.className = 'kc'; rs.style.alignSelf = 'center'; $('panRestart').style.cssText = 'height:44px;width:100%;min-height:0;font-size:.8rem'; rs.appendChild($('panRestart')); 
+    const rs = document.createElement('div'); rs.className = 'kc'; rs.style.alignSelf = 'center'; $('panMake').style.cssText = 'height:48px;width:100%;min-height:0;font-size:.8rem;line-height:1.05'; $('panRestart').style.cssText = 'height:30px;width:100%;min-height:0;font-size:.62rem;margin-top:5px'; rs.appendChild($('panMake')); rs.appendChild($('panRestart')); 
     [$('panBox').parentNode, $('knPF').parentNode, $('knPD').parentNode, rs, $('knPG').parentNode, $('knPS').parentNode, $('knPZ').parentNode].forEach(n => prow.appendChild(n));
     // drawing
     const OFF = document.createElement('canvas'); OFF.width = 300; OFF.height = 444;
@@ -1914,10 +1960,11 @@ body { animation: nvIn .3s ease both; }
   async function goAnimate() { try { await pupOpen(); } catch (e) {} }
   function startKind(kind) {
     document.body.classList.toggle('sg', kind === 'board'); if (kind !== 'board') { cv.style.width = ''; cv.style.height = ''; }
-    st.kind = kind; if (kind === 'clip') { if (st.look === 'none') st.look = 'vhs'; } else if (kind !== 'stop') st.look = 'none'; st.cam = kind === 'stop' && !st.frames.length; setDeck('pause'); if (kind === 'board' && board.sel < 0 && board.faces.length) board.sel = 0; setTimeout(scrollToControls, 120);
+    st.kind = kind; if (kind === 'clip') { if (st.look === 'none') st.look = 'vhs'; } else if (kind !== 'stop') st.look = 'none'; st.cam = false; /* photos first: the camera starts only when you ask for it */ setDeck('pause'); if (kind === 'board' && board.sel < 0 && board.faces.length) board.sel = 0; setTimeout(scrollToControls, 120);
     $('start').classList.add('hide'); $('app').classList.remove('hide');
     document.querySelectorAll('#tools button').forEach(b => b.classList.toggle('gone', b.dataset.k !== 'both' && b.dataset.k !== kind));
     $('tl').classList.toggle('hide', kind === 'clip' || kind === 'char');
+    if (kind !== 'clip') $('clipSeek').classList.add('hide');
     if (kind === 'clip') { stopCam(); $('info').textContent = ''; if (st.clip) applyClipSize(); } else refreshUI();
     renderEra(); if (kind === 'char') openCharCreator(); showPanel(kind === 'clip' ? 'clip' : kind === 'board' ? 'bphotos' : kind === 'char' ? 'create' : 'shoot'); updateDeckEnabled(); if (kind === 'board') { refreshBoardUI(); syncFaceControls(); sgSet('photo'); }
   }
@@ -1965,6 +2012,11 @@ body { animation: nvIn .3s ease both; }
     c.restore();
   }
   window.__drawCaption = drawCaption;
+  // slide through the tape with a finger, like a scrub bar
+  let seekDrag = false;
+  $('clipSeek').addEventListener('input', () => { if (!st.clip || deck.recording) return; seekDrag = true; if (deck.mode !== 'pause') setDeck('pause'); try { clipV.currentTime = +$('clipSeek').value / 1000 * clipV.duration; } catch (e) {} });
+  ['change', 'pointerup', 'touchend'].forEach(ev => $('clipSeek').addEventListener(ev, () => { seekDrag = false; }));
+  $('clipPick').addEventListener('click', () => { buzz(8); $('clipIn').click(); });
   $('clipIn').addEventListener('change', async (e) => {
     const file = e.target.files[0]; e.target.value = ''; if (!file) return;
     setDeck('pause'); st.clip = null; if (clipUrl) URL.revokeObjectURL(clipUrl); clipUrl = URL.createObjectURL(file); clipV.src = clipUrl;
@@ -1975,7 +2027,8 @@ body { animation: nvIn .3s ease both; }
       st.clip = { w: ar >= 1 ? long : Math.round(long * ar), h: ar >= 1 ? Math.round(long / ar) : long };
       ed.a = 0; ed.b = clipV.duration; ed.rate = 1; ['edA', 'edB'].forEach(id => { $(id).max = clipV.duration.toFixed(1); }); $('edA').value = 0; $('edB').value = clipV.duration.toFixed(1); edSync(); document.querySelectorAll('#edRate .chip').forEach(x => x.setAttribute('aria-pressed', x.dataset.r === '1' ? 'true' : 'false')); $('clipEd').classList.remove('hide');
       applyClipSize(); clipV.currentTime = 0; deck.p = 0; stageMsg(''); updateDeckEnabled(); setDeck('pause');
-      msg('clipMsg', 'Loaded. ' + clock(clipV.duration) + ' long. Press PLAY under the picture. When you are ready, hit REC.');
+      msg('clipMsg', 'Loaded, ' + clock(clipV.duration) + ' long. PLAY to watch it. REC to record what you see. Slide the bar to jump around.');
+      $('clipPick').textContent = 'Pick a different video'; $('clipPick').classList.remove('dark'); if ($('clipTip')) $('clipTip').classList.add('hide');
     } catch (err) { msg('clipMsg', HEVC_MSG, true); }
   });
   clipV.addEventListener('ended', () => { if (!deck.auto && deck.mode !== 'pause') setDeck('pause'); });
@@ -2333,6 +2386,7 @@ body { animation: nvIn .3s ease both; }
       if (TQ) warpQuad(cc, c.canvas, TQ, W, H);
     });
     if (TQ) cc.drawImage(sceneFor(W, H), 0, 0);
+    nightPaint(cc, W, H, rs, TQ);
     stageMsg(none ? 'Pick a billboard, then add photos' : '');
     if (!deck.recording && !fsOn() && nVis() > 1 && (st.panel === 'bphotos' || st.panel === 'bsign')) { const r = rs[Math.min(board.pi, rs.length - 1)]; c.save(); c.setLineDash([14, 9]); c.lineWidth = Math.max(3, W / 150); c.strokeStyle = '#ffffff'; c.shadowColor = 'rgba(0,0,0,.8)'; c.shadowBlur = 5; c.strokeRect(r.x - 3, r.y - 3, r.w + 6, r.h + 6); c.restore(); }
     if (ED) { drawFaceEditor(W, H); const iw = Math.round(W * 0.27), ih = Math.round(iw * H / W); ctx.save(); ctx.shadowColor = 'rgba(0,0,0,.6)'; ctx.shadowBlur = 10; ctx.drawImage(bTmp, 12, 12, iw, ih); ctx.restore(); ctx.lineWidth = Math.max(2, W / 260); ctx.strokeStyle = '#f2ecd6'; ctx.strokeRect(12, 12, iw, ih); return; }
@@ -2510,7 +2564,7 @@ body { animation: nvIn .3s ease both; }
     // sign and timing
     const bs = $('p-bsign'); bs.insertBefore($('boardRow'), bs.children[1]); tag($('boardRow'), 'timing');
     [...bs.children].forEach(c => { if (c.tagName === 'H2' || c.id === 'boardRow') return; tag(c, 'timing'); });
-    ['bShapes', 'bClear', 'bMsg2'].forEach(id => { tag($(id), 'sign'); const l = $(id).previousElementSibling; if (id === 'bShapes' && l && l.tagName === 'LABEL') tag(l, 'sign'); });
+    ['bShapes', 'bLight', 'bSound', 'bClear', 'bMsg2'].forEach(id => { tag($(id), 'sign'); const l = $(id).previousElementSibling; if (id !== 'bClear' && id !== 'bMsg2' && l && l.tagName === 'LABEL') tag(l, 'sign'); });
     bs.querySelectorAll('p.tip').forEach(x => tag(x, 'sign'));
     document.querySelectorAll('#sgRail button').forEach(b => b.addEventListener('click', () => { try { buzz(8); } catch (e) {} sgSet(b.dataset.s); }));
     $('sgPlus').addEventListener('click', () => { try { buzz(8); } catch (e) {} $('bPhotoIn').click(); });
@@ -2526,13 +2580,70 @@ body { animation: nvIn .3s ease both; }
     document.querySelectorAll('#bAspects .chip').forEach(x => x.setAttribute('aria-pressed', x.dataset.a === board.aspect ? 'true' : 'false')); fsHintUpdate(); refreshBoardUI(); syncFaceControls();
   }
   chipSet('bShapes', Object.keys(TPL).map(k => [k, TPL[k].name]), () => board.tpl, setTpl);
-  chipSet('bStag', [[1, 'Staggered'], [0, 'Together']], () => board.stag ? 1 : 0, v => { board.stag = +v === 1; board.panels.forEach((p, i) => { p.off = board.stag ? i * 2.2 : 0; }); });
+  chipSet('bStag', [[1, 'Staggered'], [0, 'Together']], () => board.stag ? 1 : 0, v => { board.stag = +v === 1; board.panels.forEach((p, i) => { p.off = board.stag ? i * 2.2 : 0; }); if (SHOW.bpm) beatApply(); });
   chipSet('bSlats', [[8, '8'], [12, '12'], [18, '18'], [24, '24']], () => board.slats, v => { board.slats = +v; });
   document.querySelectorAll('#bStyle .chip').forEach(b => b.addEventListener('click', () => { board.wave = +b.dataset.w; document.querySelectorAll('#bStyle .chip').forEach(x => x.setAttribute('aria-pressed', x === b ? 'true' : 'false')); }));
   document.querySelectorAll('#bAspects .chip').forEach(b => b.addEventListener('click', () => { board.aspect = b.dataset.a; document.querySelectorAll('#bAspects .chip').forEach(x => x.setAttribute('aria-pressed', x === b ? 'true' : 'false')); allFaces().forEach(f => { f.cache = null; }); }));
-  $('bHold').addEventListener('input', () => { board.hold = +$('bHold').value; $('bHoldVal').textContent = board.hold + ' s'; refreshBoardUI(); });
-  $('bSpinT').addEventListener('input', () => { board.spin = +$('bSpinT').value; $('bSpinVal').textContent = board.spin.toFixed(1) + ' s'; refreshBoardUI(); });
+  $('bHold').addEventListener('input', () => { if (SHOW.bpm) { SHOW.bpm = 0; showSave(); $('bBpmV').textContent = 'OFF'; } board.hold = +$('bHold').value; $('bHoldVal').textContent = board.hold + ' s'; refreshBoardUI(); });
+  $('bSpinT').addEventListener('input', () => { if (SHOW.bpm) { SHOW.bpm = 0; showSave(); $('bBpmV').textContent = 'OFF'; } board.spin = +$('bSpinT').value; $('bSpinVal').textContent = board.spin.toFixed(1) + ' s'; refreshBoardUI(); });
 
+  // ---- show mode: night lights, the clack of the slats, and flips locked to the beat ----
+  const SHOW = { light: 'day', sound: 0, bpm: 0, beats: 2, taps: [] };
+  try { const q = JSON.parse(localStorage.getItem('nocivBoardShow') || 'null'); if (q) { if (['day', 'night', 'neon'].indexOf(q.light) >= 0) SHOW.light = q.light; SHOW.sound = q.sound ? 1 : 0; if (q.bpm >= 50 && q.bpm <= 200) SHOW.bpm = q.bpm; if ([1, 2, 4, 8].indexOf(q.beats) >= 0) SHOW.beats = q.beats; } } catch (e) {}
+  const showSave = () => { try { localStorage.setItem('nocivBoardShow', JSON.stringify({ light: SHOW.light, sound: SHOW.sound, bpm: SHOW.bpm, beats: SHOW.beats })); } catch (e) {} };
+  const beatLen = () => 60 / SHOW.bpm;
+  function beatApply() { // a flip every few beats: the new photo lands right on a beat, panels one beat apart
+    const bi = SHOW.bpm ? [1, 2, 4, 8].indexOf(SHOW.beats) + 1 : 0; document.querySelectorAll('#bBeats .chip').forEach((x, i) => x.setAttribute('aria-pressed', i === bi ? 'true' : 'false'));
+    if (!SHOW.bpm) { $('bBpmV').textContent = 'OFF'; return; }
+    const b = beatLen(), T = b * SHOW.beats; board.spin = Math.round(Math.min(T * 0.45, Math.max(0.35, b * 0.9)) * 100) / 100;
+    board.panels.forEach((pn, i) => { pn.hold = Math.max(0.1, Math.round((T - board.spin) * 1000) / 1000); pn.off = board.stag ? i * b : 0; });
+    $('bBpmV').textContent = Math.round(SHOW.bpm) + ' BPM'; if ($('bSpinT')) { $('bSpinT').value = board.spin; $('bSpinVal').textContent = board.spin.toFixed(2) + ' s'; } refreshBoardUI();
+  }
+  function beatAlign() { if (!SHOW.bpm) return; const b = beatLen(); board.t = Math.round(board.t / b) * b; board.playing = true; }
+  $('bTap').addEventListener('click', () => {
+    const now = performance.now() / 1000, T = SHOW.taps; if (T.length && now - T[T.length - 1] > 2) T.length = 0; T.push(now); if (T.length > 8) T.shift();
+    const btn = $('bTap'); btn.classList.add('hit'); setTimeout(() => btn.classList.remove('hit'), 90); buzz(10);
+    if (T.length >= 2) { const gaps = []; for (let i = 1; i < T.length; i++) gaps.push(T[i] - T[i - 1]); gaps.sort((a, b) => a - b); const g = gaps[gaps.length >> 1]; let bpm = 60 / g; while (bpm < 60) bpm *= 2; while (bpm > 190) bpm /= 2; SHOW.bpm = Math.round(bpm * 10) / 10; beatApply(); showSave(); }
+    beatAlign(); $('bBpmTip').textContent = T.length < 4 ? 'Keep tapping... ' + T.length + ' of 4' : 'Locked to ' + Math.round(SHOW.bpm) + ' BPM. Tap again any time to line it back up.';
+  });
+  $('bBpmDn').addEventListener('click', () => { SHOW.bpm = SHOW.bpm ? Math.max(50, Math.round(SHOW.bpm) - 1) : 0; beatApply(); showSave(); buzz(8); });
+  $('bBpmUp').addEventListener('click', () => { SHOW.bpm = SHOW.bpm ? Math.min(200, Math.round(SHOW.bpm) + 1) : 120; beatApply(); beatAlign(); showSave(); buzz(8); });
+  setTimeout(() => {
+    chipSet('bBeats', [[0, 'Off'], [1, 'Every beat'], [2, 'Every 2'], [4, 'Every 4'], [8, 'Every 8']], () => SHOW.bpm ? SHOW.beats : 0, v => { v = +v; if (!v) { SHOW.bpm = 0; $('bBpmTip').textContent = 'Beat lock is off. The flips follow the timing below.'; } else { SHOW.beats = v; if (!SHOW.bpm) SHOW.bpm = 120; } beatApply(); beatAlign(); showSave(); });
+    chipSet('bLight', [['day', 'Day'], ['night', 'Night'], ['neon', 'Neon']], () => SHOW.light, v => { SHOW.light = v; showSave(); renderStill(); });
+    chipSet('bSound', [[0, 'Off'], [1, 'Clack']], () => SHOW.sound, v => { SHOW.sound = +v; showSave(); if (SHOW.sound) clack(0.02, 3); });
+    beatApply();
+  }, 0);
+  // the clatter of a real trivision: a fast run of small knocks, one per slat
+  function clack(spread, n) {
+    try { _ac = _ac || new (window.AudioContext || window.webkitAudioContext)(); if (_ac.state === 'suspended') _ac.resume();
+      if (!clack.buf) { const L = Math.round(_ac.sampleRate * 0.03), bf = _ac.createBuffer(1, L, _ac.sampleRate), d = bf.getChannelData(0); for (let i = 0; i < L; i++) d[i] = (Math.random() * 2 - 1) * Math.pow(1 - i / L, 6); clack.buf = bf; }
+      const t0 = _ac.currentTime + 0.01;
+      for (let i = 0; i < n; i++) { const src = _ac.createBufferSource(), f = _ac.createBiquadFilter(), g = _ac.createGain(); src.buffer = clack.buf; f.type = 'bandpass'; f.frequency.value = 900 + Math.random() * 700; f.Q.value = 3; g.gain.value = 0.32; src.connect(f); f.connect(g); g.connect(_ac.destination); src.start(t0 + i * spread + Math.random() * spread * 0.4); }
+    } catch (e) {}
+  }
+  const lastP = [];
+  function boardSoundStep() { // a panel just started to turn: play its clatter, spread over the ripple
+    if (!SHOW.sound || !board.playing || deck.recording) return;
+    visPanels().forEach((pn, i) => { if (pn.faces.length < 2) return; const p = boardPhase(board.t + pn.off, pn).p; if (p > 0 && !(lastP[i] > 0)) { const N = Math.min(14, board.slats); clack(board.spin * (0.25 + board.wave * 0.5) / N, N); } lastP[i] = p; });
+  }
+  // after dark: the street goes dark, the faces light up from lamps along the top
+  function nightPaint(c, W, H, rs, TQ) {
+    if (SHOW.light === 'day') return;
+    const q = sceneXf(W, H), holes = TQ ? [TQ.map(p => [q.ox + p[0] * q.k, q.oy + p[1] * q.k])] : rs.map(r => [[r.x, r.y], [r.x + r.w, r.y], [r.x + r.w, r.y + r.h], [r.x, r.y + r.h]]);
+    const t = board.t, fl = (k) => { const v = Math.sin(t * 17.3 + k * 4.1) * Math.sin(t * 5.1 + k) ; return v > 0.93 ? 0.35 : 1; }; /* a lamp blinks out now and then, the same way every time */
+    c.save(); c.beginPath(); c.rect(0, 0, W, H); holes.forEach(h => { c.moveTo(h[0][0], h[0][1]); h.slice(1).forEach(p => c.lineTo(p[0], p[1])); c.closePath(); });
+    c.fillStyle = SHOW.light === 'neon' ? 'rgba(10,4,26,.86)' : 'rgba(10,16,34,.74)'; c.fill('evenodd'); c.restore();
+    holes.forEach((h, k) => {
+      const [a, b] = [h[0], h[1]], len = Math.hypot(b[0] - a[0], b[1] - a[1]), x0 = Math.min(...h.map(p => p[0])), x1 = Math.max(...h.map(p => p[0])), y0 = Math.min(...h.map(p => p[1])), y1 = Math.max(...h.map(p => p[1]));
+      c.save(); c.beginPath(); c.moveTo(h[0][0], h[0][1]); h.slice(1).forEach(p => c.lineTo(p[0], p[1])); c.closePath(); c.clip();
+      c.globalCompositeOperation = 'multiply'; const gr = c.createLinearGradient(0, y0, 0, y1); gr.addColorStop(0, '#ffffff'); gr.addColorStop(1, SHOW.light === 'neon' ? '#7a6aa0' : '#8a8578'); c.fillStyle = gr; c.fillRect(x0, y0, x1 - x0, y1 - y0); c.restore();
+      if (SHOW.light === 'night') { const nL = Math.max(2, Math.round(len / (W * 0.11))); for (let i = 0; i < nL; i++) { const u = (i + 0.5) / nL, lx = a[0] + (b[0] - a[0]) * u, ly = a[1] + (b[1] - a[1]) * u - H * 0.012, on = fl(k * 10 + i);
+          c.save(); c.globalCompositeOperation = 'lighter'; const r = Math.max(x1 - x0, y1 - y0) * 0.55, g2 = c.createRadialGradient(lx, ly, 0, lx, ly + r * 0.35, r); g2.addColorStop(0, 'rgba(255,226,160,' + (0.34 * on) + ')'); g2.addColorStop(1, 'rgba(255,226,160,0)'); c.fillStyle = g2; c.beginPath(); c.moveTo(lx - r * 0.14, ly); c.lineTo(lx + r * 0.14, ly); c.lineTo(lx + r * 0.75, ly + r * 1.25); c.lineTo(lx - r * 0.75, ly + r * 1.25); c.closePath(); c.fill(); c.restore();
+          c.fillStyle = '#16161a'; const lw = Math.max(6, W * 0.022), lh = Math.max(3, W * 0.007); c.fillRect(lx - lw / 2, ly - lh * 2.2, lw, lh * 1.6); c.fillRect(lx - 1, ly - lh * 4.5, 2, lh * 2.4); c.fillStyle = on > 0.5 ? '#fff3cf' : '#7d7464'; c.fillRect(lx - lw * 0.35, ly - lh * 0.7, lw * 0.7, lh * 0.7); } }
+      else { const col = k % 2 ? '#3ef2ff' : '#ff3fa6', on = fl(k * 7 + 3); c.save(); c.globalCompositeOperation = 'lighter'; c.lineJoin = 'round'; c.beginPath(); c.moveTo(h[0][0], h[0][1]); h.slice(1).forEach(p => c.lineTo(p[0], p[1])); c.closePath(); [[W * 0.03, 0.18], [W * 0.014, 0.4], [W * 0.005, 0.95]].forEach(([w, al]) => { c.lineWidth = w; c.strokeStyle = col; c.globalAlpha = al * on; c.stroke(); }); c.restore(); }
+    });
+  }
   // fullscreen: iOS Safari cannot fullscreen an element, so we fill the whole screen with CSS and also ask the browser when it can
   function fsOn() { return document.body.classList.contains('fs'); }
   let fsTimer = 0, wakeLock = null;
@@ -3242,7 +3353,7 @@ body { animation: nvIn .3s ease both; }
       for (let i = 0; i < pans.length && i < 6; i++) { const P = board.panels[i]; P.hold = pans[i].hold || 5; P.off = pans[i].off || 0; P.faces = []; for (const q of (pans[i].faces || []).slice(0, 5)) P.faces.push(await loadFace(q)); }
       board.pi = 0; board.sel = board.faces.length ? 0 : -1; board.selL = -1;
       chipSet('bShapes', Object.keys(TPL).map(k => [k, TPL[k].name]), () => board.tpl, setTpl);
-      chipSet('bStag', [[1, 'Staggered'], [0, 'Together']], () => board.stag ? 1 : 0, v => { board.stag = +v === 1; board.panels.forEach((p, i) => { p.off = board.stag ? i * 2.2 : 0; }); });
+      chipSet('bStag', [[1, 'Staggered'], [0, 'Together']], () => board.stag ? 1 : 0, v => { board.stag = +v === 1; board.panels.forEach((p, i) => { p.off = board.stag ? i * 2.2 : 0; }); if (SHOW.bpm) beatApply(); });
       chipSet('bSlats', [[8, '8'], [12, '12'], [18, '18'], [24, '24']], () => board.slats, v => { board.slats = +v; });
       document.querySelectorAll('#bAspects .chip').forEach(x => x.setAttribute('aria-pressed', x.dataset.a === board.aspect ? 'true' : 'false'));
       refreshBoardUI(); syncFaceControls(); signSig = signNow();
