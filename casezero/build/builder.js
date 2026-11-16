@@ -1171,9 +1171,9 @@ function drawParts3d() {
     r.root.position.set(0, 0, 0);
     r.fit = () => { const rad = Math.hypot(wide, tall) / 2 * 1.08, v = r.camera.fov * Math.PI / 360, hz = Math.atan(Math.tan(v) * r.camera.aspect), dist = rad / Math.sin(Math.min(v, hz)) * 1.12, dir = id === 'char' ? [0.28, 0.16, 1] : [0.3, 0.75, 0.75];
       r.controls.target.set(0, id === 'char' ? tall / 2 : tall / 4, 0); r.camera.position.copy(new THREE.Vector3(dir[0], dir[1], dir[2]).normalize().multiplyScalar(dist)).add(r.controls.target); r.controls.update(); };
-    r.mode = 'big'; r.view = key; r.fit();
+    r.mode = 'big'; r.view = key; r.fit(); try { tag(xmeta(id)[0] + ': ' + XINFO[id]() + '. Drag to spin it.'); } catch (e) {} /* said once, so a message from a button is not written over */
   }
-  r.controls.enabled = true; r.draw(); try { tag(xmeta(id)[0] + ': ' + XINFO[id]() + '. Drag to spin it.'); } catch (e) {}
+  r.controls.enabled = true; r.draw();
 }
 function draw3d(isMini) {
   if (curTab() === 'extras') { if (!isMini && S.xsel) drawParts3d(); return; }
