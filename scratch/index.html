@@ -109,6 +109,17 @@ a.tool-card { text-decoration: none; color: inherit; }
   <div class="fs-more" id="fsMore" hidden>
 
   <div class="fs-box">
+    <h2>Five words. That is the whole vocabulary.</h2>
+    <div class="fs-acc">
+      <div><b>Files</b><span>Your site is a folder of files. The studio makes them and hands them to you as one zip.</span></div>
+      <div><b>Host</b><span>A company that keeps your files online so anyone can open them. Cloudflare does it free.</span></div>
+      <div><b>Deploy</b><span>Sending your files to the host. Every time you deploy, the live site becomes the new files.</span></div>
+      <div><b>Domain</b><span>Your own name, like yourname.com. Optional. Without one you still get a free link.</span></div>
+      <div><b>Admin</b><span>Your site address plus /admin.html. That is your studio, living on your own site, for changes later.</span></div>
+    </div>
+  </div>
+
+  <div class="fs-box">
     <h2>What you can change</h2>
     <p>Every base can turn into any other. Name your tabs anything and add as many as you need. Each tab is a kind of page: Home, Items, Page, Gallery, Links or Contact.</p>
     <p>Choose the menu: tabs on top, a menu button, an app bottom bar or a side list. Choose how pages change: fade, slide, rise or zoom. Pick type, colors, corners, spacing, layout and photo shape. The studio checks that your text is readable.</p>
@@ -151,6 +162,30 @@ a.tool-card { text-decoration: none; color: inherit; }
     </ol>
     <a class="fs-go" href="/scratch/studio.html">Open the studio</a>
   </div>
+
+  <div class="fs-box" id="later">
+    <h2>Change it later</h2>
+    <ol class="fs-steps">
+      <li><b>Open your admin</b>Go to your site address and add <em>/admin.html</em>, like yourname.pages.dev/admin.html. Your live site loads into the studio, on any phone or computer.</li>
+      <li><b>Edit</b>Change words, photos, prices, pages. Nothing online changes yet.</li>
+      <li><b>Download again</b>On Publish, tap <em>Download my site</em>.</li>
+      <li><b>Deploy again</b>In Cloudflare open your project and tap <em>Create deployment</em>. Pick the new zip. The live site switches in about a minute.</li>
+    </ol>
+    <p class="fs-small">Visitors can open /admin.html too, but they can only play with a copy in their own browser. Nothing reaches your live site without your Cloudflare login.</p>
+  </div>
+
+  <div class="fs-box" id="github">
+    <h2>Rather use GitHub?</h2>
+    <p>GitHub keeps every old version of your files, so you can always go back. It is a few more steps, and it is easier on a computer than a phone.</p>
+    <ol class="fs-steps">
+      <li><b>Unzip your site</b>You need the folder, not the zip.</li>
+      <li><b>Make a repository</b>On github.com tap <em>New repository</em>. Name it. Leave it Public.</li>
+      <li><b>Upload the files</b>Tap <em>uploading an existing file</em>. Drag in everything inside your folder. Tap <em>Commit changes</em>.</li>
+      <li><b>Turn on Pages</b>Go to <em>Settings</em>, then <em>Pages</em>. Under Branch pick <em>main</em> and save. Your link is yourname.github.io/the-repo-name.</li>
+    </ol>
+    <p class="fs-small"><b>Public means public.</b> On a free GitHub account, Pages only works from a public repository, so anyone can read your files there. A website shows its files to every visitor anyway, so for most sites that changes nothing. Never put passwords or secret keys in a site.</p>
+    <p class="fs-small"><b>Want the repository private?</b> Keep it private on GitHub and let Cloudflare do the hosting: in Cloudflare choose <em>Connect to Git</em> instead of Upload assets. Then every change you save on GitHub goes live by itself. Pick this at the start: a Cloudflare project made by uploading a zip cannot be switched to GitHub later, you would make a new project.</p>
+  </div>
   </div>
 
   <p class="build-note">Built yours? Show it at the <a href="/community.html">Base</a>. That is how this spreads.</p>
@@ -165,7 +200,7 @@ a.tool-card { text-decoration: none; color: inherit; }
   if (location.hash === '#steps') { set(true); setTimeout(function () { var t = document.getElementById('steps'); if (t) t.scrollIntoView(); }, 50); }
 })();
 </script>
-<script>window.TOOL_HELP = Object.assign(window.TOOL_HELP || {}, {"fs": {"title": "From Scratch", "items": [["What it is", "A free kit to make your own website. We do not host it. You download the files and they are yours."], ["Pick a start", "Shop, Archive, App, Music, Food, Event, Links or Blank. You can change every word, color and page after."], ["Make it yours", "In the Studio, tap a Look or Shuffle. Your words, photos and pages stay when you switch."], ["Put it online", "Free. Your site gets a link like yourname.pages.dev. Your own domain name is optional, about $11 a year if you want one later. Every step is under How it works."], ["What it costs", "Nothing from us. Ever."]]}});</script>
+<script>window.TOOL_HELP = Object.assign(window.TOOL_HELP || {}, {"fs": {"title": "From Scratch", "items": [["What it is", "A free kit to make your own website. We do not host it. You download the files and they are yours."], ["Pick a start", "Shop, Archive, App, Music, Food, Event, Links or Blank. You can change every word, color and page after."], ["Make it yours", "In the Studio, tap a Look or Shuffle. Your words, photos and pages stay when you switch."], ["Put it online", "Free. Your site gets a link like yourname.pages.dev. Your own domain name is optional, about $11 a year if you want one later. Every step is under How it works."], ["Change it later", "Open your site address plus /admin.html. Edit, download again, deploy again. Steps are under How it works."], ["What it costs", "Nothing from us. Ever."]]}});</script>
 <script src="/tool-help.js" defer></script>
 </body>
 </html>

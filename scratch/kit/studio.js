@@ -508,8 +508,8 @@ function pPublish() {
   return '<h2>Publish</h2><ul class="checks">' + cs.map(function (x) { return '<li class="' + (x.ok ? 'ok' : 'bad') + '"><span>' + (x.ok ? '✓' : '!') + '</span>' + x.t + (x.ok ? '' : ' <button type="button" class="sm" data-act="pane" data-v="' + x.go + '">Fix</button>') + '</li>'; }).join('') + '</ul>' +
     (bad ? '<p class="help">You can still download. These just make it better.</p>' : '') +
     '<button type="button" class="big" data-act="zip">Download my site (.zip)</button><p class="help" id="zipmsg"></p>' +
-    '<div class="steps"><h3>Then put it online</h3><ol><li>Get your own domain name first. This kit is free; the domain is paid to the domain seller, usually about $11 a year for a .com on Cloudflare.</li><li>In Cloudflare: Workers and Pages, Create, Pages, Upload assets. Drop in the zip.</li><li>Add your domain under Custom domains.</li><li>Make your buy links in Stripe and paste them in.</li></ol><a class="sm" href="' + GUIDE + '" target="_blank" rel="noopener">Full guide with every tap</a></div>' +
-    '<h3>To change it later</h3><p class="help">Open yourname.com/admin.html, edit, download a new zip and upload it again. Your live site only changes when you upload.</p>' +
+    '<div class="steps"><h3>Then put it online. Free.</h3><ol><li>Make a free Cloudflare account.</li><li>Workers and Pages, Create, Pages, Upload assets. Pick the zip. Deploy.</li><li>You get a free link like yourname.pages.dev. Done.</li><li>Optional: your own domain (about $11 a year), and Stripe buy links if you sell.</li></ol><a class="sm" href="' + GUIDE + '" target="_blank" rel="noopener">Full guide with every tap</a></div>' +
+    '<div class="steps"><h3>To change it later</h3><ol><li>Open your site address + /admin.html. Your live site loads in.</li><li>Edit.</li><li>Download my site again.</li><li>In Cloudflare: your project, Create deployment, pick the new zip.</li></ol><p class="help">Your live site only changes when you deploy. Using GitHub instead? The full guide has that too.</p></div>' +
     '<h3>Share your look</h3><p class="help">A link with your colors, type, menu, motion and page layout. Never your words, photos, prices or email. Nothing is stored anywhere, it all rides in the link. Whoever opens it starts their own site from your look, and their footer credits you.</p><button type="button" class="sm wide" data-act="remix">Copy my remix link</button><p class="help" id="remixMsg"></p>' +
     '<h3>Backup</h3><div class="ch"><button type="button" class="sm" data-act="backup">Save backup</button><label class="sm up">Open backup<input type="file" accept=".json,application/json" data-restore="1"></label><button type="button" class="sm" data-act="live">Load live site</button><button type="button" class="sm danger" data-act="reset">Start over</button></div>';
 }
@@ -593,6 +593,7 @@ function fetchBytes(p) { return fetch(p, { cache: 'no-cache' }).then(function (r
 function buildZip() {
   var enc = new TextEncoder(), files = [], self = location.pathname.split('/').pop() || 'studio.html';
   var json = clone(D); delete json._touched; delete json._preset;
+  try { localStorage.setItem(KEYBASE + ':livesent', hashOf(JSON.stringify(json))); } catch (e) {} /* so this phone knows its own upload when it sees it live */
   var html = indexHtml();
   files.push({ name: 'index.html', data: enc.encode(html) }, { name: '404.html', data: enc.encode(html) },
     { name: 'site.json', data: enc.encode(JSON.stringify(json, null, 2)) }, { name: 'README.txt', data: enc.encode(README) },
@@ -780,5 +781,24 @@ function boot() {
     push();
   });
 }
+function norm(d) { var c = clone(d); delete c._touched; delete c._preset; return JSON.stringify(c); }
+function hashOf(t) { var h = 5381; for (var i = 0; i < t.length; i++) h = ((h << 5) + h + t.charCodeAt(i)) | 0; return t.length + ':' + h; }
+// On your own site's admin page: if the live site was changed from another phone or computer since this one last saw it,
+// offer to load it, so you never edit an old copy by accident.
+function liveCheck() {
+  if (/studio\.html$/.test(location.pathname)) return;
+  fetch('site.json', { cache: 'no-cache' }).then(function (r) { if (!r.ok) throw 0; return r.json(); }).then(function (live) {
+    var t = JSON.stringify(live), k = KEYBASE + ':liveseen', h = hashOf(t), seen = null; try { seen = localStorage.getItem(k); } catch (e) {}
+    var mark = function () { try { localStorage.setItem(k, h); } catch (e) {} };
+    if (!D || !D._touched || norm(D) === t || seen === null) { mark(); return; } /* nothing edited here, or the two already match */
+    var sent = null; try { sent = localStorage.getItem(KEYBASE + ':livesent'); } catch (e) {} if (sent === h) { mark(); return; } /* the live site is the zip this phone made */
+    if (seen === h) return; /* live is as this phone last saw it: the difference is your own unsent edits */
+    var bar = document.createElement('div'); bar.className = 'steps'; bar.style.margin = '10px 12px';
+    bar.innerHTML = '<h3>Your live site changed somewhere else</h3><p class="help">This phone has an older copy with its own edits. Which one do you want to work on?</p><div class="ch"><button type="button" class="sm" data-lv="live">Use the live site</button><button type="button" class="sm" data-lv="mine">Keep this copy</button></div>';
+    var pn = document.getElementById('pane'); if (!pn || !pn.parentNode) return; pn.parentNode.insertBefore(bar, pn);
+    bar.addEventListener('click', function (e) { var b = e.target.closest('[data-lv]'); if (!b) return; if (b.getAttribute('data-lv') === 'live') { D = live; if (!D.shop) D.shop = clone(SHIP); if (!D.style) D.style = PRESETS.blank().style; editTab = editItem = null; save(); draw(); } mark(); bar.remove(); });
+  }).catch(function () {});
+}
 boot();
+setTimeout(liveCheck, 1500);
 })();

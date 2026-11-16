@@ -373,7 +373,7 @@ function xmeta(id) { // one printed part: [short name, what it is and how it goe
     spring: ['Spring', 'A flat zigzag that pushes back. Good for a button that pops back up or a latch. Light pushes only. PETG lasts longer than PLA, which goes soft over time.' + NEWP, stepper('xsp_n', 'Bends', String(X.spring.n))],
     clamp: ['Clamp', 'Hooks over a shelf or desk edge. Push the wedge in to lock it. The hole in its back takes an M3 screw, so a leg bar or your own part bolts on.' + NEWP, stepper('xcl_t', 'Grips', X.clamp.t + ' mm thick')],
     panel: ['Panel', 'A flat plate with a screw hole in each corner. A door, a cover, a shelf, a base for your own idea.' + NEWP, stepper('xp_w', 'Wide', X.panel.w + ' mm') + stepper('xp_h', 'Tall', X.panel.h + ' mm')],
-    keys: ['Keyboard', 'Your own mechanical keyboard, ' + kb().c + ' across and ' + kb().r + ' down: a printed plate the switches click into, printed key caps, and a board you can order that joins every key to a Pico. Every key is one square, so there is no long space bar. Plate and board follow the Cherry MX data sheet.' + NEWP, kbHtml(), true],
+    keys: ['Keyboard', 'Your own mechanical keyboard, ' + kb().c + ' across and ' + kb().r + ' down: a printed plate the switches click into, printed key caps, and a board you can order that joins every key to a Pico. Every key is one square. For a space bar, two keys share one long cap. Plate and board follow the Cherry MX data sheet.' + NEWP, kbHtml(), true],
     standoff: ['Standoffs', 'Lift a board off the floor. The screw cuts its own thread in the plastic.', '<div class="row"><b>Screw</b>' + seg('xo_s', [['m25', 'M2.5 (Pi)'], ['m3', 'M3']], X.standoff.s) + '</div>' + stepper('xo_h', 'Tall', X.standoff.h + ' mm')],
     clip: ['Cable clips', 'Keep wires tidy inside. Stick on with tape or glue.', stepper('xc_d', 'Cable', X.clip.d + ' mm')] }[id];
 }
@@ -416,7 +416,8 @@ function kbHtml() { const K = kb(), X = xp(), n = K.c * K.r, C = kbCase(), cost 
     '<p class="h" style="margin-top:12px">2. Key caps</p>' + filLine('keys') +
     '<div class="row"><b>Cap fit</b>' + seg('xkf', [['0', 'Snug'], ['0.1', 'Normal'], ['0.2', 'Loose']], String(X.keys.f)) + '</div>' +
     '<p class="note" style="margin:2px 0 6px">Print 1 test cap first and push it on a switch. Too tight to go on: pick Loose. Falls off: pick Snug. Then print the rest.</p>' +
-    '<div class="grid g2"><button class="btn" data-xsave="keycap1" style="padding:9px">Save 1 test cap</button><button class="btn" data-xsave="keycaps" style="padding:9px">Save ' + Math.min(24, n) + ' caps</button></div>' + (n > 24 ? '<p class="note" style="margin-top:4px">The file holds 24. Print it ' + Math.ceil(n / 24) + ' times for all ' + n + '.</p>' : '') +
+    '<div class="row"><b>Space bar</b>' + seg('xksp', [['0', 'No'], ['1', 'Yes']], X.keys.sp ? '1' : '0') + '</div>' + (X.keys.sp ? '<p class="note" style="margin:2px 0 6px">The two middle keys of the bottom row share one long cap, and both type a space. Two switches push back, so it presses a little heavier than a single key.</p>' : '') +
+    '<div class="grid g2"><button class="btn" data-xsave="keycap1" style="padding:9px">Save 1 test cap</button><button class="btn" data-xsave="keycaps" style="padding:9px">Save ' + Math.min(24, n - (X.keys.sp ? 2 : 0)) + ' caps</button></div>' + (X.keys.sp ? '<button class="btn" data-xsave="keycap2" style="padding:9px;margin-top:8px">Save the space bar</button>' : '') + (n - (X.keys.sp ? 2 : 0) > 24 ? '<p class="note" style="margin-top:4px">The file holds 24. Print it ' + Math.ceil((n - (X.keys.sp ? 2 : 0)) / 24) + ' times for all ' + (n - (X.keys.sp ? 2 : 0)) + '.</p>' : '') +
     '<p class="h" style="margin-top:12px">3. Order the board</p><p class="note" style="margin:0 0 6px">' + cost.txt + ' Shipping and import fees usually cost more than the boards.</p>' +
     '<button class="btn dark" data-act="kbzip">Get the board files (zip)</button>' +
     '<p class="note" style="margin-top:6px">The zip has the factory files, the code that makes it type, and a step by step to solder it. <b>You buy:</b> ' + n + ' MX style switches, ' + n + ' small diodes (1N4148), 1 Pico with pins (Pico H), 4 M3 x 12 screws and nuts. About $' + Math.round(n * 0.45 + 9) + ' plus the board.</p>' +
@@ -815,7 +816,7 @@ $('pane').addEventListener('click', (e) => {
     if (k === 'pt') { S.pt = +v; save(); render(); return; } if (k === 'prad') { S.prad = +v; save(); render(); return; } if (k === 'phold') { S.phold = v; reflow(); save(); render(); return; } if (k === 'plift') { if (v === '0') S.plift = 0; else { S.plift = S.plift || 12; S.pbase = v; } reflow(); save(); render(); return; }
     const nn = (S.notches || [])[S.nsel]; if (nn && k === 'n_edge') { if ((nn.edge === 'left' || nn.edge === 'right') !== (v === 'left' || v === 'right')) nn.at = Math.round((v === 'left' || v === 'right' ? dims().D : dims().W) / 2); nn.edge = v; reflow(); save(); render(); return; } if (nn && k === 'n_shape') { nn.shape = v; save(); render(); return; }
     if (k === 'fil') { S.fil = v; save(); render(); return; } if (k === 'pq') { S.pq = v; S.psOpen = true; save(); render(); return; }
-    { const X = xp(); if (k === 'xkf') { X.keys.f = +v; save(); render(); return; } if (k === 'xs_a') { X.stand.a = +v; save(); render(); return; } if (k === 'xf_hole') { X.feet.hole = v === '1'; save(); render(); return; } if (k === 'xo_s') { X.standoff.s = v; save(); render(); return; } }
+    { const X = xp(); if (k === 'xkf') { X.keys.f = +v; save(); render(); return; } if (k === 'xksp') { X.keys.sp = v === '1' ? 1 : 0; save(); render(); return; } if (k === 'xs_a') { X.stand.a = +v; save(); render(); return; } if (k === 'xf_hole') { X.feet.hole = v === '1'; save(); render(); return; } if (k === 'xo_s') { X.standoff.s = v; save(); render(); return; } }
     if (k === 'brand') { S.brand = v; save(); render(); return; }
     if (k === 'walls') { S.walls = v; applyWalls(); reflow(); save(); render(); return; }
     if (k === 'layer') { S.layer = v; save(); render(); return; }
@@ -1381,7 +1382,7 @@ function addonPolys(id) {
     [-8.89, 8.89].forEach((dy) => cut.push(G.rect(K.pico.x - 25.8, K.pico.y + dy - 1.6, K.pico.x + 25.8, K.pico.y + dy + 1.6))); /* two slots: the Pico's pins poke up through here */
     const rim = G.union(G.diff(out, [G.rect(K.x0 + 7, K.y0 + 7, K.x1 - 7, K.y1 - 7)]).concat([G.rect(K.x0 + 6, K.H + 0.8, K.x1 - 6, K.H + 2.4)])); /* the rim, and one rib between the keys and the Pico, keep a thin printed plate flat. Its 3.5 mm height is also what holds the board at the right distance. */
     return { layers: [{ polys: G.diff(out, cut), z0: 0, z1: 1.5 }, { polys: G.diff(rim, scr), z0: 1.5, z1: 5 }], n: 1 }; }
-  if (id === 'keycaps' || id === 'keycap1') { const X2 = xp(), n = id === 'keycap1' ? 1 : Math.min(24, kb().c * kb().r); return { layers: capPolys(X2.keys.f == null ? 0.1 : X2.keys.f), n }; }
+  if (id === 'keycaps' || id === 'keycap1' || id === 'keycap2') { const X2 = xp(), n = id === 'keycaps' ? Math.min(24, kb().c * kb().r - (X2.keys.sp ? 2 : 0)) : 1; return { layers: capPolys(X2.keys.f == null ? 0.1 : X2.keys.f, id === 'keycap2'), n }; }
   if (id === 'feet') { const c = G.circle(0, 0, 7, 40); return { polys: X.feet.hole ? G.diff([c], [G.circle(0, 0, 1.7, 20)]) : [c], h: X.feet.h, n: 4 }; }
   if (id === 'standoff') return { polys: G.diff([G.circle(0, 0, 3.2, 32)], [G.circle(0, 0, X.standoff.s === 'm3' ? 1.3 : 1.1, 20)]), h: X.standoff.h, n: 4 };
   if (id === 'clip') { const ro = X.clip.d / 2 + 1.8, ri = X.clip.d / 2 + 0.3, gap = X.clip.d * 0.75;
@@ -1401,6 +1402,7 @@ function addonFile(id) {
 }
 // ---------- the keyboard: one set of numbers shared by the plate, the caps, the board and the hole in the case ----------
 // Cherry MX data sheet: keys 19.05 mm apart, 14 mm square hole in a 1.5 mm plate, 5 mm from plate top to board top.
+// Checked against the KiCad library footprint SW_Cherry_MX_1.00u_PCB (pads 2.2 mm with 1.5 mm holes, 4 mm middle hole, 1.7 mm pegs).
 // On the board each switch has a 4 mm middle hole, two 1.5 mm pin holes at (-3.81, +2.54) and (+2.54, +5.08) from its middle, and two 1.7 mm peg holes 5.08 to each side.
 // All of those are whole steps of 1.27 mm, the grid the board maker routes on.
 const KB = { P: 19.05, M: 8.5, STRIP: 24, HOLE: 14.1 }, KB_GP = [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 26, 27, 28];
@@ -1420,10 +1422,11 @@ function kbPart() { // the keyboard as a part you can put in a case: the case to
     tip: 'Change its size in Parts, Keyboard. It has its own brain and plugs in by USB.', price: Math.round(n * 0.45 + 9), src: 'Sized by Case Zero from the Cherry MX data sheet', url: '', find: 'MX style keyboard switch' } };
   KBP = { K, o }; return o;
 }
-function capPolys(f) { // one key cap, printed top down. The cross hole takes the switch stem: Cherry gives the hole as 4.1 mm across with 1.17 mm arms; a printed hole closes up a little, so it is drawn wider.
-  const top = [G.rrect(0, 0, 18, 18, 2)], L = 4.2 + f, a = (1.35 + f) / 2, b = (1.15 + f) / 2;
-  const cross = G.union([G.rect(9 - L / 2, 9 - a, 9 + L / 2, 9 + a), G.rect(9 - b, 9 - L / 2, 9 + b, 9 + L / 2)]);
-  return [{ polys: top, z0: 0, z1: 1.6 }, { polys: G.union(G.diff(top, [G.rrect(1.4, 1.4, 16.6, 16.6, 1)]).concat(G.diff([G.circle(9, 9, 2.75, 40)], cross))), z0: 1.6, z1: 8 }];
+function capPolys(f, wide) { // one key cap, printed top down. The cross hole takes the switch stem: Cherry gives the hole as 4.1 mm across with 1.17 mm arms; a printed hole closes up a little, so it is drawn wider.
+  // wide: a space bar. One long cap over two switches side by side, so its two posts are one key step (19.05 mm) apart and it needs no wire stabilizer.
+  const Wc = wide ? 18 + KB.P : 18, top = [G.rrect(0, 0, Wc, 18, 2)], L = 4.2 + f, a = (1.35 + f) / 2, b = (1.15 + f) / 2, posts = wide ? [9, 9 + KB.P] : [9];
+  const post = (cx) => G.diff([G.circle(cx, 9, 2.75, 40)], G.union([G.rect(cx - L / 2, 9 - a, cx + L / 2, 9 + a), G.rect(cx - b, 9 - L / 2, cx + b, 9 + L / 2)]));
+  return [{ polys: top, z0: 0, z1: 1.6 }, { polys: G.union(G.diff(top, [G.rrect(1.4, 1.4, Wc - 1.4, 16.6, 1)]).concat(...posts.map(post))), z0: 1.6, z1: 8 }];
 }
 const KBB = {};
 function kbBoard() {
@@ -1444,7 +1447,8 @@ function kbCode(b) { // CircuitPython for the Pico. keypad.KeyMatrix scans the k
   const use = K.r >= 6 ? [5, 0, 1, 2, 3, 4] : K.r === 5 ? [0, 1, 2, 3, 4] : K.r === 4 ? [1, 2, 3, 4] : K.r === 3 ? [1, 2, 3] : K.r === 2 ? [1, 2] : [1];
   const L = ['# NOCIV Case Zero keyboard, ' + K.c + ' x ' + K.r + ' keys. CircuitPython for a Raspberry Pi Pico.', '# 1. Put CircuitPython on the Pico (circuitpython.org, pick your Pico, drag the file on).', '# 2. Copy the adafruit_hid folder from the Adafruit library bundle into the lib folder on the Pico.', '# 3. Save this file on the Pico as code.py. It starts by itself.', '# Not run on real parts by us yet. To change a key, change its name in KEYS below.', '', 'import board', 'import keypad', 'import usb_hid', 'from adafruit_hid.keyboard import Keyboard', 'from adafruit_hid.keycode import Keycode as K', '',
     'COLS = (' + b.cols.map((g) => 'board.GP' + g).join(', ') + ',)  # left to right', 'ROWS = (' + b.rows.map((g) => 'board.GP' + g).join(', ') + ',)  # top to bottom', '', '# One line per row of keys, top row first. None means the key does nothing.', 'KEYS = ['];
-  use.forEach((u) => L.push('    [' + ROWS[u].slice(0, K.c).map((n) => 'K.' + n).join(', ') + '],')); L.push(']', '', 'matrix = keypad.KeyMatrix(row_pins=ROWS, column_pins=COLS, columns_to_anodes=True)', 'kbd = Keyboard(usb_hid.devices)', '', 'while True:', '    event = matrix.events.get()', '    if event:', '        row, col = divmod(event.key_number, len(COLS))', '        code = KEYS[row][col]', '        if code is None:', '            continue', '        if event.pressed:', '            kbd.press(code)', '        else:', '            kbd.release(code)', '');
+  const sp = !!(S.xp && S.xp.keys && S.xp.keys.sp), m = Math.floor((K.c - 1) / 2);
+  use.forEach((u, ri) => L.push('    [' + ROWS[u].slice(0, K.c).map((n, ci) => 'K.' + (sp && ri === use.length - 1 && (ci === m || ci === m + 1) ? 'SPACE' : n)).join(', ') + '],' + (sp && ri === use.length - 1 ? '  # the two SPACE keys sit under the long space bar' : ''))); L.push(']', '', 'matrix = keypad.KeyMatrix(row_pins=ROWS, column_pins=COLS, columns_to_anodes=True)', 'kbd = Keyboard(usb_hid.devices)', '', 'while True:', '    event = matrix.events.get()', '    if event:', '        row, col = divmod(event.key_number, len(COLS))', '        code = KEYS[row][col]', '        if code is None:', '            continue', '        if event.pressed:', '            kbd.press(code)', '        else:', '            kbd.release(code)', '');
   return L.join('\n');
 }
 function kbCost(K) { const cheap = K.w <= 100 && K.h <= 100; return { cheap, txt: cheap ? 'It fits the cheapest factory size (under 100 x 100 mm): about $2 for 5 boards at JLCPCB before shipping.' : 'It is bigger than 100 x 100 mm, the cheapest factory size, so the price steps up. The factory shows the exact price the moment you upload the file.' }; }
@@ -1452,10 +1456,10 @@ function kbReadme(b) { const K = b.kb, n = K.c * K.r;
   return ['NOCIV CASE ZERO KEYBOARD, ' + K.c + ' x ' + K.r + ' = ' + n + ' KEYS', 'Board ' + K.w.toFixed(1) + ' x ' + K.h.toFixed(1) + ' mm, 2 layers, 1.6 mm thick. Made by the Case Zero builder at nociv.co.', '',
     'HONEST NOTE', 'A computer drew and checked this board (every pad is joined, nothing touches). Nobody has had this exact board made yet. Order the smallest batch first.', '',
     'ORDER IT', '1. Go to a board factory such as jlcpcb.com or pcbway.com and pick the instant quote.', '2. Upload this whole zip file. Keep their standard settings: 2 layers, 1.6 mm, any color.', '3. ' + kbCost(K).txt, '   Shipping and import fees are usually more than the boards.', '',
-    'WHAT TO BUY', n + ' keyboard switches, MX style (3 pin or 5 pin both fit)', n + ' diodes, type 1N4148 (the small glass ones, through hole)', '1 Raspberry Pi Pico with pins already on (Pico H)', '4 screws M3 x 12 with nuts', n + ' key caps: print them from the builder, or buy any MX caps', '',
+    'WHAT TO BUY', n + ' keyboard switches, MX style (3 pin or 5 pin both fit)', n + ' diodes, type 1N4148 (the small glass ones, through hole)', '1 Raspberry Pi Pico with pins already on (Pico H)', '4 screws M3 x 12 with nuts', n + ' key caps: print them from the builder, or buy any MX caps', (S.xp && S.xp.keys && S.xp.keys.sp ? 'Space bar: the two middle switches of the bottom row share one long printed cap. Both type a space.' : ''), '',
     'PUT IT TOGETHER', '1. Diodes first. They go on the FRONT (the side with the little boxes), lying flat in the gap beside each switch. The black stripe on the diode goes to the end with the two lines. Solder on the back, snip the legs.', '2. The Pico next, while the board is still bare. It goes on the BACK, in the box marked PICO HERE, USB end where the drawing shows it. Its pins poke up through the board. Solder them on the front.', '3. Click every switch into the printed plate. The rim faces the board.', '4. Lower the plate onto the board so each switch drops into its holes. The Pico pins come up through the two slots in the plate. Solder the two metal pins of each switch on the back.', '5. Push the key caps on.', '',
     'MAKE IT TYPE', 'Open code.py in this zip and follow the 3 steps at its top.', '',
-    'WIRING, IF YOU ARE CURIOUS', 'Columns, left to right: ' + b.cols.map((g) => 'GP' + g).join(' '), 'Rows, top to bottom: ' + b.rows.map((g) => 'GP' + g).join(' '), 'Each key joins its column to its row through one diode. Every key is one square (no long space bar).', ''].join('\n');
+    'WIRING, IF YOU ARE CURIOUS', 'Columns, left to right: ' + b.cols.map((g) => 'GP' + g).join(' '), 'Rows, top to bottom: ' + b.rows.map((g) => 'GP' + g).join(' '), 'Each key joins its column to its row through one diode. Every key is one square.', ''].join('\n');
 }
 // ---------- the carrier board (Clean it) ----------
 const PICOS = ['pico', 'picow', 'pico2'];
