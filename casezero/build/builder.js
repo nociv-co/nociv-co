@@ -3,9 +3,10 @@
 // Print: your printer and bed, material, how it joins, where the puzzle seams go. Files: STL per piece, wood templates, wiring.
 import * as THREE from 'three';
 import { OrbitControls } from 'three/addons/OrbitControls.js';
-import * as G from './geo.js?v=20';
+import * as G from './geo.js?v=21';
 import { openMeasure, GROUPS } from './capture.js?v=20';
 import { makeBoard, boardFiles, boardSvg, zip as zipFiles } from './board.js?v=3';
+import { charParts, chSpec, charBuyList, CH_DEF } from './char3d.js?v=1';
 import { planWiring, codeFor, PICO_LEFT, PICO_RIGHT, PICO_PINS, PICO_BRAINS, NEED } from './wiring.js?v=19';
 
 const CZ = window.CZ, R = G.RULE, $ = (id) => document.getElementById(id);
@@ -218,7 +219,7 @@ function looksFor(panel) {
 // ---------- the halves ----------
 function halfFor(panel, h) {
   if (isPanel()) return panelBuilt();
-  const d = dims(), lid = panel === 'lid', flip = (it) => ({ P: PP(it), x: lid ? d.W - it.x : it.x, y: lid ? d.D - it.y : it.y, r: ((it.r || 0) + (lid ? 2 : 0)) % 4 });
+  const d = dims(), lid = panel === 'lid', flip = (it) => ({ P: PP(it), x: lid ? d.W - it.x : it.x, y: lid ? d.D - it.y : it.y, r: ((it.r || 0) + (lid ? 2 : 0)) % 4, mt: it.mt || 'flush' });
   const parts = itemsOn(panel).filter((i) => PP(i)).map((i) => Object.assign(flip(i), { spring: S.spring && i.type === 'tact12' })); let inside = lid ? [] : S.items.filter((i) => i.panel === 'inside' && PP(i) && i.of == null).map(flip);
   if (!lid && pcbOn()) { const Bd = boardBuild(); if (Bd.ok) { /* the Pico is soldered to the board: no posts for it. The board gets four posts for M2 screws. */
     inside = inside.map((q) => (q.P.cat === 'brain' ? Object.assign({}, q, { P: Object.assign({}, q.P, { holes: null }) }) : q));
@@ -358,7 +359,7 @@ const ORDER = [2, 3, 0, 1, 4, 5];
 const FUNCS = [['brain', 'Think', 'The brain that runs it', 'pico'], ['screen', 'Show things', 'A screen', 'tft28'], ['press', 'Take presses', 'Buttons, a D-pad', 'button16'], ['turn', 'Turn and slide', 'Knobs, a wheel, a stick', 'encoder'],
   ['out', 'Light and sound', 'Lights, a speaker', 'speaker28'], ['move', 'Move', 'A motor that turns an arm', 'servo'], ['power', 'Run on a battery', 'Cut the cord', 'lipo1200'], ['print', 'Printed parts', 'Stand, body, gears', null], ['mine', 'Use my own part', 'Measure it with your phone', null]];
 const FN_STAND = '<svg viewBox="0 0 60 36" aria-hidden="true"><path d="M17 31L29 6l9 4-12 25z" fill="#c8412f" stroke="#1a1a1a" stroke-width="2" stroke-linejoin="round"/><path d="M35 15l11 17" stroke="#1a1a1a" stroke-width="3" stroke-linecap="round"/><path d="M7 33h47" stroke="#1a1a1a" stroke-width="2" stroke-linecap="round"/></svg>';
-const XGROUPS = [['Stand and carry', ['stand', 'handle', 'feet']], ['Character', ['body', 'limbs']], ['Moving parts', ['gears', 'hinge', 'spring', 'clamp']], ['Keyboard', ['keys']], ['Hardware', ['panel', 'standoff', 'clip']]];
+const XGROUPS = [['Stand and carry', ['stand', 'handle', 'feet']], ['Character', ['char', 'limbs']], ['Moving parts', ['gears', 'hinge', 'spring', 'clamp']], ['Keyboard', ['keys']], ['Hardware', ['panel', 'standoff', 'clip']]];
 const NEWP = ' Sized from published specs, not from a test print.';
 function xmeta(id) { // one printed part: [short name, what it is and how it goes on, its few settings]
   const X = xp(), fits = stepper('xs_t', 'Fits', X.stand.t + ' mm thick' + (X.stand.auto ? ' (your case)' : ''));
@@ -366,6 +367,7 @@ function xmeta(id) { // one printed part: [short name, what it is and how it goe
     stand: ['Kickstand', 'Clips onto the bottom edge and leans it back. No pin to snap.', fits + '<div class="row"><b>Leans</b>' + seg('xs_a', [['15', '15'], ['25', '25'], ['35', '35 deg']], String(X.stand.a)) + '</div>'],
     handle: ['Handle', 'An arch to carry it by. Glue its two feet to the top or the back with super glue or epoxy: tape will not hold it.' + NEWP, stepper('xh_l', 'Grip', X.handle.l + ' mm wide')],
     feet: ['Feet', 'Little round feet so it does not slide. Screw on, or glue.', '<div class="row"><b>Fix</b>' + seg('xf_hole', [['1', 'Screw hole'], ['0', 'Glue']], X.feet.hole ? '1' : '0') + '</div>' + stepper('xf_h', 'Tall', X.feet.h + ' mm')],
+    char: ['Character', 'A whole character to print: head, body, arms, hands, legs and feet, with a face. Spin it above to see it from every side. The head turns on its neck, the arms and legs swing and hold a pose.' + NEWP, charHtml(), true],
     body: ['Body', 'A torso your case sits on like a head. Two arms and two legs screw to its sides and hold a pose when you tighten them. You need 4 M3 x 12 screws (they cut their own thread in the torso) and 2 M3 x 20 with nuts for the feet. A heavy case can tip it: spread the legs.' + NEWP, stepper('xb_h', 'Torso', X.body.h + ' mm tall') + stepper('xl_l', 'Arms, legs', X.limbs.l + ' mm long') + fits],
     limbs: ['Legs or arms', 'No torso: 2 clips grab an edge of the case, then 4 bars and 2 feet. Join them with 6 M3 x 20 screws and nuts, tighten to hold a pose.' + NEWP, stepper('xl_l', 'Bars', X.limbs.l + ' mm long') + fits],
     gears: ['Gears', 'Two gears on a base with pegs, so they turn the moment they come off the printer. The small one has 18 teeth. ' + (X.gears.n === 18 ? 'Same size: they turn at the same speed, in opposite directions.' : 'Turn the small one and the big one turns ' + (X.gears.n / 18).toFixed(X.gears.n % 18 ? 1 : 0) + ' times slower and stronger.') + ' Take them off the base to use them on your own axles, ' + (0.75 * (18 + X.gears.n)).toFixed(1).replace('.0', '') + ' mm apart. Print in PETG if they will do real work.' + NEWP, stepper('xg_n', 'Big gear', X.gears.n + ' teeth')],
@@ -384,10 +386,10 @@ const FILNOTE = { pla: 'The easy one. It goes soft at about 55 to 60 C, so keep 
 // 2 = good, 1 = works with a catch, 0 = not worth the plastic. Each with the reason in plain words.
 const SOFT = [0, 'Too soft. It would bend instead of holding.'];
 const FILV = {
-  pla: { stand: [2], handle: [1, 'Carries a light device. PLA snaps instead of bending, so do not swing it around.'], feet: [2], body: [2], limbs: [2], gears: [1, 'Good to play with and for light jobs. Under real work the teeth wear and warm up.'], hinge: [2], spring: [0, 'It pushes back on day one, then goes limp if it stays squeezed. PLA does that.'], clamp: [1, 'It grips, but PLA slowly relaxes under a steady squeeze. Push the wedge in again now and then.'], panel: [2], keys: [2, 'PLA is stiff, and stiff is what a switch plate wants. Key caps too.'], standoff: [2], clip: [1, 'Fine if the cable goes in once. It can snap if you keep opening it.'] },
-  petg: { stand: [2], handle: [2, 'Bends before it breaks, so it is the safer handle.'], feet: [2], body: [2], limbs: [2], gears: [2], hinge: [2], spring: [2, 'The best common filament for a spring.'], clamp: [2], panel: [2], keys: [1, 'PETG gives a little more than PLA, so typing feels softer. The rim keeps it flat. Key caps can come out stringy inside.'], standoff: [2], clip: [2] },
-  abs: { stand: [2], handle: [2], feet: [2], body: [2], limbs: [2], gears: [2], hinge: [2], spring: [1, 'Springy at first, tires faster than PETG.'], clamp: [2], panel: [1, 'Big flat pieces curl at the corners unless the printer is enclosed.'], keys: [1, 'A wide thin plate curls at the corners unless the printer is enclosed.'], standoff: [2], clip: [2] },
-  tpu: { stand: SOFT, handle: [1, 'A soft strap. It stretches, so only for something light.'], feet: [2, 'Grippy. The best filament for feet.'], body: SOFT, limbs: SOFT, gears: SOFT, hinge: SOFT, spring: [1, 'Squashy like rubber, not springy.'], clamp: SOFT, panel: SOFT, keys: SOFT, standoff: SOFT, clip: [2] } };
+  pla: { char: [2, 'PLA is stiff and prints clean, which suits a figure that sits on a desk.'], stand: [2], handle: [1, 'Carries a light device. PLA snaps instead of bending, so do not swing it around.'], feet: [2], body: [2], limbs: [2], gears: [1, 'Good to play with and for light jobs. Under real work the teeth wear and warm up.'], hinge: [2], spring: [0, 'It pushes back on day one, then goes limp if it stays squeezed. PLA does that.'], clamp: [1, 'It grips, but PLA slowly relaxes under a steady squeeze. Push the wedge in again now and then.'], panel: [2], keys: [2, 'PLA is stiff, and stiff is what a switch plate wants. Key caps too.'], standoff: [2], clip: [1, 'Fine if the cable goes in once. It can snap if you keep opening it.'] },
+  petg: { char: [2], stand: [2], handle: [2, 'Bends before it breaks, so it is the safer handle.'], feet: [2], body: [2], limbs: [2], gears: [2], hinge: [2], spring: [2, 'The best common filament for a spring.'], clamp: [2], panel: [2], keys: [1, 'PETG gives a little more than PLA, so typing feels softer. The rim keeps it flat. Key caps can come out stringy inside.'], standoff: [2], clip: [2] },
+  abs: { char: [1, 'The hollow head and body can warp or split unless the printer is enclosed.'], stand: [2], handle: [2], feet: [2], body: [2], limbs: [2], gears: [2], hinge: [2], spring: [1, 'Springy at first, tires faster than PETG.'], clamp: [2], panel: [1, 'Big flat pieces curl at the corners unless the printer is enclosed.'], keys: [1, 'A wide thin plate curls at the corners unless the printer is enclosed.'], standoff: [2], clip: [2] },
+  tpu: { char: SOFT, stand: SOFT, handle: [1, 'A soft strap. It stretches, so only for something light.'], feet: [2, 'Grippy. The best filament for feet.'], body: SOFT, limbs: SOFT, gears: SOFT, hinge: SOFT, spring: [1, 'Squashy like rubber, not springy.'], clamp: SOFT, panel: SOFT, keys: SOFT, standoff: SOFT, clip: [2] } };
 const VWORD = ['Skip it', 'With a catch', 'Good'];
 const filV = (id) => (FILV[fil()] || {})[id] || [2];
 function filBar() { const f = fil(), ids = [].concat(...XGROUPS.map((g) => g[1])), n = [0, 0, 0]; ids.forEach((k) => { n[filV(k)[0]]++; }); const nm = FILS.find((x) => x[0] === f)[1];
@@ -407,6 +409,15 @@ function printCard(id) { const q = PQ[S.pq] ? S.pq : 'nice', P = PSET[id] || [3,
     '<div class="it"><b>Supports: off</b>Supports are throwaway scaffolding under overhangs. This part is drawn so it needs none.</div>' +
     '<div class="it"><b>Brim: ' + (P[2] ? 'on' : 'off') + '</b>A thin skirt stuck to the bed that keeps a part from tipping or lifting. ' + (P[2] ? 'This one stands tall on a small foot, so turn it on and peel it off after.' : 'Not needed here. Turn it on only if corners lift on your printer.') + '</div>' +
     '</div></details>'; }
+// ---------- the character page ----------
+let CHC = null;
+function charCache() { const k = JSON.stringify(xp().ch); if (!CHC || CHC.k !== k) { CHC = charParts(G, xp().ch); CHC.k = k; } return CHC; }
+function charHtml() { const c = chSpec(xp().ch), row = (label, f, opts) => '<div class="row"><b>' + label + '</b>' + seg('ch_' + f, opts, String(c[f])) + '</div>', hasScr = c.eyes === 'screen' || c.mouth === 'screen';
+  return '<p class="h" style="margin-top:10px">Shape</p>' + row('Head', 'head', [['cube', 'Cube'], ['sphere', 'Ball']]) + row('Body', 'body', [['box', 'Boxy'], ['round', 'Round']]) + row('Hands', 'hands', [['mitt', 'Mitt'], ['claw', 'Claw']]) + row('Feet', 'feet', [['shoe', 'Shoe'], ['boot', 'Boot']]) + row('Size', 'size', [['50', 'Small'], ['60', 'Medium'], ['72', 'Large']]) +
+    '<p class="h" style="margin-top:12px">Face</p>' + row('Eyes', 'eyes', [['dot', 'Dots'], ['oval', 'Ovals'], ['screen', 'A screen']]) + row('Brows', 'brows', [['1', 'On'], ['0', 'Off']]) + row('Nose', 'nose', [['button', 'Button'], ['wedge', 'Wedge'], ['none', 'None']]) + row('Mouth', 'mouth', [['smile', 'Smile'], ['line', 'Line'], ['screen', 'A screen']]) + row('Face parts', 'face', [['raised', 'Raised'], ['sunk', 'Sunk in']]) +
+    (hasScr ? row('Screen sits', 'scr', [['flush', 'Flush'], ['raised', 'Raised rim'], ['sunk', 'Sunk in'], ['mounted', 'On top']]) + '<p class="note" style="margin:2px 0 6px">A small OLED screen (0.96 in) shows the ' + (c.eyes === 'screen' ? 'eyes' : 'mouth') + '. ' + (c.head === 'sphere' ? 'The ball gets a flat spot so the flat screen sits right. ' : '') + (c.scr === 'mounted' ? 'It sticks on the outside, its cable goes through the slot.' : 'It sits behind the window, held with a dab of hot glue.') + ' One screen fits in a head.</p>' : '') +
+    '<p class="h" style="margin-top:12px">Moving</p>' + row('Head turns', 'turn', [['0', 'By hand'], ['1', 'Thumb wheel']]) + '<p class="note" style="margin:2px 0 6px">' + (c.turn ? 'Two gears. Turn the wheel behind the neck and the head turns.' : 'The head turns on its neck when you twist it.') + ' Arms and legs swing on their screws: tighten to hold a pose.</p>' +
+    '<p class="note" style="margin:8px 0 0"><b>You buy:</b> ' + charBuyList(c).join('. ') + '.</p>' + filLine('char'); }
 // ---------- the keyboard page ----------
 function kbCase() { const K = kb(), d = dims(), wall = R.T + R.CLR + 1, iw = d.W - 2 * wall, ih = d.D - 2 * wall; return { iw, ih, fits: (K.w <= iw && K.h <= ih) || (K.h <= iw && K.w <= ih), has: S.items.some((i) => i.type === 'kbd') }; }
 function kbHtml() { const K = kb(), X = xp(), n = K.c * K.r, C = kbCase(), cost = kbCost(K);
@@ -560,6 +571,7 @@ function pane(t) {
     if (s && PP(s) && PP(s).board) h += '<div class="selbar"><b>My photo</b>' + [['off', 'Hide'], ['faded', 'Faint'], ['clear', 'Show']].map((m) => '<button data-photo="' + m[0] + '"' + ((S.photo || 'off') === m[0] ? ' style="background:#1a1a1a;color:#fff"' : '') + '>' + m[1] + '</button>').join('') + '</div>' + ((PP(s).kids || []).length ? '<button class="btn" data-act="kidsreset" style="margin:0 0 8px;padding:8px">Put the parts back where my photo had them</button>' : '') + '<div class="selbar"><b>Board</b><button data-act="bmove">' + (s.move ? 'Unlocked: drag moves it' : 'Locked in place') + '</button></div>' + (s.move ? nudgeRow() : '') + '<p class="note" style="margin:-2px 0 8px">Tap an empty spot on your board to add a part there.</p>' + stepper('btop', 'Tallest', (PP(s).top || 9) + ' mm button') + '<p class="note" style="margin:-2px 0 8px">Your board hangs under the top so a ' + (PP(s).top || 9) + ' mm button pokes through 1.5 mm. Tap a part to see how far it pokes through.</p>' + stepper('bund', 'Under', (PP(s).under != null ? PP(s).under : 8.5) + ' mm below') + '<p class="note" style="margin:-2px 0 8px">Space under the board for pins, solder and wires' + (PP(s).under != null ? ', from your side photo' : ', a guess: take the side photo to measure it') + '.</p>';
     h += '<p class="h">' + (t === 'lid' ? 'The lid: screens live here' : t === 'base' ? 'The base: controls, the brain sits under it' : 'The top') + '</p>';
     h += mine.length ? '<div class="chosen">' + mine.map((i) => '<span data-sel="' + i.id + '" style="cursor:pointer' + (i.id === sel ? ';background:#1a1a1a;color:#fff' : '') + '">' + esc(N[i.id] + ' ' + PP(i).short) + (problems(i).length ? ' <i>!</i>' : '') + '</span>').join('') + '</div>' : '<p class="note">No parts here yet. Add some in Brain.</p>';
+    if (s && s.of == null && s.panel !== 'inside' && PP(s) && !PP(s).board && !isPanel()) { const mt = s.mt || 'flush'; h += '<div class="selbar"><b>Sits</b>' + [['flush', 'Flush'], ['raised', 'Raised rim'], ['sunk', 'Sunk in'], ['top', 'On top']].map((m) => '<button data-mt="' + m[0] + '"' + (mt === m[0] ? ' style="background:#1a1a1a;color:#fff"' : '') + '>' + m[1] + '</button>').join('') + '</div><p class="note" style="margin:2px 0 0">' + ({ flush: 'Level with the top.', raised: 'A rim stands up around it. The rim prints as its own flat piece that you glue on.', sunk: 'It sits down in a shallow pocket.', top: 'No opening. The part sits on the top, only its wires go through a small hole.' })[mt] + '</p>'; }
     h += '<div class="grid g2" style="margin-top:8px"><button class="btn dark" data-act="auto">Arrange for me</button><button class="btn" data-act="toBrain">Add parts</button></div>';
     h += '<p class="note">' + (probs.length ? probs.map((x) => '<span class="bad">' + esc(label(x.it)) + ' is ' + esc(x.list[0]) + '.</span>').join(' ') : (S.items.length ? '<span class="ok">Everything fits.</span> ' + (S.items.some((i) => PP(i) && PP(i).board) ? 'Tap your board to add a part there. Drag a part to line it up. Two fingers zoom in, and the part numbers show.' : 'Drag a part to move it. Tap to pick it.') : '')) + '</p>';
     return h;
@@ -743,6 +755,10 @@ $('pane').addEventListener('click', (e) => {
   if (d.have) { S.have[d.have] = !S.have[d.have]; save(); render(); return; }
   if (act === 'kidsreset') { const b0 = S.items.find((i) => i.id === sel); if (b0 && PP(b0) && PP(b0).board) { snapU(); S.items = S.items.filter((i) => i.of !== b0.id); makeKids(b0, PP(b0)); S.pins = {}; save(); render(); } return; }
   if (act === 'snap') { $('snapIn').click(); return; }
+  if (d.xsave === 'char') { tag('Packing your character...'); setTimeout(() => { const C = charCache();
+      Promise.all(C.parts.filter((q) => !q.show).map((q) => G.stl(G.trisOf(G.layerGeos(q.print || q.layers)), q.id).arrayBuffer().then((ab) => ({ name: 'character-' + q.id + (q.n > 1 ? '-print-' + q.n : '') + '.stl', data: new Uint8Array(ab) })))).then((list) => {
+        const txt = ['NOCIV CASE ZERO CHARACTER', Math.round(C.tall) + ' mm tall. ' + NEWP.trim(), '', 'PRINT', 'Standard profile for your printer and filament, 0.2 mm layers, 3 walls, 15 percent infill, supports off.'].concat(C.parts.filter((q) => !q.show).map((q) => '  ' + q.name + (q.n > 1 ? ' (print ' + q.n + ')' : '') + ': ' + q.how), ['', 'BUY'], charBuyList(C.spec).map((x) => '  ' + x), ['', 'PUT IT TOGETHER', '1. Legs: screw a leg bar to each hip hole on the body with an M3 x 12. Screw a foot to the bottom of each leg with an M3 x 16 and a nut.', '2. Arms: the same at the shoulder holes, with a hand on the end of each arm.', '3. Push the neck tube into the hole on top of the body. A drop of glue keeps it.', C.turn ? '4. Slide the head gear over the neck. Put the thumb wheel on the tab behind it with the M3 x 20 screw and two nuts, loose enough to turn. Glue the head gear to the underside of the head plate.' : '4. Slide the neck ring over the neck.', '5. Slide the head plate over the neck, then press the head down onto the plate. Glue the plate into the head once any screen is in.', '6. Tighten the arm and leg screws until they hold a pose.', '']).join('\n');
+        list.push({ name: 'START HERE.txt', text: txt }); saveFile({ name: 'casezero-character.zip', blob: new Blob([zipFiles(list)], { type: 'application/zip' }) }); tag('Saved casezero-character.zip'); }); }, 30); return; }
   if (d.xsave) { const f = addonFile(d.xsave); if (f) saveFile(f); return; }
   if (act === 'start') { showStart(); return; }
   if (act === 'clearall') { if (Date.now() - CLEARARM < 4000) { backup(); snapU(); S.items = S.items.filter((i) => i.of != null || (PP(i) && PP(i).board)); /* a board you measured from a photo stays, with the parts on it */ sel = null; LAST = null; CLEARARM = 0; CLEARED = true; } else CLEARARM = Date.now(); save(); render(); return; }
@@ -791,6 +807,7 @@ $('pane').addEventListener('click', (e) => {
   if (act === 'open') { S.open = !S.open; save(); render(); return; }
   if (act === 'make') { if (b.getAttribute('aria-disabled') === 'true') return; makeFiles(); return; }
   if (d.f != null) { saveFile(FILES[+d.f]); return; }
+  if (d.mt) { const it = S.items.find((i) => i.id === sel); if (it) { snapU(); it.mt = d.mt; save(); render(); } return; }
   if (d.jump) { const pi = PAGES.findIndex((q) => q.name === d.jump); if (pi >= 0) openPage(pi); return; }
   if (act === 'saveall') { if (!FILES || !FILES.length) return; tag('Packing your files...');
     Promise.all(FILES.map((f) => f.blob.arrayBuffer().then((ab) => ({ name: f.name, data: new Uint8Array(ab) })))).then((list) => {
@@ -828,6 +845,7 @@ $('pane').addEventListener('click', (e) => {
     const k = sg.dataset.sg, v = d.v, L = S.look; markCache = k.startsWith('lg_') || k.startsWith('lb_') ? {} : markCache;
     if (k === 'pt') { S.pt = +v; save(); render(); return; } if (k === 'prad') { S.prad = +v; save(); render(); return; } if (k === 'phold') { S.phold = v; reflow(); save(); render(); return; } if (k === 'plift') { if (v === '0') S.plift = 0; else { S.plift = S.plift || 12; S.pbase = v; } reflow(); save(); render(); return; }
     const nn = (S.notches || [])[S.nsel]; if (nn && k === 'n_edge') { if ((nn.edge === 'left' || nn.edge === 'right') !== (v === 'left' || v === 'right')) nn.at = Math.round((v === 'left' || v === 'right' ? dims().D : dims().W) / 2); nn.edge = v; reflow(); save(); render(); return; } if (nn && k === 'n_shape') { nn.shape = v; save(); render(); return; }
+    if (k.indexOf('ch_') === 0) { const X = xp(), f = k.slice(3); X.ch[f] = (f === 'brows' || f === 'turn' || f === 'size') ? +v : v; if (f === 'eyes' && v === 'screen' && X.ch.mouth === 'screen') X.ch.mouth = 'line'; if (f === 'mouth' && v === 'screen' && X.ch.eyes === 'screen') X.ch.eyes = 'oval'; save(); render(); return; }
     if (k === 'fil') { S.fil = v; save(); render(); return; } if (k === 'pq') { S.pq = v; S.psOpen = true; save(); render(); return; }
     { const X = xp(); if (k === 'xkf') { X.keys.f = +v; save(); render(); return; } if (k === 'xksp') { X.keys.sp = v === '1' ? 1 : 0; save(); render(); return; } if (k === 'xs_a') { X.stand.a = +v; save(); render(); return; } if (k === 'xf_hole') { X.feet.hole = v === '1'; save(); render(); return; } if (k === 'xo_s') { X.standoff.s = v; save(); render(); return; } }
     if (k === 'brand') { S.brand = v; save(); render(); return; }
@@ -854,7 +872,7 @@ let view = null; // current 2D mapping for taps
 function fit() { const r = cv.getBoundingClientRect(), d = Math.min(2, devicePixelRatio || 1); cv.width = Math.max(1, Math.round(r.width * d)); cv.height = Math.max(1, Math.round(r.height * d)); }
 // The 3D box: steps that show a flat picture also show the case in 3D in the top right corner. Tap it to make it big.
 let BIG3D = false, miniTimer = 0;
-const native3d = () => { const t = curTab(); return (S.step === 2 && !isPanel()) || (S.step === 5 && t === '3d') || (S.step === 3 && t === 'colors'); };
+const native3d = () => { const t = curTab(); if (t === 'extras') return !!S.xsel; return (S.step === 2 && !isPanel()) || (S.step === 5 && t === '3d') || (S.step === 3 && t === 'colors'); };
 const wantsMini = () => (S.step === 0 || S.step === 1 || S.step === 3 || S.step === 4 || (S.step === 2 && isPanel())) && (S.items.length > 0 || S.step === 3) && !$('con').classList.contains('down');
 function draw() {
   const big = native3d() || BIG3D, mini = !big && wantsMini(), v3 = $('v3');
@@ -1137,7 +1155,28 @@ function setHighlight(r) {
   const fill = new THREE.Mesh(geo, new THREE.MeshBasicMaterial({ color: 0xffd23a, transparent: true, opacity: 0.5, depthTest: false })), edge = new THREE.LineSegments(new THREE.EdgesGeometry(geo), new THREE.LineBasicMaterial({ color: 0x1a1a1a, depthTest: false }));
   fill.renderOrder = 998; edge.renderOrder = 999; box.add(fill, edge); box.position.set(sl.x, sl.y, sl.z); sl.grp.add(box); r.hl = box;
 }
+// the Parts room in 3D: the piece you picked, the way it prints. The character shows put together.
+function drawParts3d() {
+  const r = setup3d(), id = S.xsel, key = 'x:' + id + ':' + JSON.stringify(S.xp || {});
+  if (r.key !== key) {
+    r.key = key; r.slots = {}; r.hl = null; r.root.children.slice().forEach((c) => { r.root.remove(c); c.traverse((o) => { if (o.geometry) o.geometry.dispose(); }); });
+    let tall = 30, wide = 60;
+    if (id === 'char') { const C = charCache();
+      C.parts.forEach((q) => { if (q.kind === 'up') { const m = mesh(G.layerGeos(q.layers), q.color); m.position.set(q.pose[0], q.pose[1], q.pose[2]); if (q.spin) m.rotation.z = q.spin; r.root.add(m); }
+        else q.at.forEach((a) => { const m = mesh(G.layerGeos(q.layers), q.color); m.matrixAutoUpdate = false; m.matrix.makeBasis(new THREE.Vector3(0, 1, 0), new THREE.Vector3(0, 0, 1), new THREE.Vector3(1, 0, 0)).setPosition(a[0], a[1], a[2]); r.root.add(m); }); });
+      C.screens.forEach((sc) => { const m = new THREE.Mesh(new THREE.BoxGeometry(sc.w, 1.2, sc.h), new THREE.MeshStandardMaterial({ color: 0x10242c, emissive: 0x1c6f86 })); m.position.set(sc.x, sc.y, sc.z); r.root.add(m); });
+      tall = C.tall; wide = C.wide; }
+    else { const a = addonPolys(id), sets = a ? (a.sets || [a]) : [], cols = [0xc8412f, 0x2f4a6b, 0xf2c230, 0xe9e2cc]; let x = 0; const rows = sets.map((st) => { const layers = st.layers || [{ polys: st.polys, z0: 0, z1: st.h }], b = G.bbox([].concat(...layers.map((l) => l.polys))), zt = Math.max(...layers.map((l) => l.z1)); return { layers, b, zt }; }), tw = rows.reduce((q, w) => q + w.b.w, 0) + 6 * Math.max(0, rows.length - 1);
+      rows.forEach((w, i) => { const m = mesh(G.layerGeos(w.layers), cols[i % cols.length]); m.position.set(-tw / 2 + x - w.b.x0, -(w.b.y0 + w.b.h / 2), 0); r.root.add(m); x += w.b.w + 6; tall = Math.max(tall, w.zt, w.b.h * 0.6); }); wide = Math.max(40, tw); }
+    r.root.position.set(0, 0, 0);
+    r.fit = () => { const rad = Math.hypot(wide, tall) / 2 * 1.08, v = r.camera.fov * Math.PI / 360, hz = Math.atan(Math.tan(v) * r.camera.aspect), dist = rad / Math.sin(Math.min(v, hz)) * 1.12, dir = id === 'char' ? [0.28, 0.16, 1] : [0.3, 0.75, 0.75];
+      r.controls.target.set(0, id === 'char' ? tall / 2 : tall / 4, 0); r.camera.position.copy(new THREE.Vector3(dir[0], dir[1], dir[2]).normalize().multiplyScalar(dist)).add(r.controls.target); r.controls.update(); };
+    r.mode = 'big'; r.view = key; r.fit();
+  }
+  r.controls.enabled = true; r.draw(); try { tag(xmeta(id)[0] + ': ' + XINFO[id]() + '. Drag to spin it.'); } catch (e) {}
+}
 function draw3d(isMini) {
+  if (curTab() === 'extras') { if (!isMini && S.xsel) drawParts3d(); return; }
   // styling the lid's outside: show it closed, from above, the way people will see it
   const lidTop = S.step === 3 && curTab() !== 'colors' && curFace() === 'lidout', OPEN = S.open && !lidTop;
   const r = setup3d(), d = dims(), h = heights(), key = JSON.stringify([S.items, S.style, S.cols, S.rows, S.add, S.hinge, S.hside, S.magnets, OPEN, S.mine, S.look, S.snap, S.spring, S.walls, LOGOIMG ? LOGOIMG.src.length : 0]);
@@ -1335,8 +1374,8 @@ async function scanPrinter(file) {
 }
 
 // ---------- add-ons: one piece at a time ----------
-function xp() { if (!S.xp) S.xp = {}; const X = S.xp; X.stand = X.stand || { t: null, a: 25 }; if (X.stand.t == null) X.stand.auto = true; if (X.stand.auto) X.stand.t = isPanel() ? 20 : Math.round(heights().H); /* follows the case until she sets it */ X.feet = X.feet || { hole: true, h: 4 }; X.standoff = X.standoff || { s: 'm25', h: 8 }; X.clip = X.clip || { d: 6 }; X.handle = X.handle || { l: 80 }; X.limbs = X.limbs || { l: 45 }; X.body = X.body || { h: 60 }; X.gears = X.gears || { n: 36 }; X.gears.n = Math.max(18, Math.min(54, Math.round(X.gears.n / 9) * 9)); X.hinge = X.hinge || { l: 30 }; X.spring = X.spring || { n: 6 }; X.clamp = X.clamp || { t: 20 }; X.panel = X.panel || { w: 80, h: 60 }; X.keys = X.keys || { c: 4, r: 3 }; if (X.keys.c < 3) X.keys.c = 3; if (X.keys.f == null) X.keys.f = 0.1; return X; }
-const XINFO = { body: () => '7 pieces: torso on its side, the rest flat', gears: () => '3 pieces, print flat', hinge: () => '2 leaves, print standing as saved', spring: () => '2 springs, print flat', clamp: () => '1 clamp and 1 wedge, print flat', panel: () => { const X = xp(); return '1 panel, ' + X.panel.w + ' x ' + X.panel.h + ' mm, 2.4 mm thick'; }, keys: () => { const K = kb(); return '1 plate, ' + K.w.toFixed(0) + ' x ' + K.h.toFixed(0) + ' mm, print it rim side up'; }, handle: () => '1 handle, print on its side', limbs: () => '8 pieces, print flat', stand: () => '2 stands, print on their side', feet: () => '4 feet', standoff: () => '4 standoffs', clip: () => '6 clips' };
+function xp() { if (!S.xp) S.xp = {}; const X = S.xp; X.stand = X.stand || { t: null, a: 25 }; if (X.stand.t == null) X.stand.auto = true; if (X.stand.auto) X.stand.t = isPanel() ? 20 : Math.round(heights().H); /* follows the case until she sets it */ X.feet = X.feet || { hole: true, h: 4 }; X.standoff = X.standoff || { s: 'm25', h: 8 }; X.clip = X.clip || { d: 6 }; X.handle = X.handle || { l: 80 }; X.limbs = X.limbs || { l: 45 }; X.body = X.body || { h: 60 }; X.gears = X.gears || { n: 36 }; X.gears.n = Math.max(18, Math.min(54, Math.round(X.gears.n / 9) * 9)); X.hinge = X.hinge || { l: 30 }; X.spring = X.spring || { n: 6 }; X.clamp = X.clamp || { t: 20 }; X.panel = X.panel || { w: 80, h: 60 }; X.ch = Object.assign({}, CH_DEF, X.ch || {}); X.keys = X.keys || { c: 4, r: 3 }; if (X.keys.c < 3) X.keys.c = 3; if (X.keys.f == null) X.keys.f = 0.1; return X; }
+const XINFO = { char: () => { const C = charCache(); return C.parts.reduce((n, q) => n + q.n, 0) + ' pieces, ' + Math.round(C.tall) + ' mm tall'; }, body: () => '7 pieces: torso on its side, the rest flat', gears: () => '3 pieces, print flat', hinge: () => '2 leaves, print standing as saved', spring: () => '2 springs, print flat', clamp: () => '1 clamp and 1 wedge, print flat', panel: () => { const X = xp(); return '1 panel, ' + X.panel.w + ' x ' + X.panel.h + ' mm, 2.4 mm thick'; }, keys: () => { const K = kb(); return '1 plate, ' + K.w.toFixed(0) + ' x ' + K.h.toFixed(0) + ' mm, print it rim side up'; }, handle: () => '1 handle, print on its side', limbs: () => '8 pieces, print flat', stand: () => '2 stands, print on their side', feet: () => '4 feet', standoff: () => '4 standoffs', clip: () => '6 clips' };
 function addonPolys(id) {
   // every add-on is a flat shape pushed up into 3D (prints flat, strongest way for each one). Returns { polys, h, n, gap }
   const X = xp();
@@ -1395,6 +1434,8 @@ function addonPolys(id) {
     [-8.89, 8.89].forEach((dy) => cut.push(G.rect(K.pico.x - 25.8, K.pico.y + dy - 1.6, K.pico.x + 25.8, K.pico.y + dy + 1.6))); /* two slots: the Pico's pins poke up through here */
     const rim = G.union(G.diff(out, [G.rect(K.x0 + 7, K.y0 + 7, K.x1 - 7, K.y1 - 7)]).concat([G.rect(K.x0 + 6, K.H + 0.8, K.x1 - 6, K.H + 2.4)])); /* the rim, and one rib between the keys and the Pico, keep a thin printed plate flat. Its 3.5 mm height is also what holds the board at the right distance. */
     return { layers: [{ polys: G.diff(out, cut), z0: 0, z1: 1.5 }, { polys: G.diff(rim, scr), z0: 1.5, z1: 5 }], n: 1 }; }
+  if (id === 'char') { const c = chSpec(X.ch); // a front view, for the tile picture only. The real pieces come from charParts.
+    return { polys: G.union([c.head === 'sphere' ? G.circle(0, 96, 29, 48) : G.rrect(-30, 68, 30, 122, 8), c.body === 'round' ? G.circle(0, 36, 1, 48).map(([x, y]) => [x * 29, (y - 36) * 31 + 36]) : G.rrect(-28, 6, 28, 64, 6), G.rect(-36, 16, -29, 56), G.rect(29, 16, 36, 56), G.rect(-20, -34, -11, 8), G.rect(11, -34, 20, 8), G.rrect(-28, -42, -8, -33, 3), G.rrect(8, -42, 28, -33, 3), G.rect(-5, 62, 5, 70)]), h: 1, n: 1 }; }
   if (id === 'keycaps' || id === 'keycap1' || id === 'keycap2') { const X2 = xp(), n = id === 'keycaps' ? Math.min(24, kb().c * kb().r - (X2.keys.sp ? 2 : 0)) : 1; return { layers: capPolys(X2.keys.f == null ? 0.1 : X2.keys.f, id === 'keycap2'), n }; }
   if (id === 'feet') { const c = G.circle(0, 0, 7, 40); return { polys: X.feet.hole ? G.diff([c], [G.circle(0, 0, 1.7, 20)]) : [c], h: X.feet.h, n: 4 }; }
   if (id === 'standoff') return { polys: G.diff([G.circle(0, 0, 3.2, 32)], [G.circle(0, 0, X.standoff.s === 'm3' ? 1.3 : 1.1, 20)]), h: X.standoff.h, n: 4 };
@@ -1752,7 +1793,7 @@ $('helpTop').onclick = openHelp;
 $('sheet').addEventListener('click', (e) => { if (e.target === $('sheet')) $('sheet').hidden = true; });
 window.addEventListener('resize', draw);
 
-window.__cz = { wiring, codeFor, get S() { return S; }, get view() { return view; }, AZ, get UNDO() { return UNDO.length; }, halves, plan, makeFiles, get FILES() { return FILES; }, allProblems, G, addPart, go, render, dims, heights, addonFile, addonPolys, kb, kbBoard, kbCode, kbReadme, boardSvg, get TRAY() { return TRAY; }, showStart, loadRecipe, cost, boardBuild, boardFiles, boardReadme };
+window.__cz = { wiring, codeFor, get S() { return S; }, get view() { return view; }, AZ, get UNDO() { return UNDO.length; }, halves, plan, makeFiles, get FILES() { return FILES; }, allProblems, G, addPart, go, render, dims, heights, addonFile, addonPolys, charParts, charCache, kb, kbBoard, kbCode, kbReadme, boardSvg, get TRAY() { return TRAY; }, showStart, loadRecipe, cost, boardBuild, boardFiles, boardReadme };
 render();
 if (!S.started && !S.items.length) showStart();
 // arriving from the Case Zero page: /casezero/build/?room=brain opens that room

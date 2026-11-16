@@ -149,21 +149,26 @@ export function buildHalf(o) {
     q.P.holes.forEach(([hx, hy]) => { const p = rot([[q.x - P.w / 2 + hx, q.y - P.h / 2 + hy]], (q.r || 0) * Math.PI / 2, q.x, q.y)[0]; tray.push({ polys: diff([circle(p[0], p[1], 2.6, 24)], [circle(p[0], p[1], (P.hole || 2.1) * 0.8 / 2, 16)]), z0: R.F, z1: R.F + 5 }); });
   });
   // the deck: outline minus every cut and the post screw holes
-  const cuts = [], thin = [], nubs = [];
+  const cuts = [], thin = [], nubs = [], rims = [], sunk = []; // how a part sits: flush, in a pocket, behind a raised rim, or on top of the deck
   o.parts.forEach((q) => {
     if (q.spring) { // printed spring button (a living hinge): a C shaped slot leaves the pad on one arm, a nub presses the switch
       const pad = circle(q.x, q.y, 6.2, 32), arm = rect(q.x - 2.2, q.y - 8.2, q.x + 2.2, q.y);
       cuts.push(...diff([circle(q.x, q.y, 7.4, 36)], union([pad, rect(q.x - 2.2, q.y - 9, q.x + 2.2, q.y)])));
       thin.push(pad, arm); nubs.push(circle(q.x, q.y, 1.6, 16)); return;
     }
-    cuts.push(...cutShape(q.P, q.x, q.y, q.r || 0));
+    const cs = cutShape(q.P, q.x, q.y, q.r || 0);
+    if (q.mt === 'top') { cuts.push(circle(q.x, q.y, 3.2, 24)); return; } /* on top: the part sits on the deck, only its wires go through */
+    cuts.push(...cs);
+    if (q.mt === 'raised') rims.push(...offset(cs, 3)); else if (q.mt === 'sunk') sunk.push(...offset(cs, 3));
   });
   if (!snapOK) posts.forEach(([x, y]) => cuts.push(circle(x, y, R.HOLE / 2, 24)));
   const tm = marks(o.top), deckFlat = diff(diff(deckPoly, union(cuts)), tm.cut), top = deckZ + R.LT;
   const thinU = thin.length ? inter(union(thin), deckFlat) : [];
+  const deckUp = sunk.length ? diff(deckFlat, union(sunk)) : deckFlat; /* sunk: a 1.2 mm pocket around the opening */
   deck.push({ polys: diff(deckFlat, thinU), z0: deckZ, z1: top - 1.2, tag: 'deck' });
-  if (tm.recess.length) { deck.push({ polys: deckFlat, z0: top - 1.2, z1: top - D, tag: 'deck' }); deck.push({ polys: diff(deckFlat, tm.recess), z0: top - D, z1: top, tag: 'deck' }); if (tm.fill.length) inlay.push({ polys: inter(tm.fill, deckFlat), z0: top - D, z1: top, tag: 'inlayT' }); }
-  else deck.push({ polys: deckFlat, z0: top - 1.2, z1: top, tag: 'deck' });
+  if (tm.recess.length) { deck.push({ polys: deckUp, z0: top - 1.2, z1: top - D, tag: 'deck' }); deck.push({ polys: diff(deckUp, tm.recess), z0: top - D, z1: top, tag: 'deck' }); if (tm.fill.length) inlay.push({ polys: inter(tm.fill, deckUp), z0: top - D, z1: top, tag: 'inlayT' }); }
+  else deck.push({ polys: deckUp, z0: top - 1.2, z1: top, tag: 'deck' });
+  if (rims.length) { const ring = diff(inter(union(rims), deckPoly), union(cuts)); if (ring.length) stick.push({ layers: [{ polys: ring, z0: top, z1: top + 1.6 }], face: 'top' }); } /* raised rim: its own flat piece, glued on, so the deck still prints face down */
   tm.stick.forEach((sp) => { sp.layers.forEach((l) => { l.z0 += top - D; l.z1 += top - D; }); sp.face = 'top'; stick.push(sp); });
   if (nubs.length) deck.push({ polys: union(nubs), z0: deckZ - 1.5, z1: top - 1.2, tag: 'nub' });
   // snap clips (Slant 3D style cantilever): four arms hang from the deck edge, their lips catch a groove in the wall. No screws.
