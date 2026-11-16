@@ -311,7 +311,7 @@ function crc32(u8) { let c = 0xFFFFFFFF; for (let i = 0; i < u8.length; i++) c =
 export function zip(files) {
   const enc = new TextEncoder(), parts = [], cen = []; let off = 0;
   const u16 = (v) => [v & 255, (v >> 8) & 255], u32 = (v) => [v & 255, (v >>> 8) & 255, (v >>> 16) & 255, (v >>> 24) & 255];
-  files.forEach((f) => { const nm = enc.encode(f.name), data = enc.encode(f.text), crc = crc32(data);
+  files.forEach((f) => { const nm = enc.encode(f.name), data = f.data || enc.encode(f.text), crc = crc32(data); /* f.data: bytes as they are (a 3D print file), f.text: plain text */
     const head = [].concat(u32(0x04034b50), u16(20), u16(0), u16(0), u16(0), u16(0x21), u32(crc), u32(data.length), u32(data.length), u16(nm.length), u16(0));
     parts.push(new Uint8Array(head), nm, data);
     cen.push({ nm, bytes: [].concat(u32(0x02014b50), u16(20), u16(20), u16(0), u16(0), u16(0), u16(0x21), u32(crc), u32(data.length), u32(data.length), u16(nm.length), u16(0), u16(0), u16(0), u16(0), u32(0), u32(off)) });

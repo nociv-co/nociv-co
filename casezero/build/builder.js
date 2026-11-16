@@ -5,7 +5,7 @@ import * as THREE from 'three';
 import { OrbitControls } from 'three/addons/OrbitControls.js';
 import * as G from './geo.js?v=20';
 import { openMeasure, GROUPS } from './capture.js?v=20';
-import { makeBoard, boardFiles, boardSvg, zip as zipFiles } from './board.js?v=2';
+import { makeBoard, boardFiles, boardSvg, zip as zipFiles } from './board.js?v=3';
 import { planWiring, codeFor, PICO_LEFT, PICO_RIGHT, PICO_PINS, PICO_BRAINS, NEED } from './wiring.js?v=19';
 
 const CZ = window.CZ, R = G.RULE, $ = (id) => document.getElementById(id);
@@ -791,6 +791,19 @@ $('pane').addEventListener('click', (e) => {
   if (act === 'open') { S.open = !S.open; save(); render(); return; }
   if (act === 'make') { if (b.getAttribute('aria-disabled') === 'true') return; makeFiles(); return; }
   if (d.f != null) { saveFile(FILES[+d.f]); return; }
+  if (d.jump) { const pi = PAGES.findIndex((q) => q.name === d.jump); if (pi >= 0) openPage(pi); return; }
+  if (act === 'saveall') { if (!FILES || !FILES.length) return; tag('Packing your files...');
+    Promise.all(FILES.map((f) => f.blob.arrayBuffer().then((ab) => ({ name: f.name, data: new Uint8Array(ab) })))).then((list) => {
+      let code = null; try { const w = wiring(); if (w && w.rows && w.rows.length && !w.problems.length) code = codeFor(w, summaryLine()).text; } catch (e) { code = null; }
+      const wood = S.material === 'wood', start = ['NOCIV CASE ZERO: START HERE', summaryLine().replace(/<[^>]+>/g, ''), '', 'FROM FILES TO A FINISHED DEVICE', '',
+        '1. PRINT', wood ? '   Print the .svg templates at 100 percent, tape them to the wood and cut them out.' : '   Print every .stl file. In your slicer pick the standard profile for your printer and filament, then set', wood ? '' : '   ' + LAYER[S.layer] + ' mm layers, 4 walls, 15 percent infill, supports off. Print the deck face down and the tray open side up.', '',
+        '2. BUY THE PARTS', '   casezero-parts.txt is the list. For prices and what to search for, open the builder: nociv.co/casezero/build, Brain, Shop.', '',
+        '3. WIRE IT', '   In the builder: Brain, Wire it. It shows one wire at a time, with a test after each part. No breadboard.', '',
+        '4. LOAD THE CODE', code ? '   code.py is in this zip. Its first lines tell you how to put it on the Pico.' : '   Your build has no starter code yet (no brain with parts wired to it). Add them in the builder and save again.', '',
+        '5. CLOSE IT UP', '   Fit the parts, screw the deck down. Done.', '', 'Your build is saved in the builder on the phone or computer you made it on.', ''].join('\n');
+      list.push({ name: 'START HERE.txt', text: start }); if (code) list.push({ name: 'code.py', text: code });
+      saveFile({ name: 'casezero-build.zip', blob: new Blob([zipFiles(list)], { type: 'application/zip' }) }); tag('Saved casezero-build.zip'); });
+    return; }
   const st = b.closest('[data-st]');
   if (st && d.d) {
     const k = st.dataset.st, v = +d.d;
@@ -1679,7 +1692,12 @@ function makeFiles() {
     if (!wood && knobs) { const geos = []; for (let i = 0; i < knobs; i++) { const kg = G.knobGeo(); kg.translate(i * 24, 0, 0); geos.push(kg); } files.push({ label: knobs + (knobs > 1 ? ' knobs' : ' knob'), name: 'casezero-knobs.stl', blob: G.stl(G.trisOf(geos), 'knobs') }); }
     if (!wood && pads) { const geos = []; for (let i = 0; i < pads; i++) G.dpadGeos().forEach((gg) => { gg.translate(i * 40, 0, 1.5); geos.push(gg); }); files.push({ label: pads + ' D-pad', name: 'casezero-dpad.stl', blob: G.stl(G.trisOf(geos), 'dpad') }); }
     files.push({ label: 'Parts + build list', name: 'casezero-parts.txt', blob: new Blob([partsText()], { type: 'text/plain' }) });
-    FILES = files; out.innerHTML = files.map((f, i) => '<button type="button" class="btn" data-f="' + i + '">Save ' + esc(f.label) + '</button>').join('');
+    FILES = files; const hasBrain = S.items.some((i) => PP(i) && PP(i).cat === 'brain');
+    out.innerHTML = '<button type="button" class="btn red" data-act="saveall" style="grid-column:1/-1">Save everything in one zip</button>' + files.map((f, i) => '<button type="button" class="btn" data-f="' + i + '">Save ' + esc(f.label) + '</button>').join('') +
+      '<div class="list" style="grid-column:1/-1;margin-top:8px"><p class="h" style="margin:0 0 4px">From files to a finished device</p>' +
+      '<div class="it"><b>1. Print</b>Every piece above. ' + (wood ? 'Print the templates at 100 percent and cut them out.' : 'Use ' + LAYER[S.layer] + ' mm layers, 4 walls, 15 percent infill, no supports.') + '</div>' +
+      '<div class="it"><b>2. Buy the parts</b>The list with prices and what to search for.<div style="margin-top:6px"><button class="btn" data-jump="Shop" style="display:inline-block;padding:7px 12px">Open Shop</button></div></div>' +
+      (hasBrain ? '<div class="it"><b>3. Wire it</b>One wire at a time, no breadboard, with a test after each part.<div style="margin-top:6px"><button class="btn" data-jump="Wire it" style="display:inline-block;padding:7px 12px">Open Wire it</button></div></div><div class="it"><b>4. Load the code</b>The starter code is in the zip as code.py, with the steps at its top.</div><div class="it"><b>5. Close it up</b>Screw the deck down. Done.</div>' : '<div class="it"><b>3. Close it up</b>Fit your parts and screw the deck down. Done.</div>') + '</div>';
   }, 30);
 }
 function partsText() {
