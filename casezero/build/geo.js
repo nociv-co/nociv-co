@@ -109,7 +109,7 @@ export function buildHalf(o) {
   // floor, with marks on the bottom face: dips (filled with a second color or paint), cut throughs (vents), pockets for glue-on pieces
   // a face, arms and legs on the outside of a lid: the lid's floor is its outside
   const oS = [], oU = [], oH = [], oB = [];
-  const mounts = o.mounts || [], wallM = mounts.filter((m) => m.face !== 'bottom').map((m) => Object.assign({ bands: m.type === 'screw' ? [{ z0: +(m.zc - PLUG + 0.1).toFixed(3), z1: +(m.zc + PLUG - 0.1).toFixed(3), hw: PLUG - 0.1 }] : mountBands(m) }, m)), botM = mounts.filter((m) => m.face === 'bottom');
+  const mounts = o.mounts || [], plateM = mounts.filter((m) => m.face === 'plate'), wallM = mounts.filter((m) => m.face !== 'bottom' && m.face !== 'plate').map((m) => Object.assign({ bands: m.type === 'screw' ? [{ z0: +(m.zc - PLUG + 0.1).toFixed(3), z1: +(m.zc + PLUG - 0.1).toFixed(3), hw: PLUG - 0.1 }] : mountBands(m) }, m)), botM = mounts.filter((m) => m.face === 'bottom');
   botM.forEach((m) => { if (m.type === 'snap') { const s = mountSlot() / 2; oH.push(rect(m.x - s, m.y - s, m.x + s, m.y + s)); } else oH.push(circle(m.x, m.y, R.PILOT / 2 + R.FIT, 20)); }); /* a mounted part on the bottom: its hole through the floor */
   (o.decoOut || []).forEach((dq) => { if (dq.arm) { oH.push(circle(dq.x, dq.y, 1.35, 20)); oB.push(circle(dq.x, dq.y, 4.6, 28)); } else if (dq.mt === 'raised') oU.push(...dq.polys); else oS.push(...dq.polys); });
   const bm0 = marks(o.bottom), bm = oS.length ? Object.assign({}, bm0, { recess: union(bm0.recess.concat(oS)) }) : bm0, floorCut = diff(out, oH.length ? union(bm.cut.concat(oH)) : bm.cut);
@@ -166,10 +166,16 @@ export function buildHalf(o) {
     o._mag = bosses;
   }
   // inside parts (brains): standoffs with pilot holes
-  (o.inside || []).forEach((q) => {
-    const P = q.P; if (!P.holes) return;
-    q.P.holes.forEach(([hx, hy]) => { const p = rot([[q.x - P.w / 2 + hx, q.y - P.h / 2 + hy]], (q.r || 0) * Math.PI / 2, q.x, q.y)[0]; tray.push({ polys: diff([circle(p[0], p[1], 2.6, 24)], [circle(p[0], p[1], (P.hole || 2.1) * 0.8 / 2, 16)]), z0: R.F, z1: R.F + 5 }); });
+  (o.inside || []).forEach((q) => { // inside parts: standoffs at its screw holes, or a mounting slate (a flat plate on 4 corner posts) at the chosen riser height
+    const P = q.P, rz = q.riser != null ? q.riser : 5, a = (q.r || 0) * Math.PI / 2;
+    if (P.holes && P.holes.length) { if (rz < 0.5) return; P.holes.forEach(([hx, hy]) => { const p = rot([[q.x - P.w / 2 + hx, q.y - P.h / 2 + hy]], a, q.x, q.y)[0]; tray.push({ polys: diff([circle(p[0], p[1], 2.6, 24)], [circle(p[0], p[1], (P.hole || 2.1) * 0.8 / 2, 16)]), z0: R.F, z1: R.F + rz }); }); return; }
+    if (q.riser == null || rz < 0.5) return; /* no holes and no riser asked for: it lies on the floor, as before */
+    const w = P.w + 4, h = P.h + 4, pt = Math.min(1.6, rz), plate = [rot(rect(q.x - w / 2, q.y - h / 2, q.x + w / 2, q.y + h / 2), a, q.x, q.y)];
+    tray.push({ polys: plate, z0: R.F + rz - pt, z1: R.F + rz, tag: 'slate' });
+    if (rz - pt > 0.3) [[-1, -1], [1, -1], [1, 1], [-1, 1]].forEach(([sx, sy]) => { const c = rot([[q.x + sx * (w / 2 - 3), q.y + sy * (h / 2 - 3)]], a, q.x, q.y)[0]; tray.push({ polys: [circle(c[0], c[1], 2.6, 24)], z0: R.F, z1: R.F + rz - pt + 0.1, tag: 'slate' }); }); /* posts run 0.1 mm into the plate */
   });
+  // a covered wire channel: a U-shaped duct inside the wall under the wire notch, so the wires run down hidden
+  if (o.duct) { const m = o.duct, du = diff([mountRect(m, 6, R.T + 6, -(R.T - 0.1))], [mountRect(m, 4, R.T + 4, -(R.T - 0.3))]); tray.push({ polys: inter(du, offset(out, -0.2)), z0: R.F, z1: Math.max(R.F + 2, H - 6.5), tag: 'duct' }); }
   // the deck: outline minus every cut and the post screw holes
   const cuts = [], thin = [], nubs = [], rims = [], sunk = []; // how a part sits: flush, in a pocket, behind a raised rim, or on top of the deck
   o.parts.forEach((q) => {
@@ -187,6 +193,7 @@ export function buildHalf(o) {
   const decoUp = [], armB = [];
   (o.deco || []).forEach((dq) => { if (dq.arm) { cuts.push(circle(dq.x, dq.y, 1.35, 20)); armB.push(circle(dq.x, dq.y, 4.6, 28)); } else if (dq.mt === 'raised') decoUp.push(...dq.polys); else sunk.push(...dq.polys); });
   if (!snapOK) posts.forEach(([x, y]) => cuts.push(circle(x, y, R.HOLE / 2, 24)));
+  plateM.forEach((m) => { if (m.type === 'snap') { const s = mountSlot() / 2; cuts.push(rect(m.x - s, m.y - s, m.x + s, m.y + s)); } else { cuts.push(circle(m.x, m.y, R.PILOT / 2 + R.FIT, 20)); deck.push({ polys: inter(diff([circle(m.x, m.y, R.POSTR + 0.4, 32)], [circle(m.x, m.y, R.PILOT / 2 + R.FIT, 20)]), deckPoly), z0: deckZ - 6, z1: deckZ + 0.1, tag: 'frame' }); } }); /* a part on the deck: its hole, and a 6 mm boss under the deck for the screw */
   const tm = marks(o.top), deckFlat = diff(diff(deckPoly, union(cuts)), tm.cut), top = deckZ + R.LT;
   const thinU = thin.length ? inter(union(thin), deckFlat) : [];
   const deckUp = sunk.length ? diff(deckFlat, union(sunk)) : deckFlat; /* sunk: a 1.2 mm pocket around the opening */
@@ -282,7 +289,7 @@ export function fitSwatch(o) {
 }
 export function plugGeos(p) {
   const R = RULE, geos = layerGeos([{ polys: diff([rect(-PLUG, -PLUG, PLUG, PLUG)], [boreOct(0, 0)]), z0: 0, z1: R.T + 6.5 }]);
-  const n = p.face === 'back' ? [0, 1, 0] : p.face === 'left' ? [-1, 0, 0] : [1, 0, 0], Z = new THREE.Vector3(-n[0], -n[1], -n[2]), Y = new THREE.Vector3(0, 0, 1), X = new THREE.Vector3().crossVectors(Y, Z);
+  const n = p.face === 'back' ? [0, 1, 0] : p.face === 'front' ? [0, -1, 0] : p.face === 'left' ? [-1, 0, 0] : [1, 0, 0], Z = new THREE.Vector3(-n[0], -n[1], -n[2]), Y = new THREE.Vector3(0, 0, 1), X = new THREE.Vector3().crossVectors(Y, Z);
   const M = new THREE.Matrix4().makeBasis(X, Y, Z).setPosition(p.x, p.y, p.zc); geos.forEach((gg) => gg.applyMatrix4(M)); return geos;
 }
 function nearestInside(polys, p) { if (inside([circle(p[0], p[1], RULE.MAG / 2 + 1.6, 24)], offset(polys, 1.4))) return p; for (let s = 1; s < 30; s++) { const q = [p[0], p[1] + s]; if (inside([circle(q[0], q[1], RULE.MAG / 2 + 1.6, 24)], offset(polys, 1.4))) return q; } return null; }

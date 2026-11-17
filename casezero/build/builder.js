@@ -3,7 +3,7 @@
 // Print: your printer and bed, material, how it joins, where the puzzle seams go. Files: STL per piece, wood templates, wiring.
 import * as THREE from 'three';
 import { OrbitControls } from 'three/addons/OrbitControls.js';
-import * as G from './geo.js?v=29';
+import * as G from './geo.js?v=30';
 import { CARABINER_HOOK_OUTLINE_MM, CARABINER_DEFAULT_THICKNESS_MM } from './charm_carabiner_hook.js?v=1';
 import { openMeasure, GROUPS } from './capture.js?v=20';
 import { makeBoard, boardFiles, boardSvg, zip as zipFiles } from './board.js?v=3';
@@ -99,13 +99,14 @@ function depthOf(panel) { return itemsOn(panel).filter((i) => i.of == null).redu
 function upOf(panel) { return itemsOn(panel).reduce((m, i) => Math.max(m, PP(i) ? Math.max(PP(i).up || 0, i.mt === 'raised' ? 1.6 : 0, i.mt === 'top' ? (PP(i).depth || 0) + (PP(i).up || 0) : 0) : 0), panel !== homePanel() ? 0 : topDeco().some((q) => q.k === 'leg') ? 22 : topDeco().some((q) => q.k === 'arm') ? 14 : topDeco().some((q) => q.mt === 'raised') ? 1.6 : 0); }
 // One computed geometry for the whole build. Body, Parts and the 3D view all read the case size from here, so they can never disagree.
 function geom() { const d = dims(), h = heights(); return { W: d.W, D: d.D, H: h.H, Hl: h.Hl, closed: h.H + h.Hl, recess: h.recess, recessL: h.recessL }; }
+const riserOf = (it) => (it && it.riser != null ? it.riser : 5); /* how high an inside part sits off the floor: its standoffs or its mounting slate */
 function heights() {
   if (isPanel()) return { H: S.pt + (S.plift || 0), Hl: 0, recess: 0, recessL: 0 };
   // base: floor + deepest part or brain + deck, plus room for caps when the lid closes
-  const home = homePanel(), inside = S.items.filter((i) => i.panel === 'inside' && i.of == null).reduce((m, i) => Math.max(m, 5 + (PP(i) ? PP(i).depth : 0)), 0);
+  const home = homePanel(), inside = S.items.filter((i) => i.panel === 'inside' && i.of == null).reduce((m, i) => Math.max(m, riserOf(i) + (PP(i) ? PP(i).depth : 0)), 0);
   const recess = isClam() ? Math.ceil(upOf(home) + 1) : 0, pcb = pcbOn(); /* with the carrier board: it lies on 5 mm posts and is 1.6 mm thick, so the brain rides 1.6 higher and every part on top has to clear the board */
   const H = Math.max(isClam() ? 18 : 20, Math.ceil(R.F + Math.max(depthOf(home) + (pcb ? 6.6 : 0), inside + (pcb ? 1.6 : 0)) + 3 + R.LT + recess)) + S.add;
-  const Hl = isClam() ? Math.max(12, Math.ceil(R.F + depthOf('lid') + 2 + R.LT + Math.ceil(upOf('lid')))) : 0;
+  const Hl = isClam() ? Math.max(12, Math.ceil(R.F + depthOf('lid') + 2 + R.LT + Math.ceil(upOf('lid')))) + (S.addL || 0) : 0; /* addL: the lid deeper on its own */
   return { H, Hl, recess, recessL: isClam() ? Math.ceil(upOf('lid')) : 0 };
 }
 
@@ -128,7 +129,7 @@ function problems(it) {
       if (!(g.x0 < bf.x1 + c && g.x1 > bf.x0 - c && g.y0 < bf.y1 + c && g.y1 > bf.y0 - c)) return;
       const h = heights(), deckZ = h.H - R.LT - h.recess, under = deckZ - PP(bd).hang - 1.6; /* the board's underside */
       const low = under - (PP(bd).under != null ? PP(bd).under : 8.5); /* the lowest pin or solder joint under the board */
-      const clash = o.panel === bd.panel ? PP(o).depth > PP(bd).hang - c : o.panel === 'inside' && R.F + 5 + PP(o).depth > low - c;
+      const clash = o.panel === bd.panel ? PP(o).depth > PP(bd).hang - c : o.panel === 'inside' && R.F + riserOf(o) + PP(o).depth > low - c;
       if (clash) out.push(it === bd ? 'over ' + label(o) : (o.panel === bd.panel ? 'on your board ' : 'under your board ') + label(bd) + ', move it off the board');
       return;
     }
@@ -137,7 +138,7 @@ function problems(it) {
     else if ((it.panel === 'inside' && q.panel === homePanel()) || (q.panel === 'inside' && it.panel === homePanel())) {
       const deck = it.panel === 'inside' ? q : it, brain = it.panel === 'inside' ? it : q, h = heights();
       const bottom = h.H - R.LT - h.recess - PP(deck).depth;
-      if (bottom < R.F + 5 + PP(brain).depth + (pcbOn() ? 1.6 : 0)) out.push(it === deck ? 'too deep, it hits ' + label(brain) : 'under ' + label(deck) + ', not enough room');
+      if (bottom < R.F + riserOf(brain) + PP(brain).depth + (pcbOn() ? 1.6 : 0)) out.push(it === deck ? 'too deep, it hits ' + label(brain) : 'under ' + label(deck) + ', not enough room');
     }
   });
   return out;
@@ -155,8 +156,17 @@ function autoPlace(it) {
 }
 function defaultPanel(P) { if (P.inside) return 'inside'; if (isClam() && (P.screen || P.front)) return 'lid'; return homePanel(); } /* front: looks out of the front, like a camera or a sensor */
 let LAST = null; // the part just added: the 3D box shows it in yellow
-function addPart(type) { const P = PARTS()[type]; const it = { id: ++uid, type, panel: defaultPanel(P), x: 0, y: 0, r: 0 }; S.items.push(it); autoPlace(it); LAST = it.id; focusPanel(it); save(); return it; }
+function addPart(type) { const P = PARTS()[type]; const it = { id: ++uid, type, panel: defaultPanel(P), x: 0, y: 0, r: 0 }; S.items.push(it); autoPlace(it); if (P && P.cat === 'brain' && P.inside) snapBrain(it); LAST = it.id; focusPanel(it); save(); return it; }
 // Arrange opens on the side the newest part landed on
+const hasBattery = () => S.items.some((i) => PP(i) && PP(i).mah);
+function snapBrain(it) { // the brain sits against a wall with its USB end through it; a battery lets it go anywhere
+  const P = PP(it); if (!P || P.cat !== 'brain' || !P.inside || hasBattery() || it.of != null || isPanel()) return;
+  const b = G.bbox(outline()), m = R.T + 0.6 + 0.3, x0 = it.x, y0 = it.y, r0 = it.r || 0, hf = hingeFace();
+  const walls = [['left', 0, () => [b.x0 + m + P.w / 2, y0]], ['right', 2, () => [b.x1 - m - P.w / 2, y0]], ['front', 1, () => [x0, b.y0 + m + P.w / 2]], ['back', 3, () => [x0, b.y1 - m - P.w / 2]]].filter((w) => w[0] !== hf);
+  walls.sort((a, c) => { const pa = a[2](), pc = c[2](); return Math.hypot(pa[0] - x0, pa[1] - y0) - Math.hypot(pc[0] - x0, pc[1] - y0); });
+  for (const [, r, at] of walls) { const p = at(); it.r = r; it.x = p[0]; it.y = p[1]; if (!problems(it).length) return; for (const d of [10, -10, 20, -20, 30, -30]) { if (r % 2) it.x = p[0] + d; else it.y = p[1] + d; if (!problems(it).length) return; } }
+  it.x = x0; it.y = y0; it.r = r0;
+}
 function focusPanel(it) { const p = panels().indexOf(it.panel) >= 0 ? it.panel : homePanel(), pi = PAGES.findIndex((q) => q.name === 'Arrange'); S.tab[1] = p; if (!S.seen) S.seen = {}; S.seen[pi] = '1:' + p; }
 function removePart(type) { snapU(); for (let i = S.items.length - 1; i >= 0; i--) if (S.items[i].type === type) { S.items.splice(i, 1); break; } save(); }
 function reflow() { // style or size changed: move parts onto the panels this shape has, re-place anything that no longer fits
@@ -271,7 +281,7 @@ function looksFor(panel) {
 // ---------- the halves ----------
 function halfFor(panel, h) {
   if (isPanel()) return panelBuilt();
-  const d = dims(), lid = panel === 'lid', flip = (it) => ({ P: PP(it), x: lid ? d.W - it.x : it.x, y: lid ? d.D - it.y : it.y, r: ((it.r || 0) + (lid ? 2 : 0)) % 4, mt: it.mt || 'flush' });
+  const d = dims(), lid = panel === 'lid', flip = (it) => ({ P: PP(it), x: lid ? d.W - it.x : it.x, y: lid ? d.D - it.y : it.y, r: ((it.r || 0) + (lid ? 2 : 0)) % 4, mt: it.mt || 'flush', riser: it.riser });
   const parts = itemsOn(panel).filter((i) => PP(i)).map((i) => Object.assign(flip(i), { spring: S.spring && i.type === 'tact12' })); let inside = lid ? [] : S.items.filter((i) => i.panel === 'inside' && PP(i) && i.of == null).map(flip);
   if (!lid && pcbOn()) { const Bd = boardBuild(); if (Bd.ok) { /* the Pico is soldered to the board: no posts for it. The board gets four posts for M2 screws. */
     inside = inside.map((q) => (q.P.cat === 'brain' ? Object.assign({}, q, { P: Object.assign({}, q.P, { holes: null }) }) : q));
@@ -290,7 +300,7 @@ function halfFor(panel, h) {
   const hingeOn = isClam() && S.hinge === 'printed', lk = looksFor(panel);
   return G.buildHalf({ style: S.style, W: d.W, D: d.D, H: lid ? h.Hl : h.H, recess: lid ? h.recessL : h.recess, parts, inside, port, port2, deco: !lid && panel === homePanel() ? decoPolys() : [], decoOut: lid && isClam() ? decoPolys('lid') : [],
     top: lk.top, bottom: lk.bottom, walls: lk.walls, snap: S.snap,
-    mounts: !lid && panel === homePanel() ? activeMounts() : lid && isClam() ? activeLidMounts() : [], art: !lid && panel === homePanel() ? wallArt() : [], ports: !lid && panel === homePanel() ? activePorts() : [],
+    mounts: !lid && panel === homePanel() ? activeMounts() : lid && isClam() ? activeLidMounts() : [], art: !lid && panel === homePanel() ? wallArt() : [], ports: (!lid && panel === homePanel() ? activePorts() : []).concat(isClam() ? wireNotch(lid ? 'lid' : 'base') : []), duct: !lid && isClam() && S.wpass === 'channel' ? wireDuct() : null,
     magnets: isClam() && S.magnets, hinge: { on: hingeOn, side: S.style === 'small' ? (S.hside === 'right' ? 'right' : 'left') : 'back' }, hingeSet: lid ? 'b' : 'a' });
 }
 function panelBuilt() {
@@ -696,12 +706,14 @@ function pane(t) {
   if (t === 'picks') return '<p class="h">Cheap, loved by the maker community</p><div class="list">' + CZ.PICKS.map((p) => '<div class="it"><b>' + esc(p[1]) + (c[p[0]] ? ' <span class="ok">added</span>' : '') + '</b>' + esc(p[2]) + '<div style="margin-top:6px"><button class="btn" data-add="' + p[0] + '" style="display:inline-block;padding:7px 12px">+ Add ' + esc(P[p[0]].short) + '</button></div></div>').join('') + '</div><p class="note">From Reddit (r/esp32, r/raspberry_pi), Instructables and maker blogs. Sources in the ? help.</p>';
   if (t === 'lid' || t === 'base' || t === 'top') {
     const mine = S.items.filter((i) => i.panel === t || (t !== 'lid' && i.panel === 'inside')), s = S.items.find((i) => i.id === sel), probs = allProblems(), N = numbers();
-    let h = s && s.of != null ? '<div class="selbar"><b>' + esc(label(s)) + '</b><select class="pin" data-kidtype="' + s.id + '" aria-label="What it is">' + KID_TYPES.filter((t) => CZ.PARTS[t]).map((t) => '<option value="' + t + '"' + (t === s.type ? ' selected' : '') + '>' + esc(CZ.PARTS[t].short) + '</option>').join('') + '</select>' + (RECTK(s) ? '<button data-act="rot">Turn</button>' : '') + '<button data-act="del">Remove</button></div>' + nudgeRow() + '<p class="note" style="margin:-2px 0 8px">Drag it, or use the arrows (0.5 mm), until it sits where the real part is (turn My photo on to check). Your board stays put.</p>' + (s.panel !== 'inside' ? stepper('kh', 'Height', kidH(s) + ' mm above board') + '<p class="note" style="margin:-2px 0 8px">' + esc(pokeNote(s)) + '</p>' : '') : s ? '<div class="selbar"><b>' + esc(label(s)) + '</b><button data-act="rot">Turn</button>' + (isClam() && s.panel !== 'inside' && !(PP(s) && PP(s).board) ? '<button data-act="swap">To ' + (s.panel === 'lid' ? 'base' : 'lid') + '</button>' : '') + '<button data-act="del">Remove</button></div>' : '';
+    let h = s && s.of != null ? '<div class="selbar"><b>' + esc(label(s)) + '</b><select class="pin" data-kidtype="' + s.id + '" aria-label="What it is">' + KID_TYPES.filter((t) => CZ.PARTS[t]).map((t) => '<option value="' + t + '"' + (t === s.type ? ' selected' : '') + '>' + esc(CZ.PARTS[t].short) + '</option>').join('') + '</select>' + (RECTK(s) ? '<button data-act="rot">Turn</button>' : '') + '<button data-act="del">Remove</button></div>' + nudgeRow() + '<p class="note" style="margin:-2px 0 8px">Drag it, or use the arrows (0.5 mm), until it sits where the real part is (turn My photo on to check). Your board stays put.</p>' + (s.panel !== 'inside' ? stepper('kh', 'Height', kidH(s) + ' mm above board') + '<p class="note" style="margin:-2px 0 8px">' + esc(pokeNote(s)) + '</p>' : '') : s ? '<div class="selbar"><b>' + esc(label(s)) + '</b><button data-act="rot">Turn</button>' + (isClam() && s.panel !== 'inside' && !(PP(s) && PP(s).board) ? '<button data-act="swap">To ' + (s.panel === 'lid' ? 'base' : 'lid') + '</button>' : '') + '<button data-act="del">Remove</button></div>' +
+      (PP(s) && !PP(s).inside ? '<div class="selbar"><b>Mount</b>' + [['top', 'On top'], ['in', 'Inside']].map((m) => '<button data-act="mnt_' + m[0] + '"' + ((s.panel === 'inside') === (m[0] === 'in') ? ' style="background:#1a1a1a;color:#fff"' : '') + '>' + m[1] + '</button>').join('') + '</div>' : '') +
+      (s.panel === 'inside' ? stepper('riser', 'Riser', PP(s) && PP(s).holes && PP(s).holes.length ? riserOf(s) + ' mm standoffs' : s.riser != null && s.riser > 0 ? s.riser + ' mm slate' : 'On the floor') + '<p class="note keep" style="margin:-2px 0 8px">' + (PP(s) && PP(s).holes && PP(s).holes.length ? 'Standoffs at its screw holes, printed with the case.' : 'A flat plate on 4 corner posts lifts it; it prints with the case.') + '</p>' : '') : '';
     if (s && PP(s) && PP(s).board) h += '<div class="selbar"><b>My photo</b>' + [['off', 'Hide'], ['faded', 'Faint'], ['clear', 'Show']].map((m) => '<button data-photo="' + m[0] + '"' + ((S.photo || 'off') === m[0] ? ' style="background:#1a1a1a;color:#fff"' : '') + '>' + m[1] + '</button>').join('') + '</div>' + ((PP(s).kids || []).length ? '<button class="btn" data-act="kidsreset" style="margin:0 0 8px;padding:8px">Put the parts back where my photo had them</button>' : '') + '<div class="selbar"><b>Board</b><button data-act="bmove">' + (s.move ? 'Unlocked: drag moves it' : 'Locked in place') + '</button></div>' + (s.move ? nudgeRow() : '') + '<p class="note" style="margin:-2px 0 8px">Tap an empty spot on your board to add a part there.</p>' + stepper('btop', 'Tallest', (PP(s).top || 9) + ' mm button') + '<p class="note" style="margin:-2px 0 8px">Your board hangs under the top so a ' + (PP(s).top || 9) + ' mm button pokes through 1.5 mm. Tap one to see how far it pokes through.</p>' + stepper('bund', 'Under', (PP(s).under != null ? PP(s).under : 8.5) + ' mm below') + '<p class="note" style="margin:-2px 0 8px">Space under the board for pins, solder and wires' + (PP(s).under != null ? ', from your side photo' : ', a guess: take the side photo to measure it') + '.</p>';
     h += '<p class="h">' + (t === 'lid' ? 'The lid: screens live here' : t === 'base' ? 'The base: controls, the brain sits under it' : 'The top') + '</p>';
     h += mine.length ? '<div class="chosen">' + mine.map((i) => '<span data-sel="' + i.id + '" style="cursor:pointer' + (i.id === sel ? ';background:#1a1a1a;color:#fff' : '') + '">' + esc(N[i.id] + ' ' + PP(i).short) + (problems(i).length ? ' <i>!</i>' : '') + '</span>').join('') + '</div>' : '<p class="note">No electronics here yet. Add some in Brain.</p>';
     if (s && s.of == null && s.panel !== 'inside' && PP(s) && !PP(s).board && !isPanel()) { const mt = s.mt || 'flush'; h += '<div class="selbar"><b>Sits</b>' + [['flush', 'Flush'], ['raised', 'Raised rim'], ['sunk', 'Sunk in'], ['top', 'On top']].map((m) => '<button data-mt="' + m[0] + '"' + (mt === m[0] ? ' style="background:#1a1a1a;color:#fff"' : '') + '>' + m[1] + '</button>').join('') + '</div><p class="note" style="margin:2px 0 0">' + ({ flush: 'Level with the top.', raised: 'A rim stands up around it. The rim prints as its own flat piece that you glue on.', sunk: 'It sits down in a shallow pocket.', top: 'No opening. The part sits on the top, only its wires go through a small hole.' })[mt] + '</p>'; }
-    h += '<div class="grid g2" style="margin-top:8px"><button class="btn dark" data-act="auto">Arrange for me</button><button class="btn" data-act="toBrain">Add electronics</button></div>';
+    h += '<div class="grid g2" style="margin-top:8px"><button class="btn dark" data-act="auto">Arrange for me</button><button class="btn" data-act="toBrain">Add electronics</button></div><button class="btn' + (S.xray ? ' dark' : '') + '" data-act="xray" style="margin-top:8px;width:100%">' + (S.xray ? 'Back to flat view' : 'Inside view (open lid, X-ray)') + '</button>';
     h += '<p class="note">' + (probs.length ? probs.map((x) => '<span class="bad">' + esc(label(x.it)) + ' is ' + esc(x.list[0]) + '.</span>').join(' ') : (mine.length ? '<span class="ok">Everything fits.</span> ' + (S.items.some((i) => PP(i) && PP(i).board) ? 'Tap your board to add a part there. Drag a part to line it up. Two fingers zoom in, and the part numbers show.' : 'Drag anything to move it. Tap to pick it.') : '')) + '</p>';
     return h;
   }
@@ -721,10 +733,11 @@ function pane(t) {
   if (t === 'shape') return '<div class="hrow">' + CZ.STYLES.map((s) => '<button type="button" class="pick" data-style="' + s[0] + '" aria-pressed="' + (S.style === s[0]) + '">' + styleSvg(s[0]) + esc(s[1]) + '</button>').join('') + '</div><p class="note">' + esc(styleRow()[2]) + '.' + (S.style === 'face' ? ' Round screens make eyes or a watch face. Want it to move? Add a servo in Brain (Move).' : '') + (S.style === 'hand' || S.style === 'pad' ? ' Our own shape, not a copy of any console.' : '') + '</p>' + (S.style === 'face' ? '<button class="btn dark" data-xgo="body" style="margin-top:8px">Give it a body, arms and legs</button>' : '') + (isPanel() ? '' : '<p class="h" style="margin-top:12px">Size and fit</p>' + pane('fit')) + '<button class="btn" data-act="start" style="margin-top:10px">Start over with something else</button>';
   if (t === 'fit') {
     const h = geom();
-    let o = stepper('cols', 'Wide', S.cols + ' sq' + (S.xw ? ' + ' + S.xw : '')).replace(/<\/div>$/, '<input class="num mm" id="mmw" type="number" inputmode="decimal" step="0.5" value="' + +h.W.toFixed(1) + '" aria-label="Width in mm"><span class="u">mm</span></div>') + stepper('rows', 'Tall', S.rows + ' sq' + (S.xd ? ' + ' + S.xd : '')).replace(/<\/div>$/, '<input class="num mm" id="mmd" type="number" inputmode="decimal" step="0.5" value="' + +h.D.toFixed(1) + '" aria-label="Depth in mm"><span class="u">mm</span></div>') + stepper('add', 'Height', h.closed + ' mm' + (isClam() ? ' closed' : '') + (S.add ? ' (+' + S.add + ')' : ''));
+    let o = stepper('cols', 'Wide', S.cols + ' sq' + (S.xw ? ' + ' + S.xw : '')).replace(/<\/div>$/, '<input class="num mm" id="mmw" type="number" inputmode="decimal" step="0.5" value="' + +h.W.toFixed(1) + '" aria-label="Width in mm"><span class="u">mm</span></div>') + stepper('rows', 'Tall', S.rows + ' sq' + (S.xd ? ' + ' + S.xd : '')).replace(/<\/div>$/, '<input class="num mm" id="mmd" type="number" inputmode="decimal" step="0.5" value="' + +h.D.toFixed(1) + '" aria-label="Depth in mm"><span class="u">mm</span></div>') + (isClam() ? stepper('add', 'Base', h.H + ' mm deep' + (S.add ? ' (+' + S.add + ')' : '')) + stepper('addL', 'Lid', h.Hl + ' mm deep' + (S.addL ? ' (+' + S.addL + ')' : '')) + '<p class="note keep" style="margin:-2px 0 8px">' + h.closed + ' mm closed. Deepen the base for batteries or tall parts without thickening the lid.</p>' : stepper('add', 'Height', h.closed + ' mm' + (S.add ? ' (+' + S.add + ')' : '')));
     o += '<div class="row"><b>Deck on</b>' + seg('snap', [['0', 'Screws'], ['1', 'Snap clips']], S.snap ? '1' : '0') + '</div>';
     if (S.items.some((i) => i.type === 'tact12')) o += '<div class="row"><b>Buttons</b>' + seg('spring', [['0', 'Caps'], ['1', 'Printed springs']], S.spring ? '1' : '0') + '</div>';
-    if (isClam()) o += '<div class="row"><b>Hinge</b>' + seg('hinge', [['printed', 'Printed'], ['metal', 'Metal'], ['none', 'Lift off']], S.hinge) + '</div>' + (S.style === 'small' ? '<div class="row"><b>Opens on</b>' + seg('hside', [['left', 'Left'], ['right', 'Right']], S.hside) + '</div>' : '') + '<div class="row"><b>Closes</b>' + seg('magnets', [['1', 'Magnets'], ['0', 'Latch or strap']], S.magnets ? '1' : '0') + '</div>';
+    if (isClam()) o += '<div class="row"><b>Hinge</b>' + seg('hinge', [['printed', 'Printed'], ['metal', 'Metal'], ['none', 'Lift off']], S.hinge) + '</div>' + (S.style === 'small' ? '<div class="row"><b>Opens on</b>' + seg('hside', [['left', 'Left'], ['right', 'Right']], S.hside) + '</div>' : '') + '<div class="row"><b>Closes</b>' + seg('magnets', [['1', 'Magnets'], ['0', 'Latch or strap']], S.magnets ? '1' : '0') + '</div><div class="row"><b>Wires</b>' + seg('wpass', [['slot', 'Hinge slot'], ['ribbon', 'Ribbon notch'], ['channel', 'Covered channel']], S.wpass || 'slot') + '</div>';
+    if (UPRIGHT[S.style]) o += '<div class="row"><b>Tripod</b>' + seg('tripodOn', [['0', 'None'], ['1', 'Bottom 1/4-20']], S.attachedParts.some((m) => m.partId === 'tripod' && m.face === 'front') ? '1' : '0') + '</div>';
     o += '<p class="note">' + (S.snap ? 'Snap clips: 4 arms under the deck click into a groove in the wall. No screws. ' : '') + (S.spring ? 'Printed springs: the deck around each small button becomes a little flexing pad, no caps to buy. ' : '') + (isClam() ? (S.hinge === 'printed' ? 'Printed hinge: a piece of 1.75 mm filament is the pin. ' : S.hinge === 'metal' ? 'Metal hinges: 2 small butt hinges (25 mm) screwed to the back. ' : '') + (S.magnets ? 'Two 6 x 3 mm magnets in each half hold it shut. ' : '') : 'Height grows to fit your deepest part. Add more for batteries or a speaker. ') + '</p>';
     return o;
   }
@@ -888,7 +901,7 @@ $('pane').addEventListener('click', (e) => {
   if (d.add) { const it = addPart(d.add); const P = PP(it); const tip = $('partTip'); render(); if ($('partTip')) $('partTip').textContent = P.tip; void tip; return; }
   if (d.sel) { sel = +d.sel; render(); return; }
   if (d.delmine) { delete S.mine[d.delmine]; S.items = S.items.filter((i) => i.type !== d.delmine); save(); render(); return; }
-  if (d.style) { S.picked = true; S.style = d.style; const z = SIZES[S.style]; S.cols = z[0]; S.rows = z[1]; S.xw = S.xd = 0; reflow(); if (allProblems().length) fitAll(); /* the new shape is too small for what is in it: grow it until everything fits */ save(); render(); return; }
+  if (d.style) { S.picked = true; S.style = d.style; const z = SIZES[S.style]; S.cols = z[0]; S.rows = z[1]; S.xw = S.xd = 0; if (UPRIGHT[S.style]) S.snap = true; /* the front plate snaps on */ reflow(); if (allProblems().length) fitAll(); /* the new shape is too small for what is in it: grow it until everything fits */ save(); render(); return; }
   if (d.printer) { setPrinter(d.printer); QRMSG = ''; save(); render(); return; }
   if (d.mat) { S.material = d.mat; const m = CZ.MATERIALS.find((x) => x[0] === d.mat); if (m[3].indexOf(S.join) < 0) S.join = m[3][0]; if (S.join === 'dovetail') S.tab3 = 'dovetail'; save(); render(); return; }
   if (d.tex) { S.look.tex[S.look.texFace].kind = d.tex; save(); render(); return; }
@@ -945,6 +958,8 @@ $('pane').addEventListener('click', (e) => {
   if (act === 'saveboard') { const Bd = boardBuild(); if (Bd.ok) saveFile({ name: 'casezero-board.zip', blob: new Blob([zipFiles(boardFiles(Bd, 'casezero-board').concat([{ name: 'README.txt', text: boardReadme(Bd) }]))], { type: 'application/zip' }) }); return; }
   if (act === 'rot' && s && PP(s) && PP(s).board) { snapU(); s.r = ((s.r || 0) + 1) % 4; syncKids(s); if (problems(s).length) { autoPlace(s); syncKids(s); } save(); render(); return; }
   if (act === 'rot' && s) { s.r = ((s.r || 0) + 1) % 4; if (problems(s).length) { const keep = [s.x, s.y]; if (!autoPlace(s)) { s.x = keep[0]; s.y = keep[1]; } } save(); render(); return; }
+  if (act === 'xray') { S.xray = !S.xray; BIG3D = false; save(); render(); return; }
+  if ((act === 'mnt_top' || act === 'mnt_in') && s) { snapU(); if (act === 'mnt_in') { if (s.panel !== 'inside') { s.top0 = s.panel; s.panel = 'inside'; } } else if (s.panel === 'inside') { s.panel = s.top0 && panels().indexOf(s.top0) > -1 ? s.top0 : defaultPanel(Object.assign({}, PP(s), { inside: false })); } if (problems(s).length) autoPlace(s); save(); render(); return; }
   if (act === 'swap' && s) { s.panel = s.panel === 'lid' ? 'base' : 'lid'; autoPlace(s); S.tab[1] = s.panel; save(); render(); return; }
   if (act === 'del' && s) { snapU(); S.items = S.items.filter((i) => i !== s && i.of !== s.id); sel = null; save(); render(); return; }
   
@@ -974,7 +989,7 @@ $('pane').addEventListener('click', (e) => {
   if (st && d.d) {
     const k = st.dataset.st, v = +d.d;
     if (k === 'cols') S.cols = Math.max(2, Math.min(24, S.cols + v)); if (k === 'rows') S.rows = Math.max(2, Math.min(24, S.rows + v));
-    if (k === 'add') S.add = Math.max(0, Math.min(80, S.add + v * 5));
+    if (k === 'add') S.add = Math.max(0, Math.min(80, S.add + v * 5)); if (k === 'addL') S.addL = Math.max(0, Math.min(40, (S.addL || 0) + v * 2));
     if (k === 'bedw') S.bed[0] = Math.max(80, Math.min(400, S.bed[0] + v * 10)); if (k === 'bedd') S.bed[1] = Math.max(80, Math.min(400, S.bed[1] + v * 10));
     if (k === 'lgsize') { const L = LG(); L.size = Math.max(6, Math.min(160, L.size + v * (L.size >= 20 ? 5 : 2))); markCache = {}; }
     if (k === 'lgx' || k === 'lgz') { const f = logoFace(), L = LG(f), m = wallMid(f); if (k === 'lgx') L.x = (L.x == null ? m[0] : L.x) + v * 2 * (f === 'back' || f === 'left' ? -1 : 1); else L.y = Math.max(R.F, (L.y == null ? m[1] : L.y) + v); }
@@ -982,7 +997,7 @@ $('pane').addEventListener('click', (e) => {
     const nn = (S.notches || [])[S.nsel];
     if (k === 'plift') S.plift = Math.max(3, Math.min(60, S.plift + v));
     if (['kh', 'btop', 'bund'].includes(k)) snapU();
-    { const si = S.items.find((i) => i.id === sel); if (si && k === 'kh') si.h = Math.max(0, Math.min(60, kidH(si) + v * 0.5)); if (si && k === 'btop' && PP(si) && PP(si).board) setBoardTop(PP(si), (PP(si).top || 9) + v * 0.5); if (si && k === 'bund' && PP(si) && PP(si).board) { const B = PP(si); B.under = Math.max(0, Math.min(40, (B.under != null ? B.under : 8.5) + v * 0.5)); setBoardTop(B, B.top || 9); } }
+    { const si = S.items.find((i) => i.id === sel); if (si && k === 'riser') si.riser = Math.max(0, Math.min(20, (si.riser == null && !(PP(si) && PP(si).holes && PP(si).holes.length) ? 0 : riserOf(si)) + v)); /* a part on the floor starts its slate from 0 */ if (si && k === 'kh') si.h = Math.max(0, Math.min(60, kidH(si) + v * 0.5)); if (si && k === 'btop' && PP(si) && PP(si).board) setBoardTop(PP(si), (PP(si).top || 9) + v * 0.5); if (si && k === 'bund' && PP(si) && PP(si).board) { const B = PP(si); B.under = Math.max(0, Math.min(40, (B.under != null ? B.under : 8.5) + v * 0.5)); setBoardTop(B, B.top || 9); } }
     const X = xp(); if (k === 'xs_t') { X.stand.t = Math.max(6, Math.min(80, X.stand.t + v)); X.stand.auto = X.stand.t === caseThick(); /* back on the case's own size: it follows the case again */ } if (k === 'xf_h') X.feet.h = Math.max(2, Math.min(15, X.feet.h + v)); if (k === 'xo_h') X.standoff.h = Math.max(2, Math.min(40, X.standoff.h + v)); if (k === 'xc_d') X.clip.d = Math.max(2, Math.min(16, X.clip.d + v)); if (k === 'xh_l') X.handle.l = Math.max(50, Math.min(140, X.handle.l + v * 10)); if (k === 'xl_l') X.limbs.l = Math.max(25, Math.min(90, X.limbs.l + v * 5)); const cl = (o, f, lo, hi, st) => { o[f] = Math.max(lo, Math.min(hi, o[f] + v * st)); };
     if (k === 'xb_h') cl(X.body, 'h', 45, 100, 5); if (k === 'xln_d') cl(X.lens, 'd', 8, 80, 1); if (k === 'xgr_l') cl(X.grip, 'l', 40, 120, 5); if (k === 'xg_n') cl(X.gears, 'n', 18, 54, 9); if (k === 'xhi_l') cl(X.hinge, 'l', 15, 60, 5); if (k === 'xsp_n') cl(X.spring, 'n', 3, 12, 1); if (k === 'xcl_t') cl(X.clamp, 't', 10, 45, 5); if (k === 'xp_w') cl(X.panel, 'w', 30, 200, 10); if (k === 'xp_h') cl(X.panel, 'h', 30, 200, 10); if (k === 'xk_c') cl(X.keys, 'c', 3, 12, 1); if (k === 'xk_r') cl(X.keys, 'r', 1, 6, 1);
     if (nn && k === 'nw') nn.w = Math.max(4, Math.min(120, nn.w + v * 2)); if (nn && k === 'nd') nn.d = Math.max(2, Math.min(60, nn.d + v)); if (nn && k === 'nat') nn.at = Math.max(0, Math.min(nn.edge === 'left' || nn.edge === 'right' ? dims().D : dims().W, nn.at + v * 5));
@@ -1000,6 +1015,8 @@ $('pane').addEventListener('click', (e) => {
     { const X = xp(); if (k === 'xkf') { X.keys.f = +v; save(); render(); return; } if (k === 'xksp') { X.keys.sp = v === '1' ? 1 : 0; save(); render(); return; } if (k === 'xs_a') { X.stand.a = +v; save(); render(); return; } if (k === 'xch_s' || k === 'xch_h') { X.charm[k === 'xch_s' ? 'size' : 'hook'] = v; if (k === 'xch_h') S.attachedParts.forEach((m) => { if (m.partId === 'charm' && m.charm) m.charm.hook = v; }); MPC = {}; save(); render(); return; } if (k === 'xf_hole') { X.feet.hole = v === '1'; save(); render(); return; } if (k === 'xo_s') { X.standoff.s = v; save(); render(); return; } }
     if (k === 'brand') { S.brand = v; save(); render(); return; }
     if (k === 'walls') { S.walls = v; S.wallT = null; applyWalls(); reflow(); save(); render(); return; }
+    if (k === 'wpass') { S.wpass = v; save(); render(); return; }
+    if (k === 'tripodOn') { tripodBottom(v === '1'); save(); render(); return; }
     if (k === 'm_face' || k === 'm_type' || k === 'm_view' || k === 'm_pface') { mnt()[k.slice(2)] = v; save(); render(); return; }
     if (k === 'tol') { if (v === 'c') S.tolC = true; else { S.tolC = false; S.tol = +v; } applyWalls(); reflow(); save(); render(); return; }
     if (k === 'fmt') { S.fmt = v; save(); sg.querySelectorAll('button').forEach((x) => x.setAttribute('aria-pressed', String(x === b))); $('fileList').querySelectorAll('[data-f]').forEach((x) => { const f = FILES[+x.dataset.f]; if (f) x.textContent = 'Save ' + f.label + fmtTag(f); }); return; }
@@ -1025,7 +1042,7 @@ let view = null; // current 2D mapping for taps
 function fit() { const r = cv.getBoundingClientRect(), d = Math.min(2, devicePixelRatio || 1); cv.width = Math.max(1, Math.round(r.width * d)); cv.height = Math.max(1, Math.round(r.height * d)); }
 // The 3D box: steps that show a flat picture also show the case in 3D in the top right corner. Tap it to make it big.
 let BIG3D = false, miniTimer = 0;
-const native3d = () => { const t = curTab(); if (t === 'extras') return !decoOn() || deco3d(); /* nothing picked yet: the case itself, live */ return (S.step === 2 && !isPanel()) || (S.step === 5 && (t === '3d' || t === 'files')) || (S.step === 3 && (t === 'colors' || (t === 'logo' && !!WALLF[logoFace()]))); }; /* a side-wall logo is placed on the case in 3D */
+const native3d = () => { const t = curTab(); if (t === 'extras') return !decoOn() || deco3d(); /* nothing picked yet: the case itself, live */ return xrayOn() || (S.step === 2 && !isPanel()) || (S.step === 5 && (t === '3d' || t === 'files')) || (S.step === 3 && (t === 'colors' || (t === 'logo' && !!WALLF[logoFace()]))); }; /* a side-wall logo is placed on the case in 3D */
 const wantsMini = () => (S.step === 0 || S.step === 1 || S.step === 3 || S.step === 4 || (S.step === 2 && isPanel())) && !$('con').classList.contains('down');
 function draw() {
   const big = native3d() || BIG3D, mini = !big && wantsMini(), v3 = $('v3');
@@ -1235,7 +1252,7 @@ cv.addEventListener('pointermove', (e) => {
   const dr = drag; drag = null; if (!dr) return;
   if (dr.notch || dr.logo) { save(); render(); return; }
   if (dr.pan) { if (!dr.moved && t === 'pointerup') { if (dr.add) { sel = dr.board.id; render(); pickAt(dr.board, dr.add); return; } if (dr.desel) { sel = null; render(); } } return; }
-  if (dr.moved) { save(); render(); }
+  if (dr.moved) { if (dr.it) snapBrain(dr.it); save(); render(); }
 }));
 
 function curFace() { const t = curTab(), L = S.look; if (t === 'logo') return logoFace(); if (t === 'tex') return L.texFace === 'walls' ? 'top' : L.texFace; return 'top'; }
@@ -1355,6 +1372,8 @@ function setup3d() {
   wrap.addEventListener('click', () => { if (wrap.classList.contains('mini')) { BIG3D = true; draw(); } });
   return T3;
 }
+const xrayOn = () => !!S.xray && S.step === 1; /* Arrange, Inside view: the lid opens and the deck goes see-through */
+function ghost(o) { o.traverse((c) => { if (c.material) { c.material = c.material.clone(); c.material.transparent = true; c.material.opacity = 0.22; c.material.depthWrite = false; } }); }
 function mesh(geos, color) { const grp = new THREE.Group(), mat = new THREE.MeshStandardMaterial({ color, roughness: .85, flatShading: true, side: THREE.DoubleSide }); geos.forEach((gg) => { gg.computeVertexNormals(); grp.add(new THREE.Mesh(gg, mat)); }); return grp; }
 function standIn(P, x, y, rq, top) { // a simple 3D stand-in for what shows above the deck: screen glass, button caps, D-pad
   const c = P.cut || {}; let m = null;
@@ -1401,7 +1420,8 @@ function draw3d(isMini) {
   const MV = mountView();
   if (curTab() === 'extras' && !D3 && S.xsel && !MV) { if (!isMini) drawParts3d(); return; }
   // styling the lid's outside: show it closed, from above, the way people will see it
-  const lidTop = S.step === 3 && curTab() !== 'colors' && (curFace() === 'lidout' || !!WALLF[curFace()]), DF = D3 ? decoFace() : '', OPEN = D3 || MV ? false : S.open && !lidTop; /* mounting: the lid stays shut, out of the way */
+  const XR = xrayOn();
+  const lidTop = !XR && S.step === 3 && curTab() !== 'colors' && (curFace() === 'lidout' || !!WALLF[curFace()]), DF = D3 ? decoFace() : '', OPEN = XR ? true : D3 || MV ? false : S.open && !lidTop; /* mounting: the lid stays shut, out of the way */
   const r = setup3d(), d = geom(), h = d, key = JSON.stringify([buildKey(), DF, OPEN, logoImgKey(), MV ? S.xsel : 0, S.attachedParts.length ? S.xp : 0]);
   if (isMini && (!$('v3').classList.contains('mini') || $('v3').hidden)) return; // left the flat view before the timer ran
   const mode = isMini ? 'mini' : 'big';
@@ -1412,8 +1432,8 @@ function draw3d(isMini) {
     hs.forEach((x) => {
       const grp = new THREE.Group();
       const c1 = new THREE.Color(S.look.c1).getHex(), c2 = new THREE.Color(S.look.c2).getHex();
-      grp.add(mesh(G.layerGeos(x.built.tray, x.built.extra), c1)); (x.built.plugs || []).forEach((pg) => grp.add(mesh(G.plugGeos(pg), c1)));
-      grp.add(mesh(G.layerGeos(x.built.deck), x.key === 'lid' ? 0x2a2a2a : 0xc8412f));
+      { const tm = mesh(G.layerGeos(x.built.tray, x.built.extra), c1); if (XR && x.key === 'lid') ghost(tm); grp.add(tm); } (x.built.plugs || []).forEach((pg) => grp.add(mesh(G.plugGeos(pg), c1)));
+      { const dm = mesh(G.layerGeos(x.built.deck), x.key === 'lid' ? 0x2a2a2a : 0xc8412f); if (x.key === 'lid') dm.position.z = -0.1; /* the lid liner's inner face sat exactly on the screen frames: 0.1 mm apart, no flicker */ if (XR) ghost(dm); grp.add(dm); }
       if (x.built.inlay.length) grp.add(mesh(G.layerGeos(x.built.inlay.map((l) => ({ polys: l.polys, z0: l.z0 + (l.tag === 'inlayT' ? 0.02 : -0.02), z1: l.z1 + (l.tag === 'inlayT' ? 0.02 : -0.02) }))), c2));
       x.built.stick.forEach((st) => grp.add(mesh(G.layerGeos(st.layers), c2)));
       const hf = x.key === 'lid' ? (isClam() ? 'lid' : '') : x.key === homePanel() ? 'top' : ''; // the face reads dark, the arms and legs hang from their screws. One group each, so a piece can follow your finger.
@@ -1437,7 +1457,7 @@ function draw3d(isMini) {
       parts.concat(lid ? [] : S.items.filter((i) => i.panel === 'inside')).forEach((it) => {
         const P = PP(it); if (!P) return; const px0 = lid ? d.W - it.x : it.x, py0 = lid ? d.D - it.y : it.y, rq = ((it.r || 0) + (lid ? 2 : 0)) % 4;
         const f = fp(it), ins = it.panel === 'inside', dep = ins ? P.depth + 2 : P.depth + (P.up || 0);
-        r.slots[it.id] = { grp, x: px0, y: py0, z: ins ? R.F + 2 + P.depth / 2 : top - P.depth / 2 + (P.up || 0) / 2, w: f.w, h: f.h, dep };
+        r.slots[it.id] = { grp, x: px0, y: py0, z: ins ? R.F + riserOf(it) + P.depth / 2 : top - P.depth / 2 + (P.up || 0) / 2, w: f.w, h: f.h, dep };
         if (P.board) { const bw = rq % 2 ? P.h : P.w, bh = rq % 2 ? P.w : P.h, pl = new THREE.Mesh(new THREE.BoxGeometry(bw, bh, 1.6), new THREE.MeshStandardMaterial({ color: 0x2f7a4b })); pl.position.set(px0, py0, top - R.LT - (P.hang || 6) - 0.8); grp.add(pl); return; } /* her board, inside under the top */
         if (ins) return;
         const m = standIn(P, px0, py0, rq, top); if (m) grp.add(m);
@@ -1461,12 +1481,12 @@ function draw3d(isMini) {
         r.root.add(hinge);
       } else r.root.add(grp);
     });
-    r.root.position.set(-d.W / 2, 0, d.D / 2);
+    const UPR = UPRIGHT[S.style]; r.root.rotation.x = UPR ? 0 : -Math.PI / 2; r.root.position.set(-d.W / 2, 0, UPR ? -h.H / 2 : d.D / 2); /* upright: stands on its front edge, the plate facing you */
     r.fit = () => {
       const dk = deco3d(), hh = dk && decoFace() === 'lid' ? h.H + h.Hl : h.H, lm = dk && (S.deco || []).some(isLimb) ? 62 : 0, rad = dk ? Math.hypot(d.W + lm, d.D + lm, hh) / 2 * 1.06 : Math.hypot(d.W, d.D, h.H + h.Hl + (OPEN ? d.D : 0)) / 2, v = r.camera.fov * Math.PI / 360, hz = Math.atan(Math.tan(v) * r.camera.aspect), dist = rad / Math.sin(Math.min(v, hz)) * (r.mode === 'mini' ? 1.0 : 1.15);
-      r.controls.target.set(0, dk ? hh / 2 : (h.H + (isClam() && OPEN ? d.D * 0.4 : h.Hl)) / 2, lm ? 16 : 0);
+      r.controls.target.set(0, UPRIGHT[S.style] ? d.D / 2 : dk ? hh / 2 : (h.H + (isClam() && OPEN ? d.D * 0.4 : h.Hl)) / 2, lm ? 16 : 0);
       // in Style, turn to the side being decorated: the lid's outside faces the back when it is open, the bottom faces down
-      const f = S.step === 3 && curTab() !== 'colors' ? curFace() : 'top', MD = { lid: [0.3, 0.95, 0.45], back: [0.35, 0.55, -0.85], front: [0.35, 0.55, 0.85], left: [-0.9, 0.5, 0.35], right: [0.9, 0.5, 0.35], bottom: [0.35, -0.85, 0.6] }, dir = MV ? MD[PORTS[S.xsel] ? pface() : mnt().face] : dk ? [0, 1, 0.5] : WALLF[f] ? MD[f] : f === 'lidout' && isClam() ? [0.2, 1, 0.55] : f === 'bottom' ? [0.4, -0.85, 0.6] : [0.45, 0.7, 0.8];
+      const f = S.step === 3 && curTab() !== 'colors' ? curFace() : 'top', MD = { plate: [0.3, 0.95, 0.45], lid: [0.3, 0.95, 0.45], back: [0.35, 0.55, -0.85], front: [0.35, 0.55, 0.85], left: [-0.9, 0.5, 0.35], right: [0.9, 0.5, 0.35], bottom: [0.35, -0.85, 0.6] }, MDU = { plate: [0.3, 0.25, 0.95], front: [0.35, -0.85, 0.45], back: [0.35, 0.9, -0.3], left: [-0.9, 0.35, 0.4], right: [0.9, 0.35, 0.4], bottom: [0.35, 0.3, -0.9] }, dir = UPRIGHT[S.style] ? (MV ? MDU[PORTS[S.xsel] ? pface() : mnt().face] : [0.45, 0.3, 0.85]) : MV ? MD[PORTS[S.xsel] ? pface() : mnt().face] : dk ? [0, 1, 0.5] : WALLF[f] ? MD[f] : f === 'lidout' && isClam() ? [0.2, 1, 0.55] : f === 'bottom' ? [0.4, -0.85, 0.6] : [0.45, 0.7, 0.8];
       r.camera.position.copy(new THREE.Vector3(dir[0], dir[1], dir[2]).normalize().multiplyScalar(dist)).add(r.controls.target); r.controls.update();
     };
     const limbs = (S.deco || []).some(isLimb) + DF, stay = D3 && r.view === 'bigdeco' && r.hadLimb === limbs; r.hadLimb = limbs; /* you turned the case to reach a spot: adding or dropping a piece must not turn it back */
@@ -1620,21 +1640,22 @@ function xp() { if (!S.xp) S.xp = {}; const X = S.xp; X.stand = X.stand || { t: 
 const XINFO = { deco: () => { const n = (S.deco || []).length; return n ? n + ' on your case' : 'nothing added yet'; }, char: () => { const C = charCache(); return C.parts.reduce((n, q) => n + q.n, 0) + ' pieces, ' + Math.round(C.tall) + ' mm tall'; }, body: () => '7 pieces: torso on its side, the rest flat', gears: () => '3 pieces, print flat', hinge: () => '2 leaves, print standing as saved', spring: () => '2 springs, print flat', clamp: () => '1 clamp and 1 wedge, print flat', panel: () => { const X = xp(); return '1 panel, ' + X.panel.w + ' x ' + X.panel.h + ' mm, 2.4 mm thick'; }, keys: () => { const K = kb(); return '1 plate, ' + K.w.toFixed(0) + ' x ' + K.h.toFixed(0) + ' mm, print it rim side up'; }, handle: () => '1 handle, print on its side', limbs: () => '8 pieces, print flat', stand: () => '2 stands, print on their side', lens: () => '1 ring, print flat', grip: () => '1 grip, print flat', tripod: () => '1 block, print flat, nut pocket down', charm: () => '1 lug, print on its side' + (xp().charm.hook === 'hook' ? ', 1 hook, print flat' : ''), feet: () => '4 feet', standoff: () => '4 standoffs', clip: () => '6 clips' };
 // ---------- mounting printed parts on the case ----------
 // S.attachedParts: [{ id, partId, face: back | left | right | bottom, anchor: { u, v } (20 mm grid squares), mountType: screw | snap }]
-const MOUNTABLE = { handle: 'side', stand: 'side', charm: 'side', feet: 'flat', standoff: 'flat', panel: 'flat', lens: 'flat', grip: 'flat', tripod: 'flat' }, TWO = { handle: true };
+const MOUNTABLE = { limbs: 'flat', handle: 'side', stand: 'side', charm: 'side', feet: 'flat', standoff: 'flat', panel: 'flat', lens: 'flat', grip: 'flat', tripod: 'flat' }, TWO = { handle: true };
 const twoPoint = (id, opt) => !!TWO[id] || (id === 'charm' && (opt || xp().charm).size === 'chunky');
 const mp = (m) => mountPart(m.partId, m.partId === 'charm' ? m.charm : null); /* a mounted charm keeps the size and hook it was mounted with */ /* Chunky charm: two points, like the Handle */ /* side: printed on its side, its feet go against the case */
 const MFACES = [['back', 'Back'], ['left', 'Left'], ['right', 'Right'], ['bottom', 'Bottom']];
-const FLATF = (f) => f === 'bottom' || f === 'lid'; /* the outside of the base, and the outside of the lid: flat faces, the part prints flat on its plate */
-function mfaces() { const CL = { back: 'Hinge edge', left: 'Left edge', right: 'Right edge', bottom: 'Back (base)' }; return (isClam() ? [['lid', 'Front (lid)']] : []).concat(MFACES.map((f) => (isClam() ? [f[0], CL[f[0]]] : f))); } /* a case with a lid: its front is the lid, its back the base, the walls are its edges */
+const UPRIGHT = { camera: 1, mini: 1 }; /* bodies that stand on their thin front edge: the deck is a snap-on plate facing you */
+const FLATF = (f) => f === 'bottom' || f === 'lid' || f === 'plate'; /* plate: the top of the deck of a case with no lid (the front of an upright one) */ /* the outside of the base, and the outside of the lid: flat faces, the part prints flat on its plate */
+function mfaces() { const CL = { back: 'Hinge edge', left: 'Left edge', right: 'Right edge', bottom: 'Back (base)' }, UP = { back: 'Top edge', left: 'Left edge', right: 'Right edge', bottom: 'Back' }; if (UPRIGHT[S.style]) return [['plate', 'Front (plate)'], ['front', 'Bottom edge']].concat(MFACES.map((f) => [f[0], UP[f[0]]])); return (isClam() ? [['lid', 'Front (lid)']] : isPanel() ? [] : [['plate', 'Top (deck)']]).concat(MFACES.map((f) => (isClam() ? [f[0], CL[f[0]]] : f))); } /* a case with a lid: its front is the lid, its back the base, the walls are its edges */
 const mfaceName = (f) => (mfaces().find((x) => x[0] === f) || [f, f])[1];
-const MBASIS = { lid: [[-1, 0, 0], [0, 1, 0], [0, 0, -1]], back: [[-1, 0, 0], [0, 0, 1], [0, 1, 0]], left: [[0, -1, 0], [0, 0, 1], [-1, 0, 0]], right: [[0, 1, 0], [0, 0, 1], [1, 0, 0]], bottom: [[-1, 0, 0], [0, 1, 0], [0, 0, -1]] }; /* along, up, out of the case */
+const MBASIS = { plate: [[1, 0, 0], [0, 1, 0], [0, 0, 1]], front: [[1, 0, 0], [0, 0, 1], [0, -1, 0]], lid: [[-1, 0, 0], [0, 1, 0], [0, 0, -1]], back: [[-1, 0, 0], [0, 0, 1], [0, 1, 0]], left: [[0, -1, 0], [0, 0, 1], [-1, 0, 0]], right: [[0, 1, 0], [0, 0, 1], [1, 0, 0]], bottom: [[-1, 0, 0], [0, 1, 0], [0, 0, -1]] }; /* along, up, out of the case */
 const mnt = () => { if (!S.mnt) S.mnt = { face: 'back', type: 'screw', view: 'case' }; return S.mnt; };
 const mountView = () => curTab() === 'extras' && !!S.xsel && !isPanel() && (!!PORTS[S.xsel] || (!!MOUNTABLE[S.xsel] && mnt().view !== 'part'));
 const hingeFace = () => (isClam() && S.hinge !== 'none' ? (S.style === 'small' ? (S.hside === 'right' ? 'right' : 'left') : 'back') : null);
 let MPC = {};
 function mountPart(id, opt) { // one copy of the part, turned so the side that goes on the case is at z = 0, with its size along the case. opt: a mounted charm's own size and hook
   const k = id + JSON.stringify(S.xp || {}) + JSON.stringify(opt || 0); if (MPC[k]) return MPC[k];
-  const a = addonPolys(id, opt), set = (a.sets || [a])[0], layers = set.layers || [{ polys: set.polys, z0: 0, z1: set.h }], b = G.bbox([].concat(...layers.map((l) => l.polys))), h = Math.max(...layers.map((l) => l.z1));
+  const a = addonPolys(id, opt), set = (a.sets || [a])[id === 'limbs' ? 1 : 0], /* legs or arms: the bar goes on the wall, its far end takes the next piece */ layers = set.layers || [{ polys: set.polys, z0: 0, z1: set.h }], b = G.bbox([].concat(...layers.map((l) => l.polys))), h = Math.max(...layers.map((l) => l.z1));
   const side = MOUNTABLE[id] === 'side', bw = b.w, bh = side ? h : b.h;
   const M = new THREE.Matrix4(); if (side) M.set(-1, 0, 0, 0, 0, 0, 1, 0, 0, 1, 0, 0, 0, 0, 0, 1); /* x, y, z -> -x, z, y: the profile's bottom goes against the case */
   const x0 = side ? -b.x1 : b.x0, y0 = side ? 0 : b.y0, z0 = side ? b.y0 : 0, pitch = twoPoint(id, opt) ? Math.ceil((bw + 12) / 20) * 20 : 0; /* two points: whole 20 mm squares apart, the part between them */
@@ -1642,7 +1663,7 @@ function mountPart(id, opt) { // one copy of the part, turned so the side that g
   if (Object.keys(MPC).length > 40) MPC = {}; return (MPC[k] = { layers, M, bw, bh, pitch });
 }
 function mountGeos(m, forPrint) { // the part plus its mating plate (and the snap pin, laid flat beside it when printing)
-  const P = mp(m), pl = G.mountPlate(m.mountType, P.bw, P.bh, FLATF(m.face) ? R.F : R.T, P.pitch), geos = G.layerGeos(P.layers).map((gg) => gg.applyMatrix4(P.M));
+  const P = mp(m), pl = G.mountPlate(m.mountType, P.bw, P.bh, m.face === 'plate' ? R.LT : FLATF(m.face) ? R.F : R.T, P.pitch), geos = G.layerGeos(P.layers).map((gg) => gg.applyMatrix4(P.M));
   if (m.partId === 'tripod') { const hx = [G.circle(8 + P.bw / 2, 0, (11.11 / 2 + tolOf()) / Math.cos(Math.PI / 6), 6)]; pl.layers = pl.layers.map((l) => Object.assign({}, l, { polys: G.diff(l.polys, hx) })); } /* the nut pocket runs on through the plate: the nut goes in from the case side before it is mounted */
   geos.push(...G.layerGeos(pl.layers));
   if (pl.pin && forPrint) for (let i = 0; i < pl.pins; i++) G.layerGeos([{ polys: pl.pin.polys, z0: 0, z1: pl.pin.h }]).forEach((gg) => { gg.translate(-19 - i * 14, -pl.hy, 0); geos.push(gg); });
@@ -1654,8 +1675,9 @@ function mountAt(m) { // where a mount sits on the case: the point on the outsid
   const h = geom(), g0 = R.T + R.CLR + 1, a = m.anchor || { u: 0, v: 0 }, sx = g0 + (a.u + 0.5) * 20, sy = g0 + (a.v + 0.5) * 20, B = MBASIS[m.face];
   let w;
   if (m.face === 'bottom') w = { face: 'bottom', type: m.mountType, x: sx, y: sy, zc: 0, B, o: [sx, sy, 0], H: h.H };
+  else if (m.face === 'plate') { if (isClam() || isPanel()) return null; const top = h.H - h.recess; w = { face: 'plate', type: m.mountType, x: sx, y: sy, zc: 0, B, o: [sx, sy, top], H: h.H }; }
   else if (m.face === 'lid') { if (!isClam()) return null; const d = dims(), lx = S.style === 'small' ? sx : d.W - sx, ly = S.style === 'small' ? d.D - sy : sy; w = { face: 'lid', type: m.mountType, x: lx, y: ly, zc: 0, B, o: [lx, ly, 0], H: h.Hl }; } /* the lid's outside, in the lid's own frame: the spot is where you see it from outside */
-  else { const p = G.wallAt(outline(), m.face, m.face === 'back' ? sx : sy0(a)); if (!p) return null; /* back: along x, left and right: along y */
+  else { const p = G.wallAt(outline(), m.face, m.face === 'back' || m.face === 'front' ? sx : sy0(a)); if (!p) return null; /* back: along x, left and right: along y */
     const deckZ = h.H - R.LT - h.recess, zc = Math.max(R.F + 4, Math.min(deckZ - 6, (R.F + deckZ) / 2));
     w = { face: m.face, type: m.mountType, x: p[0], y: p[1], zc: +zc.toFixed(2), B, o: [p[0], p[1], zc], H: h.H, deckZ }; }
   const w2 = Object.assign({}, w, { B: [B[0].map((q) => -q), B[1].map((q) => -q), B[2]] });
@@ -1666,35 +1688,36 @@ function mountAt(m) { // where a mount sits on the case: the point on the outsid
 function mountPoints(m) { // every screw or pin of a mount: one, or two for a part that must not turn
   const w = mountAt(m); if (!w) return []; const P = mp(m); if (!P.pitch) return [w];
   const ax = m.face === 'left' || m.face === 'right' ? 1 : 0, d = w.B[0][ax] * P.pitch;
-  if (FLATF(m.face)) return [w, Object.assign({}, w, { x: w.x + d, o: [w.x + d, w.y, 0] })];
+  if (FLATF(m.face)) return [w, Object.assign({}, w, { x: w.x + d, o: [w.x + d, w.y, w.o[2]] })];
   const p = G.wallAt(outline(), m.face, (ax ? w.y : w.x) + d); return p ? [w, Object.assign({}, w, { x: p[0], y: p[1], o: [p[0], p[1], w.zc] })] : [w];
 }
 const mountCount = (m) => (mp(m).pitch ? 2 : 1);
 const sy0 = (a) => R.T + R.CLR + 1 + (a.u + 0.5) * 20;
 function edgeWhy(m, w) { const out = outline(), b = G.bbox(out), pf = plateFace(m, w);
-  if (FLATF(m.face)) return G.inside([pf], G.offset(out, -1)) ? '' : 'off the edge';
-  const lo = m.face === 'back' ? b.x0 : b.y0, hi = m.face === 'back' ? b.x1 : b.y1; if (G.inside([pf], [G.rect(lo + 4, 0.5, hi - 4, w.H - 0.5)])) return '';
+  if (FLATF(m.face)) return G.inside([pf], G.offset(out, m.face === 'plate' ? -(R.T + R.CLR + 2) : -1)) ? '' : 'off the edge'; /* on the deck: inside its edge, clear of the snap clips */
+  const vx = m.face === 'back' || m.face === 'front', lo = vx ? b.x0 : b.y0, hi = vx ? b.x1 : b.y1; if (G.inside([pf], [G.rect(lo + 4, 0.5, hi - 4, w.H - 0.5)])) return '';
   return pf.some((p) => p[1] < 0.5 || p[1] > w.H - 0.5) ? 'too big for this side' : (pf.reduce((q, p) => Math.max(q, p[0]), -1e9) - pf.reduce((q, p) => Math.min(q, p[0]), 1e9) > hi - lo - 8 ? 'too long for this side' : 'off the edge'); }
 function plateFace(m, w) { // the plate's outline on the face it sits on: wall faces in (along the wall, height), the bottom in (x, y)
-  const P = mp(m), hy = Math.max(7, P.bh / 2 + 2), B = w.B, pt = (mx, my) => { const q = [0, 1, 2].map((i) => w.o[i] + B[0][i] * mx + B[1][i] * my); return FLATF(m.face) ? [q[0], q[1]] : [m.face === 'back' ? q[0] : q[1], q[2]]; };
+  const P = mp(m), hy = Math.max(7, P.bh / 2 + 2), B = w.B, pt = (mx, my) => { const q = [0, 1, 2].map((i) => w.o[i] + B[0][i] * mx + B[1][i] * my); return FLATF(m.face) ? [q[0], q[1]] : [m.face === 'back' || m.face === 'front' ? q[0] : q[1], q[2]]; };
   const x1 = P.pitch ? P.pitch + 7 : 9 + P.bw; return [pt(-7, -hy), pt(x1, -hy), pt(x1, hy), pt(-7, hy)];
 }
 function mountBlocked(m) { // why this spot cannot take this part, or '' if it can
   if (isPanel()) return 'needs a case';
   if (!MOUNTABLE[m.partId]) return 'not a mounting part';
   if (m.face === hingeFace()) return 'hinge';
-  if (m.partId === 'tripod' && m.face !== 'bottom') return 'bottom only';
-  if (m.face === 'lid' && !isClam()) return 'no lid';
+  if (m.partId === 'tripod' && m.face !== (UPRIGHT[S.style] ? 'front' : 'bottom')) return 'bottom only';
+  if (m.face === 'lid' && !isClam()) return 'no lid'; if (m.face === 'plate' && (isClam() || isPanel())) return 'no plate';
   const w = mountAt(m); if (!w) return 'off the edge';
   const out = outline(), pf = plateFace(m, w), ew = edgeWhy(m, w); if (ew) return ew;
   const zone = G.union(mountPoints(m).map((q) => (FLATF(m.face) ? G.rect(q.x - 6, q.y - 6, q.x + 6, q.y + 6) : G.mountRect(q, 6, R.T + 7.5, 0)))), ztop = FLATF(m.face) ? R.F + 6 : w.zc + 5, hit = (polys) => G.area(G.inter(zone, polys)) > 0.3;
   if (isClam() && S.magnets && G.magnetSpots(out).some(([x, y]) => hit([G.circle(x, y, R.MAG / 2 + 2.6, 24)]))) return 'magnet';
   if (posts().some(([x, y]) => hit([G.circle(x, y, R.POSTR + 1, 20)]))) return 'deck screw';
-  if (m.face === 'lid') { const h = geom(), dzL = h.Hl - R.LT - h.recessL, d = dims(); /* the lid's electronics, turned into the lid's frame */
+  if (m.face === 'plate') { const dz = geom().H - R.LT - geom().recess; if (S.items.some((it) => PP(it) && ((it.panel === homePanel() && it.of == null) || (it.panel === 'inside' && R.F + riserOf(it) + (PP(it).depth || 0) > dz - 6.5)) && hit(rectPoly(fp(it))))) return 'electronics'; } /* the deck's own parts and openings, and anything inside that reaches the boss */
+  else if (m.face === 'lid') { const h = geom(), dzL = h.Hl - R.LT - h.recessL, d = dims(); /* the lid's electronics, turned into the lid's frame */
     if (S.items.some((it) => { if (!PP(it) || it.panel !== 'lid' || dzL - (PP(it).depth || 0) >= ztop) return false; const f = fp(it); return hit([G.rect(d.W - f.x1, d.D - f.y1, d.W - f.x0, d.D - f.y0)]); })) return 'electronics'; }
   else { const dz = geom().H - R.LT - geom().recess;
     if (S.items.some((it) => PP(it) && (it.panel === 'inside' || (it.panel === homePanel() && dz - (PP(it).depth || 0) < ztop)) && hit(rectPoly(fp(it))))) return 'electronics'; }
-  if (FLATF(m.face)) { const lf = m.face === 'lid' ? 'lidout' : 'bottom'; if (logoOn(lf)) { const L = LG(lf), d = dims(), lp = toOwn(lf, G.place(logoShape(lf), L.x == null ? d.W / 2 : L.x, L.y == null ? d.D / 2 : L.y, 1, 0)); if (lp.length && G.area(G.inter(G.offset([pf], 1), lp)) > 0.3) return 'logo'; } } /* a logo on that face keeps its room */
+  if (FLATF(m.face)) { const lf = m.face === 'lid' ? 'lidout' : m.face === 'plate' ? 'top' : 'bottom'; if (logoOn(lf)) { const L = LG(lf), d = dims(), lp = toOwn(lf, G.place(logoShape(lf), L.x == null ? d.W / 2 : L.x, L.y == null ? d.D / 2 : L.y, 1, 0)); if (lp.length && G.area(G.inter(G.offset([pf], 1), lp)) > 0.3) return 'logo'; } } /* a logo on that face keeps its room */
   if (S.attachedParts.some((q) => q !== m && q.id !== m.id && q.face === m.face && (() => { const qw = mountAt(q); return qw && G.area(G.inter([pf], [plateFace(q, qw)])) > 0.3; })())) return 'taken';
   if (!FLATF(m.face) && S.ports.some((p) => p.face === m.face && G.area(G.inter([pf], portFace(p))) > 0.3)) return 'port';
   return '';
@@ -1723,12 +1746,17 @@ function portBlocked(p) {
   const zone = [G.mountRect({ face: p.face, x: v ? (s0 + s1) / 2 : w.x, y: v ? w.y : (s0 + s1) / 2 }, (s1 - s0) / 2 + 1.5, R.T + 6, 0)], hit = (polys) => G.area(G.inter(zone, polys)) > 0.3, dz = h.H - R.LT - h.recess;
   if (isClam() && S.magnets && G.magnetSpots(outline()).some(([x, y]) => hit([G.circle(x, y, R.MAG / 2 + 2.6, 24)]))) return 'magnet';
   if (posts().some(([x, y]) => hit([G.circle(x, y, R.POSTR + 1, 20)]))) return 'deck screw';
-  if (S.items.some((it) => { const P = PP(it); if (!P || !(it.panel === 'inside' || it.panel === homePanel())) return false; const zr = it.panel === 'inside' ? [R.F, R.F + 5 + (P.depth || 0)] : [dz - (P.depth || 0), dz]; return zr[0] < w.z1 && zr[1] > w.z0 && hit(rectPoly(fp(it))); })) return 'electronics';
+  if (S.items.some((it) => { const P = PP(it); if (!P || !(it.panel === 'inside' || it.panel === homePanel())) return false; const zr = it.panel === 'inside' ? [R.F, R.F + riserOf(it) + (P.depth || 0)] : [dz - (P.depth || 0), dz]; return zr[0] < w.z1 && zr[1] > w.z0 && hit(rectPoly(fp(it))); })) return 'electronics';
   const pf = portFace(p);
   if (S.ports.some((q) => q !== p && q.id !== p.id && q.face === p.face && G.area(G.inter(G.offset(pf, 1), portFace(q))) > 0.1)) return 'taken';
   if (S.attachedParts.some((m) => m.face === p.face && MOUNTABLE[m.partId] && (() => { const mw = mountAt(m); return mw && G.area(G.inter(G.offset(pf, 1), [plateFace(m, mw)])) > 0.1; })())) return 'taken';
   return '';
 }
+// ---------- wires between lid and base: a notch in both hinge walls that meet when the lid closes ----------
+function wireNotch(half) { const f = hingeFace(); if (!f) return []; const b = G.bbox(outline()), v = f === 'back', c = v ? (b.x0 + b.x1) / 2 : (b.y0 + b.y1) / 2, w = G.wallAt(outline(), f, c); if (!w) return [];
+  const H = half === 'lid' ? geom().Hl : geom().H, k = S.wpass || 'slot', hw = k === 'ribbon' ? 13 : k === 'channel' ? 4 : 5, dz = k === 'ribbon' ? 2.4 : 6;
+  return [{ face: f, x: w[0], y: w[1], rects: [{ s0: c - hw, s1: c + hw, z0: H - dz, z1: H + 1 }] }]; }
+function wireDuct() { const f = hingeFace(); if (!f) return null; const b = G.bbox(outline()), v = f === 'back', c = v ? (b.x0 + b.x1) / 2 : (b.y0 + b.y1) / 2, w = G.wallAt(outline(), f, c); return w ? { face: f, x: v ? c : w[0], y: v ? w[1] : c } : null; }
 function activePorts() { return S.ports.filter((p) => PORTS[p.kind] && !portBlocked(p)).map(portAt).filter(Boolean); }
 function portAttach(a) { const p = { id: S.ports.reduce((q, x) => Math.max(q, x.id || 0), 0) + 1, kind: S.xsel, face: pface(), anchor: { u: a.u, v: 0 } }, why = portBlocked(p);
   if (why) { tag('That spot is blocked: ' + why + '.'); return; } S.ports = S.ports.concat([p]); save(); render(); tag(PORTS[p.kind][0] + ' cut into the ' + p.face + ' wall.'); }
@@ -1744,6 +1772,10 @@ function portHtml(id) {
 }
 const xname = (id) => (PORTS[id] ? PORTS[id][0] : xmeta(id)[0]);
 function activeMounts() { return [].concat(...S.attachedParts.filter((m) => MOUNTABLE[m.partId] && m.face !== 'lid' && !mountBlocked(m)).map(mountPoints)); }
+function tripodBottom(on) { S.attachedParts = S.attachedParts.filter((m) => !(m.partId === 'tripod' && m.face === 'front')); if (!on) return;
+  const mid = (S.cols - 1) / 2, order = anchorsOf('front').sort((a, c) => Math.abs(a.u - mid) - Math.abs(c.u - mid)); /* the middle of the bottom edge first */
+  for (const a of order) for (const t of ['screw', 'snap']) { const m = { id: S.attachedParts.reduce((q, x) => Math.max(q, x.id || 0), 0) + 1, partId: 'tripod', face: 'front', anchor: { u: a.u, v: 0 }, mountType: t }; if (!mountBlocked(m)) { m.anchors = [m.anchor]; S.attachedParts.push(m); return; } }
+  tag('No room for a tripod mount on the bottom edge'); }
 function activeLidMounts() { return [].concat(...S.attachedParts.filter((m) => MOUNTABLE[m.partId] && m.face === 'lid' && !mountBlocked(m)).map(mountPoints)).map((w) => Object.assign({}, w, { face: 'bottom' })); } /* to the lid it is its own outside, like the bottom of the base */
 function attachAt(a) {
   if (PORTS[S.xsel]) return portAttach(a);
@@ -1789,7 +1821,7 @@ function addonPolys(id, opt) {
   }
   if (id === 'lens') { const d = X.lens.d; return { polys: G.diff([G.circle(0, 0, d / 2 + 4, 96)], [G.circle(0, 0, d / 2 + tolOf(), 96)]), h: 6, n: 1 }; } /* a ring round a lens of that size, with the clearance */
   if (id === 'grip') { const L = X.grip.l, W = 30; return { polys: G.diff([G.rrect(0, 0, L, W, 8)], [0.25, 0.5, 0.75].map((f) => G.circle(L * f, W + 5, 8, 40))), h: 8, n: 1 }; } /* a pad with three finger dips along one edge */
-  if (id === 'tripod') { const s = 24, c = tolOf(), sq = [G.rrect(-s / 2, -s / 2, s / 2, s / 2, 3)], hex = [G.circle(0, 0, (11.11 / 2 + c) / Math.cos(Math.PI / 6), 6)], bolt = [G.circle(0, 0, 6.35 / 2 + c, 40)];
+  if (id === 'tripod') { const c = tolOf(), sq = [G.rrect(-10, -7, 10, 7, 2.5)], /* 20 x 14: the nut's flats across the short side, so it fits a thin edge */ hex = [G.circle(0, 0, (11.11 / 2 + c) / Math.cos(Math.PI / 6), 6)], bolt = [G.circle(0, 0, 6.35 / 2 + c, 40)];
     return { layers: [{ polys: G.diff(sq, hex), z0: 0, z1: 1.9 }, { polys: G.diff(sq, bolt), z0: 1.9, z1: 8 }], h: 8, n: 1 }; } /* 1/4-20 hex nut: 11.11 mm across the flats, 5.56 thick. The pocket is the plate plus 1.9 mm, the tripod screw comes in through the 1/4 in hole */
   if (id === 'charm') { // seen from the side: a flange on the case, a neck, a ring round a 5 mm eyelet. Pushed up 5 mm (Mini) or 8 mm (Chunky).
     const C = opt || X.charm, big = C.size === 'chunky', k = big ? 1.6 : 1, ro = 5.5 * k, base = 4, bw = big ? 30 : 2 * ro, cy = base + 2 + ro;
