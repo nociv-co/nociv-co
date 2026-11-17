@@ -135,13 +135,13 @@
       ports: [{ kind: 'p_vent', face: 'right', u: 1 }],
       credit: { project: 'Case Zero starter code', by: 'this builder, made from your wiring', url: 'https://nociv.co/casezero/build/', license: 'free to use and change' },
       note: 'Its code.py runs a 25:00 countdown: press the button to start or pause, hold it 1 s to reset, turn the wheel to set the minutes. It beeps at 00:00.' },
-    { id: 'synth', name: 'Mini Synth', level: 'Medium', style: 'groove', starter: true, fn: 'synth', line: '8 keys and 4 knobs that play notes in any music app over USB. A handle on the back to carry it.',
-      parts: [['pico', 1], ['oled096', 1], ['pot', 4], ['tact12', 8], ['speaker28', 1]], size: [10, 6],
-      place: [['pico', 31, 76, 0], ['oled096', 70, 76, 0], ['pot', 105, 76, 0], ['pot', 130, 76, 0], ['pot', 155, 76, 0], ['pot', 180, 76, 0], ['speaker28', 184, 102, 0]].concat([0, 1, 2, 3, 4, 5, 6, 7].map(function (i) { return ['tact12', 26 + i * 22.2, 32, 0]; })),
+    { id: 'synth', name: 'Mini Synth', level: 'Medium', style: 'groove', starter: true, fn: 'synth', line: '8 keys, 2 knobs and 2 click wheels that play notes in any music app over USB. A handle on the back to carry it.',
+      parts: [['pico', 1], ['oled096', 1], ['pot', 2], ['encoder', 2], ['tact12', 8], ['speaker28', 1]], size: [10, 6],
+      place: [['pico', 31, 76, 0], ['oled096', 70, 76, 0], ['pot', 100, 76, 0], ['pot', 122, 76, 0], ['encoder', 152, 76, 0], ['encoder', 186, 76, 0], ['speaker28', 184, 102, 0]].concat([0, 1, 2, 3, 4, 5, 6, 7].map(function (i) { return ['tact12', 26 + i * 22.2, 32, 0]; })),
       mounts: [{ partId: 'handle', face: 'back', anchor: { u: 1 }, mountType: 'screw' }],
       ports: [{ kind: 'p_vent', face: 'right', u: 2 }],
       credit: { project: 'Case Zero starter code', by: 'this builder, made from your wiring', url: 'https://nociv.co/casezero/build/', license: 'free to use and change' },
-      note: 'Its code.py plays a note per key on the speaker; knob 1 moves the pitch, knob 2 the tempo of the arpeggio while you hold a key.' }
+      note: 'Its code.py plays a note per key on the speaker; knob 1 moves the pitch, knob 2 the tempo of the arpeggio while you hold a key. The 2 click wheels are free for your own ideas: each one already prints its count.' }
     ,{ id: 'sampler', name: 'Voice Sampler', level: 'Medium', style: 'groove', starter: true, fn: 'sampler', line: '12 pads that play sounds, 3 modes (Chopper, Drum, Ambient), Pitch and Effect wheels, a stick to scrub and set the level. Plays out of a headphone jack and over USB MIDI.',
       parts: [['pico', 1], ['keypad44', 1], ['encoder', 2], ['thumb', 1], ['oled096', 1], ['mat8', 1], ['jack35', 1]], size: [10, 7],
       place: [['keypad44', 45, 72, 0], ['oled096', 100, 112, 0], ['mat8', 140, 112, 0], ['encoder', 107, 60, 0], ['encoder', 152, 60, 0], ['thumb', 182, 112, 0], ['pico', 60, 18, 0], ['jack35', 174, 138, 0]],
