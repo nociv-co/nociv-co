@@ -154,7 +154,7 @@ export function charParts(G, c0) {
   const B = c.bend ? 1 : 0, out = (x, t) => (x > 0 ? x : x - t); /* x of a piece's inner face, on either side */
   side('arm', B ? 'Arm piece' : 'Arm', fp.bar, B ? 4 : 2, 0x2f4a6b, [].concat(...[-1, 1].map((sd) => [[out(sd * shX, 5), 0, shZ]].concat(B ? [[out(sd * (shX + 5), 5), 0, shZ - fp.Lb]] : []))));
   side('hand', c.hands === 'claw' ? 'Claw hand' : 'Mitt hand', fp.hand, 2, 0xe9e2cc, [-1, 1].map((sd) => [out(sd * (shX + 5 + 5 * B), 8), 0, shZ - fp.reach]));
-  side('leg', B ? 'Leg piece' : 'Leg', fp.bar, B ? 4 : 2, 0x2f4a6b, [].concat(...[-1, 1].map((sd) => [[out(sd * hipX, 5), 0, hipZ]].concat(B ? [[out(sd * (hipX + 5), 5), 0, hipZ - fp.Lb]] : []))));
+  side('leg', B ? 'Leg piece' : 'Leg', fp.bar, B ? 4 : 2, 0xf2c230, [].concat(...[-1, 1].map((sd) => [[out(sd * hipX, 5), 0, hipZ]].concat(B ? [[out(sd * (hipX + 5), 5), 0, hipZ - fp.Lb]] : []))));
   side('foot', c.feet === 'boot' ? 'Boot' : 'Shoe', fp.foot, 2, 0x1a1a1a, [-1, 1].map((sd) => [out(sd * (hipX + 5 + 5 * B), 16), 0, 0]));
   const screens = head.scr.map((sv, k) => ({ x: 0, y: head.planes[k] + (c.scr === 'mounted' ? -1.2 : T * 0.6), z: headZ + (hd.cz - hd.zb) + sv, w: OLED.w, h: OLED.h }));
   return { parts: P, screens, tall: headZ + hd.H, wide: 2 * (hipX + 21 + 5 * B), spec: c, turn: !!c.turn };

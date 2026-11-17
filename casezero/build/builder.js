@@ -6,7 +6,7 @@ import { OrbitControls } from 'three/addons/OrbitControls.js';
 import * as G from './geo.js?v=22';
 import { openMeasure, GROUPS } from './capture.js?v=20';
 import { makeBoard, boardFiles, boardSvg, zip as zipFiles } from './board.js?v=3';
-import { charParts, chSpec, charBuyList, CH_DEF, headDims, faceSpots, faceLimit, featPoly, flatParts, FEATS } from './char3d.js?v=2';
+import { charParts, chSpec, charBuyList, CH_DEF, headDims, faceSpots, faceLimit, featPoly, flatParts, FEATS } from './char3d.js?v=3';
 import { planWiring, codeFor, PICO_LEFT, PICO_RIGHT, PICO_PINS, PICO_BRAINS, NEED } from './wiring.js?v=19';
 
 const CZ = window.CZ, R = G.RULE, $ = (id) => document.getElementById(id);
@@ -76,7 +76,7 @@ function deckArea() { return G.offset(outline(), isPanel() ? -1 : -(R.T + R.CLR 
 function posts() { const d = dims(); if (isPanel()) { const k = S.plift > 0 && S.pbase !== 'rim' ? 8.5 : 6.5; /* half mm: never in line with a notch edge (whole mm), which breaks the mesh */ return S.phold === 'screws' ? [[k, k], [d.W - k, k], [d.W - k, d.D - k], [k, d.D - k]] : []; } return G.postSpots(outline(), d.W * d.D > 30000 ? 6 : 4); }
 function itemsOn(panel) { return S.items.filter((i) => i.panel === panel); }
 function depthOf(panel) { return itemsOn(panel).filter((i) => i.of == null).reduce((m, i) => Math.max(m, PP(i) ? PP(i).depth : 0), 0); } /* parts on a board: the board sets the depth */
-function upOf(panel) { return itemsOn(panel).reduce((m, i) => Math.max(m, PP(i) ? Math.max(PP(i).up || 0, i.mt === 'raised' ? 1.6 : 0, i.mt === 'top' ? (PP(i).depth || 0) + (PP(i).up || 0) : 0) : 0), panel !== homePanel() ? 0 : (S.deco || []).some((q) => q.k === 'arm') ? 11 : (S.deco || []).some((q) => q.mt === 'raised') ? 1.6 : 0); }
+function upOf(panel) { return itemsOn(panel).reduce((m, i) => Math.max(m, PP(i) ? Math.max(PP(i).up || 0, i.mt === 'raised' ? 1.6 : 0, i.mt === 'top' ? (PP(i).depth || 0) + (PP(i).up || 0) : 0) : 0), panel !== homePanel() ? 0 : (S.deco || []).some((q) => q.k === 'leg') ? 22 : (S.deco || []).some((q) => q.k === 'arm') ? 14 : (S.deco || []).some((q) => q.mt === 'raised') ? 1.6 : 0); }
 function heights() {
   if (isPanel()) return { H: S.pt + (S.plift || 0), Hl: 0, recess: 0, recessL: 0 };
   // base: floor + deepest part or brain + deck, plus room for caps when the lid closes
@@ -370,7 +370,7 @@ function xmeta(id) { // one printed part: [short name, what it is and how it goe
     handle: ['Handle', 'An arch to carry it by. Glue its two feet to the top or the back with super glue or epoxy: tape will not hold it.' + NEWP, stepper('xh_l', 'Grip', X.handle.l + ' mm wide')],
     feet: ['Feet', 'Little round feet so it does not slide. Screw on, or glue.', '<div class="row"><b>Fix</b>' + seg('xf_hole', [['1', 'Screw hole'], ['0', 'Glue']], X.feet.hole ? '1' : '0') + '</div>' + stepper('xf_h', 'Tall', X.feet.h + ' mm')],
     char: ['Character', 'A whole character to print: head, body, arms, hands, legs and feet, with a face. Spin it above to see it from every side. The head turns on its neck, the arms and legs swing and hold a pose.' + NEWP, charHtml(), 'print files (zip)'],
-    deco: ['Face and arms', 'Give the case you built a face, and arms that swing. Tap one to add it, then drag it where you want it on the picture above. It becomes part of your case files.' + NEWP, decoHtml(), 'none'],
+    deco: ['Face, arms, legs', 'Give the case you built a face, and arms and legs that swing. Drag a piece onto the case above, then drag it where you want it. It becomes part of your case files.' + NEWP, decoHtml(), 'none'],
     body: ['Body', 'A torso your case sits on like a head. Two arms and two legs screw to its sides and hold a pose when you tighten them. You need 4 M3 x 12 screws (they cut their own thread in the torso) and 2 M3 x 20 with nuts for the feet. A heavy case can tip it: spread the legs.' + NEWP, stepper('xb_h', 'Torso', X.body.h + ' mm tall') + stepper('xl_l', 'Arms, legs', X.limbs.l + ' mm long') + fits],
     limbs: ['Legs or arms', 'No torso: 2 clips grab an edge of the case, then 4 bars and 2 feet. Join them with 6 M3 x 20 screws and nuts, tighten to hold a pose.' + NEWP, stepper('xl_l', 'Bars', X.limbs.l + ' mm long') + fits],
     gears: ['Gears', 'Two gears on a base with pegs, so they turn the moment they come off the printer. The small one has 18 teeth. ' + (X.gears.n === 18 ? 'Same size: they turn at the same speed, in opposite directions.' : 'Turn the small one and the big one turns ' + (X.gears.n / 18).toFixed(X.gears.n % 18 ? 1 : 0) + ' times slower and stronger.') + ' Take them off the base to use them on your own axles, ' + (0.75 * (18 + X.gears.n)).toFixed(1).replace('.0', '') + ' mm apart. Print in PETG if they will do real work.' + NEWP, stepper('xg_n', 'Big gear', X.gears.n + ' teeth')],
@@ -416,13 +416,16 @@ function printCard(id) { const q = PQ[S.pq] ? S.pq : 'nice', P = PSET[id] || [3,
 let DECO = null;
 const decoOn = () => S.step === 5 && curTab() === 'extras' && (S.xsel === 'deco' || (S.xsel === 'char' && DECO && DECO.mode === 'char'));
 const decoMode = () => (S.xsel === 'deco' ? 'case' : 'char');
-function decoPolys() { return (S.deco || []).map((q) => (q.k === 'arm' ? { arm: true, x: q.x, y: q.y } : { mt: q.mt || 'sunk', polys: [featPoly(q.k, q.s || 1.4, q.f).map(([x, y]) => [x + q.x, y + q.y])] })); }
+const isLimb = (q) => q.k === 'arm' || q.k === 'leg';
+const deco3d = () => decoOn() && decoMode() === 'case'; /* a face, arms and legs on the case: you work on the real case in 3D */
+let LIMBFP = null; const limbFp = () => LIMBFP || (LIMBFP = flatParts(G, { size: 60 }));
+function decoPolys() { return (S.deco || []).map((q) => (isLimb(q) ? { arm: true, x: q.x, y: q.y } : { mt: q.mt || 'sunk', polys: [featPoly(q.k, q.s || 1.4, q.f).map(([x, y]) => [x + q.x, y + q.y])] })); }
 function decoScene() { // the surface, what is already on it, and what you can move
   if (decoMode() === 'char') { const c = chSpec(xp().ch), d = headDims(c), s = d.s, F = faceSpots(c);
     return { both: F.both, s, outline: d.cube ? [G.rrect(-d.W / 2, -d.H / 2, d.W / 2, d.H / 2, 8 * s)] : G.inter([G.circle(0, -0.2 * d.R, d.R, 72)], [G.rect(-d.R, -0.8 * d.R, d.R, d.R)]), refs: [],
       items: F.spots.map((f) => ({ key: f.k, x: f.p[0] * s, y: f.p[1] * s, r: f.kind === 'screen' ? 14 : 8 * s, screen: f.kind === 'screen', poly: f.kind === 'screen' ? [[-15, -9.5], [15, -9.5], [15, 9.5], [-15, 9.5]] : featPoly(f.kind, s, f.flip) })) }; }
   const P = PARTS(), refs = []; itemsOn(homePanel()).forEach((i) => { if (P[i.type]) refs.push(...G.cutShape(P[i.type], i.x, i.y, i.r || 0)); });
-  return { outline: outline(), refs, s: 1, items: (S.deco || []).map((q) => ({ key: q.id, x: q.x, y: q.y, r: q.k === 'arm' ? 9 : 9 * (q.s || 1.4), arm: q.k === 'arm', poly: q.k === 'arm' ? G.circle(0, 0, 5, 24) : featPoly(q.k, q.s || 1.4, q.f) })) };
+  return { outline: outline(), refs, s: 1, items: (S.deco || []).map((q) => ({ key: q.id, x: q.x, y: q.y, r: isLimb(q) ? 9 : 9 * (q.s || 1.4), arm: isLimb(q), poly: isLimb(q) ? G.circle(0, 0, 5, 24) : featPoly(q.k, q.s || 1.4, q.f) })) };
 }
 function drawDeco(W, H) {
   const d = px(), sc = decoScene(), b = G.bbox(sc.outline), k = Math.min((W - 36 * d) / b.w, (H - 84 * d) / b.h), ox = (W - b.w * k) / 2 - b.x0 * k, oy = (H - 26 * d + b.h * k) / 2 + b.y0 * k;
@@ -443,7 +446,7 @@ function decoMove(key, x, y) {
     let p = faceLimit(c, [x / s, y / s]); if (key === 'es' || key === 'ms') p = [0, p[1]]; pos[key] = p;
     const twin = { eL: 'eR', eR: 'eL', bL: 'bR', bR: 'bL' }[key]; if (twin) pos[twin] = [-p[0], p[1]]; /* eyes and brows move as a pair, so the face stays even */
     return; }
-  const q = (S.deco || []).find((z) => z.id === key); if (!q) return; const b = G.bbox(outline()), m = 7; q.x = Math.max(b.x0 + m, Math.min(b.x1 - m, x)); q.y = Math.max(b.y0 + m, Math.min(b.y1 - m, y));
+  const q = (S.deco || []).find((z) => z.id === key); if (!q) return; const b = G.bbox(outline()), m = 7; const at = decoInside(Math.max(b.x0 + m, Math.min(b.x1 - m, x)), Math.max(b.y0 + m, Math.min(b.y1 - m, y))); q.x = at[0]; q.y = at[1];
 }
 function decoWire() {
 cv.addEventListener('pointerdown', (e) => { if (!decoOn() || !DECO || !DECO.xf) return; const [x, y] = decoPoint(e); let best = null, bd = 1e9; DECO.sc.items.forEach((it) => { const dd = Math.hypot(it.x - x, it.y - y); if (dd < Math.max(11, it.r + 5) && dd < bd) { bd = dd; best = it; } });
@@ -451,13 +454,15 @@ cv.addEventListener('pointerdown', (e) => { if (!decoOn() || !DECO || !DECO.xf) 
 cv.addEventListener('pointermove', (e) => { if (!decoOn() || !DECO || !DECO.drag) return; const [x, y] = decoPoint(e); DECO.drag.moved = true; decoMove(DECO.drag.key, x + DECO.drag.dx, y + DECO.drag.dy); draw(); e.preventDefault(); });
 ['pointerup', 'pointercancel'].forEach((ev) => cv.addEventListener(ev, () => { if (!decoOn() || !DECO) return; const dr = DECO.drag; DECO.drag = null; if (dr && dr.moved) save(); render(); }));
 }
-function decoHtml() { const sel = DECO && (S.deco || []).find((q) => q.id === DECO.sel), arms = (S.deco || []).filter((q) => q.k === 'arm').length;
-  const add = '<p class="h" style="margin-top:10px">Add to the top of your case</p><div class="grid g3">' + Object.keys(FEATS).map((k) => '<button class="btn" data-dadd="' + k + '" style="padding:8px 4px;font-size:12.5px">+ ' + FEATS[k] + '</button>').join('') + '<button class="btn dark" data-dadd="arm" style="padding:8px 4px;font-size:12.5px">+ Arm</button></div>';
+function decoHtml() { const D = S.deco || [], sel = DECO && D.find((q) => q.id === DECO.sel), arms = D.filter((q) => q.k === 'arm').length, legs = D.filter((q) => q.k === 'leg').length;
+  const chip = (k, name, dark) => '<button class="btn' + (dark ? ' dark' : '') + '" data-dadd="' + k + '" style="padding:11px 4px;font-size:12.5px">+ ' + name + '</button>';
+  const add = '<p class="h" style="margin-top:10px">Drag one onto your case, or tap it</p><div class="grid g3">' + Object.keys(FEATS).map((k) => chip(k, FEATS[k])).join('') + chip('arm', 'Arm', 1) + chip('leg', 'Leg', 1) + '</div>';
+  const many = (n, w) => n + ' ' + w + (n > 1 ? 's' : ''), what = [arms ? many(arms, 'arm') : '', legs ? many(legs, 'leg') : ''].filter(Boolean).join(' and ');
   return (sel ? '<div style="margin-top:10px"></div>' : add) +
-    (sel ? (sel.k === 'arm' ? '<div class="selbar"><b>Arm</b><button data-dact="rm">Remove</button></div><p class="note" style="margin:2px 0 0">A screw spot. The arm swings around it, flat against the case.</p>'
+    (sel ? (isLimb(sel) ? '<div class="selbar" style="flex-wrap:wrap"><b style="flex:1 0 100%">' + (sel.k === 'leg' ? 'Leg' : 'Arm') + '</b><button data-dact="turnl">Turn left</button><button data-dact="turnr">Turn right</button><button data-dact="rm">Remove</button></div><p class="note" style="margin:2px 0 0">A screw spot. The ' + sel.k + ' swings around it, flat against the case. Turning it here only changes the picture: you pose the real one by hand.</p>'
       : '<div class="selbar" style="flex-wrap:wrap"><b style="flex:1 0 100%">' + esc(FEATS[sel.k]) + '</b><button data-dact="sunk"' + ((sel.mt || 'sunk') === 'sunk' ? ' style="background:#1a1a1a;color:#fff"' : '') + '>Sunk in</button><button data-dact="raised"' + (sel.mt === 'raised' ? ' style="background:#1a1a1a;color:#fff"' : '') + '>Raised</button><button data-dact="small">Smaller</button><button data-dact="big">Bigger</button>' + (sel.k === 'brow' ? '<button data-dact="flip">Tilt</button>' : '') + '<button data-dact="rm">Remove</button></div><p class="note" style="margin:2px 0 0">' + ((sel.mt || 'sunk') === 'sunk' ? 'Pressed 1.2 mm into the top. Wipe paint in to make it pop.' : 'Stands 1.6 mm up. It prints as its own little piece that you glue on.') + '</p>')
-      : '<p class="note" style="margin-top:6px">' + ((S.deco || []).length ? 'Tap a piece on the picture to change or remove it.' : 'Grey shapes on the picture are the electronics already on your case, so you can work around them. A screen can be the eyes: just put the brows and mouth around it.') + '</p>') + (sel ? add : '') +
-    (arms ? '<button class="btn red" data-xsave="decoarms" style="margin-top:10px">Save ' + arms + (arms > 1 ? ' arms' : ' arm') + ' to print</button><p class="note" style="margin-top:4px">Each arm is a bar and a hand. Screw the bar to its spot with an M3 x 12 (it cuts its own thread), the hand to the bar with an M3 x 16 and a nut.</p>' : '') +
+      : '<p class="note" style="margin-top:6px">' + (D.length ? 'Tap a piece on the case to change or remove it. Drag the empty space to spin the case.' : 'That is the case you built, with its electronics on it. Drag a piece up onto it, then drag it again to move it. A screen can be the eyes: put the brows and mouth around it.') + '</p>') + (sel ? add : '') +
+    (what ? '<button class="btn red" data-xsave="decoarms" style="margin-top:10px">Save ' + what + ' to print</button><p class="note" style="margin-top:4px">An arm is a bar and a hand, a leg is a bar and a foot. Screw the bar to its spot with an M3 x 12 (it cuts its own thread), the hand or foot to the bar with an M3 x 16 and a nut.' + (isClam() ? ' This case has a lid, so they sit under it and the lid is made taller to clear them. For a figure that stands on its legs, pick Slate, Handheld or Character as the body.' : '') + '</p>' : '') +
     '<button class="btn" data-jump="Finish" style="margin-top:10px">See it on my case</button>'; }
 // ---------- the character page ----------
 let CHC = null;
@@ -859,8 +864,8 @@ $('pane').addEventListener('click', (e) => {
   if (d.f != null) { saveFile(FILES[+d.f]); return; }
   if (act === 'faceed') { DECO = DECO && DECO.mode === 'char' ? null : { mode: 'char' }; render(); return; }
   if (act === 'facereset') { delete xp().ch.pos; save(); render(); return; }
-  if (d.dadd) { snapU(); S.deco = S.deco || []; const bb = G.bbox(outline()), n = S.deco.length, q = { id: 'd' + Date.now().toString(36) + n, k: d.dadd, x: bb.x0 + bb.w * (0.3 + 0.2 * (n % 3)), y: bb.y0 + bb.h * (0.7 - 0.18 * (Math.floor(n / 3) % 3)), mt: 'sunk', s: 1.4 }; S.deco.push(q); DECO = DECO || { mode: 'case' }; DECO.sel = q.id; save(); render(); return; }
-  if (d.dact) { const q = DECO && (S.deco || []).find((z) => z.id === DECO.sel); if (!q) return; snapU(); if (d.dact === 'rm') { S.deco = S.deco.filter((z) => z !== q); DECO.sel = null; } else if (d.dact === 'big') q.s = Math.min(3.2, (q.s || 1.4) + 0.3); else if (d.dact === 'small') q.s = Math.max(0.8, (q.s || 1.4) - 0.3); else if (d.dact === 'flip') q.f = q.f ? 0 : 1; else q.mt = d.dact; save(); render(); return; }
+  if (d.dadd) { if (Date.now() - SKIPC < 500) return; decoAdd(d.dadd); save(); render(); return; }
+  if (d.dact) { const q = DECO && (S.deco || []).find((z) => z.id === DECO.sel); if (!q) return; snapU(); if (d.dact === 'rm') { S.deco = S.deco.filter((z) => z !== q); DECO.sel = null; } else if (d.dact === 'big') q.s = Math.min(3.2, (q.s || 1.4) + 0.3); else if (d.dact === 'small') q.s = Math.max(0.8, (q.s || 1.4) - 0.3); else if (d.dact === 'flip') q.f = q.f ? 0 : 1; else if (d.dact === 'turnl' || d.dact === 'turnr') q.a = (((q.a || 0) + (d.dact === 'turnl' ? -45 : 45)) % 360 + 360) % 360; else q.mt = d.dact; save(); render(); return; }
   if (d.mt) { const it = S.items.find((i) => i.id === sel); if (it) { snapU(); it.mt = d.mt; save(); render(); } return; }
   if (d.jump) { const pi = PAGES.findIndex((q) => q.name === d.jump); if (pi >= 0) openPage(pi); return; }
   if (act === 'saveall') { if (!FILES || !FILES.length) return; tag('Packing your files...');
@@ -921,12 +926,12 @@ $('snapIn').addEventListener('change', (e) => {
 });
 
 // ---------- the picture ----------
-const cv = $('view'), g = cv.getContext('2d'); decoWire();
+const cv = $('view'), g = cv.getContext('2d'); decoWire(); deco3dWire();
 let view = null; // current 2D mapping for taps
 function fit() { const r = cv.getBoundingClientRect(), d = Math.min(2, devicePixelRatio || 1); cv.width = Math.max(1, Math.round(r.width * d)); cv.height = Math.max(1, Math.round(r.height * d)); }
 // The 3D box: steps that show a flat picture also show the case in 3D in the top right corner. Tap it to make it big.
 let BIG3D = false, miniTimer = 0;
-const native3d = () => { const t = curTab(); if (t === 'extras') return !!S.xsel && !decoOn(); return (S.step === 2 && !isPanel()) || (S.step === 5 && t === '3d') || (S.step === 3 && t === 'colors'); };
+const native3d = () => { const t = curTab(); if (t === 'extras') return !!S.xsel && (!decoOn() || deco3d()); return (S.step === 2 && !isPanel()) || (S.step === 5 && t === '3d') || (S.step === 3 && t === 'colors'); };
 const wantsMini = () => (S.step === 0 || S.step === 1 || S.step === 3 || S.step === 4 || (S.step === 2 && isPanel())) && (S.items.length > 0 || S.step === 3) && !$('con').classList.contains('down');
 function draw() {
   const big = native3d() || BIG3D, mini = !big && wantsMini(), v3 = $('v3');
@@ -1183,6 +1188,61 @@ function drawBeds(W, H) {
 
 // ---------- 3D ----------
 let T3 = null;
+// one face piece, arm or leg, drawn around its own spot so it can be moved without rebuilding the case
+function decoMesh(q, tz) { const grp = new THREE.Group();
+  if (isLimb(q)) { const fp = limbFp(), L = fp.Lb, leg = q.k === 'leg', end = leg ? fp.foot : fp.hand, off = leg ? -11 - L : -L, z = tz + 0.4;
+    grp.add(mesh(G.layerGeos([{ polys: fp.bar.polys, z0: z, z1: z + fp.bar.h }]), 0x2f4a6b));
+    grp.add(mesh(G.layerGeos([{ polys: end.polys.map((p) => p.map(([a, b]) => [a, b + off])), z0: z + fp.bar.h, z1: z + fp.bar.h + end.h }]), leg ? 0x1a1a1a : 0xe9e2cc));
+    grp.rotation.z = (q.a || 0) * Math.PI / 180; }
+  else grp.add(mesh(G.layerGeos([{ polys: [featPoly(q.k, q.s || 1.4, q.f)], z0: q.mt === 'raised' ? tz + 1.6 : tz - 1.2, z1: q.mt === 'raised' ? tz + 1.7 : tz - 1.1 }]), 0x1a1a1a));
+  return grp; }
+function decoMark() { const r = T3; if (!r) return; // a red ring around the piece you picked
+  if (r.decoRing) { if (r.decoRing.parent) r.decoRing.parent.remove(r.decoRing); r.decoRing.geometry.dispose(); r.decoRing = null; }
+  const q = deco3d() && DECO && (S.deco || []).find((z) => z.id === DECO.sel), m = q && r.decoM && r.decoM[q.id]; if (!m) return;
+  const rad = isLimb(q) ? 10 : 9 * (q.s || 1.4) + 2, ring = new THREE.Mesh(new THREE.RingGeometry(rad, rad + 2.4, 48), new THREE.MeshBasicMaterial({ color: 0xc8412f, side: THREE.DoubleSide, depthTest: false, transparent: true }));
+  ring.renderOrder = 999; ring.position.z = r.decoZ + 0.5; m.add(ring); r.decoRing = ring; }
+function decoPlace(q, lifted) { const r = T3, m = r && r.decoM && r.decoM[q.id]; if (!m) return; m.position.set(q.x, q.y, lifted && !isLimb(q) ? 2.4 : lifted ? 1 : 0); r.draw(); }
+// where a finger on the 3D picture lands on the top of the case, in case millimetres
+function decoRay(e) { const r = T3; if (!r || r.decoZ == null) return null; const el = $('v3'), at = document.elementFromPoint(e.clientX, e.clientY); if (!at || !el.contains(at)) return null;
+  const b = el.getBoundingClientRect(), rc = new THREE.Raycaster(); rc.setFromCamera(new THREE.Vector2(((e.clientX - b.left) / b.width) * 2 - 1, -((e.clientY - b.top) / b.height) * 2 + 1), r.camera);
+  r.root.updateMatrixWorld(true); const inv = new THREE.Matrix4().copy(r.root.matrixWorld).invert(), o = rc.ray.origin.clone().applyMatrix4(inv), dir = rc.ray.direction.clone().transformDirection(inv);
+  if (Math.abs(dir.z) < 1e-4) return null; const t = (r.decoZ - o.z) / dir.z; return t > 0 ? [o.x + dir.x * t, o.y + dir.y * t] : null; }
+function decoHit(x, y, slop) { let best = null, bd = 1e9; (S.deco || []).forEach((q) => { const pts = [[q.x, q.y]];
+    if (isLimb(q)) { const a = (q.a || 0) * Math.PI / 180, L = limbFp().Lb + (q.k === 'leg' ? 8 : 14); [0.5, 1].forEach((f) => pts.push([q.x + Math.sin(a) * L * f, q.y - Math.cos(a) * L * f])); }
+    const rad = (isLimb(q) ? 9 : 9 * (q.s || 1.4)) + slop; pts.forEach((p) => { const dd = Math.hypot(p[0] - x, p[1] - y); if (dd < rad && dd < bd) { bd = dd; best = q; } }); });
+  return best; }
+const inPoly = (polys, x, y) => { let c = false; polys.forEach((p) => { for (let i = 0, j = p.length - 1; i < p.length; j = i++) { const a = p[i], b = p[j]; if ((a[1] > y) !== (b[1] > y) && x < a[0] + (y - a[1]) * (b[0] - a[0]) / (b[1] - a[1])) c = !c; } }); return c; };
+let DIN = null;
+function decoInside(x, y) { // keep a piece on the case: a round or shaped top has corners its box does not
+  const k = S.style + JSON.stringify(dims()); if (!DIN || DIN.k !== k) { const o = outline(); let ins = o; try { const t = G.offset(o, -7); if (t && t.length) ins = t; } catch (e) {} DIN = { k, ins, b: G.bbox(o) }; }
+  if (inPoly(DIN.ins, x, y)) return [x, y]; const cx = DIN.b.x0 + DIN.b.w / 2, cy = DIN.b.y0 + DIN.b.h / 2; let lo = 0, hi = 1;
+  for (let i = 0; i < 14; i++) { const m = (lo + hi) / 2; if (inPoly(DIN.ins, cx + (x - cx) * m, cy + (y - cy) * m)) lo = m; else hi = m; } return [cx + (x - cx) * lo, cy + (y - cy) * lo]; }
+function decoAdd(k) { snapU(); S.deco = S.deco || []; const bb = G.bbox(outline()), n = S.deco.length, limb = k === 'arm' || k === 'leg';
+  const q = { id: 'd' + Date.now().toString(36) + n, k, x: bb.x0 + bb.w * (0.3 + 0.2 * (n % 3)), y: bb.y0 + bb.h * (0.7 - 0.18 * (Math.floor(n / 3) % 3)), mt: 'sunk', s: 1.4 };
+  if (limb) { const side = S.deco.filter((z) => z.k === k).length % 2; q.x = side ? bb.x1 - bb.w * 0.3 : bb.x0 + bb.w * 0.3; q.y = bb.y0; if (k === 'arm') { q.x = side ? bb.x1 : bb.x0; q.y = bb.y0 + bb.h * 0.55; } q.a = k === 'leg' ? 0 : side ? 20 : -20; } /* arms start on the sides, legs on the bottom edge */
+  const at = decoInside(q.x, q.y); q.x = at[0]; q.y = at[1];
+  S.deco.push(q); DECO = DECO || { mode: 'case' }; DECO.sel = q.id; return q; }
+let SKIPC = 0;
+function deco3dWire() { const el = $('v3'); let dr = null, dn = null, nw = null, ghost = null;
+  el.addEventListener('pointerdown', (e) => { if (!deco3d() || !T3) return; const p = decoRay(e); dn = { x: e.clientX, y: e.clientY, id: e.pointerId }; if (!p) return;
+    const p2 = decoRay({ clientX: e.clientX + 20, clientY: e.clientY }), slop = p2 ? Math.min(16, Math.hypot(p2[0] - p[0], p2[1] - p[1])) : 8, q = decoHit(p[0], p[1], slop); if (!q) return;
+    e.stopPropagation(); e.preventDefault(); dn = null; T3.controls.enabled = false; DECO = DECO || { mode: 'case' }; DECO.sel = q.id; dr = { q, dx: q.x - p[0], dy: q.y - p[1], moved: false, id: e.pointerId };
+    try { el.setPointerCapture(e.pointerId); } catch (x) {} decoMark(); T3.draw(); }, true);
+  el.addEventListener('pointermove', (e) => { if (!dr || e.pointerId !== dr.id) return; e.stopPropagation(); e.preventDefault(); const p = decoRay(e); if (!p) return;
+    if (!dr.moved) { snapU(); dr.moved = true; } decoMove(dr.q.id, p[0] + dr.dx, p[1] + dr.dy); decoPlace(dr.q, true); }, true);
+  ['pointerup', 'pointercancel'].forEach((ev) => el.addEventListener(ev, (e) => {
+    if (dr && e.pointerId === dr.id) { const d0 = dr; dr = null; e.stopPropagation(); if (T3) T3.controls.enabled = true; if (d0.moved) save(); render(); return; }
+    if (dn && e.pointerId === dn.id) { const tap = Math.hypot(e.clientX - dn.x, e.clientY - dn.y) < 7; dn = null; if (tap && deco3d() && DECO && DECO.sel) { DECO.sel = null; render(); } } }, true));
+  // pick a piece up from the list and carry it onto the case
+  document.addEventListener('pointerdown', (e) => { const b = e.target.closest && e.target.closest('[data-dadd]'); if (!b || !deco3d()) return; nw = { k: b.dataset.dadd, x: e.clientX, y: e.clientY, id: e.pointerId, q: null, name: b.textContent }; try { b.setPointerCapture(e.pointerId); } catch (x) {} });
+  document.addEventListener('pointermove', (e) => { if (!nw || e.pointerId !== nw.id) return;
+    if (!nw.q) { if (Math.hypot(e.clientX - nw.x, e.clientY - nw.y) < 9) return; nw.q = decoAdd(nw.k); draw3d(false);
+      ghost = document.createElement('div'); ghost.textContent = nw.name.replace(/^\+\s*/, ''); ghost.style.cssText = 'position:fixed;left:0;top:0;z-index:99;pointer-events:none;padding:9px 13px;border-radius:999px;background:#c8412f;color:#fff;font:800 13px/1 -apple-system,BlinkMacSystemFont,Arial,sans-serif;box-shadow:0 3px 10px rgba(0,0,0,.3)'; document.body.appendChild(ghost); }
+    e.preventDefault(); const p = decoRay(e); ghost.style.transform = 'translate(' + (e.clientX - 30) + 'px,' + (e.clientY - 58) + 'px)'; ghost.style.opacity = p ? '0' : '1';
+    if (p) { decoMove(nw.q.id, p[0], p[1]); decoPlace(nw.q, true); } }, { passive: false });
+  ['pointerup', 'pointercancel'].forEach((ev) => document.addEventListener(ev, (e) => { if (!nw || e.pointerId !== nw.id) return; const n = nw; nw = null; if (ghost) { ghost.remove(); ghost = null; }
+    if (n.q) { SKIPC = Date.now(); save(); render(); } }));
+}
 function setup3d() {
   if (T3) return T3;
   const wrap = $('v3'), renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
@@ -1224,19 +1284,22 @@ function drawParts3d() {
       C.screens.forEach((sc) => { const m = new THREE.Mesh(new THREE.BoxGeometry(sc.w, 1.2, sc.h), new THREE.MeshStandardMaterial({ color: 0x10242c, emissive: 0x1c6f86 })); m.position.set(sc.x, sc.y, sc.z); r.root.add(m); });
       tall = C.tall; wide = C.wide; }
     else { const a = addonPolys(id), sets = a ? (a.sets || [a]) : [], cols = [0xc8412f, 0x2f4a6b, 0xf2c230, 0xe9e2cc]; let x = 0; const rows = sets.map((st) => { const layers = st.layers || [{ polys: st.polys, z0: 0, z1: st.h }], b = G.bbox([].concat(...layers.map((l) => l.polys))), zt = Math.max(...layers.map((l) => l.z1)); return { layers, b, zt }; }), tw = rows.reduce((q, w) => q + w.b.w, 0) + 6 * Math.max(0, rows.length - 1);
-      rows.forEach((w, i) => { const m = mesh(G.layerGeos(w.layers), cols[i % cols.length]); m.position.set(-tw / 2 + x - w.b.x0, -(w.b.y0 + w.b.h / 2), 0); r.root.add(m); x += w.b.w + 6; tall = Math.max(tall, w.zt, w.b.h * 0.6); }); wide = Math.max(40, tw); }
+      let deep = 0; rows.forEach((w, i) => { const n = Math.max(1, Math.min(8, sets[i].n || 1)), sy = w.b.h + 5, span = n * sy - 5; deep = Math.max(deep, span); /* every copy you print, not one of each */
+        for (let j = 0; j < n; j++) { const m = mesh(G.layerGeos(w.layers), cols[i % cols.length]); m.position.set(-tw / 2 + x - w.b.x0, -w.b.y0 - span / 2 + j * sy, 0); r.root.add(m); }
+        x += w.b.w + 6; tall = Math.max(tall, w.zt, w.b.h * 0.6); }); wide = Math.max(40, tw, deep); tall = Math.max(tall, deep * 0.6); }
     r.root.position.set(0, 0, 0);
-    r.fit = () => { const rad = Math.hypot(wide, tall) / 2 * 1.08, v = r.camera.fov * Math.PI / 360, hz = Math.atan(Math.tan(v) * r.camera.aspect), dist = rad / Math.sin(Math.min(v, hz)) * 1.12, dir = id === 'char' ? [0.28, 0.16, 1] : [0.3, 0.75, 0.75];
-      r.controls.target.set(0, id === 'char' ? tall / 2 : tall / 4, 0); r.camera.position.copy(new THREE.Vector3(dir[0], dir[1], dir[2]).normalize().multiplyScalar(dist)).add(r.controls.target); r.controls.update(); };
+    r.fit = () => { const rad = Math.hypot(wide, tall) / 2 * 1.08, v = r.camera.fov * Math.PI / 360, hz = Math.atan(Math.tan(v) * r.camera.aspect), dist = rad / Math.sin(Math.min(v, hz)) * (id === 'char' ? 1.22 : 1.12), dir = id === 'char' ? [0.5, 0.2, 1] : [0.3, 0.75, 0.75];
+      r.controls.target.set(0, id === 'char' ? tall * 0.43 : tall / 4, 0); /* the character sits a little high so the caption does not cover its feet */ r.camera.position.copy(new THREE.Vector3(dir[0], dir[1], dir[2]).normalize().multiplyScalar(dist)).add(r.controls.target); r.controls.update(); };
     r.mode = 'big'; r.view = key; r.fit(); try { tag(xmeta(id)[0] + ': ' + XINFO[id]() + '. Drag to spin it.'); } catch (e) {} /* said once, so a message from a button is not written over */
   }
   r.controls.enabled = true; r.draw();
 }
 function draw3d(isMini) {
-  if (curTab() === 'extras') { if (!isMini && S.xsel) drawParts3d(); return; }
+  const D3 = deco3d();
+  if (curTab() === 'extras' && !D3) { if (!isMini && S.xsel) drawParts3d(); return; }
   // styling the lid's outside: show it closed, from above, the way people will see it
-  const lidTop = S.step === 3 && curTab() !== 'colors' && curFace() === 'lidout', OPEN = S.open && !lidTop;
-  const r = setup3d(), d = dims(), h = heights(), key = JSON.stringify([S.items, S.deco || 0, S.style, S.cols, S.rows, S.add, S.hinge, S.hside, S.magnets, OPEN, S.mine, S.look, S.snap, S.spring, S.walls, LOGOIMG ? LOGOIMG.src.length : 0]);
+  const lidTop = S.step === 3 && curTab() !== 'colors' && curFace() === 'lidout', OPEN = D3 ? isClam() : S.open && !lidTop; /* adding a face: a clamshell opens so you can reach its top */
+  const r = setup3d(), d = dims(), h = heights(), key = JSON.stringify([S.items, S.deco || 0, D3, S.style, S.cols, S.rows, S.add, S.hinge, S.hside, S.magnets, OPEN, S.mine, S.look, S.snap, S.spring, S.walls, LOGOIMG ? LOGOIMG.src.length : 0]);
   if (isMini && (!$('v3').classList.contains('mini') || $('v3').hidden)) return; // left the flat view before the timer ran
   const mode = isMini ? 'mini' : 'big';
   if (r.key !== key) {
@@ -1250,11 +1313,9 @@ function draw3d(isMini) {
       grp.add(mesh(G.layerGeos(x.built.deck), x.key === 'lid' ? 0x2a2a2a : 0xc8412f));
       if (x.built.inlay.length) grp.add(mesh(G.layerGeos(x.built.inlay.map((l) => ({ polys: l.polys, z0: l.z0 + (l.tag === 'inlayT' ? 0.02 : -0.02), z1: l.z1 + (l.tag === 'inlayT' ? 0.02 : -0.02) }))), c2));
       x.built.stick.forEach((st) => grp.add(mesh(G.layerGeos(st.layers), c2)));
-      if (x.key === homePanel() && (S.deco || []).length) { // the face reads dark, the arms hang from their screws
-        const tz = x.built.deckZ + R.LT, dk = [], ar = [];
-        S.deco.forEach((q) => { if (q.k === 'arm') ar.push({ polys: [G.rrect(q.x - 6, q.y - 46, q.x + 6, q.y + 6, 5.9)], z0: tz + 0.4, z1: tz + 5.4 }, { polys: [G.circle(q.x, q.y - 46, 9, 28)], z0: tz + 5.4, z1: tz + 10.4 });
-          else dk.push({ polys: [featPoly(q.k, q.s || 1.4, q.f).map(([a, b]) => [a + q.x, b + q.y])], z0: q.mt === 'raised' ? tz + 1.6 : tz - 1.2, z1: q.mt === 'raised' ? tz + 1.7 : tz - 1.1 }); });
-        if (dk.length) grp.add(mesh(G.layerGeos(dk), 0x1a1a1a)); if (ar.length) grp.add(mesh(G.layerGeos(ar), 0x2f4a6b)); }
+      if (x.key === homePanel()) { // the face reads dark, the arms and legs hang from their screws. One group each, so a piece can follow your finger.
+        const tz = x.built.deckZ + R.LT; r.decoZ = tz; r.decoM = {}; r.decoRing = null;
+        (S.deco || []).forEach((q) => { const m = decoMesh(q, tz); m.position.set(q.x, q.y, 0); grp.add(m); r.decoM[q.id] = m; }); }
       // stand ins for the parts so you can read it
       const parts = x.key === 'lid' ? itemsOn('lid') : itemsOn(x.key);
       const top = x.built.deckZ + R.LT, lid = x.key === 'lid';
@@ -1269,6 +1330,7 @@ function draw3d(isMini) {
         const a = rq * Math.PI / 2, ca = Math.cos(a), sa = Math.sin(a);
         (P.userCuts || []).forEach((u) => { const K = CZ.PARTS[u.kind] || {}, mm = standIn({ cut: u.cut, up: K.up, isScreen: u.kind === 'screen' }, px0 + u.x * ca - u.y * sa, py0 + u.x * sa + u.y * ca, rq, top); if (mm) grp.add(mm); });
       });
+      if (x.key === 'lid' && D3) return; /* adding a face: the lid is out of the way */
       if (x.key === 'lid') {
         // place the lid: turn it 180 about z so its hinge edge faces the base, then fold it up about the hinge axis
         const bk = S.style === 'small' ? (S.hside === 'right' ? 'right' : 'left') : 'back', gap = R.KR + 0.6;
@@ -1286,20 +1348,22 @@ function draw3d(isMini) {
     });
     r.root.position.set(-d.W / 2, 0, d.D / 2);
     r.fit = () => {
-      const rad = Math.hypot(d.W, d.D, h.H + h.Hl + (OPEN ? d.D : 0)) / 2, v = r.camera.fov * Math.PI / 360, hz = Math.atan(Math.tan(v) * r.camera.aspect), dist = rad / Math.sin(Math.min(v, hz)) * (r.mode === 'mini' ? 1.0 : 1.15);
-      r.controls.target.set(0, (h.H + (isClam() && OPEN ? d.D * 0.4 : h.Hl)) / 2, 0);
+      const dk = deco3d(), lm = dk && (S.deco || []).some(isLimb) ? 62 : 0, rad = dk ? Math.hypot(d.W + lm, d.D + lm, h.H) / 2 * 1.06 : Math.hypot(d.W, d.D, h.H + h.Hl + (OPEN ? d.D : 0)) / 2, v = r.camera.fov * Math.PI / 360, hz = Math.atan(Math.tan(v) * r.camera.aspect), dist = rad / Math.sin(Math.min(v, hz)) * (r.mode === 'mini' ? 1.0 : 1.15);
+      r.controls.target.set(0, dk ? h.H / 2 : (h.H + (isClam() && OPEN ? d.D * 0.4 : h.Hl)) / 2, lm ? 16 : 0);
       // in Style, turn to the side being decorated: the lid's outside faces the back when it is open, the bottom faces down
-      const f = S.step === 3 && curTab() !== 'colors' ? curFace() : 'top', dir = f === 'lidout' && isClam() ? [0.2, 1, 0.55] : f === 'bottom' ? [0.4, -0.85, 0.6] : [0.45, 0.7, 0.8];
+      const f = S.step === 3 && curTab() !== 'colors' ? curFace() : 'top', dir = dk ? [0, 1, 0.5] : f === 'lidout' && isClam() ? [0.2, 1, 0.55] : f === 'bottom' ? [0.4, -0.85, 0.6] : [0.45, 0.7, 0.8];
       r.camera.position.copy(new THREE.Vector3(dir[0], dir[1], dir[2]).normalize().multiplyScalar(dist)).add(r.controls.target); r.controls.update();
     };
-    r.mode = mode; r.view = mode + (S.step === 3 ? curFace() + curTab() : ''); r.fit();
+    const limbs = (S.deco || []).some(isLimb), stay = D3 && r.view === 'bigdeco' && r.hadLimb === limbs; r.hadLimb = limbs; /* you turned the case to reach a spot: adding or dropping a piece must not turn it back */
+    r.mode = mode; r.view = mode + (D3 ? 'deco' : S.step === 3 ? curFace() + curTab() : ''); if (!stay) r.fit();
   }
   r.controls.enabled = !isMini;
-  const view = mode + (S.step === 3 ? curFace() + curTab() : '');
+  const view = mode + (D3 ? 'deco' : S.step === 3 ? curFace() + curTab() : '');
   if (r.mode !== mode || r.view !== view) { r.mode = mode; r.view = view; r.fit(); }
-  setHighlight(r);
+  setHighlight(r); decoMark();
   r.draw();
   if (isMini) return;
+  if (D3) { tag((S.deco || []).length ? 'Drag a piece to move it. Drag the empty space to spin.' : 'Drag a piece from below onto your case'); $('sb').hidden = true; $('sb').innerHTML = ''; return; }
   tag(summaryLine());
   const sb = $('sb'), flat = BIG3D && !native3d();
   sb.innerHTML = (flat ? '<button type="button" id="flatBtn" aria-pressed="true">Back to flat</button>' : '') + (isClam() && !lidTop ? '<button type="button" id="openBtn">' + (S.open ? 'Close it' : 'Open it') + '</button>' : '');
@@ -1497,7 +1561,7 @@ function addonPolys(id) {
     const rim = G.union(G.diff(out, [G.rect(K.x0 + 7, K.y0 + 7, K.x1 - 7, K.y1 - 7)]).concat([G.rect(K.x0 + 6, K.H + 0.8, K.x1 - 6, K.H + 2.4)])); /* the rim, and one rib between the keys and the Pico, keep a thin printed plate flat. Its 3.5 mm height is also what holds the board at the right distance. */
     return { layers: [{ polys: G.diff(out, cut), z0: 0, z1: 1.5 }, { polys: G.diff(rim, scr), z0: 1.5, z1: 5 }], n: 1 }; }
   if (id === 'deco') return { polys: G.diff([G.rrect(-24, -18, 24, 18, 6)], [featPoly('eyeoval', 0.9).map(([x, y]) => [x - 10, y + 5]), featPoly('eyeoval', 0.9).map(([x, y]) => [x + 10, y + 5]), featPoly('smile', 0.8).map(([x, y]) => [x, y - 8])]), h: 1, n: 1 }; /* the tile picture */
-  if (id === 'decoarms') { const fp = flatParts(G, { size: 60 }), n = Math.max(1, (S.deco || []).filter((q) => q.k === 'arm').length); return { sets: [{ polys: fp.bar.polys, h: fp.bar.h, n }, { polys: fp.hand.polys, h: fp.hand.h, n }] }; }
+  if (id === 'decoarms') { const fp = limbFp(), D = S.deco || [], na = D.filter((q) => q.k === 'arm').length, nl = D.filter((q) => q.k === 'leg').length, sets = [{ polys: fp.bar.polys, h: fp.bar.h, n: Math.max(1, na + nl) }]; if (na || !nl) sets.push({ polys: fp.hand.polys, h: fp.hand.h, n: Math.max(1, na) }); if (nl) sets.push({ polys: fp.foot.polys, h: fp.foot.h, n: nl }); return { sets }; }
   if (id === 'char') { const c = chSpec(X.ch); // a front view, for the tile picture only. The real pieces come from charParts.
     return { polys: G.union([c.head === 'sphere' ? G.circle(0, 96, 29, 48) : G.rrect(-30, 68, 30, 122, 8), c.body === 'round' ? G.circle(0, 36, 1, 48).map(([x, y]) => [x * 29, (y - 36) * 31 + 36]) : G.rrect(-28, 6, 28, 64, 6), G.rect(-36, 16, -29, 56), G.rect(29, 16, 36, 56), G.rect(-20, -34, -11, 8), G.rect(11, -34, 20, 8), G.rrect(-28, -42, -8, -33, 3), G.rrect(8, -42, 28, -33, 3), G.rect(-5, 62, 5, 70)]), h: 1, n: 1 }; }
   if (id === 'keycaps' || id === 'keycap1' || id === 'keycap2') { const X2 = xp(), n = id === 'keycaps' ? Math.min(24, kb().c * kb().r - (X2.keys.sp ? 2 : 0)) : 1; return { layers: capPolys(X2.keys.f == null ? 0.1 : X2.keys.f, id === 'keycap2'), n }; }
