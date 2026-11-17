@@ -40,7 +40,12 @@ export const NEED = {
   stick: { pins: [['up', 'd'], ['down', 'd'], ['left', 'd'], ['right', 'd']], what: 'button' },
   pot: { pins: [['turn', 'a']], power: '3V3', what: 'knob' }, slider: { pins: [['slide', 'a']], power: '3V3', what: 'knob' },
   encoder: { pins: [['clk+dt', 'enc'], ['press', 'd']], power: '3V3', what: 'wheel' },
-  thumb: { pins: [['x', 'a'], ['y', 'a'], ['press', 'd']], power: '3V3', what: 'stick' },
+  thumb: { pins: [['x', 'a'], ['y', 'a'], ['press', 'd']], power: '3V3', what: 'stick', opt: ['y'] }, /* opt: left out, not a problem, when the analog pins run out */
+  keypad44: { pins: [['row1', 'd'], ['row2', 'd'], ['row3', 'd'], ['row4', 'd'], ['col1', 'd'], ['col2', 'd'], ['col3', 'd'], ['col4', 'd']], what: 'keypad', note: 'Rows and columns: no power wire. The pins read it as a matrix, 16 keys on 8 wires.' },
+  mat8: { pins: [['din', 'd'], ['cs', 'd'], ['clk', 'd']], power: 'VBUS', what: 'matrix8', note: 'VCC to VBUS (5 V). DIN, CS and CLK can be any pins.' },
+  jack35: { pins: [['audio', 'pwm']], what: 'sound', viaDac: true, note: 'Mono: the pin through a 1K resistor to the tip and ring, a 100 nF capacitor from there to GND, the sleeve to GND.' },
+  i2sdac: { pins: [['bclk+lrc', 'enc'], ['din', 'd']], power: 'VBUS', what: 'i2sout', note: 'BCLK and LRC must be side by side (LRC = BCLK + 1). VIN to VBUS (5 V). PCM5102: LOUT, ROUT and AGND go to the jack tip, ring and sleeve.' },
+  inmp441: { pins: [['sck+ws', 'enc'], ['sd', 'd']], power: '3V3', what: 'i2sin', note: 'VDD to 3V3, L/R to GND (left channel). SCK and WS side by side (WS = SCK + 1).' },
   led5: { pins: [['light', 'd']], what: 'led', note: 'Put a 220 ohm resistor on the long leg.' },
   ring12: { pins: [['data', 'd']], power: 'VBUS', what: 'ring', note: 'Power from VBUS (5 V). Keep the data wire short.' },
   speaker28: { pins: [['sound', 'pwm']], what: 'sound', note: 'A bare speaker is quiet on a pin. A piezo, or a small amp board (like a PAM8302), is louder.' },
@@ -80,54 +85,64 @@ export function planWiring(items, over, B) {
   // 2. her own pin choices are held before anything else is picked
   items.forEach((it) => { const N = NEED[it.type]; if (!N || !N.pins) return; N.pins.forEach(([r, kind]) => { const k = it.key + ':' + r; if (over[k] != null) { take(over[k], it.label); if (kind === 'enc') take(over[k] + 1, it.label); if (kind === 'pwm') pwmSlices[B.pwm(over[k])] = it.label; } }); });
   // 3. analog, then wheels (two pins side by side), then sound and motors, then everything else
-  const order = { a: 0, enc: 1, pwm: 2, d: 3 }, wants = [];
-  items.forEach((it) => { const N = NEED[it.type]; if (!N) return; if (N.pi) { if (!B.pi) problems.push(it.label + ' is an HDMI screen: it needs a Raspberry Pi brain, not a ' + B.name + '.'); return; } if (!N.pins) return; N.pins.forEach(([r, kind]) => wants.push({ it, r, kind })); });
+  const order = { a: 0, enc: 1, pwm: 2, d: 3 }, wants = [], dac = items.some((i) => i.type === 'i2sdac'); /* a jack with a DAC is wired to the DAC, not the brain */
+  items.forEach((it) => { const N = NEED[it.type]; if (!N) return; if (N.pi) { if (!B.pi) problems.push(it.label + ' is an HDMI screen: it needs a Raspberry Pi brain, not a ' + B.name + '.'); return; } if (!N.pins || (N.viaDac && dac)) return; N.pins.forEach(([r, kind]) => wants.push({ it, r, kind })); });
   const got = {};
-  wants.slice().sort((a, b) => order[a.kind] - order[b.kind]).forEach(({ it, r, kind }) => {
+  wants.slice().sort((a, b) => order[a.kind] + ((NEED[a.it.type].opt || []).indexOf(a.r) > -1 ? 0.5 : 0) - order[b.kind] - ((NEED[b.it.type].opt || []).indexOf(b.r) > -1 ? 0.5 : 0)).forEach(({ it, r, kind }) => {
     const k = it.key + ':' + r; if (over[k] != null) { got[k] = over[k]; return; }
     let pin = null;
-    if (kind === 'a') { pin = firstFree(ADCB); if (pin == null) problems.push(it.label + ' needs an analog pin, and the ' + B.name + (ADCB.length ? ' has only ' + ADCB.length + ' (' + ADCB.map(L).join(', ') + ').' : ' has none: add an analog board such as an ADS1115.')); }
+    if (kind === 'a') { pin = firstFree(ADCB.filter((p) => ALLB.indexOf(p) < 0)); if (pin == null) pin = firstFree(ADCB); if (pin == null && (NEED[it.type].opt || []).indexOf(r) > -1) { got[k] = null; return; } if (pin == null) problems.push(it.label + ' needs an analog pin, and the ' + B.name + (ADCB.length ? ' has only ' + ADCB.length + ' (' + ADCB.map(L).join(', ') + ').' : ' has none: add an analog board such as an ADS1115.')); }
     else if (kind === 'enc') { pin = ALLB.find((p) => ALLB.indexOf(p + 1) > -1 && ADCB.indexOf(p) < 0 && free(p) && free(p + 1)); if (pin != null) take(pin + 1, it.label); }
     else if (kind === 'pwm') { pin = ALLB.find((p) => ADCB.indexOf(p) < 0 && free(p) && B.pwm(p) > -1 && !pwmSlices[B.pwm(p)]); if (pin != null) pwmSlices[B.pwm(pin)] = it.label; }
     else pin = firstFree(ALLB.filter((p) => ADCB.indexOf(p) < 0)) != null ? firstFree(ALLB.filter((p) => ADCB.indexOf(p) < 0)) : firstFree(ADCB.filter((p) => ALLB.indexOf(p) > -1));
     if (pin == null && kind !== 'a') problems.push('Out of pins for ' + it.label + '. Take a part off, or use a Qwiic button board (one plug for many buttons).');
     if (pin != null) take(pin, it.label); got[k] = pin;
   });
-  items.forEach((it) => { const N = NEED[it.type]; if (!N || !N.pins) return; rows.push({ it, roles: N.pins.map(([r, kind]) => ({ role: r, pin: got[it.key + ':' + r], kind, k: it.key + ':' + r, two: kind === 'enc' })), power: N.power || null, note: N.note || '', N }); });
+  items.forEach((it) => { const N = NEED[it.type]; if (!N || !N.pins) return; if (N.viaDac && dac) { rows.push({ it, roles: [], power: null, note: 'Wired to the audio DAC: its LOUT, ROUT and AGND go to the tip, ring and sleeve. No brain pin.', N: Object.assign({}, N, { what: 'jack' }) }); return; }
+    rows.push({ it, roles: N.pins.filter(([r]) => !((N.opt || []).indexOf(r) > -1 && got[it.key + ':' + r] == null)).map(([r, kind]) => ({ role: r, pin: got[it.key + ':' + r], kind, k: it.key + ':' + r, two: kind === 'enc' })), power: N.power || null, note: N.note || '', N }); });
   rows.sort((a, b) => items.indexOf(a.it) - items.indexOf(b.it));
   return { rows, problems: Array.from(new Set(problems)), used };
 }
 
 // a board that does not run CircuitPython (Arduino Nano, Pro Micro, a Raspberry Pi): the pin list for your own code
-function pinList(plan, title, B) {
+function pinList(plan, title, B, fn) {
   const L = ['# NOCIV Case Zero: ' + title, '# Brain: ' + B.name + '. It does not run CircuitPython, so there is no starter code.py for it.', B.pi ? '# On a Raspberry Pi, use Python with gpiozero, or Blinka for CircuitPython libraries. The pins are BCM numbers.' : '# Write the code in the Arduino IDE (Arduino Nano, or SparkFun Pro Micro for the Pro Micro). The pin names are the ones printed on the board.', '#', '# Your parts and their pins:'];
   plan.rows.forEach((row) => L.push('#   ' + row.it.label + ': ' + row.roles.map((r) => r.role + ' ' + (r.pin == null ? '?' : B.lab(r.pin)) + (r.two ? ' + ' + B.lab(r.pin + 1) : '')).join(', ') + (row.power ? ', power ' + (row.power === 'VBUS' ? B.v5 : B.v3) : '') + ', GND'));
   plan.problems.forEach((p) => L.push('#   Fix: ' + p));
+  if (fn === 'sampler') L.push('#', '# Voice Sampler on an Arduino: read the keypad with the Keypad library (rows and columns above), drive the 8x8 matrix with LedControl (DIN, CLK, CS),', '# play the pads with tone() on the audio pin, and send MIDI: MIDIUSB on a Pro Micro (it is a USB MIDI device), Serial MIDI at 31250 baud on a Nano.', '# Keypad keys, row by row: Pad 1, Pad 2, Pad 3, Mode / Pad 4, Pad 5, Pad 6, Bank / Pad 7, Pad 8, Pad 9, Record / Pad 10, Pad 11, Pad 12, Stop.');
   return { text: L.join('\n') + '\n', libs: [] };
 }
 // ---------- the starter code ----------
 const pyStr = (s) => '"' + String(s).replace(/\\/g, '\\\\').replace(/"/g, '\\"') + '"';
 export function codeFor(plan, title, fn, B) {
   B = B || BOARDS.pico; const PFX = B.cp || 'board.GP', LB = B.lab, SPI = B.spi || [18, 19, 16], I2C = B.i2c || [4, 5];
-  if (!B.cp) return pinList(plan, title, B); // fn: a recipe's own program (macro, timer, synth) in place of the pin test
-  const keys = [], pots = [], encs = [], outs = [], pirs = [], tofs = [], cams = [], L = [];
+  if (!B.cp) return pinList(plan, title, B, fn); // fn: a recipe's own program (macro, timer, synth) in place of the pin test
+  const keys = [], pots = [], encs = [], outs = [], pirs = [], tofs = [], cams = [], mats = [], L = [];
+  let mx = null, i2s = null, mic = null;
   let screen = null;
   plan.rows.forEach((row) => {
     const it = row.it, tag = it.label.split(' ')[0], N = row.N, R = {}; row.roles.forEach((r) => { R[r.role] = r.pin; });
     if (N.what === 'motion' && R.out != null) { pirs.push([R.out, tag]); return; }
     if (N.what === 'distance') { tofs.push(tag); return; }
     if (N.what === 'camera') { cams.push([R.cs, tag]); return; }
+    if (N.what === 'keypad') { mats.push({ R, tag }); return; }
+    if (N.what === 'matrix8') { if (!mx) mx = R; return; }
+    if (N.what === 'i2sout') { if (!i2s) i2s = R; return; }
+    if (N.what === 'i2sin') { if (!mic) mic = R; return; }
+    if (N.what === 'jack') return; /* on the DAC, no brain pin */
     if (N.spi || N.i2c) { if (!screen) screen = { N, R, label: it.label }; return; }
     if (N.what === 'button') row.roles.forEach((r) => { if (r.pin != null) keys.push([r.pin, row.roles.length > 1 ? tag + ' ' + r.role : tag, 'btn']); });
-    if (N.what === 'knob' && R.turn != null) pots.push([R.turn, tag]);
-    if (N.what === 'knob' && R.slide != null) pots.push([R.slide, tag]);
-    if (N.what === 'stick') { if (R.x != null) pots.push([R.x, tag + ' x']); if (R.y != null) pots.push([R.y, tag + ' y']); if (R.press != null) keys.push([R.press, tag + ' press']); }
+    if (N.what === 'knob' && R.turn != null) pots.push([R.turn, tag, 'knob']);
+    if (N.what === 'knob' && R.slide != null) pots.push([R.slide, tag, 'knob']);
+    if (N.what === 'stick') { if (R.x != null) pots.push([R.x, tag + ' x', 'x']); if (R.y != null) pots.push([R.y, tag + ' y', 'y']); if (R.press != null) keys.push([R.press, tag + ' press']); }
     if (N.what === 'wheel') { if (R['clk+dt'] != null) encs.push([R['clk+dt'], tag]); if (R.press != null) keys.push([R.press, tag + ' press']); }
-    if (['led', 'ring', 'sound', 'servo'].indexOf(N.what) > -1 && row.roles[0].pin != null) outs.push([N.what, row.roles[0].pin, tag]);
+    if (['led', 'ring', 'sound', 'servo'].indexOf(N.what) > -1 && row.roles.length && row.roles[0].pin != null) outs.push([N.what, row.roles[0].pin, tag]);
   });
   const has = (w) => outs.some((o) => o[0] === w), libs = [];
   if (screen) { libs.push('adafruit_display_text'); if (screen.N.driver === 'ili9341') libs.push('adafruit_ili9341.mpy'); if (screen.N.driver === 'ssd1306') libs.push('adafruit_displayio_ssd1306.mpy'); if (screen.N.driver === 'gc9a01') libs.push('gc9a01.mpy (from the Community Bundle)'); }
   if (has('ring')) libs.push('neopixel.mpy'); if (has('servo')) libs.push('adafruit_motor'); if (tofs.length) libs.push('adafruit_vl53l0x.mpy'); if (fn === 'macro' && keys.length) libs.push('adafruit_hid');
+  if (mx) libs.push('adafruit_max7219', 'adafruit_framebuf.mpy', 'adafruit_bus_device'); if (fn === 'sampler') libs.push('adafruit_midi');
+  const sam = fn === 'sampler' && mats.length, synth = !!i2s || (sam && has('sound')); /* synthio plays the pads: out of the I2S DAC, or one PWM pin to the jack */
   const bus = !!(cams.length || tofs.length); /* sensors share one I2C bus (and the camera the SPI bus) with the screen, made once at the top */
   L.push('# NOCIV Case Zero starter code. ' + title, '# Brain: ' + B.name + (B === BOARDS.pico ? ', Pico W or Pico 2 (same pins).' : '. CircuitPython names its pins board.IO and the number.'), '#',
     '# 1. Put CircuitPython 9 or newer on the Pico: circuitpython.org, search your board, follow the steps.',
@@ -135,13 +150,15 @@ export function codeFor(plan, title, fn, B) {
     '# 3. Save this file as code.py on the CIRCUITPY drive. It starts by itself.', '#',
     '# Every press, turn and slide also prints a line like "NOCIV B1 1" for the live test.', '# Pins come from your Case Zero wiring map. Change them there and save this file again.', '',
     'import time', 'import board');
-  if (keys.length) L.push('import keypad');
+  if (keys.length || mats.length) L.push('import keypad');
   if (pots.length) L.push('import analogio');
   if (encs.length) L.push('import rotaryio');
-  const inputs = keys.length || pots.length || encs.length || pirs.length;
+  const inputs = keys.length || pots.length || encs.length || pirs.length || mats.length;
   if (has('led') || inputs || cams.length) L.push('import digitalio');
   if (bus) L.push('import busio');
-  if (has('sound') || has('servo')) L.push('import pwmio');
+  if ((has('sound') && !sam) || has('servo')) L.push('import pwmio');
+  if (synth) L.push('import synthio', i2s ? 'import audiobusio' : 'import audiopwmio');
+  if (mx) L.push('import bitbangio', 'from adafruit_max7219 import matrices');
   if (has('ring')) L.push('import neopixel');
   if (has('servo')) L.push('from adafruit_motor import servo');
   L.push('');
@@ -172,8 +189,14 @@ export function codeFor(plan, title, fn, B) {
   L.push('def show(text):', '    if status:', '        status.text = text', '');
   if (keys.length) L.push('# ---- buttons (pressed = pin to GND, the Pico pulls it up inside) ----', 'KEYS = (' + keys.map((k) => '' + PFX + k[0]).join(', ') + ',)', 'NAMES = (' + keys.map((k) => pyStr(k[1])).join(', ') + ',)', 'keys = keypad.Keys(KEYS, value_when_pressed=False, pull=True)', '');
   if (pots.length) L.push('# ---- knobs, sliders and sticks (0 to 100) ----', 'POTS = (' + pots.map((p) => '(analogio.AnalogIn(' + PFX + p[0] + '), ' + pyStr(p[1]) + ')').join(', ') + ',)', 'last = [-10] * len(POTS)', '');
+  if (mats.length) { const R = mats[0].R; L.push('# ---- ' + mats[0].tag + ' 4x4 keypad: 4 row wires and 4 column wires, 16 keys ----', 'PADS = keypad.KeyMatrix(row_pins=(' + [1, 2, 3, 4].map((i) => PFX + R['row' + i]).join(', ') + '), column_pins=(' + [1, 2, 3, 4].map((i) => PFX + R['col' + i]).join(', ') + '))',
+    'PAD_NAMES = ' + (sam ? '("Pad 1", "Pad 2", "Pad 3", "Mode", "Pad 4", "Pad 5", "Pad 6", "Bank", "Pad 7", "Pad 8", "Pad 9", "Record", "Pad 10", "Pad 11", "Pad 12", "Stop")' : '("1", "2", "3", "A", "4", "5", "6", "B", "7", "8", "9", "C", "*", "0", "#", "D")'), ''); }
+  if (mx) L.push('# ---- 8x8 LED matrix (MAX7219): DIN ' + LB(mx.din) + ', CS ' + LB(mx.cs) + ', CLK ' + LB(mx.clk) + ' ----', 'leds = None', 'try:', '    leds = matrices.Matrix8x8(bitbangio.SPI(' + PFX + mx.clk + ', MOSI=' + PFX + mx.din + '), digitalio.DigitalInOut(' + PFX + mx.cs + '))', '    leds.brightness(3)', '    leds.fill(0)', '    leds.show()', 'except Exception as err:', '    print("NOCIV LED matrix not found yet:", err)', '');
+  if (synth) { const jk = outs.find((o) => o[0] === 'sound'); L.push(i2s ? '# ---- sound: the I2S DAC on BCLK ' + LB(i2s['bclk+lrc']) + ', LRC ' + LB(i2s['bclk+lrc'] + 1) + ', DIN ' + LB(i2s.din) + ' ----' : '# ---- sound: one pin (' + LB(jk[1]) + ') to the jack, mono, through the 1K resistor and 100 nF capacitor ----',
+    i2s ? 'audio = audiobusio.I2SOut(bit_clock=' + PFX + i2s['bclk+lrc'] + ', word_select=' + PFX + (i2s['bclk+lrc'] + 1) + ', data=' + PFX + i2s.din + ')' : 'audio = audiopwmio.PWMAudioOut(' + PFX + jk[1] + ')', 'synth = synthio.Synthesizer(sample_rate=22050)', 'audio.play(synth)', ''); }
+  if (mic) L.push('# ---- I2S mic (INMP441): SCK ' + LB(mic['sck+ws']) + ', WS ' + LB(mic['sck+ws'] + 1) + ', SD ' + LB(mic.sd) + '.', '# CircuitPython has no I2S input yet. To record it, use MicroPython (machine.I2S) or the Arduino I2S library with these pins.', '');
   if (encs.length) L.push('# ---- click wheels (the two pins sit side by side) ----', 'WHEELS = (' + encs.map((e) => '(rotaryio.IncrementalEncoder(' + PFX + e[0] + ', ' + PFX + (e[0] + 1) + '), ' + pyStr(e[1]) + ')').join(', ') + ',)', 'spot = [0] * len(WHEELS)', '');
-  outs.forEach(([w, pin, tag]) => {
+  outs.forEach(([w, pin, tag]) => { if (w === 'sound' && sam) return; /* the sampler plays its pin with synthio */
     if (w === 'led') L.push('# ---- ' + tag + ' light ----', 'led = digitalio.DigitalInOut(' + PFX + pin + ')', 'led.direction = digitalio.Direction.OUTPUT', '');
     if (w === 'ring') L.push('# ---- ' + tag + ' light ring ----', 'ring = neopixel.NeoPixel(' + PFX + pin + ', 12, brightness=0.2)', '');
     if (w === 'sound') L.push('# ---- ' + tag + ' sound ----', 'beep = pwmio.PWMOut(' + PFX + pin + ', frequency=440, duty_cycle=0, variable_frequency=True)', '');
@@ -212,15 +235,44 @@ export function codeFor(plan, title, fn, B) {
     L.push('    if held is not None and now >= next_step:', '        f = SCALE[held % 8] * 2 ** (held // 8 + transpose / 12) * ARP[step % len(ARP)]', '        beep.frequency = max(20, int(f))', '        beep.duty_cycle = 2 ** 15', '        if step == 0:', '            print("NOCIV note", NOTE[held % 8], int(f))', '            show(NOTE[held % 8] + " " + str(int(f)) + " Hz")', '        step += 1', '        next_step = now + 60 / bpm / 2', '    time.sleep(0.005)', '');
     return { text: L.join('\n'), libs };
   }
+  if (sam) {
+    const ix = (k, n) => { const i = pots.map((p, j) => (p[2] === k ? j : -1)).filter((j) => j > -1)[n || 0]; return i == null ? 'None' : String(i); };
+    L.push('# ---- Voice Sampler: 12 pads play a sound and send a USB MIDI note. Mode, Bank, Record and Stop are the right column. ----', '# Knob 1 = Pitch (-12 to +12), knob 2 = Effect (0 to 100, how long a sound rings), the stick = Scrub (MIDI CC 1). Every event also prints "NOCIV ..." on Serial.',
+      'import array', 'import math', 'import random', 'import usb_midi', 'import adafruit_midi', 'from adafruit_midi.note_on import NoteOn', 'from adafruit_midi.note_off import NoteOff', 'from adafruit_midi.control_change import ControlChange', '',
+      'midi = adafruit_midi.MIDI(midi_out=usb_midi.ports[1], out_channel=0)', 'MODES = ("Chopper", "Drum", "Ambient")', 'PAD_OF = (0, 1, 2, None, 3, 4, 5, None, 6, 7, 8, None, 9, 10, 11, None)',
+      'WAVES = (', '    array.array("h", [int(30000 - i * 60000 / 256) for i in range(256)]),', '    array.array("h", [random.randint(-30000, 30000) for _ in range(256)]),', '    array.array("h", [int(30000 * math.sin(i * math.pi / 128)) for i in range(256)]),', ')',
+      'PITCH, EFFECT, SCRUB = ' + ix('knob', 0) + ', ' + ix('knob', 1) + ', ' + ix('x', 0), 'mode = 0', 'bank = 0', 'recording = False', 'pitch = 0', 'effect = 50', 'scrub = 50', 'voices = {}', '',
+      'def note_of(n):', '    return 36 + n if mode == 1 else 48 + bank * 12 + n', '', 'def hz(n):', '    return 440 * 2 ** ((note_of(n) - 69 + pitch) / 12)', '',
+      'def envelope():', '    if mode == 0:', '        return synthio.Envelope(attack_time=0.002, decay_time=0.08 + effect / 400, sustain_level=0.5, release_time=0.05)', '    if mode == 1:', '        return synthio.Envelope(attack_time=0.001, decay_time=0.04 + effect / 600, sustain_level=0.0, release_time=0.04)', '    return synthio.Envelope(attack_time=0.3, decay_time=0.4, sustain_level=0.8, release_time=0.4 + effect / 40)', '',
+      'def light(n):', '    if not leds:', '        return', '    leds.fill(0)', '    if n is not None:', '        x, y = (n % 4) * 2, (n // 4) * 2', '        for dx in (0, 1):', '            for dy in (0, 1):', '                leds.pixel(x + dx, y + dy, 1)', '    for i in range(effect * 8 // 101 + 1):', '        leds.pixel(i, 7, 1)', '    leds.show()', '',
+      'def knob(i):', '    if i is None:', '        return None', '    v = POTS[i][0].value * 100 // 65535', '    if abs(v - last[i]) < 2:', '        return None', '    last[i] = v', '    return v', '');
+    if (!mx) L.push('leds = None', '');
+    if (!synth) L.push('synth = None  # add the 3.5mm jack or the I2S DAC to hear the pads', '');
+    if (!pots.length) L.push('POTS = ()', 'last = []', '');
+    L.push('show("Sampler: " + MODES[mode])', 'light(None)', 'print("NOCIV ready")', '', 'while True:', '    event = PADS.events.get()', '    if event:', '        name = PAD_NAMES[event.key_number]', '        n = PAD_OF[event.key_number]', '        print("NOCIV", name.replace(" ", "-"), 1 if event.pressed else 0)', '        if lamp:', '            lamp.value = event.pressed',
+      '        if n is not None and event.pressed:', '            voice = synthio.Note(hz(n), waveform=WAVES[mode], envelope=envelope())', '            voices[n] = voice', '            if synth:', '                synth.press(voice)', '            midi.send(NoteOn(note_of(n), 100))', '            light(n)', '            show(name + " " + MODES[mode])',
+      '        elif n is not None:', '            voice = voices.pop(n, None)', '            if voice and synth:', '                synth.release(voice)', '            midi.send(NoteOff(note_of(n), 0))',
+      '        elif event.pressed:', '            if name == "Mode":', '                mode = (mode + 1) % 3', '                show("Mode: " + MODES[mode])', '            elif name == "Bank":', '                bank = (bank + 1) % 4', '                show("Bank " + "ABCD"[bank])', '            elif name == "Record":', '                recording = not recording', '                show("REC" if recording else "Rec off")', '                print("NOCIV record", 1 if recording else 0)', '            elif name == "Stop":', '                if synth:', '                    synth.release_all()', '                voices.clear()', '                light(None)', '                show("Stop")',
+      '    v = knob(PITCH)', '    if v is not None:', '        pitch = v * 24 // 100 - 12', '        for n, voice in voices.items():', '            voice.frequency = hz(n)', '        midi.send(ControlChange(16, v * 127 // 100))', '        print("NOCIV Pitch", pitch)', '        show("Pitch %+d" % pitch)',
+      '    v = knob(EFFECT)', '    if v is not None:', '        effect = v', '        midi.send(ControlChange(74, v * 127 // 100))', '        print("NOCIV Effect", v)', '        show("Effect " + str(v))', '        light(None)',
+      '    v = knob(SCRUB)', '    if v is not None:', '        scrub = v', '        midi.send(ControlChange(1, v * 127 // 100))', '        print("NOCIV Scrub", v)', '        show("Scrub " + str(v) + "%")', '    time.sleep(0.005)', '');
+    if (B === BOARDS.pico) { const its = plan.rows.map((r) => r.it), np = planWiring(its, {}, BOARDS.nano); L.push('# ---- Arduino pin map reference: the same parts on an Arduino Nano ----'); np.rows.forEach((row) => L.push('#   ' + row.it.label + ': ' + (row.roles.length ? row.roles.map((r) => r.role + ' ' + (r.pin == null ? '?' : BOARDS.nano.lab(r.pin)) + (r.two ? ' + ' + BOARDS.nano.lab(r.pin + 1) : '')).join(', ') : 'no pin') + (row.power ? ', power ' + (row.power === 'VBUS' ? '5V' : '3V3') : ''))); np.problems.forEach((p) => L.push('#   Fix: ' + p)); L.push(''); }
+    return { text: L.join('\n'), libs };
+  }
   L.push('show("Ready")', 'print("NOCIV ready")', '', 'while True:');
   let body = 0;
+  if (mats.length) { L.push('    event = PADS.events.get()', '    if event:', '        print("NOCIV", "Key-" + PAD_NAMES[event.key_number], 1 if event.pressed else 0)', '        if lamp:', '            lamp.value = event.pressed', '        if event.pressed:', '            show("Key " + PAD_NAMES[event.key_number])');
+    if (mx) L.push('            if leds:', '                leds.fill(0)', '                leds.pixel(event.key_number % 4 * 2, event.key_number // 4 * 2, 1)', '                leds.show()');
+    if (synth) L.push('            synth.press(60 + event.key_number)', '        else:', '            synth.release(60 + event.key_number)');
+    body++; }
   if (keys.length) {
     L.push('    event = keys.events.get()', '    if event:', '        name = NAMES[event.key_number]', '        down = 1 if event.pressed else 0', '        print("NOCIV", name.replace(" ", "-"), down)', '        if lamp:', '            lamp.value = bool(down)', '        if down:', '            show(name + " pressed")');
     if (has('led')) L.push('            led.value = not led.value');
     if (has('ring')) L.push('            ring.fill((200, 40, 30))');
-    if (has('sound')) L.push('            beep.frequency = 330 + 60 * event.key_number', '            beep.duty_cycle = 2 ** 14');
+    if (has('sound') && !synth) L.push('            beep.frequency = 330 + 60 * event.key_number', '            beep.duty_cycle = 2 ** 14');
+    if (synth) L.push('            synth.press(60 + event.key_number)');
     if (has('servo') && !pots.length) L.push('            arm.angle = 90 if arm.angle is None or arm.angle < 45 else 0');
-    if (has('ring') || has('sound')) { L.push('        else:'); if (has('ring')) L.push('            ring.fill((0, 0, 0))'); if (has('sound')) L.push('            beep.duty_cycle = 0'); }
+    if (has('ring') || has('sound') || synth) { L.push('        else:'); if (has('ring')) L.push('            ring.fill((0, 0, 0))'); if (has('sound') && !synth) L.push('            beep.duty_cycle = 0'); if (synth) L.push('            synth.release_all()'); }
     body++;
   }
   if (pots.length) {

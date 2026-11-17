@@ -78,6 +78,7 @@ export function cutShape(P, x, y, rotq, extra) {
   else if (c.o === 'rect') { const oy = y + (c.dy || 0); /* dy: an opening that is not in the middle of its part (a keyboard has a strip above the keys) */ out.push(R(rrect(x - c.w / 2 - tol, oy - c.h / 2 - tol, x + c.w / 2 + tol, oy + c.h / 2 + tol, 1.2))); }
   else if (c.o === 'slot') out.push(R(rrect(x - c.w / 2 - tol, y - c.h / 2 - tol, x + c.w / 2 + tol, y + c.h / 2 + tol, c.h / 2 + tol - 0.01)));
   else if (c.o === 'cross') { const w = c.w / 2 + 0.4 + tol, t = c.t / 2 + 0.4 + tol; out.push(...union([R(rect(x - w, y - t, x + w, y + t)), R(rect(x - t, y - w, x + t, y + w))])); }
+  else if (c.o === 'keys') { for (let j = 0; j < c.m; j++) for (let i = 0; i < c.n; i++) out.push(R(circle(x + (i - (c.n - 1) / 2) * c.p, y + (j - (c.m - 1) / 2) * c.p, c.d / 2 + tol, 32))); } /* a keypad: a hole per key */
   else if (c.o === 'ring') { for (let i = 0; i < 12; i++) { const an = i / 12 * Math.PI * 2, r = c.d / 2 - c.t / 2; out.push(circle(x + Math.cos(an) * r, y + Math.sin(an) * r, 2.2, 20)); } }
   else if (c.o === 'grille') { out.push(circle(x, y, 1.5, 16)); for (let i = 0; i < 6; i++) { const an = i * Math.PI / 3; out.push(circle(x + 6 * Math.cos(an), y + 6 * Math.sin(an), 1.5, 16)); } for (let i = 0; i < 10; i++) { const an = i * Math.PI / 5 + 0.3; out.push(circle(x + 10.5 * Math.cos(an), y + 10.5 * Math.sin(an), 1.25, 16)); } }
   if (P.bolts) P.bolts.forEach(([bx, by]) => { const p = rot([[x + bx, y + by]], a, x, y)[0]; out.push(circle(p[0], p[1], 2.2, 20)); });
