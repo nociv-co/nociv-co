@@ -12,6 +12,7 @@ export const GROUPS = [['Brain', [['pico', 'Pico'], ['picow', 'Pico W'], ['pico2
   ['Other', [['led5', 'LED'], ['speaker28', 'Speaker'], ['hole', 'Other hole']]]];
 const KINDS = [].concat(...GROUPS.map((g) => g[1]));
 const KNAME = (k) => (QK[k] ? QK[k][0] : (KINDS.find((x) => x[0] === k) || [0, k])[1]);
+const TNAME = (h) => (h.label || KNAME(h.kind)); /* a Custom tag can carry its own name */
 const SHORT = { tact12: 'B12', button16: 'B16', arcade24: 'A24', arcade30: 'A30', dpad: 'DP', pot: 'K', encoder: 'CW', thumb: 'TS', slider: 'SL', led5: 'LED', speaker28: 'SPK', screen: 'SCREEN', tft28: '2.8 IN', round128: 'ROUND', oled096: 'OLED', hdmi5: '5 IN', hdmi7: '7 IN', pico: 'PICO', picow: 'PICO W', pico2: 'PICO 2', esp32: 'ESP32', hole: 'HOLE' };
 const RECT = (k) => { const P = KP(k); return !!(P && (P.cat === 'brain' || P.cat === 'screen')); }; /* drawn at real size, can be turned */ // short tags on the photo so close parts do not overlap
 const KP = (k) => (window.CZ && window.CZ.PARTS && window.CZ.PARTS[k]) || null;
@@ -222,7 +223,7 @@ export function openMeasure(done, more) { more = more || {};
             else if (c.o === 'rect' || c.o === 'slot') { const w = c.w * ppm, hh = c.h * ppm; g.strokeRect(s0[0] - w / 2, s0[1] - hh / 2, w, hh); }
             else { g.beginPath(); g.arc(s0[0], s0[1], Math.max(4, (c.d || 6) / 2 * ppm), 0, 7); g.stroke(); }
           }
-          if (h.kind) { const nm = QK[h.kind] ? QK[h.kind][0].toUpperCase() : SHORT[h.kind] || h.kind; g.font = '800 ' + 10 * d + 'px Arial'; g.textAlign = 'center'; g.lineWidth = 3 * d; g.strokeStyle = '#000'; g.strokeText(nm, s0[0], s0[1] - 8 * d); g.fillStyle = col; g.fillText(nm, s0[0], s0[1] - 8 * d); }
+          if (h.kind) { const nm = QK[h.kind] ? TNAME(h).toUpperCase() : SHORT[h.kind] || h.kind; g.font = '800 ' + 10 * d + 'px Arial'; g.textAlign = 'center'; g.lineWidth = 3 * d; g.strokeStyle = '#000'; g.strokeText(nm, s0[0], s0[1] - 8 * d); g.fillStyle = col; g.fillText(nm, s0[0], s0[1] - 8 * d); }
         });
         if (pending) { const s1 = S(pending); g.strokeStyle = '#2bd46b'; g.lineWidth = 3 * d; g.beginPath(); g.arc(s1[0], s1[1], 14 * d, 0, 7); g.stroke(); g.beginPath(); g.moveTo(s1[0] - 20 * d, s1[1]); g.lineTo(s1[0] + 20 * d, s1[1]); g.moveTo(s1[0], s1[1] - 20 * d); g.lineTo(s1[0], s1[1] + 20 * d); g.stroke(); }
         if (drag && drag.kind === 'new') { const s1 = S(drag.p); g.strokeStyle = '#fff'; g.lineWidth = 2 * d; g.beginPath(); g.arc(s1[0], s1[1], 10 * d, 0, 7); g.stroke(); }
@@ -231,15 +232,15 @@ export function openMeasure(done, more) { more = more || {};
       const info = $('mzInfo'), m = (key === 'part' || key === 'holes') ? partMM() : null;
       const tagged = FR(which) && key === 'holes';
       if (m) info.innerHTML = '<b>' + (FR(which) ? 'Panel / Box Size' : M.name) + ': ' + m.w.toFixed(1) + ' x ' + m.h.toFixed(1) + ' mm' + (key === 'holes' ? ' (locked)' : '') + '</b>' + (key === 'holes' ? '. ' + holes.length + (tagged ? ' tagged.' : ' holes, next one ' + hd + ' mm') : '') + (M.ppm ? '<br><span style="color:#aaa">Card locked: ' + M.ppm.toFixed(2) + ' px per mm</span>' : '') +
-        (tagged && holes.length ? '<div id="mzList" style="max-height:92px;overflow:auto;margin-top:4px">' + holes.map((h, i) => { const c = holeMM(h.p), sz = tagSize(h); return '<div' + (h === picked ? ' style="color:#fff"' : '') + '>' + (i + 1) + '. ' + esc(KNAME(h.kind) || 'Hole') + ': ' + sz + ' at ' + (c[0] + m.w / 2).toFixed(1) + ', ' + (c[1] + m.h / 2).toFixed(1) + ' mm</div>'; }).join('') + '</div>' : '');
+        (tagged && holes.length ? '<div id="mzList" style="max-height:92px;overflow:auto;margin-top:4px">' + holes.map((h, i) => { const c = holeMM(h.p), sz = tagSize(h); return '<div' + (h === picked ? ' style="color:#fff"' : '') + '>' + (i + 1) + '. ' + esc(TNAME(h) || 'Hole') + ': ' + sz + ' at ' + (c[0] + m.w / 2).toFixed(1) + ', ' + (c[1] + m.h / 2).toFixed(1) + ' mm</div>'; }).join('') + '</div>' : '');
       else if (key === 'side') { const sm = sideMM(); info.innerHTML = sm ? '<b>Tallest part ' + sm.top.toFixed(1) + ' mm above the board, ' + sm.under.toFixed(1) + ' mm under it</b>' : ''; }
       else info.textContent = 'Card = 85.6 x 54 mm. 1-2 top edge, 3-4 bottom edge.';
       if (Z > 1.01) info.insertAdjacentHTML('beforeend', ' <button type="button" class="zfit" id="mzFit">Fit photo</button>');
       const sb = $('mzSel'), tl = $('mzTags');
       sb.hidden = !tagged; tl.hidden = !tagged; /* both rows stay on the tag step so the photo never jumps */
       if (tagged && !picked) sb.innerHTML = '<i>' + (holes.length ? 'Tap a tag to change, turn or remove it.' : 'Nothing tagged yet.') + '</i>';
-      if (tagged && picked) sb.innerHTML = '<b>' + esc(KNAME(picked.kind)) + (QK[picked.kind] ? ' ' + tagSize(picked) : '') + '</b><button type="button" id="mzChg">Change</button>' + (RECT(picked.kind) || QK[picked.kind] ? '<button type="button" id="mzTurn">Turn</button>' : '') + '<button type="button" id="mzDel">Remove</button>';
-      if (tagged) tl.innerHTML = holes.map((h, i) => '<button type="button" data-tag="' + i + '" aria-pressed="' + (h === picked) + '">' + (i + 1) + ' ' + esc(QK[h.kind] ? QK[h.kind][0] : SHORT[h.kind] || h.kind || 'hole') + '</button>').join('');
+      if (tagged && picked) sb.innerHTML = (picked.kind === 'q_custom' ? '<input class="nm" id="mzRen" style="flex:1;min-width:0;height:38px" maxlength="24" aria-label="Name this part" placeholder="Name it (HDMI Switch)" value="' + esc(picked.label || '') + '">' : '<b>' + esc(TNAME(picked)) + (QK[picked.kind] ? ' ' + tagSize(picked) : '') + '</b>') + '<button type="button" id="mzChg">Change</button>' + (RECT(picked.kind) || QK[picked.kind] ? '<button type="button" id="mzTurn">Turn</button>' : '') + '<button type="button" id="mzDel">Remove</button>';
+      if (tagged) tl.innerHTML = holes.map((h, i) => '<button type="button" data-tag="' + i + '" aria-pressed="' + (h === picked) + '">' + (i + 1) + ' ' + esc(h.label || (QK[h.kind] ? QK[h.kind][0] : SHORT[h.kind] || h.kind || 'hole')) + '</button>').join('');
       $('mzTagRow').hidden = !tagged; $('mzQSize').hidden = !(tagged && picked && QK[picked.kind]);
       $('mzHoleSize').hidden = key !== 'holes' || (tagged && !(picked && picked.kind === 'hole'));
       $('mzHoleSize').querySelectorAll('[data-hd]').forEach((b) => { b.style.display = tagged && !(picked && picked.kind === 'hole') ? 'none' : ''; });
@@ -333,6 +334,7 @@ export function openMeasure(done, more) { more = more || {};
     }
     function wireBar() {
       const zf = $('mzFit'); if (zf) zf.onclick = () => { Z = 1; PX = 0; PY = 0; place(); draw(); };
+      const rn = $('mzRen'); if (rn) { rn.oninput = () => { picked.label = rn.value.slice(0, 24); const L = $('mzList'), i = holes.indexOf(picked), b2 = box.querySelector('[data-tag="' + i + '"]'); if (b2) b2.textContent = (i + 1) + ' ' + (picked.label || 'Custom'); if (L && L.children[i]) L.children[i].firstChild.textContent = (i + 1) + '. ' + (picked.label || 'Custom') + ': ' + L.children[i].textContent.split(': ').slice(1).join(': '); }; rn.onchange = () => draw(); } /* typing does not redraw the bar, so the keyboard stays up */
       const c = $('mzChg'), t = $('mzTurn'), x = $('mzDel');
       if (c) c.onclick = () => openPick(null); if (t) t.onclick = () => { picked.r = ((picked.r || 0) + 1) % 4; draw(); }; if (x) x.onclick = () => { holes.splice(holes.indexOf(picked), 1); picked = null; draw(); };
       box.querySelectorAll('[data-tag]').forEach((b) => { b.onclick = () => { picked = holes[+b.dataset.tag]; draw(); }; });
@@ -360,7 +362,7 @@ export function openMeasure(done, more) { more = more || {};
       const plain = holes.filter((h) => !h.kind || h.kind === 'hole'), tags = holes.filter((h) => h.kind && h.kind !== 'hole' && KP(h.kind)), quick = holes.filter((h) => QK[h.kind]);
       shot.mm = m ? { w: nominal(m.w), h: nominal(m.h), holes: plain.map((h) => { const c = holeMM(h.p); return { x: c[0], y: c[1], d: nominal(h.d) }; }),
         kids: tags.map((h) => { const c = holeMM(h.p); return { type: h.kind, x: Math.round(c[0] * 10) / 10, y: Math.round(c[1] * 10) / 10, r: h.r || 0 }; }),
-        cuts: quick.map((h) => { const c = holeMM(h.p), t = (h.r || 0) % 2; return { kind: h.kind, label: QK[h.kind][0], w: t ? h.sz[1] : h.sz[0], h: t ? h.sz[0] : h.sz[1], x: Math.round(c[0] * 10) / 10, y: Math.round(c[1] * 10) / 10 }; }),
+        cuts: quick.map((h) => { const c = holeMM(h.p), t = (h.r || 0) % 2; return { kind: h.kind, label: (h.label || '').trim() || QK[h.kind][0], w: t ? h.sz[1] : h.sz[0], h: t ? h.sz[0] : h.sz[1], x: Math.round(c[0] * 10) / 10, y: Math.round(c[1] * 10) / 10 }; }),
         img: FR(which) ? rectify() : null } : null;
       return hub();
     };
