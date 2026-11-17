@@ -2392,7 +2392,7 @@ function fitAll() { // place every loose part; if they do not all fit, grow the 
 }
 function loadRecipe(id) {
   const r = (CZ.RECIPES || []).find((x) => x.id === id); if (!r) return;
-  backup(); S.items = []; S.pins = {}; S.have = {}; sel = null; LAST = null; UNDO.length = 0;
+  wipeAll(); S.items = []; S.pins = {}; S.have = {}; sel = null; LAST = null; UNDO.length = 0; /* a recipe starts from nothing too */
   S.style = r.style; const z = r.size || SIZES[r.style]; S.cols = z[0]; S.rows = z[1]; S.xw = S.xd = 0; S.add = r.add || 0; S.recipe = r.id; S.picked = true; S.started = true; S.pcb = false; S.wired = {};
   const mk = (t, x, y, rq) => { const P = CZ.PARTS[t]; if (P) S.items.push({ id: ++uid, type: t, panel: defaultPanel(P), x, y, r: rq || 0 }); };
   if (r.place) r.place.forEach(([t, x, y, rq]) => mk(t, x, y, rq)); /* a hand-made layout, in mm from the bottom left */
@@ -2405,6 +2405,17 @@ function loadRecipe(id) {
 }
 const recipeCost = (r) => r.parts.reduce((a, [t, n]) => a + ((CZ.PARTS[t] && CZ.PARTS[t].price) || 0) * n, 0);
 // ---------- start: three doors ----------
+// Start fresh: one reset for everything a build holds. Body, Brain and Parts, mounted parts, wall ports, shroud, swap panels and kept box, risers and electronics,
+// logos and their pictures, the board photo, pin choices, and the saved draft. A ?build= or ?recipe= link is taken off the address too.
+// The printer and its bed stay (they are her machine, not the build). The old build is kept once, so "Bring back the build I had before" still works.
+function wipeAll() {
+  backup(); const keep = { printer: S.printer, bed: S.bed };
+  try { [KEY, KEY + ':photo', KEY + ':logo'].concat(['lidout', 'lidin', 'top', 'bottom', 'back', 'front', 'left', 'right'].map((f) => KEY + ':logo:' + f)).forEach((k) => localStorage.removeItem(k)); } catch (e) {}
+  try { if (location.search) history.replaceState(null, '', location.pathname); } catch (e) {}
+  S = Object.assign(JSON.parse(S_DEF), keep); S.look = LOOK0(); S.phold = 'screws';
+  Object.keys(LOGOIMGS).forEach((k) => delete LOGOIMGS[k]); PHOTO = null; uid = 0; sel = null; LAST = null; UNDO.length = 0; MPC = {}; markCache = {}; FILES = [];
+  try { testReset(); } catch (e) {} applyWalls(); save();
+}
 function hasBak() { try { return !!localStorage.getItem(BAK); } catch (e) { return false; } }
 function showStart() {
   $('sheetIn').innerHTML = '<h2>Build your own device</h2><div class="list">' +
@@ -2430,6 +2441,8 @@ $('sheetIn').addEventListener('click', (e) => {
   if (e.target.closest('[data-act=keepbox]')) { $('sheet').hidden = true; keepBox(); return; }
   if (dr) { const v = dr.dataset.door;
     if (v === 'known') showRecipes(); else if (v === 'new') showNew(); else if (v === 'back') showStart();
+    else if (v === 'cancel') $('sheet').hidden = true;
+    else if (v === 'wipe') { wipeAll(); render(); showStart(); tag('Fresh start: everything is cleared'); }
     else if (v === 'close') { S.started = true; save(); $('sheet').hidden = true; }
     else if (v === 'bak') bringBack();
     else if (v === 'have') { S.started = true; $('sheet').hidden = true; S.tab[0] = 'snap'; go(0); }
@@ -2438,7 +2451,7 @@ $('sheetIn').addEventListener('click', (e) => {
     if (S.items.length) { $('sheetIn').innerHTML = '<h2>Start the ' + esc(r.name) + '?</h2><p class="note" style="font-size:14px">This replaces the ' + S.items.length + ' electronics in the build you have now.</p><div class="list" style="margin-top:10px"><button class="btn start" data-rok="' + r.id + '"><b>Replace my build</b>Start fresh with the ' + esc(r.name) + '.</button><button class="btn start" data-door="close"><b>Keep my build</b>Go back to what I was making.</button></div>'; return; }
     $('sheet').hidden = true; tag('Building your ' + r.name + '...'); setTimeout(() => loadRecipe(r.id), 40); return; }
   if (ok) { $('sheet').hidden = true; tag('Building it...'); const id = ok.dataset.rok; setTimeout(() => loadRecipe(id), 40); return; }
-  const b = e.target.closest('[data-go]'); if (!b) return; const g = b.dataset.go; S.started = true; $('sheet').hidden = true;
+  const b = e.target.closest('[data-go]'); if (!b) return; const g = b.dataset.go; wipeAll(); S.started = true; $('sheet').hidden = true; /* something new starts from nothing */
   if (g === 'panel') { if (!isPanel()) { S.style = 'panel'; reflow(); } S.tab[2] = 'psize'; go(2); }
   else if (g === 'part') { S.xsel = null; S.tab[5] = 'extras'; go(5); }
   else { if (isPanel()) { S.style = 'clam'; S.cols = 9; S.rows = 6; reflow(); } S.tab[2] = 'shape'; go(2); }
@@ -2566,6 +2579,7 @@ const LEARN = [
 ];
 function openHelp() { $('sheetIn').innerHTML = '<button class="x" id="sheetX" aria-label="Close">&times;</button><h2>Help and Learn</h2>' + LEARN.map((l, i) => '<details' + (i === 0 ? ' open' : '') + '><summary>' + l[0] + '</summary>' + l[1] + '</details>').join(''); $('sheet').hidden = false; $('sheetX').onclick = () => { $('sheet').hidden = true; }; }
 $('helpTop').onclick = openHelp;
+$('freshTop').onclick = () => { $('sheetIn').innerHTML = '<h2>Clear current build and start fresh?</h2><p class="note" style="font-size:14px">This clears the body, the electronics, the mounted parts, the ports, the logos and the saved draft.</p><div class="list" style="margin-top:10px"><button class="btn start" data-door="wipe"><b>Clear and start fresh</b>Begin again from the start screen.</button><button class="btn start" data-door="cancel"><b>Keep my build</b>Go back to what I was making.</button></div>'; $('sheet').hidden = false; };
 $('sheet').addEventListener('click', (e) => { if (e.target === $('sheet')) $('sheet').hidden = true; });
 window.addEventListener('resize', draw);
 // mounting: drag a part onto a spot (desktop), or tap a spot or a dot on the case (phone)
