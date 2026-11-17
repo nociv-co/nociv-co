@@ -7,7 +7,7 @@ import * as G from './geo.js?v=31';
 import { CARABINER_HOOK_OUTLINE_MM, CARABINER_DEFAULT_THICKNESS_MM } from './charm_carabiner_hook.js?v=1';
 import { openMeasure, GROUPS } from './capture.js?v=20';
 import { makeBoard, boardFiles, boardSvg, zip as zipFiles } from './board.js?v=3';
-import { charParts, chSpec, charBuyList, CH_DEF, headDims, faceSpots, faceLimit, featPoly, flatParts, FEATS } from './char3d.js?v=3';
+import { charParts, chSpec, charBuyList, CH_DEF, headDims, faceSpots, faceLimit, featPoly, flatParts, FEATS } from './char3d.js?v=4';
 import { planWiring, codeFor, PICO_LEFT, PICO_RIGHT, PICO_PINS, PICO_BRAINS, NEED } from './wiring.js?v=20';
 
 const CZ = window.CZ, R = G.RULE, $ = (id) => document.getElementById(id);
@@ -551,7 +551,7 @@ function charHtml() { const c = chSpec(xp().ch), row = (label, f, opts) => '<div
     '<p class="h" style="margin-top:12px">Face</p>' + row('Eyes', 'eyes', [['dot', 'Dots'], ['oval', 'Ovals'], ['screen', 'A screen']]) + row('Brows', 'brows', [['1', 'On'], ['0', 'Off']]) + row('Nose', 'nose', [['button', 'Button'], ['wedge', 'Wedge'], ['none', 'None']]) + row('Mouth', 'mouth', [['smile', 'Smile'], ['line', 'Line'], ['screen', 'A screen']]) + row('Face parts', 'face', [['raised', 'Raised'], ['sunk', 'Sunk in']]) +
     (hasScr ? row('Screen sits', 'scr', [['flush', 'Flush'], ['raised', 'Raised rim'], ['sunk', 'Sunk in'], ['mounted', 'On top']]) + '<p class="note" style="margin:2px 0 6px">A small OLED screen (0.96 in) shows the ' + (c.eyes === 'screen' ? 'eyes' : 'mouth') + '. ' + (c.head === 'sphere' ? 'The ball gets a flat spot so the flat screen sits right. ' : '') + (c.scr === 'mounted' ? 'It sticks on the outside, its cable goes through the slot.' : 'It sits behind the window, held with a dab of hot glue.') + ' ' + (c.head === 'cube' && c.size >= 72 ? 'The large cube head has room for two: one for the eyes, one for the mouth.' : 'Two screens need the large cube head.') + '</p>' : '') +
     '<button class="btn' + (DECO && DECO.mode === 'char' && S.xsel === 'char' ? ' red' : ' dark') + '" data-act="faceed" style="margin-top:8px">' + (DECO && DECO.mode === 'char' && S.xsel === 'char' ? 'Done. Back to 3D' : 'Move the face parts') + '</button>' + (c.pos ? '<button class="btn" data-act="facereset" style="margin-top:6px;padding:8px">Put the face back where it was</button>' : '') +
-    '<p class="h" style="margin-top:12px">Moving</p>' + row('Head turns', 'turn', [['0', 'By hand'], ['1', 'Thumb wheel']]) + row('Arms, legs', 'bend', [['0', 'Straight'], ['1', 'Elbows + knees']]) + '<p class="note" style="margin:2px 0 6px">' + (c.turn ? 'Two gears. Turn the wheel behind the neck and the head turns.' : 'The head turns on its neck when you twist it.') + ' Arms and legs swing on their screws: tighten to hold a pose.</p>' +
+    '<p class="h" style="margin-top:12px">Moving</p>' + row('Head turns', 'turn', [['0', 'By hand'], ['1', 'Thumb wheel']]) + row('Arms, legs', 'bend', [['0', 'Straight'], ['1', 'Elbows + knees']]) + row('Right arm', 'servo', [['0', 'By hand'], ['1', 'Motorized (SG90 servo)']]) + (c.servo ? '<p class="note keep" style="margin:2px 0 6px">An SG90 micro servo stands in a sleeve inside the torso; its horn fits a pocket in the right arm. It is on your Shop list and in Wire it.</p>' : '') + '<p class="note" style="margin:2px 0 6px">' + (c.turn ? 'Two gears. Turn the wheel behind the neck and the head turns.' : 'The head turns on its neck when you twist it.') + ' Arms and legs swing on their screws: tighten to hold a pose.</p>' +
     '<p class="note" style="margin:8px 0 0"><b>You buy:</b> ' + charBuyList(c).join('. ') + '.</p>' + filLine('char'); }
 // ---------- the keyboard page ----------
 function kbCase() { const K = kb(), d = dims(), wall = R.T + R.CLR + 1, iw = d.W - 2 * wall, ih = d.D - 2 * wall; return { iw, ih, fits: (K.w <= iw && K.h <= ih) || (K.h <= iw && K.w <= ih), has: S.items.some((i) => i.type === 'kbd') }; }
@@ -603,7 +603,7 @@ function tabsFor(step) {
   if (step === 2) return [['shape', 'Shape', 'shape'], ['measure', 'Measure', 'measure']]; /* size and fit sit on Shape itself */
   if (step === 3) return [['colors', 'Color', 'colors'], ['tex', 'Texture', 'tex'], ['labels', 'Buttons', 'labels'], ['logo', 'Logo', 'logo']];
   if (step === 4) return [['printer', 'Printer', 'printer'], ['strong', 'Strength', 'strong'], ['mat', 'Material', 'mat'], ['split', 'Split', 'split']];
-  return [['3d', '3D', 'cube'], ['shop', 'Shop', 'cart'], ['files', 'Files', 'file'], ['pcb', 'Board', 'brain'], ['extras', 'Extras', 'parts'], ['wire', 'Wire it', 'wire']];
+  return [['3d', '3D', 'cube'], ['shop', 'Shop', 'cart'], ['files', 'Files', 'file'], ['pcb', 'Board', 'brain'], ['extras', 'Extras', 'parts'], ['wire', 'Wire it', 'wire'], ['map', 'Wiring map', 'wire'], ['test', 'Test it', 'wire']];
 }
 function curTab() { const t = tabsFor(S.step), c = S.tab[S.step]; return t.some((x) => x[0] === c) ? c : t[S.step === 0 ? 1 : 0][0]; }
 function nudgeRow() { return '<div class="selbar nud"><b>Nudge</b><button data-act="nudge" data-nx="-1" data-ny="0" aria-label="Left">&larr;</button><button data-act="nudge" data-nx="0" data-ny="1" aria-label="Up">&uarr;</button><button data-act="nudge" data-nx="0" data-ny="-1" aria-label="Down">&darr;</button><button data-act="nudge" data-nx="1" data-ny="0" aria-label="Right">&rarr;</button></div>'; }
@@ -625,7 +625,7 @@ const PAGES = [
   { room: 'body', name: 'Print', hint: 'Pick your printer', tabs: [[4, '*']], more: ['strong', 'mat', 'split'] },
   { room: 'body', name: 'Finish', hint: 'Look, then save the files', tabs: [[5, '3d'], [5, 'files']] },
   { room: 'brain', name: 'Electronics', hint: 'What should it do?', tabs: [[0, 'parts'], [0, 'snap'], [0, 'picks']], more: ['snap', 'picks'] },
-  { room: 'brain', name: 'Wire it', hint: 'One wire at a time', tall: true, tabs: [[5, 'wire'], [0, 'pins']], more: ['pins'] },
+  { room: 'brain', name: 'Wire it', hint: 'One wire at a time', tall: true, tabs: [[5, 'wire'], [5, 'map'], [5, 'test'], [0, 'pins']], more: ['pins'] },
   { room: 'brain', name: 'Shop', hint: 'What to buy', tall: true, tabs: [[5, 'shop']] },
   { room: 'brain', name: 'Board', hint: 'One board, no loose wires', tall: true, tabs: [[5, 'pcb']] },
   { room: 'parts', name: 'Parts', hint: 'Print it, add it on', tabs: [[5, 'extras']] }
@@ -781,6 +781,8 @@ function pane(t) {
   if (t === 'pcb') return pcbHtml();
   if (t === 'files') { const probs = allProblems(); return '<p class="note" style="margin:0 0 8px">No printer? A print service or a library takes these same files. To print from a USB stick, open them in your printer\'s free slicer app first: it turns them into the file your printer reads.</p>' + (S.material === 'wood' ? '' : '<div class="row"><b>File type</b>' + seg('fmt', [['stl', 'STL'], ['3mf', '3MF']], fmtOf()) + '</div>') + '<div class="grid g2"><button class="btn red" data-act="make"' + (probs.length || !S.items.length ? ' aria-disabled="true"' : '') + '>Make my files</button>' + (S.material === 'wood' || isPanel() ? '' : '<button class="btn" data-act="swatch">Download 15-min Fit Swatch</button>') + '</div>' + (S.material === 'wood' || isPanel() ? '' : '<p class="note" style="margin:6px 0 0">The swatch is a ' + swatchSize() + ' mm plate with ' + (isClam() && S.magnets ? 'a magnet pocket, ' : '') + 'the M3 bore, the snap pin slot and ' + esc(swatchButton().short) + ' opening, at your ' + tolOf() + ' mm clearance and ' + R.T + ' mm walls. Print it first: if they fit, the case will.</p>') + '<p class="note">' + (!S.items.length ? 'Add electronics in Brain first.' : probs.length ? '<span class="bad">Fix the electronics marked ! in Arrange first.</span>' : (S.material === 'wood' ? 'Wood: real size templates (SVG) to print at 100 percent or laser cut, plus the cut list.' : 'One file per piece, numbered, as STL or 3MF. Print the deck face down, the tray open side up.')) + '</p><div class="files" id="fileList" style="margin-top:8px"></div>'; }
   if (t === 'wire') return wireHtml();
+  if (t === 'map') return '<p class="note keep" style="margin:0 0 6px"><b style="color:#c8412f">Red</b> = power, <b>black</b> = ground, <b style="color:#2f6fdb">blue</b> / <b style="color:#c9a200">yellow</b> / <b style="color:#2f9a5b">green</b> = signals. Every wire from every part to its pin on the brain, the same plan as the step-by-step cards and code.py.</p>' + (mapWhy() ? '<p class="note bad">' + esc(mapWhy()) + '</p>' : '');
+  if (t === 'test') return '<p class="note keep" style="margin:0 0 6px">Press the buttons, drag the knobs and sliders, wave at the motion sensor. This acts out what your code.py does, step by step, before you wire anything.</p>' + (mapWhy() ? '<p class="note bad">' + esc(mapWhy()) + '</p>' : '') + '<div class="list" id="tlog" style="font:600 12px/1.35 ui-monospace,Menlo,monospace">' + TEST.log.map((l) => '<div class="it" style="padding:5px 8px">' + esc(l) + '</div>').join('') + '</div><button class="btn" data-act="treset" style="margin-top:8px;padding:8px">Start the test again</button>';
   if (t === 'extras') return partsRoomHtml();
   return '';
 }
@@ -958,6 +960,7 @@ $('pane').addEventListener('click', (e) => {
   if (act === 'saveboard') { const Bd = boardBuild(); if (Bd.ok) saveFile({ name: 'casezero-board.zip', blob: new Blob([zipFiles(boardFiles(Bd, 'casezero-board').concat([{ name: 'README.txt', text: boardReadme(Bd) }]))], { type: 'application/zip' }) }); return; }
   if (act === 'rot' && s && PP(s) && PP(s).board) { snapU(); s.r = ((s.r || 0) + 1) % 4; syncKids(s); if (problems(s).length) { autoPlace(s); syncKids(s); } save(); render(); return; }
   if (act === 'rot' && s) { s.r = ((s.r || 0) + 1) % 4; if (problems(s).length) { const keep = [s.x, s.y]; if (!autoPlace(s)) { s.x = keep[0]; s.y = keep[1]; } } save(); render(); return; }
+  if (act === 'treset') { testReset(); render(); return; }
   if (act === 'xray') { S.xray = !S.xray; BIG3D = false; save(); render(); return; }
   if ((act === 'mnt_top' || act === 'mnt_in') && s) { snapU(); if (act === 'mnt_in') { if (s.panel !== 'inside') { s.top0 = s.panel; s.panel = 'inside'; } } else if (s.panel === 'inside') { s.panel = s.top0 && panels().indexOf(s.top0) > -1 ? s.top0 : defaultPanel(Object.assign({}, PP(s), { inside: false })); } if (problems(s).length) autoPlace(s); save(); render(); return; }
   if (act === 'swap' && s) { s.panel = s.panel === 'lid' ? 'base' : 'lid'; autoPlace(s); S.tab[1] = s.panel; save(); render(); return; }
@@ -1010,7 +1013,7 @@ $('pane').addEventListener('click', (e) => {
     const k = sg.dataset.sg, v = d.v, L = S.look; markCache = k.startsWith('lg_') || k.startsWith('lb_') ? {} : markCache;
     if (k === 'pt') { S.pt = +v; save(); render(); return; } if (k === 'prad') { S.prad = +v; save(); render(); return; } if (k === 'phold') { S.phold = v; reflow(); save(); render(); return; } if (k === 'plift') { if (v === '0') S.plift = 0; else { S.plift = S.plift || 12; S.pbase = v; } reflow(); save(); render(); return; }
     const nn = (S.notches || [])[S.nsel]; if (nn && k === 'n_edge') { if ((nn.edge === 'left' || nn.edge === 'right') !== (v === 'left' || v === 'right')) nn.at = Math.round((v === 'left' || v === 'right' ? dims().D : dims().W) / 2); nn.edge = v; reflow(); save(); render(); return; } if (nn && k === 'n_shape') { nn.shape = v; save(); render(); return; }
-    if (k.indexOf('ch_') === 0) { const X = xp(), f = k.slice(3); X.ch[f] = (f === 'brows' || f === 'turn' || f === 'size' || f === 'bend') ? +v : v; const two = X.ch.head === 'cube' && X.ch.size >= 72; if (!two && f === 'eyes' && v === 'screen' && X.ch.mouth === 'screen') X.ch.mouth = 'line'; if (!two && f === 'mouth' && v === 'screen' && X.ch.eyes === 'screen') X.ch.eyes = 'oval'; if (!two && (f === 'size' || f === 'head') && X.ch.eyes === 'screen' && X.ch.mouth === 'screen') X.ch.mouth = 'line'; save(); render(); return; }
+    if (k.indexOf('ch_') === 0) { const X = xp(), f = k.slice(3); X.ch[f] = (f === 'brows' || f === 'turn' || f === 'size' || f === 'bend' || f === 'servo') ? +v : v; const two = X.ch.head === 'cube' && X.ch.size >= 72; if (!two && f === 'eyes' && v === 'screen' && X.ch.mouth === 'screen') X.ch.mouth = 'line'; if (!two && f === 'mouth' && v === 'screen' && X.ch.eyes === 'screen') X.ch.eyes = 'oval'; if (!two && (f === 'size' || f === 'head') && X.ch.eyes === 'screen' && X.ch.mouth === 'screen') X.ch.mouth = 'line'; save(); render(); return; }
     if (k === 'fil') { S.fil = v; save(); render(); return; } if (k === 'pq') { S.pq = v; S.psOpen = true; save(); render(); return; }
     { const X = xp(); if (k === 'xkf') { X.keys.f = +v; save(); render(); return; } if (k === 'xksp') { X.keys.sp = v === '1' ? 1 : 0; save(); render(); return; } if (k === 'xs_a') { X.stand.a = +v; save(); render(); return; } if (k === 'xch_s' || k === 'xch_h') { X.charm[k === 'xch_s' ? 'size' : 'hook'] = v; if (k === 'xch_h') S.attachedParts.forEach((m) => { if (m.partId === 'charm' && m.charm) m.charm.hook = v; }); MPC = {}; save(); render(); return; } if (k === 'xf_hole') { X.feet.hole = v === '1'; save(); render(); return; } if (k === 'xo_s') { X.standoff.s = v; save(); render(); return; } }
     if (k === 'brand') { S.brand = v; save(); render(); return; }
@@ -1057,6 +1060,8 @@ function draw() {
   if (S.step === 2) return drawPanel(homePanel(), W, H);
   if (S.step === 3) return drawFace(W, H);
   if (S.step === 4) return drawBeds(W, H);
+  if (S.step === 5 && curTab() === 'map') return drawMap(W, H);
+  if (S.step === 5 && curTab() === 'test') return drawTest(W, H);
   if (curTab() === 'extras') return drawPrinted(W, H);
   drawBrain(W, H);
 }
@@ -1210,6 +1215,7 @@ function pickAt(b, p) { /* the same "What is it?" sheet as the photo page, over 
   };
 }
 cv.addEventListener('pointerdown', (e) => {
+  if (S.step === 5 && curTab() === 'test') { testDown(e); return; }
   if (decoOn()) return;
   if (S.step === 2 && isPanel() && view && curTab() === 'notch') { if (!(S.notches || []).length) { S.notches = [{ edge: 'bottom', shape: 'rrect', w: 20, d: 8, at: 0 }]; S.nsel = 0; } notchTo(mm(e)); drag = { notch: true }; cv.setPointerCapture(e.pointerId); draw(); return; }
   if (S.step === 3 && view && curTab() === 'logo' && !WALLF[logoFace()] && LG().on) { const p = mm(e), L = LG(); L.x = p[0]; L.y = p[1]; drag = { logo: true }; cv.setPointerCapture(e.pointerId); draw(); return; }
@@ -1235,6 +1241,7 @@ cv.addEventListener('pointerdown', (e) => {
   if (sel !== it.id) { sel = it.id; render(); }
 });
 cv.addEventListener('pointermove', (e) => {
+  if (TEST.drag) { testMove(e); return; }
   if (decoOn()) return;
   if (S.step === 1 && TOUCH.has(e.pointerId)) TOUCH.set(e.pointerId, cpx(e));
   if (pinch && TOUCH.size >= 2) { const [a, b] = [...TOUCH.values()]; zoomAt(pinch.z0 * Math.hypot(a[0] - b[0], a[1] - b[1]) / pinch.d0, [(a[0] + b[0]) / 2, (a[1] + b[1]) / 2]); return; }
@@ -1248,6 +1255,7 @@ cv.addEventListener('pointermove', (e) => {
   if (drag.it.of != null) unSync(drag.it); if (PP(drag.it) && PP(drag.it).board) syncKids(drag.it); draw();
 });
 ['pointerup', 'pointercancel'].forEach((t) => cv.addEventListener(t, (e) => {
+  if (TEST.drag || TEST.held) testUp(e);
   TOUCH.delete(e.pointerId); if (pinch) { if (TOUCH.size < 2) pinch = null; drag = null; return; }
   const dr = drag; drag = null; if (!dr) return;
   if (dr.notch || dr.logo) { save(); render(); return; }
@@ -1556,6 +1564,7 @@ function wiringItems() {
     if (P.userCuts && P.userCuts.length) P.userCuts.forEach((u, ci) => { if (NEED[u.kind]) out.push({ key: i.id + '.' + ci, label: N[i.id] + '.' + (ci + 1) + ' ' + (KSHORT[u.kind] || u.kind), type: u.kind }); });
     else if (NEED[i.type]) out.push({ key: String(i.id), label: N[i.id] + ' ' + P.short, type: i.type });
   });
+  if (S.xp && S.xp.ch && S.xp.ch.servo) out.push({ key: 'chservo', label: 'C1 Arm servo', type: 'servo' }); /* the character's motorized arm is wired like any servo */
   return out;
 }
 const BRAIN_NAMES = { pico: 'Raspberry Pi Pico', picow: 'Raspberry Pi Pico W', pico2: 'Raspberry Pi Pico 2', esp32: 'ESP32', other: 'your board brain' };
@@ -1565,6 +1574,91 @@ function brainInfo() {
   const m = S.items.find((i) => PP(i) && PP(i).brain && PP(i).brain !== 'none'); if (m) return { type: PP(m).brain, name: BRAIN_NAMES[PP(m).brain] + ' (on your board)' };
   return null;
 }
+// ---------- Wiring map: the whole plan as one drawing. Test it: the parts act out what code.py does ----------
+const WCOL = ['#2f6fdb', '#c9a200', '#2f9a5b'], netCol = (net, i) => (net === '3V3' || net === 'VBUS' ? '#d23b2a' : net === 'GND' ? '#1a1a1a' : WCOL[i % 3]);
+function mapWhy() { const bi = brainInfo(); if (bi && PICO_BRAINS.indexOf(bi.type) < 0 && bi.type !== 'pico2') return 'The map and the test follow the wiring plan, which is made for the Raspberry Pi Pico, Pico W and Pico 2. Yours is the ' + bi.name + ', so its pins will differ.'; if (!wiring().rows.length) return 'Add buttons, knobs, screens, sensors or lights in Electronics first.'; return ''; }
+function pcx(e) { const r = cv.getBoundingClientRect(), k = cv.width / r.width; return [(e.clientX - r.left) * k, (e.clientY - r.top) * k]; }
+function drawMap(W, H) {
+  const d = px(), w = wiring(), rows = w.rows, bi = brainInfo(); g.fillStyle = '#f7f4ec'; g.fillRect(0, 0, W, H);
+  if (!rows.length) { g.fillStyle = '#6f6a60'; g.font = '800 ' + 14 * d + 'px -apple-system,Arial'; g.textAlign = 'center'; g.fillText('Add parts to see the wiring map', W / 2, H / 2); tag('Wiring map'); return; }
+  const bw = Math.min(W * 0.2, 96 * d), top = 28 * d, bh = H - top - 40 * d, bx = W / 2 - bw / 2, step = bh / 20, gnd = (side) => (side === 'L' ? PICO_LEFT : PICO_RIGHT).map((p, i) => (p === 'GND' ? i : -1)).filter((i) => i > -1);
+  const pinAt = (net, side, yNear) => { let i = PICO_LEFT.indexOf(net); if (i > -1 && net !== 'GND') return ['L', i]; i = PICO_RIGHT.indexOf(net); if (i > -1 && net !== 'GND') return ['R', i]; if (net === 'GND') { const list = gnd(side); const iy = list.reduce((a, c) => (Math.abs(top + (c + 0.5) * step - yNear) < Math.abs(top + (a + 0.5) * step - yNear) ? c : a), list[0]); return [side, iy]; } return null; };
+  const pxy = (sd, i) => [sd === 'L' ? bx : bx + bw, top + (i + 0.5) * step];
+  g.fillStyle = '#2f7a4b'; g.beginPath(); g.roundRect ? g.roundRect(bx, top, bw, bh, 8 * d) : g.rect(bx, top, bw, bh); g.fill();
+  g.fillStyle = '#fff'; g.font = '800 ' + 11 * d + 'px -apple-system,Arial'; g.textAlign = 'center'; g.fillText((bi ? bi.name : 'Raspberry Pi Pico').replace(/Raspberry Pi /, '').slice(0, 14), W / 2, top + bh / 2);
+  g.font = '700 ' + Math.min(9 * d, step * 0.62) + 'px -apple-system,Arial';
+  for (let i = 0; i < 20; i++) { const yl = top + (i + 0.5) * step; g.textAlign = 'left'; g.fillStyle = '#e8f3ec'; g.fillText(PICO_LEFT[i], bx + 4 * d, yl + 3 * d); g.textAlign = 'right'; g.fillText(PICO_RIGHT[i], bx + bw - 4 * d, yl + 3 * d); g.fillStyle = '#d9c46a'; g.fillRect(bx - 2 * d, yl - 1.5 * d, 4 * d, 3 * d); g.fillRect(bx + bw - 2 * d, yl - 1.5 * d, 4 * d, 3 * d); }
+  const items = rows.map((row) => { const pads = padsFor(row), gl = pads.filter((p) => /^GP/.test(p[1])).map((p) => PICO_LEFT.indexOf(p[1]) > -1 ? -1 : 1).reduce((a, c) => a + c, 0); return { row, pads, side: gl > 0 ? 'R' : 'L' }; });
+  ['L', 'R'].forEach((sd) => { const list = items.filter((x) => x.side === sd); if (!list.length) return; const lh = 11 * d, need = list.reduce((a, x) => a + 16 * d + x.pads.length * lh, 0) + 6 * d * (list.length - 1), k = Math.min(1, bh / need), colW = (sd === 'L' ? bx : W - bx - bw) - 70 * d, x0 = sd === 'L' ? 8 * d : bx + bw + 62 * d; let y = top + Math.max(0, (bh - need * k) / 2), lane = 0;
+    list.forEach((it) => { const h = (16 * d + it.pads.length * lh) * k; g.fillStyle = '#fff'; g.strokeStyle = '#1a1a1a'; g.lineWidth = 1.5 * d; g.beginPath(); g.rect(x0, y, Math.max(40 * d, colW), h); g.fill(); g.stroke();
+      g.fillStyle = '#1a1a1a'; g.font = '800 ' + 10 * d * Math.max(0.7, k) + 'px -apple-system,Arial'; g.textAlign = sd === 'L' ? 'left' : 'right'; g.fillText(it.row.it.label.slice(0, 18), sd === 'L' ? x0 + 4 * d : x0 + Math.max(40 * d, colW) - 4 * d, y + 11 * d * k);
+      it.pads.forEach(([lbl, net], j) => { const py = y + (15 * d + (j + 0.5) * lh) * k, ex = sd === 'L' ? x0 + Math.max(40 * d, colW) : x0, at = pinAt(net, sd, py); g.font = '700 ' + 8.5 * d * Math.max(0.7, k) + 'px -apple-system,Arial'; g.fillStyle = '#6f6a60'; g.textAlign = sd === 'L' ? 'right' : 'left'; g.fillText(lbl, sd === 'L' ? ex - 3 * d : ex + 3 * d, py + 3 * d);
+        if (!at) return; const [qx, qy] = pxy(at[0], at[1]), lx = sd === 'L' ? bx - 10 * d - (lane % 10) * 4 * d : bx + bw + 10 * d + (lane % 10) * 4 * d; lane++;
+        g.strokeStyle = netCol(net, lane); g.lineWidth = 2 * d; g.beginPath(); g.moveTo(ex, py); g.lineTo(lx, py); g.lineTo(lx, qy); g.lineTo(qx, qy); g.stroke(); });
+      y += h + 6 * d * k; }); });
+  tag(rows.length + ' parts wired to the ' + (bi ? bi.name : 'brain') + (w.problems.length ? '. ' + w.problems[0] : ''));
+}
+const TEST = { text: 'Ready', led: false, ring: false, angle: null, lamp: false, val: {}, last: {}, pos: {}, pir: {}, dist: {}, cam: null, log: [], hits: [], drag: null, held: null, ac: null, osc: null };
+function testReset() { Object.assign(TEST, { text: 'Ready', led: false, ring: false, angle: null, lamp: false, val: {}, last: {}, pos: {}, pir: {}, dist: {}, cam: null, log: [], drag: null, held: null }); toneOff(); }
+function testLog(s) { TEST.log.unshift(s); TEST.log.length = Math.min(TEST.log.length, 40); const el = $('tlog'); if (el) el.innerHTML = TEST.log.map((l) => '<div class="it" style="padding:5px 8px">' + esc(l) + '</div>').join(''); }
+function tone(f) { try { if (!TEST.ac) TEST.ac = new (window.AudioContext || window.webkitAudioContext)(); toneOff(); const o = TEST.ac.createOscillator(), gn = TEST.ac.createGain(); o.type = 'square'; o.frequency.value = f; gn.gain.value = 0.06; o.connect(gn).connect(TEST.ac.destination); o.start(); TEST.osc = o; setTimeout(() => { if (TEST.osc === o) toneOff(); }, 600); } catch (e) { TEST.osc = null; } }
+function toneOff() { if (TEST.osc) { try { TEST.osc.stop(); } catch (e) {} TEST.osc = null; } }
+function testModel() { // the parts as code.py sees them: keys in the order KEYS lists them, knobs, wheels, outputs, sensors
+  const plan = wiring(), m = { keys: [], pots: [], encs: [], outs: [], pirs: [], tofs: [], cams: [], screen: null };
+  plan.rows.forEach((row) => { const it = row.it, tag = it.label.split(' ')[0], N = row.N, Rr = {}; row.roles.forEach((r) => { Rr[r.role] = r.pin; });
+    if (N.what === 'motion') { m.pirs.push({ tag, pin: Rr.out, label: it.label }); return; } if (N.what === 'distance') { m.tofs.push({ tag, label: it.label }); return; } if (N.what === 'camera') { m.cams.push({ tag, label: it.label }); return; }
+    if (N.spi || N.i2c) { if (!m.screen) m.screen = { label: it.label }; return; }
+    if (N.what === 'button') row.roles.forEach((r) => m.keys.push({ name: row.roles.length > 1 ? tag + ' ' + r.role : tag, pin: r.pin, label: it.label }));
+    if (N.what === 'knob') ['turn', 'slide'].forEach((k) => { if (Rr[k] != null) m.pots.push({ name: tag, pin: Rr[k], label: it.label }); });
+    if (N.what === 'stick') { if (Rr.x != null) m.pots.push({ name: tag + ' x', pin: Rr.x, label: it.label }); if (Rr.y != null) m.pots.push({ name: tag + ' y', pin: Rr.y, label: it.label }); if (Rr.press != null) m.keys.push({ name: tag + ' press', pin: Rr.press, label: it.label }); }
+    if (N.what === 'wheel') { m.encs.push({ name: tag, pin: Rr['clk+dt'], label: it.label }); if (Rr.press != null) m.keys.push({ name: tag + ' press', pin: Rr.press, label: it.label }); }
+    if (['led', 'ring', 'sound', 'servo'].indexOf(N.what) > -1) m.outs.push({ what: N.what, pin: row.roles[0].pin, tag, label: it.label }); });
+  return m;
+}
+function show(m, t) { if (m.screen) { TEST.text = t; return ' -> screen: "' + t + '"'; } return ''; }
+function testAct(h, down) {
+  const m = testModel(), has = (w) => m.outs.find((o) => o.what === w); let s = '';
+  if (h.kind === 'key') { const k = m.keys[h.i];
+    if (down) { s = k.name + ' pressed -> GP' + k.pin + ' LOW' + show(m, k.name + ' pressed'); TEST.lamp = true; if (has('led')) { TEST.led = !TEST.led; s += ' -> LED ' + (TEST.led ? 'on' : 'off'); } if (has('ring')) { TEST.ring = true; s += ' -> ring red'; } if (has('sound')) { const f = 330 + 60 * h.i; tone(f); s += ' -> speaker ' + f + ' Hz'; } if (has('servo') && !m.pots.length) { TEST.angle = TEST.angle == null || TEST.angle < 45 ? 90 : 0; s += ' -> servo ' + TEST.angle + ' deg'; } TEST.held = h; }
+    else { s = k.name + ' released -> GP' + k.pin + ' HIGH'; TEST.lamp = false; if (has('ring')) TEST.ring = false; toneOff(); TEST.held = null; } }
+  if (h.kind === 'pot') { const p = m.pots[h.i], v = TEST.val[h.i] || 0; if (Math.abs(v - (TEST.last[h.i] == null ? -10 : TEST.last[h.i])) < 2) return; TEST.last[h.i] = v; s = p.name + ' turned -> GP' + p.pin + ' reads ' + v + show(m, p.name + ' ' + v); TEST.lamp = !TEST.lamp; if (has('servo') && h.i === 0) { TEST.angle = Math.floor(v * 180 / 100); /* code.py: value * 180 // 100 */ s += ' -> servo ' + TEST.angle + ' deg'; } }
+  if (h.kind === 'enc') { const e = m.encs[h.i]; TEST.pos[h.i] = (TEST.pos[h.i] || 0) + h.dir; s = e.name + ' turned ' + (h.dir > 0 ? 'right' : 'left') + ' -> GP' + e.pin + '+GP' + (e.pin + 1) + ' count ' + TEST.pos[h.i] + show(m, e.name + ' ' + TEST.pos[h.i]); TEST.lamp = !TEST.lamp; }
+  if (h.kind === 'pir') { const p = m.pirs[h.i]; TEST.pir[h.i] = !TEST.pir[h.i]; s = p.tag + (TEST.pir[h.i] ? ' sees motion -> GP' + p.pin + ' HIGH' : ' still -> GP' + p.pin + ' LOW') + show(m, p.tag + (TEST.pir[h.i] ? ' motion' : ' still')); TEST.lamp = !!TEST.pir[h.i]; }
+  if (h.kind === 'tof') { const t = m.tofs[h.i], v = TEST.dist[h.i] || 300; s = t.tag + ' measures ' + v + ' mm (I2C GP4/GP5)' + show(m, t.tag + ' ' + v + ' mm'); }
+  if (h.kind === 'cam') { TEST.cam = true; s = 'camera check -> SPI answers 0x55, I2C finds 0x30' + show(m, 'Camera found'); }
+  if (s) testLog(s); draw();
+}
+function drawTest(W, H) {
+  const d = px(), m = testModel(), why = mapWhy(); g.fillStyle = '#f7f4ec'; g.fillRect(0, 0, W, H); TEST.hits = [];
+  if (!wiring().rows.length) { g.fillStyle = '#6f6a60'; g.font = '800 ' + 14 * d + 'px -apple-system,Arial'; g.textAlign = 'center'; g.fillText('Add parts to test them', W / 2, H / 2); tag('Test it'); return; }
+  const font = (s, w) => { g.font = (w || 800) + ' ' + s * d + 'px -apple-system,Arial'; }, box = (x, y, w, h, f, st) => { g.fillStyle = f; g.beginPath(); g.rect(x, y, w, h); g.fill(); if (st) { g.strokeStyle = st; g.lineWidth = 1.5 * d; g.stroke(); } };
+  // the screen and the brain at the top
+  const sw = Math.min(W - 24 * d, 260 * d), sx = (W - sw) / 2; let y = 10 * d;
+  box(sx, y, sw, 40 * d, m.screen ? '#10242c' : '#e7e2d6', '#1a1a1a'); font(13); g.textAlign = 'center'; g.fillStyle = m.screen ? '#9ff0ff' : '#6f6a60'; g.fillText(m.screen ? TEST.text : 'No screen: watch the log below', W / 2, y + 25 * d);
+  y += 48 * d; box(W / 2 - 34 * d, y, 68 * d, 20 * d, '#2f7a4b'); font(9); g.fillStyle = '#fff'; g.fillText('Pico', W / 2 - 6 * d, y + 14 * d); g.fillStyle = TEST.lamp ? '#7dff6b' : '#204a2c'; g.beginPath(); g.arc(W / 2 + 22 * d, y + 10 * d, 4 * d, 0, 7); g.fill();
+  y += 30 * d;
+  // one cell per control or output
+  const cells = []; m.keys.forEach((k, i) => cells.push({ kind: 'key', i, label: k.name })); m.pots.forEach((p, i) => cells.push({ kind: 'pot', i, label: p.name })); m.encs.forEach((e, i) => cells.push({ kind: 'enc', i, label: e.name }));
+  m.pirs.forEach((p, i) => cells.push({ kind: 'pir', i, label: p.tag + ' motion' })); m.tofs.forEach((t, i) => cells.push({ kind: 'tof', i, label: t.tag + ' distance' })); m.cams.forEach((c, i) => cells.push({ kind: 'cam', i, label: c.tag + ' camera' }));
+  m.outs.forEach((o) => cells.push({ kind: 'out', what: o.what, label: o.tag + ' ' + o.what }));
+  const cols = Math.max(2, Math.min(5, Math.floor((W - 16 * d) / (92 * d)))), cw = (W - 16 * d) / cols, rowsN = Math.ceil(cells.length / cols), ch = Math.max(46 * d, Math.min(84 * d, (H - y - 8 * d) / Math.max(1, rowsN)));
+  cells.forEach((c, n) => { const cx = 8 * d + (n % cols) * cw, cy = y + Math.floor(n / cols) * ch, mx = cx + cw / 2, my = cy + ch * 0.45, r = Math.min(cw, ch) * 0.24;
+    font(9.5, 700); g.textAlign = 'center'; g.fillStyle = '#1a1a1a'; g.fillText(c.label.slice(0, 16), mx, cy + ch - 6 * d);
+    if (c.kind === 'key') { const on = TEST.held && TEST.held.kind === 'key' && TEST.held.i === c.i; g.fillStyle = on ? '#c8412f' : '#1a1a1a'; g.beginPath(); g.arc(mx, my, r, 0, 7); g.fill(); TEST.hits.push({ kind: 'key', i: c.i, x: mx - r, y: my - r, w: 2 * r, h: 2 * r }); }
+    if (c.kind === 'pot' || c.kind === 'tof') { const v = c.kind === 'pot' ? TEST.val[c.i] || 0 : ((TEST.dist[c.i] || 300) - 30) / 11.7, x0 = cx + 10 * d, x1 = cx + cw - 10 * d; g.strokeStyle = '#1a1a1a'; g.lineWidth = 4 * d; g.beginPath(); g.moveTo(x0, my); g.lineTo(x1, my); g.stroke(); const hx = x0 + (x1 - x0) * v / 100; g.fillStyle = '#c8412f'; g.beginPath(); g.arc(hx, my, 8 * d, 0, 7); g.fill(); font(9, 700); g.fillStyle = '#6f6a60'; g.fillText(c.kind === 'pot' ? String(TEST.val[c.i] || 0) : (TEST.dist[c.i] || 300) + ' mm', mx, my - 12 * d); TEST.hits.push({ kind: c.kind, i: c.i, x: x0 - 8 * d, y: my - 14 * d, w: x1 - x0 + 16 * d, h: 28 * d, x0, x1 }); }
+    if (c.kind === 'enc') { [-1, 1].forEach((dir) => { const bx2 = mx + dir * 22 * d; g.fillStyle = '#1a1a1a'; g.beginPath(); g.arc(bx2, my, 13 * d, 0, 7); g.fill(); g.fillStyle = '#fff'; font(13); g.fillText(dir < 0 ? '<' : '>', bx2, my + 5 * d); TEST.hits.push({ kind: 'enc', i: c.i, dir, x: bx2 - 13 * d, y: my - 13 * d, w: 26 * d, h: 26 * d }); }); font(10); g.fillStyle = '#1a1a1a'; g.fillText(String(TEST.pos[c.i] || 0), mx, my + 4 * d); }
+    if (c.kind === 'pir') { const on = !!TEST.pir[c.i]; g.fillStyle = on ? '#fff3b0' : '#fff'; g.strokeStyle = '#1a1a1a'; g.lineWidth = 2 * d; g.beginPath(); g.arc(mx, my + r * 0.4, r * 1.1, Math.PI, 0); g.closePath(); g.fill(); g.stroke(); TEST.hits.push({ kind: 'pir', i: c.i, x: mx - r * 1.2, y: my - r, w: r * 2.4, h: r * 2 }); }
+    if (c.kind === 'cam') { g.fillStyle = TEST.cam ? '#2f9a5b' : '#1a1a1a'; g.beginPath(); g.arc(mx, my, r, 0, 7); g.fill(); g.fillStyle = '#8fd3ff'; g.beginPath(); g.arc(mx, my, r * 0.45, 0, 7); g.fill(); TEST.hits.push({ kind: 'cam', i: c.i, x: mx - r, y: my - r, w: 2 * r, h: 2 * r }); }
+    if (c.kind === 'out') { if (c.what === 'led') { g.fillStyle = TEST.led ? '#ff4b3a' : '#5a2a26'; g.beginPath(); g.arc(mx, my, r * 0.7, 0, 7); g.fill(); }
+      if (c.what === 'ring') { g.strokeStyle = TEST.ring ? '#c8412f' : '#cfc9bb'; g.lineWidth = 6 * d; g.beginPath(); g.arc(mx, my, r, 0, 7); g.stroke(); }
+      if (c.what === 'sound') { g.fillStyle = TEST.osc ? '#c8412f' : '#1a1a1a'; g.beginPath(); g.arc(mx, my, r * 0.8, 0, 7); g.fill(); }
+      if (c.what === 'servo') { const a = (TEST.angle == null ? 90 : TEST.angle) * Math.PI / 180; g.strokeStyle = '#1a1a1a'; g.lineWidth = 2 * d; g.beginPath(); g.arc(mx, my + r * 0.5, r, Math.PI, 0); g.stroke(); g.strokeStyle = '#c8412f'; g.lineWidth = 4 * d; g.beginPath(); g.moveTo(mx, my + r * 0.5); g.lineTo(mx - Math.cos(a) * r, my + r * 0.5 - Math.sin(a) * r); g.stroke(); } } });
+  tag(why || 'Test it: this acts out your code.py');
+}
+function testDown(e) { const [x, y] = pcx(e), h = TEST.hits.find((q) => x >= q.x && x <= q.x + q.w && y >= q.y && y <= q.y + q.h); if (!h) return; try { cv.setPointerCapture(e.pointerId); } catch (er) {}
+  if (h.kind === 'pot' || h.kind === 'tof') { TEST.drag = h; testMove(e); return; } if (h.kind === 'enc') { testAct(h, true); return; } if (h.kind === 'pir' || h.kind === 'cam') { testAct(h, true); return; } testAct(h, true); }
+function testMove(e) { const h = TEST.drag; if (!h) return; const [x] = pcx(e), v = Math.max(0, Math.min(100, Math.round((x - h.x0) / (h.x1 - h.x0) * 100))); if (h.kind === 'pot') { TEST.val[h.i] = v; testAct(h, true); } else { TEST.dist[h.i] = Math.round(30 + v * 11.7); draw(); } }
+function testUp() { if (TEST.drag && TEST.drag.kind === 'tof') testAct(TEST.drag, true); TEST.drag = null; if (TEST.held) testAct(TEST.held, false); }
 function wiring() { if (!S.pins) S.pins = {}; return planWiring(wiringItems(), S.pins); }
 function pinsHtml() {
   const bi = brainInfo(), bp = bi;
@@ -2047,6 +2141,7 @@ function extraRows() {
   { const dS = !isPanel() && !S.snap ? posts().length * panels().length : 0, mS = S.attachedParts.filter((m) => m.mountType === 'screw' && MOUNTABLE[m.partId]).reduce((q, m) => q + mountCount(m), 0); /* the deck screws plus one for every part mounted with a screw */
     if (dS + mS) out.push({ t: 'x_m3', name: 'M3 screws, 8 mm, ' + (dS + mS) + ' (' + [dS ? dS + ' for the deck' : '', mS ? mS + ' for mounted parts' : ''].filter(Boolean).join(', ') + ', small box)', each: 3 }); }
   if (isPanel() && S.phold === 'screws') out.push({ t: 'x_m3', name: 'M3 screws (small box)', each: 3 });
+  if (S.xp && S.xp.ch && S.xp.ch.servo) out.push({ t: 'x_sg90', name: '1 x SG90 Micro Servo (character arm)', each: 2 });
   { const nT = S.attachedParts.filter((m) => m.partId === 'tripod').length; if (nT) out.push({ t: 'x_nut', name: nT + ' x 1/4"-20 hex nut (tripod mount)', each: 0.5 * nT }); }
   { const nC = S.attachedParts.filter((m) => m.partId === 'charm' && (m.charm || xp().charm).hook === 'lug').length; if (nC) out.push({ t: 'x_clasp', name: nC + ' x Trigger clasp keyring (for the charm lug)', each: 2 * nC }); }
   if (isClam() && S.magnets) out.push({ t: 'x_mag', name: 'Round magnets 6 x 3 mm, 4 or more', each: 3 });
@@ -2300,7 +2395,7 @@ window.addEventListener('pageshow', (e) => { if (e.persisted) resync(); });
 window.addEventListener('storage', (e) => { if (e.key === KEY) resync(); });
 document.addEventListener('visibilitychange', () => { if (!document.hidden) resync(); });
 
-window.__cz = { wallArt, LG, hookPolys, addBoard, packBuild, unpackBuild, shareState, portBlocked, portAt, mountBlocked, swatchFile, loadRecipe, get DECO() { return DECO; }, get T3() { return T3; }, THREE, wiring, codeFor, get S() { return S; }, get view() { return view; }, AZ, get UNDO() { return UNDO.length; }, halves, plan, makeFiles, get FILES() { return FILES; }, allProblems, G, addPart, go, render, dims, heights, addonFile, addonPolys, charParts, charCache, kb, kbBoard, kbCode, kbReadme, boardSvg, get TRAY() { return TRAY; }, showStart, loadRecipe, cost, boardBuild, boardFiles, boardReadme };
+window.__cz = { TEST, testModel, wiring, wallArt, LG, hookPolys, addBoard, packBuild, unpackBuild, shareState, portBlocked, portAt, mountBlocked, swatchFile, loadRecipe, get DECO() { return DECO; }, get T3() { return T3; }, THREE, wiring, codeFor, get S() { return S; }, get view() { return view; }, AZ, get UNDO() { return UNDO.length; }, halves, plan, makeFiles, get FILES() { return FILES; }, allProblems, G, addPart, go, render, dims, heights, addonFile, addonPolys, charParts, charCache, kb, kbBoard, kbCode, kbReadme, boardSvg, get TRAY() { return TRAY; }, showStart, loadRecipe, cost, boardBuild, boardFiles, boardReadme };
 render();
 { const q = new URLSearchParams(location.search), code = q.get('build'), rid = q.get('recipe'), r = rid && (CZ.RECIPES || []).find((x) => x.id === rid), clean = () => { try { history.replaceState(null, '', location.pathname); } catch (e) {} };
   if (code) { /* a build link: it becomes the saved build (the one that was here goes to Bring back), no start sheet */
