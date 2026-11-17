@@ -3,10 +3,10 @@
 // Print: your printer and bed, material, how it joins, where the puzzle seams go. Files: STL per piece, wood templates, wiring.
 import * as THREE from 'three';
 import { OrbitControls } from 'three/addons/OrbitControls.js';
-import * as G from './geo.js?v=21';
+import * as G from './geo.js?v=22';
 import { openMeasure, GROUPS } from './capture.js?v=20';
 import { makeBoard, boardFiles, boardSvg, zip as zipFiles } from './board.js?v=3';
-import { charParts, chSpec, charBuyList, CH_DEF } from './char3d.js?v=1';
+import { charParts, chSpec, charBuyList, CH_DEF, headDims, faceSpots, faceLimit, featPoly, flatParts, FEATS } from './char3d.js?v=2';
 import { planWiring, codeFor, PICO_LEFT, PICO_RIGHT, PICO_PINS, PICO_BRAINS, NEED } from './wiring.js?v=19';
 
 const CZ = window.CZ, R = G.RULE, $ = (id) => document.getElementById(id);
@@ -76,7 +76,7 @@ function deckArea() { return G.offset(outline(), isPanel() ? -1 : -(R.T + R.CLR 
 function posts() { const d = dims(); if (isPanel()) { const k = S.plift > 0 && S.pbase !== 'rim' ? 8.5 : 6.5; /* half mm: never in line with a notch edge (whole mm), which breaks the mesh */ return S.phold === 'screws' ? [[k, k], [d.W - k, k], [d.W - k, d.D - k], [k, d.D - k]] : []; } return G.postSpots(outline(), d.W * d.D > 30000 ? 6 : 4); }
 function itemsOn(panel) { return S.items.filter((i) => i.panel === panel); }
 function depthOf(panel) { return itemsOn(panel).filter((i) => i.of == null).reduce((m, i) => Math.max(m, PP(i) ? PP(i).depth : 0), 0); } /* parts on a board: the board sets the depth */
-function upOf(panel) { return itemsOn(panel).reduce((m, i) => Math.max(m, PP(i) ? (PP(i).up || 0) : 0), 0); }
+function upOf(panel) { return itemsOn(panel).reduce((m, i) => Math.max(m, PP(i) ? Math.max(PP(i).up || 0, i.mt === 'raised' ? 1.6 : 0, i.mt === 'top' ? (PP(i).depth || 0) + (PP(i).up || 0) : 0) : 0), panel !== homePanel() ? 0 : (S.deco || []).some((q) => q.k === 'arm') ? 11 : (S.deco || []).some((q) => q.mt === 'raised') ? 1.6 : 0); }
 function heights() {
   if (isPanel()) return { H: S.pt + (S.plift || 0), Hl: 0, recess: 0, recessL: 0 };
   // base: floor + deepest part or brain + deck, plus room for caps when the lid closes
@@ -236,7 +236,7 @@ function halfFor(panel, h) {
     if (ch) { const p2 = wallPort(ch, R.F + 1.5); if (port) port2 = p2; else port = p2; }
   }
   const hingeOn = isClam() && S.hinge === 'printed', lk = looksFor(panel);
-  return G.buildHalf({ style: S.style, W: d.W, D: d.D, H: lid ? h.Hl : h.H, recess: lid ? h.recessL : h.recess, parts, inside, port, port2,
+  return G.buildHalf({ style: S.style, W: d.W, D: d.D, H: lid ? h.Hl : h.H, recess: lid ? h.recessL : h.recess, parts, inside, port, port2, deco: !lid && panel === homePanel() ? decoPolys() : [],
     top: lk.top, bottom: lk.bottom, walls: lk.walls, snap: S.snap,
     magnets: isClam() && S.magnets, hinge: { on: hingeOn, side: S.style === 'small' ? (S.hside === 'right' ? 'right' : 'left') : 'back' }, hingeSet: lid ? 'b' : 'a' });
 }
@@ -356,10 +356,12 @@ const STEPS = [['Brain', 'brain'], ['Arrange', 'arrange'], ['Body', 'body'], ['S
 // her order (11-04): Body first, then its look (color, texture, buttons), then the Brain inside, then Arrange
 const ORDER = [2, 3, 0, 1, 4, 5];
 // What a device can do. Parts opens on these instead of on a catalog. [id (= part category), name, one line, part whose picture stands for it]
-const FUNCS = [['brain', 'Think', 'The brain that runs it', 'pico'], ['screen', 'Show things', 'A screen', 'tft28'], ['press', 'Take presses', 'Buttons, a D-pad', 'button16'], ['turn', 'Turn and slide', 'Knobs, a wheel, a stick', 'encoder'],
-  ['out', 'Light and sound', 'Lights, a speaker', 'speaker28'], ['move', 'Move', 'A motor that turns an arm', 'servo'], ['power', 'Run on a battery', 'Cut the cord', 'lipo1200'], ['print', 'Printed parts', 'Stand, body, gears', null], ['mine', 'Use my own part', 'Measure it with your phone', null]];
+const FUNCS = [['brain', 'Brain', 'The chip that runs it', 'pico'], ['screen', 'Screens', 'It shows things', 'tft28'], ['press', 'Buttons', 'Buttons, a D-pad', 'button16'], ['turn', 'Knobs', 'Knobs, a wheel, a stick', 'encoder'],
+  ['out', 'Light and sound', 'Lights, a speaker', 'speaker28'], ['move', 'Motors', 'Turns an arm', 'servo'], ['power', 'Power', 'Battery, charger, switch', 'lipo1200'], ['mine', 'My own board', 'Measure it with your phone', null]];
+// electronics in three groups: what you do to it, what it does back, and what ties it together
+const FGROUPS = [['Inputs', 'you press, turn or slide', ['press', 'turn']], ['Outputs', 'it shows, lights, sounds or moves', ['screen', 'out', 'move']], ['Connections', 'the brain, the power, your own board', ['brain', 'power', 'mine']]];
 const FN_STAND = '<svg viewBox="0 0 60 36" aria-hidden="true"><path d="M17 31L29 6l9 4-12 25z" fill="#c8412f" stroke="#1a1a1a" stroke-width="2" stroke-linejoin="round"/><path d="M35 15l11 17" stroke="#1a1a1a" stroke-width="3" stroke-linecap="round"/><path d="M7 33h47" stroke="#1a1a1a" stroke-width="2" stroke-linecap="round"/></svg>';
-const XGROUPS = [['Stand and carry', ['stand', 'handle', 'feet']], ['Character', ['char', 'limbs']], ['Moving parts', ['gears', 'hinge', 'spring', 'clamp']], ['Keyboard', ['keys']], ['Hardware', ['panel', 'standoff', 'clip']]];
+const XGROUPS = [['Stand and carry', ['stand', 'handle', 'feet']], ['Character', ['char', 'deco', 'limbs']], ['Moving parts', ['gears', 'hinge', 'spring', 'clamp']], ['Keyboard', ['keys']], ['Hardware', ['panel', 'standoff', 'clip']]];
 const NEWP = ' Sized from published specs, not from a test print.';
 function xmeta(id) { // one printed part: [short name, what it is and how it goes on, its few settings]
   const X = xp(), fits = stepper('xs_t', 'Fits', X.stand.t + ' mm thick' + (X.stand.auto ? ' (your case)' : ''));
@@ -367,7 +369,8 @@ function xmeta(id) { // one printed part: [short name, what it is and how it goe
     stand: ['Kickstand', 'Clips onto the bottom edge and leans it back. No pin to snap.', fits + '<div class="row"><b>Leans</b>' + seg('xs_a', [['15', '15'], ['25', '25'], ['35', '35 deg']], String(X.stand.a)) + '</div>'],
     handle: ['Handle', 'An arch to carry it by. Glue its two feet to the top or the back with super glue or epoxy: tape will not hold it.' + NEWP, stepper('xh_l', 'Grip', X.handle.l + ' mm wide')],
     feet: ['Feet', 'Little round feet so it does not slide. Screw on, or glue.', '<div class="row"><b>Fix</b>' + seg('xf_hole', [['1', 'Screw hole'], ['0', 'Glue']], X.feet.hole ? '1' : '0') + '</div>' + stepper('xf_h', 'Tall', X.feet.h + ' mm')],
-    char: ['Character', 'A whole character to print: head, body, arms, hands, legs and feet, with a face. Spin it above to see it from every side. The head turns on its neck, the arms and legs swing and hold a pose.' + NEWP, charHtml(), true],
+    char: ['Character', 'A whole character to print: head, body, arms, hands, legs and feet, with a face. Spin it above to see it from every side. The head turns on its neck, the arms and legs swing and hold a pose.' + NEWP, charHtml(), 'print files (zip)'],
+    deco: ['Face and arms', 'Give the case you built a face, and arms that swing. Tap one to add it, then drag it where you want it on the picture above. It becomes part of your case files.' + NEWP, decoHtml(), 'none'],
     body: ['Body', 'A torso your case sits on like a head. Two arms and two legs screw to its sides and hold a pose when you tighten them. You need 4 M3 x 12 screws (they cut their own thread in the torso) and 2 M3 x 20 with nuts for the feet. A heavy case can tip it: spread the legs.' + NEWP, stepper('xb_h', 'Torso', X.body.h + ' mm tall') + stepper('xl_l', 'Arms, legs', X.limbs.l + ' mm long') + fits],
     limbs: ['Legs or arms', 'No torso: 2 clips grab an edge of the case, then 4 bars and 2 feet. Join them with 6 M3 x 20 screws and nuts, tighten to hold a pose.' + NEWP, stepper('xl_l', 'Bars', X.limbs.l + ' mm long') + fits],
     gears: ['Gears', 'Two gears on a base with pegs, so they turn the moment they come off the printer. The small one has 18 teeth. ' + (X.gears.n === 18 ? 'Same size: they turn at the same speed, in opposite directions.' : 'Turn the small one and the big one turns ' + (X.gears.n / 18).toFixed(X.gears.n % 18 ? 1 : 0) + ' times slower and stronger.') + ' Take them off the base to use them on your own axles, ' + (0.75 * (18 + X.gears.n)).toFixed(1).replace('.0', '') + ' mm apart. Print in PETG if they will do real work.' + NEWP, stepper('xg_n', 'Big gear', X.gears.n + ' teeth')],
@@ -375,7 +378,7 @@ function xmeta(id) { // one printed part: [short name, what it is and how it goe
     spring: ['Spring', 'A flat zigzag that pushes back. Good for a button that pops back up or a latch. Light pushes only. PETG lasts longer than PLA, which goes soft over time.' + NEWP, stepper('xsp_n', 'Bends', String(X.spring.n))],
     clamp: ['Clamp', 'Hooks over a shelf or desk edge. Push the wedge in to lock it. The hole in its back takes an M3 screw, so a leg bar or your own part bolts on.' + NEWP, stepper('xcl_t', 'Grips', X.clamp.t + ' mm thick')],
     panel: ['Panel', 'A flat plate with a screw hole in each corner. A door, a cover, a shelf, a base for your own idea.' + NEWP, stepper('xp_w', 'Wide', X.panel.w + ' mm') + stepper('xp_h', 'Tall', X.panel.h + ' mm')],
-    keys: ['Keyboard', 'Your own mechanical keyboard, ' + kb().c + ' across and ' + kb().r + ' down: a printed plate the switches click into, printed key caps, and a board you can order that joins every key to a Pico. Every key is one square. For a space bar, two keys share one long cap. Plate and board follow the Cherry MX data sheet.' + NEWP, kbHtml(), true],
+    keys: ['Keyboard', 'Your own mechanical keyboard, ' + kb().c + ' across and ' + kb().r + ' down: a printed plate the switches click into, printed key caps, and a board you can order that joins every key to a Pico. Every key is one square. For a space bar, two keys share one long cap. Plate and board follow the Cherry MX data sheet.' + NEWP, kbHtml(), 'plate'],
     standoff: ['Standoffs', 'Lift a board off the floor. The screw cuts its own thread in the plastic.', '<div class="row"><b>Screw</b>' + seg('xo_s', [['m25', 'M2.5 (Pi)'], ['m3', 'M3']], X.standoff.s) + '</div>' + stepper('xo_h', 'Tall', X.standoff.h + ' mm')],
     clip: ['Cable clips', 'Keep wires tidy inside. Stick on with tape or glue.', stepper('xc_d', 'Cable', X.clip.d + ' mm')] }[id];
 }
@@ -409,14 +412,62 @@ function printCard(id) { const q = PQ[S.pq] ? S.pq : 'nice', P = PSET[id] || [3,
     '<div class="it"><b>Supports: off</b>Supports are throwaway scaffolding under overhangs. This part is drawn so it needs none.</div>' +
     '<div class="it"><b>Brim: ' + (P[2] ? 'on' : 'off') + '</b>A thin skirt stuck to the bed that keeps a part from tipping or lifting. ' + (P[2] ? 'This one stands tall on a small foot, so turn it on and peel it off after.' : 'Not needed here. Turn it on only if corners lift on your printer.') + '</div>' +
     '</div></details>'; }
+// ---------- tap and drop: one flat editor for the face on a character's head and for a face and arms on a case ----------
+let DECO = null;
+const decoOn = () => S.step === 5 && curTab() === 'extras' && (S.xsel === 'deco' || (S.xsel === 'char' && DECO && DECO.mode === 'char'));
+const decoMode = () => (S.xsel === 'deco' ? 'case' : 'char');
+function decoPolys() { return (S.deco || []).map((q) => (q.k === 'arm' ? { arm: true, x: q.x, y: q.y } : { mt: q.mt || 'sunk', polys: [featPoly(q.k, q.s || 1.4, q.f).map(([x, y]) => [x + q.x, y + q.y])] })); }
+function decoScene() { // the surface, what is already on it, and what you can move
+  if (decoMode() === 'char') { const c = chSpec(xp().ch), d = headDims(c), s = d.s, F = faceSpots(c);
+    return { both: F.both, s, outline: d.cube ? [G.rrect(-d.W / 2, -d.H / 2, d.W / 2, d.H / 2, 8 * s)] : G.inter([G.circle(0, -0.2 * d.R, d.R, 72)], [G.rect(-d.R, -0.8 * d.R, d.R, d.R)]), refs: [],
+      items: F.spots.map((f) => ({ key: f.k, x: f.p[0] * s, y: f.p[1] * s, r: f.kind === 'screen' ? 14 : 8 * s, screen: f.kind === 'screen', poly: f.kind === 'screen' ? [[-15, -9.5], [15, -9.5], [15, 9.5], [-15, 9.5]] : featPoly(f.kind, s, f.flip) })) }; }
+  const P = PARTS(), refs = []; itemsOn(homePanel()).forEach((i) => { if (P[i.type]) refs.push(...G.cutShape(P[i.type], i.x, i.y, i.r || 0)); });
+  return { outline: outline(), refs, s: 1, items: (S.deco || []).map((q) => ({ key: q.id, x: q.x, y: q.y, r: q.k === 'arm' ? 9 : 9 * (q.s || 1.4), arm: q.k === 'arm', poly: q.k === 'arm' ? G.circle(0, 0, 5, 24) : featPoly(q.k, q.s || 1.4, q.f) })) };
+}
+function drawDeco(W, H) {
+  const d = px(), sc = decoScene(), b = G.bbox(sc.outline), k = Math.min((W - 36 * d) / b.w, (H - 84 * d) / b.h), ox = (W - b.w * k) / 2 - b.x0 * k, oy = (H - 26 * d + b.h * k) / 2 + b.y0 * k;
+  DECO = DECO || { mode: decoMode() }; DECO.mode = decoMode(); DECO.xf = { k, ox, oy, d }; DECO.sc = sc;
+  const path = (polys, dx, dy) => { const p = new Path2D(); polys.forEach((pl) => { pl.forEach(([x, y], i) => { const X = ox + (x + (dx || 0)) * k, Y = oy - (y + (dy || 0)) * k; if (i) p.lineTo(X, Y); else p.moveTo(X, Y); }); p.closePath(); }); return p; };
+  g.lineJoin = 'round'; g.fillStyle = '#f2ecd6'; g.strokeStyle = '#1a1a1a'; g.lineWidth = 2.5 * d; const op = path(sc.outline); g.fill(op, 'evenodd'); g.stroke(op);
+  if (sc.refs.length) { g.fillStyle = 'rgba(26,26,26,.16)'; g.fill(path(sc.refs), 'evenodd'); }
+  sc.items.forEach((it) => { const on = it.key === DECO.sel, p = path([it.poly], it.x, it.y);
+    if (it.screen) { g.fillStyle = '#10242c'; g.fill(p); g.fillStyle = '#1c6f86'; g.fill(path([[[-12, -6.5], [12, -6.5], [12, 6.5], [-12, 6.5]]], it.x, it.y)); }
+    else if (it.arm) { g.fillStyle = '#2f4a6b'; g.globalAlpha = 0.85; g.fill(path([[[-6, -46], [6, -46], [6, 0], [-6, 0]]], it.x, it.y)); g.beginPath(); g.arc(ox + it.x * k, oy - (it.y - 46) * k, 9 * k, 0, 7); g.fill(); g.globalAlpha = 1; g.fillStyle = '#1a1a1a'; g.fill(p); }
+    else { g.fillStyle = '#1a1a1a'; g.fill(p, 'evenodd'); }
+    if (on) { g.strokeStyle = '#c8412f'; g.lineWidth = 2.5 * d; g.setLineDash([6 * d, 4 * d]); g.beginPath(); g.arc(ox + it.x * k, oy - it.y * k, (it.r + 4) * k, 0, 7); g.stroke(); g.setLineDash([]); } });
+  tag(sc.items.length ? (sc.both ? 'Two screens share the head, so they stay put' : 'Drag a piece where you want it') : 'Tap a piece below to add it');
+}
+function decoPoint(e) { const r = cv.getBoundingClientRect(), q = cv.width / r.width, f = DECO.xf; return [((e.clientX - r.left) * q - f.ox) / f.k, (f.oy - (e.clientY - r.top) * q) / f.k]; }
+function decoMove(key, x, y) {
+  if (decoMode() === 'char') { const X = xp(), c = chSpec(X.ch), s = DECO.sc.s; if (DECO.sc.both) return; const pos = X.ch.pos = X.ch.pos || {};
+    let p = faceLimit(c, [x / s, y / s]); if (key === 'es' || key === 'ms') p = [0, p[1]]; pos[key] = p;
+    const twin = { eL: 'eR', eR: 'eL', bL: 'bR', bR: 'bL' }[key]; if (twin) pos[twin] = [-p[0], p[1]]; /* eyes and brows move as a pair, so the face stays even */
+    return; }
+  const q = (S.deco || []).find((z) => z.id === key); if (!q) return; const b = G.bbox(outline()), m = 7; q.x = Math.max(b.x0 + m, Math.min(b.x1 - m, x)); q.y = Math.max(b.y0 + m, Math.min(b.y1 - m, y));
+}
+function decoWire() {
+cv.addEventListener('pointerdown', (e) => { if (!decoOn() || !DECO || !DECO.xf) return; const [x, y] = decoPoint(e); let best = null, bd = 1e9; DECO.sc.items.forEach((it) => { const dd = Math.hypot(it.x - x, it.y - y); if (dd < Math.max(11, it.r + 5) && dd < bd) { bd = dd; best = it; } });
+  DECO.sel = best ? best.key : null; DECO.drag = best ? { key: best.key, dx: best.x - x, dy: best.y - y, moved: false } : null; if (best) { try { cv.setPointerCapture(e.pointerId); } catch (x2) {} if (decoMode() === 'case') snapU(); } draw(); e.preventDefault(); });
+cv.addEventListener('pointermove', (e) => { if (!decoOn() || !DECO || !DECO.drag) return; const [x, y] = decoPoint(e); DECO.drag.moved = true; decoMove(DECO.drag.key, x + DECO.drag.dx, y + DECO.drag.dy); draw(); e.preventDefault(); });
+['pointerup', 'pointercancel'].forEach((ev) => cv.addEventListener(ev, () => { if (!decoOn() || !DECO) return; const dr = DECO.drag; DECO.drag = null; if (dr && dr.moved) save(); render(); }));
+}
+function decoHtml() { const sel = DECO && (S.deco || []).find((q) => q.id === DECO.sel), arms = (S.deco || []).filter((q) => q.k === 'arm').length;
+  const add = '<p class="h" style="margin-top:10px">Add to the top of your case</p><div class="grid g3">' + Object.keys(FEATS).map((k) => '<button class="btn" data-dadd="' + k + '" style="padding:8px 4px;font-size:12.5px">+ ' + FEATS[k] + '</button>').join('') + '<button class="btn dark" data-dadd="arm" style="padding:8px 4px;font-size:12.5px">+ Arm</button></div>';
+  return (sel ? '<div style="margin-top:10px"></div>' : add) +
+    (sel ? (sel.k === 'arm' ? '<div class="selbar"><b>Arm</b><button data-dact="rm">Remove</button></div><p class="note" style="margin:2px 0 0">A screw spot. The arm swings around it, flat against the case.</p>'
+      : '<div class="selbar" style="flex-wrap:wrap"><b style="flex:1 0 100%">' + esc(FEATS[sel.k]) + '</b><button data-dact="sunk"' + ((sel.mt || 'sunk') === 'sunk' ? ' style="background:#1a1a1a;color:#fff"' : '') + '>Sunk in</button><button data-dact="raised"' + (sel.mt === 'raised' ? ' style="background:#1a1a1a;color:#fff"' : '') + '>Raised</button><button data-dact="small">Smaller</button><button data-dact="big">Bigger</button>' + (sel.k === 'brow' ? '<button data-dact="flip">Tilt</button>' : '') + '<button data-dact="rm">Remove</button></div><p class="note" style="margin:2px 0 0">' + ((sel.mt || 'sunk') === 'sunk' ? 'Pressed 1.2 mm into the top. Wipe paint in to make it pop.' : 'Stands 1.6 mm up. It prints as its own little piece that you glue on.') + '</p>')
+      : '<p class="note" style="margin-top:6px">' + ((S.deco || []).length ? 'Tap a piece on the picture to change or remove it.' : 'Grey shapes on the picture are the electronics already on your case, so you can work around them. A screen can be the eyes: just put the brows and mouth around it.') + '</p>') + (sel ? add : '') +
+    (arms ? '<button class="btn red" data-xsave="decoarms" style="margin-top:10px">Save ' + arms + (arms > 1 ? ' arms' : ' arm') + ' to print</button><p class="note" style="margin-top:4px">Each arm is a bar and a hand. Screw the bar to its spot with an M3 x 12 (it cuts its own thread), the hand to the bar with an M3 x 16 and a nut.</p>' : '') +
+    '<button class="btn" data-jump="Finish" style="margin-top:10px">See it on my case</button>'; }
 // ---------- the character page ----------
 let CHC = null;
 function charCache() { const k = JSON.stringify(xp().ch); if (!CHC || CHC.k !== k) { CHC = charParts(G, xp().ch); CHC.k = k; } return CHC; }
 function charHtml() { const c = chSpec(xp().ch), row = (label, f, opts) => '<div class="row"><b>' + label + '</b>' + seg('ch_' + f, opts, String(c[f])) + '</div>', hasScr = c.eyes === 'screen' || c.mouth === 'screen';
   return '<p class="h" style="margin-top:10px">Shape</p>' + row('Head', 'head', [['cube', 'Cube'], ['sphere', 'Ball']]) + row('Body', 'body', [['box', 'Boxy'], ['round', 'Round']]) + row('Hands', 'hands', [['mitt', 'Mitt'], ['claw', 'Claw']]) + row('Feet', 'feet', [['shoe', 'Shoe'], ['boot', 'Boot']]) + row('Size', 'size', [['50', 'Small'], ['60', 'Medium'], ['72', 'Large']]) +
     '<p class="h" style="margin-top:12px">Face</p>' + row('Eyes', 'eyes', [['dot', 'Dots'], ['oval', 'Ovals'], ['screen', 'A screen']]) + row('Brows', 'brows', [['1', 'On'], ['0', 'Off']]) + row('Nose', 'nose', [['button', 'Button'], ['wedge', 'Wedge'], ['none', 'None']]) + row('Mouth', 'mouth', [['smile', 'Smile'], ['line', 'Line'], ['screen', 'A screen']]) + row('Face parts', 'face', [['raised', 'Raised'], ['sunk', 'Sunk in']]) +
-    (hasScr ? row('Screen sits', 'scr', [['flush', 'Flush'], ['raised', 'Raised rim'], ['sunk', 'Sunk in'], ['mounted', 'On top']]) + '<p class="note" style="margin:2px 0 6px">A small OLED screen (0.96 in) shows the ' + (c.eyes === 'screen' ? 'eyes' : 'mouth') + '. ' + (c.head === 'sphere' ? 'The ball gets a flat spot so the flat screen sits right. ' : '') + (c.scr === 'mounted' ? 'It sticks on the outside, its cable goes through the slot.' : 'It sits behind the window, held with a dab of hot glue.') + ' One screen fits in a head.</p>' : '') +
-    '<p class="h" style="margin-top:12px">Moving</p>' + row('Head turns', 'turn', [['0', 'By hand'], ['1', 'Thumb wheel']]) + '<p class="note" style="margin:2px 0 6px">' + (c.turn ? 'Two gears. Turn the wheel behind the neck and the head turns.' : 'The head turns on its neck when you twist it.') + ' Arms and legs swing on their screws: tighten to hold a pose.</p>' +
+    (hasScr ? row('Screen sits', 'scr', [['flush', 'Flush'], ['raised', 'Raised rim'], ['sunk', 'Sunk in'], ['mounted', 'On top']]) + '<p class="note" style="margin:2px 0 6px">A small OLED screen (0.96 in) shows the ' + (c.eyes === 'screen' ? 'eyes' : 'mouth') + '. ' + (c.head === 'sphere' ? 'The ball gets a flat spot so the flat screen sits right. ' : '') + (c.scr === 'mounted' ? 'It sticks on the outside, its cable goes through the slot.' : 'It sits behind the window, held with a dab of hot glue.') + ' ' + (c.head === 'cube' && c.size >= 72 ? 'The large cube head has room for two: one for the eyes, one for the mouth.' : 'Two screens need the large cube head.') + '</p>' : '') +
+    '<button class="btn' + (DECO && DECO.mode === 'char' && S.xsel === 'char' ? ' red' : ' dark') + '" data-act="faceed" style="margin-top:8px">' + (DECO && DECO.mode === 'char' && S.xsel === 'char' ? 'Done. Back to 3D' : 'Move the face parts') + '</button>' + (c.pos ? '<button class="btn" data-act="facereset" style="margin-top:6px;padding:8px">Put the face back where it was</button>' : '') +
+    '<p class="h" style="margin-top:12px">Moving</p>' + row('Head turns', 'turn', [['0', 'By hand'], ['1', 'Thumb wheel']]) + row('Arms, legs', 'bend', [['0', 'Straight'], ['1', 'Elbows + knees']]) + '<p class="note" style="margin:2px 0 6px">' + (c.turn ? 'Two gears. Turn the wheel behind the neck and the head turns.' : 'The head turns on its neck when you twist it.') + ' Arms and legs swing on their screws: tighten to hold a pose.</p>' +
     '<p class="note" style="margin:8px 0 0"><b>You buy:</b> ' + charBuyList(c).join('. ') + '.</p>' + filLine('char'); }
 // ---------- the keyboard page ----------
 function kbCase() { const K = kb(), d = dims(), wall = R.T + R.CLR + 1, iw = d.W - 2 * wall, ih = d.D - 2 * wall; return { iw, ih, fits: (K.w <= iw && K.h <= ih) || (K.h <= iw && K.w <= ih), has: S.items.some((i) => i.type === 'kbd') }; }
@@ -457,10 +508,10 @@ function partsRoomHtml() {
   if (!T) return filBar() + XGROUPS.map((g) => '<p class="h">' + g[0] + '</p><div class="grid g3" style="margin-bottom:10px">' + g[1].map((k) => { const v = filV(k)[0]; return '<button type="button" class="pick fn xt" data-xsel="' + k + '">' + xThumb(k) + xmeta(k)[0] + (v < 2 ? '<small class="vd v' + v + '">' + VWORD[v] + '</small>' : '') + '</button>'; }).join('') + '</div>').join('') +
     '<details class="fold"><summary>Printed buttons and knobs</summary>' + btnHtml() + '</details><p class="note">Each one is its own print. Make it now or later, then add it to what you already built.</p>';
   return '<div class="fnh"><button type="button" class="btn" data-xsel="">&lsaquo; All</button><b>' + T[0] + '</b></div><p class="note" style="margin-top:6px">' + T[1] + '</p>' + T[2] + (T[3] ? '' : filLine(id)) +
-    '<button class="btn red" data-xsave="' + id + '" style="margin-top:10px">Save the ' + (T[3] ? 'plate' : 'print file') + '</button>' + printCard(id);
+    (T[3] === 'none' ? '' : '<button class="btn red" data-xsave="' + id + '" style="margin-top:10px">Save the ' + (T[3] || 'print file') + '</button>' + printCard(id));
 }
 function tabsFor(step) {
-  if (step === 0) return [['snap', 'Snap', 'snap'], ['parts', 'Parts', 'parts'], ['picks', 'Picks', 'picks'], ['pins', 'Wiring', 'wire']];
+  if (step === 0) return [['snap', 'Snap', 'snap'], ['parts', 'Electronics', 'parts'], ['picks', 'Picks', 'picks'], ['pins', 'Wiring', 'wire']];
   if (step === 1) return panels().map((p) => [p, PNAME[p], p]).concat([[isPanel() ? 'psize' : 'size', 'Size', 'size']]);
   if (step === 2 && isPanel()) return [['shape', 'Shape', 'shape'], ['psize', 'Size', 'size'], ['notch', 'Notches', 'notch'], ['measure', 'Measure', 'measure']];
   if (step === 2) return [['shape', 'Shape', 'shape'], ['fit', 'Fit', 'fit'], ['measure', 'Measure', 'measure']];
@@ -476,8 +527,8 @@ const UNDO = []; let CLEARED = false;
 const BAK = KEY + '-bak';
 function backup() { try { if (S.items.length) localStorage.setItem(BAK, JSON.stringify(S)); } catch (e) {} } /* the whole build, kept before anything that wipes it */
 function bringBack() { try { const b = localStorage.getItem(BAK); if (b) { localStorage.setItem(KEY, b); localStorage.removeItem(BAK); location.reload(); } } catch (e) {} }
-function snapU() { UNDO.push(JSON.stringify({ items: S.items, b: Object.keys(S.mine || {}).map((k) => [k, S.mine[k].top, S.mine[k].under]) })); if (UNDO.length > 40) UNDO.shift(); zmBar(); }
-function undo() { const u = UNDO.pop(); CLEARED = false; if (!u) return; const o = JSON.parse(u); S.items = o.items; o.b.forEach(([k, t, un]) => { const P = S.mine[k]; if (P && P.board) { P.under = un; setBoardTop(P, t || 9); } }); if (!S.items.some((i) => i.id === sel)) sel = null; syncAll(); save(); render(); }
+function snapU() { UNDO.push(JSON.stringify({ deco: S.deco || [], items: S.items, b: Object.keys(S.mine || {}).map((k) => [k, S.mine[k].top, S.mine[k].under]) })); if (UNDO.length > 40) UNDO.shift(); zmBar(); }
+function undo() { const u = UNDO.pop(); CLEARED = false; if (!u) return; const o = JSON.parse(u); S.items = o.items; if (o.deco) S.deco = o.deco; o.b.forEach(([k, t, un]) => { const P = S.mine[k]; if (P && P.board) { P.under = un; setBoardTop(P, t || 9); } }); if (!S.items.some((i) => i.id === sel)) sel = null; syncAll(); save(); render(); }
 // ---- Studio shell (11-13). Two rooms, like the Case Zero page: the Body is what holds it, the Brain is what it does.
 // One job per page. A page shows only its own tools; everything else stays out of sight until you go there.
 // A page is a list of [step, tab] pairs from the old six steps, so every pane, action and saved build keeps working. '*' = every tab of that step.
@@ -487,7 +538,7 @@ const PAGES = [
   { room: 'body', name: 'Arrange', hint: 'Drag the parts into place', tabs: [[1, '*']], more: ['size', 'psize'] },
   { room: 'body', name: 'Print', hint: 'Pick your printer', tabs: [[4, '*']], more: ['strong', 'mat', 'split'] },
   { room: 'body', name: 'Finish', hint: 'Look, then save the files', tabs: [[5, '3d'], [5, 'files']] },
-  { room: 'brain', name: 'Inside', hint: 'What should it do?', tabs: [[0, 'parts'], [0, 'snap'], [0, 'picks']], more: ['snap', 'picks'] },
+  { room: 'brain', name: 'Electronics', hint: 'What should it do?', tabs: [[0, 'parts'], [0, 'snap'], [0, 'picks']], more: ['snap', 'picks'] },
   { room: 'brain', name: 'Wire it', hint: 'One wire at a time', tall: true, tabs: [[5, 'wire'], [0, 'pins']], more: ['pins'] },
   { room: 'brain', name: 'Shop', hint: 'What to buy', tall: true, tabs: [[5, 'shop']] },
   { room: 'brain', name: 'Board', hint: 'One board, no loose wires', tall: true, tabs: [[5, 'pcb']] },
@@ -545,18 +596,18 @@ function stepper(name, label, txt) { return '<div class="row"><b>' + label + '</
 const LK = { solder: 'SOLDER', pins: 'NO SOLDER', plug: 'PLUG IN' };
 function counts() { const c = {}; S.items.forEach((i) => { c[i.type] = (c[i.type] || 0) + 1; }); return c; }
 function chosenChips() { const c = counts(), P = PARTS(); const k = Object.keys(c).filter((t) => !(P[t] && P[t].board)), n = S.items.filter((i) => i.of == null && !(PP(i) && PP(i).board)).length, arm = Date.now() - CLEARARM < 4000;
-  return (k.length ? '<p class="h" style="margin-top:12px">In your build</p><div class="chosen">' + k.map((t) => '<span>' + esc(P[t] ? P[t].short : t) + ' <i>x' + c[t] + '</i><button type="button" class="rm" data-sub="' + t + '" aria-label="Remove one ' + esc(P[t] ? P[t].short : t) + '">&times;</button></span>').join('') + '</div><p class="note" style="margin-top:6px">Tap the x to take one out. <b>About ' + money(cost(true).total) + ' so far.</b></p>' + (n > 1 ? '<button class="btn' + (arm ? ' red' : '') + '" data-act="clearall" style="margin-top:8px;padding:8px">' + (arm ? 'Tap again: take out all ' + n + ' parts' : 'Take out all parts (your case stays)') + '</button>' : '') : '<p class="note">Nothing yet. Tap a part to add it.</p>') +
+  return (k.length ? '<p class="h" style="margin-top:12px">Electronics in your build</p><div class="chosen">' + k.map((t) => '<span>' + esc(P[t] ? P[t].short : t) + ' <i>x' + c[t] + '</i><button type="button" class="rm" data-sub="' + t + '" aria-label="Remove one ' + esc(P[t] ? P[t].short : t) + '">&times;</button></span>').join('') + '</div><p class="note" style="margin-top:6px">Tap the x to take one out. <b>About ' + money(cost(true).total) + ' so far.</b></p>' + (n > 1 ? '<button class="btn' + (arm ? ' red' : '') + '" data-act="clearall" style="margin-top:8px;padding:8px">' + (arm ? 'Tap again: take out all ' + n + ' parts' : 'Take out all parts (your case stays)') + '</button>' : '') : '<p class="note">Nothing yet. Tap a group, then tap what you want.</p>') +
     (CLEARED && UNDO.length ? '<button class="btn dark" data-act="undo1" style="margin-top:8px;padding:8px">Undo: put it back</button>' : ''); }
 function pane(t) {
   const P = PARTS(), c = counts();
   if (t === 'snap') return '<p class="h">Already built and soldered?</p><button class="btn red" data-act="measure">Photo my board, front and back</button><p class="note" style="margin-bottom:10px">A card next to it is the ruler. Press on each part on the photo, say what it is, do the brain too. Your board goes inside the case, every part on it becomes its own part you can change. Photos stay on your phone.</p>' +
     '<p class="h">Not built yet</p><div class="grid g2"><button class="btn dark" data-act="snap">' + (PHOTO ? 'Take another photo' : 'Take a photo of my parts') + '</button><button class="btn" data-act="toParts">Pick from the list</button></div>' +
-    '<p class="note">Lay your parts out on a table and snap them. The photo stays here on your phone so you can match each one to the list. Then tap Parts and add each one you see.</p>' + (PHOTO ? '<button class="btn" data-act="nophoto" style="margin-top:8px">Remove the photo</button>' : '') + chosenChips();
+    '<p class="note">Lay your parts out on a table and snap them. The photo stays here on your phone so you can match each one to the list. Then tap Electronics and add each one you see.</p>' + (PHOTO ? '<button class="btn" data-act="nophoto" style="margin-top:8px">Remove the photo</button>' : '') + chosenChips();
   if (t === 'parts') {
     // Parts are about what the device does, not about catalog names. First the question, then the few parts that answer it.
     const fn = FUNCS.find((f) => f[0] === S.fn);
-    if (!fn) return '<div class="grid g3">' + FUNCS.map((f) => { const n = f[0] === 'print' ? 0 : Object.keys(c).reduce((a, k) => a + (P[k] && P[k].cat === f[0] ? c[k] : 0), 0);
-      return '<button type="button" class="pick fn" data-fn="' + f[0] + '">' + (n ? '<span class="n">' + n + '</span>' : '') + (f[3] && P[f[3]] ? partSvg(P[f[3]]) : f[0] === 'print' ? FN_STAND : ico('measure')) + f[1] + '<small>' + f[2] + '</small></button>'; }).join('') + '</div>' + chosenChips();
+    if (!fn) { const tile = (f) => { const n = Object.keys(c).reduce((q, k) => q + (P[k] && P[k].cat === f[0] ? c[k] : 0), 0); return '<button type="button" class="pick fn" data-fn="' + f[0] + '">' + (n ? '<span class="n">' + n + '</span>' : '') + (f[3] && P[f[3]] ? partSvg(P[f[3]]) : ico('measure')) + f[1] + '<small>' + f[2] + '</small></button>'; };
+      return FGROUPS.map((g) => '<p class="h"' + (g[0] === 'Inputs' ? ' style="margin-top:0"' : '') + '>' + g[0] + ' <span style="font-weight:600;text-transform:none;letter-spacing:0">' + g[1] + '</span></p><div class="grid g3" style="margin-bottom:10px">' + g[2].map((k) => tile(FUNCS.find((f) => f[0] === k))).join('') + '</div>').join('') + chosenChips(); }
     const head = '<div class="fnh"><button type="button" class="btn" data-fn="">&lsaquo; All</button><b>' + fn[1] + '</b></div>';
     const list = Object.keys(P).filter((k) => P[k].cat === fn[0]);
     return head + '<div class="hrow">' + (list.length ? list.map((k) => '<button type="button" class="pick" data-add="' + k + '">' + (c[k] ? '<span class="n">' + c[k] + '</span><span class="rmv" data-sub="' + k + '" role="button" aria-label="Remove one">&minus;</span>' : '') + '<span class="lk ' + P[k].link + '">' + LK[P[k].link] + '</span>' + partSvg(P[k]) + esc(P[k].short) + '<small>' + (P[k].price ? '$' + P[k].price + ' &middot; ' : '') + esc((P[k].w + ' x ' + P[k].h).replace(/\.0\b/g, '')) + ' mm</small></button>').join('') :
@@ -572,7 +623,7 @@ function pane(t) {
     h += '<p class="h">' + (t === 'lid' ? 'The lid: screens live here' : t === 'base' ? 'The base: controls, the brain sits under it' : 'The top') + '</p>';
     h += mine.length ? '<div class="chosen">' + mine.map((i) => '<span data-sel="' + i.id + '" style="cursor:pointer' + (i.id === sel ? ';background:#1a1a1a;color:#fff' : '') + '">' + esc(N[i.id] + ' ' + PP(i).short) + (problems(i).length ? ' <i>!</i>' : '') + '</span>').join('') + '</div>' : '<p class="note">No parts here yet. Add some in Brain.</p>';
     if (s && s.of == null && s.panel !== 'inside' && PP(s) && !PP(s).board && !isPanel()) { const mt = s.mt || 'flush'; h += '<div class="selbar"><b>Sits</b>' + [['flush', 'Flush'], ['raised', 'Raised rim'], ['sunk', 'Sunk in'], ['top', 'On top']].map((m) => '<button data-mt="' + m[0] + '"' + (mt === m[0] ? ' style="background:#1a1a1a;color:#fff"' : '') + '>' + m[1] + '</button>').join('') + '</div><p class="note" style="margin:2px 0 0">' + ({ flush: 'Level with the top.', raised: 'A rim stands up around it. The rim prints as its own flat piece that you glue on.', sunk: 'It sits down in a shallow pocket.', top: 'No opening. The part sits on the top, only its wires go through a small hole.' })[mt] + '</p>'; }
-    h += '<div class="grid g2" style="margin-top:8px"><button class="btn dark" data-act="auto">Arrange for me</button><button class="btn" data-act="toBrain">Add parts</button></div>';
+    h += '<div class="grid g2" style="margin-top:8px"><button class="btn dark" data-act="auto">Arrange for me</button><button class="btn" data-act="toBrain">Add electronics</button></div>';
     h += '<p class="note">' + (probs.length ? probs.map((x) => '<span class="bad">' + esc(label(x.it)) + ' is ' + esc(x.list[0]) + '.</span>').join(' ') : (S.items.length ? '<span class="ok">Everything fits.</span> ' + (S.items.some((i) => PP(i) && PP(i).board) ? 'Tap your board to add a part there. Drag a part to line it up. Two fingers zoom in, and the part numbers show.' : 'Drag a part to move it. Tap to pick it.') : '')) + '</p>';
     return h;
   }
@@ -633,7 +684,7 @@ function pane(t) {
   if (t === '3d') return '<p class="h">Spin it with one finger, pinch to zoom</p>' + (isClam() ? '<button class="btn" data-act="open">' + (S.open ? 'Close the lid' : 'Open the lid') + '</button>' : '') + '<p class="note">' + summaryLine() + ' <b>' + money(cost().total) + ' to build.</b></p>' + creditHtml();
   if (t === 'shop') return shopHtml();
   if (t === 'pcb') return pcbHtml();
-  if (t === 'files') { const probs = allProblems(); return '<p class="note" style="margin:0 0 8px">No printer? A print service or a library takes these same files. To print from a USB stick, open them in your printer\'s free slicer app first: it turns them into the file your printer reads.</p>' + '<button class="btn red" data-act="make"' + (probs.length || !S.items.length ? ' aria-disabled="true"' : '') + '>Make my files</button><p class="note">' + (!S.items.length ? 'Add parts in Brain first.' : probs.length ? '<span class="bad">Fix the parts marked ! in Arrange first.</span>' : (S.material === 'wood' ? 'Wood: real size templates (SVG) to print at 100 percent or laser cut, plus the cut list.' : 'One STL per piece, numbered. Print the deck face down, the tray open side up.')) + '</p><div class="files" id="fileList" style="margin-top:8px"></div>'; }
+  if (t === 'files') { const probs = allProblems(); return '<p class="note" style="margin:0 0 8px">No printer? A print service or a library takes these same files. To print from a USB stick, open them in your printer\'s free slicer app first: it turns them into the file your printer reads.</p>' + '<button class="btn red" data-act="make"' + (probs.length || !S.items.length ? ' aria-disabled="true"' : '') + '>Make my files</button><p class="note">' + (!S.items.length ? 'Add electronics in Brain first.' : probs.length ? '<span class="bad">Fix the parts marked ! in Arrange first.</span>' : (S.material === 'wood' ? 'Wood: real size templates (SVG) to print at 100 percent or laser cut, plus the cut list.' : 'One STL per piece, numbered. Print the deck face down, the tray open side up.')) + '</p><div class="files" id="fileList" style="margin-top:8px"></div>'; }
   if (t === 'wire') return wireHtml();
   if (t === 'extras') return partsRoomHtml();
   return '';
@@ -735,8 +786,7 @@ function after(t) {
 $('pane').addEventListener('click', (e) => {
   const b = e.target.closest('button, [data-sel], [data-delmine], [data-sub], [data-nsel]'); if (!b) return; const d = b.dataset;
   if (d.nsel != null) { S.nsel = +d.nsel; save(); render(); return; }
-  if (d.fn === 'print') { S.xsel = null; goRoom('parts'); return; }
-  if (d.xsel != null) { S.xsel = d.xsel || null; save(); render(); return; }
+  if (d.xsel != null) { DECO = null; S.xsel = d.xsel || null; save(); render(); return; }
   if (d.xgo) { S.xsel = d.xgo; goRoom('parts'); return; }
   if (d.act === 'undo1') { undo(); return; }
   if (d.fn != null) { S.fn = d.fn || null; if (d.fn && d.fn !== 'print') S.cat = d.fn; save(); render(); return; }
@@ -807,6 +857,10 @@ $('pane').addEventListener('click', (e) => {
   if (act === 'open') { S.open = !S.open; save(); render(); return; }
   if (act === 'make') { if (b.getAttribute('aria-disabled') === 'true') return; makeFiles(); return; }
   if (d.f != null) { saveFile(FILES[+d.f]); return; }
+  if (act === 'faceed') { DECO = DECO && DECO.mode === 'char' ? null : { mode: 'char' }; render(); return; }
+  if (act === 'facereset') { delete xp().ch.pos; save(); render(); return; }
+  if (d.dadd) { snapU(); S.deco = S.deco || []; const bb = G.bbox(outline()), n = S.deco.length, q = { id: 'd' + Date.now().toString(36) + n, k: d.dadd, x: bb.x0 + bb.w * (0.3 + 0.2 * (n % 3)), y: bb.y0 + bb.h * (0.7 - 0.18 * (Math.floor(n / 3) % 3)), mt: 'sunk', s: 1.4 }; S.deco.push(q); DECO = DECO || { mode: 'case' }; DECO.sel = q.id; save(); render(); return; }
+  if (d.dact) { const q = DECO && (S.deco || []).find((z) => z.id === DECO.sel); if (!q) return; snapU(); if (d.dact === 'rm') { S.deco = S.deco.filter((z) => z !== q); DECO.sel = null; } else if (d.dact === 'big') q.s = Math.min(3.2, (q.s || 1.4) + 0.3); else if (d.dact === 'small') q.s = Math.max(0.8, (q.s || 1.4) - 0.3); else if (d.dact === 'flip') q.f = q.f ? 0 : 1; else q.mt = d.dact; save(); render(); return; }
   if (d.mt) { const it = S.items.find((i) => i.id === sel); if (it) { snapU(); it.mt = d.mt; save(); render(); } return; }
   if (d.jump) { const pi = PAGES.findIndex((q) => q.name === d.jump); if (pi >= 0) openPage(pi); return; }
   if (act === 'saveall') { if (!FILES || !FILES.length) return; tag('Packing your files...');
@@ -845,7 +899,7 @@ $('pane').addEventListener('click', (e) => {
     const k = sg.dataset.sg, v = d.v, L = S.look; markCache = k.startsWith('lg_') || k.startsWith('lb_') ? {} : markCache;
     if (k === 'pt') { S.pt = +v; save(); render(); return; } if (k === 'prad') { S.prad = +v; save(); render(); return; } if (k === 'phold') { S.phold = v; reflow(); save(); render(); return; } if (k === 'plift') { if (v === '0') S.plift = 0; else { S.plift = S.plift || 12; S.pbase = v; } reflow(); save(); render(); return; }
     const nn = (S.notches || [])[S.nsel]; if (nn && k === 'n_edge') { if ((nn.edge === 'left' || nn.edge === 'right') !== (v === 'left' || v === 'right')) nn.at = Math.round((v === 'left' || v === 'right' ? dims().D : dims().W) / 2); nn.edge = v; reflow(); save(); render(); return; } if (nn && k === 'n_shape') { nn.shape = v; save(); render(); return; }
-    if (k.indexOf('ch_') === 0) { const X = xp(), f = k.slice(3); X.ch[f] = (f === 'brows' || f === 'turn' || f === 'size') ? +v : v; if (f === 'eyes' && v === 'screen' && X.ch.mouth === 'screen') X.ch.mouth = 'line'; if (f === 'mouth' && v === 'screen' && X.ch.eyes === 'screen') X.ch.eyes = 'oval'; save(); render(); return; }
+    if (k.indexOf('ch_') === 0) { const X = xp(), f = k.slice(3); X.ch[f] = (f === 'brows' || f === 'turn' || f === 'size' || f === 'bend') ? +v : v; const two = X.ch.head === 'cube' && X.ch.size >= 72; if (!two && f === 'eyes' && v === 'screen' && X.ch.mouth === 'screen') X.ch.mouth = 'line'; if (!two && f === 'mouth' && v === 'screen' && X.ch.eyes === 'screen') X.ch.eyes = 'oval'; if (!two && (f === 'size' || f === 'head') && X.ch.eyes === 'screen' && X.ch.mouth === 'screen') X.ch.mouth = 'line'; save(); render(); return; }
     if (k === 'fil') { S.fil = v; save(); render(); return; } if (k === 'pq') { S.pq = v; S.psOpen = true; save(); render(); return; }
     { const X = xp(); if (k === 'xkf') { X.keys.f = +v; save(); render(); return; } if (k === 'xksp') { X.keys.sp = v === '1' ? 1 : 0; save(); render(); return; } if (k === 'xs_a') { X.stand.a = +v; save(); render(); return; } if (k === 'xf_hole') { X.feet.hole = v === '1'; save(); render(); return; } if (k === 'xo_s') { X.standoff.s = v; save(); render(); return; } }
     if (k === 'brand') { S.brand = v; save(); render(); return; }
@@ -867,12 +921,12 @@ $('snapIn').addEventListener('change', (e) => {
 });
 
 // ---------- the picture ----------
-const cv = $('view'), g = cv.getContext('2d');
+const cv = $('view'), g = cv.getContext('2d'); decoWire();
 let view = null; // current 2D mapping for taps
 function fit() { const r = cv.getBoundingClientRect(), d = Math.min(2, devicePixelRatio || 1); cv.width = Math.max(1, Math.round(r.width * d)); cv.height = Math.max(1, Math.round(r.height * d)); }
 // The 3D box: steps that show a flat picture also show the case in 3D in the top right corner. Tap it to make it big.
 let BIG3D = false, miniTimer = 0;
-const native3d = () => { const t = curTab(); if (t === 'extras') return !!S.xsel; return (S.step === 2 && !isPanel()) || (S.step === 5 && t === '3d') || (S.step === 3 && t === 'colors'); };
+const native3d = () => { const t = curTab(); if (t === 'extras') return !!S.xsel && !decoOn(); return (S.step === 2 && !isPanel()) || (S.step === 5 && t === '3d') || (S.step === 3 && t === 'colors'); };
 const wantsMini = () => (S.step === 0 || S.step === 1 || S.step === 3 || S.step === 4 || (S.step === 2 && isPanel())) && (S.items.length > 0 || S.step === 3) && !$('con').classList.contains('down');
 function draw() {
   const big = native3d() || BIG3D, mini = !big && wantsMini(), v3 = $('v3');
@@ -881,6 +935,7 @@ function draw() {
   if (big) { requestAnimationFrame(() => draw3d(false)); return; }
   if (mini && !drag) { clearTimeout(miniTimer); miniTimer = setTimeout(() => draw3d(true), 160); }
   TRAY = []; zmBar(); fit(); const W = cv.width, H = cv.height; g.setTransform(1, 0, 0, 1, 0, 0); g.clearRect(0, 0, W, H); g.fillStyle = '#e7e2d6'; g.fillRect(0, 0, W, H);
+  if (decoOn()) return drawDeco(W, H);
   if (S.step === 0) return curTab() === 'pins' ? drawPinout(W, H) : drawBrain(W, H);
   if (S.step === 1) { const t = curTab(); return drawPanel(t === 'size' || t === 'psize' ? homePanel() : t, W, H); }
   if (S.step === 2) return drawPanel(homePanel(), W, H);
@@ -934,7 +989,7 @@ function drawBrain(W, H) {
     if (on) { const bx = x + o.w - 4 * d, by = y + 4 * d; g.fillStyle = '#c8412f'; g.beginPath(); g.arc(bx, by, 11 * d, 0, 7); g.fill(); g.strokeStyle = '#fff'; g.lineWidth = 2.5 * d; g.beginPath(); g.moveTo(bx - 4 * d, by - 4 * d); g.lineTo(bx + 4 * d, by + 4 * d); g.moveTo(bx + 4 * d, by - 4 * d); g.lineTo(bx - 4 * d, by + 4 * d); g.stroke(); }
   });
   if (!list.some((i) => i.id === TSEL)) TSEL = null;
-  { const ts = S.items.find((i) => i.id === TSEL); tag(ts ? 'Tap ' + P[ts.type].short + ' again to take it out' : list.length + (list.length === 1 ? ' part' : ' parts') + '. Tap one to take it out.'); }
+  { const ts = S.items.find((i) => i.id === TSEL); tag(ts ? 'Tap ' + P[ts.type].short + ' again to take it out' : list.length + ' in your build. Tap one to take it out.'); }
 }
 const PIMG = new Map();
 function pimg(src) { let im = PIMG.get(src); if (!im) { im = new Image(); im.onload = () => draw(); im.src = src; PIMG.set(src, im); } return im.complete && im.naturalWidth ? im : null; }
@@ -1039,6 +1094,7 @@ function pickAt(b, p) { /* the same "What is it?" sheet as the photo page, over 
   };
 }
 cv.addEventListener('pointerdown', (e) => {
+  if (decoOn()) return;
   if (S.step === 2 && isPanel() && view && curTab() === 'notch') { if (!(S.notches || []).length) { S.notches = [{ edge: 'bottom', shape: 'rrect', w: 20, d: 8, at: 0 }]; S.nsel = 0; } notchTo(mm(e)); drag = { notch: true }; cv.setPointerCapture(e.pointerId); draw(); return; }
   if (S.step === 3 && view && curTab() === 'logo' && S.look.logo.on) { const p = mm(e); S.look.logo.x = p[0]; S.look.logo.y = p[1]; drag = { logo: true }; cv.setPointerCapture(e.pointerId); draw(); return; }
   if (TRAY.length) { const r = cv.getBoundingClientRect(), k = cv.width / r.width, x = (e.clientX - r.left) * k, y = (e.clientY - r.top) * k, h = TRAY.find((t) => x >= t.x - 12 * k && x <= t.x + t.w + 12 * k && y >= t.y - 12 * k && y <= t.y + t.h) || null;
@@ -1063,6 +1119,7 @@ cv.addEventListener('pointerdown', (e) => {
   if (sel !== it.id) { sel = it.id; render(); }
 });
 cv.addEventListener('pointermove', (e) => {
+  if (decoOn()) return;
   if (S.step === 1 && TOUCH.has(e.pointerId)) TOUCH.set(e.pointerId, cpx(e));
   if (pinch && TOUCH.size >= 2) { const [a, b] = [...TOUCH.values()]; zoomAt(pinch.z0 * Math.hypot(a[0] - b[0], a[1] - b[1]) / pinch.d0, [(a[0] + b[0]) / 2, (a[1] + b[1]) / 2]); return; }
   if (!drag) return; const p = mm(e);
@@ -1179,7 +1236,7 @@ function draw3d(isMini) {
   if (curTab() === 'extras') { if (!isMini && S.xsel) drawParts3d(); return; }
   // styling the lid's outside: show it closed, from above, the way people will see it
   const lidTop = S.step === 3 && curTab() !== 'colors' && curFace() === 'lidout', OPEN = S.open && !lidTop;
-  const r = setup3d(), d = dims(), h = heights(), key = JSON.stringify([S.items, S.style, S.cols, S.rows, S.add, S.hinge, S.hside, S.magnets, OPEN, S.mine, S.look, S.snap, S.spring, S.walls, LOGOIMG ? LOGOIMG.src.length : 0]);
+  const r = setup3d(), d = dims(), h = heights(), key = JSON.stringify([S.items, S.deco || 0, S.style, S.cols, S.rows, S.add, S.hinge, S.hside, S.magnets, OPEN, S.mine, S.look, S.snap, S.spring, S.walls, LOGOIMG ? LOGOIMG.src.length : 0]);
   if (isMini && (!$('v3').classList.contains('mini') || $('v3').hidden)) return; // left the flat view before the timer ran
   const mode = isMini ? 'mini' : 'big';
   if (r.key !== key) {
@@ -1193,6 +1250,11 @@ function draw3d(isMini) {
       grp.add(mesh(G.layerGeos(x.built.deck), x.key === 'lid' ? 0x2a2a2a : 0xc8412f));
       if (x.built.inlay.length) grp.add(mesh(G.layerGeos(x.built.inlay.map((l) => ({ polys: l.polys, z0: l.z0 + (l.tag === 'inlayT' ? 0.02 : -0.02), z1: l.z1 + (l.tag === 'inlayT' ? 0.02 : -0.02) }))), c2));
       x.built.stick.forEach((st) => grp.add(mesh(G.layerGeos(st.layers), c2)));
+      if (x.key === homePanel() && (S.deco || []).length) { // the face reads dark, the arms hang from their screws
+        const tz = x.built.deckZ + R.LT, dk = [], ar = [];
+        S.deco.forEach((q) => { if (q.k === 'arm') ar.push({ polys: [G.rrect(q.x - 6, q.y - 46, q.x + 6, q.y + 6, 5.9)], z0: tz + 0.4, z1: tz + 5.4 }, { polys: [G.circle(q.x, q.y - 46, 9, 28)], z0: tz + 5.4, z1: tz + 10.4 });
+          else dk.push({ polys: [featPoly(q.k, q.s || 1.4, q.f).map(([a, b]) => [a + q.x, b + q.y])], z0: q.mt === 'raised' ? tz + 1.6 : tz - 1.2, z1: q.mt === 'raised' ? tz + 1.7 : tz - 1.1 }); });
+        if (dk.length) grp.add(mesh(G.layerGeos(dk), 0x1a1a1a)); if (ar.length) grp.add(mesh(G.layerGeos(ar), 0x2f4a6b)); }
       // stand ins for the parts so you can read it
       const parts = x.key === 'lid' ? itemsOn('lid') : itemsOn(x.key);
       const top = x.built.deckZ + R.LT, lid = x.key === 'lid';
@@ -1375,7 +1437,7 @@ async function scanPrinter(file) {
 
 // ---------- add-ons: one piece at a time ----------
 function xp() { if (!S.xp) S.xp = {}; const X = S.xp; X.stand = X.stand || { t: null, a: 25 }; if (X.stand.t == null) X.stand.auto = true; if (X.stand.auto) X.stand.t = isPanel() ? 20 : Math.round(heights().H); /* follows the case until she sets it */ X.feet = X.feet || { hole: true, h: 4 }; X.standoff = X.standoff || { s: 'm25', h: 8 }; X.clip = X.clip || { d: 6 }; X.handle = X.handle || { l: 80 }; X.limbs = X.limbs || { l: 45 }; X.body = X.body || { h: 60 }; X.gears = X.gears || { n: 36 }; X.gears.n = Math.max(18, Math.min(54, Math.round(X.gears.n / 9) * 9)); X.hinge = X.hinge || { l: 30 }; X.spring = X.spring || { n: 6 }; X.clamp = X.clamp || { t: 20 }; X.panel = X.panel || { w: 80, h: 60 }; X.ch = Object.assign({}, CH_DEF, X.ch || {}); X.keys = X.keys || { c: 4, r: 3 }; if (X.keys.c < 3) X.keys.c = 3; if (X.keys.f == null) X.keys.f = 0.1; return X; }
-const XINFO = { char: () => { const C = charCache(); return C.parts.reduce((n, q) => n + q.n, 0) + ' pieces, ' + Math.round(C.tall) + ' mm tall'; }, body: () => '7 pieces: torso on its side, the rest flat', gears: () => '3 pieces, print flat', hinge: () => '2 leaves, print standing as saved', spring: () => '2 springs, print flat', clamp: () => '1 clamp and 1 wedge, print flat', panel: () => { const X = xp(); return '1 panel, ' + X.panel.w + ' x ' + X.panel.h + ' mm, 2.4 mm thick'; }, keys: () => { const K = kb(); return '1 plate, ' + K.w.toFixed(0) + ' x ' + K.h.toFixed(0) + ' mm, print it rim side up'; }, handle: () => '1 handle, print on its side', limbs: () => '8 pieces, print flat', stand: () => '2 stands, print on their side', feet: () => '4 feet', standoff: () => '4 standoffs', clip: () => '6 clips' };
+const XINFO = { deco: () => { const n = (S.deco || []).length; return n ? n + ' on your case' : 'nothing added yet'; }, char: () => { const C = charCache(); return C.parts.reduce((n, q) => n + q.n, 0) + ' pieces, ' + Math.round(C.tall) + ' mm tall'; }, body: () => '7 pieces: torso on its side, the rest flat', gears: () => '3 pieces, print flat', hinge: () => '2 leaves, print standing as saved', spring: () => '2 springs, print flat', clamp: () => '1 clamp and 1 wedge, print flat', panel: () => { const X = xp(); return '1 panel, ' + X.panel.w + ' x ' + X.panel.h + ' mm, 2.4 mm thick'; }, keys: () => { const K = kb(); return '1 plate, ' + K.w.toFixed(0) + ' x ' + K.h.toFixed(0) + ' mm, print it rim side up'; }, handle: () => '1 handle, print on its side', limbs: () => '8 pieces, print flat', stand: () => '2 stands, print on their side', feet: () => '4 feet', standoff: () => '4 standoffs', clip: () => '6 clips' };
 function addonPolys(id) {
   // every add-on is a flat shape pushed up into 3D (prints flat, strongest way for each one). Returns { polys, h, n, gap }
   const X = xp();
@@ -1434,6 +1496,8 @@ function addonPolys(id) {
     [-8.89, 8.89].forEach((dy) => cut.push(G.rect(K.pico.x - 25.8, K.pico.y + dy - 1.6, K.pico.x + 25.8, K.pico.y + dy + 1.6))); /* two slots: the Pico's pins poke up through here */
     const rim = G.union(G.diff(out, [G.rect(K.x0 + 7, K.y0 + 7, K.x1 - 7, K.y1 - 7)]).concat([G.rect(K.x0 + 6, K.H + 0.8, K.x1 - 6, K.H + 2.4)])); /* the rim, and one rib between the keys and the Pico, keep a thin printed plate flat. Its 3.5 mm height is also what holds the board at the right distance. */
     return { layers: [{ polys: G.diff(out, cut), z0: 0, z1: 1.5 }, { polys: G.diff(rim, scr), z0: 1.5, z1: 5 }], n: 1 }; }
+  if (id === 'deco') return { polys: G.diff([G.rrect(-24, -18, 24, 18, 6)], [featPoly('eyeoval', 0.9).map(([x, y]) => [x - 10, y + 5]), featPoly('eyeoval', 0.9).map(([x, y]) => [x + 10, y + 5]), featPoly('smile', 0.8).map(([x, y]) => [x, y - 8])]), h: 1, n: 1 }; /* the tile picture */
+  if (id === 'decoarms') { const fp = flatParts(G, { size: 60 }), n = Math.max(1, (S.deco || []).filter((q) => q.k === 'arm').length); return { sets: [{ polys: fp.bar.polys, h: fp.bar.h, n }, { polys: fp.hand.polys, h: fp.hand.h, n }] }; }
   if (id === 'char') { const c = chSpec(X.ch); // a front view, for the tile picture only. The real pieces come from charParts.
     return { polys: G.union([c.head === 'sphere' ? G.circle(0, 96, 29, 48) : G.rrect(-30, 68, 30, 122, 8), c.body === 'round' ? G.circle(0, 36, 1, 48).map(([x, y]) => [x * 29, (y - 36) * 31 + 36]) : G.rrect(-28, 6, 28, 64, 6), G.rect(-36, 16, -29, 56), G.rect(29, 16, 36, 56), G.rect(-20, -34, -11, 8), G.rect(11, -34, 20, 8), G.rrect(-28, -42, -8, -33, 3), G.rrect(8, -42, 28, -33, 3), G.rect(-5, 62, 5, 70)]), h: 1, n: 1 }; }
   if (id === 'keycaps' || id === 'keycap1' || id === 'keycap2') { const X2 = xp(), n = id === 'keycaps' ? Math.min(24, kb().c * kb().r - (X2.keys.sp ? 2 : 0)) : 1; return { layers: capPolys(X2.keys.f == null ? 0.1 : X2.keys.f, id === 'keycap2'), n }; }
@@ -1630,7 +1694,7 @@ function creditHtml() {
   return '<details class="fold"><summary>Code: ' + esc(r.credit.project) + ' by ' + esc(r.credit.by) + '</summary><div class="list"><div class="it"><b>' + esc(r.name) + ': the code</b>Comes from <a href="' + esc(r.credit.url) + '" target="_blank" rel="noopener" style="display:inline;padding:0;border:0;text-decoration:underline">' + esc(r.credit.project) + '</a> by ' + esc(r.credit.by) + ' (license: ' + esc(r.credit.license) + '). Their work, their credit. Our starter code in Brain, Wire it, Wiring only proves your wiring works.<small>' + esc(r.note) + (r.tested ? '' : ' Not test-built by NOCIV yet.') + '</small></div></div></details>';
 }
 function shopHtml() {
-  const c = cost(); if (!S.items.length) return '<p class="note" style="margin-top:0">Nothing to buy yet. Add parts in Brain, or pick a recipe on the start screen.</p>';
+  const c = cost(); if (!S.items.length) return '<p class="note" style="margin-top:0">Nothing to buy yet. Add electronics in Brain, or pick a recipe on the start screen.</p>';
   const link = (p) => (p.url ? '<a href="' + esc(p.url) + '" target="_blank" rel="noopener" style="display:inline;padding:0;border:0;text-decoration:underline">Maker page</a>' : '<a href="https://www.google.com/search?tbm=shop&q=' + encodeURIComponent(p.find || p.name) + '" target="_blank" rel="noopener" style="display:inline;padding:0;border:0;text-decoration:underline">Search shops</a>');
   const haveBtn = (t, on) => '<button data-have="' + t + '" style="all:unset;cursor:pointer;float:right;padding:6px 9px;border:1.5px solid #1a1a1a;border-radius:9px;font:800 11.5px/1 var(--sys);' + (on ? 'background:#1a1a1a;color:#fff' : '') + '">' + (on ? 'Have it' : 'I have this') + '</button>';
   let h = '<div class="est"><b>About ' + money(c.total) + ' to build</b><span>' + money(c.parts) + ' parts + ' + money(c.extras) + ' small stuff + ' + money(c.plastic) + ' plastic. Shipping is extra. Typical prices, not live.</span></div>';
@@ -1793,7 +1857,7 @@ $('helpTop').onclick = openHelp;
 $('sheet').addEventListener('click', (e) => { if (e.target === $('sheet')) $('sheet').hidden = true; });
 window.addEventListener('resize', draw);
 
-window.__cz = { wiring, codeFor, get S() { return S; }, get view() { return view; }, AZ, get UNDO() { return UNDO.length; }, halves, plan, makeFiles, get FILES() { return FILES; }, allProblems, G, addPart, go, render, dims, heights, addonFile, addonPolys, charParts, charCache, kb, kbBoard, kbCode, kbReadme, boardSvg, get TRAY() { return TRAY; }, showStart, loadRecipe, cost, boardBuild, boardFiles, boardReadme };
+window.__cz = { get DECO() { return DECO; }, wiring, codeFor, get S() { return S; }, get view() { return view; }, AZ, get UNDO() { return UNDO.length; }, halves, plan, makeFiles, get FILES() { return FILES; }, allProblems, G, addPart, go, render, dims, heights, addonFile, addonPolys, charParts, charCache, kb, kbBoard, kbCode, kbReadme, boardSvg, get TRAY() { return TRAY; }, showStart, loadRecipe, cost, boardBuild, boardFiles, boardReadme };
 render();
 if (!S.started && !S.items.length) showStart();
 // arriving from the Case Zero page: /casezero/build/?room=brain opens that room

@@ -3,11 +3,11 @@
 // so hollowing a head, cutting a window for a screen, or raising an eyebrow is plain 2D cut and join work per slice.
 // Coordinates: millimetres. x is the character's left to right, the face looks toward -y, z is up.
 
-export const CH_DEF = { head: 'cube', body: 'box', hands: 'mitt', feet: 'shoe', eyes: 'oval', brows: 1, nose: 'button', mouth: 'smile', face: 'raised', scr: 'flush', turn: 0, size: 60 };
+export const CH_DEF = { head: 'cube', body: 'box', hands: 'mitt', feet: 'shoe', eyes: 'oval', brows: 1, nose: 'button', mouth: 'smile', face: 'raised', scr: 'flush', turn: 0, bend: 0, size: 60 };
 const T = 2.4, DZ = 0.8;           // wall thickness, slice height
 const OLED = { w: 24, h: 13, bz: 3 }; // the window a 0.96 in OLED screen needs, and the border around it
 
-export function chSpec(c) { const o = Object.assign({}, CH_DEF, c || {}); if (o.eyes === 'screen' && o.mouth === 'screen') o.mouth = 'line'; /* one small screen fits in a head, not two */ return o; }
+export function chSpec(c) { const o = Object.assign({}, CH_DEF, c || {}); if (o.eyes === 'screen' && o.mouth === 'screen' && !(o.head === 'cube' && o.size >= 72)) o.mouth = 'line'; /* two small screens only fit one above the other in the large cube head */ return o; }
 
 // ---------- gears: true involute teeth, 20 degree pressure angle ----------
 export function gearPoly(G, N, m, bore) {
@@ -19,25 +19,45 @@ export function gearPoly(G, N, m, bore) {
 const GEAR = { m: 1.5, big: 24, small: 18 }; // the head gear and the thumb wheel. 18 teeth is the smallest that cuts clean.
 export const gearGap = () => GEAR.m * (GEAR.big + GEAR.small) / 2;
 
-// ---------- the face: each feature answers "at this height, which stretch of the face do I cover?" ----------
-const ell = (cx, cv, rx, rv) => (v) => { const d = (v - cv) / rv; if (Math.abs(d) >= 1) return []; const w = rx * Math.sqrt(1 - d * d); return [[cx - w, cx + w]]; };
-const bar = (cx, cv, w, h, slope) => (v) => { if (!slope) return Math.abs(v - cv) < h / 2 ? [[cx - w / 2, cx + w / 2]] : []; const a = cx + (v - cv - h / 2) / slope, b = cx + (v - cv + h / 2) / slope, x0 = Math.max(cx - w / 2, Math.min(a, b)), x1 = Math.min(cx + w / 2, Math.max(a, b)); return x1 - x0 > 0.3 ? [[x0, x1]] : []; };
-const tri = (cx, vtop, vbot, hw) => (v) => { if (v >= vtop || v <= vbot) return []; const w = hw * (vtop - v) / (vtop - vbot); return w > 0.3 ? [[cx - w, cx + w]] : []; };
-const smile = (cx, cv, rx, rv, th) => (v) => { const d = v - cv; if (d > 0 || d <= -rv) return []; const xo = rx * Math.sqrt(1 - (d / rv) * (d / rv)), ri = rv - th, xi = -d < ri ? (rx - th) * Math.sqrt(1 - (d / ri) * (d / ri)) : 0; return xi > 0.4 ? [[cx - xo, cx - xi], [cx + xi, cx + xo]] : [[cx - xo, cx + xo]]; };
-function faceOf(c, s, Hh) {
-  const F = [], ey = 0.12 * Hh, ex = 12.5 * s, my = -0.24 * Hh;
-  if (c.eyes !== 'screen') [-1, 1].forEach((sd) => F.push(c.eyes === 'dot' ? ell(sd * ex, ey, 3.6 * s, 3.6 * s) : ell(sd * ex, ey, 6.2 * s, 4.4 * s)));
-  if (c.brows) [-1, 1].forEach((sd) => F.push(bar(sd * ex, ey + (c.eyes === 'screen' ? 13 : 9) * s, 11 * s, 2.6 * s, -sd * 0.22)));
-  if (c.nose === 'button') F.push(ell(0, -0.05 * Hh, 3 * s, 3 * s)); else if (c.nose === 'wedge') F.push(tri(0, 0.02 * Hh, -0.1 * Hh, 5.5 * s));
-  if (c.mouth === 'smile') F.push(smile(0, my + 5 * s, 11 * s, 8 * s, 2.6 * s)); else if (c.mouth === 'line') F.push(bar(0, my, 18 * s, 2.6 * s, 0));
-  const scr = []; if (c.eyes === 'screen') scr.push(ey); if (c.mouth === 'screen') scr.push(my);
+// ---------- the face ----------
+// Every feature is a small flat outline (the same outlines go on a character's head and on the top of a case).
+// On a head, each slice asks the outline: "at this height, which stretch of the face do you cover?"
+const ring = (rx, ry, n) => { const o = []; for (let i = 0; i < n; i++) { const t = 2 * Math.PI * i / n; o.push([rx * Math.cos(t), ry * Math.sin(t)]); } return o; };
+export const FEATS = { eyedot: 'Eye, dot', eyeoval: 'Eye, oval', brow: 'Brow', nosebtn: 'Nose, button', nosewedge: 'Nose, wedge', smile: 'Smile', line: 'Mouth, line' };
+export function featPoly(kind, s, flip) { // centred on 0, 0. s = scale (1 = the medium head)
+  if (kind === 'eyedot') return ring(3.6 * s, 3.6 * s, 28);
+  if (kind === 'eyeoval') return ring(6.2 * s, 4.4 * s, 32);
+  if (kind === 'nosebtn') return ring(3 * s, 3 * s, 24);
+  if (kind === 'nosewedge') return [[0, 4 * s], [5.5 * s, -4 * s], [-5.5 * s, -4 * s]];
+  if (kind === 'line') return [[-9 * s, -1.3 * s], [9 * s, -1.3 * s], [9 * s, 1.3 * s], [-9 * s, 1.3 * s]];
+  if (kind === 'brow') { const w = 5.5 * s, h = 1.3 * s, k = (flip ? 1 : -1) * 0.22; return [[-w, -h - w * k], [w, -h + w * k], [w, h + w * k], [-w, h - w * k]]; }
+  if (kind === 'smile') { const rx = 11 * s, rv = 8 * s, th = 2.6 * s, o = [], n = 18; for (let i = 0; i <= n; i++) { const t = Math.PI + Math.PI * i / n; o.push([rx * Math.cos(t), rv * Math.sin(t) + 4 * s]); } for (let i = n; i >= 0; i--) { const t = Math.PI + Math.PI * i / n; o.push([(rx - th) * Math.cos(t), (rv - th) * Math.sin(t) + 4 * s]); } return o; }
+  return ring(3 * s, 3 * s, 20);
+}
+const scan = (poly, v) => { const xs = []; for (let i = 0, j = poly.length - 1; i < poly.length; j = i++) { const a = poly[i], b = poly[j]; if ((a[1] > v) !== (b[1] > v)) xs.push(a[0] + (v - a[1]) * (b[0] - a[0]) / (b[1] - a[1])); } xs.sort((p, q) => p - q); const out = []; for (let i = 0; i + 1 < xs.length; i += 2) if (xs[i + 1] - xs[i] > 0.3) out.push([xs[i], xs[i + 1]]); return out; };
+// where each feature sits unless you moved it: [across, up] in mm from the middle of the face, for the medium head
+export function faceSpots(c0) {
+  const c = chSpec(c0), Hh = 54, both = c.eyes === 'screen' && c.mouth === 'screen', D = { eL: [-12.5, 6.5], eR: [12.5, 6.5], bL: [-12.5, c.eyes === 'screen' ? 19.5 : 15.5], bR: [12.5, c.eyes === 'screen' ? 19.5 : 15.5], n: [0, c.nose === 'wedge' ? -2 : -2.7], m: [0, c.mouth === 'smile' ? -12 : -13], es: [0, both ? 14.5 : 6.5], ms: [0, both ? -14.5 : -13] };
+  const P = c.pos || {}, out = []; void Hh;
+  const at = (k) => (!both && P[k] ? P[k] : D[k]);
+  if (c.eyes === 'screen') out.push({ k: 'es', kind: 'screen', p: at('es') }); else { out.push({ k: 'eL', kind: c.eyes === 'dot' ? 'eyedot' : 'eyeoval', p: at('eL') }, { k: 'eR', kind: c.eyes === 'dot' ? 'eyedot' : 'eyeoval', p: at('eR') }); }
+  if (c.brows) out.push({ k: 'bL', kind: 'brow', flip: 0, p: at('bL') }, { k: 'bR', kind: 'brow', flip: 1, p: at('bR') });
+  if (c.nose === 'button' || c.nose === 'wedge') out.push({ k: 'n', kind: c.nose === 'wedge' ? 'nosewedge' : 'nosebtn', p: at('n') });
+  if (c.mouth === 'screen') out.push({ k: 'ms', kind: 'screen', p: at('ms') }); else out.push({ k: 'm', kind: c.mouth === 'smile' ? 'smile' : 'line', p: at('m') });
+  return { spots: out, both };
+}
+// how far from the middle a feature may go and still sit on the face
+export function faceLimit(c0, p) { const c = chSpec(c0), d = headDims(c), s = d.s; let u = p[0], v = p[1]; if (d.cube) { const mu = (d.W / 2 - 10) / s, mv = (d.H / 2 - 8) / s; u = Math.max(-mu, Math.min(mu, u)); v = Math.max(-mv, Math.min(mv, v)); } else { const m = 0.6 * d.R / s, l = Math.hypot(u, v); if (l > m) { u *= m / l; v *= m / l; } } return [u, v]; }
+function faceOf(c, s) {
+  const F = [], scr = [];
+  faceSpots(c).spots.forEach((f) => { if (f.kind === 'screen') { scr.push(f.p[1] * s); return; } const poly = featPoly(f.kind, s, f.flip).map(([x, y]) => [x + f.p[0] * s, y + f.p[1] * s]); F.push((v) => scan(poly, v)); });
   return { F, scr };
 }
 
 // ---------- head: a hollow shell, open underneath, with the face on its front ----------
 export function headDims(c) { const s = c.size / 60, cube = c.head === 'cube', W = 60 * s, D = 52 * s, Hh = 54 * s, R = 32 * s; return { s, cube, W: cube ? W : 2 * R, D: cube ? D : 2 * R, R, zb: cube ? 0 : -0.6 * R, zt: cube ? Hh : R, H: cube ? Hh : 1.6 * R, cz: cube ? Hh / 2 : 0.2 * R, baseR: 0.8 * R }; }
 export function headLayers(G, c0) {
-  const c = chSpec(c0), d = headDims(c), s = d.s, cube = d.cube, R = d.R, hw = d.W / 2, hd = d.D / 2, fc = faceOf(c, s, d.H), raised = c.face !== 'sunk', L = [], faceL = [];
+  const c = chSpec(c0), d = headDims(c), s = d.s, cube = d.cube, R = d.R, hw = d.W / 2, hd = d.D / 2, fc = faceOf(c, s), raised = c.face !== 'sunk', L = [], faceL = [];
   const a = OLED.w / 2 + OLED.bz, bh = OLED.h / 2 + OLED.bz;
   // on a round head the screen needs a flat spot: a facet cut just deep enough that its corners touch the ball
   const planes = fc.scr.map((v) => { if (cube) return -hd; const zz = d.cz + v, zm = Math.max(Math.abs(zz - bh), Math.abs(zz + bh)); return -Math.sqrt(Math.max(1, R * R - zm * zm - a * a)) + 0.3; });
@@ -103,7 +123,7 @@ export function bodyLayers(G, c0) {
 // ---------- flat parts: drawn from the side, then given a thickness ----------
 const hole3 = (G, x, y) => G.circle(x, y, 1.7, 24);
 export function flatParts(G, c0) {
-  const c = chSpec(c0), s = c.size / 60, Lb = 40 * s;
+  const c = chSpec(c0), s = c.size / 60, Lf = 40 * s, Lb = c.bend ? Lf / 2 + 2 : Lf; /* with elbows and knees each limb is two short bars */
   const barP = G.diff(G.union([G.rect(-6, -Lb, 6, 0), G.circle(0, 0, 6, 40), G.circle(0, -Lb, 6, 40)]), [hole3(G, 0, 0), hole3(G, 0, -Lb)]);
   const hand = c.hands === 'claw'
     ? G.diff(G.union([G.circle(0, 0, 6.5, 40), G.rect(-4, -11 * s, 4, 0)].concat(G.diff([G.circle(0, -21 * s, 12 * s, 48)], [G.circle(0, -21 * s, 6.8 * s, 40), G.rect(-3.6 * s, -36 * s, 3.6 * s, -21 * s)]))), [hole3(G, 0, 0)])
@@ -111,14 +131,14 @@ export function flatParts(G, c0) {
   const foot = c.feet === 'boot'
     ? G.diff(G.union([G.rrect(-26 * s, 0, 16 * s, 13, 6), G.circle(0, 11, 7, 40)]), [hole3(G, 0, 11)])
     : G.diff(G.union([G.rrect(-40 * s, 0, 18 * s, 6, 3), G.rrect(-13, 0, 13, 12, 5), G.circle(0, 11, 6.5, 40)]), [hole3(G, 0, 11)]);
-  return { bar: { polys: barP, h: 5 }, hand: { polys: hand, h: 8 }, foot: { polys: foot, h: 16 }, Lb };
+  return { bar: { polys: barP, h: 5 }, hand: { polys: hand, h: 8 }, foot: { polys: foot, h: 16 }, Lb, reach: c.bend ? 2 * Lb : Lb };
 }
 
 // ---------- every piece, where it prints and where it sits when the character is put together ----------
 // pose: [x, y, z] of the piece's own origin, and kind 'up' (slices stack upward) or 'side' (a flat part standing on edge, its thickness along x)
 export function charParts(G, c0) {
   const c = chSpec(c0), hd = headDims(c), bd = bodyDims(c), fp = flatParts(G, c), head = headLayers(G, c), gap = c.turn ? 7 : 3;
-  const hipZ = 11 + fp.Lb, bodyZ = hipZ - bd.zh, topZ = bodyZ + bd.H, shZ = bodyZ + bd.zs, plateZ = topZ + gap, headZ = plateZ + T;
+  const hipZ = 11 + fp.reach, bodyZ = hipZ - bd.zh, topZ = bodyZ + bd.H, shZ = bodyZ + bd.zs, plateZ = topZ + gap, headZ = plateZ + T;
   const neckLen = 12 + gap + T + 2, P = [];
   const flip = (layers, H) => layers.map((l) => ({ polys: l.polys.map((p) => p.map(([x, y]) => [x, -y]).reverse()), z0: H - l.z1, z1: H - l.z0 })).reverse(); /* turned over for printing: its closed top goes on the bed */
   P.push({ id: 'head', name: 'Head', n: 1, color: 0xe9e2cc, layers: head.layers, print: hd.cube ? flip(head.layers, hd.H) : head.layers, pose: [0, 0, headZ], kind: 'up', how: hd.cube ? 'top face on the bed, no supports' : 'as saved, flat base on the bed, no supports' });
@@ -131,11 +151,12 @@ export function charParts(G, c0) {
     P.push({ id: 'gearthumb', name: 'Thumb wheel', n: 1, color: 0xf2c230, layers: [{ polys: gearPoly(G, GEAR.small, GEAR.m, 3.4), z0: 0, z1: 6 }], pose: [0, gearGap(), topZ + 0.5], kind: 'up', spin: Math.PI / GEAR.small, how: 'flat' });
   } else P.push({ id: 'spacer', name: 'Neck ring', n: 1, color: 0x2f4a6b, layers: [{ polys: G.diff([G.circle(0, 0, 11, 40)], [G.circle(0, 0, 7.15, 40)]), z0: 0, z1: 3 }], pose: [0, 0, topZ], kind: 'up', how: 'flat' });
   const shX = bodyHalf(c, bd.zs).rx, hipX = bodyHalf(c, bd.zh).rx, side = (id, name, part, n, color, at) => P.push({ id, name, n, color, layers: [{ polys: part.polys, z0: 0, z1: part.h }], h: part.h, kind: 'side', at, how: 'flat' });
-  side('arm', 'Arm', fp.bar, 2, 0x2f4a6b, [-1, 1].map((sd) => [sd > 0 ? shX : -shX - 5, 0, shZ]));
-  side('hand', c.hands === 'claw' ? 'Claw hand' : 'Mitt hand', fp.hand, 2, 0xe9e2cc, [-1, 1].map((sd) => [sd > 0 ? shX + 5 : -shX - 13, 0, shZ - fp.Lb]));
-  side('leg', 'Leg', fp.bar, 2, 0x2f4a6b, [-1, 1].map((sd) => [sd > 0 ? hipX : -hipX - 5, 0, hipZ]));
-  side('foot', c.feet === 'boot' ? 'Boot' : 'Shoe', fp.foot, 2, 0x1a1a1a, [-1, 1].map((sd) => [sd > 0 ? hipX + 5 : -hipX - 21, 0, 0]));
+  const B = c.bend ? 1 : 0, out = (x, t) => (x > 0 ? x : x - t); /* x of a piece's inner face, on either side */
+  side('arm', B ? 'Arm piece' : 'Arm', fp.bar, B ? 4 : 2, 0x2f4a6b, [].concat(...[-1, 1].map((sd) => [[out(sd * shX, 5), 0, shZ]].concat(B ? [[out(sd * (shX + 5), 5), 0, shZ - fp.Lb]] : []))));
+  side('hand', c.hands === 'claw' ? 'Claw hand' : 'Mitt hand', fp.hand, 2, 0xe9e2cc, [-1, 1].map((sd) => [out(sd * (shX + 5 + 5 * B), 8), 0, shZ - fp.reach]));
+  side('leg', B ? 'Leg piece' : 'Leg', fp.bar, B ? 4 : 2, 0x2f4a6b, [].concat(...[-1, 1].map((sd) => [[out(sd * hipX, 5), 0, hipZ]].concat(B ? [[out(sd * (hipX + 5), 5), 0, hipZ - fp.Lb]] : []))));
+  side('foot', c.feet === 'boot' ? 'Boot' : 'Shoe', fp.foot, 2, 0x1a1a1a, [-1, 1].map((sd) => [out(sd * (hipX + 5 + 5 * B), 16), 0, 0]));
   const screens = head.scr.map((sv, k) => ({ x: 0, y: head.planes[k] + (c.scr === 'mounted' ? -1.2 : T * 0.6), z: headZ + (hd.cz - hd.zb) + sv, w: OLED.w, h: OLED.h }));
-  return { parts: P, screens, tall: headZ + hd.H, wide: 2 * (hipX + 21), spec: c, turn: !!c.turn };
+  return { parts: P, screens, tall: headZ + hd.H, wide: 2 * (hipX + 21 + 5 * B), spec: c, turn: !!c.turn };
 }
-export function charBuyList(c0) { const c = chSpec(c0); const L = ['4 screws M3 x 12 (shoulders and hips: they cut their own thread in the body)', '4 screws M3 x 16 with nuts (hands and feet)']; if (c.turn) L.push('1 screw M3 x 20 with 2 nuts (the thumb wheel turns on it)'); if (c.eyes === 'screen' || c.mouth === 'screen') L.push('1 small screen, 0.96 in OLED (SSD1306), and a Pico to drive it'); return L; }
+export function charBuyList(c0) { const c = chSpec(c0); const L = ['4 screws M3 x 12 (shoulders and hips: they cut their own thread in the body)', (c.bend ? 8 : 4) + ' screws M3 x 16 with nuts (hands and feet' + (c.bend ? ', elbows and knees' : '') + ')']; if (c.turn) L.push('1 screw M3 x 20 with 2 nuts (the thumb wheel turns on it)'); const ns = (c.eyes === 'screen' ? 1 : 0) + (c.mouth === 'screen' ? 1 : 0); if (ns) L.push(ns + ' small screen' + (ns > 1 ? 's' : '') + ', 0.96 in OLED (SSD1306), and a Pico to drive ' + (ns > 1 ? 'them' : 'it')); return L; }

@@ -161,6 +161,9 @@ export function buildHalf(o) {
     cuts.push(...cs);
     if (q.mt === 'raised') rims.push(...offset(cs, 3)); else if (q.mt === 'sunk') sunk.push(...offset(cs, 3));
   });
+  // a face and arms on the case: outlines pressed in or standing up, and screw spots where an arm swings
+  const decoUp = [], armB = [];
+  (o.deco || []).forEach((dq) => { if (dq.arm) { cuts.push(circle(dq.x, dq.y, 1.35, 20)); armB.push(circle(dq.x, dq.y, 4.6, 28)); } else if (dq.mt === 'raised') decoUp.push(...dq.polys); else sunk.push(...dq.polys); });
   if (!snapOK) posts.forEach(([x, y]) => cuts.push(circle(x, y, R.HOLE / 2, 24)));
   const tm = marks(o.top), deckFlat = diff(diff(deckPoly, union(cuts)), tm.cut), top = deckZ + R.LT;
   const thinU = thin.length ? inter(union(thin), deckFlat) : [];
@@ -168,6 +171,8 @@ export function buildHalf(o) {
   deck.push({ polys: diff(deckFlat, thinU), z0: deckZ, z1: top - 1.2, tag: 'deck' });
   if (tm.recess.length) { deck.push({ polys: deckUp, z0: top - 1.2, z1: top - D, tag: 'deck' }); deck.push({ polys: diff(deckUp, tm.recess), z0: top - D, z1: top, tag: 'deck' }); if (tm.fill.length) inlay.push({ polys: inter(tm.fill, deckUp), z0: top - D, z1: top, tag: 'inlayT' }); }
   else deck.push({ polys: deckUp, z0: top - 1.2, z1: top, tag: 'deck' });
+  if (decoUp.length) { const up = inter(union(decoUp), deckFlat).filter((pl) => Math.abs(area([pl])) > 6); /* a sliver left over a hole is not worth printing */ if (up.length) stick.push({ layers: [{ polys: up, z0: top, z1: top + 1.6 }], face: 'top' }); }
+  if (armB.length) { const boss = diff(inter(union(armB), deckPoly), union(cuts)); if (boss.length) deck.push({ polys: boss, z0: deckZ - 6, z1: deckZ, tag: 'frame' }); } /* 8 mm of plastic under an arm screw, so its thread holds */
   if (rims.length) { const ring = diff(inter(union(rims), deckPoly), union(cuts)); if (ring.length) stick.push({ layers: [{ polys: ring, z0: top, z1: top + 1.6 }], face: 'top' }); } /* raised rim: its own flat piece, glued on, so the deck still prints face down */
   tm.stick.forEach((sp) => { sp.layers.forEach((l) => { l.z0 += top - D; l.z1 += top - D; }); sp.face = 'top'; stick.push(sp); });
   if (nubs.length) deck.push({ polys: union(nubs), z0: deckZ - 1.5, z1: top - 1.2, tag: 'nub' });
