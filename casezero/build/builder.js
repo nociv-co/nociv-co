@@ -115,7 +115,15 @@ function problems(it) {
   S.items.forEach((q) => {
     if (q === it || !PP(q)) return;
     if ((it.of != null || q.of != null || PP(it).board || PP(q).board) && fam(it) === fam(q)) return;
-    if (PP(it).board || PP(q).board) return; /* the board hangs under the top: only its own parts come through */
+    if (PP(it).board || PP(q).board) { // the board hangs under the top: a keepout for everything that is not on it, with the clearance around it
+      const bd = PP(it).board ? it : q, o = bd === it ? q : it, bf = fp(bd), c = tolOf(), g = fp(o);
+      if (!(g.x0 < bf.x1 + c && g.x1 > bf.x0 - c && g.y0 < bf.y1 + c && g.y1 > bf.y0 - c)) return;
+      const h = heights(), deckZ = h.H - R.LT - h.recess, under = deckZ - PP(bd).hang - 1.6; /* the board's underside */
+      const low = under - (PP(bd).under != null ? PP(bd).under : 8.5); /* the lowest pin or solder joint under the board */
+      const clash = o.panel === bd.panel ? PP(o).depth > PP(bd).hang - c : o.panel === 'inside' && R.F + 5 + PP(o).depth > low - c;
+      if (clash) out.push(it === bd ? 'over ' + label(o) : (o.panel === bd.panel ? 'on your board ' : 'under your board ') + label(bd) + ', move it off the board');
+      return;
+    }
     const g = fp(q), hit = f.x0 < g.x1 - 0.1 && f.x1 > g.x0 + 0.1 && f.y0 < g.y1 - 0.1 && f.y1 > g.y0 + 0.1; if (!hit) return;
     if (q.panel === it.panel) out.push('on top of ' + label(q));
     else if ((it.panel === 'inside' && q.panel === homePanel()) || (q.panel === 'inside' && it.panel === homePanel())) {
@@ -1448,7 +1456,7 @@ function addBoard(P, replace) {
     S.cols = Math.max(2, Math.min(24, Math.ceil((P.w + room) / 20))); S.rows = Math.max(2, Math.min(24, Math.ceil((P.h + room) / 20)));
     for (let n = 0; n < 6; n++) { const d = dims(); it.r = 0; it.x = d.W / 2; it.y = d.D / 2; syncKids(it); if (!problems(it).length) break; if (n % 2 ? S.cols < 24 : S.rows < 24) { if (n % 2) S.cols++; else S.rows++; } }
     if (problems(it).length) { autoPlace(it); syncKids(it); }
-    S.photo = 'off'; /* show the clean parts first; My photo brings the picture back */
+    S.xw = S.xd = 0; S.photo = 'off'; /* show the clean parts first; My photo brings the picture back */
   } else if (problems(it).length && !isPanel()) {
     const need = (w, h) => [Math.max(replace ? 2 : S.cols, Math.ceil((w + room) / 20)), Math.max(replace ? 2 : S.rows, Math.ceil((h + room) / 20))];
     const a = need(P.w, P.h), b = need(P.h, P.w), pick = a[0] * a[1] <= b[0] * b[1] ? a : b;
@@ -2108,7 +2116,7 @@ window.addEventListener('pageshow', (e) => { if (e.persisted) resync(); });
 window.addEventListener('storage', (e) => { if (e.key === KEY) resync(); });
 document.addEventListener('visibilitychange', () => { if (!document.hidden) resync(); });
 
-window.__cz = { get DECO() { return DECO; }, get T3() { return T3; }, THREE, wiring, codeFor, get S() { return S; }, get view() { return view; }, AZ, get UNDO() { return UNDO.length; }, halves, plan, makeFiles, get FILES() { return FILES; }, allProblems, G, addPart, go, render, dims, heights, addonFile, addonPolys, charParts, charCache, kb, kbBoard, kbCode, kbReadme, boardSvg, get TRAY() { return TRAY; }, showStart, loadRecipe, cost, boardBuild, boardFiles, boardReadme };
+window.__cz = { addBoard, get DECO() { return DECO; }, get T3() { return T3; }, THREE, wiring, codeFor, get S() { return S; }, get view() { return view; }, AZ, get UNDO() { return UNDO.length; }, halves, plan, makeFiles, get FILES() { return FILES; }, allProblems, G, addPart, go, render, dims, heights, addonFile, addonPolys, charParts, charCache, kb, kbBoard, kbCode, kbReadme, boardSvg, get TRAY() { return TRAY; }, showStart, loadRecipe, cost, boardBuild, boardFiles, boardReadme };
 render();
 if (!S.started && !S.items.length) showStart();
 // arriving from the Case Zero page: /casezero/build/?room=brain opens that room
