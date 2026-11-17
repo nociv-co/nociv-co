@@ -108,6 +108,8 @@ export function buildHalf(o) {
   // floor, with marks on the bottom face: dips (filled with a second color or paint), cut throughs (vents), pockets for glue-on pieces
   // a face, arms and legs on the outside of a lid: the lid's floor is its outside
   const oS = [], oU = [], oH = [], oB = [];
+  const mounts = o.mounts || [], wallM = mounts.filter((m) => m.face !== 'bottom').map((m) => Object.assign({ bands: mountBands(m) }, m)), botM = mounts.filter((m) => m.face === 'bottom');
+  botM.forEach((m) => { if (m.type === 'snap') { const s = mountSlot() / 2; oH.push(rect(m.x - s, m.y - s, m.x + s, m.y + s)); } else oH.push(circle(m.x, m.y, R.PILOT / 2 + R.FIT, 20)); }); /* a mounted part on the bottom: its hole through the floor */
   (o.decoOut || []).forEach((dq) => { if (dq.arm) { oH.push(circle(dq.x, dq.y, 1.35, 20)); oB.push(circle(dq.x, dq.y, 4.6, 28)); } else if (dq.mt === 'raised') oU.push(...dq.polys); else oS.push(...dq.polys); });
   const bm0 = marks(o.bottom), bm = oS.length ? Object.assign({}, bm0, { recess: union(bm0.recess.concat(oS)) }) : bm0, floorCut = diff(out, oH.length ? union(bm.cut.concat(oH)) : bm.cut);
   if (oU.length) { const up = inter(union(oU), out); if (up.length) stick.push({ layers: [{ polys: up, z0: -1.6, z1: 0 }], face: 'bottom' }); }
@@ -120,6 +122,7 @@ export function buildHalf(o) {
   const snapOK = o.snap && deckZ - 10.6 > R.F + 1, gz = [deckZ - 10.4, deckZ - 7.6];
   const zs = new Set([R.F, H]); if (o.port) zs.add(o.port.z); if (o.port2) zs.add(o.port2.z); if (snapOK) { zs.add(gz[0]); zs.add(gz[1]); }
   if (wt && wt.kind !== 'vstripe') { const bh = Math.max(1, wt.sp / 2); for (let z = R.F + bh; z < H - 0.3; z += bh) zs.add(+z.toFixed(2)); }
+  wallM.forEach((m) => m.bands.forEach((q) => { zs.add(q.z0); zs.add(q.z1); }));
   const Z = [...zs].filter((z) => z >= R.F && z <= H).sort((x, y) => x - y);
   const ringOut = wt ? diff(offset(out, wt.depth), out) : [];
   for (let i = 0; i < Z.length - 1; i++) {
@@ -134,15 +137,23 @@ export function buildHalf(o) {
     if (snapOK && mid > gz[0] && mid < gz[1]) w = diff(w, offset(out, -(R.T - 1.2)));
     if (o.port && mid > o.port.z) w = diff(w, [rect(o.port.x0, o.port.y0, o.port.x1, o.port.y1)]);
     if (o.port2 && mid > o.port2.z) w = diff(w, [rect(o.port2.x0, o.port2.y0, o.port2.x1, o.port2.y1)]);
+    wallM.forEach((m) => { const q = m.bands.find((x) => mid > x.z0 && mid < x.z1); if (q) w = diff(w, [mountRect(m, q.hw, R.T + 8, 2)]); });
     tray.push({ polys: w, z0, z1, tag: 'wall' });
   }
   // screw posts: deck sits on top of them, flush with the wall
   const postPolys = posts.map(([x, y]) => circle(x, y, R.POSTR, 32)), pilots = posts.map(([x, y]) => circle(x, y, R.PILOT / 2, 20));
   tray.push({ polys: diff(union(postPolys), pilots), z0: R.F, z1: deckZ });
+  // mounted parts: a screw gets a 6 mm boss inside the wall (or on the floor), its pilot hole runs through wall and boss
+  wallM.filter((m) => m.type === 'screw').forEach((m) => {
+    const foot = inter([mountRect(m, 5, R.T + 6.5, 0)], offset(innerWall, 0.4)); if (!foot.length) return;
+    const b = m.bands; tray.push({ polys: foot, z0: R.F, z1: b[0].z0, tag: 'mount' });
+    b.forEach((q) => tray.push({ polys: diff(foot, [mountRect(m, q.hw, R.T + 8, 2)]), z0: q.z0, z1: q.z1, tag: 'mount' }));
+    tray.push({ polys: foot, z0: b[b.length - 1].z1, z1: m.zc + 5, tag: 'mount' });
+  });
+  botM.filter((m) => m.type === 'screw').forEach((m) => tray.push({ polys: diff([circle(m.x, m.y, R.POSTR + 0.4, 32)], [circle(m.x, m.y, R.PILOT / 2 + R.FIT, 20)]), z0: R.F, z1: R.F + 6, tag: 'mount' }));
   // magnet bosses at the front (clamshell closing), flush with the wall top, pocket on top
   if (o.magnets) {
-    const b = bbox(out), mx = [b.x0 + b.w * 0.3, b.x0 + b.w * 0.7], ins = R.T + R.MAG / 2 + 1.4;
-    const bosses = mx.map((x) => { const p = nearestInside(innerWall, [x, b.y0 + ins]); return p; }).filter(Boolean);
+    const bosses = magnetSpots(out);
     const bp = bosses.map(([x, y]) => circle(x, y, R.MAG / 2 + 1.6, 36)), pk = bosses.map(([x, y]) => circle(x, y, R.MAG / 2, 32));
     tray.push({ polys: union(bp), z0: R.F, z1: H - R.MAGD - R.LT * (o.deckOnTop ? 0 : 0) });
     tray.push({ polys: diff(union(bp), pk), z0: H - R.MAGD, z1: H });
@@ -217,6 +228,34 @@ function marks(list) {
   });
   r.recess = r.recess.length ? union(r.recess) : []; r.fill = r.fill.length ? union(r.fill) : []; r.cut = r.cut.length ? union(r.cut) : [];
   return r;
+}
+// where the closing magnets sit: two bosses near the front wall
+export function magnetSpots(out) { const R = RULE, innerWall = offset(out, -R.T), b = bbox(out), mx = [b.x0 + b.w * 0.3, b.x0 + b.w * 0.7], ins = R.T + R.MAG / 2 + 1.4; return mx.map((x) => nearestInside(innerWall, [x, b.y0 + ins])).filter(Boolean); }
+// ---------- mounting a printed part on the case ----------
+// Screw: the same M3 fixing as the deck posts (a pilot hole the screw cuts its own thread in, R.PILOT, in a 6 mm boss), the part has a plate with a counterbored R.HOLE.
+// Snap: a printed snap pin, the same idea as the deck snap clips: a split arrow goes through a square hole in the part's plate and the wall, its lips catch behind the wall.
+export const MOUNT = { PT: 4, PIN: 5 };
+export function mountSlot() { return MOUNT.PIN + 2 * (RULE.FIT + 0.2); } // the square hole for the pin: pin plus the clearance on each side
+// the outside of the case at a mount: the wall point for back, left, right
+export function wallAt(out, face, s) { const b = bbox(out), q = inter(out, [face === 'back' ? rect(s - 0.05, b.y0 - 1, s + 0.05, b.y1 + 1) : rect(b.x0 - 1, s - 0.05, b.x1 + 1, s + 0.05)]); if (!q.length) return null; const c = bbox(q); return face === 'back' ? [s, c.y1] : face === 'left' ? [c.x0, s] : [c.x1, s]; }
+// across the wall at a mount: from a mm inside the outer face to b mm outside it
+export function mountRect(m, hw, a, b) { return m.face === 'back' ? rect(m.x - hw, m.y - a, m.x + hw, m.y + b) : m.face === 'left' ? rect(m.x - b, m.y - hw, m.x + a, m.y + hw) : rect(m.x - a, m.y - hw, m.x + b, m.y + hw); }
+// the hole through a wall as height bands: a round hole is stacked from thin bands, the way it prints
+export function mountBands(m) {
+  if (m.type === 'snap') { const s = mountSlot(); return [{ z0: +(m.zc - s / 2).toFixed(3), z1: +(m.zc + s / 2).toFixed(3), hw: s / 2 }]; }
+  const r = RULE.PILOT / 2 + RULE.FIT, n = Math.max(3, Math.ceil(2 * r / 0.4)), st = 2 * r / n, out = [];
+  for (let i = 0; i < n; i++) { const z0 = m.zc - r + i * st, z1 = z0 + st, d = (z0 + z1) / 2 - m.zc; out.push({ z0: +z0.toFixed(3), z1: +z1.toFixed(3), hw: Math.sqrt(Math.max(0, r * r - d * d)) + 0.05 }); }
+  return out;
+}
+// the part's side: a plate under the part (the part starts at x = 8), the counterbored M3 hole or the square pin hole at 0,0. wallT: how thick the case is where the pin goes through.
+export function mountPlate(type, bw, bh, wallT) {
+  const R = RULE, T = MOUNT.PT, hy = Math.max(7, bh / 2 + 2), plate = [rrect(-7, -hy, 9 + bw, hy, 3)];
+  if (type === 'snap') {
+    const s = mountSlot(), w = MOUNT.PIN / 2, y0 = 2, yb = y0 + T + wallT + 0.4, cw = w + 1.2;
+    const pin = diff([[[-5, 0], [5, 0], [5, y0], [w, y0], [w, yb], [cw, yb + 0.6], [w * 0.6, yb + 4.5], [-w * 0.6, yb + 4.5], [-cw, yb + 0.6], [-w, yb], [-w, y0], [-5, y0]]], [rect(-0.7, yb - 3.5, 0.7, yb + 5)]);
+    return { layers: [{ polys: diff(plate, [rect(-s / 2, -s / 2, s / 2, s / 2)]), z0: 0, z1: T }], pin: { polys: pin, h: MOUNT.PIN }, hy };
+  }
+  return { layers: [{ polys: diff(plate, [circle(0, 0, R.HOLE / 2 + R.FIT, 24)]), z0: 0, z1: T / 2 }, { polys: diff(plate, [circle(0, 0, 3.2 + R.FIT, 32)]), z0: T / 2, z1: T }], pin: null, hy };
 }
 function nearestInside(polys, p) { if (inside([circle(p[0], p[1], RULE.MAG / 2 + 1.6, 24)], offset(polys, 1.4))) return p; for (let s = 1; s < 30; s++) { const q = [p[0], p[1] + s]; if (inside([circle(q[0], q[1], RULE.MAG / 2 + 1.6, 24)], offset(polys, 1.4))) return q; } return null; }
 
