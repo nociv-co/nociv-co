@@ -99,7 +99,28 @@
     { id: 'desk', name: 'Offline desk assistant', level: 'Hard', style: 'face', line: 'Talk to it, it answers out loud. Nothing leaves the box.',
       parts: [['pi5', 1], ['round128', 1], ['speaker28', 1], ['button16', 1]],
       credit: { project: 'Ollama + Whisper + Piper', by: 'the Ollama, OpenAI Whisper and Piper projects', url: 'https://ollama.com', license: 'each has its own' },
-      note: 'Needs a Pi 5 with 8 GB (about $100, more than the price shown here), a USB microphone and a memory card. Answers take several seconds. An old laptop or phone you already own is a cheaper brain.' }
+      note: 'Needs a Pi 5 with 8 GB (about $100, more than the price shown here), a USB microphone and a memory card. Answers take several seconds. An old laptop or phone you already own is a cheaper brain.' },
+    // Starter builds: body, brain and printed parts in one go. Their code is the starter code.py the builder writes from the wiring.
+    { id: 'macro4', name: '4-Button Macro Pad', level: 'Easy', style: 'slate', starter: true, line: '4 big buttons that type shortcuts on your computer over USB. Feet underneath.',
+      parts: [['pico', 1], ['button16', 4]], size: [5, 5],
+      place: [['button16', 21.7, 82, 0], ['button16', 43.7, 82, 0], ['button16', 65.7, 82, 0], ['button16', 87.7, 82, 0], ['pico', 53.7, 40, 0]],
+      mounts: [{ partId: 'feet', face: 'bottom', anchor: { u: 1, v: 0 }, mountType: 'snap' }, { partId: 'feet', face: 'bottom', anchor: { u: 3, v: 0 }, mountType: 'snap' }, { partId: 'feet', face: 'bottom', anchor: { u: 0, v: 2 }, mountType: 'snap' }, { partId: 'feet', face: 'bottom', anchor: { u: 4, v: 2 }, mountType: 'snap' }],
+      credit: { project: 'Case Zero starter code', by: 'this builder, made from your wiring', url: 'https://nociv.co/casezero/build/', license: 'free to use and change' },
+      note: 'Set what each button types in code.py. The Pico shows up as a keyboard, nothing to install on the computer.' },
+    { id: 'timer', name: 'Desk Timer', level: 'Easy', style: 'slate', starter: true, line: 'Turn the wheel to set the minutes, press start, it beeps when the time is up. Leans back on a kickstand.',
+      parts: [['pico', 1], ['oled096', 1], ['encoder', 1], ['button16', 1], ['speaker28', 1]], size: [6, 4],
+      place: [['oled096', 40, 62, 0], ['encoder', 100, 62, 0], ['button16', 105, 25, 0], ['speaker28', 30, 25, 0], ['pico', 64, 22, 0]],
+      mounts: [{ partId: 'stand', face: 'bottom', anchor: { u: 2, v: 2 }, mountType: 'screw' }],
+      ports: [{ kind: 'p_vent', face: 'right', u: 1 }],
+      credit: { project: 'Case Zero starter code', by: 'this builder, made from your wiring', url: 'https://nociv.co/casezero/build/', license: 'free to use and change' },
+      note: 'The starter code reads the wheel and the button and shows them on the screen. The countdown and the beep are yours to add, a good first program.' },
+    { id: 'synth', name: 'Mini Synth', level: 'Medium', style: 'groove', starter: true, line: '8 keys and 4 knobs that play notes in any music app over USB. A handle on the back to carry it.',
+      parts: [['pico', 1], ['oled096', 1], ['pot', 4], ['tact12', 8]], size: [10, 5],
+      place: [['pico', 31, 76, 0], ['oled096', 70, 76, 0], ['pot', 105, 76, 0], ['pot', 130, 76, 0], ['pot', 155, 76, 0], ['pot', 180, 76, 0]].concat([0, 1, 2, 3, 4, 5, 6, 7].map(function (i) { return ['tact12', 26 + i * 22.2, 32, 0]; })),
+      mounts: [{ partId: 'handle', face: 'back', anchor: { u: 1 }, mountType: 'screw' }],
+      ports: [{ kind: 'p_vent', face: 'right', u: 2 }],
+      credit: { project: 'Case Zero starter code', by: 'this builder, made from your wiring', url: 'https://nociv.co/casezero/build/', license: 'free to use and change' },
+      note: 'The keys and knobs come in as buttons and 0 to 100 in the starter code. Turning them into MIDI notes is a short change: the CircuitPython MIDI library does the rest.' }
   ];
   // Community picks (Reddit, Instructables, maker blogs): cheap and well documented.
   C.PICKS = [

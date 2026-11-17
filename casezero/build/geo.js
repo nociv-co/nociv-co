@@ -123,6 +123,8 @@ export function buildHalf(o) {
   const zs = new Set([R.F, H]); if (o.port) zs.add(o.port.z); if (o.port2) zs.add(o.port2.z); if (snapOK) { zs.add(gz[0]); zs.add(gz[1]); }
   if (wt && wt.kind !== 'vstripe') { const bh = Math.max(1, wt.sp / 2); for (let z = R.F + bh; z < H - 0.3; z += bh) zs.add(+z.toFixed(2)); }
   wallM.forEach((m) => m.bands.forEach((q) => { zs.add(q.z0); zs.add(q.z1); }));
+  const ports = (o.ports || []).map((p) => Object.assign({}, p, { rects: p.rects.map((q) => ({ s0: q.s0, s1: q.s1, z0: +Math.max(R.F, q.z0).toFixed(3), z1: +Math.min(H, q.z1).toFixed(3) })).filter((q) => q.z1 - q.z0 > 0.2) })); /* ports and vents: openings through a side wall */
+  ports.forEach((p) => p.rects.forEach((q) => { zs.add(q.z0); zs.add(q.z1); }));
   const Z = [...zs].filter((z) => z >= R.F && z <= H).sort((x, y) => x - y);
   const ringOut = wt ? diff(offset(out, wt.depth), out) : [];
   for (let i = 0; i < Z.length - 1; i++) {
@@ -138,6 +140,7 @@ export function buildHalf(o) {
     if (o.port && mid > o.port.z) w = diff(w, [rect(o.port.x0, o.port.y0, o.port.x1, o.port.y1)]);
     if (o.port2 && mid > o.port2.z) w = diff(w, [rect(o.port2.x0, o.port2.y0, o.port2.x1, o.port2.y1)]);
     wallM.forEach((m) => { const q = m.bands.find((x) => mid > x.z0 && mid < x.z1); if (q) w = diff(w, [mountRect(m, q.hw, R.T + 8, 2)]); });
+    ports.forEach((p) => p.rects.forEach((q) => { if (mid > q.z0 && mid < q.z1) { const c = (q.s0 + q.s1) / 2, v = p.face === 'back' || p.face === 'front'; w = diff(w, [mountRect({ face: p.face, x: v ? c : p.x, y: v ? p.y : c }, (q.s1 - q.s0) / 2, R.T + 1, 2)]); } }));
     tray.push({ polys: w, z0, z1, tag: 'wall' });
   }
   // screw posts: deck sits on top of them, flush with the wall
@@ -235,9 +238,9 @@ export function magnetSpots(out) { const R = RULE, innerWall = offset(out, -R.T)
 export const MOUNT = { PT: 4, PIN: 5 };
 export function mountSlot() { return MOUNT.PIN + 2 * (RULE.FIT + 0.2); } // the square hole for the pin: pin plus the clearance on each side
 // the outside of the case at a mount: the wall point for back, left, right
-export function wallAt(out, face, s) { const b = bbox(out), q = inter(out, [face === 'back' ? rect(s - 0.05, b.y0 - 1, s + 0.05, b.y1 + 1) : rect(b.x0 - 1, s - 0.05, b.x1 + 1, s + 0.05)]); if (!q.length) return null; const c = bbox(q); return face === 'back' ? [s, c.y1] : face === 'left' ? [c.x0, s] : [c.x1, s]; }
+export function wallAt(out, face, s) { const v = face === 'back' || face === 'front', b = bbox(out), q = inter(out, [v ? rect(s - 0.05, b.y0 - 1, s + 0.05, b.y1 + 1) : rect(b.x0 - 1, s - 0.05, b.x1 + 1, s + 0.05)]); if (!q.length) return null; const c = bbox(q); return face === 'back' ? [s, c.y1] : face === 'front' ? [s, c.y0] : face === 'left' ? [c.x0, s] : [c.x1, s]; }
 // across the wall at a mount: from a mm inside the outer face to b mm outside it
-export function mountRect(m, hw, a, b) { return m.face === 'back' ? rect(m.x - hw, m.y - a, m.x + hw, m.y + b) : m.face === 'left' ? rect(m.x - b, m.y - hw, m.x + a, m.y + hw) : rect(m.x - a, m.y - hw, m.x + b, m.y + hw); }
+export function mountRect(m, hw, a, b) { return m.face === 'back' ? rect(m.x - hw, m.y - a, m.x + hw, m.y + b) : m.face === 'front' ? rect(m.x - hw, m.y - b, m.x + hw, m.y + a) : m.face === 'left' ? rect(m.x - b, m.y - hw, m.x + a, m.y + hw) : rect(m.x - a, m.y - hw, m.x + b, m.y + hw); }
 // the hole through a wall as height bands: a round hole is stacked from thin bands, the way it prints
 export function mountBands(m) {
   if (m.type === 'snap') { const s = mountSlot(); return [{ z0: +(m.zc - s / 2).toFixed(3), z1: +(m.zc + s / 2).toFixed(3), hw: s / 2 }]; }
@@ -258,9 +261,22 @@ export function mountPlate(type, bw, bh, wallT, pitch) { // pitch: a second hole
 // An M3 screw into a wall: a square plug set into a window in the wall (0.1 mm into it on every side, so they merge), running through the wall into a 6.5 mm boss.
 // The bore is an octagon, flat at the top so it bridges 1 mm, sized so its flats hold the pilot hole for an M3 plus the clearance.
 const PLUG = 5;
+export function boreOct(x, y) { const a = RULE.PILOT / 2 + RULE.FIT, cr = a / Math.cos(Math.PI / 8), o = []; for (let k = 0; k < 8; k++) { const t = Math.PI / 8 + k * Math.PI / 4; o.push([x + cr * Math.cos(t), y + cr * Math.sin(t)]); } return o; }
+// The 15 minute fit swatch: a small plate as thick as the case wall with the case's own fits in it, cut with the same helpers and the same clearance:
+// a magnet pocket in its boss (when the case has magnets), the octagonal M3 bore, the snap pin slot and one button opening from the build.
+export function fitSwatch(o) {
+  const R = RULE, T = R.T, items = [], gap = 3, cut = o.button ? cutShape(o.button, 0, 0, 0) : [], cb = cut.length ? bbox(cut) : null, mr = R.MAG / 2 + 1.6;
+  if (o.magnets) items.push({ k: 'mag', w: 2 * mr }); items.push({ k: 'bore', w: 6 }, { k: 'slot', w: mountSlot() + 2 }); if (cb) items.push({ k: 'btn', w: cb.w });
+  const W = Math.max(40, items.reduce((q, i) => q + i.w, 0) + gap * (items.length + 1)), H = Math.max(25, (cb ? cb.h : 0) + 10), cy = H / 2, holes = []; let x = gap, mag = null;
+  items.forEach((i) => { const cx = x + i.w / 2; if (i.k === 'mag') mag = [cx, cy]; if (i.k === 'bore') holes.push(boreOct(cx, cy)); if (i.k === 'slot') { const s = mountSlot() / 2; holes.push(rect(cx - s, cy - s, cx + s, cy + s)); } if (i.k === 'btn') holes.push(...cutShape(o.button, cx - (cb.x0 + cb.x1) / 2, cy - (cb.y0 + cb.y1) / 2, 0)); x += i.w + gap; });
+  const plate = diff([rrect(0, 0, W, H, 3)], holes.length ? union(holes) : []), layers = [];
+  if (!mag) { layers.push({ polys: plate, z0: 0, z1: T }); return { layers, W, H }; }
+  const top = Math.max(T, R.MAGD + 0.8), zp = top - R.MAGD, pocket = [circle(mag[0], mag[1], R.MAG / 2, 32)], boss = [circle(mag[0], mag[1], mr, 36)];
+  layers.push({ polys: plate, z0: 0, z1: zp }, { polys: diff(plate, pocket), z0: zp, z1: T }, { polys: diff(boss, pocket), z0: T, z1: top }); /* the pocket is as deep as in the case: 0.8 mm floor under the magnet */
+  return { layers, W, H };
+}
 export function plugGeos(p) {
-  const R = RULE, a = R.PILOT / 2 + R.FIT, cr = a / Math.cos(Math.PI / 8), oct = []; for (let k = 0; k < 8; k++) { const t = Math.PI / 8 + k * Math.PI / 4; oct.push([cr * Math.cos(t), cr * Math.sin(t)]); }
-  const geos = layerGeos([{ polys: diff([rect(-PLUG, -PLUG, PLUG, PLUG)], [oct]), z0: 0, z1: R.T + 6.5 }]);
+  const R = RULE, geos = layerGeos([{ polys: diff([rect(-PLUG, -PLUG, PLUG, PLUG)], [boreOct(0, 0)]), z0: 0, z1: R.T + 6.5 }]);
   const n = p.face === 'back' ? [0, 1, 0] : p.face === 'left' ? [-1, 0, 0] : [1, 0, 0], Z = new THREE.Vector3(-n[0], -n[1], -n[2]), Y = new THREE.Vector3(0, 0, 1), X = new THREE.Vector3().crossVectors(Y, Z);
   const M = new THREE.Matrix4().makeBasis(X, Y, Z).setPosition(p.x, p.y, p.zc); geos.forEach((gg) => gg.applyMatrix4(M)); return geos;
 }
