@@ -8,7 +8,7 @@ import { CARABINER_HOOK_OUTLINE_MM, CARABINER_DEFAULT_THICKNESS_MM } from './cha
 import { openMeasure, GROUPS } from './capture.js?v=20';
 import { makeBoard, boardFiles, boardSvg, zip as zipFiles } from './board.js?v=3';
 import { charParts, chSpec, charBuyList, CH_DEF, headDims, faceSpots, faceLimit, featPoly, flatParts, FEATS } from './char3d.js?v=4';
-import { planWiring, codeFor, PICO_LEFT, PICO_RIGHT, PICO_PINS, PICO_BRAINS, NEED } from './wiring.js?v=20';
+import { planWiring, codeFor, PICO_LEFT, PICO_RIGHT, PICO_PINS, PICO_BRAINS, NEED } from './wiring.js?v=21';
 
 const CZ = window.CZ, R = G.RULE, $ = (id) => document.getElementById(id);
 const esc = (s) => String(s == null ? '' : s).replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
@@ -782,7 +782,7 @@ function pane(t) {
   if (t === 'files') { const probs = allProblems(); return '<p class="note" style="margin:0 0 8px">No printer? A print service or a library takes these same files. To print from a USB stick, open them in your printer\'s free slicer app first: it turns them into the file your printer reads.</p>' + (S.material === 'wood' ? '' : '<div class="row"><b>File type</b>' + seg('fmt', [['stl', 'STL'], ['3mf', '3MF']], fmtOf()) + '</div>') + '<div class="grid g2"><button class="btn red" data-act="make"' + (probs.length || !S.items.length ? ' aria-disabled="true"' : '') + '>Make my files</button>' + (S.material === 'wood' || isPanel() ? '' : '<button class="btn" data-act="swatch">Download 15-min Fit Swatch</button>') + '</div>' + (S.material === 'wood' || isPanel() ? '' : '<p class="note" style="margin:6px 0 0">The swatch is a ' + swatchSize() + ' mm plate with ' + (isClam() && S.magnets ? 'a magnet pocket, ' : '') + 'the M3 bore, the snap pin slot and ' + esc(swatchButton().short) + ' opening, at your ' + tolOf() + ' mm clearance and ' + R.T + ' mm walls. Print it first: if they fit, the case will.</p>') + '<p class="note">' + (!S.items.length ? 'Add electronics in Brain first.' : probs.length ? '<span class="bad">Fix the electronics marked ! in Arrange first.</span>' : (S.material === 'wood' ? 'Wood: real size templates (SVG) to print at 100 percent or laser cut, plus the cut list.' : 'One file per piece, numbered, as STL or 3MF. Print the deck face down, the tray open side up.')) + '</p><div class="files" id="fileList" style="margin-top:8px"></div>'; }
   if (t === 'wire') return wireHtml();
   if (t === 'map') return '<p class="note keep" style="margin:0 0 6px"><b style="color:#c8412f">Red</b> = power, <b>black</b> = ground, <b style="color:#2f6fdb">blue</b> / <b style="color:#c9a200">yellow</b> / <b style="color:#2f9a5b">green</b> = signals. Every wire from every part to its pin on the brain, the same plan as the step-by-step cards and code.py.</p>' + (mapWhy() ? '<p class="note bad">' + esc(mapWhy()) + '</p>' : '');
-  if (t === 'test') return '<p class="note keep" style="margin:0 0 6px">Press the buttons, drag the knobs and sliders, wave at the motion sensor. This acts out what your code.py does, step by step, before you wire anything.</p>' + (mapWhy() ? '<p class="note bad">' + esc(mapWhy()) + '</p>' : '') + '<div class="list" id="tlog" style="font:600 12px/1.35 ui-monospace,Menlo,monospace">' + TEST.log.map((l) => '<div class="it" style="padding:5px 8px">' + esc(l) + '</div>').join('') + '</div><button class="btn" data-act="treset" style="margin-top:8px;padding:8px">Start the test again</button>';
+  if (t === 'test') return '<p class="note keep" style="margin:0 0 6px">' + ({ macro: 'Your macro pad: each button sends a shortcut. Press them to see what the computer gets.', timer: 'Your desk timer: press the button to start or pause, hold it 1 s to reset, turn the wheel to set the minutes. It beeps at 00:00.', synth: 'Your synth: hold a button to play its note. Knob 1 moves the pitch, knob 2 the tempo of the arpeggio.' }[recipeFn()] || 'Press the buttons, drag the knobs and sliders, wave at the motion sensor.') + ' This acts out what your code.py does, step by step, before you wire anything.</p>' + (mapWhy() ? '<p class="note bad">' + esc(mapWhy()) + '</p>' : '') + '<div class="list" id="tlog" style="font:600 12px/1.35 ui-monospace,Menlo,monospace">' + TEST.log.map((l) => '<div class="it" style="padding:5px 8px">' + esc(l) + '</div>').join('') + '</div><button class="btn" data-act="treset" style="margin-top:8px;padding:8px">Start the test again</button>';
   if (t === 'extras') return partsRoomHtml();
   return '';
 }
@@ -921,7 +921,7 @@ $('pane').addEventListener('click', (e) => {
   if (d.xsave) { const f = addonFile(d.xsave); if (f) saveFile(f); return; }
   if (act === 'start') { showStart(); return; }
   if (act === 'clearall') { if (Date.now() - CLEARARM < 4000) { backup(); snapU(); S.items = S.items.filter((i) => i.of != null || (PP(i) && PP(i).board)); /* a board you measured from a photo stays, with the parts on it */ sel = null; LAST = null; CLEARARM = 0; CLEARED = true; } else CLEARARM = Date.now(); save(); render(); return; }
-  if (act === 'savecode') { const c = codeFor(wiring(), summaryLine()); saveFile({ name: 'code.py', blob: new Blob([c.text], { type: 'text/x-python' }) }); return; }
+  if (act === 'savecode') { const c = codeFor(wiring(), summaryLine(), recipeFn()); saveFile({ name: 'code.py', blob: new Blob([c.text], { type: 'text/x-python' }) }); return; }
   if (act === 'repin') { S.pins = {}; save(); render(); return; }
   if (act === 'toWiring') { S.tab[0] = 'pins'; go(0); return; }
   if (act === 'toBoard') { S.tab[5] = 'pcb'; go(5); return; }
@@ -978,7 +978,7 @@ $('pane').addEventListener('click', (e) => {
   if (d.jump) { const pi = PAGES.findIndex((q) => q.name === d.jump); if (pi >= 0) openPage(pi); return; }
   if (act === 'saveall') { if (!FILES || !FILES.length) return; tag('Packing your files...');
     Promise.all(FILES.map(fileOut).map((f) => f.blob.arrayBuffer().then((ab) => ({ name: f.name, data: new Uint8Array(ab) })))).then((list) => {
-      let code = null; try { const w = wiring(); if (w && w.rows && w.rows.length && !w.problems.length) code = codeFor(w, summaryLine()).text; } catch (e) { code = null; }
+      let code = null; try { const w = wiring(); if (w && w.rows && w.rows.length && !w.problems.length) code = codeFor(w, summaryLine(), recipeFn()).text; } catch (e) { code = null; }
       const wood = S.material === 'wood', start = ['NOCIV CASE ZERO: START HERE', summaryLine().replace(/<[^>]+>/g, ''), '', 'FROM FILES TO A FINISHED DEVICE', '',
         '1. PRINT', wood ? '   Print the .svg templates at 100 percent, tape them to the wood and cut them out.' : '   Print every .' + fmtOf() + ' file. In your slicer pick the standard profile for your printer and filament, then set', wood ? '' : '   ' + LAYER[S.layer] + ' mm layers, 4 walls, 15 percent infill, supports off. Print the deck face down and the tray open side up.', '',
         '2. BUY THE PARTS', '   casezero-parts.txt is the list. For prices and what to search for, open the builder: nociv.co/casezero/build, Brain, Shop.', '',
@@ -1599,7 +1599,7 @@ function drawMap(W, H) {
   tag(rows.length + ' parts wired to the ' + (bi ? bi.name : 'brain') + (w.problems.length ? '. ' + w.problems[0] : ''));
 }
 const TEST = { text: 'Ready', led: false, ring: false, angle: null, lamp: false, val: {}, last: {}, pos: {}, pir: {}, dist: {}, cam: null, log: [], hits: [], drag: null, held: null, ac: null, osc: null };
-function testReset() { Object.assign(TEST, { text: 'Ready', led: false, ring: false, angle: null, lamp: false, val: {}, last: {}, pos: {}, pir: {}, dist: {}, cam: null, log: [], drag: null, held: null }); toneOff(); }
+function testReset() { clearInterval(TEST.tick); synthOff(); TEST.tm = null; TEST.note = null; TEST.tr = 0; TEST.bpm = 120; Object.assign(TEST, { text: 'Ready', led: false, ring: false, angle: null, lamp: false, val: {}, last: {}, pos: {}, pir: {}, dist: {}, cam: null, log: [], drag: null, held: null }); toneOff(); }
 function testLog(s) { TEST.log.unshift(s); TEST.log.length = Math.min(TEST.log.length, 40); const el = $('tlog'); if (el) el.innerHTML = TEST.log.map((l) => '<div class="it" style="padding:5px 8px">' + esc(l) + '</div>').join(''); }
 function tone(f) { try { if (!TEST.ac) TEST.ac = new (window.AudioContext || window.webkitAudioContext)(); toneOff(); const o = TEST.ac.createOscillator(), gn = TEST.ac.createGain(); o.type = 'square'; o.frequency.value = f; gn.gain.value = 0.06; o.connect(gn).connect(TEST.ac.destination); o.start(); TEST.osc = o; setTimeout(() => { if (TEST.osc === o) toneOff(); }, 600); } catch (e) { TEST.osc = null; } }
 function toneOff() { if (TEST.osc) { try { TEST.osc.stop(); } catch (e) {} TEST.osc = null; } }
@@ -1608,16 +1608,45 @@ function testModel() { // the parts as code.py sees them: keys in the order KEYS
   plan.rows.forEach((row) => { const it = row.it, tag = it.label.split(' ')[0], N = row.N, Rr = {}; row.roles.forEach((r) => { Rr[r.role] = r.pin; });
     if (N.what === 'motion') { m.pirs.push({ tag, pin: Rr.out, label: it.label }); return; } if (N.what === 'distance') { m.tofs.push({ tag, label: it.label }); return; } if (N.what === 'camera') { m.cams.push({ tag, label: it.label }); return; }
     if (N.spi || N.i2c) { if (!m.screen) m.screen = { label: it.label }; return; }
-    if (N.what === 'button') row.roles.forEach((r) => m.keys.push({ name: row.roles.length > 1 ? tag + ' ' + r.role : tag, pin: r.pin, label: it.label }));
+    if (N.what === 'button') row.roles.forEach((r) => m.keys.push({ name: row.roles.length > 1 ? tag + ' ' + r.role : tag, pin: r.pin, label: it.label, btn: true }));
     if (N.what === 'knob') ['turn', 'slide'].forEach((k) => { if (Rr[k] != null) m.pots.push({ name: tag, pin: Rr[k], label: it.label }); });
     if (N.what === 'stick') { if (Rr.x != null) m.pots.push({ name: tag + ' x', pin: Rr.x, label: it.label }); if (Rr.y != null) m.pots.push({ name: tag + ' y', pin: Rr.y, label: it.label }); if (Rr.press != null) m.keys.push({ name: tag + ' press', pin: Rr.press, label: it.label }); }
     if (N.what === 'wheel') { m.encs.push({ name: tag, pin: Rr['clk+dt'], label: it.label }); if (Rr.press != null) m.keys.push({ name: tag + ' press', pin: Rr.press, label: it.label }); }
     if (['led', 'ring', 'sound', 'servo'].indexOf(N.what) > -1) m.outs.push({ what: N.what, pin: row.roles[0].pin, tag, label: it.label }); });
   return m;
 }
-function show(m, t) { if (m.screen) { TEST.text = t; return ' -> screen: "' + t + '"'; } return ''; }
+function show(m, t) { if (m.screen || recipeFn()) { TEST.text = t; return m.screen ? ' -> screen: "' + t + '"' : ' -> "' + t + '"'; } return ''; }
+const MACRO = [['C', 'copy'], ['V', 'paste'], ['Z', 'undo'], ['PLAY', 'play/pause']], SCALE = [262, 294, 330, 349, 392, 440, 494, 523], NOTE = ['C', 'D', 'E', 'F', 'G', 'A', 'B', 'C'];
+const clock = (r) => String(Math.floor(r / 60)).padStart(2, '0') + ':' + String(r % 60).padStart(2, '0');
+function synthOn(f) { try { if (!TEST.ac) TEST.ac = new (window.AudioContext || window.webkitAudioContext)(); if (!TEST.sy) { const o = TEST.ac.createOscillator(), gn = TEST.ac.createGain(); o.type = 'square'; gn.gain.value = 0.05; o.connect(gn).connect(TEST.ac.destination); o.start(); TEST.sy = o; } TEST.sy.frequency.value = Math.max(20, f); } catch (e) { TEST.sy = null; } }
+function synthOff() { clearInterval(TEST.arp); TEST.arp = null; if (TEST.sy) { try { TEST.sy.stop(); } catch (e) {} TEST.sy = null; } }
+function presetAct(fn, m, h, down) { // the starters' own programs, step for step like their code.py
+  const T = TEST.tm || (TEST.tm = { min: 25, rem: 25 * 60, run: false, at: 0 }), st = Math.max(0, m.keys.findIndex((k) => k.btn));
+  if (fn === 'macro' && h.kind === 'key') { const k = m.keys[h.i]; if (!down) { TEST.lamp = false; TEST.held = null; return k.name + ' released -> GP' + k.pin + ' HIGH'; } TEST.lamp = true; TEST.held = h; const sc = MACRO[h.i], txt = sc ? (sc[0] === 'PLAY' ? 'Play/Pause' : 'Ctrl+' + sc[0] + ' (' + sc[1] + ')') : k.name; TEST.text = txt; return k.name + ' pressed -> GP' + k.pin + ' LOW -> the computer gets ' + txt; }
+  if (fn === 'timer') {
+    if (h.kind === 'key' && h.i === st) { if (down) { T.at = Date.now(); TEST.held = h; return ''; } TEST.held = null; const k = m.keys[h.i];
+      if (Date.now() - T.at >= 1000) { T.run = false; T.rem = T.min * 60; clearInterval(TEST.tick); TEST.text = clock(T.rem); return k.name + ' held 1 s -> timer reset -> ' + clock(T.rem); }
+      T.run = !T.run; clearInterval(TEST.tick); if (T.run) TEST.tick = setInterval(() => { T.rem -= 1; TEST.text = clock(T.rem); if (T.rem <= 0) { clearInterval(TEST.tick); T.run = false; TEST.text = '00:00 done!'; testLog('00:00 -> speaker beeps 3 times at 880 Hz'); [0, 250, 500].forEach((t) => setTimeout(() => tone(880), t)); T.rem = T.min * 60; } if (S.step === 5 && curTab() === 'test') draw(); }, 1000);
+      TEST.text = T.run || T.rem === T.min * 60 ? clock(T.rem) : clock(T.rem) + ' paused'; return k.name + ' pressed -> GP' + k.pin + ' -> timer ' + (T.run ? 'running' : 'paused') + ' at ' + clock(T.rem); }
+    if (h.kind === 'enc' && !T.run) { T.min = Math.max(1, Math.min(99, T.min + h.dir)); T.rem = T.min * 60; TEST.text = clock(T.rem); return m.encs[h.i].name + ' turned -> ' + T.min + ' minutes -> ' + clock(T.rem); }
+    if (h.kind === 'key') return m.keys[h.i].name + (down ? ' pressed' : ' released') + ' (the timer only listens to ' + m.keys[st].name + ')';
+    return null;
+  }
+  if (fn === 'synth') { const freq = () => { const n = TEST.note; return SCALE[n % 8] * Math.pow(2, Math.floor(n / 8) + (TEST.tr || 0) / 12) * [1, 1.5, 2][m.pots.length > 1 ? TEST.step % 3 : 0]; };
+    if (h.kind === 'key') { const k = m.keys[h.i]; if (!down) { if (TEST.note === h.i) { synthOff(); TEST.note = null; TEST.lamp = false; } TEST.held = null; return k.name + ' released -> sound off'; }
+      TEST.held = h; TEST.note = h.i; TEST.step = 0; TEST.lamp = true; synthOn(freq()); const f = Math.round(freq()); TEST.text = NOTE[h.i % 8] + ' ' + f + ' Hz';
+      clearInterval(TEST.arp); if (m.pots.length > 1) TEST.arp = setInterval(() => { TEST.step++; synthOn(freq()); }, 60000 / (TEST.bpm || 120) / 2);
+      return k.name + ' pressed -> GP' + k.pin + ' LOW -> plays ' + NOTE[h.i % 8] + ' ' + f + ' Hz'; }
+    if (h.kind === 'pot') { const v = TEST.val[h.i] || 0, p = m.pots[h.i]; if (Math.abs(v - (TEST.last[h.i] == null ? -10 : TEST.last[h.i])) < 2) return ''; TEST.last[h.i] = v;
+      if (h.i === 0) { TEST.tr = Math.floor(v * 24 / 100) - 12; if (TEST.note != null) synthOn(freq()); return p.name + ' turned -> pitch ' + (TEST.tr > 0 ? '+' : '') + TEST.tr + ' semitones'; }
+      if (h.i === 1) { TEST.bpm = 60 + Math.floor(v * 180 / 100); if (TEST.arp) { clearInterval(TEST.arp); TEST.arp = setInterval(() => { TEST.step++; synthOn(freq()); }, 60000 / TEST.bpm / 2); } return p.name + ' turned -> tempo ' + TEST.bpm + ' bpm'; } }
+    return null;
+  }
+  return null;
+}
 function testAct(h, down) {
   const m = testModel(), has = (w) => m.outs.find((o) => o.what === w); let s = '';
+  const fnr = recipeFn(); if (fnr) { const out = presetAct(fnr, m, h, down); if (out !== null) { if (out) testLog(out); draw(); return; } }
   if (h.kind === 'key') { const k = m.keys[h.i];
     if (down) { s = k.name + ' pressed -> GP' + k.pin + ' LOW' + show(m, k.name + ' pressed'); TEST.lamp = true; if (has('led')) { TEST.led = !TEST.led; s += ' -> LED ' + (TEST.led ? 'on' : 'off'); } if (has('ring')) { TEST.ring = true; s += ' -> ring red'; } if (has('sound')) { const f = 330 + 60 * h.i; tone(f); s += ' -> speaker ' + f + ' Hz'; } if (has('servo') && !m.pots.length) { TEST.angle = TEST.angle == null || TEST.angle < 45 ? 90 : 0; s += ' -> servo ' + TEST.angle + ' deg'; } TEST.held = h; }
     else { s = k.name + ' released -> GP' + k.pin + ' HIGH'; TEST.lamp = false; if (has('ring')) TEST.ring = false; toneOff(); TEST.held = null; } }
@@ -1634,7 +1663,7 @@ function drawTest(W, H) {
   const font = (s, w) => { g.font = (w || 800) + ' ' + s * d + 'px -apple-system,Arial'; }, box = (x, y, w, h, f, st) => { g.fillStyle = f; g.beginPath(); g.rect(x, y, w, h); g.fill(); if (st) { g.strokeStyle = st; g.lineWidth = 1.5 * d; g.stroke(); } };
   // the screen and the brain at the top
   const sw = Math.min(W - 24 * d, 260 * d), sx = (W - sw) / 2; let y = 10 * d;
-  box(sx, y, sw, 40 * d, m.screen ? '#10242c' : '#e7e2d6', '#1a1a1a'); font(13); g.textAlign = 'center'; g.fillStyle = m.screen ? '#9ff0ff' : '#6f6a60'; g.fillText(m.screen ? TEST.text : 'No screen: watch the log below', W / 2, y + 25 * d);
+  const scr = m.screen || recipeFn(), fnr = recipeFn(); if (fnr === 'timer' && TEST.text === 'Ready') TEST.text = clock((TEST.tm ? TEST.tm.rem : 1500)); box(sx, y, sw, 40 * d, scr ? '#10242c' : '#e7e2d6', '#1a1a1a'); font(fnr === 'timer' ? 18 : 13); g.textAlign = 'center'; g.fillStyle = scr ? '#9ff0ff' : '#6f6a60'; g.fillText(scr ? TEST.text : 'No screen: watch the log below', W / 2, y + (fnr === 'timer' ? 28 : 25) * d); if (fnr && !m.screen) { font(8.5, 700); g.fillStyle = '#6f6a60'; g.fillText(fnr === 'macro' ? 'what the computer gets' : 'no screen in this build: shown here for the test', W / 2, y + 50 * d); }
   y += 48 * d; box(W / 2 - 34 * d, y, 68 * d, 20 * d, '#2f7a4b'); font(9); g.fillStyle = '#fff'; g.fillText('Pico', W / 2 - 6 * d, y + 14 * d); g.fillStyle = TEST.lamp ? '#7dff6b' : '#204a2c'; g.beginPath(); g.arc(W / 2 + 22 * d, y + 10 * d, 4 * d, 0, 7); g.fill();
   y += 30 * d;
   // one cell per control or output
@@ -2176,6 +2205,7 @@ function powerNote() {
 }
 const hrs = (h) => (h >= 10 ? Math.round(h) + ' hours' : h >= 1 ? (Math.round(h * 2) / 2) + ' hours' : Math.max(5, Math.round(h * 12) * 5) + ' minutes');
 const recipe = () => (S.recipe && (CZ.RECIPES || []).find((r) => r.id === S.recipe)) || null;
+const recipeFn = () => (recipe() && recipe().fn) || null; /* a starter's own program: macro, timer or synth */
 function creditHtml() {
   const r = recipe(); if (!r) return '';
   return '<details class="fold"><summary>Code: ' + esc(r.credit.project) + ' by ' + esc(r.credit.by) + '</summary><div class="list"><div class="it"><b>' + esc(r.name) + ': the code</b>Comes from <a href="' + esc(r.credit.url) + '" target="_blank" rel="noopener" style="display:inline;padding:0;border:0;text-decoration:underline">' + esc(r.credit.project) + '</a> by ' + esc(r.credit.by) + ' (license: ' + esc(r.credit.license) + '). Their work, their credit. Our starter code in Brain, Wire it, Wiring only proves your wiring works.<small>' + esc(r.note) + (r.tested ? '' : ' Not test-built by NOCIV yet.') + '</small></div></div></details>';

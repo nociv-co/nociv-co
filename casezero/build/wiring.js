@@ -79,7 +79,7 @@ export function planWiring(items, over) {
 
 // ---------- the starter code ----------
 const pyStr = (s) => '"' + String(s).replace(/\\/g, '\\\\').replace(/"/g, '\\"') + '"';
-export function codeFor(plan, title) {
+export function codeFor(plan, title, fn) { // fn: a recipe's own program (macro, timer, synth) in place of the pin test
   const keys = [], pots = [], encs = [], outs = [], pirs = [], tofs = [], cams = [], L = [];
   let screen = null;
   plan.rows.forEach((row) => {
@@ -88,7 +88,7 @@ export function codeFor(plan, title) {
     if (N.what === 'distance') { tofs.push(tag); return; }
     if (N.what === 'camera') { cams.push([R.cs, tag]); return; }
     if (N.spi || N.i2c) { if (!screen) screen = { N, R, label: it.label }; return; }
-    if (N.what === 'button') row.roles.forEach((r) => { if (r.pin != null) keys.push([r.pin, row.roles.length > 1 ? tag + ' ' + r.role : tag]); });
+    if (N.what === 'button') row.roles.forEach((r) => { if (r.pin != null) keys.push([r.pin, row.roles.length > 1 ? tag + ' ' + r.role : tag, 'btn']); });
     if (N.what === 'knob' && R.turn != null) pots.push([R.turn, tag]);
     if (N.what === 'knob' && R.slide != null) pots.push([R.slide, tag]);
     if (N.what === 'stick') { if (R.x != null) pots.push([R.x, tag + ' x']); if (R.y != null) pots.push([R.y, tag + ' y']); if (R.press != null) keys.push([R.press, tag + ' press']); }
@@ -97,7 +97,7 @@ export function codeFor(plan, title) {
   });
   const has = (w) => outs.some((o) => o[0] === w), libs = [];
   if (screen) { libs.push('adafruit_display_text'); if (screen.N.driver === 'ili9341') libs.push('adafruit_ili9341.mpy'); if (screen.N.driver === 'ssd1306') libs.push('adafruit_displayio_ssd1306.mpy'); if (screen.N.driver === 'gc9a01') libs.push('gc9a01.mpy (from the Community Bundle)'); }
-  if (has('ring')) libs.push('neopixel.mpy'); if (has('servo')) libs.push('adafruit_motor'); if (tofs.length) libs.push('adafruit_vl53l0x.mpy');
+  if (has('ring')) libs.push('neopixel.mpy'); if (has('servo')) libs.push('adafruit_motor'); if (tofs.length) libs.push('adafruit_vl53l0x.mpy'); if (fn === 'macro' && keys.length) libs.push('adafruit_hid');
   const bus = !!(cams.length || tofs.length); /* sensors share one I2C bus (and the camera the SPI bus) with the screen, made once at the top */
   L.push('# NOCIV Case Zero starter code. ' + title, '# Brain: Raspberry Pi Pico, Pico W or Pico 2 (same pins).', '#',
     '# 1. Put CircuitPython 9 or newer on the Pico: circuitpython.org, search your board, follow the steps.',
@@ -156,6 +156,32 @@ export function codeFor(plan, title) {
     '    seen = False', '    if i2c and i2c.try_lock():', '        try:', '            seen = 0x30 in i2c.scan()', '        finally:', '            i2c.unlock()', '    return buf[0] == 0x55 and seen', '',
     'if camera_ok():', '    print("NOCIV ' + cams[0][1] + ' 1")', '    show("Camera found")', 'else:', '    print("NOCIV ' + cams[0][1] + ' 0")', '    show("Camera not found")', '');
   if (inputs) L.push('# ---- the small light on the Pico itself: it shows a press with no screen and no computer ----', 'try:', '    lamp = digitalio.DigitalInOut(board.LED)', '    lamp.direction = digitalio.Direction.OUTPUT', 'except (AttributeError, ValueError):', '    lamp = None', '');
+  const snd = has('sound'), st = Math.max(0, keys.findIndex((k) => k[2] === 'btn'));
+  if (fn === 'macro' && keys.length) {
+    L.push('# ---- 4-Button Macro Pad: each button sends a shortcut to the computer over USB ----', 'import usb_hid', 'from adafruit_hid.keyboard import Keyboard', 'from adafruit_hid.keycode import Keycode', 'from adafruit_hid.consumer_control import ConsumerControl', 'from adafruit_hid.consumer_control_code import ConsumerControlCode',
+      'MAC = False  # True on a Mac: Cmd instead of Ctrl', 'kbd = Keyboard(usb_hid.devices)', 'media = ConsumerControl(usb_hid.devices)', 'MOD = Keycode.GUI if MAC else Keycode.CONTROL', 'MODNAME = "Cmd" if MAC else "Ctrl"',
+      'SHORTCUTS = (("C", Keycode.C, "copy"), ("V", Keycode.V, "paste"), ("Z", Keycode.Z, "undo"), ("PLAY", None, "play/pause"))', '',
+      'def fire(n):', '    if n >= len(SHORTCUTS):', '        return NAMES[n]', '    letter, code, what = SHORTCUTS[n]', '    if code is None:', '        media.send(ConsumerControlCode.PLAY_PAUSE)', '        return "Play/Pause"', '    kbd.send(MOD, code)', '    return MODNAME + "+" + letter + " (" + what + ")"', '',
+      'show("Macro pad ready")', 'print("NOCIV ready")', '', 'while True:', '    event = keys.events.get()', '    if event:', '        down = 1 if event.pressed else 0', '        print("NOCIV", NAMES[event.key_number].replace(" ", "-"), down)', '        if lamp:', '            lamp.value = bool(down)', '        if down:', '            shortcut = fire(event.key_number)', '            print("NOCIV sent", shortcut)', '            show(shortcut)', '    time.sleep(0.01)', '');
+    return { text: L.join('\n'), libs };
+  }
+  if (fn === 'timer' && keys.length) {
+    L.push('# ---- Desk Timer: press the button to start or pause, hold it 1 s to reset' + (encs.length ? ', turn the wheel to set the minutes' : '') + '. It beeps at 00:00 ----', 'START = ' + st, 'minutes = 25', 'remaining = minutes * 60', 'running = False', 'tick = time.monotonic()', 'held_at = None', '',
+      'def clock():', '    return "%02d:%02d" % (remaining // 60, remaining % 60)', '', 'def ring_bell():');
+    if (snd) L.push('    for _ in range(3):', '        beep.frequency = 880', '        beep.duty_cycle = 2 ** 15', '        time.sleep(0.15)', '        beep.duty_cycle = 0', '        time.sleep(0.1)', ''); else L.push('    print("NOCIV beep")', '');
+    L.push('show(clock())', 'print("NOCIV ready")', '', 'while True:', '    now = time.monotonic()', '    event = keys.events.get()', '    if event and event.key_number == START:', '        if event.pressed:', '            held_at = now', '        elif held_at is not None:', '            if now - held_at >= 1:', '                running = False', '                remaining = minutes * 60', '                print("NOCIV timer reset")', '            else:', '                running = not running', '                tick = now', '                print("NOCIV timer", "start" if running else "pause")', '            held_at = None', '            show(clock() if running or remaining == minutes * 60 else clock() + " paused")');
+    if (encs.length) L.push('    if not running and WHEELS[0][0].position != spot[0]:', '        minutes = max(1, min(99, minutes + WHEELS[0][0].position - spot[0]))', '        spot[0] = WHEELS[0][0].position', '        remaining = minutes * 60', '        show(clock())');
+    L.push('    if running and now - tick >= 1:', '        tick += 1', '        remaining -= 1', '        show(clock())', '        if remaining <= 0:', '            running = False', '            show("00:00 done!")', '            print("NOCIV timer done")', '            ring_bell()', '            remaining = minutes * 60', '    time.sleep(0.01)', '');
+    return { text: L.join('\n'), libs };
+  }
+  if (fn === 'synth' && keys.length && snd) {
+    L.push('# ---- Mini Synth: each button plays a note.' + (pots.length ? ' Knob 1 moves the pitch' + (pots.length > 1 ? ', knob 2 sets the tempo of the arpeggio while you hold a key' : '') + '.' : '') + ' ----', 'SCALE = (262, 294, 330, 349, 392, 440, 494, 523)', 'NOTE = ("C", "D", "E", "F", "G", "A", "B", "C")', 'ARP = ' + (pots.length > 1 ? '(1, 1.5, 2)' : '(1,)'), 'held = None', 'step = 0', 'next_step = 0', 'transpose = 0', 'bpm = 120', '',
+      'show("Synth ready")', 'print("NOCIV ready")', '', 'while True:', '    now = time.monotonic()', '    event = keys.events.get()', '    if event:', '        if event.pressed:', '            held = event.key_number', '            step = 0', '            next_step = now', '            if lamp:', '                lamp.value = True', '        elif event.key_number == held:', '            held = None', '            beep.duty_cycle = 0', '            if lamp:', '                lamp.value = False');
+    if (pots.length) L.push('    transpose = POTS[0][0].value * 24 // 65535 - 12');
+    if (pots.length > 1) L.push('    bpm = 60 + POTS[1][0].value * 180 // 65535');
+    L.push('    if held is not None and now >= next_step:', '        f = SCALE[held % 8] * 2 ** (held // 8 + transpose / 12) * ARP[step % len(ARP)]', '        beep.frequency = max(20, int(f))', '        beep.duty_cycle = 2 ** 15', '        if step == 0:', '            print("NOCIV note", NOTE[held % 8], int(f))', '            show(NOTE[held % 8] + " " + str(int(f)) + " Hz")', '        step += 1', '        next_step = now + 60 / bpm / 2', '    time.sleep(0.005)', '');
+    return { text: L.join('\n'), libs };
+  }
   L.push('show("Ready")', 'print("NOCIV ready")', '', 'while True:');
   let body = 0;
   if (keys.length) {
