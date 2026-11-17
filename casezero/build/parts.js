@@ -141,6 +141,8 @@
     ['pad', 'Controller', 'Two grips', 'slate'],
     ['groove', 'Groovebox', 'Flat, rows of knobs', 'slate'],
     ['face', 'Character', 'Round face, eyes, can move', 'slate'],
+    ['camera', 'Camera', 'Handheld camera: the lens in the front (the lid), screen and buttons in the back (the base)', 'clam'],
+    ['mini', 'Mini Sensor', 'A small box for a tiny camera, scanner or sensor', 'clam'],
     ['deck', 'Deck', 'Cyberdeck or laptop: big screen in the lid, keyboard and controls in the base. Measure your keyboard in Brain', 'clam'],
     ['panel', 'Panel', 'A flat panel for a box you already have: screen window, holes, notches for wires', 'panel']
   ];
