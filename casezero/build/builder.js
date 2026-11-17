@@ -160,6 +160,15 @@ function autoPlace(it) {
   it.r = 0; it.x = d.W / 2; it.y = d.D / 2; return false;
 }
 function defaultPanel(P) { if (P.inside) return 'inside'; if (isClam() && (P.screen || P.front || P.lid)) return 'lid'; return homePanel(); } /* front: looks out of the front, like a camera or a sensor */
+// Swap part: the same kind of control, in the same spot. Wiring, code.py, Test It and the Shop all follow the new type by themselves.
+const SWAPS = [['pot', 'slider', 'encoder'], ['tact12', 'button16', 'arcade24', 'arcade30'], ['tft28', 'round128', 'oled096']];
+const swapGroup = (t) => SWAPS.find((g) => g.indexOf(t) > -1);
+function swapBar(it) { const g = it && it.of == null && swapGroup(it.type); if (!g) return ''; const P = PARTS();
+  return '<div class="selbar"><b>Swap part</b><select class="pin" data-swapto="' + it.id + '" aria-label="Swap part">' + g.filter((t) => P[t]).map((t) => '<option value="' + t + '"' + (t === it.type ? ' selected' : '') + '>' + esc(P[t].short) + '</option>').join('') + '</select></div>'; }
+function swapType(it, t) { if (!it || it.type === t || !PARTS()[t]) return; snapU(); const was = PP(it).short, at = [it.x, it.y, it.r || 0];
+  it.type = t; Object.keys(S.pins || {}).forEach((k) => { if (k.split(':')[0] === String(it.id)) delete S.pins[k]; }); /* its old pin choices: the new part has other pins */
+  clampIn(it); if (problems(it).length) { const c = [it.x, it.y, it.r]; if (!placeNear(it)) { it.x = c[0]; it.y = c[1]; it.r = c[2]; } }
+  save(); render(); tag(was + ' swapped for ' + PP(it).short + (it.x === at[0] && it.y === at[1] ? (it.r === at[2] ? ', same spot' : ', same spot, turned to fit') : ', moved ' + Math.round(Math.hypot(it.x - at[0], it.y - at[1])) + ' mm to fit') + '. Pins and code follow it.'); }
 let LAST = null; // the part just added: the 3D box shows it in yellow
 function addPart(type) { const P = PARTS()[type]; const it = { id: ++uid, type, panel: defaultPanel(P), x: 0, y: 0, r: 0 }; S.items.push(it); autoPlace(it); if (P && P.cat === 'brain' && P.inside) snapBrain(it); if (P && P.jack) jackHole(); LAST = it.id; focusPanel(it); save(); return it; }
 // Arrange opens on the side the newest part landed on
@@ -176,9 +185,25 @@ function focusPanel(it) { const p = panels().indexOf(it.panel) >= 0 ? it.panel :
 function removePart(type) { snapU(); for (let i = S.items.length - 1; i >= 0; i--) if (S.items[i].type === type) { S.items.splice(i, 1); break; } save(); }
 function reflow() { // style or size changed: move parts onto the panels this shape has, re-place anything that no longer fits
   S.items.forEach((it) => { if (it.panel !== 'inside' && panels().indexOf(it.panel) < 0) it.panel = defaultPanel(PP(it)) === 'inside' ? 'inside' : homePanel(); });
+  S.items.forEach(clampIn); /* first slide anything outside back in, so it keeps its spot near the edge */
   S.items.forEach((it) => { if (it.of == null && problems(it).length) autoPlace(it); });
-  syncAll();
+  syncAll(); keepInside();
 }
+// No part ever floats outside the case: a part past the edge slides back inside the deck (or the floor, for inside parts).
+function areaOf(it) { return it.panel === 'inside' ? G.offset(outline(), -(R.T + 0.6)) : deckArea(); }
+function clampIn(it) { if (!it || it.of != null || !PP(it)) return false; const b = G.bbox(areaOf(it)), f = fp(it); if (f.w > b.w || f.h > b.h) return false;
+  const dx = Math.max(0, b.x0 - f.x0) - Math.max(0, f.x1 - b.x1), dy = Math.max(0, b.y0 - f.y0) - Math.max(0, f.y1 - b.y1); if (!dx && !dy) return false; it.x += dx; it.y += dy; if (PP(it).board) syncKids(it); return true; }
+function placeNear(it) { // the spot it has, a quarter turn there, then the nearest free spot around it (2.5 mm steps, up to 25 mm away)
+  const x0 = it.x, y0 = it.y, r0 = it.r || 0, rs = [r0, (r0 + 1) % 4];
+  for (let d = 0; d <= 25; d += 2.5) for (const r of rs) for (let a = 0; a < (d ? 16 : 1); a++) { it.r = r; it.x = x0 + d * Math.cos(a * Math.PI / 8); it.y = y0 + d * Math.sin(a * Math.PI / 8); clampIn(it); if (!problems(it).length) return true; }
+  it.x = x0; it.y = y0; it.r = r0; return autoPlace(it); }
+const overEdge = () => S.items.filter((it) => it.of == null && PP(it) && problems(it).indexOf('over the edge') > -1);
+function keepInside() { // still over the edge (a round corner, or no room left): pack them all again at this size, and only grow the body if that cannot work
+  if (!S.items.length) return; S.items.forEach((it) => { if (clampIn(it) && problems(it).length) placeNear(it); }); /* slid back in onto another part: the nearest free spot */
+  if (!overEdge().length) return; overEdge().forEach((it) => placeNear(it)); if (!overEdge().length) return;
+  const keep = [S.cols, S.rows], list = S.items.filter((i) => i.of == null && PP(i)); list.forEach((i) => { i.x = -999; i.y = -999; });
+  list.sort((a, b) => (fp(b).w * fp(b).h) - (fp(a).w * fp(a).h)).forEach((i) => { autoPlace(i); if (PP(i).board) syncKids(i); });
+  if (overEdge().length && !isPanel() && !S.lockBox) fitAll(); if (S.lockBox) { S.cols = keep[0]; S.rows = keep[1]; } }
 // ---------- a built board and the parts on it ----------
 // The board item hangs under the top. Each part on it is its own item with an offset (dx, dy, dr) in the board's frame,
 // locked to the board unless she unlocks it. Moving or turning the board moves them all.
@@ -732,7 +757,11 @@ function pane(t) {
   if (t === 'snap') return '<p class="h">Already built and soldered?</p><button class="btn red" data-act="measure">Photo my board, front and back</button><p class="note" style="margin-bottom:10px">A card next to it is the ruler. Press on each part on the photo, say what it is, do the brain too. Your board goes inside the case, every part on it becomes its own part you can change. Photos stay on your phone.</p>' +
     '<p class="h">Not built yet</p><div class="grid g2"><button class="btn dark" data-act="snap">' + (PHOTO ? 'Take another photo' : 'Take a photo of my electronics') + '</button><button class="btn" data-act="toParts">Pick from the list</button></div>' +
     '<p class="note">Lay your electronics out on a table and snap them. The photo stays here on your phone so you can match each one to the list. Then tap Electronics and add each one you see.</p>' + (PHOTO ? '<button class="btn" data-act="nophoto" style="margin-top:8px">Remove the photo</button>' : '') + chosenChips();
-  if (t === 'parts') {
+  if (t === 'parts') { const ts = TSEL != null && S.items.find((i) => i.id === TSEL), sb = ts ? swapBar(ts) : ''; if (sb) return sb + partsPane(P, c); return partsPane(P, c); }
+  return paneRest(t, P, c);
+}
+function partsPane(P, c) {
+  {
     // Parts are about what the device does, not about catalog names. First the question, then the few parts that answer it.
     const fn = FUNCS.find((f) => f[0] === S.fn);
     if (!fn) { const tile = (f) => { const n = Object.keys(c).reduce((q, k) => q + (P[k] && P[k].cat === f[0] ? c[k] : 0), 0); return '<button type="button" class="pick fn" data-fn="' + f[0] + '">' + (n ? '<span class="n">' + n + '</span>' : '') + (f[3] && P[f[3]] ? partSvg(P[f[3]]) : ico('measure')) + f[1] + '<small>' + f[2] + '</small></button>'; };
@@ -743,11 +772,13 @@ function pane(t) {
         '<button type="button" class="pick" data-act="measure" style="grid-column:span 2">' + ico('measure') + 'Measure one with my phone<small>Card as the ruler</small></button>' : '')) + '</div>' +
       '<p class="note" id="partTip">' + (list[0] ? 'Tap one to add it. The red minus takes one out. ' + esc(P[list[0]].tip) : '') + '</p>' + (fn[0] === 'power' ? '<p class="note">' + powerNote() + '</p>' : '') + chosenChips();
   }
+}
+function paneRest(t, P, c) {
   if (t === 'pins') return pinsHtml();
   if (t === 'picks') return '<p class="h">Cheap, loved by the maker community</p><div class="list">' + CZ.PICKS.map((p) => '<div class="it"><b>' + esc(p[1]) + (c[p[0].split('+')[0]] ? ' <span class="ok">added</span>' : '') + '</b>' + esc(p[2]) + '<div style="margin-top:6px"><button class="btn" data-add="' + p[0] + '" style="display:inline-block;padding:7px 12px">+ Add ' + esc(p[0].split('+').map((k) => P[k].short).join(' + ')) + '</button></div></div>').join('') + '</div><p class="note">From Reddit (r/esp32, r/raspberry_pi), Instructables and maker blogs. Sources in the ? help.</p>';
   if (t === 'lid' || t === 'base' || t === 'top') {
     const mine = S.items.filter((i) => i.panel === t || (t !== 'lid' && i.panel === 'inside')), s = S.items.find((i) => i.id === sel), probs = allProblems(), N = numbers();
-    let h = s && s.of != null ? '<div class="selbar"><b>' + esc(label(s)) + '</b><select class="pin" data-kidtype="' + s.id + '" aria-label="What it is">' + KID_TYPES.filter((t) => CZ.PARTS[t]).map((t) => '<option value="' + t + '"' + (t === s.type ? ' selected' : '') + '>' + esc(CZ.PARTS[t].short) + '</option>').join('') + '</select>' + (RECTK(s) ? '<button data-act="rot">Turn</button>' : '') + '<button data-act="del">Remove</button></div>' + nudgeRow() + '<p class="note" style="margin:-2px 0 8px">Drag it, or use the arrows (0.5 mm), until it sits where the real part is (turn My photo on to check). Your board stays put.</p>' + (s.panel !== 'inside' ? stepper('kh', 'Height', kidH(s) + ' mm above board') + '<p class="note" style="margin:-2px 0 8px">' + esc(pokeNote(s)) + '</p>' : '') : s ? '<div class="selbar"><b>' + esc(label(s)) + '</b><button data-act="rot">Turn</button>' + (isClam() && s.panel !== 'inside' && !(PP(s) && PP(s).board) ? '<button data-act="swap">To ' + (s.panel === 'lid' ? 'base' : 'lid') + '</button>' : '') + '<button data-act="del">Remove</button></div>' +
+    let h = s && s.of != null ? '<div class="selbar"><b>' + esc(label(s)) + '</b><select class="pin" data-kidtype="' + s.id + '" aria-label="What it is">' + KID_TYPES.filter((t) => CZ.PARTS[t]).map((t) => '<option value="' + t + '"' + (t === s.type ? ' selected' : '') + '>' + esc(CZ.PARTS[t].short) + '</option>').join('') + '</select>' + (RECTK(s) ? '<button data-act="rot">Turn</button>' : '') + '<button data-act="del">Remove</button></div>' + nudgeRow() + '<p class="note" style="margin:-2px 0 8px">Drag it, or use the arrows (0.5 mm), until it sits where the real part is (turn My photo on to check). Your board stays put.</p>' + (s.panel !== 'inside' ? stepper('kh', 'Height', kidH(s) + ' mm above board') + '<p class="note" style="margin:-2px 0 8px">' + esc(pokeNote(s)) + '</p>' : '') : s ? '<div class="selbar"><b>' + esc(label(s)) + '</b><button data-act="rot">Turn</button>' + (isClam() && s.panel !== 'inside' && !(PP(s) && PP(s).board) ? '<button data-act="swap">To ' + (s.panel === 'lid' ? 'base' : 'lid') + '</button>' : '') + '<button data-act="del">Remove</button></div>' + swapBar(s) +
       (PP(s) && !PP(s).inside ? '<div class="selbar"><b>Mount</b>' + [['top', 'On top'], ['in', 'Inside']].map((m) => '<button data-act="mnt_' + m[0] + '"' + ((s.panel === 'inside') === (m[0] === 'in') ? ' style="background:#1a1a1a;color:#fff"' : '') + '>' + m[1] + '</button>').join('') + '</div>' : '') +
       (s.panel === 'inside' ? stepper('riser', 'Riser', PP(s) && PP(s).holes && PP(s).holes.length ? riserOf(s) + ' mm standoffs' : s.riser != null && s.riser > 0 ? s.riser + ' mm slate' : 'On the floor') + '<p class="note keep" style="margin:-2px 0 8px">' + (PP(s) && PP(s).holes && PP(s).holes.length ? 'Standoffs at its screw holes, printed with the case.' : 'A flat plate on 4 corner posts lifts it; it prints with the case.') + '</p>' : '') : '';
     if (s && PP(s) && PP(s).board) h += '<div class="selbar"><b>My photo</b>' + [['off', 'Hide'], ['faded', 'Faint'], ['clear', 'Show']].map((m) => '<button data-photo="' + m[0] + '"' + ((S.photo || 'off') === m[0] ? ' style="background:#1a1a1a;color:#fff"' : '') + '>' + m[1] + '</button>').join('') + '</div>' + ((PP(s).kids || []).length ? '<button class="btn" data-act="kidsreset" style="margin:0 0 8px;padding:8px">Put the parts back where my photo had them</button>' : '') + '<div class="selbar"><b>Board</b><button data-act="bmove">' + (s.move ? 'Unlocked: drag moves it' : 'Locked in place') + '</button></div>' + (s.move ? nudgeRow() : '') + '<p class="note" style="margin:-2px 0 8px">Tap an empty spot on your board to add a part there.</p>' + stepper('btop', 'Tallest', (PP(s).top || 9) + ' mm button') + '<p class="note" style="margin:-2px 0 8px">Your board hangs under the top so a ' + (PP(s).top || 9) + ' mm button pokes through 1.5 mm. Tap one to see how far it pokes through.</p>' + stepper('bund', 'Under', (PP(s).under != null ? PP(s).under : 8.5) + ' mm below') + '<p class="note" style="margin:-2px 0 8px">Space under the board for pins, solder and wires' + (PP(s).under != null ? ', from your side photo' : ', a guess: take the side photo to measure it') + '.</p>';
@@ -908,6 +939,7 @@ $('pane').addEventListener('input', (e) => {
   if (t.id === 'c2') { S.look.c2 = t.value; save(); if (T3) T3.key = ''; draw(); }
 });
 $('pane').addEventListener('change', (e) => {
+  if (e.target.dataset && e.target.dataset.swapto) { swapType(S.items.find((i) => i.id === +e.target.dataset.swapto), e.target.value); return; }
   if (e.target.dataset && e.target.dataset.kidtype) { const k = S.items.find((i) => i.id === +e.target.dataset.kidtype); if (k) { snapU(); k.type = e.target.value; k.panel = CZ.PARTS[k.type].cat === 'brain' ? 'inside' : (boardOf(k) ? boardOf(k).panel : homePanel()); S.pins = {}; } save(); render(); return; }
   if (e.target.dataset && e.target.dataset.pin) { if (!S.pins) S.pins = {}; S.pins[e.target.dataset.pin] = +e.target.value; save(); render(); return; }
   if (e.target.id === 'pw' || e.target.id === 'pd') { reflow(); save(); render(); return; }
@@ -1279,7 +1311,7 @@ cv.addEventListener('pointerdown', (e) => {
   if (S.step === 3 && view && curTab() === 'logo' && !WALLF[logoFace()] && LG().on) { const p = mm(e), L = LG(); L.x = p[0]; L.y = p[1]; drag = { logo: true }; cv.setPointerCapture(e.pointerId); draw(); return; }
   if (TRAY.length) { const r = cv.getBoundingClientRect(), k = cv.width / r.width, x = (e.clientX - r.left) * k, y = (e.clientY - r.top) * k, h = TRAY.find((t) => x >= t.x - 12 * k && x <= t.x + t.w + 12 * k && y >= t.y - 12 * k && y <= t.y + t.h) || null;
     if (h && h.id === TSEL) { const it = S.items.find((i) => i.id === TSEL); if (it) { snapU(); S.items = S.items.filter((i) => i !== it && i.of !== it.id); CLEARED = true; } TSEL = null; save(); render(); }
-    else { TSEL = h ? h.id : null; draw(); }
+    else { TSEL = h ? h.id : null; render(); } /* the pane shows Swap part for it */
     return; }
   if (S.step !== 1 || !view) return;
   try { cv.setPointerCapture(e.pointerId); } catch (er) { /* not a real pointer */ }
@@ -2398,6 +2430,7 @@ function loadRecipe(id) {
   if (r.place) r.place.forEach(([t, x, y, rq]) => mk(t, x, y, rq)); /* a hand-made layout, in mm from the bottom left */
   else r.parts.forEach(([t, n]) => { for (let i = 0; i < n; i++) mk(t, -999, -999, 0); });
   if (!r.place || allProblems().length) fitAll(); /* no layout, or it does not fit after a size change in the list: place them for her */
+  keepInside();
   S.attachedParts = []; S.ports = []; MPC = {};
   (r.mounts || []).forEach((q) => { const m = { id: S.attachedParts.length + 1, partId: q.partId, face: q.face, anchor: Object.assign({ v: 0 }, q.anchor), mountType: q.mountType }; if (mountBlocked(m)) return; const pts = mountPoints(m); m.anchors = [m.anchor]; if (pts.length > 1) { const ax = m.face === 'left' || m.face === 'right' ? 1 : 0; m.anchors.push({ u: m.anchor.u + Math.round(pts[0].B[0][ax] * mp(m).pitch / 20), v: m.anchor.v }); } S.attachedParts.push(m); });
   (r.ports || []).forEach((q) => { const p = { id: S.ports.length + 1, kind: q.kind, face: q.face, anchor: { u: q.u, v: 0 } }; if (!portBlocked(p)) S.ports.push(p); });
@@ -2598,11 +2631,12 @@ window.addEventListener('pageshow', (e) => { if (e.persisted) resync(); });
 window.addEventListener('storage', (e) => { if (e.key === KEY) resync(); });
 document.addEventListener('visibilitychange', () => { if (!document.hidden) resync(); });
 
-window.__cz = { decoMove, mountPart, TEST, testModel, wiring, wallArt, LG, hookPolys, addBoard, packBuild, unpackBuild, shareState, portBlocked, portAt, mountBlocked, swatchFile, loadRecipe, get DECO() { return DECO; }, get T3() { return T3; }, THREE, wiring, codeFor, get S() { return S; }, get view() { return view; }, AZ, get UNDO() { return UNDO.length; }, halves, plan, makeFiles, get FILES() { return FILES; }, allProblems, G, addPart, go, render, dims, heights, addonFile, addonPolys, charParts, charCache, kb, kbBoard, kbCode, kbReadme, boardSvg, wiring, portBlocked, testAct, testModel, micMain, get TRAY() { return TRAY; }, showStart, loadRecipe, cost, boardBuild, boardFiles, boardReadme, extraRows, keepBox };
+window.__cz = { decoMove, mountPart, TEST, testModel, wiring, wallArt, LG, hookPolys, addBoard, packBuild, unpackBuild, shareState, portBlocked, portAt, mountBlocked, swatchFile, loadRecipe, get DECO() { return DECO; }, get T3() { return T3; }, THREE, wiring, codeFor, get S() { return S; }, get view() { return view; }, AZ, get UNDO() { return UNDO.length; }, halves, plan, makeFiles, get FILES() { return FILES; }, allProblems, G, addPart, go, render, dims, heights, addonFile, addonPolys, charParts, charCache, kb, kbBoard, kbCode, kbReadme, boardSvg, wiring, PP, portBlocked, testAct, testModel, micMain, get TRAY() { return TRAY; }, showStart, loadRecipe, cost, boardBuild, boardFiles, boardReadme, extraRows, keepBox };
 render();
+try { if (S.items.length) { keepInside(); save(); } } catch (e) {} /* a saved build from an older builder: nothing left floating outside */
 { const q = new URLSearchParams(location.search), code = q.get('build'), rid = q.get('recipe'), r = rid && (CZ.RECIPES || []).find((x) => x.id === rid), clean = () => { try { history.replaceState(null, '', location.pathname); } catch (e) {} };
   if (code) { /* a build link: it becomes the saved build (the one that was here goes to Bring back), no start sheet */
-    unpackBuild(code).then((o) => { if (!o || !Array.isArray(o.items)) throw new Error('bad'); backup(); o.started = true; localStorage.setItem(KEY, JSON.stringify(Object.assign(JSON.parse(S_DEF), o))); clean(); MPC = {}; resync(); tag('Build loaded from the link'); $('sheetIn').innerHTML = '<h2>A build from a link</h2><div class="list"><button class="btn start" data-door="close"><b>Use this build</b>Everything as it was made.</button><button class="btn start" data-act="keepbox"><b>Keep Box, Swap Insides</b>Keep its box, size, hinge and mounts. Clear the electronics and design new insides for it.</button></div>'; $('sheet').hidden = false; })
+    unpackBuild(code).then((o) => { if (!o || !Array.isArray(o.items)) throw new Error('bad'); backup(); o.started = true; localStorage.setItem(KEY, JSON.stringify(Object.assign(JSON.parse(S_DEF), o))); clean(); MPC = {}; resync(); keepInside(); save(); render(); tag('Build loaded from the link'); $('sheetIn').innerHTML = '<h2>A build from a link</h2><div class="list"><button class="btn start" data-door="close"><b>Use this build</b>Everything as it was made.</button><button class="btn start" data-act="keepbox"><b>Keep Box, Swap Insides</b>Keep its box, size, hinge and mounts. Clear the electronics and design new insides for it.</button></div>'; $('sheet').hidden = false; })
       .catch(() => { clean(); tag('That build link could not be read'); if (!S.started && !S.items.length) showStart(); });
   } else if (r) { clean(); if (S.items.length) { $('sheetIn').innerHTML = '<h2>Start the ' + esc(r.name) + '?</h2><p class="note" style="font-size:14px">This replaces the ' + S.items.length + ' electronics in the build you have now. It is kept, so Bring back can return it.</p><div class="list" style="margin-top:10px"><button class="btn start" data-rok="' + r.id + '"><b>Start the ' + esc(r.name) + '</b>' + esc(r.line) + '</button><button class="btn start" data-door="close"><b>Keep my build</b>Go back to what I was making.</button></div>'; $('sheet').hidden = false; } else loadRecipe(r.id); }
   else if (!S.started && !S.items.length) showStart(); }
