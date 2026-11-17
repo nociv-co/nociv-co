@@ -14,6 +14,9 @@
       tip: 'Pico WH has the pins already on. Same size as the Pico.', price: 7, src: 'Raspberry Pi Pico W datasheet: same 51 x 21 mm board', url: 'https://www.raspberrypi.com/products/raspberry-pi-pico/' },
     pico2: { cat: 'brain', name: 'Raspberry Pi Pico 2', short: 'Pico 2', w: 51, h: 21, depth: 9, inside: true, holes: [[2, 4.8], [2, 16.2], [49, 4.8], [49, 16.2]], hole: 2.1, link: 'pins', usb: 'micro USB on a short end',
       tip: 'Same size and pins as the Pico, faster chip. Pico 2 H has the pins already on.', price: 5, src: 'Raspberry Pi Pico 2 datasheet: 51 x 21 mm, same holes as Pico', url: 'https://www.raspberrypi.com/products/raspberry-pi-pico-2/' },
+    nano: { cat: 'brain', name: 'Arduino Nano (ATmega328P)', short: 'Nano', w: 18, h: 45, depth: 8, inside: true, holes: [], link: 'pins', usb: 'USB on a short end', tip: 'The classic cheap Arduino. Programmed in the Arduino IDE (no CircuitPython). 5 V pins.', price: 4, src: 'Arduino Nano, 18 x 45 mm' },
+    promicro: { cat: 'brain', name: 'Pro Micro (ATmega32U4)', short: 'Pro Micro', w: 18, h: 33, depth: 8, inside: true, holes: [], link: 'pins', usb: 'USB on a short end', tip: 'Tiny and acts as a USB keyboard: a favourite for macro pads. Programmed in the Arduino IDE. 5 V pins.', price: 5, src: 'SparkFun-style Pro Micro, 18 x 33 mm' },
+    esp32c3: { cat: 'brain', name: 'ESP32-C3 SuperMini (Wi-Fi + Bluetooth)', short: 'C3 Mini', w: 18, h: 22.5, depth: 7, inside: true, holes: [], link: 'pins', usb: 'USB-C on a short end', tip: 'A thumb-sized Wi-Fi brain for about $3. Runs CircuitPython.', price: 3, src: 'ESP32-C3 SuperMini, 22.5 x 18 mm' },
     esp32: { cat: 'brain', name: 'ESP32 DevKit (Wi-Fi + Bluetooth)', short: 'ESP32', w: 51.5, h: 28.5, depth: 9, inside: true, holes: [], hole: 2.5, link: 'pins', usb: 'USB on a short end', check: true,
       tip: 'Wi-Fi and Bluetooth brain. Boards differ by seller, so measure yours.', price: 6, src: 'Common 30 pin ESP32 DevKit, about 51.5 x 28.5 mm. Sellers differ.', url: '' },
     zero2: { cat: 'brain', name: 'Raspberry Pi Zero 2 W', short: 'Pi Zero 2', w: 65, h: 30, depth: 6, inside: true, holes: [[3.5, 3.5], [61.5, 3.5], [3.5, 26.5], [61.5, 26.5]], hole: 2.75, link: 'pins', usb: 'mini HDMI + 2 micro USB on one long side',
@@ -134,7 +137,7 @@
   C.PICKS = [
     ['cyd', 'The Cheap Yellow Display', 'Brain plus touch screen on one board, around $15. Huge community.'],
     ['round128', 'Round watch screen', 'Watch faces, gauges and robot eyes.'],
-    ['pico', 'Pico + 2.8 in screen', 'Your build. Cheapest way into handhelds.'],
+    ['pico+tft28', 'Pico + 2.8 in screen', 'Your build. Cheapest way into handhelds. Adds both.'],
     ['zero2', 'Pi Zero 2 W', 'Runs RetroPie for an AdventurePi style arcade.'],
     ['encoder', 'Click wheel', 'Menus and volume in one part.'],
     ['thumb', 'Thumb stick', 'Controller feel for a few dollars.']

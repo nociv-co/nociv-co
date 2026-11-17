@@ -11,6 +11,25 @@ const ADC = [26, 27, 28];
 const ALL = [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 26, 27, 28];
 export const PICO_PINS = ALL;
 export const PICO_BRAINS = ['pico', 'picow'];
+// Every brain the wiring plan knows: its two header rows (top to bottom, USB at the top), the pins a part may use, the analog ones, the SPI and I2C pins,
+// a pin's printed name (lab) and its CircuitPython name (cp: null when the board does not run CircuitPython).
+const range = (a, b) => { const o = []; for (let i = a; i <= b; i++) o.push(i); return o; };
+const PICO_PWM = (n) => (n >> 1) & 7;
+export const BOARDS = {
+  pico: { name: 'Raspberry Pi Pico', left: PICO_LEFT, right: PICO_RIGHT, all: ALL, adc: ADC, spi: [18, 19, 16], i2c: [4, 5], spiPick: [[17, 20, 21], [22, 16, 15], [14, 13, 12]], camCs: [17, 20, 21, 22], lab: (n) => 'GP' + n, cp: 'board.GP', pwm: PICO_PWM, v5: 'VBUS', v3: '3V3' },
+  nano: { name: 'Arduino Nano', left: ['D13', '3V3', 'AREF', 'A0', 'A1', 'A2', 'A3', 'A4', 'A5', 'A6', 'A7', '5V', 'RST', 'GND', 'VIN'], right: ['D12', 'D11', 'D10', 'D9', 'D8', 'D7', 'D6', 'D5', 'D4', 'D3', 'D2', 'GND', 'RST', 'D0', 'D1'],
+    all: range(2, 19), adc: range(14, 21), spi: [13, 11, 12], i2c: [18, 19], spiPick: [[10, 9, 8], [7, 6, 5]], camCs: [10, 9, 8], lab: (n) => (n >= 14 ? 'A' + (n - 14) : 'D' + n), cp: null, pwm: (n) => ([3, 5, 6, 9, 10, 11].indexOf(n) > -1 ? n : -1), v5: '5V', v3: '3V3' },
+  promicro: { name: 'Pro Micro (ATmega32U4)', left: ['D1', 'D0', 'GND', 'GND', 'D2', 'D3', 'D4', 'D5', 'D6', 'D7', 'D8', 'D9'], right: ['RAW', 'GND', 'RST', 'VCC', 'A3', 'A2', 'A1', 'A0', 'D15', 'D14', 'D16', 'D10'],
+    all: [2, 3, 4, 5, 6, 7, 8, 9, 10, 14, 15, 16, 18, 19, 20, 21], adc: [18, 19, 20, 21], spi: [15, 16, 14], i2c: [2, 3], spiPick: [[10, 9, 8], [7, 6, 5]], camCs: [10, 9], lab: (n) => (n >= 18 ? 'A' + (21 - n) : 'D' + n), cp: null, pwm: (n) => ([3, 5, 6, 9, 10].indexOf(n) > -1 ? n : -1), v5: 'VCC', v3: 'VCC' },
+  c3: { name: 'ESP32-C3 SuperMini', left: ['5V', 'GND', '3V3', 'GPIO4', 'GPIO3', 'GPIO2', 'GPIO1', 'GPIO0'], right: ['GPIO5', 'GPIO6', 'GPIO7', 'GPIO8', 'GPIO9', 'GPIO10', 'GPIO20', 'GPIO21'],
+    all: [5, 6, 7, 10, 20, 21, 0, 1, 2, 3, 4, 8, 9], adc: [0, 1, 2, 3, 4], spi: [4, 6, 5], i2c: [8, 9] /* 8 (the LED) and 9 (BOOT) last */, spiPick: [[7, 10, 3]], camCs: [7, 10], lab: (n) => 'GPIO' + n, cp: 'board.IO', pwm: (n) => n, v5: '5V', v3: '3V3' },
+  esp32: { name: 'ESP32 DevKit', left: ['EN', 'GPIO36', 'GPIO39', 'GPIO34', 'GPIO35', 'GPIO32', 'GPIO33', 'GPIO25', 'GPIO26', 'GPIO27', 'GPIO14', 'GPIO12', 'GPIO13', 'GND', 'VIN'], right: ['GPIO23', 'GPIO22', 'TX0', 'RX0', 'GPIO21', 'GPIO19', 'GPIO18', 'GPIO5', 'GPIO17', 'GPIO16', 'GPIO4', 'GPIO2', 'GPIO15', 'GND', '3V3'],
+    all: [4, 5, 13, 14, 15, 16, 17, 18, 19, 21, 22, 23, 25, 26, 27, 32, 33], adc: [32, 33, 34, 35, 36, 39], spi: [18, 23, 19], i2c: [21, 22], spiPick: [[5, 17, 16], [15, 4, 2]], camCs: [5, 15], lab: (n) => 'GPIO' + n, cp: 'board.IO', pwm: (n) => n, v5: 'VIN', v3: '3V3' },
+  cyd: { name: 'Cheap Yellow Display', left: ['3V3', 'GPIO27', 'GPIO22', 'GND'], right: ['VIN', 'GPIO35', 'GPIO21', 'GND'], all: [22, 27, 21], adc: [35], spi: null, i2c: [27, 22], spiPick: [], camCs: [], lab: (n) => 'GPIO' + n, cp: 'board.IO', pwm: (n) => n, v5: 'VIN', v3: '3V3', builtIn: 'its own 2.8 in touch screen' },
+  pi: { name: 'Raspberry Pi (40 pin header)', left: ['3V3', 'GPIO2', 'GPIO3', 'GPIO4', 'GND', 'GPIO17', 'GPIO27', 'GPIO22', '3V3', 'GPIO10', 'GPIO9', 'GPIO11', 'GND', 'ID_SD', 'GPIO5', 'GPIO6', 'GPIO13', 'GPIO19', 'GPIO26', 'GND'], right: ['5V', '5V', 'GND', 'GPIO14', 'GPIO15', 'GPIO18', 'GND', 'GPIO23', 'GPIO24', 'GND', 'GPIO25', 'GPIO8', 'GPIO7', 'ID_SC', 'GND', 'GPIO12', 'GND', 'GPIO16', 'GPIO20', 'GPIO21'],
+    all: [4, 17, 27, 22, 5, 6, 13, 19, 26, 23, 24, 25, 12, 16, 20, 21, 18], adc: [], spi: [11, 10, 9], i2c: [2, 3], spiPick: [[8, 25, 24], [7, 23, 22]], camCs: [8, 7], lab: (n) => 'GPIO' + n, cp: null, pwm: (n) => ([12, 13, 18, 19].indexOf(n) > -1 ? n % 2 : -1), v5: '5V', v3: '3V3', pi: true }
+};
+export const BOARD_OF = { pico: 'pico', picow: 'pico', pico2: 'pico', nano: 'nano', promicro: 'promicro', esp32c3: 'c3', esp32: 'esp32', cyd: 'cyd', zero2: 'pi', pi5: 'pi' };
 
 // What each kind of part needs. d = any pin, a = an analog pin (GP26 to 28), enc = two pins next to each other,
 // pwm = a pin whose PWM slice no other sound or motor uses. power: 3V3 or VBUS (5 V from USB).
@@ -32,43 +51,45 @@ export const NEED = {
   hdmi5: { pi: true }, hdmi7: { pi: true },
   pir: { pins: [['out', 'd']], power: 'VBUS', what: 'motion', note: 'Power it from VBUS (5 V). Its OUT pin gives 3.3 V, safe for the Pico. The two small screws set the range and how long it stays on.' },
   vl53: { i2c: true, what: 'distance', note: 'Shares the two I2C wires with any other I2C part. Most VL53L0X boards take 3V3.' },
-  arducam: { cam: true, what: 'camera', note: 'SPI carries the picture (MISO on GP16), I2C sets the camera up. VCC to 3V3.' }
+  arducam: { cam: true, what: 'camera', note: 'SPI carries the picture (it needs MISO too), I2C sets the camera up. VCC to 3V3.' }
 };
 const slice = (n) => (n >> 1) & 7;
 
 // items: [{ key, label, type }] in number order. over: { 'key:role': pin } her own choices win.
-export function planWiring(items, over) {
+export function planWiring(items, over, B) {
+  B = B || BOARDS.pico; const ALLB = B.all, ADCB = B.adc, L = B.lab, sp = B.spi || [], ic = B.i2c || [];
   const used = {}, rows = [], problems = [], pwmSlices = {};
-  const take = (pin, who) => { if (used[pin] && used[pin] !== who) problems.push('GP' + pin + ' is used twice (' + used[pin] + ' and ' + who + ').'); used[pin] = who; };
+  const take = (pin, who) => { if (used[pin] && used[pin] !== who) problems.push(L(pin) + ' is used twice (' + used[pin] + ' and ' + who + ').'); used[pin] = who; };
   const free = (p) => used[p] == null;
   const firstFree = (list) => list.find(free);
-  const spiParts = items.filter((i) => NEED[i.type] && NEED[i.type].spi), i2cParts = items.filter((i) => NEED[i.type] && NEED[i.type].i2c);
+  if (!B.spi) items.filter((i) => NEED[i.type] && (NEED[i.type].spi || NEED[i.type].cam)).forEach((i) => problems.push(i.label + ' needs SPI, and the ' + B.name + ' has no free SPI pins.' + (B.builtIn ? ' Its SPI drives ' + B.builtIn + '.' : '')));
+  const spiParts = !B.spi ? [] : items.filter((i) => NEED[i.type] && NEED[i.type].spi), i2cParts = items.filter((i) => NEED[i.type] && NEED[i.type].i2c);
   // 1. screens first: they need fixed pins. SPI0 = GP18 clock, GP19 data. I2C0 = GP4 SDA, GP5 SCL.
-  const camParts = items.filter((i) => NEED[i.type] && NEED[i.type].cam);
-  if (spiParts.length || camParts.length) { take(18, 'SPI (clock)'); take(19, 'SPI (data)'); }
-  if (i2cParts.length || camParts.length) { take(4, 'I2C (SDA)'); take(5, 'I2C (SCL)'); }
-  if (camParts.length) take(16, 'SPI (camera MISO)');
-  camParts.forEach((it) => { const k = it.key + ':cs', pin = over[k] != null ? over[k] : [17, 20, 21, 22].find(free) != null ? [17, 20, 21, 22].find(free) : firstFree(ALL.filter((x) => ADC.indexOf(x) < 0)); if (pin != null) take(pin, it.label);
-    rows.push({ it, roles: [{ role: 'clock', pin: 18, fixed: true }, { role: 'data', pin: 19, fixed: true }, { role: 'miso', pin: 16, fixed: true }, { role: 'cs', pin, kind: 'd', k }, { role: 'SDA', pin: 4, fixed: true }, { role: 'SCL', pin: 5, fixed: true }], power: '3V3', note: NEED[it.type].note, N: NEED[it.type] }); });
-  const spiPick = [[17, 20, 21], [22, 16, 15], [14, 13, 12]];
+  const camParts = !B.spi ? [] : items.filter((i) => NEED[i.type] && NEED[i.type].cam);
+  if (spiParts.length || camParts.length) { take(sp[0], 'SPI (clock)'); take(sp[1], 'SPI (data)'); }
+  if (i2cParts.length || camParts.length) { take(ic[0], 'I2C (SDA)'); take(ic[1], 'I2C (SCL)'); }
+  if (camParts.length) take(sp[2], 'SPI (camera MISO)');
+  camParts.forEach((it) => { const k = it.key + ':cs', pin = over[k] != null ? over[k] : B.camCs.find(free) != null ? B.camCs.find(free) : firstFree(ALLB.filter((x) => ADCB.indexOf(x) < 0)); if (pin != null) take(pin, it.label);
+    rows.push({ it, roles: [{ role: 'clock', pin: sp[0], fixed: true }, { role: 'data', pin: sp[1], fixed: true }, { role: 'miso', pin: sp[2], fixed: true }, { role: 'cs', pin, kind: 'd', k }, { role: 'SDA', pin: ic[0], fixed: true }, { role: 'SCL', pin: ic[1], fixed: true }], power: '3V3', note: NEED[it.type].note, N: NEED[it.type] }); });
+  const spiPick = B.spiPick;
   spiParts.forEach((it, n) => {
-    const N = NEED[it.type], p = spiPick[n] || [], roles = [['cs', p[0]], ['dc', p[1]], ['rst', p[2]]].map(([r, d]) => { const k = it.key + ':' + r, pin = over[k] != null ? over[k] : (d != null && free(d) ? d : firstFree(ALL.filter((x) => ADC.indexOf(x) < 0))); if (pin != null) take(pin, it.label); return { role: r, pin, kind: 'd', k }; });
-    rows.push({ it, roles: [{ role: 'clock', pin: 18, fixed: true }, { role: 'data', pin: 19, fixed: true }].concat(roles), power: '3V3', note: 'Backlight (LED or BL) to 3V3. MISO is not needed.', N });
+    const N = NEED[it.type], p = spiPick[n] || [], roles = [['cs', p[0]], ['dc', p[1]], ['rst', p[2]]].map(([r, d]) => { const k = it.key + ':' + r, pin = over[k] != null ? over[k] : (d != null && free(d) ? d : firstFree(ALLB.filter((x) => ADCB.indexOf(x) < 0))); if (pin != null) take(pin, it.label); return { role: r, pin, kind: 'd', k }; });
+    rows.push({ it, roles: [{ role: 'clock', pin: sp[0], fixed: true }, { role: 'data', pin: sp[1], fixed: true }].concat(roles), power: '3V3', note: 'Backlight (LED or BL) to 3V3. MISO is not needed.', N });
   });
-  i2cParts.forEach((it) => rows.push({ it, roles: [{ role: 'SDA', pin: 4, fixed: true }, { role: 'SCL', pin: 5, fixed: true }], power: '3V3', note: NEED[it.type].note, N: NEED[it.type] }));
+  i2cParts.forEach((it) => rows.push({ it, roles: [{ role: 'SDA', pin: ic[0], fixed: true }, { role: 'SCL', pin: ic[1], fixed: true }], power: '3V3', note: NEED[it.type].note, N: NEED[it.type] }));
   // 2. her own pin choices are held before anything else is picked
-  items.forEach((it) => { const N = NEED[it.type]; if (!N || !N.pins) return; N.pins.forEach(([r, kind]) => { const k = it.key + ':' + r; if (over[k] != null) { take(over[k], it.label); if (kind === 'enc') take(over[k] + 1, it.label); if (kind === 'pwm') pwmSlices[slice(over[k])] = it.label; } }); });
+  items.forEach((it) => { const N = NEED[it.type]; if (!N || !N.pins) return; N.pins.forEach(([r, kind]) => { const k = it.key + ':' + r; if (over[k] != null) { take(over[k], it.label); if (kind === 'enc') take(over[k] + 1, it.label); if (kind === 'pwm') pwmSlices[B.pwm(over[k])] = it.label; } }); });
   // 3. analog, then wheels (two pins side by side), then sound and motors, then everything else
   const order = { a: 0, enc: 1, pwm: 2, d: 3 }, wants = [];
-  items.forEach((it) => { const N = NEED[it.type]; if (!N) return; if (N.pi) { problems.push(it.label + ' is an HDMI screen: it needs a Raspberry Pi brain, not a Pico.'); return; } if (!N.pins) return; N.pins.forEach(([r, kind]) => wants.push({ it, r, kind })); });
+  items.forEach((it) => { const N = NEED[it.type]; if (!N) return; if (N.pi) { if (!B.pi) problems.push(it.label + ' is an HDMI screen: it needs a Raspberry Pi brain, not a ' + B.name + '.'); return; } if (!N.pins) return; N.pins.forEach(([r, kind]) => wants.push({ it, r, kind })); });
   const got = {};
   wants.slice().sort((a, b) => order[a.kind] - order[b.kind]).forEach(({ it, r, kind }) => {
     const k = it.key + ':' + r; if (over[k] != null) { got[k] = over[k]; return; }
     let pin = null;
-    if (kind === 'a') { pin = firstFree(ADC); if (pin == null) problems.push(it.label + ' needs an analog pin, and the Pico has only 3 (GP26, GP27, GP28).'); }
-    else if (kind === 'enc') { pin = ALL.find((p) => p + 1 <= 22 && ADC.indexOf(p) < 0 && free(p) && free(p + 1)); if (pin != null) take(pin + 1, it.label); }
-    else if (kind === 'pwm') { pin = ALL.find((p) => ADC.indexOf(p) < 0 && free(p) && !pwmSlices[slice(p)]); if (pin != null) pwmSlices[slice(pin)] = it.label; }
-    else pin = firstFree(ALL.filter((p) => ADC.indexOf(p) < 0)) != null ? firstFree(ALL.filter((p) => ADC.indexOf(p) < 0)) : firstFree(ADC);
+    if (kind === 'a') { pin = firstFree(ADCB); if (pin == null) problems.push(it.label + ' needs an analog pin, and the ' + B.name + (ADCB.length ? ' has only ' + ADCB.length + ' (' + ADCB.map(L).join(', ') + ').' : ' has none: add an analog board such as an ADS1115.')); }
+    else if (kind === 'enc') { pin = ALLB.find((p) => ALLB.indexOf(p + 1) > -1 && ADCB.indexOf(p) < 0 && free(p) && free(p + 1)); if (pin != null) take(pin + 1, it.label); }
+    else if (kind === 'pwm') { pin = ALLB.find((p) => ADCB.indexOf(p) < 0 && free(p) && B.pwm(p) > -1 && !pwmSlices[B.pwm(p)]); if (pin != null) pwmSlices[B.pwm(pin)] = it.label; }
+    else pin = firstFree(ALLB.filter((p) => ADCB.indexOf(p) < 0)) != null ? firstFree(ALLB.filter((p) => ADCB.indexOf(p) < 0)) : firstFree(ADCB.filter((p) => ALLB.indexOf(p) > -1));
     if (pin == null && kind !== 'a') problems.push('Out of pins for ' + it.label + '. Take a part off, or use a Qwiic button board (one plug for many buttons).');
     if (pin != null) take(pin, it.label); got[k] = pin;
   });
@@ -77,9 +98,18 @@ export function planWiring(items, over) {
   return { rows, problems: Array.from(new Set(problems)), used };
 }
 
+// a board that does not run CircuitPython (Arduino Nano, Pro Micro, a Raspberry Pi): the pin list for your own code
+function pinList(plan, title, B) {
+  const L = ['# NOCIV Case Zero: ' + title, '# Brain: ' + B.name + '. It does not run CircuitPython, so there is no starter code.py for it.', B.pi ? '# On a Raspberry Pi, use Python with gpiozero, or Blinka for CircuitPython libraries. The pins are BCM numbers.' : '# Write the code in the Arduino IDE (Arduino Nano, or SparkFun Pro Micro for the Pro Micro). The pin names are the ones printed on the board.', '#', '# Your parts and their pins:'];
+  plan.rows.forEach((row) => L.push('#   ' + row.it.label + ': ' + row.roles.map((r) => r.role + ' ' + (r.pin == null ? '?' : B.lab(r.pin)) + (r.two ? ' + ' + B.lab(r.pin + 1) : '')).join(', ') + (row.power ? ', power ' + (row.power === 'VBUS' ? B.v5 : B.v3) : '') + ', GND'));
+  plan.problems.forEach((p) => L.push('#   Fix: ' + p));
+  return { text: L.join('\n') + '\n', libs: [] };
+}
 // ---------- the starter code ----------
 const pyStr = (s) => '"' + String(s).replace(/\\/g, '\\\\').replace(/"/g, '\\"') + '"';
-export function codeFor(plan, title, fn) { // fn: a recipe's own program (macro, timer, synth) in place of the pin test
+export function codeFor(plan, title, fn, B) {
+  B = B || BOARDS.pico; const PFX = B.cp || 'board.GP', LB = B.lab, SPI = B.spi || [18, 19, 16], I2C = B.i2c || [4, 5];
+  if (!B.cp) return pinList(plan, title, B); // fn: a recipe's own program (macro, timer, synth) in place of the pin test
   const keys = [], pots = [], encs = [], outs = [], pirs = [], tofs = [], cams = [], L = [];
   let screen = null;
   plan.rows.forEach((row) => {
@@ -99,7 +129,7 @@ export function codeFor(plan, title, fn) { // fn: a recipe's own program (macro,
   if (screen) { libs.push('adafruit_display_text'); if (screen.N.driver === 'ili9341') libs.push('adafruit_ili9341.mpy'); if (screen.N.driver === 'ssd1306') libs.push('adafruit_displayio_ssd1306.mpy'); if (screen.N.driver === 'gc9a01') libs.push('gc9a01.mpy (from the Community Bundle)'); }
   if (has('ring')) libs.push('neopixel.mpy'); if (has('servo')) libs.push('adafruit_motor'); if (tofs.length) libs.push('adafruit_vl53l0x.mpy'); if (fn === 'macro' && keys.length) libs.push('adafruit_hid');
   const bus = !!(cams.length || tofs.length); /* sensors share one I2C bus (and the camera the SPI bus) with the screen, made once at the top */
-  L.push('# NOCIV Case Zero starter code. ' + title, '# Brain: Raspberry Pi Pico, Pico W or Pico 2 (same pins).', '#',
+  L.push('# NOCIV Case Zero starter code. ' + title, '# Brain: ' + B.name + (B === BOARDS.pico ? ', Pico W or Pico 2 (same pins).' : '. CircuitPython names its pins board.IO and the number.'), '#',
     '# 1. Put CircuitPython 9 or newer on the Pico: circuitpython.org, search your board, follow the steps.',
     libs.length ? '# 2. From the CircuitPython Library Bundle, copy into CIRCUITPY/lib: ' + libs.join(', ') + '.' : '# 2. No extra libraries needed.',
     '# 3. Save this file as code.py on the CIRCUITPY drive. It starts by itself.', '#',
@@ -116,21 +146,21 @@ export function codeFor(plan, title, fn) { // fn: a recipe's own program (macro,
   if (has('servo')) L.push('from adafruit_motor import servo');
   L.push('');
   L.push('status = None', '');
-  if (bus) { L.push('# ---- the shared wires: I2C on GP4 (SDA) and GP5 (SCL)' + (cams.length ? ', SPI on GP18, GP19 and GP16' : '') + ' ----', 'try:', '    i2c = busio.I2C(board.GP5, board.GP4)', 'except Exception as err:', '    i2c = None', '    print("NOCIV I2C not found yet:", err)');
-    if (cams.length) L.push('spi = busio.SPI(board.GP18, MOSI=board.GP19, MISO=board.GP16)');
+  if (bus) { L.push('# ---- the shared wires: I2C on ' + LB(I2C[0]) + ' (SDA) and ' + LB(I2C[1]) + ' (SCL)' + (cams.length ? ', SPI on ' + SPI.map(LB).join(', ') : '') + ' ----', 'try:', '    i2c = busio.I2C(' + PFX + I2C[1] + ', ' + PFX + I2C[0] + ')', 'except Exception as err:', '    i2c = None', '    print("NOCIV I2C not found yet:", err)');
+    if (cams.length) L.push('spi = busio.SPI(' + PFX + SPI[0] + ', MOSI=' + PFX + SPI[1] + ', MISO=' + PFX + SPI[2] + ')');
     L.push(''); }
   if (screen) {
     const S2 = screen.N, R = screen.R, big = S2.w >= 240, at = L.length;
     L.push('# ---- screen: ' + screen.label + ' ----', 'import busio', 'import displayio', 'import terminalio', 'from adafruit_display_text import label', 'displayio.release_displays()');
     if (S2.spi) {
       L.push('try:', '    from fourwire import FourWire', 'except ImportError:', '    from displayio import FourWire');
-      if (!cams.length) L.push('spi = busio.SPI(board.GP18, MOSI=board.GP19)');
-      L.push('bus = FourWire(spi, command=board.GP' + R.dc + ', chip_select=board.GP' + R.cs + ', reset=board.GP' + R.rst + ', baudrate=24000000)');
+      if (!cams.length) L.push('spi = busio.SPI(' + PFX + SPI[0] + ', MOSI=' + PFX + SPI[1] + ')');
+      L.push('bus = FourWire(spi, command=' + PFX + R.dc + ', chip_select=' + PFX + R.cs + ', reset=' + PFX + R.rst + ', baudrate=24000000)');
       if (S2.driver === 'ili9341') L.push('import adafruit_ili9341', 'display = adafruit_ili9341.ILI9341(bus, width=320, height=240)');
       else L.push('import gc9a01', 'display = gc9a01.GC9A01(bus, width=240, height=240)');
     } else {
       L.push('try:', '    from i2cdisplaybus import I2CDisplayBus', 'except ImportError:', '    from displayio import I2CDisplay as I2CDisplayBus');
-      L.push('import adafruit_displayio_ssd1306'); if (!bus) L.push('i2c = busio.I2C(board.GP5, board.GP4)'); L.push('bus = I2CDisplayBus(i2c, device_address=0x3C)', 'display = adafruit_displayio_ssd1306.SSD1306(bus, width=128, height=64)');
+      L.push('import adafruit_displayio_ssd1306'); if (!bus) L.push('i2c = busio.I2C(' + PFX + I2C[1] + ', ' + PFX + I2C[0] + ')'); L.push('bus = I2CDisplayBus(i2c, device_address=0x3C)', 'display = adafruit_displayio_ssd1306.SSD1306(bus, width=128, height=64)');
     }
     L.push('group = displayio.Group()', 'display.root_group = group',
       'title = label.Label(terminalio.FONT, text="NOCIV", scale=' + (big ? 3 : 2) + ', x=' + (S2.driver === 'gc9a01' ? 70 : 8) + ', y=' + (big ? 40 : 12) + ')',
@@ -140,18 +170,18 @@ export function codeFor(plan, title, fn) { // fn: a recipe's own program (macro,
     const body = L.splice(at + 1).map((x) => '    ' + x); L.push('try:'); body.forEach((x) => L.push(x)); L.push('except Exception as err:', '    status = None', '    print("NOCIV screen not found yet:", err)', '');
   }
   L.push('def show(text):', '    if status:', '        status.text = text', '');
-  if (keys.length) L.push('# ---- buttons (pressed = pin to GND, the Pico pulls it up inside) ----', 'KEYS = (' + keys.map((k) => 'board.GP' + k[0]).join(', ') + ',)', 'NAMES = (' + keys.map((k) => pyStr(k[1])).join(', ') + ',)', 'keys = keypad.Keys(KEYS, value_when_pressed=False, pull=True)', '');
-  if (pots.length) L.push('# ---- knobs, sliders and sticks (0 to 100) ----', 'POTS = (' + pots.map((p) => '(analogio.AnalogIn(board.GP' + p[0] + '), ' + pyStr(p[1]) + ')').join(', ') + ',)', 'last = [-10] * len(POTS)', '');
-  if (encs.length) L.push('# ---- click wheels (the two pins sit side by side) ----', 'WHEELS = (' + encs.map((e) => '(rotaryio.IncrementalEncoder(board.GP' + e[0] + ', board.GP' + (e[0] + 1) + '), ' + pyStr(e[1]) + ')').join(', ') + ',)', 'spot = [0] * len(WHEELS)', '');
+  if (keys.length) L.push('# ---- buttons (pressed = pin to GND, the Pico pulls it up inside) ----', 'KEYS = (' + keys.map((k) => '' + PFX + k[0]).join(', ') + ',)', 'NAMES = (' + keys.map((k) => pyStr(k[1])).join(', ') + ',)', 'keys = keypad.Keys(KEYS, value_when_pressed=False, pull=True)', '');
+  if (pots.length) L.push('# ---- knobs, sliders and sticks (0 to 100) ----', 'POTS = (' + pots.map((p) => '(analogio.AnalogIn(' + PFX + p[0] + '), ' + pyStr(p[1]) + ')').join(', ') + ',)', 'last = [-10] * len(POTS)', '');
+  if (encs.length) L.push('# ---- click wheels (the two pins sit side by side) ----', 'WHEELS = (' + encs.map((e) => '(rotaryio.IncrementalEncoder(' + PFX + e[0] + ', ' + PFX + (e[0] + 1) + '), ' + pyStr(e[1]) + ')').join(', ') + ',)', 'spot = [0] * len(WHEELS)', '');
   outs.forEach(([w, pin, tag]) => {
-    if (w === 'led') L.push('# ---- ' + tag + ' light ----', 'led = digitalio.DigitalInOut(board.GP' + pin + ')', 'led.direction = digitalio.Direction.OUTPUT', '');
-    if (w === 'ring') L.push('# ---- ' + tag + ' light ring ----', 'ring = neopixel.NeoPixel(board.GP' + pin + ', 12, brightness=0.2)', '');
-    if (w === 'sound') L.push('# ---- ' + tag + ' sound ----', 'beep = pwmio.PWMOut(board.GP' + pin + ', frequency=440, duty_cycle=0, variable_frequency=True)', '');
-    if (w === 'servo') L.push('# ---- ' + tag + ' servo ----', 'arm = servo.Servo(pwmio.PWMOut(board.GP' + pin + ', duty_cycle=2 ** 15, frequency=50))', '');
+    if (w === 'led') L.push('# ---- ' + tag + ' light ----', 'led = digitalio.DigitalInOut(' + PFX + pin + ')', 'led.direction = digitalio.Direction.OUTPUT', '');
+    if (w === 'ring') L.push('# ---- ' + tag + ' light ring ----', 'ring = neopixel.NeoPixel(' + PFX + pin + ', 12, brightness=0.2)', '');
+    if (w === 'sound') L.push('# ---- ' + tag + ' sound ----', 'beep = pwmio.PWMOut(' + PFX + pin + ', frequency=440, duty_cycle=0, variable_frequency=True)', '');
+    if (w === 'servo') L.push('# ---- ' + tag + ' servo ----', 'arm = servo.Servo(pwmio.PWMOut(' + PFX + pin + ', duty_cycle=2 ** 15, frequency=50))', '');
   });
-  if (pirs.length) L.push('# ---- motion sensors: OUT goes high while something moves ----', 'PIRS = []', 'for gp, name in (' + pirs.map((q) => '(board.GP' + q[0] + ', ' + pyStr(q[1]) + ')').join(', ') + ',):', '    pin = digitalio.DigitalInOut(gp)', '    pin.direction = digitalio.Direction.INPUT', '    PIRS.append([pin, name, False])', '');
+  if (pirs.length) L.push('# ---- motion sensors: OUT goes high while something moves ----', 'PIRS = []', 'for gp, name in (' + pirs.map((q) => '(' + PFX + q[0] + ', ' + pyStr(q[1]) + ')').join(', ') + ',):', '    pin = digitalio.DigitalInOut(gp)', '    pin.direction = digitalio.Direction.INPUT', '    PIRS.append([pin, name, False])', '');
   if (tofs.length) L.push('# ---- laser distance (VL53L0X), in mm. Several on one bus need their address changed: one works as it comes ----', 'tof = None', 'try:', '    import adafruit_vl53l0x', '    tof = adafruit_vl53l0x.VL53L0X(i2c)', 'except Exception as err:', '    print("NOCIV distance sensor not found yet:", err)', 'tof_name = ' + pyStr(tofs[0]), 'tof_next = 0', '');
-  if (cams.length) L.push('# ---- SPI camera (Arducam Mini 2MP): this checks it answers on both buses.', '# To take photos, add Arducam\'s CircuitPython code for the Pico (their PICO_SPI_CAM examples) and use the same pins.', 'cam_cs = digitalio.DigitalInOut(board.GP' + cams[0][0] + ')', 'cam_cs.direction = digitalio.Direction.OUTPUT', 'cam_cs.value = True',
+  if (cams.length) L.push('# ---- SPI camera (Arducam Mini 2MP): this checks it answers on both buses.', '# To take photos, add Arducam\'s CircuitPython code for the Pico (their PICO_SPI_CAM examples) and use the same pins.', 'cam_cs = digitalio.DigitalInOut(' + PFX + cams[0][0] + ')', 'cam_cs.direction = digitalio.Direction.OUTPUT', 'cam_cs.value = True',
     'def camera_ok():', '    buf = bytearray(1)', '    while not spi.try_lock():', '        pass', '    try:', '        spi.configure(baudrate=4000000)', '        cam_cs.value = False', '        spi.write(bytes([0x80, 0x55]))', '        cam_cs.value = True', '        cam_cs.value = False', '        spi.write(bytes([0x00]))', '        spi.readinto(buf)', '        cam_cs.value = True', '    finally:', '        spi.unlock()',
     '    seen = False', '    if i2c and i2c.try_lock():', '        try:', '            seen = 0x30 in i2c.scan()', '        finally:', '            i2c.unlock()', '    return buf[0] == 0x55 and seen', '',
     'if camera_ok():', '    print("NOCIV ' + cams[0][1] + ' 1")', '    show("Camera found")', 'else:', '    print("NOCIV ' + cams[0][1] + ' 0")', '    show("Camera not found")', '');

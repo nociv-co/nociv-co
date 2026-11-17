@@ -3,12 +3,12 @@
 // Print: your printer and bed, material, how it joins, where the puzzle seams go. Files: STL per piece, wood templates, wiring.
 import * as THREE from 'three';
 import { OrbitControls } from 'three/addons/OrbitControls.js';
-import * as G from './geo.js?v=31';
+import * as G from './geo.js?v=32';
 import { CARABINER_HOOK_OUTLINE_MM, CARABINER_DEFAULT_THICKNESS_MM } from './charm_carabiner_hook.js?v=1';
 import { openMeasure, GROUPS } from './capture.js?v=20';
-import { makeBoard, boardFiles, boardSvg, zip as zipFiles } from './board.js?v=3';
-import { charParts, chSpec, charBuyList, CH_DEF, headDims, faceSpots, faceLimit, featPoly, flatParts, FEATS } from './char3d.js?v=4';
-import { planWiring, codeFor, PICO_LEFT, PICO_RIGHT, PICO_PINS, PICO_BRAINS, NEED } from './wiring.js?v=21';
+import { makeBoard, boardFiles, boardSvg, zip as zipFiles } from './board.js?v=4';
+import { charParts, chSpec, charBuyList, CH_DEF, headDims, faceSpots, faceLimit, featPoly, flatParts, FEATS } from './char3d.js?v=5';
+import { planWiring, codeFor, PICO_LEFT, PICO_RIGHT, PICO_PINS, PICO_BRAINS, NEED, BOARDS, BOARD_OF } from './wiring.js?v=22';
 
 const CZ = window.CZ, R = G.RULE, $ = (id) => document.getElementById(id);
 const esc = (s) => String(s == null ? '' : s).replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
@@ -120,6 +120,7 @@ function problems(it) {
   const body = it.of != null && !it.free && it.panel !== 'inside' ? G.cutShape(P, it.x, it.y, it.r || 0) : rectPoly(f); /* a part soldered on a board only needs its hole to fit, not its module size */
   if (body.length && !G.inside(body, area)) out.push('over the edge');
   posts().forEach(([x, y]) => { if (body.length && G.area(G.inter(body, [G.circle(x, y, R.POSTR + 0.8, 16)])) > 0.5) out.push('on a screw post'); });
+  if (isClam() && S.wpass === 'channel' && it.panel !== 'lid' && it.of == null) { const m = wireDuct(); if (m && G.area(G.inter(rectPoly(f), [G.mountRect(m, 6.5, R.T + 6.5, 0)])) > 0.5) out.push('on the wire channel'); } /* the duct runs floor to top inside the hinge wall */
   const fam = (a) => (a.of != null ? a.of : a.id); /* a board and the parts on it are one family: the photo already proved they fit together */
   S.items.forEach((q) => {
     if (q === it || !PP(q)) return;
@@ -520,7 +521,9 @@ function decoMove(key, x, y) {
     let p = faceLimit(c, [x / s, y / s]); if (key === 'es' || key === 'ms') p = [0, p[1]]; pos[key] = p;
     const twin = { eL: 'eR', eR: 'eL', bL: 'bR', bR: 'bL' }[key]; if (twin) pos[twin] = [-p[0], p[1]]; /* eyes and brows move as a pair, so the face stays even */
     return; }
-  const q = (S.deco || []).find((z) => z.id === key); if (!q) return; const b = G.bbox(outline()), m = 7; const at = decoInside(Math.max(b.x0 + m, Math.min(b.x1 - m, x)), Math.max(b.y0 + m, Math.min(b.y1 - m, y))); q.x = at[0]; q.y = at[1];
+  const q = (S.deco || []).find((z) => z.id === key); if (!q) return; const b = G.bbox(outline()), m = 7; let at = decoInside(Math.max(b.x0 + m, Math.min(b.x1 - m, x)), Math.max(b.y0 + m, Math.min(b.y1 - m, y)));
+  if (isLimb(q) && isClam()) { const hf = hingeFace(), k = 18; /* an arm or leg screwed near the hinge would hang off the lid when it opens: keep it 18 mm clear */ if (hf === 'back') at = [at[0], Math.min(at[1], b.y1 - k)]; else if (hf === 'left') at = [Math.max(at[0], b.x0 + k), at[1]]; else if (hf === 'right') at = [Math.min(at[0], b.x1 - k), at[1]]; }
+  q.x = at[0]; q.y = at[1];
 }
 function decoWire() {
 cv.addEventListener('pointerdown', (e) => { if (!decoOn() || !DECO || !DECO.xf) return; const [x, y] = decoPoint(e); let best = null, bd = 1e9; DECO.sc.items.forEach((it) => { const dd = Math.hypot(it.x - x, it.y - y); if (dd < Math.max(11, it.r + 5) && dd < bd) { bd = dd; best = it; } });
@@ -555,14 +558,14 @@ function charHtml() { const c = chSpec(xp().ch), row = (label, f, opts) => '<div
     '<p class="note" style="margin:8px 0 0"><b>You buy:</b> ' + charBuyList(c).join('. ') + '.</p>' + filLine('char'); }
 // ---------- the keyboard page ----------
 function kbCase() { const K = kb(), d = dims(), wall = R.T + R.CLR + 1, iw = d.W - 2 * wall, ih = d.D - 2 * wall; return { iw, ih, fits: (K.w <= iw && K.h <= ih) || (K.h <= iw && K.w <= ih), has: S.items.some((i) => i.type === 'kbd') }; }
-function kbHtml() { const K = kb(), X = xp(), n = K.c * K.r, C = kbCase(), cost = kbCost(K);
-  return '<p class="h" style="margin-top:10px">1. Size</p>' + stepper('xk_c', 'Across', K.c + ' keys') + stepper('xk_r', 'Down', K.r + ' keys') +
+function kbHtml() { const K = kb(), X = xp(), n = K.sw.length, C = kbCase(), cost = kbCost(K);
+  return '<p class="h" style="margin-top:10px">1. Size</p><div class="row"><b>Layout</b>' + seg('xkp', [['custom', 'Custom'], ['60', '60% (61-key)']], K.s60 ? '60' : 'custom') + '</div>' + (K.s60 ? '<p class="note keep" style="margin:0 0 6px">The standard 61-key typing block: no number pad, F row or arrow keys. Fn+1..= gives F1 to F12, Fn+WASD or IJKL the arrows, Fn+Backspace Delete. The plate is split into puzzle pieces when it is bigger than your bed.</p>' : stepper('xk_c', 'Across', K.c + ' keys') + stepper('xk_r', 'Down', K.r + ' keys')) +
     '<p class="note" style="margin:4px 0 6px">It is ' + K.w.toFixed(0) + ' x ' + K.h.toFixed(0) + ' mm with ' + n + ' keys. ' + (C.has ? '<span class="ok">It is in your case.</span>' : C.fits ? '<span class="ok">It fits inside your case.</span>' : 'Your case has ' + C.iw.toFixed(0) + ' x ' + C.ih.toFixed(0) + ' mm inside, so it does not fit yet.') + '</p>' +
     '<div class="grid g2">' + '<button class="btn" data-act="kbfit" style="padding:9px">Size it to my case</button><button class="btn' + (C.has ? '' : ' dark') + '" data-act="kbadd" style="padding:9px">' + (C.has ? 'Take it out of my case' : 'Put it in my case') + '</button></div>' +
     '<p class="h" style="margin-top:12px">2. Key caps</p>' + filLine('keys') +
     '<div class="row"><b>Cap fit</b>' + seg('xkf', [['0', 'Snug'], ['0.1', 'Normal'], ['0.2', 'Loose']], String(X.keys.f)) + '</div>' +
     '<p class="note" style="margin:2px 0 6px">Print 1 test cap first and push it on a switch. Too tight to go on: pick Loose. Falls off: pick Snug. Then print the rest.</p>' +
-    '<div class="row"><b>Space bar</b>' + seg('xksp', [['0', 'No'], ['1', 'Yes']], X.keys.sp ? '1' : '0') + '</div>' + (X.keys.sp ? '<p class="note" style="margin:2px 0 6px">The two middle keys of the bottom row share one long cap, and both type a space. Two switches push back, so it presses a little heavier than a single key.</p>' : '') +
+    (K.s60 ? '<div class="grid g2"><button class="btn" data-xsave="keycap1" style="padding:9px">Save 1 test cap</button><button class="btn" data-xsave="keycapswide" style="padding:9px">Save the ' + K.sw.filter((q) => q.u > 1).length + ' wide caps</button></div><p class="note" style="margin:4px 0 0">Plus ' + K.sw.filter((q) => !(q.u > 1)).length + ' plain caps: Save 24 caps, then again.</p><button class="btn" data-xsave="keycaps" style="padding:9px;margin-top:6px">Save 24 caps</button>' : '') + (K.s60 ? '' : '<div class="row"><b>Space bar</b>' + seg('xksp', [['0', 'No'], ['1', 'Yes']], X.keys.sp ? '1' : '0') + '</div>') + (K.s60 ? '' : X.keys.sp ? '<p class="note" style="margin:2px 0 6px">The two middle keys of the bottom row share one long cap, and both type a space. Two switches push back, so it presses a little heavier than a single key.</p>' : '') +
     '<div class="grid g2"><button class="btn" data-xsave="keycap1" style="padding:9px">Save 1 test cap</button><button class="btn" data-xsave="keycaps" style="padding:9px">Save ' + Math.min(24, n - (X.keys.sp ? 2 : 0)) + ' caps</button></div>' + (X.keys.sp ? '<button class="btn" data-xsave="keycap2" style="padding:9px;margin-top:8px">Save the space bar</button>' : '') + (n - (X.keys.sp ? 2 : 0) > 24 ? '<p class="note" style="margin-top:4px">The file holds 24. Print it ' + Math.ceil((n - (X.keys.sp ? 2 : 0)) / 24) + ' times for all ' + (n - (X.keys.sp ? 2 : 0)) + '.</p>' : '') +
     '<p class="h" style="margin-top:12px">3. Order the board</p><p class="note" style="margin:0 0 6px">' + cost.txt + ' Shipping and import fees usually cost more than the boards.</p>' +
     '<button class="btn dark" data-act="kbzip">Get the board files (zip)</button>' +
@@ -703,7 +706,7 @@ function pane(t) {
       '<p class="note" id="partTip">' + (list[0] ? 'Tap one to add it. The red minus takes one out. ' + esc(P[list[0]].tip) : '') + '</p>' + (fn[0] === 'power' ? '<p class="note">' + powerNote() + '</p>' : '') + chosenChips();
   }
   if (t === 'pins') return pinsHtml();
-  if (t === 'picks') return '<p class="h">Cheap, loved by the maker community</p><div class="list">' + CZ.PICKS.map((p) => '<div class="it"><b>' + esc(p[1]) + (c[p[0]] ? ' <span class="ok">added</span>' : '') + '</b>' + esc(p[2]) + '<div style="margin-top:6px"><button class="btn" data-add="' + p[0] + '" style="display:inline-block;padding:7px 12px">+ Add ' + esc(P[p[0]].short) + '</button></div></div>').join('') + '</div><p class="note">From Reddit (r/esp32, r/raspberry_pi), Instructables and maker blogs. Sources in the ? help.</p>';
+  if (t === 'picks') return '<p class="h">Cheap, loved by the maker community</p><div class="list">' + CZ.PICKS.map((p) => '<div class="it"><b>' + esc(p[1]) + (c[p[0].split('+')[0]] ? ' <span class="ok">added</span>' : '') + '</b>' + esc(p[2]) + '<div style="margin-top:6px"><button class="btn" data-add="' + p[0] + '" style="display:inline-block;padding:7px 12px">+ Add ' + esc(p[0].split('+').map((k) => P[k].short).join(' + ')) + '</button></div></div>').join('') + '</div><p class="note">From Reddit (r/esp32, r/raspberry_pi), Instructables and maker blogs. Sources in the ? help.</p>';
   if (t === 'lid' || t === 'base' || t === 'top') {
     const mine = S.items.filter((i) => i.panel === t || (t !== 'lid' && i.panel === 'inside')), s = S.items.find((i) => i.id === sel), probs = allProblems(), N = numbers();
     let h = s && s.of != null ? '<div class="selbar"><b>' + esc(label(s)) + '</b><select class="pin" data-kidtype="' + s.id + '" aria-label="What it is">' + KID_TYPES.filter((t) => CZ.PARTS[t]).map((t) => '<option value="' + t + '"' + (t === s.type ? ' selected' : '') + '>' + esc(CZ.PARTS[t].short) + '</option>').join('') + '</select>' + (RECTK(s) ? '<button data-act="rot">Turn</button>' : '') + '<button data-act="del">Remove</button></div>' + nudgeRow() + '<p class="note" style="margin:-2px 0 8px">Drag it, or use the arrows (0.5 mm), until it sits where the real part is (turn My photo on to check). Your board stays put.</p>' + (s.panel !== 'inside' ? stepper('kh', 'Height', kidH(s) + ' mm above board') + '<p class="note" style="margin:-2px 0 8px">' + esc(pokeNote(s)) + '</p>' : '') : s ? '<div class="selbar"><b>' + esc(label(s)) + '</b><button data-act="rot">Turn</button>' + (isClam() && s.panel !== 'inside' && !(PP(s) && PP(s).board) ? '<button data-act="swap">To ' + (s.panel === 'lid' ? 'base' : 'lid') + '</button>' : '') + '<button data-act="del">Remove</button></div>' +
@@ -792,7 +795,7 @@ const WIRES = { arducam: 8, pir: 3, vl53: 4, esp32cam: 0, tact12: 2, button16: 2
 // A wire goes from a part to a pin, the pin has a job, and you test it before the next one. Three ways to join: push-on wires, solder, or the board.
 const PIN_OF = {}; PICO_LEFT.forEach((n, i) => { if (PIN_OF[n] == null) PIN_OF[n] = i + 1; }); PICO_RIGHT.forEach((n, j) => { if (PIN_OF[n] == null) PIN_OF[n] = 40 - j; });
 const GND_PINS = [3, 8, 13, 18, 23, 28, 38];
-const pinWhere = (n) => (n <= 20 ? 'left side, pin ' + n + ' counting down from the USB plug' : 'right side, pin ' + (41 - n) + ' counting down from the USB plug');
+const pinWhere = (n) => { const B = BRDX(), L = B.left.length, nl = headerPins(B).nl; return n <= L ? 'left side, pin ' + n + ' counting down from the USB plug' : 'right side, pin ' + (nl + 1 - n) + ' counting down from the USB plug'; };
 function picoSvg(pin) { // the Pico seen from above, USB plug at the top, one pin lit
   let h = '<svg viewBox="0 0 64 150" style="float:right;width:74px;margin:0 0 4px 8px" aria-hidden="true"><rect x="14" y="8" width="36" height="136" rx="3" fill="#2f7d55"/><rect x="24" y="2" width="16" height="12" rx="2" fill="#b9b9b9"/><text x="32" y="26" text-anchor="middle" font-size="6" font-weight="800" fill="#fff" font-family="sans-serif">USB</text>';
   for (let i = 0; i < 20; i++) { const y = 14 + i * 6.6, l = i + 1, r = 40 - i; h += '<circle cx="17.5" cy="' + y + '" r="' + (pin === l ? 4.2 : 1.9) + '" fill="' + (pin === l ? '#c8412f' : '#f0cf6b') + '"/><circle cx="46.5" cy="' + y + '" r="' + (pin === r ? 4.2 : 1.9) + '" fill="' + (pin === r ? '#c8412f' : '#f0cf6b') + '"/>'; }
@@ -801,7 +804,7 @@ function picoSvg(pin) { // the Pico seen from above, USB plug at the top, one pi
 }
 const TESTS = { button: 'Press it. The small light on the Pico turns on while you hold it', knob: 'Turn or slide it. The small light on the Pico blinks as it moves', wheel: 'Turn it and press it. The small light on the Pico blinks', stick: 'Push it around. The small light on the Pico blinks', led: 'Press any button. This light switches on and off', ring: 'Press any button. The ring lights up', sound: 'Press any button. It beeps', servo: 'Press a button or turn a knob. The arm moves', screen: 'It shows NOCIV and the word Ready' };
 function wirePlan() {
-  const bi = brainInfo(); if (bi && PICO_BRAINS.indexOf(bi.type) < 0 && bi.type !== 'pico2') return { why: 'The wire by wire guide is for the Raspberry Pi Pico, Pico W and Pico 2 for now. Yours is the ' + bi.name + '.' };
+  const bi = brainInfo(); if (!BRD()) return { why: 'The wire by wire guide does not know the pins of the ' + bi.name + ' yet. It knows the Pico, Arduino Nano, Pro Micro, ESP32-C3 SuperMini, ESP32 DevKit, the Cheap Yellow Display and the Raspberry Pi.' };
   const w = wiring(); if (!w.rows.length) return { why: 'Add buttons, knobs, screens or lights in Brain, Electronics first. Each one gets its wires here.' };
   if (w.problems.length) return { why: 'Fix this in Brain, Wire it, Wiring first: ' + w.problems[0] };
   const rows = w.rows.slice().sort((a, b) => ((b.N.spi || b.N.i2c) ? 1 : 0) - ((a.N.spi || a.N.i2c) ? 1 : 0)); /* screens first: the screen is how you see the rest work */
@@ -810,7 +813,7 @@ function wirePlan() {
   const want = { GND: 0, '3V3': 0, VBUS: 0 }; parts.forEach((p) => p.pads.forEach(([, net]) => { if (want[net] != null) want[net]++; }));
   // direct pins first; only the overflow goes through a hub. A hub has 5 holes: 1 in, 4 out. A net with one pin (3.3 V) chains a second hub off the first.
   const hubs = [], share = {}; ['GND', '3V3', 'VBUS'].forEach((net) => {
-    const pins = net === 'GND' ? GND_PINS : [PIN_OF[net]]; if (want[net] <= pins.length) return;
+    const HP = headerPins(BRDX()), pins = net === 'GND' ? HP.gnd : [HP.P[netName(net)]].filter(Boolean); if (!pins.length || want[net] <= pins.length) return;
     let n; if (pins.length > 1) n = Math.min(pins.length, Math.ceil((want[net] - pins.length) / 3)); else { n = 1; while (4 * n - (n - 1) < want[net]) n++; }
     const sh = share[net] = { hubs: [], direct: pins.length > 1 ? pins.slice(n) : [] };
     for (let i = 0; i < n; i++) { const hb = { net, name: (net === 'GND' ? 'ground' : net === 'VBUS' ? '5 V' : '3.3 V') + ' hub ' + String.fromCharCode(65 + i), left: 4, pin: pins.length > 1 ? pins[i] : i === 0 ? pins[0] : null, from: pins.length === 1 && i > 0 ? sh.hubs[i - 1] : null }; if (hb.from) hb.from.left--; hubs.push(hb); sh.hubs.push(hb); }
@@ -823,7 +826,7 @@ function wirePlan() {
       const st = { k: row.it.key + ':' + m, kind: 'wire', title, label, net, link: P ? P.link : 'pins' };
       if (share[net] && share[net].direct.length) st.pin = share[net].direct.shift();
       else if (share[net]) { const hb = share[net].hubs.find((x) => x.left > 0) || share[net].hubs[0]; hb.left--; st.hub = hb; }
-      else st.pin = net === 'GND' ? GND_PINS[g++ % GND_PINS.length] : PIN_OF[net];
+      else { const HP = headerPins(BRDX()); st.pin = net === 'GND' ? HP.gnd[g++ % HP.gnd.length] : HP.P[netName(net)] || HP.P[net]; }
       steps.push(st);
     });
     steps.push({ k: row.it.key + ':test', kind: 'test', title, what: row.N.what, note: row.note });
@@ -838,17 +841,17 @@ function wireHtml() {
   const done = S.wired || {}, steps = pl.steps, nd = steps.filter((x) => done[x.k]).length, cur = steps.find((x) => !done[x.k]);
   const jumpers = steps.filter((x) => x.kind === 'wire' || x.kind === 'hub').length;
   h += join === 'push'
-    ? '<p class="note" style="margin-top:0"><b>No solder, no breadboard.</b> You need a Pico with its pins already on (Pico H or WH) and about ' + jumpers + ' push-on jumper wires (female to female). One end pushes onto the part, the other onto a Pico pin.' + (pl.hubs.length ? ' Also ' + pl.hubs.length + ' lever connector' + (pl.hubs.length > 1 ? 's' : '') + ' with 5 holes (the Wago 221 kind): they join wires with a flip of a lever.' : '') + '</p>'
-    : '<p class="note" style="margin-top:0"><b>Solder.</b> One wire at a time: solder one end to the part, the other to the Pico pin shown. About ' + jumpers + ' wires. Test each part before the next one.</p>';
+    ? '<p class="note" style="margin-top:0"><b>No solder, no breadboard.</b> You need ' + (BRDX() === BOARDS.pico ? 'a Pico with its pins already on (Pico H or WH)' : (/^[AEIOU]/.test(bshort()) ? 'an ' : 'a ') + bshort() + ' with its header pins already on') + ' and about ' + jumpers + ' push-on jumper wires (female to female). One end pushes onto the part, the other onto a ' + (BRDX() === BOARDS.pico ? 'Pico' : 'board') + ' pin.' + (pl.hubs.length ? ' Also ' + pl.hubs.length + ' lever connector' + (pl.hubs.length > 1 ? 's' : '') + ' with 5 holes (the Wago 221 kind): they join wires with a flip of a lever.' : '') + '</p>'
+    : '<p class="note" style="margin-top:0"><b>Solder.</b> One wire at a time: solder one end to the part, the other to the ' + (BRDX() === BOARDS.pico ? 'Pico' : 'board') + ' pin shown. About ' + jumpers + ' wires. Test each part before the next one.</p>';
   h += '<div class="prog"><i style="width:' + Math.round(nd / steps.length * 100) + '%"></i><b>' + nd + ' of ' + steps.length + '</b></div>';
   const tick = (k, on) => '<button data-wired="' + esc(k) + '" style="all:unset;cursor:pointer;float:right;padding:6px 9px;border:1.5px solid #1a1a1a;border-radius:9px;font:800 11.5px/1 var(--sys);margin-left:6px;' + (on ? 'background:#1a1a1a;color:#fff' : '') + '">' + (on ? 'Done' : 'Tick when done') + '</button>';
-  const pinTxt = (p) => 'Pico pin ' + p + ' (' + pinWhere(p) + ')';
+  const pinTxt = (p) => BRDX().name.replace(/Raspberry Pi /, '').replace(/ \(.*\)/, '') + ' pin ' + p + ' (' + pinWhere(p) + ')';
   const card = (x, solo) => { // solo: the one you are on, shown big with the pin picture. In the full list, a short line each.
     const on = !!done[x.k], full = solo || !on, btn = solo ? '' : tick(x.k, on), end = solo ? '<button class="btn red" data-wired="' + esc(x.k) + '" style="width:100%;margin-top:10px;clear:both">Done. Next one</button>' : '';
-    if (x.kind === 'code') return '<div class="it">' + btn + '<b>First: put the test code on the Pico</b>' + (!full ? '' : 'Save code.py, plug the Pico into a computer with its USB cable, and follow the 3 steps at the top of the file. You do this once. After that every part can be tested the moment its wires are on, powered by any USB charger.<br><button class="btn dark" data-act="savecode" style="margin-top:6px">Save code.py</button>') + end + '</div>';
+    if (x.kind === 'code') return '<div class="it">' + btn + '<b>' + (BRDX().cp ? 'First: put the test code on the ' + bshort() + '</b>' + (!full ? '' : 'Save code.py, plug the ' + bshort() + ' into a computer with its USB cable, and follow the 3 steps at the top of the file. You do this once. After that every part can be tested the moment its wires are on, powered by any USB charger.<br><button class="btn dark" data-act="savecode" style="margin-top:6px">Save code.py</button>') : 'First: the pin list for your code</b>' + (!full ? '' : 'The ' + bshort() + ' does not run CircuitPython, so there is no test code to load. Save the pin list and write your code ' + (BRDX().pi ? 'in Python on the Pi (gpiozero)' : 'in the Arduino IDE') + ' with these pins.<br><button class="btn dark" data-act="savecode" style="margin-top:6px">Save the pin list</button>')) + end + '</div>';
     if (x.kind === 'hub') return '<div class="it">' + btn + (solo && x.pin ? picoSvg(x.pin) : '') + '<b>' + esc(x.hub.name[0].toUpperCase() + x.hub.name.slice(1)) + '</b>' + (!full ? '' : !x.pin ? 'One wire from ' + esc(x.hub.from.name) + ' into a second 5-hole lever connector. Strip 1 cm on both ends.' : (join === 'push' ? 'One wire from ' + pinTxt(x.pin) + ' into a 5-hole lever connector. Cut off the plug on that end, strip 1 cm, lift the lever, push the wire in, close it. The other 4 holes are for your electronics.' : 'One wire from ' + pinTxt(x.pin) + '. Up to 4 parts join onto this wire.')) + end + '</div>';
     if (x.kind === 'test') return '<div class="it">' + btn + '<b>Test ' + esc(x.title) + '</b>' + (!full ? '' : esc(TESTS[x.what] || 'Check it does its job') + '. Nothing? Check its wires again, one by one.' + (x.note ? '<small>' + esc(x.note) + '</small>' : '')) + end + '</div>';
-    const to = x.hub ? x.hub.name + ' (any free hole)' : pinTxt(x.pin) + (x.net.indexOf('GP') === 0 ? ', named ' + x.net : x.net === 'GND' ? ', a ground pin' : x.net === 'VBUS' ? ', 5 volts from USB' : ', 3.3 volts');
+    const to = x.hub ? x.hub.name + ' (any free hole)' : pinTxt(x.pin) + (x.net !== 'GND' && x.net !== 'VBUS' && x.net !== '3V3' ? ', named ' + x.net : x.net === 'GND' ? ', a ground pin' : x.net === 'VBUS' ? ', 5 volts (' + BRDX().v5 + ')' : ', 3.3 volts (' + BRDX().v3 + ')');
     const bare = x.link === 'solder' && join === 'push' ? '<small>This part has bare legs. No-solder ways: buy it with wires already on, use push-on spade plugs, or clamp its leg and a wire together in a lever connector.</small>' : '';
     return '<div class="it">' + btn + (solo && !x.hub ? picoSvg(x.pin) : '') + '<b>' + esc(x.title) + ': ' + esc(x.label) + '</b>' + (!full ? '' : 'From the ' + esc(x.label) + ' pin on the part to ' + esc(to) + '.' + bare) + end + '</div>';
   };
@@ -900,7 +903,7 @@ $('pane').addEventListener('click', (e) => {
   if (d.act === 'undo1') { undo(); return; }
   if (d.fn != null) { S.fn = d.fn || null; if (d.fn && d.fn !== 'print') S.cat = d.fn; save(); render(); return; }
   if (d.sub) { e.stopPropagation(); removePart(d.sub); render(); return; }
-  if (d.add) { const it = addPart(d.add); const P = PP(it); const tip = $('partTip'); render(); if ($('partTip')) $('partTip').textContent = P.tip; void tip; return; }
+  if (d.add) { let it = null; d.add.split('+').forEach((k) => { it = addPart(k); }); const P = PP(it); const tip = $('partTip'); render(); if ($('partTip')) $('partTip').textContent = P.tip; void tip; return; }
   if (d.sel) { sel = +d.sel; render(); return; }
   if (d.delmine) { delete S.mine[d.delmine]; S.items = S.items.filter((i) => i.type !== d.delmine); save(); render(); return; }
   if (d.style) { S.picked = true; S.style = d.style; const z = SIZES[S.style]; S.cols = z[0]; S.rows = z[1]; S.xw = S.xd = 0; if (UPRIGHT[S.style]) S.snap = true; /* the front plate snaps on */ reflow(); if (allProblems().length) fitAll(); /* the new shape is too small for what is in it: grow it until everything fits */ save(); render(); return; }
@@ -918,10 +921,10 @@ $('pane').addEventListener('click', (e) => {
       Promise.all(C.parts.filter((q) => !q.show).map((q) => G.stl(G.trisOf(G.layerGeos(q.print || q.layers)), q.id).arrayBuffer().then((ab) => ({ name: 'character-' + q.id + (q.n > 1 ? '-print-' + q.n : '') + '.stl', data: new Uint8Array(ab) })))).then((list) => {
         const txt = ['NOCIV CASE ZERO CHARACTER', Math.round(C.tall) + ' mm tall. ' + NEWP.trim(), '', 'PRINT', 'Standard profile for your printer and filament, 0.2 mm layers, 3 walls, 15 percent infill, supports off.'].concat(C.parts.filter((q) => !q.show).map((q) => '  ' + q.name + (q.n > 1 ? ' (print ' + q.n + ')' : '') + ': ' + q.how), ['', 'BUY'], charBuyList(C.spec).map((x) => '  ' + x), ['', 'PUT IT TOGETHER', '1. Legs: screw a leg bar to each hip hole on the body with an M3 x 12. Screw a foot to the bottom of each leg with an M3 x 16 and a nut.', '2. Arms: the same at the shoulder holes, with a hand on the end of each arm.', '3. Push the neck tube into the hole on top of the body. A drop of glue keeps it.', C.turn ? '4. Slide the head gear over the neck. Put the thumb wheel on the tab behind it with the M3 x 20 screw and two nuts, loose enough to turn. Glue the head gear to the underside of the head plate.' : '4. Slide the neck ring over the neck.', '5. Slide the head plate over the neck, then press the head down onto the plate. Glue the plate into the head once any screen is in.', '6. Tighten the arm and leg screws until they hold a pose.', '']).join('\n');
         list.push({ name: 'START HERE.txt', text: txt }); saveFile({ name: 'casezero-character.zip', blob: new Blob([zipFiles(list)], { type: 'application/zip' }) }); tag('Saved casezero-character.zip'); }); }, 30); return; }
-  if (d.xsave) { const f = addonFile(d.xsave); if (f) saveFile(f); return; }
+  if (d.xsave) { const f = addonFile(d.xsave); if (f && f.pending) f.pending.then((blob) => saveFile({ name: f.name, blob })); else if (f) saveFile(f); return; }
   if (act === 'start') { showStart(); return; }
   if (act === 'clearall') { if (Date.now() - CLEARARM < 4000) { backup(); snapU(); S.items = S.items.filter((i) => i.of != null || (PP(i) && PP(i).board)); /* a board you measured from a photo stays, with the parts on it */ sel = null; LAST = null; CLEARARM = 0; CLEARED = true; } else CLEARARM = Date.now(); save(); render(); return; }
-  if (act === 'savecode') { const c = codeFor(wiring(), summaryLine(), recipeFn()); saveFile({ name: 'code.py', blob: new Blob([c.text], { type: 'text/x-python' }) }); return; }
+  if (act === 'savecode') { const c = codeFor(wiring(), summaryLine(), recipeFn(), BRDX()); saveFile({ name: 'code.py', blob: new Blob([c.text], { type: 'text/x-python' }) }); return; }
   if (act === 'repin') { S.pins = {}; save(); render(); return; }
   if (act === 'toWiring') { S.tab[0] = 'pins'; go(0); return; }
   if (act === 'toBoard') { S.tab[5] = 'pcb'; go(5); return; }
@@ -954,6 +957,10 @@ $('pane').addEventListener('click', (e) => {
     X.keys.c = Math.min(12, c); X.keys.r = Math.min(6, r); save(); render(); tag('Sized to your case: ' + X.keys.c + ' x ' + X.keys.r + ' keys'); return; }
   if (act === 'kbadd') { snapU(); const has = S.items.find((i) => i.type === 'kbd'); if (has) { S.items = S.items.filter((i) => i !== has); save(); render(); tag('Keyboard taken out of your case'); return; }
     addPart('kbd'); if (allProblems().length) fitAll(); save(); render(); tag(allProblems().length ? 'It is in, but something overlaps. Open Body, Arrange.' : 'In your case. See it in Body, Arrange.'); return; }
+  if ((act === 'kbzip' || act === 'kbshow') && kb().s60) { /* a 60% board's keys sit on quarter steps, off the 2.54 mm board grid: it is hand-wired, so the zip holds the code and the wiring guide */
+    const K = kb(), hb = { kb: K, cols: Array.from({ length: K.c }, (q, i) => KB_GP[i]), rows: Array.from({ length: K.r }, (q, i) => KB_GP[K.c + i]) };
+    if (act === 'kbshow') { const el = document.querySelector('[data-kbsvg]'); if (el) el.innerHTML = '<p class="note keep">The 60% layout is hand-wired: its wide keys put switches between the 2.54 mm steps a board needs. One diode per key, 5 row wires and 14 column wires to the Pico. The zip has the guide and code.py.</p>'; return; }
+    saveFile({ name: 'casezero-keyboard-60.zip', blob: new Blob([zipFiles([{ name: 'code.py', text: kbCode60(hb) }, { name: 'README.txt', text: ['NOCIV Case Zero keyboard, 60% (61 keys), hand-wired', '', 'WIRING', '1. Click the 61 switches into the printed plate.', '2. Each switch: a 1N4148 diode from one pin to its row wire, the stripe (cathode) toward the row. Same for every key.', '3. Rows (top row first): ' + hb.rows.map((g2) => 'GP' + g2).join(', ') + '.', '4. Columns (key position in its row, left to right): ' + hb.cols.map((g2) => 'GP' + g2).join(', ') + '. The other switch pin of each key goes to its column wire.', '5. Save code.py on the Pico. Fn is the key right of the right Alt.', '', 'Keys 2 keys wide and longer (Backspace, Enter, both Shifts, Space) rock a little without stabilizers.'].join('\n') }])], { type: 'application/zip' }) }); tag('Saved casezero-keyboard-60.zip'); return; }
   if (act === 'kbzip' || act === 'kbshow') { tag('Drawing the board...'); setTimeout(() => { const Bd = kbBoard(); if (!Bd.ok) { tag(Bd.errors[0] || 'The board could not be drawn.'); return; }
       if (act === 'kbshow') { const el = document.querySelector('[data-kbsvg]'); if (el) el.innerHTML = boardSvg(Bd) + '<p class="note" style="margin-top:4px">Gold lines are on the front, blue on the back. Checked: all ' + Bd.check.connected + ' pads joined, nothing closer than ' + Bd.check.minGap.toFixed(2) + ' mm.</p>'; tag('Board ' + Bd.box.w.toFixed(0) + ' x ' + Bd.box.h.toFixed(0) + ' mm'); return; }
       const nm = 'casezero-keyboard-' + Bd.kb.c + 'x' + Bd.kb.r; saveFile({ name: nm + '.zip', blob: new Blob([zipFiles(boardFiles(Bd, nm).concat([{ name: 'README.txt', text: kbReadme(Bd) }, { name: 'code.py', text: kbCode(Bd) }]))], { type: 'application/zip' }) }); tag('Saved ' + nm + '.zip'); }, 30); return; }
@@ -978,7 +985,7 @@ $('pane').addEventListener('click', (e) => {
   if (d.jump) { const pi = PAGES.findIndex((q) => q.name === d.jump); if (pi >= 0) openPage(pi); return; }
   if (act === 'saveall') { if (!FILES || !FILES.length) return; tag('Packing your files...');
     Promise.all(FILES.map(fileOut).map((f) => f.blob.arrayBuffer().then((ab) => ({ name: f.name, data: new Uint8Array(ab) })))).then((list) => {
-      let code = null; try { const w = wiring(); if (w && w.rows && w.rows.length && !w.problems.length) code = codeFor(w, summaryLine(), recipeFn()).text; } catch (e) { code = null; }
+      let code = null; try { const w = wiring(); if (w && w.rows && w.rows.length && !w.problems.length) code = codeFor(w, summaryLine(), recipeFn(), BRDX()).text; } catch (e) { code = null; }
       const wood = S.material === 'wood', start = ['NOCIV CASE ZERO: START HERE', summaryLine().replace(/<[^>]+>/g, ''), '', 'FROM FILES TO A FINISHED DEVICE', '',
         '1. PRINT', wood ? '   Print the .svg templates at 100 percent, tape them to the wood and cut them out.' : '   Print every .' + fmtOf() + ' file. In your slicer pick the standard profile for your printer and filament, then set', wood ? '' : '   ' + LAYER[S.layer] + ' mm layers, 4 walls, 15 percent infill, supports off. Print the deck face down and the tray open side up.', '',
         '2. BUY THE PARTS', '   casezero-parts.txt is the list. For prices and what to search for, open the builder: nociv.co/casezero/build, Brain, Shop.', '',
@@ -1015,7 +1022,7 @@ $('pane').addEventListener('click', (e) => {
     const nn = (S.notches || [])[S.nsel]; if (nn && k === 'n_edge') { if ((nn.edge === 'left' || nn.edge === 'right') !== (v === 'left' || v === 'right')) nn.at = Math.round((v === 'left' || v === 'right' ? dims().D : dims().W) / 2); nn.edge = v; reflow(); save(); render(); return; } if (nn && k === 'n_shape') { nn.shape = v; save(); render(); return; }
     if (k.indexOf('ch_') === 0) { const X = xp(), f = k.slice(3); X.ch[f] = (f === 'brows' || f === 'turn' || f === 'size' || f === 'bend' || f === 'servo') ? +v : v; const two = X.ch.head === 'cube' && X.ch.size >= 72; if (!two && f === 'eyes' && v === 'screen' && X.ch.mouth === 'screen') X.ch.mouth = 'line'; if (!two && f === 'mouth' && v === 'screen' && X.ch.eyes === 'screen') X.ch.eyes = 'oval'; if (!two && (f === 'size' || f === 'head') && X.ch.eyes === 'screen' && X.ch.mouth === 'screen') X.ch.mouth = 'line'; save(); render(); return; }
     if (k === 'fil') { S.fil = v; save(); render(); return; } if (k === 'pq') { S.pq = v; S.psOpen = true; save(); render(); return; }
-    { const X = xp(); if (k === 'xkf') { X.keys.f = +v; save(); render(); return; } if (k === 'xksp') { X.keys.sp = v === '1' ? 1 : 0; save(); render(); return; } if (k === 'xs_a') { X.stand.a = +v; save(); render(); return; } if (k === 'xch_s' || k === 'xch_h') { X.charm[k === 'xch_s' ? 'size' : 'hook'] = v; if (k === 'xch_h') S.attachedParts.forEach((m) => { if (m.partId === 'charm' && m.charm) m.charm.hook = v; }); MPC = {}; save(); render(); return; } if (k === 'xf_hole') { X.feet.hole = v === '1'; save(); render(); return; } if (k === 'xo_s') { X.standoff.s = v; save(); render(); return; } }
+    { const X = xp(); if (k === 'xkf') { X.keys.f = +v; save(); render(); return; } if (k === 'xksp') { X.keys.sp = v === '1' ? 1 : 0; save(); render(); return; } if (k === 'xkp') { X.keys.preset = v === '60' ? '60' : 'custom'; KBC = null; save(); render(); return; } if (k === 'xs_a') { X.stand.a = +v; save(); render(); return; } if (k === 'xch_s' || k === 'xch_h') { X.charm[k === 'xch_s' ? 'size' : 'hook'] = v; if (k === 'xch_h') S.attachedParts.forEach((m) => { if (m.partId === 'charm' && m.charm) m.charm.hook = v; }); MPC = {}; save(); render(); return; } if (k === 'xf_hole') { X.feet.hole = v === '1'; save(); render(); return; } if (k === 'xo_s') { X.standoff.s = v; save(); render(); return; } }
     if (k === 'brand') { S.brand = v; save(); render(); return; }
     if (k === 'walls') { S.walls = v; S.wallT = null; applyWalls(); reflow(); save(); render(); return; }
     if (k === 'wpass') { S.wpass = v; save(); render(); return; }
@@ -1098,14 +1105,14 @@ function drawBrain(W, H) {
   const pad = 10 * d, area = PHOTO ? { x: pad, y: H * 0.58, w: W - pad * 2, h: H * 0.42 - 44 * d } : { x: pad, y: pad, w: W - pad * 2 - miniRoom(), h: H - pad * 2 - 40 * d };
   if (PHOTO) { g.fillStyle = 'rgba(243,239,230,.92)'; g.fillRect(0, area.y - 6 * d, W, H - area.y + 6 * d); }
   // shelf pack at one shared scale so sizes compare
-  let k = 3 * d; const pack = (kk) => { let x = 0, y = 0, rowH = 0; const out = []; list.forEach((i) => { const p = P[i.type], w = Math.max(p.w * kk + 8 * d, 58 * d), h = p.h * kk + 20 * d; if (x + w > area.w && x > 0) { x = 0; y += rowH + 6 * d; rowH = 0; } out.push({ i, x, y, w, h }); x += w + 6 * d; rowH = Math.max(rowH, h); }); return { out, h: y + rowH }; };
+  let k = 3 * d; const capH = W / d < 700 ? 74 * d : 0; /* on a phone every tile is one height: a big screen no longer towers over a button */ const pack = (kk) => { let x = 0, y = 0, rowH = 0; const out = []; list.forEach((i) => { const p = P[i.type], ki = capH ? Math.min(kk, (capH - 24 * d) / p.h) : kk, w = Math.max(p.w * ki + 8 * d, 58 * d), h = capH || p.h * ki + 20 * d; if (x + w > area.w && x > 0) { x = 0; y += rowH + 6 * d; rowH = 0; } out.push({ i, x, y, w, h, ki }); x += w + 6 * d; rowH = Math.max(rowH, h); }); return { out, h: y + rowH }; };
   let pk = pack(k); while (pk.h > area.h && k > 0.3) { k *= 0.9; pk = pack(k); }
   const N = numbers();
   pk.out.forEach((o) => {
     const p = P[o.i.type], x = area.x + o.x, y = area.y + o.y, on = o.i.id === TSEL; TRAY.push({ id: o.i.id, x, y, w: o.w, h: o.h });
     g.fillStyle = '#fff'; g.strokeStyle = on ? '#c8412f' : '#1a1a1a'; g.lineWidth = (on ? 3.5 : 1.5) * d; g.beginPath(); g.roundRect ? g.roundRect(x, y, o.w, o.h, 8 * d) : g.rect(x, y, o.w, o.h); g.fill(); g.stroke();
-    const cx = x + o.w / 2, cy = y + 4 * d + p.h * k / 2;
-    drawPartAt(p, cx, cy, k, 0, false);
+    const cx = x + o.w / 2, cy = y + 4 * d + p.h * o.ki / 2;
+    drawPartAt(p, cx, cy, o.ki, 0, false);
     g.fillStyle = '#1a1a1a'; g.font = '800 ' + 10 * d + 'px -apple-system,Arial'; g.textAlign = 'center'; let lb = (N[o.i.id] || '') + ' ' + p.short; if (g.measureText(lb).width > o.w - 6 * d) lb = N[o.i.id] || p.short.slice(0, 5); g.fillText(lb, cx, y + o.h - 6 * d);
     if (on) { const bx = x + o.w - 4 * d, by = y + 4 * d; g.fillStyle = '#c8412f'; g.beginPath(); g.arc(bx, by, 11 * d, 0, 7); g.fill(); g.strokeStyle = '#fff'; g.lineWidth = 2.5 * d; g.beginPath(); g.moveTo(bx - 4 * d, by - 4 * d); g.lineTo(bx + 4 * d, by + 4 * d); g.moveTo(bx + 4 * d, by - 4 * d); g.lineTo(bx - 4 * d, by + 4 * d); g.stroke(); }
   });
@@ -1576,19 +1583,19 @@ function brainInfo() {
 }
 // ---------- Wiring map: the whole plan as one drawing. Test it: the parts act out what code.py does ----------
 const WCOL = ['#2f6fdb', '#c9a200', '#2f9a5b'], netCol = (net, i) => (net === '3V3' || net === 'VBUS' ? '#d23b2a' : net === 'GND' ? '#1a1a1a' : WCOL[i % 3]);
-function mapWhy() { const bi = brainInfo(); if (bi && PICO_BRAINS.indexOf(bi.type) < 0 && bi.type !== 'pico2') return 'The map and the test follow the wiring plan, which is made for the Raspberry Pi Pico, Pico W and Pico 2. Yours is the ' + bi.name + ', so its pins will differ.'; if (!wiring().rows.length) return 'Add buttons, knobs, screens, sensors or lights in Electronics first.'; return ''; }
+function mapWhy() { const bi = brainInfo(); if (!BRD()) return 'The map and the test do not know the pins of the ' + bi.name + ' yet.'; if (!wiring().rows.length) return 'Add buttons, knobs, screens, sensors or lights in Electronics first.'; return ''; }
 function pcx(e) { const r = cv.getBoundingClientRect(), k = cv.width / r.width; return [(e.clientX - r.left) * k, (e.clientY - r.top) * k]; }
 function drawMap(W, H) {
   const d = px(), w = wiring(), rows = w.rows, bi = brainInfo(); g.fillStyle = '#f7f4ec'; g.fillRect(0, 0, W, H);
   if (!rows.length) { g.fillStyle = '#6f6a60'; g.font = '800 ' + 14 * d + 'px -apple-system,Arial'; g.textAlign = 'center'; g.fillText('Add parts to see the wiring map', W / 2, H / 2); tag('Wiring map'); return; }
-  const bw = Math.min(W * 0.2, 96 * d), top = 28 * d, bh = H - top - 40 * d, bx = W / 2 - bw / 2, step = bh / 20, gnd = (side) => (side === 'L' ? PICO_LEFT : PICO_RIGHT).map((p, i) => (p === 'GND' ? i : -1)).filter((i) => i > -1);
-  const pinAt = (net, side, yNear) => { let i = PICO_LEFT.indexOf(net); if (i > -1 && net !== 'GND') return ['L', i]; i = PICO_RIGHT.indexOf(net); if (i > -1 && net !== 'GND') return ['R', i]; if (net === 'GND') { const list = gnd(side); const iy = list.reduce((a, c) => (Math.abs(top + (c + 0.5) * step - yNear) < Math.abs(top + (a + 0.5) * step - yNear) ? c : a), list[0]); return [side, iy]; } return null; };
+  const B = BRDX(), BL = B.left, BRr = B.right, nr = Math.max(BL.length, BRr.length), bw = Math.min(W * 0.2, 96 * d), top = 28 * d, bh = H - top - 40 * d, bx = W / 2 - bw / 2, step = bh / nr, gnd = (side) => (side === 'L' ? BL : BRr).map((p, i) => (p === 'GND' ? i : -1)).filter((i) => i > -1);
+  const pinAt = (net0, side, yNear) => { const net = netName(net0); let i = BL.indexOf(net); if (i > -1 && net !== 'GND') return ['L', i]; i = BRr.indexOf(net); if (i > -1 && net !== 'GND') return ['R', i]; if (net === 'GND') { const list = gnd(side).length ? gnd(side) : gnd(side === 'L' ? 'R' : 'L'); side = gnd(side).length ? side : side === 'L' ? 'R' : 'L'; const iy = list.reduce((a, c) => (Math.abs(top + (c + 0.5) * step - yNear) < Math.abs(top + (a + 0.5) * step - yNear) ? c : a), list[0]); return list.length ? [side, iy] : null; } return null; };
   const pxy = (sd, i) => [sd === 'L' ? bx : bx + bw, top + (i + 0.5) * step];
   g.fillStyle = '#2f7a4b'; g.beginPath(); g.roundRect ? g.roundRect(bx, top, bw, bh, 8 * d) : g.rect(bx, top, bw, bh); g.fill();
-  g.fillStyle = '#fff'; g.font = '800 ' + 11 * d + 'px -apple-system,Arial'; g.textAlign = 'center'; g.fillText((bi ? bi.name : 'Raspberry Pi Pico').replace(/Raspberry Pi /, '').slice(0, 14), W / 2, top + bh / 2);
+  g.fillStyle = '#fff'; g.font = '800 ' + 11 * d + 'px -apple-system,Arial'; g.textAlign = 'center'; g.fillText(B.name.replace(/Raspberry Pi /, '').replace(/ \(.*\)/, '').slice(0, 14), W / 2, top + bh / 2);
   g.font = '700 ' + Math.min(9 * d, step * 0.62) + 'px -apple-system,Arial';
-  for (let i = 0; i < 20; i++) { const yl = top + (i + 0.5) * step; g.textAlign = 'left'; g.fillStyle = '#e8f3ec'; g.fillText(PICO_LEFT[i], bx + 4 * d, yl + 3 * d); g.textAlign = 'right'; g.fillText(PICO_RIGHT[i], bx + bw - 4 * d, yl + 3 * d); g.fillStyle = '#d9c46a'; g.fillRect(bx - 2 * d, yl - 1.5 * d, 4 * d, 3 * d); g.fillRect(bx + bw - 2 * d, yl - 1.5 * d, 4 * d, 3 * d); }
-  const items = rows.map((row) => { const pads = padsFor(row), gl = pads.filter((p) => /^GP/.test(p[1])).map((p) => PICO_LEFT.indexOf(p[1]) > -1 ? -1 : 1).reduce((a, c) => a + c, 0); return { row, pads, side: gl > 0 ? 'R' : 'L' }; });
+  for (let i = 0; i < nr; i++) { const yl = top + (i + 0.5) * step; g.textAlign = 'left'; g.fillStyle = '#e8f3ec'; if (BL[i]) g.fillText(BL[i], bx + 4 * d, yl + 3 * d); g.textAlign = 'right'; if (BRr[i]) g.fillText(BRr[i], bx + bw - 4 * d, yl + 3 * d); g.fillStyle = '#d9c46a'; if (BL[i]) g.fillRect(bx - 2 * d, yl - 1.5 * d, 4 * d, 3 * d); if (BRr[i]) g.fillRect(bx + bw - 2 * d, yl - 1.5 * d, 4 * d, 3 * d); }
+  const items = rows.map((row) => { const pads = padsFor(row), gl = pads.filter((p) => p[1] !== 'GND' && p[1] !== '3V3' && p[1] !== 'VBUS').map((p) => BL.indexOf(p[1]) > -1 ? -1 : 1).reduce((a, c) => a + c, 0); return { row, pads, side: gl > 0 ? 'R' : 'L' }; });
   ['L', 'R'].forEach((sd) => { const list = items.filter((x) => x.side === sd); if (!list.length) return; const lh = 11 * d, need = list.reduce((a, x) => a + 16 * d + x.pads.length * lh, 0) + 6 * d * (list.length - 1), k = Math.min(1, bh / need), colW = (sd === 'L' ? bx : W - bx - bw) - 70 * d, x0 = sd === 'L' ? 8 * d : bx + bw + 62 * d; let y = top + Math.max(0, (bh - need * k) / 2), lane = 0;
     list.forEach((it) => { const h = (16 * d + it.pads.length * lh) * k; g.fillStyle = '#fff'; g.strokeStyle = '#1a1a1a'; g.lineWidth = 1.5 * d; g.beginPath(); g.rect(x0, y, Math.max(40 * d, colW), h); g.fill(); g.stroke();
       g.fillStyle = '#1a1a1a'; g.font = '800 ' + 10 * d * Math.max(0.7, k) + 'px -apple-system,Arial'; g.textAlign = sd === 'L' ? 'left' : 'right'; g.fillText(it.row.it.label.slice(0, 18), sd === 'L' ? x0 + 4 * d : x0 + Math.max(40 * d, colW) - 4 * d, y + 11 * d * k);
@@ -1627,7 +1634,7 @@ function presetAct(fn, m, h, down) { // the starters' own programs, step for ste
     if (h.kind === 'key' && h.i === st) { if (down) { T.at = Date.now(); TEST.held = h; return ''; } TEST.held = null; const k = m.keys[h.i];
       if (Date.now() - T.at >= 1000) { T.run = false; T.rem = T.min * 60; clearInterval(TEST.tick); TEST.text = clock(T.rem); return k.name + ' held 1 s -> timer reset -> ' + clock(T.rem); }
       T.run = !T.run; clearInterval(TEST.tick); if (T.run) TEST.tick = setInterval(() => { T.rem -= 1; TEST.text = clock(T.rem); if (T.rem <= 0) { clearInterval(TEST.tick); T.run = false; TEST.text = '00:00 done!'; testLog('00:00 -> speaker beeps 3 times at 880 Hz'); [0, 250, 500].forEach((t) => setTimeout(() => tone(880), t)); T.rem = T.min * 60; } if (S.step === 5 && curTab() === 'test') draw(); }, 1000);
-      TEST.text = T.run || T.rem === T.min * 60 ? clock(T.rem) : clock(T.rem) + ' paused'; return k.name + ' pressed -> GP' + k.pin + ' -> timer ' + (T.run ? 'running' : 'paused') + ' at ' + clock(T.rem); }
+      TEST.text = T.run || T.rem === T.min * 60 ? clock(T.rem) : clock(T.rem) + ' paused'; return k.name + ' pressed -> ' + LABP(k.pin) + ' -> timer ' + (T.run ? 'running' : 'paused') + ' at ' + clock(T.rem); }
     if (h.kind === 'enc' && !T.run) { T.min = Math.max(1, Math.min(99, T.min + h.dir)); T.rem = T.min * 60; TEST.text = clock(T.rem); return m.encs[h.i].name + ' turned -> ' + T.min + ' minutes -> ' + clock(T.rem); }
     if (h.kind === 'key') return m.keys[h.i].name + (down ? ' pressed' : ' released') + ' (the timer only listens to ' + m.keys[st].name + ')';
     return null;
@@ -1651,9 +1658,9 @@ function testAct(h, down) {
     if (down) { s = k.name + ' pressed -> GP' + k.pin + ' LOW' + show(m, k.name + ' pressed'); TEST.lamp = true; if (has('led')) { TEST.led = !TEST.led; s += ' -> LED ' + (TEST.led ? 'on' : 'off'); } if (has('ring')) { TEST.ring = true; s += ' -> ring red'; } if (has('sound')) { const f = 330 + 60 * h.i; tone(f); s += ' -> speaker ' + f + ' Hz'; } if (has('servo') && !m.pots.length) { TEST.angle = TEST.angle == null || TEST.angle < 45 ? 90 : 0; s += ' -> servo ' + TEST.angle + ' deg'; } TEST.held = h; }
     else { s = k.name + ' released -> GP' + k.pin + ' HIGH'; TEST.lamp = false; if (has('ring')) TEST.ring = false; toneOff(); TEST.held = null; } }
   if (h.kind === 'pot') { const p = m.pots[h.i], v = TEST.val[h.i] || 0; if (Math.abs(v - (TEST.last[h.i] == null ? -10 : TEST.last[h.i])) < 2) return; TEST.last[h.i] = v; s = p.name + ' turned -> GP' + p.pin + ' reads ' + v + show(m, p.name + ' ' + v); TEST.lamp = !TEST.lamp; if (has('servo') && h.i === 0) { TEST.angle = Math.floor(v * 180 / 100); /* code.py: value * 180 // 100 */ s += ' -> servo ' + TEST.angle + ' deg'; } }
-  if (h.kind === 'enc') { const e = m.encs[h.i]; TEST.pos[h.i] = (TEST.pos[h.i] || 0) + h.dir; s = e.name + ' turned ' + (h.dir > 0 ? 'right' : 'left') + ' -> GP' + e.pin + '+GP' + (e.pin + 1) + ' count ' + TEST.pos[h.i] + show(m, e.name + ' ' + TEST.pos[h.i]); TEST.lamp = !TEST.lamp; }
-  if (h.kind === 'pir') { const p = m.pirs[h.i]; TEST.pir[h.i] = !TEST.pir[h.i]; s = p.tag + (TEST.pir[h.i] ? ' sees motion -> GP' + p.pin + ' HIGH' : ' still -> GP' + p.pin + ' LOW') + show(m, p.tag + (TEST.pir[h.i] ? ' motion' : ' still')); TEST.lamp = !!TEST.pir[h.i]; }
-  if (h.kind === 'tof') { const t = m.tofs[h.i], v = TEST.dist[h.i] || 300; s = t.tag + ' measures ' + v + ' mm (I2C GP4/GP5)' + show(m, t.tag + ' ' + v + ' mm'); }
+  if (h.kind === 'enc') { const e = m.encs[h.i]; TEST.pos[h.i] = (TEST.pos[h.i] || 0) + h.dir; s = e.name + ' turned ' + (h.dir > 0 ? 'right' : 'left') + ' -> ' + LABP(e.pin) + '+' + LABP(e.pin + 1) + ' count ' + TEST.pos[h.i] + show(m, e.name + ' ' + TEST.pos[h.i]); TEST.lamp = !TEST.lamp; }
+  if (h.kind === 'pir') { const p = m.pirs[h.i]; TEST.pir[h.i] = !TEST.pir[h.i]; s = p.tag + (TEST.pir[h.i] ? ' sees motion -> ' + LABP(p.pin) + ' HIGH' : ' still -> ' + LABP(p.pin) + ' LOW') + show(m, p.tag + (TEST.pir[h.i] ? ' motion' : ' still')); TEST.lamp = !!TEST.pir[h.i]; }
+  if (h.kind === 'tof') { const t = m.tofs[h.i], v = TEST.dist[h.i] || 300; s = t.tag + ' measures ' + v + ' mm (I2C ' + (BRDX().i2c || []).map(LABP).join('/') + ')' + show(m, t.tag + ' ' + v + ' mm'); }
   if (h.kind === 'cam') { TEST.cam = true; s = 'camera check -> SPI answers 0x55, I2C finds 0x30' + show(m, 'Camera found'); }
   if (s) testLog(s); draw();
 }
@@ -1664,7 +1671,7 @@ function drawTest(W, H) {
   // the screen and the brain at the top
   const sw = Math.min(W - 24 * d, 260 * d), sx = (W - sw) / 2; let y = 10 * d;
   const scr = m.screen || recipeFn(), fnr = recipeFn(); if (fnr === 'timer' && TEST.text === 'Ready') TEST.text = clock((TEST.tm ? TEST.tm.rem : 1500)); box(sx, y, sw, 40 * d, scr ? '#10242c' : '#e7e2d6', '#1a1a1a'); font(fnr === 'timer' ? 18 : 13); g.textAlign = 'center'; g.fillStyle = scr ? '#9ff0ff' : '#6f6a60'; g.fillText(scr ? TEST.text : 'No screen: watch the log below', W / 2, y + (fnr === 'timer' ? 28 : 25) * d); if (fnr && !m.screen) { font(8.5, 700); g.fillStyle = '#6f6a60'; g.fillText(fnr === 'macro' ? 'what the computer gets' : 'no screen in this build: shown here for the test', W / 2, y + 50 * d); }
-  y += 48 * d; box(W / 2 - 34 * d, y, 68 * d, 20 * d, '#2f7a4b'); font(9); g.fillStyle = '#fff'; g.fillText('Pico', W / 2 - 6 * d, y + 14 * d); g.fillStyle = TEST.lamp ? '#7dff6b' : '#204a2c'; g.beginPath(); g.arc(W / 2 + 22 * d, y + 10 * d, 4 * d, 0, 7); g.fill();
+  y += 48 * d; box(W / 2 - 34 * d, y, 68 * d, 20 * d, '#2f7a4b'); font(9); g.fillStyle = '#fff'; g.fillText(BRDX().name.replace(/Raspberry Pi /, '').slice(0, 9), W / 2 - 6 * d, y + 14 * d); g.fillStyle = TEST.lamp ? '#7dff6b' : '#204a2c'; g.beginPath(); g.arc(W / 2 + 22 * d, y + 10 * d, 4 * d, 0, 7); g.fill();
   y += 30 * d;
   // one cell per control or output
   const cells = []; m.keys.forEach((k, i) => cells.push({ kind: 'key', i, label: k.name })); m.pots.forEach((p, i) => cells.push({ kind: 'pot', i, label: p.name })); m.encs.forEach((e, i) => cells.push({ kind: 'enc', i, label: e.name }));
@@ -1688,33 +1695,39 @@ function testDown(e) { const [x, y] = pcx(e), h = TEST.hits.find((q) => x >= q.x
   if (h.kind === 'pot' || h.kind === 'tof') { TEST.drag = h; testMove(e); return; } if (h.kind === 'enc') { testAct(h, true); return; } if (h.kind === 'pir' || h.kind === 'cam') { testAct(h, true); return; } testAct(h, true); }
 function testMove(e) { const h = TEST.drag; if (!h) return; const [x] = pcx(e), v = Math.max(0, Math.min(100, Math.round((x - h.x0) / (h.x1 - h.x0) * 100))); if (h.kind === 'pot') { TEST.val[h.i] = v; testAct(h, true); } else { TEST.dist[h.i] = Math.round(30 + v * 11.7); draw(); } }
 function testUp() { if (TEST.drag && TEST.drag.kind === 'tof') testAct(TEST.drag, true); TEST.drag = null; if (TEST.held) testAct(TEST.held, false); }
-function wiring() { if (!S.pins) S.pins = {}; return planWiring(wiringItems(), S.pins); }
+// the brain's header: which pins it has and what they are called. No brain yet: the Pico, the board the guide starts from
+function BRD() { const bi = brainInfo(); if (!bi) return BOARDS.pico; const k = BOARD_OF[bi.type]; return k ? BOARDS[k] : null; }
+const BRDX = () => BRD() || BOARDS.pico, bshort = () => BRDX().name.replace(/Raspberry Pi /, '').replace(/ \(.*\)/, ''), LABP = (p) => BRDX().lab(p), netName = (net) => (net === 'VBUS' ? BRDX().v5 : net === '3V3' ? BRDX().v3 : net);
+function headerPins(B) { const P = {}, nl = B.left.length + B.right.length; B.left.forEach((nm, i) => { if (P[nm] == null) P[nm] = i + 1; }); B.right.forEach((nm, j) => { if (P[nm] == null) P[nm] = nl - j; });
+  const gnd = B.left.map((nm, i) => (nm === 'GND' ? i + 1 : 0)).concat(B.right.map((nm, j) => (nm === 'GND' ? nl - j : 0))).filter(Boolean); return { P, gnd, nl }; }
+function wiring() { if (!S.pins) S.pins = {}; return planWiring(wiringItems(), S.pins, BRDX()); }
 function pinsHtml() {
   const bi = brainInfo(), bp = bi;
-  if (bi && PICO_BRAINS.indexOf(bi.type) < 0 && bi.type !== 'pico2') return '<p class="note" style="margin-top:0"><b>' + esc(bi.name) + '</b>: its wiring map comes next. Pico, Pico W and Pico 2 work now.</p>';
+  if (!BRD()) return '<p class="note" style="margin-top:0"><b>' + esc(bi.name) + '</b>: its pins are not in the wiring guide yet.</p>';
   const w = wiring(), list = wiringItems();
   if (!list.length) return '<p class="note" style="margin-top:0">Add buttons, knobs, screens or lights in Electronics, or photo your built board in Snap. Each one gets its pins here.</p>';
-  const opt = (k, cur) => '<select class="pin" data-pin="' + k + '">' + PICO_PINS.map((p) => '<option value="' + p + '"' + (p === cur ? ' selected' : '') + '>GP' + p + (w.used[p] && p !== cur ? ' *' : '') + '</option>').join('') + '</select>';
+  const opt = (k, cur) => '<select class="pin" data-pin="' + k + '">' + BRDX().all.concat(BRDX().adc.filter((p) => BRDX().all.indexOf(p) < 0)).map((p) => '<option value="' + p + '"' + (p === cur ? ' selected' : '') + '>' + LABP(p) + (w.used[p] && p !== cur ? ' *' : '') + '</option>').join('') + '</select>';
   let h = creditHtml() + '<div class="grid g2" style="margin:6px 0"><button class="btn dark" data-act="savecode">Save code.py</button><button class="btn" data-act="repin">Pick pins for me</button></div>' + '<p class="note" style="margin-top:0">' + (bp ? '<b>' + esc(bp.name) + '</b>.' : '<b>No brain picked</b>, showing a Raspberry Pi Pico.') + ' Every part gets its pins by the real rules. Soldered already? Pick the pins you used. * = taken. code.py is CircuitPython: buttons print their name, the screen shows what you press, knobs show 0 to 100. Steps are at the top of the file.</p>';
   const tagScr = S.items.filter((i) => PP(i) && (PP(i).userCuts || []).some((u) => u.kind === 'screen')).length; if (tagScr) h += '<p class="note"><span class="bad">A screen tagged on your board photo is not wired yet.</span> Which screen is it? Add it in Electronics, Screens (2.8 in, round, OLED) and it gets its pins and code here.</p>';
   if (w.problems.length) h += '<p class="note">' + w.problems.map((x) => '<span class="bad">' + esc(x) + '</span>').join('<br>') + '</p>';
-  h += '<div class="list" style="margin-top:6px">' + w.rows.map((r) => '<div class="it"><b>' + esc(r.it.label) + '</b>' + r.roles.map((x) => '<span class="pr">' + esc(x.role) + ' ' + (x.fixed || !x.k ? '<i>GP' + x.pin + '</i>' : opt(x.k, x.pin) + (x.two ? ' <i>+ GP' + (x.pin + 1) + '</i>' : '')) + '</span>').join('') + '<span class="pr">' + (r.power ? '+ to ' + r.power + ', ' : '') + 'GND to GND</span>' + (r.note ? '<small>' + esc(r.note) + '</small>' : '') + '</div>').join('') + '</div>';
+  h += '<div class="list" style="margin-top:6px">' + w.rows.map((r) => '<div class="it"><b>' + esc(r.it.label) + '</b>' + r.roles.map((x) => '<span class="pr">' + esc(x.role) + ' ' + (x.fixed || !x.k ? '<i>' + LABP(x.pin) + '</i>' : opt(x.k, x.pin) + (x.two ? ' <i>+ ' + LABP(x.pin + 1) + '</i>' : '')) + '</span>').join('') + '<span class="pr">' + (r.power ? '+ to ' + r.power + ', ' : '') + 'GND to GND</span>' + (r.note ? '<small>' + esc(r.note) + '</small>' : '') + '</div>').join('') + '</div>';
   return h;
 }
 function drawPinout(W, H) {
   // the Pico from above, USB at the top: every pin labeled, used pins red with the part number beside them
   const d = px(), w = wiring(), who = {}; w.rows.forEach((r) => r.roles.forEach((x) => { if (x.pin != null) { const t = r.it.label.split(' ')[0]; who[x.pin] = (who[x.pin] ? who[x.pin] + ',' : '') + t; if (x.two) who[x.pin + 1] = (who[x.pin + 1] ? who[x.pin + 1] + ',' : '') + t; } }));
-  const room = miniRoom(), aw = W - room, top = 14 * d, rowH = Math.min(22 * d, (H - top - 50 * d) / 20), bw = Math.min(110 * d, aw * 0.28), bx = (aw - bw) / 2, bh = rowH * 20 + 10 * d;
+  const B = BRDX(), nr = Math.max(B.left.length, B.right.length), num = {}; B.all.concat(B.adc).forEach((p) => { num[B.lab(p)] = p; });
+  const room = miniRoom(), aw = W - room, top = 14 * d, rowH = Math.min(22 * d, (H - top - 50 * d) / nr), bw = Math.min(110 * d, aw * 0.28), bx = (aw - bw) / 2, bh = rowH * nr + 10 * d;
   g.fillStyle = '#2f7a4b'; g.fillRect(bx, top, bw, bh); g.fillStyle = '#9a958a'; g.fillRect(bx + bw / 2 - 12 * d, top - 8 * d, 24 * d, 12 * d);
-  g.fillStyle = '#fff'; g.font = '900 ' + 12 * d + 'px -apple-system,Arial'; g.textAlign = 'center'; g.fillText('PICO', bx + bw / 2, top + bh / 2);
+  g.fillStyle = '#fff'; g.font = '900 ' + 12 * d + 'px -apple-system,Arial'; g.textAlign = 'center'; g.fillText(B.name.replace(/Raspberry Pi /, '').toUpperCase().slice(0, 12), bx + bw / 2, top + bh / 2);
   const pinRow = (names, left) => names.forEach((nm, i) => {
-    const y = top + 5 * d + rowH * (i + 0.5), x = left ? bx : bx + bw, num = /^GP(\d+)$/.test(nm) ? +nm.slice(2) : null, use = num != null && who[num];
+    const y = top + 5 * d + rowH * (i + 0.5), x = left ? bx : bx + bw, nn = num[nm] != null ? num[nm] : null, use = nn != null && who[nn];
     g.fillStyle = use ? '#c8412f' : nm.indexOf('GND') > -1 ? '#1a1a1a' : '#e9e2cc'; g.beginPath(); g.arc(x, y, 4.2 * d, 0, 7); g.fill(); g.strokeStyle = '#1a1a1a'; g.lineWidth = 1 * d; g.stroke();
     g.font = (use ? '900 ' : '700 ') + 10 * d + 'px -apple-system,Arial'; g.textAlign = left ? 'right' : 'left'; g.fillStyle = use ? '#c8412f' : '#6f6a60';
-    g.fillText(nm + (use ? '  ' + who[num] : ''), left ? x - 8 * d : x + 8 * d, y + 3.5 * d);
+    g.fillText(nm + (use ? '  ' + who[nn] : ''), left ? x - 8 * d : x + 8 * d, y + 3.5 * d);
   });
-  pinRow(PICO_LEFT, true); pinRow(PICO_RIGHT, false);
-  tag(Object.keys(who).length + ' pins used of 26. ' + (w.problems.length ? w.problems.length + ' to fix.' : 'Plus GND for every part.'));
+  pinRow(B.left, true); pinRow(B.right, false);
+  tag(Object.keys(who).length + ' pins used of ' + B.all.length + '. ' + (w.problems.length ? w.problems.length + ' to fix.' : 'Plus GND for every part.'));
 }
 
 // ---------- printers, strength and time ----------
@@ -1786,7 +1799,7 @@ const mountView = () => curTab() === 'extras' && !!S.xsel && !isPanel() && (!!PO
 const hingeFace = () => (isClam() && S.hinge !== 'none' ? (S.style === 'small' ? (S.hside === 'right' ? 'right' : 'left') : 'back') : null);
 let MPC = {};
 function mountPart(id, opt) { // one copy of the part, turned so the side that goes on the case is at z = 0, with its size along the case. opt: a mounted charm's own size and hook
-  const k = id + JSON.stringify(S.xp || {}) + JSON.stringify(opt || 0); if (MPC[k]) return MPC[k];
+  const k = id + JSON.stringify(S.xp || {}) + JSON.stringify(opt || 0) + (id === 'tripod' ? S.style + geom().H : ''); if (MPC[k]) return MPC[k];
   const a = addonPolys(id, opt), set = (a.sets || [a])[id === 'limbs' ? 1 : 0], /* legs or arms: the bar goes on the wall, its far end takes the next piece */ layers = set.layers || [{ polys: set.polys, z0: 0, z1: set.h }], b = G.bbox([].concat(...layers.map((l) => l.polys))), h = Math.max(...layers.map((l) => l.z1));
   const side = MOUNTABLE[id] === 'side', bw = b.w, bh = side ? h : b.h;
   const M = new THREE.Matrix4(); if (side) M.set(-1, 0, 0, 0, 0, 0, 1, 0, 0, 1, 0, 0, 0, 0, 0, 1); /* x, y, z -> -x, z, y: the profile's bottom goes against the case */
@@ -1831,7 +1844,7 @@ function edgeWhy(m, w) { const out = outline(), b = G.bbox(out), pf = plateFace(
   return pf.some((p) => p[1] < 0.5 || p[1] > w.H - 0.5) ? 'too big for this side' : (pf.reduce((q, p) => Math.max(q, p[0]), -1e9) - pf.reduce((q, p) => Math.min(q, p[0]), 1e9) > hi - lo - 8 ? 'too long for this side' : 'off the edge'); }
 function plateFace(m, w) { // the plate's outline on the face it sits on: wall faces in (along the wall, height), the bottom in (x, y)
   const P = mp(m), hy = Math.max(7, P.bh / 2 + 2), B = w.B, pt = (mx, my) => { const q = [0, 1, 2].map((i) => w.o[i] + B[0][i] * mx + B[1][i] * my); return FLATF(m.face) ? [q[0], q[1]] : [m.face === 'back' || m.face === 'front' ? q[0] : q[1], q[2]]; };
-  const xa = P.compact ? -5.5 : -7, x1 = P.pitch ? P.pitch + 7 : P.compact ? 7 + P.bw : 9 + P.bw; return [pt(xa, -hy), pt(x1, -hy), pt(x1, hy), pt(xa, hy)];
+  const xa = P.compact ? -6.5 : -7, x1 = P.pitch ? P.pitch + 7 : P.compact ? 7 + P.bw : 9 + P.bw; return [pt(xa, -hy), pt(x1, -hy), pt(x1, hy), pt(xa, hy)];
 }
 function mountBlocked(m) { // why this spot cannot take this part, or '' if it can
   if (isPanel()) return 'needs a case';
@@ -1953,7 +1966,7 @@ function addonPolys(id, opt) {
   }
   if (id === 'lens') { const d = X.lens.d; return { polys: G.diff([G.circle(0, 0, d / 2 + 4, 96)], [G.circle(0, 0, d / 2 + tolOf(), 96)]), h: 6, n: 1 }; } /* a ring round a lens of that size, with the clearance */
   if (id === 'grip') { const L = X.grip.l, W = 30; return { polys: G.diff([G.rrect(0, 0, L, W, 8)], [0.25, 0.5, 0.75].map((f) => G.circle(L * f, W + 5, 8, 40))), h: 8, n: 1 }; } /* a pad with three finger dips along one edge */
-  if (id === 'tripod') { const c = tolOf(), sq = [G.rrect(-10, -7, 10, 7, 2.5)], /* 20 x 14: the nut's flats across the short side, so it fits a thin edge */ hex = [G.circle(0, 0, (11.11 / 2 + c) / Math.cos(Math.PI / 6), 6)], bolt = [G.circle(0, 0, 6.35 / 2 + c, 40)];
+  if (id === 'tripod') { const c = tolOf(), big = !(UPRIGHT[S.style] && geom().H < 24), sq = [big ? G.rrect(-11, -8, 11, 8, 3) : G.rrect(-10, -7, 10, 7, 2.5)], /* 22 x 16 when the edge has room: 2.2 mm round the nut's flats, else 20 x 14 */ /* 20 x 14: the nut's flats across the short side, so it fits a thin edge */ hex = [G.circle(0, 0, (11.11 / 2 + c) / Math.cos(Math.PI / 6), 6)], bolt = [G.circle(0, 0, 6.35 / 2 + c, 40)];
     return { layers: [{ polys: G.diff(sq, hex), z0: 0, z1: 1.9 }, { polys: G.diff(sq, bolt), z0: 1.9, z1: 8 }], h: 8, n: 1 }; } /* 1/4-20 hex nut: 11.11 mm across the flats, 5.56 thick. The pocket is the plate plus 1.9 mm, the tripod screw comes in through the 1/4 in hole */
   if (id === 'charm') { // seen from the side: a flange on the case, a neck, a ring round a 5 mm eyelet. Pushed up 5 mm (Mini) or 8 mm (Chunky).
     const C = opt || X.charm, big = C.size === 'chunky', k = big ? 1.6 : 1, ro = big ? 5.5 * k : 4.75, base = 4, bw = big ? 30 : 2 * ro, cy = base + 2 + ro; /* the eyelet is 5 mm either way */
@@ -2011,6 +2024,7 @@ function addonPolys(id, opt) {
   if (id === 'decoarms') { const fp = limbFp(), D = S.deco || [], na = D.filter((q) => q.k === 'arm').length, nl = D.filter((q) => q.k === 'leg').length, sets = [{ polys: fp.bar.polys, h: fp.bar.h, n: Math.max(1, na + nl) }]; if (na || !nl) sets.push({ polys: fp.hand.polys, h: fp.hand.h, n: Math.max(1, na) }); if (nl) sets.push({ polys: fp.foot.polys, h: fp.foot.h, n: nl }); return { sets }; }
   if (id === 'char') { const c = chSpec(X.ch); // a front view, for the tile picture only. The real pieces come from charParts.
     return { polys: G.union([c.head === 'sphere' ? G.circle(0, 96, 29, 48) : G.rrect(-30, 68, 30, 122, 8), c.body === 'round' ? G.circle(0, 36, 1, 48).map(([x, y]) => [x * 29, (y - 36) * 31 + 36]) : G.rrect(-28, 6, 28, 64, 6), G.rect(-36, 16, -29, 56), G.rect(29, 16, 36, 56), G.rect(-20, -34, -11, 8), G.rect(11, -34, 20, 8), G.rrect(-28, -42, -8, -33, 3), G.rrect(8, -42, 28, -33, 3), G.rect(-5, 62, 5, 70)]), h: 1, n: 1 }; }
+  if (id === 'keycapswide') { const K = kb(), f = xp().keys.f == null ? 0.1 : xp().keys.f, cnt = {}; K.sw.filter((q) => q.u > 1).forEach((q) => { cnt[q.u] = (cnt[q.u] || 0) + 1; }); return { sets: Object.keys(cnt).map((u) => ({ layers: capU(f, +u), n: cnt[u] })) }; } /* the 60% board's wider keys, one of each it needs */
   if (id === 'keycaps' || id === 'keycap1' || id === 'keycap2') { const X2 = xp(), n = id === 'keycaps' ? Math.min(24, kb().c * kb().r - (X2.keys.sp ? 2 : 0)) : 1; return { layers: capPolys(X2.keys.f == null ? 0.1 : X2.keys.f, id === 'keycap2'), n }; }
   if (id === 'feet') { const c = G.circle(0, 0, 7, 40); return { polys: X.feet.hole ? G.diff([c], [G.circle(0, 0, 1.7, 20)]) : [c], h: X.feet.h, n: 4 }; }
   if (id === 'standoff') return { polys: G.diff([G.circle(0, 0, 3.2, 32)], [G.circle(0, 0, X.standoff.s === 'm3' ? 1.3 : 1.1, 20)]), h: X.standoff.h, n: 4 };
@@ -2020,6 +2034,10 @@ function addonPolys(id, opt) {
   return null;
 }
 function addonFile(id) {
+  if (id === 'keys') { const a = addonPolys('keys'), foot = a.layers[0].polys, bb = G.bbox(foot), bw = S.bed[0] - 8, bh = S.bed[1] - 8; /* a plate bigger than the bed: puzzle pieces with dovetail seams, like the case */
+    if (bb.w > bw || bb.h > bh) { const vert = bb.w > bw, n = Math.ceil((vert ? bb.w : bb.h) / (vert ? bw : bh)) - 1, pcs = G.cutLayers(a.layers, [], G.pieceRegions(foot, vert ? 'v' : 'h', n, 'dovetail'));
+      const files = pcs.map((pc, i) => { const t = G.stl(G.trisOf(G.layerGeos(pc.layers)), 'keys plate ' + (i + 1)); return t.arrayBuffer().then((ab) => ({ name: 'casezero-keys-plate-' + (i + 1) + '.stl', data: new Uint8Array(ab) })); });
+      return { name: 'casezero-keys-plate.zip', pending: Promise.all(files).then((list) => new Blob([zipFiles(list.concat([{ name: 'README.txt', text: 'The switch plate in ' + pcs.length + ' pieces: it is bigger than your ' + S.bed[0] + ' x ' + S.bed[1] + ' mm bed. Print each one flat, then push the dovetails together (a drop of glue holds them).' }]))], { type: 'application/zip' })) }; } }
   const a = addonPolys(id); if (!a) return null; const geos = []; let y0 = 0;
   (a.sets || [a]).forEach((set) => { // each kind of piece in its own row, copies side by side. A piece can be one slab or a few stacked ones.
     const layers = set.layers || [{ polys: set.polys, z0: 0, z1: set.h }], b = G.bbox([].concat(...layers.map((l) => l.polys))), step = b.w + 4;
@@ -2036,30 +2054,42 @@ function addonFile(id) {
 // All of those are whole steps of 1.27 mm, the grid the board maker routes on.
 const KB = { P: 19.05, M: 8.5, STRIP: 24, HOLE: 14.1 }, KB_GP = [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 26, 27, 28];
 let KBC = null;
+// the 60% layout: 61 keys in 5 rows, [Keycode name, width in keys]. FN is the layer key.
+const K60 = [['GRAVE_ACCENT ONE TWO THREE FOUR FIVE SIX SEVEN EIGHT NINE ZERO MINUS EQUALS', 1, 'BACKSPACE', 2], ['TAB', 1.5, 'Q W E R T Y U I O P LEFT_BRACKET RIGHT_BRACKET', 1, 'BACKSLASH', 1.5], ['CAPS_LOCK', 1.75, 'A S D F G H J K L SEMICOLON QUOTE', 1, 'ENTER', 2.25], ['LEFT_SHIFT', 2.25, 'Z X C V B N M COMMA PERIOD FORWARD_SLASH', 1, 'RIGHT_SHIFT', 2.75], ['LEFT_CONTROL LEFT_GUI LEFT_ALT', 1.25, 'SPACE', 6.25, 'RIGHT_ALT FN APPLICATION RIGHT_CONTROL', 1.25]]
+  .map((row) => { const out = []; for (let i = 0; i < row.length; i += 2) row[i].split(' ').forEach((nm) => out.push([nm, row[i + 1]])); return out; });
 function kb() {
-  const X = (S.xp && S.xp.keys) || { c: 4, r: 3 }, c = Math.max(3, Math.min(12, X.c || 4)), r = Math.max(1, Math.min(6, X.r || 3)); if (KBC && KBC.c === c && KBC.r === r) return KBC;
+  const X = (S.xp && S.xp.keys) || { c: 4, r: 3 }, s60 = X.preset === '60', c = s60 ? 14 : Math.max(3, Math.min(12, X.c || 4)), r = s60 ? 5 : Math.max(1, Math.min(6, X.r || 3)); if (KBC && KBC.c === c && KBC.r === r && KBC.s60 === s60) return KBC;
+  if (s60) { const P = KB.P, W = 15 * P, H = 5 * P, x0 = -KB.M, y0 = -KB.M, x1 = W + KB.M, y1 = H + KB.M + KB.STRIP, sw = []; let n = 0;
+    K60.forEach((row, t) => { let cum = 0; const j = 4 - t; row.forEach(([nm, u], i) => { sw.push({ i, j, n: n++, x: (cum + u / 2) * P, y: (j + 0.5) * P, u, name: nm }); cum += u; }); });
+    const px = P / 2 + Math.floor((W - 25.2 - P / 2) / 1.27) * 1.27, py = (r - 0.5) * P + 18 * 1.27;
+    return (KBC = { c, r, s60, W, H, x0, y0, x1, y1, w: x1 - x0, h: y1 - y0, sw, pico: { x: px, y: py }, screws: [[x0 + 4, y0 + 4], [x1 - 4, y0 + 4], [x0 + 4, y1 - 4], [x1 - 4, y1 - 4]] }); }
   const P = KB.P, W = c * P, H = r * P, x0 = -KB.M, y0 = -KB.M, x1 = W + KB.M, y1 = H + KB.M + KB.STRIP, sw = [];
   for (let j = 0; j < r; j++) for (let i = 0; i < c; i++) sw.push({ i, j, n: (r - 1 - j) * c + i, x: (i + 0.5) * P, y: (j + 0.5) * P }); // j 0 is the bottom row. n counts from the top left, the way you read.
   const px = P / 2 + Math.floor((W - 25.2 - P / 2) / 1.27) * 1.27, py = (r - 0.5) * P + 18 * 1.27; // the Pico, on the back of the strip above the keys
-  return (KBC = { c, r, W, H, x0, y0, x1, y1, w: x1 - x0, h: y1 - y0, sw, pico: { x: px, y: py }, screws: [[x0 + 4, y0 + 4], [x1 - 4, y0 + 4], [x0 + 4, y1 - 4], [x1 - 4, y1 - 4]] });
+  return (KBC = { c, r, s60: false, W, H, x0, y0, x1, y1, w: x1 - x0, h: y1 - y0, sw, pico: { x: px, y: py }, screws: [[x0 + 4, y0 + 4], [x1 - 4, y0 + 4], [x0 + 4, y1 - 4], [x1 - 4, y1 - 4]] });
 }
 let KBP = null;
 function kbPart() { // the keyboard as a part you can put in a case: the case top gets one opening for the keys and four screw holes
   if (typeof S === 'undefined' || !S) return {}; const K = kb(); if (KBP && KBP.K === K) return KBP.o;
-  const cx = (K.x0 + K.x1) / 2, cy = (K.y0 + K.y1) / 2, n = K.c * K.r;
-  const o = { kbd: { cat: 'press', kb: true, name: 'Keyboard, ' + K.c + ' x ' + K.r + ' keys (printed plate, its own board)', short: 'Keyboard', w: K.w, h: K.h, depth: 14, cut: { o: 'rect', w: K.W + 1, h: K.H + 1, dy: -KB.STRIP / 2 }, userHoles: K.screws.map(([x, y]) => ({ x: x - cx, y: y - cy, d: 3.4 })), link: 'plug',
+  const cx = (K.x0 + K.x1) / 2, cy = (K.y0 + K.y1) / 2, n = K.sw.length;
+  const o = { kbd: { cat: 'press', kb: true, name: (K.s60 ? 'Keyboard, 60% (61 keys)' : 'Keyboard, ' + K.c + ' x ' + K.r + ' keys') + ' (printed plate, its own board)', short: 'Keyboard', w: K.w, h: K.h, depth: 14, cut: { o: 'rect', w: K.W + 1, h: K.H + 1, dy: -KB.STRIP / 2 }, userHoles: K.screws.map(([x, y]) => ({ x: x - cx, y: y - cy, d: 3.4 })), link: 'plug',
     tip: 'Change its size in Parts, Keyboard. It has its own brain and plugs in by USB.', price: Math.round(n * 0.45 + 9), src: 'Sized by Case Zero from the Cherry MX data sheet', url: '', find: 'MX style keyboard switch' } };
   KBP = { K, o }; return o;
 }
-function capPolys(f, wide) { // one key cap, printed top down. The cross hole takes the switch stem: Cherry gives the hole as 4.1 mm across with 1.17 mm arms; a printed hole closes up a little, so it is drawn wider.
+function capPolys(f, wide, u) { if (u && u > 1) return capU(f, u); // one key cap, printed top down. The cross hole takes the switch stem: Cherry gives the hole as 4.1 mm across with 1.17 mm arms; a printed hole closes up a little, so it is drawn wider.
   // wide: a space bar. One long cap over two switches side by side, so its two posts are one key step (19.05 mm) apart and it needs no wire stabilizer.
   const Wc = wide ? 18 + KB.P : 18, top = [G.rrect(0, 0, Wc, 18, 2)], L = 4.2 + f, a = (1.35 + f) / 2, b = (1.15 + f) / 2, posts = wide ? [9, 9 + KB.P] : [9];
   const post = (cx) => G.diff([G.circle(cx, 9, 2.75, 40)], G.union([G.rect(cx - L / 2, 9 - a, cx + L / 2, 9 + a), G.rect(cx - b, 9 - L / 2, cx + b, 9 + L / 2)]));
   return [{ polys: top, z0: 0, z1: 1.6 }, { polys: G.union(G.diff(top, [G.rrect(1.4, 1.4, Wc - 1.4, 16.6, 1)]).concat(...posts.map(post))), z0: 1.6, z1: 8 }];
 }
+function capU(f, u) { // a wide cap of a 60% board: u keys long, one stem in the middle (2 keys and longer rock a little without stabilizers)
+  const Wc = u * KB.P - 1.05, top = [G.rrect(0, 0, Wc, 18, 2)], L = 4.2 + f, a = (1.35 + f) / 2, b2 = (1.15 + f) / 2, cx = Wc / 2;
+  const post = G.diff([G.circle(cx, 9, 2.75, 40)], G.union([G.rect(cx - L / 2, 9 - a, cx + L / 2, 9 + a), G.rect(cx - b2, 9 - L / 2, cx + b2, 9 + L / 2)]));
+  return [{ polys: top, z0: 0, z1: 1.6 }, { polys: G.union(G.diff(top, [G.rrect(1.4, 1.4, Wc - 1.4, 16.6, 1)]).concat(post)), z0: 1.6, z1: 8 }];
+}
 const KBB = {};
 function kbBoard() {
-  const K = kb(), key = K.c + 'x' + K.r; if (KBB.key === key) return KBB.b;
+  const K = kb(), key = K.c + 'x' + K.r + (K.s60 ? '60' : ''); if (KBB.key === key) return KBB.b;
   const fixed = [], holes = [], silk = [], gp = (n) => 'GP' + KB_GP[n];
   K.sw.forEach((s) => { const col = gp(s.i), row = gp(K.c + (K.r - 1 - s.j)), kn = 'K' + s.n, dx = s.x + 8.89;
     fixed.push({ x: s.x - 3.81, y: s.y + 2.54, net: col, d: 2.2, drill: 1.5 }, { x: s.x + 2.54, y: s.y + 5.08, net: kn, d: 2.2, drill: 1.5 }, { x: dx, y: s.y + 3.81, net: kn }, { x: dx, y: s.y - 3.81, net: row });
@@ -2067,11 +2097,12 @@ function kbBoard() {
     silk.push([dx - 1, s.y - 2, dx + 1, s.y - 2], [dx + 1, s.y - 2, dx + 1, s.y + 2], [dx + 1, s.y + 2, dx - 1, s.y + 2], [dx - 1, s.y + 2, dx - 1, s.y - 2], [dx - 1, s.y - 1.4, dx + 1, s.y - 1.4], [dx - 1, s.y - 1.1, dx + 1, s.y - 1.1]); /* the diode, with its stripe at the bottom end */ });
   K.screws.forEach(([x, y]) => holes.push({ x, y, d: 3.4 }));
   const edge = [[K.x0, K.y0], [K.x1, K.y0], [K.x1, K.y1], [K.x0, K.y1]];
-  const b = makeBoard({ keepin: edge, pico: { x: K.pico.x, y: K.pico.y, r: 2, flip: true }, fixed, holes, silk, noMounts: true, finalize: () => [edge], name: 'NOCIV KEYS ' + K.c + 'X' + K.r });
-  if (b.ok) { b.kb = K; b.cols = K.sw.filter((s) => s.j === 0).map((s) => KB_GP[s.i]); b.rows = []; for (let t = 0; t < K.r; t++) b.rows.push(KB_GP[K.c + t]); }
+  const b = makeBoard({ keepin: edge, pico: { x: K.pico.x, y: K.pico.y, r: 2, flip: true }, fixed, holes, silk, noMounts: true, finalize: () => [edge], name: K.s60 ? 'NOCIV KEYS 60' : 'NOCIV KEYS ' + K.c + 'X' + K.r });
+  if (b.ok) { b.kb = K; b.cols = Array.from({ length: K.c }, (q, i) => KB_GP[i]); /* one column pin per key position, whichever row is longest */ b.rows = []; for (let t = 0; t < K.r; t++) b.rows.push(KB_GP[K.c + t]); }
   KBB.key = key; KBB.b = b; return b;
 }
 function kbCode(b) { // CircuitPython for the Pico. keypad.KeyMatrix scans the keys; adafruit_hid types them over USB.
+  if (b.kb.s60) return kbCode60(b);
   const K = b.kb, ROWS = ['ONE TWO THREE FOUR FIVE SIX SEVEN EIGHT NINE ZERO MINUS BACKSPACE', 'Q W E R T Y U I O P LEFT_BRACKET BACKSLASH', 'A S D F G H J K L SEMICOLON QUOTE ENTER', 'Z X C V B N M COMMA PERIOD FORWARD_SLASH UP_ARROW RIGHT_SHIFT', 'LEFT_CONTROL LEFT_GUI LEFT_ALT SPACE SPACE SPACE SPACE RIGHT_ALT TAB LEFT_ARROW DOWN_ARROW RIGHT_ARROW', 'ESCAPE F1 F2 F3 F4 F5 F6 F7 F8 F9 F10 DELETE'].map((q) => q.split(' '));
   const use = K.r >= 6 ? [5, 0, 1, 2, 3, 4] : K.r === 5 ? [0, 1, 2, 3, 4] : K.r === 4 ? [1, 2, 3, 4] : K.r === 3 ? [1, 2, 3] : K.r === 2 ? [1, 2] : [1];
   const L = ['# NOCIV Case Zero keyboard, ' + K.c + ' x ' + K.r + ' keys. CircuitPython for a Raspberry Pi Pico.', '# 1. Put CircuitPython on the Pico (circuitpython.org, pick your Pico, drag the file on).', '# 2. Copy the adafruit_hid folder from the Adafruit library bundle into the lib folder on the Pico.', '# 3. Save this file on the Pico as code.py. It starts by itself.', '# Not run on real parts by us yet. To change a key, change its name in KEYS below.', '', 'import board', 'import keypad', 'import usb_hid', 'from adafruit_hid.keyboard import Keyboard', 'from adafruit_hid.keycode import Keycode as K', '',
@@ -2079,6 +2110,19 @@ function kbCode(b) { // CircuitPython for the Pico. keypad.KeyMatrix scans the k
   const sp = !!(S.xp && S.xp.keys && S.xp.keys.sp), m = Math.floor((K.c - 1) / 2);
   use.forEach((u, ri) => L.push('    [' + ROWS[u].slice(0, K.c).map((n, ci) => 'K.' + (sp && ri === use.length - 1 && (ci === m || ci === m + 1) ? 'SPACE' : n)).join(', ') + '],' + (sp && ri === use.length - 1 ? '  # the two SPACE keys sit under the long space bar' : ''))); L.push(']', '', 'matrix = keypad.KeyMatrix(row_pins=ROWS, column_pins=COLS, columns_to_anodes=True)', 'kbd = Keyboard(usb_hid.devices)', '', 'while True:', '    event = matrix.events.get()', '    if event:', '        row, col = divmod(event.key_number, len(COLS))', '        code = KEYS[row][col]', '        if code is None:', '            continue', '        if event.pressed:', '            kbd.press(code)', '        else:', '            kbd.release(code)', '');
   return L.join('\n');
+}
+function kbCode60(b) { // the 60% board: the 61 keys, and an Fn layer for F1 to F12, the arrows and Delete
+  const K = b.kb, rows = [0, 1, 2, 3, 4].map((t) => K.sw.filter((s) => s.j === 4 - t).sort((a, c) => a.i - c.i));
+  const at = (nm) => { for (let t = 0; t < 5; t++) { const s = rows[t].find((q) => q.name === nm); if (s) return [t, s.i]; } return null; }, fn = [];
+  ['ONE', 'TWO', 'THREE', 'FOUR', 'FIVE', 'SIX', 'SEVEN', 'EIGHT', 'NINE', 'ZERO', 'MINUS', 'EQUALS'].forEach((nm, i) => { const p = at(nm); fn.push('    (' + p[0] + ', ' + p[1] + '): K.F' + (i + 1) + ','); });
+  [['BACKSPACE', 'DELETE'], ['W', 'UP_ARROW'], ['A', 'LEFT_ARROW'], ['S', 'DOWN_ARROW'], ['D', 'RIGHT_ARROW'], ['I', 'UP_ARROW'], ['J', 'LEFT_ARROW'], ['K', 'DOWN_ARROW'], ['L', 'RIGHT_ARROW']].forEach(([nm, kc]) => { const p = at(nm); fn.push('    (' + p[0] + ', ' + p[1] + '): K.' + kc + ',  # Fn+' + (nm === 'BACKSPACE' ? 'Backspace' : nm)); });
+  const fk = at('FN');
+  return ['# NOCIV Case Zero keyboard: 60% layout, 61 keys. CircuitPython for a Raspberry Pi Pico.', '# 1. Put CircuitPython on the Pico (circuitpython.org). 2. Copy adafruit_hid into the lib folder. 3. Save this file as code.py.', '# Fn layer: Fn+1 to Fn+= give F1 to F12, Fn+WASD and Fn+IJKL are the arrows, Fn+Backspace is Delete.', '# Not run on real parts by us yet.', '',
+    'import board', 'import keypad', 'import usb_hid', 'from adafruit_hid.keyboard import Keyboard', 'from adafruit_hid.keycode import Keycode as K', '',
+    'COLS = (' + b.cols.map((g2) => 'board.GP' + g2).join(', ') + ',)  # key positions, left to right', 'ROWS = (' + b.rows.map((g2) => 'board.GP' + g2).join(', ') + ',)  # top row first', '',
+    '# each row, left to right; None where a short row has no key', 'KEYS = ['].concat(rows.map((row) => '    [' + Array.from({ length: K.c }, (q, i) => { const s = row.find((x) => x.i === i); return !s ? 'None' : s.name === 'FN' ? 'None' : 'K.' + s.name; }).join(', ') + '],'),
+    [']', 'FN_KEY = (' + fk[0] + ', ' + fk[1] + ')', 'FN = {'], fn, ['}', '', 'matrix = keypad.KeyMatrix(row_pins=ROWS, column_pins=COLS, columns_to_anodes=True)', 'kbd = Keyboard(usb_hid.devices)', 'fn_down = False', 'down = {}', '',
+    'while True:', '    event = matrix.events.get()', '    if not event:', '        continue', '    row, col = divmod(event.key_number, len(COLS))', '    if (row, col) == FN_KEY:', '        fn_down = event.pressed', '        continue', '    if event.pressed:', '        code = FN.get((row, col)) if fn_down else None', '        code = code or KEYS[row][col]', '        if code is None:', '            continue', '        down[event.key_number] = code', '        kbd.press(code)', '    else:', '        code = down.pop(event.key_number, None)', '        if code is not None:', '            kbd.release(code)', '']).join('\n');
 }
 function kbCost(K) { const cheap = K.w <= 100 && K.h <= 100; return { cheap, txt: cheap ? 'It fits the cheapest factory size (under 100 x 100 mm): about $2 for 5 boards at JLCPCB before shipping.' : 'It is bigger than 100 x 100 mm, the cheapest factory size, so the price steps up. The factory shows the exact price the moment you upload the file.' }; }
 function kbReadme(b) { const K = b.kb, n = K.c * K.r;
@@ -2098,7 +2142,7 @@ function pcbWhy() { // null when a board can be made, else the plain reason
   if (S.items.some((i) => i.of != null)) return 'Your parts are already soldered on your own board, so a second board has nothing to do here.';
   const b = S.items.find((i) => PP(i) && PP(i).cat === 'brain');
   if (!b) return 'Add a brain first (Brain, Electronics). The board is made for a Raspberry Pi Pico, Pico W or Pico 2.';
-  if (PICOS.indexOf(b.type) < 0) return 'The board is made for a Raspberry Pi Pico, Pico W or Pico 2 for now. Yours is the ' + PP(b).name + '.';
+  if (PICOS.indexOf(b.type) < 0) return PP(b).screen || b.type === 'cyd' ? 'Your ' + PP(b).name + ' has its brain and screen on one board, so there is no carrier board to make. Wire the extras straight to its connectors: Wire it shows which.' : 'The carrier board is made for a Raspberry Pi Pico, Pico W or Pico 2. Your ' + PP(b).name + ' wires up with push-on wires instead: Wire it shows every one.';
   const w = wiring(); if (!w.rows.length) return 'Add buttons, knobs, screens or lights first: the board connects them to the brain.';
   if (w.problems.length) return 'Fix this in Brain, Wire it, Wiring first: ' + w.problems[0];
   if (w.rows.some((r) => r.roles.some((x) => x.pin == null))) return 'A part has no pin yet. Fix it in Brain, Wire it, Wiring first.';
@@ -2106,7 +2150,7 @@ function pcbWhy() { // null when a board can be made, else the plain reason
 }
 const PADLBL = { out: 'OUT', press: 'SW', up: 'UP', down: 'DN', left: 'LT', right: 'RT', turn: 'SIG', slide: 'SIG', x: 'X', y: 'Y', light: 'LED+', data: 'DIN', sound: 'SPK+', signal: 'SIG' };
 function padsFor(row) { // the pads one part gets, in the order its own pins usually sit. [what is printed next to the pad, which Pico pin it goes to]
-  const N = row.N, Rr = {}, gp = (p) => 'GP' + p; row.roles.forEach((r) => { Rr[r.role] = r.pin; });
+  const N = row.N, Rr = {}, gp = (p) => LABP(p); row.roles.forEach((r) => { Rr[r.role] = r.pin; });
   if (N.spi) return [['3V3', '3V3'], ['GND', 'GND'], ['CS', gp(Rr.cs)], ['RST', gp(Rr.rst)], ['DC', gp(Rr.dc)], ['MOSI', gp(Rr.data)], ['SCK', gp(Rr.clock)], ['LED', '3V3']];
   if (N.cam) return [['CS', gp(Rr.cs)], ['MOSI', gp(Rr.data)], ['MISO', gp(Rr.miso)], ['SCK', gp(Rr.clock)], ['GND', 'GND'], ['VCC', '3V3'], ['SDA', gp(Rr.SDA)], ['SCL', gp(Rr.SCL)]]; /* Arducam Mini header order */
   if (N.i2c) return [['GND', 'GND'], ['3V3', '3V3'], ['SCL', gp(Rr.SCL)], ['SDA', gp(Rr.SDA)]];
@@ -2125,8 +2169,8 @@ function boardBuild() {
   const keepPolys = big(G.offset(outline(), -(R.T + 0.8 + (isClam() && S.magnets ? 9 : 0)))), ps = posts().map(([x, y]) => ({ x, y, r: R.POSTR + 0.8 }));
   if (!keepPolys.length) return { ok: false, errors: ['This body is too small for a board.'] };
   const zones = S.items.filter((i) => i.panel === 'inside' && PP(i) && PP(i).cat !== 'brain').map((i) => { const P = PP(i), odd = (i.r || 0) % 2, hw = (odd ? P.h : P.w) / 2, hh = (odd ? P.w : P.h) / 2; return { x0: i.x - hw, y0: i.y - hh, x1: i.x + hw, y1: i.y + hh }; });
-  const groups = w.rows.map((row) => { const it = S.items.find((i) => String(i.id) === String(row.it.key)); if (!it) return null; return { title: String(row.it.label).toUpperCase().replace(/[^A-Z0-9 +\-./]/g, ' '), x: it.x, y: it.panel === 'lid' ? d.D - 12 : it.y, pads: padsFor(row).map(([label, net]) => ({ label, net })) }; }).filter(Boolean);
-  const pw = powerInfo(), b = makeBoard({ keepin: keepPolys[0], posts: ps, pico: { x: br.x, y: br.y, r: br.r || 0 }, zones, groups, diode: !!pw.mah && !S.items.some((i) => i.type === 'liposhim'),
+  const legend = w.rows.map((row) => String(row.it.label).toUpperCase().replace(/[^A-Z0-9 +\-./]/g, ' ')); const groups = w.rows.map((row) => { const it = S.items.find((i) => String(i.id) === String(row.it.key)); if (!it) return null; return { title: String(row.it.label).split(' ')[0].toUpperCase(), /* just T3: the legend on the back says what it is */ x: it.x, y: it.panel === 'lid' ? d.D - 12 : it.y, pads: padsFor(row).map(([label, net]) => ({ label, net })) }; }).filter(Boolean);
+  const pw = powerInfo(), b = makeBoard({ legend, keepin: keepPolys[0], posts: ps, pico: { x: br.x, y: br.y, r: br.r || 0 }, zones, groups, diode: !!pw.mah && !S.items.some((i) => i.type === 'liposhim'),
     finalize: (r) => { const rc = [G.rect(r.x0, r.y0, r.x1, r.y1)], cut = G.diff(G.diff(keepPolys.slice(0, 1), G.diff(keepPolys.slice(0, 1), rc)), ps.map((q) => G.circle(q.x, q.y, q.r, 32))); return big(cut).filter((p) => Math.abs(G.area([p])) > 4); } });
   PCB = { key, b }; return b;
 }
@@ -2425,7 +2469,7 @@ window.addEventListener('pageshow', (e) => { if (e.persisted) resync(); });
 window.addEventListener('storage', (e) => { if (e.key === KEY) resync(); });
 document.addEventListener('visibilitychange', () => { if (!document.hidden) resync(); });
 
-window.__cz = { TEST, testModel, wiring, wallArt, LG, hookPolys, addBoard, packBuild, unpackBuild, shareState, portBlocked, portAt, mountBlocked, swatchFile, loadRecipe, get DECO() { return DECO; }, get T3() { return T3; }, THREE, wiring, codeFor, get S() { return S; }, get view() { return view; }, AZ, get UNDO() { return UNDO.length; }, halves, plan, makeFiles, get FILES() { return FILES; }, allProblems, G, addPart, go, render, dims, heights, addonFile, addonPolys, charParts, charCache, kb, kbBoard, kbCode, kbReadme, boardSvg, get TRAY() { return TRAY; }, showStart, loadRecipe, cost, boardBuild, boardFiles, boardReadme };
+window.__cz = { decoMove, mountPart, TEST, testModel, wiring, wallArt, LG, hookPolys, addBoard, packBuild, unpackBuild, shareState, portBlocked, portAt, mountBlocked, swatchFile, loadRecipe, get DECO() { return DECO; }, get T3() { return T3; }, THREE, wiring, codeFor, get S() { return S; }, get view() { return view; }, AZ, get UNDO() { return UNDO.length; }, halves, plan, makeFiles, get FILES() { return FILES; }, allProblems, G, addPart, go, render, dims, heights, addonFile, addonPolys, charParts, charCache, kb, kbBoard, kbCode, kbReadme, boardSvg, get TRAY() { return TRAY; }, showStart, loadRecipe, cost, boardBuild, boardFiles, boardReadme };
 render();
 { const q = new URLSearchParams(location.search), code = q.get('build'), rid = q.get('recipe'), r = rid && (CZ.RECIPES || []).find((x) => x.id === rid), clean = () => { try { history.replaceState(null, '', location.pathname); } catch (e) {} };
   if (code) { /* a build link: it becomes the saved build (the one that was here goes to Bring back), no start sheet */

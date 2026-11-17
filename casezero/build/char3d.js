@@ -98,7 +98,7 @@ export function headPlate(G, c0) {
 }
 
 // ---------- body: a hollow shell, open underneath so a small board and its wires fit inside ----------
-export function bodyDims(c) { const s = c.size / 60; return { s, W: 56 * s, D: 38 * s, H: 62 * s, box: c.body !== 'round', zs: 62 * s - 12, zh: 10 }; }
+export function bodyDims(c) { const s = c.size / 60; return { s, W: 56 * s, D: 38 * s, H: 62 * s, box: c.body !== 'round', zs: 62 * s - (c.servo ? 14 : 12), zh: 10 }; } /* with a servo the shoulder sits 2 mm lower, so its top tab clears the shell */
 export function bodyHalf(c, z) { const d = bodyDims(c); if (d.box) return { rx: d.W / 2, ry: d.D / 2 }; const f = 0.8 + 0.2 * Math.sin(Math.PI * Math.max(0, Math.min(1, z / d.H))); return { rx: d.W / 2 * f * 1.04, ry: d.D / 2 * f * 1.1 }; }
 const oval = (G, rx, ry) => G.circle(0, 0, 1, 72).map(([x, y]) => [x * rx, y * ry]);
 export function bodyLayers(G, c0) {
@@ -117,6 +117,7 @@ export function bodyLayers(G, c0) {
     if (c.servo && !top) { // SG90 standing in a sleeve against the right wall, its shaft through the wall at the shoulder. Snip its mounting tabs off; the sleeve holds it.
       const zl = d.zs - 16.6 - 0.2, zt = d.zs + 5.9 + 0.2, xi = rx - T;
       if (zm > zl && zm < zt) { const clear = [G.rect(xi - 22.9, -6.3, xi + 0.3, 6.3)]; P = G.diff(G.union(P.concat(G.diff([G.rect(xi - 24.5, -7.9, xi + 0.1, 7.9)], clear))), clear); }
+      if ((zm > zl - 5.1 && zm <= zl) || (zm >= zt && zm < zt + 5.1)) P = G.diff(P, [G.rect(xi - 7.4, -6.5, xi - 3.6, 6.5)]); /* the mounting tabs stick out 4.9 mm past each end, 15.9 mm up the servo: room for them, so it slides in from below as it comes */
       const dz = Math.abs(zm - d.zs); if (dz < 3.7) { const hh = Math.sqrt(3.7 * 3.7 - dz * dz); P = G.diff(P, [G.rect(xi - 1, -hh, rx + 1, hh)]); } /* the horn hub goes through a 7.4 mm hole */
     }
     [d.zs, d.zh].forEach((zc) => { const dz = Math.abs(zm - zc); if (dz < 1.35) { const hh = Math.sqrt(1.35 * 1.35 - dz * dz); P = G.diff(P, [G.rect(rx - T - 7, -hh, rx + 1, hh), G.rect(-rx - 1, -hh, -rx + T + 7, hh)]); } }); /* 2.7 mm holes: an M3 screw cuts its own thread */
@@ -169,4 +170,4 @@ export function charParts(G, c0) {
   const screens = head.scr.map((sv, k) => ({ x: 0, y: head.planes[k] + (c.scr === 'mounted' ? -1.2 : T * 0.6), z: headZ + (hd.cz - hd.zb) + sv, w: OLED.w, h: OLED.h }));
   return { parts: P, screens, tall: headZ + hd.H, wide: 2 * (hipX + 21 + 5 * B), spec: c, turn: !!c.turn };
 }
-export function charBuyList(c0) { const c = chSpec(c0); const L = [(c.servo ? 3 : 4) + ' screws M3 x 12 (shoulders and hips: they cut their own thread in the body)', (c.bend ? 8 : 4) + ' screws M3 x 16 with nuts (hands and feet' + (c.bend ? ', elbows and knees' : '') + ')']; if (c.turn) L.push('1 screw M3 x 20 with 2 nuts (the thumb wheel turns on it)'); if (c.servo) L.push('1 SG90 micro servo, about $2 (snip its mounting tabs off; its single-arm horn glues into the arm), and a Pico to drive it'); const ns = (c.eyes === 'screen' ? 1 : 0) + (c.mouth === 'screen' ? 1 : 0); if (ns) L.push(ns + ' small screen' + (ns > 1 ? 's' : '') + ', 0.96 in OLED (SSD1306), and a Pico to drive ' + (ns > 1 ? 'them' : 'it')); return L; }
+export function charBuyList(c0) { const c = chSpec(c0); const L = [(c.servo ? 3 : 4) + ' screws M3 x 12 (shoulders and hips: they cut their own thread in the body)', (c.bend ? 8 : 4) + ' screws M3 x 16 with nuts (hands and feet' + (c.bend ? ', elbows and knees' : '') + ')']; if (c.turn) L.push('1 screw M3 x 20 with 2 nuts (the thumb wheel turns on it)'); if (c.servo) L.push('1 SG90 micro servo, about $2 (it slides in from below with its tabs on; its single-arm horn glues into the arm), and a Pico to drive it'); const ns = (c.eyes === 'screen' ? 1 : 0) + (c.mouth === 'screen' ? 1 : 0); if (ns) L.push(ns + ' small screen' + (ns > 1 ? 's' : '') + ', 0.96 in OLED (SSD1306), and a Pico to drive ' + (ns > 1 ? 'them' : 'it')); return L; }
