@@ -108,7 +108,7 @@ export function buildHalf(o) {
   // floor, with marks on the bottom face: dips (filled with a second color or paint), cut throughs (vents), pockets for glue-on pieces
   // a face, arms and legs on the outside of a lid: the lid's floor is its outside
   const oS = [], oU = [], oH = [], oB = [];
-  const mounts = o.mounts || [], wallM = mounts.filter((m) => m.face !== 'bottom').map((m) => Object.assign({ bands: mountBands(m) }, m)), botM = mounts.filter((m) => m.face === 'bottom');
+  const mounts = o.mounts || [], wallM = mounts.filter((m) => m.face !== 'bottom').map((m) => Object.assign({ bands: m.type === 'screw' ? [{ z0: +(m.zc - PLUG + 0.1).toFixed(3), z1: +(m.zc + PLUG - 0.1).toFixed(3), hw: PLUG - 0.1 }] : mountBands(m) }, m)), botM = mounts.filter((m) => m.face === 'bottom');
   botM.forEach((m) => { if (m.type === 'snap') { const s = mountSlot() / 2; oH.push(rect(m.x - s, m.y - s, m.x + s, m.y + s)); } else oH.push(circle(m.x, m.y, R.PILOT / 2 + R.FIT, 20)); }); /* a mounted part on the bottom: its hole through the floor */
   (o.decoOut || []).forEach((dq) => { if (dq.arm) { oH.push(circle(dq.x, dq.y, 1.35, 20)); oB.push(circle(dq.x, dq.y, 4.6, 28)); } else if (dq.mt === 'raised') oU.push(...dq.polys); else oS.push(...dq.polys); });
   const bm0 = marks(o.bottom), bm = oS.length ? Object.assign({}, bm0, { recess: union(bm0.recess.concat(oS)) }) : bm0, floorCut = diff(out, oH.length ? union(bm.cut.concat(oH)) : bm.cut);
@@ -144,11 +144,9 @@ export function buildHalf(o) {
   const postPolys = posts.map(([x, y]) => circle(x, y, R.POSTR, 32)), pilots = posts.map(([x, y]) => circle(x, y, R.PILOT / 2, 20));
   tray.push({ polys: diff(union(postPolys), pilots), z0: R.F, z1: deckZ });
   // mounted parts: a screw gets a 6 mm boss inside the wall (or on the floor), its pilot hole runs through wall and boss
-  wallM.filter((m) => m.type === 'screw').forEach((m) => {
-    const foot = inter([mountRect(m, 5, R.T + 6.5, 0)], offset(innerWall, 0.4)); if (!foot.length) return;
-    const b = m.bands; tray.push({ polys: foot, z0: R.F, z1: b[0].z0, tag: 'mount' });
-    b.forEach((q) => tray.push({ polys: diff(foot, [mountRect(m, q.hw, R.T + 8, 2)]), z0: q.z0, z1: q.z1, tag: 'mount' }));
-    tray.push({ polys: foot, z0: b[b.length - 1].z1, z1: m.zc + 5, tag: 'mount' });
+  const plugs = wallM.filter((m) => m.type === 'screw').map((m) => ({ face: m.face, x: m.x, y: m.y, zc: m.zc }));
+  wallM.filter((m) => m.type === 'screw').forEach((m) => { /* the boss under the plug, from the floor up to 0.1 mm inside it */
+    const foot = inter([mountRect(m, PLUG, R.T + 6.5, 0)], offset(innerWall, 0.4)); if (foot.length) tray.push({ polys: foot, z0: R.F, z1: m.zc - PLUG + 0.1, tag: 'mount' });
   });
   botM.filter((m) => m.type === 'screw').forEach((m) => tray.push({ polys: diff([circle(m.x, m.y, R.POSTR + 0.4, 32)], [circle(m.x, m.y, R.PILOT / 2 + R.FIT, 20)]), z0: R.F, z1: R.F + 6, tag: 'mount' }));
   // magnet bosses at the front (clamshell closing), flush with the wall top, pocket on top
@@ -215,7 +213,7 @@ export function buildHalf(o) {
   });
   // printed hinge knuckles on the hinge edge
   if (o.hinge && o.hinge.on) extra.push(...knuckles(out, o.hinge, H, o.hingeSet));
-  return { out, tray, deck, extra, posts, H, deckZ, inlay, stick, snap: snapOK };
+  return { out, tray, deck, extra, posts, H, deckZ, inlay, stick, snap: snapOK, plugs };
 }
 // marks on a face: [{ polys, how }] how = dip (second color or paint), cut (all the way through), glue (a pocket now, a separate piece to glue in)
 function marks(list) {
@@ -248,14 +246,23 @@ export function mountBands(m) {
   return out;
 }
 // the part's side: a plate under the part (the part starts at x = 8), the counterbored M3 hole or the square pin hole at 0,0. wallT: how thick the case is where the pin goes through.
-export function mountPlate(type, bw, bh, wallT) {
-  const R = RULE, T = MOUNT.PT, hy = Math.max(7, bh / 2 + 2), plate = [rrect(-7, -hy, 9 + bw, hy, 3)];
+export function mountPlate(type, bw, bh, wallT, pitch) { // pitch: a second hole that far along, for a part that needs two points so it cannot turn
+  const R = RULE, T = MOUNT.PT, hy = Math.max(7, bh / 2 + 2), plate = [rrect(-7, -hy, pitch ? pitch + 7 : 9 + bw, hy, 3)], at = pitch ? [0, pitch] : [0];
   if (type === 'snap') {
     const s = mountSlot(), w = MOUNT.PIN / 2, y0 = 2, yb = y0 + T + wallT + 0.4, cw = w + 1.2;
     const pin = diff([[[-5, 0], [5, 0], [5, y0], [w, y0], [w, yb], [cw, yb + 0.6], [w * 0.6, yb + 4.5], [-w * 0.6, yb + 4.5], [-cw, yb + 0.6], [-w, yb], [-w, y0], [-5, y0]]], [rect(-0.7, yb - 3.5, 0.7, yb + 5)]);
-    return { layers: [{ polys: diff(plate, [rect(-s / 2, -s / 2, s / 2, s / 2)]), z0: 0, z1: T }], pin: { polys: pin, h: MOUNT.PIN }, hy };
+    return { layers: [{ polys: diff(plate, at.map((x) => rect(x - s / 2, -s / 2, x + s / 2, s / 2))), z0: 0, z1: T }], pin: { polys: pin, h: MOUNT.PIN }, pins: at.length, hy };
   }
-  return { layers: [{ polys: diff(plate, [circle(0, 0, R.HOLE / 2 + R.FIT, 24)]), z0: 0, z1: T / 2 }, { polys: diff(plate, [circle(0, 0, 3.2 + R.FIT, 32)]), z0: T / 2, z1: T }], pin: null, hy };
+  return { layers: [{ polys: diff(plate, at.map((x) => circle(x, 0, R.HOLE / 2 + R.FIT, 24))), z0: 0, z1: T / 2 }, { polys: diff(plate, at.map((x) => circle(x, 0, 3.2 + R.FIT, 32))), z0: T / 2, z1: T }], pin: null, pins: 0, hy };
+}
+// An M3 screw into a wall: a square plug set into a window in the wall (0.1 mm into it on every side, so they merge), running through the wall into a 6.5 mm boss.
+// The bore is an octagon, flat at the top so it bridges 1 mm, sized so its flats hold the pilot hole for an M3 plus the clearance.
+const PLUG = 5;
+export function plugGeos(p) {
+  const R = RULE, a = R.PILOT / 2 + R.FIT, cr = a / Math.cos(Math.PI / 8), oct = []; for (let k = 0; k < 8; k++) { const t = Math.PI / 8 + k * Math.PI / 4; oct.push([cr * Math.cos(t), cr * Math.sin(t)]); }
+  const geos = layerGeos([{ polys: diff([rect(-PLUG, -PLUG, PLUG, PLUG)], [oct]), z0: 0, z1: R.T + 6.5 }]);
+  const n = p.face === 'back' ? [0, 1, 0] : p.face === 'left' ? [-1, 0, 0] : [1, 0, 0], Z = new THREE.Vector3(-n[0], -n[1], -n[2]), Y = new THREE.Vector3(0, 0, 1), X = new THREE.Vector3().crossVectors(Y, Z);
+  const M = new THREE.Matrix4().makeBasis(X, Y, Z).setPosition(p.x, p.y, p.zc); geos.forEach((gg) => gg.applyMatrix4(M)); return geos;
 }
 function nearestInside(polys, p) { if (inside([circle(p[0], p[1], RULE.MAG / 2 + 1.6, 24)], offset(polys, 1.4))) return p; for (let s = 1; s < 30; s++) { const q = [p[0], p[1] + s]; if (inside([circle(q[0], q[1], RULE.MAG / 2 + 1.6, 24)], offset(polys, 1.4))) return q; } return null; }
 
