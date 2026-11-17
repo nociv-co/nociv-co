@@ -148,7 +148,7 @@
     ['hand', 'Handheld', 'Tall, screen on top, buttons below', 'slate'],
     ['pad', 'Controller', 'Two grips', 'slate'],
     ['groove', 'Groovebox', 'Flat, rows of knobs', 'slate'],
-    ['face', 'Character', 'Round face, eyes, can move', 'slate'],
+    ['face', 'Character Base (Holds Chip & Battery)', 'The round base a character stands on. The chip and the battery go inside it; the character you build in Parts stands on top', 'slate'],
     ['camera', 'Camera', 'Stands upright on its thin edge. Lens and sensors in the front plate, which snaps on. Optional tripod mount underneath', 'slate'],
     ['mini', 'Mini Sensor', 'A small upright box for a tiny camera, scanner or sensor, with a snap-on front plate', 'slate'],
     ['deck', 'Deck', 'Cyberdeck or laptop: big screen in the lid, keyboard and controls in the base. Measure your keyboard in Brain', 'clam'],

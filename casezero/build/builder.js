@@ -3,7 +3,7 @@
 // Print: your printer and bed, material, how it joins, where the puzzle seams go. Files: STL per piece, wood templates, wiring.
 import * as THREE from 'three';
 import { OrbitControls } from 'three/addons/OrbitControls.js';
-import * as G from './geo.js?v=30';
+import * as G from './geo.js?v=31';
 import { CARABINER_HOOK_OUTLINE_MM, CARABINER_DEFAULT_THICKNESS_MM } from './charm_carabiner_hook.js?v=1';
 import { openMeasure, GROUPS } from './capture.js?v=20';
 import { makeBoard, boardFiles, boardSvg, zip as zipFiles } from './board.js?v=3';
@@ -425,7 +425,7 @@ const FUNCS = [['brain', 'Brain', 'The chip that runs it', 'pico'], ['screen', '
 const FGROUPS = [['Inputs', 'you press, turn or slide, or it senses', ['press', 'turn', 'sense']], ['Outputs', 'it shows, lights, sounds or moves', ['screen', 'out', 'move']], ['Connections', 'the brain, the power, your own board', ['brain', 'power', 'mine']]];
 const FN_STAND = '<svg viewBox="0 0 60 36" aria-hidden="true"><path d="M17 31L29 6l9 4-12 25z" fill="#c8412f" stroke="#1a1a1a" stroke-width="2" stroke-linejoin="round"/><path d="M35 15l11 17" stroke="#1a1a1a" stroke-width="3" stroke-linecap="round"/><path d="M7 33h47" stroke="#1a1a1a" stroke-width="2" stroke-linecap="round"/></svg>';
 const PSVG = { p_usbc: '<svg viewBox="0 0 60 36" aria-hidden="true"><rect x="6" y="6" width="48" height="24" rx="3" fill="#e9e2cc" stroke="#1a1a1a" stroke-width="2"/><rect x="20" y="15" width="20" height="7" rx="3.5" fill="#1a1a1a"/></svg>', p_switch: '<svg viewBox="0 0 60 36" aria-hidden="true"><rect x="6" y="6" width="48" height="24" rx="3" fill="#e9e2cc" stroke="#1a1a1a" stroke-width="2"/><rect x="19" y="14" width="22" height="9" fill="#1a1a1a"/><rect x="22" y="16" width="7" height="5" fill="#c8412f"/></svg>', p_vent: '<svg viewBox="0 0 60 36" aria-hidden="true"><rect x="6" y="6" width="48" height="24" rx="3" fill="#e9e2cc" stroke="#1a1a1a" stroke-width="2"/>' + [17, 24, 31, 38, 45].map((x) => '<rect x="' + (x - 1.5) + '" y="11" width="3" height="14" fill="#1a1a1a"/>').join('') + '</svg>' };
-const XGROUPS = [['Stand and carry', ['stand', 'handle', 'feet', 'charm']], ['Camera and sensor', ['lens', 'grip', 'tripod']], ['Character', ['char', 'deco', 'limbs']], ['Moving parts', ['gears', 'hinge', 'spring', 'clamp']], ['Keyboard', ['keys']], ['Hardware', ['panel', 'standoff', 'clip']]];
+const XGROUPS = [['Stand and carry', ['stand', 'handle', 'feet', 'charm']], ['Camera and sensor', ['lens', 'grip', 'tripod']], ['Character', ['char', 'deco', 'limbs']], ['Moving parts', ['gears', 'hinge', 'clamp']], ['Keyboard', ['keys']], ['Hardware', ['panel', 'standoff', 'clip']]];
 const NEWP = ' Sized from published specs, not from a test print.';
 function xmeta(id) { // one printed part: [short name, what it is and how it goes on, its few settings]
   const X = xp(), fits = stepper('xs_t', 'Fits', X.stand.t + ' mm thick' + (X.stand.auto ? ' (your case)' : ''));
@@ -1081,7 +1081,7 @@ function frame(W, H, dW, dD) { // fit a flat picture, leaving room for the 3D bo
   if (rs && kA > kB) return { k: kA, ox: pad + (aw - rs - dW * kA) / 2, oy: pad };
   return { k: kB, ox: (W - dW * kB) / 2, oy: pad + (rs && kB < Math.min(aw / dW, ah / dD) ? rs : 0) };
 }
-function tag(s) { $('tag').textContent = s; }
+function tag(s) { $('tag').textContent = String(s).replace(/&(amp|lt|gt|quot|#39);/g, (m, k) => ({ amp: '&', lt: '<', gt: '>', quot: '"', '#39': "'" })[k]); } /* captions are plain text: names escaped for the page read right here */
 let TRAY = [], TSEL = null; // where each tray picture sits, and the one that is picked
 function drawBrain(W, H) {
   TRAY = [];
@@ -1391,6 +1391,13 @@ function setHighlight(r) {
   fill.renderOrder = 998; edge.renderOrder = 999; box.add(fill, edge); box.position.set(sl.x, sl.y, sl.z); sl.grp.add(box); r.hl = box;
 }
 // the Parts room in 3D: the piece you picked, the way it prints. The character shows put together.
+function charGroup() { // the assembled character, feet at z = 0, the way it stands
+  const C = charCache(), out = new THREE.Group();
+  C.parts.forEach((q) => { if (q.kind === 'up') { const m = mesh(G.layerGeos(q.layers), q.color); m.position.set(q.pose[0], q.pose[1], q.pose[2]); if (q.spin) m.rotation.z = q.spin; out.add(m); }
+    else q.at.forEach((a) => { const m = mesh(G.layerGeos(q.layers), q.color); m.matrixAutoUpdate = false; m.matrix.makeBasis(new THREE.Vector3(0, 1, 0), new THREE.Vector3(0, 0, 1), new THREE.Vector3(1, 0, 0)).setPosition(a[0], a[1], a[2]); out.add(m); }); });
+  C.screens.forEach((sc) => { const m = new THREE.Mesh(new THREE.BoxGeometry(sc.w, 1.2, sc.h), new THREE.MeshStandardMaterial({ color: 0x10242c, emissive: 0x1c6f86 })); m.position.set(sc.x, sc.y, sc.z); out.add(m); });
+  return out;
+}
 function drawParts3d() {
   const r = setup3d(), id = S.xsel, key = 'x:' + id + ':' + JSON.stringify(S.xp || {});
   if (r.key !== key) {
@@ -1422,7 +1429,7 @@ function draw3d(isMini) {
   // styling the lid's outside: show it closed, from above, the way people will see it
   const XR = xrayOn();
   const lidTop = !XR && S.step === 3 && curTab() !== 'colors' && (curFace() === 'lidout' || !!WALLF[curFace()]), DF = D3 ? decoFace() : '', OPEN = XR ? true : D3 || MV ? false : S.open && !lidTop; /* mounting: the lid stays shut, out of the way */
-  const r = setup3d(), d = geom(), h = d, key = JSON.stringify([buildKey(), DF, OPEN, logoImgKey(), MV ? S.xsel : 0, S.attachedParts.length ? S.xp : 0]);
+  const r = setup3d(), d = geom(), h = d, key = JSON.stringify([buildKey(), DF, OPEN, logoImgKey(), S.style === 'face' ? JSON.stringify((S.xp || {}).ch || 0) : 0, MV ? S.xsel : 0, S.attachedParts.length ? S.xp : 0]);
   if (isMini && (!$('v3').classList.contains('mini') || $('v3').hidden)) return; // left the flat view before the timer ran
   const mode = isMini ? 'mini' : 'big';
   if (r.key !== key) {
@@ -1481,10 +1488,12 @@ function draw3d(isMini) {
         r.root.add(hinge);
       } else r.root.add(grp);
     });
+    const CHP = S.style === 'face' && !D3 && !MV && !XR, CT = CHP ? charCache().tall : 0; /* Character Base: the character stands on it */
+    if (CHP) { const cg = charGroup(); cg.position.set(d.W / 2, d.D / 2, h.H - 0.1); r.root.add(cg); }
     const UPR = UPRIGHT[S.style]; r.root.rotation.x = UPR ? 0 : -Math.PI / 2; r.root.position.set(-d.W / 2, 0, UPR ? -h.H / 2 : d.D / 2); /* upright: stands on its front edge, the plate facing you */
     r.fit = () => {
-      const dk = deco3d(), hh = dk && decoFace() === 'lid' ? h.H + h.Hl : h.H, lm = dk && (S.deco || []).some(isLimb) ? 62 : 0, rad = dk ? Math.hypot(d.W + lm, d.D + lm, hh) / 2 * 1.06 : Math.hypot(d.W, d.D, h.H + h.Hl + (OPEN ? d.D : 0)) / 2, v = r.camera.fov * Math.PI / 360, hz = Math.atan(Math.tan(v) * r.camera.aspect), dist = rad / Math.sin(Math.min(v, hz)) * (r.mode === 'mini' ? 1.0 : 1.15);
-      r.controls.target.set(0, UPRIGHT[S.style] ? d.D / 2 : dk ? hh / 2 : (h.H + (isClam() && OPEN ? d.D * 0.4 : h.Hl)) / 2, lm ? 16 : 0);
+      const dk = deco3d(), hh = dk && decoFace() === 'lid' ? h.H + h.Hl : h.H, lm = dk && (S.deco || []).some(isLimb) ? 62 : 0, rad = dk ? Math.hypot(d.W + lm, d.D + lm, hh) / 2 * 1.06 : Math.hypot(d.W, d.D, h.H + h.Hl + CT + (OPEN ? d.D : 0)) / 2, v = r.camera.fov * Math.PI / 360, hz = Math.atan(Math.tan(v) * r.camera.aspect), dist = rad / Math.sin(Math.min(v, hz)) * (r.mode === 'mini' ? 1.0 : 1.15);
+      r.controls.target.set(0, UPRIGHT[S.style] ? d.D / 2 : CT ? (h.H + CT) / 2 : dk ? hh / 2 : (h.H + (isClam() && OPEN ? d.D * 0.4 : h.Hl)) / 2, lm ? 16 : 0);
       // in Style, turn to the side being decorated: the lid's outside faces the back when it is open, the bottom faces down
       const f = S.step === 3 && curTab() !== 'colors' ? curFace() : 'top', MD = { plate: [0.3, 0.95, 0.45], lid: [0.3, 0.95, 0.45], back: [0.35, 0.55, -0.85], front: [0.35, 0.55, 0.85], left: [-0.9, 0.5, 0.35], right: [0.9, 0.5, 0.35], bottom: [0.35, -0.85, 0.6] }, MDU = { plate: [0.3, 0.25, 0.95], front: [0.35, -0.85, 0.45], back: [0.35, 0.9, -0.3], left: [-0.9, 0.35, 0.4], right: [0.9, 0.35, 0.4], bottom: [0.35, 0.3, -0.9] }, dir = UPRIGHT[S.style] ? (MV ? MDU[PORTS[S.xsel] ? pface() : mnt().face] : [0.45, 0.3, 0.85]) : MV ? MD[PORTS[S.xsel] ? pface() : mnt().face] : dk ? [0, 1, 0.5] : WALLF[f] ? MD[f] : f === 'lidout' && isClam() ? [0.2, 1, 0.55] : f === 'bottom' ? [0.4, -0.85, 0.6] : [0.45, 0.7, 0.8];
       r.camera.position.copy(new THREE.Vector3(dir[0], dir[1], dir[2]).normalize().multiplyScalar(dist)).add(r.controls.target); r.controls.update();
@@ -1658,12 +1667,12 @@ function mountPart(id, opt) { // one copy of the part, turned so the side that g
   const a = addonPolys(id, opt), set = (a.sets || [a])[id === 'limbs' ? 1 : 0], /* legs or arms: the bar goes on the wall, its far end takes the next piece */ layers = set.layers || [{ polys: set.polys, z0: 0, z1: set.h }], b = G.bbox([].concat(...layers.map((l) => l.polys))), h = Math.max(...layers.map((l) => l.z1));
   const side = MOUNTABLE[id] === 'side', bw = b.w, bh = side ? h : b.h;
   const M = new THREE.Matrix4(); if (side) M.set(-1, 0, 0, 0, 0, 0, 1, 0, 0, 1, 0, 0, 0, 0, 0, 1); /* x, y, z -> -x, z, y: the profile's bottom goes against the case */
-  const x0 = side ? -b.x1 : b.x0, y0 = side ? 0 : b.y0, z0 = side ? b.y0 : 0, pitch = twoPoint(id, opt) ? Math.ceil((bw + 12) / 20) * 20 : 0; /* two points: whole 20 mm squares apart, the part between them */
-  M.premultiply(new THREE.Matrix4().makeTranslation((pitch ? (pitch - bw) / 2 : 8) - x0, -y0 - bh / 2, G.MOUNT.PT - 0.1 - z0)); /* sunk 0.1 mm into its plate, so the two merge in the slicer */
-  if (Object.keys(MPC).length > 40) MPC = {}; return (MPC[k] = { layers, M, bw, bh, pitch });
+  const compact = id === 'charm' && !twoPoint(id, opt), x0 = side ? -b.x1 : b.x0, y0 = side ? 0 : b.y0, z0 = side ? b.y0 : 0, pitch = twoPoint(id, opt) ? Math.ceil((bw + 12) / 20) * 20 : 0; /* two points: whole 20 mm squares apart, the part between them */
+  M.premultiply(new THREE.Matrix4().makeTranslation((pitch ? (pitch - bw) / 2 : compact ? 6 : 8) - x0, -y0 - bh / 2, G.MOUNT.PT - 0.1 - z0)); /* sunk 0.1 mm into its plate, so the two merge in the slicer */
+  if (Object.keys(MPC).length > 40) MPC = {}; return (MPC[k] = { layers, M, bw, bh, pitch, compact });
 }
 function mountGeos(m, forPrint) { // the part plus its mating plate (and the snap pin, laid flat beside it when printing)
-  const P = mp(m), pl = G.mountPlate(m.mountType, P.bw, P.bh, m.face === 'plate' ? R.LT : FLATF(m.face) ? R.F : R.T, P.pitch), geos = G.layerGeos(P.layers).map((gg) => gg.applyMatrix4(P.M));
+  const P = mp(m), pl = G.mountPlate(m.mountType, P.bw, P.bh, m.face === 'plate' ? R.LT : FLATF(m.face) ? R.F : R.T, P.pitch, P.compact), geos = G.layerGeos(P.layers).map((gg) => gg.applyMatrix4(P.M));
   if (m.partId === 'tripod') { const hx = [G.circle(8 + P.bw / 2, 0, (11.11 / 2 + tolOf()) / Math.cos(Math.PI / 6), 6)]; pl.layers = pl.layers.map((l) => Object.assign({}, l, { polys: G.diff(l.polys, hx) })); } /* the nut pocket runs on through the plate: the nut goes in from the case side before it is mounted */
   geos.push(...G.layerGeos(pl.layers));
   if (pl.pin && forPrint) for (let i = 0; i < pl.pins; i++) G.layerGeos([{ polys: pl.pin.polys, z0: 0, z1: pl.pin.h }]).forEach((gg) => { gg.translate(-19 - i * 14, -pl.hy, 0); geos.push(gg); });
@@ -1699,7 +1708,7 @@ function edgeWhy(m, w) { const out = outline(), b = G.bbox(out), pf = plateFace(
   return pf.some((p) => p[1] < 0.5 || p[1] > w.H - 0.5) ? 'too big for this side' : (pf.reduce((q, p) => Math.max(q, p[0]), -1e9) - pf.reduce((q, p) => Math.min(q, p[0]), 1e9) > hi - lo - 8 ? 'too long for this side' : 'off the edge'); }
 function plateFace(m, w) { // the plate's outline on the face it sits on: wall faces in (along the wall, height), the bottom in (x, y)
   const P = mp(m), hy = Math.max(7, P.bh / 2 + 2), B = w.B, pt = (mx, my) => { const q = [0, 1, 2].map((i) => w.o[i] + B[0][i] * mx + B[1][i] * my); return FLATF(m.face) ? [q[0], q[1]] : [m.face === 'back' || m.face === 'front' ? q[0] : q[1], q[2]]; };
-  const x1 = P.pitch ? P.pitch + 7 : 9 + P.bw; return [pt(-7, -hy), pt(x1, -hy), pt(x1, hy), pt(-7, hy)];
+  const xa = P.compact ? -5.5 : -7, x1 = P.pitch ? P.pitch + 7 : P.compact ? 7 + P.bw : 9 + P.bw; return [pt(xa, -hy), pt(x1, -hy), pt(x1, hy), pt(xa, hy)];
 }
 function mountBlocked(m) { // why this spot cannot take this part, or '' if it can
   if (isPanel()) return 'needs a case';
@@ -1824,9 +1833,9 @@ function addonPolys(id, opt) {
   if (id === 'tripod') { const c = tolOf(), sq = [G.rrect(-10, -7, 10, 7, 2.5)], /* 20 x 14: the nut's flats across the short side, so it fits a thin edge */ hex = [G.circle(0, 0, (11.11 / 2 + c) / Math.cos(Math.PI / 6), 6)], bolt = [G.circle(0, 0, 6.35 / 2 + c, 40)];
     return { layers: [{ polys: G.diff(sq, hex), z0: 0, z1: 1.9 }, { polys: G.diff(sq, bolt), z0: 1.9, z1: 8 }], h: 8, n: 1 }; } /* 1/4-20 hex nut: 11.11 mm across the flats, 5.56 thick. The pocket is the plate plus 1.9 mm, the tripod screw comes in through the 1/4 in hole */
   if (id === 'charm') { // seen from the side: a flange on the case, a neck, a ring round a 5 mm eyelet. Pushed up 5 mm (Mini) or 8 mm (Chunky).
-    const C = opt || X.charm, big = C.size === 'chunky', k = big ? 1.6 : 1, ro = 5.5 * k, base = 4, bw = big ? 30 : 2 * ro, cy = base + 2 + ro;
+    const C = opt || X.charm, big = C.size === 'chunky', k = big ? 1.6 : 1, ro = big ? 5.5 * k : 4.75, base = 4, bw = big ? 30 : 2 * ro, cy = base + 2 + ro; /* the eyelet is 5 mm either way */
     const lug = G.diff(G.union([G.rect(-bw / 2, 0, bw / 2, base), G.rect(-ro * 0.8, 0, ro * 0.8, cy), G.circle(0, cy, ro, 48)]), [G.circle(0, cy, 2.5, 32)]);
-    const sets = [{ polys: lug, h: big ? 8 : 5, n: 1 }]; if (C.hook === 'hook') sets.push({ polys: hookPolys(C), h: CARABINER_DEFAULT_THICKNESS_MM, n: 1 });
+    const sets = [{ polys: lug, h: big ? 8 : 6, n: 1 }]; /* Mini: 6 mm thick, a reinforced lug */ if (C.hook === 'hook') sets.push({ polys: hookPolys(C), h: CARABINER_DEFAULT_THICKNESS_MM, n: 1 });
     return { sets };
   }
   if (id === 'handle') { // side view of an arch with two flat feet, pushed up 16 mm wide. Layers run along the arch, the strong way.

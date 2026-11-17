@@ -261,8 +261,8 @@ export function mountBands(m) {
   return out;
 }
 // the part's side: a plate under the part (the part starts at x = 8), the counterbored M3 hole or the square pin hole at 0,0. wallT: how thick the case is where the pin goes through.
-export function mountPlate(type, bw, bh, wallT, pitch) { // pitch: a second hole that far along, for a part that needs two points so it cannot turn
-  const R = RULE, T = MOUNT.PT, hy = Math.max(7, bh / 2 + 2), plate = [rrect(-7, -hy, pitch ? pitch + 7 : 9 + bw, hy, 3)], at = pitch ? [0, pitch] : [0];
+export function mountPlate(type, bw, bh, wallT, pitch, compact) { // pitch: a second hole that far along, for a part that needs two points so it cannot turn. compact: a small plate, 2.3 mm round the screw
+  const R = RULE, T = MOUNT.PT, hy = Math.max(7, bh / 2 + 2), plate = [rrect(compact ? -5.5 : -7, -hy, pitch ? pitch + 7 : compact ? 7 + bw : 9 + bw, hy, 3)], at = pitch ? [0, pitch] : [0];
   if (type === 'snap') {
     const s = mountSlot(), w = MOUNT.PIN / 2, y0 = 2, yb = y0 + T + wallT + 0.4, cw = w + 1.2;
     const pin = diff([[[-5, 0], [5, 0], [5, y0], [w, y0], [w, yb], [cw, yb + 0.6], [w * 0.6, yb + 4.5], [-w * 0.6, yb + 4.5], [-cw, yb + 0.6], [-w, yb], [-w, y0], [-5, y0]]], [rect(-0.7, yb - 3.5, 0.7, yb + 5)]);
