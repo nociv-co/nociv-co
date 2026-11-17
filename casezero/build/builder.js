@@ -313,11 +313,16 @@ function halfFor(panel, h) {
 const SWAP = { wall: 4, lip: 7 };
 const swapOn = () => isPanel() && !!(S.swap && S.swap.on);
 function swapCorners() { const d = dims(), k = SWAP.wall + SWAP.lip / 2; return [[k, k], [d.W - k, k], [d.W - k, d.D - k], [k, d.D - k]]; }
+function swapFix() { const d = dims(), k = SWAP.wall + SWAP.lip / 2, at = (L) => [Math.max(k + 12, L * 0.25), Math.min(L - k - 12, L * 0.75)]; const [x1, x2] = at(d.W), [y1, y2] = at(d.D); return [[x1, k], [x2, d.D - k], [k, y2], [d.W - k, y1]]; } /* 4 countersunk holes that screw the frame into the box, one per side, off the corners and off the middle where a big frame is split */
 const swapLedge = () => (S.swap && S.swap.mount === 'magnets' ? 5 : 4);
 function swapFrame() { // the frame, printed ledge down: the ledge the inserts rest on, and the wall round them
   const o = outline(), mag = S.swap.mount === 'magnets', LT = swapLedge(), c = swapCorners(), ring = G.diff(o, G.offset(o, -(SWAP.wall + SWAP.lip))), wall = G.diff(o, G.offset(o, -SWAP.wall)), L = [];
-  if (mag) { const pk = c.map(([x, y]) => G.circle(x, y, R.MAG / 2, 32)); L.push({ polys: ring, z0: 0, z1: LT - R.MAGD }, { polys: G.diff(ring, pk), z0: LT - R.MAGD, z1: LT }); }
-  else L.push({ polys: G.diff(ring, c.map(([x, y]) => G.circle(x, y, R.PILOT / 2 + R.FIT, 24))), z0: 0, z1: LT }); /* the M3 x 8 cuts its own thread in the 4 mm ledge */
+  const fx = swapFix(), cs = (R.HOLE + R.FIT * 2) / 2, ch = 3 - cs, csk = (z) => Math.max(cs, cs + z - (LT - ch)); /* 90 degree countersink for a 6 mm head at the top, stepped so it prints with no overhang */
+  const zs = [0, LT].concat(mag ? [LT - R.MAGD] : []).concat([0, 1, 2, 3].map((i) => +(LT - ch + i * ch / 4).toFixed(3))).filter((z, i, a) => z >= 0 && z <= LT && a.indexOf(z) === i).sort((a, b) => a - b);
+  for (let i = 0; i + 1 < zs.length; i++) { const z0 = zs[i], z1 = zs[i + 1], cut = fx.map(([x, y]) => G.circle(x, y, csk(z1), 32));
+    if (mag && z0 >= LT - R.MAGD - 1e-6) c.forEach(([x, y]) => cut.push(G.circle(x, y, R.MAG / 2, 32)));
+    if (!mag) c.forEach(([x, y]) => cut.push(G.circle(x, y, R.PILOT / 2 + R.FIT, 24))); /* the M3 x 8 cuts its own thread in the 4 mm ledge */
+    L.push({ polys: G.diff(ring, cut), z0, z1 }); }
   L.push({ polys: wall, z0: LT - 0.1, z1: LT + S.pt + 0.2 }); /* the wall overlaps the ledge 0.1 mm, so they print as one */
   return L;
 }
@@ -331,7 +336,7 @@ function swapTo(i) { const L = swapList(); L[S.swap.cur].items = JSON.parse(JSON
 function swapHtml() {
   const on = swapOn(), L = on ? swapList() : [];
   return '<div class="row"><b>Swap panels</b>' + seg('swapOn', [['0', 'Off'], ['1', 'On']], on ? '1' : '0') + '</div>' + (!on ? '' : '<div class="row"><b>Mount with</b>' + seg('swapMount', [['screws', 'M3 Screws'], ['magnets', 'Magnets (6 x 3 mm)']], S.swap.mount) + '</div>' +
-    '<p class="note keep" style="margin:0 0 6px">A frame stays in your box. Each insert drops into it and is held at the 4 corners by ' + (S.swap.mount === 'magnets' ? 'magnets' : 'M3 x 8 mm screws') + '. Every insert has the same outline and the same corner holes, so they swap.</p>' +
+    '<p class="note keep" style="margin:0 0 6px">A frame screws into your box with 4 countersunk screws. Each insert drops into it and is held at the 4 corners by ' + (S.swap.mount === 'magnets' ? 'magnets' : 'M3 x 8 mm screws') + '. Every insert has the same outline and the same corner holes, so they swap.</p>' +
     '<div class="chosen" style="margin-bottom:8px">' + L.map((q, i) => '<span data-ins="' + i + '" style="cursor:pointer' + (i === S.swap.cur ? ';background:#1a1a1a;color:#fff' : '') + '">' + esc(q.name) + ' (' + (i === S.swap.cur ? S.items.length : (q.items || []).length) + ')</span>').join('') + '</div><button class="btn" data-act="insnew" style="padding:8px;margin-bottom:8px">New insert</button>');
 }
 function panelBuilt() {
@@ -2265,9 +2270,9 @@ function extraRows() {
   if (wires && (S.how || 'push') === 'push') { const wp = wirePlan(); if (wp.hubs && wp.hubs.length) out.push({ t: 'x_lever', name: 'Lever connectors, 5 hole (' + wp.hubs.length + ')', each: Math.max(1, Math.round(wp.hubs.length * 0.7)) }); }
   { const dS = !isPanel() && !S.snap ? posts().length * panels().length : 0, mS = S.attachedParts.filter((m) => m.mountType === 'screw' && MOUNTABLE[m.partId]).reduce((q, m) => q + mountCount(m), 0); /* the deck screws plus one for every part mounted with a screw */
     if (dS + mS) out.push({ t: 'x_m3', name: 'M3 screws, 8 mm, ' + (dS + mS) + ' (' + [dS ? dS + ' for the deck' : '', mS ? mS + ' for mounted parts' : ''].filter(Boolean).join(', ') + ', small box)', each: 3 }); }
-  if (isPanel() && S.phold === 'screws') out.push({ t: 'x_m3', name: 'M3 screws (small box)', each: 3 });
+  if (isPanel() && S.phold === 'screws' && !swapOn()) out.push({ t: 'x_m3', name: 'M3 screws (small box)', each: 3 }); /* swap mode: the insert has no box screws, the frame does */
   if (S.xp && S.xp.ch && S.xp.ch.servo) out.push({ t: 'x_sg90', name: '1 x SG90 Micro Servo (character arm)', each: 2 });
-  if (swapOn()) { const nI = swapList().length; if (S.swap.mount === 'magnets') { const nm = 4 * (1 + nI); out.push({ t: 'x_swapmag', name: nm + ' x Magnets 6 x 3 mm (swap frame and ' + nI + ' insert' + (nI > 1 ? 's' : '') + ')', each: 3 * Math.ceil(nm / 10) }); } else out.push({ t: 'x_swapm3', name: '4 x M3 x 8 mm screws (swap insert corners)', each: 1 }); }
+  if (swapOn()) { const nI = swapList().length; if (S.swap.mount === 'magnets') { const nm = 4 * (1 + nI); out.push({ t: 'x_swapmag', name: nm + ' x Magnets 6 x 3 mm (swap frame and ' + nI + ' insert' + (nI > 1 ? 's' : '') + ')', each: 3 * Math.ceil(nm / 10) }); } else out.push({ t: 'x_swapm3', name: '4 x M3 x 8 mm screws (swap insert corners)', each: 1 }); out.push({ t: 'x_swapcsk', name: '4 x M3 x 10 mm countersunk screws, or #4 wood screws (swap frame into the box)', each: 1 }); }
   { const nS = S.items.filter((i) => i.type === 'shroud').length; if (nS) out.push({ t: 'x_shroudscr', name: (4 * nS) + ' x M3 x 10 mm screws (raised shroud flange)', each: nS }); }
   { const nT = S.attachedParts.filter((m) => m.partId === 'tripod').length; if (nT) out.push({ t: 'x_nut', name: nT + ' x 1/4"-20 hex nut (tripod mount)', each: 0.5 * nT }); }
   { const nC = S.attachedParts.filter((m) => m.partId === 'charm' && (m.charm || xp().charm).hook === 'lug').length; if (nC) out.push({ t: 'x_clasp', name: nC + ' x Trigger clasp keyring (for the charm lug)', each: 2 * nC }); }
