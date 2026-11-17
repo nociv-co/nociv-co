@@ -8,7 +8,7 @@ import { CARABINER_HOOK_OUTLINE_MM, CARABINER_DEFAULT_THICKNESS_MM } from './cha
 import { openMeasure, GROUPS } from './capture.js?v=20';
 import { makeBoard, boardFiles, boardSvg, zip as zipFiles } from './board.js?v=4';
 import { charParts, chSpec, charBuyList, CH_DEF, headDims, faceSpots, faceLimit, featPoly, flatParts, FEATS } from './char3d.js?v=5';
-import { micMain, planWiring, codeFor, PICO_LEFT, PICO_RIGHT, PICO_PINS, PICO_BRAINS, NEED, BOARDS, BOARD_OF } from './wiring.js?v=24';
+import { micMain, planWiring, codeFor, PICO_LEFT, PICO_RIGHT, PICO_PINS, PICO_BRAINS, NEED, BOARDS, BOARD_OF } from './wiring.js?v=25';
 
 const CZ = window.CZ, R = G.RULE, $ = (id) => document.getElementById(id);
 const esc = (s) => String(s == null ? '' : s).replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
@@ -1731,10 +1731,11 @@ function presetAct(fn, m, h, down) {
     return null;
   }
   if (fn === 'synth') { const freq = () => { const n = TEST.note; return SCALE[n % 8] * Math.pow(2, Math.floor(n / 8) + (TEST.tr || 0) / 12) * [1, 1.5, 2][m.pots.length > 1 ? TEST.step % 3 : 0]; };
-    if (h.kind === 'key') { const k = m.keys[h.i]; if (!down) { if (TEST.note === h.i) { synthOff(); TEST.note = null; TEST.lamp = false; } TEST.held = null; return k.name + ' released -> sound off'; }
-      TEST.held = h; TEST.note = h.i; TEST.step = 0; TEST.lamp = true; synthOn(freq()); const f = Math.round(freq()); TEST.text = NOTE[h.i % 8] + ' ' + f + ' Hz';
+    if (h.kind === 'key' && !m.keys[h.i].btn) { const k = m.keys[h.i]; TEST.held = down ? h : null; if (!down) return ''; TEST.text = k.name; return k.name + ' pressed -> ' + LABP(k.pin) + ' LOW -> screen: "' + k.name + '" (no note)'; } /* a wheel or stick press plays no note, like code.py */
+    if (h.kind === 'key') { const k = m.keys[h.i], ni = m.keys.slice(0, h.i).filter((q) => q.btn).length; if (!down) { if (TEST.note === ni) { synthOff(); TEST.note = null; TEST.lamp = false; } TEST.held = null; return k.name + ' released -> sound off'; }
+      TEST.held = h; TEST.note = ni; TEST.step = 0; TEST.lamp = true; synthOn(freq()); const f = Math.round(freq()); TEST.text = NOTE[ni % 8] + ' ' + f + ' Hz';
       clearInterval(TEST.arp); if (m.pots.length > 1) TEST.arp = setInterval(() => { TEST.step++; synthOn(freq()); }, 60000 / (TEST.bpm || 120) / 2);
-      return k.name + ' pressed -> GP' + k.pin + ' LOW -> plays ' + NOTE[h.i % 8] + ' ' + f + ' Hz'; }
+      return k.name + ' pressed -> GP' + k.pin + ' LOW -> plays ' + NOTE[ni % 8] + ' ' + f + ' Hz'; }
     if (h.kind === 'pot') { const v = TEST.val[h.i] || 0, p = m.pots[h.i]; if (Math.abs(v - (TEST.last[h.i] == null ? -10 : TEST.last[h.i])) < 2) return ''; TEST.last[h.i] = v;
       if (h.i === 0) { TEST.tr = Math.floor(v * 24 / 100) - 12; if (TEST.note != null) synthOn(freq()); return p.name + ' turned -> pitch ' + (TEST.tr > 0 ? '+' : '') + TEST.tr + ' semitones'; }
       if (h.i === 1) { TEST.bpm = 60 + Math.floor(v * 180 / 100); if (TEST.arp) { clearInterval(TEST.arp); TEST.arp = setInterval(() => { TEST.step++; synthOn(freq()); }, 60000 / TEST.bpm / 2); } return p.name + ' turned -> tempo ' + TEST.bpm + ' bpm'; } }
