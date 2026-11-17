@@ -5,7 +5,7 @@ import * as THREE from 'three';
 import { OrbitControls } from 'three/addons/OrbitControls.js';
 import * as G from './geo.js?v=33';
 import { CARABINER_HOOK_OUTLINE_MM, CARABINER_DEFAULT_THICKNESS_MM } from './charm_carabiner_hook.js?v=1';
-import { openMeasure, GROUPS } from './capture.js?v=21';
+import { openMeasure, GROUPS } from './capture.js?v=22';
 import { makeBoard, boardFiles, boardSvg, zip as zipFiles } from './board.js?v=4';
 import { charParts, chSpec, charBuyList, CH_DEF, headDims, faceSpots, faceLimit, featPoly, flatParts, FEATS } from './char3d.js?v=5';
 import { micMain, planWiring, codeFor, PICO_LEFT, PICO_RIGHT, PICO_PINS, PICO_BRAINS, NEED, BOARDS, BOARD_OF } from './wiring.js?v=25';
@@ -2504,6 +2504,7 @@ function measuredItems(p, cx, cy, panel) {
 const MEASURED = {
   panels(list) { if (!list || !list.length) return; backup(); S.style = 'panel'; S.picked = true; S.started = true; S.lockBox = null;
     S.mpan = { list: list.map((p) => ({ name: p.name, w: Math.round(p.w * 2) / 2, h: Math.round(p.h * 2) / 2, src: p, items: null })), cur: 0 };
+    S.mpan.list.forEach((q) => { S.pw = q.w; S.pd = q.h; const d = dims(); S.items = measuredItems(q.src, d.W / 2, d.D / 2, 'top'); q.src = null; reflow(); keepInside(); q.items = JSON.parse(JSON.stringify(S.items)); }); /* each panel's parts, placed at its own size */
     mpanLoad(0, true); tag(list.length > 1 ? list.length + ' panels measured: ' + list.map((p) => p.name).join(', ') + '. Switch between them in Shape, Size.' : list[0].name + ': ' + S.pw + ' x ' + S.pd + ' mm, ' + S.items.length + ' tagged parts placed.'); },
   case(style, list) { if (!list || !list.length) return; backup(); const p = list[0], c = tolOf(), m = 2 * (R.T + R.CLR + 1), gap = 2 * (R.T + R.CLR + 0.8) - m; /* the deck inside the walls has to hold the panel, plus the clearance all round */
     S.style = style; S.picked = true; S.started = true; S.lockBox = null; S.mpan = null; S.xw = S.xd = 0;
@@ -2594,7 +2595,7 @@ function piecesHtml() { // every printed piece, by what it is, with how many fil
   if (S.material === 'wood') return ''; const fs = bedFiles(), grp = {}; fs.forEach((f) => { const n = f.name.replace(/^casezero-/, '').replace(/\.stl$/, ''), k = /test-fit/.test(n) ? 'Test fit' : /color2/.test(n) ? 'Marks color' : /^(lid|base|top|panel)-(box|deck)?/.test(n) ? n.split('-')[0].replace(/^./, (c) => c.toUpperCase()) + (/deck/.test(n) ? ' deck' : isPanel() ? '' : ' box') : /^mount/.test(n) ? 'Mounted parts' : /keycap/.test(n) ? 'Keycaps' : /keys-plate/.test(n) ? 'Keyboard plate' : /shroud/.test(n) ? 'Raised shroud' : /swap-frame/.test(n) ? 'Swap frame' : /swap-insert/.test(n) ? 'Swap inserts' : /knob/.test(n) ? 'Knobs' : /dpad/.test(n) ? 'D-pad' : /hook/.test(n) ? 'Carabiner hook' : /glue/.test(n) ? 'Glue-on pieces' : f.label; grp[k] = (grp[k] || 0) + 1; });
   const ex = []; if (S.items.some((i) => i.panel === 'inside' && (riserOf(i) > 0))) ex.push('Standoffs and slates (print with the case)'); { const sn = S.attachedParts.filter((m) => MOUNTABLE[m.partId] && m.mountType === 'snap').reduce((q, m) => q + mountCount(m), 0); if (sn) ex.push(sn + ' snap pins (in the mounted part files)'); }
   if (!fs.length) return ''; return '<p class="h" style="margin:4px 0">' + fs.length + ' printed files</p><div class="chosen" style="margin-bottom:6px">' + Object.keys(grp).map((k) => '<span>' + esc(k) + (grp[k] > 1 ? ' x' + grp[k] : '') + '</span>').join('') + ex.map((e) => '<span>' + esc(e) + '</span>').join('') + '</div>'; }
-function filesOf() {
+function filesOf(only) { /* only: just this panel's pieces, for the other measured panels */
     const files = [], hs = halves(), wood = S.material === 'wood';
     hs.forEach((x) => {
       const pl = plan(x.built), n = pl.regs.length, nm = x.name.toLowerCase();
@@ -2613,6 +2614,10 @@ function filesOf() {
       const dks = x.built.deck.filter((l) => l.tag === 'deck'); if (dks.length) files.push({ label: x.name + ' test fit (1 mm)', name: 'casezero-' + nm + '-test-fit.stl', blob: meshBlob(G.trisOf(G.layerGeos([{ polys: dks[dks.length - 1].polys, z0: 0, z1: 1 }])), nm + ' test fit') });
 
     });
+    if (only) return files;
+    if (!wood && isPanel() && S.mpan && S.mpan.list && S.mpan.list.length > 1) { const L = S.mpan.list, cur = S.mpan.cur, keep = { pw: S.pw, pd: S.pd, items: S.items }, tagOf = (f, i) => Object.assign(f, { label: L[i].name + ': ' + f.label, name: f.name.replace('casezero-', 'casezero-p' + (i + 1) + '-') });
+      files.forEach((f) => tagOf(f, cur)); /* every measured panel in the same zip, each file named by its panel */
+      L.forEach((q, i) => { if (i === cur || !q.items) return; S.pw = q.w; S.pd = q.h; S.items = q.items; markCache = {}; try { filesOf(true).forEach((f) => files.push(tagOf(f, i))); } finally { S.pw = keep.pw; S.pd = keep.pd; S.items = keep.items; markCache = {}; } }); }
     if (!wood && swapOn()) { const regs = plan(hs[0].built).regs, n = regs.length, pcs = (L, nm, lab) => G.cutLayers(L, [], regs).forEach((p, j) => { const tris = G.trisOf(G.layerGeos(p.layers)); if (tris.length) files.push({ label: lab + (n > 1 ? ' piece ' + (j + 1) + ' of ' + n : ''), name: nm + (n > 1 ? '-' + (j + 1) : '') + '.stl', blob: meshBlob(tris, lab) }); }); /* bigger than the bed: the same cuts as the panel */
       pcs(swapFrame(), 'casezero-swap-frame', 'Swap frame (stays in the box)');
       swapList().forEach((q, i) => { if (i === S.swap.cur) return; const keep = S.items; S.items = q.items || []; markCache = {}; try { pcs(panelBuilt().tray, 'casezero-swap-insert-' + (i + 1), q.name + ' (swap insert)'); } finally { S.items = keep; markCache = {}; } }); }
