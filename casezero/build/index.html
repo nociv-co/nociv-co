@@ -179,7 +179,8 @@ details.fold .list .it{border-color:var(--line)}
 .prog i{position:absolute;left:0;top:0;bottom:0;background:#cfe9d7}
 .prog b{position:relative;display:block;text-align:center;font:900 13px/26px var(--sys)}
 .pane .hrow{padding-top:2px}
-.bbar .dots b{width:8px;height:8px;border-radius:50%;background:#cfc9bb}.bbar .dots b.on{background:var(--ink);width:22px;border-radius:4px}
+.bbar .dots{gap:0}.bbar .dots b{box-sizing:content-box;width:8px;height:8px;padding:14px 4px;border-radius:50%;background:#cfc9bb content-box;cursor:pointer}.bbar .dots b.on{background:var(--ink) content-box;width:22px;border-radius:4px}
+.row .num.mm{flex:0 0 64px;padding:0 4px;text-align:center;font-size:14px}
 @media(min-width:900px){body{max-width:560px;margin:0 auto;border-left:1.5px solid var(--ink);border-right:1.5px solid var(--ink)}}
 </style>
 <script src="/vendor/clipper/clipper.js"></script>
@@ -203,6 +204,6 @@ details.fold .list .it{border-color:var(--line)}
 <nav class="bbar" id="bbar" aria-label="Steps"></nav>
 <input type="file" id="snapIn" accept="image/*" capture="environment" hidden>
 <div class="sheet" id="sheet" hidden><div class="in" id="sheetIn"></div></div>
-<script type="module" src="builder.js?v=36"></script>
+<script type="module" src="builder.js?v=37"></script>
 </body>
 </html>

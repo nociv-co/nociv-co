@@ -4,7 +4,7 @@
 import * as THREE from 'three';
 const CL = window.ClipperLib, SC = 1000; // clipper works in integers, 1 unit = 1/1000 mm
 
-export const RULE = { T: 2.4, F: 2.0, LT: 2.4, POSTR: 3.6, PILOT: 2.5, HOLE: 3.4, CLR: 0.3, MAG: 6.3, MAGD: 3.2, KR: 4.2, PIN: 2.1 };
+export const RULE = { T: 2.4, F: 2.0, LT: 2.4, POSTR: 3.6, PILOT: 2.5, HOLE: 3.4, CLR: 0.3, MAG: 6.3, MAGD: 3.2, KR: 4.2, PIN: 2.1, FIT: 0, SEAM: 0.075 }; // FIT: extra room around every opening, SEAM: room on each side of a split seam. Both follow the Clearance setting.
 
 // ---------- polygon helpers ----------
 const toC = (poly) => poly.map(([x, y]) => ({ X: Math.round(x * SC), Y: Math.round(y * SC) }));
@@ -72,17 +72,17 @@ export function postSpots(out, n) {
 export function cutShape(P, x, y, rotq, extra) {
   const c = P.cut || { o: 'rect', w: P.w, h: P.h }, out = [], a = (rotq || 0) * Math.PI / 2;
   const R = (poly) => rot(poly, a, x, y);
-  const tol = extra || 0;
+  const tol = (extra || 0) + RULE.FIT;
   if (c.o === 'circle') out.push(circle(x, y, c.d / 2 + tol));
   else if (c.o === 'rect') { const oy = y + (c.dy || 0); /* dy: an opening that is not in the middle of its part (a keyboard has a strip above the keys) */ out.push(R(rrect(x - c.w / 2 - tol, oy - c.h / 2 - tol, x + c.w / 2 + tol, oy + c.h / 2 + tol, 1.2))); }
-  else if (c.o === 'slot') out.push(R(rrect(x - c.w / 2, y - c.h / 2, x + c.w / 2, y + c.h / 2, c.h / 2 - 0.01)));
-  else if (c.o === 'cross') { const w = c.w / 2 + 0.4, t = c.t / 2 + 0.4; out.push(...union([R(rect(x - w, y - t, x + w, y + t)), R(rect(x - t, y - w, x + t, y + w))])); }
+  else if (c.o === 'slot') out.push(R(rrect(x - c.w / 2 - tol, y - c.h / 2 - tol, x + c.w / 2 + tol, y + c.h / 2 + tol, c.h / 2 + tol - 0.01)));
+  else if (c.o === 'cross') { const w = c.w / 2 + 0.4 + tol, t = c.t / 2 + 0.4 + tol; out.push(...union([R(rect(x - w, y - t, x + w, y + t)), R(rect(x - t, y - w, x + t, y + w))])); }
   else if (c.o === 'ring') { for (let i = 0; i < 12; i++) { const an = i / 12 * Math.PI * 2, r = c.d / 2 - c.t / 2; out.push(circle(x + Math.cos(an) * r, y + Math.sin(an) * r, 2.2, 20)); } }
   else if (c.o === 'grille') { out.push(circle(x, y, 1.5, 16)); for (let i = 0; i < 6; i++) { const an = i * Math.PI / 3; out.push(circle(x + 6 * Math.cos(an), y + 6 * Math.sin(an), 1.5, 16)); } for (let i = 0; i < 10; i++) { const an = i * Math.PI / 5 + 0.3; out.push(circle(x + 10.5 * Math.cos(an), y + 10.5 * Math.sin(an), 1.25, 16)); } }
   if (P.bolts) P.bolts.forEach(([bx, by]) => { const p = rot([[x + bx, y + by]], a, x, y)[0]; out.push(circle(p[0], p[1], 2.2, 20)); });
-  (P.userHoles || []).forEach((h) => { const p = rot([[x + h.x, y + h.y]], a, x, y)[0]; out.push(circle(p[0], p[1], h.d / 2 + 0.2, 28)); });
+  (P.userHoles || []).forEach((h) => { const p = rot([[x + h.x, y + h.y]], a, x, y)[0]; out.push(circle(p[0], p[1], h.d / 2 + 0.2 + RULE.FIT, 28)); });
   // parts tagged on a photo of a built board: each one cuts its catalog hole at the spot that was tapped
-  (P.userCuts || []).forEach((u) => { const p = rot([[x + u.x, y + u.y]], a, x, y)[0]; out.push(...cutShape({ cut: u.cut, w: 1, h: 1 }, p[0], p[1], rotq, tol)); });
+  (P.userCuts || []).forEach((u) => { const p = rot([[x + u.x, y + u.y]], a, x, y)[0]; out.push(...cutShape({ cut: u.cut, w: 1, h: 1 }, p[0], p[1], rotq, extra)); });
   return out;
 }
 // The room a part takes on the deck (for overlap checks and the layout picture).
@@ -285,7 +285,7 @@ export function pieceRegions(foot, dir, n, style) {
   if (dir === 'h' || dir === 'both') for (let i = 1; i <= n; i++) cutAll([(b.x0 + b.x1) / 2, b.y0 + b.h * i / (n + 1)], Math.PI / 2);
   if (dir === 'd') { const c = [(b.x0 + b.x1) / 2, (b.y0 + b.y1) / 2], span = (b.w + b.h) / Math.SQRT2; for (let i = 1; i <= n; i++) { const t = -span / 2 + span * i / (n + 1); cutAll([c[0] + t / Math.SQRT2, c[1] - t / Math.SQRT2], Math.PI / 4); } }
   // a hair of room on every seam so the pieces slide together (0.15 mm total)
-  return regions.map((r) => offset(r, -0.075)).filter((r) => area(inter(r, foot)) > 4);
+  return regions.map((r) => offset(r, -RULE.SEAM)).filter((r) => area(inter(r, foot)) > 4);
 }
 // Cut a half's layers into the regions. Knuckles go whole to the piece their middle sits in.
 export function cutLayers(layers, extra, regions) {
