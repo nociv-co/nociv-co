@@ -626,6 +626,7 @@ function kbHtml() { const K = kb(), X = xp(), n = K.sw.length, C = kbCase(), cos
     '<p class="note" style="margin:4px 0 6px">It is ' + K.w.toFixed(0) + ' x ' + K.h.toFixed(0) + ' mm with ' + n + ' keys. ' + (C.has ? '<span class="ok">It is in your case.</span>' : C.fits ? '<span class="ok">It fits inside your case.</span>' : 'Your case has ' + C.iw.toFixed(0) + ' x ' + C.ih.toFixed(0) + ' mm inside, so it does not fit yet.') + '</p>' +
     '<div class="grid g2">' + '<button class="btn" data-act="kbfit" style="padding:9px">Size it to my case</button><button class="btn' + (C.has ? '' : ' dark') + '" data-act="kbadd" style="padding:9px">' + (C.has ? 'Take it out of my case' : 'Put it in my case') + '</button></div>' +
     '<p class="h" style="margin-top:12px">2. Key caps</p>' + filLine('keys') +
+    '<div class="row"><b>3D view</b>' + seg('xkview', [['plate', 'Plate only'], ['caps', 'With keycaps']], X.keys.view === 'plate' ? 'plate' : 'caps') + '</div>' +
     '<div class="row"><b>Cap fit</b>' + seg('xkf', [['0', 'Snug'], ['0.1', 'Normal'], ['0.2', 'Loose']], String(X.keys.f)) + '</div>' +
     '<p class="note" style="margin:2px 0 6px">Print 1 test cap first and push it on a switch. Too tight to go on: pick Loose. Falls off: pick Snug. Then print the rest.</p>' +
     (K.s60 ? '<div class="grid g2"><button class="btn" data-xsave="keycap1" style="padding:9px">Save 1 test cap</button><button class="btn" data-xsave="keycapswide" style="padding:9px">Save the ' + K.sw.filter((q) => q.u > 1).length + ' wide caps</button></div><p class="note" style="margin:4px 0 0">Plus ' + K.sw.filter((q) => !(q.u > 1)).length + ' plain caps: Save 24 caps, then again.</p><button class="btn" data-xsave="keycaps" style="padding:9px;margin-top:6px">Save 24 caps</button>' : '') + (K.s60 ? '' : '<div class="row"><b>Space bar</b>' + seg('xksp', [['0', 'No'], ['1', 'Yes']], X.keys.sp ? '1' : '0') + '</div>') + (K.s60 ? '' : X.keys.sp ? '<p class="note" style="margin:2px 0 6px">The two middle keys of the bottom row share one long cap, and both type a space. Two switches push back, so it presses a little heavier than a single key.</p>' : '') +
@@ -849,7 +850,7 @@ function paneRest(t, P, c) {
     return '<div class="row"><b>Seams go</b>' + seg('sdir', [['auto', 'Auto'], ['v', '|'], ['h', '&mdash;'], ['both', '+'], ['d', '/']], S.sdir) + '</div><div class="row"><b>How many</b>' + seg('sn', [['auto', 'Auto'], ['1', '1'], ['2', '2'], ['3', '3'], ['4', '4']], S.sn) + '</div><div class="row"><b>Edges</b>' + seg('tab3', [['dovetail', 'Puzzle tabs'], ['flat', 'Flat + glue']], S.tab3) + '</div>' +
       '<p class="note">' + (bad ? '<span class="bad">Some pieces are still bigger than your ' + S.bed[0] + ' x ' + S.bed[1] + ' mm bed. Add a seam.</span>' : '<span class="ok">' + n + ' pieces, all fit your bed.</span>') + ' One seam in the middle = 2 even pieces. Two seams = 3. Puzzle tabs lock, a drop of glue keeps them.</p>';
   }
-  if (t === '3d') return '<p class="h">Spin it with one finger, pinch to zoom</p><div class="grid g2">' + (isClam() ? '<button class="btn" data-act="open">' + (S.open ? 'Close the lid' : 'Open the lid') + '</button>' : '') + '<button class="btn dark" data-act="share">Copy Build Link</button></div><button class="btn" data-act="keepbox" style="margin-top:8px;width:100%">Keep Box, Swap Insides</button><div id="shareOut"></div><p class="note">' + summaryLine() + ' <b>' + money(cost().total) + ' to build.</b></p>' + creditHtml();
+  if (t === '3d') return '<div class="row"><b>View</b>' + seg('bedv', [['asm', 'Assembled'], ['bed', 'Print Bed']], S.bedv === 'bed' ? 'bed' : 'asm') + '</div>' + piecesHtml() + '<p class="h">Spin it with one finger, pinch to zoom</p><div class="grid g2">' + (isClam() ? '<button class="btn" data-act="open">' + (S.open ? 'Close the lid' : 'Open the lid') + '</button>' : '') + '<button class="btn dark" data-act="share">Copy Build Link</button></div><button class="btn" data-act="keepbox" style="margin-top:8px;width:100%">Keep Box, Swap Insides</button><div id="shareOut"></div><p class="note">' + summaryLine() + ' <b>' + money(cost().total) + ' to build.</b></p>' + creditHtml();
   if (t === 'shop') return shopHtml();
   if (t === 'pcb') return pcbHtml();
   if (t === 'files') { const probs = allProblems(); return '<p class="note" style="margin:0 0 8px">No printer? A print service or a library takes these same files. To print from a USB stick, open them in your printer\'s free slicer app first: it turns them into the file your printer reads.</p>' + (S.material === 'wood' ? '' : '<div class="row"><b>File type</b>' + seg('fmt', [['stl', 'STL'], ['3mf', '3MF']], fmtOf()) + '</div>') + '<div class="grid g2"><button class="btn red" data-act="make"' + (probs.length || !S.items.length ? ' aria-disabled="true"' : '') + '>Make my files</button>' + (S.material === 'wood' || isPanel() ? '' : '<button class="btn" data-act="swatch">Download 15-min Fit Swatch</button>') + '</div>' + (S.material === 'wood' || isPanel() ? '' : '<p class="note" style="margin:6px 0 0">The swatch is a ' + swatchSize() + ' mm plate with ' + (isClam() && S.magnets ? 'a magnet pocket, ' : '') + 'the M3 bore, the snap pin slot and ' + esc(swatchButton().short) + ' opening, at your ' + tolOf() + ' mm clearance and ' + R.T + ' mm walls. Print it first: if they fit, the case will.</p>') + '<p class="note">' + (!S.items.length ? 'Add electronics in Brain first.' : probs.length ? '<span class="bad">Fix the electronics marked ! in Arrange first.</span>' : (S.material === 'wood' ? 'Wood: real size templates (SVG) to print at 100 percent or laser cut, plus the cut list.' : 'One file per piece, numbered, as STL or 3MF. Print the deck face down, the tray open side up.')) + '</p><div class="files" id="fileList" style="margin-top:8px"></div>'; }
@@ -1102,11 +1103,12 @@ $('pane').addEventListener('click', (e) => {
     const nn = (S.notches || [])[S.nsel]; if (nn && k === 'n_edge') { if ((nn.edge === 'left' || nn.edge === 'right') !== (v === 'left' || v === 'right')) nn.at = Math.round((v === 'left' || v === 'right' ? dims().D : dims().W) / 2); nn.edge = v; reflow(); save(); render(); return; } if (nn && k === 'n_shape') { nn.shape = v; save(); render(); return; }
     if (k.indexOf('ch_') === 0) { const X = xp(), f = k.slice(3); X.ch[f] = (f === 'brows' || f === 'turn' || f === 'size' || f === 'bend' || f === 'servo') ? +v : v; const two = X.ch.head === 'cube' && X.ch.size >= 72; if (!two && f === 'eyes' && v === 'screen' && X.ch.mouth === 'screen') X.ch.mouth = 'line'; if (!two && f === 'mouth' && v === 'screen' && X.ch.eyes === 'screen') X.ch.eyes = 'oval'; if (!two && (f === 'size' || f === 'head') && X.ch.eyes === 'screen' && X.ch.mouth === 'screen') X.ch.mouth = 'line'; save(); render(); return; }
     if (k === 'fil') { S.fil = v; save(); render(); return; } if (k === 'pq') { S.pq = v; S.psOpen = true; save(); render(); return; }
-    { const X = xp(); if (k === 'xkf') { X.keys.f = +v; save(); render(); return; } if (k === 'xksp') { X.keys.sp = v === '1' ? 1 : 0; save(); render(); return; } if (k === 'xkp') { X.keys.preset = v === '60' ? '60' : 'custom'; KBC = null; save(); render(); return; } if (k === 'xs_a') { X.stand.a = +v; save(); render(); return; } if (k === 'xch_s' || k === 'xch_h') { X.charm[k === 'xch_s' ? 'size' : 'hook'] = v; if (k === 'xch_h') S.attachedParts.forEach((m) => { if (m.partId === 'charm' && m.charm) m.charm.hook = v; }); MPC = {}; save(); render(); return; } if (k === 'xf_hole') { X.feet.hole = v === '1'; save(); render(); return; } if (k === 'xo_s') { X.standoff.s = v; save(); render(); return; } }
+    { const X = xp(); if (k === 'xkview') { X.keys.view = v; save(); render(); return; } if (k === 'xkf') { X.keys.f = +v; save(); render(); return; } if (k === 'xksp') { X.keys.sp = v === '1' ? 1 : 0; save(); render(); return; } if (k === 'xkp') { X.keys.preset = v === '60' ? '60' : 'custom'; KBC = null; save(); render(); return; } if (k === 'xs_a') { X.stand.a = +v; save(); render(); return; } if (k === 'xch_s' || k === 'xch_h') { X.charm[k === 'xch_s' ? 'size' : 'hook'] = v; if (k === 'xch_h') S.attachedParts.forEach((m) => { if (m.partId === 'charm' && m.charm) m.charm.hook = v; }); MPC = {}; save(); render(); return; } if (k === 'xf_hole') { X.feet.hole = v === '1'; save(); render(); return; } if (k === 'xo_s') { X.standoff.s = v; save(); render(); return; } }
     if (k === 'brand') { S.brand = v; save(); render(); return; }
     if (k === 'walls') { S.walls = v; S.wallT = null; applyWalls(); reflow(); save(); render(); return; }
     if (k === 'wpass') { S.wpass = v; save(); render(); return; }
     if (k === 'swapOn') { S.swap = Object.assign({ mount: 'screws', inserts: null, cur: 0 }, S.swap || {}, { on: v === '1' }); if (S.swap.on) swapList(); save(); render(); return; }
+    if (k === 'bedv') { S.bedv = v; save(); render(); return; }
     if (k === 'swapMount') { S.swap.mount = v; save(); render(); return; }
     if (k === 'tripodOn') { tripodBottom(v === '1'); save(); render(); return; }
     if (k === 'm_face' || k === 'm_type' || k === 'm_view' || k === 'm_pface') { mnt()[k.slice(2)] = v; save(); render(); return; }
@@ -1498,6 +1500,16 @@ function charGroup() { // the assembled character, feet at z = 0, the way it sta
   C.screens.forEach((sc) => { const m = new THREE.Mesh(new THREE.BoxGeometry(sc.w, 1.2, sc.h), new THREE.MeshStandardMaterial({ color: 0x10242c, emissive: 0x1c6f86 })); m.position.set(sc.x, sc.y, sc.z); out.add(m); });
   return out;
 }
+// the key caps sitting on their switches over the plate, so you see what the caps files make. Not printed this way: the caps print top down.
+function capsOn(ox, oy) {
+  const K = kb(), X = xp().keys, f = X.f == null ? 0.1 : X.f, top = 1.5, out = new THREE.Group(), G1 = {}, sp = !K.s60 && X.sp, m = Math.floor((K.c - 1) / 2);
+  const geo = (k, wide, u) => G1[k] || (G1[k] = G.layerGeos(capPolys(f, wide, u))), sw = new THREE.BoxGeometry(14, 14, 5.5), swm = new THREE.MeshStandardMaterial({ color: 0x2a2a2a, roughness: 0.7 });
+  K.sw.forEach((q) => { const hs = new THREE.Mesh(sw, swm); hs.position.set(ox + q.x, oy + q.y, top + 2.75); out.add(hs); /* the switch under it */
+    if (sp && q.j === 0 && q.i === m + 1) return; /* the space bar covers two switches */
+    const wide = sp && q.j === 0 && q.i === m, u = q.u > 1 ? q.u : 0, c = mesh(geo(wide ? 'w' : u ? 'u' + u : 'c', wide, u), u || wide ? 0x2f4a6b : 0xe9e2cc), Wc = u ? u * KB.P - 1.05 : 0;
+    c.scale.z = -1; c.position.set(ox + q.x - (u ? Wc / 2 : 9), oy + q.y - 9, top + 6.5 + 8); out.add(c); });
+  return out;
+}
 function drawParts3d() {
   const r = setup3d(), id = S.xsel, key = 'x:' + id + ':' + JSON.stringify(S.xp || {});
   if (r.key !== key) {
@@ -1511,7 +1523,8 @@ function drawParts3d() {
     else { const a = addonPolys(id), sets = a ? (a.sets || [a]) : [], cols = [0xc8412f, 0x2f4a6b, 0xf2c230, 0xe9e2cc]; let x = 0; const rows = sets.map((st) => { const layers = st.layers || [{ polys: st.polys, z0: 0, z1: st.h }], b = G.bbox([].concat(...layers.map((l) => l.polys))), zt = Math.max(...layers.map((l) => l.z1)); return { layers, b, zt }; }), tw = rows.reduce((q, w) => q + w.b.w, 0) + 6 * Math.max(0, rows.length - 1);
       let deep = 0; rows.forEach((w, i) => { const n = Math.max(1, Math.min(8, sets[i].n || 1)), sy = w.b.h + 5, span = n * sy - 5; deep = Math.max(deep, span); /* every copy you print, not one of each */
         for (let j = 0; j < n; j++) { const m = mesh(G.layerGeos(w.layers), cols[i % cols.length]); m.position.set(-tw / 2 + x - w.b.x0, -w.b.y0 - span / 2 + j * sy, 0); r.root.add(m); }
-        x += w.b.w + 6; tall = Math.max(tall, w.zt, w.b.h * 0.6); }); wide = Math.max(40, tw, deep); tall = Math.max(tall, deep * 0.6); }
+        x += w.b.w + 6; tall = Math.max(tall, w.zt, w.b.h * 0.6); }); wide = Math.max(40, tw, deep); tall = Math.max(tall, deep * 0.6);
+      if (id === 'keys' && rows.length && xp().keys.view !== 'plate') { r.root.add(capsOn(-tw / 2 - rows[0].b.x0, -rows[0].b.y0 - rows[0].b.h / 2)); tall = Math.max(tall, 16); } }
     r.root.position.set(0, 0, 0);
     r.fit = () => { const rad = Math.hypot(wide, tall) / 2 * 1.08, v = r.camera.fov * Math.PI / 360, hz = Math.atan(Math.tan(v) * r.camera.aspect), dist = rad / Math.sin(Math.min(v, hz)) * (id === 'char' ? 1.22 : 1.12), dir = id === 'char' ? [0.5, 0.2, 1] : [0.3, 0.75, 0.75];
       r.controls.target.set(0, id === 'char' ? tall * 0.43 : tall / 4, 0); /* the character sits a little high so the caption does not cover its feet */ r.camera.position.copy(new THREE.Vector3(dir[0], dir[1], dir[2]).normalize().multiplyScalar(dist)).add(r.controls.target); r.controls.update(); };
@@ -1520,12 +1533,37 @@ function drawParts3d() {
   r.controls.enabled = true; r.draw();
 }
 // everything in the build that can change the shape: the 3D view is rebuilt whenever any of it changes, whichever room changed it
-function buildKey() { const { step, tab, page, seen, lastIn, moreOn, cat, fn, xsel, xp: x, have, wired, open, started, picked, ...b } = S; return b; }
+function buildKey() { const { step, tab, page, seen, lastIn, moreOn, cat, fn, xsel, xp: x, have, wired, open, started, picked, bedv, ...b } = S; return b; }
+// Print Bed: every printed file laid out as it prints, on as many beds as it takes, so nothing is hidden inside the case before you download
+const BEDC = { k: null, files: [] }, BCOL = [0xc8412f, 0x2f4a6b, 0xf2c230, 0xe9e2cc, 0x2f7a4b, 0x8a6bb8];
+function bedFiles() { const k = JSON.stringify(buildKey()) + '|' + S.bed + '|' + S.material + '|' + JSON.stringify(S.xp || {}); if (BEDC.k !== k) { BEDC.k = k; try { BEDC.files = S.material === 'wood' ? [] : filesOf().filter((f) => f.blob && f.blob.tris && f.blob.tris.length); } catch (e) { BEDC.files = []; } } return BEDC.files; }
+function bedPack(files) { const bw = S.bed[0], bh = S.bed[1], g = 6, beds = []; let cur = null;
+  const ps = files.map((f) => { const t = f.blob.tris; let x0 = 1e9, y0 = 1e9, z0 = 1e9, x1 = -1e9, y1 = -1e9, z1 = -1e9; for (let i = 0; i < t.length; i += 3) { x0 = Math.min(x0, t[i]); x1 = Math.max(x1, t[i]); y0 = Math.min(y0, t[i + 1]); y1 = Math.max(y1, t[i + 1]); z0 = Math.min(z0, t[i + 2]); z1 = Math.max(z1, t[i + 2]); } return { f, x0, y0, z0, w: x1 - x0, h: y1 - y0, z: z1 - z0 }; }).sort((a, b) => b.h - a.h);
+  ps.forEach((p) => { if (p.w > bw - 2 * g || p.h > bh - 2 * g) { beds.push({ items: [Object.assign(p, { px: g, py: g })], big: true, shelves: [] }); return; }
+    const put = (bd) => { for (const sh of bd.shelves) if (p.h <= sh.h && sh.x + p.w <= bw - g) { bd.items.push(Object.assign(p, { px: sh.x, py: sh.y })); sh.x += p.w + g; return true; } /* first fit: any shelf with room, then a new shelf */
+      const y = bd.shelves.reduce((q, sh) => Math.max(q, sh.y + sh.h + g), g); if (y + p.h > bh - g) return false; bd.shelves.push({ y, h: p.h, x: g + p.w + g }); bd.items.push(Object.assign(p, { px: g, py: y })); return true; };
+    if (!beds.some((bd) => !bd.big && put(bd))) { cur = { items: [], shelves: [] }; beds.push(cur); put(cur); } });
+  return beds; }
+function drawBed3d() {
+  const r = setup3d(), files = bedFiles(), key = 'bed:' + BEDC.k;
+  if (r.key !== key) {
+    r.key = key; r.slots = {}; r.hl = null; r.root.children.slice().forEach((c) => { r.root.remove(c); c.traverse((o) => { if (o.geometry) o.geometry.dispose(); }); });
+    const beds = bedPack(files), bw = S.bed[0], bh = S.bed[1], step = bw + 24, total = beds.length * step - 24; let tall = 10, n = 0;
+    beds.forEach((b, i) => { const X0 = -total / 2 + i * step, plate = new THREE.Mesh(new THREE.BoxGeometry(bw, bh, 1), new THREE.MeshStandardMaterial({ color: b.big ? 0xe8c9c2 : 0xd9d4c7, roughness: 1 })); plate.position.set(X0 + bw / 2, 0, -0.5); r.root.add(plate);
+      b.items.forEach((p) => { const gg = new THREE.BufferGeometry(); gg.setAttribute('position', new THREE.BufferAttribute(new Float32Array(p.f.blob.tris), 3)); gg.translate(X0 + p.px - p.x0, -bh / 2 + p.py - p.y0, -p.z0); r.root.add(mesh([gg], BCOL[n++ % BCOL.length])); tall = Math.max(tall, p.z); }); });
+    r.root.position.set(0, 0, 0); const wide = Math.max(bw, total), deep = bh;
+    r.fit = () => { const rad = Math.hypot(wide, deep * 0.7, tall) / 2 * 1.05, v = r.camera.fov * Math.PI / 360, hz = Math.atan(Math.tan(v) * r.camera.aspect), dist = rad / Math.sin(Math.min(v, hz)); r.controls.target.set(0, 0, 0); r.camera.position.copy(new THREE.Vector3(0.25, 0.8, 0.7).normalize().multiplyScalar(dist)); r.controls.update(); };
+    r.mode = 'big'; r.view = key; r.fit(); $('sb').hidden = true; $('sb').innerHTML = '';
+    const big = beds.filter((b) => b.big).length; tag(files.length + ' printed pieces on ' + beds.length + ' bed' + (beds.length > 1 ? 's' : '') + ' of ' + bw + ' x ' + bh + ' mm' + (big ? ', ' + big + ' bigger than the bed (pink)' : '') + '. Drag to spin.');
+  }
+  r.controls.enabled = true; r.draw();
+}
 function draw3d(isMini) {
   const D3 = deco3d();
   if ($('v3').hidden || (!isMini && $('v3').classList.contains('mini'))) return; // the view changed before this frame ran
   const MV = mountView();
   if (curTab() === 'extras' && !D3 && S.xsel && !MV) { if (!isMini) drawParts3d(); return; }
+  if (S.step === 5 && curTab() === '3d' && S.bedv === 'bed' && !isMini) { drawBed3d(); return; }
   // styling the lid's outside: show it closed, from above, the way people will see it
   const XR = xrayOn();
   const lidTop = !XR && S.step === 3 && curTab() !== 'colors' && (curFace() === 'lidout' || !!WALLF[curFace()]), DF = D3 ? decoFace() : '', OPEN = XR ? true : D3 || MV ? false : S.open && !lidTop; /* mounting: the lid stays shut, out of the way */
@@ -2152,7 +2190,7 @@ function addonPolys(id, opt) {
   if (id === 'panel') { const w = X.panel.w, h = X.panel.h; return { polys: G.diff([G.rect(0, 0, w, h)], [hole3(5, 5), hole3(w - 5, 5), hole3(5, h - 5), hole3(w - 5, h - 5)]), h: 2.4, n: 1 }; }
   if (id === 'keys') { // the switch plate. Holes drawn 14.1: printed holes come out a touch small and 14 is the size the clips need.
     const K = kb(), o = KB.HOLE / 2, out = [G.rect(K.x0, K.y0, K.x1, K.y1)], scr = K.screws.map(([x, y]) => hole3(x, y)), cut = scr.slice();
-    K.sw.forEach((q) => cut.push(G.rect(q.x - o, q.y - o, q.x + o, q.y + o)));
+    K.sw.forEach((q, k) => { const jx = (q.j || 0) * 0.004, jy = (q.i != null ? q.i : k) * 0.004; cut.push(G.rect(q.x - o + jx, q.y - o + jy, q.x + o + jx, q.y + o + jy)); }); /* a few thousandths of a mm apart (at most 0.06 mm), so no two holes share a straight line: holes in one line leave open edges in the mesh */
     [-8.89, 8.89].forEach((dy) => cut.push(G.rect(K.pico.x - 25.8, K.pico.y + dy - 1.6, K.pico.x + 25.8, K.pico.y + dy + 1.6))); /* two slots: the Pico's pins poke up through here */
     const rim = G.union(G.diff(out, [G.rect(K.x0 + 7, K.y0 + 7, K.x1 - 7, K.y1 - 7)]).concat([G.rect(K.x0 + 6, K.H + 0.8, K.x1 - 6, K.H + 2.4)])); /* the rim, and one rib between the keys and the Pico, keep a thin printed plate flat. Its 3.5 mm height is also what holds the board at the right distance. */
     return { layers: [{ polys: G.diff(out, cut), z0: 0, z1: 1.5 }, { polys: G.diff(rim, scr), z0: 1.5, z1: 5 }], n: 1 }; }
@@ -2181,7 +2219,7 @@ function addonFile(id) {
     for (let i = 0; i < set.n; i++) geos.push(...G.layerGeos(layers.map((l) => ({ polys: l.polys.map((p) => p.map(([x, y]) => [x - b.x0 + (i % per) * step, y - b.y0 + y0 + Math.floor(i / per) * (b.h + 4)])), z0: l.z0, z1: l.z1 }))));
     y0 += Math.ceil(set.n / per) * (b.h + 4);
   });
-  return { name: 'casezero-' + id + '.stl', blob: G.stl(G.trisOf(geos), id) };
+  return { name: 'casezero-' + id + '.stl', blob: meshBlob(G.trisOf(geos), id) };
 }
 // ---------- the keyboard: one set of numbers shared by the plate, the caps, the board and the hole in the case ----------
 // Cherry MX data sheet: keys 19.05 mm apart, 14 mm square hole in a 1.5 mm plate, 5 mm from plate top to board top.
@@ -2522,9 +2560,12 @@ function threeMf(tris, name) {
     { name: '_rels/.rels', text: X + '<Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships"><Relationship Target="/3D/3dmodel.model" Id="rel0" Type="http://schemas.microsoft.com/3dmanufacturing/2013/01/3dmodel"/></Relationships>' },
     { name: '3D/3dmodel.model', text: model }])], { type: 'model/3mf' });
 }
-function makeFiles() {
-  const out = $('fileList'); out.innerHTML = '<p class="note">Making...</p>';
-  setTimeout(() => {
+// every file of the build, made now: the Files list, the Print Bed view and the list of pieces all use it
+function piecesHtml() { // every printed piece, by what it is, with how many files it takes
+  if (S.material === 'wood') return ''; const fs = bedFiles(), grp = {}; fs.forEach((f) => { const n = f.name.replace(/^casezero-/, '').replace(/\.stl$/, ''), k = /test-fit/.test(n) ? 'Test fit' : /color2/.test(n) ? 'Marks color' : /^(lid|base|top|panel)-(box|deck)?/.test(n) ? n.split('-')[0].replace(/^./, (c) => c.toUpperCase()) + (/deck/.test(n) ? ' deck' : isPanel() ? '' : ' box') : /^mount/.test(n) ? 'Mounted parts' : /keycap/.test(n) ? 'Keycaps' : /keys-plate/.test(n) ? 'Keyboard plate' : /shroud/.test(n) ? 'Raised shroud' : /swap-frame/.test(n) ? 'Swap frame' : /swap-insert/.test(n) ? 'Swap inserts' : /knob/.test(n) ? 'Knobs' : /dpad/.test(n) ? 'D-pad' : /hook/.test(n) ? 'Carabiner hook' : /glue/.test(n) ? 'Glue-on pieces' : f.label; grp[k] = (grp[k] || 0) + 1; });
+  const ex = []; if (S.items.some((i) => i.panel === 'inside' && (riserOf(i) > 0))) ex.push('Standoffs and slates (print with the case)'); { const sn = S.attachedParts.filter((m) => MOUNTABLE[m.partId] && m.mountType === 'snap').reduce((q, m) => q + mountCount(m), 0); if (sn) ex.push(sn + ' snap pins (in the mounted part files)'); }
+  if (!fs.length) return ''; return '<p class="h" style="margin:4px 0">' + fs.length + ' printed files</p><div class="chosen" style="margin-bottom:6px">' + Object.keys(grp).map((k) => '<span>' + esc(k) + (grp[k] > 1 ? ' x' + grp[k] : '') + '</span>').join('') + ex.map((e) => '<span>' + esc(e) + '</span>').join('') + '</div>'; }
+function filesOf() {
     const files = [], hs = halves(), wood = S.material === 'wood';
     hs.forEach((x) => {
       const pl = plan(x.built), n = pl.regs.length, nm = x.name.toLowerCase();
@@ -2553,7 +2594,17 @@ function makeFiles() {
     const knobs = S.items.filter((i) => PP(i) && PP(i).printed === 'knob').length + extraOf('knob'), pads = S.items.filter((i) => PP(i) && PP(i).printed === 'dpad').length + extraOf('dpad');
     if (!wood && knobs) { const geos = []; for (let i = 0; i < knobs; i++) { const kg = G.knobGeo(); kg.translate(i * 24, 0, 0); geos.push(kg); } files.push({ label: knobs + (knobs > 1 ? ' knobs' : ' knob'), name: 'casezero-knobs.stl', blob: meshBlob(G.trisOf(geos), 'knobs') }); }
     if (!wood && pads) { const geos = []; for (let i = 0; i < pads; i++) G.dpadGeos().forEach((gg) => { gg.translate(i * 40, 0, 1.5); geos.push(gg); }); files.push({ label: pads + ' D-pad', name: 'casezero-dpad.stl', blob: meshBlob(G.trisOf(geos), 'dpad') }); }
+    if (!wood && S.items.some((i) => i.type === 'kbd')) { const a = addonPolys('keys'), foot = a.layers[0].polys, bb = G.bbox(foot), bw = S.bed[0] - 8, bh = S.bed[1] - 8; /* the keyboard in the case: its plate (in pieces if bigger than the bed) and its caps */
+      if (bb.w > bw || bb.h > bh) { const vert = bb.w > bw, n = Math.ceil((vert ? bb.w : bb.h) / (vert ? bw : bh)) - 1, pcs = G.cutLayers(a.layers, [], G.pieceRegions(foot, vert ? 'v' : 'h', n, 'dovetail')); pcs.forEach((pc, i) => files.push({ label: 'Keyboard plate piece ' + (i + 1) + ' of ' + pcs.length, name: 'casezero-keys-plate-' + (i + 1) + '.stl', blob: meshBlob(G.trisOf(G.layerGeos(pc.layers)), 'keys plate ' + (i + 1)) })); }
+      else files.push({ label: 'Keyboard plate', name: 'casezero-keys-plate.stl', blob: meshBlob(G.trisOf(G.layerGeos(a.layers)), 'keys plate') });
+      ['keycaps'].concat(kb().s60 ? ['keycapswide'] : xp().keys.sp ? ['keycap2'] : []).forEach((id) => { const f = addonFile(id); if (f && f.blob) files.push({ label: id === 'keycaps' ? 'Keycaps' : id === 'keycap2' ? 'Space bar cap' : 'Wide keycaps', name: f.name, blob: f.blob }); }); }
     files.push({ label: 'Electronics + build list', name: 'casezero-parts.txt', blob: new Blob([partsText()], { type: 'text/plain' }) });
+    return files;
+}
+function makeFiles() {
+  const out = $('fileList'); out.innerHTML = '<p class="note">Making...</p>';
+  setTimeout(() => {
+    const files = filesOf(), wood = S.material === 'wood';
     FILES = files; const hasBrain = S.items.some((i) => PP(i) && PP(i).cat === 'brain');
     out.innerHTML = '<button type="button" class="btn red" data-act="saveall" style="grid-column:1/-1">Save everything in one zip</button>' + files.map((f, i) => '<button type="button" class="btn" data-f="' + i + '">Save ' + esc(f.label + fmtTag(f)) + '</button>').join('') +
       '<div class="list" style="grid-column:1/-1;margin-top:8px"><p class="h" style="margin:0 0 4px">From files to a finished device</p>' +
@@ -2631,7 +2682,7 @@ window.addEventListener('pageshow', (e) => { if (e.persisted) resync(); });
 window.addEventListener('storage', (e) => { if (e.key === KEY) resync(); });
 document.addEventListener('visibilitychange', () => { if (!document.hidden) resync(); });
 
-window.__cz = { decoMove, mountPart, TEST, testModel, wiring, wallArt, LG, hookPolys, addBoard, packBuild, unpackBuild, shareState, portBlocked, portAt, mountBlocked, swatchFile, loadRecipe, get DECO() { return DECO; }, get T3() { return T3; }, THREE, wiring, codeFor, get S() { return S; }, get view() { return view; }, AZ, get UNDO() { return UNDO.length; }, halves, plan, makeFiles, get FILES() { return FILES; }, allProblems, G, addPart, go, render, dims, heights, addonFile, addonPolys, charParts, charCache, kb, kbBoard, kbCode, kbReadme, boardSvg, wiring, PP, portBlocked, testAct, testModel, micMain, get TRAY() { return TRAY; }, showStart, loadRecipe, cost, boardBuild, boardFiles, boardReadme, extraRows, keepBox };
+window.__cz = { decoMove, mountPart, TEST, testModel, wiring, wallArt, LG, hookPolys, addBoard, packBuild, unpackBuild, shareState, portBlocked, portAt, mountBlocked, swatchFile, loadRecipe, get DECO() { return DECO; }, get T3() { return T3; }, THREE, wiring, codeFor, get S() { return S; }, get view() { return view; }, AZ, get UNDO() { return UNDO.length; }, halves, plan, makeFiles, get FILES() { return FILES; }, allProblems, G, addPart, go, render, dims, heights, addonFile, addonPolys, charParts, charCache, kb, kbBoard, kbCode, kbReadme, boardSvg, wiring, PP, fitAll, filesOf, portBlocked, testAct, testModel, micMain, get TRAY() { return TRAY; }, showStart, loadRecipe, cost, boardBuild, boardFiles, boardReadme, extraRows, keepBox };
 render();
 try { if (S.items.length) { keepInside(); save(); } } catch (e) {} /* a saved build from an older builder: nothing left floating outside */
 { const q = new URLSearchParams(location.search), code = q.get('build'), rid = q.get('recipe'), r = rid && (CZ.RECIPES || []).find((x) => x.id === rid), clean = () => { try { history.replaceState(null, '', location.pathname); } catch (e) {} };
