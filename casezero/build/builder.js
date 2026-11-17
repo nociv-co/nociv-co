@@ -52,7 +52,7 @@ const logoImgKey = () => Object.keys(LOGOIMGS).map((k) => k + LOGOIMGS[k].src.le
 const AZ = { z: 1, px: 0, py: 0 }; let PEND = null; /* Arrange zoom, and the spot waiting for "What is here?" */
 let uid = S.items.reduce((m, p) => Math.max(m, p.id || 0), 0), sel = null, PHOTO = null;
 try { const ph = localStorage.getItem(KEY + ':photo'); if (ph) { PHOTO = new Image(); PHOTO.src = ph; PHOTO.onload = () => draw(); } } catch (e) {}
-const PARTS = () => Object.assign({}, CZ.PARTS, S.mine, kbPart());
+const PARTS = () => Object.assign({}, CZ.PARTS, S.mine, kbPart(), shroudPart());
 const PP = (it) => PARTS()[it.type];
 const styleRow = () => CZ.STYLES.find((s) => s[0] === S.style) || CZ.STYLES[0];
 const isClam = () => styleRow()[3] === 'clam';
@@ -100,7 +100,11 @@ function upOf(panel) { return itemsOn(panel).reduce((m, i) => Math.max(m, PP(i) 
 // One computed geometry for the whole build. Body, Parts and the 3D view all read the case size from here, so they can never disagree.
 function geom() { const d = dims(), h = heights(); return { W: d.W, D: d.D, H: h.H, Hl: h.Hl, closed: h.H + h.Hl, recess: h.recess, recessL: h.recessL }; }
 const riserOf = (it) => (it && it.riser != null ? it.riser : 5); /* how high an inside part sits off the floor: its standoffs or its mounting slate */
-function heights() {
+function keepBox() { // the box stays (size, hinge, its mounts and ports, its height); the electronics go, so you design new insides for it
+  backup(); const h = heightsFree(); S.lockBox = { H: h.H, Hl: h.Hl }; if (swapOn()) { const L = swapList(); L.push({ name: 'Insert ' + (L.length + 1), items: [] }); swapTo(L.length - 1); }
+  S.items = []; S.pins = {}; S.recipe = null; S.deco = []; sel = null; LAST = null; save(); S.tab[1] = homePanel(); go(1); tag('Box kept: ' + Math.round(dims().W) + ' x ' + Math.round(dims().D) + ' x ' + (h.H + h.Hl) + ' mm. Add the new insides.'); }
+function heights() { const h = heightsFree(); if (S.lockBox && !isPanel()) return Object.assign({}, h, { H: S.lockBox.H, Hl: S.lockBox.Hl, grew: h.H > S.lockBox.H || h.Hl > S.lockBox.Hl }); return h; } /* a kept box keeps its height */
+function heightsFree() {
   if (isPanel()) return { H: S.pt + (S.plift || 0), Hl: 0, recess: 0, recessL: 0 };
   // base: floor + deepest part or brain + deck, plus room for caps when the lid closes
   const home = homePanel(), inside = S.items.filter((i) => i.panel === 'inside' && i.of == null).reduce((m, i) => Math.max(m, riserOf(i) + (PP(i) ? PP(i).depth : 0)), 0);
@@ -304,6 +308,32 @@ function halfFor(panel, h) {
     mounts: !lid && panel === homePanel() ? activeMounts() : lid && isClam() ? activeLidMounts() : [], art: !lid && panel === homePanel() ? wallArt() : [], ports: (!lid && panel === homePanel() ? activePorts() : []).concat(isClam() ? wireNotch(lid ? 'lid' : 'base') : []), duct: !lid && isClam() && S.wpass === 'channel' ? wireDuct() : null,
     magnets: isClam() && S.magnets, hinge: { on: hingeOn, side: S.style === 'small' ? (S.hside === 'right' ? 'right' : 'left') : 'back' }, hingeSet: lid ? 'b' : 'a' });
 }
+// Swap panels: a frame (a ledge round the inside of the box) stays put; each insert plate drops into it and is held at the 4 corners by M3 screws or 6 x 3 mm magnets.
+// Every insert has the same outline and the same corner holes, so any of them fits the same frame.
+const SWAP = { wall: 4, lip: 7 };
+const swapOn = () => isPanel() && !!(S.swap && S.swap.on);
+function swapCorners() { const d = dims(), k = SWAP.wall + SWAP.lip / 2; return [[k, k], [d.W - k, k], [d.W - k, d.D - k], [k, d.D - k]]; }
+const swapLedge = () => (S.swap && S.swap.mount === 'magnets' ? 5 : 4);
+function swapFrame() { // the frame, printed ledge down: the ledge the inserts rest on, and the wall round them
+  const o = outline(), mag = S.swap.mount === 'magnets', LT = swapLedge(), c = swapCorners(), ring = G.diff(o, G.offset(o, -(SWAP.wall + SWAP.lip))), wall = G.diff(o, G.offset(o, -SWAP.wall)), L = [];
+  if (mag) { const pk = c.map(([x, y]) => G.circle(x, y, R.MAG / 2, 32)); L.push({ polys: ring, z0: 0, z1: LT - R.MAGD }, { polys: G.diff(ring, pk), z0: LT - R.MAGD, z1: LT }); }
+  else L.push({ polys: G.diff(ring, c.map(([x, y]) => G.circle(x, y, R.PILOT / 2 + R.FIT, 24))), z0: 0, z1: LT }); /* the M3 x 8 cuts its own thread in the 4 mm ledge */
+  L.push({ polys: wall, z0: LT - 0.1, z1: LT + S.pt + 0.2 }); /* the wall overlaps the ledge 0.1 mm, so they print as one */
+  return L;
+}
+function swapInsert(plate) { // turn the panel into an insert: inside the frame wall with the clearance, the corner holes or magnet pockets
+  const o = outline(), c = swapCorners(), T = S.pt, shape = G.inter(plate, G.offset(o, -(SWAP.wall + tolOf())));
+  if (S.swap.mount === 'magnets') { const dp = Math.min(R.MAGD, T - 0.8), pk = c.map(([x, y]) => G.circle(x, y, R.MAG / 2, 32)); return [{ polys: G.diff(shape, pk), z0: 0, z1: dp, tag: 'floor' }, { polys: shape, z0: dp, z1: T, tag: 'floor' }]; }
+  return [{ polys: G.diff(shape, c.map(([x, y]) => G.circle(x, y, R.HOLE / 2 + R.FIT, 24))), z0: 0, z1: T, tag: 'floor' }];
+}
+function swapList() { if (!S.swap.inserts || !S.swap.inserts.length) S.swap.inserts = [{ name: 'Insert 1', items: null }]; if (S.swap.cur == null || S.swap.cur >= S.swap.inserts.length) S.swap.cur = 0; return S.swap.inserts; }
+function swapTo(i) { const L = swapList(); L[S.swap.cur].items = JSON.parse(JSON.stringify(S.items)); S.items = JSON.parse(JSON.stringify(L[i].items || [])); L[i].items = null; S.swap.cur = i; S.pins = {}; uid = S.items.reduce((m, p) => Math.max(m, p.id || 0), uid); }
+function swapHtml() {
+  const on = swapOn(), L = on ? swapList() : [];
+  return '<div class="row"><b>Swap panels</b>' + seg('swapOn', [['0', 'Off'], ['1', 'On']], on ? '1' : '0') + '</div>' + (!on ? '' : '<div class="row"><b>Mount with</b>' + seg('swapMount', [['screws', 'M3 Screws'], ['magnets', 'Magnets (6 x 3 mm)']], S.swap.mount) + '</div>' +
+    '<p class="note keep" style="margin:0 0 6px">A frame stays in your box. Each insert drops into it and is held at the 4 corners by ' + (S.swap.mount === 'magnets' ? 'magnets' : 'M3 x 8 mm screws') + '. Every insert has the same outline and the same corner holes, so they swap.</p>' +
+    '<div class="chosen" style="margin-bottom:8px">' + L.map((q, i) => '<span data-ins="' + i + '" style="cursor:pointer' + (i === S.swap.cur ? ';background:#1a1a1a;color:#fff' : '') + '">' + esc(q.name) + ' (' + (i === S.swap.cur ? S.items.length : (q.items || []).length) + ')</span>').join('') + '</div><button class="btn" data-act="insnew" style="padding:8px;margin-bottom:8px">New insert</button>');
+}
 function panelBuilt() {
   // one flat plate: outline with notches, minus every part's hole, the screen screws and the corner screws. Marks pressed into the front.
   const o = outline(), T = S.pt, D = 0.6, cuts = [];
@@ -313,7 +343,7 @@ function panelBuilt() {
     if (P.screen && !S.plift) { const w = (i.r % 2 ? P.h : P.w) + 1, h = (i.r % 2 ? P.w : P.h) + 1; cuts.push(G.rrect(i.x - w / 2, i.y - h / 2, i.x + w / 2, i.y + h / 2, 1.5)); } else cuts.push(...G.cutShape(P, i.x, i.y, i.r || 0));
     (P.mountHoles || []).forEach((m) => cuts.push(G.circle(i.x + m.x * Math.cos(a) - m.y * Math.sin(a), i.y + m.x * Math.sin(a) + m.y * Math.cos(a), m.d / 2 + 0.2, 24)));
   });
-  posts().forEach(([x, y]) => cuts.push(G.circle(x, y, R.HOLE / 2, 24)));
+  if (!swapOn()) posts().forEach(([x, y]) => cuts.push(G.circle(x, y, R.HOLE / 2, 24))); /* in swap mode the frame holds the insert, not the box screws */
   const dip = [], thru = [], fill = [];
   looksFor('top').top.forEach((m) => { if (m.how === 'cut') thru.push(...m.polys); else { dip.push(...m.polys); if (m.fill || m.how === 'glue') fill.push(...m.polys); } });
   const holes = cuts.concat(thru), plate = holes.length ? G.diff(o, G.union(holes)) : o, tray = [], inlay = [];
@@ -333,6 +363,7 @@ function panelBuilt() {
     const legs = []; sp.forEach(([x, y]) => { const c = G.circle(x, y, 4.5, 28); if (G.area(G.inter([c], plate)) < G.area([c]) - 0.5) return; legs.push(S.phold === 'screws' ? G.diff([c], [G.circle(x, y, R.HOLE / 2, 20)])[0] : c); });
     if (legs.length) tray.push({ polys: G.union(legs), z0: -S.plift, z1: 0, tag: 'leg' });
   }
+  if (swapOn()) return { out: G.offset(o, -(SWAP.wall + tolOf())), tray: swapInsert(plate), deck: [], extra: [], posts: [], H: T, deckZ: T - R.LT, inlay: [], stick: [], snap: false, frame: swapFrame() }; /* the insert, and the frame it drops into */
   return { out: o, tray, deck: [], extra: [], posts: [], H: T, deckZ: T - R.LT, inlay, stick: [], snap: false };
 }
 function halves() { const h = heights(); return panels().map((p) => ({ key: p, name: PNAME[p], built: halfFor(p, h) })); }
@@ -426,7 +457,7 @@ const FUNCS = [['brain', 'Brain', 'The chip that runs it', 'pico'], ['screen', '
 const FGROUPS = [['Inputs', 'you press, turn or slide, or it senses', ['press', 'turn', 'sense']], ['Outputs', 'it shows, lights, sounds or moves', ['screen', 'out', 'move']], ['Connections', 'the brain, the power, your own board', ['brain', 'power', 'mine']]];
 const FN_STAND = '<svg viewBox="0 0 60 36" aria-hidden="true"><path d="M17 31L29 6l9 4-12 25z" fill="#c8412f" stroke="#1a1a1a" stroke-width="2" stroke-linejoin="round"/><path d="M35 15l11 17" stroke="#1a1a1a" stroke-width="3" stroke-linecap="round"/><path d="M7 33h47" stroke="#1a1a1a" stroke-width="2" stroke-linecap="round"/></svg>';
 const PSVG = { p_usbc: '<svg viewBox="0 0 60 36" aria-hidden="true"><rect x="6" y="6" width="48" height="24" rx="3" fill="#e9e2cc" stroke="#1a1a1a" stroke-width="2"/><rect x="20" y="15" width="20" height="7" rx="3.5" fill="#1a1a1a"/></svg>', p_switch: '<svg viewBox="0 0 60 36" aria-hidden="true"><rect x="6" y="6" width="48" height="24" rx="3" fill="#e9e2cc" stroke="#1a1a1a" stroke-width="2"/><rect x="19" y="14" width="22" height="9" fill="#1a1a1a"/><rect x="22" y="16" width="7" height="5" fill="#c8412f"/></svg>', p_vent: '<svg viewBox="0 0 60 36" aria-hidden="true"><rect x="6" y="6" width="48" height="24" rx="3" fill="#e9e2cc" stroke="#1a1a1a" stroke-width="2"/>' + [17, 24, 31, 38, 45].map((x) => '<rect x="' + (x - 1.5) + '" y="11" width="3" height="14" fill="#1a1a1a"/>').join('') + '</svg>' };
-const XGROUPS = [['Stand and carry', ['stand', 'handle', 'feet', 'charm']], ['Camera and sensor', ['lens', 'grip', 'tripod']], ['Character', ['char', 'deco', 'limbs']], ['Moving parts', ['gears', 'hinge', 'clamp']], ['Keyboard', ['keys']], ['Hardware', ['panel', 'standoff', 'clip']]];
+const XGROUPS = [['Stand and carry', ['stand', 'handle', 'feet', 'charm']], ['Deeper box', ['shroud']], ['Camera and sensor', ['lens', 'grip', 'tripod']], ['Character', ['char', 'deco', 'limbs']], ['Moving parts', ['gears', 'hinge', 'clamp']], ['Keyboard', ['keys']], ['Hardware', ['panel', 'standoff', 'clip']]];
 const NEWP = ' Sized from published specs, not from a test print.';
 function xmeta(id) { // one printed part: [short name, what it is and how it goes on, its few settings]
   const X = xp(), fits = stepper('xs_t', 'Fits', X.stand.t + ' mm thick' + (X.stand.auto ? ' (your case)' : ''));
@@ -446,6 +477,7 @@ function xmeta(id) { // one printed part: [short name, what it is and how it goe
     keys: ['Keyboard', 'Your own mechanical keyboard, ' + kb().c + ' across and ' + kb().r + ' down: a printed plate the switches click into, printed key caps, and a board you can order that joins every key to a Pico. Every key is one square. For a space bar, two keys share one long cap. Plate and board follow the Cherry MX data sheet.' + NEWP, kbHtml(), 'plate'],
     standoff: ['Standoffs', 'Lift a board off the floor. The screw cuts its own thread in the plastic.', '<div class="row"><b>Screw</b>' + seg('xo_s', [['m25', 'M2.5 (Pi)'], ['m3', 'M3']], X.standoff.s) + '</div>' + stepper('xo_h', 'Tall', X.standoff.h + ' mm')],
     clip: ['Cable clips', 'Keep wires tidy inside. Stick on with tape or glue.', stepper('xc_d', 'Cable', X.clip.d + ' mm')],
+    shroud: ['Raised shroud', 'More depth for a shallow box: cut a hole, screw this frame over it, and drop the piece you cut out back in as its lid. Room for a microcontroller, a battery or a switch.', stepper('xsh_w', 'Wide', X.shroud.w + ' mm') + stepper('xsh_h', 'Tall', X.shroud.h + ' mm') + stepper('xsh_d', 'Deeper', X.shroud.d + ' mm') + stepper('xsh_c', 'Cover', X.shroud.ct + ' mm thick') + '<button class="btn dark" data-act="shroudplace" style="margin-top:6px">' + (S.items.some((i) => i.type === 'shroud') ? 'It is placed: move it in Arrange' : 'Place it on my ' + (isPanel() ? 'panel' : 'case top')) + '</button><p class="note keep" style="margin:4px 0 0">The hole is ' + X.shroud.w + ' x ' + X.shroud.h + ' mm; the cut-out piece drops into a ' + (X.shroud.w + 2 * tolOf()).toFixed(1) + ' x ' + (X.shroud.h + 2 * tolOf()).toFixed(1) + ' mm rabbet at the top.</p>'],
     lens: ['Lens ring', 'A ring round a camera lens or a sensor window. Mount it on the front (the lid) over the opening.', stepper('xln_d', 'Lens', X.lens.d + ' mm across')],
     grip: ['Grip', 'A pad with finger dips, to hold a camera or a scanner steady. Mount it on the back (the base) or a side.', stepper('xgr_l', 'Long', X.grip.l + ' mm')],
     tripod: ['Tripod mount', 'Puts a standard 1/4 in tripod thread on the bottom: a 1/4-20 hex nut sits in a pocket inside it. Push the nut in, then mount it with an M3 screw or a snap pin. The nut is on your Shop list.', ''],
@@ -721,7 +753,7 @@ function pane(t) {
     return h;
   }
   if (t === 'psize') { const d = dims(), scr = S.items.some((i) => PP(i) && PP(i).screen);
-    return '<button class="btn dark" data-act="measureLid" style="margin-bottom:8px">Measure the inside of my box</button><div class="row"><b>Box inside</b><input class="num" id="pw" type="number" inputmode="decimal" step="0.5" value="' + S.pw + '" aria-label="Inside width in mm"><span class="u">x</span><input class="num" id="pd" type="number" inputmode="decimal" step="0.5" value="' + S.pd + '" aria-label="Inside height in mm"><span class="u">mm</span></div>' +
+    return swapHtml() + '<button class="btn dark" data-act="measureLid" style="margin-bottom:8px">Measure the inside of my box</button><div class="row"><b>Box inside</b><input class="num" id="pw" type="number" inputmode="decimal" step="0.5" value="' + S.pw + '" aria-label="Inside width in mm"><span class="u">x</span><input class="num" id="pd" type="number" inputmode="decimal" step="0.5" value="' + S.pd + '" aria-label="Inside height in mm"><span class="u">mm</span></div>' +
     '<div class="row"><b>Sits</b>' + seg('plift', [['0', 'On the floor'], ['legs', 'On legs'], ['rim', 'On a lip']], S.plift > 0 ? (S.pbase || 'legs') : '0') + '</div>' + (S.plift > 0 ? stepper('plift', S.pbase === 'rim' ? 'Lip' : 'Legs', S.plift + ' mm tall') : '') + '<div class="row"><b>Holds by</b>' + seg('phold', [['screws', 'Screws'], ['glue', 'Glue'], ['ribs', 'Snug ribs'], ['drop', 'Drops in']], S.phold) + '</div>' +
     '<div class="row"><b>Thick</b>' + seg('pt', [['2', '2 mm'], ['3', '3 mm'], ['4', '4 mm']], String(S.pt)) + '</div><div class="row"><b>Corners</b>' + seg('prad', [['0', 'Square'], ['3', 'Soft'], ['8', 'Round']], String(S.prad)) + '</div>' +
     '<p class="note">Panel: <b>' + d.W + ' x ' + d.D + ' mm</b>, 1 mm smaller than the box so it drops in. ' + ({ screws: 'M3 screws in the corners' + (S.plift > 0 ? ' go down through the ' + (S.pbase === 'rim' ? 'lip' : 'legs') + ' into the box. Already have screws or posts in the box? Line the corner holes up with them, or tag them on a photo.' : '. Already have screws in the box? Line the corner holes up with them.'), glue: 'No holes. ' + (S.plift > 0 ? 'A thin line of glue on the bottom of the ' + (S.pbase === 'rim' ? 'lip' : 'legs') : 'Glue or double sided tape on the back') + ' (E6000 or CA for wood and PLA). It is forever.', ribs: 'Little ribs on every edge press against the box and hold it, no screws.', drop: 'It just lies in the box.' })[S.phold] + ' ' +
@@ -737,6 +769,7 @@ function pane(t) {
   if (t === 'fit') {
     const h = geom();
     let o = stepper('cols', 'Wide', S.cols + ' sq' + (S.xw ? ' + ' + S.xw : '')).replace(/<\/div>$/, '<input class="num mm" id="mmw" type="number" inputmode="decimal" step="0.5" value="' + +h.W.toFixed(1) + '" aria-label="Width in mm"><span class="u">mm</span></div>') + stepper('rows', 'Tall', S.rows + ' sq' + (S.xd ? ' + ' + S.xd : '')).replace(/<\/div>$/, '<input class="num mm" id="mmd" type="number" inputmode="decimal" step="0.5" value="' + +h.D.toFixed(1) + '" aria-label="Depth in mm"><span class="u">mm</span></div>') + (isClam() ? stepper('add', 'Base', h.H + ' mm deep' + (S.add ? ' (+' + S.add + ')' : '')) + stepper('addL', 'Lid', h.Hl + ' mm deep' + (S.addL ? ' (+' + S.addL + ')' : '')) + '<p class="note keep" style="margin:-2px 0 8px">' + h.closed + ' mm closed. Deepen the base for batteries or tall parts without thickening the lid.</p>' : stepper('add', 'Height', h.closed + ' mm' + (S.add ? ' (+' + S.add + ')' : '')));
+    if (S.lockBox) o = '<p class="vline v1">Box kept: ' + Math.round(dims().W) + ' x ' + Math.round(dims().D) + ' x ' + h.closed + ' mm. <button type="button" class="btn" data-act="unlockbox" style="display:inline-block;padding:6px 10px">Unlock</button></p>' + o + (heights().grew ? '<p class="note bad">Something you added is deeper than the kept box.</p>' : '');
     o += '<div class="row"><b>Deck on</b>' + seg('snap', [['0', 'Screws'], ['1', 'Snap clips']], S.snap ? '1' : '0') + '</div>';
     if (S.items.some((i) => i.type === 'tact12')) o += '<div class="row"><b>Buttons</b>' + seg('spring', [['0', 'Caps'], ['1', 'Printed springs']], S.spring ? '1' : '0') + '</div>';
     if (isClam()) o += '<div class="row"><b>Hinge</b>' + seg('hinge', [['printed', 'Printed'], ['metal', 'Metal'], ['none', 'Lift off']], S.hinge) + '</div>' + (S.style === 'small' ? '<div class="row"><b>Opens on</b>' + seg('hside', [['left', 'Left'], ['right', 'Right']], S.hside) + '</div>' : '') + '<div class="row"><b>Closes</b>' + seg('magnets', [['1', 'Magnets'], ['0', 'Latch or strap']], S.magnets ? '1' : '0') + '</div><div class="row"><b>Wires</b>' + seg('wpass', [['slot', 'Hinge slot'], ['ribbon', 'Ribbon notch'], ['channel', 'Covered channel']], S.wpass || 'slot') + '</div>';
@@ -779,7 +812,7 @@ function pane(t) {
     return '<div class="row"><b>Seams go</b>' + seg('sdir', [['auto', 'Auto'], ['v', '|'], ['h', '&mdash;'], ['both', '+'], ['d', '/']], S.sdir) + '</div><div class="row"><b>How many</b>' + seg('sn', [['auto', 'Auto'], ['1', '1'], ['2', '2'], ['3', '3'], ['4', '4']], S.sn) + '</div><div class="row"><b>Edges</b>' + seg('tab3', [['dovetail', 'Puzzle tabs'], ['flat', 'Flat + glue']], S.tab3) + '</div>' +
       '<p class="note">' + (bad ? '<span class="bad">Some pieces are still bigger than your ' + S.bed[0] + ' x ' + S.bed[1] + ' mm bed. Add a seam.</span>' : '<span class="ok">' + n + ' pieces, all fit your bed.</span>') + ' One seam in the middle = 2 even pieces. Two seams = 3. Puzzle tabs lock, a drop of glue keeps them.</p>';
   }
-  if (t === '3d') return '<p class="h">Spin it with one finger, pinch to zoom</p><div class="grid g2">' + (isClam() ? '<button class="btn" data-act="open">' + (S.open ? 'Close the lid' : 'Open the lid') + '</button>' : '') + '<button class="btn dark" data-act="share">Copy Build Link</button></div><div id="shareOut"></div><p class="note">' + summaryLine() + ' <b>' + money(cost().total) + ' to build.</b></p>' + creditHtml();
+  if (t === '3d') return '<p class="h">Spin it with one finger, pinch to zoom</p><div class="grid g2">' + (isClam() ? '<button class="btn" data-act="open">' + (S.open ? 'Close the lid' : 'Open the lid') + '</button>' : '') + '<button class="btn dark" data-act="share">Copy Build Link</button></div><button class="btn" data-act="keepbox" style="margin-top:8px;width:100%">Keep Box, Swap Insides</button><div id="shareOut"></div><p class="note">' + summaryLine() + ' <b>' + money(cost().total) + ' to build.</b></p>' + creditHtml();
   if (t === 'shop') return shopHtml();
   if (t === 'pcb') return pcbHtml();
   if (t === 'files') { const probs = allProblems(); return '<p class="note" style="margin:0 0 8px">No printer? A print service or a library takes these same files. To print from a USB stick, open them in your printer\'s free slicer app first: it turns them into the file your printer reads.</p>' + (S.material === 'wood' ? '' : '<div class="row"><b>File type</b>' + seg('fmt', [['stl', 'STL'], ['3mf', '3MF']], fmtOf()) + '</div>') + '<div class="grid g2"><button class="btn red" data-act="make"' + (probs.length || !S.items.length ? ' aria-disabled="true"' : '') + '>Make my files</button>' + (S.material === 'wood' || isPanel() ? '' : '<button class="btn" data-act="swatch">Download 15-min Fit Swatch</button>') + '</div>' + (S.material === 'wood' || isPanel() ? '' : '<p class="note" style="margin:6px 0 0">The swatch is a ' + swatchSize() + ' mm plate with ' + (isClam() && S.magnets ? 'a magnet pocket, ' : '') + 'the M3 bore, the snap pin slot and ' + esc(swatchButton().short) + ' opening, at your ' + tolOf() + ' mm clearance and ' + R.T + ' mm walls. Print it first: if they fit, the case will.</p>') + '<p class="note">' + (!S.items.length ? 'Add electronics in Brain first.' : probs.length ? '<span class="bad">Fix the electronics marked ! in Arrange first.</span>' : (S.material === 'wood' ? 'Wood: real size templates (SVG) to print at 100 percent or laser cut, plus the cut list.' : 'One file per piece, numbered, as STL or 3MF. Print the deck face down, the tray open side up.')) + '</p><div class="files" id="fileList" style="margin-top:8px"></div>'; }
@@ -872,6 +905,7 @@ $('pane').addEventListener('change', (e) => {
   if (e.target.dataset && e.target.dataset.kidtype) { const k = S.items.find((i) => i.id === +e.target.dataset.kidtype); if (k) { snapU(); k.type = e.target.value; k.panel = CZ.PARTS[k.type].cat === 'brain' ? 'inside' : (boardOf(k) ? boardOf(k).panel : homePanel()); S.pins = {}; } save(); render(); return; }
   if (e.target.dataset && e.target.dataset.pin) { if (!S.pins) S.pins = {}; S.pins[e.target.dataset.pin] = +e.target.value; save(); render(); return; }
   if (e.target.id === 'pw' || e.target.id === 'pd') { reflow(); save(); render(); return; }
+  if (S.lockBox && (e.target.id === 'mmw' || e.target.id === 'mmd')) { render(); return; }
   if (e.target.id === 'mmw' || e.target.id === 'mmd') { const w = e.target.id === 'mmw', v = parseFloat(e.target.value), m = 2 * (R.T + R.CLR + 1); /* a typed size: whole 20 mm squares, plus the odd millimetres */
     if (v > 0) { const q = Math.max(2, Math.min(24, Math.floor((v - m + 1e-6) / 20))); S[w ? 'cols' : 'rows'] = q; S[w ? 'xw' : 'xd'] = Math.max(0, Math.min(19.9, Math.round((v - m - q * 20) * 10) / 10)); reflow(); } save(); render(); return; }
   if (e.target.id === 'wallT') { const v = parseFloat(e.target.value); if (v > 0) { const t = Math.max(2, Math.min(5, Math.round(v * 10) / 10)); S.wallT = t === 2.4 || t === 3.2 ? null : t; if (!S.wallT) S.walls = t === 3.2 ? 'tough' : 'normal'; applyWalls(); reflow(); } save(); render(); return; }
@@ -888,7 +922,8 @@ function after(t) {
 
 // ---------- taps ----------
 $('pane').addEventListener('click', (e) => {
-  const b = e.target.closest('button, [data-sel], [data-delmine], [data-sub], [data-nsel]'); if (!b) return; const d = b.dataset;
+  const b = e.target.closest('button, [data-sel], [data-delmine], [data-sub], [data-nsel], [data-ins]'); if (!b) return; const d = b.dataset;
+  if (d.ins != null) { swapTo(+d.ins); save(); render(); tag(swapList()[S.swap.cur].name + ': its parts'); return; }
   if (d.nsel != null) { S.nsel = +d.nsel; save(); render(); return; }
   if (d.xsel != null) { DECO = null; S.xsel = d.xsel || null; save(); render(); return; }
   if (d.manc != null) { const [u, v] = d.manc.split(',').map(Number), on = S.attachedParts.find((m) => m.partId === S.xsel && m.face === mnt().face && (m.anchors || [m.anchor]).some((q) => q.u === u && q.v === v)); if (on) { S.attachedParts = S.attachedParts.filter((m) => m !== on); save(); render(); } else attachAt({ u, v }); return; }
@@ -906,6 +941,7 @@ $('pane').addEventListener('click', (e) => {
   if (d.add) { let it = null; d.add.split('+').forEach((k) => { it = addPart(k); }); const P = PP(it); const tip = $('partTip'); render(); if ($('partTip')) $('partTip').textContent = P.tip; void tip; return; }
   if (d.sel) { sel = +d.sel; render(); return; }
   if (d.delmine) { delete S.mine[d.delmine]; S.items = S.items.filter((i) => i.type !== d.delmine); save(); render(); return; }
+  if (d.style && S.lockBox) { tag('The box is kept. Unlock it below to pick another shape.'); return; }
   if (d.style) { S.picked = true; S.style = d.style; const z = SIZES[S.style]; S.cols = z[0]; S.rows = z[1]; S.xw = S.xd = 0; if (UPRIGHT[S.style]) S.snap = true; /* the front plate snaps on */ reflow(); if (allProblems().length) fitAll(); /* the new shape is too small for what is in it: grow it until everything fits */ save(); render(); return; }
   if (d.printer) { setPrinter(d.printer); QRMSG = ''; save(); render(); return; }
   if (d.mat) { S.material = d.mat; const m = CZ.MATERIALS.find((x) => x[0] === d.mat); if (m[3].indexOf(S.join) < 0) S.join = m[3][0]; if (S.join === 'dovetail') S.tab3 = 'dovetail'; save(); render(); return; }
@@ -967,6 +1003,10 @@ $('pane').addEventListener('click', (e) => {
   if (act === 'saveboard') { const Bd = boardBuild(); if (Bd.ok) saveFile({ name: 'casezero-board.zip', blob: new Blob([zipFiles(boardFiles(Bd, 'casezero-board').concat([{ name: 'README.txt', text: boardReadme(Bd) }]))], { type: 'application/zip' }) }); return; }
   if (act === 'rot' && s && PP(s) && PP(s).board) { snapU(); s.r = ((s.r || 0) + 1) % 4; syncKids(s); if (problems(s).length) { autoPlace(s); syncKids(s); } save(); render(); return; }
   if (act === 'rot' && s) { s.r = ((s.r || 0) + 1) % 4; if (problems(s).length) { const keep = [s.x, s.y]; if (!autoPlace(s)) { s.x = keep[0]; s.y = keep[1]; } } save(); render(); return; }
+  if (act === 'shroudplace') { if (!S.items.some((i) => i.type === 'shroud')) { const it = addPart('shroud'); it.panel = homePanel(); autoPlace(it); } save(); render(); tag('Shroud placed: drag it in Arrange'); return; }
+  if (act === 'insnew') { const L = swapList(); L.push({ name: 'Insert ' + (L.length + 1), items: [] }); swapTo(L.length - 1); save(); render(); tag(L[S.swap.cur].name + ': empty, add its parts'); return; }
+  if (act === 'keepbox') { keepBox(); return; }
+  if (act === 'unlockbox') { S.lockBox = null; save(); render(); tag('The box size is free again'); return; }
   if (act === 'treset') { testReset(); render(); return; }
   if (act === 'xray') { S.xray = !S.xray; BIG3D = false; save(); render(); return; }
   if ((act === 'mnt_top' || act === 'mnt_in') && s) { snapU(); if (act === 'mnt_in') { if (s.panel !== 'inside') { s.top0 = s.panel; s.panel = 'inside'; } } else if (s.panel === 'inside') { s.panel = s.top0 && panels().indexOf(s.top0) > -1 ? s.top0 : defaultPanel(Object.assign({}, PP(s), { inside: false })); } if (problems(s).length) autoPlace(s); save(); render(); return; }
@@ -998,6 +1038,7 @@ $('pane').addEventListener('click', (e) => {
   const st = b.closest('[data-st]');
   if (st && d.d) {
     const k = st.dataset.st, v = +d.d;
+    if (S.lockBox && ['cols', 'rows', 'add', 'addL'].indexOf(k) > -1) { tag('The box is kept at its size. Unlock it in Shape to change it.'); return; }
     if (k === 'cols') S.cols = Math.max(2, Math.min(24, S.cols + v)); if (k === 'rows') S.rows = Math.max(2, Math.min(24, S.rows + v));
     if (k === 'add') S.add = Math.max(0, Math.min(80, S.add + v * 5)); if (k === 'addL') S.addL = Math.max(0, Math.min(40, (S.addL || 0) + v * 2));
     if (k === 'bedw') S.bed[0] = Math.max(80, Math.min(400, S.bed[0] + v * 10)); if (k === 'bedd') S.bed[1] = Math.max(80, Math.min(400, S.bed[1] + v * 10));
@@ -1009,7 +1050,7 @@ $('pane').addEventListener('click', (e) => {
     if (['kh', 'btop', 'bund'].includes(k)) snapU();
     { const si = S.items.find((i) => i.id === sel); if (si && k === 'riser') si.riser = Math.max(0, Math.min(20, (si.riser == null && !(PP(si) && PP(si).holes && PP(si).holes.length) ? 0 : riserOf(si)) + v)); /* a part on the floor starts its slate from 0 */ if (si && k === 'kh') si.h = Math.max(0, Math.min(60, kidH(si) + v * 0.5)); if (si && k === 'btop' && PP(si) && PP(si).board) setBoardTop(PP(si), (PP(si).top || 9) + v * 0.5); if (si && k === 'bund' && PP(si) && PP(si).board) { const B = PP(si); B.under = Math.max(0, Math.min(40, (B.under != null ? B.under : 8.5) + v * 0.5)); setBoardTop(B, B.top || 9); } }
     const X = xp(); if (k === 'xs_t') { X.stand.t = Math.max(6, Math.min(80, X.stand.t + v)); X.stand.auto = X.stand.t === caseThick(); /* back on the case's own size: it follows the case again */ } if (k === 'xf_h') X.feet.h = Math.max(2, Math.min(15, X.feet.h + v)); if (k === 'xo_h') X.standoff.h = Math.max(2, Math.min(40, X.standoff.h + v)); if (k === 'xc_d') X.clip.d = Math.max(2, Math.min(16, X.clip.d + v)); if (k === 'xh_l') X.handle.l = Math.max(50, Math.min(140, X.handle.l + v * 10)); if (k === 'xl_l') X.limbs.l = Math.max(25, Math.min(90, X.limbs.l + v * 5)); const cl = (o, f, lo, hi, st) => { o[f] = Math.max(lo, Math.min(hi, o[f] + v * st)); };
-    if (k === 'xb_h') cl(X.body, 'h', 45, 100, 5); if (k === 'xln_d') cl(X.lens, 'd', 8, 80, 1); if (k === 'xgr_l') cl(X.grip, 'l', 40, 120, 5); if (k === 'xg_n') cl(X.gears, 'n', 18, 54, 9); if (k === 'xhi_l') cl(X.hinge, 'l', 15, 60, 5); if (k === 'xsp_n') cl(X.spring, 'n', 3, 12, 1); if (k === 'xcl_t') cl(X.clamp, 't', 10, 45, 5); if (k === 'xp_w') cl(X.panel, 'w', 30, 200, 10); if (k === 'xp_h') cl(X.panel, 'h', 30, 200, 10); if (k === 'xk_c') cl(X.keys, 'c', 3, 12, 1); if (k === 'xk_r') cl(X.keys, 'r', 1, 6, 1);
+    if (k === 'xb_h') cl(X.body, 'h', 45, 100, 5); if (k === 'xsh_w') cl(X.shroud, 'w', 20, 200, 5); if (k === 'xsh_h') cl(X.shroud, 'h', 20, 200, 5); if (k === 'xsh_d') cl(X.shroud, 'd', 6, 80, 2); if (k === 'xsh_c') cl(X.shroud, 'ct', 1, 8, 0.5); if (k === 'xln_d') cl(X.lens, 'd', 8, 80, 1); if (k === 'xgr_l') cl(X.grip, 'l', 40, 120, 5); if (k === 'xg_n') cl(X.gears, 'n', 18, 54, 9); if (k === 'xhi_l') cl(X.hinge, 'l', 15, 60, 5); if (k === 'xsp_n') cl(X.spring, 'n', 3, 12, 1); if (k === 'xcl_t') cl(X.clamp, 't', 10, 45, 5); if (k === 'xp_w') cl(X.panel, 'w', 30, 200, 10); if (k === 'xp_h') cl(X.panel, 'h', 30, 200, 10); if (k === 'xk_c') cl(X.keys, 'c', 3, 12, 1); if (k === 'xk_r') cl(X.keys, 'r', 1, 6, 1);
     if (nn && k === 'nw') nn.w = Math.max(4, Math.min(120, nn.w + v * 2)); if (nn && k === 'nd') nn.d = Math.max(2, Math.min(60, nn.d + v)); if (nn && k === 'nat') nn.at = Math.max(0, Math.min(nn.edge === 'left' || nn.edge === 'right' ? dims().D : dims().W, nn.at + v * 5));
     if (k === 'txsp') { const tx = S.look.tex[S.look.texFace]; tx.sp = Math.max(2, Math.min(30, tx.sp + v)); }
     if (k === 'cols' || k === 'rows') reflow();
@@ -1026,6 +1067,8 @@ $('pane').addEventListener('click', (e) => {
     if (k === 'brand') { S.brand = v; save(); render(); return; }
     if (k === 'walls') { S.walls = v; S.wallT = null; applyWalls(); reflow(); save(); render(); return; }
     if (k === 'wpass') { S.wpass = v; save(); render(); return; }
+    if (k === 'swapOn') { S.swap = Object.assign({ mount: 'screws', inserts: null, cur: 0 }, S.swap || {}, { on: v === '1' }); if (S.swap.on) swapList(); save(); render(); return; }
+    if (k === 'swapMount') { S.swap.mount = v; save(); render(); return; }
     if (k === 'tripodOn') { tripodBottom(v === '1'); save(); render(); return; }
     if (k === 'm_face' || k === 'm_type' || k === 'm_view' || k === 'm_pface') { mnt()[k.slice(2)] = v; save(); render(); return; }
     if (k === 'tol') { if (v === 'c') S.tolC = true; else { S.tolC = false; S.tol = +v; } applyWalls(); reflow(); save(); render(); return; }
@@ -1454,7 +1497,8 @@ function draw3d(isMini) {
     hs.forEach((x) => {
       const grp = new THREE.Group();
       const c1 = new THREE.Color(S.look.c1).getHex(), c2 = new THREE.Color(S.look.c2).getHex();
-      { const tm = mesh(G.layerGeos(x.built.tray, x.built.extra), c1); if (XR && x.key === 'lid') ghost(tm); grp.add(tm); } (x.built.plugs || []).forEach((pg) => grp.add(mesh(G.plugGeos(pg), c1)));
+      { const tm = mesh(G.layerGeos(x.built.tray, x.built.extra), c1); if (XR && x.key === 'lid') ghost(tm); grp.add(tm); }
+      if (x.built.frame) { const fm = mesh(G.layerGeos(x.built.frame), 0x2f4a6b); fm.position.z = -swapLedge(); grp.add(fm); } /* swap panels: the frame the insert sits in */ (x.built.plugs || []).forEach((pg) => grp.add(mesh(G.plugGeos(pg), c1)));
       { const dm = mesh(G.layerGeos(x.built.deck), x.key === 'lid' ? 0x2a2a2a : 0xc8412f); if (x.key === 'lid') dm.position.z = -0.1; /* the lid liner's inner face sat exactly on the screen frames: 0.1 mm apart, no flicker */ if (XR) ghost(dm); grp.add(dm); }
       if (x.built.inlay.length) grp.add(mesh(G.layerGeos(x.built.inlay.map((l) => ({ polys: l.polys, z0: l.z0 + (l.tag === 'inlayT' ? 0.02 : -0.02), z1: l.z1 + (l.tag === 'inlayT' ? 0.02 : -0.02) }))), c2));
       x.built.stick.forEach((st) => grp.add(mesh(G.layerGeos(st.layers), c2)));
@@ -1781,8 +1825,8 @@ async function scanPrinter(file) {
 
 // ---------- add-ons: one piece at a time ----------
 const caseThick = () => (isPanel() ? 20 : Math.round(geom().closed)); /* what a clip-on part has to grab: the case, closed */
-function xp() { if (!S.xp) S.xp = {}; const X = S.xp; X.stand = X.stand || { t: null, a: 25 }; if (X.stand.t == null) X.stand.auto = true; if (X.stand.auto) X.stand.t = caseThick(); /* follows the case until she sets it */ X.feet = X.feet || { hole: true, h: 4 }; X.standoff = X.standoff || { s: 'm25', h: 8 }; X.charm = Object.assign({ size: 'mini', hook: 'lug' }, X.charm || {}); X.lens = X.lens || { d: 30 }; X.grip = X.grip || { l: 60 }; X.clip = X.clip || { d: 6 }; X.handle = X.handle || { l: 80 }; X.limbs = X.limbs || { l: 45 }; X.body = X.body || { h: 60 }; X.gears = X.gears || { n: 36 }; X.gears.n = Math.max(18, Math.min(54, Math.round(X.gears.n / 9) * 9)); X.hinge = X.hinge || { l: 30 }; X.spring = X.spring || { n: 6 }; X.clamp = X.clamp || { t: 20 }; X.panel = X.panel || { w: 80, h: 60 }; X.ch = Object.assign({}, CH_DEF, X.ch || {}); X.keys = X.keys || { c: 4, r: 3 }; if (X.keys.c < 3) X.keys.c = 3; if (X.keys.f == null) X.keys.f = 0.1; return X; }
-const XINFO = { deco: () => { const n = (S.deco || []).length; return n ? n + ' on your case' : 'nothing added yet'; }, char: () => { const C = charCache(); return C.parts.reduce((n, q) => n + q.n, 0) + ' pieces, ' + Math.round(C.tall) + ' mm tall'; }, body: () => '7 pieces: torso on its side, the rest flat', gears: () => '3 pieces, print flat', hinge: () => '2 leaves, print standing as saved', spring: () => '2 springs, print flat', clamp: () => '1 clamp and 1 wedge, print flat', panel: () => { const X = xp(); return '1 panel, ' + X.panel.w + ' x ' + X.panel.h + ' mm, 2.4 mm thick'; }, keys: () => { const K = kb(); return '1 plate, ' + K.w.toFixed(0) + ' x ' + K.h.toFixed(0) + ' mm, print it rim side up'; }, handle: () => '1 handle, print on its side', limbs: () => '8 pieces, print flat', stand: () => '2 stands, print on their side', lens: () => '1 ring, print flat', grip: () => '1 grip, print flat', tripod: () => '1 block, print flat, nut pocket down', charm: () => '1 lug, print on its side' + (xp().charm.hook === 'hook' ? ', 1 hook, print flat' : ''), feet: () => '4 feet', standoff: () => '4 standoffs', clip: () => '6 clips' };
+function xp() { if (!S.xp) S.xp = {}; const X = S.xp; X.stand = X.stand || { t: null, a: 25 }; if (X.stand.t == null) X.stand.auto = true; if (X.stand.auto) X.stand.t = caseThick(); /* follows the case until she sets it */ X.feet = X.feet || { hole: true, h: 4 }; X.standoff = X.standoff || { s: 'm25', h: 8 }; X.charm = Object.assign({ size: 'mini', hook: 'lug' }, X.charm || {}); X.shroud = Object.assign({ w: 60, h: 40, d: 20, ct: 3 }, X.shroud || {}); X.lens = X.lens || { d: 30 }; X.grip = X.grip || { l: 60 }; X.clip = X.clip || { d: 6 }; X.handle = X.handle || { l: 80 }; X.limbs = X.limbs || { l: 45 }; X.body = X.body || { h: 60 }; X.gears = X.gears || { n: 36 }; X.gears.n = Math.max(18, Math.min(54, Math.round(X.gears.n / 9) * 9)); X.hinge = X.hinge || { l: 30 }; X.spring = X.spring || { n: 6 }; X.clamp = X.clamp || { t: 20 }; X.panel = X.panel || { w: 80, h: 60 }; X.ch = Object.assign({}, CH_DEF, X.ch || {}); X.keys = X.keys || { c: 4, r: 3 }; if (X.keys.c < 3) X.keys.c = 3; if (X.keys.f == null) X.keys.f = 0.1; return X; }
+const XINFO = { deco: () => { const n = (S.deco || []).length; return n ? n + ' on your case' : 'nothing added yet'; }, char: () => { const C = charCache(); return C.parts.reduce((n, q) => n + q.n, 0) + ' pieces, ' + Math.round(C.tall) + ' mm tall'; }, body: () => '7 pieces: torso on its side, the rest flat', gears: () => '3 pieces, print flat', hinge: () => '2 leaves, print standing as saved', spring: () => '2 springs, print flat', clamp: () => '1 clamp and 1 wedge, print flat', panel: () => { const X = xp(); return '1 panel, ' + X.panel.w + ' x ' + X.panel.h + ' mm, 2.4 mm thick'; }, keys: () => { const K = kb(); return '1 plate, ' + K.w.toFixed(0) + ' x ' + K.h.toFixed(0) + ' mm, print it rim side up'; }, handle: () => '1 handle, print on its side', limbs: () => '8 pieces, print flat', stand: () => '2 stands, print on their side', shroud: () => '1 frame, flange down', lens: () => '1 ring, print flat', grip: () => '1 grip, print flat', tripod: () => '1 block, print flat, nut pocket down', charm: () => '1 lug, print on its side' + (xp().charm.hook === 'hook' ? ', 1 hook, print flat' : ''), feet: () => '4 feet', standoff: () => '4 standoffs', clip: () => '6 clips' };
 // ---------- mounting printed parts on the case ----------
 // S.attachedParts: [{ id, partId, face: back | left | right | bottom, anchor: { u, v } (20 mm grid squares), mountType: screw | snap }]
 const MOUNTABLE = { limbs: 'flat', handle: 'side', stand: 'side', charm: 'side', feet: 'flat', standoff: 'flat', panel: 'flat', lens: 'flat', grip: 'flat', tripod: 'flat' }, TWO = { handle: true };
@@ -1964,6 +2008,10 @@ function addonPolys(id, opt) {
     const brace = [bBot, [far, 0], [far, 4], bTop].map((p) => p.slice());
     return { polys: G.union(U.concat([G.rect(0, 0, far, 4), brace])), h: 30, n: 2 };
   }
+  if (id === 'shroud') { // over a hole in a shallow box: a flange to screw down, 4 walls for the extra depth, and a rabbet at the top the cut-out piece drops back into
+    const Q = X.shroud, c = tolOf(), w = Q.w / 2, h = Q.h / 2, F = 12, Wl = 3, top = Q.d + Q.ct, rr = (a, b, r) => G.rrect(-a, -b, a, b, r);
+    const flange = G.diff([rr(w + F, h + F, 4)], [G.rect(-w + 4, -h + 4, w - 4, h - 4)].concat([[-1, -1], [1, -1], [1, 1], [-1, 1]].map(([sx, sy]) => G.circle(sx * (w + F / 2 + 1), sy * (h + F / 2 + 1), 1.7, 24))));
+    return { layers: [{ polys: flange, z0: 0, z1: 2.5 }, { polys: G.diff([rr(w + Wl, h + Wl, 2)], [G.rect(-w + 4, -h + 4, w - 4, h - 4)]), z0: 2.4, z1: Q.d }, { polys: G.diff([rr(w + Wl, h + Wl, 2)], [G.rect(-w - c, -h - c, w + c, h + c)]), z0: Q.d - 0.1, z1: top }], n: 1 }; /* the 4 mm ledge inside holds the cover; each band overlaps the one under it 0.1 mm */ }
   if (id === 'lens') { const d = X.lens.d; return { polys: G.diff([G.circle(0, 0, d / 2 + 4, 96)], [G.circle(0, 0, d / 2 + tolOf(), 96)]), h: 6, n: 1 }; } /* a ring round a lens of that size, with the clearance */
   if (id === 'grip') { const L = X.grip.l, W = 30; return { polys: G.diff([G.rrect(0, 0, L, W, 8)], [0.25, 0.5, 0.75].map((f) => G.circle(L * f, W + 5, 8, 40))), h: 8, n: 1 }; } /* a pad with three finger dips along one edge */
   if (id === 'tripod') { const c = tolOf(), big = !(UPRIGHT[S.style] && geom().H < 24), sq = [big ? G.rrect(-11, -8, 11, 8, 3) : G.rrect(-10, -7, 10, 7, 2.5)], /* 22 x 16 when the edge has room: 2.2 mm round the nut's flats, else 20 x 14 */ /* 20 x 14: the nut's flats across the short side, so it fits a thin edge */ hex = [G.circle(0, 0, (11.11 / 2 + c) / Math.cos(Math.PI / 6), 6)], bolt = [G.circle(0, 0, 6.35 / 2 + c, 40)];
@@ -2069,6 +2117,10 @@ function kb() {
   return (KBC = { c, r, s60: false, W, H, x0, y0, x1, y1, w: x1 - x0, h: y1 - y0, sw, pico: { x: px, y: py }, screws: [[x0 + 4, y0 + 4], [x1 - 4, y0 + 4], [x0 + 4, y1 - 4], [x1 - 4, y1 - 4]] });
 }
 let KBP = null;
+function shroudPart() { // the raised shroud as a part you place: it cuts a W x H hole and takes its flange's room
+  if (typeof S === 'undefined' || !S || !S.xp || !S.xp.shroud) return {}; const Q = S.xp.shroud, F = 12;
+  return { shroud: { cat: 'hw', name: 'Raised shroud, ' + Q.w + ' x ' + Q.h + ' mm, ' + Q.d + ' mm deeper', short: 'Shroud', w: Q.w + 2 * F, h: Q.h + 2 * F, depth: 0, cut: { o: 'rect', w: Q.w, h: Q.h }, link: 'none', price: 0, tip: 'Cut a ' + Q.w + ' x ' + Q.h + ' mm hole in your box, screw the shroud over it, and drop the piece you cut out back in as its lid.', src: 'Made by Case Zero' } };
+}
 function kbPart() { // the keyboard as a part you can put in a case: the case top gets one opening for the keys and four screw holes
   if (typeof S === 'undefined' || !S) return {}; const K = kb(); if (KBP && KBP.K === K) return KBP.o;
   const cx = (K.x0 + K.x1) / 2, cy = (K.y0 + K.y1) / 2, n = K.sw.length;
@@ -2204,7 +2256,7 @@ const money = (n) => '$' + (n >= 100 ? Math.round(n) : n.toFixed(n % 1 ? 2 : 0))
 function shopRows() {
   // one row per kind of part. Parts already soldered on a photographed board are yours: nothing to buy. "Have it" takes a row off the bill.
   const P = PARTS(), m = {};
-  S.items.forEach((i) => { const p = P[i.type]; if (!p || p.cat === 'mine') return; const r = m[i.type] || (m[i.type] = { t: i.type, p, n: 0, own: 0 }); r.n++; if (i.of != null) r.own++; });
+  S.items.forEach((i) => { const p = P[i.type]; if (!p || p.cat === 'mine' || p.cat === 'hw') return; const r = m[i.type] || (m[i.type] = { t: i.type, p, n: 0, own: 0 }); r.n++; if (i.of != null) r.own++; });
   return Object.keys(m).map((t) => { const r = m[t]; r.have = !!S.have[t]; r.buy = r.have ? 0 : r.n - r.own; r.sum = r.buy * (r.p.price || 0); return r; });
 }
 function extraRows() {
@@ -2215,6 +2267,8 @@ function extraRows() {
     if (dS + mS) out.push({ t: 'x_m3', name: 'M3 screws, 8 mm, ' + (dS + mS) + ' (' + [dS ? dS + ' for the deck' : '', mS ? mS + ' for mounted parts' : ''].filter(Boolean).join(', ') + ', small box)', each: 3 }); }
   if (isPanel() && S.phold === 'screws') out.push({ t: 'x_m3', name: 'M3 screws (small box)', each: 3 });
   if (S.xp && S.xp.ch && S.xp.ch.servo) out.push({ t: 'x_sg90', name: '1 x SG90 Micro Servo (character arm)', each: 2 });
+  if (swapOn()) { const nI = swapList().length; if (S.swap.mount === 'magnets') { const nm = 4 * (1 + nI); out.push({ t: 'x_swapmag', name: nm + ' x Magnets 6 x 3 mm (swap frame and ' + nI + ' insert' + (nI > 1 ? 's' : '') + ')', each: 3 * Math.ceil(nm / 10) }); } else out.push({ t: 'x_swapm3', name: '4 x M3 x 8 mm screws (swap insert corners)', each: 1 }); }
+  { const nS = S.items.filter((i) => i.type === 'shroud').length; if (nS) out.push({ t: 'x_shroudscr', name: (4 * nS) + ' x M3 x 10 mm screws (raised shroud flange)', each: nS }); }
   { const nT = S.attachedParts.filter((m) => m.partId === 'tripod').length; if (nT) out.push({ t: 'x_nut', name: nT + ' x 1/4"-20 hex nut (tripod mount)', each: 0.5 * nT }); }
   { const nC = S.attachedParts.filter((m) => m.partId === 'charm' && (m.charm || xp().charm).hook === 'lug').length; if (nC) out.push({ t: 'x_clasp', name: nC + ' x Trigger clasp keyring (for the charm lug)', each: 2 * nC }); }
   if (isClam() && S.magnets) out.push({ t: 'x_mag', name: 'Round magnets 6 x 3 mm, 4 or more', each: 3 });
@@ -2317,6 +2371,7 @@ function showRecipes() {
 }
 $('sheetIn').addEventListener('click', (e) => {
   const dr = e.target.closest('[data-door]'), rc = e.target.closest('[data-recipe]'), ok = e.target.closest('[data-rok]');
+  if (e.target.closest('[data-act=keepbox]')) { $('sheet').hidden = true; keepBox(); return; }
   if (dr) { const v = dr.dataset.door;
     if (v === 'known') showRecipes(); else if (v === 'new') showNew(); else if (v === 'back') showStart();
     else if (v === 'close') { S.started = true; save(); $('sheet').hidden = true; }
@@ -2386,6 +2441,10 @@ function makeFiles() {
       const dks = x.built.deck.filter((l) => l.tag === 'deck'); if (dks.length) files.push({ label: x.name + ' test fit (1 mm)', name: 'casezero-' + nm + '-test-fit.stl', blob: meshBlob(G.trisOf(G.layerGeos([{ polys: dks[dks.length - 1].polys, z0: 0, z1: 1 }])), nm + ' test fit') });
 
     });
+    if (!wood && swapOn()) { const regs = plan(hs[0].built).regs, n = regs.length, pcs = (L, nm, lab) => G.cutLayers(L, [], regs).forEach((p, j) => { const tris = G.trisOf(G.layerGeos(p.layers)); if (tris.length) files.push({ label: lab + (n > 1 ? ' piece ' + (j + 1) + ' of ' + n : ''), name: nm + (n > 1 ? '-' + (j + 1) : '') + '.stl', blob: meshBlob(tris, lab) }); }); /* bigger than the bed: the same cuts as the panel */
+      pcs(swapFrame(), 'casezero-swap-frame', 'Swap frame (stays in the box)');
+      swapList().forEach((q, i) => { if (i === S.swap.cur) return; const keep = S.items; S.items = q.items || []; markCache = {}; try { pcs(panelBuilt().tray, 'casezero-swap-insert-' + (i + 1), q.name + ' (swap insert)'); } finally { S.items = keep; markCache = {}; } }); }
+    if (!wood && S.items.some((i) => i.type === 'shroud')) files.push({ label: 'Raised shroud', name: 'casezero-shroud.stl', blob: meshBlob(G.trisOf(G.layerGeos(addonPolys('shroud').layers)), 'shroud') });
     if (!wood) S.attachedParts.forEach((m, i) => { if (MOUNTABLE[m.partId]) files.push(mountFile(m, i)); });
     { const hs = wood ? [] : S.attachedParts.filter((m) => m.partId === 'charm' && (m.charm || xp().charm).hook === 'hook'); if (hs.length) { const geos = []; let y = 0; hs.forEach((m) => { const hp = hookPolys(m.charm), hb = G.bbox(hp); G.layerGeos([{ polys: hp, z0: 0, z1: CARABINER_DEFAULT_THICKNESS_MM }]).forEach((gg) => { gg.translate(-hb.x0, -hb.y0 + y, 0); geos.push(gg); }); y += hb.h + 4; }); files.push({ label: hs.length + ' printed carabiner hook' + (hs.length > 1 ? 's' : ''), name: 'casezero-charm-hook.stl', blob: meshBlob(G.trisOf(geos), 'charm hook') }); } }
     const extraOf = (k) => S.items.reduce((n, i) => n + ((PP(i) && PP(i).prints && PP(i).prints[k]) || 0), 0);
@@ -2469,11 +2528,11 @@ window.addEventListener('pageshow', (e) => { if (e.persisted) resync(); });
 window.addEventListener('storage', (e) => { if (e.key === KEY) resync(); });
 document.addEventListener('visibilitychange', () => { if (!document.hidden) resync(); });
 
-window.__cz = { decoMove, mountPart, TEST, testModel, wiring, wallArt, LG, hookPolys, addBoard, packBuild, unpackBuild, shareState, portBlocked, portAt, mountBlocked, swatchFile, loadRecipe, get DECO() { return DECO; }, get T3() { return T3; }, THREE, wiring, codeFor, get S() { return S; }, get view() { return view; }, AZ, get UNDO() { return UNDO.length; }, halves, plan, makeFiles, get FILES() { return FILES; }, allProblems, G, addPart, go, render, dims, heights, addonFile, addonPolys, charParts, charCache, kb, kbBoard, kbCode, kbReadme, boardSvg, get TRAY() { return TRAY; }, showStart, loadRecipe, cost, boardBuild, boardFiles, boardReadme };
+window.__cz = { decoMove, mountPart, TEST, testModel, wiring, wallArt, LG, hookPolys, addBoard, packBuild, unpackBuild, shareState, portBlocked, portAt, mountBlocked, swatchFile, loadRecipe, get DECO() { return DECO; }, get T3() { return T3; }, THREE, wiring, codeFor, get S() { return S; }, get view() { return view; }, AZ, get UNDO() { return UNDO.length; }, halves, plan, makeFiles, get FILES() { return FILES; }, allProblems, G, addPart, go, render, dims, heights, addonFile, addonPolys, charParts, charCache, kb, kbBoard, kbCode, kbReadme, boardSvg, get TRAY() { return TRAY; }, showStart, loadRecipe, cost, boardBuild, boardFiles, boardReadme, extraRows, keepBox };
 render();
 { const q = new URLSearchParams(location.search), code = q.get('build'), rid = q.get('recipe'), r = rid && (CZ.RECIPES || []).find((x) => x.id === rid), clean = () => { try { history.replaceState(null, '', location.pathname); } catch (e) {} };
   if (code) { /* a build link: it becomes the saved build (the one that was here goes to Bring back), no start sheet */
-    unpackBuild(code).then((o) => { if (!o || !Array.isArray(o.items)) throw new Error('bad'); backup(); o.started = true; localStorage.setItem(KEY, JSON.stringify(Object.assign(JSON.parse(S_DEF), o))); clean(); MPC = {}; resync(); tag('Build loaded from the link'); })
+    unpackBuild(code).then((o) => { if (!o || !Array.isArray(o.items)) throw new Error('bad'); backup(); o.started = true; localStorage.setItem(KEY, JSON.stringify(Object.assign(JSON.parse(S_DEF), o))); clean(); MPC = {}; resync(); tag('Build loaded from the link'); $('sheetIn').innerHTML = '<h2>A build from a link</h2><div class="list"><button class="btn start" data-door="close"><b>Use this build</b>Everything as it was made.</button><button class="btn start" data-act="keepbox"><b>Keep Box, Swap Insides</b>Keep its box, size, hinge and mounts. Clear the electronics and design new insides for it.</button></div>'; $('sheet').hidden = false; })
       .catch(() => { clean(); tag('That build link could not be read'); if (!S.started && !S.items.length) showStart(); });
   } else if (r) { clean(); if (S.items.length) { $('sheetIn').innerHTML = '<h2>Start the ' + esc(r.name) + '?</h2><p class="note" style="font-size:14px">This replaces the ' + S.items.length + ' electronics in the build you have now. It is kept, so Bring back can return it.</p><div class="list" style="margin-top:10px"><button class="btn start" data-rok="' + r.id + '"><b>Start the ' + esc(r.name) + '</b>' + esc(r.line) + '</button><button class="btn start" data-door="close"><b>Keep my build</b>Go back to what I was making.</button></div>'; $('sheet').hidden = false; } else loadRecipe(r.id); }
   else if (!S.started && !S.items.length) showStart(); }
