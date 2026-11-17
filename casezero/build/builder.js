@@ -5,7 +5,7 @@ import * as THREE from 'three';
 import { OrbitControls } from 'three/addons/OrbitControls.js';
 import * as G from './geo.js?v=33';
 import { CARABINER_HOOK_OUTLINE_MM, CARABINER_DEFAULT_THICKNESS_MM } from './charm_carabiner_hook.js?v=1';
-import { openMeasure, GROUPS } from './capture.js?v=20';
+import { openMeasure, GROUPS } from './capture.js?v=21';
 import { makeBoard, boardFiles, boardSvg, zip as zipFiles } from './board.js?v=4';
 import { charParts, chSpec, charBuyList, CH_DEF, headDims, faceSpots, faceLimit, featPoly, flatParts, FEATS } from './char3d.js?v=5';
 import { micMain, planWiring, codeFor, PICO_LEFT, PICO_RIGHT, PICO_PINS, PICO_BRAINS, NEED, BOARDS, BOARD_OF } from './wiring.js?v=25';
@@ -791,7 +791,7 @@ function paneRest(t, P, c) {
     return h;
   }
   if (t === 'psize') { const d = dims(), scr = S.items.some((i) => PP(i) && PP(i).screen);
-    return swapHtml() + '<button class="btn dark" data-act="measureLid" style="margin-bottom:8px">Measure the inside of my box</button><div class="row"><b>Box inside</b><input class="num" id="pw" type="number" inputmode="decimal" step="0.5" value="' + S.pw + '" aria-label="Inside width in mm"><span class="u">x</span><input class="num" id="pd" type="number" inputmode="decimal" step="0.5" value="' + S.pd + '" aria-label="Inside height in mm"><span class="u">mm</span></div>' +
+    return mpanHtml() + swapHtml() + '<button class="btn dark" data-act="measureLid" style="margin-bottom:8px">Measure the inside of my box</button><div class="row"><b>Box inside</b><input class="num" id="pw" type="number" inputmode="decimal" step="0.5" value="' + S.pw + '" aria-label="Inside width in mm"><span class="u">x</span><input class="num" id="pd" type="number" inputmode="decimal" step="0.5" value="' + S.pd + '" aria-label="Inside height in mm"><span class="u">mm</span></div>' +
     '<div class="row"><b>Sits</b>' + seg('plift', [['0', 'On the floor'], ['legs', 'On legs'], ['rim', 'On a lip']], S.plift > 0 ? (S.pbase || 'legs') : '0') + '</div>' + (S.plift > 0 ? stepper('plift', S.pbase === 'rim' ? 'Lip' : 'Legs', S.plift + ' mm tall') : '') + '<div class="row"><b>Holds by</b>' + seg('phold', [['screws', 'Screws'], ['glue', 'Glue'], ['ribs', 'Snug ribs'], ['drop', 'Drops in']], S.phold) + '</div>' +
     '<div class="row"><b>Thick</b>' + seg('pt', [['2', '2 mm'], ['3', '3 mm'], ['4', '4 mm']], String(S.pt)) + '</div><div class="row"><b>Corners</b>' + seg('prad', [['0', 'Square'], ['3', 'Soft'], ['8', 'Round']], String(S.prad)) + '</div>' +
     '<p class="note">Panel: <b>' + d.W + ' x ' + d.D + ' mm</b>, 1 mm smaller than the box so it drops in. ' + ({ screws: 'M3 screws in the corners' + (S.plift > 0 ? ' go down through the ' + (S.pbase === 'rim' ? 'lip' : 'legs') + ' into the box. Already have screws or posts in the box? Line the corner holes up with them, or tag them on a photo.' : '. Already have screws in the box? Line the corner holes up with them.'), glue: 'No holes. ' + (S.plift > 0 ? 'A thin line of glue on the bottom of the ' + (S.pbase === 'rim' ? 'lip' : 'legs') : 'Glue or double sided tape on the back') + ' (E6000 or CA for wood and PLA). It is forever.', ribs: 'Little ribs on every edge press against the box and hold it, no screws.', drop: 'It just lies in the box.' })[S.phold] + ' ' +
@@ -961,7 +961,8 @@ function after(t) {
 
 // ---------- taps ----------
 $('pane').addEventListener('click', (e) => {
-  const b = e.target.closest('button, [data-sel], [data-delmine], [data-sub], [data-nsel], [data-ins]'); if (!b) return; const d = b.dataset;
+  const b = e.target.closest('button, [data-sel], [data-delmine], [data-sub], [data-nsel], [data-ins], [data-mpan]'); if (!b) return; const d = b.dataset;
+  if (d.mpan != null) { mpanLoad(+d.mpan); tag(S.mpan.list[S.mpan.cur].name + ': ' + S.pw + ' x ' + S.pd + ' mm'); return; }
   if (d.ins != null) { swapTo(+d.ins); save(); render(); tag(swapList()[S.swap.cur].name + ': its parts'); return; }
   if (d.nsel != null) { S.nsel = +d.nsel; save(); render(); return; }
   if (d.xsel != null) { DECO = null; S.xsel = d.xsel || null; save(); render(); return; }
@@ -1009,7 +1010,7 @@ $('pane').addEventListener('click', (e) => {
   if (d.wired) { if (!S.wired) S.wired = {}; if (S.wired[d.wired]) delete S.wired[d.wired]; else S.wired[d.wired] = true; save(); const top = $('pane').scrollTop; render(); $('pane').scrollTop = top; return; }
   if (act === 'addNotch') { S.notches = S.notches || []; S.notches.push({ edge: 'bottom', shape: 'rrect', w: 20, d: 8, at: Math.round(dims().W / 2) }); S.nsel = S.notches.length - 1; reflow(); save(); render(); return; }
   if (act === 'delNotch') { S.notches.splice(S.nsel, 1); S.nsel = Math.max(0, S.nsel - 1); save(); render(); return; }
-  if (act === 'measureLid') { openMeasure((P) => { S.pw = Math.round(P.w * 2) / 2; S.pd = Math.round(P.h * 2) / 2; reflow(); save(); render(); }); return; }
+  if (act === 'measureLid') { openMeasure((P) => { S.pw = Math.round(P.w * 2) / 2; S.pd = Math.round(P.h * 2) / 2; reflow(); save(); render(); }, MEASURED); return; }
   if (act === 'nophoto') { PHOTO = null; try { localStorage.removeItem(KEY + ':photo'); } catch (er) {} render(); return; }
   if (act === 'toParts') { S.tab[0] = 'parts'; render(); return; }
   if (act === 'toBrain') { S.tab[0] = 'parts'; go(0); return; }
@@ -1020,7 +1021,7 @@ $('pane').addEventListener('click', (e) => {
     $('sheetIn').innerHTML = '<h2>Build around your board?</h2><p class="note" style="font-size:14px">Your board already has its screen, buttons and brain on it. You also have ' + others.length + ' electronics added by hand: ' + esc(others.map((i) => PP(i) ? PP(i).short : i.type).slice(0, 6).join(', ')) + (others.length > 6 ? '...' : '') + '.</p><div class="list" style="margin-top:10px"><button class="btn start" data-board="replace"><b>Just my board</b>Remove the ' + others.length + ' other electronics. Best when everything is soldered on the board.</button><button class="btn start" data-board="keep"><b>Keep them too</b>For parts that are not on the board, like a separate speaker.</button></div>';
     $('sheet').hidden = false;
     $('sheetIn').querySelectorAll('[data-board]').forEach((x) => { x.onclick = () => { $('sheet').hidden = true; addBoard(P, x.dataset.board === 'replace'); }; });
-  }); return; }
+  }, MEASURED); return; }
   if (act === 'auto') { snapU(); const list = S.items.filter((i) => i.of == null); /* parts on your board stay where the photo put them */ list.forEach((i) => { i.x = -999; i.y = -999; }); list.sort((a, b) => (fp(b).w * fp(b).h) - (fp(a).w * fp(a).h)).forEach((i) => { autoPlace(i); if (PP(i) && PP(i).board) syncKids(i); }); save(); render(); return; }
   const s = S.items.find((i) => i.id === sel);
   if (act === 'rot' && s && s.of != null) { snapU(); const b = boardOf(s); s.dr = ((s.dr || 0) + 1) % 4; if (b) syncKids(b); save(); render(); return; }
@@ -2487,6 +2488,34 @@ function wipeAll() {
   Object.keys(LOGOIMGS).forEach((k) => delete LOGOIMGS[k]); PHOTO = null; uid = 0; sel = null; LAST = null; UNDO.length = 0; MPC = {}; markCache = {}; FILES = [];
   try { testReset(); } catch (e) {} applyWalls(); save();
 }
+// ---------- what the phone measured: panels at their locked size, or a Case Zero body sized to fit ----------
+// Each tag becomes a part: a catalog part (button, knob, screen) at its spot, or one of your own parts (Screen, Board / Chip, Controller, Button / Cutout) with a cutout of the size you set.
+// Positions are mm from the panel's middle, so the same tags land in the same place on a panel or in a case.
+function measuredItems(p, cx, cy, panel) {
+  const out = [], mk = (type, x, y, r) => { const it = { id: ++uid, type, panel: panel || homePanel(), x: cx + x, y: cy + y, r: r || 0 }; out.push(it); };
+  (p.kids || []).forEach((k) => { const P = CZ.PARTS[k.type]; if (!P) return; mk(k.type, k.x, k.y, k.r); if (P.inside && !isPanel()) out[out.length - 1].panel = 'inside'; });
+  (p.cuts || []).concat((p.holes || []).map((h) => ({ kind: 'q_hole', label: 'Hole', w: h.d, h: h.d, x: h.x, y: h.y, round: true }))).forEach((c, i) => {
+    const key = 'm' + Date.now().toString(36) + out.length + i, w = Math.max(2, +c.w), h = Math.max(2, +c.h);
+    S.mine[key] = { cat: 'mine', name: c.label + ', ' + w + ' x ' + h + ' mm (measured)', short: c.label === 'Board / Chip' ? 'Board' : c.label, w, h, depth: c.kind === 'q_screen' ? 6 : 5, screen: c.kind === 'q_screen', measured: true, link: 'none', price: 0,
+      cut: c.round ? { o: 'circle', d: w } : { o: 'rect', w, h }, tip: 'Measured with your phone: a ' + w + ' x ' + h + ' mm cutout.', src: 'Measured with a card as the ruler' };
+    mk(key, c.x, c.y, 0); });
+  return out;
+}
+const MEASURED = {
+  panels(list) { if (!list || !list.length) return; backup(); S.style = 'panel'; S.picked = true; S.started = true; S.lockBox = null;
+    S.mpan = { list: list.map((p) => ({ name: p.name, w: Math.round(p.w * 2) / 2, h: Math.round(p.h * 2) / 2, src: p, items: null })), cur: 0 };
+    mpanLoad(0, true); tag(list.length > 1 ? list.length + ' panels measured: ' + list.map((p) => p.name).join(', ') + '. Switch between them in Shape, Size.' : list[0].name + ': ' + S.pw + ' x ' + S.pd + ' mm, ' + S.items.length + ' tagged parts placed.'); },
+  case(style, list) { if (!list || !list.length) return; backup(); const p = list[0], c = tolOf(), m = 2 * (R.T + R.CLR + 1), gap = 2 * (R.T + R.CLR + 0.8) - m; /* the deck inside the walls has to hold the panel, plus the clearance all round */
+    S.style = style; S.picked = true; S.started = true; S.lockBox = null; S.mpan = null; S.xw = S.xd = 0;
+    [['cols', 'xw', p.w], ['rows', 'xd', p.h]].forEach(([q, x, v]) => { const need = v + 2 * c + m + Math.max(0, gap), n = Math.max(2, Math.min(24, Math.floor((need - m) / 20))); S[q] = n; S[x] = Math.max(0, Math.min(19.9, Math.ceil((need - m - n * 20) * 10) / 10)); if (S[x] > 19.9) { S[q]++; S[x] = 0; } });
+    const d = dims(); S.items = S.items.filter((i) => PP(i) && PP(i).cat === 'brain'); S.items = S.items.concat(measuredItems(p, d.W / 2, d.D / 2)); reflow(); keepInside(); save(); S.tab[1] = homePanel(); go(1);
+    tag(styleRow()[1] + ' sized to ' + Math.round(d.W) + ' x ' + Math.round(d.D) + ' mm to hold ' + p.name + ' (' + p.w.toFixed(1) + ' x ' + p.h.toFixed(1) + ' mm + ' + c + ' mm clearance).'); }
+};
+function mpanLoad(i, first) { // one measured panel at a time: its size, and its own parts
+  const L = S.mpan.list; if (!first) L[S.mpan.cur].items = JSON.parse(JSON.stringify(S.items)); S.mpan.cur = i; const q = L[i]; S.pw = q.w; S.pd = q.h;
+  if (q.items) S.items = JSON.parse(JSON.stringify(q.items)); else { const d = dims(); S.items = measuredItems(q.src, d.W / 2, d.D / 2, 'top'); q.src = null; }
+  uid = S.items.reduce((m, p) => Math.max(m, p.id || 0), uid); sel = null; reflow(); keepInside(); save(); if (first) { S.tab[1] = 'top'; go(1); } else render(); }
+function mpanHtml() { const M = S.mpan; if (!isPanel() || !M || !M.list || M.list.length < 2) return ''; return '<div class="row"><b>Measured</b><div class="chosen" style="margin:0">' + M.list.map((q, i) => '<span data-mpan="' + i + '" style="cursor:pointer' + (i === M.cur ? ';background:#1a1a1a;color:#fff' : '') + '">' + esc(q.name) + ' ' + q.w + ' x ' + q.h + '</span>').join('') + '</div></div>'; }
 function hasBak() { try { return !!localStorage.getItem(BAK); } catch (e) { return false; } }
 function showStart() {
   $('sheetIn').innerHTML = '<h2>Build your own device</h2><div class="list">' +
@@ -2682,7 +2711,7 @@ window.addEventListener('pageshow', (e) => { if (e.persisted) resync(); });
 window.addEventListener('storage', (e) => { if (e.key === KEY) resync(); });
 document.addEventListener('visibilitychange', () => { if (!document.hidden) resync(); });
 
-window.__cz = { decoMove, mountPart, TEST, testModel, wiring, wallArt, LG, hookPolys, addBoard, packBuild, unpackBuild, shareState, portBlocked, portAt, mountBlocked, swatchFile, loadRecipe, get DECO() { return DECO; }, get T3() { return T3; }, THREE, wiring, codeFor, get S() { return S; }, get view() { return view; }, AZ, get UNDO() { return UNDO.length; }, halves, plan, makeFiles, get FILES() { return FILES; }, allProblems, G, addPart, go, render, dims, heights, addonFile, addonPolys, charParts, charCache, kb, kbBoard, kbCode, kbReadme, boardSvg, wiring, PP, fitAll, filesOf, portBlocked, testAct, testModel, micMain, get TRAY() { return TRAY; }, showStart, loadRecipe, cost, boardBuild, boardFiles, boardReadme, extraRows, keepBox };
+window.__cz = { decoMove, mountPart, TEST, testModel, wiring, wallArt, LG, hookPolys, addBoard, packBuild, unpackBuild, shareState, portBlocked, portAt, mountBlocked, swatchFile, loadRecipe, get DECO() { return DECO; }, get T3() { return T3; }, THREE, wiring, codeFor, get S() { return S; }, get view() { return view; }, AZ, get UNDO() { return UNDO.length; }, halves, plan, makeFiles, get FILES() { return FILES; }, allProblems, G, addPart, go, render, dims, heights, addonFile, addonPolys, charParts, charCache, kb, kbBoard, kbCode, kbReadme, boardSvg, wiring, PP, fitAll, filesOf, MEASURED, portBlocked, testAct, testModel, micMain, get TRAY() { return TRAY; }, showStart, loadRecipe, cost, boardBuild, boardFiles, boardReadme, extraRows, keepBox };
 render();
 try { if (S.items.length) { keepInside(); save(); } } catch (e) {} /* a saved build from an older builder: nothing left floating outside */
 { const q = new URLSearchParams(location.search), code = q.get('build'), rid = q.get('recipe'), r = rid && (CZ.RECIPES || []).find((x) => x.id === rid), clean = () => { try { history.replaceState(null, '', location.pathname); } catch (e) {} };
