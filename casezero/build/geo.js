@@ -106,7 +106,12 @@ export function buildHalf(o) {
   const tray = [], deck = [], extra = [];
   const inlay = [], stick = [], D = 0.6; // D = how deep a mark or texture goes (3 layers at 0.2 mm)
   // floor, with marks on the bottom face: dips (filled with a second color or paint), cut throughs (vents), pockets for glue-on pieces
-  const bm = marks(o.bottom), floorCut = diff(out, bm.cut);
+  // a face, arms and legs on the outside of a lid: the lid's floor is its outside
+  const oS = [], oU = [], oH = [], oB = [];
+  (o.decoOut || []).forEach((dq) => { if (dq.arm) { oH.push(circle(dq.x, dq.y, 1.35, 20)); oB.push(circle(dq.x, dq.y, 4.6, 28)); } else if (dq.mt === 'raised') oU.push(...dq.polys); else oS.push(...dq.polys); });
+  const bm0 = marks(o.bottom), bm = oS.length ? Object.assign({}, bm0, { recess: union(bm0.recess.concat(oS)) }) : bm0, floorCut = diff(out, oH.length ? union(bm.cut.concat(oH)) : bm.cut);
+  if (oU.length) { const up = inter(union(oU), out); if (up.length) stick.push({ layers: [{ polys: up, z0: -1.6, z1: 0 }], face: 'bottom' }); }
+  if (oB.length) tray.push({ polys: diff(inter(union(oB), innerWall), union(oH)), z0: R.F, z1: Math.max(R.F + 3, Math.min(R.F + 6, deckZ - 0.4)), tag: 'frame' }); /* plastic behind an arm screw, so its thread holds */
   if (bm.recess.length) { tray.push({ polys: diff(floorCut, bm.recess), z0: 0, z1: D, tag: 'floor' }); tray.push({ polys: floorCut, z0: D, z1: R.F, tag: 'floor' }); if (bm.fill.length) inlay.push({ polys: inter(bm.fill, floorCut), z0: 0, z1: D, tag: 'inlayB' }); }
   else tray.push({ polys: floorCut, z0: 0, z1: R.F, tag: 'floor' });
   bm.stick.forEach((sp) => { sp.layers.forEach((l) => { const h = l.z1; l.z0 = -(h - D); l.z1 = D; }); sp.face = 'bottom'; stick.push(sp); });
