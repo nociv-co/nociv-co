@@ -28,6 +28,7 @@ a.tool-card { text-decoration: none; color: inherit; }
 .cz-log-wrap { max-width: 900px; margin: 34px auto 0; background: var(--bn); position: relative; padding: 28px 18px 20px; box-shadow: 0 6px 16px rgba(0,0,0,0.16); }
 .cz-log-wrap::before { content: ''; position: absolute; top: -11px; left: 22px; width: 64px; height: 22px; background: var(--bi); opacity: .85; transform: rotate(-3deg); }
 .cz-log-wrap h2 { margin: 0; font-family: -apple-system, BlinkMacSystemFont, "Helvetica Neue", Arial, sans-serif; font-weight: 900; font-size: 1.8rem; text-transform: uppercase; letter-spacing: .03em; line-height: 1; }
+.cz-starters { margin: 10px 0 0; font-weight: 700; } .cz-starters a { color: inherit; }
 .cz-log { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 6px; margin-top: 12px; }
 .cz-log button { padding: 0; border: 2px solid var(--bi); background: #fff; aspect-ratio: 1; overflow: hidden; cursor: pointer; display: block; width: 100%; }
 .cz-log img, .cz-log video { width: 100%; height: 100%; object-fit: cover; display: block; }
@@ -94,6 +95,7 @@ a.tool-card { text-decoration: none; color: inherit; }
 
   <div class="cz-log-wrap">
     <h2>From the bench</h2>
+    <p class="cz-starters">Start from one of ours, ready to print: <a href="/casezero/build/?recipe=macro4">4-Button Macro Pad</a> &middot; <a href="/casezero/build/?recipe=timer">Desk Timer</a> &middot; <a href="/casezero/build/?recipe=synth">Mini Synth</a></p>
     <div class="cz-log" id="czLog"></div>
     <p class="cz-empty" id="czEmpty">Loading the build photos...</p>
   </div>

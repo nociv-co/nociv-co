@@ -3,7 +3,7 @@
 // Print: your printer and bed, material, how it joins, where the puzzle seams go. Files: STL per piece, wood templates, wiring.
 import * as THREE from 'three';
 import { OrbitControls } from 'three/addons/OrbitControls.js';
-import * as G from './geo.js?v=26';
+import * as G from './geo.js?v=27';
 import { openMeasure, GROUPS } from './capture.js?v=20';
 import { makeBoard, boardFiles, boardSvg, zip as zipFiles } from './board.js?v=3';
 import { charParts, chSpec, charBuyList, CH_DEF, headDims, faceSpots, faceLimit, featPoly, flatParts, FEATS } from './char3d.js?v=3';
@@ -18,7 +18,7 @@ const KEY = 'nociv-casezero-v7', SIZES = { clam: [9, 6], small: [5, 7], slate: [
 let S = { step: 2, tab: {}, cat: 'brain', items: [], mine: {}, style: 'clam', cols: 9, rows: 6, add: 0, hinge: 'printed', hside: 'back', magnets: true,
   printer: 'a1', bed: [256, 256], material: 'pla', join: 'dovetail', sdir: 'auto', sn: 'auto', tab3: 'dovetail', open: true, snap: false, spring: false,
   walls: 'normal', layer: 'normal', brand: null, look: null,
-  pw: 300, pd: 190, pt: 3, prad: 3, pholes: true, phold: null, plift: 0, notches: [], nsel: 0, started: false, recipe: null, have: {}, picked: false, attachedParts: [], mnt: { face: 'back', type: 'screw', view: 'case' } }; // Panel: real size in mm, thickness, corners, corner screw holes, wire notches
+  pw: 300, pd: 190, pt: 3, prad: 3, pholes: true, phold: null, plift: 0, notches: [], nsel: 0, started: false, recipe: null, have: {}, picked: false, attachedParts: [], ports: [], mnt: { face: 'back', type: 'screw', view: 'case', pface: 'back' } }; // Panel: real size in mm, thickness, corners, corner screw holes, wire notches
 const LOOK0 = () => ({ logo: { on: false, src: 'text', text: 'NOCIV', face: 'lidout', x: null, y: null, size: 40, how: 'dip' }, labels: { on: false, place: 'below', size: 4, how: 'dip', text: {} }, tex: { top: { kind: 'none', sp: 6, bump: false }, bottom: { kind: 'none', sp: 6, bump: false }, walls: { kind: 'none', sp: 6 }, lidout: { kind: 'none', sp: 6, bump: false }, lidin: { kind: 'none', sp: 6, bump: false } }, texFace: 'top', colors: 1, c1: '#e9e2cc', c2: '#1a1a1a', single: 'paint' });
 // One store for Body, Brain and Parts: S, kept in localStorage. STORED is the text this page last read or wrote,
 // so a page that was left open (another tab, or one the Back button brings back) can tell the build changed and take it, instead of saving its old copy over it.
@@ -29,6 +29,7 @@ function hydrate() {
   if (!S.look) S.look = LOOK0();
   if (!S.have) S.have = {};
   if (!Array.isArray(S.attachedParts)) S.attachedParts = [];
+  if (!Array.isArray(S.ports)) S.ports = [];
   if (!S.mnt) S.mnt = { face: 'back', type: 'screw', view: 'case' };
   if (!S.phold) S.phold = S.pholes === false ? 'drop' : 'screws';
 }
@@ -262,7 +263,7 @@ function halfFor(panel, h) {
   const hingeOn = isClam() && S.hinge === 'printed', lk = looksFor(panel);
   return G.buildHalf({ style: S.style, W: d.W, D: d.D, H: lid ? h.Hl : h.H, recess: lid ? h.recessL : h.recess, parts, inside, port, port2, deco: !lid && panel === homePanel() ? decoPolys() : [], decoOut: lid && isClam() ? decoPolys('lid') : [],
     top: lk.top, bottom: lk.bottom, walls: lk.walls, snap: S.snap,
-    mounts: !lid && panel === homePanel() ? activeMounts() : [],
+    mounts: !lid && panel === homePanel() ? activeMounts() : [], ports: !lid && panel === homePanel() ? activePorts() : [],
     magnets: isClam() && S.magnets, hinge: { on: hingeOn, side: S.style === 'small' ? (S.hside === 'right' ? 'right' : 'left') : 'back' }, hingeSet: lid ? 'b' : 'a' });
 }
 function panelBuilt() {
@@ -386,6 +387,7 @@ const FUNCS = [['brain', 'Brain', 'The chip that runs it', 'pico'], ['screen', '
 // electronics in three groups: what you do to it, what it does back, and what ties it together
 const FGROUPS = [['Inputs', 'you press, turn or slide', ['press', 'turn']], ['Outputs', 'it shows, lights, sounds or moves', ['screen', 'out', 'move']], ['Connections', 'the brain, the power, your own board', ['brain', 'power', 'mine']]];
 const FN_STAND = '<svg viewBox="0 0 60 36" aria-hidden="true"><path d="M17 31L29 6l9 4-12 25z" fill="#c8412f" stroke="#1a1a1a" stroke-width="2" stroke-linejoin="round"/><path d="M35 15l11 17" stroke="#1a1a1a" stroke-width="3" stroke-linecap="round"/><path d="M7 33h47" stroke="#1a1a1a" stroke-width="2" stroke-linecap="round"/></svg>';
+const PSVG = { p_usbc: '<svg viewBox="0 0 60 36" aria-hidden="true"><rect x="6" y="6" width="48" height="24" rx="3" fill="#e9e2cc" stroke="#1a1a1a" stroke-width="2"/><rect x="20" y="15" width="20" height="7" rx="3.5" fill="#1a1a1a"/></svg>', p_switch: '<svg viewBox="0 0 60 36" aria-hidden="true"><rect x="6" y="6" width="48" height="24" rx="3" fill="#e9e2cc" stroke="#1a1a1a" stroke-width="2"/><rect x="19" y="14" width="22" height="9" fill="#1a1a1a"/><rect x="22" y="16" width="7" height="5" fill="#c8412f"/></svg>', p_vent: '<svg viewBox="0 0 60 36" aria-hidden="true"><rect x="6" y="6" width="48" height="24" rx="3" fill="#e9e2cc" stroke="#1a1a1a" stroke-width="2"/>' + [17, 24, 31, 38, 45].map((x) => '<rect x="' + (x - 1.5) + '" y="11" width="3" height="14" fill="#1a1a1a"/>').join('') + '</svg>' };
 const XGROUPS = [['Stand and carry', ['stand', 'handle', 'feet']], ['Character', ['char', 'deco', 'limbs']], ['Moving parts', ['gears', 'hinge', 'spring', 'clamp']], ['Keyboard', ['keys']], ['Hardware', ['panel', 'standoff', 'clip']]];
 const NEWP = ' Sized from published specs, not from a test print.';
 function xmeta(id) { // one printed part: [short name, what it is and how it goes on, its few settings]
@@ -545,8 +547,10 @@ function btnHtml() {
     '<p class="note">Every button still needs a small switch under it to make the click: plastic alone cannot carry a signal.</p>';
 }
 function partsRoomHtml() {
+  if (PORTS[S.xsel]) return portHtml(S.xsel);
   const id = S.xsel, T = id && xmeta(id);
   if (!T) return filBar() + XGROUPS.map((g) => '<p class="h">' + g[0] + '</p><div class="grid g3" style="margin-bottom:10px">' + g[1].map((k) => { const v = filV(k)[0]; return '<button type="button" class="pick fn xt" data-xsel="' + k + '">' + xThumb(k) + xmeta(k)[0] + (v < 2 ? '<small class="vd v' + v + '">' + VWORD[v] + '</small>' : '') + '</button>'; }).join('') + '</div>').join('') +
+    '<p class="h">Ports and vents</p><div class="grid g3" style="margin-bottom:10px">' + Object.keys(PORTS).map((k) => '<button type="button" class="pick fn xt" data-xsel="' + k + '">' + PSVG[k] + PORTS[k][0] + '</button>').join('') + '</div>' +
     '<details class="fold"><summary>Printed buttons and knobs</summary>' + btnHtml() + '</details><p class="note">Each one is its own print. Make it now or later, then add it to what you already built.</p>';
   return '<div class="fnh"><button type="button" class="btn" data-xsel="">&lsaquo; All</button><b>' + T[0] + '</b></div><p class="note" style="margin-top:6px">' + T[1] + '</p>' + T[2] + (T[3] ? '' : filLine(id)) +
     (T[3] === 'none' ? '' : '<button class="btn red" data-xsave="' + id + '" style="margin-top:10px">Save the ' + (T[3] || 'print file') + '</button>' + printCard(id)) + mountHtml(id);
@@ -726,10 +730,10 @@ function pane(t) {
     return '<div class="row"><b>Seams go</b>' + seg('sdir', [['auto', 'Auto'], ['v', '|'], ['h', '&mdash;'], ['both', '+'], ['d', '/']], S.sdir) + '</div><div class="row"><b>How many</b>' + seg('sn', [['auto', 'Auto'], ['1', '1'], ['2', '2'], ['3', '3'], ['4', '4']], S.sn) + '</div><div class="row"><b>Edges</b>' + seg('tab3', [['dovetail', 'Puzzle tabs'], ['flat', 'Flat + glue']], S.tab3) + '</div>' +
       '<p class="note">' + (bad ? '<span class="bad">Some pieces are still bigger than your ' + S.bed[0] + ' x ' + S.bed[1] + ' mm bed. Add a seam.</span>' : '<span class="ok">' + n + ' pieces, all fit your bed.</span>') + ' One seam in the middle = 2 even pieces. Two seams = 3. Puzzle tabs lock, a drop of glue keeps them.</p>';
   }
-  if (t === '3d') return '<p class="h">Spin it with one finger, pinch to zoom</p>' + (isClam() ? '<button class="btn" data-act="open">' + (S.open ? 'Close the lid' : 'Open the lid') + '</button>' : '') + '<p class="note">' + summaryLine() + ' <b>' + money(cost().total) + ' to build.</b></p>' + creditHtml();
+  if (t === '3d') return '<p class="h">Spin it with one finger, pinch to zoom</p><div class="grid g2">' + (isClam() ? '<button class="btn" data-act="open">' + (S.open ? 'Close the lid' : 'Open the lid') + '</button>' : '') + '<button class="btn dark" data-act="share">Copy Build Link</button></div><div id="shareOut"></div><p class="note">' + summaryLine() + ' <b>' + money(cost().total) + ' to build.</b></p>' + creditHtml();
   if (t === 'shop') return shopHtml();
   if (t === 'pcb') return pcbHtml();
-  if (t === 'files') { const probs = allProblems(); return '<p class="note" style="margin:0 0 8px">No printer? A print service or a library takes these same files. To print from a USB stick, open them in your printer\'s free slicer app first: it turns them into the file your printer reads.</p>' + '<button class="btn red" data-act="make"' + (probs.length || !S.items.length ? ' aria-disabled="true"' : '') + '>Make my files</button><p class="note">' + (!S.items.length ? 'Add electronics in Brain first.' : probs.length ? '<span class="bad">Fix the electronics marked ! in Arrange first.</span>' : (S.material === 'wood' ? 'Wood: real size templates (SVG) to print at 100 percent or laser cut, plus the cut list.' : 'One file per piece, numbered, as STL or 3MF. Print the deck face down, the tray open side up.')) + '</p><div class="files" id="fileList" style="margin-top:8px"></div>'; }
+  if (t === 'files') { const probs = allProblems(); return '<p class="note" style="margin:0 0 8px">No printer? A print service or a library takes these same files. To print from a USB stick, open them in your printer\'s free slicer app first: it turns them into the file your printer reads.</p>' + (S.material === 'wood' ? '' : '<div class="row"><b>File type</b>' + seg('fmt', [['stl', 'STL'], ['3mf', '3MF']], fmtOf()) + '</div>') + '<div class="grid g2"><button class="btn red" data-act="make"' + (probs.length || !S.items.length ? ' aria-disabled="true"' : '') + '>Make my files</button>' + (S.material === 'wood' || isPanel() ? '' : '<button class="btn" data-act="swatch">Download 15-min Fit Swatch</button>') + '</div>' + (S.material === 'wood' || isPanel() ? '' : '<p class="note" style="margin:6px 0 0">The swatch is a ' + swatchSize() + ' mm plate with ' + (isClam() && S.magnets ? 'a magnet pocket, ' : '') + 'the M3 bore, the snap pin slot and ' + esc(swatchButton().short) + ' opening, at your ' + tolOf() + ' mm clearance and ' + R.T + ' mm walls. Print it first: if they fit, the case will.</p>') + '<p class="note">' + (!S.items.length ? 'Add electronics in Brain first.' : probs.length ? '<span class="bad">Fix the electronics marked ! in Arrange first.</span>' : (S.material === 'wood' ? 'Wood: real size templates (SVG) to print at 100 percent or laser cut, plus the cut list.' : 'One file per piece, numbered, as STL or 3MF. Print the deck face down, the tray open side up.')) + '</p><div class="files" id="fileList" style="margin-top:8px"></div>'; }
   if (t === 'wire') return wireHtml();
   if (t === 'extras') return partsRoomHtml();
   return '';
@@ -837,6 +841,10 @@ $('pane').addEventListener('click', (e) => {
   if (d.nsel != null) { S.nsel = +d.nsel; save(); render(); return; }
   if (d.xsel != null) { DECO = null; S.xsel = d.xsel || null; save(); render(); return; }
   if (d.manc != null) { const [u, v] = d.manc.split(',').map(Number), on = S.attachedParts.find((m) => m.partId === S.xsel && m.face === mnt().face && (m.anchors || [m.anchor]).some((q) => q.u === u && q.v === v)); if (on) { S.attachedParts = S.attachedParts.filter((m) => m !== on); save(); render(); } else attachAt({ u, v }); return; }
+  if (d.panc != null) { const u = +d.panc, on = S.ports.find((p) => p.kind === S.xsel && p.face === pface() && p.anchor.u === u); if (on) { S.ports = S.ports.filter((p) => p !== on); save(); render(); } else portAttach({ u }); return; }
+  if (d.prm != null) { S.ports = S.ports.filter((p) => p.id !== +d.prm); save(); render(); return; }
+  if (d.act === 'swatch') { saveFile(fileOut(swatchFile())); return; }
+  if (d.act === 'share') { shareLink(); return; }
   if (d.mrm != null) { S.attachedParts = S.attachedParts.filter((m) => m.id !== +d.mrm); save(); render(); return; }
   if (d.mtog != null) { const m = S.attachedParts.find((x) => x.id === +d.mtog); if (m) { m.mountType = m.mountType === 'screw' ? 'snap' : 'screw'; save(); render(); } return; }
   if (d.msave != null) { const i = S.attachedParts.findIndex((x) => x.id === +d.msave), m = S.attachedParts[i]; if (m) saveFile(fileOut(mountFile(m, i))); return; }
@@ -958,7 +966,7 @@ $('pane').addEventListener('click', (e) => {
     { const X = xp(); if (k === 'xkf') { X.keys.f = +v; save(); render(); return; } if (k === 'xksp') { X.keys.sp = v === '1' ? 1 : 0; save(); render(); return; } if (k === 'xs_a') { X.stand.a = +v; save(); render(); return; } if (k === 'xf_hole') { X.feet.hole = v === '1'; save(); render(); return; } if (k === 'xo_s') { X.standoff.s = v; save(); render(); return; } }
     if (k === 'brand') { S.brand = v; save(); render(); return; }
     if (k === 'walls') { S.walls = v; S.wallT = null; applyWalls(); reflow(); save(); render(); return; }
-    if (k === 'm_face' || k === 'm_type' || k === 'm_view') { mnt()[k.slice(2)] = v; save(); render(); return; }
+    if (k === 'm_face' || k === 'm_type' || k === 'm_view' || k === 'm_pface') { mnt()[k.slice(2)] = v; save(); render(); return; }
     if (k === 'tol') { if (v === 'c') S.tolC = true; else { S.tolC = false; S.tol = +v; } applyWalls(); reflow(); save(); render(); return; }
     if (k === 'fmt') { S.fmt = v; save(); sg.querySelectorAll('button').forEach((x) => x.setAttribute('aria-pressed', String(x === b))); $('fileList').querySelectorAll('[data-f]').forEach((x) => { const f = FILES[+x.dataset.f]; if (f) x.textContent = 'Save ' + f.label + fmtTag(f); }); return; }
     if (k === 'layer') { S.layer = v; save(); render(); return; }
@@ -1379,7 +1387,9 @@ function draw3d(isMini) {
         (S.deco || []).forEach((q) => { if (onFace(q) !== hf) return; const m = decoMesh(q, tz); m.position.set(q.x, q.y, 0); grp.add(m); r.decoM[q.id] = m; }); }
       if (x.key === homePanel()) { // parts mounted on the case, and while mounting: a dot on every spot, green free, red blocked
         S.attachedParts.forEach((m) => { const w = mountAt(m); if (!w || !MOUNTABLE[m.partId]) return; const pm = mesh(mountGeos(m, false), mountBlocked(m) ? 0xd94a3a : 0x2f4a6b); pm.matrixAutoUpdate = false; pm.matrix.makeBasis(new THREE.Vector3(...w.B[0]), new THREE.Vector3(...w.B[1]), new THREE.Vector3(...w.B[2])).setPosition(...w.o); grp.add(pm); });
-        if (MV) anchorsOf(mnt().face).forEach((a) => { const t = { partId: S.xsel, face: mnt().face, anchor: a, mountType: mnt().type }, w = mountAt(t); if (!w) return; const why = mountBlocked(t), dot = new THREE.Mesh(new THREE.SphereGeometry(2.6, 14, 10), new THREE.MeshBasicMaterial({ color: why ? 0xc8412f : 0x2f9a5b }));
+        if (MV && PORTS[S.xsel]) anchorsOf(pface()).forEach((a) => { const t = { kind: S.xsel, face: pface(), anchor: a }, w = portAt(t); if (!w) return; const why = portBlocked(t), N = PNORM[t.face], dot = new THREE.Mesh(new THREE.SphereGeometry(2.6, 14, 10), new THREE.MeshBasicMaterial({ color: why ? 0xc8412f : 0x2f9a5b }));
+          dot.position.set(w.o[0] + N[0] * 3, w.o[1] + N[1] * 3, w.o[2]); grp.add(dot); r.marks.push({ obj: dot, a, why }); });
+        else if (MV) anchorsOf(mnt().face).forEach((a) => { const t = { partId: S.xsel, face: mnt().face, anchor: a, mountType: mnt().type }, w = mountAt(t); if (!w) return; const why = mountBlocked(t), dot = new THREE.Mesh(new THREE.SphereGeometry(2.6, 14, 10), new THREE.MeshBasicMaterial({ color: why ? 0xc8412f : 0x2f9a5b }));
           dot.position.set(w.o[0] + w.B[2][0] * 3, w.o[1] + w.B[2][1] * 3, w.o[2] + w.B[2][2] * 3); grp.add(dot); r.marks.push({ obj: dot, a, why }); });
       }
       // stand ins for the parts so you can read it
@@ -1417,20 +1427,20 @@ function draw3d(isMini) {
       const dk = deco3d(), hh = dk && decoFace() === 'lid' ? h.H + h.Hl : h.H, lm = dk && (S.deco || []).some(isLimb) ? 62 : 0, rad = dk ? Math.hypot(d.W + lm, d.D + lm, hh) / 2 * 1.06 : Math.hypot(d.W, d.D, h.H + h.Hl + (OPEN ? d.D : 0)) / 2, v = r.camera.fov * Math.PI / 360, hz = Math.atan(Math.tan(v) * r.camera.aspect), dist = rad / Math.sin(Math.min(v, hz)) * (r.mode === 'mini' ? 1.0 : 1.15);
       r.controls.target.set(0, dk ? hh / 2 : (h.H + (isClam() && OPEN ? d.D * 0.4 : h.Hl)) / 2, lm ? 16 : 0);
       // in Style, turn to the side being decorated: the lid's outside faces the back when it is open, the bottom faces down
-      const f = S.step === 3 && curTab() !== 'colors' ? curFace() : 'top', MD = { back: [0.35, 0.55, -0.85], left: [-0.9, 0.5, 0.35], right: [0.9, 0.5, 0.35], bottom: [0.35, -0.85, 0.6] }, dir = MV ? MD[mnt().face] : dk ? [0, 1, 0.5] : f === 'lidout' && isClam() ? [0.2, 1, 0.55] : f === 'bottom' ? [0.4, -0.85, 0.6] : [0.45, 0.7, 0.8];
+      const f = S.step === 3 && curTab() !== 'colors' ? curFace() : 'top', MD = { back: [0.35, 0.55, -0.85], front: [0.35, 0.55, 0.85], left: [-0.9, 0.5, 0.35], right: [0.9, 0.5, 0.35], bottom: [0.35, -0.85, 0.6] }, dir = MV ? MD[PORTS[S.xsel] ? pface() : mnt().face] : dk ? [0, 1, 0.5] : f === 'lidout' && isClam() ? [0.2, 1, 0.55] : f === 'bottom' ? [0.4, -0.85, 0.6] : [0.45, 0.7, 0.8];
       r.camera.position.copy(new THREE.Vector3(dir[0], dir[1], dir[2]).normalize().multiplyScalar(dist)).add(r.controls.target); r.controls.update();
     };
     const limbs = (S.deco || []).some(isLimb) + DF, stay = D3 && r.view === 'bigdeco' && r.hadLimb === limbs; r.hadLimb = limbs; /* you turned the case to reach a spot: adding or dropping a piece must not turn it back */
-    r.mode = mode; r.view = mode + (D3 ? 'deco' : S.step === 3 ? curFace() + curTab() : '') + (MV ? 'm' + mnt().face : ''); if (!stay) r.fit();
+    r.mode = mode; r.view = mode + (D3 ? 'deco' : S.step === 3 ? curFace() + curTab() : '') + (MV ? 'm' + (PORTS[S.xsel] ? pface() : mnt().face) : ''); if (!stay) r.fit();
   }
   r.controls.enabled = !isMini;
-  const view = mode + (D3 ? 'deco' : S.step === 3 ? curFace() + curTab() : '') + (MV ? 'm' + mnt().face : '');
+  const view = mode + (D3 ? 'deco' : S.step === 3 ? curFace() + curTab() : '') + (MV ? 'm' + (PORTS[S.xsel] ? pface() : mnt().face) : '');
   if (r.mode !== mode || r.view !== view) { r.mode = mode; r.view = view; r.fit(); }
   setHighlight(r); decoMark();
   r.draw();
   if (isMini) return;
   if (D3) { tag((S.deco || []).length ? 'Drag a piece to move it. Drag the empty space to spin.' : 'Drag a piece from below onto your case'); $('sb').hidden = true; $('sb').innerHTML = ''; return; }
-  tag(MV ? 'Tap a green dot to mount the ' + xmeta(S.xsel)[0].toLowerCase() + '. Red is blocked.' : summaryLine());
+  tag(MV ? 'Tap a green dot to ' + (PORTS[S.xsel] ? 'cut the ' : 'mount the ') + xname(S.xsel).toLowerCase() + '. Red is blocked.' : summaryLine());
   const sb = $('sb'), flat = BIG3D && !native3d();
   sb.innerHTML = (flat ? '<button type="button" id="flatBtn" aria-pressed="true">Back to flat</button>' : '') + (isClam() && !lidTop ? '<button type="button" id="openBtn">' + (S.open ? 'Close it' : 'Open it') + '</button>' : '');
   sb.hidden = !sb.innerHTML; const ob = $('openBtn'); if (ob) ob.onclick = () => { S.open = !S.open; save(); render(); };
@@ -1575,7 +1585,7 @@ const MOUNTABLE = { handle: 'side', stand: 'side', feet: 'flat', standoff: 'flat
 const MFACES = [['back', 'Back'], ['left', 'Left'], ['right', 'Right'], ['bottom', 'Bottom']];
 const MBASIS = { back: [[-1, 0, 0], [0, 0, 1], [0, 1, 0]], left: [[0, -1, 0], [0, 0, 1], [-1, 0, 0]], right: [[0, 1, 0], [0, 0, 1], [1, 0, 0]], bottom: [[-1, 0, 0], [0, 1, 0], [0, 0, -1]] }; /* along, up, out of the case */
 const mnt = () => { if (!S.mnt) S.mnt = { face: 'back', type: 'screw', view: 'case' }; return S.mnt; };
-const mountView = () => curTab() === 'extras' && !!S.xsel && !!MOUNTABLE[S.xsel] && !isPanel() && mnt().view !== 'part';
+const mountView = () => curTab() === 'extras' && !!S.xsel && !isPanel() && (!!PORTS[S.xsel] || (!!MOUNTABLE[S.xsel] && mnt().view !== 'part'));
 const hingeFace = () => (isClam() && S.hinge !== 'none' ? (S.style === 'small' ? (S.hside === 'right' ? 'right' : 'left') : 'back') : null);
 let MPC = {};
 function mountPart(id) { // one copy of the part, turned so the side that goes on the case is at z = 0, with its size along the case
@@ -1594,7 +1604,7 @@ function mountGeos(m, forPrint) { // the part plus its mating plate (and the sna
   return geos;
 }
 function mountTris(m) { return G.trisOf(mountGeos(m, true)); }
-function anchorsOf(face) { const n = face === 'back' ? S.cols : face === 'bottom' ? S.cols * S.rows : S.rows, out = []; for (let i = 0; i < n; i++) out.push(face === 'bottom' ? { u: i % S.cols, v: Math.floor(i / S.cols) } : { u: i, v: 0 }); return out; }
+function anchorsOf(face) { const n = face === 'back' || face === 'front' ? S.cols : face === 'bottom' ? S.cols * S.rows : S.rows, out = []; for (let i = 0; i < n; i++) out.push(face === 'bottom' ? { u: i % S.cols, v: Math.floor(i / S.cols) } : { u: i, v: 0 }); return out; }
 function mountAt(m) { // where a mount sits on the case: the point on the outside face, the height of its hole, and the part's frame
   const h = geom(), g0 = R.T + R.CLR + 1, a = m.anchor || { u: 0, v: 0 }, sx = g0 + (a.u + 0.5) * 20, sy = g0 + (a.v + 0.5) * 20, B = MBASIS[m.face];
   let w;
@@ -1635,10 +1645,56 @@ function mountBlocked(m) { // why this spot cannot take this part, or '' if it c
   const dz = geom().H - R.LT - geom().recess;
   if (S.items.some((it) => PP(it) && (it.panel === 'inside' || (it.panel === homePanel() && dz - (PP(it).depth || 0) < ztop)) && hit(rectPoly(fp(it))))) return 'electronics';
   if (S.attachedParts.some((q) => q !== m && q.id !== m.id && q.face === m.face && (() => { const qw = mountAt(q); return qw && G.area(G.inter([pf], [plateFace(q, qw)])) > 0.3; })())) return 'taken';
+  if (m.face !== 'bottom' && S.ports.some((p) => p.face === m.face && G.area(G.inter([pf], portFace(p))) > 0.3)) return 'port';
   return '';
 }
+// ---------- ports and vents through a side wall: the same spots, the same blocking rules ----------
+// S.ports: [{ id, kind: p_usbc | p_switch | p_vent, face: back | front | left | right, anchor: { u } }]
+const PORTS = { p_usbc: ['USB-C', 'An opening for a USB-C cable to reach the brain or a charger inside: 9.2 x 3.4 mm plus the clearance.'], p_switch: ['Slide switch', 'A slot for a small slide switch (SS12D10 type) so you can turn it on and off from outside: 9 x 4 mm plus the clearance.'], p_vent: ['Vent grille', 'Five slots to let warm air out of the case.'] };
+const PFACES = [['back', 'Back'], ['front', 'Front'], ['left', 'Left'], ['right', 'Right']], PNORM = { back: [0, 1, 0], front: [0, -1, 0], left: [-1, 0, 0], right: [1, 0, 0] };
+const pface = () => (PNORM[mnt().pface] ? mnt().pface : 'back');
+function portRects(kind) { // the openings: along the wall from the spot (u) and height (z), with the clearance on every side
+  const c = tolOf(), F = R.F, dz = geom().H - R.LT - geom().recess;
+  if (kind === 'p_usbc') return [{ u0: -4.6 - c, u1: 4.6 + c, z0: F + 3 - c, z1: F + 6.4 + c }];
+  if (kind === 'p_switch') return [{ u0: -4.5 - c, u1: 4.5 + c, z0: F + 3.5 - c, z1: F + 7.5 + c }];
+  const top = Math.min(dz - 2.5, F + 15); return [-8, -4, 0, 4, 8].map((u) => ({ u0: u - 1 - c, u1: u + 1 + c, z0: F + 3, z1: Math.max(F + 6, top) }));
+}
+function portAt(p) { const g0 = R.T + R.CLR + 1, s = g0 + ((p.anchor || { u: 0 }).u + 0.5) * 20, w = G.wallAt(outline(), p.face, s); if (!w) return null;
+  const rects = portRects(p.kind).map((q) => ({ s0: s + q.u0, s1: s + q.u1, z0: q.z0, z1: q.z1 })), z0 = Math.min(...rects.map((q) => q.z0)), z1 = Math.max(...rects.map((q) => q.z1));
+  return { face: p.face, x: w[0], y: w[1], s, rects, z0, z1, o: [w[0], w[1], (z0 + z1) / 2] }; }
+function portFace(p) { const w = portAt(p); return w ? w.rects.map((q) => G.rect(q.s0, q.z0, q.s1, q.z1)) : []; } /* in (along the wall, height), like a mount plate */
+function portBlocked(p) {
+  if (isPanel()) return 'needs a case';
+  if (p.face === hingeFace()) return 'hinge';
+  const w = portAt(p); if (!w) return 'off the edge';
+  const b = G.bbox(outline()), v = p.face === 'back' || p.face === 'front', lo = v ? b.x0 : b.y0, hi = v ? b.x1 : b.y1, h = geom(), s0 = Math.min(...w.rects.map((q) => q.s0)), s1 = Math.max(...w.rects.map((q) => q.s1));
+  if (s0 < lo + 5 || s1 > hi - 5 || w.z1 > h.H - 1) return 'off the edge';
+  const zone = [G.mountRect({ face: p.face, x: v ? (s0 + s1) / 2 : w.x, y: v ? w.y : (s0 + s1) / 2 }, (s1 - s0) / 2 + 1.5, R.T + 6, 0)], hit = (polys) => G.area(G.inter(zone, polys)) > 0.3, dz = h.H - R.LT - h.recess;
+  if (isClam() && S.magnets && G.magnetSpots(outline()).some(([x, y]) => hit([G.circle(x, y, R.MAG / 2 + 2.6, 24)]))) return 'magnet';
+  if (posts().some(([x, y]) => hit([G.circle(x, y, R.POSTR + 1, 20)]))) return 'deck screw';
+  if (S.items.some((it) => { const P = PP(it); if (!P || !(it.panel === 'inside' || it.panel === homePanel())) return false; const zr = it.panel === 'inside' ? [R.F, R.F + 5 + (P.depth || 0)] : [dz - (P.depth || 0), dz]; return zr[0] < w.z1 && zr[1] > w.z0 && hit(rectPoly(fp(it))); })) return 'electronics';
+  const pf = portFace(p);
+  if (S.ports.some((q) => q !== p && q.id !== p.id && q.face === p.face && G.area(G.inter(G.offset(pf, 1), portFace(q))) > 0.1)) return 'taken';
+  if (S.attachedParts.some((m) => m.face === p.face && MOUNTABLE[m.partId] && (() => { const mw = mountAt(m); return mw && G.area(G.inter(G.offset(pf, 1), [plateFace(m, mw)])) > 0.1; })())) return 'taken';
+  return '';
+}
+function activePorts() { return S.ports.filter((p) => PORTS[p.kind] && !portBlocked(p)).map(portAt).filter(Boolean); }
+function portAttach(a) { const p = { id: S.ports.reduce((q, x) => Math.max(q, x.id || 0), 0) + 1, kind: S.xsel, face: pface(), anchor: { u: a.u, v: 0 } }, why = portBlocked(p);
+  if (why) { tag('That spot is blocked: ' + why + '.'); return; } S.ports = S.ports.concat([p]); save(); render(); tag(PORTS[p.kind][0] + ' cut into the ' + p.face + ' wall.'); }
+function portHtml(id) {
+  const f = pface(), hf = hingeFace(), mine = S.ports.filter((p) => p.kind === id), at = anchorsOf(f);
+  const btn = (a) => { const t = { kind: id, face: f, anchor: a }, on = mine.find((p) => p.face === f && p.anchor.u === a.u), why = on ? '' : portBlocked(t);
+    return '<button type="button" class="manc' + (on ? ' on' : '') + '" data-panc="' + a.u + '"' + (why ? ' disabled aria-disabled="true" title="Blocked: ' + why + '"' : ' title="Cut it here"') + '>' + (a.u + 1) + (why ? '<small>' + esc(why.split(' ')[0]) + '</small>' : '') + '</button>'; };
+  return '<div class="fnh"><button type="button" class="btn" data-xsel="">&lsaquo; All</button><b>' + PORTS[id][0] + '</b></div><p class="note" style="margin-top:6px">' + PORTS[id][1] + ' It is cut into the case walls in your files.</p>' +
+    '<div class="row"><b>Wall</b>' + seg('m_pface', PFACES.map((x) => [x[0], x[1] + (x[0] === hf ? ' (hinge)' : '')]), f) + '</div>' +
+    '<div class="mgrid" style="grid-template-columns:repeat(' + Math.min(12, at.length) + ',minmax(0,1fr))">' + at.map(btn).join('') + '</div>' +
+    '<p class="note keep">Tap a spot, or drag <span class="mdrag" draggable="true" data-mdrag="' + id + '">' + PORTS[id][0] + '</span> onto a spot or a green dot. Red spots are blocked by the hinge, a magnet, a deck screw, your electronics or a mounted part.</p>' +
+    (mine.length ? '<div class="list" style="margin-top:6px">' + mine.map((p) => { const why = portBlocked(p); return '<div class="it"><b>' + esc(PFACES.find((x) => x[0] === p.face)[1]) + ' wall, spot ' + (p.anchor.u + 1) + '</b>' + (why ? '<span class="bad">Blocked: ' + esc(why) + '. It is not cut until you move it.</span>' : '') + '<div class="selbar" style="margin:6px 0 0"><button type="button" data-prm="' + p.id + '">Remove</button></div></div>'; }).join('') + '</div>' : '');
+}
+const xname = (id) => (PORTS[id] ? PORTS[id][0] : xmeta(id)[0]);
 function activeMounts() { return [].concat(...S.attachedParts.filter((m) => MOUNTABLE[m.partId] && !mountBlocked(m)).map(mountPoints)); }
 function attachAt(a) {
+  if (PORTS[S.xsel]) return portAttach(a);
   const M = mnt(), m = { id: S.attachedParts.reduce((q, x) => Math.max(q, x.id || 0), 0) + 1, partId: S.xsel, face: M.face, anchor: { u: a.u, v: a.v }, mountType: M.type }, why = mountBlocked(m);
   if (why) { tag('That spot is blocked: ' + why + '.'); return; }
   { const pts = mountPoints(m); m.anchors = [m.anchor]; if (pts.length > 1) { const ax = m.face === 'left' || m.face === 'right' ? 1 : 0; m.anchors.push({ u: m.anchor.u + Math.round(pts[0].B[0][ax] * mountPart(m.partId).pitch / 20), v: m.anchor.v }); } } /* both points, on the 20 mm grid */
@@ -1954,6 +2010,9 @@ function loadRecipe(id) {
   if (r.place) r.place.forEach(([t, x, y, rq]) => mk(t, x, y, rq)); /* a hand-made layout, in mm from the bottom left */
   else r.parts.forEach(([t, n]) => { for (let i = 0; i < n; i++) mk(t, -999, -999, 0); });
   if (!r.place || allProblems().length) fitAll(); /* no layout, or it does not fit after a size change in the list: place them for her */
+  S.attachedParts = []; S.ports = []; MPC = {};
+  (r.mounts || []).forEach((q) => { const m = { id: S.attachedParts.length + 1, partId: q.partId, face: q.face, anchor: Object.assign({ v: 0 }, q.anchor), mountType: q.mountType }; if (mountBlocked(m)) return; const pts = mountPoints(m); m.anchors = [m.anchor]; if (pts.length > 1) { const ax = m.face === 'left' || m.face === 'right' ? 1 : 0; m.anchors.push({ u: m.anchor.u + Math.round(pts[0].B[0][ax] * mountPart(m.partId).pitch / 20), v: m.anchor.v }); } S.attachedParts.push(m); });
+  (r.ports || []).forEach((q) => { const p = { id: S.ports.length + 1, kind: q.kind, face: q.face, anchor: { u: q.u, v: 0 } }; if (!portBlocked(p)) S.ports.push(p); });
   LAST = null; S.tab[2] = 'shape'; S.tab[5] = '3d'; save(); go(2);
 }
 const recipeCost = (r) => r.parts.reduce((a, [t, n]) => a + ((CZ.PARTS[t] && CZ.PARTS[t].price) || 0) * n, 0);
@@ -2001,7 +2060,22 @@ let FILES = [];
 // Print files: every piece is kept as its triangles, so it can be saved as STL or as 3MF (real millimetres, one indexed mesh, opens in Bambu Studio, Orca, Prusa and Cura)
 const fmtOf = () => (S.fmt === '3mf' ? '3mf' : 'stl'), fmtTag = (f) => (f.blob.tris ? ' (.' + fmtOf() + ')' : '');
 function meshBlob(tris, name) { const b = G.stl(tris, name); b.tris = tris; b.title = name; return b; }
+function swatchButton() { const it = S.items.find((i) => PP(i) && i.panel === homePanel() && PP(i).cat === 'press' && i.of == null) || S.items.find((i) => PP(i) && i.panel !== 'inside' && PP(i).cut && PP(i).cut.o !== 'none' && i.of == null); return it ? PP(it) : CZ.PARTS.tact12; }
+function swatchGeo() { return G.fitSwatch({ magnets: isClam() && S.magnets, button: swatchButton() }); }
+const swatchSize = () => { const q = swatchGeo(); return Math.round(q.W) + ' x ' + Math.round(q.H); };
+function swatchFile() { const q = swatchGeo(); return { label: 'Fit swatch', name: 'casezero-fit-swatch.stl', blob: meshBlob(G.trisOf(G.layerGeos(q.layers)), 'fit swatch') }; }
 function mountFile(m, i) { return { label: 'Mounted ' + xmeta(m.partId)[0].toLowerCase() + ' ' + (i + 1) + ' (' + m.face + ', ' + (m.mountType === 'screw' ? 'M3 screw' : 'snap pin') + ')', name: 'casezero-mount-' + (i + 1) + '-' + m.partId + '.stl', blob: meshBlob(mountTris(m), 'mount ' + (i + 1) + ' ' + m.partId) }; }
+// ---------- the build in a link: the whole saved build, packed into ?build=, no server ----------
+const b64u = (u8) => { let t = ''; for (let i = 0; i < u8.length; i += 0x8000) t += String.fromCharCode.apply(null, u8.subarray(i, i + 0x8000)); return btoa(t).replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, ''); };
+const unb64u = (t) => { const s2 = atob(t.replace(/-/g, '+').replace(/_/g, '/') + '='.repeat((4 - t.length % 4) % 4)), u = new Uint8Array(s2.length); for (let i = 0; i < s2.length; i++) u[i] = s2.charCodeAt(i); return u; };
+const zpipe = (u8, T) => new Response(new Blob([u8]).stream().pipeThrough(new T('deflate-raw'))).arrayBuffer().then((b) => new Uint8Array(b));
+function shareState() { if (S.xp) xp(); /* sizes that follow the case are brought up to date first */ const o = JSON.parse(JSON.stringify(S)); Object.keys(o.mine || {}).forEach((k) => { delete o.mine[k].img; }); ['seen', 'moreOn', 'lastIn', 'page'].forEach((k) => delete o[k]); return o; } /* photos stay on the phone */
+async function packBuild() { const raw = new TextEncoder().encode(JSON.stringify(shareState())); return window.CompressionStream ? 'z' + b64u(await zpipe(raw, CompressionStream)) : 'j' + b64u(raw); }
+async function unpackBuild(code) { const bytes = unb64u(code.slice(1)); return JSON.parse(new TextDecoder().decode(code[0] === 'z' ? await zpipe(bytes, DecompressionStream) : bytes)); }
+async function shareLink() { const url = location.origin + location.pathname + '?build=' + (await packBuild()), out = $('shareOut');
+  let ok = false; try { await navigator.clipboard.writeText(url); ok = true; } catch (e) { ok = false; }
+  if (out) out.innerHTML = '<p class="note keep" style="margin:6px 0 0">' + (ok ? '<b>Copied.</b> ' : 'Copy this link: ') + 'Anyone who opens it gets this build: body, brain, parts and clearance. Photos and logo pictures stay on this phone.</p><input class="num" readonly value="' + esc(url) + '" style="width:100%;margin-top:6px;font-size:12px" onclick="this.select()">';
+  tag(ok ? 'Build link copied' : 'Build link ready below'); }
 function fileOut(f) { return f && f.blob.tris && fmtOf() === '3mf' ? { label: f.label, name: f.name.replace(/\.stl$/, '.3mf'), blob: threeMf(f.blob.tris, f.blob.title) } : f; }
 function threeMf(tris, name) {
   const seen = new Map(), vs = [], ts = [], num = (v) => String(+v.toFixed(4));
@@ -2041,7 +2115,7 @@ function makeFiles() {
     if (!wood && pads) { const geos = []; for (let i = 0; i < pads; i++) G.dpadGeos().forEach((gg) => { gg.translate(i * 40, 0, 1.5); geos.push(gg); }); files.push({ label: pads + ' D-pad', name: 'casezero-dpad.stl', blob: meshBlob(G.trisOf(geos), 'dpad') }); }
     files.push({ label: 'Electronics + build list', name: 'casezero-parts.txt', blob: new Blob([partsText()], { type: 'text/plain' }) });
     FILES = files; const hasBrain = S.items.some((i) => PP(i) && PP(i).cat === 'brain');
-    out.innerHTML = (wood ? '' : '<div class="row" style="grid-column:1/-1;margin:0"><b>File type</b>' + seg('fmt', [['stl', 'STL'], ['3mf', '3MF']], fmtOf()) + '</div>') + '<button type="button" class="btn red" data-act="saveall" style="grid-column:1/-1">Save everything in one zip</button>' + files.map((f, i) => '<button type="button" class="btn" data-f="' + i + '">Save ' + esc(f.label + fmtTag(f)) + '</button>').join('') +
+    out.innerHTML = '<button type="button" class="btn red" data-act="saveall" style="grid-column:1/-1">Save everything in one zip</button>' + files.map((f, i) => '<button type="button" class="btn" data-f="' + i + '">Save ' + esc(f.label + fmtTag(f)) + '</button>').join('') +
       '<div class="list" style="grid-column:1/-1;margin-top:8px"><p class="h" style="margin:0 0 4px">From files to a finished device</p>' +
       '<div class="it"><b>1. Print</b>Every piece above. ' + (wood ? 'Print the templates at 100 percent and cut them out.' : 'Use ' + LAYER[S.layer] + ' mm layers, 4 walls, 15 percent infill, no supports.') + '</div>' +
       '<div class="it"><b>2. Buy the electronics</b>The list with prices and what to search for.<div style="margin-top:6px"><button class="btn" data-jump="Shop" style="display:inline-block;padding:7px 12px">Open Shop</button></div></div>' +
@@ -2102,8 +2176,8 @@ $('sheet').addEventListener('click', (e) => { if (e.target === $('sheet')) $('sh
 window.addEventListener('resize', draw);
 // mounting: drag a part onto a spot (desktop), or tap a spot or a dot on the case (phone)
 $('pane').addEventListener('dragstart', (e) => { const t = e.target.closest && e.target.closest('[data-mdrag]'); if (t) { e.dataTransfer.setData('text/plain', t.dataset.mdrag); e.dataTransfer.effectAllowed = 'copy'; } });
-$('pane').addEventListener('dragover', (e) => { const t = e.target.closest && e.target.closest('[data-manc]:not([disabled])'); if (t) e.preventDefault(); });
-$('pane').addEventListener('drop', (e) => { const t = e.target.closest && e.target.closest('[data-manc]:not([disabled])'); if (!t) return; e.preventDefault(); const [u, v] = t.dataset.manc.split(',').map(Number); attachAt({ u, v }); });
+$('pane').addEventListener('dragover', (e) => { const t = e.target.closest && e.target.closest('[data-manc]:not([disabled]),[data-panc]:not([disabled])'); if (t) e.preventDefault(); });
+$('pane').addEventListener('drop', (e) => { const t = e.target.closest && e.target.closest('[data-manc]:not([disabled]),[data-panc]:not([disabled])'); if (!t) return; e.preventDefault(); if (t.dataset.panc != null) { portAttach({ u: +t.dataset.panc }); return; } const [u, v] = t.dataset.manc.split(',').map(Number); attachAt({ u, v }); });
 { const el = $('v3'); let dn = null;
   el.addEventListener('pointerdown', (e) => { dn = [e.clientX, e.clientY]; });
   el.addEventListener('click', (e) => { if (!mountView() || !dn || Math.hypot(e.clientX - dn[0], e.clientY - dn[1]) > 6) return; const a = pickMark(e.clientX, e.clientY); if (a) attachAt(a); });
@@ -2116,8 +2190,13 @@ window.addEventListener('pageshow', (e) => { if (e.persisted) resync(); });
 window.addEventListener('storage', (e) => { if (e.key === KEY) resync(); });
 document.addEventListener('visibilitychange', () => { if (!document.hidden) resync(); });
 
-window.__cz = { addBoard, get DECO() { return DECO; }, get T3() { return T3; }, THREE, wiring, codeFor, get S() { return S; }, get view() { return view; }, AZ, get UNDO() { return UNDO.length; }, halves, plan, makeFiles, get FILES() { return FILES; }, allProblems, G, addPart, go, render, dims, heights, addonFile, addonPolys, charParts, charCache, kb, kbBoard, kbCode, kbReadme, boardSvg, get TRAY() { return TRAY; }, showStart, loadRecipe, cost, boardBuild, boardFiles, boardReadme };
+window.__cz = { addBoard, packBuild, unpackBuild, shareState, portBlocked, portAt, mountBlocked, swatchFile, loadRecipe, get DECO() { return DECO; }, get T3() { return T3; }, THREE, wiring, codeFor, get S() { return S; }, get view() { return view; }, AZ, get UNDO() { return UNDO.length; }, halves, plan, makeFiles, get FILES() { return FILES; }, allProblems, G, addPart, go, render, dims, heights, addonFile, addonPolys, charParts, charCache, kb, kbBoard, kbCode, kbReadme, boardSvg, get TRAY() { return TRAY; }, showStart, loadRecipe, cost, boardBuild, boardFiles, boardReadme };
 render();
-if (!S.started && !S.items.length) showStart();
+{ const q = new URLSearchParams(location.search), code = q.get('build'), rid = q.get('recipe'), r = rid && (CZ.RECIPES || []).find((x) => x.id === rid), clean = () => { try { history.replaceState(null, '', location.pathname); } catch (e) {} };
+  if (code) { /* a build link: it becomes the saved build (the one that was here goes to Bring back), no start sheet */
+    unpackBuild(code).then((o) => { if (!o || !Array.isArray(o.items)) throw new Error('bad'); backup(); o.started = true; localStorage.setItem(KEY, JSON.stringify(Object.assign(JSON.parse(S_DEF), o))); clean(); MPC = {}; resync(); tag('Build loaded from the link'); })
+      .catch(() => { clean(); tag('That build link could not be read'); if (!S.started && !S.items.length) showStart(); });
+  } else if (r) { clean(); if (S.items.length) { $('sheetIn').innerHTML = '<h2>Start the ' + esc(r.name) + '?</h2><p class="note" style="font-size:14px">This replaces the ' + S.items.length + ' electronics in the build you have now. It is kept, so Bring back can return it.</p><div class="list" style="margin-top:10px"><button class="btn start" data-rok="' + r.id + '"><b>Start the ' + esc(r.name) + '</b>' + esc(r.line) + '</button><button class="btn start" data-door="close"><b>Keep my build</b>Go back to what I was making.</button></div>'; $('sheet').hidden = false; } else loadRecipe(r.id); }
+  else if (!S.started && !S.items.length) showStart(); }
 // arriving from the Case Zero page: /casezero/build/?room=brain opens that room
 { const rq = new URLSearchParams(location.search).get('room'); if ((rq === 'brain' || rq === 'body' || rq === 'parts') && PAGES[S.page || 0].room !== rq) goRoom(rq); }
