@@ -46,6 +46,14 @@
     dpad: { up: 8, cat: 'press', name: 'Printed D-pad on 4 tactile buttons', short: 'D-pad', w: 32, h: 32, depth: 10, cut: { o: 'cross', w: 32, t: 11 }, keep: 19, link: 'solder', printed: 'dpad', find: '6x6 mm tactile switch',
       tip: 'We print the cross for you. It rocks on 4 tactile buttons underneath.', price: 1.2, src: 'NOCIV printed part over 4 x 6 mm tactile switches', url: '' },
     // ---------- knobs + sticks ----------
+    arducam: { up: 6, cat: 'sense', front: true, name: 'SPI Camera (Arducam Mini 2MP, OV2640)', short: 'SPI camera', w: 34, h: 24, depth: 10, cut: { o: 'circle', d: 14 }, link: 'pins',
+      tip: 'Takes photos for the Pico over SPI; I2C sets the camera up. Comes with its wires. The lens looks out through a 14 mm hole.', price: 26, src: 'Arducam Mini 2MP Plus (B0067), board 34 x 24 mm', url: 'https://www.arducam.com/product/arducam-2mp-spi-camera-b0067-arduino/' },
+    pir: { up: 12, cat: 'sense', front: true, name: 'PIR Motion sensor (HC-SR501)', short: 'Motion', w: 32, h: 24, depth: 14, cut: { o: 'circle', d: 23 }, link: 'pins',
+      tip: 'Sees people move, up to about 7 m. Its white dome pokes out through a 23 mm hole. One signal wire.', price: 2, src: 'HC-SR501 module, 32 x 24 mm, 23 mm dome' },
+    vl53: { cat: 'sense', front: true, name: 'Laser distance sensor (VL53L0X)', short: 'Distance', w: 25, h: 11, depth: 4, cut: { o: 'rect', w: 8, h: 5 }, link: 'pins',
+      tip: 'Measures how far away something is, up to about 1.2 m, through a small 8 x 5 mm window. Two I2C wires.', price: 4, src: 'VL53L0X breakout, 25 x 11 mm' },
+    esp32cam: { cat: 'mine', front: true, name: 'ESP32-CAM (AI-Thinker)', short: 'ESP32-CAM', w: 40.5, h: 27, depth: 12, up: 4, cut: { o: 'circle', d: 9 }, link: 'pins',
+      tip: 'Its own brain with a camera and Wi-Fi. It has no USB plug: program it with a USB to serial adapter or the ESP32-CAM-MB base.', price: 8, src: 'AI-Thinker ESP32-CAM, 40.5 x 27 mm' },
     pot: { up: 15, cat: 'turn', name: 'Turn knob (10K potentiometer)', short: 'Turn knob', w: 17, h: 17, depth: 18, cut: { o: 'circle', d: 7.3 }, keep: 9.5, link: 'solder', printed: 'knob',
       tip: 'We print the knob. No solder: get one already on a little board with pins.', price: 1, src: 'Adafruit 562: 7 mm hole, 6 mm shaft', url: 'https://www.adafruit.com/product/562' },
     encoder: { up: 15, cat: 'turn', name: 'Click wheel (KY-040 encoder)', short: 'Click wheel', w: 32, h: 19, depth: 20, cut: { o: 'circle', d: 7.3 }, keep: 10, link: 'pins', printed: 'knob', check: true,
@@ -141,6 +149,8 @@
     ['pad', 'Controller', 'Two grips', 'slate'],
     ['groove', 'Groovebox', 'Flat, rows of knobs', 'slate'],
     ['face', 'Character', 'Round face, eyes, can move', 'slate'],
+    ['camera', 'Camera', 'Handheld camera: the lens in the front (the lid), screen and buttons in the back (the base)', 'clam'],
+    ['mini', 'Mini Sensor', 'A small box for a tiny camera, scanner or sensor', 'clam'],
     ['deck', 'Deck', 'Cyberdeck or laptop: big screen in the lid, keyboard and controls in the base. Measure your keyboard in Brain', 'clam'],
     ['panel', 'Panel', 'A flat panel for a box you already have: screen window, holes, notches for wires', 'panel']
   ];
