@@ -133,7 +133,7 @@ export function makeBoard(spec) {
   let cx0 = 1e9, cy0 = 1e9, cx1 = -1e9, cy1 = -1e9; pads.forEach((p) => { cx0 = Math.min(cx0, p.x); cy0 = Math.min(cy0, p.y); cx1 = Math.max(cx1, p.x); cy1 = Math.max(cy1, p.y); });
   (spec.zones || []).forEach((z) => { cx0 = Math.min(cx0, z.x0); cy0 = Math.min(cy0, z.y0); cx1 = Math.max(cx1, z.x1); cy1 = Math.max(cy1, z.y1); });
   const mounts = [], MK = 3.4; // keep copper this far from a screw
-  const mountOk = (i, j) => { if (i < 0 || j < 0 || i >= nx || j >= ny) return false; const x = X(i), y = Y(j); if (!pip(keep, x, y) || edgeDist(keep, x, y) < 3 || posts.some((q) => Math.hypot(q.x - x, q.y - y) < q.r + 3.2) || inPico(x, y) || inZone(x, y)) return false; if (pads.some((p) => Math.hypot(p.x - x, p.y - y) < MK + 0.9)) return false; return !mounts.some((m) => Math.hypot(m.x - x, m.y - y) < 20); };
+  const mountOk = (i, j) => { if (i < 0 || j < 0 || i >= nx || j >= ny) return false; const x = X(i), y = Y(j); if (!pip(keep, x, y) || edgeDist(keep, x, y) < 3 || posts.some((q) => Math.hypot(q.x - x, q.y - y) < q.r + 4.5) /* a mounting hole keeps 3.4 mm of board from a case-post notch */ || inPico(x, y) || inZone(x, y)) return false; if (pads.some((p) => Math.hypot(p.x - x, p.y - y) < MK + 0.9)) return false; return !mounts.some((m) => Math.hypot(m.x - x, m.y - y) < 20); };
   [[cx0 - 4, cy0 - 4], [cx1 + 4, cy1 + 4], [cx1 + 4, cy0 - 4], [cx0 - 4, cy1 + 4]].forEach(([tx, ty]) => { let best = null, bd = 1e9; for (let j = 0; j < ny; j++) for (let i = 0; i < nx; i++) { const d = Math.hypot(X(i) - tx, Y(j) - ty); if (d < bd && mountOk(i, j)) { bd = d; best = [i, j]; } } if (best) mounts.push({ x: X(best[0]), y: Y(best[1]) }); });
   if (spec.noMounts) mounts.length = 0;
   if (!spec.noMounts && mounts.length < 3) return { ok: false, errors: ['No room for the screws that hold the board. Make the body a little bigger.'] };
@@ -196,7 +196,7 @@ export function makeBoard(spec) {
   const viaList = vias.map((v) => { const p = cellXY(v.k); return { x: p[0], y: p[1], net: v.net }; });
   // board edge: only as big as what is on it
   let ex0 = 1e9, ey0 = 1e9, ex1 = -1e9, ey1 = -1e9; const grow = (x, y, r) => { ex0 = Math.min(ex0, x - r); ey0 = Math.min(ey0, y - r); ex1 = Math.max(ex1, x + r); ey1 = Math.max(ey1, y + r); };
-  pads.forEach((p) => grow(p.x, p.y, 3)); viaList.forEach((v) => grow(v.x, v.y, 3)); tracks.forEach((t) => { grow(t.x1, t.y1, 2.5); grow(t.x2, t.y2, 2.5); }); mounts.forEach((m) => grow(m.x, m.y, 3.6)); (spec.zones || []).forEach((z) => { grow(z.x0, z.y0, 1); grow(z.x1, z.y1, 1); });
+  pads.forEach((p) => grow(p.x, p.y, 5)); viaList.forEach((v) => grow(v.x, v.y, 5)); tracks.forEach((t) => { grow(t.x1, t.y1, 5); grow(t.x2, t.y2, 5); }); mounts.forEach((m) => grow(m.x, m.y, 5)); /* 5 mm of board round everything on it */ (spec.zones || []).forEach((z) => { grow(z.x0, z.y0, 1); grow(z.x1, z.y1, 1); });
   const edges = spec.finalize ? spec.finalize({ x0: ex0, y0: ey0, x1: ex1, y1: ey1 }) : [[[ex0, ey0], [ex1, ey0], [ex1, ey1], [ex0, ey1]]];
   if (!edges || !edges.length) return { ok: false, errors: ['The board outline came out empty.'] };
   let ax0 = 1e9, ay0 = 1e9, ax1 = -1e9, ay1 = -1e9; edges[0].forEach(([x, y]) => { ax0 = Math.min(ax0, x); ay0 = Math.min(ay0, y); ax1 = Math.max(ax1, x); ay1 = Math.max(ay1, y); });
@@ -227,6 +227,7 @@ export function makeBoard(spec) {
     textStrokes(r === 0 ? 'USB PICO' : r === 1 ? 'USB PICO' : 'PICO USB', tx, ty, 1.6, horiz ? 0 : 1).forEach((s) => silk.push(s));
     const p1 = picoPads[0], d1 = m(0, -1); line(p1.x - 1.1 + d1[0] * 0 , p1.y - 1.1, p1.x + 1.1, p1.y - 1.1); line(p1.x + 1.1, p1.y - 1.1, p1.x + 1.1, p1.y + 1.1); line(p1.x + 1.1, p1.y + 1.1, p1.x - 1.1, p1.y + 1.1); line(p1.x - 1.1, p1.y + 1.1, p1.x - 1.1, p1.y - 1.1); // a square around pin 1
   }
+  (spec.legend || []).forEach((t, i) => { const h = 1.2; textStrokes(t.slice(0, 30), ax0 + 4 + textLen(t.slice(0, 30), h), ay1 - 4 - i * 2.2, h, 0, true).forEach((s) => silkB.push(s)); }); /* the key to the short labels, on the back */
   { const t = spec.name || 'NOCIV CASE ZERO', h = Math.min(2.2, (ax1 - ax0 - 8) * 6 / (t.length * 5.6)); if (h >= 1) textStrokes(t, (ax0 + ax1) / 2 + textLen(t, h) / 2, ay0 + 4, h, 0, true).forEach((s) => silkB.push(s)); }
 
   const res = { ok: true, errors, warnings, pads, vias: viaList, tracks, mounts, holes, edges, silk, silkB, rows, diode: !!diode, nets: nets.slice(1).map((n) => n.name), netIds: netId, gndSeeds: gndSeeds.map(cellXY),
