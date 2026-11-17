@@ -125,6 +125,7 @@ export function buildHalf(o) {
   wallM.forEach((m) => m.bands.forEach((q) => { zs.add(q.z0); zs.add(q.z1); }));
   const ports = (o.ports || []).map((p) => Object.assign({}, p, { rects: p.rects.map((q) => ({ s0: q.s0, s1: q.s1, z0: +Math.max(R.F, q.z0).toFixed(3), z1: +Math.min(H, q.z1).toFixed(3) })).filter((q) => q.z1 - q.z0 > 0.2) })); /* ports and vents: openings through a side wall */
   ports.forEach((p) => p.rects.forEach((q) => { zs.add(q.z0); zs.add(q.z1); }));
+  const art = o.art || []; art.forEach((a) => a.bands.forEach((q) => { zs.add(q.z0); zs.add(q.z1); })); /* logos on the side walls: one band per print layer */
   const Z = [...zs].filter((z) => z >= R.F && z <= H).sort((x, y) => x - y);
   const ringOut = wt ? diff(offset(out, wt.depth), out) : [];
   for (let i = 0; i < Z.length - 1; i++) {
@@ -140,6 +141,9 @@ export function buildHalf(o) {
     if (o.port && mid > o.port.z) w = diff(w, [rect(o.port.x0, o.port.y0, o.port.x1, o.port.y1)]);
     if (o.port2 && mid > o.port2.z) w = diff(w, [rect(o.port2.x0, o.port2.y0, o.port2.x1, o.port2.y1)]);
     wallM.forEach((m) => { const q = m.bands.find((x) => mid > x.z0 && mid < x.z1); if (q) w = diff(w, [mountRect(m, q.hw, R.T + 8, 2)]); });
+    art.forEach((a) => { const q = a.bands.find((x) => mid > x.z0 && mid < x.z1); if (!q) return; const v = a.face === 'back' || a.face === 'front';
+      q.iv.forEach(([s0, s1]) => { const c = (s0 + s1) / 2, m = { face: a.face, x: v ? c : a.x, y: v ? a.y : c }, hw = (s1 - s0) / 2;
+        if (a.how === 'raised') w = union(w, [mountRect(m, hw, 0.1, a.depth)]); else w = diff(w, [mountRect(m, hw, a.how === 'cut' ? R.T + 1 : a.depth, 2)]); }); });
     ports.forEach((p) => p.rects.forEach((q) => { if (mid > q.z0 && mid < q.z1) { const c = (q.s0 + q.s1) / 2, v = p.face === 'back' || p.face === 'front'; w = diff(w, [mountRect({ face: p.face, x: v ? c : p.x, y: v ? p.y : c }, (q.s1 - q.s0) / 2, R.T + 1, 2)]); } }));
     tray.push({ polys: w, z0, z1, tag: 'wall' });
   }
