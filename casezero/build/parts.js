@@ -46,6 +46,8 @@
       tip: 'Arcade kits come with plug wires and a USB encoder: plug and play.', price: 1.5, src: 'Sanwa OBSF-24 style: 24 mm hole', url: '' },
     arcade30: { up: 11, cat: 'press', name: '30 mm arcade button', short: 'Arcade 30', w: 30, h: 30, depth: 38, cut: { o: 'circle', d: 30.3 }, keep: 18, link: 'plug',
       tip: 'Same plug and play kit as the 24 mm.', price: 2, src: 'Adafruit 3491: 30 mm hole, 38 mm deep', url: 'https://www.adafruit.com/product/3491' },
+    keypad44: { up: 5, cat: 'press', name: '4x4 Keypad (16 buttons, matrix)', short: 'Keypad', w: 70, h: 70, depth: 10, cut: { o: 'keys', n: 4, m: 4, p: 17, d: 12.5 }, keep: 35, link: 'pins', check: true,
+      tip: '16 tactile buttons on one board, read as 4 rows and 4 columns: 8 wires for 16 keys. Its caps come up through 16 round holes.', price: 3, src: 'Common 4x4 tactile keypad module, 12 x 12 mm keys about 17 mm apart. Sellers differ, measure yours.', url: '' },
     dpad: { up: 8, cat: 'press', name: 'Printed D-pad on 4 tactile buttons', short: 'D-pad', w: 32, h: 32, depth: 10, cut: { o: 'cross', w: 32, t: 11 }, keep: 19, link: 'solder', printed: 'dpad', find: '6x6 mm tactile switch',
       tip: 'We print the cross for you. It rocks on 4 tactile buttons underneath.', price: 1.2, src: 'NOCIV printed part over 4 x 6 mm tactile switches', url: '' },
     // ---------- knobs + sticks ----------
@@ -74,6 +76,14 @@
       tip: 'Glows through a printed ring. 3 wires.', price: 4, src: 'NeoPixel style ring, about 37 mm across', url: 'https://www.adafruit.com/product/1643' },
     speaker28: { cat: 'out', name: 'Mini speaker 28 mm', short: 'Speaker', w: 28, h: 28, depth: 6, cut: { o: 'grille', d: 28 }, keep: 15, link: 'solder',
       tip: 'Glue it under the holes. Many come with a plug.', price: 2, src: 'Adafruit 1890: 28 mm across', url: 'https://www.adafruit.com/product/1890' },
+    mat8: { cat: 'out', name: '8x8 LED Matrix (MAX7219)', short: 'LED matrix', w: 33, h: 33, depth: 14, cut: { o: 'rect', w: 32.6, h: 32.6 }, link: 'pins', check: true,
+      tip: '64 red lights you set one by one. Three wires (DIN, CS, CLK) and 5 V. Get the small module with the chip under the matrix.', price: 3, src: 'MAX7219 8x8 module, 32 x 32 mm matrix', url: '' },
+    jack35: { cat: 'out', name: '3.5mm Audio Jack (TRS)', short: 'Audio jack', w: 12, h: 6, depth: 6, inside: true, holes: [], link: 'solder', jack: true,
+      tip: 'Headphones or a speaker cable plug in through a 6.2 mm round hole in the side wall. Stereo from a PCM5102 DAC, or mono from one Pico pin through a 1K resistor and a 100 nF capacitor.', price: 1, src: 'PJ-320 style 3.5 mm TRS socket breakout, about 12 x 6 mm, 6 mm barrel', url: '' },
+    i2sdac: { cat: 'out', name: 'I2S Audio DAC / Amp (MAX98357A / PCM5102)', short: 'Audio DAC', w: 20, h: 18, depth: 5, inside: true, holes: [], link: 'pins', check: true,
+      tip: 'Clean digital sound from the Pico: three I2S wires (BCLK, LRC, DIN). MAX98357A drives a speaker. PCM5102 has a line out for the 3.5mm jack.', price: 4, src: 'Adafruit 3006 (MAX98357A) about 19 x 18 mm; PCM5102 boards are similar. Sellers differ, measure yours.', url: 'https://www.adafruit.com/product/3006' },
+    inmp441: { cat: 'sense', lid: true, name: 'I2S Mic (INMP441)', short: 'Mic', w: 14, h: 14, depth: 3, cut: { o: 'circle', d: 3 }, link: 'pins',
+      tip: 'A digital microphone. It hears through a 3 mm hole in the lid: glue it with its sound hole over the hole. Three I2S wires (SCK, WS, SD) and 3V3.', price: 3, src: 'INMP441 breakout, about 14 mm round board', url: '' },
     // ---------- power (new 11-13): run it without a cable ----------
     lipo1200: { cat: 'power', name: 'Battery, flat LiPo 1200 mAh', short: 'Battery', w: 62, h: 34, depth: 6, inside: true, holes: [], link: 'plug', check: true, mah: 1200,
       tip: 'Rechargeable, with a small JST plug. Buy one with a protection circuit. Hold it down with double sided tape, never a screw, and never bend or poke it. Red and black are swapped on some sellers: check before you plug it in.', price: 10, src: 'Adafruit 258: about 62 x 34 x 5 mm. Sellers differ, measure yours.', url: 'https://www.adafruit.com/product/258' },
@@ -132,6 +142,12 @@
       ports: [{ kind: 'p_vent', face: 'right', u: 2 }],
       credit: { project: 'Case Zero starter code', by: 'this builder, made from your wiring', url: 'https://nociv.co/casezero/build/', license: 'free to use and change' },
       note: 'Its code.py plays a note per key on the speaker; knob 1 moves the pitch, knob 2 the tempo of the arpeggio while you hold a key.' }
+    ,{ id: 'sampler', name: 'Voice Sampler', level: 'Medium', style: 'groove', starter: true, fn: 'sampler', line: '12 pads that play sounds, 3 modes (Chopper, Drum, Ambient), Pitch and Effect wheels, a stick to scrub and set the level. Plays out of a headphone jack and over USB MIDI.',
+      parts: [['pico', 1], ['keypad44', 1], ['encoder', 2], ['thumb', 1], ['oled096', 1], ['mat8', 1], ['jack35', 1]], size: [10, 7],
+      place: [['keypad44', 45, 72, 0], ['oled096', 100, 112, 0], ['mat8', 140, 112, 0], ['encoder', 107, 60, 0], ['encoder', 152, 60, 0], ['thumb', 182, 112, 0], ['pico', 60, 18, 0], ['jack35', 174, 138, 0]],
+      ports: [{ kind: 'p_jack', face: 'back', u: 8 }],
+      credit: { project: 'Case Zero starter code', by: 'this builder, made from your wiring', url: 'https://nociv.co/casezero/build/', license: 'free to use and change' },
+      note: 'Its code.py plays a sound per pad out of the jack and sends it as a USB MIDI note. The keypad\'s right column is Mode (Chopper, Drum, Ambient), Bank, Record and Stop. Wheel 1 is Pitch, wheel 2 Effect; the stick scrubs left and right and sets the level up and down. With the I2S mic, main.py (MicroPython) records it.' }
   ];
   // Community picks (Reddit, Instructables, maker blogs): cheap and well documented.
   C.PICKS = [

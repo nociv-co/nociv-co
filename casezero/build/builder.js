@@ -3,12 +3,12 @@
 // Print: your printer and bed, material, how it joins, where the puzzle seams go. Files: STL per piece, wood templates, wiring.
 import * as THREE from 'three';
 import { OrbitControls } from 'three/addons/OrbitControls.js';
-import * as G from './geo.js?v=32';
+import * as G from './geo.js?v=33';
 import { CARABINER_HOOK_OUTLINE_MM, CARABINER_DEFAULT_THICKNESS_MM } from './charm_carabiner_hook.js?v=1';
 import { openMeasure, GROUPS } from './capture.js?v=20';
 import { makeBoard, boardFiles, boardSvg, zip as zipFiles } from './board.js?v=4';
 import { charParts, chSpec, charBuyList, CH_DEF, headDims, faceSpots, faceLimit, featPoly, flatParts, FEATS } from './char3d.js?v=5';
-import { planWiring, codeFor, PICO_LEFT, PICO_RIGHT, PICO_PINS, PICO_BRAINS, NEED, BOARDS, BOARD_OF } from './wiring.js?v=22';
+import { micMain, planWiring, codeFor, PICO_LEFT, PICO_RIGHT, PICO_PINS, PICO_BRAINS, NEED, BOARDS, BOARD_OF } from './wiring.js?v=24';
 
 const CZ = window.CZ, R = G.RULE, $ = (id) => document.getElementById(id);
 const esc = (s) => String(s == null ? '' : s).replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
@@ -159,9 +159,9 @@ function autoPlace(it) {
   }
   it.r = 0; it.x = d.W / 2; it.y = d.D / 2; return false;
 }
-function defaultPanel(P) { if (P.inside) return 'inside'; if (isClam() && (P.screen || P.front)) return 'lid'; return homePanel(); } /* front: looks out of the front, like a camera or a sensor */
+function defaultPanel(P) { if (P.inside) return 'inside'; if (isClam() && (P.screen || P.front || P.lid)) return 'lid'; return homePanel(); } /* front: looks out of the front, like a camera or a sensor */
 let LAST = null; // the part just added: the 3D box shows it in yellow
-function addPart(type) { const P = PARTS()[type]; const it = { id: ++uid, type, panel: defaultPanel(P), x: 0, y: 0, r: 0 }; S.items.push(it); autoPlace(it); if (P && P.cat === 'brain' && P.inside) snapBrain(it); LAST = it.id; focusPanel(it); save(); return it; }
+function addPart(type) { const P = PARTS()[type]; const it = { id: ++uid, type, panel: defaultPanel(P), x: 0, y: 0, r: 0 }; S.items.push(it); autoPlace(it); if (P && P.cat === 'brain' && P.inside) snapBrain(it); if (P && P.jack) jackHole(); LAST = it.id; focusPanel(it); save(); return it; }
 // Arrange opens on the side the newest part landed on
 const hasBattery = () => S.items.some((i) => PP(i) && PP(i).mah);
 function snapBrain(it) { // the brain sits against a wall with its USB end through it; a battery lets it go anywhere
@@ -431,12 +431,13 @@ const ico = (n) => '<svg viewBox="0 0 24 24" aria-hidden="true">' + (I[n] || '')
 function partSvg(P) {
   const m = Math.max(P.w, P.h) + 6, s = 'width="100%" height="36" viewBox="' + (-m / 2) + ' ' + (-m / 2) + ' ' + m + ' ' + m + '"';
   let g = '';
-  if (!P.cut || P.screen || P.inside || P.measured || P.cut.o === 'rect') g += '<rect x="' + (-P.w / 2) + '" y="' + (-P.h / 2) + '" width="' + P.w + '" height="' + P.h + '" rx="1.5" fill="' + (P.screen ? '#22262a' : '#2f7a4b') + '" opacity="' + (P.inside ? .9 : .8) + '"/>';
+  if (!P.cut || P.screen || P.inside || P.measured || P.cut.o === 'rect' || P.cut.o === 'keys') g += '<rect x="' + (-P.w / 2) + '" y="' + (-P.h / 2) + '" width="' + P.w + '" height="' + P.h + '" rx="1.5" fill="' + (P.screen ? '#22262a' : '#2f7a4b') + '" opacity="' + (P.inside ? .9 : .8) + '"/>';
   const c = P.cut || {};
   if (P.screen) g += c.o === 'circle' ? '<circle r="' + c.d / 2 + '" fill="#8fd3ff"/>' : '<rect x="' + (-c.w / 2) + '" y="' + (-c.h / 2) + '" width="' + c.w + '" height="' + c.h + '" fill="#8fd3ff"/>';
   else if (c.o === 'circle') g += '<circle r="' + c.d / 2 + '" fill="#1a1a1a"/>' + (P.up > 9 ? '<circle r="' + c.d / 2.6 + '" fill="#c8412f"/>' : '');
   else if (c.o === 'cross') g += '<path d="M' + (-c.w / 2) + ' ' + (-c.t / 2) + 'h' + (c.w / 2 - c.t / 2) + 'v' + (-(c.w / 2 - c.t / 2)) + 'h' + c.t + 'v' + (c.w / 2 - c.t / 2) + 'h' + (c.w / 2 - c.t / 2) + 'v' + c.t + 'h' + (-(c.w / 2 - c.t / 2)) + 'v' + (c.w / 2 - c.t / 2) + 'h' + (-c.t) + 'v' + (-(c.w / 2 - c.t / 2)) + 'h' + (-(c.w / 2 - c.t / 2)) + 'z" fill="#1a1a1a"/>';
   else if (c.o === 'slot') g += '<rect x="' + (-P.w / 2) + '" y="-3" width="' + P.w + '" height="6" rx="2" fill="#2f7a4b"/><rect x="' + (-c.w / 2) + '" y="-1.5" width="' + c.w + '" height="3" rx="1.5" fill="#1a1a1a"/><rect x="-3" y="-4" width="6" height="8" fill="#c8412f"/>';
+  else if (c.o === 'keys') g += KEYXY(c).map(([x, y]) => '<circle cx="' + x + '" cy="' + y + '" r="' + c.d / 2 + '" fill="#1a1a1a"/>').join('');
   else if (c.o === 'grille') g += '<circle r="' + c.d / 2 + '" fill="#999"/>' + [0, 1, 2, 3, 4, 5].map((i) => '<circle cx="' + 6 * Math.cos(i * 1.047) + '" cy="' + 6 * Math.sin(i * 1.047) + '" r="1.6" fill="#1a1a1a"/>').join('') + '<circle r="1.6" fill="#1a1a1a"/>';
   else if (c.o === 'ring') g += '<circle r="' + (c.d / 2 - 4) + '" fill="none" stroke="#1a1a1a" stroke-width="8"/>' + [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11].map((i) => '<circle cx="' + (c.d / 2 - 4) * Math.cos(i * .5236) + '" cy="' + (c.d / 2 - 4) * Math.sin(i * .5236) + '" r="1.8" fill="#ffd23a"/>').join('');
   (P.userHoles || []).forEach((h) => { g += '<circle cx="' + h.x + '" cy="' + (-h.y) + '" r="' + h.d / 2 + '" fill="#1a1a1a"/>'; });
@@ -461,7 +462,7 @@ const FUNCS = [['brain', 'Brain', 'The chip that runs it', 'pico'], ['screen', '
 // electronics in three groups: what you do to it, what it does back, and what ties it together
 const FGROUPS = [['Inputs', 'you press, turn or slide, or it senses', ['press', 'turn', 'sense']], ['Outputs', 'it shows, lights, sounds or moves', ['screen', 'out', 'move']], ['Connections', 'the brain, the power, your own board', ['brain', 'power', 'mine']]];
 const FN_STAND = '<svg viewBox="0 0 60 36" aria-hidden="true"><path d="M17 31L29 6l9 4-12 25z" fill="#c8412f" stroke="#1a1a1a" stroke-width="2" stroke-linejoin="round"/><path d="M35 15l11 17" stroke="#1a1a1a" stroke-width="3" stroke-linecap="round"/><path d="M7 33h47" stroke="#1a1a1a" stroke-width="2" stroke-linecap="round"/></svg>';
-const PSVG = { p_usbc: '<svg viewBox="0 0 60 36" aria-hidden="true"><rect x="6" y="6" width="48" height="24" rx="3" fill="#e9e2cc" stroke="#1a1a1a" stroke-width="2"/><rect x="20" y="15" width="20" height="7" rx="3.5" fill="#1a1a1a"/></svg>', p_switch: '<svg viewBox="0 0 60 36" aria-hidden="true"><rect x="6" y="6" width="48" height="24" rx="3" fill="#e9e2cc" stroke="#1a1a1a" stroke-width="2"/><rect x="19" y="14" width="22" height="9" fill="#1a1a1a"/><rect x="22" y="16" width="7" height="5" fill="#c8412f"/></svg>', p_vent: '<svg viewBox="0 0 60 36" aria-hidden="true"><rect x="6" y="6" width="48" height="24" rx="3" fill="#e9e2cc" stroke="#1a1a1a" stroke-width="2"/>' + [17, 24, 31, 38, 45].map((x) => '<rect x="' + (x - 1.5) + '" y="11" width="3" height="14" fill="#1a1a1a"/>').join('') + '</svg>' };
+const PSVG = { p_hdmi: '<svg viewBox="0 0 60 36" aria-hidden="true"><rect x="6" y="6" width="48" height="24" rx="3" fill="#e9e2cc" stroke="#1a1a1a" stroke-width="2"/><path d="M16 13h28v6l-3 4H19l-3-4z" fill="#1a1a1a"/></svg>', p_minihdmi: '<svg viewBox="0 0 60 36" aria-hidden="true"><rect x="6" y="6" width="48" height="24" rx="3" fill="#e9e2cc" stroke="#1a1a1a" stroke-width="2"/><path d="M20 14h20v5l-2 3H22l-2-3z" fill="#1a1a1a"/></svg>', p_microhdmi: '<svg viewBox="0 0 60 36" aria-hidden="true"><rect x="6" y="6" width="48" height="24" rx="3" fill="#e9e2cc" stroke="#1a1a1a" stroke-width="2"/><path d="M24 15h12v4l-1 2H25l-1-2z" fill="#1a1a1a"/></svg>', p_jack: '<svg viewBox="0 0 60 36" aria-hidden="true"><rect x="6" y="6" width="48" height="24" rx="3" fill="#e9e2cc" stroke="#1a1a1a" stroke-width="2"/><circle cx="30" cy="18" r="6" fill="#1a1a1a"/></svg>', p_usbc: '<svg viewBox="0 0 60 36" aria-hidden="true"><rect x="6" y="6" width="48" height="24" rx="3" fill="#e9e2cc" stroke="#1a1a1a" stroke-width="2"/><rect x="20" y="15" width="20" height="7" rx="3.5" fill="#1a1a1a"/></svg>', p_switch: '<svg viewBox="0 0 60 36" aria-hidden="true"><rect x="6" y="6" width="48" height="24" rx="3" fill="#e9e2cc" stroke="#1a1a1a" stroke-width="2"/><rect x="19" y="14" width="22" height="9" fill="#1a1a1a"/><rect x="22" y="16" width="7" height="5" fill="#c8412f"/></svg>', p_vent: '<svg viewBox="0 0 60 36" aria-hidden="true"><rect x="6" y="6" width="48" height="24" rx="3" fill="#e9e2cc" stroke="#1a1a1a" stroke-width="2"/>' + [17, 24, 31, 38, 45].map((x) => '<rect x="' + (x - 1.5) + '" y="11" width="3" height="14" fill="#1a1a1a"/>').join('') + '</svg>' };
 const XGROUPS = [['Stand and carry', ['stand', 'handle', 'feet', 'charm']], ['Deeper box', ['shroud']], ['Camera and sensor', ['lens', 'grip', 'tripod']], ['Character', ['char', 'deco', 'limbs']], ['Moving parts', ['gears', 'hinge', 'clamp']], ['Keyboard', ['keys']], ['Hardware', ['panel', 'standoff', 'clip']]];
 const NEWP = ' Sized from published specs, not from a test print.';
 function xmeta(id) { // one printed part: [short name, what it is and how it goes on, its few settings]
@@ -823,7 +824,7 @@ function pane(t) {
   if (t === 'files') { const probs = allProblems(); return '<p class="note" style="margin:0 0 8px">No printer? A print service or a library takes these same files. To print from a USB stick, open them in your printer\'s free slicer app first: it turns them into the file your printer reads.</p>' + (S.material === 'wood' ? '' : '<div class="row"><b>File type</b>' + seg('fmt', [['stl', 'STL'], ['3mf', '3MF']], fmtOf()) + '</div>') + '<div class="grid g2"><button class="btn red" data-act="make"' + (probs.length || !S.items.length ? ' aria-disabled="true"' : '') + '>Make my files</button>' + (S.material === 'wood' || isPanel() ? '' : '<button class="btn" data-act="swatch">Download 15-min Fit Swatch</button>') + '</div>' + (S.material === 'wood' || isPanel() ? '' : '<p class="note" style="margin:6px 0 0">The swatch is a ' + swatchSize() + ' mm plate with ' + (isClam() && S.magnets ? 'a magnet pocket, ' : '') + 'the M3 bore, the snap pin slot and ' + esc(swatchButton().short) + ' opening, at your ' + tolOf() + ' mm clearance and ' + R.T + ' mm walls. Print it first: if they fit, the case will.</p>') + '<p class="note">' + (!S.items.length ? 'Add electronics in Brain first.' : probs.length ? '<span class="bad">Fix the electronics marked ! in Arrange first.</span>' : (S.material === 'wood' ? 'Wood: real size templates (SVG) to print at 100 percent or laser cut, plus the cut list.' : 'One file per piece, numbered, as STL or 3MF. Print the deck face down, the tray open side up.')) + '</p><div class="files" id="fileList" style="margin-top:8px"></div>'; }
   if (t === 'wire') return wireHtml();
   if (t === 'map') return '<p class="note keep" style="margin:0 0 6px"><b style="color:#c8412f">Red</b> = power, <b>black</b> = ground, <b style="color:#2f6fdb">blue</b> / <b style="color:#c9a200">yellow</b> / <b style="color:#2f9a5b">green</b> = signals. Every wire from every part to its pin on the brain, the same plan as the step-by-step cards and code.py.</p>' + (mapWhy() ? '<p class="note bad">' + esc(mapWhy()) + '</p>' : '');
-  if (t === 'test') return '<p class="note keep" style="margin:0 0 6px">' + ({ macro: 'Your macro pad: each button sends a shortcut. Press them to see what the computer gets.', timer: 'Your desk timer: press the button to start or pause, hold it 1 s to reset, turn the wheel to set the minutes. It beeps at 00:00.', synth: 'Your synth: hold a button to play its note. Knob 1 moves the pitch, knob 2 the tempo of the arpeggio.' }[recipeFn()] || 'Press the buttons, drag the knobs and sliders, wave at the motion sensor.') + ' This acts out what your code.py does, step by step, before you wire anything.</p>' + (mapWhy() ? '<p class="note bad">' + esc(mapWhy()) + '</p>' : '') + '<div class="list" id="tlog" style="font:600 12px/1.35 ui-monospace,Menlo,monospace">' + TEST.log.map((l) => '<div class="it" style="padding:5px 8px">' + esc(l) + '</div>').join('') + '</div><button class="btn" data-act="treset" style="margin-top:8px;padding:8px">Start the test again</button>';
+  if (t === 'test') return '<p class="note keep" style="margin:0 0 6px">' + ({ macro: 'Your macro pad: each button sends a shortcut. Press them to see what the computer gets.', timer: 'Your desk timer: press the button to start or pause, hold it 1 s to reset, turn the wheel to set the minutes. It beeps at 00:00.', synth: 'Your synth: hold a button to play its note. Knob 1 moves the pitch, knob 2 the tempo of the arpeggio.', sampler: 'Your sampler: tap a pad to hear it. Mode switches Chopper, Drum and Ambient; Bank moves the notes up. Turn the Pitch and Effect wheels and move the stick while a pad rings.' }[recipeFn()] || 'Press the buttons, drag the knobs and sliders, wave at the motion sensor.') + ' This acts out what your code.py does, step by step, before you wire anything.</p>' + (mapWhy() ? '<p class="note bad">' + esc(mapWhy()) + '</p>' : '') + '<div class="list" id="tlog" style="font:600 12px/1.35 ui-monospace,Menlo,monospace">' + TEST.log.map((l) => '<div class="it" style="padding:5px 8px">' + esc(l) + '</div>').join('') + '</div><button class="btn" data-act="treset" style="margin-top:8px;padding:8px">Start the test again</button>';
   if (t === 'extras') return partsRoomHtml();
   return '';
 }
@@ -965,6 +966,7 @@ $('pane').addEventListener('click', (e) => {
   if (d.xsave) { const f = addonFile(d.xsave); if (f && f.pending) f.pending.then((blob) => saveFile({ name: f.name, blob })); else if (f) saveFile(f); return; }
   if (act === 'start') { showStart(); return; }
   if (act === 'clearall') { if (Date.now() - CLEARARM < 4000) { backup(); snapU(); S.items = S.items.filter((i) => i.of != null || (PP(i) && PP(i).board)); /* a board you measured from a photo stays, with the parts on it */ sel = null; LAST = null; CLEARARM = 0; CLEARED = true; } else CLEARARM = Date.now(); save(); render(); return; }
+  if (act === 'savemic') { const t = micMain(wiring(), summaryLine().replace(/<[^>]+>/g, ''), BRDX()); if (t) saveFile({ name: 'main.py', blob: new Blob([t], { type: 'text/x-python' }) }); return; }
   if (act === 'savecode') { const c = codeFor(wiring(), summaryLine(), recipeFn(), BRDX()); saveFile({ name: 'code.py', blob: new Blob([c.text], { type: 'text/x-python' }) }); return; }
   if (act === 'repin') { S.pins = {}; save(); render(); return; }
   if (act === 'toWiring') { S.tab[0] = 'pins'; go(0); return; }
@@ -1037,7 +1039,7 @@ $('pane').addEventListener('click', (e) => {
         '3. WIRE IT', '   In the builder: Brain, Wire it. It shows one wire at a time, with a test after each part. No breadboard.', '',
         '4. LOAD THE CODE', code ? '   code.py is in this zip. Its first lines tell you how to put it on the Pico.' : '   Your build has no starter code yet (no brain with parts wired to it). Add them in the builder and save again.', '',
         '5. CLOSE IT UP', '   Fit the electronics, screw the deck down. Done.', '', 'Your build is saved in the builder on the phone or computer you made it on.', ''].join('\n');
-      list.push({ name: 'START HERE.txt', text: start }); if (code) list.push({ name: 'code.py', text: code });
+      list.push({ name: 'START HERE.txt', text: start }); if (code) list.push({ name: 'code.py', text: code }); try { const mm = micMain(wiring(), summaryLine().replace(/<[^>]+>/g, ''), BRDX()); if (mm) list.push({ name: 'main.py', text: mm }); } catch (e) {} /* the mic recorder, MicroPython */
       saveFile({ name: 'casezero-build.zip', blob: new Blob([zipFiles(list)], { type: 'application/zip' }) }); tag('Saved casezero-build.zip'); });
     return; }
   const st = b.closest('[data-st]');
@@ -1173,7 +1175,7 @@ function drawPartAt(P, cx, cy, k, rq, dim) {
   // real size drawing of a part: board, then what shows through the deck
   g.save(); g.translate(cx, cy); g.rotate(-(rq || 0) * Math.PI / 2);
   const c = P.cut || {}, d = px(), GA = drawPartAt.ga || 1; g.globalAlpha = GA;
-  if (P.screen || P.inside || P.measured || !P.cut || c.o === 'rect' || c.o === 'slot') { g.fillStyle = P.screen ? '#22262a' : '#2f7a4b'; g.globalAlpha = (dim ? 0.35 : 0.9) * GA; g.fillRect(-P.w * k / 2, -P.h * k / 2, P.w * k, P.h * k); g.globalAlpha = GA; }
+  if (P.screen || P.inside || P.measured || !P.cut || c.o === 'rect' || c.o === 'slot' || c.o === 'keys') { g.fillStyle = P.screen ? '#22262a' : '#2f7a4b'; g.globalAlpha = (dim ? 0.35 : 0.9) * GA; g.fillRect(-P.w * k / 2, -P.h * k / 2, P.w * k, P.h * k); g.globalAlpha = GA; }
   const ph = P.img ? pimg(P.img) : null, pa = !dim ? 1 : S.step === 1 ? ({ clear: 0.95, faded: 0.4, off: 0 })[S.photo || 'off'] : 0.4; if (ph && pa) { g.globalAlpha = pa * GA; g.drawImage(ph, -P.w * k / 2, -P.h * k / 2, P.w * k, P.h * k); g.globalAlpha = GA; }
   (P.userCuts || []).forEach((u) => { const cc = u.cut, x = u.x * k, y = -u.y * k; g.fillStyle = cc.o === 'rect' ? 'rgba(143,211,255,.55)' : 'rgba(26,26,26,.55)'; g.strokeStyle = '#ffd23a'; g.lineWidth = 1.5 * d; g.beginPath();
     if (cc.o === 'rect') g.rect(x - cc.w / 2 * k, y - cc.h / 2 * k, cc.w * k, cc.h * k); else if (cc.o === 'cross') { g.rect(x - cc.w / 2 * k, y - cc.t / 2 * k, cc.w * k, cc.t * k); g.rect(x - cc.t / 2 * k, y - cc.w / 2 * k, cc.t * k, cc.w * k); } else g.arc(x, y, (cc.d || 6) / 2 * k, 0, 7);
@@ -1183,6 +1185,7 @@ function drawPartAt(P, cx, cy, k, rq, dim) {
   else if (c.o === 'circle') { g.beginPath(); g.arc(0, 0, c.d / 2 * k, 0, 7); g.fill(); if (P.up > 9) { g.fillStyle = '#c8412f'; g.beginPath(); g.arc(0, 0, c.d / 2.6 * k, 0, 7); g.fill(); } }
   else if (c.o === 'cross') { g.fillRect(-c.w / 2 * k, -c.t / 2 * k, c.w * k, c.t * k); g.fillRect(-c.t / 2 * k, -c.w / 2 * k, c.t * k, c.w * k); }
   else if (c.o === 'slot') { g.fillRect(-c.w / 2 * k, -c.h / 2 * k, c.w * k, c.h * k); g.fillStyle = '#c8412f'; g.fillRect(-3 * k, -4 * k, 6 * k, 8 * k); }
+  else if (c.o === 'keys') KEYXY(c).forEach(([x, y]) => { g.beginPath(); g.arc(x * k, -y * k, c.d / 2 * k, 0, 7); g.fill(); });
   else if (c.o === 'grille') { g.fillStyle = '#9a958a'; g.beginPath(); g.arc(0, 0, c.d / 2 * k, 0, 7); g.fill(); g.fillStyle = '#1a1a1a'; for (let i = 0; i < 6; i++) { g.beginPath(); g.arc(6 * k * Math.cos(i * 1.047), 6 * k * Math.sin(i * 1.047), 1.5 * k, 0, 7); g.fill(); } }
   else if (c.o === 'ring') { g.strokeStyle = '#1a1a1a'; g.lineWidth = 8 * k; g.beginPath(); g.arc(0, 0, (c.d / 2 - 4) * k, 0, 7); g.stroke(); }
   (P.userHoles || []).forEach((h) => { g.fillStyle = '#1a1a1a'; g.beginPath(); g.arc(h.x * k, -h.y * k, h.d / 2 * k, 0, 7); g.fill(); });
@@ -1438,11 +1441,13 @@ function setup3d() {
 const xrayOn = () => !!S.xray && S.step === 1; /* Arrange, Inside view: the lid opens and the deck goes see-through */
 function ghost(o) { o.traverse((c) => { if (c.material) { c.material = c.material.clone(); c.material.transparent = true; c.material.opacity = 0.22; c.material.depthWrite = false; } }); }
 function mesh(geos, color) { const grp = new THREE.Group(), mat = new THREE.MeshStandardMaterial({ color, roughness: .85, flatShading: true, side: THREE.DoubleSide }); geos.forEach((gg) => { gg.computeVertexNormals(); grp.add(new THREE.Mesh(gg, mat)); }); return grp; }
+const KEYXY = (c) => { const o = []; for (let j = 0; j < c.m; j++) for (let i = 0; i < c.n; i++) o.push([(i - (c.n - 1) / 2) * c.p, (j - (c.m - 1) / 2) * c.p]); return o; }; /* a keypad's key centers, from its middle */
 function standIn(P, x, y, rq, top) { // a simple 3D stand-in for what shows above the deck: screen glass, button caps, D-pad
   const c = P.cut || {}; let m = null;
   if (P.screen || (c.o === 'rect' && P.isScreen)) { m = new THREE.Mesh(c.o === 'circle' ? new THREE.CylinderGeometry(c.d / 2, c.d / 2, 0.6, 40) : new THREE.BoxGeometry(((rq % 2) ? c.h : c.w), 0.6, ((rq % 2) ? c.w : c.h)), new THREE.MeshStandardMaterial({ color: 0x8fd3ff, emissive: 0x16323f })); m.rotation.x = Math.PI / 2; m.position.set(x, y, top - 1.2); }
   else if (c.o === 'circle' && P.up) { const rr = c.d / 2; m = new THREE.Mesh(new THREE.CylinderGeometry(rr * (P.up > 12 ? .55 : 1.05), rr * 1.1, Math.min(P.up, 14), 32), new THREE.MeshStandardMaterial({ color: P.up > 9 ? 0xf2ecd6 : 0x1a1a1a })); m.rotation.x = Math.PI / 2; m.position.set(x, y, top + Math.min(P.up, 14) / 2); }
   else if (c.o === 'cross') { m = mesh(G.dpadGeos(), 0x1a1a1a); m.position.set(x, y, top - 1.2); }
+  else if (c.o === 'keys') { m = new THREE.Group(); const a = (rq || 0) * Math.PI / 2, mat = new THREE.MeshStandardMaterial({ color: 0x1a1a1a }), hh = Math.min(P.up || 4, 14); KEYXY(c).forEach(([dx, dy]) => { const k = new THREE.Mesh(new THREE.CylinderGeometry(c.d / 2 * 0.9, c.d / 2, hh, 24), mat); k.rotation.x = Math.PI / 2; k.position.set(x + dx * Math.cos(a) - dy * Math.sin(a), y + dx * Math.sin(a) + dy * Math.cos(a), top + hh / 2); m.add(k); }); }
   return m;
 }
 function setHighlight(r) {
@@ -1611,7 +1616,7 @@ function addBoard(P, replace) {
 let CLEARARM = 0;
 
 // ---------- wiring: which pin each part goes to ----------
-const KSHORT = { tact12: 'Button', button16: 'Button', arcade24: 'Arcade', arcade30: 'Arcade', dpad: 'D-pad', pot: 'Knob', encoder: 'Wheel', thumb: 'Stick', led5: 'LED', speaker28: 'Speaker' };
+const KSHORT = { keypad44: 'Keypad', mat8: 'Matrix', jack35: 'Jack', i2sdac: 'DAC', inmp441: 'Mic', tact12: 'Button', button16: 'Button', arcade24: 'Arcade', arcade30: 'Arcade', dpad: 'D-pad', pot: 'Knob', encoder: 'Wheel', thumb: 'Stick', led5: 'LED', speaker28: 'Speaker' };
 function wiringItems() {
   // every part that needs a wire, numbered like the rest of the builder. Parts tagged on a board photo count one by one.
   const N = numbers(), out = [];
@@ -1655,7 +1660,7 @@ function drawMap(W, H) {
   tag(rows.length + ' parts wired to the ' + (bi ? bi.name : 'brain') + (w.problems.length ? '. ' + w.problems[0] : ''));
 }
 const TEST = { text: 'Ready', led: false, ring: false, angle: null, lamp: false, val: {}, last: {}, pos: {}, pir: {}, dist: {}, cam: null, log: [], hits: [], drag: null, held: null, ac: null, osc: null };
-function testReset() { clearInterval(TEST.tick); synthOff(); TEST.tm = null; TEST.note = null; TEST.tr = 0; TEST.bpm = 120; Object.assign(TEST, { text: 'Ready', led: false, ring: false, angle: null, lamp: false, val: {}, last: {}, pos: {}, pir: {}, dist: {}, cam: null, log: [], drag: null, held: null }); toneOff(); }
+function testReset() { clearInterval(TEST.tick); synthOff(); sAllOff(); TEST.sm = null; TEST.mx = null; TEST.tm = null; TEST.note = null; TEST.tr = 0; TEST.bpm = 120; Object.assign(TEST, { text: 'Ready', led: false, ring: false, angle: null, lamp: false, val: {}, last: {}, pos: {}, pir: {}, dist: {}, cam: null, log: [], drag: null, held: null }); toneOff(); }
 function testLog(s) { TEST.log.unshift(s); TEST.log.length = Math.min(TEST.log.length, 40); const el = $('tlog'); if (el) el.innerHTML = TEST.log.map((l) => '<div class="it" style="padding:5px 8px">' + esc(l) + '</div>').join(''); }
 function tone(f) { try { if (!TEST.ac) TEST.ac = new (window.AudioContext || window.webkitAudioContext)(); toneOff(); const o = TEST.ac.createOscillator(), gn = TEST.ac.createGain(); o.type = 'square'; o.frequency.value = f; gn.gain.value = 0.06; o.connect(gn).connect(TEST.ac.destination); o.start(); TEST.osc = o; setTimeout(() => { if (TEST.osc === o) toneOff(); }, 600); } catch (e) { TEST.osc = null; } }
 function toneOff() { if (TEST.osc) { try { TEST.osc.stop(); } catch (e) {} TEST.osc = null; } }
@@ -1664,9 +1669,13 @@ function testModel() { // the parts as code.py sees them: keys in the order KEYS
   plan.rows.forEach((row) => { const it = row.it, tag = it.label.split(' ')[0], N = row.N, Rr = {}; row.roles.forEach((r) => { Rr[r.role] = r.pin; });
     if (N.what === 'motion') { m.pirs.push({ tag, pin: Rr.out, label: it.label }); return; } if (N.what === 'distance') { m.tofs.push({ tag, label: it.label }); return; } if (N.what === 'camera') { m.cams.push({ tag, label: it.label }); return; }
     if (N.spi || N.i2c) { if (!m.screen) m.screen = { label: it.label }; return; }
+    if (N.what === 'keypad') { (recipeFn() === 'sampler' ? SAMPK : PADK).forEach((name, j) => m.keys.push({ name, pin: Rr['row' + (Math.floor(j / 4) + 1)], col: Rr['col' + (j % 4 + 1)], label: it.label, btn: true, pad: j })); return; } /* code.py: KeyMatrix numbers the keys row by row */
+    if (N.what === 'matrix8') { m.outs.push({ what: 'matrix8', pin: Rr.din, tag, label: it.label }); return; }
+    if (N.what === 'i2sout') { m.outs.push({ what: 'sound', pin: Rr['bclk+lrc'], tag, label: it.label }); return; }
+    if (N.what === 'i2sin' || N.what === 'jack' || !row.roles.length) return;
     if (N.what === 'button') row.roles.forEach((r) => m.keys.push({ name: row.roles.length > 1 ? tag + ' ' + r.role : tag, pin: r.pin, label: it.label, btn: true }));
-    if (N.what === 'knob') ['turn', 'slide'].forEach((k) => { if (Rr[k] != null) m.pots.push({ name: tag, pin: Rr[k], label: it.label }); });
-    if (N.what === 'stick') { if (Rr.x != null) m.pots.push({ name: tag + ' x', pin: Rr.x, label: it.label }); if (Rr.y != null) m.pots.push({ name: tag + ' y', pin: Rr.y, label: it.label }); if (Rr.press != null) m.keys.push({ name: tag + ' press', pin: Rr.press, label: it.label }); }
+    if (N.what === 'knob') ['turn', 'slide'].forEach((k) => { if (Rr[k] != null) m.pots.push({ name: tag, pin: Rr[k], label: it.label, kind: 'knob' }); });
+    if (N.what === 'stick') { if (Rr.x != null) m.pots.push({ name: tag + ' x', pin: Rr.x, label: it.label, kind: 'x' }); if (Rr.y != null) m.pots.push({ name: tag + ' y', pin: Rr.y, label: it.label, kind: 'y' }); if (Rr.press != null) m.keys.push({ name: tag + ' press', pin: Rr.press, label: it.label }); }
     if (N.what === 'wheel') { m.encs.push({ name: tag, pin: Rr['clk+dt'], label: it.label }); if (Rr.press != null) m.keys.push({ name: tag + ' press', pin: Rr.press, label: it.label }); }
     if (['led', 'ring', 'sound', 'servo'].indexOf(N.what) > -1) m.outs.push({ what: N.what, pin: row.roles[0].pin, tag, label: it.label }); });
   return m;
@@ -1676,7 +1685,40 @@ const MACRO = [['C', 'copy'], ['V', 'paste'], ['Z', 'undo'], ['PLAY', 'play/paus
 const clock = (r) => String(Math.floor(r / 60)).padStart(2, '0') + ':' + String(r % 60).padStart(2, '0');
 function synthOn(f) { try { if (!TEST.ac) TEST.ac = new (window.AudioContext || window.webkitAudioContext)(); if (!TEST.sy) { const o = TEST.ac.createOscillator(), gn = TEST.ac.createGain(); o.type = 'square'; gn.gain.value = 0.05; o.connect(gn).connect(TEST.ac.destination); o.start(); TEST.sy = o; } TEST.sy.frequency.value = Math.max(20, f); } catch (e) { TEST.sy = null; } }
 function synthOff() { clearInterval(TEST.arp); TEST.arp = null; if (TEST.sy) { try { TEST.sy.stop(); } catch (e) {} TEST.sy = null; } }
-function presetAct(fn, m, h, down) { // the starters' own programs, step for step like their code.py
+const SAMPK = ['Pad 1', 'Pad 2', 'Pad 3', 'Mode', 'Pad 4', 'Pad 5', 'Pad 6', 'Bank', 'Pad 7', 'Pad 8', 'Pad 9', 'Record', 'Pad 10', 'Pad 11', 'Pad 12', 'Stop'], PADK = ['1', '2', '3', 'A', '4', '5', '6', 'B', '7', '8', '9', 'C', '*', '0', '#', 'D'];
+const PAD_OF = [0, 1, 2, null, 3, 4, 5, null, 6, 7, 8, null, 9, 10, 11, null], SMODES = ['Chopper', 'Drum', 'Ambient'];
+// the Voice Sampler, like its code.py: a pad plays a sound in the mode, the knobs move pitch and effect live, the 8x8 matrix lights the pad
+const sNote = (SM, n) => (SM.mode === 1 ? 36 + n : 48 + SM.bank * 12 + n), sHz = (SM, n) => 440 * Math.pow(2, (sNote(SM, n) - 69 + SM.pitch) / 12);
+function sLights(SM, n) { const L = new Array(64).fill(0); if (n != null) { const x = (n % 4) * 2, y = Math.floor(n / 4) * 2; [0, 1].forEach((dx) => [0, 1].forEach((dy) => { L[(y + dy) * 8 + x + dx] = 1; })); } for (let i = 0; i < Math.floor(SM.eff * 8 / 101) + 1; i++) L[56 + i] = 1; return L; }
+function sPlay(SM, n) { try { const ac = TEST.ac || (TEST.ac = new (window.AudioContext || window.webkitAudioContext)()), now = ac.currentTime, g = ac.createGain(); g.connect(ac.destination);
+    if (SM.mode === 1) { const len = Math.floor(ac.sampleRate * 0.4), buf = ac.createBuffer(1, len, ac.sampleRate), d = buf.getChannelData(0), k = len * (0.06 + SM.eff / 500); for (let i = 0; i < len; i++) d[i] = (Math.random() * 2 - 1) * Math.exp(-i / k); const src = ac.createBufferSource(); src.buffer = buf; src.playbackRate.value = Math.pow(2, SM.pitch / 12) * (0.6 + n * 0.08); g.gain.value = 0.25 * (SM.level || 1); src.connect(g); src.start(); return { src, g, n }; }
+    const o = ac.createOscillator(); o.type = SM.mode === 0 ? 'sawtooth' : 'sine'; o.frequency.value = sHz(SM, n); o.connect(g); g.gain.setValueAtTime(0, now); g.gain.linearRampToValueAtTime(0.07 * (SM.level || 1), now + (SM.mode === 2 ? 0.3 : 0.003)); if (SM.mode === 0) g.gain.setTargetAtTime(0.035 * (SM.level || 1), now + 0.003, 0.02 + SM.eff / 2000); o.start(); return { o, g, n }; } catch (e) { return null; } }
+function sStop(SM, v) { if (!v || !TEST.ac) return; const now = TEST.ac.currentTime; try { v.g.gain.cancelScheduledValues(now); v.g.gain.setTargetAtTime(0, now, SM && SM.mode === 2 ? 0.1 + SM.eff / 200 : 0.03); if (v.o) v.o.stop(now + 3); } catch (e) {} }
+function sAllOff() { Object.keys(TEST.sv || {}).forEach((k) => sStop(TEST.sm, TEST.sv[k])); TEST.sv = {}; }
+function sampler(m, h, down) {
+  const SM = TEST.sm || (TEST.sm = { mode: 0, bank: 0, rec: false, pitch: 0, eff: 50, scrub: 50, level: 1 }); TEST.sv = TEST.sv || {}; if (!TEST.mx) TEST.mx = sLights(SM, null);
+  if (h.kind === 'key') { const k = m.keys[h.i]; if (k.pad == null) return null; const name = SAMPK[k.pad], n = PAD_OF[k.pad], at = 'row ' + LABP(k.pin) + ' x col ' + LABP(k.col);
+    if (n != null && down) { TEST.held = h; TEST.lamp = true; sStop(SM, TEST.sv[n]); TEST.sv[n] = sPlay(SM, n); TEST.mx = sLights(SM, n); TEST.text = name + ' . ' + SMODES[SM.mode]; return name + ' pressed (' + at + ') -> ' + SMODES[SM.mode] + ' sound ' + Math.round(sHz(SM, n)) + ' Hz -> USB MIDI note ' + sNote(SM, n) + ' on'; }
+    if (n != null) { TEST.held = null; TEST.lamp = false; sStop(SM, TEST.sv[n]); delete TEST.sv[n]; return name + ' released -> MIDI note ' + sNote(SM, n) + ' off'; }
+    if (!down) { TEST.held = null; TEST.lamp = false; return ''; } TEST.held = h; TEST.lamp = true;
+    if (name === 'Mode') { SM.mode = (SM.mode + 1) % 3; TEST.text = 'Mode: ' + SMODES[SM.mode]; return 'Mode pressed (' + at + ') -> ' + SMODES[SM.mode]; }
+    if (name === 'Bank') { SM.bank = (SM.bank + 1) % 4; TEST.text = 'Bank ' + 'ABCD'[SM.bank]; return 'Bank pressed -> bank ' + 'ABCD'[SM.bank] + ' (notes from ' + (48 + SM.bank * 12) + ')'; }
+    if (name === 'Record') { SM.rec = !SM.rec; TEST.text = SM.rec ? 'REC' : 'Rec off'; return 'Record pressed -> ' + (SM.rec ? 'recording armed' : 'recording off'); }
+    sAllOff(); TEST.mx = sLights(SM, null); TEST.text = 'Stop'; return 'Stop pressed -> every sound off'; }
+  const retune = () => Object.keys(TEST.sv).forEach((n) => { const vo = TEST.sv[n]; if (!vo) return; if (vo.o) vo.o.frequency.setValueAtTime(sHz(SM, +n), TEST.ac.currentTime); if (vo.src) vo.src.playbackRate.value = Math.pow(2, SM.pitch / 12) * (0.6 + n * 0.08); });
+  if (h.kind === 'enc' && h.i < 2) { const e = m.encs[h.i]; TEST.pos[h.i] = (TEST.pos[h.i] || 0) + h.dir;
+    if (h.i === 0) { SM.pitch = Math.max(-12, Math.min(12, SM.pitch + h.dir)); retune(); TEST.text = 'Pitch ' + (SM.pitch > 0 ? '+' : '') + SM.pitch; return e.name + ' (Pitch) turned ' + (h.dir > 0 ? 'right' : 'left') + ' -> pitch ' + (SM.pitch > 0 ? '+' : '') + SM.pitch + ' semitones, MIDI CC 16'; }
+    SM.eff = Math.max(0, Math.min(100, SM.eff + 5 * h.dir)); TEST.mx = sLights(SM, null); TEST.text = 'Effect ' + SM.eff; return e.name + ' (Effect) turned ' + (h.dir > 0 ? 'right' : 'left') + ' -> effect ' + SM.eff + ', sounds ring ' + (SM.eff > 50 ? 'longer' : 'shorter') + ', MIDI CC 74'; }
+  if (h.kind === 'pot') { const p = m.pots[h.i], v = TEST.val[h.i] || 0; if (Math.abs(v - (TEST.last[h.i] == null ? -10 : TEST.last[h.i])) < 2) return ''; TEST.last[h.i] = v; const kn = m.pots.filter((q) => q.kind === 'knob').indexOf(p);
+    if (kn === 0) { SM.pitch = Math.floor(v * 24 / 100) - 12; Object.keys(TEST.sv).forEach((n) => { const vo = TEST.sv[n]; if (!vo) return; if (vo.o) vo.o.frequency.setValueAtTime(sHz(SM, +n), TEST.ac.currentTime); if (vo.src) vo.src.playbackRate.value = Math.pow(2, SM.pitch / 12) * (0.6 + n * 0.08); }); TEST.text = 'Pitch ' + (SM.pitch > 0 ? '+' : '') + SM.pitch; return p.name + ' (Pitch) -> ' + LABP(p.pin) + ' reads ' + v + ' -> pitch ' + (SM.pitch > 0 ? '+' : '') + SM.pitch + ' semitones, MIDI CC 16'; }
+    if (kn === 1) { SM.eff = v; TEST.mx = sLights(SM, null); TEST.text = 'Effect ' + v; return p.name + ' (Effect) -> ' + LABP(p.pin) + ' reads ' + v + ' -> sounds ring ' + (v > 50 ? 'longer' : 'shorter') + ', MIDI CC 74'; }
+    if (p.kind === 'y') { SM.level = 0.2 + v * 0.8 / 100; Object.keys(TEST.sv).forEach((n) => { const vo = TEST.sv[n]; if (vo) vo.g.gain.setTargetAtTime((vo.src ? 0.25 : 0.07) * SM.level, TEST.ac.currentTime, 0.02); }); TEST.text = 'Level ' + v; return p.name + ' (Level) -> ' + LABP(p.pin) + ' reads ' + v + ' -> pad volume ' + Math.round(SM.level * 100) + '%, MIDI CC 2'; }
+    if (p.kind === 'x') { SM.scrub = v; TEST.text = 'Scrub ' + v + '%'; return p.name + ' (Scrub) -> ' + LABP(p.pin) + ' reads ' + v + ' -> MIDI CC 1'; }
+    return ''; }
+  return null;
+}
+function presetAct(fn, m, h, down) {
+  if (fn === 'sampler') return sampler(m, h, down); // the starters' own programs, step for step like their code.py
   const T = TEST.tm || (TEST.tm = { min: 25, rem: 25 * 60, run: false, at: 0 }), st = Math.max(0, m.keys.findIndex((k) => k.btn));
   if (fn === 'macro' && h.kind === 'key') { const k = m.keys[h.i]; if (!down) { TEST.lamp = false; TEST.held = null; return k.name + ' released -> GP' + k.pin + ' HIGH'; } TEST.lamp = true; TEST.held = h; const sc = MACRO[h.i], txt = sc ? (sc[0] === 'PLAY' ? 'Play/Pause' : 'Ctrl+' + sc[0] + ' (' + sc[1] + ')') : k.name; TEST.text = txt; return k.name + ' pressed -> GP' + k.pin + ' LOW -> the computer gets ' + txt; }
   if (fn === 'timer') {
@@ -1736,7 +1778,8 @@ function drawTest(W, H) {
     if (c.kind === 'cam') { g.fillStyle = TEST.cam ? '#2f9a5b' : '#1a1a1a'; g.beginPath(); g.arc(mx, my, r, 0, 7); g.fill(); g.fillStyle = '#8fd3ff'; g.beginPath(); g.arc(mx, my, r * 0.45, 0, 7); g.fill(); TEST.hits.push({ kind: 'cam', i: c.i, x: mx - r, y: my - r, w: 2 * r, h: 2 * r }); }
     if (c.kind === 'out') { if (c.what === 'led') { g.fillStyle = TEST.led ? '#ff4b3a' : '#5a2a26'; g.beginPath(); g.arc(mx, my, r * 0.7, 0, 7); g.fill(); }
       if (c.what === 'ring') { g.strokeStyle = TEST.ring ? '#c8412f' : '#cfc9bb'; g.lineWidth = 6 * d; g.beginPath(); g.arc(mx, my, r, 0, 7); g.stroke(); }
-      if (c.what === 'sound') { g.fillStyle = TEST.osc ? '#c8412f' : '#1a1a1a'; g.beginPath(); g.arc(mx, my, r * 0.8, 0, 7); g.fill(); }
+      if (c.what === 'matrix8') { const L = TEST.mx || [], s2 = Math.min(cw, ch) * 0.6, q = s2 / 8; box(mx - s2 / 2, my - s2 / 2, s2, s2, '#1a1a1a'); for (let i = 0; i < 64; i++) { g.fillStyle = L[i] ? '#ff4b3a' : '#3a1d1a'; g.beginPath(); g.arc(mx - s2 / 2 + (i % 8 + 0.5) * q, my - s2 / 2 + (Math.floor(i / 8) + 0.5) * q, q * 0.36, 0, 7); g.fill(); } }
+      if (c.what === 'sound') { g.fillStyle = TEST.osc || (TEST.sv && Object.keys(TEST.sv).length) ? '#c8412f' : '#1a1a1a'; g.beginPath(); g.arc(mx, my, r * 0.8, 0, 7); g.fill(); }
       if (c.what === 'servo') { const a = (TEST.angle == null ? 90 : TEST.angle) * Math.PI / 180; g.strokeStyle = '#1a1a1a'; g.lineWidth = 2 * d; g.beginPath(); g.arc(mx, my + r * 0.5, r, Math.PI, 0); g.stroke(); g.strokeStyle = '#c8412f'; g.lineWidth = 4 * d; g.beginPath(); g.moveTo(mx, my + r * 0.5); g.lineTo(mx - Math.cos(a) * r, my + r * 0.5 - Math.sin(a) * r); g.stroke(); } } });
   tag(why || 'Test it: this acts out your code.py');
 }
@@ -1756,7 +1799,7 @@ function pinsHtml() {
   const w = wiring(), list = wiringItems();
   if (!list.length) return '<p class="note" style="margin-top:0">Add buttons, knobs, screens or lights in Electronics, or photo your built board in Snap. Each one gets its pins here.</p>';
   const opt = (k, cur) => '<select class="pin" data-pin="' + k + '">' + BRDX().all.concat(BRDX().adc.filter((p) => BRDX().all.indexOf(p) < 0)).map((p) => '<option value="' + p + '"' + (p === cur ? ' selected' : '') + '>' + LABP(p) + (w.used[p] && p !== cur ? ' *' : '') + '</option>').join('') + '</select>';
-  let h = creditHtml() + '<div class="grid g2" style="margin:6px 0"><button class="btn dark" data-act="savecode">Save code.py</button><button class="btn" data-act="repin">Pick pins for me</button></div>' + '<p class="note" style="margin-top:0">' + (bp ? '<b>' + esc(bp.name) + '</b>.' : '<b>No brain picked</b>, showing a Raspberry Pi Pico.') + ' Every part gets its pins by the real rules. Soldered already? Pick the pins you used. * = taken. code.py is CircuitPython: buttons print their name, the screen shows what you press, knobs show 0 to 100. Steps are at the top of the file.</p>';
+  let h = creditHtml() + '<div class="grid g2" style="margin:6px 0"><button class="btn dark" data-act="savecode">Save code.py</button><button class="btn" data-act="repin">Pick pins for me</button></div>' + (S.items.some((i) => i.type === 'inmp441') && BRDX().cp ? '<button class="btn" data-act="savemic" style="width:100%;margin-bottom:6px">Save main.py (records the mic, MicroPython)</button>' : '') + '<p class="note" style="margin-top:0">' + (bp ? '<b>' + esc(bp.name) + '</b>.' : '<b>No brain picked</b>, showing a Raspberry Pi Pico.') + ' Every part gets its pins by the real rules. Soldered already? Pick the pins you used. * = taken. code.py is CircuitPython: buttons print their name, the screen shows what you press, knobs show 0 to 100. Steps are at the top of the file.</p>';
   const tagScr = S.items.filter((i) => PP(i) && (PP(i).userCuts || []).some((u) => u.kind === 'screen')).length; if (tagScr) h += '<p class="note"><span class="bad">A screen tagged on your board photo is not wired yet.</span> Which screen is it? Add it in Electronics, Screens (2.8 in, round, OLED) and it gets its pins and code here.</p>';
   if (w.problems.length) h += '<p class="note">' + w.problems.map((x) => '<span class="bad">' + esc(x) + '</span>').join('<br>') + '</p>';
   h += '<div class="list" style="margin-top:6px">' + w.rows.map((r) => '<div class="it"><b>' + esc(r.it.label) + '</b>' + r.roles.map((x) => '<span class="pr">' + esc(x.role) + ' ' + (x.fixed || !x.k ? '<i>' + LABP(x.pin) + '</i>' : opt(x.k, x.pin) + (x.two ? ' <i>+ ' + LABP(x.pin + 1) + '</i>' : '')) + '</span>').join('') + '<span class="pr">' + (r.power ? '+ to ' + r.power + ', ' : '') + 'GND to GND</span>' + (r.note ? '<small>' + esc(r.note) + '</small>' : '') + '</div>').join('') + '</div>';
@@ -1917,13 +1960,17 @@ function mountBlocked(m) { // why this spot cannot take this part, or '' if it c
   return '';
 }
 // ---------- ports and vents through a side wall: the same spots, the same blocking rules ----------
-// S.ports: [{ id, kind: p_usbc | p_switch | p_vent, face: back | front | left | right, anchor: { u } }]
-const PORTS = { p_usbc: ['USB-C', 'An opening for a USB-C cable to reach the brain or a charger inside: 9.2 x 3.4 mm plus the clearance.'], p_switch: ['Slide switch', 'A slot for a small slide switch (SS12D10 type) so you can turn it on and off from outside: 9 x 4 mm plus the clearance.'], p_vent: ['Vent grille', 'Five slots to let warm air out of the case.'] };
+// S.ports: [{ id, kind: p_usbc | p_switch | p_vent | p_hdmi | p_minihdmi | p_microhdmi | p_jack, face: back | front | left | right, anchor: { u } }]
+const PORTS = { p_hdmi: ['HDMI', 'An opening for a full size HDMI plug: 16.5 x 6.5 mm plus the clearance.'], p_minihdmi: ['Mini HDMI', 'An opening for a Mini HDMI plug (Pi Zero): 12.5 x 4.5 mm plus the clearance.'], p_microhdmi: ['Micro HDMI', 'An opening for a Micro HDMI plug (Pi 4 and 5): 8.5 x 4 mm plus the clearance.'], p_jack: ['3.5mm jack', 'A 6.2 mm round hole for a headphone or audio plug, lined up with the jack inside.'], p_usbc: ['USB-C', 'An opening for a USB-C cable to reach the brain or a charger inside: 9.2 x 3.4 mm plus the clearance.'], p_switch: ['Slide switch', 'A slot for a small slide switch (SS12D10 type) so you can turn it on and off from outside: 9 x 4 mm plus the clearance.'], p_vent: ['Vent grille', 'Five slots to let warm air out of the case.'] };
 const PFACES = [['back', 'Back'], ['front', 'Front'], ['left', 'Left'], ['right', 'Right']], PNORM = { back: [0, 1, 0], front: [0, -1, 0], left: [-1, 0, 0], right: [1, 0, 0] };
 const pface = () => (PNORM[mnt().pface] ? mnt().pface : 'back');
 function portRects(kind) { // the openings: along the wall from the spot (u) and height (z), with the clearance on every side
   const c = tolOf(), F = R.F, dz = geom().H - R.LT - geom().recess;
   if (kind === 'p_usbc') return [{ u0: -4.6 - c, u1: 4.6 + c, z0: F + 3 - c, z1: F + 6.4 + c }];
+  if (kind === 'p_hdmi') return [{ u0: -8.25 - c, u1: 8.25 + c, z0: F + 3 - c, z1: F + 9.5 + c }];
+  if (kind === 'p_minihdmi') return [{ u0: -6.25 - c, u1: 6.25 + c, z0: F + 3 - c, z1: F + 7.5 + c }];
+  if (kind === 'p_microhdmi') return [{ u0: -4.25 - c, u1: 4.25 + c, z0: F + 3 - c, z1: F + 7 + c }];
+  if (kind === 'p_jack') { const r = 3.1 + c, zc = F + 3 + 3.1, nb = 8; return Array.from({ length: nb }, (_, i) => { const z0 = zc - r + i * 2 * r / nb, z1 = z0 + 2 * r / nb, e = Math.min(Math.abs(z0 - zc), Math.abs(z1 - zc)) * (z0 < zc && z1 > zc ? 0 : 1), hw = Math.sqrt(r * r - e * e); return { u0: -hw, u1: hw, z0: +z0.toFixed(3), z1: +z1.toFixed(3) }; }); } /* round, from 8 bands: each one as wide as the circle where it is widest */
   if (kind === 'p_switch') return [{ u0: -4.5 - c, u1: 4.5 + c, z0: F + 3.5 - c, z1: F + 7.5 + c }];
   const top = Math.min(dz - 2.5, F + 15); return [-8, -4, 0, 4, 8].map((u) => ({ u0: u - 1 - c, u1: u + 1 + c, z0: F + 3, z1: Math.max(F + 6, top) }));
 }
@@ -1940,7 +1987,7 @@ function portBlocked(p) {
   const zone = [G.mountRect({ face: p.face, x: v ? (s0 + s1) / 2 : w.x, y: v ? w.y : (s0 + s1) / 2 }, (s1 - s0) / 2 + 1.5, R.T + 6, 0)], hit = (polys) => G.area(G.inter(zone, polys)) > 0.3, dz = h.H - R.LT - h.recess;
   if (isClam() && S.magnets && G.magnetSpots(outline()).some(([x, y]) => hit([G.circle(x, y, R.MAG / 2 + 2.6, 24)]))) return 'magnet';
   if (posts().some(([x, y]) => hit([G.circle(x, y, R.POSTR + 1, 20)]))) return 'deck screw';
-  if (S.items.some((it) => { const P = PP(it); if (!P || !(it.panel === 'inside' || it.panel === homePanel())) return false; const zr = it.panel === 'inside' ? [R.F, R.F + riserOf(it) + (P.depth || 0)] : [dz - (P.depth || 0), dz]; return zr[0] < w.z1 && zr[1] > w.z0 && hit(rectPoly(fp(it))); })) return 'electronics';
+  if (S.items.some((it) => { const P = PP(it); if (!P || !(it.panel === 'inside' || it.panel === homePanel()) || (P.jack && p.kind === 'p_jack')) return false; /* the jack sits at its own hole */ const zr = it.panel === 'inside' ? [R.F, R.F + riserOf(it) + (P.depth || 0)] : [dz - (P.depth || 0), dz]; return zr[0] < w.z1 && zr[1] > w.z0 && hit(rectPoly(fp(it))); })) return 'electronics';
   const pf = portFace(p);
   if (S.ports.some((q) => q !== p && q.id !== p.id && q.face === p.face && G.area(G.inter(G.offset(pf, 1), portFace(q))) > 0.1)) return 'taken';
   if (S.attachedParts.some((m) => m.face === p.face && MOUNTABLE[m.partId] && (() => { const mw = mountAt(m); return mw && G.area(G.inter(G.offset(pf, 1), [plateFace(m, mw)])) > 0.1; })())) return 'taken';
@@ -1952,6 +1999,9 @@ function wireNotch(half) { const f = hingeFace(); if (!f) return []; const b = G
   return [{ face: f, x: w[0], y: w[1], rects: [{ s0: c - hw, s1: c + hw, z0: H - dz, z1: H + 1 }] }]; }
 function wireDuct() { const f = hingeFace(); if (!f) return null; const b = G.bbox(outline()), v = f === 'back', c = v ? (b.x0 + b.x1) / 2 : (b.y0 + b.y1) / 2, w = G.wallAt(outline(), f, c); return w ? { face: f, x: v ? c : w[0], y: v ? w[1] : c } : null; }
 function activePorts() { return S.ports.filter((p) => PORTS[p.kind] && !portBlocked(p)).map(portAt).filter(Boolean); }
+function jackHole() { // the audio jack gets its round hole in a free spot of a wall: the back first, or a side wall on a lid + base case. Move it in Ports & Vents.
+  if (isPanel() || S.ports.some((p) => p.kind === 'p_jack')) return; const id = S.ports.reduce((q, x) => Math.max(q, x.id || 0), 0) + 1, hf = hingeFace();
+  for (const f of (isClam() ? ['right', 'left', 'front'] : ['back', 'right', 'left', 'front']).filter((x) => x !== hf)) /* a lid + base case: a side wall, never the hinge wall */ for (const a of anchorsOf(f)) { const p = { id, kind: 'p_jack', face: f, anchor: { u: a.u, v: 0 } }; if (!portBlocked(p)) { S.ports = S.ports.concat([p]); tag('3.5mm jack: a 6.2 mm hole cut in the ' + f + ' wall. Move it in Parts, Ports and vents.'); return; } } }
 function portAttach(a) { const p = { id: S.ports.reduce((q, x) => Math.max(q, x.id || 0), 0) + 1, kind: S.xsel, face: pface(), anchor: { u: a.u, v: 0 } }, why = portBlocked(p);
   if (why) { tag('That spot is blocked: ' + why + '.'); return; } S.ports = S.ports.concat([p]); save(); render(); tag(PORTS[p.kind][0] + ' cut into the ' + p.face + ' wall.'); }
 function portHtml(id) {
@@ -2308,7 +2358,7 @@ function powerNote() {
 }
 const hrs = (h) => (h >= 10 ? Math.round(h) + ' hours' : h >= 1 ? (Math.round(h * 2) / 2) + ' hours' : Math.max(5, Math.round(h * 12) * 5) + ' minutes');
 const recipe = () => (S.recipe && (CZ.RECIPES || []).find((r) => r.id === S.recipe)) || null;
-const recipeFn = () => (recipe() && recipe().fn) || null; /* a starter's own program: macro, timer or synth */
+const recipeFn = () => (recipe() && recipe().fn) || null; /* a starter's own program: macro, timer, synth or sampler */
 function creditHtml() {
   const r = recipe(); if (!r) return '';
   return '<details class="fold"><summary>Code: ' + esc(r.credit.project) + ' by ' + esc(r.credit.by) + '</summary><div class="list"><div class="it"><b>' + esc(r.name) + ': the code</b>Comes from <a href="' + esc(r.credit.url) + '" target="_blank" rel="noopener" style="display:inline;padding:0;border:0;text-decoration:underline">' + esc(r.credit.project) + '</a> by ' + esc(r.credit.by) + ' (license: ' + esc(r.credit.license) + '). Their work, their credit. Our starter code in Brain, Wire it, Wiring only proves your wiring works.<small>' + esc(r.note) + (r.tested ? '' : ' Not test-built by NOCIV yet.') + '</small></div></div></details>';
@@ -2533,7 +2583,7 @@ window.addEventListener('pageshow', (e) => { if (e.persisted) resync(); });
 window.addEventListener('storage', (e) => { if (e.key === KEY) resync(); });
 document.addEventListener('visibilitychange', () => { if (!document.hidden) resync(); });
 
-window.__cz = { decoMove, mountPart, TEST, testModel, wiring, wallArt, LG, hookPolys, addBoard, packBuild, unpackBuild, shareState, portBlocked, portAt, mountBlocked, swatchFile, loadRecipe, get DECO() { return DECO; }, get T3() { return T3; }, THREE, wiring, codeFor, get S() { return S; }, get view() { return view; }, AZ, get UNDO() { return UNDO.length; }, halves, plan, makeFiles, get FILES() { return FILES; }, allProblems, G, addPart, go, render, dims, heights, addonFile, addonPolys, charParts, charCache, kb, kbBoard, kbCode, kbReadme, boardSvg, get TRAY() { return TRAY; }, showStart, loadRecipe, cost, boardBuild, boardFiles, boardReadme, extraRows, keepBox };
+window.__cz = { decoMove, mountPart, TEST, testModel, wiring, wallArt, LG, hookPolys, addBoard, packBuild, unpackBuild, shareState, portBlocked, portAt, mountBlocked, swatchFile, loadRecipe, get DECO() { return DECO; }, get T3() { return T3; }, THREE, wiring, codeFor, get S() { return S; }, get view() { return view; }, AZ, get UNDO() { return UNDO.length; }, halves, plan, makeFiles, get FILES() { return FILES; }, allProblems, G, addPart, go, render, dims, heights, addonFile, addonPolys, charParts, charCache, kb, kbBoard, kbCode, kbReadme, boardSvg, wiring, portBlocked, testAct, testModel, micMain, get TRAY() { return TRAY; }, showStart, loadRecipe, cost, boardBuild, boardFiles, boardReadme, extraRows, keepBox };
 render();
 { const q = new URLSearchParams(location.search), code = q.get('build'), rid = q.get('recipe'), r = rid && (CZ.RECIPES || []).find((x) => x.id === rid), clean = () => { try { history.replaceState(null, '', location.pathname); } catch (e) {} };
   if (code) { /* a build link: it becomes the saved build (the one that was here goes to Bring back), no start sheet */
