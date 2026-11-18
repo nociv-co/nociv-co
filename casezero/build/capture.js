@@ -12,7 +12,7 @@ export const GROUPS = [['Brain', [['pico', 'Pico'], ['picow', 'Pico W'], ['pico2
   ['Other', [['led5', 'LED'], ['speaker28', 'Speaker'], ['hole', 'Other hole']]]];
 const KINDS = [].concat(...GROUPS.map((g) => g[1]));
 const KNAME = (k) => (QK[k] ? QK[k][0] : (KINDS.find((x) => x[0] === k) || [0, k])[1]);
-const TNAME = (h) => (h.label || KNAME(h.kind)); /* a Custom tag can carry its own name */
+const TNAME = (h) => (h.label || (h.kind === 'q_screen' && h.preset != null && SCREENS[h.preset][1] ? 'Screen ' + SCREENS[h.preset][0] : KNAME(h.kind))); /* a Custom tag can carry its own name */
 const SHORT = { tact12: 'B12', button16: 'B16', arcade24: 'A24', arcade30: 'A30', dpad: 'DP', pot: 'K', encoder: 'CW', thumb: 'TS', slider: 'SL', led5: 'LED', speaker28: 'SPK', screen: 'SCREEN', tft28: '2.8 IN', round128: 'ROUND', oled096: 'OLED', hdmi5: '5 IN', hdmi7: '7 IN', pico: 'PICO', picow: 'PICO W', pico2: 'PICO 2', esp32: 'ESP32', hole: 'HOLE' };
 const RECT = (k) => { const P = KP(k); return !!(P && (P.cat === 'brain' || P.cat === 'screen')); }; /* drawn at real size, can be turned */ // short tags on the photo so close parts do not overlap
 const KP = (k) => (window.CZ && window.CZ.PARTS && window.CZ.PARTS[k]) || null;
@@ -20,6 +20,7 @@ const $ = (id) => document.getElementById(id);
 // A front photo is a panel (or a box opening): front, front2, front3... Each has its own card, its own locked size and its own tags.
 const FR = (w) => String(w).indexOf('front') === 0;
 // Quick labels: a part you size yourself, by its outline on the photo. Its cutout is the size you set, in mm.
+const SCREENS = [['0.96" OLED', [24, 13]], ['2.8" TFT', [58, 44]], ['3.5"', [74, 49]], ['5"', [110, 66]], ['7"', [156, 88]], ['Custom', null]]; /* the window each screen needs: the picture, not the board */
 const QK = { q_screen: ['Screen', [60, 40]], q_board: ['Board / Chip', [50, 25]], q_ctrl: ['Controller', [32, 32]], q_cut: ['Button / Cutout', [12, 12]], q_custom: ['Custom', [20, 20]] };
 
 function solve(A, b) { // gaussian elimination, 8 x 8
@@ -49,6 +50,7 @@ const CSS = `
 .mz .mv{flex:1;min-height:0;position:relative;overflow:hidden;background:#000}
 .mz video,.mz canvas.ph{position:absolute;inset:0;width:100%;height:100%;object-fit:contain;touch-action:none}
 .mz svg.ov{position:absolute;inset:0;width:100%;height:100%;pointer-events:none}
+.mz .sayh{flex:none;padding:7px 12px;background:#1d1d1d;border-bottom:1px solid #333;font:700 13px/1.35 inherit;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;cursor:pointer}.mz .sayh.open{white-space:normal}
 .mz .say{position:absolute;left:12px;right:12px;top:12px;text-align:center;font:800 16px/1.25 inherit;text-shadow:0 1px 3px #000}
 .mz .mb{flex:none;padding:10px 12px calc(12px + env(safe-area-inset-bottom));display:flex;flex-direction:column;gap:8px;background:#161616}
 .mz .rowb{display:flex;gap:8px}
@@ -63,9 +65,10 @@ const CSS = `
 .mz{-webkit-user-select:none;user-select:none;-webkit-touch-callout:none}.mz canvas{-webkit-user-select:none;user-select:none;-webkit-touch-callout:none;-webkit-tap-highlight-color:transparent}
 .mz .zfit{all:unset;cursor:pointer;margin-left:6px;padding:4px 9px;border:1.5px solid #fff;border-radius:8px;font:800 12px/1 inherit}
 .mz .pick .pkh{flex:none;display:flex;gap:6px;align-items:center;padding:0 0 8px}.mz .pick .pkb{flex:1;min-height:0;overflow:auto;-webkit-overflow-scrolling:touch}.mz .pick .chips{justify-content:flex-start}.mz .pick .pkh h3{flex:1;margin:0;text-align:left}.mz .pick .pkt{all:unset;cursor:pointer;padding:9px 12px;border:1.5px solid #fff;border-radius:10px;font:800 13px/1 inherit}.mz .pick.small{max-height:none;overflow:hidden}.mz .pick.small .pkb{display:none}
-.mz .pick{position:absolute;left:0;right:0;bottom:0;max-height:58%;overflow:hidden;display:flex;flex-direction:column;text-align:left;background:#161616;border-top:2px solid #fff;border-radius:16px 16px 0 0;padding:12px 12px 16px}.mz .pick h3{margin:2px 0 8px;font:900 15px/1 inherit;text-transform:uppercase;letter-spacing:.06em}.mz .pick h4{margin:10px 0 6px;font:800 12px/1 inherit;color:#aaa;text-transform:uppercase;letter-spacing:.06em}
-.mz .mzsel{display:flex;gap:6px;align-items:center;min-height:42px}.mz .mzsel b{flex:1;font:800 14px/1.2 inherit}.mz .mzsel i{flex:1;font:600 13px/1.3 inherit;font-style:normal;color:#aaa}.mz #mzTags{min-height:36px}.mz .mzsel button{all:unset;cursor:pointer;padding:10px 12px;border:1.5px solid #fff;border-radius:10px;font:800 13px/1 inherit}
-.mz .chips{display:flex;gap:6px;flex-wrap:wrap}.mz .chips.scroll{flex-wrap:nowrap;overflow-x:auto;-webkit-overflow-scrolling:touch;padding-bottom:2px}.mz .chips.scroll button{flex:none;min-height:24px}.mz .chips button{all:unset;cursor:pointer;padding:9px 12px;border-radius:999px;border:1.5px solid #fff;font:700 13px/1 inherit}.mz .chips button[aria-pressed=true]{background:#fff;color:#111}
+.mz .pick{position:absolute;left:0;right:0;bottom:0;max-height:44%;overflow:hidden;display:flex;flex-direction:column;text-align:left;background:#161616;border-top:2px solid #fff;border-radius:16px 16px 0 0;padding:12px 12px 16px}.mz .pick h3{margin:2px 0 8px;font:900 15px/1 inherit;text-transform:uppercase;letter-spacing:.06em}.mz .pick h4{margin:10px 0 6px;font:800 12px/1 inherit;color:#aaa;text-transform:uppercase;letter-spacing:.06em}
+.mz .mzsel{display:flex;gap:6px;align-items:center;min-height:42px}.mz .mzsel b{flex:1;min-width:0;font:800 14px/1.2 inherit;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.mz .mzsel i{flex:1;font:600 13px/1.3 inherit;font-style:normal;color:#aaa}.mz #mzTags{min-height:36px}.mz .mzsel button{all:unset;cursor:pointer;padding:10px 12px;border:1.5px solid #fff;border-radius:10px;font:800 13px/1 inherit}
+.mz .chips{display:flex;gap:6px;flex-wrap:wrap}.mz .chips.scroll{flex-wrap:nowrap;overflow-x:auto;-webkit-overflow-scrolling:touch;padding-bottom:2px}.mz .chips.scroll button{flex:none;min-height:24px}.mz .pick .chips button{padding:7px 10px;font-size:12.5px}.mz .pick h4{margin:7px 0 4px}
+.mz .chips button{all:unset;cursor:pointer;padding:9px 12px;border-radius:999px;border:1.5px solid #fff;font:700 13px/1 inherit}.mz .chips button[aria-pressed=true]{background:#fff;color:#111}
 `;
 
 export function openMeasure(done, more) { more = more || {};
@@ -80,6 +83,7 @@ export function openMeasure(done, more) { more = more || {};
   function shell(title, mid, bottom) {
     box.innerHTML = '<div class="mt"><b>' + title + '</b><button class="mx" aria-label="Close">&times;</button></div><div class="mv">' + mid + '</div><div class="mb">' + bottom + '</div>';
     box.querySelector('.mx').onclick = close;
+    const sy = box.querySelector('.mv #mzSay'); if (sy) { sy.className = 'sayh'; box.insertBefore(sy, box.querySelector('.mv')); sy.title = 'Tap to read it all'; sy.onclick = () => sy.classList.toggle('open'); } /* the instruction sits in one line over the photo, not on it */
   }
 
   // 1. what and how
@@ -155,7 +159,7 @@ export function openMeasure(done, more) { more = more || {};
     const say = {
       card: 'Move the 4 orange dots onto the card: 1 and 2 on its top edge, 3 and 4 on the bottom, until the white outline sits on its edges. Next locks the scale.',
       part: FR(which) ? 'Panel / Box Size: the 4 green dots onto the corners of your panel or box opening. Next locks the size.' : 'Now the 4 green dots onto the corners of your board. Move slowly for small steps.',
-      holes: FR(which) ? 'Tap + Tag Another Part, pick what it is, then drag it into place and set its size. The panel size stays locked.' : 'Press on each screw hole, slide until the cross is on it, let go.',
+      holes: FR(which) ? '+ Tag Another Part, then drag it into place. Drag a green corner, or W and H, to fit it. The panel size stays locked.' : 'Press on each screw hole, slide until the cross is on it, let go.',
       side: 'Green line on the top face of the board (the side with the buttons). Yellow dot on top of the tallest part. Blue dot on the lowest thing underneath (pins, solder, wires).'
     };
     const NAMES = { card: 'card', part: FR(which) ? 'Panel / Box Size' : 'board edges', holes: FR(which) ? 'tag parts' : 'screw holes', side: 'heights' };
@@ -165,9 +169,13 @@ export function openMeasure(done, more) { more = more || {};
     let k = 1, ox = 0, oy = 0, hd = FR(which) ? 12 : 3;
     let Z = 1, PX = 0, PY = 0; /* pinch zoom: Z times the fitted size, PX PY = how far the photo is moved, in canvas px */
     function place() { const k0 = Math.min(cv.width / W0, cv.height / H0); k = k0 * Z; ox = (cv.width - W0 * k) / 2 + PX; oy = (cv.height - H0 * k) / 2 + PY; }
-    function fit() { if (!document.body.contains(cv)) return; const r = cv.getBoundingClientRect(), d = Math.min(2, devicePixelRatio || 1); cv.width = r.width * d; cv.height = r.height * d; place(); draw(); }
+    function fit() { if (drag) { fit.wait = true; return; } /* never resize the photo under a finger: it jumps */ if (!document.body.contains(cv)) return; const r = cv.getBoundingClientRect(), d = Math.min(2, devicePixelRatio || 1); cv.width = r.width * d; cv.height = r.height * d; place(); draw(); }
     const S = (p) => [ox + p[0] * k, oy + p[1] * k], I = (x, y) => [(x - ox) / k, (y - oy) / k];
-    function H() { return homography(pts.card, [[0, 0], [CARD[0], 0], [CARD[0], CARD[1]], [0, CARD[1]]]); }
+    // The card can lie either way round: its longer edge in the photo is the 85.6 mm one. 1-2 is always the edge the dots start on,
+    // so a card stood on end maps 1-2 to 53.98 mm. Mapping the long edge to 85.6 keeps one scale for x and y: a tall lid stays tall.
+    function cardDims() { const q = pts.card, a = (dist(q[0], q[1]) + dist(q[3], q[2])) / 2, b = (dist(q[0], q[3]) + dist(q[1], q[2])) / 2; return a >= b ? [CARD[0], CARD[1]] : [CARD[1], CARD[0]]; }
+    function cardPpm() { const q = pts.card, a = (dist(q[0], q[1]) + dist(q[3], q[2])) / 2, b = (dist(q[0], q[3]) + dist(q[1], q[2])) / 2; return (Math.max(a, b) / CARD[0] + Math.min(a, b) / CARD[1]) / 2; } /* one px per mm, from both edges */
+    function H() { const [cw, ch] = cardDims(); return homography(pts.card, [[0, 0], [cw, 0], [cw, ch], [0, ch]]); }
     function partMM() {
       const h = H(); if (!h) return null; const q = pts.part.map(h);
       const w = (dist(q[0], q[1]) + dist(q[3], q[2])) / 2, hh = (dist(q[0], q[3]) + dist(q[1], q[2])) / 2;
@@ -187,9 +195,9 @@ export function openMeasure(done, more) { more = more || {};
     // The real card outline, rounded corners included (ID-1 cards: 85.6 x 54 mm, corner radius 3.18 mm), mapped onto the photo through the 4 dots.
     // The dots are where the straight edges would meet; matching the curves puts them there.
     function cardOutline() {
-      const T = homography([[0, 0], [CARD[0], 0], [CARD[0], CARD[1]], [0, CARD[1]]], pts.card); if (!T) return null;
+      const [cw, ch] = cardDims(), T = homography([[0, 0], [cw, 0], [cw, ch], [0, ch]], pts.card); if (!T) return null;
       const r = 3.18, out = [], corner = (cx, cy, a0) => { for (let i = 0; i <= 8; i++) { const a = a0 + i / 8 * Math.PI / 2; out.push(T([cx + r * Math.cos(a), cy + r * Math.sin(a)])); } };
-      corner(CARD[0] - r, r, -Math.PI / 2); corner(CARD[0] - r, CARD[1] - r, 0); corner(r, CARD[1] - r, Math.PI / 2); corner(r, r, Math.PI);
+      corner(cw - r, r, -Math.PI / 2); corner(cw - r, ch - r, 0); corner(r, ch - r, Math.PI / 2); corner(r, r, Math.PI);
       return out;
     }
     function draw() {
@@ -225,22 +233,23 @@ export function openMeasure(done, more) { more = more || {};
           }
           if (h.kind) { const nm = QK[h.kind] ? TNAME(h).toUpperCase() : SHORT[h.kind] || h.kind; g.font = '800 ' + 10 * d + 'px Arial'; g.textAlign = 'center'; g.lineWidth = 3 * d; g.strokeStyle = '#000'; g.strokeText(nm, s0[0], s0[1] - 8 * d); g.fillStyle = col; g.fillText(nm, s0[0], s0[1] - 8 * d); }
         });
+        if (picked && QK[picked.kind]) { const P2 = sppm(), s0 = S(picked.p), t = (picked.r || 0) % 2, w = (t ? picked.sz[1] : picked.sz[0]) * P2 / 2, hh = (t ? picked.sz[0] : picked.sz[1]) * P2 / 2; [[-1, -1], [1, -1], [1, 1], [-1, 1]].forEach(([sx, sy]) => { g.beginPath(); g.arc(s0[0] + sx * w, s0[1] + sy * hh, 9 * d, 0, 7); g.fillStyle = '#2bd46b'; g.fill(); g.strokeStyle = '#0b2414'; g.lineWidth = 2 * d; g.stroke(); }); } /* its 4 corners: drag one to fit the real part */
         if (pending) { const s1 = S(pending); g.strokeStyle = '#2bd46b'; g.lineWidth = 3 * d; g.beginPath(); g.arc(s1[0], s1[1], 14 * d, 0, 7); g.stroke(); g.beginPath(); g.moveTo(s1[0] - 20 * d, s1[1]); g.lineTo(s1[0] + 20 * d, s1[1]); g.moveTo(s1[0], s1[1] - 20 * d); g.lineTo(s1[0], s1[1] + 20 * d); g.stroke(); }
         if (drag && drag.kind === 'new') { const s1 = S(drag.p); g.strokeStyle = '#fff'; g.lineWidth = 2 * d; g.beginPath(); g.arc(s1[0], s1[1], 10 * d, 0, 7); g.stroke(); }
       }
       $('mzSay').textContent = say[key];
       const info = $('mzInfo'), m = (key === 'part' || key === 'holes') ? partMM() : null;
       const tagged = FR(which) && key === 'holes';
-      if (m) info.innerHTML = '<b>' + (FR(which) ? 'Panel / Box Size' : M.name) + ': ' + m.w.toFixed(1) + ' x ' + m.h.toFixed(1) + ' mm' + (key === 'holes' ? ' (locked)' : '') + '</b>' + (key === 'holes' ? '. ' + holes.length + (tagged ? ' tagged.' : ' holes, next one ' + hd + ' mm') : '') + (M.ppm ? '<br><span style="color:#aaa">Card locked: ' + M.ppm.toFixed(2) + ' px per mm</span>' : '') +
-        (tagged && holes.length ? '<div id="mzList" style="max-height:92px;overflow:auto;margin-top:4px">' + holes.map((h, i) => { const c = holeMM(h.p), sz = tagSize(h); return '<div' + (h === picked ? ' style="color:#fff"' : '') + '>' + (i + 1) + '. ' + esc(TNAME(h) || 'Hole') + ': ' + sz + ' at ' + (c[0] + m.w / 2).toFixed(1) + ', ' + (c[1] + m.h / 2).toFixed(1) + ' mm</div>'; }).join('') + '</div>' : '');
+      if (m) info.innerHTML = '<b>' + (FR(which) ? 'Panel / Box Size' : M.name) + ': ' + m.w.toFixed(1) + ' x ' + m.h.toFixed(1) + ' mm' + (key === 'holes' ? ' (locked)' : '') + '</b>' + (key === 'holes' ? '. ' + holes.length + (tagged ? ' tagged.' : ' holes, next one ' + hd + ' mm') : '') + (M.ppm ? '<br><span style="color:#aaa">Card locked (' + (M.cardWay || 'landscape') + '): ' + M.ppm.toFixed(2) + ' px per mm, same across and down</span>' : '') +
+        (tagged && holes.length ? '<div id="mzList" style="max-height:66px;overflow:auto;margin-top:4px">' + holes.map((h, i) => { const c = holeMM(h.p), sz = tagSize(h); return '<div' + (h === picked ? ' style="color:#fff"' : '') + '>' + (i + 1) + '. ' + esc(TNAME(h) || 'Hole') + ': ' + sz + ' at ' + (c[0] + m.w / 2).toFixed(1) + ', ' + (c[1] + m.h / 2).toFixed(1) + ' mm</div>'; }).join('') + '</div>' : '');
       else if (key === 'side') { const sm = sideMM(); info.innerHTML = sm ? '<b>Tallest part ' + sm.top.toFixed(1) + ' mm above the board, ' + sm.under.toFixed(1) + ' mm under it</b>' : ''; }
-      else info.textContent = 'Card = 85.6 x 54 mm. 1-2 top edge, 3-4 bottom edge.';
+      else { const cd = cardDims(); info.textContent = 'Card = 85.6 x 54 mm, ' + (cd[0] > cd[1] ? 'lying flat' : 'stood on end') + ' (' + cardPpm().toFixed(2) + ' px per mm). 1-2 top edge, 3-4 bottom edge.'; }
       if (Z > 1.01) info.insertAdjacentHTML('beforeend', ' <button type="button" class="zfit" id="mzFit">Fit photo</button>');
       const sb = $('mzSel'), tl = $('mzTags');
       sb.hidden = !tagged; tl.hidden = !tagged; /* both rows stay on the tag step so the photo never jumps */
       if (tagged && !picked) sb.innerHTML = '<i>' + (holes.length ? 'Tap a tag to change, turn or remove it.' : 'Nothing tagged yet.') + '</i>';
-      if (tagged && picked) sb.innerHTML = (picked.kind === 'q_custom' ? '<input class="nm" id="mzRen" style="flex:1;min-width:0;height:38px" maxlength="24" aria-label="Name this part" placeholder="Name it (HDMI Switch)" value="' + esc(picked.label || '') + '">' : '<b>' + esc(TNAME(picked)) + (QK[picked.kind] ? ' ' + tagSize(picked) : '') + '</b>') + '<button type="button" id="mzChg">Change</button>' + (RECT(picked.kind) || QK[picked.kind] ? '<button type="button" id="mzTurn">Turn</button>' : '') + '<button type="button" id="mzDel">Remove</button>';
-      if (tagged) tl.innerHTML = holes.map((h, i) => '<button type="button" data-tag="' + i + '" aria-pressed="' + (h === picked) + '">' + (i + 1) + ' ' + esc(h.label || (QK[h.kind] ? QK[h.kind][0] : SHORT[h.kind] || h.kind || 'hole')) + '</button>').join('');
+      if (tagged && picked) sb.innerHTML = (picked.kind === 'q_custom' ? '<input class="nm" id="mzRen" style="flex:1;min-width:0;height:38px" maxlength="24" aria-label="Name this part" placeholder="Name it (HDMI Switch)" value="' + esc(picked.label || '') + '">' : '<b>' + esc(TNAME(picked)) + (QK[picked.kind] ? ' ' + tagSize(picked) : '') + '</b>') + '<button type="button" id="mzChg">Change</button>' + ((picked.kind === 'q_screen' || (KP(picked.kind) && KP(picked.kind).cat === 'screen')) ? '<button type="button" id="mzPre">' + (picked.preset != null ? SCREENS[picked.preset][0] : 'Preset') + '</button>' : '') + (RECT(picked.kind) || QK[picked.kind] ? '<button type="button" id="mzTurn">Turn</button>' : '') + '<button type="button" id="mzDel">Remove</button>';
+      if (tagged) tl.innerHTML = holes.map((h, i) => '<button type="button" data-tag="' + i + '" aria-pressed="' + (h === picked) + '">' + (i + 1) + ' ' + esc(QK[h.kind] ? TNAME(h) : SHORT[h.kind] || h.kind || 'hole') + '</button>').join('');
       $('mzTagRow').hidden = !tagged; $('mzQSize').hidden = !(tagged && picked && QK[picked.kind]);
       $('mzHoleSize').hidden = key !== 'holes' || (tagged && !(picked && picked.kind === 'hole'));
       $('mzHoleSize').querySelectorAll('[data-hd]').forEach((b) => { b.style.display = tagged && !(picked && picked.kind === 'hole') ? 'none' : ''; });
@@ -252,7 +261,7 @@ export function openMeasure(done, more) { more = more || {};
     }
     // magnifier: while a finger is down, a round close-up shows exactly where the dot or tag lands (the finger hides it)
     let loupe = null, drag = null, picked = null, pending = null;
-    const tagSize = (h) => { if (QK[h.kind]) return h.sz[0] + ' x ' + h.sz[1] + ' mm'; const P = h.kind && h.kind !== 'hole' && KP(h.kind); if (P && (RECT(h.kind) || !P.cut || P.cut.o === 'rect')) return P.w + ' x ' + P.h + ' mm'; const c = P ? P.cut : null; return c && c.d ? c.d + ' mm round' : (h.d || 6) + ' mm hole'; };
+    const tagSize = (h) => { if (QK[h.kind]) return ((h.r || 0) % 2 ? h.sz[1] + ' x ' + h.sz[0] : h.sz[0] + ' x ' + h.sz[1]) + ' mm'; const P = h.kind && h.kind !== 'hole' && KP(h.kind); if (P && (RECT(h.kind) || !P.cut || P.cut.o === 'rect')) return P.w + ' x ' + P.h + ' mm'; const c = P ? P.cut : null; return c && c.d ? c.d + ' mm round' : (h.d || 6) + ' mm hole'; };
     const esc = (t) => String(t).replace(/[&<>"]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
     function drawLoupe(q, d) {
       const R = 64 * d, Z = 4, s = S(q), cx = s[0] < cv.width / 2 ? cv.width - R - 10 * d : R + 10 * d, cy = R + 10 * d, r = R / (k * Z);
@@ -275,6 +284,9 @@ export function openMeasure(done, more) { more = more || {};
         else if (Math.hypot(p[0] - s0[0], p[1] - s0[1]) < Math.max(16 * dpr, ((h.kind && KP(h.kind) && KP(h.kind).cut && KP(h.kind).cut.d) || h.d || 6) / 2 * ppm)) return h; }
       return null;
     };
+    const sppm = () => { const m = partMM(); return m ? dist(S(pts.part[0]), S(pts.part[1])) / m.w : 3; }; /* screen px per mm on the panel */
+    const hitCorner = (p) => { if (!picked || !QK[picked.kind]) return null; const P2 = sppm(), s0 = S(picked.p), t = (picked.r || 0) % 2, w = (t ? picked.sz[1] : picked.sz[0]) * P2 / 2, hh = (t ? picked.sz[0] : picked.sz[1]) * P2 / 2, dpr = Math.min(2, devicePixelRatio || 1);
+      for (const [sx, sy] of [[-1, -1], [1, -1], [1, 1], [-1, 1]]) if (Math.hypot(p[0] - (s0[0] + sx * w), p[1] - (s0[1] + sy * hh)) < 22 * dpr) return { sx, sy, o: [s0[0] - sx * w, s0[1] - sy * hh] }; return null; };
     const touches = new Map(); let pinch = null, hold = false;
     const inBoard = (q) => { const P4 = pts.part; let c = false; for (let i = 0, j = 3; i < 4; j = i++) { const a = P4[i], b = P4[j]; if ((a[1] > q[1]) !== (b[1] > q[1]) && q[0] < (b[0] - a[0]) * (q[1] - a[1]) / (b[1] - a[1]) + a[0]) c = !c; } return c; };
     const note = (t) => { const n = $('mzSay'); if (n) { n.textContent = t; clearTimeout(note.t); note.t = setTimeout(() => draw(), 1600); } };
@@ -286,6 +298,7 @@ export function openMeasure(done, more) { more = more || {};
       }
       if (hold) return;
       if (key === 'holes') {
+        const cn = hitCorner(p); if (cn) { drag = { kind: 'corner', t: picked, o: cn.o }; loupe = I(p[0], p[1]); draw(); return; } /* the opposite corner stays put */
         const h = hitTag(p);
         if (h) { picked = FR(which) ? h : null; drag = { kind: 'move', t: h, off: [h.p[0] - I(p[0], p[1])[0], h.p[1] - I(p[0], p[1])[1]], f0: p, moved: false }; loupe = h.p; }
         else { picked = null; drag = { kind: 'new', p: I(p[0], p[1]) }; loupe = drag.p; }
@@ -306,12 +319,14 @@ export function openMeasure(done, more) { more = more || {};
       if (drag.kind === 'dot') {
         const dx = p[0] - drag.last[0], dy = p[1] - drag.last[1], v = Math.hypot(dx, dy) / dpr, gain = v > 14 ? 1 : 0.3 + 0.7 * v / 14;
         const q = pts[drag.key][drag.i]; q[0] = Math.max(0, Math.min(W0, q[0] + dx * gain / k)); q[1] = Math.max(0, Math.min(H0, q[1] + dy * gain / k)); drag.last = p; loupe = q;
-      } else if (drag.kind === 'move') { if (Math.hypot(p[0] - drag.f0[0], p[1] - drag.f0[1]) > 8 * dpr) drag.moved = true; const q = I(p[0], p[1]); drag.t.p = [q[0] + drag.off[0], q[1] + drag.off[1]]; loupe = drag.t.p; }
+      } else if (drag.kind === 'corner') { const P2 = sppm(), t = drag.t, tw = Math.max(4, Math.abs(p[0] - drag.o[0])), th = Math.max(4, Math.abs(p[1] - drag.o[1])), r = (v) => Math.max(2, Math.round(v / P2 * 2) / 2), turned = (t.r || 0) % 2;
+        t.sz = turned ? [r(th), r(tw)] : [r(tw), r(th)]; t.p = I((p[0] + drag.o[0]) / 2, (p[1] + drag.o[1]) / 2); if (t.kind === 'q_screen') t.preset = SCREENS.length - 1; loupe = I(p[0], p[1]); }
+      else if (drag.kind === 'move') { if (Math.hypot(p[0] - drag.f0[0], p[1] - drag.f0[1]) > 8 * dpr) drag.moved = true; const q = I(p[0], p[1]); drag.t.p = [q[0] + drag.off[0], q[1] + drag.off[1]]; loupe = drag.t.p; }
       else { drag.p = I(p[0], p[1]); loupe = drag.p; }
       draw();
     };
     const endDrag = (ok) => {
-      const dr = drag; drag = null; loupe = null; sel = -1; if (!dr) return;
+      const dr = drag; drag = null; loupe = null; sel = -1; if (fit.wait) { fit.wait = false; fit(); } if (!dr) return;
       if (ok && dr.kind === 'new' && !inBoard(dr.p)) { draw(); note('Tags go on your board, inside the green dots. Two fingers zoom.'); return; }
       if (ok && dr.kind === 'new') { if (FR(which)) { draw(); openPick(dr.p); return; } holes.push({ p: dr.p, d: hd }); }
       if (ok && dr.kind === 'move' && !dr.moved && !FR(which)) holes.splice(holes.indexOf(dr.t), 1);
@@ -325,15 +340,16 @@ export function openMeasure(done, more) { more = more || {};
       const mv = box.querySelector('.mv'), old = mv.querySelector('.pick'); if (old) old.remove();
       const el = document.createElement('div'); el.className = 'pick'; pending = pt; draw();
       el.innerHTML = '<div class="pkh"><h3>What is it?</h3><button type="button" class="pkt" data-hide="1">Hide</button><button type="button" class="pkt" data-k="">Cancel</button></div><div class="pkb">' + (M.kind && pt ? '<div class="chips"><button type="button" data-k="' + M.kind + '" aria-pressed="true">Same as last: ' + esc(KNAME(M.kind)) + '</button></div>' : '') +
-        '<h4>Quick</h4><div class="chips">' + Object.keys(QK).map((q) => '<button type="button" data-k="' + q + '">' + QK[q][0] + '</button>').join('') + '</div>' + GROUPS.map((gr) => '<h4>' + gr[0] + '</h4><div class="chips">' + gr[1].map((x) => '<button type="button" data-k="' + x[0] + '">' + x[1] + '</button>').join('') + '</div>').join('') + '</div>';
+        '<h4>Quick</h4><div class="chips scroll">' + Object.keys(QK).map((q) => '<button type="button" data-k="' + q + '">' + QK[q][0] + '</button>').join('') + '</div>' + GROUPS.map((gr) => '<h4>' + gr[0] + '</h4><div class="chips scroll">' + gr[1].map((x) => '<button type="button" data-k="' + x[0] + '">' + x[1] + '</button>').join('') + '</div>').join('') + '</div>';
       mv.appendChild(el);
       el.onclick = (ev) => {
         const hb = ev.target.closest('[data-hide]'); if (hb) { const sm = el.classList.toggle('small'); hb.textContent = sm ? 'Show' : 'Hide'; return; } /* drop it down to see the photo */
         const b = ev.target.closest('[data-k]'); if (!b) return; const kd = b.dataset.k; el.remove(); pending = null; if (!kd) { draw(); return; }
-        M.kind = kd; if (pt) { const t = { p: pt, kind: kd, d: hd, r: 0 }; if (QK[kd]) t.sz = QK[kd][1].slice(); holes.push(t); picked = t; } else if (picked) { picked.kind = kd; picked.r = picked.r || 0; if (QK[kd] && !picked.sz) picked.sz = QK[kd][1].slice(); } draw(); };
+        M.kind = kd; if (pt) { const t = { p: pt, kind: kd, d: hd, r: 0 }; if (QK[kd]) t.sz = QK[kd][1].slice(); if (kd === 'q_screen') { t.preset = 1; t.sz = SCREENS[1][1].slice(); } holes.push(t); picked = t; } else if (picked) { picked.kind = kd; picked.r = picked.r || 0; if (QK[kd] && !picked.sz) picked.sz = QK[kd][1].slice(); } draw(); };
     }
     function wireBar() {
       const zf = $('mzFit'); if (zf) zf.onclick = () => { Z = 1; PX = 0; PY = 0; place(); draw(); };
+      const pr = $('mzPre'); if (pr) pr.onclick = () => { /* the next screen size; a catalog screen becomes a sized screen tag */ const i = picked.preset == null ? 0 : (picked.preset + 1) % SCREENS.length, s2 = SCREENS[i][1]; if (picked.kind !== 'q_screen') { picked.kind = 'q_screen'; picked.sz = picked.sz || [60, 40]; } picked.preset = i; if (s2) picked.sz = s2.slice(); draw(); };
       const rn = $('mzRen'); if (rn) { rn.oninput = () => { picked.label = rn.value.slice(0, 24); const L = $('mzList'), i = holes.indexOf(picked), b2 = box.querySelector('[data-tag="' + i + '"]'); if (b2) b2.textContent = (i + 1) + ' ' + (picked.label || 'Custom'); if (L && L.children[i]) L.children[i].firstChild.textContent = (i + 1) + '. ' + (picked.label || 'Custom') + ': ' + L.children[i].textContent.split(': ').slice(1).join(': '); }; rn.onchange = () => draw(); } /* typing does not redraw the bar, so the keyboard stays up */
       const c = $('mzChg'), t = $('mzTurn'), x = $('mzDel');
       if (c) c.onclick = () => openPick(null); if (t) t.onclick = () => { picked.r = ((picked.r || 0) + 1) % 4; draw(); }; if (x) x.onclick = () => { holes.splice(holes.indexOf(picked), 1); picked = null; draw(); };
@@ -354,7 +370,7 @@ export function openMeasure(done, more) { more = more || {};
     }
     $('mzBack').onclick = () => { if (st > 0) { st--; draw(); } else cam(which); }; /* never throws away the tags: the first step offers a new photo instead */
     $('mzNext').onclick = () => {
-      if (stage[st] === 'card') { const q = pts.card; M.ppm = (dist(q[0], q[1]) + dist(q[3], q[2])) / 2 / CARD[0]; shot.card = pts.card.map((p) => p.slice()); } /* the card is locked: its scale holds for the next steps */
+      if (stage[st] === 'card') { M.ppm = cardPpm(); M.cardWay = cardDims()[0] > cardDims()[1] ? 'landscape' : 'portrait'; shot.card = pts.card.map((p) => p.slice()); } /* the card is locked: its scale holds for the next steps */
       if (stage[st] === 'part') { shot.part = pts.part.map((p) => p.slice()); } /* the size is locked: tags never change it */
       if (st < stage.length - 1) { st++; draw(); return; }
       if (which === 'side') { const sm = sideMM(); shot.card = pts.card; shot.side = pts.side; if (sm) { shot.mm = sm; M.top = Math.max(4, Math.round(sm.top * 2) / 2); M.under = Math.round(sm.under * 2) / 2; } return hub(); }
@@ -362,10 +378,11 @@ export function openMeasure(done, more) { more = more || {};
       const plain = holes.filter((h) => !h.kind || h.kind === 'hole'), tags = holes.filter((h) => h.kind && h.kind !== 'hole' && KP(h.kind)), quick = holes.filter((h) => QK[h.kind]);
       shot.mm = m ? { w: nominal(m.w), h: nominal(m.h), holes: plain.map((h) => { const c = holeMM(h.p); return { x: c[0], y: c[1], d: nominal(h.d) }; }),
         kids: tags.map((h) => { const c = holeMM(h.p); return { type: h.kind, x: Math.round(c[0] * 10) / 10, y: Math.round(c[1] * 10) / 10, r: h.r || 0 }; }),
-        cuts: quick.map((h) => { const c = holeMM(h.p), t = (h.r || 0) % 2; return { kind: h.kind, label: (h.label || '').trim() || QK[h.kind][0], w: t ? h.sz[1] : h.sz[0], h: t ? h.sz[0] : h.sz[1], x: Math.round(c[0] * 10) / 10, y: Math.round(c[1] * 10) / 10 }; }),
+        cuts: quick.map((h) => { const c = holeMM(h.p), t = (h.r || 0) % 2; return { kind: h.kind, label: (h.label || '').trim() || TNAME(h), w: t ? h.sz[1] : h.sz[0], h: t ? h.sz[0] : h.sz[1], x: Math.round(c[0] * 10) / 10, y: Math.round(c[1] * 10) / 10 }; }),
         img: FR(which) ? rectify() : null } : null;
       return hub();
     };
+    cv.__set = (key, arr) => { pts[key] = arr.map((p) => p.slice()); draw(); }; cv.__corners = () => { if (!picked || !QK[picked.kind]) return []; const P2 = sppm(), s0 = S(picked.p), t = (picked.r || 0) % 2, w = (t ? picked.sz[1] : picked.sz[0]) * P2 / 2, hh = (t ? picked.sz[0] : picked.sz[1]) * P2 / 2; return [[-1, -1], [1, -1], [1, 1], [-1, 1]].map(([sx, sy]) => [s0[0] + sx * w, s0[1] + sy * hh]); }; cv.__img = (cx, cy) => { const r = cv.getBoundingClientRect(), d = cv.width / r.width; return I((cx - r.left) * d, (cy - r.top) * d); }; cv.__toImg = (p) => I(p[0], p[1]); /* for the automated tests: put the dots exactly */
     new ResizeObserver(fit).observe(cv); fit();
   }
   /* The hub: every photo has its own row, done ones can be opened again with their tags kept. Nothing here starts over. */
