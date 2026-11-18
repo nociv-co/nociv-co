@@ -50,6 +50,7 @@ const CSS = `
 .mz .mv{flex:1;min-height:0;position:relative;overflow:hidden;background:#000}
 .mz video,.mz canvas.ph{position:absolute;inset:0;width:100%;height:100%;object-fit:contain;touch-action:none}
 .mz svg.ov{position:absolute;inset:0;width:100%;height:100%;pointer-events:none}
+.mz .sayw{flex:none;display:flex;align-items:center;background:#1d1d1d;border-bottom:1px solid #333}.mz .sayw.off:not(.peek){display:none}.mz .sayw .sayh{flex:1;min-width:0;border:0}.mz .sayx{all:unset;cursor:pointer;flex:none;margin:0 8px;padding:5px 9px;border:1.5px solid #888;border-radius:8px;font:800 12px/1 inherit;color:#ddd}.mz .mt .sayq{width:30px;height:30px;font-size:15px}
 .mz .sayh{flex:none;padding:7px 12px;background:#1d1d1d;border-bottom:1px solid #333;font:700 13px/1.35 inherit;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;cursor:pointer}.mz .sayh.open{white-space:normal}
 .mz .say{position:absolute;left:12px;right:12px;top:12px;text-align:center;font:800 16px/1.25 inherit;text-shadow:0 1px 3px #000}
 .mz .mb{flex:none;padding:10px 12px calc(12px + env(safe-area-inset-bottom));display:flex;flex-direction:column;gap:8px;background:#161616}
@@ -67,7 +68,8 @@ const CSS = `
 .mz .pick .pkh{flex:none;display:flex;gap:6px;align-items:center;padding:0 0 8px}.mz .pick .pkb{flex:1;min-height:0;overflow:auto;-webkit-overflow-scrolling:touch}.mz .pick .chips{justify-content:flex-start}.mz .pick .pkh h3{flex:1;margin:0;text-align:left}.mz .pick .pkt{all:unset;cursor:pointer;padding:9px 12px;border:1.5px solid #fff;border-radius:10px;font:800 13px/1 inherit}.mz .pick.small{max-height:none;overflow:hidden}.mz .pick.small .pkb{display:none}
 .mz .pick{position:absolute;left:0;right:0;bottom:0;max-height:44%;overflow:hidden;display:flex;flex-direction:column;text-align:left;background:#161616;border-top:2px solid #fff;border-radius:16px 16px 0 0;padding:12px 12px 16px}.mz .pick h3{margin:2px 0 8px;font:900 15px/1 inherit;text-transform:uppercase;letter-spacing:.06em}.mz .pick h4{margin:10px 0 6px;font:800 12px/1 inherit;color:#aaa;text-transform:uppercase;letter-spacing:.06em}
 .mz .mzsel{display:flex;gap:6px;align-items:center;min-height:42px}.mz .mzsel b{flex:1;min-width:0;font:800 14px/1.2 inherit;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.mz .mzsel i{flex:1;font:600 13px/1.3 inherit;font-style:normal;color:#aaa}.mz #mzTags{min-height:36px}.mz .mzsel button{all:unset;cursor:pointer;padding:10px 12px;border:1.5px solid #fff;border-radius:10px;font:800 13px/1 inherit}
-.mz .chips{display:flex;gap:6px;flex-wrap:wrap}.mz .chips.scroll{flex-wrap:nowrap;overflow-x:auto;-webkit-overflow-scrolling:touch;padding-bottom:2px}.mz .chips.scroll button{flex:none;min-height:24px}.mz .pick .chips button{padding:7px 10px;font-size:12.5px}.mz .pick h4{margin:7px 0 4px}
+.mz .chips{display:flex;gap:6px;flex-wrap:wrap}.mz .chips.scroll{flex-wrap:nowrap;overflow-x:auto;-webkit-overflow-scrolling:touch;padding-bottom:2px}.mz .chips.scroll button{flex:none;min-height:24px}.mz .pick .chips button{padding:7px 10px;font-size:12.5px}.mz .pick .chips.quick{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:6px}.mz .pick .chips.quick button{text-align:center;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.mz .chev{all:unset;cursor:pointer;align-self:center;margin:-4px 0 -2px;padding:2px 18px;font:900 14px/1 inherit;color:#aaa}.mz .mb.min > :not(.chev):not(.nav){display:none!important}.mz .pick h4{margin:7px 0 4px}
 .mz .chips button{all:unset;cursor:pointer;padding:9px 12px;border-radius:999px;border:1.5px solid #fff;font:700 13px/1 inherit}.mz .chips button[aria-pressed=true]{background:#fff;color:#111}
 `;
 
@@ -77,13 +79,17 @@ export function openMeasure(done, more) { more = more || {};
   const M = { name: 'Panel / Box Size', ppm: null, pnames: {}, shots: {}, step: 'intro', stream: null, tilt: null, holes: [], depth: 12, hang: 8, kind: null, brain: null, top: 9, under: null };
   const pname = (w) => { if (M.pnames[w]) return M.pnames[w]; const n = w === 'front' ? 1 : +w.slice(5) || 1; return 'Panel ' + n + (n === 1 ? ' (Lid)' : n === 2 ? ' (Base)' : ''); };
   const fronts = () => Object.keys(M.shots).filter(FR).sort((a, b) => (a === 'front' ? 1 : +a.slice(5)) - (b === 'front' ? 1 : +b.slice(5)));
+  function applySay() { const w = box.querySelector('.sayw'), q = $('mzHelpT'); if (!w) return; const off = M.sayPref != null ? M.sayPref : !!M.ppm; w.classList.toggle('off', off); if (q) q.hidden = !off; } /* folded by default once the card is locked */
   const close = () => { stopCam(); window.removeEventListener('deviceorientation', onTilt); box.remove(); };
   function stopCam() { if (M.stream) { M.stream.getTracks().forEach((t) => t.stop()); M.stream = null; } }
   function onTilt(e) { M.tilt = [e.beta || 0, e.gamma || 0]; }
   function shell(title, mid, bottom) {
     box.innerHTML = '<div class="mt"><b>' + title + '</b><button class="mx" aria-label="Close">&times;</button></div><div class="mv">' + mid + '</div><div class="mb">' + bottom + '</div>';
     box.querySelector('.mx').onclick = close;
-    const sy = box.querySelector('.mv #mzSay'); if (sy) { sy.className = 'sayh'; box.insertBefore(sy, box.querySelector('.mv')); sy.title = 'Tap to read it all'; sy.onclick = () => sy.classList.toggle('open'); } /* the instruction sits in one line over the photo, not on it */
+    const sy = box.querySelector('.mv #mzSay'); if (sy) { const w = document.createElement('div'); w.className = 'sayw'; box.insertBefore(w, box.querySelector('.mv')); sy.className = 'sayh'; w.appendChild(sy); sy.title = 'Tap to read it all'; sy.onclick = () => sy.classList.toggle('open');
+      const hb = document.createElement('button'); hb.type = 'button'; hb.className = 'sayx'; hb.textContent = 'Hide'; hb.onclick = () => { M.sayPref = true; applySay(); }; w.appendChild(hb);
+      const q = document.createElement('button'); q.type = 'button'; q.className = 'mx sayq'; q.id = 'mzHelpT'; q.setAttribute('aria-label', 'Show the instructions'); q.textContent = '?'; q.onclick = () => { M.sayPref = false; applySay(); }; box.querySelector('.mt').insertBefore(q, box.querySelector('.mt .mx')); }
+    applySay(); /* the instruction sits in one line over the photo, not on it */
   }
 
   // 1. what and how
@@ -164,7 +170,8 @@ export function openMeasure(done, more) { more = more || {};
     };
     const NAMES = { card: 'card', part: FR(which) ? 'Panel / Box Size' : 'board edges', holes: FR(which) ? 'tag parts' : 'screw holes', side: 'heights' };
     shell((FR(which) ? pname(which) : which === 'back' ? 'Back' : 'Side') + ': ' + (st + 1) + ' of ' + stage.length, '<canvas class="ph" id="mzC"></canvas><div class="say" id="mzSay"></div>',
-      '<div class="lst" id="mzInfo"></div><div class="mzsel" id="mzSel" hidden></div><div class="chips scroll" id="mzTags" hidden></div><div class="rowb" id="mzTagRow" hidden><button class="bt go" id="mzAddTag">+ Tag Another Part</button></div><div class="rowb" id="mzQSize" hidden><button class="bt" data-qs="w-1">W -</button><button class="bt" data-qs="w1">W +</button><button class="bt" data-qs="h-1">H -</button><button class="bt" data-qs="h1">H +</button></div><div class="rowb" id="mzHoleSize" hidden><button class="bt" data-hd="-1">Smaller</button><button class="bt" data-hd="1">Bigger</button><button class="bt" id="mzUndo">Undo</button></div><div class="rowb"><button class="bt" id="mzBack">Back</button><button class="bt go" id="mzNext">Next</button></div>');
+      '<button type="button" class="chev" id="mzChev" aria-label="Fold the panel down">&#8964;</button><div class="lst" id="mzInfo"></div><div class="mzsel" id="mzSel" hidden></div><div class="chips scroll" id="mzTags" hidden></div><div class="rowb" id="mzTagRow" hidden><button class="bt go" id="mzAddTag">+ Tag Another Part</button></div><div class="rowb" id="mzQSize" hidden><button class="bt" data-qs="w-1">W -</button><button class="bt" data-qs="w1">W +</button><button class="bt" data-qs="h-1">H -</button><button class="bt" data-qs="h1">H +</button></div><div class="rowb" id="mzHoleSize" hidden><button class="bt" data-hd="-1">Smaller</button><button class="bt" data-hd="1">Bigger</button><button class="bt" id="mzUndo">Undo</button></div><div class="rowb nav"><button class="bt" id="mzBack">Back</button><button class="bt go" id="mzNext">Next</button></div>');
+    { const mb = box.querySelector('.mb'), ch = $('mzChev'), set = () => { mb.classList.toggle('min', !!M.mbMin); ch.innerHTML = M.mbMin ? '&#8963;' : '&#8964;'; ch.setAttribute('aria-label', M.mbMin ? 'Show the panel' : 'Fold the panel down'); }; ch.onclick = () => { M.mbMin = !M.mbMin; set(); }; set(); } /* folded: only Back and Next, the whole photo to drag corners on */
     const cv = $('mzC'), g = cv.getContext('2d');
     let k = 1, ox = 0, oy = 0, hd = FR(which) ? 12 : 3;
     let Z = 1, PX = 0, PY = 0; /* pinch zoom: Z times the fitted size, PX PY = how far the photo is moved, in canvas px */
@@ -237,7 +244,7 @@ export function openMeasure(done, more) { more = more || {};
         if (pending) { const s1 = S(pending); g.strokeStyle = '#2bd46b'; g.lineWidth = 3 * d; g.beginPath(); g.arc(s1[0], s1[1], 14 * d, 0, 7); g.stroke(); g.beginPath(); g.moveTo(s1[0] - 20 * d, s1[1]); g.lineTo(s1[0] + 20 * d, s1[1]); g.moveTo(s1[0], s1[1] - 20 * d); g.lineTo(s1[0], s1[1] + 20 * d); g.stroke(); }
         if (drag && drag.kind === 'new') { const s1 = S(drag.p); g.strokeStyle = '#fff'; g.lineWidth = 2 * d; g.beginPath(); g.arc(s1[0], s1[1], 10 * d, 0, 7); g.stroke(); }
       }
-      $('mzSay').textContent = say[key];
+      { const w = box.querySelector('.sayw'); if (!(w && w.classList.contains('peek'))) $('mzSay').textContent = say[key]; } applySay(); /* a warning on show is not written over */
       const info = $('mzInfo'), m = (key === 'part' || key === 'holes') ? partMM() : null;
       const tagged = FR(which) && key === 'holes';
       if (m) info.innerHTML = '<b>' + (FR(which) ? 'Panel / Box Size' : M.name) + ': ' + m.w.toFixed(1) + ' x ' + m.h.toFixed(1) + ' mm' + (key === 'holes' ? ' (locked)' : '') + '</b>' + (key === 'holes' ? '. ' + holes.length + (tagged ? ' tagged.' : ' holes, next one ' + hd + ' mm') : '') + (M.ppm ? '<br><span style="color:#aaa">Card locked (' + (M.cardWay || 'landscape') + '): ' + M.ppm.toFixed(2) + ' px per mm, same across and down</span>' : '') +
@@ -289,7 +296,7 @@ export function openMeasure(done, more) { more = more || {};
       for (const [sx, sy] of [[-1, -1], [1, -1], [1, 1], [-1, 1]]) if (Math.hypot(p[0] - (s0[0] + sx * w), p[1] - (s0[1] + sy * hh)) < 22 * dpr) return { sx, sy, o: [s0[0] - sx * w, s0[1] - sy * hh] }; return null; };
     const touches = new Map(); let pinch = null, hold = false;
     const inBoard = (q) => { const P4 = pts.part; let c = false; for (let i = 0, j = 3; i < 4; j = i++) { const a = P4[i], b = P4[j]; if ((a[1] > q[1]) !== (b[1] > q[1]) && q[0] < (b[0] - a[0]) * (q[1] - a[1]) / (b[1] - a[1]) + a[0]) c = !c; } return c; };
-    const note = (t) => { const n = $('mzSay'); if (n) { n.textContent = t; clearTimeout(note.t); note.t = setTimeout(() => draw(), 1600); } };
+    const note = (t) => { const n = $('mzSay'), w = box.querySelector('.sayw'); if (n) { n.textContent = t; if (w) w.classList.add('peek'); clearTimeout(note.t); note.t = setTimeout(() => { if (w) w.classList.remove('peek'); draw(); }, 1600); } }; /* a warning shows even when the banner is folded */
     cv.onpointerdown = (e) => {
       e.preventDefault(); const key = stage[st], p = evp(e); try { cv.setPointerCapture(e.pointerId); } catch (er) { /* not a real pointer */ } touches.set(e.pointerId, p);
       if (touches.size === 2) { /* second finger: pinch to zoom, cancel whatever the first finger started */
@@ -340,7 +347,7 @@ export function openMeasure(done, more) { more = more || {};
       const mv = box.querySelector('.mv'), old = mv.querySelector('.pick'); if (old) old.remove();
       const el = document.createElement('div'); el.className = 'pick'; pending = pt; draw();
       el.innerHTML = '<div class="pkh"><h3>What is it?</h3><button type="button" class="pkt" data-hide="1">Hide</button><button type="button" class="pkt" data-k="">Cancel</button></div><div class="pkb">' + (M.kind && pt ? '<div class="chips"><button type="button" data-k="' + M.kind + '" aria-pressed="true">Same as last: ' + esc(KNAME(M.kind)) + '</button></div>' : '') +
-        '<h4>Quick</h4><div class="chips scroll">' + Object.keys(QK).map((q) => '<button type="button" data-k="' + q + '">' + QK[q][0] + '</button>').join('') + '</div>' + GROUPS.map((gr) => '<h4>' + gr[0] + '</h4><div class="chips scroll">' + gr[1].map((x) => '<button type="button" data-k="' + x[0] + '">' + x[1] + '</button>').join('') + '</div>').join('') + '</div>';
+        '<h4>Quick</h4><div class="chips quick">' + Object.keys(QK).map((q) => '<button type="button" data-k="' + q + '">' + QK[q][0] + '</button>').join('') + '</div>' + GROUPS.map((gr) => '<h4>' + gr[0] + '</h4><div class="chips scroll">' + gr[1].map((x) => '<button type="button" data-k="' + x[0] + '">' + x[1] + '</button>').join('') + '</div>').join('') + '</div>';
       mv.appendChild(el);
       el.onclick = (ev) => {
         const hb = ev.target.closest('[data-hide]'); if (hb) { const sm = el.classList.toggle('small'); hb.textContent = sm ? 'Show' : 'Hide'; return; } /* drop it down to see the photo */
