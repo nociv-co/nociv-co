@@ -131,6 +131,7 @@ export function codeFor(plan, title, fn, B) {
     if (N.what === 'i2sin') { if (!mic) mic = R; return; }
     if (N.what === 'jack') return; /* on the DAC, no brain pin */
     if (N.spi || N.i2c) { if (!screen) screen = { N, R, label: it.label }; return; }
+    if (N.what === 'button' && it.step && row.roles.length === 1 && row.roles[0].pin != null) { pots.push([row.roles[0].pin, tag, 'step']); return; } /* a Stepped Button: read like a knob, 25/50/75/100 */
     if (N.what === 'button') row.roles.forEach((r) => { if (r.pin != null) keys.push([r.pin, row.roles.length > 1 ? tag + ' ' + r.role : tag, 'btn']); });
     if (N.what === 'knob' && R.turn != null) pots.push([R.turn, tag, 'knob']);
     if (N.what === 'knob' && R.slide != null) pots.push([R.slide, tag, 'knob']);
@@ -151,7 +152,7 @@ export function codeFor(plan, title, fn, B) {
     '# Every press, turn and slide also prints a line like "NOCIV B1 1" for the live test.', '# Pins come from your Case Zero wiring map. Change them there and save this file again.', '',
     'import time', 'import board');
   if (keys.length || mats.length) L.push('import keypad');
-  if (pots.length) L.push('import analogio');
+  if (pots.some((p) => p[2] !== 'step')) L.push('import analogio');
   if (encs.length) L.push('import rotaryio');
   const inputs = keys.length || pots.length || encs.length || pirs.length || mats.length;
   if (has('led') || inputs || cams.length) L.push('import digitalio');
@@ -188,7 +189,8 @@ export function codeFor(plan, title, fn, B) {
   }
   L.push('def show(text):', '    if status:', '        status.text = text', '');
   if (keys.length) L.push('# ---- buttons (pressed = pin to GND, the Pico pulls it up inside) ----', 'KEYS = (' + keys.map((k) => '' + PFX + k[0]).join(', ') + ',)', 'NAMES = (' + keys.map((k) => pyStr(k[1])).join(', ') + ',)', 'keys = keypad.Keys(KEYS, value_when_pressed=False, pull=True)', '');
-  if (pots.length) L.push('# ---- knobs, sliders and sticks (0 to 100) ----', 'POTS = (' + pots.map((p) => '(analogio.AnalogIn(' + PFX + p[0] + '), ' + pyStr(p[1]) + ')').join(', ') + ',)', 'last = [-10] * len(POTS)', '');
+  if (pots.some((p) => p[2] === 'step')) L.push('# ---- Stepped Button: each press steps 1/4 -> 2/4 -> 3/4 -> 4/4 (25% -> 50% -> 75% -> 100%), read like a knob ----', 'class Stepper:', '    def __init__(self, pin):', '        self.io = digitalio.DigitalInOut(pin)', '        self.io.switch_to_input(pull=digitalio.Pull.UP)', '        self.level = 0', '        self.was = True', '', '    @property', '    def value(self):', '        now = self.io.value', '        if self.was and not now:', '            self.level = self.level % 4 + 1', '            print("NOCIV step", self.level, "/ 4")', '        self.was = now', '        return self.level * 65535 // 4', '');
+  if (pots.length) L.push('# ---- knobs, sliders and sticks (0 to 100) ----', 'POTS = (' + pots.map((p) => '(' + (p[2] === 'step' ? 'Stepper(' : 'analogio.AnalogIn(') + PFX + p[0] + '), ' + pyStr(p[1]) + ')').join(', ') + ',)', 'last = [-10] * len(POTS)', '');
   if (mats.length) { const R = mats[0].R; L.push('# ---- ' + mats[0].tag + ' 4x4 keypad: 4 row wires and 4 column wires, 16 keys ----', 'PADS = keypad.KeyMatrix(row_pins=(' + [1, 2, 3, 4].map((i) => PFX + R['row' + i]).join(', ') + '), column_pins=(' + [1, 2, 3, 4].map((i) => PFX + R['col' + i]).join(', ') + '))',
     'PAD_NAMES = ' + (sam ? '("Pad 1", "Pad 2", "Pad 3", "Mode", "Pad 4", "Pad 5", "Pad 6", "Bank", "Pad 7", "Pad 8", "Pad 9", "Record", "Pad 10", "Pad 11", "Pad 12", "Stop")' : '("1", "2", "3", "A", "4", "5", "6", "B", "7", "8", "9", "C", "*", "0", "#", "D")'), ''); }
   if (mx) L.push('# ---- 8x8 LED matrix (MAX7219): DIN ' + LB(mx.din) + ', CS ' + LB(mx.cs) + ', CLK ' + LB(mx.clk) + ' ----', 'leds = None', 'try:', '    leds = matrices.Matrix8x8(bitbangio.SPI(' + PFX + mx.clk + ', MOSI=' + PFX + mx.din + '), digitalio.DigitalInOut(' + PFX + mx.cs + '))', '    leds.brightness(3)', '    leds.fill(0)', '    leds.show()', 'except Exception as err:', '    print("NOCIV LED matrix not found yet:", err)', '');
