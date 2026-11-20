@@ -8,7 +8,7 @@ import { CARABINER_HOOK_OUTLINE_MM, CARABINER_DEFAULT_THICKNESS_MM } from './cha
 import { openMeasure, GROUPS } from './capture.js?v=26';
 import { makeBoard, boardFiles, boardSvg, zip as zipFiles } from './board.js?v=4';
 import { charParts, chSpec, charBuyList, CH_DEF, headDims, faceSpots, faceLimit, featPoly, flatParts, FEATS } from './char3d.js?v=5';
-import { micMain, planWiring, codeFor, PICO_LEFT, PICO_RIGHT, PICO_PINS, PICO_BRAINS, NEED, BOARDS, BOARD_OF } from './wiring.js?v=25';
+import { micMain, planWiring, codeFor, PICO_LEFT, PICO_RIGHT, PICO_PINS, PICO_BRAINS, NEED, BOARDS, BOARD_OF } from './wiring.js?v=26';
 
 const CZ = window.CZ, R = G.RULE, $ = (id) => document.getElementById(id);
 const esc = (s) => String(s == null ? '' : s).replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
@@ -150,7 +150,7 @@ function problems(it) {
 }
 const allProblems = () => S.items.map((it) => ({ it, list: problems(it) })).filter((x) => x.list.length);
 function numbers() { const m = {}; ['lid', 'base', 'top', 'inside'].forEach((p) => { itemsOn(p).slice().sort((a, b) => (b.y - a.y) || (a.x - b.x)).forEach((it, i) => { m[it.id] = PLET[p] + (i + 1); }); }); return m; }
-function label(it) { const n = numbers()[it.id]; return (n ? n + ' ' : '') + (PP(it) ? PP(it).short : ''); }
+function label(it) { const n = numbers()[it.id]; return (n ? n + ' ' : '') + (PP(it) ? PP(it).short : '') + (it.step ? ' (stepped)' : ''); }
 function autoPlace(it) {
   const P = PP(it), d = dims(), tries = [0, 1];
   for (let ry = 0; ry < 2; ry++) for (const r of tries) {
@@ -161,14 +161,17 @@ function autoPlace(it) {
 }
 function defaultPanel(P) { if (P.inside) return 'inside'; if (isClam() && (P.screen || P.front || P.lid)) return 'lid'; return homePanel(); } /* front: looks out of the front, like a camera or a sensor */
 // Swap part: the same kind of control, in the same spot. Wiring, code.py, Test It and the Shop all follow the new type by themselves.
-const SWAPS = [['pot', 'slider', 'encoder'], ['tact12', 'button16', 'arcade24', 'arcade30'], ['tft28', 'round128', 'oled096']];
+/* knobs, sliders, click wheels and buttons swap across types; 'step' is a Stepped Button: each press steps 1/4 -> 2/4 -> 3/4 -> 4/4, read like a knob */
+const SWAPS = [['pot', 'slider', 'encoder', 'step', 'tact12', 'button16', 'arcade24', 'arcade30'], ['tft28', 'round128', 'oled096']], BTNS = ['tact12', 'button16', 'arcade24', 'arcade30'], STEPN = 'Stepped Button (step on press 1/4 -> 2/4 -> 3/4 -> 4/4)';
 const swapGroup = (t) => SWAPS.find((g) => g.indexOf(t) > -1);
-function swapBar(it) { const g = it && it.of == null && swapGroup(it.type); if (!g) return ''; const P = PARTS();
-  return '<div class="selbar"><b>Swap part</b><select class="pin" data-swapto="' + it.id + '" aria-label="Swap part">' + g.filter((t) => P[t]).map((t) => '<option value="' + t + '"' + (t === it.type ? ' selected' : '') + '>' + esc(P[t].short) + '</option>').join('') + '</select></div>'; }
-function swapType(it, t) { if (!it || it.type === t || !PARTS()[t]) return; snapU(); const was = PP(it).short, at = [it.x, it.y, it.r || 0];
-  it.type = t; Object.keys(S.pins || {}).forEach((k) => { if (k.split(':')[0] === String(it.id)) delete S.pins[k]; }); /* its old pin choices: the new part has other pins */
+const swapCur = (it) => (it.step && BTNS.indexOf(it.type) > -1 ? 'step' : it.type);
+function swapBar(it) { const g = it && it.of == null && swapGroup(it.type); if (!g) return ''; const P = PARTS(), c = swapCur(it);
+  return '<div class="selbar"><b>Swap part</b><select class="pin" data-swapto="' + it.id + '" aria-label="Swap part">' + g.filter((t) => t === 'step' || P[t]).map((t) => '<option value="' + t + '"' + (t === c ? ' selected' : '') + '>' + esc(t === 'step' ? STEPN : P[t].short) + '</option>').join('') + '</select></div>'; }
+function swapType(it, t) { if (!it) return; let st = false; if (t === 'step') { st = true; t = BTNS.indexOf(it.type) > -1 ? it.type : 'button16'; }
+  if ((it.type === t && !!it.step === st) || !PARTS()[t]) return; snapU(); const was = label(it).replace(/^\S+ /, ''), at = [it.x, it.y, it.r || 0];
+  it.type = t; if (st) it.step = 1; else delete it.step; Object.keys(S.pins || {}).forEach((k) => { if (k.split(':')[0] === String(it.id)) delete S.pins[k]; }); /* its old pin choices: the new part has other pins */
   clampIn(it); if (problems(it).length) { const c = [it.x, it.y, it.r]; if (!placeNear(it)) { it.x = c[0]; it.y = c[1]; it.r = c[2]; } }
-  save(); render(); tag(was + ' swapped for ' + PP(it).short + (it.x === at[0] && it.y === at[1] ? (it.r === at[2] ? ', same spot' : ', same spot, turned to fit') : ', moved ' + Math.round(Math.hypot(it.x - at[0], it.y - at[1])) + ' mm to fit') + '. Pins and code follow it.'); }
+  save(); render(); tag(was + ' swapped for ' + (it.step ? 'Stepped Button' : PP(it).short) + (it.x === at[0] && it.y === at[1] ? (it.r === at[2] ? ', same spot' : ', same spot, turned to fit') : ', moved ' + Math.round(Math.hypot(it.x - at[0], it.y - at[1])) + ' mm to fit') + '. Pins and code follow it.'); }
 let LAST = null; // the part just added: the 3D box shows it in yellow
 function addPart(type) { const P = PARTS()[type]; const it = { id: ++uid, type, panel: defaultPanel(P), x: 0, y: 0, r: 0 }; S.items.push(it); autoPlace(it); if (P && P.cat === 'brain' && P.inside) snapBrain(it); if (P && P.jack) jackHole(); LAST = it.id; focusPanel(it); save(); return it; }
 // Arrange opens on the side the newest part landed on
@@ -859,7 +862,7 @@ function paneRest(t, P, c) {
   if (t === 'files') { const probs = allProblems(); return '<p class="note" style="margin:0 0 8px">No printer? A print service or a library takes these same files. To print from a USB stick, open them in your printer\'s free slicer app first: it turns them into the file your printer reads.</p>' + (S.material === 'wood' ? '' : '<div class="row"><b>File type</b>' + seg('fmt', [['stl', 'STL'], ['3mf', '3MF']], fmtOf()) + '</div>') + (S.material === 'wood' ? '' : '<div class="row"><b>Print</b>' + seg('xmode', [['solid', 'Full Solid'], ['skel', 'Skeleton Test (~20 min)']], skelMode() ? 'skel' : 'solid') + '</div>' + (skelMode() ? (() => { let e = null; try { e = estimate(); } catch (er) {} return '<p class="note" style="margin:0 0 6px">' + (e ? '<b>About ' + hm(e.sec) + ', ' + Math.round(e.grams) + ' g.</b> ' : '') + 'A 0.6 mm frame, fast as toothpicks: a 3 mm border, a 3 mm rim round every opening and screw hole, solid bands along the puzzle seams, 1.6 mm ribs 40 mm apart, and a ruler notch every 10 mm on the front edge. Print it, lay it on your parts and your box, then adjust below.</p>'; })() : '')) + '<div class="grid g2"><button class="btn red" data-act="make"' + (probs.length || !S.items.length ? ' aria-disabled="true"' : '') + '>' + (skelMode() ? 'Make the test frame' : 'Make my files') + '</button>' + (S.material === 'wood' || isPanel() ? '' : '<button class="btn" data-act="swatch">Download 15-min Fit Swatch</button>') + '</div>' + (gcodeOk() && printerRow()[5] === 'bambu' ? '<p class="note" style="margin:8px 0 0">Ready-to-print G-code is made for Marlin printers (Ender, Prusa MK, Anycubic...). For your ' + esc(printerRow()[1]) + ', open the STL in Bambu Studio, or pick another printer in 04 Print.</p>' : '') + (gcodeOk() && printerRow()[5] !== 'bambu' ? '<button class="btn dark" data-act="gcode" style="width:100%;margin-top:8px">G-code (' + esc(printerRow()[0] === 'custom' ? 'my printer' : printerRow()[1]) + ' / Marlin, PLA)</button>' + (gcodePieces() > 1 ? '<div class="chosen" style="margin:6px 0 0">' + Array.from({ length: gcodePieces() }, (_, i) => '<span data-gcp="' + i + '" style="cursor:pointer">Piece ' + (i + 1) + '</span>').join('') + '<span data-gcp="all" style="cursor:pointer;background:#1a1a1a;color:#fff">All pieces</span></div>' : '') + '<p class="note" style="margin:4px 0 0">Flat pieces need no slicer: this file goes straight on the SD card. 0.28 mm layers at 60 mm/s; the printer shows its time and progress. Marlin printers: Ender, Prusa MK, Anycubic and most others.</p>' : '') + (S.material === 'wood' ? '' : '<button class="btn" data-act="papersvg" style="width:100%;margin-top:8px">1:1 Paper Template (SVG)</button>' + adjustHtml()) + (S.material === 'wood' || isPanel() ? '' : '<p class="note" style="margin:6px 0 0">The swatch is a ' + swatchSize() + ' mm plate with ' + (isClam() && S.magnets ? 'a magnet pocket, ' : '') + 'the M3 bore, the snap pin slot and ' + esc(swatchButton().short) + ' opening, at your ' + tolOf() + ' mm clearance and ' + R.T + ' mm walls. Print it first: if they fit, the case will.</p>') + '<p class="note">' + (!S.items.length ? 'Add electronics in Brain first.' : probs.length ? '<span class="bad">Fix the electronics marked ! in Arrange first.</span>' : (S.material === 'wood' ? 'Wood: real size templates (SVG) to print at 100 percent or laser cut, plus the cut list.' : 'One file per piece, numbered, as STL or 3MF. Print the deck face down, the tray open side up.')) + '</p><div class="files" id="fileList" style="margin-top:8px"></div>' + (S.material === 'wood' ? '' : sliceGuide() + faqHtml()); } /* make, then the files, then how to slice them */
   if (t === 'wire') return wireHtml();
   if (t === 'map') return simRow() + '<p class="note keep" style="margin:0 0 6px"><b style="color:#c8412f">Red</b> = power, <b>black</b> = ground, <b style="color:#2f6fdb">blue</b> / <b style="color:#c9a200">yellow</b> / <b style="color:#2f9a5b">green</b> = signals. Every wire from every part to its pin on the brain, the same plan as the step-by-step cards and code.py.</p>' + (mapWhy() ? '<p class="note bad">' + esc(mapWhy()) + '</p>' : '');
-  if (t === 'test') return simRow() + '<p class="note keep" style="margin:0 0 6px">' + ({ macro: 'Your macro pad: each button sends a shortcut. Press them to see what the computer gets.', timer: 'Your desk timer: press the button to start or pause, hold it 1 s to reset, turn the wheel to set the minutes. It beeps at 00:00.', synth: 'Your synth: hold a button to play its note. Knob 1 moves the pitch, knob 2 the tempo of the arpeggio.', sampler: 'Your sampler: tap a pad to hear it. Mode switches Chopper, Drum and Ambient; Bank moves the notes up. Turn the Pitch and Effect wheels and move the stick while a pad rings.' }[recipeFn()] || 'Press the buttons, drag the knobs and sliders, wave at the motion sensor.') + ' This acts out what your code.py does, step by step, before you wire anything.</p>' + (mapWhy() ? '<p class="note bad">' + esc(mapWhy()) + '</p>' : '') + '<div class="list" id="tlog" style="font:600 12px/1.35 ui-monospace,Menlo,monospace">' + TEST.log.map((l) => '<div class="it" style="padding:5px 8px">' + esc(l) + '</div>').join('') + '</div><button class="btn" data-act="treset" style="margin-top:8px;padding:8px">Start the test again</button>';
+  if (t === 'test') return simRow() + '<div id="bswap">' + bswapHtml() + '</div><p class="note keep" style="margin:0 0 6px">' + ({ macro: 'Your macro pad: each button sends a shortcut. Press them to see what the computer gets.', timer: 'Your desk timer: press the button to start or pause, hold it 1 s to reset, turn the wheel to set the minutes. It beeps at 00:00.', synth: 'Your synth: hold a button to play its note. Knob 1 moves the pitch, knob 2 the tempo of the arpeggio.', sampler: 'Your sampler: tap a pad to hear it. Mode switches Chopper, Drum and Ambient; Bank moves the notes up. Turn the Pitch and Effect wheels and move the stick while a pad rings.' }[recipeFn()] || 'Press the buttons, drag the knobs and sliders, wave at the motion sensor.') + ' This acts out what your code.py does, step by step, before you wire anything.</p>' + (mapWhy() ? '<p class="note bad">' + esc(mapWhy()) + '</p>' : '') + '<div class="list" id="tlog" style="font:600 12px/1.35 ui-monospace,Menlo,monospace">' + TEST.log.map((l) => '<div class="it" style="padding:5px 8px">' + esc(l) + '</div>').join('') + '</div><button class="btn" data-act="treset" style="margin-top:8px;padding:8px">Start the test again</button>';
   if (t === 'extras') return partsRoomHtml();
   return '';
 }
@@ -968,6 +971,7 @@ function after(t) {
 
 // ---------- taps ----------
 $('pane').addEventListener('click', (e) => {
+  const bw = e.target.closest('[data-bswap]'); if (bw) { const [id, t] = bw.dataset.bswap.split(':'), it = S.items.find((i) => i.id === +id); if (it && t !== swapCur(it)) { testReset(); swapType(it, t); } return; }
   const sp = e.target.closest('[data-sim],[data-wired]'); if (sp) { if (sp.dataset.sim) simTap(sp.dataset.sim); else { S.tab[5] = curTab() === 'map' ? 'test' : 'map'; save(); render(); } return; }
   const b = e.target.closest('button, [data-sel], [data-delmine], [data-sub], [data-nsel], [data-ins], [data-mpan], [data-gcp]'); if (!b) return; const d = b.dataset;
   if (d.gcp != null) { saveGcode(d.gcp === 'all' ? null : +d.gcp); return; }
@@ -1709,7 +1713,7 @@ function wiringItems() {
   S.items.filter((i) => PP(i) && PP(i).cat !== 'brain').sort((a, b) => String(N[a.id]).localeCompare(String(N[b.id]), undefined, { numeric: true })).forEach((i) => {
     const P = PP(i);
     if (P.userCuts && P.userCuts.length) P.userCuts.forEach((u, ci) => { if (NEED[u.kind]) out.push({ key: i.id + '.' + ci, label: N[i.id] + '.' + (ci + 1) + ' ' + (KSHORT[u.kind] || u.kind), type: u.kind }); });
-    else if (NEED[i.type]) out.push({ key: String(i.id), label: N[i.id] + ' ' + P.short, type: i.type });
+    else if (NEED[i.type]) out.push({ key: String(i.id), label: N[i.id] + ' ' + P.short + (i.step ? ' (stepped)' : ''), type: i.type, step: i.step ? 1 : 0, id: i.id });
   });
   if (S.xp && S.xp.ch && S.xp.ch.servo) out.push({ key: 'chservo', label: 'C1 Arm servo', type: 'servo' }); /* the character's motorized arm is wired like any servo */
   return out;
@@ -1759,10 +1763,11 @@ function testModel() { // the parts as code.py sees them: keys in the order KEYS
     if (N.what === 'matrix8') { m.outs.push({ what: 'matrix8', pin: Rr.din, tag, label: it.label }); return; }
     if (N.what === 'i2sout') { m.outs.push({ what: 'sound', pin: Rr['bclk+lrc'], tag, label: it.label }); return; }
     if (N.what === 'i2sin' || N.what === 'jack' || !row.roles.length) return;
-    if (N.what === 'button') row.roles.forEach((r) => m.keys.push({ name: row.roles.length > 1 ? tag + ' ' + r.role : tag, pin: r.pin, label: it.label, btn: true }));
-    if (N.what === 'knob') ['turn', 'slide'].forEach((k) => { if (Rr[k] != null) m.pots.push({ name: tag, pin: Rr[k], label: it.label, kind: 'knob' }); });
+    if (N.what === 'button' && it.step && row.roles.length === 1) { m.pots.push({ name: tag, pin: row.roles[0].pin, label: it.label, kind: 'step', id: it.id }); return; } /* code.py: Stepper(), read like a knob */
+    if (N.what === 'button') row.roles.forEach((r) => m.keys.push({ name: row.roles.length > 1 ? tag + ' ' + r.role : tag, pin: r.pin, label: it.label, btn: true, id: it.id }));
+    if (N.what === 'knob') ['turn', 'slide'].forEach((k) => { if (Rr[k] != null) m.pots.push({ name: tag, pin: Rr[k], label: it.label, kind: 'knob', id: it.id }); });
     if (N.what === 'stick') { if (Rr.x != null) m.pots.push({ name: tag + ' x', pin: Rr.x, label: it.label, kind: 'x' }); if (Rr.y != null) m.pots.push({ name: tag + ' y', pin: Rr.y, label: it.label, kind: 'y' }); if (Rr.press != null) m.keys.push({ name: tag + ' press', pin: Rr.press, label: it.label }); }
-    if (N.what === 'wheel') { m.encs.push({ name: tag, pin: Rr['clk+dt'], label: it.label }); if (Rr.press != null) m.keys.push({ name: tag + ' press', pin: Rr.press, label: it.label }); }
+    if (N.what === 'wheel') { m.encs.push({ name: tag, pin: Rr['clk+dt'], label: it.label, id: it.id }); if (Rr.press != null) m.keys.push({ name: tag + ' press', pin: Rr.press, label: it.label }); }
     if (['led', 'ring', 'sound', 'servo'].indexOf(N.what) > -1) m.outs.push({ what: N.what, pin: row.roles[0].pin, tag, label: it.label }); });
   return m;
 }
@@ -1823,19 +1828,20 @@ function presetAct(fn, m, h, down) {
       clearInterval(TEST.arp); if (m.pots.length > 1) TEST.arp = setInterval(() => { TEST.step++; synthOn(freq()); }, 60000 / (TEST.bpm || 120) / 2);
       return k.name + ' pressed -> GP' + k.pin + ' LOW -> plays ' + NOTE[ni % 8] + ' ' + f + ' Hz'; }
     if (h.kind === 'pot') { const v = TEST.val[h.i] || 0, p = m.pots[h.i]; if (Math.abs(v - (TEST.last[h.i] == null ? -10 : TEST.last[h.i])) < 2) return ''; TEST.last[h.i] = v;
-      if (h.i === 0) { TEST.tr = Math.floor(v * 24 / 100) - 12; if (TEST.note != null) synthOn(freq()); return p.name + ' turned -> pitch ' + (TEST.tr > 0 ? '+' : '') + TEST.tr + ' semitones'; }
-      if (h.i === 1) { TEST.bpm = 60 + Math.floor(v * 180 / 100); if (TEST.arp) { clearInterval(TEST.arp); TEST.arp = setInterval(() => { TEST.step++; synthOn(freq()); }, 60000 / TEST.bpm / 2); } return p.name + ' turned -> tempo ' + TEST.bpm + ' bpm'; } }
+      if (h.i === 0) { TEST.tr = Math.floor(v * 24 / 100) - 12; if (TEST.note != null) synthOn(freq()); return p.name + (p.kind === 'step' ? ' pressed -> step ' + v / 25 + '/4' : ' turned') + ' -> pitch ' + (TEST.tr > 0 ? '+' : '') + TEST.tr + ' semitones'; }
+      if (h.i === 1) { TEST.bpm = 60 + Math.floor(v * 180 / 100); if (TEST.arp) { clearInterval(TEST.arp); TEST.arp = setInterval(() => { TEST.step++; synthOn(freq()); }, 60000 / TEST.bpm / 2); } return p.name + (p.kind === 'step' ? ' pressed -> step ' + v / 25 + '/4' : ' turned') + ' -> tempo ' + TEST.bpm + ' bpm'; } }
     return null;
   }
   return null;
 }
 function testAct(h, down) {
   const m = testModel(), has = (w) => m.outs.find((o) => o.what === w); let s = '';
+  if (down) bsel(h.kind === 'key' ? m.keys[h.i] : h.kind === 'pot' ? m.pots[h.i] : h.kind === 'enc' ? m.encs[h.i] : null);
   const fnr = recipeFn(); if (fnr) { const out = presetAct(fnr, m, h, down); if (out !== null) { if (out) testLog(out); draw(); return; } }
   if (h.kind === 'key') { const k = m.keys[h.i];
     if (down) { s = k.name + ' pressed -> GP' + k.pin + ' LOW' + show(m, k.name + ' pressed'); TEST.lamp = true; if (has('led')) { TEST.led = !TEST.led; s += ' -> LED ' + (TEST.led ? 'on' : 'off'); } if (has('ring')) { TEST.ring = true; s += ' -> ring red'; } if (has('sound')) { const f = 330 + 60 * h.i; tone(f); s += ' -> speaker ' + f + ' Hz'; } if (has('servo') && !m.pots.length) { TEST.angle = TEST.angle == null || TEST.angle < 45 ? 90 : 0; s += ' -> servo ' + TEST.angle + ' deg'; } TEST.held = h; }
     else { s = k.name + ' released -> GP' + k.pin + ' HIGH'; TEST.lamp = false; if (has('ring')) TEST.ring = false; toneOff(); TEST.held = null; } }
-  if (h.kind === 'pot') { const p = m.pots[h.i], v = TEST.val[h.i] || 0; if (Math.abs(v - (TEST.last[h.i] == null ? -10 : TEST.last[h.i])) < 2) return; TEST.last[h.i] = v; s = p.name + ' turned -> GP' + p.pin + ' reads ' + v + show(m, p.name + ' ' + v); TEST.lamp = !TEST.lamp; if (has('servo') && h.i === 0) { TEST.angle = Math.floor(v * 180 / 100); /* code.py: value * 180 // 100 */ s += ' -> servo ' + TEST.angle + ' deg'; } }
+  if (h.kind === 'pot') { const p = m.pots[h.i], v = TEST.val[h.i] || 0; if (Math.abs(v - (TEST.last[h.i] == null ? -10 : TEST.last[h.i])) < 2) return; TEST.last[h.i] = v; s = p.name + (p.kind === 'step' ? ' pressed -> step ' + v / 25 + '/4 -> GP' + p.pin + ' reads ' + v + show(m, p.name + ' ' + v / 25 + '/4') : ' turned -> GP' + p.pin + ' reads ' + v + show(m, p.name + ' ' + v)); TEST.lamp = !TEST.lamp; if (has('servo') && h.i === 0) { TEST.angle = Math.floor(v * 180 / 100); /* code.py: value * 180 // 100 */ s += ' -> servo ' + TEST.angle + ' deg'; } }
   if (h.kind === 'enc') { const e = m.encs[h.i]; TEST.pos[h.i] = (TEST.pos[h.i] || 0) + h.dir; s = e.name + ' turned ' + (h.dir > 0 ? 'right' : 'left') + ' -> ' + LABP(e.pin) + '+' + LABP(e.pin + 1) + ' count ' + TEST.pos[h.i] + show(m, e.name + ' ' + TEST.pos[h.i]); TEST.lamp = !TEST.lamp; }
   if (h.kind === 'pir') { const p = m.pirs[h.i]; TEST.pir[h.i] = !TEST.pir[h.i]; s = p.tag + (TEST.pir[h.i] ? ' sees motion -> ' + LABP(p.pin) + ' HIGH' : ' still -> ' + LABP(p.pin) + ' LOW') + show(m, p.tag + (TEST.pir[h.i] ? ' motion' : ' still')); TEST.lamp = !!TEST.pir[h.i]; }
   if (h.kind === 'tof') { const t = m.tofs[h.i], v = TEST.dist[h.i] || 300; s = t.tag + ' measures ' + v + ' mm (I2C ' + (BRDX().i2c || []).map(LABP).join('/') + ')' + show(m, t.tag + ' ' + v + ' mm'); }
@@ -1859,7 +1865,8 @@ function drawTest(W, H) {
   cells.forEach((c, n) => { const cx = 8 * d + (n % cols) * cw, cy = y + Math.floor(n / cols) * ch, mx = cx + cw / 2, my = cy + ch * 0.45, r = Math.min(cw, ch) * 0.24;
     font(9.5, 700); g.textAlign = 'center'; g.fillStyle = '#1a1a1a'; g.fillText(c.label.slice(0, 16), mx, cy + ch - 6 * d);
     if (c.kind === 'key') { const on = TEST.held && TEST.held.kind === 'key' && TEST.held.i === c.i; g.fillStyle = on ? '#c8412f' : '#1a1a1a'; g.beginPath(); g.arc(mx, my, r, 0, 7); g.fill(); TEST.hits.push({ kind: 'key', i: c.i, x: mx - r, y: my - r, w: 2 * r, h: 2 * r }); }
-    if (c.kind === 'pot' || c.kind === 'tof') { const v = c.kind === 'pot' ? TEST.val[c.i] || 0 : ((TEST.dist[c.i] || 300) - 30) / 11.7, x0 = cx + 10 * d, x1 = cx + cw - 10 * d; g.strokeStyle = '#1a1a1a'; g.lineWidth = 4 * d; g.beginPath(); g.moveTo(x0, my); g.lineTo(x1, my); g.stroke(); const hx = x0 + (x1 - x0) * v / 100; g.fillStyle = '#c8412f'; g.beginPath(); g.arc(hx, my, 8 * d, 0, 7); g.fill(); font(9, 700); g.fillStyle = '#6f6a60'; g.fillText(c.kind === 'pot' ? String(TEST.val[c.i] || 0) : (TEST.dist[c.i] || 300) + ' mm', mx, my - 12 * d); TEST.hits.push({ kind: c.kind, i: c.i, x: x0 - 8 * d, y: my - 14 * d, w: x1 - x0 + 16 * d, h: 28 * d, x0, x1 }); }
+    if (c.kind === 'pot' && m.pots[c.i].kind === 'step') { const lv = (TEST.val[c.i] || 0) / 25; g.fillStyle = '#1a1a1a'; g.beginPath(); g.arc(mx, my, r, 0, 7); g.fill(); for (let q = 0; q < 4; q++) { g.fillStyle = q < lv ? '#c8412f' : '#cfc9bb'; g.fillRect(mx - 2 * r + q * r, my + r + 3 * d, r * 0.8, 4 * d); } font(9, 700); g.fillStyle = '#fff'; g.fillText(lv ? lv + '/4' : '-', mx, my + 3 * d); TEST.hits.push({ kind: 'pot', step: true, i: c.i, x: mx - r, y: my - r, w: 2 * r, h: 2 * r }); }
+    else if (c.kind === 'pot' || c.kind === 'tof') { const v = c.kind === 'pot' ? TEST.val[c.i] || 0 : ((TEST.dist[c.i] || 300) - 30) / 11.7, x0 = cx + 10 * d, x1 = cx + cw - 10 * d; g.strokeStyle = '#1a1a1a'; g.lineWidth = 4 * d; g.beginPath(); g.moveTo(x0, my); g.lineTo(x1, my); g.stroke(); const hx = x0 + (x1 - x0) * v / 100; g.fillStyle = '#c8412f'; g.beginPath(); g.arc(hx, my, 8 * d, 0, 7); g.fill(); font(9, 700); g.fillStyle = '#6f6a60'; g.fillText(c.kind === 'pot' ? String(TEST.val[c.i] || 0) : (TEST.dist[c.i] || 300) + ' mm', mx, my - 12 * d); TEST.hits.push({ kind: c.kind, i: c.i, x: x0 - 8 * d, y: my - 14 * d, w: x1 - x0 + 16 * d, h: 28 * d, x0, x1 }); }
     if (c.kind === 'enc') { [-1, 1].forEach((dir) => { const bx2 = mx + dir * 22 * d; g.fillStyle = '#1a1a1a'; g.beginPath(); g.arc(bx2, my, 13 * d, 0, 7); g.fill(); g.fillStyle = '#fff'; font(13); g.fillText(dir < 0 ? '<' : '>', bx2, my + 5 * d); TEST.hits.push({ kind: 'enc', i: c.i, dir, x: bx2 - 13 * d, y: my - 13 * d, w: 26 * d, h: 26 * d }); }); font(10); g.fillStyle = '#1a1a1a'; g.fillText(String(TEST.pos[c.i] || 0), mx, my + 4 * d); }
     if (c.kind === 'pir') { const on = !!TEST.pir[c.i]; g.fillStyle = on ? '#fff3b0' : '#fff'; g.strokeStyle = '#1a1a1a'; g.lineWidth = 2 * d; g.beginPath(); g.arc(mx, my + r * 0.4, r * 1.1, Math.PI, 0); g.closePath(); g.fill(); g.stroke(); TEST.hits.push({ kind: 'pir', i: c.i, x: mx - r * 1.2, y: my - r, w: r * 2.4, h: r * 2 }); }
     if (c.kind === 'cam') { g.fillStyle = TEST.cam ? '#2f9a5b' : '#1a1a1a'; g.beginPath(); g.arc(mx, my, r, 0, 7); g.fill(); g.fillStyle = '#8fd3ff'; g.beginPath(); g.arc(mx, my, r * 0.45, 0, 7); g.fill(); TEST.hits.push({ kind: 'cam', i: c.i, x: mx - r, y: my - r, w: 2 * r, h: 2 * r }); }
@@ -1871,13 +1878,19 @@ function drawTest(W, H) {
   tag(why || 'Test it: this acts out your code.py');
 }
 function testDown(e) { const [x, y] = pcx(e), h = TEST.hits.find((q) => x >= q.x && x <= q.x + q.w && y >= q.y && y <= q.y + q.h); if (!h) return; try { cv.setPointerCapture(e.pointerId); } catch (er) {}
-  if (h.kind === 'pot' || h.kind === 'tof') { TEST.drag = h; testMove(e); return; } if (h.kind === 'enc') { testAct(h, true); return; } if (h.kind === 'pir' || h.kind === 'cam') { testAct(h, true); return; } testAct(h, true); }
+  if (h.step) { stepPress(h); return; } if (h.kind === 'pot' || h.kind === 'tof') { TEST.drag = h; testMove(e); return; } if (h.kind === 'enc') { testAct(h, true); return; } if (h.kind === 'pir' || h.kind === 'cam') { testAct(h, true); return; } testAct(h, true); }
+// Swap in Brain: tap a knob, slider, click wheel or button in the test, then trade it here without leaving Brain. Arrange nudges it if it no longer fits.
+let BSEL = null;
+function bswapHtml() { const it = BSEL != null && S.items.find((i) => i.id === BSEL); if (!it || swapGroup(it.type) !== SWAPS[0]) return ''; const c = swapCur(it);
+  return '<div class="selbar"><b>Swap ' + esc(label(it).split(' ')[0]) + '</b>' + [['pot', 'Knob'], ['slider', 'Slider'], ['step', 'Stepped'], [BTNS.indexOf(it.type) > -1 ? it.type : 'button16', 'Button']].map(([t, n]) => '<button data-bswap="' + it.id + ':' + t + '"' + (t === c ? ' aria-pressed="true" style="background:#1a1a1a;color:#fff"' : '') + '>' + n + '</button>').join('') + '</div>'; }
+function bsel(ent) { if (!ent || ent.id == null) return; BSEL = ent.id; const el = $('bswap'); if (el) el.innerHTML = bswapHtml(); }
+function stepPress(h) { TEST.val[h.i] = ((TEST.val[h.i] || 0) / 25 % 4 + 1) * 25; TEST.last[h.i] = null; testAct(h, true); } /* a Stepped Button: 25% -> 50% -> 75% -> 100% -> 25% */
 function testMove(e) { const h = TEST.drag; if (!h) return; const [x] = pcx(e), v = Math.max(0, Math.min(100, Math.round((x - h.x0) / (h.x1 - h.x0) * 100))); if (h.kind === 'pot') { TEST.val[h.i] = v; testAct(h, true); } else { TEST.dist[h.i] = Math.round(30 + v * 11.7); draw(); } }
 // the Brain stage: tap a group of parts below and the test acts them out; Wired flips the stage to the wiring map
 const SIMG = [['pads', 'Pads'], ['btns', 'Buttons'], ['knobs', 'Knobs'], ['stick', 'Stick'], ['sense', 'Sensors']], SIMN = {};
 function simList(k) { const m = testModel(), L = [];
   if (k === 'pads') m.keys.forEach((q, i) => { if (q.pad != null) L.push({ kind: 'key', i }); });
-  if (k === 'btns') m.keys.forEach((q, i) => { if (q.pad == null) L.push({ kind: 'key', i }); });
+  if (k === 'btns') { m.keys.forEach((q, i) => { if (q.pad == null) L.push({ kind: 'key', i }); }); m.pots.forEach((q, i) => { if (q.kind === 'step') L.push({ kind: 'pot', step: true, i }); }); }
   if (k === 'knobs') { m.pots.forEach((q, i) => { if (q.kind === 'knob') L.push({ kind: 'pot', i }); }); m.encs.forEach((q, i) => L.push({ kind: 'enc', i, dir: 1 })); }
   if (k === 'stick') m.pots.forEach((q, i) => { if (q.kind === 'x' || q.kind === 'y') L.push({ kind: 'pot', i }); });
   if (k === 'sense') { m.pirs.forEach((q, i) => L.push({ kind: 'pir', i })); m.tofs.forEach((q, i) => L.push({ kind: 'tof', i })); m.cams.forEach((q, i) => L.push({ kind: 'cam', i })); }
@@ -1888,6 +1901,7 @@ function simTap(k) { const L = simList(k); if (!L.length) { tag('No ' + k.replac
   if (curTab() !== 'test') { S.tab[5] = 'test'; save(); render(); }
   const h = L[(SIMN[k] = ((SIMN[k] || 0) + 1)) % L.length];
   if (h.kind === 'key') { TEST.held = h; testAct(h, true); setTimeout(() => { if (TEST.held === h || (TEST.held && TEST.held.kind === 'key' && TEST.held.i === h.i)) testAct(h, false); else draw(); }, 280); return; }
+  if (h.step) { stepPress(h); return; }
   if (h.kind === 'pot') { TEST.val[h.i] = ((TEST.val[h.i] || 0) + 25) % 125 > 100 ? 0 : ((TEST.val[h.i] || 0) + 25) % 125; testAct(h, true); return; }
   if (h.kind === 'tof') TEST.dist[h.i] = (TEST.dist[h.i] || 300) >= 1000 ? 100 : (TEST.dist[h.i] || 300) + 300;
   testAct(h, true); }
