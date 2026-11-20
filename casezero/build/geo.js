@@ -59,8 +59,8 @@ export function outline(style, W, D) {
   return [rrect(0, 0, W, D, 6)];
 }
 // Where the screw posts go: inside the walls, near the far left, right, top and bottom of the outline.
-export function postSpots(out, n) {
-  const inner = offset(out, -(RULE.T + RULE.POSTR + 0.4)), b = bbox(inner), pts = [];
+export function postSpots(out, n, inset) { /* inset: mm further in (or out, below 0) from where the posts would go, after a test fit */
+  const inner = offset(out, -(RULE.T + RULE.POSTR + 0.4 + Math.max(-0.4, inset || 0))), b = bbox(inner), pts = [];
   if (!inner.length) return pts;
   const ring = inner.reduce((a, p) => (p.length > a.length ? p : a), inner[0]);
   const targets = [[b.x0, b.y0], [b.x1, b.y0], [b.x1, b.y1], [b.x0, b.y1]];
@@ -103,7 +103,7 @@ export function buildHalf(o) {
   // o: { style, W, D, H, parts:[{P,x,y,r}], inside:[{P,x,y,r}], hinge, magnets, port, joins, deckOnTop }
   const R = RULE, out = outline(o.style, o.W, o.D);
   const innerWall = offset(out, -R.T), deckPoly = offset(out, -(R.T + R.CLR));
-  const posts = postSpots(out, o.W * o.D > 30000 ? 6 : 4);
+  const posts = postSpots(out, o.W * o.D > 30000 ? 6 : 4, o.inset);
   const H = o.H, deckZ = H - R.LT - (o.recess || 0); // a recess leaves room for caps and knobs when the lid closes
   const tray = [], deck = [], extra = [];
   const inlay = [], stick = [], D = 0.6; // D = how deep a mark or texture goes (3 layers at 0.2 mm)
@@ -185,7 +185,7 @@ export function buildHalf(o) {
       cuts.push(...diff([circle(q.x, q.y, 7.4, 36)], union([pad, rect(q.x - 2.2, q.y - 9, q.x + 2.2, q.y)])));
       thin.push(pad, arm); nubs.push(circle(q.x, q.y, 1.6, 16)); return;
     }
-    const cs = cutShape(q.P, q.x, q.y, q.r || 0);
+    const cs = cutShape(q.P, q.x, q.y, q.r || 0, (q.fit || 0) / 2); /* fit: mm wider (or narrower) after a test print */
     if (q.mt === 'top') { cuts.push(circle(q.x, q.y, 3.2, 24)); return; } /* on top: the part sits on the deck, only its wires go through */
     cuts.push(...cs);
     if (q.mt === 'raised') rims.push(...offset(cs, 3)); else if (q.mt === 'sunk') sunk.push(...offset(cs, 3));
