@@ -115,7 +115,7 @@ export function openMeasure(done, more) { more = more || {};
     const label = FR(which) ? pname(which) : which === 'back' ? 'Back (flipped like a page)' : 'Side';
     shell(label, '<video playsinline muted autoplay></video><svg class="ov" id="mzOv"></svg><div class="say" id="mzSay">Hold the phone flat over the card and the part</div>',
       '<button class="shut" id="mzShut" aria-label="Take the photo"></button><div class="rowb"><button class="bt" id="mzCamBack">Back</button><label class="bt" style="position:relative">Use a photo instead<input type="file" accept="image/*" id="mzFile2" style="position:absolute;inset:0;opacity:0"></label></div>');
-    $('mzCamBack').onclick = () => { stopCam(); if (M.shots[which]) mark(which, FR(which) ? 2 : 1); else if (M.shots.front && M.shots.front.mm) hub(); else intro(); };
+    $('mzCamBack').onclick = () => { stopCam(); if (M.shots[which]) mark(which, FR(which) ? 99 : 1); else if (M.shots.front && M.shots.front.mm) hub(); else intro(); };
     $('mzFile2').onchange = (e) => { const f = e.target.files[0]; if (f) { stopCam(); fromFile(f, which); } };
     const v = box.querySelector('video');
     try { M.stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: { ideal: 'environment' }, width: { ideal: 1920 }, height: { ideal: 1440 } }, audio: false }); v.srcObject = M.stream; }
@@ -154,23 +154,26 @@ export function openMeasure(done, more) { more = more || {};
   // 3. drag corners, tap holes
   function mark(which, startAt) {
     const shot = M.shots[which], img = shot.img;
-    const stage = which === 'side' ? ['card', 'side'] : ['card', 'part', 'holes'];
+    const stage = which === 'side' ? ['card', 'side'] : FR(which) ? ['card', 'part', 'lip', 'holes'] : ['card', 'part', 'holes']; /* lip: the outer rim, optional */
     let st = Math.min(stage.length - 1, startAt || 0), pts = {}, sel = -1;
     const W0 = img.width, H0 = img.height;
     { const cw = Math.min(W0, H0) * 0.42, ch = cw * CARD[1] / CARD[0], cx = W0 / 2, cy = H0 / 2; /* centered, upright: 1-2 on the top edge, 3-4 on the bottom, card proportions */
       pts.card = shot.card || [[cx - cw / 2, cy - ch / 2], [cx + cw / 2, cy - ch / 2], [cx + cw / 2, cy + ch / 2], [cx - cw / 2, cy + ch / 2]]; }
     pts.part = shot.part || [[W0 * 0.12, H0 * 0.12], [W0 * 0.88, H0 * 0.12], [W0 * 0.88, H0 * 0.88], [W0 * 0.12, H0 * 0.88]];
+    pts.lip = shot.lip ? shot.lip.map((p) => p.slice()) : null; /* set from the opening when you reach the lip step */
+    const lipFrom = () => { const P4 = pts.part, cx = (P4[0][0] + P4[1][0] + P4[2][0] + P4[3][0]) / 4, cy = (P4[0][1] + P4[1][1] + P4[2][1] + P4[3][1]) / 4; return P4.map(([x, y]) => [cx + (x - cx) * 1.08, cy + (y - cy) * 1.08]); };
     pts.side = shot.side || [[W0 * 0.5, H0 * 0.6], [W0 * 0.9, H0 * 0.6], [W0 * 0.7, H0 * 0.45], [W0 * 0.7, H0 * 0.7]]; /* 1-2 the board's top face, 3 top of the tallest part, 4 the lowest thing under the board */
     const holes = shot.holes || [];
     const say = {
-      card: 'Move the 4 orange dots onto the card: 1 and 2 on its top edge, 3 and 4 on the bottom, until the white outline sits on its edges. Next locks the scale.',
-      part: FR(which) ? 'Panel / Box Size: the 4 green dots onto the corners of your panel or box opening. Next locks the size.' : 'Now the 4 green dots onto the corners of your board. Move slowly for small steps.',
+      card: 'Move the 4 orange dots onto the card: 1 and 2 on its top edge, 3 and 4 on the bottom, until the white outline sits on its edges. Next locks the scale. Tip: lay the card flat in the same plane as the box opening (inside the box if you can), so depth does not change the scale.',
+      lip: 'Optional: the 4 blue dots on the outside corners of the rim or lip round the opening, for its flange width. No lip? Tap No lip, skip.',
+      part: FR(which) ? 'Inner Box Opening: the 4 green dots onto the corners of the opening your panel drops into. Next locks the size.' : 'Now the 4 green dots onto the corners of your board. Move slowly for small steps.',
       holes: FR(which) ? '+ Tag Another Part, then drag it into place. Drag a green corner, or W and H, to fit it. The panel size stays locked.' : 'Press on each screw hole, slide until the cross is on it, let go.',
       side: 'Green line on the top face of the board (the side with the buttons). Yellow dot on top of the tallest part. Blue dot on the lowest thing underneath (pins, solder, wires).'
     };
-    const NAMES = { card: 'card', part: FR(which) ? 'Panel / Box Size' : 'board edges', holes: FR(which) ? 'tag parts' : 'screw holes', side: 'heights' };
+    const NAMES = { card: 'card', lip: 'Outer Rim / Lip (optional)', part: FR(which) ? 'Inner Box Opening' : 'board edges', holes: FR(which) ? 'tag parts' : 'screw holes', side: 'heights' };
     shell((FR(which) ? pname(which) : which === 'back' ? 'Back' : 'Side') + ': ' + (st + 1) + ' of ' + stage.length, '<canvas class="ph" id="mzC"></canvas><div class="say" id="mzSay"></div>',
-      '<button type="button" class="chev" id="mzChev" aria-label="Fold the panel down">&#8964;</button><div class="lst" id="mzInfo"></div><div class="mzsel" id="mzSel" hidden></div><div class="chips scroll" id="mzTags" hidden></div><div class="rowb" id="mzTagRow" hidden><button class="bt go" id="mzAddTag">+ Tag Another Part</button></div><div class="rowb" id="mzQSize" hidden><button class="bt" data-qs="w-1">W -</button><button class="bt" data-qs="w1">W +</button><button class="bt" data-qs="h-1">H -</button><button class="bt" data-qs="h1">H +</button></div><div class="rowb" id="mzHoleSize" hidden><button class="bt" data-hd="-1">Smaller</button><button class="bt" data-hd="1">Bigger</button><button class="bt" id="mzUndo">Undo</button></div><div class="rowb nav"><button class="bt" id="mzBack">Back</button><button class="bt go" id="mzNext">Next</button></div>');
+      '<button type="button" class="chev" id="mzChev" aria-label="Fold the panel down">&#8964;</button><div class="lst" id="mzInfo"></div><div class="mzsel" id="mzSel" hidden></div><div class="chips scroll" id="mzTags" hidden></div><div class="rowb" id="mzLipRow" hidden><button class="bt" id="mzNoLip">No lip, skip</button></div><details id="mzCal" hidden style="font:600 13px/1.35 inherit;color:#ddd"><summary style="cursor:pointer;font-weight:800;color:#fff">Have a ruler or calipers? (Optional)</summary><ol style="margin:6px 0;padding-left:20px"><li>Close the jaws and press ZERO.</li><li>Use the big bottom jaws for outside edges, or the small top blades for inside walls.</li><li>Type the mm reading here to lock exact scale.</li></ol><div class="rowb"><select id="mzCalAx" style="height:40px;border-radius:10px;background:#000;color:#fff;border:2px solid #fff;padding:0 6px"><option value="w">Width</option><option value="h">Height</option></select><input class="nm" id="mzCalV" type="number" inputmode="decimal" step="0.01" placeholder="mm" style="flex:1;min-width:0;height:40px"><button class="bt" id="mzCalGo" style="flex:none;padding:10px 14px">Lock</button></div></details><div class="rowb" id="mzTagRow" hidden><button class="bt go" id="mzAddTag">+ Tag Another Part</button></div><div class="rowb" id="mzQSize" hidden><button class="bt" data-qs="w-1">W -</button><button class="bt" data-qs="w1">W +</button><button class="bt" data-qs="h-1">H -</button><button class="bt" data-qs="h1">H +</button></div><div class="rowb" id="mzHoleSize" hidden><button class="bt" data-hd="-1">Smaller</button><button class="bt" data-hd="1">Bigger</button><button class="bt" id="mzUndo">Undo</button></div><div class="rowb nav"><button class="bt" id="mzBack">Back</button><button class="bt go" id="mzNext">Next</button></div>');
     { const mb = box.querySelector('.mb'), ch = $('mzChev'), set = () => { mb.classList.toggle('min', !!M.mbMin); ch.innerHTML = M.mbMin ? '&#8963;' : '&#8964;'; ch.setAttribute('aria-label', M.mbMin ? 'Show the panel' : 'Fold the panel down'); }; ch.onclick = () => { M.mbMin = !M.mbMin; set(); }; set(); } /* folded: only Back and Next, the whole photo to drag corners on */
     const cv = $('mzC'), g = cv.getContext('2d');
     let k = 1, ox = 0, oy = 0, hd = FR(which) ? 12 : 3;
@@ -182,12 +185,13 @@ export function openMeasure(done, more) { more = more || {};
     // so a card stood on end maps 1-2 to 53.98 mm. Mapping the long edge to 85.6 keeps one scale for x and y: a tall lid stays tall.
     function cardDims() { const q = pts.card, a = (dist(q[0], q[1]) + dist(q[3], q[2])) / 2, b = (dist(q[0], q[3]) + dist(q[1], q[2])) / 2; return a >= b ? [CARD[0], CARD[1]] : [CARD[1], CARD[0]]; }
     function cardPpm() { const q = pts.card, a = (dist(q[0], q[1]) + dist(q[3], q[2])) / 2, b = (dist(q[0], q[3]) + dist(q[1], q[2])) / 2; return (Math.max(a, b) / CARD[0] + Math.min(a, b) / CARD[1]) / 2; } /* one px per mm, from both edges */
-    function H() { const [cw, ch] = cardDims(); return homography(pts.card, [[0, 0], [cw, 0], [cw, ch], [0, ch]]); }
+    function H() { const [cw, ch] = cardDims(), h = homography(pts.card, [[0, 0], [cw, 0], [cw, ch], [0, ch]]), k = shot.scale || 1; return h ? (p) => { const q = h(p); return [q[0] * k, q[1] * k]; } : null; } /* 4 corners undo the tilt (a homography); a ruler or caliper reading can fine-tune the scale */
     function partMM() {
       const h = H(); if (!h) return null; const q = pts.part.map(h);
       const w = (dist(q[0], q[1]) + dist(q[3], q[2])) / 2, hh = (dist(q[0], q[3]) + dist(q[1], q[2])) / 2;
       return { q, w, h: hh, map: h };
     }
+    function lipMM() { const h = H(), L = pts.lip || shot.lip; if (!h || !L) return null; const q = L.map(h); return { w: (dist(q[0], q[1]) + dist(q[3], q[2])) / 2, h: (dist(q[0], q[3]) + dist(q[1], q[2])) / 2 }; }
     function holeMM(p) { // hole position in part coords (mm from part center, x right, y up)
       const m = partMM(); if (!m) return [0, 0];
       const P = m.map(p), q = m.q, c = [(q[0][0] + q[1][0] + q[2][0] + q[3][0]) / 4, (q[0][1] + q[1][1] + q[2][1] + q[3][1]) / 4];
@@ -211,9 +215,11 @@ export function openMeasure(done, more) { more = more || {};
       if (!document.body.contains(cv) || !$('mzSay')) return; // this screen is gone
       g.clearRect(0, 0, cv.width, cv.height); g.drawImage(img, ox, oy, W0 * k, H0 * k);
       const key = stage[st], d = Math.min(2, devicePixelRatio || 1);
+      if (key === 'lip' && !pts.lip) pts.lip = lipFrom(); /* back into the lip step: start from the opening */
       const poly = (arr, col, close) => { g.beginPath(); arr.forEach((p, i) => { const s = S(p); i ? g.lineTo(s[0], s[1]) : g.moveTo(s[0], s[1]); }); if (close) g.closePath(); g.strokeStyle = col; g.lineWidth = 3 * d; g.stroke(); arr.forEach((p, i) => { const s = S(p); g.beginPath(); g.arc(s[0], s[1], 13 * d, 0, 7); g.fillStyle = col; g.globalAlpha = .35; g.fill(); g.globalAlpha = 1; g.lineWidth = 3 * d; g.stroke(); g.fillStyle = '#fff'; g.font = '800 ' + 12 * d + 'px Arial'; g.textAlign = 'center'; g.fillText(String(i + 1), s[0], s[1] + 4 * d); }); };
       if (stage.indexOf('card') > -1) { if (key !== 'card') g.globalAlpha = 0.35; poly(pts.card, '#ff9a2b', true); g.globalAlpha = 1; /* locked: faded, so it does not get in the way of the tags */ if (key === 'card') { const ol = cardOutline(); if (ol) { g.beginPath(); ol.forEach((q2, i) => { const s2 = S(q2); i ? g.lineTo(s2[0], s2[1]) : g.moveTo(s2[0], s2[1]); }); g.closePath(); g.strokeStyle = '#fff'; g.lineWidth = 2 * d; g.stroke(); } } }
-      if (key === 'part' || key === 'holes') poly(pts.part, '#2bd46b', true);
+      if (key === 'part' || key === 'holes' || key === 'lip') poly(pts.part, '#2bd46b', true);
+      if (key === 'lip' && pts.lip) poly(pts.lip, '#5aa9ff', true);
       if (key === 'side') {
         const P4 = pts.side, a = S(P4[0]), b = S(P4[1]), ux = b[0] - a[0], uy = b[1] - a[1], ul = Math.hypot(ux, uy) || 1, ex = ux / ul * 4000, ey = uy / ul * 4000;
         g.setLineDash([8 * d, 6 * d]); g.strokeStyle = '#2bd46b'; g.lineWidth = 2 * d; g.beginPath(); g.moveTo(a[0] - ex, a[1] - ey); g.lineTo(b[0] + ex, b[1] + ey); g.stroke(); g.setLineDash([]);
@@ -245,9 +251,9 @@ export function openMeasure(done, more) { more = more || {};
         if (drag && drag.kind === 'new') { const s1 = S(drag.p); g.strokeStyle = '#fff'; g.lineWidth = 2 * d; g.beginPath(); g.arc(s1[0], s1[1], 10 * d, 0, 7); g.stroke(); }
       }
       { const w = box.querySelector('.sayw'); if (!(w && w.classList.contains('peek'))) $('mzSay').textContent = say[key]; } applySay(); /* a warning on show is not written over */
-      const info = $('mzInfo'), m = (key === 'part' || key === 'holes') ? partMM() : null;
+      const info = $('mzInfo'), m = (key === 'part' || key === 'holes' || key === 'lip') ? partMM() : null;
       const tagged = FR(which) && key === 'holes';
-      if (m) info.innerHTML = '<b>' + (FR(which) ? 'Panel / Box Size' : M.name) + ': ' + m.w.toFixed(1) + ' x ' + m.h.toFixed(1) + ' mm' + (key === 'holes' ? ' (locked)' : '') + '</b>' + (key === 'holes' ? '. ' + holes.length + (tagged ? ' tagged.' : ' holes, next one ' + hd + ' mm') : '') + (M.ppm ? '<br><span style="color:#aaa">Card locked (' + (M.cardWay || 'landscape') + '): ' + M.ppm.toFixed(2) + ' px per mm, same across and down</span>' : '') +
+      if (m) info.innerHTML = '<b>' + (FR(which) ? 'Inner Box Opening' : M.name) + ': ' + m.w.toFixed(1) + ' x ' + m.h.toFixed(1) + ' mm' + (key === 'holes' || key === 'lip' ? ' (locked)' : '') + '</b>' + (key === 'lip' && lipMM() ? '<br><b style="color:#5aa9ff">Outer Rim / Lip: ' + lipMM().w.toFixed(1) + ' x ' + lipMM().h.toFixed(1) + ' mm, a ' + ((lipMM().w - m.w) / 2).toFixed(1) + ' / ' + ((lipMM().h - m.h) / 2).toFixed(1) + ' mm lip</b>' : '') + (shot.scale ? '<br><span style="color:#aaa">Scale set from your ruler: x' + shot.scale.toFixed(4) + '</span>' : '') + (key === 'holes' ? '. ' + holes.length + (tagged ? ' tagged.' : ' holes, next one ' + hd + ' mm') : '') + (M.ppm ? '<br><span style="color:#aaa">Card locked (' + (M.cardWay || 'landscape') + '): ' + M.ppm.toFixed(2) + ' px per mm, same across and down</span>' : '') +
         (tagged && holes.length ? '<div id="mzList" style="max-height:66px;overflow:auto;margin-top:4px">' + holes.map((h, i) => { const c = holeMM(h.p), sz = tagSize(h); return '<div' + (h === picked ? ' style="color:#fff"' : '') + '>' + (i + 1) + '. ' + esc(TNAME(h) || 'Hole') + ': ' + sz + ' at ' + (c[0] + m.w / 2).toFixed(1) + ', ' + (c[1] + m.h / 2).toFixed(1) + ' mm</div>'; }).join('') + '</div>' : '');
       else if (key === 'side') { const sm = sideMM(); info.innerHTML = sm ? '<b>Tallest part ' + sm.top.toFixed(1) + ' mm above the board, ' + sm.under.toFixed(1) + ' mm under it</b>' : ''; }
       else { const cd = cardDims(); info.textContent = 'Card = 85.6 x 54 mm, ' + (cd[0] > cd[1] ? 'lying flat' : 'stood on end') + ' (' + cardPpm().toFixed(2) + ' px per mm). 1-2 top edge, 3-4 bottom edge.'; }
@@ -257,7 +263,7 @@ export function openMeasure(done, more) { more = more || {};
       if (tagged && !picked) sb.innerHTML = '<i>' + (holes.length ? 'Tap a tag to change, turn or remove it.' : 'Nothing tagged yet.') + '</i>';
       if (tagged && picked) sb.innerHTML = (picked.kind === 'q_custom' ? '<input class="nm" id="mzRen" style="flex:1;min-width:0;height:38px" maxlength="24" aria-label="Name this part" placeholder="Name it (HDMI Switch)" value="' + esc(picked.label || '') + '">' : '<b>' + esc(TNAME(picked)) + (QK[picked.kind] ? ' ' + tagSize(picked) : '') + '</b>') + '<button type="button" id="mzChg">Change</button>' + ((picked.kind === 'q_screen' || (KP(picked.kind) && KP(picked.kind).cat === 'screen')) ? '<button type="button" id="mzPre">' + (picked.preset != null ? SCREENS[picked.preset][0] : 'Preset') + '</button>' : '') + (RECT(picked.kind) || QK[picked.kind] ? '<button type="button" id="mzTurn">Turn</button>' : '') + '<button type="button" id="mzDel">Remove</button>';
       if (tagged) tl.innerHTML = holes.map((h, i) => '<button type="button" data-tag="' + i + '" aria-pressed="' + (h === picked) + '">' + (i + 1) + ' ' + esc(QK[h.kind] ? TNAME(h) : SHORT[h.kind] || h.kind || 'hole') + '</button>').join('');
-      $('mzTagRow').hidden = !tagged; $('mzQSize').hidden = !(tagged && picked && QK[picked.kind]);
+      $('mzTagRow').hidden = !tagged; $('mzLipRow').hidden = key !== 'lip'; $('mzCal').hidden = !(key === 'part' && FR(which)); $('mzQSize').hidden = !(tagged && picked && QK[picked.kind]);
       $('mzHoleSize').hidden = key !== 'holes' || (tagged && !(picked && picked.kind === 'hole'));
       $('mzHoleSize').querySelectorAll('[data-hd]').forEach((b) => { b.style.display = tagged && !(picked && picked.kind === 'hole') ? 'none' : ''; });
       { const tb = box.querySelector('.mt b'); if (tb) tb.textContent = (FR(which) ? pname(which) : which === 'back' ? 'Back' : 'Side') + ' ' + (st + 1) + ' of ' + stage.length + ': ' + NAMES[key]; }
@@ -362,6 +368,8 @@ export function openMeasure(done, more) { more = more || {};
       if (c) c.onclick = () => openPick(null); if (t) t.onclick = () => { picked.r = ((picked.r || 0) + 1) % 4; draw(); }; if (x) x.onclick = () => { holes.splice(holes.indexOf(picked), 1); picked = null; draw(); };
       box.querySelectorAll('[data-tag]').forEach((b) => { b.onclick = () => { picked = holes[+b.dataset.tag]; draw(); }; });
     }
+    $('mzNoLip').onclick = () => { pts.lip = null; shot.lip = null; st++; draw(); };
+    $('mzCalGo').onclick = () => { const v = parseFloat($('mzCalV').value), ax = $('mzCalAx').value; if (!(v > 0)) { shot.scale = null; draw(); return; } const m = partMM(); if (!m) return; const raw = m[ax] / (shot.scale || 1); shot.scale = v / raw; draw(); }; /* one known length fixes the scale for everything on this photo */
     $('mzAddTag').onclick = () => { const P4 = pts.part, n = holes.length, c = [(P4[0][0] + P4[1][0] + P4[2][0] + P4[3][0]) / 4 + (n % 3 - 1) * W0 * 0.04, (P4[0][1] + P4[1][1] + P4[2][1] + P4[3][1]) / 4 + (Math.floor(n / 3) % 3 - 1) * H0 * 0.04]; picked = null; openPick(c); }; /* lands in the middle of the panel: drag it into place */
     box.querySelectorAll('[data-qs]').forEach((b) => { b.onclick = () => { if (!picked || !QK[picked.kind]) return; const v = b.dataset.qs, i = v[0] === 'w' ? 0 : 1; picked.sz[i] = Math.max(2, Math.min(400, picked.sz[i] + +v.slice(1))); draw(); }; });
     box.querySelectorAll('[data-hd]').forEach((b) => { b.onclick = () => { hd = Math.max(1, hd + (+b.dataset.hd) * (hd >= 6 ? 1 : 0.5)); draw(); }; });
@@ -378,13 +386,15 @@ export function openMeasure(done, more) { more = more || {};
     $('mzBack').onclick = () => { if (st > 0) { st--; draw(); } else cam(which); }; /* never throws away the tags: the first step offers a new photo instead */
     $('mzNext').onclick = () => {
       if (stage[st] === 'card') { M.ppm = cardPpm(); M.cardWay = cardDims()[0] > cardDims()[1] ? 'landscape' : 'portrait'; shot.card = pts.card.map((p) => p.slice()); } /* the card is locked: its scale holds for the next steps */
-      if (stage[st] === 'part') { shot.part = pts.part.map((p) => p.slice()); } /* the size is locked: tags never change it */
+      if (stage[st] === 'part') { shot.part = pts.part.map((p) => p.slice()); if (FR(which) && !pts.lip) pts.lip = lipFrom(); } /* the size is locked: tags never change it */
+      if (stage[st] === 'lip') shot.lip = pts.lip ? pts.lip.map((p) => p.slice()) : null;
       if (st < stage.length - 1) { st++; draw(); return; }
       if (which === 'side') { const sm = sideMM(); shot.card = pts.card; shot.side = pts.side; if (sm) { shot.mm = sm; M.top = Math.max(4, Math.round(sm.top * 2) / 2); M.under = Math.round(sm.under * 2) / 2; } return hub(); }
       const m = partMM(); shot.card = pts.card; shot.part = pts.part; shot.holes = holes;
       const plain = holes.filter((h) => !h.kind || h.kind === 'hole'), tags = holes.filter((h) => h.kind && h.kind !== 'hole' && KP(h.kind)), quick = holes.filter((h) => QK[h.kind]);
       shot.mm = m ? { w: nominal(m.w), h: nominal(m.h), holes: plain.map((h) => { const c = holeMM(h.p); return { x: c[0], y: c[1], d: nominal(h.d) }; }),
         kids: tags.map((h) => { const c = holeMM(h.p); return { type: h.kind, x: Math.round(c[0] * 10) / 10, y: Math.round(c[1] * 10) / 10, r: h.r || 0 }; }),
+        lip: (() => { const l = lipMM(); return l ? { w: nominal(l.w), h: nominal(l.h) } : null; })(),
         cuts: quick.map((h) => { const c = holeMM(h.p), t = (h.r || 0) % 2; return { kind: h.kind, label: (h.label || '').trim() || TNAME(h), w: t ? h.sz[1] : h.sz[0], h: t ? h.sz[0] : h.sz[1], x: Math.round(c[0] * 10) / 10, y: Math.round(c[1] * 10) / 10 }; }),
         img: FR(which) ? rectify() : null } : null;
       return hub();
@@ -398,19 +408,19 @@ export function openMeasure(done, more) { more = more || {};
     shell('Your photos', '<div class="say" style="position:static;padding:22px 16px;text-align:left">' + summary() + '</div>',
       fronts().concat(fronts().length ? [] : ['front']).map((w) => row(w, pname(w), '')).join('') + (fronts().some((w) => M.shots[w].mm) ? '<div class="rowb"><button class="bt" id="mzMore">+ Add another panel (' + pname('front' + (fronts().length + 1)) + ')</button></div>' : '') + row('back', 'back', 'Screw holes, so the case has posts for them.') + row('side', 'side', 'How tall your parts are and what hangs under the board.') + '<div class="rowb"><button class="bt go" id="mzDone">Done with photos</button></div>');
     { const mm = $('mzMore'); if (mm) mm.onclick = () => cam('front' + (fronts().length + 1)); }
-    box.querySelectorAll('[data-shot]').forEach((b) => { b.onclick = () => { const w = b.dataset.shot; if (M.shots[w]) mark(w, FR(w) ? 2 : w === 'side' ? 1 : 2); else cam(w); }; });
+    box.querySelectorAll('[data-shot]').forEach((b) => { b.onclick = () => { const w = b.dataset.shot; if (M.shots[w]) mark(w, FR(w) ? 99 : w === 'side' ? 1 : 2); else cam(w); }; });
     $('mzDone').onclick = result;
   }
   function summary() {
     const b = M.shots.back && M.shots.back.mm;
     let s = '<b>' + M.name + '</b><br>';
     fronts().forEach((w) => { const f = M.shots[w].mm; if (!f) return; const cnt = {}; (f.kids || []).forEach((c) => { const nm = KNAME(c.type); cnt[nm] = (cnt[nm] || 0) + 1; }); (f.cuts || []).forEach((c) => { cnt[c.label] = (cnt[c.label] || 0) + 1; });
-      s += '<b>' + pname(w) + '</b>: ' + f.w.toFixed(1) + ' x ' + f.h.toFixed(1) + ' mm (locked)<br>On it: ' + (Object.keys(cnt).map((x) => cnt[x] + ' ' + x).join(', ') || 'nothing tagged') + (f.holes.length ? ', ' + f.holes.length + ' other hole' + (f.holes.length > 1 ? 's' : '') : '') + '<br>'; });
+      s += '<b>' + pname(w) + '</b>: ' + f.w.toFixed(1) + ' x ' + f.h.toFixed(1) + ' mm opening (locked)' + (f.lip ? ', rim ' + f.lip.w.toFixed(1) + ' x ' + f.lip.h.toFixed(1) + ' mm' : '') + '<br>On it: ' + (Object.keys(cnt).map((x) => cnt[x] + ' ' + x).join(', ') || 'nothing tagged') + (f.holes.length ? ', ' + f.holes.length + ' other hole' + (f.holes.length > 1 ? 's' : '') : '') + '<br>'; });
     if (b) s += 'Screw holes on the back: ' + b.holes.length + '<br>';
     s += M.under != null ? 'Tallest part ' + M.top.toFixed(1) + ' mm above the board, ' + M.under.toFixed(1) + ' mm under it' : 'Heights: not measured yet (side photo)';
     return s;
   }
-  function panelsOut() { return fronts().filter((w) => M.shots[w].mm).map((w) => { const f = M.shots[w].mm; return { name: pname(w), w: f.w, h: f.h, kids: f.kids || [], cuts: f.cuts || [], holes: f.holes || [] }; }); }
+  function panelsOut() { return fronts().filter((w) => M.shots[w].mm).map((w) => { const f = M.shots[w].mm; return { name: pname(w), w: f.w, h: f.h, lip: f.lip || null, kids: f.kids || [], cuts: f.cuts || [], holes: f.holes || [] }; }); }
   function result() {
     const f = M.shots.front && M.shots.front.mm; if (!f) return intro();
     if (!more.panels && !more.case) return boardResult();
