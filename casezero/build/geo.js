@@ -269,6 +269,10 @@ export function mountPlate(type, bw, bh, wallT, pitch, compact) { // pitch: a se
     const pin = diff([[[-5, 0], [5, 0], [5, y0], [w, y0], [w, yb], [cw, yb + 0.6], [w * 0.6, yb + 4.5], [-w * 0.6, yb + 4.5], [-cw, yb + 0.6], [-w, yb], [-w, y0], [-5, y0]]], [rect(-0.7, yb - 3.5, 0.7, yb + 5)]);
     return { layers: [{ polys: diff(plate, at.map((x) => rect(x - s / 2, -s / 2, x + s / 2, s / 2))), z0: 0, z1: T }], pin: { polys: pin, h: MOUNT.PIN }, pins: at.length, hy };
   }
+  if (type === 'wood') { /* a box you already have: a 3.4 mm hole for a #4 wood screw, countersunk to a 6 mm head on the outer face (90 degrees, in 4 steps) */
+    const cs = 1.3, L = [{ polys: diff(plate, at.map((x) => circle(x, 0, 1.7 + R.FIT, 24))), z0: 0, z1: T - cs }];
+    for (let i = 0; i < 4; i++) L.push({ polys: diff(plate, at.map((x) => circle(x, 0, 1.7 + R.FIT + (i + 1) * cs / 4, 32))), z0: T - cs + i * cs / 4, z1: T - cs + (i + 1) * cs / 4 });
+    return { layers: L, pin: null, pins: 0, hy }; }
   return { layers: [{ polys: diff(plate, at.map((x) => circle(x, 0, R.HOLE / 2 + R.FIT, 24))), z0: 0, z1: T / 2 }, { polys: diff(plate, at.map((x) => circle(x, 0, 3.2 + R.FIT, 32))), z0: T / 2, z1: T }], pin: null, pins: 0, hy };
 }
 // An M3 screw into a wall: a square plug set into a window in the wall (0.1 mm into it on every side, so they merge), running through the wall into a 6.5 mm boss.
@@ -577,30 +581,34 @@ function hatch(polys, sp, deg) { // straight lines across the polygons, every sp
   return out;
 }
 export function gcodeOf(piece, o) {
-  const lh = o.lh || 0.2, w = 0.45, fil = Math.PI * 0.875 * 0.875, L = piece.layers.filter((l) => l.polys && l.polys.length);
-  if (!L.length) return null; const top = Math.max(...L.map((l) => l.z1)), n = Math.max(1, Math.round(top / lh)), brimN = 5;
+  const w = 0.45, fil = Math.PI * 0.875 * 0.875, L = piece.layers.filter((l) => l.polys && l.polys.length);
+  if (!L.length) return null; const top = Math.max(...L.map((l) => l.z1)), n = Math.max(1, Math.round(top / (o.lh || 0.28))), lh = top / n, brimN = 5; /* layers as close to 0.28 mm as the height allows */
   const b = bbox([].concat(...L.map((l) => l.polys))), BW = o.bed[0], BD = o.bed[1], need = brimN * w + w;
   if (b.w + 2 * need > BW - 2 || b.h + 2 * need > BD - 2) return { error: 'bigger than the ' + BW + ' x ' + BD + ' mm bed' };
   const dx = BW / 2 - (b.x0 + b.x1) / 2, dy = BD / 2 - (b.y0 + b.y1) / 2, G = [], f = (v) => (Math.round(v * 1000) / 1000).toString();
-  let cx = null, cy = null, fil_mm = 0;
-  const travel = (x, y) => { const X = x + dx, Y = y + dy, far = cx != null && Math.hypot(X - cx, Y - cy) > 2; if (far) G.push('G1 E-5 F2400'); G.push('G0 X' + f(X) + ' Y' + f(Y) + ' F6000'); if (far) G.push('G1 E5 F2400'); cx = X; cy = Y; };
-  const ext = (x, y, F) => { const X = x + dx, Y = y + dy, e = Math.hypot(X - cx, Y - cy) * w * lh / fil; if (e < 1e-5) return; fil_mm += e; G.push('G1 X' + f(X) + ' Y' + f(Y) + ' E' + e.toFixed(5) + ' F' + F); cx = X; cy = Y; };
+  let cx = null, cy = null, fil_mm = 0, sec = 0; /* sec: the print time, move by move */
+  const travel = (x, y) => { const X = x + dx, Y = y + dy, far = cx != null && Math.hypot(X - cx, Y - cy) > 2; if (far) G.push('G1 E-5 F2400'); G.push('G0 X' + f(X) + ' Y' + f(Y) + ' F7200'); if (far) G.push('G1 E5 F2400'); if (cx != null) sec += Math.hypot(X - cx, Y - cy) / 120 + (far ? 0.25 : 0); cx = X; cy = Y; };
+  const ext = (x, y, F) => { const X = x + dx, Y = y + dy, e = Math.hypot(X - cx, Y - cy) * w * lh / fil; if (e < 1e-5) return; fil_mm += e; sec += Math.hypot(X - cx, Y - cy) / (F / 60); G.push('G1 X' + f(X) + ' Y' + f(Y) + ' E' + e.toFixed(5) + ' F' + F); cx = X; cy = Y; };
   const loop = (p, F) => { if (p.length < 3) return; travel(p[0][0], p[0][1]); for (let i = 1; i <= p.length; i++) ext(p[i % p.length][0], p[i % p.length][1], F); };
   const left = b.x0 + dx - need, primeOk = left > 6; /* the prime line runs up the left edge, only when the piece leaves room for it */
   G.push('; NOCIV Case Zero: ' + (o.name || 'piece') + '. ' + (o.printer || 'Marlin printer') + ', ' + BW + ' x ' + BD + ' mm bed, PLA, ' + lh + ' mm layers, 2 perimeters, brim, ' + (o.solid ? 'solid' : '20% lines') + '.',
     '; Check the first layer: the brim should stick flat. Made in the browser, no slicer needed for flat pieces.',
-    'M140 S60', 'M104 S200', 'G90', 'M83', 'G28', 'M190 S60', 'M109 S200', 'M106 S0', 'G92 E0');
+    'M140 S60', 'M104 S200', 'G90', 'M83', 'G28', 'M190 S60', 'M109 S200', 'M106 S0', 'G92 E0'); const head = G.length;
   if (primeOk) G.push('G0 X2 Y20 Z0.3 F5000', 'G1 X2 Y' + f(Math.min(BD - 20, 200)) + ' E' + (Math.min(BD - 40, 180) * 0.05).toFixed(3) + ' F1500', 'G0 X2.5 Y' + f(Math.min(BD - 20, 200)) + ' F5000', 'G1 X2.5 Y20 E' + (Math.min(BD - 40, 180) * 0.05).toFixed(3) + ' F1500', 'G1 E-2 F2400', 'G0 Z1 F600');
   for (let i = 0; i < n; i++) {
-    const zm = (i + 0.5) * top / n, sec = union([].concat(...L.filter((l) => l.z0 <= zm && zm < l.z1).map((l) => l.polys)));
-    if (!sec.length) continue;
+    const zm = (i + 0.5) * top / n, cut = union([].concat(...L.filter((l) => l.z0 <= zm && zm < l.z1).map((l) => l.polys)));
+    if (!cut.length) continue;
     G.push(';LAYER:' + i, 'G0 Z' + f((i + 1) * lh) + ' F600'); if (i === 1) G.push('M106 S255'); if (i === 0 && primeOk) G.push('G1 E2 F2400');
-    const Fp = i === 0 ? 1200 : 1800, Fi = i === 0 ? 1200 : 3000;
-    if (i === 0) for (let k = brimN; k >= 1; k--) offset(sec, w / 2 + k * w).forEach((p) => loop(p, Fp)); /* the brim, from the outside in, ending against the piece */
-    offset(sec, -1.5 * w).forEach((p) => loop(p, Fp)); offset(sec, -w / 2).forEach((p) => loop(p, Fp)); /* inner perimeter, then the outer one */
-    const solid = o.solid || i < 3 || i >= n - 3, fill = offset(sec, -1.85 * w);
-    if (fill.length) hatch(fill, solid ? w : w / 0.2, i % 2 ? -45 : 45).forEach(([p, q]) => { travel(p[0], p[1]); ext(q[0], q[1], Fi); });
+    const Fp = i === 0 ? 1800 : 3600, Fi = Fp; /* 60 mm/s, the first layer at 30 */
+    if (i === 0) { const shell = union(exPolys(cut).map((e) => e.outer)); for (let k = brimN; k >= 1; k--) offset(shell, w / 2 + k * w).forEach((p) => loop(p, Fp)); } /* the brim: round the outside only, never inside a hole, from the outside in, ending against the piece */
+    offset(cut, -1.5 * w).forEach((p) => loop(p, Fp)); offset(cut, -w / 2).forEach((p) => loop(p, Fp)); /* a 1.6 mm rib is just these two lines: no infill */ /* inner perimeter, then the outer one */
+    const solid = o.solid || i < 3 || i >= n - 3, fill = offset(cut, -1.85 * w);
+    if (fill.length) { const parts = exPolys(fill), used = parts.map(() => false); /* one region at a time, nearest first: short travel, few retracts */
+      for (let r = 0; r < parts.length; r++) { let bi = -1, bd = 1e18; parts.forEach((e, j) => { if (used[j]) return; const q = e.outer[0], d = cx == null ? 0 : (q[0] + dx - cx) ** 2 + (q[1] + dy - cy) ** 2; if (d < bd) { bd = d; bi = j; } }); used[bi] = true;
+        hatch([parts[bi].outer, ...parts[bi].holes], solid ? w : w / 0.2, i % 2 ? -45 : 45).forEach(([p, q]) => { travel(p[0], p[1]); ext(q[0], q[1], Fi); }); } }
   }
   G.push(';END', 'M104 S0', 'M140 S0', 'G91', 'G1 E-2 F2700', 'G1 Z10 F600', 'G90', 'G28 X0', 'M106 S0', 'M84');
-  return { text: G.join('\n') + '\n', layers: n, filament: fil_mm, grams: fil_mm * fil / 1000 * 1.24 };
+  sec += n * 0.6 + 20; /* layer changes, prime and park */
+  G.splice(2, 0, ';FLAVOR:Marlin', ';TIME:' + Math.round(sec), ';LAYER_COUNT:' + n, ';Filament used: ' + (fil_mm / 1000).toFixed(3) + 'm', ';Layer height: ' + lh.toFixed(3)); void head; /* the printer screen reads these for its time and progress */
+  return { text: G.join('\n') + '\n', layers: n, filament: fil_mm, grams: fil_mm * fil / 1000 * 1.24, sec };
 }
