@@ -394,6 +394,29 @@ function toShape(ex) {
   ex.holes.forEach((h) => { const hh = ccw(h) ? h.slice().reverse() : h; sh.holes.push(new THREE.Path(hh.map(([x, y]) => new THREE.Vector2(x, y)))); });
   return sh;
 }
+// One closed shell from flat pieces that tile a face: the top and bottom from every piece's triangles, the walls only on edges no other
+// triangle shares (the real outline and the real holes). Pieces side by side as separate shells slice wrong in slicers that nest outlines
+// (Kiri:Moto reads some as holes); one shell with outward walls slices the same everywhere.
+function shellOf(pieces, z0, z1) {
+  const tris = [], K = (x, y) => x.toFixed(4) + ',' + y.toFixed(4), sn = (r) => r.map(([x, y]) => [Math.round(x * 1e4) / 1e4, Math.round(y * 1e4) / 1e4]);
+  pieces = pieces.map((ex) => ({ outer: sn(ex.outer), holes: ex.holes.map(sn) }));
+  { /* where one piece has a corner on another piece's edge, put that corner into the edge too: no T-junctions, so the pieces stitch into one shell */
+    const C = 4, grid = new Map(), cell = (x, y) => Math.floor(x / C) + ':' + Math.floor(y / C), all = new Map();
+    pieces.forEach((ex) => [ex.outer, ...ex.holes].forEach((r) => r.forEach((p) => { const k = K(p[0], p[1]); if (all.has(k)) return; all.set(k, p); const c = cell(p[0], p[1]); if (!grid.has(c)) grid.set(c, []); grid.get(c).push(p); })));
+    const fix = (r) => { const o = []; r.forEach((a, i) => { const b = r[(i + 1) % r.length], dx = b[0] - a[0], dy = b[1] - a[1], L2 = dx * dx + dy * dy; o.push(a); if (L2 < 1e-10) return; const on = [];
+      for (let gx = Math.floor(Math.min(a[0], b[0]) / C); gx <= Math.floor(Math.max(a[0], b[0]) / C); gx++) for (let gy = Math.floor(Math.min(a[1], b[1]) / C); gy <= Math.floor(Math.max(a[1], b[1]) / C); gy++) (grid.get(gx + ':' + gy) || []).forEach((p) => {
+        const t = ((p[0] - a[0]) * dx + (p[1] - a[1]) * dy) / L2; if (t <= 1e-6 || t >= 1 - 1e-6) return; const ex = a[0] + t * dx - p[0], ey = a[1] + t * dy - p[1]; if (ex * ex + ey * ey < 4e-8) on.push([t, p]); });
+      on.sort((u, w) => u[0] - w[0]).forEach(([, p]) => o.push(p)); }); return o; };
+    pieces = pieces.map((ex) => ({ outer: fix(ex.outer), holes: ex.holes.map(fix) })); }
+  pieces.forEach((ex) => { const o = ex.outer.map(([x, y]) => new THREE.Vector2(x, y)); if (THREE.ShapeUtils.isClockWise(o)) o.reverse();
+    const hs = ex.holes.map((h) => { const v = h.map(([x, y]) => new THREE.Vector2(x, y)); if (!THREE.ShapeUtils.isClockWise(v)) v.reverse(); return v; }), pts = o.concat(...hs);
+    THREE.ShapeUtils.triangulateShape(o, hs).forEach(([a, b, c]) => { const A = pts[a], B = pts[b], C = pts[c], s = (B.x - A.x) * (C.y - A.y) - (B.y - A.y) * (C.x - A.x); if (Math.abs(s) < 1e-9) return; tris.push(s > 0 ? [A, B, C] : [A, C, B]); }); });
+  if (!tris.length) return null; const dir = new Set(); tris.forEach((t) => t.forEach((p, i) => { const q = t[(i + 1) % 3]; dir.add(K(p.x, p.y) + '>' + K(q.x, q.y)); }));
+  const P = [], v = (p, z) => P.push(Math.round(p.x * 1e4) / 1e4, Math.round(p.y * 1e4) / 1e4, z); /* snapped, so pieces that meet share the very same corner */
+  tris.forEach(([A, B, C]) => { v(A, z1); v(B, z1); v(C, z1); v(A, z0); v(C, z0); v(B, z0); /* top faces up, bottom faces down */
+    [[A, B], [B, C], [C, A]].forEach(([a, b]) => { if (dir.has(K(b.x, b.y) + '>' + K(a.x, a.y))) return; /* inside the face: no wall */ v(a, z0); v(b, z0); v(b, z1); v(a, z0); v(b, z1); v(a, z1); }); }); /* a wall on the outline, facing out */
+  const geo = new THREE.BufferGeometry(); geo.setAttribute('position', new THREE.Float32BufferAttribute(P, 3)); return geo;
+}
 export function layerGeos(layers, extra) {
   const geos = [];
   layers.forEach((l) => {
@@ -408,6 +431,7 @@ export function layerGeos(layers, extra) {
       }
       else all.push(ex);
     });
+    if (l.tag === 'skel') { const sh = shellOf(all.filter((ex) => Math.abs(CL.Clipper.Area(toC(ex.outer))) >= 50), l.z0, l.z1); if (sh) geos.push(sh); return; } /* a frame: one closed shell, not strips side by side */
     all.forEach((ex) => {
       if (Math.abs(CL.Clipper.Area(toC(ex.outer))) < 50) return; // skip crumbs under 0.05 mm2
       const g = new THREE.ExtrudeGeometry(toShape(ex), { depth: l.z1 - l.z0, bevelEnabled: false, curveSegments: 1 });
