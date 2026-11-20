@@ -416,7 +416,7 @@ export function openMeasure(done, more) { more = more || {};
     if (!more.panels && !more.case) return boardResult();
     const ps = panelsOut(), ST = ((window.CZ && window.CZ.STYLES) || []).filter((x) => x[0] !== 'panel');
     shell('Use what you measured', '<div class="say" style="position:static;padding:22px 16px;text-align:left">' + summary() + '</div>',
-      (more.panels ? '<div class="rowb"><button class="bt go" id="mzPanels">Build ' + (ps.length > 1 ? ps.length + ' panels' : 'the panel') + ' at ' + ps.map((p) => p.w.toFixed(1) + ' x ' + p.h.toFixed(1)).join(' and ') + ' mm</button></div>' : '') +
+      (more.panels ? '<div class="rowb"><button class="bt go" id="mzPanels">' + (more.useLabel ? more.useLabel + ': ' + ps[0].w.toFixed(1) + ' x ' + ps[0].h.toFixed(1) + ' mm' : 'Build ' + (ps.length > 1 ? ps.length + ' panels' : 'the panel') + ' at ' + ps.map((p) => p.w.toFixed(1) + ' x ' + p.h.toFixed(1)).join(' and ') + ' mm') + '</button></div>' : '') +
       (more.case ? '<div class="lst"><b>Or size a Case Zero body to fit ' + ps[0].name + ' (plus your clearance):</b></div><div class="chips" id="mzStyles">' + ST.map((x) => '<button type="button" data-st="' + x[0] + '">' + x[1] + '</button>').join('') + '</div>' : '') +
       '<div class="rowb"><button class="bt" id="mzAgain">Back to photos</button><button class="bt" id="mzBoard">Add as my built board</button></div>');
     $('mzAgain').onclick = hub; $('mzBoard').onclick = boardResult;
