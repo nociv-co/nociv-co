@@ -121,10 +121,84 @@ export const LIBURL = { ino: 'https://www.arduino.cc/en/software', cp: 'https://
 // One door for every board: Arduino boards get a real .ino sketch, CircuitPython boards a code.py, both in the same 3 plain-English sections.
 export function codeFor(plan, title, fn, B, tw) {
   B = B || BOARDS.pico;
-  if (B.ino) return inoFor(plan, title, fn, B, tw || {});
-  const c = codePy(plan, title, fn, B, tw || {});
-  if (B.cp) { c.text = pySections(c.text); c.lang = 'py'; c.file = 'code.py'; } else { c.lang = 'txt'; c.file = 'pins.txt'; }
+  const c = fn === 'djfx' && (B.ino || B.cp) ? djfxCode(plan, title, B) : B.ino ? inoFor(plan, title, fn, B, tw || {}) : codePy(plan, title, fn, B, tw || {});
+  if (!c.lang) { if (B.cp) { c.text = pySections(c.text); c.lang = 'py'; c.file = 'code.py'; } else { c.lang = 'txt'; c.file = 'pins.txt'; } }
+  const pf = preflight(plan, B), cm = c.lang === 'ino' ? '// ' : '# ';
+  if (pf.length) c.text = pf.map((w) => cm + 'CHECK FIRST: ' + w).join('\n') + '\n' + c.text;
   return c;
+}
+// ---------- preflight: run before code is exported or Wired is shown ----------
+// Duplicate pins (shared I2C / SPI bus pins are fine), and 3.3V-only parts on a 5V brain (Elegoo / Arduino Uno).
+export const V33 = { vl53: 'VL53L0X', inmp441: 'INMP441', oled096: 'OLED' };
+export function preflight(plan, B) {
+  B = B || BOARDS.pico; const out = [], by = {};
+  (plan.rows || []).forEach((row) => row.roles.forEach((r) => { if (r.fixed || r.pin == null) return; [r.pin].concat(r.two ? [r.pin + 1] : []).forEach((p) => { (by[p] = by[p] || []).push(row.it.label); }); }));
+  Object.keys(by).forEach((p) => { const who = Array.from(new Set(by[p])); if (by[p].length > 1) out.push('Pin ' + B.lab(+p) + ' is assigned twice (' + who.join(' and ') + '). Give one of them another pin.'); });
+  if (B === BOARDS.uno) { const seen = {}; (plan.rows || []).forEach((row) => { const n = V33[row.it.type]; if (n && !seen[row.it.label]) { seen[row.it.label] = 1; out.push(row.it.label + ' (' + n + ') is a 3.3V part: Use 3.3V power, not 5V. Wire its VCC to the Uno\'s 3V3 pin, never 5V.'); } }); }
+  return out;
+}
+// ---------- DJ FX: Loop, Echo, Spiral, Phaser on the first 4 buttons, a Beat wheel (CC 14) and a Wet/Dry knob or slider (CC 15) ----------
+export const DJFX = [['Loop', 36, 'toggle'], ['Echo', 37, 'holdtoggle'], ['Spiral', 38, 'hold'], ['Phaser', 39, 'toggle']], BEATS = ['1/4', '1/2', '1', '2', '4', '8'];
+export const DJMODE = { toggle: 'Toggle', holdtoggle: 'Hold/Toggle', hold: 'Hold' };
+function djParts(plan) { const keys = [], pots = [], encs = [];
+  plan.rows.forEach((row) => { const it = row.it, tag = it.label.split(' ')[0], N = row.N, R = {}; row.roles.forEach((r) => { R[r.role] = r.pin; });
+    if (N.what === 'button' && !it.step) row.roles.forEach((r) => { if (r.pin != null) keys.push([r.pin, row.roles.length > 1 ? tag + ' ' + r.role : tag]); });
+    if (N.what === 'knob') ['turn', 'slide'].forEach((k) => { if (R[k] != null) pots.push([R[k], tag]); });
+    if (N.what === 'wheel' && R['clk+dt'] != null) encs.push([R['clk+dt'], tag]); });
+  const fx = keys.slice(0, 4), wheel = encs[0] || null, beatPot = !wheel && pots.length > 1 ? pots[0] : null, wet = beatPot ? pots[1] : pots[0] || null;
+  return { fx, wheel, beatPot, wet }; }
+function djfxCode(plan, title, B) {
+  const P = djParts(plan), pm = B === BOARDS.promicro, LB = B.lab, map = P.fx.map((k, i) => DJFX[i][0] + ' = ' + LB(k[0]) + ' (note ' + DJFX[i][1] + ', ' + DJMODE[DJFX[i][2]] + ')');
+  const head = ['DJ FX. ' + title, 'Brain: ' + B.name + '.', 'Buttons: ' + (map.length ? map.join(', ') : 'none yet: add up to 4 buttons in Parts') + '.',
+    'Beat wheel: MIDI CC 14, ' + BEATS[0] + ' to ' + BEATS[BEATS.length - 1] + ' (' + (P.wheel ? 'click wheel ' + LB(P.wheel[0]) + '+' + LB(P.wheel[0] + 1) : P.beatPot ? 'knob ' + LB(P.beatPot[0]) : 'add a click wheel') + '). Wet/Dry: MIDI CC 15, 0 to 100% (' + (P.wet ? 'knob/slider ' + LB(P.wet[0]) : 'add a knob or slider') + ').',
+    'In your DJ app (Mixxx, rekordbox, Serato, VirtualDJ), MIDI-learn each FX to its note and the beat / wet-dry to CC 14 / CC 15.'];
+  plan.problems.forEach((p) => head.push('Fix first: ' + p));
+  if (B.ino) { const ap = (n) => { const s = LB(n); return /^A\d/.test(s) ? s : s.replace(/^\D+/, ''); }, L = head.map((l) => '// ' + l), libs = pm ? [{ n: 'MIDIUSB', by: 'Gary Grewal', inc: 'MIDIUSB.h', built: false }] : [];
+    if (pm) L.push('// Native USB MIDI: the Pro Micro shows up as a MIDI device. Install "MIDIUSB" by Gary Grewal (Sketch -> Include Library -> Manage Libraries).');
+    else L.push('// The ' + B.name + ' has no native USB MIDI: it sends Serial MIDI at 115200 baud. Bridge it with the free Hairless MIDI (serial to MIDI) + loopMIDI (virtual MIDI port).');
+    L.push('', '// ===== 1. LIBRARIES =====', pm ? '#include <MIDIUSB.h>' : '// none: Serial is built in', '', '// ===== 2. YOUR PINS =====');
+    L.push('const int NFX = ' + P.fx.length + ';', P.fx.length ? 'const int FX_PIN[] = {' + P.fx.map((k) => ap(k[0])).join(', ') + '};' : 'const int FX_PIN[] = {0};');
+    L.push('const char* FX_NAME[] = {"Loop", "Echo", "Spiral", "Phaser"};', 'const byte FX_NOTE[] = {36, 37, 38, 39};', 'const byte FX_MODE[] = {0, 1, 2, 0};  // 0 Toggle, 1 Hold/Toggle (tap latches, hold is momentary), 2 Hold');
+    if (P.wheel) L.push('const int WHEEL_CLK = ' + ap(P.wheel[0]) + ', WHEEL_DT = ' + ap(P.wheel[0] + 1) + ';');
+    if (P.beatPot) L.push('const int BEAT_POT = ' + ap(P.beatPot[0]) + ';');
+    if (P.wet) L.push('const int WET_POT = ' + ap(P.wet[0]) + ';');
+    L.push('', '// ===== 3. WHAT HAPPENS WHEN YOU PRESS THINGS =====', 'const char* BEATS[] = {"1/4", "1/2", "1", "2", "4", "8"};', 'int beat = 2, wet = -10, wheelWas = HIGH;', 'bool fxOn[4], was[4], skipUp[4];', 'unsigned long downAt[4];', '');
+    L.push('void midi(byte cmd, byte a, byte b) {', pm ? '  midiEventPacket_t m = {(byte)(cmd >> 4), cmd, a, b};\n  MidiUSB.sendMIDI(m);\n  MidiUSB.flush();' : '  Serial.write(cmd); Serial.write(a); Serial.write(b);', '}');
+    L.push('void fx(int i, bool on) { fxOn[i] = on; midi(on ? 0x90 : 0x80, FX_NOTE[i], on ? 127 : 0); }', 'void sendBeat() { midi(0xB0, 14, beat * 127 / 5); }', '');
+    L.push('void setup() {', '  Serial.begin(115200);' + (pm ? '' : '  // Serial MIDI for Hairless'), '  for (int i = 0; i < NFX; i++) { pinMode(FX_PIN[i], INPUT_PULLUP); was[i] = HIGH; fxOn[i] = false; skipUp[i] = false; }');
+    if (P.wheel) L.push('  pinMode(WHEEL_CLK, INPUT_PULLUP); pinMode(WHEEL_DT, INPUT_PULLUP); wheelWas = digitalRead(WHEEL_CLK);');
+    L.push('}', '', 'void loop() {', '  for (int i = 0; i < NFX; i++) {', '    bool now = digitalRead(FX_PIN[i]);', '    if (now == was[i]) continue;', '    was[i] = now;',
+      '    if (now == LOW) {  // pressed', '      downAt[i] = millis();', '      if (FX_MODE[i] == 0) fx(i, !fxOn[i]);', '      else if (!fxOn[i]) fx(i, true);', '      else { fx(i, false); skipUp[i] = true; }  // a latched Echo: tap again to stop', '    } else {  // released',
+      '      if (skipUp[i]) { skipUp[i] = false; continue; }', '      if (FX_MODE[i] == 2) fx(i, false);', '      if (FX_MODE[i] == 1 && millis() - downAt[i] >= 300) fx(i, false);  // held: momentary. tapped: stays on', '    }', '  }');
+    if (P.wheel) L.push('  int clk = digitalRead(WHEEL_CLK);', '  if (clk != wheelWas) { wheelWas = clk; if (clk == LOW) { int b = constrain(beat + (digitalRead(WHEEL_DT) != clk ? 1 : -1), 0, 5); if (b != beat) { beat = b; sendBeat(); } } }');
+    if (P.beatPot) L.push('  int b = analogRead(BEAT_POT) * 6L / 1024;', '  if (b != beat) { beat = b; sendBeat(); }');
+    if (P.wet) L.push('  int v = analogRead(WET_POT) * 100L / 1023;', '  if (abs(v - wet) >= 2) { wet = v; midi(0xB0, 15, v * 127 / 100); }  // Wet/Dry %');
+    L.push('  delay(3);', '}', '');
+    return { text: L.join('\n'), libs, lang: 'ino', file: 'casezero.ino' }; }
+  const PF = B.cp, L = head.map((l) => '# ' + l);
+  const pn = (n) => (B === BOARDS.pico ? 'board.GP' + n : PF + n);
+  L.push('# Native USB MIDI (adafruit_midi): the ' + B.name + ' shows up as a MIDI device. Copy adafruit_midi from the CircuitPython Library Bundle into CIRCUITPY/lib.');
+  if (B !== BOARDS.pico) L.push('# Native USB MIDI needs a board with USB built into the chip (Pico, ESP32-S2/S3). A ' + B.name + ' prints the MIDI it would send instead.');
+  L.push('', '# ===== 1. LIBRARIES =====', 'import time', 'import board', 'import digitalio');
+  if (P.wet || P.beatPot) L.push('import analogio'); if (P.wheel) L.push('import rotaryio');
+  L.push('try:', '    import usb_midi', '    import adafruit_midi', '    from adafruit_midi.note_on import NoteOn', '    from adafruit_midi.note_off import NoteOff', '    from adafruit_midi.control_change import ControlChange', '    midi = adafruit_midi.MIDI(midi_out=usb_midi.ports[1], out_channel=0)', 'except Exception as err:', '    midi = None', '    print("NOCIV no USB MIDI here:", err)', '');
+  L.push('# ===== 2. YOUR PINS =====', 'FX = (("Loop", 36, "toggle"), ("Echo", 37, "holdtoggle"), ("Spiral", 38, "hold"), ("Phaser", 39, "toggle"))', 'FX_PINS = (' + P.fx.map((k) => pn(k[0])).join(', ') + (P.fx.length === 1 ? ',' : '') + ')');
+  L.push('btns = []', 'for p in FX_PINS:', '    b = digitalio.DigitalInOut(p)', '    b.switch_to_input(pull=digitalio.Pull.UP)', '    btns.append(b)');
+  if (P.wheel) L.push('wheel = rotaryio.IncrementalEncoder(' + pn(P.wheel[0]) + ', ' + pn(P.wheel[0] + 1) + ')');
+  if (P.beatPot) L.push('beat_pot = analogio.AnalogIn(' + pn(P.beatPot[0]) + ')');
+  if (P.wet) L.push('wet_pot = analogio.AnalogIn(' + pn(P.wet[0]) + ')');
+  L.push('', '# ===== 3. WHAT HAPPENS WHEN YOU PRESS THINGS =====', 'BEATS = ("1/4", "1/2", "1", "2", "4", "8")', 'on = [False] * len(btns)', 'was = [True] * len(btns)', 'skip_up = [False] * len(btns)', 'down_at = [0.0] * len(btns)', 'beat = 2', 'wet = -10', 'last_pos = 0', '',
+    'def send(msg, text):', '    if midi:', '        midi.send(msg)', '    print("NOCIV", text)', '',
+    'def fx(i, state):', '    on[i] = state', '    name, note, mode = FX[i]', '    send(NoteOn(note, 127) if state else NoteOff(note, 0), name + (" on" if state else " off"))', '',
+    'def send_beat():', '    send(ControlChange(14, beat * 127 // 5), "Beat " + BEATS[beat])', '',
+    'print("NOCIV DJ FX ready")', 'while True:', '    for i, b in enumerate(btns):', '        down = not b.value', '        if down == (not was[i]):', '            continue', '        was[i] = not down', '        mode = FX[i][2]',
+    '        if down:', '            down_at[i] = time.monotonic()', '            if mode == "toggle":', '                fx(i, not on[i])', '            elif not on[i]:', '                fx(i, True)', '            else:', '                fx(i, False)  # a latched Echo: tap again to stop', '                skip_up[i] = True',
+    '        else:', '            if skip_up[i]:', '                skip_up[i] = False', '            elif mode == "hold":', '                fx(i, False)', '            elif mode == "holdtoggle" and time.monotonic() - down_at[i] >= 0.3:', '                fx(i, False)  # held: momentary. tapped: stays on');
+  if (P.wheel) L.push('    pos = wheel.position', '    if pos != last_pos:', '        nb = max(0, min(5, beat + (1 if pos > last_pos else -1)))', '        last_pos = pos', '        if nb != beat:', '            beat = nb', '            send_beat()');
+  if (P.beatPot) L.push('    nb = min(5, beat_pot.value * 6 // 65536)', '    if nb != beat:', '        beat = nb', '        send_beat()');
+  if (P.wet) L.push('    v = wet_pot.value * 100 // 65535', '    if abs(v - wet) >= 2:', '        wet = v', '        send(ControlChange(15, v * 127 // 100), "Wet/Dry " + str(v) + "%")');
+  L.push('    time.sleep(0.003)', '');
+  return { text: L.join('\n'), libs: ['adafruit_midi'], lang: 'py', file: 'code.py' };
 }
 function pySections(t) {
   const L = t.split('\n'), at = (re) => L.findIndex((l) => re.test(l));
