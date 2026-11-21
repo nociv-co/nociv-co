@@ -18,18 +18,20 @@ const PICO_PWM = (n) => (n >> 1) & 7;
 export const BOARDS = {
   pico: { name: 'Raspberry Pi Pico', left: PICO_LEFT, right: PICO_RIGHT, all: ALL, adc: ADC, spi: [18, 19, 16], i2c: [4, 5], spiPick: [[17, 20, 21], [22, 16, 15], [14, 13, 12]], camCs: [17, 20, 21, 22], lab: (n) => 'GP' + n, cp: 'board.GP', pwm: PICO_PWM, v5: 'VBUS', v3: '3V3' },
   nano: { name: 'Arduino Nano', left: ['D13', '3V3', 'AREF', 'A0', 'A1', 'A2', 'A3', 'A4', 'A5', 'A6', 'A7', '5V', 'RST', 'GND', 'VIN'], right: ['D12', 'D11', 'D10', 'D9', 'D8', 'D7', 'D6', 'D5', 'D4', 'D3', 'D2', 'GND', 'RST', 'D0', 'D1'],
-    all: range(2, 19), adc: range(14, 21), spi: [13, 11, 12], i2c: [18, 19], spiPick: [[10, 9, 8], [7, 6, 5]], camCs: [10, 9, 8], lab: (n) => (n >= 14 ? 'A' + (n - 14) : 'D' + n), cp: null, pwm: (n) => ([3, 5, 6, 9, 10, 11].indexOf(n) > -1 ? n : -1), v5: '5V', v3: '3V3' },
+    all: range(2, 19), adc: range(14, 21), spi: [13, 11, 12], i2c: [18, 19], spiPick: [[10, 9, 8], [7, 6, 5]], camCs: [10, 9, 8], lab: (n) => (n >= 14 ? 'A' + (n - 14) : 'D' + n), cp: null, ino: true, pwm: (n) => ([3, 5, 6, 9, 10, 11].indexOf(n) > -1 ? n : -1), v5: '5V', v3: '3V3' },
+  uno: { name: 'Elegoo / Arduino Uno', left: ['IOREF', 'RST', '3V3', '5V', 'GND', 'GND', 'VIN', 'A0', 'A1', 'A2', 'A3', 'A4', 'A5'], right: ['SCL', 'SDA', 'AREF', 'GND', 'D13', 'D12', 'D11', 'D10', 'D9', 'D8', 'D7', 'D6', 'D5', 'D4', 'D3', 'D2', 'D1', 'D0'],
+    all: range(2, 19), adc: range(14, 19), spi: [13, 11, 12], i2c: [18, 19], spiPick: [[10, 9, 8], [7, 6, 5]], camCs: [10, 9, 8], lab: (n) => (n >= 14 ? 'A' + (n - 14) : 'D' + n), cp: null, ino: true, pwm: (n) => ([3, 5, 6, 9, 10, 11].indexOf(n) > -1 ? n : -1), v5: '5V', v3: '3V3' },
   promicro: { name: 'Pro Micro (ATmega32U4)', left: ['D1', 'D0', 'GND', 'GND', 'D2', 'D3', 'D4', 'D5', 'D6', 'D7', 'D8', 'D9'], right: ['RAW', 'GND', 'RST', 'VCC', 'A3', 'A2', 'A1', 'A0', 'D15', 'D14', 'D16', 'D10'],
-    all: [2, 3, 4, 5, 6, 7, 8, 9, 10, 14, 15, 16, 18, 19, 20, 21], adc: [18, 19, 20, 21], spi: [15, 16, 14], i2c: [2, 3], spiPick: [[10, 9, 8], [7, 6, 5]], camCs: [10, 9], lab: (n) => (n >= 18 ? 'A' + (21 - n) : 'D' + n), cp: null, pwm: (n) => ([3, 5, 6, 9, 10].indexOf(n) > -1 ? n : -1), v5: 'VCC', v3: 'VCC' },
+    all: [2, 3, 4, 5, 6, 7, 8, 9, 10, 14, 15, 16, 18, 19, 20, 21], adc: [18, 19, 20, 21], spi: [15, 16, 14], i2c: [2, 3], spiPick: [[10, 9, 8], [7, 6, 5]], camCs: [10, 9], lab: (n) => (n >= 18 ? 'A' + (21 - n) : 'D' + n), cp: null, ino: true, pwm: (n) => ([3, 5, 6, 9, 10].indexOf(n) > -1 ? n : -1), v5: 'VCC', v3: 'VCC' },
   c3: { name: 'ESP32-C3 SuperMini', left: ['5V', 'GND', '3V3', 'GPIO4', 'GPIO3', 'GPIO2', 'GPIO1', 'GPIO0'], right: ['GPIO5', 'GPIO6', 'GPIO7', 'GPIO8', 'GPIO9', 'GPIO10', 'GPIO20', 'GPIO21'],
     all: [5, 6, 7, 10, 20, 21, 0, 1, 2, 3, 4, 8, 9], adc: [0, 1, 2, 3, 4], spi: [4, 6, 5], i2c: [8, 9] /* 8 (the LED) and 9 (BOOT) last */, spiPick: [[7, 10, 3]], camCs: [7, 10], lab: (n) => 'GPIO' + n, cp: 'board.IO', pwm: (n) => n, v5: '5V', v3: '3V3' },
   esp32: { name: 'ESP32 DevKit', left: ['EN', 'GPIO36', 'GPIO39', 'GPIO34', 'GPIO35', 'GPIO32', 'GPIO33', 'GPIO25', 'GPIO26', 'GPIO27', 'GPIO14', 'GPIO12', 'GPIO13', 'GND', 'VIN'], right: ['GPIO23', 'GPIO22', 'TX0', 'RX0', 'GPIO21', 'GPIO19', 'GPIO18', 'GPIO5', 'GPIO17', 'GPIO16', 'GPIO4', 'GPIO2', 'GPIO15', 'GND', '3V3'],
     all: [4, 5, 13, 14, 15, 16, 17, 18, 19, 21, 22, 23, 25, 26, 27, 32, 33], adc: [32, 33, 34, 35, 36, 39], spi: [18, 23, 19], i2c: [21, 22], spiPick: [[5, 17, 16], [15, 4, 2]], camCs: [5, 15], lab: (n) => 'GPIO' + n, cp: 'board.IO', pwm: (n) => n, v5: 'VIN', v3: '3V3' },
-  cyd: { name: 'Cheap Yellow Display', left: ['3V3', 'GPIO27', 'GPIO22', 'GND'], right: ['VIN', 'GPIO35', 'GPIO21', 'GND'], all: [22, 27, 21], adc: [35], spi: null, i2c: [27, 22], spiPick: [], camCs: [], lab: (n) => 'GPIO' + n, cp: 'board.IO', pwm: (n) => n, v5: 'VIN', v3: '3V3', builtIn: 'its own 2.8 in touch screen' },
+  cyd: { name: 'Cheap Yellow Display', left: ['3V3', 'GPIO27', 'GPIO22', 'GND'], right: ['VIN', 'GPIO35', 'GPIO21', 'GND'], all: [22, 27, 21], adc: [35], spi: null, i2c: [27, 22], spiPick: [], camCs: [], lab: (n) => 'GPIO' + n, cp: 'board.IO', ino: true, pwm: (n) => n, v5: 'VIN', v3: '3V3', builtIn: 'its own 2.8 in touch screen' },
   pi: { name: 'Raspberry Pi (40 pin header)', left: ['3V3', 'GPIO2', 'GPIO3', 'GPIO4', 'GND', 'GPIO17', 'GPIO27', 'GPIO22', '3V3', 'GPIO10', 'GPIO9', 'GPIO11', 'GND', 'ID_SD', 'GPIO5', 'GPIO6', 'GPIO13', 'GPIO19', 'GPIO26', 'GND'], right: ['5V', '5V', 'GND', 'GPIO14', 'GPIO15', 'GPIO18', 'GND', 'GPIO23', 'GPIO24', 'GND', 'GPIO25', 'GPIO8', 'GPIO7', 'ID_SC', 'GND', 'GPIO12', 'GND', 'GPIO16', 'GPIO20', 'GPIO21'],
     all: [4, 17, 27, 22, 5, 6, 13, 19, 26, 23, 24, 25, 12, 16, 20, 21, 18], adc: [], spi: [11, 10, 9], i2c: [2, 3], spiPick: [[8, 25, 24], [7, 23, 22]], camCs: [8, 7], lab: (n) => 'GPIO' + n, cp: null, pwm: (n) => ([12, 13, 18, 19].indexOf(n) > -1 ? n % 2 : -1), v5: '5V', v3: '3V3', pi: true }
 };
-export const BOARD_OF = { pico: 'pico', picow: 'pico', pico2: 'pico', nano: 'nano', promicro: 'promicro', esp32c3: 'c3', esp32: 'esp32', cyd: 'cyd', zero2: 'pi', pi5: 'pi' };
+export const BOARD_OF = { uno: 'uno', pico: 'pico', picow: 'pico', pico2: 'pico', nano: 'nano', promicro: 'promicro', esp32c3: 'c3', esp32: 'esp32', cyd: 'cyd', zero2: 'pi', pi5: 'pi' };
 
 // What each kind of part needs. d = any pin, a = an analog pin (GP26 to 28), enc = two pins next to each other,
 // pwm = a pin whose PWM slice no other sound or motor uses. power: 3V3 or VBUS (5 V from USB).
@@ -113,10 +115,174 @@ function pinList(plan, title, B, fn) {
   return { text: L.join('\n') + '\n', libs: [] };
 }
 // ---------- the starter code ----------
+// ---------- what the code does: presets and tweaks shared by code.py, the Arduino sketch and Test It ----------
+export const SCALES = { major: [0, 2, 4, 5, 7, 9, 11, 12], penta: [0, 2, 4, 7, 9, 12, 14, 16], minor: [0, 2, 3, 5, 7, 8, 10, 12] };
+export const LIBURL = { ino: 'https://www.arduino.cc/en/software', cp: 'https://circuitpython.org/libraries', web: 'https://code.circuitpython.org/' };
+// One door for every board: Arduino boards get a real .ino sketch, CircuitPython boards a code.py, both in the same 3 plain-English sections.
+export function codeFor(plan, title, fn, B, tw) {
+  B = B || BOARDS.pico;
+  if (B.ino) return inoFor(plan, title, fn, B, tw || {});
+  const c = codePy(plan, title, fn, B, tw || {});
+  if (B.cp) { c.text = pySections(c.text); c.lang = 'py'; c.file = 'code.py'; } else { c.lang = 'txt'; c.file = 'pins.txt'; }
+  return c;
+}
+function pySections(t) {
+  const L = t.split('\n'), at = (re) => L.findIndex((l) => re.test(l));
+  const i3 = at(/^show\("(Ready|Macro pad ready)"\)$|^# ---- (4-Button Macro Pad|Desk Timer|Mini Synth|Voice Sampler|MIDI Controller|Soundboard)/);
+  if (i3 > -1) L.splice(i3, 0, '# ===== 3. WHAT HAPPENS WHEN YOU PRESS THINGS =====', '# The loop at the bottom runs forever: it checks every part and reacts.', '');
+  const i2 = at(/^status = None/); if (i2 > -1) L.splice(i2, 0, '# ===== 2. YOUR PINS =====', '# Which wire goes to which pin. They match the wiring guide in the app.', '');
+  const i1 = at(/^import time$/); if (i1 > -1) L.splice(i1, 0, '# ===== 1. LIBRARIES =====', '# Code other people wrote that this file borrows. The ones that are not built in go in CIRCUITPY/lib (step 2 above).');
+  return L.join('\n');
+}
+const cStr = (s) => '"' + String(s).replace(/\\/g, '\\\\').replace(/"/g, '\\"') + '"';
+// ---------- the Arduino sketch (.ino): Elegoo / Arduino Uno, Nano, Pro Micro and the Cheap Yellow Display ----------
+function inoFor(plan, title, fn, B, tw) {
+  const ap = (n) => { const s = B.lab(n); return /^A\d/.test(s) ? s : s.replace(/^\D+/, ''); };
+  const pm = B === BOARDS.promicro, cyd = B === BOARDS.cyd, keys = [], pots = [], steps = [], encs = [], outs = [], pirs = [], mats = [], notes = [];
+  let screen = null;
+  plan.rows.forEach((row) => {
+    const it = row.it, tag = it.label.split(' ')[0], N = row.N, R = {}; row.roles.forEach((r) => { R[r.role] = r.pin; });
+    if (N.what === 'motion' && R.out != null) { pirs.push([R.out, tag]); return; }
+    if (N.what === 'keypad') { if (!mats.length) mats.push({ R, tag }); return; }
+    if (['distance', 'camera', 'matrix8', 'i2sout', 'i2sin'].indexOf(N.what) > -1) { notes.push(it.label + ': ' + row.roles.map((r) => r.role + ' ' + (r.pin == null ? '?' : B.lab(r.pin))).join(', ') + ' (wired, not used by this sketch yet)'); return; }
+    if (N.what === 'jack') return;
+    if (N.spi || N.i2c) { if (!screen) screen = { N, R, label: it.label }; return; }
+    if (N.what === 'button' && it.step && row.roles.length === 1 && row.roles[0].pin != null) { steps.push([row.roles[0].pin, tag]); return; }
+    if (N.what === 'button') row.roles.forEach((r) => { if (r.pin != null) keys.push([r.pin, row.roles.length > 1 ? tag + ' ' + r.role : tag]); });
+    if (N.what === 'knob' && R.turn != null) pots.push([R.turn, tag]);
+    if (N.what === 'knob' && R.slide != null) pots.push([R.slide, tag]);
+    if (N.what === 'stick') { if (R.x != null) pots.push([R.x, tag + ' x']); if (R.y != null) pots.push([R.y, tag + ' y']); if (R.press != null) keys.push([R.press, tag + ' press']); }
+    if (N.what === 'wheel') { if (R['clk+dt'] != null) encs.push([R['clk+dt'], tag]); if (R.press != null) keys.push([R.press, tag + ' press']); }
+    if (['led', 'ring', 'sound', 'servo'].indexOf(N.what) > -1 && row.roles.length && row.roles[0].pin != null && !outs.some((o) => o[0] === N.what)) outs.push([N.what, row.roles[0].pin, tag]);
+  });
+  const out = (w) => outs.find((o) => o[0] === w), snd = out('sound'), drv = screen && screen.N.driver;
+  const mode = ['synth', 'macro', 'midi', 'timer', 'sound'].indexOf(fn) > -1 ? fn : 'test', step = tw.btn === 'step', sc = SCALES[tw.scale] || SCALES.major;
+  const libs = []; const lib = (n, by, inc, built) => libs.push({ n, by, inc, built: !!built });
+  if (cyd) { lib('TFT_eSPI', 'Bodmer', 'TFT_eSPI.h'); lib('XPT2046_Touchscreen', 'Paul Stoffregen', 'XPT2046_Touchscreen.h'); }
+  else if (drv === 'ssd1306') { lib('Adafruit SSD1306', 'Adafruit', 'Adafruit_SSD1306.h'); lib('Adafruit GFX Library', 'Adafruit', 'Adafruit_GFX.h'); }
+  else if (drv === 'ili9341') { lib('Adafruit ILI9341', 'Adafruit', 'Adafruit_ILI9341.h'); lib('Adafruit GFX Library', 'Adafruit', 'Adafruit_GFX.h'); }
+  else if (drv === 'gc9a01') { lib('Adafruit GC9A01A', 'Adafruit', 'Adafruit_GC9A01A.h'); lib('Adafruit GFX Library', 'Adafruit', 'Adafruit_GFX.h'); }
+  if (mats.length) lib('Keypad', 'Mark Stanley, Alexander Brevig', 'Keypad.h');
+  if (out('ring')) lib('Adafruit NeoPixel', 'Adafruit', 'Adafruit_NeoPixel.h');
+  if (out('servo')) lib(cyd ? 'ESP32Servo' : 'Servo', cyd ? 'Kevin Harrington' : 'Arduino (built in)', cyd ? 'ESP32Servo.h' : 'Servo.h', !cyd);
+  if (mode === 'macro' && pm) lib('Keyboard', 'Arduino (built in)', 'Keyboard.h', true);
+  if (mode === 'midi' && pm) lib('MIDIUSB', 'Gary Grewal', 'MIDIUSB.h');
+  const boardPick = pm ? 'SparkFun Pro Micro (or Arduino Leonardo)' : cyd ? 'ESP32 Dev Module (add the ESP32 boards first: Tools -> Board -> Boards Manager -> esp32)' : B === BOARDS.nano ? 'Arduino Nano (Processor: ATmega328P, try "Old Bootloader" if upload fails)' : 'Arduino Uno';
+  const L = [];
+  L.push('// NOCIV Case Zero sketch. ' + title, '// Brain: ' + B.name + '. Arduino language (.ino).', '//',
+    '// How to put it on the board:', '//   1. Install the free Arduino IDE: https://www.arduino.cc/en/software',
+    '//   2. Save this file as casezero/casezero.ino (the folder and the file must have the same name).',
+    '//   3. Tools -> Board -> ' + boardPick + '. Tools -> Port -> the one that appears when you plug it in.',
+    libs.some((l) => !l.built) ? '//   4. Install the libraries in section 1: Sketch -> Include Library -> Manage Libraries, search each name, Install.' : '//   4. No libraries to install.',
+    '//   5. Press Upload (the arrow). Open Tools -> Serial Monitor at 115200 to see every press.', '//');
+  if (cyd) L.push('// CYD: TFT_eSPI needs the CYD settings. Copy the CYD User_Setup.h (github.com/witnessmenow/ESP32-Cheap-Yellow-Display, DisplayConfig)', '//   into the TFT_eSPI library folder, replacing the one there. Spare pins for your parts: GPIO22 and GPIO27 (CN1 plug), GPIO35 (P3, input only), GPIO21 (P3, shared with the backlight on some boards).', '//   Already on the board: speaker GPIO26, RGB LED GPIO4/16/17, light sensor GPIO34, SD card on its own SPI.', '//');
+  plan.problems.forEach((p) => L.push('// Fix first: ' + p));
+  notes.forEach((n) => L.push('// ' + n));
+  L.push('', '// ===== 1. LIBRARIES =====', '// Code other people wrote that this sketch borrows. (install) = install it once in the Library Manager.');
+  const incs = []; libs.forEach((l) => { if (incs.indexOf(l.inc) < 0) { incs.push(l.inc); L.push('#include <' + l.inc + '>' + ' '.repeat(Math.max(1, 26 - l.inc.length)) + '// ' + (l.built ? 'built in' : '(install) "' + l.n + '" by ' + l.by)); } });
+  if (drv === 'ssd1306' && !cyd) L.push('#include <Wire.h>                 // built in: the 2-wire I2C bus');
+  if (cyd) L.push('#include <SPI.h>                  // built in');
+  if (!incs.length && !cyd) L.push('// Nothing extra needed: everything here is built into Arduino.');
+  L.push('', '// ===== 2. YOUR PINS =====', '// Which wire goes to which pin. They match the wiring guide in the app. Change a number here if you used another pin.');
+  const arr = (nm, list, f) => list.length && L.push('const int ' + nm + '[] = {' + list.map(f).join(', ') + '};');
+  const names = (nm, list) => list.length && L.push('const char* ' + nm + '[] = {' + list.map((k) => cStr(k[1])).join(', ') + '};');
+  if (keys.length) { L.push('// Buttons: one leg to the pin, the other to GND. Pressed reads LOW.'); arr('BTN_PIN', keys, (k) => ap(k[0])); names('BTN_NAME', keys); L.push('const int NBTN = ' + keys.length + ';'); }
+  if (pots.length) { L.push('// Knobs, sliders, sticks: the middle leg to the pin. Read 0 to 100.'); arr('POT_PIN', pots, (k) => ap(k[0])); names('POT_NAME', pots); L.push('const int NPOT = ' + pots.length + ';'); }
+  if (steps.length) { L.push('// Stepped Buttons: each press steps 1/4 -> 2/4 -> 3/4 -> 4/4 (25, 50, 75, 100).'); arr('STEP_PIN', steps, (k) => ap(k[0])); names('STEP_NAME', steps); L.push('const int NSTEP = ' + steps.length + ';'); }
+  if (encs.length) { L.push('// Click wheels: CLK and DT sit side by side.'); L.push('const int ENC_PIN[][2] = {' + encs.map((e) => '{' + ap(e[0]) + ', ' + ap(e[0] + 1) + '}').join(', ') + '};'); names('ENC_NAME', encs); L.push('const int NENC = ' + encs.length + ';'); }
+  if (pirs.length) { arr('PIR_PIN', pirs, (k) => ap(k[0])); names('PIR_NAME', pirs); L.push('const int NPIR = ' + pirs.length + ';'); }
+  outs.forEach(([w, p, t]) => L.push('const int ' + { led: 'LED_PIN', ring: 'RING_PIN', sound: 'SOUND_PIN', servo: 'SERVO_PIN' }[w] + ' = ' + ap(p) + ';  // ' + t));
+  if (cyd && !snd) L.push('const int SOUND_PIN = 26;  // the CYD speaker plug');
+  const SP = snd || cyd;
+  if (mats.length) { const R = mats[0].R; L.push('// 4x4 keypad: 4 row wires, 4 column wires.', 'byte ROW_PIN[4] = {' + [1, 2, 3, 4].map((i) => ap(R['row' + i])).join(', ') + '};', 'byte COL_PIN[4] = {' + [1, 2, 3, 4].map((i) => ap(R['col' + i])).join(', ') + '};', "char PAD_KEYS[4][4] = {{'1','2','3','A'},{'4','5','6','B'},{'7','8','9','C'},{'*','0','#','D'}};", 'Keypad pad = Keypad(makeKeymap(PAD_KEYS), ROW_PIN, COL_PIN, 4, 4);'); }
+  if (screen && !cyd) { const R = screen.R; L.push('// Screen: ' + screen.label);
+    if (drv === 'ssd1306') L.push('Adafruit_SSD1306 screen(128, 64, &Wire, -1);  // SDA ' + B.lab(B.i2c[0]) + ', SCL ' + B.lab(B.i2c[1]));
+    else L.push((drv === 'ili9341' ? 'Adafruit_ILI9341' : 'Adafruit_GC9A01A') + ' screen(' + ap(R.cs) + ', ' + ap(R.dc) + ', ' + ap(R.rst) + ');  // CS, DC, RST. SCK ' + B.lab(B.spi[0]) + ', MOSI ' + B.lab(B.spi[1])); }
+  if (cyd) L.push('TFT_eSPI screen;                    // the built-in 2.8 in screen', 'SPIClass touchBus(VSPI);', 'XPT2046_Touchscreen touch(33, 36);  // touch: CS 33, IRQ 36 (MOSI 32, MISO 39, CLK 25)');
+  if (out('ring')) L.push('Adafruit_NeoPixel ring(12, RING_PIN, NEO_GRB + NEO_KHZ800);');
+  if (out('servo')) L.push('Servo arm;');
+  L.push('', '// ===== 3. WHAT HAPPENS WHEN YOU PRESS THINGS =====');
+  const what = { test: 'Pin Test: every press, turn and slide prints "NOCIV name value" so you can check each wire.', synth: 'Synth: each button plays a note of the scale on the speaker. Knob 1 moves the pitch.', macro: 'USB Macro Pad: each button sends a shortcut (copy, paste, undo, save).', midi: 'MIDI: each button sends a MIDI note, each knob a MIDI CC (1, 2, 3...).', timer: 'Timer: button 1 starts and pauses, hold it 1 s to reset. Turn the wheel to set the minutes. It beeps at 00:00.', sound: 'Soundboard: each button plays its own little jingle.' }[mode];
+  L.push('// ' + what);
+  if (['synth', 'midi', 'sound'].indexOf(mode) > -1) L.push('const int SCALE[] = {' + sc.join(', ') + '};  // ' + ({ major: 'Major', penta: 'Pentatonic', minor: 'Minor' }[tw.scale] || 'Major') + ' scale, in steps above middle C', 'const bool STEP_MODE = ' + step + ';     // true: each press plays one short 1/4 note. false: the note plays while you hold the button.', 'int transpose = 0;');
+  if (mode === 'macro') L.push('const bool MAC = ' + !!tw.mac + ';  // true on a Mac: Cmd instead of Ctrl', "const char SHORTCUT[] = {'c', 'v', 'z', 's'};", 'const char* WHAT[] = {"copy", "paste", "undo", "save"};');
+  if (mode === 'macro' && !pm) L.push('// The ' + B.name + ' cannot act as a USB keyboard (a Pro Micro or a Pico can). Here each button prints the shortcut it would send.');
+  if (mode === 'midi' && !pm) L.push('// The ' + B.name + ' is not a USB MIDI device. It sends MIDI over the USB cable at 115200: run the free Hairless MIDI bridge on your computer.');
+  if (mode === 'timer') L.push('int minutes = ' + (tw.min || 25) + ';', 'long remaining = minutes * 60L;', 'bool running = false;', 'unsigned long tick = 0, downAt = 0;');
+  if (keys.length) L.push('bool btnWas[NBTN];');
+  if (pots.length) L.push('int potWas[NPOT];');
+  if (steps.length) L.push('bool stepWas[NSTEP];', 'int stepAt[NSTEP];');
+  if (encs.length) L.push('int encWas[NENC];', 'long encPos[NENC];');
+  if (pirs.length) L.push('bool pirWas[NPIR];');
+  L.push('unsigned long noteOff = 0;  // when a short note ends', 'int noteOn = -1;', '');
+  // show(): the screen (if any) and the Serial Monitor
+  L.push('void show(String text) {');
+  if (drv === 'ssd1306' && !cyd) L.push('  screen.clearDisplay();', '  screen.setTextSize(2);', '  screen.setTextColor(SSD1306_WHITE);', '  screen.setCursor(0, 20);', '  screen.println(text);', '  screen.display();');
+  else if (cyd) L.push('  screen.fillRect(0, 100, 320, 40, TFT_BLACK);', '  screen.drawString(text, 10, 104, 4);');
+  else if (screen) L.push('  screen.fillRect(0, 100, 320, 40, 0x0000);', '  screen.setCursor(8, 108);', '  screen.setTextSize(3);', '  screen.setTextColor(0xFFFF);', '  screen.print(text);');
+  else L.push('  // no screen: the Serial Monitor shows it');
+  L.push('}', '', 'void say(String name, int value) {  // "NOCIV B1 1": the live test in the app reads these lines');
+  L.push(mode === 'midi' && !pm ? '  // (quiet in MIDI mode: the serial cable carries the MIDI)' : '  Serial.print("NOCIV "); Serial.print(name); Serial.print(" "); Serial.println(value);', '}', '');
+  if (['synth', 'midi', 'sound'].indexOf(mode) > -1) L.push('int noteNumber(int n) { return 60 + SCALE[n % 8] + 12 * (n / 8) + transpose; }  // 60 = middle C', 'float noteHz(int n) { return 440.0 * pow(2, (noteNumber(n) - 69) / 12.0); }', '');
+  if (mode === 'midi') L.push('void midi(byte cmd, byte a, byte b) {', pm ? '  midiEventPacket_t m = {(byte)(cmd >> 4), cmd, a, b};\n  MidiUSB.sendMIDI(m);\n  MidiUSB.flush();' : '  Serial.write(cmd); Serial.write(a); Serial.write(b);', '}', '');
+  if (mode === 'timer') L.push('String clock() { char t[8]; sprintf(t, "%02ld:%02ld", remaining / 60, remaining % 60); return String(t); }', '');
+  const beep = (hz, ms) => (SP ? 'tone(SOUND_PIN, ' + hz + ', ' + ms + ');' : '/* add a buzzer to hear it */');
+  // press / release
+  L.push('// A button (or a keypad key) went down. n = which one.', 'void press(int n, String name) {', '  say(name, 1);');
+  if (out('led')) L.push('  digitalWrite(LED_PIN, !digitalRead(LED_PIN));');
+  if (out('ring')) L.push('  ring.fill(ring.Color(200, 40, 30)); ring.show();');
+  if (mode === 'test') { L.push('  show(name);'); if (SP) L.push('  ' + beep('330 + 60 * n', 80)); if (out('servo') && !pots.length) L.push('  arm.write(arm.read() < 45 ? 90 : 0);'); }
+  if (mode === 'synth') L.push('  show(name + " " + String((int)noteHz(n)) + " Hz");', SP ? '  if (STEP_MODE) tone(SOUND_PIN, noteHz(n), 250); else tone(SOUND_PIN, noteHz(n));' : '  // add a buzzer or the jack (Parts) to hear it', '  noteOn = n;');
+  if (mode === 'sound') L.push('  show("Sound " + String(n + 1));', SP ? '  if (STEP_MODE) { tone(SOUND_PIN, noteHz(n), 250); return; }\n  for (int i = 0; i < 3; i++) { tone(SOUND_PIN, noteHz(n + i * 2), 120); delay(140); }  // its jingle: 3 quick notes' : '  // add a buzzer (Parts) to hear it');
+  if (mode === 'midi') L.push('  midi(0x90, noteNumber(n), 100);  // note on, loud', '  show("Note " + String(noteNumber(n)));', '  noteOn = n;', '  if (STEP_MODE) noteOff = millis() + 250;');
+  if (mode === 'macro') L.push('  if (n > 3) { show(name); return; }', '  show(String(MAC ? "Cmd+" : "Ctrl+") + SHORTCUT[n] + " " + WHAT[n]);', pm ? '  Keyboard.press(MAC ? KEY_LEFT_GUI : KEY_LEFT_CTRL);\n  Keyboard.press(SHORTCUT[n]);\n  delay(20);\n  Keyboard.releaseAll();' : '  Serial.println(String("would send ") + (MAC ? "Cmd+" : "Ctrl+") + SHORTCUT[n]);');
+  if (mode === 'timer') L.push('  if (n == 0) downAt = millis();');
+  L.push('}', '', '// It came back up.', 'void release(int n, String name) {', '  say(name, 0);');
+  if (out('ring')) L.push('  ring.clear(); ring.show();');
+  if (mode === 'synth' && SP) L.push('  if (!STEP_MODE && noteOn == n) { noTone(SOUND_PIN); noteOn = -1; }');
+  if (mode === 'midi') L.push('  if (!STEP_MODE && noteOn == n) { midi(0x80, noteNumber(n), 0); noteOn = -1; }');
+  if (mode === 'timer') L.push('  if (n != 0) return;', '  if (millis() - downAt >= 1000) { running = false; remaining = minutes * 60L; show(clock()); return; }  // held 1 s: reset', '  running = !running; tick = millis();', '  show(running ? clock() : clock() + " paused");');
+  L.push('}', '', '// A knob moved, or a Stepped Button stepped. value is 0 to 100.', 'void dial(int n, String name, int value) {', '  say(name, value);');
+  if (mode === 'test') { L.push('  show(name + " " + String(value));'); if (out('servo')) L.push('  if (n == 0) arm.write(value * 180 / 100);'); }
+  if (mode === 'synth' || mode === 'sound') L.push('  if (n == 0) { transpose = value * 24 / 100 - 12; show("Pitch " + String(transpose)); }');
+  if (mode === 'midi') L.push('  midi(0xB0, 1 + n, value * 127 / 100);  // CC 1, 2, 3...', '  show("CC " + String(1 + n) + " " + String(value));');
+  if (mode === 'macro') L.push('  show(name + " " + String(value));');
+  L.push('}', '', '// A click wheel clicked one step. dir is +1 or -1.', 'void wheel(int n, String name, long pos, int dir) {', '  say(name, pos);');
+  if (mode === 'timer') L.push('  if (!running) { minutes = constrain(minutes + dir, 1, 99); remaining = minutes * 60L; show(clock()); }');
+  else if (mode === 'synth' || mode === 'sound' || mode === 'midi') L.push('  transpose = constrain(transpose + dir, -12, 12);', '  show("Pitch " + String(transpose));');
+  else L.push('  show(name + " " + String(pos));');
+  L.push('}', '', 'void setup() {', mode === 'midi' && !pm ? '  Serial.begin(115200);  // MIDI bytes for the Hairless bridge' : '  Serial.begin(115200);');
+  if (keys.length) L.push('  for (int i = 0; i < NBTN; i++) { pinMode(BTN_PIN[i], INPUT_PULLUP); btnWas[i] = HIGH; }');
+  if (steps.length) L.push('  for (int i = 0; i < NSTEP; i++) { pinMode(STEP_PIN[i], INPUT_PULLUP); stepWas[i] = HIGH; stepAt[i] = 0; }');
+  if (pots.length) L.push('  for (int i = 0; i < NPOT; i++) potWas[i] = -10;');
+  if (encs.length) L.push('  for (int i = 0; i < NENC; i++) { pinMode(ENC_PIN[i][0], INPUT_PULLUP); pinMode(ENC_PIN[i][1], INPUT_PULLUP); encWas[i] = digitalRead(ENC_PIN[i][0]); encPos[i] = 0; }');
+  if (pirs.length) L.push('  for (int i = 0; i < NPIR; i++) { pinMode(PIR_PIN[i], INPUT); pirWas[i] = LOW; }');
+  if (out('led')) L.push('  pinMode(LED_PIN, OUTPUT);');
+  if (out('ring')) L.push('  ring.begin(); ring.setBrightness(50); ring.show();');
+  if (out('servo')) L.push('  arm.attach(SERVO_PIN);');
+  if (mode === 'macro' && pm) L.push('  Keyboard.begin();');
+  if (drv === 'ssd1306' && !cyd) L.push('  screen.begin(SSD1306_SWITCHCAPVCC, 0x3C);');
+  else if (cyd) L.push('  screen.init();', '  screen.setRotation(1);', '  screen.fillScreen(TFT_BLACK);', '  screen.setTextColor(TFT_WHITE, TFT_BLACK);', '  screen.drawString("NOCIV", 10, 20, 4);', '  touchBus.begin(25, 39, 32, 33);', '  touch.begin(touchBus);');
+  else if (screen) L.push('  screen.begin();', '  screen.fillScreen(0x0000);');
+  L.push('  show(' + (mode === 'timer' ? 'clock()' : cStr({ test: 'Ready', synth: 'Synth ready', macro: 'Macro pad ready', midi: 'MIDI ready', sound: 'Soundboard ready' }[mode])) + ');', mode === 'midi' && !pm ? '' : '  Serial.println("NOCIV ready");', '}', '');
+  L.push('void loop() {');
+  if (keys.length) L.push('  for (int i = 0; i < NBTN; i++) {  // buttons', '    bool now = digitalRead(BTN_PIN[i]);', '    if (now != btnWas[i]) { btnWas[i] = now; if (now == LOW) press(i, BTN_NAME[i]); else release(i, BTN_NAME[i]); }', '  }');
+  if (steps.length) L.push('  for (int i = 0; i < NSTEP; i++) {  // Stepped Buttons: 1/4 -> 2/4 -> 3/4 -> 4/4', '    bool now = digitalRead(STEP_PIN[i]);', '    if (now != stepWas[i]) { stepWas[i] = now; if (now == LOW) { stepAt[i] = stepAt[i] % 4 + 1; dial(' + (pots.length ? 'NPOT + ' : '') + 'i, STEP_NAME[i], stepAt[i] * 25); } }', '  }');
+  if (pots.length) L.push('  for (int i = 0; i < NPOT; i++) {  // knobs and sliders', '    int v = analogRead(POT_PIN[i]) * 100L / ' + (cyd ? 4095 : 1023) + ';', '    if (abs(v - potWas[i]) >= 2) { potWas[i] = v; dial(i, POT_NAME[i], v); }', '  }');
+  if (encs.length) L.push('  for (int i = 0; i < NENC; i++) {  // click wheels', '    int clk = digitalRead(ENC_PIN[i][0]);', '    if (clk != encWas[i]) { encWas[i] = clk; if (clk == LOW) { int dir = digitalRead(ENC_PIN[i][1]) != clk ? 1 : -1; encPos[i] += dir; wheel(i, ENC_NAME[i], encPos[i], dir); } }', '  }');
+  if (pirs.length) L.push('  for (int i = 0; i < NPIR; i++) {  // motion sensors', '    bool now = digitalRead(PIR_PIN[i]);', '    if (now != pirWas[i]) { pirWas[i] = now; say(PIR_NAME[i], now); show(String(PIR_NAME[i]) + (now ? " motion" : " still")); }', '  }');
+  if (mats.length) L.push('  if (pad.getKeys()) {  // the 4x4 keypad', '    for (int i = 0; i < LIST_MAX; i++) {', '      if (!pad.key[i].stateChanged) continue;', '      String name = String("Key-") + pad.key[i].kchar;', '      if (pad.key[i].kstate == PRESSED) press(pad.key[i].kcode, name);', '      else if (pad.key[i].kstate == RELEASED) release(pad.key[i].kcode, name);', '    }', '  }');
+  if (cyd) L.push('  static bool wasTouched = false;  // the touch screen counts as one more button', '  bool t = touch.tirqTouched() && touch.touched();', '  if (t != wasTouched) { wasTouched = t; if (t) press(' + keys.length + ', "Touch"); else release(' + keys.length + ', "Touch"); }');
+  if (mode === 'midi') L.push('  if (noteOn >= 0 && STEP_MODE && millis() > noteOff) { midi(0x80, noteNumber(noteOn), 0); noteOn = -1; }  // the short 1/4 note ends');
+  if (mode === 'timer') L.push('  if (running && millis() - tick >= 1000) {  // one second passed', '    tick += 1000; remaining--; show(clock());', '    if (remaining <= 0) { running = false; show("00:00 done!"); for (int i = 0; i < 3; i++) { ' + beep(880, 150) + ' delay(250); } remaining = minutes * 60L; }', '  }');
+  L.push('  delay(5);  // a tiny rest, also stops button bounce', '}', '');
+  return { text: L.join('\n'), libs, lang: 'ino', file: 'casezero.ino' };
+}
 const pyStr = (s) => '"' + String(s).replace(/\\/g, '\\\\').replace(/"/g, '\\"') + '"';
-export function codeFor(plan, title, fn, B) {
+function codePy(plan, title, fn, B, tw) {
   B = B || BOARDS.pico; const PFX = B.cp || 'board.GP', LB = B.lab, SPI = B.spi || [18, 19, 16], I2C = B.i2c || [4, 5];
-  if (!B.cp) return pinList(plan, title, B, fn); // fn: a recipe's own program (macro, timer, synth) in place of the pin test
+  if (!B.cp) return pinList(plan, title, B, fn);
+   // fn: a recipe's own program (macro, timer, synth) in place of the pin test
   const keys = [], pots = [], encs = [], outs = [], pirs = [], tofs = [], cams = [], mats = [], L = [];
   let mx = null, i2s = null, mic = null;
   let screen = null;
@@ -142,7 +308,8 @@ export function codeFor(plan, title, fn, B) {
   const has = (w) => outs.some((o) => o[0] === w), libs = [];
   if (screen) { libs.push('adafruit_display_text'); if (screen.N.driver === 'ili9341') libs.push('adafruit_ili9341.mpy'); if (screen.N.driver === 'ssd1306') libs.push('adafruit_displayio_ssd1306.mpy'); if (screen.N.driver === 'gc9a01') libs.push('gc9a01.mpy (from the Community Bundle)'); }
   if (has('ring')) libs.push('neopixel.mpy'); if (has('servo')) libs.push('adafruit_motor'); if (tofs.length) libs.push('adafruit_vl53l0x.mpy'); if (fn === 'macro' && keys.length) libs.push('adafruit_hid');
-  if (mx) libs.push('adafruit_max7219', 'adafruit_framebuf.mpy', 'adafruit_bus_device'); if (fn === 'sampler') libs.push('adafruit_midi');
+  if (mx) libs.push('adafruit_max7219', 'adafruit_framebuf.mpy', 'adafruit_bus_device'); if (fn === 'sampler' || (fn === 'midi' && keys.length)) libs.push('adafruit_midi');
+  const SC = SCALES[tw.scale] || SCALES.major, TAP = tw.btn === 'step' ? '0.25' : 'None', SCN = { major: 'Major', penta: 'Pentatonic', minor: 'Minor' }[tw.scale] || 'Major';
   const sam = fn === 'sampler' && mats.length, synth = !!i2s || (sam && has('sound')); /* synthio plays the pads: out of the I2S DAC, or one PWM pin to the jack */
   const bus = !!(cams.length || tofs.length); /* sensors share one I2C bus (and the camera the SPI bus) with the screen, made once at the top */
   L.push('# NOCIV Case Zero starter code. ' + title, '# Brain: ' + B.name + (B === BOARDS.pico ? ', Pico W or Pico 2 (same pins).' : '. CircuitPython names its pins board.IO and the number.'), '#',
@@ -214,14 +381,14 @@ export function codeFor(plan, title, fn, B) {
   const snd = has('sound'), st = Math.max(0, keys.findIndex((k) => k[2] === 'btn'));
   if (fn === 'macro' && keys.length) {
     L.push('# ---- 4-Button Macro Pad: each button sends a shortcut to the computer over USB ----', 'import usb_hid', 'from adafruit_hid.keyboard import Keyboard', 'from adafruit_hid.keycode import Keycode', 'from adafruit_hid.consumer_control import ConsumerControl', 'from adafruit_hid.consumer_control_code import ConsumerControlCode',
-      'MAC = False  # True on a Mac: Cmd instead of Ctrl', 'kbd = Keyboard(usb_hid.devices)', 'media = ConsumerControl(usb_hid.devices)', 'MOD = Keycode.GUI if MAC else Keycode.CONTROL', 'MODNAME = "Cmd" if MAC else "Ctrl"',
+      'MAC = ' + (tw.mac ? 'True' : 'False') + '  # True on a Mac: Cmd instead of Ctrl', 'kbd = Keyboard(usb_hid.devices)', 'media = ConsumerControl(usb_hid.devices)', 'MOD = Keycode.GUI if MAC else Keycode.CONTROL', 'MODNAME = "Cmd" if MAC else "Ctrl"',
       'SHORTCUTS = (("C", Keycode.C, "copy"), ("V", Keycode.V, "paste"), ("Z", Keycode.Z, "undo"), ("PLAY", None, "play/pause"))', '',
       'def fire(n):', '    if n >= len(SHORTCUTS):', '        return NAMES[n]', '    letter, code, what = SHORTCUTS[n]', '    if code is None:', '        media.send(ConsumerControlCode.PLAY_PAUSE)', '        return "Play/Pause"', '    kbd.send(MOD, code)', '    return MODNAME + "+" + letter + " (" + what + ")"', '',
       'show("Macro pad ready")', 'print("NOCIV ready")', '', 'while True:', '    event = keys.events.get()', '    if event:', '        down = 1 if event.pressed else 0', '        print("NOCIV", NAMES[event.key_number].replace(" ", "-"), down)', '        if lamp:', '            lamp.value = bool(down)', '        if down:', '            shortcut = fire(event.key_number)', '            print("NOCIV sent", shortcut)', '            show(shortcut)', '    time.sleep(0.01)', '');
     return { text: L.join('\n'), libs };
   }
   if (fn === 'timer' && keys.length) {
-    L.push('# ---- Desk Timer: press the button to start or pause, hold it 1 s to reset' + (encs.length ? ', turn the wheel to set the minutes' : '') + '. It beeps at 00:00 ----', 'START = ' + st, 'minutes = 25', 'remaining = minutes * 60', 'running = False', 'tick = time.monotonic()', 'held_at = None', '',
+    L.push('# ---- Desk Timer: press the button to start or pause, hold it 1 s to reset' + (encs.length ? ', turn the wheel to set the minutes' : '') + '. It beeps at 00:00 ----', 'START = ' + st, 'minutes = ' + (tw.min || 25), 'remaining = minutes * 60', 'running = False', 'tick = time.monotonic()', 'held_at = None', '',
       'def clock():', '    return "%02d:%02d" % (remaining // 60, remaining % 60)', '', 'def ring_bell():');
     if (snd) L.push('    for _ in range(3):', '        beep.frequency = 880', '        beep.duty_cycle = 2 ** 15', '        time.sleep(0.15)', '        beep.duty_cycle = 0', '        time.sleep(0.1)', ''); else L.push('    print("NOCIV beep")', '');
     L.push('show(clock())', 'print("NOCIV ready")', '', 'while True:', '    now = time.monotonic()', '    event = keys.events.get()', '    if event and event.key_number == START:', '        if event.pressed:', '            held_at = now', '        elif held_at is not None:', '            if now - held_at >= 1:', '                running = False', '                remaining = minutes * 60', '                print("NOCIV timer reset")', '            else:', '                running = not running', '                tick = now', '                print("NOCIV timer", "start" if running else "pause")', '            held_at = None', '            show(clock() if running or remaining == minutes * 60 else clock() + " paused")');
@@ -230,11 +397,28 @@ export function codeFor(plan, title, fn, B) {
     return { text: L.join('\n'), libs };
   }
   if (fn === 'synth' && keys.length && snd) {
-    L.push('# ---- Mini Synth: each button plays a note.' + (pots.length ? ' Knob 1 moves the pitch' + (pots.length > 1 ? ', knob 2 sets the tempo of the arpeggio while you hold a key' : '') + '.' : '') + ' ----', 'SCALE = (262, 294, 330, 349, 392, 440, 494, 523)', 'NOTE = ("C", "D", "E", "F", "G", "A", "B", "C")', 'ARP = ' + (pots.length > 1 ? '(1, 1.5, 2)' : '(1,)'), 'PLAY = (' + (() => { let n = 0; return keys.map((k) => (k[2] === 'btn' ? String(n++) : 'None')).join(', '); })() + ',)  # the note each key plays: None for a wheel or stick press', 'held = None', 'step = 0', 'next_step = 0', 'transpose = 0', 'bpm = 120', '',
-      'show("Synth ready")', 'print("NOCIV ready")', '', 'while True:', '    now = time.monotonic()', '    event = keys.events.get()', '    if event and PLAY[event.key_number] is None:', '        if event.pressed:', '            print("NOCIV", NAMES[event.key_number].replace(" ", "-"), 1)', '            show(NAMES[event.key_number])', '    elif event:', '        if event.pressed:', '            held = PLAY[event.key_number]', '            step = 0', '            next_step = now', '            if lamp:', '                lamp.value = True', '        elif PLAY[event.key_number] == held:', '            held = None', '            beep.duty_cycle = 0', '            if lamp:', '                lamp.value = False');
+    L.push('# ---- Mini Synth: each button plays a note.' + (pots.length ? ' Knob 1 moves the pitch' + (pots.length > 1 ? ', knob 2 sets the tempo of the arpeggio while you hold a key' : '') + '.' : '') + ' ----', 'SCALE = (' + SC.map((x) => Math.round(261.63 * Math.pow(2, x / 12))).join(', ') + ')  # ' + SCN + ' scale, in Hz', 'NOTE = (' + SC.map((x) => pyStr(['C', 'C#', 'D', 'Eb', 'E', 'F', 'F#', 'G', 'Ab', 'A', 'Bb', 'B'][x % 12])).join(', ') + ')', 'TAP = ' + TAP + '  # 0.25: each press plays one short 1/4 note. None: the note plays while you hold it', 'started = 0', 'ARP = ' + (pots.length > 1 ? '(1, 1.5, 2)' : '(1,)'), 'PLAY = (' + (() => { let n = 0; return keys.map((k) => (k[2] === 'btn' ? String(n++) : 'None')).join(', '); })() + ',)  # the note each key plays: None for a wheel or stick press', 'held = None', 'step = 0', 'next_step = 0', 'transpose = 0', 'bpm = 120', '',
+      'show("Synth ready")', 'print("NOCIV ready")', '', 'while True:', '    now = time.monotonic()', '    event = keys.events.get()', '    if event and PLAY[event.key_number] is None:', '        if event.pressed:', '            print("NOCIV", NAMES[event.key_number].replace(" ", "-"), 1)', '            show(NAMES[event.key_number])', '    elif event:', '        if event.pressed:', '            held = PLAY[event.key_number]', '            step = 0', '            next_step = now', '            started = now', '            if lamp:', '                lamp.value = True', '        elif PLAY[event.key_number] == held:', '            held = None', '            beep.duty_cycle = 0', '            if lamp:', '                lamp.value = False');
     if (pots.length) L.push('    transpose = POTS[0][0].value * 24 // 65535 - 12');
     if (pots.length > 1) L.push('    bpm = 60 + POTS[1][0].value * 180 // 65535');
+    L.push('    if held is not None and TAP and now - started >= TAP:', '        held = None', '        beep.duty_cycle = 0');
     L.push('    if held is not None and now >= next_step:', '        f = SCALE[held % 8] * 2 ** (held // 8 + transpose / 12) * ARP[step % len(ARP)]', '        beep.frequency = max(20, int(f))', '        beep.duty_cycle = 2 ** 15', '        if step == 0:', '            print("NOCIV note", NOTE[held % 8], int(f))', '            show(NOTE[held % 8] + " " + str(int(f)) + " Hz")', '        step += 1', '        next_step = now + 60 / bpm / 2', '    time.sleep(0.005)', '');
+    return { text: L.join('\n'), libs };
+  }
+  if (fn === 'midi' && keys.length) {
+    L.push('# ---- MIDI Controller: each button sends a USB MIDI note (' + SCN + ' scale), each knob a MIDI CC (1, 2, 3...). Any music app sees it. ----', 'import usb_midi', 'import adafruit_midi', 'from adafruit_midi.note_on import NoteOn', 'from adafruit_midi.note_off import NoteOff', 'from adafruit_midi.control_change import ControlChange', '',
+      'midi = adafruit_midi.MIDI(midi_out=usb_midi.ports[1], out_channel=0)', 'SCALE = (' + SC.join(', ') + ')  # steps above middle C (60)', 'TAP = ' + TAP + '  # 0.25: each press is one short 1/4 note. None: the note holds while you hold the button', 'playing = {}', '',
+      'def note_of(n):', '    return 60 + SCALE[n % 8] + 12 * (n // 8)', '', 'show("MIDI ready")', 'print("NOCIV ready")', '', 'while True:', '    now = time.monotonic()', '    event = keys.events.get()', '    if event:', '        n = event.key_number', '        print("NOCIV", NAMES[n].replace(" ", "-"), 1 if event.pressed else 0)',
+      '        if event.pressed:', '            midi.send(NoteOn(note_of(n), 100))', '            playing[n] = now', '            show("Note " + str(note_of(n)))', '        elif not TAP and n in playing:', '            midi.send(NoteOff(note_of(n), 0))', '            playing.pop(n)',
+      '    for n in [k for k, t in playing.items() if TAP and now - t >= TAP]:', '        midi.send(NoteOff(note_of(n), 0))', '        playing.pop(n)');
+    if (pots.length) L.push('    for n, (pot, name) in enumerate(POTS):', '        value = pot.value * 100 // 65535', '        if abs(value - last[n]) >= 2:', '            last[n] = value', '            midi.send(ControlChange(1 + n, value * 127 // 100))', '            print("NOCIV", name.replace(" ", "-"), value)', '            show("CC " + str(1 + n) + " " + str(value))');
+    L.push('    time.sleep(0.005)', '');
+    return { text: L.join('\n'), libs };
+  }
+  if (fn === 'sound' && keys.length && has('sound')) {
+    L.push('# ---- Soundboard: each button plays its own jingle (' + SCN + ' scale) on the speaker. ----', 'SCALE = (' + SC.map((x) => Math.round(261.63 * Math.pow(2, x / 12))).join(', ') + ')  # Hz', 'TAP = ' + TAP + '  # 0.25: one short 1/4 note per press. None: the full 3-note jingle', '',
+      'def play(hz, length):', '    beep.frequency = max(20, int(hz))', '    beep.duty_cycle = 2 ** 15', '    time.sleep(length)', '    beep.duty_cycle = 0', '',
+      'show("Soundboard ready")', 'print("NOCIV ready")', '', 'while True:', '    event = keys.events.get()', '    if event:', '        n = event.key_number', '        print("NOCIV", NAMES[n].replace(" ", "-"), 1 if event.pressed else 0)', '        if event.pressed:', '            show("Sound " + str(n + 1))', '            if TAP:', '                play(SCALE[n % 8], TAP)', '            else:', '                for i in range(3):', '                    play(SCALE[(n + i * 2) % 8] * (2 if n + i * 2 >= 8 else 1), 0.12)', '                    time.sleep(0.02)', '    time.sleep(0.005)', '');
     return { text: L.join('\n'), libs };
   }
   if (sam) {
