@@ -697,7 +697,7 @@ function tabsFor(step) {
   if (step === 2) return [['shape', 'Shape', 'shape'], ['measure', 'Measure', 'measure']]; /* size and fit sit on Shape itself */
   if (step === 3) return [['colors', 'Color', 'colors'], ['tex', 'Texture', 'tex'], ['labels', 'Buttons', 'labels'], ['logo', 'Logo', 'logo']];
   if (step === 4) return [['printer', 'Printer', 'printer'], ['strong', 'Strength', 'strong'], ['mat', 'Material', 'mat'], ['split', 'Split', 'split']];
-  return [['3d', '3D', 'cube'], ['shop', 'Shop', 'cart'], ['files', 'Files', 'file'], ['pcb', 'Board', 'brain'], ['extras', 'Extras', 'parts'], ['wire', 'Wire it', 'wire'], ['map', 'Wired', 'wire'], ['test', 'Test It', 'wire'], ['try', 'Try It', 'wire'], ['sounds', 'Sound Files', 'file'], ['guide', 'Guide & Code', 'file']];
+  return [['3d', '3D', 'cube'], ['shop', 'Shop', 'cart'], ['files', 'Files', 'file'], ['pcb', 'Board', 'brain'], ['extras', 'Extras', 'parts'], ['wire', 'Wire it', 'wire'], ['map', 'Wired', 'wire'], ['test', 'PLAY', 'wire'], ['sounds', 'Sound Files', 'file'], ['guide', 'Guide & Code', 'file']];
 }
 function curTab() { const t = tabsFor(S.step), c = S.tab[S.step]; return t.some((x) => x[0] === c) ? c : t[S.step === 0 ? 1 : 0][0]; }
 function nudgeRow() { return '<div class="selbar nud"><b>Nudge</b><button data-act="nudge" data-nx="-1" data-ny="0" aria-label="Left">&larr;</button><button data-act="nudge" data-nx="0" data-ny="1" aria-label="Up">&uarr;</button><button data-act="nudge" data-nx="0" data-ny="-1" aria-label="Down">&darr;</button><button data-act="nudge" data-nx="1" data-ny="0" aria-label="Right">&rarr;</button></div>'; }
@@ -717,7 +717,7 @@ const PAGES = [ /* three rooms: DESIGN (make the case), PLAY (hear and test it),
   { room: 'design', name: 'Parts', tabs: [[0, 'parts'], [1, '*'], [5, 'extras'], [0, 'snap'], [0, 'picks']], more: ['snap', 'picks', 'size', 'psize'] },
   { room: 'design', name: 'Style', tabs: [[3, '*']] },
   { room: 'design', name: 'Print Prep', tabs: [[4, '*']], more: ['strong', 'mat', 'split'] },
-  { room: 'play', name: 'Play', tabs: [[5, 'try'], [5, 'test'], [5, 'map'], [5, 'wire'], [0, 'pins']] },
+  { room: 'play', name: 'Play', tabs: [[5, 'test'], [5, 'map'], [5, 'wire'], [0, 'pins']] },
   { room: 'build', name: 'Print Files', tabs: [[5, 'files'], [5, '3d']] },
   { room: 'build', name: 'Parts & Boards', tabs: [[5, 'shop'], [5, 'pcb']] },
   { room: 'build', name: 'Sound Files', tabs: [[5, 'sounds']] },
@@ -912,6 +912,7 @@ function paneRest(t, P, c) {
   if (t === 'files') { const probs = allProblems(); return PRINT_SVC + (S.material === 'wood' ? '' : '<div class="row"><b>File type</b>' + seg('fmt', [['stl', 'STL'], ['3mf', '3MF']], fmtOf()) + '</div>') + (S.material === 'wood' ? '' : '<div class="row"><b>Print</b>' + seg('xmode', [['solid', 'Full Solid'], ['skel', 'Skeleton Test (~20 min)']], skelMode() ? 'skel' : 'solid') + '</div>' + (skelMode() ? (() => { let e = null; try { e = estimate(); } catch (er) {} return '<p class="note" style="margin:0 0 6px">' + (e ? '<b>About ' + hm(e.sec) + ', ' + Math.round(e.grams) + ' g.</b> ' : '') + 'A 0.6 mm frame, fast as toothpicks: a 3 mm border, a 3 mm rim round every opening and screw hole, solid bands along the puzzle seams, 1.6 mm ribs 40 mm apart, and a ruler notch every 10 mm on the front edge. Print it, lay it on your parts and your box, then adjust below.</p>'; })() : '')) + '<div class="grid g2"><button class="btn red" data-act="make"' + (probs.length || !S.items.length ? ' aria-disabled="true"' : '') + '>' + (skelMode() ? 'Make the test frame' : 'Make my files') + '</button>' + (S.material === 'wood' || isPanel() ? '' : '<button class="btn" data-act="swatch">Download 15-min Fit Swatch</button>') + '</div>' + (gcodeOk() && printerRow()[5] === 'bambu' ? '<p class="note" style="margin:8px 0 0">Ready-to-print G-code is made for Marlin printers (Ender, Prusa MK, Anycubic...). For your ' + esc(printerRow()[1]) + ', open the STL in Bambu Studio, or pick another printer in 04 Print.</p>' : '') + (gcodeOk() && printerRow()[5] !== 'bambu' ? '<button class="btn dark" data-act="gcode" style="width:100%;margin-top:8px">G-code (' + esc(printerRow()[0] === 'custom' ? 'my printer' : printerRow()[1]) + ' / Marlin, PLA)</button>' + (gcodePieces() > 1 ? '<div class="chosen" style="margin:6px 0 0">' + Array.from({ length: gcodePieces() }, (_, i) => '<span data-gcp="' + i + '" style="cursor:pointer">Piece ' + (i + 1) + '</span>').join('') + '<span data-gcp="all" style="cursor:pointer;background:#1a1a1a;color:#fff">All pieces</span></div>' : '') + '<p class="note" style="margin:4px 0 0">Flat pieces need no slicer: this file goes straight on the SD card. 0.28 mm layers at 60 mm/s; the printer shows its time and progress. Marlin printers: Ender, Prusa MK, Anycubic and most others.</p>' : '') + (S.material === 'wood' ? '' : '<button class="btn" data-act="papersvg" style="width:100%;margin-top:8px">1:1 Paper Template (SVG)</button>' + adjustHtml()) + (S.material === 'wood' || isPanel() ? '' : '<p class="note" style="margin:6px 0 0">The swatch is a ' + swatchSize() + ' mm plate with ' + (isClam() && S.magnets ? 'a magnet pocket, ' : '') + 'the M3 bore, the snap pin slot and ' + esc(swatchButton().short) + ' opening, at your ' + tolOf() + ' mm clearance and ' + R.T + ' mm walls. Print it first: if they fit, the case will.</p>') + '<p class="note">' + (!S.items.length ? 'Add electronics in Brain first.' : probs.length ? '<span class="bad">Fix the electronics marked ! in Arrange first.</span>' : (S.material === 'wood' ? 'Wood: real size templates (SVG) to print at 100 percent or laser cut, plus the cut list.' : 'One file per piece, numbered, as STL or 3MF. Print the deck face down, the tray open side up.')) + '</p><div class="files" id="fileList" style="margin-top:8px"></div>' + (S.items.length ? GUIDE_BTN : '') + (S.material === 'wood' ? '' : sliceGuide() + faqHtml()); } /* make, then the files, then how to slice them */
   if (t === 'wire') return wireHtml();
   if (t === 'map') return simRow() + '<p class="note keep" style="margin:0 0 6px"><b style="color:#c8412f">Red</b> = power, <b>black</b> = ground, <b style="color:#2f6fdb">blue</b> / <b style="color:#c9a200">yellow</b> / <b style="color:#2f9a5b">green</b> = signals. Every wire from every part to its pin on the brain, the same plan as the step-by-step cards and ' + CFILE() + '.</p>' + pfHtml() + (mapWhy() ? '<p class="note bad">' + esc(mapWhy()) + '</p>' : '');
+  if (t === 'test' && playSim()) return simKind() ? simPane() : tryPane();
   if (t === 'test') return behHtml() + simRow() + '<div id="bswap">' + bswapHtml() + '</div><p class="note keep" style="margin:0 0 6px">' + ({ macro: 'Your macro pad: each button sends a shortcut. Press them to see what the computer gets.', midi: 'Your MIDI controller: each button sends a note in the ' + SCN[TW().scale] + ' scale, each knob a MIDI CC. Any music app on the computer plays it.', sound: 'Your soundboard: each button plays its own jingle on the speaker.', timer: 'Your desk timer: press the button to start or pause, hold it 1 s to reset, turn the wheel to set the minutes. It beeps at 00:00.', synth: 'Your synth: hold a button to play its note. Knob 1 moves the pitch, knob 2 the tempo of the arpeggio.', sampler: 'Your sampler: tap a pad to hear it. Mode switches Chopper, Drum and Ambient; Bank moves the notes up. Turn the Pitch and Effect wheels and move the stick while a pad rings.' }[recipeFn()] || 'Press the buttons, drag the knobs and sliders, wave at the motion sensor.') + '</p>' + pfHtml() + (mapWhy() ? '<p class="note bad">' + esc(mapWhy()) + '</p>' : '') + '<div class="list" id="tlog" style="font:600 12px/1.35 ui-monospace,Menlo,monospace">' + TEST.log.map((l) => '<div class="it" style="padding:5px 8px">' + esc(l) + '</div>').join('') + '</div><button class="btn" data-act="treset" style="margin-top:8px;padding:8px">Start the test again</button>';
   if (t === 'extras') return partsRoomHtml();
   return '';
@@ -1017,7 +1018,7 @@ function after(t) {
   codeBox(PAGES[S.page].room === 'play'); playInd();
   if (t === 'parts') { const s = $('cat'); if (s) s.onchange = () => { S.cat = s.value; save(); render(); }; }
   $('sb').hidden = !(native3d() || BIG3D);
-  const tv = $('tryv'); if (tv) { tv.hidden = t !== 'try'; if (t === 'try') { tryWire(); tryStage(); } } if (t !== 'try' && t !== 'test') djStop(); else if (t === 'try') djSync(TRYS.dj);
+  const tv = $('tryv'), ps = playSim() && !BIG3D; if (tv) { tv.hidden = !ps; tv.style.paddingTop = ps ? '136px' : ''; if (ps) { tryWire(); tryStage(); } } $('v3').style.zIndex = play3d() ? '3' : ''; if (t !== 'test') djStop(); else if (playSim()) djSync(TRYS.dj); /* PLAY: one view, the locked top-down 3D case stays in the corner */
 }
 
 // ---------- taps ----------
@@ -1234,8 +1235,8 @@ function draw() {
   if (S.step === 3) return drawFace(W, H);
   if (S.step === 4) return drawBeds(W, H);
   if (S.step === 5 && curTab() === 'map') return drawMap(W, H);
+  if (playSim()) return;
   if (S.step === 5 && curTab() === 'test') return drawTest(W, H);
-  if (S.step === 5 && curTab() === 'try') return;
   if (curTab() === 'extras') return drawPrinted(W, H);
   drawBrain(W, H);
 }
@@ -1277,7 +1278,7 @@ function drawBrain(W, H) {
   const N = numbers();
   pk.out.forEach((o) => {
     const p = P[o.i.type], x = area.x + o.x, y = area.y + o.y, on = o.i.id === TSEL; TRAY.push({ id: o.i.id, x, y, w: o.w, h: o.h });
-    g.fillStyle = '#fff'; g.strokeStyle = on ? '#c8412f' : '#1a1a1a'; g.lineWidth = (on ? 3.5 : 1.5) * d; g.beginPath(); g.roundRect ? g.roundRect(x, y, o.w, o.h, 8 * d) : g.rect(x, y, o.w, o.h); g.fill(); g.stroke();
+    g.fillStyle = '#fff'; g.strokeStyle = on ? '#2563EB' : '#1a1a1a'; g.lineWidth = (on ? 3.5 : 1.5) * d; g.beginPath(); g.roundRect ? g.roundRect(x, y, o.w, o.h, 8 * d) : g.rect(x, y, o.w, o.h); g.fill(); g.stroke();
     const cx = x + o.w / 2, cy = y + 4 * d + p.h * o.ki / 2;
     { const im = o.h > 44 * d ? artImg(o.i.type) : null; if (im) { const ah = o.h - 24 * d, aw = Math.min(o.w - 12 * d, ah * 4 / 3), bh = aw * 0.75; g.drawImage(im, cx - aw / 2, y + 5 * d + (ah - bh) / 2, aw, bh); } else drawPartAt(p, cx, cy, o.ki, 0, false); } /* crisp line art, like the part buttons */
     g.fillStyle = '#1a1a1a'; g.font = '800 ' + 10 * d + 'px -apple-system,Arial'; g.textAlign = 'center'; let lb = (N[o.i.id] || '') + ' ' + p.short; if (g.measureText(lb).width > o.w - 6 * d) lb = N[o.i.id] || p.short.slice(0, 5); g.fillText(lb, cx, y + o.h - 6 * d);
@@ -1331,9 +1332,9 @@ function drawPanel(panel, W, H) {
     const P = PP(it), f = fp(it), ins = it.panel === 'inside' || !!P.board, isSel = it.id === sel;
     g.save();
     if (ins) { g.setLineDash([5 * px(), 4 * px()]); }
-    g.fillStyle = bad.has(it.id) ? 'rgba(255,214,0,.55)' : ins ? 'rgba(47,122,75,.28)' : 'rgba(255,255,255,.18)';
+    g.fillStyle = isSel ? 'rgba(37,99,235,.45)' : bad.has(it.id) ? 'rgba(255,214,0,.55)' : ins ? 'rgba(47,122,75,.28)' : 'rgba(255,255,255,.18)';
     g.fillRect(X(f.x0), Y(f.y1), f.w * k, f.h * k);
-    g.strokeStyle = isSel ? '#fff' : bad.has(it.id) ? '#ffd23a' : ins ? '#1a1a1a' : 'rgba(255,255,255,.75)'; g.lineWidth = (isSel ? 3 : 1.5) * px(); g.strokeRect(X(f.x0), Y(f.y1), f.w * k, f.h * k);
+    g.strokeStyle = isSel ? '#2563EB' : bad.has(it.id) ? '#ffd23a' : ins ? '#1a1a1a' : 'rgba(255,255,255,.75)'; g.lineWidth = (isSel ? 3.5 : 1.5) * px(); g.strokeRect(X(f.x0), Y(f.y1), f.w * k, f.h * k);
     g.restore();
     drawPartAt.ga = it.of != null && S.step === 1 && (S.photo || 'off') !== 'off' ? 0.55 : 1; /* see-through over the photo, so the real part shows under it */
     if (!ins || P.board) drawPartAt(P, X(it.x), Y(it.y), k, it.r, !!P.board);
@@ -1558,6 +1559,7 @@ function setup3d() {
 }
 // ---------- PLAY: press the real 3D case. A tap (moved < 6 px) on a control presses it 1.2 mm, lights it and runs its Function; a drag still spins the case ----------
 const play3d = () => S.step === 5 && curTab() === 'test';
+const playSim = () => play3d() && (!!simKind() || !S.items.length); /* PLAY for a preset with its own live preview, or nothing built yet: the pads */
 const PRESS = {}; let PRAF = 0;
 function playHit(e) { const r = T3, el = $('v3'); if (!r || !r.ctl) return null; const b = el.getBoundingClientRect(), rc = new THREE.Raycaster(); rc.setFromCamera(new THREE.Vector2(((e.clientX - b.left) / b.width) * 2 - 1, -((e.clientY - b.top) / b.height) * 2 + 1), r.camera);
   r.scene.updateMatrixWorld(true); let best = null; const ray = new THREE.Ray(), pt = new THREE.Vector3(), inv = new THREE.Matrix4();
@@ -1566,14 +1568,14 @@ function playHit(e) { const r = T3, el = $('v3'); if (!r || !r.ctl) return null;
     else bx.push([q.x, q.y, q.w / 2 + 2, q.h / 2 + 2, null]);
     bx.forEach(([x, y, hw, hh, sub]) => { if (ray.intersectBox(new THREE.Box3(new THREE.Vector3(x - hw, y - hh, q.top - 2), new THREE.Vector3(x + hw, y + hh, q.top + Math.min(q.up, 14) + 3)), pt)) { const dd = pt.distanceTo(ray.origin); if (!best || dd < best.d) best = { id: +id, sub, d: dd }; } }); });
   return best; }
-function glow(o, on) { o.traverse((x) => { const mt = x.material; if (!mt || !mt.emissive) return; if (!x.userData.own) { x.material = mt.clone(); x.userData.own = 1; x.userData.e0 = mt.emissive.getHex(); } x.material.emissive.setHex(on ? 0x1d4ed8 : x.userData.e0); }); }
+function glow(o, on) { o.traverse((x) => { const mt = x.material; if (!mt || !mt.emissive) return; if (!x.userData.own) { x.material = mt.clone(); x.userData.own = 1; x.userData.e0 = mt.emissive.getHex(); } x.material.emissive.setHex(on ? BLUE : x.userData.e0); }); }
 function pressTick() { PRAF = 0; const r = T3; if (!r) return; const now = performance.now(); let live = false;
   Object.keys(PRESS).forEach((k) => { const p = PRESS[k], t = (now - p.t0) / 1000, e = r.ctl && r.ctl[p.id]; let o = e && e.m; if (o && p.sub != null) o = o.children[p.sub] || o; const done = t > 0.55;
     const off = done ? 0 : t < 0.06 ? -1.2 * t / 0.06 : -1.2 * Math.exp(-(t - 0.06) * 12) * Math.cos((t - 0.06) * 28); /* down, then a damped spring back */
     if (o) { if (o.userData.z0 == null) o.userData.z0 = o.position.z; o.position.z = o.userData.z0 + off; glow(o, !done && t < 0.35); }
     if (done) delete PRESS[k]; else live = true; });
   r.draw(); if (live) PRAF = requestAnimationFrame(pressTick); }
-function playPress(hit) { const m = testModel(), id = hit.id, it = S.items.find((i) => i.id === id); PRESS[id + ':' + hit.sub] = { id, sub: hit.sub, t0: performance.now() }; if (!PRAF) PRAF = requestAnimationFrame(pressTick);
+function playPress(hit) { const m = testModel(), id = hit.id, it = S.items.find((i) => i.id === id); HL = id; auHot(); PRESS[id + ':' + hit.sub] = { id, sub: hit.sub, t0: performance.now() }; if (!PRAF) PRAF = requestAnimationFrame(pressTick);
   const ki = m.keys.findIndex((k) => k.id === id && (hit.sub == null || k.pad === hit.sub)), pi = m.pots.findIndex((q) => q.id === id), ei = m.encs.findIndex((q) => q.id === id);
   if (ki > -1) { const h = { kind: 'key', i: ki }; TEST.held = h; testAct(h, true); setTimeout(() => { if (TEST.held === h || (TEST.held && TEST.held.kind === 'key' && TEST.held.i === h.i)) testAct(h, false); else draw(); }, 280); return; }
   if (pi > -1) { const h = { kind: 'pot', i: pi }; if (m.pots[pi].kind === 'step') { stepPress(h); return; } TEST.val[pi] = ((TEST.val[pi] || 0) + 25) % 125 > 100 ? 0 : ((TEST.val[pi] || 0) + 25) % 125; testAct(h, true); return; }
@@ -1612,7 +1614,7 @@ function blueSel(r) { const id = play3d() ? HL : sel != null ? sel : HL;
 function setHighlight(r) {
   // yellow see-through box: where the part you just added (or picked) sits and how deep it goes
   if (r.hl) { r.hl.parent && r.hl.parent.remove(r.hl); r.hl.traverse((o) => { if (o.geometry) o.geometry.dispose(); }); r.hl = null; }
-  const id = S.step === 1 ? sel : S.step === 0 ? LAST : null, sl = id != null && r.slots[id]; if (!sl) return;
+  const id = S.step === 1 || S.step === 2 ? sel : S.step === 0 ? LAST : null, sl = id != null && r.slots[id]; if (!sl) return;
   const geo = new THREE.BoxGeometry(sl.w + 1, sl.h + 1, sl.dep), box = new THREE.Group();
   const fill = new THREE.Mesh(geo, new THREE.MeshBasicMaterial({ color: BLUE, transparent: true, opacity: 0.45, depthTest: false })), edge = new THREE.LineSegments(new THREE.EdgesGeometry(geo), new THREE.LineBasicMaterial({ color: BLUE, depthTest: false }));
   fill.renderOrder = 998; edge.renderOrder = 999; box.add(fill, edge); box.position.set(sl.x, sl.y, sl.z); sl.grp.add(box); r.hl = box;
@@ -2009,7 +2011,7 @@ function midiAct(fn, m, h, down) { const tw = TW(), stp = tw.btn === 'step' || (
   if (h.kind === 'pot' && fn === 'midi') { const v = TEST.val[h.i] || 0, p = m.pots[h.i]; if (Math.abs(v - (TEST.last[h.i] == null ? -10 : TEST.last[h.i])) < 2) return ''; TEST.last[h.i] = v; TEST.text = 'CC ' + (1 + h.i) + ' ' + v; return p.name + ' -> MIDI CC ' + (1 + h.i) + ' = ' + Math.floor(v * 127 / 100); }
   return null; }
 (function () { const st = document.createElement('style'); st.textContent = '.hrow.beh{grid-auto-columns:max-content}.hrow.beh button,.selbar.tw button{all:unset;cursor:pointer;padding:9px 12px;border:1.5px solid var(--ink);border-radius:999px;font:800 12px/1 var(--sys);background:#fff;white-space:nowrap}.hrow.beh button[aria-pressed=true],.selbar.tw button[aria-pressed=true]{background:#1a1a1a;color:#fff}.selbar.tw{flex-wrap:wrap}.selbar.tw button{padding:8px 10px}.buy a.amz{background:#ff9900;border-color:#1a1a1a;color:#1a1a1a;padding:6px 12px;font-size:12px}.libs{border:1.5px solid var(--ink);border-radius:12px;padding:8px 10px;margin:8px 0;background:#fffbe9;font:500 13px/1.4 var(--sys);overflow-wrap:anywhere}.libs code{font:700 12px ui-monospace,Menlo,monospace}.libs ul,.libs ol{margin:4px 0 4px 18px;padding:0}.libs p{margin:4px 0}.btags{margin:6px 0 8px;font:500 12px/1.35 var(--sys)}.btags div{padding:5px 0;border-top:1px solid var(--line)}.btags b{font-weight:800}'; document.head.appendChild(st); })();
-function testAct(h, down) {
+function testAct(h, down) { if (down) auHot();
   const m = testModel(), has = (w) => m.outs.find((o) => o.what === w); let s = '';
   if (down) bsel(h.kind === 'key' ? m.keys[h.i] : h.kind === 'pot' ? m.pots[h.i] : h.kind === 'enc' ? m.encs[h.i] : null);
   const fnr = recipeFn(); if (fnr) { const out = presetAct(fnr, m, h, down); if (out !== null) { if (out) testLog(out + (down ? fnTag(m, h) : '')); draw(); return; } }
@@ -2043,7 +2045,7 @@ function drawTest(W, H) {
   cells.forEach((c, n) => { const cx = 8 * d + (n % cols) * cw, cy = y + Math.floor(n / cols) * ch, mx = cx + cw / 2, my = cy + ch * 0.45, r = Math.min(cw, ch) * 0.24, ent = ctlOf(m, c);
     if (ent && ent.id != null && ent.id === hlId) { g.strokeStyle = '#2563EB'; g.lineWidth = 3 * d; g.beginPath(); g.rect(cx + 3 * d, cy + 2 * d, cw - 6 * d, ch - 4 * d); g.stroke(); }
     font(9.5, 700); g.textAlign = 'center'; g.fillStyle = '#1a1a1a'; g.fillText(c.label.slice(0, 16), mx, cy + ch - 6 * d);
-    if (c.kind === 'key') { const on = TEST.held && TEST.held.kind === 'key' && TEST.held.i === c.i; g.fillStyle = on ? '#c8412f' : '#1a1a1a'; g.beginPath(); g.arc(mx, my, r, 0, 7); g.fill(); TEST.hits.push({ kind: 'key', i: c.i, x: mx - r, y: my - r, w: 2 * r, h: 2 * r }); }
+    if (c.kind === 'key') { const on = TEST.held && TEST.held.kind === 'key' && TEST.held.i === c.i; g.fillStyle = on ? '#2563EB' : '#1a1a1a'; g.beginPath(); g.arc(mx, my, r, 0, 7); g.fill(); TEST.hits.push({ kind: 'key', i: c.i, x: mx - r, y: my - r, w: 2 * r, h: 2 * r }); }
     if (c.kind === 'pot' && m.pots[c.i].kind === 'step') { const lv = (TEST.val[c.i] || 0) / 25; g.fillStyle = '#1a1a1a'; g.beginPath(); g.arc(mx, my, r, 0, 7); g.fill(); for (let q = 0; q < 4; q++) { g.fillStyle = q < lv ? '#c8412f' : '#cfc9bb'; g.fillRect(mx - 2 * r + q * r, my + r + 3 * d, r * 0.8, 4 * d); } font(9, 700); g.fillStyle = '#fff'; g.fillText(lv ? lv + '/4' : '-', mx, my + 3 * d); TEST.hits.push({ kind: 'pot', step: true, i: c.i, x: mx - r, y: my - r, w: 2 * r, h: 2 * r }); }
     else if (c.kind === 'pot' || c.kind === 'tof') { const v = c.kind === 'pot' ? TEST.val[c.i] || 0 : ((TEST.dist[c.i] || 300) - 30) / 11.7, x0 = cx + 10 * d, x1 = cx + cw - 10 * d; g.strokeStyle = '#1a1a1a'; g.lineWidth = 4 * d; g.beginPath(); g.moveTo(x0, my); g.lineTo(x1, my); g.stroke(); const hx = x0 + (x1 - x0) * v / 100; g.fillStyle = '#c8412f'; g.beginPath(); g.arc(hx, my, 8 * d, 0, 7); g.fill(); font(9, 700); g.fillStyle = '#6f6a60'; g.fillText(c.kind === 'pot' ? String(TEST.val[c.i] || 0) : (TEST.dist[c.i] || 300) + ' mm', mx, my - 12 * d); TEST.hits.push({ kind: c.kind, i: c.i, x: x0 - 8 * d, y: my - 14 * d, w: x1 - x0 + 16 * d, h: 28 * d, x0, x1 }); }
     if (c.kind === 'enc') { [-1, 1].forEach((dir) => { const bx2 = mx + dir * 22 * d; g.fillStyle = '#1a1a1a'; g.beginPath(); g.arc(bx2, my, 13 * d, 0, 7); g.fill(); g.fillStyle = '#fff'; font(13); g.fillText(dir < 0 ? '<' : '>', bx2, my + 5 * d); TEST.hits.push({ kind: 'enc', i: c.i, dir, x: bx2 - 13 * d, y: my - 13 * d, w: 26 * d, h: 26 * d }); }); font(10); g.fillStyle = '#1a1a1a'; g.fillText(String(TEST.pos[c.i] || 0), mx, my + 4 * d); }
@@ -2850,6 +2852,7 @@ function loadRecipe(id) {
   (r.mounts || []).forEach((q) => { const m = { id: S.attachedParts.length + 1, partId: q.partId, face: q.face, anchor: Object.assign({ v: 0 }, q.anchor), mountType: q.mountType }; if (mountBlocked(m)) return; const pts = mountPoints(m); m.anchors = [m.anchor]; if (pts.length > 1) { const ax = m.face === 'left' || m.face === 'right' ? 1 : 0; m.anchors.push({ u: m.anchor.u + Math.round(pts[0].B[0][ax] * mp(m).pitch / 20), v: m.anchor.v }); } S.attachedParts.push(m); });
   (r.ports || []).forEach((q) => { const p = { id: S.ports.length + 1, kind: q.kind, face: q.face, anchor: { u: q.u, v: 0 } }; if (!portBlocked(p)) S.ports.push(p); });
   LAST = null; S.tab[2] = 'shape'; S.tab[5] = '3d'; save(); go(2);
+  draw(); requestAnimationFrame(() => { if (T3) T3.key = ''; draw(); tag(summaryLine()); }); /* paint the case now, not an empty grid under "Building it..." */
 }
 const recipeCost = (r) => r.parts.reduce((a, [t, n]) => a + ((CZ.PARTS[t] && CZ.PARTS[t].price) || 0) * n, 0);
 // ---------- start: three doors ----------
@@ -3248,10 +3251,10 @@ function auCtx() { if (AU.ctx) return AU.ctx; const AC = window.AudioContext || 
 function auUnlock() { const c = auCtx(); if (!c) return null; if (!AU.on) { if (c.state === 'running') c.suspend().catch(() => {}); return c; }
   if (c.state !== 'running' || !AU.primed) { AU.primed = true; try { c.resume().catch(() => {}); } catch (e) {} try { const b = c.createBufferSource(); b.buffer = c.createBuffer(1, 1, 22050); b.connect(c.destination); b.start(0); } catch (e) {} } return c; } /* iPhone Safari: resume and a 1-sample silent buffer, inside the tap itself */
 document.addEventListener('pointerdown', () => { if (AU.on) auUnlock(); if (TEST.ac && TEST.ac !== AU.ctx && TEST.ac.state !== 'running') try { TEST.ac.resume(); } catch (e) {} }, true);
-function playInd() { const el = $('pind'); if (!el || !AU) return; const on = (PAGES[S.page] || {}).room === 'play' && curTab() !== 'map'; el.hidden = !on; /* Wired: keep the pin labels clear */ if (!on) return; const live = AU.on && (!!AU.loopT || Date.now() - (AU.hot || 0) < 1200);
+function playInd() { const el = $('pind'); if (!el || !AU) return; const on = (PAGES[S.page] || {}).room === 'play' && curTab() !== 'map'; el.hidden = !on; /* Wired: keep the pin labels clear */ if (!on) return; const live = (AU.on && !!AU.loopT) || Date.now() - (AU.hot || 0) < 1200; /* any tap flips it, sound on or off */
   const k = AU.on + ':' + live; if (el.dataset.k === k) return; el.dataset.k = k; el.innerHTML = '<button type="button" class="' + (AU.on ? 'on' : '') + '" data-snd="' + (AU.on ? '0' : '1') + '" aria-pressed="' + AU.on + '">Sound: ' + (AU.on ? 'On' : 'Off') + '</button><span class="' + (live ? 'live' : '') + '">' + (live ? '\u25B6 Playing' : 'Tap any pad') + '</span>'; }
 function auHot() { AU.hot = Date.now(); playInd(); clearTimeout(AU.indT); AU.indT = setTimeout(playInd, 1300); }
-$('pind').addEventListener('click', (e) => { const b = e.target.closest('[data-snd]'); if (!b) return; auSet(b.dataset.snd === '1'); if (!AU.on) djStop(); else if (curTab() === 'try') djSync(TRYS.dj); else if (curTab() === 'test' && TEST.dj) djSync(TEST.dj); render(); });
+$('pind').addEventListener('click', (e) => { const b = e.target.closest('[data-snd]'); if (!b) return; auSet(b.dataset.snd === '1'); if (!AU.on) djStop(); else if (playSim()) djSync(TRYS.dj); else if (curTab() === 'test' && TEST.dj) djSync(TEST.dj); render(); });
 function auSet(on) { AU.on = on; try { localStorage.setItem(KEY + ':sound', on ? '1' : '0'); } catch (e) {} const c = auCtx(); if (c) { if (on) auUnlock(); else c.suspend().catch(() => {}); } }
 const soundPill = () => '<button type="button" class="spill' + (AU.on ? ' on' : '') + '" data-snd="' + (AU.on ? '0' : '1') + '" aria-pressed="' + AU.on + '">Sound: ' + (AU.on ? 'On' : 'Off') + '</button>';
 const libsDrawer = () => '<details class="fold slib"><summary>Free Sound Libraries</summary><div class="list">' + (CZ.SOUND_LIBS || []).map(([n, u, t]) => '<a href="' + u + '" target="_blank" rel="noopener"><b>' + n + '</b>' + t + '</a>').join('') + '</div><p class="note keep">Tip: for the Pico save each sound as a <b>16-bit, 22 kHz, mono .wav</b>.</p></details>';
@@ -3385,7 +3388,10 @@ function simCtl(k) {
   if (k === 'cyd') return '<p class="note keep" style="margin:0;display:flex;align-items:center;gap:8px"><span class="simled" style="width:16px;height:16px;border-radius:50%;background:#333;border:2px solid #888;flex:none"></span>RGB LED (GPIO 4, 16, 17). Tap the tiles on the screen.</p>';
   if (k === 'arcade') return '<div style="display:flex;flex-wrap:wrap;gap:12px;justify-content:center">' + simDpad(['A', 'B', 'X', 'Y']) + '</div>';
   return ''; }
-function simAct(a, down, b) { const st = SIM.st, k = SIM.k, now = performance.now() / 1000;
+function simLight(a) { let C = S.items.filter((i) => PP(i) && ['press', 'turn'].indexOf(PP(i).cat) > -1); if (!C.length) C = S.items.filter((i) => PP(i) && (PP(i).cat === 'screen' || PP(i).isScreen || i.type === 'cyd')); const pad = C.find((i) => PP(i).printed === 'dpad' || i.type === 'dpad'), id = 'udlr'.indexOf(a) > -1 && a.length === 1 && pad ? pad.id : (C.filter((i) => i !== pad)[Math.max(0, 'ABXY123456'.indexOf(a)) % Math.max(1, C.length - (pad ? 1 : 0))] || pad || C[0] || {}).id;
+  auHot(); if (id == null) return; HL = id; PRESS[id + ':null'] = { id, sub: null, t0: performance.now() }; if (!PRAF) PRAF = requestAnimationFrame(pressTick); if (T3) { blueSel(T3); T3.draw(); } }
+function simAct(a, down, b) { const st = SIM.st, k = SIM.k, now = performance.now() / 1000; if (down) simLight(a);
+  if (k === 'arcade' && down && 'udlr'.indexOf(a) > -1 && a.length === 1) { const q = 8; st.x = Math.max(0, Math.min(304, st.x + (a === 'r' ? q : a === 'l' ? -q : 0))); st.y = Math.max(0, Math.min(224, st.y + (a === 'd' ? q : a === 'u' ? -q : 0))); } /* each tap moves the sprite at once; holding keeps it walking */
   if (k === 'deskbot' && a === 'wake' && down) { st.wake = now; simTone(880, 0.25, 'sine'); simTone(1318.5, 0.4, 'sine', 0.16); }
   else if (k === 'scanner' && a === 'scan' && down) { st.run = !st.run; if (b) b.textContent = st.run ? 'Button: pause the scan' : 'Button: start the scan'; }
   else if (k === 'retrocam' && down) { if (a === 'shutter') { st.shots++; st.flash = now; simTone(2400, 0.03, 'square'); simTone(700, 0.05, 'square', 0.04); } else if (a === 'wiggle') { st.wig = !st.wig; if (b) b.setAttribute('aria-pressed', String(st.wig)); } }
@@ -3441,7 +3447,7 @@ function simStage(el) { const k = simKind(); if (!k) return; const [W, H] = SIMS
     const cv = el.querySelector('canvas');
     el.querySelectorAll('[data-sim]').forEach((b) => { b.addEventListener('pointerdown', (e) => { e.preventDefault(); auUnlock(); simAct(b.dataset.sim, true, b); }); ['pointerup', 'pointercancel', 'pointerleave'].forEach((ev) => b.addEventListener(ev, () => { if (b.classList.contains('hit')) simAct(b.dataset.sim, false, b); })); });
     el.querySelectorAll('input[data-simr]').forEach((i) => i.addEventListener('input', () => { SIM.st[i.dataset.simr] = +i.value; const o = i.parentNode.querySelector('output'); if (o) o.textContent = i.value; }));
-    cv.addEventListener('pointerdown', (e) => { auUnlock(); try { cv.setPointerCapture(e.pointerId); } catch (x) {} simPointer(e, 'down', cv); });
+    cv.addEventListener('pointerdown', (e) => { auUnlock(); simLight('touch'); try { cv.setPointerCapture(e.pointerId); } catch (x) {} simPointer(e, 'down', cv); });
     cv.addEventListener('pointermove', (e) => simPointer(e, 'move', cv)); ['pointerup', 'pointercancel'].forEach((ev) => cv.addEventListener(ev, (e) => simPointer(e, 'up', cv))); }
   if (SIM.live) return; SIM.live = true; SIM.tp = 0;
   const loop = (ms) => { const cv = el.querySelector('canvas.simc'); if (el.hidden || !cv || SIM.k !== simKind()) { SIM.live = false; return; }
@@ -3468,7 +3474,7 @@ function tryWire() { const el = $('tryv'); if (!el || el.dataset.on) return; el.
   el.addEventListener('input', (e) => { const r = e.target.closest('[data-tknob]'); if (!r) return; const k = r.dataset.tknob, v = +r.value, o = r.parentNode.querySelector('output'); if (o) o.textContent = k === 'beat' ? BEATS[v] : v; tryKnob(k, v); }); }
 $('pane').addEventListener('click', (e) => { const p = e.target.closest('[data-spre]'); if (p) { showRecipe(p.dataset.spre); $('sheet').hidden = false; } });
 $('pane').addEventListener('click', (e) => { const b = e.target.closest('[data-snd],[data-tpre],[data-tpack],[data-tup],[data-tmake]'); if (!b) return; const d = b.dataset;
-  if (d.snd != null) { auSet(d.snd === '1'); if (!AU.on) djStop(); else if (curTab() === 'try') djSync(TRYS.dj); render(); return; }
+  if (d.snd != null) { auSet(d.snd === '1'); if (!AU.on) djStop(); else if (playSim()) djSync(TRYS.dj); render(); return; }
   if (d.tpre) { trySetPreset(d.tpre); save(); render(); return; }
   if (d.tpack) { const T = TRY(), P = PACKS()[d.tpack]; T.pads = T.pads.map((id, i) => sid(d.tpack, P.sounds[i % P.sounds.length][0])); save(); render(); tag(P.name + ' on every pad'); return; }
   if (d.tup != null) { const f = $('tryFile'); if (f) { f.dataset.at = d.tup; f.onchange = () => { tryUpload(f.files, f.dataset.at); f.value = ''; }; f.click(); } return; }
