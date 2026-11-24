@@ -131,6 +131,8 @@ export function codeFor(plan, title, fn, B, tw) {
       if (at > -1) T.splice(at + 2, 0, ...inc); else T.unshift('// Libraries to install (Sketch -> Include Library -> Manage Libraries): ' + add.filter((l) => !l.built).map((l) => '"' + l.n + '" by ' + l.by).join(', '));
       c.text = T.filter((x) => x.indexOf('// Nothing extra needed') < 0).join('\n').replace('//   4. No libraries to install.', '//   4. Install the libraries in section 1: Sketch -> Include Library -> Manage Libraries, search each name, Install.'); }
   }
+  const fa = (plan.rows || []).filter((r) => r.it.action); /* part.action: what each control does, the same list Test It acts out */
+  if (fa.length && c.lang !== 'txt') c.text = [cm + 'FUNCTIONS (set in Test It, tap a part, Function):'].concat(fa.map((r) => cm + '  ' + r.it.label + ' -> ' + ACTN(r.it.action))).join('\n') + '\n' + c.text;
   if (pf.length) c.text = pf.map((w) => cm + 'CHECK FIRST: ' + w).join('\n') + '\n' + c.text;
   return c;
 }
@@ -167,15 +169,22 @@ export function preflight(plan, B) {
 // ---------- DJ FX: Loop, Echo, Spiral, Phaser on the first 4 buttons, a Beat wheel (CC 14) and a Wet/Dry knob or slider (CC 15) ----------
 export const DJFX = [['Loop', 36, 'toggle'], ['Echo', 37, 'holdtoggle'], ['Spiral', 38, 'hold'], ['Phaser', 39, 'toggle']], BEATS = ['1/4', '1/2', '1', '2', '4', '8'];
 export const DJMODE = { toggle: 'Toggle', holdtoggle: 'Hold/Toggle', hold: 'Hold' };
+// Every control can carry an action (set in Test It, Function). DJ FX reads them: Loop/Echo/Spiral/Phaser buttons, a Beat wheel or knob, a Wet/Dry knob.
+export const ACTS = [['loop', 'Loop'], ['echo', 'Echo'], ['spiral', 'Spiral'], ['phaser', 'Phaser'], ['beat', 'Beat'], ['wet', 'Wet/Dry'], ['step', 'Step 1/4'], ['note', 'Note'], ['macro', 'Macro'], ['custom', 'Custom']];
+export const ACTN = (a) => (ACTS.find((x) => x[0] === a) || [0, 'Custom'])[1];
+export const DJA = { loop: 0, echo: 1, spiral: 2, phaser: 3 };
 function djParts(plan) { const keys = [], pots = [], encs = [];
-  plan.rows.forEach((row) => { const it = row.it, tag = it.label.split(' ')[0], N = row.N, R = {}; row.roles.forEach((r) => { R[r.role] = r.pin; });
-    if (N.what === 'button' && !it.step) row.roles.forEach((r) => { if (r.pin != null) keys.push([r.pin, row.roles.length > 1 ? tag + ' ' + r.role : tag]); });
-    if (N.what === 'knob') ['turn', 'slide'].forEach((k) => { if (R[k] != null) pots.push([R[k], tag]); });
-    if (N.what === 'wheel' && R['clk+dt'] != null) encs.push([R['clk+dt'], tag]); });
-  const fx = keys.slice(0, 4), wheel = encs[0] || null, beatPot = !wheel && pots.length > 1 ? pots[0] : null, wet = beatPot ? pots[1] : pots[0] || null;
+  plan.rows.forEach((row) => { const it = row.it, tag = it.label.split(' ')[0], N = row.N, R = {}, a = it.action || null; row.roles.forEach((r) => { R[r.role] = r.pin; });
+    if (N.what === 'button' && !it.step) row.roles.forEach((r) => { if (r.pin != null) keys.push([r.pin, row.roles.length > 1 ? tag + ' ' + r.role : tag, a]); });
+    if (N.what === 'knob') ['turn', 'slide'].forEach((k) => { if (R[k] != null) pots.push([R[k], tag, a]); });
+    if (N.what === 'wheel' && R['clk+dt'] != null) encs.push([R['clk+dt'], tag, a]); });
+  if (plan.rows.some((r) => r.it.action)) { /* part.action decides: no guessing from the order */
+    const fx = keys.filter((k) => DJA[k[2]] != null).map((k) => [k[0], k[1], DJA[k[2]]]), wheel = encs.find((e) => e[2] === 'beat') || null, beatPot = wheel ? null : pots.find((q) => q[2] === 'beat') || null, wet = pots.find((q) => q[2] === 'wet') || null;
+    return { fx, wheel, beatPot, wet }; }
+  const fx = keys.slice(0, 4).map((k, i) => [k[0], k[1], i]), wheel = encs[0] || null, beatPot = !wheel && pots.length > 1 ? pots[0] : null, wet = beatPot ? pots[1] : pots[0] || null;
   return { fx, wheel, beatPot, wet }; }
 function djfxCode(plan, title, B) {
-  const P = djParts(plan), pm = B === BOARDS.promicro, LB = B.lab, map = P.fx.map((k, i) => DJFX[i][0] + ' = ' + LB(k[0]) + ' (note ' + DJFX[i][1] + ', ' + DJMODE[DJFX[i][2]] + ')');
+  const P = djParts(plan), pm = B === BOARDS.promicro, LB = B.lab, map = P.fx.map((k) => DJFX[k[2]][0] + ' = ' + LB(k[0]) + ' (note ' + DJFX[k[2]][1] + ', ' + DJMODE[DJFX[k[2]][2]] + ')'), NF = Math.max(1, P.fx.length), MD = { toggle: 0, holdtoggle: 1, hold: 2 };
   const head = ['DJ FX. ' + title, 'Brain: ' + B.name + '.', 'Buttons: ' + (map.length ? map.join(', ') : 'none yet: add up to 4 buttons in Parts') + '.',
     'Beat wheel: MIDI CC 14, ' + BEATS[0] + ' to ' + BEATS[BEATS.length - 1] + ' (' + (P.wheel ? 'click wheel ' + LB(P.wheel[0]) + '+' + LB(P.wheel[0] + 1) : P.beatPot ? 'knob ' + LB(P.beatPot[0]) : 'add a click wheel') + '). Wet/Dry: MIDI CC 15, 0 to 100% (' + (P.wet ? 'knob/slider ' + LB(P.wet[0]) : 'add a knob or slider') + ').',
     'In your DJ app (Mixxx, rekordbox, Serato, VirtualDJ), MIDI-learn each FX to its note and the beat / wet-dry to CC 14 / CC 15.'];
@@ -185,11 +194,11 @@ function djfxCode(plan, title, B) {
     else L.push('// The ' + B.name + ' has no native USB MIDI: it sends Serial MIDI at 115200 baud. Bridge it with the free Hairless MIDI (serial to MIDI) + loopMIDI (virtual MIDI port).');
     L.push('', '// ===== 1. LIBRARIES =====', pm ? '#include <MIDIUSB.h>' : '// none: Serial is built in', '', '// ===== 2. YOUR PINS =====');
     L.push('const int NFX = ' + P.fx.length + ';', P.fx.length ? 'const int FX_PIN[] = {' + P.fx.map((k) => ap(k[0])).join(', ') + '};' : 'const int FX_PIN[] = {0};');
-    L.push('const char* FX_NAME[] = {"Loop", "Echo", "Spiral", "Phaser"};', 'const byte FX_NOTE[] = {36, 37, 38, 39};', 'const byte FX_MODE[] = {0, 1, 2, 0};  // 0 Toggle, 1 Hold/Toggle (tap latches, hold is momentary), 2 Hold');
+    L.push('const char* FX_NAME[] = {' + (P.fx.length ? P.fx.map((k) => '"' + DJFX[k[2]][0] + '"').join(', ') : '""') + '};', 'const byte FX_NOTE[] = {' + (P.fx.length ? P.fx.map((k) => DJFX[k[2]][1]).join(', ') : '0') + '};', 'const byte FX_MODE[] = {' + (P.fx.length ? P.fx.map((k) => MD[DJFX[k[2]][2]]).join(', ') : '0') + '};  // 0 Toggle, 1 Hold/Toggle (tap latches, hold is momentary), 2 Hold');
     if (P.wheel) L.push('const int WHEEL_CLK = ' + ap(P.wheel[0]) + ', WHEEL_DT = ' + ap(P.wheel[0] + 1) + ';');
     if (P.beatPot) L.push('const int BEAT_POT = ' + ap(P.beatPot[0]) + ';');
     if (P.wet) L.push('const int WET_POT = ' + ap(P.wet[0]) + ';');
-    L.push('', '// ===== 3. WHAT HAPPENS WHEN YOU PRESS THINGS =====', 'const char* BEATS[] = {"1/4", "1/2", "1", "2", "4", "8"};', 'int beat = 2, wet = -10, wheelWas = HIGH;', 'bool fxOn[4], was[4], skipUp[4];', 'unsigned long downAt[4];', '');
+    L.push('', '// ===== 3. WHAT HAPPENS WHEN YOU PRESS THINGS =====', 'const char* BEATS[] = {"1/4", "1/2", "1", "2", "4", "8"};', 'int beat = 2, wet = -10, wheelWas = HIGH;', 'bool fxOn[' + NF + '], was[' + NF + '], skipUp[' + NF + '];', 'unsigned long downAt[' + NF + '];', '');
     L.push('void midi(byte cmd, byte a, byte b) {', pm ? '  midiEventPacket_t m = {(byte)(cmd >> 4), cmd, a, b};\n  MidiUSB.sendMIDI(m);\n  MidiUSB.flush();' : '  Serial.write(cmd); Serial.write(a); Serial.write(b);', '}');
     L.push('void fx(int i, bool on) { fxOn[i] = on; midi(on ? 0x90 : 0x80, FX_NOTE[i], on ? 127 : 0); }', 'void sendBeat() { midi(0xB0, 14, beat * 127 / 5); }', '');
     L.push('void setup() {', '  Serial.begin(115200);' + (pm ? '' : '  // Serial MIDI for Hairless'), '  for (int i = 0; i < NFX; i++) { pinMode(FX_PIN[i], INPUT_PULLUP); was[i] = HIGH; fxOn[i] = false; skipUp[i] = false; }');
@@ -209,7 +218,7 @@ function djfxCode(plan, title, B) {
   L.push('', '# ===== 1. LIBRARIES =====', 'import time', 'import board', 'import digitalio');
   if (P.wet || P.beatPot) L.push('import analogio'); if (P.wheel) L.push('import rotaryio');
   L.push('try:', '    import usb_midi', '    import adafruit_midi', '    from adafruit_midi.note_on import NoteOn', '    from adafruit_midi.note_off import NoteOff', '    from adafruit_midi.control_change import ControlChange', '    midi = adafruit_midi.MIDI(midi_out=usb_midi.ports[1], out_channel=0)', 'except Exception as err:', '    midi = None', '    print("NOCIV no USB MIDI here:", err)', '');
-  L.push('# ===== 2. YOUR PINS =====', 'FX = (("Loop", 36, "toggle"), ("Echo", 37, "holdtoggle"), ("Spiral", 38, "hold"), ("Phaser", 39, "toggle"))', 'FX_PINS = (' + P.fx.map((k) => pn(k[0])).join(', ') + (P.fx.length === 1 ? ',' : '') + ')');
+  L.push('# ===== 2. YOUR PINS =====', 'FX = (' + P.fx.map((k) => '("' + DJFX[k[2]][0] + '", ' + DJFX[k[2]][1] + ', "' + DJFX[k[2]][2] + '")').join(', ') + (P.fx.length === 1 ? ',' : '') + ')', 'FX_PINS = (' + P.fx.map((k) => pn(k[0])).join(', ') + (P.fx.length === 1 ? ',' : '') + ')');
   L.push('btns = []', 'for p in FX_PINS:', '    b = digitalio.DigitalInOut(p)', '    b.switch_to_input(pull=digitalio.Pull.UP)', '    btns.append(b)');
   if (P.wheel) L.push('wheel = rotaryio.IncrementalEncoder(' + pn(P.wheel[0]) + ', ' + pn(P.wheel[0] + 1) + ')');
   if (P.beatPot) L.push('beat_pot = analogio.AnalogIn(' + pn(P.beatPot[0]) + ')');
