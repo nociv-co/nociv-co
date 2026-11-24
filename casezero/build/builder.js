@@ -814,19 +814,20 @@ function pane(t) {
   if (t === 'parts') { const ts = TSEL != null && S.items.find((i) => i.id === TSEL), sb = ts ? swapBar(ts) : ''; if (sb) return copilotHtml() + sb + partsPane(P, c); return copilotHtml() + partsPane(P, c); }
   return paneRest(t, P, c);
 }
+const plainTag = (t) => String(t || '').replace('CircuitPython (code.py)', 'Beginner-friendly').replace('Arduino (.ino)', 'Uses the free Arduino app'); /* no jargon on the Brain tags */
 function partsPane(P, c) {
   {
     // Parts are about what the device does, not about catalog names. First the question, then the few parts that answer it.
     const fn = FUNCS.find((f) => f[0] === S.fn);
     if (!fn) { const tile = (f) => { const n = Object.keys(c).reduce((q, k) => q + (P[k] && P[k].cat === f[0] ? c[k] : 0), 0); return '<button type="button" class="pick fn" data-fn="' + f[0] + '">' + (n ? '<span class="n">' + n + '</span>' : '') + (f[3] && P[f[3]] ? lineArt(f[3]) || partSvg(P[f[3]]) : ico('measure')) + f[1] + '<small>' + f[2] + '</small></button>'; };
       return FGROUPS.map((g) => '<p class="h"' + (g[0] === 'Inputs' ? ' style="margin-top:0"' : '') + '>' + g[0] + ' <span style="font-weight:600;text-transform:none;letter-spacing:0">' + g[1] + '</span></p><div class="grid g3" style="margin-bottom:10px">' + g[2].map((k) => tile(FUNCS.find((f) => f[0] === k))).join('') + '</div>').join('') + chosenChips(); }
-    const head = '<div class="fnh"><button type="button" class="btn" data-fn="">&lsaquo; All</button><b>' + fn[1] + '</b></div>';
+    const head = '<div class="fnh"><button type="button" class="btn" data-fn="" aria-label="Back to categories">&lsaquo; Back</button><b>' + fn[1] + '</b></div>';
     const list = Object.keys(P).filter((k) => P[k].cat === fn[0]);
     const cb = {}; list.forEach((k) => { cb[k] = compat(k); });
     return head + '<div class="hrow">' + (list.map((k) => '<button type="button" class="pick' + (cb[k] && cb[k][0] === 'no' ? ' dim' : '') + '" data-add="' + k + '"' + (cb[k] && cb[k][2] ? ' title="' + esc(cb[k][1] + ': ' + cb[k][2]) + '"' : '') + '>' + (cb[k] ? '<span class="cb ' + cb[k][0] + '">' + cb[k][1] + '</span>' : '') + (c[k] ? '<span class="n">' + c[k] + '</span><span class="rmv" data-sub="' + k + '" role="button" aria-label="Remove one">&minus;</span>' : '') + '<span class="lk ' + P[k].link + '">' + LK[P[k].link] + '</span>' + (lineArt(k) || partSvg(P[k])) + esc(P[k].short) + '<small>' + (P[k].price ? '$' + P[k].price : '') + '<span class="sz">' + esc((P[k].w + ' x ' + P[k].h).replace(/\.0\b/g, '')) + ' mm</span></small></button>').join('') + (fn[0] === 'mine' || !list.length ? /* My own board: the presets, and measuring one with the phone */
         '<button type="button" class="pick" data-act="measure" style="grid-column:span 2">' + ico('measure') + 'Measure one with my phone<small>Card as the ruler</small></button>' : '')) + '</div>' +
       (list.some((k) => cb[k] && cb[k][0] !== 'ok') ? '<div class="cbl">' + list.filter((k) => cb[k] && cb[k][0] !== 'ok').map((k) => '<div class="' + cb[k][0] + '"><b>' + esc(P[k].short) + '</b> ' + esc(cb[k][1]) + ': ' + esc(cb[k][2]) + '</div>').join('') + '</div>' : '') +
-      (fn[0] === 'brain' ? '<div class="btags">' + list.filter((k) => P[k].tag).map((k) => '<div><b>' + esc(P[k].short) + '</b> &middot; ' + esc(P[k].tag) + '</div>').join('') + '</div>' : '') + '<p class="note" id="partTip">' + (list[0] ? 'Tap one to add it. The red minus takes one out. ' + esc(P[list[0]].tip) : '') + '</p>' + (fn[0] === 'power' ? '<p class="note">' + powerNote() + '</p>' : '') + chosenChips();
+      (fn[0] === 'brain' ? '<div class="btags">' + list.filter((k) => P[k].tag).map((k) => '<div><b>' + esc(P[k].short) + '</b> &middot; ' + esc(plainTag(P[k].tag)) + '</div>').join('') + '</div>' : '') + '<p class="note" id="partTip">' + (list[0] ? 'Tap one to add it. The red minus takes one out. ' + esc(P[list[0]].tip) : '') + '</p>' + (fn[0] === 'power' ? '<p class="note">' + powerNote() + '</p>' : '') + chosenChips();
   }
 }
 function paneRest(t, P, c) {
@@ -1216,8 +1217,8 @@ let view = null; // current 2D mapping for taps
 function fit() { const r = cv.getBoundingClientRect(), d = Math.min(2, devicePixelRatio || 1); cv.width = Math.max(1, Math.round(r.width * d)); cv.height = Math.max(1, Math.round(r.height * d)); }
 // The 3D box: steps that show a flat picture also show the case in 3D in the top right corner. Tap it to make it big.
 let BIG3D = false, miniTimer = 0;
-const native3d = () => { const t = curTab(); if (t === 'extras') return !decoOn() || deco3d(); /* nothing picked yet: the case itself, live */ return xrayOn() || play3d() || (S.step === 2 && !isPanel()) || (S.step === 5 && (t === '3d' || t === 'files')) || (S.step === 3 && (t === 'colors' || (t === 'logo' && !!WALLF[logoFace()]))); }; /* a side-wall logo is placed on the case in 3D */
-const wantsMini = () => (S.step === 0 || S.step === 1 || S.step === 3 || S.step === 4 || (S.step === 2 && isPanel())) && !$('con').classList.contains('down');
+const native3d = () => { const t = curTab(); if (t === 'extras') return !decoOn() || deco3d(); /* nothing picked yet: the case itself, live */ return xrayOn() || (S.step === 2 && !isPanel()) || (S.step === 5 && (t === '3d' || t === 'files')) || (S.step === 3 && (t === 'colors' || (t === 'logo' && !!WALLF[logoFace()]))); }; /* a side-wall logo is placed on the case in 3D */
+const wantsMini = () => (play3d() || S.step === 0 || S.step === 1 || S.step === 3 || S.step === 4 || (S.step === 2 && isPanel())) && !$('con').classList.contains('down');
 function draw() {
   const big = native3d() || BIG3D, mini = !big && wantsMini(), v3 = $('v3');
   v3.hidden = !(big || mini); v3.classList.toggle('mini', mini); cv.style.visibility = big ? 'hidden' : 'visible';
@@ -1565,7 +1566,7 @@ function playHit(e) { const r = T3, el = $('v3'); if (!r || !r.ctl) return null;
     else bx.push([q.x, q.y, q.w / 2 + 2, q.h / 2 + 2, null]);
     bx.forEach(([x, y, hw, hh, sub]) => { if (ray.intersectBox(new THREE.Box3(new THREE.Vector3(x - hw, y - hh, q.top - 2), new THREE.Vector3(x + hw, y + hh, q.top + Math.min(q.up, 14) + 3)), pt)) { const dd = pt.distanceTo(ray.origin); if (!best || dd < best.d) best = { id: +id, sub, d: dd }; } }); });
   return best; }
-function glow(o, on) { o.traverse((x) => { const mt = x.material; if (!mt || !mt.emissive) return; if (!x.userData.own) { x.material = mt.clone(); x.userData.own = 1; x.userData.e0 = mt.emissive.getHex(); } x.material.emissive.setHex(on ? 0x8a6400 : x.userData.e0); }); }
+function glow(o, on) { o.traverse((x) => { const mt = x.material; if (!mt || !mt.emissive) return; if (!x.userData.own) { x.material = mt.clone(); x.userData.own = 1; x.userData.e0 = mt.emissive.getHex(); } x.material.emissive.setHex(on ? 0x1d4ed8 : x.userData.e0); }); }
 function pressTick() { PRAF = 0; const r = T3; if (!r) return; const now = performance.now(); let live = false;
   Object.keys(PRESS).forEach((k) => { const p = PRESS[k], t = (now - p.t0) / 1000, e = r.ctl && r.ctl[p.id]; let o = e && e.m; if (o && p.sub != null) o = o.children[p.sub] || o; const done = t > 0.55;
     const off = done ? 0 : t < 0.06 ? -1.2 * t / 0.06 : -1.2 * Math.exp(-(t - 0.06) * 12) * Math.cos((t - 0.06) * 28); /* down, then a damped spring back */
@@ -1579,7 +1580,7 @@ function playPress(hit) { const m = testModel(), id = hit.id, it = S.items.find(
   if (ei > -1) { testAct({ kind: 'enc', i: ei, dir: 1 }, true); return; }
   draw(); tag((it && PP(it) ? PP(it).short || PP(it).name : 'This part') + ' is not wired yet. See Wire it.'); }
 function play3dWire() { const el = $('v3'); let dn = null;
-  el.addEventListener('pointerdown', (e) => { if (!play3d()) return; dn = { x: e.clientX, y: e.clientY, id: e.pointerId, hit: playHit(e) }; });
+  el.addEventListener('pointerdown', (e) => { if (!play3d() || el.classList.contains('mini')) return; dn = { x: e.clientX, y: e.clientY, id: e.pointerId, hit: playHit(e) }; });
   el.addEventListener('pointermove', (e) => { if (dn && e.pointerId === dn.id && Math.hypot(e.clientX - dn.x, e.clientY - dn.y) >= 6) dn = null; }); /* it became a spin */
   el.addEventListener('pointerup', (e) => { if (!dn || e.pointerId !== dn.id) return; const d0 = dn; dn = null; if (play3d() && d0.hit) playPress(d0.hit); });
   el.addEventListener('pointercancel', () => { dn = null; }); }
@@ -1602,12 +1603,18 @@ function standIn(P, x, y, rq, top) { // a simple 3D stand-in for what shows abov
   else if (c.o === 'ring') { m = new THREE.Mesh(new THREE.TorusGeometry(c.d / 2 - c.t / 2, c.t * 0.3, 8, 36), new THREE.MeshStandardMaterial({ color: 0x3a3a3a })); m.position.set(x, y, top + 0.8); }
   return m;
 }
+// the part you picked (DESIGN) or pressed (PLAY) turns bright blue on the 3D case
+const BLUE = 0x2563eb;
+function blueSel(r) { const id = play3d() ? HL : sel != null ? sel : HL;
+  Object.keys(r.ctl || {}).forEach((k) => { const q = r.ctl[k]; if (!q.m) return; const on = +k === id;
+    q.m.traverse((x) => { const mt = x.material; if (!mt || !mt.color || r.scrM.includes(x)) return; if (!x.userData.bown) { x.material = mt.clone(); x.userData.bown = 1; x.userData.c0 = mt.color.getHex(); } if (x.userData.own == null && mt.emissive) { x.userData.own = 1; x.userData.e0 = mt.emissive.getHex(); }
+      x.material.color.setHex(on ? BLUE : x.userData.c0); if (x.material.emissive) x.material.emissive.setHex(on ? 0x1d4ed8 : x.userData.e0 || 0); }); }); }
 function setHighlight(r) {
   // yellow see-through box: where the part you just added (or picked) sits and how deep it goes
   if (r.hl) { r.hl.parent && r.hl.parent.remove(r.hl); r.hl.traverse((o) => { if (o.geometry) o.geometry.dispose(); }); r.hl = null; }
   const id = S.step === 1 ? sel : S.step === 0 ? LAST : null, sl = id != null && r.slots[id]; if (!sl) return;
   const geo = new THREE.BoxGeometry(sl.w + 1, sl.h + 1, sl.dep), box = new THREE.Group();
-  const fill = new THREE.Mesh(geo, new THREE.MeshBasicMaterial({ color: 0xffd23a, transparent: true, opacity: 0.5, depthTest: false })), edge = new THREE.LineSegments(new THREE.EdgesGeometry(geo), new THREE.LineBasicMaterial({ color: 0x1a1a1a, depthTest: false }));
+  const fill = new THREE.Mesh(geo, new THREE.MeshBasicMaterial({ color: BLUE, transparent: true, opacity: 0.45, depthTest: false })), edge = new THREE.LineSegments(new THREE.EdgesGeometry(geo), new THREE.LineBasicMaterial({ color: BLUE, depthTest: false }));
   fill.renderOrder = 998; edge.renderOrder = 999; box.add(fill, edge); box.position.set(sl.x, sl.y, sl.z); sl.grp.add(box); r.hl = box;
 }
 // the Parts room in 3D: the piece you picked, the way it prints. The character shows put together.
@@ -1685,7 +1692,7 @@ function draw3d(isMini) {
   // styling the lid's outside: show it closed, from above, the way people will see it
   const XR = xrayOn();
   const lidTop = !XR && S.step === 3 && curTab() !== 'colors' && (curFace() === 'lidout' || !!WALLF[curFace()]), DF = D3 ? decoFace() : '', OPEN = XR ? true : D3 || MV ? false : S.open && !lidTop; /* mounting: the lid stays shut, out of the way */
-  const r = setup3d(), d = geom(), h = d, key = JSON.stringify([buildKey(), DF, OPEN, logoImgKey(), S.style === 'face' ? JSON.stringify((S.xp || {}).ch || 0) : 0, MV ? S.xsel : 0, S.attachedParts.length ? S.xp : 0, HL]);
+  const r = setup3d(), d = geom(), h = d, key = JSON.stringify([buildKey(), DF, OPEN, logoImgKey(), S.style === 'face' ? JSON.stringify((S.xp || {}).ch || 0) : 0, MV ? S.xsel : 0, S.attachedParts.length ? S.xp : 0]);
   if (isMini && (!$('v3').classList.contains('mini') || $('v3').hidden)) return; // left the flat view before the timer ran
   const mode = isMini ? 'mini' : 'big';
   if (r.key !== key) {
@@ -1727,7 +1734,6 @@ function draw3d(isMini) {
         const m = standIn(P, px0, py0, rq, top); if (m) { grp.add(m); m.userData.z0 = m.position.z; m.children.forEach((ch) => { ch.userData.z0 = ch.position.z; }); }
         r.ctl[it.id] = { m, grp, x: px0, y: py0, top, up: P.up || 2, w: f.w, h: f.h, c: P.cut || {}, rq }; /* PLAY: tap it on the case */
         if (m && (P.screen || ((P.cut || {}).o === 'rect' && P.isScreen))) r.scrM.push(m); if (m && (it.type === 'led5' || it.type === 'ring12')) r.leds.push({ m, ring: it.type === 'ring12' });
-        if (it.id === HL) { const hr = new THREE.Mesh(new THREE.TorusGeometry(Math.max(f.w, f.h) / 2 + 3, 1.1, 8, 40), new THREE.MeshBasicMaterial({ color: 0xc8412f })); hr.position.set(px0, py0, top + (P.up || 0) + 1.5); grp.add(hr); } /* tap-to-highlight */
         // a board measured from a photo: every tagged part gets its stand-in too
         const a = rq * Math.PI / 2, ca = Math.cos(a), sa = Math.sin(a);
         (P.userCuts || []).forEach((u) => { const K = CZ.PARTS[u.kind] || {}, mm = standIn({ cut: u.cut, up: K.up, isScreen: u.kind === 'screen' }, px0 + u.x * ca - u.y * sa, py0 + u.x * sa + u.y * ca, rq, top); if (mm) grp.add(mm); });
@@ -1755,20 +1761,20 @@ function draw3d(isMini) {
       const dk = deco3d(), hh = dk && decoFace() === 'lid' ? h.H + h.Hl : h.H, lm = dk && (S.deco || []).some(isLimb) ? 62 : 0, rad = dk ? Math.hypot(d.W + lm, d.D + lm, hh) / 2 * 1.06 : Math.hypot(d.W, d.D, h.H + h.Hl + CT + (OPEN ? d.D : 0)) / 2, v = r.camera.fov * Math.PI / 360, hz = Math.atan(Math.tan(v) * r.camera.aspect), dist = rad / Math.sin(Math.min(v, hz)) * (r.mode === 'mini' ? 1.0 : 1.15);
       r.controls.target.set(0, UPRIGHT[S.style] ? d.D / 2 : CT ? (h.H + CT) / 2 : dk ? hh / 2 : (h.H + (isClam() && OPEN ? d.D * 0.4 : h.Hl)) / 2, lm ? 16 : 0);
       // in Style, turn to the side being decorated: the lid's outside faces the back when it is open, the bottom faces down
-      const f = S.step === 3 && curTab() !== 'colors' ? curFace() : 'top', MD = { plate: [0.3, 0.95, 0.45], lid: [0.3, 0.95, 0.45], back: [0.35, 0.55, -0.85], front: [0.35, 0.55, 0.85], left: [-0.9, 0.5, 0.35], right: [0.9, 0.5, 0.35], bottom: [0.35, -0.85, 0.6] }, MDU = { plate: [0.3, 0.25, 0.95], front: [0.35, -0.85, 0.45], back: [0.35, 0.9, -0.3], left: [-0.9, 0.35, 0.4], right: [0.9, 0.35, 0.4], bottom: [0.35, 0.3, -0.9] }, dir = UPRIGHT[S.style] ? (MV ? MDU[PORTS[S.xsel] ? pface() : mnt().face] : [0.45, 0.3, 0.85]) : MV ? MD[PORTS[S.xsel] ? pface() : mnt().face] : dk ? [0, 1, 0.5] : WALLF[f] ? MD[f] : f === 'lidout' && isClam() ? [0.2, 1, 0.55] : f === 'bottom' ? [0.4, -0.85, 0.6] : [0.45, 0.7, 0.8];
+      const f = S.step === 3 && curTab() !== 'colors' ? curFace() : 'top', MD = { plate: [0.3, 0.95, 0.45], lid: [0.3, 0.95, 0.45], back: [0.35, 0.55, -0.85], front: [0.35, 0.55, 0.85], left: [-0.9, 0.5, 0.35], right: [0.9, 0.5, 0.35], bottom: [0.35, -0.85, 0.6] }, MDU = { plate: [0.3, 0.25, 0.95], front: [0.35, -0.85, 0.45], back: [0.35, 0.9, -0.3], left: [-0.9, 0.35, 0.4], right: [0.9, 0.35, 0.4], bottom: [0.35, 0.3, -0.9] }, dir = play3d() ? (UPRIGHT[S.style] ? [0, 0.08, 1] : [0, 1, 0.08]) : UPRIGHT[S.style] ? (MV ? MDU[PORTS[S.xsel] ? pface() : mnt().face] : [0.45, 0.3, 0.85]) : MV ? MD[PORTS[S.xsel] ? pface() : mnt().face] : dk ? [0, 1, 0.5] : WALLF[f] ? MD[f] : f === 'lidout' && isClam() ? [0.2, 1, 0.55] : f === 'bottom' ? [0.4, -0.85, 0.6] : [0.45, 0.7, 0.8];
       r.camera.position.copy(new THREE.Vector3(dir[0], dir[1], dir[2]).normalize().multiplyScalar(dist)).add(r.controls.target); r.controls.update();
     };
     const limbs = (S.deco || []).some(isLimb) + DF, stay = D3 && r.view === 'bigdeco' && r.hadLimb === limbs; r.hadLimb = limbs; /* you turned the case to reach a spot: adding or dropping a piece must not turn it back */
-    r.mode = mode; r.view = mode + (D3 ? 'deco' : S.step === 3 ? curFace() + curTab() : '') + (MV ? 'm' + (PORTS[S.xsel] ? pface() : mnt().face) : ''); if (!stay) r.fit();
+    r.mode = mode; r.view = mode + (play3d() ? 'play' : '') + (D3 ? 'deco' : S.step === 3 ? curFace() + curTab() : '') + (MV ? 'm' + (PORTS[S.xsel] ? pface() : mnt().face) : ''); if (!stay) r.fit();
   }
-  r.controls.enabled = !isMini;
-  const view = mode + (D3 ? 'deco' : S.step === 3 ? curFace() + curTab() : '') + (MV ? 'm' + (PORTS[S.xsel] ? pface() : mnt().face) : '');
+  r.controls.enabled = !isMini && !play3d(); /* PLAY: locked top-down, so a tap is always a press */
+  const view = mode + (play3d() ? 'play' : '') + (D3 ? 'deco' : S.step === 3 ? curFace() + curTab() : '') + (MV ? 'm' + (PORTS[S.xsel] ? pface() : mnt().face) : '');
   if (r.mode !== mode || r.view !== view) { r.mode = mode; r.view = view; r.fit(); }
-  setHighlight(r); decoMark(); playPaint(r);
+  setHighlight(r); blueSel(r); decoMark(); playPaint(r);
   r.draw();
   if (isMini) return;
   if (D3) { tag((S.deco || []).length ? 'Drag a piece to move it. Drag the empty space to spin.' : 'Drag a piece from below onto your case'); $('sb').hidden = true; $('sb').innerHTML = ''; return; }
-  if (play3d()) tag('Tap any button, pad, knob or wheel on your case. Drag to spin it.'); else tag(MV ? 'Tap a green dot to ' + (PORTS[S.xsel] ? 'cut the ' : 'mount the ') + xname(S.xsel).toLowerCase() + '. Red is blocked.' : summaryLine());
+  if (play3d()) tag('Tap any button, pad, knob or wheel on your case.'); else tag(MV ? 'Tap a green dot to ' + (PORTS[S.xsel] ? 'cut the ' : 'mount the ') + xname(S.xsel).toLowerCase() + '. Red is blocked.' : summaryLine());
   const sb = $('sb'), flat = BIG3D && !native3d();
   sb.innerHTML = (flat ? '<button type="button" id="flatBtn" aria-pressed="true">Back to flat</button>' : '') + (isClam() && !lidTop ? '<button type="button" id="openBtn">' + (S.open ? 'Close it' : 'Open it') + '</button>' : '');
   sb.hidden = !sb.innerHTML; const ob = $('openBtn'); if (ob) ob.onclick = () => { S.open = !S.open; save(); render(); };
@@ -2022,10 +2028,10 @@ function drawTest(W, H) {
   if (!wiring().rows.length) { g.fillStyle = '#6f6a60'; g.font = '800 ' + 14 * d + 'px -apple-system,Arial'; g.textAlign = 'center'; g.fillText('Add parts to test them', W / 2, H / 2); tag('Test it'); return; }
   const font = (s, w) => { g.font = (w || 800) + ' ' + s * d + 'px -apple-system,Arial'; }, box = (x, y, w, h, f, st) => { g.fillStyle = f; g.beginPath(); g.rect(x, y, w, h); g.fill(); if (st) { g.strokeStyle = st; g.lineWidth = 1.5 * d; g.stroke(); } };
   // the screen and the brain at the top
-  const cb = !$('cbx').hidden, sw = cb ? Math.min(W - 152 * d, 260 * d) : Math.min(W - 24 * d, 260 * d), sx = cb ? 8 * d : (W - sw) / 2; let y = 10 * d;
+  const mi = $('v3').classList.contains('mini') && !$('v3').hidden, cb = !$('cbx').hidden || mi, sw = cb ? Math.min(W - 152 * d, 260 * d) : Math.min(W - 24 * d, 260 * d), sx = cb ? 8 * d : (W - sw) / 2; let y = ($('pind').hidden ? 10 : 42) * d; /* the screen sits under the Sound pills */
   const scr = m.screen || recipeFn(), fnr = recipeFn(); if (fnr === 'timer' && TEST.text === 'Ready') TEST.text = clock((TEST.tm ? TEST.tm.rem : 1500)); box(sx, y, sw, 40 * d, scr ? '#10242c' : '#e7e2d6', '#1a1a1a'); font(fnr === 'timer' ? 18 : 13); g.textAlign = 'center'; g.fillStyle = scr ? '#9ff0ff' : '#6f6a60'; g.fillText(scr ? TEST.text : (cb ? 'No screen: see the log' : 'No screen: watch the log below'), sx + sw / 2, y + (fnr === 'timer' ? 28 : 25) * d); if (fnr && !m.screen) { font(8.5, 700); g.fillStyle = '#6f6a60'; g.fillText(fnr === 'macro' ? 'what the computer gets' : 'no screen in this build: shown here for the test', W / 2, y + 50 * d); }
   y += 48 * d; box(W / 2 - 34 * d, y, 68 * d, 20 * d, '#2f7a4b'); font(9); g.fillStyle = '#fff'; g.fillText(bmini(BRDX().name).slice(0, 9), W / 2 - 6 * d, y + 14 * d); g.fillStyle = TEST.lamp ? '#7dff6b' : '#204a2c'; g.beginPath(); g.arc(W / 2 + 22 * d, y + 10 * d, 4 * d, 0, 7); g.fill();
-  y += 30 * d;
+  y += 30 * d; if (mi) y = Math.max(y, ($('cbx').hidden ? 132 : 170) * d); /* clear of the 3D corner preview */
   // one cell per control or output
   const cells = []; m.keys.forEach((k, i) => cells.push({ kind: 'key', i, label: k.name })); m.pots.forEach((p, i) => cells.push({ kind: 'pot', i, label: p.name })); m.encs.forEach((e, i) => cells.push({ kind: 'enc', i, label: e.name }));
   m.pirs.forEach((p, i) => cells.push({ kind: 'pir', i, label: p.tag + ' motion' })); m.tofs.forEach((t, i) => cells.push({ kind: 'tof', i, label: t.tag + ' distance' })); m.cams.forEach((c, i) => cells.push({ kind: 'cam', i, label: c.tag + ' camera' }));
@@ -2035,7 +2041,7 @@ function drawTest(W, H) {
     if (need > vis + 2) { if (cv.style.height !== need + 'px') { st.classList.add('tscroll'); cv.style.height = need + 'px'; return draw(); } } else if (cv.style.height) { cv.style.height = ''; st.classList.remove('tscroll'); return draw(); } }
   const hlId = HL;
   cells.forEach((c, n) => { const cx = 8 * d + (n % cols) * cw, cy = y + Math.floor(n / cols) * ch, mx = cx + cw / 2, my = cy + ch * 0.45, r = Math.min(cw, ch) * 0.24, ent = ctlOf(m, c);
-    if (ent && ent.id != null && ent.id === hlId) { g.strokeStyle = '#c8412f'; g.lineWidth = 3 * d; g.beginPath(); g.rect(cx + 3 * d, cy + 2 * d, cw - 6 * d, ch - 4 * d); g.stroke(); }
+    if (ent && ent.id != null && ent.id === hlId) { g.strokeStyle = '#2563EB'; g.lineWidth = 3 * d; g.beginPath(); g.rect(cx + 3 * d, cy + 2 * d, cw - 6 * d, ch - 4 * d); g.stroke(); }
     font(9.5, 700); g.textAlign = 'center'; g.fillStyle = '#1a1a1a'; g.fillText(c.label.slice(0, 16), mx, cy + ch - 6 * d);
     if (c.kind === 'key') { const on = TEST.held && TEST.held.kind === 'key' && TEST.held.i === c.i; g.fillStyle = on ? '#c8412f' : '#1a1a1a'; g.beginPath(); g.arc(mx, my, r, 0, 7); g.fill(); TEST.hits.push({ kind: 'key', i: c.i, x: mx - r, y: my - r, w: 2 * r, h: 2 * r }); }
     if (c.kind === 'pot' && m.pots[c.i].kind === 'step') { const lv = (TEST.val[c.i] || 0) / 25; g.fillStyle = '#1a1a1a'; g.beginPath(); g.arc(mx, my, r, 0, 7); g.fill(); for (let q = 0; q < 4; q++) { g.fillStyle = q < lv ? '#c8412f' : '#cfc9bb'; g.fillRect(mx - 2 * r + q * r, my + r + 3 * d, r * 0.8, 4 * d); } font(9, 700); g.fillStyle = '#fff'; g.fillText(lv ? lv + '/4' : '-', mx, my + 3 * d); TEST.hits.push({ kind: 'pot', step: true, i: c.i, x: mx - r, y: my - r, w: 2 * r, h: 2 * r }); }
@@ -2896,20 +2902,21 @@ function showNew() {
     '<button class="btn start" data-go="panel"><b>A panel for a box I have</b>One flat piece with a screen window, holes and notches for wires.</button>' +
     '<button class="btn start" data-go="part"><b>One part</b>Stand, feet, standoffs, cable clips, knobs.</button></div><button class="btn" data-door="back" style="margin-top:10px">Back</button>';
 }
-const RGROUPS = [['all', 'All'], ['music', 'Music'], ['games', 'Games'], ['desk', 'Desk']], LEVELN = { Easy: 1, Medium: 2, Hard: 3 };
+const RGROUPS = [['music', 'Music'], ['games', 'Games'], ['desk', 'Desk']], LEVELN = { Easy: 1, Medium: 2, Hard: 3 };
 const lvlChip = (r) => '<span class="chip lvl" aria-label="' + esc(r.level) + '"><i aria-hidden="true">' + [1, 2, 3].map((n) => (n <= (LEVELN[r.level] || 1) ? '\u25CF' : '\u25CB')).join('') + '</i>' + esc(r.level) + '</span>';
 const aboutCost = (r) => '~$' + Math.max(1, Math.round(recipeCost(r)));
-let RGROUP = 'all';
+let RGROUP = '';
 function showRecipes() { /* the picker: name, one short line, level and rough price. Everything else is one tap away */
-  const L = (CZ.RECIPES || []).filter((r) => RGROUP === 'all' || r.group === RGROUP);
-  $('sheetIn').innerHTML = '<h2>Start from a project</h2><div class="rfilt" role="group" aria-label="Filter projects">' + RGROUPS.filter((g) => g[0] === 'all' || (CZ.RECIPES || []).some((r) => r.group === g[0])).map((g) => '<button type="button" data-rgroup="' + g[0] + '" aria-pressed="' + (g[0] === RGROUP) + '">' + g[1] + '</button>').join('') + '</div>' +
+  const G = RGROUPS.filter((g) => (CZ.RECIPES || []).some((r) => r.group === g[0])); if (!G.some((g) => g[0] === RGROUP)) RGROUP = G.length ? G[0][0] : '';
+  const L = (CZ.RECIPES || []).filter((r) => r.group === RGROUP);
+  $('sheetIn').innerHTML = '<h2>Start from a project</h2><div class="rfilt" role="group" aria-label="Filter projects">' + G.map((g) => '<button type="button" data-rgroup="' + g[0] + '" aria-pressed="' + (g[0] === RGROUP) + '">' + g[1] + '</button>').join('') + '</div>' +
     '<div class="rgrid">' + L.map((r) => '<button type="button" class="rcard" data-rinfo="' + r.id + '"><b>' + esc(r.name) + '</b><span class="rl">' + esc(r.short || r.line) + '</span><span class="chips">' + lvlChip(r) + '<span class="chip">' + aboutCost(r) + '</span></span></button>').join('') + '</div>' +
     '<button class="btn" data-door="back" style="margin-top:12px">Back</button>';
 }
 function showRecipe(id) { /* the detail: the full story, what you buy, the credit and the test status */
   const r = CZ.RECIPES.find((x) => x.id === id); if (!r) return; const P = CZ.PARTS;
   const rows = r.parts.filter(([t]) => P[t]).map(([t, n]) => '<tr><td>' + n + ' x</td><td>' + esc(P[t].name) + '</td><td class="num">' + (P[t].price ? money(P[t].price * n) : '') + '</td></tr>').join('');
-  $('sheetIn').innerHTML = '<button type="button" class="rback" data-door="known" aria-label="All projects">&lsaquo; All projects</button><h2 class="rh">' + esc(r.name) + '</h2>' +
+  $('sheetIn').innerHTML = '<button type="button" class="rback" data-door="known" aria-label="Back to projects">&lsaquo; Projects</button><h2 class="rh">' + esc(r.name) + '</h2>' +
     '<div class="chips" style="margin:0 0 10px">' + lvlChip(r) + '<span class="chip">' + aboutCost(r) + ' in parts</span><span class="chip ' + (r.tested ? 'ok' : 'cm') + '">' + (r.tested ? 'NOCIV tested' : 'Community code') + '</span></div>' +
     '<p class="rline">' + esc(r.line) + '</p>' + (r.note ? '<p class="note" style="margin:0 0 10px">' + esc(r.note) + '</p>' : '') +
     '<button class="btn red" data-recipe="' + r.id + '" style="width:100%;margin:2px 0 12px">Start with this</button>' +
@@ -3232,8 +3239,8 @@ function auCtx() { if (AU.ctx) return AU.ctx; const AC = window.AudioContext || 
     const n = c.createBuffer(1, c.sampleRate * 2, c.sampleRate), d = n.getChannelData(0); for (let i = 0; i < d.length; i++) d[i] = Math.random() * 2 - 1; AU.noise = n; } catch (e) { AU.ctx = null; } return AU.ctx; }
 function auUnlock() { const c = auCtx(); if (!c) return null; if (!AU.on) { if (c.state === 'running') c.suspend().catch(() => {}); return c; }
   if (c.state !== 'running' || !AU.primed) { AU.primed = true; try { c.resume().catch(() => {}); } catch (e) {} try { const b = c.createBufferSource(); b.buffer = c.createBuffer(1, 1, 22050); b.connect(c.destination); b.start(0); } catch (e) {} } return c; } /* iPhone Safari: resume and a 1-sample silent buffer, inside the tap itself */
-document.addEventListener('pointerdown', () => { if (AU.on && (!AU.ctx || AU.ctx.state !== 'running' || (PAGES[S.page] || {}).room === 'play')) auUnlock(); }, true);
-function playInd() { const el = $('pind'); if (!el || !AU) return; const on = (PAGES[S.page] || {}).room === 'play'; el.hidden = !on; if (!on) return; const live = AU.on && (!!AU.loopT || Date.now() - (AU.hot || 0) < 1200);
+document.addEventListener('pointerdown', () => { if (AU.on) auUnlock(); if (TEST.ac && TEST.ac !== AU.ctx && TEST.ac.state !== 'running') try { TEST.ac.resume(); } catch (e) {} }, true);
+function playInd() { const el = $('pind'); if (!el || !AU) return; const on = (PAGES[S.page] || {}).room === 'play' && curTab() !== 'map'; el.hidden = !on; /* Wired: keep the pin labels clear */ if (!on) return; const live = AU.on && (!!AU.loopT || Date.now() - (AU.hot || 0) < 1200);
   const k = AU.on + ':' + live; if (el.dataset.k === k) return; el.dataset.k = k; el.innerHTML = '<button type="button" class="' + (AU.on ? 'on' : '') + '" data-snd="' + (AU.on ? '0' : '1') + '" aria-pressed="' + AU.on + '">Sound: ' + (AU.on ? 'On' : 'Off') + '</button><span class="' + (live ? 'live' : '') + '">' + (live ? '\u25B6 Playing' : 'Tap any pad') + '</span>'; }
 function auHot() { AU.hot = Date.now(); playInd(); clearTimeout(AU.indT); AU.indT = setTimeout(playInd, 1300); }
 $('pind').addEventListener('click', (e) => { const b = e.target.closest('[data-snd]'); if (!b) return; auSet(b.dataset.snd === '1'); if (!AU.on) djStop(); else if (curTab() === 'try') djSync(TRYS.dj); else if (curTab() === 'test' && TEST.dj) djSync(TEST.dj); render(); });
