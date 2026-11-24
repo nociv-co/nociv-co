@@ -32,6 +32,7 @@ html.embedded .top{display:none}
 .stage #v3.mini::after{content:'3D';position:absolute;left:6px;top:5px;padding:2px 5px;border-radius:5px;background:var(--ink);color:#fff;font:900 10px/1 var(--sys);letter-spacing:.06em;pointer-events:none}
 .stage #v3.mini::before{content:'Tap to zoom';position:absolute;left:0;right:0;bottom:4px;text-align:center;color:var(--mute);font:800 9.5px/1 var(--sys);pointer-events:none}
 .stage #v3 canvas{display:block;width:100%;height:100%}
+.stage .tag:empty{display:none!important}
 .stage .tag{position:absolute;left:8px;bottom:8px;padding:4px 8px;border-radius:8px;background:rgba(26,26,26,.82);color:#fff;font:700 11.5px/1.2 var(--sys);pointer-events:none;max-width:calc(100% - 16px)}
 .stage .zm{position:absolute;left:8px;top:8px;display:flex;gap:5px;z-index:2}.stage .zm[hidden]{display:none}.stage .zm button{all:unset;cursor:pointer;min-width:40px;height:36px;padding:0 9px;box-sizing:border-box;text-align:center;border-radius:9px;background:rgba(26,26,26,.86);color:#fff;font:900 14px/36px var(--sys)}.stage .zm button[disabled]{opacity:.35}
 .apick{position:fixed;left:0;right:0;bottom:0;display:flex;flex-direction:column;background:#161616;color:#fff;border-top:2px solid #fff;border-radius:16px 16px 0 0;padding:12px 12px 14px;z-index:3;-webkit-user-select:none;user-select:none}.apick.small .pkb{display:none}
@@ -100,6 +101,8 @@ html.embedded .top{display:none}
 .list{display:flex;flex-direction:column;gap:6px}
 .list .it,.list a{display:block;padding:9px 11px;border:1.5px solid var(--ink);border-radius:11px;background:#fff;color:var(--ink);text-decoration:none;font:600 12.5px/1.35 var(--sys)}
 .list b{display:block;font:800 13.5px/1.2 var(--sys);margin-bottom:2px}
+.list.slg .it b{display:inline;font-size:inherit;margin:0}
+.pick .psub{display:block;font:600 10px/1.15 var(--sys);opacity:.7;margin-top:1px}
 .files{display:grid;grid-template-columns:1fr 1fr;gap:7px}
 .selbar{display:flex;gap:6px;align-items:center;margin:0 0 8px;padding:7px 8px;border:1.5px solid var(--ink);border-radius:12px;background:#fff}
 .selbar b{flex:1;font:800 13px/1.2 var(--sys)}
@@ -151,13 +154,16 @@ html.embedded .top{display:none}
 .tabs .tl button svg{display:none}
 .tabs .tl button span{overflow:visible}
 .pane{padding:4px 14px 14px}
+.pane.padb{padding-bottom:calc(40px + env(safe-area-inset-bottom,0px))} /* Wired: the 3.3V vs 5V warning clears the drawer edge */
 .bbar{grid-template-columns:auto 1fr auto;align-items:center;gap:8px;padding:8px 12px calc(8px + env(safe-area-inset-bottom));border-top:1px solid var(--line);background:var(--panel);position:relative;z-index:5}
 .bbar button{flex-direction:row;min-height:44px;padding:0 16px;border-radius:999px;border:2px solid var(--ink);color:var(--ink);font:900 13px/1 var(--sys);letter-spacing:.03em}
 .bbar button.nx{background:var(--red);border-color:var(--red);color:#fff}
 .bbar button[disabled]{opacity:.28}
 .bbar .dots{display:flex;justify-content:center;gap:7px}
 .stage .tag{bottom:26px}
-.stage .tag{max-width:calc(100% - 16px);white-space:normal;overflow:hidden;display:-webkit-box;-webkit-box-orient:vertical;-webkit-line-clamp:2;line-clamp:2} /* two lines on a phone, so the print time is never cut off */
+.stage .tag{max-width:calc(100% - 16px);white-space:normal;overflow:hidden;display:-webkit-box;-webkit-box-orient:vertical;-webkit-line-clamp:2;line-clamp:2}
+.stage .tag{padding-bottom:0;border-bottom:4px solid transparent} /* the clamp cuts at the text, no sliver of a third line */
+.stage.wmap .tag{bottom:44px} /* Wired: the 3.3V vs 5V warning sits clear of the drawer */ /* two lines on a phone, so the print time is never cut off */
 .chosen span .rm{all:unset;cursor:pointer;width:22px;height:22px;margin:-3px -5px -3px 1px;border-radius:50%;background:var(--red);color:#fff;font:900 15px/22px var(--sys);text-align:center}
 .pick .rmv{position:absolute;z-index:2;bottom:-9px;left:-7px;width:26px;height:26px;border-radius:50%;background:#fff;border:2px solid var(--red);color:var(--red);font:900 18px/22px var(--sys);text-align:center;box-sizing:border-box}
 .pick.xt svg{height:44px}
