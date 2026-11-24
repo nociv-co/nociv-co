@@ -219,9 +219,31 @@ details.fold .list .it{border-color:var(--line)}
 .shopl .pr{float:none;margin-left:4px;color:#c8412f}
 .shopl .buy{display:flex;flex-wrap:wrap;gap:5px;margin-top:5px}
 .shopl .buy a{display:inline-block;padding:4px 8px;border:1.5px solid var(--ink);border-radius:8px;font:800 11px/1 var(--sys);text-decoration:none;color:var(--ink);background:#fff}
+/* Brain at 375 px: the Test It stage scrolls on its own above the drawer, pills wrap instead of clipping */
+.stage.tscroll{overflow-y:auto;-webkit-overflow-scrolling:touch;overscroll-behavior:contain}
+.stage.tscroll canvas#view{bottom:auto;touch-action:pan-y}
+.stage.tscroll .tag{display:none}
+.pane .hrow.beh,.pane .hrow.simr{display:flex;flex-wrap:wrap;gap:6px;overflow:visible;padding:2px 0 8px}
+.pane .hrow.beh button,.pane .hrow.simr button{flex:none;white-space:nowrap}
+.pane .simr .wd{position:static;box-shadow:none}
+#bswap .selbar,.pane .selbar.tw{flex-wrap:wrap}#bswap .selbar > b{flex:1 0 100%}
+.selbar.fnsel button[aria-pressed=true]{background:var(--ink);color:#fff}
+/* Body: one Simple | Pro (mm) switch at the top of the drawer */
+.tabs .tl .spro{display:inline-flex;flex:none;border:1.5px solid var(--ink);border-radius:999px;overflow:hidden;margin-right:2px}
+.tabs .tl .spro button{all:unset;cursor:pointer;height:31px;padding:0 12px;font:900 12px/31px var(--sys);background:#fff;color:var(--ink);white-space:nowrap}
+.tabs .tl .spro button + button{border-left:1.5px solid var(--ink)}
+.tabs .tl .spro button[aria-pressed=true]{background:var(--ink);color:#fff}
+.prob{margin-top:10px;padding:10px;border:1.5px dashed var(--ink);border-radius:12px;background:#fff}.prob .row > b{flex-basis:84px}
+/* part line-art */
+svg.la{fill:none;stroke:currentColor;stroke-width:2.2;stroke-linecap:round;stroke-linejoin:round}
+.pick svg.la{height:36px}.pick.fn svg.la{height:30px}
+.chosen .ach{gap:4px}.chosen .ach svg.la{flex:none;stroke-width:2.8}
+/* Board: order 5 */
+.order5{margin:8px 0 0;padding:9px 11px;border:2px solid var(--ink);border-radius:12px;background:#fffbe9;font:500 12.5px/1.4 var(--sys)}.order5 b{font-weight:900}.order5 ol{margin:6px 0 4px 18px;padding:0}.order5 p{margin:4px 0 0;color:var(--mute)}.order5 a{color:var(--ink)}
+.cfull mark{background:#c8412f;color:#fff}
 </style>
 <script src="/vendor/clipper/clipper.js"></script>
-<script src="parts.js?v=32"></script>
+<script src="parts.js?v=33"></script>
 <script type="importmap">{ "imports": { "three": "/vendor/three/three.module.js", "three/addons/": "/vendor/three/" } }</script>
 </head>
 <body>
@@ -243,6 +265,6 @@ details.fold .list .it{border-color:var(--line)}
 <input type="file" id="snapIn" accept="image/*" capture="environment" hidden>
 <div class="cfull" id="cfull" hidden role="dialog" aria-label="Your code"><div class="cfh"><span id="cfTabs"></span><span class="sp"></span><button type="button" id="cfCopy">Copy</button><button type="button" id="cfSave">Save</button><button type="button" id="cfX" aria-label="Close">&#x2715;</button></div><pre id="cfPre"></pre></div>
 <div class="sheet" id="sheet" hidden><div class="in" id="sheetIn"></div></div>
-<script type="module" src="builder.js?v=71"></script>
+<script type="module" src="builder.js?v=72"></script>
 </body>
 </html>

@@ -11,6 +11,10 @@
 export const BR = { P: 1.27, PAD: 1.6, DRILL: 1.0, TRACK: 0.4, VIA: 1.2, VDRILL: 0.6, MOUNT: 2.2, CLR: 0.2, EDGE: 1.1, SILK: 0.15, TH: 1.6 };
 const PICO_L = ['GP0', 'GP1', 'GND', 'GP2', 'GP3', 'GP4', 'GP5', 'GND', 'GP6', 'GP7', 'GP8', 'GP9', 'GND', 'GP10', 'GP11', 'GP12', 'GP13', 'GND', 'GP14', 'GP15'];
 const PICO_R = ['VBUS', 'VSYS', 'GND', '3V3_EN', '3V3', 'ADC_VREF', 'GP28', 'AGND', 'GP27', 'GP26', 'RUN', 'GP22', 'GND', 'GP21', 'GP20', 'GP19', 'GP18', 'GND', 'GP17', 'GP16'];
+// a brain on two rows of 2.54 mm pins. L[i] sits across from R[i]; half = half the row spacing (0.6 in rows: 7.62); hw, hh = half the board outline. All land on the 1.27 mm grid.
+const PICO_DIP = { L: PICO_L, R: PICO_R, half: 8.89, hw: 25.5, hh: 10.5, tag: 'PICO' };
+export function dipOf(B, key, w, h) { if (!B || key === 'pico') return PICO_DIP; const n = Math.max(B.left.length, B.right.length), half = 7.62;
+  return { L: B.left, R: B.right, half, hw: Math.max((w || n * 2.54 + 2) / 2, (n - 1) * 1.27 + 1.6), hh: Math.max((h || 18) / 2, half + 1.6), tag: ({ nano: 'NANO', promicro: 'PROMICRO', c3: 'ESP32C3' })[key] || 'BRAIN' }; }
 
 // ---------- small geometry ----------
 const rotv = (x, y, r) => { r = ((r % 4) + 4) % 4; return r === 0 ? [x, y] : r === 1 ? [-y, x] : r === 2 ? [-x, -y] : [y, -x]; }; // quarter turns, counter clockwise
@@ -66,10 +70,10 @@ export function makeBoard(spec) {
   const P = BR.P, keep = spec.keepin, errors = [], warnings = [];
   if (!keep || keep.length < 3) return { ok: false, errors: ['No room for a board in this body.'] };
   // grid lined up with the Pico pins
-  const pp = spec.pico, picoPads = [];
-  const fl = pp.flip ? -1 : 1; /* flip: the Pico sits on the back of the board, so its two rows trade places */
-  PICO_L.forEach((n, i) => { const [dx, dy] = rotv(-24.13 + i * 2.54, -8.89 * fl, pp.r || 0); picoPads.push({ name: n, pin: i + 1, x: pp.x + dx, y: pp.y + dy }); });
-  PICO_R.forEach((n, j) => { const [dx, dy] = rotv(-24.13 + j * 2.54, 8.89 * fl, pp.r || 0); picoPads.push({ name: n, pin: 40 - j, x: pp.x + dx, y: pp.y + dy }); });
+  const pp = spec.pico, picoPads = [], BD = spec.brd || PICO_DIP, nL = BD.L.length, nT = nL + BD.R.length, x0p = -(nL - 1) * 1.27;
+  const fl = pp.flip ? -1 : 1; /* flip: the brain sits on the back of the board, so its two rows trade places */
+  BD.L.forEach((n, i) => { const [dx, dy] = rotv(x0p + i * 2.54, -BD.half * fl, pp.r || 0); picoPads.push({ name: n, pin: i + 1, x: pp.x + dx, y: pp.y + dy }); });
+  BD.R.forEach((n, j) => { const [dx, dy] = rotv(x0p + j * 2.54, BD.half * fl, pp.r || 0); picoPads.push({ name: n, pin: nT - j, x: pp.x + dx, y: pp.y + dy }); });
   let bx0 = 1e9, by0 = 1e9, bx1 = -1e9, by1 = -1e9; keep.forEach(([x, y]) => { bx0 = Math.min(bx0, x); by0 = Math.min(by0, y); bx1 = Math.max(bx1, x); by1 = Math.max(by1, y); });
   const ox = picoPads[0].x - Math.floor((picoPads[0].x - bx0) / P) * P, oy = picoPads[0].y - Math.floor((picoPads[0].y - by0) / P) * P;
   const nx = Math.floor((bx1 - ox) / P) + 1, ny = Math.floor((by1 - oy) / P) + 1, N = nx * ny;
@@ -92,7 +96,7 @@ export function makeBoard(spec) {
   const gndSeeds = [];
   picoPads.forEach((q) => { const nm = q.name === 'GND' ? 'GND' : used[q.name] ? q.name : null; const k = addPad(I(q.x), J(q.y), nm, q.name, 'pico'); if (q.name === 'GND') gndSeeds.push(k); });
   if (netId.GND) nets[netId.GND].pre = gndSeeds; // the Pico joins all its GND pins inside itself
-  const [phx, phy] = rotv(25.5, 10.5, pp.r || 0), prx = Math.abs(phx) + 3.6, pry = Math.abs(phy) + 3.6; /* pad rows keep clear of the Pico, with room for their names */
+  const [phx, phy] = rotv(BD.hw, BD.hh, pp.r || 0), prx = Math.abs(phx) + 3.6, pry = Math.abs(phy) + 3.6; /* pad rows keep clear of the Pico, with room for their names */
   const inPico = (x, y) => Math.abs(x - pp.x) < prx && Math.abs(y - pp.y) < pry, inZone = (x, y) => (spec.zones || []).some((z) => x > z.x0 - 1 && x < z.x1 + 1 && y > z.y0 - 1 && y < z.y1 + 1);
   // 1b. pads that must sit at an exact spot (a keyboard switch, its diode). They have to land on the grid.
   const noVia = new Uint8Array(N), holes = (spec.holes || []).slice();
@@ -215,16 +219,16 @@ export function makeBoard(spec) {
       if (v) textStrokes('1N5817', mx + 2.9, my - textLen('1N5817', 1) / 2, 1.0, 1).forEach((s) => silk.push(s)); else textStrokes('1N5817', mx - textLen('1N5817', 1) / 2, my + 1.9, 1.0, 0).forEach((s) => silk.push(s)); }
   });
   (spec.silk || []).forEach((q) => silk.push(q));
-  if (pp.flip) { const c = [[-25.5, -10.5], [25.5, -10.5], [25.5, 10.5], [-25.5, 10.5]].map(([x, y]) => { const q = rotv(x, y, pp.r || 0); return [pp.x + q[0], pp.y + q[1]]; }); for (let i = 0; i < 4; i++) silkB.push([c[i][0], c[i][1], c[(i + 1) % 4][0], c[(i + 1) % 4][1]]);
-    const u = rotv(-1, 0, pp.r || 0), e = [pp.x + u[0] * 25.5, pp.y + u[1] * 25.5]; silkB.push([e[0], e[1] - 4, e[0] - u[0] * 4.5, e[1] - 4], [e[0] - u[0] * 4.5, e[1] - 4, e[0] - u[0] * 4.5, e[1] + 4], [e[0] - u[0] * 4.5, e[1] + 4, e[0], e[1] + 4]); /* the USB end */
-    textStrokes('PICO HERE', pp.x + textLen('PICO HERE', 1.6) / 2, pp.y - 0.8, 1.6, 0, true).forEach((q) => silkB.push(q));
+  if (pp.flip) { const c = [[-BD.hw, -BD.hh], [BD.hw, -BD.hh], [BD.hw, BD.hh], [-BD.hw, BD.hh]].map(([x, y]) => { const q = rotv(x, y, pp.r || 0); return [pp.x + q[0], pp.y + q[1]]; }); for (let i = 0; i < 4; i++) silkB.push([c[i][0], c[i][1], c[(i + 1) % 4][0], c[(i + 1) % 4][1]]);
+    const u = rotv(-1, 0, pp.r || 0), e = [pp.x + u[0] * BD.hw, pp.y + u[1] * BD.hw]; silkB.push([e[0], e[1] - 4, e[0] - u[0] * 4.5, e[1] - 4], [e[0] - u[0] * 4.5, e[1] - 4, e[0] - u[0] * 4.5, e[1] + 4], [e[0] - u[0] * 4.5, e[1] + 4, e[0], e[1] + 4]); /* the USB end */
+    const HT = BD.tag + ' HERE'; textStrokes(HT, pp.x + textLen(HT, 1.6) / 2, pp.y - 0.8, 1.6, 0, true).forEach((q) => silkB.push(q));
     const p1 = picoPads[0]; silkB.push([p1.x - 1.2, p1.y - 1.2, p1.x + 1.2, p1.y - 1.2], [p1.x + 1.2, p1.y - 1.2, p1.x + 1.2, p1.y + 1.2], [p1.x + 1.2, p1.y + 1.2, p1.x - 1.2, p1.y + 1.2], [p1.x - 1.2, p1.y + 1.2, p1.x - 1.2, p1.y - 1.2]); }
-  else { const r = pp.r || 0, c = [[-25.5, -10.5], [25.5, -10.5], [25.5, 10.5], [-25.5, 10.5]].map(([x, y]) => { const q = rotv(x, y, r); return [pp.x + q[0], pp.y + q[1]]; });
+  else { const r = pp.r || 0, c = [[-BD.hw, -BD.hh], [BD.hw, -BD.hh], [BD.hw, BD.hh], [-BD.hw, BD.hh]].map(([x, y]) => { const q = rotv(x, y, r); return [pp.x + q[0], pp.y + q[1]]; });
     for (let i = 0; i < 4; i++) line(c[i][0], c[i][1], c[(i + 1) % 4][0], c[(i + 1) % 4][1]);
     const u = rotv(-1, 0, r), w = rotv(0, 1, r), m = (a, b) => [pp.x + u[0] * a + w[0] * b, pp.y + u[1] * a + w[1] * b]; // a = toward the USB end, b = across
-    const q1 = m(25.5, -4), q2 = m(21, -4), q3 = m(21, 4), q4 = m(25.5, 4); line(q1[0], q1[1], q2[0], q2[1]); line(q2[0], q2[1], q3[0], q3[1]); line(q3[0], q3[1], q4[0], q4[1]); // the USB plug end
-    const horiz = r % 2 === 0, tx = pp.x - (horiz ? textLen('PICO USB', 1.6) / 2 : -0.8), ty = pp.y - (horiz ? 0.8 : textLen('PICO USB', 1.6) / 2);
-    textStrokes(r === 0 ? 'USB PICO' : r === 1 ? 'USB PICO' : 'PICO USB', tx, ty, 1.6, horiz ? 0 : 1).forEach((s) => silk.push(s));
+    const q1 = m(BD.hw, -4), q2 = m(BD.hw - 4.5, -4), q3 = m(BD.hw - 4.5, 4), q4 = m(BD.hw, 4); line(q1[0], q1[1], q2[0], q2[1]); line(q2[0], q2[1], q3[0], q3[1]); line(q3[0], q3[1], q4[0], q4[1]); // the USB plug end
+    const UT = BD.tag + ' USB', horiz = r % 2 === 0, tx = pp.x - (horiz ? textLen(UT, 1.6) / 2 : -0.8), ty = pp.y - (horiz ? 0.8 : textLen(UT, 1.6) / 2);
+    textStrokes(r < 2 ? 'USB ' + BD.tag : UT, tx, ty, 1.6, horiz ? 0 : 1).forEach((s) => silk.push(s));
     const p1 = picoPads[0], d1 = m(0, -1); line(p1.x - 1.1 + d1[0] * 0 , p1.y - 1.1, p1.x + 1.1, p1.y - 1.1); line(p1.x + 1.1, p1.y - 1.1, p1.x + 1.1, p1.y + 1.1); line(p1.x + 1.1, p1.y + 1.1, p1.x - 1.1, p1.y + 1.1); line(p1.x - 1.1, p1.y + 1.1, p1.x - 1.1, p1.y - 1.1); // a square around pin 1
   }
   (spec.legend || []).forEach((t, i) => { const h = 1.2; textStrokes(t.slice(0, 30), ax0 + 4 + textLen(t.slice(0, 30), h), ay1 - 4 - i * 2.2, h, 0, true).forEach((s) => silkB.push(s)); }); /* the key to the short labels, on the back */

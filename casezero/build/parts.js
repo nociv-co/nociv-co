@@ -101,6 +101,26 @@
     servo: { cat: 'move', name: 'Mini servo (SG90)', short: 'Servo', w: 23, h: 12.2, depth: 29, cut: { o: 'rect', w: 23.5, h: 12.7 }, keep: 8, link: 'plug', check: true,
       tip: 'Moves an arm, head or eyes. 3 wire plug. Pair it with the Cartoon maker to plan the moves.', price: 2, src: 'SG90: about 23 x 12.2 x 29 mm', url: '' }
   };
+  // PCB tags for the Board export (BOM.csv + CPL.csv): fp = standard KiCad footprint, mpn = maker part number, lcsc = LCSC part # where one fits.
+  // Modules (brains, screens, sensor boards) are hand-soldered, not factory placed, so most have no LCSC #: look the MPN up in the factory's parts search.
+  C.PCB = {
+    pico: { fp: 'Connector_PinSocket_2.54mm:PinSocket_1x20_P2.54mm_Vertical x2, rows 17.78 mm', mpn: 'SC0915' }, picow: { fp: 'Connector_PinSocket_2.54mm:PinSocket_1x20_P2.54mm_Vertical x2, rows 17.78 mm', mpn: 'SC0918' }, pico2: { fp: 'Connector_PinSocket_2.54mm:PinSocket_1x20_P2.54mm_Vertical x2, rows 17.78 mm', mpn: 'SC1631' },
+    nano: { fp: 'Module:Arduino_Nano', mpn: 'A000005' }, promicro: { fp: 'Connector_PinSocket_2.54mm:PinSocket_1x12_P2.54mm_Vertical x2, rows 15.24 mm', mpn: 'DEV-12640' }, esp32c3: { fp: 'Connector_PinSocket_2.54mm:PinSocket_1x08_P2.54mm_Vertical x2, rows 15.24 mm', mpn: 'ESP32-C3 SuperMini' },
+    tact12: { fp: 'Button_Switch_THT:SW_PUSH_12mm', mpn: 'B3F-4055' }, button16: { fp: 'Connector_PinHeader_2.54mm:PinHeader_1x02_P2.54mm_Vertical', mpn: '16 mm panel push button' },
+    arcade24: { fp: 'Connector_PinHeader_2.54mm:PinHeader_1x02_P2.54mm_Vertical', mpn: 'Sanwa OBSF-24' }, arcade30: { fp: 'Connector_PinHeader_2.54mm:PinHeader_1x02_P2.54mm_Vertical', mpn: 'Sanwa OBSF-30' }, dpad: { fp: 'Button_Switch_THT:SW_PUSH_6mm', mpn: '4 x 6 mm tactile' },
+    pot: { fp: 'Potentiometer_THT:Potentiometer_Bourns_PTV09A-1_Single_Vertical', mpn: 'PTV09A-4020F-B103' }, slider: { fp: 'Potentiometer_THT:Potentiometer_Bourns_PTA4543_Single_Slide', mpn: 'PTA4543-2015DPB103' },
+    encoder: { fp: 'Rotary_Encoder:RotaryEncoder_Alps_EC11E-Switch_Vertical_H20mm', mpn: 'PEC11R-4220F-S0024' }, thumb: { fp: 'Connector_PinHeader_2.54mm:PinHeader_1x05_P2.54mm_Vertical', mpn: 'Adafruit 512' },
+    stick: { fp: 'Connector_PinHeader_2.54mm:PinHeader_1x05_P2.54mm_Vertical', mpn: '4 way arcade stick' }, keypad44: { fp: 'Connector_PinHeader_2.54mm:PinHeader_1x08_P2.54mm_Vertical', mpn: '4x4 membrane keypad' },
+    oled096: { fp: 'Connector_PinHeader_2.54mm:PinHeader_1x04_P2.54mm_Vertical', mpn: 'SSD1306 0.96 in 128x64 I2C' }, tft28: { fp: 'Connector_PinHeader_2.54mm:PinHeader_1x09_P2.54mm_Vertical', mpn: 'ILI9341 2.8 in SPI' },
+    round128: { fp: 'Connector_PinHeader_2.54mm:PinHeader_1x08_P2.54mm_Vertical', mpn: 'GC9A01 1.28 in round' }, led5: { fp: 'LED_THT:LED_D5.0mm', mpn: '5 mm LED + 220R' },
+    ring12: { fp: 'Connector_PinHeader_2.54mm:PinHeader_1x03_P2.54mm_Vertical', mpn: 'Adafruit 1643' }, speaker28: { fp: 'Connector_PinHeader_2.54mm:PinHeader_1x02_P2.54mm_Vertical', mpn: '28 mm 8 ohm speaker' },
+    mat8: { fp: 'Connector_PinHeader_2.54mm:PinHeader_1x05_P2.54mm_Vertical', mpn: 'MAX7219 8x8 module' }, jack35: { fp: 'Connector_Audio:Jack_3.5mm_CUI_SJ1-3523N_Horizontal', mpn: 'SJ1-3523N' },
+    i2sdac: { fp: 'Connector_PinHeader_2.54mm:PinHeader_1x06_P2.54mm_Vertical', mpn: 'PCM5102A module' }, inmp441: { fp: 'Connector_PinHeader_2.54mm:PinHeader_1x06_P2.54mm_Vertical', mpn: 'INMP441 module' },
+    pir: { fp: 'Connector_PinHeader_2.54mm:PinHeader_1x03_P2.54mm_Vertical', mpn: 'HC-SR501' }, vl53: { fp: 'Connector_PinHeader_2.54mm:PinHeader_1x04_P2.54mm_Vertical', mpn: 'Adafruit 3317' },
+    arducam: { fp: 'Connector_PinHeader_2.54mm:PinHeader_1x08_P2.54mm_Vertical', mpn: 'ArduCAM Mini 2MP' }, servo: { fp: 'Connector_PinHeader_2.54mm:PinHeader_1x03_P2.54mm_Vertical', mpn: 'SG90' },
+    _diode: { fp: 'Diode_THT:D_DO-41_SOD81_P10.16mm_Horizontal', mpn: '1N5817' }, _hdr: { fp: 'Connector_PinSocket_2.54mm:PinSocket_1x{n}_P2.54mm_Vertical', mpn: '2.54 mm female header 1x{n}' }
+  };
+  Object.keys(C.PCB).forEach(function (k) { var P = C.PARTS[k]; if (P) { P.fp = C.PCB[k].fp; P.mpn = C.PCB[k].mpn; P.lcsc = C.PCB[k].lcsc || ''; } });
   // searchQuery: clean store search words (no parentheses or commas) so Amazon, Adafruit and AliExpress always find the part.
   var SQ = { pico: 'Raspberry Pi Pico H', picow: 'Raspberry Pi Pico WH', pico2: 'Raspberry Pi Pico 2', uno: 'Elegoo Uno R3', nano: 'Arduino Nano ATmega328P', promicro: 'Pro Micro ATmega32U4',
     esp32c3: 'ESP32 C3 SuperMini', esp32: 'ESP32 DevKit', zero2: 'Raspberry Pi Zero 2 W', pi5: 'Raspberry Pi 5', cyd: 'ESP32 2432S028 Cheap Yellow Display', tft28: 'ILI9341 2.8 inch SPI TFT', round128: 'GC9A01 round display 1.28',

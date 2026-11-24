@@ -6,9 +6,9 @@ import { OrbitControls } from 'three/addons/OrbitControls.js';
 import * as G from './geo.js?v=37';
 import { CARABINER_HOOK_OUTLINE_MM, CARABINER_DEFAULT_THICKNESS_MM } from './charm_carabiner_hook.js?v=1';
 import { openMeasure, GROUPS } from './capture.js?v=26';
-import { makeBoard, boardFiles, boardSvg, zip as zipFiles } from './board.js?v=4';
+import { makeBoard, boardFiles, boardSvg, zip as zipFiles, dipOf } from './board.js?v=5';
 import { charParts, chSpec, charBuyList, CH_DEF, headDims, faceSpots, faceLimit, featPoly, flatParts, FEATS } from './char3d.js?v=5';
-import { micMain, planWiring, codeFor, PICO_LEFT, PICO_RIGHT, PICO_PINS, PICO_BRAINS, NEED, BOARDS, BOARD_OF, SCALES, LIBURL, preflight, DJFX, BEATS, DJMODE, libsFor } from './wiring.js?v=29';
+import { micMain, planWiring, codeFor, PICO_LEFT, PICO_RIGHT, PICO_PINS, PICO_BRAINS, NEED, BOARDS, BOARD_OF, SCALES, LIBURL, preflight, DJFX, BEATS, DJMODE, libsFor, ACTS, ACTN, DJA } from './wiring.js?v=30';
 
 const CZ = window.CZ, R = G.RULE, $ = (id) => document.getElementById(id);
 const esc = (s) => String(s == null ? '' : s).replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
@@ -457,6 +457,23 @@ const I = {
   strong: '<rect x="3" y="6" width="18" height="12" rx="1"/><rect x="7" y="10" width="10" height="4"/><path d="M12 2v3M12 19v3"/>'
 };
 const ico = (n) => '<svg viewBox="0 0 24 24" aria-hidden="true">' + (I[n] || '') + '</svg>';
+// clear line-art silhouettes for the parts people pick most: knob, slider, 4x4 keypad, screens, joystick, click wheel, buttons
+const LART = {
+  pot: '<circle cx="24" cy="18" r="11"/><path d="M24 18V9"/><path d="M10 29l3-3M38 29l-3-3"/>',
+  slider: '<rect x="5" y="16" width="38" height="4" rx="2"/><rect x="19" y="8" width="9" height="20" rx="2"/><path d="M23.5 12v12"/>',
+  keypad44: '<rect x="8" y="2" width="32" height="32" rx="3"/>' + [0, 1, 2, 3].map((r) => [0, 1, 2, 3].map((c) => '<rect x="' + (11 + c * 7.2) + '" y="' + (5 + r * 7.2) + '" width="5" height="5" rx="1"/>').join('')).join(''),
+  oled096: '<rect x="5" y="5" width="38" height="26" rx="2"/><rect x="9" y="11" width="30" height="16" rx="1"/><path d="M17 8h2M22 8h2M27 8h2M32 8h2"/>',
+  tft28: '<rect x="4" y="4" width="40" height="28" rx="2"/><rect x="8" y="8" width="29" height="20" rx="1"/><path d="M40 12v12"/>',
+  round128: '<circle cx="24" cy="18" r="15"/><circle cx="24" cy="18" r="10"/>',
+  thumb: '<circle cx="24" cy="24" r="10"/><path d="M24 24l6-12"/><circle cx="31" cy="10" r="5"/>',
+  stick: '<rect x="12" y="20" width="24" height="12" rx="3"/><path d="M24 20V10"/><circle cx="24" cy="7" r="5"/>',
+  encoder: '<circle cx="24" cy="18" r="10"/>' + [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11].map((i) => { const a = i * Math.PI / 6; return '<path d="M' + (24 + 10 * Math.cos(a)).toFixed(1) + ' ' + (18 + 10 * Math.sin(a)).toFixed(1) + 'L' + (24 + 13 * Math.cos(a)).toFixed(1) + ' ' + (18 + 13 * Math.sin(a)).toFixed(1) + '"/>'; }).join('') + '<path d="M21 14h6v8h-6z"/>',
+  tact12: '<rect x="15" y="9" width="18" height="18" rx="2"/><circle cx="24" cy="18" r="5"/><path d="M11 12h4M11 24h4M33 12h4M33 24h4"/>',
+  button16: '<rect x="13" y="7" width="22" height="22" rx="3"/><circle cx="24" cy="18" r="7"/>',
+  arcade24: '<circle cx="24" cy="18" r="13"/><circle cx="24" cy="18" r="8"/>', arcade30: '<circle cx="24" cy="18" r="15"/><circle cx="24" cy="18" r="9"/>',
+  dpad: '<path d="M19 4h10v9h9v10h-9v9H19v-9h-9V13h9z"/>'
+};
+const lineArt = (k, sz) => (LART[k] ? '<svg class="la" viewBox="0 0 48 36"' + (sz ? ' width="' + sz + '" height="' + Math.round(sz * 0.75) + '"' : '') + ' aria-hidden="true">' + LART[k] + '</svg>' : '');
 function partSvg(P) {
   const m = Math.max(P.w, P.h) + 6, s = 'width="100%" height="36" viewBox="' + (-m / 2) + ' ' + (-m / 2) + ' ' + m + ' ' + m + '"';
   let g = '';
@@ -712,6 +729,7 @@ function openPage(i) { // go to a page: its first tool, or the one you last used
 }
 let SHOWN = -1, VIEWKEY = '';
 function render() {
+  actsFill(false); /* every placed control stores its action */
   PNAME.top = isPanel() ? 'Panel' : 'Top';
   if (isPanel()) { const L = S.look; if (L.texFace !== 'top') L.texFace = 'top'; }
   const t = curTab(); S.page = pageOf(S.step, t); const pg = PAGES[S.page], list = pageTabs(pg), mine = PAGES.map((p, i) => [p, i]).filter((x) => x[0].room === pg.room), at = mine.findIndex((x) => x[1] === S.page);
@@ -722,8 +740,10 @@ function render() {
   const extra = pg.more || [], isMore = (x) => extra.indexOf(x[1]) > -1, mains = list.filter((x) => !isMore(x)), rest = list.filter(isMore);
   if (!S.moreOn) S.moreOn = {}; const open = !!S.moreOn[S.page] || rest.some((x) => x[0] === S.step && x[1] === t);
   const pill = (x) => '<button type="button" data-st="' + x[0] + '" data-t="' + x[1] + '" aria-pressed="' + (x[0] === S.step && x[1] === t) + '"><span>' + x[2] + '</span></button>';
-  $('parts').innerHTML = (mains.length > 1 || open ? mains.map(pill).join('') : '') + (open ? rest.map(pill).join('') : '') + (rest.length ? '<button type="button" class="mo" data-more="' + (open ? '0' : '1') + '"><span>' + (open ? 'Less' : 'More options') + '</span></button>' : '');
-  $('parts').parentNode.hidden = !!pg.bare || (mains.length < 2 && !rest.length);
+  const body = pg.room === 'body', pro = body && !!S.pro, opn = body ? pro || rest.some((x) => x[0] === S.step && x[1] === t) : open; /* Body: one Simple | Pro (mm) switch instead of More options on every page */
+  const sp = body ? '<span class="spro" role="group" aria-label="Simple or Pro"><button type="button" data-pro="0" aria-pressed="' + !pro + '">Simple</button><button type="button" data-pro="1" aria-pressed="' + pro + '">Pro (mm)</button></span>' : '';
+  $('parts').innerHTML = sp + (mains.length > 1 || opn ? mains.map(pill).join('') : '') + (opn ? rest.map(pill).join('') : '') + (rest.length && !body ? '<button type="button" class="mo" data-more="' + (open ? '0' : '1') + '"><span>' + (open ? 'Less' : 'More options') + '</span></button>' : '');
+  $('parts').parentNode.hidden = !!pg.bare || (!body && mains.length < 2 && !rest.length);
   const prev = mine[at - 1], next = mine[at + 1];
   $('bbar').innerHTML = '<button type="button" data-pg="' + (prev ? prev[1] : '') + '"' + (prev ? '' : ' disabled') + '>Back</button><span class="dots">' + mine.map((x) => '<b role="button" data-pg="' + x[1] + '" aria-label="' + x[0].name + '" title="' + x[0].name + '"' + (x[1] === S.page ? ' class="on" aria-current="step"' : '') + '></b>').join('') + '</span>' +
     (next ? '<button type="button" class="nx" data-pg="' + next[1] + '">Next: ' + next[0].name + '</button>' : (() => { const nr = ROOMS[(ROOMS.findIndex((r) => r[0] === pg.room) + 1) % ROOMS.length]; return '<button type="button" class="nx" data-pg="' + PAGES.findIndex((p) => p.room === nr[0]) + '">' + nr[1] + '</button>'; })()) /* the next room opens on its first page */;
@@ -745,12 +765,16 @@ function go(step) { S.step = step; BIG3D = false; save(); $('con').classList.rem
 function goRoom(room) { const i = (S.lastIn || {})[room], j = i != null && PAGES[i] && PAGES[i].room === room ? i : PAGES.findIndex((p) => p.room === room); openPage(j); }
 $('bbar').addEventListener('click', (e) => { const r = e.target.closest('[data-room]'); if (r) { goRoom(r.dataset.room); return; } const b = e.target.closest('[data-pg]'); if (b && b.dataset.pg !== '') openPage(+b.dataset.pg); });
 $('rooms').addEventListener('click', (e) => { const r = e.target.closest('[data-room]'); if (r) goRoom(r.dataset.room); });
-$('parts').addEventListener('click', (e) => { const m = e.target.closest('[data-more]'); if (m) { if (!S.moreOn) S.moreOn = {}; S.moreOn[S.page] = m.dataset.more === '1'; if (!S.moreOn[S.page]) { const p = PAGES[S.page], f = pageTabs(p).find((x) => (p.more || []).indexOf(x[1]) < 0); if (f) { S.step = f[0]; S.tab[f[0]] = f[1]; } } save(); render(); return; }
+$('parts').addEventListener('click', (e) => { const pr = e.target.closest('[data-pro]'); if (pr) { S.pro = pr.dataset.pro === '1'; if (!S.pro) { const L = pageTabs(PAGES[S.page]), ex = PAGES[S.page].more || [], f = L.find((x) => ex.indexOf(x[1]) < 0); if (f && ex.indexOf(S.tab[S.step]) > -1) { S.step = f[0]; S.tab[f[0]] = f[1]; } } save(); render(); return; } const m = e.target.closest('[data-more]'); if (m) { if (!S.moreOn) S.moreOn = {}; S.moreOn[S.page] = m.dataset.more === '1'; if (!S.moreOn[S.page]) { const p = PAGES[S.page], f = pageTabs(p).find((x) => (p.more || []).indexOf(x[1]) < 0); if (f) { S.step = f[0]; S.tab[f[0]] = f[1]; } } save(); render(); return; }
   const b = e.target.closest('[data-t]'); if (!b) return; S.step = +b.dataset.st; S.tab[S.step] = b.dataset.t; BIG3D = false; save(); $('con').classList.remove('down'); render(); });
 $('drop').addEventListener('click', () => { $('con').classList.toggle('down'); draw(); });
 
 // ---------- panes ----------
 function seg(name, opts, val) { return '<div class="seg" data-sg="' + name + '">' + opts.map((o) => '<button type="button" data-v="' + o[0] + '" aria-pressed="' + (String(o[0]) === String(val)) + '">' + o[1] + '</button>').join('') + '</div>'; }
+function proHtml() { if (!S.pro || isPanel()) return ''; /* Pro (mm): the numbers behind the smart defaults */
+  return '<div class="prob"><p class="h" style="margin:0 0 6px">Pro (mm)</p><div class="row"><b>Walls</b>' + seg('walls', [['normal', '2.4'], ['tough', '3.2']], S.wallT ? '' : S.walls) + '<input class="num mm" id="wallT" type="number" inputmode="decimal" step="0.1" min="2" max="5" value="' + R.T + '" aria-label="Wall thickness in mm"><span class="u">mm</span></div>' +
+    '<div class="row"><b>Clearance</b>' + seg('tol', [['0.1', '0.1'], ['0.2', '0.2'], ['0.3', '0.3']], String(tolOf())) + '<input class="num mm" id="tolIn" type="number" inputmode="decimal" step="0.05" min="0.05" max="0.6" value="' + tolOf() + '" aria-label="Clearance in mm"><span class="u">mm</span></div>' +
+    '<div class="row"><b>Wire Pass-Through</b><button type="button" class="btn" data-xgo="p_jack" style="flex:1;padding:9px 8px">Add a 6.2 mm wire hole</button></div><p class="note keep" style="margin:0">Base / Lid depth are the steppers above. Walls and Clearance are also in Print, Strength.</p></div>'; }
 function stepper(name, label, txt) { return '<div class="row"><b>' + label + '</b><div class="step" data-st="' + name + '"><button type="button" data-d="-1" aria-label="Less">&minus;</button><output>' + esc(txt) + '</output><button type="button" data-d="1" aria-label="More">+</button></div></div>'; }
 const LK = { solder: 'SOLDER', pins: 'NO SOLDER', plug: 'PLUG IN' };
 function counts() { const c = {}; S.items.forEach((i) => { c[i.type] = (c[i.type] || 0) + 1; }); return c; }
@@ -771,11 +795,11 @@ function partsPane(P, c) {
   {
     // Parts are about what the device does, not about catalog names. First the question, then the few parts that answer it.
     const fn = FUNCS.find((f) => f[0] === S.fn);
-    if (!fn) { const tile = (f) => { const n = Object.keys(c).reduce((q, k) => q + (P[k] && P[k].cat === f[0] ? c[k] : 0), 0); return '<button type="button" class="pick fn" data-fn="' + f[0] + '">' + (n ? '<span class="n">' + n + '</span>' : '') + (f[3] && P[f[3]] ? partSvg(P[f[3]]) : ico('measure')) + f[1] + '<small>' + f[2] + '</small></button>'; };
+    if (!fn) { const tile = (f) => { const n = Object.keys(c).reduce((q, k) => q + (P[k] && P[k].cat === f[0] ? c[k] : 0), 0); return '<button type="button" class="pick fn" data-fn="' + f[0] + '">' + (n ? '<span class="n">' + n + '</span>' : '') + (f[3] && P[f[3]] ? lineArt(f[3]) || partSvg(P[f[3]]) : ico('measure')) + f[1] + '<small>' + f[2] + '</small></button>'; };
       return FGROUPS.map((g) => '<p class="h"' + (g[0] === 'Inputs' ? ' style="margin-top:0"' : '') + '>' + g[0] + ' <span style="font-weight:600;text-transform:none;letter-spacing:0">' + g[1] + '</span></p><div class="grid g3" style="margin-bottom:10px">' + g[2].map((k) => tile(FUNCS.find((f) => f[0] === k))).join('') + '</div>').join('') + chosenChips(); }
     const head = '<div class="fnh"><button type="button" class="btn" data-fn="">&lsaquo; All</button><b>' + fn[1] + '</b></div>';
     const list = Object.keys(P).filter((k) => P[k].cat === fn[0]);
-    return head + '<div class="hrow">' + (list.map((k) => '<button type="button" class="pick" data-add="' + k + '">' + (c[k] ? '<span class="n">' + c[k] + '</span><span class="rmv" data-sub="' + k + '" role="button" aria-label="Remove one">&minus;</span>' : '') + '<span class="lk ' + P[k].link + '">' + LK[P[k].link] + '</span>' + partSvg(P[k]) + esc(P[k].short) + '<small>' + (P[k].price ? '$' + P[k].price + ' &middot; ' : '') + esc((P[k].w + ' x ' + P[k].h).replace(/\.0\b/g, '')) + ' mm</small></button>').join('') + (fn[0] === 'mine' || !list.length ? /* My own board: the presets, and measuring one with the phone */
+    return head + '<div class="hrow">' + (list.map((k) => '<button type="button" class="pick" data-add="' + k + '">' + (c[k] ? '<span class="n">' + c[k] + '</span><span class="rmv" data-sub="' + k + '" role="button" aria-label="Remove one">&minus;</span>' : '') + '<span class="lk ' + P[k].link + '">' + LK[P[k].link] + '</span>' + (lineArt(k) || partSvg(P[k])) + esc(P[k].short) + '<small>' + (P[k].price ? '$' + P[k].price + ' &middot; ' : '') + esc((P[k].w + ' x ' + P[k].h).replace(/\.0\b/g, '')) + ' mm</small></button>').join('') + (fn[0] === 'mine' || !list.length ? /* My own board: the presets, and measuring one with the phone */
         '<button type="button" class="pick" data-act="measure" style="grid-column:span 2">' + ico('measure') + 'Measure one with my phone<small>Card as the ruler</small></button>' : '')) + '</div>' +
       (fn[0] === 'brain' ? '<div class="btags">' + list.filter((k) => P[k].tag).map((k) => '<div><b>' + esc(P[k].short) + '</b> &middot; ' + esc(P[k].tag) + '</div>').join('') + '</div>' : '') + '<p class="note" id="partTip">' + (list[0] ? 'Tap one to add it. The red minus takes one out. ' + esc(P[list[0]].tip) : '') + '</p>' + (fn[0] === 'power' ? '<p class="note">' + powerNote() + '</p>' : '') + chosenChips();
   }
@@ -790,7 +814,7 @@ function paneRest(t, P, c) {
       (s.panel === 'inside' ? stepper('riser', 'Riser', PP(s) && PP(s).holes && PP(s).holes.length ? riserOf(s) + ' mm standoffs' : s.riser != null && s.riser > 0 ? s.riser + ' mm slate' : 'On the floor') + '<p class="note keep" style="margin:-2px 0 8px">' + (PP(s) && PP(s).holes && PP(s).holes.length ? 'Standoffs at its screw holes, printed with the case.' : 'A flat plate on 4 corner posts lifts it; it prints with the case.') + '</p>' : '') : '';
     if (s && PP(s) && PP(s).board) h += '<div class="selbar"><b>My photo</b>' + [['off', 'Hide'], ['faded', 'Faint'], ['clear', 'Show']].map((m) => '<button data-photo="' + m[0] + '"' + ((S.photo || 'off') === m[0] ? ' style="background:#1a1a1a;color:#fff"' : '') + '>' + m[1] + '</button>').join('') + '</div>' + ((PP(s).kids || []).length ? '<button class="btn" data-act="kidsreset" style="margin:0 0 8px;padding:8px">Put the parts back where my photo had them</button>' : '') + '<div class="selbar"><b>Board</b><button data-act="bmove">' + (s.move ? 'Unlocked: drag moves it' : 'Locked in place') + '</button></div>' + (s.move ? nudgeRow() : '') + '<p class="note" style="margin:-2px 0 8px">Tap an empty spot on your board to add a part there.</p>' + stepper('btop', 'Tallest', (PP(s).top || 9) + ' mm button') + '<p class="note" style="margin:-2px 0 8px">Your board hangs under the top so a ' + (PP(s).top || 9) + ' mm button pokes through 1.5 mm. Tap one to see how far it pokes through.</p>' + stepper('bund', 'Under', (PP(s).under != null ? PP(s).under : 8.5) + ' mm below') + '<p class="note" style="margin:-2px 0 8px">Space under the board for pins, solder and wires' + (PP(s).under != null ? ', from your side photo' : ', a guess: take the side photo to measure it') + '.</p>';
     h += '<p class="h">' + (t === 'lid' ? 'The lid: screens live here' : t === 'base' ? 'The base: controls, the brain sits under it' : 'The top') + '</p>';
-    h += mine.length ? '<div class="chosen">' + mine.map((i) => '<span data-sel="' + i.id + '" style="cursor:pointer' + (i.id === sel ? ';background:#1a1a1a;color:#fff' : '') + '">' + esc(N[i.id] + ' ' + PP(i).short) + (problems(i).length ? ' <i>!</i>' : '') + '</span>').join('') + '</div>' : '<p class="note">No electronics here yet. Add some in Brain.</p>';
+    h += mine.length ? '<div class="chosen">' + mine.map((i) => '<span data-sel="' + i.id + '" class="ach" style="cursor:pointer' + (i.id === sel ? ';background:#1a1a1a;color:#fff' : '') + '">' + lineArt(i.type, 26) + esc(N[i.id] + ' ' + PP(i).short) + (problems(i).length ? ' <i>!</i>' : '') + '</span>').join('') + '</div>' : '<p class="note">No electronics here yet. Add some in Brain.</p>';
     if (s && s.of == null && s.panel !== 'inside' && PP(s) && !PP(s).board && !isPanel()) { const mt = s.mt || 'flush'; h += '<div class="selbar"><b>Sits</b>' + [['flush', 'Flush'], ['raised', 'Raised rim'], ['sunk', 'Sunk in'], ['top', 'On top']].map((m) => '<button data-mt="' + m[0] + '"' + (mt === m[0] ? ' style="background:#1a1a1a;color:#fff"' : '') + '>' + m[1] + '</button>').join('') + '</div><p class="note" style="margin:2px 0 0">' + ({ flush: 'Level with the top.', raised: 'A rim stands up around it. The rim prints as its own flat piece that you glue on.', sunk: 'It sits down in a shallow pocket.', top: 'No opening. The part sits on the top, only its wires go through a small hole.' })[mt] + '</p>'; }
     h += '<div class="grid g2" style="margin-top:8px"><button class="btn dark" data-act="auto">Arrange for me</button><button class="btn" data-act="toBrain">Add electronics</button></div><button class="btn' + (S.xray ? ' dark' : '') + '" data-act="xray" style="margin-top:8px;width:100%">' + (S.xray ? 'Back to flat view' : 'Inside view (open lid, X-ray)') + '</button>';
     h += '<p class="note">' + (probs.length ? probs.map((x) => '<span class="bad">' + esc(label(x.it)) + ' is ' + esc(x.list[0]) + '.</span>').join(' ') : (mine.length ? '<span class="ok">Everything fits.</span> ' + (S.items.some((i) => PP(i) && PP(i).board) ? 'Tap your board to add a part there. Drag a part to line it up. Two fingers zoom in, and the part numbers show.' : 'Drag anything to move it. Tap to pick it.') : '')) + '</p>';
@@ -809,10 +833,10 @@ function paneRest(t, P, c) {
       (n ? '<div class="row"><b>Edge</b>' + seg('n_edge', [['bottom', 'Bottom'], ['top', 'Top'], ['left', 'Left'], ['right', 'Right']], n.edge) + '</div><div class="row"><b>Shape</b>' + seg('n_shape', [['round', 'Round'], ['rrect', 'Rounded'], ['rect', 'Square']], n.shape) + '</div>' + stepper('nw', 'Wide', n.w + ' mm') + stepper('nd', 'Deep', n.d + ' mm') + stepper('nat', along, n.at + ' mm') : '<p class="note">A notch lets wires and plugs pass the edge of the panel. Tap Add a notch, or tap an edge on the picture.</p>') + (n ? '<p class="note">Drag on the picture to move N' + (i + 1) + ' along any edge.</p>' : '');
   }
   if (t === 'size') { const d = dims(); return stepper('cols', 'Wide', S.cols + ' squares') + stepper('rows', 'Tall', S.rows + ' squares') + '<p class="note">Each square is 20 mm, like your Panel Layout v1. Outside: <b>' + d.W.toFixed(0) + ' x ' + d.D.toFixed(0) + ' mm</b>, ' + heights().H + ' mm deep' + (isClam() ? ' + ' + heights().Hl + ' mm lid' : '') + '.</p>'; }
-  if (t === 'shape') return '<div class="hrow">' + CZ.STYLES.map((s) => '<button type="button" class="pick" data-style="' + s[0] + '" aria-pressed="' + (S.style === s[0]) + '">' + styleSvg(s[0]) + esc(s[1]) + '</button>').join('') + '</div><p class="note">' + esc(styleRow()[2]) + '.' + (S.style === 'face' ? ' Round screens make eyes or a watch face. Want it to move? Add a servo in Brain (Move).' : '') + (S.style === 'hand' || S.style === 'pad' ? ' Our own shape, not a copy of any console.' : '') + '</p>' + (S.style === 'face' ? '<button class="btn dark" data-xgo="body" style="margin-top:8px">Give it a body, arms and legs</button>' : '') + (isPanel() ? '' : '<p class="h" style="margin-top:12px">Size and fit</p>' + pane('fit')) + '<button class="btn" data-act="start" style="margin-top:10px">Start over with something else</button>';
+  if (t === 'shape') return '<div class="hrow">' + CZ.STYLES.map((s) => '<button type="button" class="pick" data-style="' + s[0] + '" aria-pressed="' + (S.style === s[0]) + '">' + styleSvg(s[0]) + esc(s[1]) + '</button>').join('') + '</div><p class="note">' + esc(styleRow()[2]) + '.' + (S.style === 'face' ? ' Round screens make eyes or a watch face. Want it to move? Add a servo in Brain (Move).' : '') + (S.style === 'hand' || S.style === 'pad' ? ' Our own shape, not a copy of any console.' : '') + '</p>' + (S.style === 'face' ? '<button class="btn dark" data-xgo="body" style="margin-top:8px">Give it a body, arms and legs</button>' : '') + (isPanel() ? '' : '<p class="h" style="margin-top:12px">Size and fit</p>' + pane('fit')) + proHtml() + '<button class="btn" data-act="start" style="margin-top:10px">Start over with something else</button>';
   if (t === 'fit') {
     const h = geom();
-    let o = stepper('cols', 'Wide', S.cols + ' sq' + (S.xw ? ' + ' + S.xw : '')).replace(/<\/div>$/, '<input class="num mm" id="mmw" type="number" inputmode="decimal" step="0.5" value="' + +h.W.toFixed(1) + '" aria-label="Width in mm"><span class="u">mm</span></div>') + stepper('rows', 'Tall', S.rows + ' sq' + (S.xd ? ' + ' + S.xd : '')).replace(/<\/div>$/, '<input class="num mm" id="mmd" type="number" inputmode="decimal" step="0.5" value="' + +h.D.toFixed(1) + '" aria-label="Depth in mm"><span class="u">mm</span></div>') + (isClam() ? stepper('add', 'Base', h.H + ' mm deep' + (S.add ? ' (+' + S.add + ')' : '')) + stepper('addL', 'Lid', h.Hl + ' mm deep' + (S.addL ? ' (+' + S.addL + ')' : '')) + '<p class="note keep" style="margin:-2px 0 8px">' + h.closed + ' mm closed. Deepen the base for batteries or tall parts without thickening the lid.</p>' : stepper('add', 'Height', h.closed + ' mm' + (S.add ? ' (+' + S.add + ')' : '')));
+    let o = stepper('cols', 'Wide', S.cols + ' sq' + (S.xw ? ' + ' + S.xw : '')).replace(/<\/div>$/, '<input class="num mm" id="mmw" type="number" inputmode="decimal" step="0.5" value="' + +h.W.toFixed(1) + '" aria-label="Width in mm"><span class="u">mm</span></div>') + stepper('rows', 'Tall', S.rows + ' sq' + (S.xd ? ' + ' + S.xd : '')).replace(/<\/div>$/, '<input class="num mm" id="mmd" type="number" inputmode="decimal" step="0.5" value="' + +h.D.toFixed(1) + '" aria-label="Depth in mm"><span class="u">mm</span></div>') + (!S.pro ? '<p class="note keep" style="margin:-2px 0 8px">' + (isClam() ? 'Base ' + h.H + ' mm, lid ' + h.Hl + ' mm deep' : h.closed + ' mm tall') + ': the smart default for your parts. Pro (mm) changes it.</p>' : isClam() ? stepper('add', 'Base', h.H + ' mm deep' + (S.add ? ' (+' + S.add + ')' : '')) + stepper('addL', 'Lid', h.Hl + ' mm deep' + (S.addL ? ' (+' + S.addL + ')' : '')) + '<p class="note keep" style="margin:-2px 0 8px">' + h.closed + ' mm closed. Deepen the base for batteries or tall parts without thickening the lid.</p>' : stepper('add', 'Height', h.closed + ' mm' + (S.add ? ' (+' + S.add + ')' : '')));
     if (S.lockBox) o = '<p class="vline v1">Box kept: ' + Math.round(dims().W) + ' x ' + Math.round(dims().D) + ' x ' + h.closed + ' mm. <button type="button" class="btn" data-act="unlockbox" style="display:inline-block;padding:6px 10px">Unlock</button></p>' + o + (heights().grew ? '<p class="note bad">Something you added is deeper than the kept box.</p>' : '');
     o += '<div class="row"><b>Deck on</b>' + seg('snap', [['0', 'Screws'], ['1', 'Snap clips']], S.snap ? '1' : '0') + '</div>';
     if (S.items.some((i) => i.type === 'tact12')) o += '<div class="row"><b>Buttons</b>' + seg('spring', [['0', 'Caps'], ['1', 'Printed springs']], S.spring ? '1' : '0') + '</div>';
@@ -971,6 +995,7 @@ function after(t) {
 
 // ---------- taps ----------
 $('pane').addEventListener('click', (e) => {
+  const pa = e.target.closest('[data-pact]'); if (pa) { const [id, k] = pa.dataset.pact.split(':'), it = S.items.find((i) => i.id === +id); if (it) { it.action = k; testReset(); save(); render(); tag(label(it).split(' ')[0] + ' is now ' + ACTN(k) + ': Test It and ' + CFILE() + ' follow it.'); } return; }
   const bw = e.target.closest('[data-bswap]'); if (bw) { const [id, t] = bw.dataset.bswap.split(':'), it = S.items.find((i) => i.id === +id); if (it && t !== swapCur(it)) { testReset(); swapType(it, t); } return; }
   const sp = e.target.closest('[data-sim],[data-wired]'); if (sp) { if (sp.dataset.sim) simTap(sp.dataset.sim); else { S.tab[5] = curTab() === 'map' ? 'test' : 'map'; save(); render(); if (S.tab[5] === 'map') pfTag(); } return; }
   const b = e.target.closest('button, [data-sel], [data-delmine], [data-sub], [data-nsel], [data-ins], [data-mpan], [data-gcp]'); if (!b) return; const d = b.dataset;
@@ -990,12 +1015,12 @@ $('pane').addEventListener('click', (e) => {
   if (d.msave != null) { const i = S.attachedParts.findIndex((x) => x.id === +d.msave), m = S.attachedParts[i]; if (m) saveFile(fileOut(mountFile(m, i))); return; }
   if (d.xgo) { S.xsel = d.xgo; goRoom('parts'); return; }
   if (d.act === 'undo1') { undo(); return; }
-  if (d.beh) { S.beh = d.beh; testReset(); save(); render(); tag((BEH.find((b) => b[0] === d.beh) || [0, 'Sampler'])[1] + ': Test It and the code follow it.'); return; }
+  if (d.beh) { S.beh = d.beh; actsFill(true); testReset(); save(); render(); tag((BEH.find((b) => b[0] === d.beh) || [0, 'Sampler'])[1] + ': Test It and the code follow it.'); return; }
   if (d.tw) { const [k, v] = d.tw.split(':'); TW()[k] = k === 'mac' ? v === '1' : k === 'min' ? +v : v; testReset(); save(); render(); return; }
   if (d.fn != null) { S.fn = d.fn || null; if (d.fn && d.fn !== 'print') S.cat = d.fn; save(); render(); return; }
   if (d.sub) { e.stopPropagation(); removePart(d.sub); render(); return; }
   if (d.add) { let it = null; d.add.split('+').forEach((k) => { it = addPart(k); }); const P = PP(it); const tip = $('partTip'); render(); if ($('partTip')) $('partTip').textContent = P.tip; void tip; return; }
-  if (d.sel) { sel = +d.sel; render(); return; }
+  if (d.sel) { sel = +d.sel; HL = sel; render(); return; }
   if (d.delmine) { delete S.mine[d.delmine]; S.items = S.items.filter((i) => i.type !== d.delmine); save(); render(); return; }
   if (d.style && S.lockBox) { tag('The box is kept. Unlock it below to pick another shape.'); return; }
   if (d.style) { S.picked = true; S.style = d.style; const z = SIZES[S.style]; S.cols = z[0]; S.rows = z[1]; S.xw = S.xd = 0; if (UPRIGHT[S.style]) S.snap = true; /* the front plate snaps on */ reflow(); if (allProblems().length) fitAll(); /* the new shape is too small for what is in it: grow it until everything fits */ save(); render(); return; }
@@ -1060,7 +1085,7 @@ $('pane').addEventListener('click', (e) => {
   if (act === 'kbzip' || act === 'kbshow') { tag('Drawing the board...'); setTimeout(() => { const Bd = kbBoard(); if (!Bd.ok) { tag(Bd.errors[0] || 'The board could not be drawn.'); return; }
       if (act === 'kbshow') { const el = document.querySelector('[data-kbsvg]'); if (el) el.innerHTML = boardSvg(Bd) + '<p class="note" style="margin-top:4px">Gold lines are on the front, blue on the back. Checked: all ' + Bd.check.connected + ' pads joined, nothing closer than ' + Bd.check.minGap.toFixed(2) + ' mm.</p>'; tag('Board ' + Bd.box.w.toFixed(0) + ' x ' + Bd.box.h.toFixed(0) + ' mm'); return; }
       const nm = 'casezero-keyboard-' + Bd.kb.c + 'x' + Bd.kb.r; saveFile({ name: nm + '.zip', blob: new Blob([zipFiles(boardFiles(Bd, nm).concat([{ name: 'README.txt', text: kbReadme(Bd) }, { name: 'code.py', text: kbCode(Bd) }]))], { type: 'application/zip' }) }); tag('Saved ' + nm + '.zip'); }, 30); return; }
-  if (act === 'saveboard') { const Bd = boardBuild(); if (Bd.ok) saveFile({ name: 'casezero-board.zip', blob: new Blob([zipFiles(boardFiles(Bd, 'casezero-board').concat([{ name: 'README.txt', text: boardReadme(Bd) }]))], { type: 'application/zip' }) }); return; }
+  if (act === 'saveboard') { const Bd = boardBuild(); if (Bd.ok) saveFile({ name: 'casezero-board.zip', blob: new Blob([zipFiles(boardFiles(Bd, 'casezero-board').concat(bomCpl(Bd), [{ name: 'README.txt', text: boardReadme(Bd) }]))], { type: 'application/zip' }) }); return; }
   if (act === 'rot' && s && PP(s) && PP(s).board) { snapU(); s.r = ((s.r || 0) + 1) % 4; syncKids(s); if (problems(s).length) { autoPlace(s); syncKids(s); } save(); render(); return; }
   if (act === 'rot' && s) { s.r = ((s.r || 0) + 1) % 4; if (problems(s).length) { const keep = [s.x, s.y]; if (!autoPlace(s)) { s.x = keep[0]; s.y = keep[1]; } } save(); render(); return; }
   if (act === 'shroudplace') { if (!S.items.some((i) => i.type === 'shroud')) { const it = addPart('shroud'); it.panel = homePanel(); autoPlace(it); } save(); render(); tag('Shroud placed: drag it in Arrange'); return; }
@@ -1168,6 +1193,7 @@ function draw() {
   if (T3) T3.controls.enabled = big;
   if (big) { zmBar(); requestAnimationFrame(() => draw3d(false)); return; }
   if (mini && !drag) { clearTimeout(miniTimer); miniTimer = setTimeout(() => draw3d(true), 160); }
+  if (!(S.step === 5 && curTab() === 'test') && cv.style.height) { cv.style.height = ''; $('stage').classList.remove('tscroll'); }
   TRAY = []; zmBar(); fit(); const W = cv.width, H = cv.height; g.setTransform(1, 0, 0, 1, 0, 0); g.clearRect(0, 0, W, H); g.fillStyle = '#e7e2d6'; g.fillRect(0, 0, W, H);
   if (decoOn()) return drawDeco(W, H);
   if (S.step === 0) return curTab() === 'pins' ? drawPinout(W, H) : drawBrain(W, H);
@@ -1332,6 +1358,7 @@ function pickAt(b, p) { /* the same "What is it?" sheet as the photo page, over 
 }
 cv.addEventListener('pointerdown', (e) => {
   if (S.step === 5 && curTab() === 'test') { testDown(e); return; }
+  if (S.step === 5 && curTab() === 'map') { const [x, y] = pcx(e), q = MAPHITS.find((r) => x >= r.x && x <= r.x + r.w && y >= r.y && y <= r.y + r.h); if (q && q.id != null) { hlSet(q.id); BSEL = q.id; draw(); tag(label(S.items.find((i) => i.id === q.id) || { type: '' }) + ': lit in Test It, Arrange, 3D and ' + CFILE()); } return; }
   if (decoOn()) return;
   if (S.step === 2 && isPanel() && view && curTab() === 'notch') { if (!(S.notches || []).length) { S.notches = [{ edge: 'bottom', shape: 'rrect', w: 20, d: 8, at: 0 }]; S.nsel = 0; } notchTo(mm(e)); drag = { notch: true }; cv.setPointerCapture(e.pointerId); draw(); return; }
   if (S.step === 3 && view && curTab() === 'logo' && !WALLF[logoFace()] && LG().on) { const p = mm(e), L = LG(); L.x = p[0]; L.y = p[1]; drag = { logo: true }; cv.setPointerCapture(e.pointerId); draw(); return; }
@@ -1591,7 +1618,7 @@ function draw3d(isMini) {
   // styling the lid's outside: show it closed, from above, the way people will see it
   const XR = xrayOn();
   const lidTop = !XR && S.step === 3 && curTab() !== 'colors' && (curFace() === 'lidout' || !!WALLF[curFace()]), DF = D3 ? decoFace() : '', OPEN = XR ? true : D3 || MV ? false : S.open && !lidTop; /* mounting: the lid stays shut, out of the way */
-  const r = setup3d(), d = geom(), h = d, key = JSON.stringify([buildKey(), DF, OPEN, logoImgKey(), S.style === 'face' ? JSON.stringify((S.xp || {}).ch || 0) : 0, MV ? S.xsel : 0, S.attachedParts.length ? S.xp : 0]);
+  const r = setup3d(), d = geom(), h = d, key = JSON.stringify([buildKey(), DF, OPEN, logoImgKey(), S.style === 'face' ? JSON.stringify((S.xp || {}).ch || 0) : 0, MV ? S.xsel : 0, S.attachedParts.length ? S.xp : 0, HL]);
   if (isMini && (!$('v3').classList.contains('mini') || $('v3').hidden)) return; // left the flat view before the timer ran
   const mode = isMini ? 'mini' : 'big';
   if (r.key !== key) {
@@ -1631,6 +1658,7 @@ function draw3d(isMini) {
         if (P.board) { const bw = rq % 2 ? P.h : P.w, bh = rq % 2 ? P.w : P.h, pl = new THREE.Mesh(new THREE.BoxGeometry(bw, bh, 1.6), new THREE.MeshStandardMaterial({ color: 0x2f7a4b })); pl.position.set(px0, py0, top - R.LT - (P.hang || 6) - 0.8); grp.add(pl); return; } /* her board, inside under the top */
         if (ins) return;
         const m = standIn(P, px0, py0, rq, top); if (m) grp.add(m);
+        if (it.id === HL) { const hr = new THREE.Mesh(new THREE.TorusGeometry(Math.max(f.w, f.h) / 2 + 3, 1.1, 8, 40), new THREE.MeshBasicMaterial({ color: 0xc8412f })); hr.position.set(px0, py0, top + (P.up || 0) + 1.5); grp.add(hr); } /* tap-to-highlight */
         // a board measured from a photo: every tagged part gets its stand-in too
         const a = rq * Math.PI / 2, ca = Math.cos(a), sa = Math.sin(a);
         (P.userCuts || []).forEach((u) => { const K = CZ.PARTS[u.kind] || {}, mm = standIn({ cut: u.cut, up: K.up, isScreen: u.kind === 'screen' }, px0 + u.x * ca - u.y * sa, py0 + u.x * sa + u.y * ca, rq, top); if (mm) grp.add(mm); });
@@ -1713,11 +1741,11 @@ let CLEARARM = 0;
 const KSHORT = { keypad44: 'Keypad', mat8: 'Matrix', jack35: 'Jack', i2sdac: 'DAC', inmp441: 'Mic', tact12: 'Button', button16: 'Button', arcade24: 'Arcade', arcade30: 'Arcade', dpad: 'D-pad', pot: 'Knob', encoder: 'Wheel', thumb: 'Stick', led5: 'LED', speaker28: 'Speaker' };
 function wiringItems() {
   // every part that needs a wire, numbered like the rest of the builder. Parts tagged on a board photo count one by one.
-  const N = numbers(), out = [];
+  const N = numbers(), out = []; let AD = null;
   S.items.filter((i) => PP(i) && PP(i).cat !== 'brain').sort((a, b) => String(N[a.id]).localeCompare(String(N[b.id]), undefined, { numeric: true })).forEach((i) => {
     const P = PP(i);
     if (P.userCuts && P.userCuts.length) P.userCuts.forEach((u, ci) => { if (NEED[u.kind]) out.push({ key: i.id + '.' + ci, label: N[i.id] + '.' + (ci + 1) + ' ' + (KSHORT[u.kind] || u.kind), type: u.kind }); });
-    else if (NEED[i.type]) out.push({ key: String(i.id), label: N[i.id] + ' ' + P.short + (i.step ? ' (stepped)' : ''), type: i.type, step: i.step ? 1 : 0, id: i.id });
+    else if (NEED[i.type]) out.push({ key: String(i.id), label: N[i.id] + ' ' + P.short + (i.step ? ' (stepped)' : ''), type: i.type, step: i.step ? 1 : 0, id: i.id, action: CTRL(i) ? i.action || (AD || (AD = actDefaults()))[i.id] || 'custom' : undefined });
   });
   if (S.xp && S.xp.ch && S.xp.ch.servo) out.push({ key: 'chservo', label: 'C1 Arm servo', type: 'servo' }); /* the character's motorized arm is wired like any servo */
   return out;
@@ -1733,8 +1761,9 @@ function brainInfo() {
 const WCOL = ['#2f6fdb', '#c9a200', '#2f9a5b'], netCol = (net, i) => (net === '3V3' || net === 'VBUS' ? '#d23b2a' : net === 'GND' ? '#1a1a1a' : WCOL[i % 3]);
 function mapWhy() { const bi = brainInfo(); if (!BRD()) return 'The map and the test do not know the pins of the ' + bi.name + ' yet.'; if (!wiring().rows.length) return 'Add buttons, knobs, screens, sensors or lights in Electronics first.'; return ''; }
 function pcx(e) { const r = cv.getBoundingClientRect(), k = cv.width / r.width; return [(e.clientX - r.left) * k, (e.clientY - r.top) * k]; }
+let MAPHITS = [];
 function drawMap(W, H) {
-  const d = px(), w = wiring(), rows = w.rows, bi = brainInfo(); g.fillStyle = '#f7f4ec'; g.fillRect(0, 0, W, H);
+  MAPHITS = []; const d = px(), w = wiring(), rows = w.rows, bi = brainInfo(); g.fillStyle = '#f7f4ec'; g.fillRect(0, 0, W, H);
   if (!rows.length) { g.fillStyle = '#6f6a60'; g.font = '800 ' + 14 * d + 'px -apple-system,Arial'; g.textAlign = 'center'; g.fillText('Add parts to see the wiring map', W / 2, H / 2); tag('Wiring map'); return; }
   const B = BRDX(), BL = B.left, BRr = B.right, nr = Math.max(BL.length, BRr.length), bw = Math.min(W * 0.2, 96 * d), top = 28 * d, bh = H - top - 40 * d, bx = W / 2 - bw / 2, step = bh / nr, gnd = (side) => (side === 'L' ? BL : BRr).map((p, i) => (p === 'GND' ? i : -1)).filter((i) => i > -1);
   const pinAt = (net0, side, yNear) => { const net = netName(net0); let i = BL.indexOf(net); if (i > -1 && net !== 'GND') return ['L', i]; i = BRr.indexOf(net); if (i > -1 && net !== 'GND') return ['R', i]; if (net === 'GND') { const list = gnd(side).length ? gnd(side) : gnd(side === 'L' ? 'R' : 'L'); side = gnd(side).length ? side : side === 'L' ? 'R' : 'L'; const iy = list.reduce((a, c) => (Math.abs(top + (c + 0.5) * step - yNear) < Math.abs(top + (a + 0.5) * step - yNear) ? c : a), list[0]); return list.length ? [side, iy] : null; } return null; };
@@ -1743,9 +1772,9 @@ function drawMap(W, H) {
   g.fillStyle = '#fff'; g.font = '800 ' + 11 * d + 'px -apple-system,Arial'; g.textAlign = 'center'; g.fillText(B.name.replace(/Raspberry Pi /, '').replace(/ \(.*\)/, '').slice(0, 14), W / 2, top + bh / 2);
   g.font = '700 ' + Math.min(9 * d, step * 0.62) + 'px -apple-system,Arial';
   for (let i = 0; i < nr; i++) { const yl = top + (i + 0.5) * step; g.textAlign = 'left'; g.fillStyle = '#e8f3ec'; if (BL[i]) g.fillText(BL[i], bx + 4 * d, yl + 3 * d); g.textAlign = 'right'; if (BRr[i]) g.fillText(BRr[i], bx + bw - 4 * d, yl + 3 * d); g.fillStyle = '#d9c46a'; if (BL[i]) g.fillRect(bx - 2 * d, yl - 1.5 * d, 4 * d, 3 * d); if (BRr[i]) g.fillRect(bx + bw - 2 * d, yl - 1.5 * d, 4 * d, 3 * d); }
-  const items = rows.map((row) => { const pads = padsFor(row), gl = pads.filter((p) => p[1] !== 'GND' && p[1] !== '3V3' && p[1] !== 'VBUS').map((p) => BL.indexOf(p[1]) > -1 ? -1 : 1).reduce((a, c) => a + c, 0); return { row, pads, side: gl > 0 ? 'R' : 'L' }; });
+  const items = rows.map((row) => { const pads = padsFor(row), gl = pads.filter((p) => p[1] !== 'GND' && p[1] !== '3V3' && p[1] !== 'VBUS' && p[1] !== B.v5 && p[1] !== B.v3).map((p) => BL.indexOf(p[1]) > -1 ? -1 : 1).reduce((a, c) => a + c, 0); return { row, pads, side: gl > 0 ? 'R' : 'L' }; });
   ['L', 'R'].forEach((sd) => { const list = items.filter((x) => x.side === sd); if (!list.length) return; const lh = 11 * d, need = list.reduce((a, x) => a + 16 * d + x.pads.length * lh, 0) + 6 * d * (list.length - 1), k = Math.min(1, bh / need), colW = (sd === 'L' ? bx : W - bx - bw) - 70 * d, x0 = sd === 'L' ? 8 * d : bx + bw + 62 * d; let y = top + Math.max(0, (bh - need * k) / 2), lane = 0;
-    list.forEach((it) => { const h = (16 * d + it.pads.length * lh) * k; g.fillStyle = '#fff'; g.strokeStyle = '#1a1a1a'; g.lineWidth = 1.5 * d; g.beginPath(); g.rect(x0, y, Math.max(40 * d, colW), h); g.fill(); g.stroke();
+    list.forEach((it) => { const h = (16 * d + it.pads.length * lh) * k, lit = it.row.it.id != null && it.row.it.id === HL; g.fillStyle = lit ? '#fdeeea' : '#fff'; g.strokeStyle = lit ? '#c8412f' : '#1a1a1a'; g.lineWidth = (lit ? 3.5 : 1.5) * d; g.beginPath(); g.rect(x0, y, Math.max(40 * d, colW), h); g.fill(); g.stroke(); MAPHITS.push({ id: it.row.it.id, x: x0, y, w: Math.max(40 * d, colW), h });
       g.fillStyle = '#1a1a1a'; g.font = '800 ' + 10 * d * Math.max(0.7, k) + 'px -apple-system,Arial'; g.textAlign = sd === 'L' ? 'left' : 'right'; g.fillText(it.row.it.label.slice(0, 18), sd === 'L' ? x0 + 4 * d : x0 + Math.max(40 * d, colW) - 4 * d, y + 11 * d * k);
       it.pads.forEach(([lbl, net], j) => { const py = y + (15 * d + (j + 0.5) * lh) * k, ex = sd === 'L' ? x0 + Math.max(40 * d, colW) : x0, at = pinAt(net, sd, py); g.font = '700 ' + 8.5 * d * Math.max(0.7, k) + 'px -apple-system,Arial'; g.fillStyle = '#6f6a60'; g.textAlign = sd === 'L' ? 'right' : 'left'; g.fillText(lbl, sd === 'L' ? ex - 3 * d : ex + 3 * d, py + 3 * d);
         if (!at) return; const [qx, qy] = pxy(at[0], at[1]), lx = sd === 'L' ? bx - 10 * d - (lane % 10) * 4 * d : bx + bw + 10 * d + (lane % 10) * 4 * d; lane++;
@@ -1841,6 +1870,22 @@ function presetAct(fn, m, h, down) {
   return null;
 }
 // ---------- What should the code do? The preset bar and its tweak pills: Test It, the code view and the saved file all follow them ----------
+// ---------- part.action: what each control does. Smart defaults per preset (DJ FX: Loop, Echo, Spiral, Phaser, Beat, Wet/Dry), changed in Test It: tap a part, Function ----------
+const CTRL = (it) => { const N = it && NEED[it.type]; return !!N && it.of == null && ['button', 'knob', 'wheel'].indexOf(N.what) > -1; };
+function actDefaults(fn) { fn = fn || recipeFn() || 'test'; const N = numbers(), L = S.items.filter(CTRL).sort((a, b) => String(N[a.id]).localeCompare(String(N[b.id]), undefined, { numeric: true })), out = {}, wh = (i) => NEED[i.type].what;
+  const btn = L.filter((i) => wh(i) === 'button' && !i.step), kn = L.filter((i) => wh(i) === 'knob'), whl = L.filter((i) => wh(i) === 'wheel');
+  if (fn === 'djfx') { btn.forEach((i, n) => { out[i.id] = ['loop', 'echo', 'spiral', 'phaser'][n] || 'note'; }); whl.forEach((i, n) => { out[i.id] = n ? 'custom' : 'beat'; }); const bp = !whl.length && kn.length > 1; kn.forEach((i, n) => { out[i.id] = bp ? ['beat', 'wet'][n] || 'custom' : n ? 'custom' : 'wet'; }); }
+  else { const b = fn === 'macro' ? 'macro' : ['midi', 'synth', 'sound', 'sampler'].indexOf(fn) > -1 ? (TW().btn === 'step' ? 'step' : 'note') : 'custom'; btn.forEach((i) => { out[i.id] = b; }); kn.concat(whl).forEach((i) => { out[i.id] = 'custom'; }); }
+  L.filter((i) => i.step).forEach((i) => { out[i.id] = 'step'; }); return out; }
+function actsFill(reset) { const D = actDefaults(); S.items.forEach((i) => { if (D[i.id] && (reset || !i.action)) i.action = D[i.id]; }); }
+const actOf = (it) => (it ? it.action || actDefaults()[it.id] || 'custom' : null);
+const itemOf = (q) => (q && q.id != null ? S.items.find((i) => i.id === q.id) : null);
+function ctlOf(m, h) { return !h ? null : h.kind === 'key' ? m.keys[h.i] : h.kind === 'pot' ? m.pots[h.i] : h.kind === 'enc' ? m.encs[h.i] : null; }
+const fnTag = (m, h) => { const it = itemOf(ctlOf(m, h)); return it ? ' [Function: ' + ACTN(actOf(it)) + ']' : ''; };
+// tap-to-highlight: one part lit in Test It, Wired, Arrange, the 3D view and its line in the code
+let HL = null;
+const hlTag = () => { if (HL == null) return null; const n = numbers()[HL]; return n ? String(n) : null; };
+function hlSet(id) { if (id == null || HL === id) return; HL = id; if (S.items.some((i) => i.id === id)) sel = id; codeBox(!$('cbx').hidden); }
 const BEH = [['synth', 'Synth'], ['macro', 'USB Macro Pad'], ['midi', 'MIDI'], ['timer', 'Timer'], ['sound', 'Soundboard'], ['djfx', 'DJ FX'], ['test', 'Pin Test']];
 const SCN = { major: 'Major', penta: 'Pentatonic', minor: 'Minor' }, NN = ['C', 'C#', 'D', 'Eb', 'E', 'F', 'F#', 'G', 'Ab', 'A', 'Bb', 'B'];
 function TW() { if (!S.tw) S.tw = {}; const t = S.tw; if (!SCALES[t.scale]) t.scale = 'major'; if (t.btn !== 'step') t.btn = 'hold'; if (!t.min) t.min = 25; return t; }
@@ -1867,31 +1912,32 @@ function libsBox() { const B = BRDX(); let c; try { c = codeFor(wiring(), summar
     '<ol><li>Put CircuitPython on the ' + esc(bshort()) + ' (circuitpython.org, search your board).</li>' + (L.length ? '<li>Get the Library Bundle at ' + a(LIBURL.cp, 'circuitpython.org/libraries') + ', unzip it, copy the names above into <code>CIRCUITPY/lib/</code>.</li>' : '') + '<li>Open ' + a(LIBURL.web, 'code.circuitpython.org') + ' to edit code.py in the browser, or save it on the CIRCUITPY drive.</li></ol></div>'; }
 // Test It for DJ FX, step for step like its code: the first 4 buttons are Loop, Echo, Spiral, Phaser; the Beat wheel is CC 14, Wet/Dry CC 15
 function djScreen() { const D = TEST.dj, on = DJFX.filter((f, i) => D.on[i]).map((f) => f[0]); TEST.text = (on.length ? on.join('+') : 'No FX') + ' | ' + BEATS[D.beat] + ' | Wet ' + D.wet + '%'; TEST.lamp = on.length > 0; }
-function djAct(m, h, down) { const D = TEST.dj || (TEST.dj = { on: [false, false, false, false], beat: 2, wet: 0, at: [], skip: [] }), fk = m.keys.filter((k) => k.btn && k.pad == null), kn = m.pots.filter((p) => p.kind === 'knob'), beatPot = !m.encs.length && kn.length > 1 ? kn[0] : null, wetPot = beatPot ? kn[1] : kn[0];
+function djAct(m, h, down) { const D = TEST.dj || (TEST.dj = { on: [false, false, false, false], beat: 2, wet: 0, at: [], skip: [] }), A = (q) => actOf(itemOf(q)), fxOf = (k) => (k.btn && k.pad == null ? DJA[A(k)] : undefined);
+  const beatPot = m.encs.some((e) => A(e) === 'beat') ? null : m.pots.find((p) => p.kind === 'knob' && A(p) === 'beat') || null, wetPot = m.pots.find((p) => p.kind === 'knob' && A(p) === 'wet') || null; /* part.action, the same as the saved code */
   const fx = (i, st) => { D.on[i] = st; const f = DJFX[i]; djScreen(); return f[0] + (st ? ' ON -> MIDI note on ' : ' OFF -> MIDI note off ') + f[1] + ' (' + DJMODE[f[2]] + ') | ' + TEST.text; };
-  if (h.kind === 'key') { const k = m.keys[h.i], i = fk.indexOf(k); TEST.held = down ? h : null; if (i < 0 || i > 3) { djScreen(); return down ? k.name + ' pressed (DJ FX uses the first 4 buttons)' : ''; } const md = DJFX[i][2];
+  if (h.kind === 'key') { const k = m.keys[h.i], i = fxOf(k); TEST.held = down ? h : null; if (i == null) { djScreen(); return down ? k.name + ' pressed (Function ' + ACTN(A(k) || 'custom') + ': not a DJ FX button. Tap it, Function, pick Loop, Echo, Spiral or Phaser)' : ''; } const md = DJFX[i][2];
     if (down) { D.at[i] = Date.now(); if (md === 'toggle') return fx(i, !D.on[i]); if (!D.on[i]) return fx(i, true); D.skip[i] = true; return fx(i, false); }
     if (D.skip[i]) { D.skip[i] = false; return ''; } if (md === 'hold' || (md === 'holdtoggle' && Date.now() - D.at[i] >= 300)) return fx(i, false); return md === 'holdtoggle' ? DJFX[i][0] + ' tapped -> stays on (tap again to stop)' : ''; }
-  if (h.kind === 'enc' && h.i === 0) { D.beat = Math.max(0, Math.min(5, D.beat + h.dir)); djScreen(); return 'Beat wheel -> ' + BEATS[D.beat] + ' -> MIDI CC 14 = ' + Math.floor(D.beat * 127 / 5) + ' | ' + TEST.text; }
+  if (h.kind === 'enc' && A(m.encs[h.i]) === 'beat') { D.beat = Math.max(0, Math.min(5, D.beat + h.dir)); djScreen(); return 'Beat wheel -> ' + BEATS[D.beat] + ' -> MIDI CC 14 = ' + Math.floor(D.beat * 127 / 5) + ' | ' + TEST.text; }
   if (h.kind === 'pot') { const p = m.pots[h.i], v = TEST.val[h.i] || 0; if (Math.abs(v - (TEST.last[h.i] == null ? -10 : TEST.last[h.i])) < 2) return ''; TEST.last[h.i] = v;
     if (p === beatPot) { D.beat = Math.min(5, Math.floor(v * 6 / 101)); djScreen(); return p.name + ' -> Beat ' + BEATS[D.beat] + ' -> MIDI CC 14 = ' + Math.floor(D.beat * 127 / 5) + ' | ' + TEST.text; }
     if (p === wetPot) { D.wet = v; djScreen(); return p.name + ' -> Wet/Dry ' + v + '% -> MIDI CC 15 = ' + Math.floor(v * 127 / 100) + ' | ' + TEST.text; } }
   return null; }
 // Test It for the MIDI and Soundboard presets, step for step like their code
-function midiAct(fn, m, h, down) { const tw = TW(), sc = SCALES[tw.scale], hz = SCALEHZ(), num = (n) => 60 + sc[n % 8] + 12 * Math.floor(n / 8);
+function midiAct(fn, m, h, down) { const tw = TW(), stp = tw.btn === 'step' || (h.kind === 'key' && actOf(itemOf(m.keys[h.i])) === 'step'), sc = SCALES[tw.scale], hz = SCALEHZ(), num = (n) => 60 + sc[n % 8] + 12 * Math.floor(n / 8);
   if (h.kind === 'key') { const k = m.keys[h.i], n = h.i;
-    if (!down) { TEST.held = null; TEST.lamp = false; return fn === 'midi' && tw.btn === 'hold' ? k.name + ' released -> MIDI note off ' + num(n) : ''; }
+    if (!down) { TEST.held = null; TEST.lamp = false; return fn === 'midi' && !stp ? k.name + ' released -> MIDI note off ' + num(n) : ''; }
     TEST.held = h; TEST.lamp = true;
-    if (fn === 'midi') { TEST.text = 'Note ' + num(n); tone(hz[n % 8] * Math.pow(2, Math.floor(n / 8))); if (tw.btn === 'step') setTimeout(toneOff, 250); return k.name + ' pressed -> ' + LABP(k.pin) + ' LOW -> MIDI note on ' + num(n) + ' (' + NOTEN()[n % 8] + ')' + (tw.btn === 'step' ? ', off after a 1/4 note' : ''); }
-    TEST.text = 'Sound ' + (n + 1); if (tw.btn === 'step') { tone(hz[n % 8]); setTimeout(toneOff, 250); } else [0, 140, 280].forEach((t, i) => setTimeout(() => { tone(hz[(n + i * 2) % 8] * (n + i * 2 >= 8 ? 2 : 1)); setTimeout(toneOff, 120); }, t));
-    return k.name + ' pressed -> ' + LABP(k.pin) + ' LOW -> plays ' + (tw.btn === 'step' ? 'one 1/4 note' : 'its 3-note jingle'); }
+    if (fn === 'midi') { TEST.text = 'Note ' + num(n); tone(hz[n % 8] * Math.pow(2, Math.floor(n / 8))); if (stp) setTimeout(toneOff, 250); return k.name + ' pressed -> ' + LABP(k.pin) + ' LOW -> MIDI note on ' + num(n) + ' (' + NOTEN()[n % 8] + ')' + (stp ? ', off after a 1/4 note' : ''); }
+    TEST.text = 'Sound ' + (n + 1); if (stp) { tone(hz[n % 8]); setTimeout(toneOff, 250); } else [0, 140, 280].forEach((t, i) => setTimeout(() => { tone(hz[(n + i * 2) % 8] * (n + i * 2 >= 8 ? 2 : 1)); setTimeout(toneOff, 120); }, t));
+    return k.name + ' pressed -> ' + LABP(k.pin) + ' LOW -> plays ' + (stp ? 'one 1/4 note' : 'its 3-note jingle'); }
   if (h.kind === 'pot' && fn === 'midi') { const v = TEST.val[h.i] || 0, p = m.pots[h.i]; if (Math.abs(v - (TEST.last[h.i] == null ? -10 : TEST.last[h.i])) < 2) return ''; TEST.last[h.i] = v; TEST.text = 'CC ' + (1 + h.i) + ' ' + v; return p.name + ' -> MIDI CC ' + (1 + h.i) + ' = ' + Math.floor(v * 127 / 100); }
   return null; }
 (function () { const st = document.createElement('style'); st.textContent = '.hrow.beh{grid-auto-columns:max-content}.hrow.beh button,.selbar.tw button{all:unset;cursor:pointer;padding:9px 12px;border:1.5px solid var(--ink);border-radius:999px;font:800 12px/1 var(--sys);background:#fff;white-space:nowrap}.hrow.beh button[aria-pressed=true],.selbar.tw button[aria-pressed=true]{background:#1a1a1a;color:#fff}.selbar.tw{flex-wrap:wrap}.selbar.tw button{padding:8px 10px}.buy a.amz{background:#ff9900;border-color:#1a1a1a;color:#1a1a1a;padding:6px 12px;font-size:12px}.libs{border:1.5px solid var(--ink);border-radius:12px;padding:8px 10px;margin:8px 0;background:#fffbe9;font:500 13px/1.4 var(--sys);overflow-wrap:anywhere}.libs code{font:700 12px ui-monospace,Menlo,monospace}.libs ul,.libs ol{margin:4px 0 4px 18px;padding:0}.libs p{margin:4px 0}.btags{margin:6px 0 8px;font:500 12px/1.35 var(--sys)}.btags div{padding:5px 0;border-top:1px solid var(--line)}.btags b{font-weight:800}'; document.head.appendChild(st); })();
 function testAct(h, down) {
   const m = testModel(), has = (w) => m.outs.find((o) => o.what === w); let s = '';
   if (down) bsel(h.kind === 'key' ? m.keys[h.i] : h.kind === 'pot' ? m.pots[h.i] : h.kind === 'enc' ? m.encs[h.i] : null);
-  const fnr = recipeFn(); if (fnr) { const out = presetAct(fnr, m, h, down); if (out !== null) { if (out) testLog(out); draw(); return; } }
+  const fnr = recipeFn(); if (fnr) { const out = presetAct(fnr, m, h, down); if (out !== null) { if (out) testLog(out + (down ? fnTag(m, h) : '')); draw(); return; } }
   if (h.kind === 'key') { const k = m.keys[h.i];
     if (down) { s = k.name + ' pressed -> GP' + k.pin + ' LOW' + show(m, k.name + ' pressed'); TEST.lamp = true; if (has('led')) { TEST.led = !TEST.led; s += ' -> LED ' + (TEST.led ? 'on' : 'off'); } if (has('ring')) { TEST.ring = true; s += ' -> ring red'; } if (has('sound')) { const f = 330 + 60 * h.i; tone(f); s += ' -> speaker ' + f + ' Hz'; } if (has('servo') && !m.pots.length) { TEST.angle = TEST.angle == null || TEST.angle < 45 ? 90 : 0; s += ' -> servo ' + TEST.angle + ' deg'; } TEST.held = h; }
     else { s = k.name + ' released -> GP' + k.pin + ' HIGH'; TEST.lamp = false; if (has('ring')) TEST.ring = false; toneOff(); TEST.held = null; } }
@@ -1900,7 +1946,7 @@ function testAct(h, down) {
   if (h.kind === 'pir') { const p = m.pirs[h.i]; TEST.pir[h.i] = !TEST.pir[h.i]; s = p.tag + (TEST.pir[h.i] ? ' sees motion -> ' + LABP(p.pin) + ' HIGH' : ' still -> ' + LABP(p.pin) + ' LOW') + show(m, p.tag + (TEST.pir[h.i] ? ' motion' : ' still')); TEST.lamp = !!TEST.pir[h.i]; }
   if (h.kind === 'tof') { const t = m.tofs[h.i], v = TEST.dist[h.i] || 300; s = t.tag + ' measures ' + v + ' mm (I2C ' + (BRDX().i2c || []).map(LABP).join('/') + ')' + show(m, t.tag + ' ' + v + ' mm'); }
   if (h.kind === 'cam') { TEST.cam = true; s = 'camera check -> SPI answers 0x55, I2C finds 0x30' + show(m, 'Camera found'); }
-  if (s) testLog(s); draw();
+  if (s) testLog(s + (down ? fnTag(m, h) : '')); draw();
 }
 function drawTest(W, H) {
   const d = px(), m = testModel(), why = mapWhy(); g.fillStyle = '#f7f4ec'; g.fillRect(0, 0, W, H); TEST.hits = [];
@@ -1915,8 +1961,12 @@ function drawTest(W, H) {
   const cells = []; m.keys.forEach((k, i) => cells.push({ kind: 'key', i, label: k.name })); m.pots.forEach((p, i) => cells.push({ kind: 'pot', i, label: p.name })); m.encs.forEach((e, i) => cells.push({ kind: 'enc', i, label: e.name }));
   m.pirs.forEach((p, i) => cells.push({ kind: 'pir', i, label: p.tag + ' motion' })); m.tofs.forEach((t, i) => cells.push({ kind: 'tof', i, label: t.tag + ' distance' })); m.cams.forEach((c, i) => cells.push({ kind: 'cam', i, label: c.tag + ' camera' }));
   m.outs.forEach((o) => cells.push({ kind: 'out', what: o.what, label: o.tag + ' ' + o.what }));
-  const cols = Math.max(2, Math.min(5, Math.floor((W - 16 * d) / (92 * d)))), cw = (W - 16 * d) / cols, rowsN = Math.ceil(cells.length / cols), ch = Math.max(46 * d, Math.min(84 * d, (H - y - 8 * d) / Math.max(1, rowsN)));
-  cells.forEach((c, n) => { const cx = 8 * d + (n % cols) * cw, cy = y + Math.floor(n / cols) * ch, mx = cx + cw / 2, my = cy + ch * 0.45, r = Math.min(cw, ch) * 0.24;
+  const cols = Math.max(2, Math.min(5, Math.floor((W - 16 * d) / (92 * d)))), cw = (W - 16 * d) / cols, rowsN = Math.ceil(cells.length / cols), ch = Math.max(72 * d, Math.min(84 * d, ($('stage').clientHeight * d - y - 64 * d) / Math.max(1, rowsN)));
+  { const need = Math.ceil((y + rowsN * ch + 64 * d) / d), st = $('stage'), vis = st.clientHeight; /* the Test It stage scrolls on its own: every knob, slider and button stays reachable above the drawer and the status pill */
+    if (need > vis + 2) { if (cv.style.height !== need + 'px') { st.classList.add('tscroll'); cv.style.height = need + 'px'; return draw(); } } else if (cv.style.height) { cv.style.height = ''; st.classList.remove('tscroll'); return draw(); } }
+  const hlId = HL;
+  cells.forEach((c, n) => { const cx = 8 * d + (n % cols) * cw, cy = y + Math.floor(n / cols) * ch, mx = cx + cw / 2, my = cy + ch * 0.45, r = Math.min(cw, ch) * 0.24, ent = ctlOf(m, c);
+    if (ent && ent.id != null && ent.id === hlId) { g.strokeStyle = '#c8412f'; g.lineWidth = 3 * d; g.beginPath(); g.rect(cx + 3 * d, cy + 2 * d, cw - 6 * d, ch - 4 * d); g.stroke(); }
     font(9.5, 700); g.textAlign = 'center'; g.fillStyle = '#1a1a1a'; g.fillText(c.label.slice(0, 16), mx, cy + ch - 6 * d);
     if (c.kind === 'key') { const on = TEST.held && TEST.held.kind === 'key' && TEST.held.i === c.i; g.fillStyle = on ? '#c8412f' : '#1a1a1a'; g.beginPath(); g.arc(mx, my, r, 0, 7); g.fill(); TEST.hits.push({ kind: 'key', i: c.i, x: mx - r, y: my - r, w: 2 * r, h: 2 * r }); }
     if (c.kind === 'pot' && m.pots[c.i].kind === 'step') { const lv = (TEST.val[c.i] || 0) / 25; g.fillStyle = '#1a1a1a'; g.beginPath(); g.arc(mx, my, r, 0, 7); g.fill(); for (let q = 0; q < 4; q++) { g.fillStyle = q < lv ? '#c8412f' : '#cfc9bb'; g.fillRect(mx - 2 * r + q * r, my + r + 3 * d, r * 0.8, 4 * d); } font(9, 700); g.fillStyle = '#fff'; g.fillText(lv ? lv + '/4' : '-', mx, my + 3 * d); TEST.hits.push({ kind: 'pot', step: true, i: c.i, x: mx - r, y: my - r, w: 2 * r, h: 2 * r }); }
@@ -1935,9 +1985,9 @@ function testDown(e) { const [x, y] = pcx(e), h = TEST.hits.find((q) => x >= q.x
   if (h.step) { stepPress(h); return; } if (h.kind === 'pot' || h.kind === 'tof') { TEST.drag = h; testMove(e); return; } if (h.kind === 'enc') { testAct(h, true); return; } if (h.kind === 'pir' || h.kind === 'cam') { testAct(h, true); return; } testAct(h, true); }
 // Swap in Brain: tap a knob, slider, click wheel or button in the test, then trade it here without leaving Brain. Arrange nudges it if it no longer fits.
 let BSEL = null;
-function bswapHtml() { const it = BSEL != null && S.items.find((i) => i.id === BSEL); if (!it || swapGroup(it.type) !== SWAPS[0]) return ''; const c = swapCur(it);
-  return '<div class="selbar"><b>Swap ' + esc(label(it).split(' ')[0]) + '</b>' + [['pot', 'Knob'], ['slider', 'Slider'], ['encoder', 'Click wheel'], ['step', 'Stepped'], [BTNS.indexOf(it.type) > -1 ? it.type : 'button16', 'Button']].map(([t, n]) => '<button data-bswap="' + it.id + ':' + t + '"' + (t === c ? ' aria-pressed="true" style="background:#1a1a1a;color:#fff"' : '') + '>' + n + '</button>').join('') + '</div>'; }
-function bsel(ent) { if (!ent || ent.id == null) return; BSEL = ent.id; const el = $('bswap'); if (el) el.innerHTML = bswapHtml(); }
+function bswapHtml() { const it = BSEL != null && S.items.find((i) => i.id === BSEL); if (!it || swapGroup(it.type) !== SWAPS[0]) return ''; const c = swapCur(it), a = actOf(it);
+  return '<div class="selbar fnsel"><b>Function ' + esc(label(it).split(' ')[0]) + '</b>' + ACTS.map(([k, n]) => '<button type="button" data-pact="' + it.id + ':' + k + '" aria-pressed="' + (k === a) + '">' + n + '</button>').join('') + '</div><div class="selbar"><b>Swap ' + esc(label(it).split(' ')[0]) + '</b>' + [['pot', 'Knob'], ['slider', 'Slider'], ['encoder', 'Click wheel'], ['step', 'Stepped'], [BTNS.indexOf(it.type) > -1 ? it.type : 'button16', 'Button']].map(([t, n]) => '<button data-bswap="' + it.id + ':' + t + '"' + (t === c ? ' aria-pressed="true" style="background:#1a1a1a;color:#fff"' : '') + '>' + n + '</button>').join('') + '</div>'; }
+function bsel(ent) { if (!ent || ent.id == null) return; BSEL = ent.id; hlSet(ent.id); const el = $('bswap'); if (el) el.innerHTML = bswapHtml(); }
 function stepPress(h) { TEST.val[h.i] = ((TEST.val[h.i] || 0) / 25 % 4 + 1) * 25; TEST.last[h.i] = null; testAct(h, true); } /* a Stepped Button: 25% -> 50% -> 75% -> 100% -> 25% */
 function testMove(e) { const h = TEST.drag; if (!h) return; const [x] = pcx(e), v = Math.max(0, Math.min(100, Math.round((x - h.x0) / (h.x1 - h.x0) * 100))); if (h.kind === 'pot') { TEST.val[h.i] = v; testAct(h, true); } else { TEST.dist[h.i] = Math.round(30 + v * 11.7); draw(); } }
 // the Brain stage: tap a group of parts below and the test acts them out; Wired flips the stage to the wiring map
@@ -1962,8 +2012,9 @@ function simTap(k) { const L = simList(k); if (!L.length) { tag('No ' + k.replac
 function codeNow() { const out = []; try { const c = codeFor(wiring(), summaryLine(), recipeFn(), BRDX(), TW()); out.push([c.file || 'code.py', c.text]); } catch (e) { out.push([CFILE(), '# Add parts in Parts and wire them to see your code.py']); }
   try { const mm = micMain(wiring(), summaryLine().replace(/<[^>]+>/g, ''), BRDX()); if (mm) out.push(['main.py', mm]); } catch (e) {} return out; }
 let CODEF = 0;
-function codeBox(on) { const b = $('cbx'); b.hidden = !on; if (!on) return; const c = codeNow(); $('cbxName').textContent = c[0][0]; $('cbxPre').textContent = c[0][1].split('\n').filter((l) => l.trim() && !/^(#|\/\/)/.test(l.trim())).slice(0, 4).join('\n') || c[0][1].split('\n').slice(0, 4).join('\n'); }
-function codeFull(i) { const c = codeNow(); CODEF = Math.min(i || 0, c.length - 1); $('cfTabs').innerHTML = c.map((x, j) => '<button type="button" data-cf="' + j + '" aria-pressed="' + (j === CODEF) + '">' + x[0] + '</button>').join(''); $('cfPre').textContent = c[CODEF][1]; $('cfull').hidden = false; }
+const hlLine = (txt) => { const t = hlTag(); if (!t) return -1; const re = new RegExp('(^|[^A-Za-z0-9_])' + t.replace(/[.]/g, '\\.') + '(?![0-9])'); return txt.split('\n').findIndex((l) => re.test(l)); };
+function codeBox(on) { const b = $('cbx'); b.hidden = !on; if (!on) return; const c = codeNow(), hi = hlLine(c[0][1]); $('cbxName').textContent = c[0][0] + (hi > -1 ? ' : ' + (hi + 1) : ''); if (hi > -1) { $('cbxPre').textContent = c[0][1].split('\n').slice(hi, hi + 4).join('\n'); return; } $('cbxPre').textContent = c[0][1].split('\n').filter((l) => l.trim() && !/^(#|\/\/)/.test(l.trim())).slice(0, 4).join('\n') || c[0][1].split('\n').slice(0, 4).join('\n'); }
+function codeFull(i) { const c = codeNow(); CODEF = Math.min(i || 0, c.length - 1); $('cfTabs').innerHTML = c.map((x, j) => '<button type="button" data-cf="' + j + '" aria-pressed="' + (j === CODEF) + '">' + x[0] + '</button>').join(''); const hi = hlLine(c[CODEF][1]), T = c[CODEF][1].split('\n'); $('cfPre').innerHTML = T.map((l, j) => (j === hi ? '<mark id="cfHL">' + esc(l) + '</mark>' : esc(l))).join('\n'); $('cfull').hidden = false; const mk = $('cfHL'); if (mk && mk.scrollIntoView) mk.scrollIntoView({ block: 'center' }); }
 $('cbx').addEventListener('click', () => codeFull(0));
 $('cfull').addEventListener('click', (e) => { const b = e.target.closest('button'); if (!b) return;
   if (b.dataset.cf != null) { codeFull(+b.dataset.cf); return; }
@@ -2444,14 +2495,14 @@ function kbReadme(b) { const K = b.kb, n = K.c * K.r;
     'WIRING, IF YOU ARE CURIOUS', 'Columns, left to right: ' + b.cols.map((g) => 'GP' + g).join(' '), 'Rows, top to bottom: ' + b.rows.map((g) => 'GP' + g).join(' '), 'Each key joins its column to its row through one diode. Every key is one square.', ''].join('\n');
 }
 // ---------- the carrier board (Clean it) ----------
-const PICOS = ['pico', 'picow', 'pico2'];
-function pcbOn() { return !!S.pcb && !isPanel() && !S.items.some((i) => i.of != null) && S.items.some((i) => i.type === 'pico' || i.type === 'picow' || i.type === 'pico2'); } /* cheap on purpose: heights() asks this all the time */
+const PICOS = ['pico', 'picow', 'pico2'], DIPS = PICOS.concat(['nano', 'promicro', 'esp32c3']); /* BOARD_PROFILES brains on two rows of pins: the board routes for each */
+function pcbOn() { return !!S.pcb && !isPanel() && !S.items.some((i) => i.of != null) && S.items.some((i) => DIPS.indexOf(i.type) > -1); } /* cheap on purpose: heights() asks this all the time */
 function pcbWhy() { // null when a board can be made, else the plain reason
   if (isPanel()) return 'A panel has no floor to hold a board.';
   if (S.items.some((i) => i.of != null)) return 'Your parts are already soldered on your own board, so a second board has nothing to do here.';
   const b = S.items.find((i) => PP(i) && PP(i).cat === 'brain');
-  if (!b) return 'Add a brain first (Brain, Electronics). The board is made for a Raspberry Pi Pico, Pico W or Pico 2.';
-  if (PICOS.indexOf(b.type) < 0) return PP(b).screen || b.type === 'cyd' ? 'Your ' + PP(b).name + ' has its brain and screen on one board, so there is no carrier board to make. Wire the extras straight to its connectors: Wire it shows which.' : 'The carrier board is made for a Raspberry Pi Pico, Pico W or Pico 2. Your ' + PP(b).name + ' wires up with push-on wires instead: Wire it shows every one.';
+  if (!b) return 'Add a brain first (Brain, Electronics). The board is made for a Pico, Pico W, Pico 2, Pro Micro, Arduino Nano or ESP32-C3 SuperMini.';
+  if (DIPS.indexOf(b.type) < 0) return PP(b).screen || b.type === 'cyd' ? 'Your ' + PP(b).name + ' has its brain and screen on one board, so there is no carrier board to make. Wire the extras straight to its connectors: Wire it shows which.' : 'The carrier board is made for a Pico, Pico 2, Pro Micro, Arduino Nano or ESP32-C3 SuperMini. Your ' + PP(b).name + ' wires up with push-on wires instead: Wire it shows every one.';
   const w = wiring(); if (!w.rows.length) return 'Add buttons, knobs, screens or lights first: the board connects them to the brain.';
   if (w.problems.length) return 'Fix this in Brain, Wire it, Wiring first: ' + w.problems[0];
   if (w.rows.some((r) => r.roles.some((x) => x.pin == null))) return 'A part has no pin yet. Fix it in Brain, Wire it, Wiring first.';
@@ -2459,19 +2510,19 @@ function pcbWhy() { // null when a board can be made, else the plain reason
 }
 const PADLBL = { out: 'OUT', press: 'SW', up: 'UP', down: 'DN', left: 'LT', right: 'RT', turn: 'SIG', slide: 'SIG', x: 'X', y: 'Y', light: 'LED+', data: 'DIN', sound: 'SPK+', signal: 'SIG' };
 function padsFor(row) { // the pads one part gets, in the order its own pins usually sit. [what is printed next to the pad, which Pico pin it goes to]
-  const N = row.N, Rr = {}, gp = (p) => LABP(p); row.roles.forEach((r) => { Rr[r.role] = r.pin; });
-  if (N.spi) return [['3V3', '3V3'], ['GND', 'GND'], ['CS', gp(Rr.cs)], ['RST', gp(Rr.rst)], ['DC', gp(Rr.dc)], ['MOSI', gp(Rr.data)], ['SCK', gp(Rr.clock)], ['LED', '3V3']];
-  if (N.cam) return [['CS', gp(Rr.cs)], ['MOSI', gp(Rr.data)], ['MISO', gp(Rr.miso)], ['SCK', gp(Rr.clock)], ['GND', 'GND'], ['VCC', '3V3'], ['SDA', gp(Rr.SDA)], ['SCL', gp(Rr.SCL)]]; /* Arducam Mini header order */
-  if (N.i2c) return [['GND', 'GND'], ['3V3', '3V3'], ['SCL', gp(Rr.SCL)], ['SDA', gp(Rr.SDA)]];
+  const N = row.N, Rr = {}, gp = (p) => LABP(p), pwr = (L) => L.map(([l, n]) => [l, n === '3V3' || n === 'VBUS' ? netName(n) : n]); row.roles.forEach((r) => { Rr[r.role] = r.pin; });
+  if (N.spi) return pwr([['3V3', '3V3'], ['GND', 'GND'], ['CS', gp(Rr.cs)], ['RST', gp(Rr.rst)], ['DC', gp(Rr.dc)], ['MOSI', gp(Rr.data)], ['SCK', gp(Rr.clock)], ['LED', '3V3']]);
+  if (N.cam) return pwr([['CS', gp(Rr.cs)], ['MOSI', gp(Rr.data)], ['MISO', gp(Rr.miso)], ['SCK', gp(Rr.clock)], ['GND', 'GND'], ['VCC', '3V3'], ['SDA', gp(Rr.SDA)], ['SCL', gp(Rr.SCL)]]); /* Arducam Mini header order */
+  if (N.i2c) return pwr([['GND', 'GND'], ['3V3', '3V3'], ['SCL', gp(Rr.SCL)], ['SDA', gp(Rr.SDA)]]);
   const out = [];
   row.roles.forEach((r) => { if (r.two) out.push(['CLK', gp(r.pin)], ['DT', gp(r.pin + 1)]); else out.push([PADLBL[r.role] || String(r.role).toUpperCase().slice(0, 4), gp(r.pin)]); });
   if (row.power) out.push([row.power === 'VBUS' ? '5V' : '3V3', row.power]);
-  out.push(['GND', 'GND']); return out;
+  out.push(['GND', 'GND']); return out.map(([l, n]) => [l, n === '3V3' || n === 'VBUS' ? netName(n) : n]); /* power on this brain's own pin names: 5V, VCC, 3V3 */
 }
 let PCB = null;
 function boardBuild() {
   const why = pcbWhy(); if (why) return { ok: false, errors: [why] };
-  const key = JSON.stringify([S.style, S.cols, S.rows, S.magnets, S.items.map((i) => [i.id, i.type, i.panel, Math.round(i.x * 10), Math.round(i.y * 10), i.r || 0]), S.pins]);
+  const key = JSON.stringify([BRDX().name, S.style, S.cols, S.rows, S.magnets, S.items.map((i) => [i.id, i.type, i.panel, Math.round(i.x * 10), Math.round(i.y * 10), i.r || 0]), S.pins]);
   if (PCB && PCB.key === key) return PCB.b;
   const d = dims(), br = S.items.find((i) => PP(i) && PP(i).cat === 'brain'), w = wiring(), big = (polys) => polys.slice().sort((a, b) => Math.abs(G.area([b])) - Math.abs(G.area([a])));
   // the board stays 0.8 mm off the inside of the wall. Magnet lids have bosses on the wall, so stay well clear of those.
@@ -2479,7 +2530,7 @@ function boardBuild() {
   if (!keepPolys.length) return { ok: false, errors: ['This body is too small for a board.'] };
   const zones = S.items.filter((i) => i.panel === 'inside' && PP(i) && PP(i).cat !== 'brain').map((i) => { const P = PP(i), odd = (i.r || 0) % 2, hw = (odd ? P.h : P.w) / 2, hh = (odd ? P.w : P.h) / 2; return { x0: i.x - hw, y0: i.y - hh, x1: i.x + hw, y1: i.y + hh }; });
   const legend = w.rows.map((row) => String(row.it.label).toUpperCase().replace(/[^A-Z0-9 +\-./]/g, ' ')); const groups = w.rows.map((row) => { const it = S.items.find((i) => String(i.id) === String(row.it.key)); if (!it) return null; return { title: String(row.it.label).split(' ')[0].toUpperCase(), /* just T3: the legend on the back says what it is */ x: it.x, y: it.panel === 'lid' ? d.D - 12 : it.y, pads: padsFor(row).map(([label, net]) => ({ label, net })) }; }).filter(Boolean);
-  const pw = powerInfo(), b = makeBoard({ legend, keepin: keepPolys[0], posts: ps, pico: { x: br.x, y: br.y, r: br.r || 0 }, zones, groups, diode: !!pw.mah && !S.items.some((i) => i.type === 'liposhim'),
+  const pw = powerInfo(), b = makeBoard({ legend, keepin: keepPolys[0], posts: ps, pico: { x: br.x, y: br.y, r: br.r || 0 }, brd: dipOf(BRDX(), BOARD_OF[br.type], PP(br).w, PP(br).h), zones, groups, diode: PICOS.indexOf(br.type) > -1 && !!pw.mah && !S.items.some((i) => i.type === 'liposhim'), name: 'NOCIV CASE ZERO ' + bshort().toUpperCase().replace(/[^A-Z0-9 ]/g, ''),
     finalize: (r) => { const rc = [G.rect(r.x0, r.y0, r.x1, r.y1)], cut = G.diff(G.diff(keepPolys.slice(0, 1), G.diff(keepPolys.slice(0, 1), rc)), ps.map((q) => G.circle(q.x, q.y, q.r, 32))); return big(cut).filter((p) => Math.abs(G.area([p])) > 4); } });
   PCB = { key, b }; return b;
 }
@@ -2487,13 +2538,24 @@ function boardReadme(b) {
   const L = ['NOCIV Case Zero carrier board', 'Size: ' + b.box.w.toFixed(1) + ' x ' + b.box.h.toFixed(1) + ' mm. 2 layers.', '',
     'ORDER', 'Upload this zip at a board factory (JLCPCB, PCBWay and others). Pick: 2 layers, 1.6 mm thick, any colour. Leave the rest as it is. They make 5 or more at a time.', 'The price you see there is the real one. Shipping often costs more than the boards.', '',
     'NOT FACTORY TESTED YET', 'The app checked these files twice (every gap, every connection), but NOCIV has not ordered and built this board yet. Order one small batch and test it before you count on it.', '',
-    'SOLDER', '1. Pico: solder its two rows of pins into the two long rows of holes. The square marks pin 1. The USB plug goes to the end marked USB.'];
+    'SOLDER', '1. ' + bshort() + ': solder its two rows of pins into the two long rows of holes. The square marks pin 1. The USB plug goes to the end marked USB.'];
   if (b.diode) L.push('2. D1: a 1N5817 diode in the two holes joined by the arrow. The stripe on the diode goes to the end with the bar.', '3. Battery side (after the charger and the switch): plus to BAT+, minus to the GND next to it.');
   L.push((b.diode ? '4' : '2') + '. Every part: a short wire from each of its pins to the hole with the same name, right under the part.', '', 'PADS');
   b.rows.forEach((r) => { L.push(r.g.isDiode ? 'BATTERY IN: BAT+ and GND holes, then diode D1 into the Pico VSYS pin' : r.g.title + ': ' + r.g.pads.map((p) => p.label + ' -> ' + p.net).join(', ')); });
   L.push('', 'Screws: 4 x M2, 6 mm, into the posts on the case floor.');
   return L.join('\n');
 }
+// BOM.csv + CPL.csv (JLCPCB / PCBWay format): what sits on the board and where. X/Y in mm from the board's lower left corner, the same origin as the Gerbers.
+function bomCpl(b) { const br = S.items.find((i) => PP(i) && PP(i).cat === 'brain'), BP = PP(br), PC = CZ.PCB || {}, ox = b.box.x0, oy = b.box.y0, q = (v) => (/[",\n]/.test(String(v)) ? '"' + String(v).replace(/"/g, '""') + '"' : String(v)), mm = (v) => v.toFixed(2) + 'mm';
+  const bom = [['Comment', 'Designator', 'Footprint', 'LCSC Part #', 'MPN', 'Qty', 'Note']], cpl = [['Designator', 'Mid X', 'Mid Y', 'Layer', 'Rotation']], B = BRDX(), hn = String(Math.max(B.left.length, B.right.length)).padStart(2, '0');
+  bom.push([BP.name, 'U1', BP.fp || '', BP.lcsc || '', BP.mpn || '', 1, 'Brain module: hand-solder']); cpl.push(['U1', mm(br.x - ox), mm(br.y - oy), 'Top', ((br.r || 0) * 90) % 360]);
+  const H = PC._hdr || { fp: '', mpn: '' }; bom.push(['Female header 1x' + hn, 'J1,J2', H.fp.replace('{n}', hn), '', H.mpn.replace('{n}', hn), 2, 'Optional: lets the brain unplug']);
+  if (b.diode) { const r = b.rows.find((x) => x.g.isDiode), pd = b.pads.filter((p) => p.group === (r && r.g) && /^D1/.test(p.label)), D = PC._diode || {}; bom.push(['1N5817', 'D1', D.fp || '', D.lcsc || '', D.mpn || '1N5817', 1, 'Stripe to the bar']); if (pd.length) cpl.push(['D1', mm(pd.reduce((a, p) => a + p.x, 0) / pd.length - ox), mm(pd.reduce((a, p) => a + p.y, 0) / pd.length - oy), 'Top', r.v ? 90 : 0]); }
+  b.rows.forEach((r) => { if (r.g.isDiode) return; const pd = b.pads.filter((p) => p.group === r.g); if (!pd.length) return; const it = S.items.find((i) => String(numbers()[i.id]) === r.g.title || String(numbers()[i.id]).toUpperCase() === r.g.title), P = it ? PP(it) : null;
+    bom.push([P ? P.name : r.g.title, r.g.title, P && P.fp || 'Wire pads 1x' + pd.length + ' P2.54mm', P && P.lcsc || '', P && P.mpn || '', 1, 'Wired to pads ' + r.g.title + ' (' + pd.map((p) => p.label).join(' ') + ')']);
+    cpl.push([r.g.title, mm(pd.reduce((a, p) => a + p.x, 0) / pd.length - ox), mm(pd.reduce((a, p) => a + p.y, 0) / pd.length - oy), 'Top', r.v ? 90 : 0]); });
+  const csv = (L) => L.map((row) => row.map(q).join(',')).join('\r\n') + '\r\n';
+  return [{ name: 'BOM.csv', text: csv(bom) }, { name: 'CPL.csv', text: csv(cpl) }]; }
 function pcbHtml() {
   let h = '<p class="h" style="margin-top:0">Clean it: one board, no nest of wires</p>';
   const b = boardBuild();
@@ -2501,6 +2563,7 @@ function pcbHtml() {
   const tall = (() => { const was = S.pcb; S.pcb = false; const a = heights().H; S.pcb = true; const c = heights().H; S.pcb = was; return c - a; })();
   h += boardSvg(b) + '<p class="note"><span class="ok">All ' + b.check.connected + ' pads connected and checked.</span> ' + b.box.w.toFixed(0) + ' x ' + b.box.h.toFixed(0) + ' mm. Yellow lines run on top, blue underneath. Smallest gap between two pieces of copper: ' + b.check.minGap.toFixed(2) + ' mm (factories need 0.13 to 0.2).</p>';
   h += '<button class="btn dark" data-act="saveboard" style="width:100%;margin-top:8px">Save the board files</button>';
+  h += '<div class="order5"><b>Order 5 Boards (JLCPCB / PCBWay)</b><ol><li>Open <a href="https://jlcpcb.com/quote" target="_blank" rel="noopener">jlcpcb.com/quote</a> or <a href="https://www.pcbway.com/orderonline.aspx" target="_blank" rel="noopener">pcbway.com</a> and upload <b>casezero-board.zip</b> as it is. It reads the Gerbers by itself.</li><li>Keep 2 layers, 1.6 mm, quantity <b>5</b>. Want them assembled? Turn on assembly and upload <b>BOM.csv</b> and <b>CPL.csv</b> from the same zip.</li><li>Check the board picture they show, then pay. Most arrive in 1 to 2 weeks.</li></ol><p>BOM.csv lists each part with its footprint and maker part number (MPN). Brains, screens and sensor boards are modules you solder yourself, so their LCSC # is blank: search the MPN in the factory parts search before you turn assembly on.</p></div>';
   h += '<p class="note"><span class="bad">Not factory tested yet.</span> The app checks every gap and connection, but NOCIV has not ordered one of these yet. Order one small batch first.</p>';
   h += '<div class="selbar" style="margin-top:8px"><b>Make my case fit it</b>' + [['1', 'Yes'], ['0', 'No']].map((m) => '<button data-pcb="' + m[0] + '"' + ((S.pcb ? '1' : '0') === m[0] ? ' style="background:#1a1a1a;color:#fff"' : '') + '>' + m[1] + '</button>').join('') + '</div>';
   h += '<p class="note">' + (S.pcb ? 'On. The case floor has 4 posts for the board (M2 screws) and no posts for the Pico. ' + (tall > 0 ? 'The case is ' + tall + ' mm taller so the electronics clear the board. ' : '') + 'Make your print files again in Body, Finish.' : 'Off. Turn it on and the case gets 4 posts for the board' + (tall > 0 ? ' and grows ' + tall + ' mm taller so the electronics clear it' : '') + '.') + '</p>';
@@ -2924,7 +2987,7 @@ window.addEventListener('pageshow', (e) => { if (e.persisted) resync(); });
 window.addEventListener('storage', (e) => { if (e.key === KEY) resync(); });
 document.addEventListener('visibilitychange', () => { if (!document.hidden) resync(); });
 
-window.__cz = { decoMove, mountPart, TEST, testModel, wiring, wallArt, LG, hookPolys, addBoard, packBuild, unpackBuild, shareState, portBlocked, portAt, mountBlocked, swatchFile, loadRecipe, get DECO() { return DECO; }, get T3() { return T3; }, THREE, wiring, codeFor, get S() { return S; }, get view() { return view; }, AZ, get UNDO() { return UNDO.length; }, halves, plan, makeFiles, get FILES() { return FILES; }, allProblems, G, addPart, go, render, dims, heights, addonFile, addonPolys, charParts, charCache, kb, kbBoard, kbCode, kbReadme, boardSvg, wiring, PP, gcodeFiles, gcodePieces, mountGeos, xp, sliceGuide, skeletonOf, skelOf, adjust, posts, estimate, reflow, fitAll, filesOf, MEASURED, portBlocked, testAct, testModel, micMain, get TRAY() { return TRAY; }, showStart, loadRecipe, cost, boardBuild, boardFiles, boardReadme, extraRows, keepBox };
+window.__cz = { openPage, boardBuild, bomCpl, actOf, get HL() { return HL; }, PAGES, decoMove, mountPart, TEST, testModel, wiring, wallArt, LG, hookPolys, addBoard, packBuild, unpackBuild, shareState, portBlocked, portAt, mountBlocked, swatchFile, loadRecipe, get DECO() { return DECO; }, get T3() { return T3; }, THREE, wiring, codeFor, get S() { return S; }, get view() { return view; }, AZ, get UNDO() { return UNDO.length; }, halves, plan, makeFiles, get FILES() { return FILES; }, allProblems, G, addPart, go, render, dims, heights, addonFile, addonPolys, charParts, charCache, kb, kbBoard, kbCode, kbReadme, boardSvg, wiring, PP, gcodeFiles, gcodePieces, mountGeos, xp, sliceGuide, skeletonOf, skelOf, adjust, posts, estimate, reflow, fitAll, filesOf, MEASURED, portBlocked, testAct, testModel, micMain, get TRAY() { return TRAY; }, showStart, loadRecipe, cost, boardBuild, boardFiles, boardReadme, extraRows, keepBox };
 render();
 try { if (S.items.length) { keepInside(); save(); } } catch (e) {} /* a saved build from an older builder: nothing left floating outside */
 { const q = new URLSearchParams(location.search), code = q.get('build'), rid = q.get('recipe'), r = rid && (CZ.RECIPES || []).find((x) => x.id === rid), clean = () => { try { history.replaceState(null, '', location.pathname); } catch (e) {} };
