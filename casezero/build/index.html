@@ -289,6 +289,8 @@ svg.la{fill:none;stroke:currentColor;stroke-width:2.2;stroke-linecap:round;strok
 /* Try room: play first. The pretend device on the stage, Sound pill, pads and knobs */
 .stage .tryv{position:absolute;inset:0;z-index:2;overflow-y:auto;-webkit-overflow-scrolling:touch;display:flex;align-items:flex-start;justify-content:center;padding:8px 10px 26px}
 .stage .tryv[hidden]{display:none}
+.stage .pind{position:absolute;left:8px;top:8px;z-index:4;display:flex;gap:6px;align-items:center}.stage .pind[hidden]{display:none}.stage .pind button,.stage .pind span{all:unset;box-sizing:border-box;height:28px;padding:0 10px;display:inline-flex;align-items:center;border-radius:999px;border:1px solid var(--line);background:#fff;color:var(--ink);font:800 11.5px/1 var(--sys);white-space:nowrap}.stage .pind button{cursor:pointer}.stage .pind button.on{background:var(--green);border-color:var(--green);color:#fff}.stage .pind span.live{background:var(--ink);border-color:var(--ink);color:#fff}
+.stage .tryv{padding-top:44px}
 .tdev{width:100%;max-width:440px;background:#1a1a1a;border-radius:16px;padding:8px;box-shadow:0 3px 10px rgba(0,0,0,.22);-webkit-user-select:none;user-select:none}
 .tscr{height:28px;margin:0 0 7px;padding:0 10px;border-radius:7px;background:#000;color:#9ff0ff;font:700 13px/28px ui-monospace,Menlo,monospace;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.tscr.dim{background:#2a2a2a;color:#ddd}
 .tpads{display:grid;gap:6px}
@@ -383,6 +385,7 @@ body{height:100dvh;overflow:hidden;display:flex;flex-direction:column}
   <div id="v3" hidden></div>
   <div class="tryv" id="tryv" hidden aria-label="Try it: play the pads"></div>
   <div class="sb" id="sb" hidden></div>
+  <div class="pind" id="pind" hidden aria-live="polite"></div>
   <div class="zm" id="zm" hidden><button type="button" data-z="1" aria-label="Zoom in">+</button><button type="button" data-z="-1" aria-label="Zoom out">&minus;</button><button type="button" data-z="0">Fit</button><button type="button" data-z="u">Undo</button></div>
   <button type="button" class="cbx" id="cbx" hidden aria-label="Open the code full screen"><span class="ch"><b id="cbxName">code.py</b><i aria-hidden="true">&#x2922;</i></span><pre id="cbxPre"></pre></button>
   <div class="tag" id="tag" role="status" aria-live="polite"></div>
@@ -397,6 +400,6 @@ body{height:100dvh;overflow:hidden;display:flex;flex-direction:column}
 <input type="file" id="snapIn" accept="image/*" capture="environment" hidden>
 <div class="cfull" id="cfull" hidden role="dialog" aria-label="Your code"><div class="cfh"><span id="cfTabs"></span><span class="sp"></span><button type="button" id="cfCopy">Copy Code</button><button type="button" id="cfSave">Save</button><button type="button" id="cfX" aria-label="Close">&#x2715;</button></div><pre id="cfPre"></pre></div>
 <div class="sheet" id="sheet" hidden><div class="in" id="sheetIn"></div></div>
-<script type="module" src="builder.js?v=78"></script>
+<script type="module" src="builder.js?v=79"></script>
 </body>
 </html>
