@@ -127,6 +127,7 @@ export const SCALES = { major: [0, 2, 4, 5, 7, 9, 11, 12], penta: [0, 2, 4, 7, 9
 export const LIBURL = { ino: 'https://www.arduino.cc/en/software', cp: 'https://circuitpython.org/libraries', web: 'https://code.circuitpython.org/' };
 // One door for every board: Arduino boards get a real .ino sketch, CircuitPython boards a code.py, both in the same 3 plain-English sections.
 export function codeFor(plan, title, fn, B, tw) {
+  title = String(title == null ? '' : title).replace(/&(amp|lt|gt|quot|#39);/g, (m, k) => ({ amp: '&', lt: '<', gt: '>', quot: '"', '#39': "'" }[k])); /* the title comes from the page (HTML): plain text in the code file */
   B = B || BOARDS.pico;
   const c = fn === 'djfx' && (B.ino || B.cp) ? djfxCode(plan, title, B) : B.ino ? inoFor(plan, title, fn, B, tw || {}) : codePy(plan, title, fn, B, tw || {});
   if (!c.lang) { if (B.cp) { c.text = pySections(c.text); c.lang = 'py'; c.file = 'code.py'; } else { c.lang = 'txt'; c.file = 'pins.txt'; } }
