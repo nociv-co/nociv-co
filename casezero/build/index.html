@@ -375,13 +375,21 @@ body{height:100dvh;overflow:hidden;display:flex;flex-direction:column}
 .stage .cbx .ch{background:transparent;color:var(--ink);gap:6px;padding:7px 12px;font:800 13px/1 var(--sys)}
 .stage .cbx pre{display:none}
 .stage .sb button{border:1px solid var(--line)}
+.top .tb.ur{margin-right:-2px}.top .tb[disabled]{opacity:.3;cursor:default}
+.nxt{all:unset;box-sizing:border-box;position:fixed;right:12px;bottom:calc(12px + env(safe-area-inset-bottom));z-index:8;cursor:pointer;background:var(--red);color:#fff;border-radius:999px;padding:12px 18px;font:900 13px/1 var(--sys);letter-spacing:.02em;box-shadow:0 4px 14px rgba(0,0,0,.22);white-space:nowrap}
+.nxt[hidden]{display:none}.nxt:active{transform:translateY(1px)}
+#pane::after{content:"";display:block;height:58px}
+.kitc{border:2px solid var(--red)!important;border-radius:12px}.est.vals{margin-top:8px}
+.tgl{all:unset;cursor:pointer;min-width:44px;text-align:center;padding:7px 10px;border:1.5px solid #1a1a1a;border-radius:999px;font:800 12px/1 var(--sys)}.tgl[aria-checked=true]{background:#1a1a1a;color:#fff}
+.camk{border:2px solid var(--red);border-radius:12px;margin-bottom:10px}
+@media (max-width:400px){.top .tb.ur{width:28px;height:28px}.top .tb.ur svg{width:15px;height:15px}}
 </style>
 <script src="/vendor/clipper/clipper.js"></script>
 <script src="parts.js?v=36"></script>
 <script type="importmap">{ "imports": { "three": "/vendor/three/three.module.js", "three/addons/": "/vendor/three/" } }</script>
 </head>
 <body>
-<header class="top"><a class="back" href="/creator-tools.html" aria-label="Back to Tools">&lsaquo;</a><div class="rooms" id="rooms" role="group" aria-label="Design, Play or Build"></div><span class="sp"></span><button class="tb" id="freshTop" aria-label="Start fresh: clear this build" title="Start fresh"><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4.5 12a7.5 7.5 0 1 0 2.2-5.3"/><path d="M4 3.5v4.6h4.6"/></svg></button><button class="tb" id="helpTop" aria-label="Help and Learn">?</button></header>
+<header class="top"><a class="back" href="/creator-tools.html" aria-label="Back to Tools">&lsaquo;</a><div class="rooms" id="rooms" role="group" aria-label="Design, Play or Build"></div><span class="sp"></span><button class="tb ur" id="undoTop" aria-label="Undo" title="Undo" disabled><svg viewBox="0 0 24 24" width="17" height="17" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 14L4 9l5-5"/><path d="M4 9h10.5a5.5 5.5 0 0 1 0 11H11"/></svg></button><button class="tb ur" id="redoTop" aria-label="Redo" title="Redo" disabled><svg viewBox="0 0 24 24" width="17" height="17" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M15 14l5-5-5-5"/><path d="M20 9H9.5a5.5 5.5 0 0 0 0 11H13"/></svg></button><button class="tb" id="freshTop" aria-label="Start fresh: clear this build" title="Start fresh"><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4.5 12a7.5 7.5 0 1 0 2.2-5.3"/><path d="M4 3.5v4.6h4.6"/></svg></button><button class="tb" id="helpTop" aria-label="Help and Learn">?</button></header>
 <section class="stage" id="stage" aria-label="Your device">
   <canvas id="view"></canvas>
   <div id="v3" hidden></div>
@@ -399,9 +407,10 @@ body{height:100dvh;overflow:hidden;display:flex;flex-direction:column}
   <div class="pane" id="pane"></div>
 </section>
 <nav class="bbar" id="bbar" aria-label="Steps"></nav>
+<button type="button" class="nxt" id="nxt" hidden></button>
 <input type="file" id="snapIn" accept="image/*" capture="environment" hidden>
 <div class="cfull" id="cfull" hidden role="dialog" aria-label="Your code"><div class="cfh"><span id="cfTabs"></span><span class="sp"></span><button type="button" id="cfCopy">Copy Code</button><button type="button" id="cfSave">Save</button><button type="button" id="cfX" aria-label="Close">&#x2715;</button></div><pre id="cfPre"></pre></div>
 <div class="sheet" id="sheet" hidden><div class="in" id="sheetIn"></div></div>
-<script type="module" src="builder.js?v=79"></script>
+<script type="module" src="builder.js?v=80"></script>
 </body>
 </html>
