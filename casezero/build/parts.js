@@ -101,6 +101,23 @@
     servo: { cat: 'move', name: 'Mini servo (SG90)', short: 'Servo', w: 23, h: 12.2, depth: 29, cut: { o: 'rect', w: 23.5, h: 12.7 }, keep: 8, link: 'plug', check: true,
       tip: 'Moves an arm, head or eyes. 3 wire plug. Pair it with the Cartoon maker to plan the moves.', price: 2, src: 'SG90: about 23 x 12.2 x 29 mm', url: '' }
   };
+  // searchQuery: clean store search words (no parentheses or commas) so Amazon, Adafruit and AliExpress always find the part.
+  var SQ = { pico: 'Raspberry Pi Pico H', picow: 'Raspberry Pi Pico WH', pico2: 'Raspberry Pi Pico 2', uno: 'Elegoo Uno R3', nano: 'Arduino Nano ATmega328P', promicro: 'Pro Micro ATmega32U4',
+    esp32c3: 'ESP32 C3 SuperMini', esp32: 'ESP32 DevKit', zero2: 'Raspberry Pi Zero 2 W', pi5: 'Raspberry Pi 5', cyd: 'ESP32 2432S028 Cheap Yellow Display', tft28: 'ILI9341 2.8 inch SPI TFT', round128: 'GC9A01 round display 1.28',
+    oled096: 'SSD1306 OLED 0.96 I2C', hdmi5: '5 inch HDMI display 800x480', hdmi7: '7 inch HDMI display 1024x600', tact12: '12mm tactile button cap', button16: '16mm momentary push button', arcade24: '24mm arcade button',
+    arcade30: '30mm arcade button', keypad44: '4x4 matrix keypad', dpad: '6x6mm tactile switch', arducam: 'Arducam Mini 2MP OV2640', pir: 'HC-SR501 PIR sensor', vl53: 'VL53L0X distance sensor', esp32cam: 'ESP32-CAM',
+    pot: '10K potentiometer', encoder: 'KY-040 rotary encoder', thumb: 'KY-023 joystick module', stick: 'Sanwa JLF joystick', slider: '60mm slide potentiometer', led5: '5mm LED assortment', ring12: 'WS2812 12 LED ring',
+    speaker28: '28mm mini speaker', mat8: 'MAX7219 8x8 LED matrix', jack35: '3.5mm audio jack breakout', i2sdac: 'MAX98357A I2S amplifier', inmp441: 'INMP441 I2S microphone', lipo1200: '1200mAh LiPo battery JST',
+    lipo500: '500mAh LiPo battery JST', liposhim: 'LiPo SHIM for Pico', tp4056: 'TP4056 USB-C charger protection', rocker: 'mini rocker switch', servo: 'SG90 micro servo' };
+  Object.keys(C.PARTS).forEach(function (k) { C.PARTS[k].searchQuery = SQ[k] || (C.PARTS[k].find || C.PARTS[k].name).replace(/\([^)]*\)/g, ' ').replace(/[,/]+/g, ' ').replace(/\s+/g, ' ').trim(); });
+  C.cleanQuery = function (t) { return String(t || '').replace(/\([^)]*\)/g, ' ').replace(/[(),/]+/g, ' ').replace(/\s+/g, ' ').trim(); };
+  // Cheap starter kits and assortments: one bag covers many builds. [name, Amazon search words, why]
+  C.KITS = [
+    ['Elegoo Uno Starter Kit', 'Elegoo Uno R3 starter kit', 'An Uno, jumper wires, buttons, LEDs, a breadboard and more in one box.'],
+    ['Tactile Button Pack', 'tactile push button assortment kit', 'Hundreds of 6 and 12 mm buttons with caps for a few dollars.'],
+    ['Potentiometer Kit', 'potentiometer assortment kit with knobs', 'Every common knob value, with knob caps.'],
+    ['Jumper Wire Pack', 'dupont jumper wire kit female to female', 'Female to female, male to female: no solder wiring.']
+  ];
   // Recipes (new 11-13): a known device to start from. Each one loads a shape and a parts list, and credits the open project its code comes from.
   // parts: [type, how many]. tested: false until NOCIV has built it for real. Nothing here copies their code: we link to it.
   C.RECIPES = [

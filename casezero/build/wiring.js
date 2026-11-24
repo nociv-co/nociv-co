@@ -124,9 +124,35 @@ export function codeFor(plan, title, fn, B, tw) {
   const c = fn === 'djfx' && (B.ino || B.cp) ? djfxCode(plan, title, B) : B.ino ? inoFor(plan, title, fn, B, tw || {}) : codePy(plan, title, fn, B, tw || {});
   if (!c.lang) { if (B.cp) { c.text = pySections(c.text); c.lang = 'py'; c.file = 'code.py'; } else { c.lang = 'txt'; c.file = 'pins.txt'; } }
   const pf = preflight(plan, B), cm = c.lang === 'ino' ? '// ' : '# ';
+  if (c.lang === 'ino') { /* every part on the board gets its real library, used by this sketch or not, so the list is never "None" */
+    const have = (c.libs = c.libs || []).map((l) => l.n), add = libsFor((plan.rows || []).map((r) => r.it.type), B).filter((l) => have.indexOf(l.n) < 0);
+    if (add.length) { c.libs = c.libs.concat(add); const T = c.text.split('\n'), at = T.indexOf('// ===== 1. LIBRARIES =====');
+      const inc = add.map((l) => '#include <' + l.inc + '>' + ' '.repeat(Math.max(1, 26 - l.inc.length)) + '// ' + (l.built ? 'built in' : '(install) "' + l.n + '" by ' + l.by));
+      if (at > -1) T.splice(at + 2, 0, ...inc); else T.unshift('// Libraries to install (Sketch -> Include Library -> Manage Libraries): ' + add.filter((l) => !l.built).map((l) => '"' + l.n + '" by ' + l.by).join(', '));
+      c.text = T.filter((x) => x.indexOf('// Nothing extra needed') < 0).join('\n').replace('//   4. No libraries to install.', '//   4. Install the libraries in section 1: Sketch -> Include Library -> Manage Libraries, search each name, Install.'); }
+  }
   if (pf.length) c.text = pf.map((w) => cm + 'CHECK FIRST: ' + w).join('\n') + '\n' + c.text;
   return c;
 }
+// ---------- board profiles: one lookup for pins, logic voltage, code file and the library each part needs ----------
+const LIB = (n, by, inc, built) => ({ n, by, inc, built: !!built }), GFX = LIB('Adafruit GFX Library', 'Adafruit', 'Adafruit_GFX.h');
+export const INO_LIBS = {
+  oled096: [LIB('Adafruit SSD1306', 'Adafruit', 'Adafruit_SSD1306.h'), GFX], tft28: [LIB('Adafruit ILI9341', 'Adafruit', 'Adafruit_ILI9341.h'), GFX], round128: [LIB('Adafruit GC9A01A', 'Adafruit', 'Adafruit_GC9A01A.h'), GFX],
+  keypad44: [LIB('Keypad', 'Mark Stanley, Alexander Brevig', 'Keypad.h')], mat8: [LIB('LedControl', 'Eberhard Fahle', 'LedControl.h')], vl53: [LIB('Adafruit_VL53L0X', 'Adafruit', 'Adafruit_VL53L0X.h')],
+  ring12: [LIB('Adafruit NeoPixel', 'Adafruit', 'Adafruit_NeoPixel.h')], servo: [LIB('Servo', 'Arduino (built in)', 'Servo.h', true)], arducam: [LIB('ArduCAM', 'ArduCAM', 'ArduCAM.h')]
+};
+export const PY_LIBS = { oled096: ['adafruit_displayio_ssd1306.mpy', 'adafruit_display_text'], tft28: ['adafruit_ili9341.mpy', 'adafruit_display_text'], round128: ['gc9a01.mpy', 'adafruit_display_text'],
+  vl53: ['adafruit_vl53l0x.mpy'], mat8: ['adafruit_max7219'], ring12: ['neopixel.mpy'], servo: ['adafruit_motor'], i2sdac: [], inmp441: [] };
+const PROF = (b, logic, lang, libs) => { const B = BOARDS[b]; return { key: b, board: B, name: B.name, pins: { left: B.left, right: B.right, all: B.all, adc: B.adc, i2c: B.i2c, spi: B.spi, label: B.lab }, logic, v5: B.v5, v3: B.v3, lang, file: lang === 'ino' ? 'casezero.ino' : 'code.py', libs }; };
+export const BOARD_PROFILES = {
+  uno: PROF('uno', '5V', 'ino', INO_LIBS), nano: PROF('nano', '5V', 'ino', INO_LIBS), promicro: PROF('promicro', '5V', 'ino', INO_LIBS),
+  pico: PROF('pico', '3.3V', 'py', PY_LIBS), esp32c3: PROF('c3', '3.3V', 'py', PY_LIBS),
+  cyd: PROF('cyd', '3.3V', 'ino', Object.assign({}, INO_LIBS, { servo: [LIB('ESP32Servo', 'Kevin Harrington', 'ESP32Servo.h')], tft28: [], round128: [] }))
+};
+export const profileOf = (B) => Object.values(BOARD_PROFILES).find((p) => p.board === B) || null;
+// the Arduino libraries a list of part types needs on brain B (deduped, in part order)
+export function libsFor(types, B) { const P = profileOf(B) || (B && B.ino ? BOARD_PROFILES.uno : null), out = [];
+  if (!P || P.lang !== 'ino') return out; (types || []).forEach((t) => (P.libs[t] || []).forEach((l) => { if (!out.some((o) => o.n === l.n)) out.push(l); })); return out; }
 // ---------- preflight: run before code is exported or Wired is shown ----------
 // Duplicate pins (shared I2C / SPI bus pins are fine), and 3.3V-only parts on a 5V brain (Elegoo / Arduino Uno).
 export const V33 = { vl53: 'VL53L0X', inmp441: 'INMP441', oled096: 'OLED' };
@@ -134,7 +160,8 @@ export function preflight(plan, B) {
   B = B || BOARDS.pico; const out = [], by = {};
   (plan.rows || []).forEach((row) => row.roles.forEach((r) => { if (r.fixed || r.pin == null) return; [r.pin].concat(r.two ? [r.pin + 1] : []).forEach((p) => { (by[p] = by[p] || []).push(row.it.label); }); }));
   Object.keys(by).forEach((p) => { const who = Array.from(new Set(by[p])); if (by[p].length > 1) out.push('Pin ' + B.lab(+p) + ' is assigned twice (' + who.join(' and ') + '). Give one of them another pin.'); });
-  if (B === BOARDS.uno) { const seen = {}; (plan.rows || []).forEach((row) => { const n = V33[row.it.type]; if (n && !seen[row.it.label]) { seen[row.it.label] = 1; out.push(row.it.label + ' (' + n + ') is a 3.3V part: Use 3.3V power, not 5V. Wire its VCC to the Uno\'s 3V3 pin, never 5V.'); } }); }
+  const P = profileOf(B); if (P && P.logic === '5V') { const seen = {}, nm = B === BOARDS.uno ? 'Uno' : B === BOARDS.nano ? 'Nano' : 'Pro Micro'; (plan.rows || []).forEach((row) => { const n = V33[row.it.type]; if (n && !seen[row.it.label]) { seen[row.it.label] = 1;
+    out.push('3.3V vs 5V: ' + row.it.label + ' (' + n + ') is a 3.3V part on a 5V ' + nm + '. Use 3.3V power, not 5V. ' + (B.v3 === '3V3' ? 'Wire its VCC to the ' + nm + '\'s 3V3 pin, never 5V' : 'The ' + nm + ' has no 3V3 pin: use a breakout with its own 3.3V regulator') + ', and pick a board with a level shifter (most Adafruit / STEMMA QT boards) for the 5V signal pins.'); } }); }
   return out;
 }
 // ---------- DJ FX: Loop, Echo, Spiral, Phaser on the first 4 buttons, a Beat wheel (CC 14) and a Wet/Dry knob or slider (CC 15) ----------
