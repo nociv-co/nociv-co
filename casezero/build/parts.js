@@ -19,8 +19,10 @@
     nano: { cat: 'brain', tag: '$4 · Arduino (.ino) · A tiny Uno: same pins and code, no USB keyboard', name: 'Arduino Nano (ATmega328P)', short: 'Nano', w: 18, h: 45, depth: 8, inside: true, holes: [], link: 'pins', usb: 'USB on a short end', tip: 'The classic cheap Arduino. Programmed in the Arduino IDE (no CircuitPython). 5 V pins.', price: 4, src: 'Arduino Nano, 18 x 45 mm' },
     promicro: { cat: 'brain', tag: '$5 · Arduino (.ino) · Small, acts as a USB keyboard or MIDI: macro pads', name: 'Pro Micro (ATmega32U4)', short: 'Pro Micro', w: 18, h: 33, depth: 8, inside: true, holes: [], link: 'pins', usb: 'USB on a short end', tip: 'Tiny and acts as a USB keyboard: a favourite for macro pads. Programmed in the Arduino IDE. 5 V pins.', price: 5, src: 'SparkFun-style Pro Micro, 18 x 33 mm' },
     esp32c3: { cat: 'brain', tag: '$3 · CircuitPython (code.py) · Thumb-sized Wi-Fi + Bluetooth, 13 pins', name: 'ESP32-C3 SuperMini (Wi-Fi + Bluetooth)', short: 'C3 Mini', w: 18, h: 22.5, depth: 7, inside: true, holes: [], link: 'pins', usb: 'USB-C on a short end', tip: 'A thumb-sized Wi-Fi brain for about $3. Runs CircuitPython.', price: 3, src: 'ESP32-C3 SuperMini, 22.5 x 18 mm' },
-    esp32: { cat: 'brain', tag: '$6 · CircuitPython (code.py) · Wi-Fi + Bluetooth, lots of pins', name: 'ESP32 DevKit (Wi-Fi + Bluetooth)', short: 'ESP32', w: 51.5, h: 28.5, depth: 9, inside: true, holes: [], hole: 2.5, link: 'pins', usb: 'USB on a short end', check: true,
-      tip: 'Wi-Fi and Bluetooth brain. Boards differ by seller, so measure yours.', price: 6, src: 'Common 30 pin ESP32 DevKit, about 51.5 x 28.5 mm. Sellers differ.', url: '' },
+    esp32s3: { cat: 'brain', tag: '$7 · Arduino (.ino) · Wi-Fi/BLE + AI audio/PSRAM (I2S mic + speaker)', name: 'ESP32-S3 DevKit (Wi-Fi/BLE + AI audio/PSRAM)', short: 'ESP32-S3', w: 63, h: 25.5, depth: 9, inside: true, holes: [], link: 'pins', usb: 'USB-C on a short end (two on most boards)', check: true,
+      tip: 'Wi-Fi and Bluetooth LE with 8 MB PSRAM (N16R8) for voice and AI audio: an I2S mic and amp plug straight on. Buy pre-soldered headers for no-solder build.', price: 7, src: 'Espressif ESP32-S3-DevKitC-1 (N16R8), about 63 x 25.5 mm. Clones differ, measure yours.', url: 'https://docs.espressif.com/projects/esp-dev-kits/en/latest/esp32s3/esp32-s3-devkitc-1/' },
+    esp32: { cat: 'brain', tag: '$5 · CircuitPython (code.py) or Arduino · Wi-Fi + Bluetooth, lots of pins', name: 'ESP32 DevKit V1 (Wi-Fi/BLE)', short: 'ESP32 V1', w: 51.5, h: 28.5, depth: 9, inside: true, holes: [], hole: 2.5, link: 'pins', usb: 'USB on a short end', check: true,
+      tip: 'Wi-Fi and Bluetooth (BLE) brain, 30 pins. Boards differ by seller, so measure yours. Buy pre-soldered headers for no-solder build.', price: 5, src: 'Common 30 pin ESP32 DevKit, about 51.5 x 28.5 mm. Sellers differ.', url: '' },
     zero2: { cat: 'brain', tag: '$15 · Python on Linux · Runs RetroPie games, needs an SD card', name: 'Raspberry Pi Zero 2 W', short: 'Pi Zero 2', w: 65, h: 30, depth: 6, inside: true, holes: [[3.5, 3.5], [61.5, 3.5], [3.5, 26.5], [61.5, 26.5]], hole: 2.75, link: 'pins', usb: 'mini HDMI + 2 micro USB on one long side',
       tip: 'Runs RetroPie like the AdventurePi. Buy the WH version for pins already on.', price: 15, src: 'Raspberry Pi Zero 2 W mechanical drawing: 65 x 30 mm, M2.5 holes 58 x 23 mm apart', url: 'https://www.raspberrypi.com/products/raspberry-pi-zero-2-w/' },
     pi5: { cat: 'brain', tag: '$45 · Python on Linux · A full computer for big screens', name: 'Raspberry Pi 4 or 5', short: 'Pi 4/5', w: 85, h: 56, depth: 18, inside: true, holes: [[3.5, 3.5], [61.5, 3.5], [3.5, 52.5], [61.5, 52.5]], hole: 2.75, link: 'pins', usb: 'USB + Ethernet on a short end, power + HDMI on a long side',
@@ -62,7 +64,7 @@
     vl53: { cat: 'sense', front: true, name: 'Laser distance sensor (VL53L0X)', short: 'Distance', w: 25, h: 11, depth: 4, cut: { o: 'rect', w: 8, h: 5 }, link: 'pins',
       tip: 'Measures how far away something is, up to about 1.2 m, through a small 8 x 5 mm window. Two I2C wires.', price: 4, src: 'VL53L0X breakout, 25 x 11 mm' },
     esp32cam: { cat: 'mine', front: true, name: 'ESP32-CAM (AI-Thinker)', short: 'ESP32-CAM', w: 40.5, h: 27, depth: 12, up: 4, cut: { o: 'circle', d: 9 }, link: 'pins',
-      tip: 'Its own brain with a camera and Wi-Fi. It has no USB plug: program it with a USB to serial adapter or the ESP32-CAM-MB base.', price: 8, src: 'AI-Thinker ESP32-CAM, 40.5 x 27 mm' },
+      tip: 'Its own brain with a camera and Wi-Fi. It has no USB plug: program it with the $2 ESP32-CAM-MB base (Shop adds it for you). Buy pre-soldered headers for no-solder build.', price: 8, src: 'AI-Thinker ESP32-CAM, 40.5 x 27 mm' },
     pot: { up: 15, cat: 'turn', name: 'Turn knob (10K potentiometer)', short: 'Turn knob', w: 17, h: 17, depth: 18, cut: { o: 'circle', d: 7.3 }, keep: 9.5, link: 'solder', printed: 'knob',
       tip: 'We print the knob. No solder: get one already on a little board with pins.', price: 1, src: 'Adafruit 562: 7 mm hole, 6 mm shaft', url: 'https://www.adafruit.com/product/562' },
     encoder: { up: 15, cat: 'turn', name: 'Click wheel (KY-040 encoder)', short: 'Click wheel', w: 32, h: 19, depth: 20, cut: { o: 'circle', d: 7.3 }, keep: 10, link: 'pins', printed: 'knob', check: true,
@@ -99,8 +101,8 @@
       tip: 'Half the size, less than half the run time. Same care as the big one: protection circuit, tape not screws, check red and black.', price: 8, src: 'Adafruit 1578: about 36 x 29 x 4.75 mm. Sellers differ, measure yours.', url: 'https://www.adafruit.com/product/1578' },
     liposhim: { cat: 'power', name: 'Pico charger (LiPo SHIM for Pico)', short: 'Pico charger', w: 21, h: 21, depth: 7, inside: true, holes: [], link: 'solder', charger: true,
       tip: 'Solders to the back of the Pico and has a power button. The battery plugs into it and charges through the Pico USB plug, so one opening does both. It rides on the Pico: its square here saves the room and keeps it on your list.', price: 9, src: 'Pimoroni PIM557: 21 x 21 x 7 mm', url: 'https://shop.pimoroni.com/products/pico-lipo-shim' },
-    tp4056: { cat: 'power', name: 'USB-C charger board (TP4056 with protection)', short: 'USB-C charger', w: 28, h: 17, depth: 5, inside: true, holes: [], link: 'solder', check: true, charger: true, usb: 'USB-C on a short end',
-      tip: 'The cheapest way to charge. Battery to B+ and B-. OUT+ goes through the power switch, then through a 1N5817 diode (stripe toward the Pico) to the Pico VSYS pin. The diode matters: without it USB power can push back into the battery. It gets its own opening in the wall for the USB-C plug.', price: 1.5, src: 'Common TP4056 USB-C module with protection: about 28 x 17 mm. Sellers differ, measure yours.', url: '' },
+    tp4056: { cat: 'power', name: 'TP4056 USB-C LiPo Charger', short: 'USB-C charger', w: 28, h: 17, depth: 5, inside: true, holes: [], link: 'solder', check: true, charger: true, usb: 'USB-C on a short end',
+      tip: 'The cheapest way to charge. Battery to B+ and B-. OUT+ goes through the power switch, then through a 1N5817 diode (stripe toward the Pico) to the Pico VSYS pin. The diode matters: without it USB power can push back into the battery. It gets its own opening in the wall for the USB-C plug. Buy pre-soldered headers for no-solder build.', price: 1, src: 'Common TP4056 USB-C module with protection: about 28 x 17 mm. Sellers differ, measure yours.', url: '' },
     lvlshift: { cat: 'power', name: 'Logic level shifter (4 channel, BSS138)', short: 'Level shifter', w: 15, h: 13, depth: 4, inside: true, holes: [], link: 'pins', check: true,
       tip: 'Lets a 3.3V part talk to a 5V Uno safely. LV to 3V3, HV to 5V, GND to GND, then each signal goes in on the HV side and out on the LV side.', price: 1, src: 'SparkFun BOB-12009 style 4 channel board: about 15 x 13 mm', url: 'https://www.sparkfun.com/products/12009' },
     rocker: { cat: 'power', name: 'On/off switch (small rocker)', short: 'Power switch', w: 15, h: 10.5, depth: 14, cut: { o: 'rect', w: 13.2, h: 8.8 }, keep: 6, link: 'solder', check: true,
@@ -133,12 +135,12 @@
   Object.keys(C.PCB).forEach(function (k) { var P = C.PARTS[k]; if (P) { P.fp = C.PCB[k].fp; P.mpn = C.PCB[k].mpn; P.lcsc = C.PCB[k].lcsc || ''; } });
   // searchQuery: clean store search words (no parentheses or commas) so Amazon, Adafruit and AliExpress always find the part.
   var SQ = { pico: 'Raspberry Pi Pico H', picow: 'Raspberry Pi Pico WH', pico2: 'Raspberry Pi Pico 2', uno: 'Elegoo Uno R3', nano: 'Arduino Nano ATmega328P', promicro: 'Pro Micro ATmega32U4',
-    esp32c3: 'ESP32 C3 SuperMini', esp32: 'ESP32 DevKit', zero2: 'Raspberry Pi Zero 2 W', pi5: 'Raspberry Pi 5', cyd: 'ESP32 2432S028 Cheap Yellow Display', tft28: 'ILI9341 2.8 inch SPI TFT', round128: 'GC9A01 round display 1.28',
+    esp32c3: 'ESP32 C3 SuperMini', esp32s3: 'ESP32 S3 DevKitC 1 N16R8', esp32: 'ESP32 DevKit V1 30 pin', zero2: 'Raspberry Pi Zero 2 W', pi5: 'Raspberry Pi 5', cyd: 'ESP32 2432S028 Cheap Yellow Display', tft28: 'ILI9341 2.8 inch SPI TFT', round128: 'GC9A01 round display 1.28',
     oled096: 'SSD1306 OLED 0.96 I2C', hdmi5: '5 inch HDMI display 800x480', hdmi7: '7 inch HDMI display 1024x600', tact12: '12mm tactile button cap', button16: '16mm momentary push button', arcade24: '24mm arcade button',
     arcade30: '30mm arcade button', keypad44: '4x4 matrix keypad', dpad: '6x6mm tactile switch', arducam: 'Arducam Mini 2MP OV2640', pir: 'HC-SR501 PIR sensor', vl53: 'VL53L0X distance sensor', esp32cam: 'ESP32-CAM',
     pot: '10K potentiometer', encoder: 'KY-040 rotary encoder', thumb: 'KY-023 joystick module', stick: 'Sanwa JLF joystick', slider: '60mm slide potentiometer', led5: '5mm LED assortment', ring12: 'WS2812 12 LED ring',
     speaker28: '28mm mini speaker', mat8: 'MAX7219 8x8 LED matrix', jack35: '3.5mm audio jack breakout', i2sdac: 'MAX98357A I2S amplifier', inmp441: 'INMP441 I2S microphone', lipo1200: '1200mAh LiPo battery JST',
-    lipo500: '500mAh LiPo battery JST', liposhim: 'LiPo SHIM for Pico', tp4056: 'TP4056 USB-C charger protection', rocker: 'mini rocker switch', dfplayer: 'DFPlayer Mini MP3 module', sdcard: 'Micro SD card reader module SPI', lcd1602: 'LCD1602 I2C module', lvlshift: 'logic level converter 4 channel', servo: 'SG90 micro servo' };
+    lipo500: '500mAh LiPo battery JST', liposhim: 'LiPo SHIM for Pico', tp4056: 'TP4056 USB C LiPo charger', rocker: 'mini rocker switch', dfplayer: 'DFPlayer Mini MP3 module', sdcard: 'Micro SD card reader module SPI', lcd1602: 'LCD1602 I2C module', lvlshift: 'logic level converter 4 channel', servo: 'SG90 micro servo' };
   Object.keys(C.PARTS).forEach(function (k) { C.PARTS[k].searchQuery = SQ[k] || (C.PARTS[k].find || C.PARTS[k].name).replace(/\([^)]*\)/g, ' ').replace(/[,/]+/g, ' ').replace(/\s+/g, ' ').trim(); });
   C.cleanQuery = function (t) { return String(t || '').replace(/\([^)]*\)/g, ' ').replace(/[(),/]+/g, ' ').replace(/\s+/g, ' ').trim(); };
   // Cheap starter kits and assortments: one bag covers many builds. [name, Amazon search words, why]
@@ -198,6 +200,331 @@
       credit: { project: 'Case Zero starter code', by: 'this builder, made from your wiring', url: 'https://nociv.co/casezero/build/', license: 'free to use and change' },
       note: 'Its code.py plays a sound per pad out of the jack and sends it as a USB MIDI note. The keypad\'s right column is Mode (Chopper, Drum, Ambient), Bank, Record and Stop. Wheel 1 is Pitch, wheel 2 Effect; the stick scrubs left and right and sets the level up and down. With the I2S mic, main.py (MicroPython) records it.' }
   ];
+  // Body presets: one open-source starter per body shape. preset: true shows it on the Shape page. play = its PLAY simulation.
+  // links (repos and libraries) show only in Build, Guide & Code. code = a starter file that proves the wiring, also in Guide & Code.
+  C.RECIPES.push(
+    { id: 'deskbot', preset: true, play: 'deskbot', name: 'AI Desk-Bot', level: 'Medium', cost: '~$25–$40', short: 'Eyes, a voice and a turning head', group: 'desk', style: 'face',
+      line: 'Press the wake button: OLED eyes open, it plays a chime and the servo turns its head. Mic and speaker are ready for a voice assistant.',
+      parts: [['esp32s3', 1], ['oled096', 1], ['inmp441', 1], ['i2sdac', 1], ['speaker28', 1], ['servo', 1], ['tact12', 1]],
+      credit: { project: 'xiaozhi-esp32', by: '78 (Xiaozhi open-source AI chatbot)', url: 'https://github.com/78/xiaozhi-esp32', license: 'MIT' },
+      links: [['xiaozhi-esp32', 'https://github.com/78/xiaozhi-esp32', 'Full voice assistant firmware for ESP32-S3 + INMP441 + MAX98357A + OLED'], ['Adafruit SSD1306', 'https://github.com/adafruit/Adafruit_SSD1306', 'OLED eyes'], ['ESP32Servo', 'https://github.com/madhephaestus/ESP32Servo', 'Servo on the ESP32-S3'], ['Arduino-ESP32 (ESP_I2S built in)', 'https://github.com/espressif/arduino-esp32', 'Board package 3.x: I2S mic and amp']],
+      note: 'The starter sketch below is NOCIV code: wake button, eyes, chime and servo. For talking to it, flash xiaozhi-esp32 (it needs Wi-Fi and its own server or theirs).',
+      code: [['deskbot.ino', `// AI Desk-Bot starter (NOCIV). Board: ESP32S3 Dev Module, PSRAM: OPI PSRAM. Arduino-ESP32 3.x.
+// Libraries: Adafruit SSD1306 + Adafruit GFX, ESP32Servo. ESP_I2S comes with the board package.
+// Wiring: OLED SDA 8, SCL 9 | Button 4 to GND | Servo signal 18 (power 5V) |
+// MAX98357A BCLK 15, LRC 16, DIN 7 | INMP441 SCK 5, WS 6, SD 17, L/R to GND
+#include <Wire.h>
+#include <Adafruit_GFX.h>
+#include <Adafruit_SSD1306.h>
+#include <ESP32Servo.h>
+#include <ESP_I2S.h>
+
+Adafruit_SSD1306 oled(128, 64, &Wire, -1);
+Servo head;
+I2SClass spk, mic;
+const int BTN = 4;
+
+void eyes(int h) {
+  oled.clearDisplay();
+  oled.fillRoundRect(24, 32 - h / 2, 28, h, 6, SSD1306_WHITE);
+  oled.fillRoundRect(76, 32 - h / 2, 28, h, 6, SSD1306_WHITE);
+  oled.display();
+}
+
+void chime() {
+  static int16_t buf[1600];
+  const float notes[2] = {880.0, 1318.5};
+  for (int n = 0; n < 2; n++) {
+    for (int i = 0; i < 1600; i++) buf[i] = (int16_t)(6000 * sin(2 * PI * notes[n] * i / 16000.0) * (1.0 - i / 1600.0));
+    spk.write((uint8_t *)buf, sizeof(buf));
+  }
+}
+
+void setup() {
+  Serial.begin(115200);
+  pinMode(BTN, INPUT_PULLUP);
+  Wire.begin(8, 9);
+  oled.begin(SSD1306_SWITCHCAPVCC, 0x3C);
+  head.attach(18);
+  head.write(90);
+  spk.setPins(15, 16, 7);
+  spk.begin(I2S_MODE_STD, 16000, I2S_DATA_BIT_WIDTH_16BIT, I2S_SLOT_MODE_MONO);
+  mic.setPins(5, 6, -1, 17);
+  mic.begin(I2S_MODE_STD, 16000, I2S_DATA_BIT_WIDTH_32BIT, I2S_SLOT_MODE_MONO);
+  eyes(4); // asleep
+}
+
+void loop() {
+  if (digitalRead(BTN) == LOW) {
+    eyes(26);
+    chime();
+    for (int a = 90; a >= 0; a -= 3) { head.write(a); delay(10); }
+    for (int a = 0; a <= 180; a += 3) { head.write(a); delay(10); }
+    for (int a = 180; a >= 90; a -= 3) { head.write(a); delay(10); }
+    Serial.printf("mic sample: %d\\r\\n", mic.read());
+    delay(1500);
+    eyes(4);
+  }
+}
+`]] },
+    { id: 'scanner', preset: true, play: 'scanner', name: 'Mini 3D Scanner', level: 'Easy', cost: '~$12–$18', short: 'A laser distance sweep on a servo', group: 'make', style: 'mini',
+      line: 'A servo sweeps a laser distance sensor from 0 to 180 degrees. The OLED draws what it sees and Serial prints (angle, mm) for a 3D point cloud.',
+      parts: [['pico', 1], ['vl53', 1], ['servo', 1], ['oled096', 1], ['tact12', 1]],
+      credit: { project: 'Adafruit CircuitPython VL53L0X', by: 'Adafruit', url: 'https://github.com/adafruit/Adafruit_CircuitPython_VL53L0X', license: 'MIT' },
+      links: [['Adafruit CircuitPython VL53L0X', 'https://github.com/adafruit/Adafruit_CircuitPython_VL53L0X', 'The distance sensor driver'], ['Adafruit CircuitPython DisplayIO SSD1306', 'https://github.com/adafruit/Adafruit_CircuitPython_DisplayIO_SSD1306', 'The OLED'], ['Adafruit CircuitPython Motor', 'https://github.com/adafruit/Adafruit_CircuitPython_Motor', 'The servo'], ['Adafruit_VL53L0X (Arduino)', 'https://github.com/adafruit/Adafruit_VL53L0X', 'For an ESP32 build in Arduino']],
+      note: 'An ESP32 DevKit works too: same parts, use the Arduino library. Add a second servo for tilt to scan in full 3D.',
+      code: [['code.py', `# Mini 3D Scanner (NOCIV starter). CircuitPython 9 on a Raspberry Pi Pico.
+# lib/: adafruit_vl53l0x, adafruit_displayio_ssd1306, adafruit_motor
+# Wiring: I2C SDA GP4, SCL GP5 (OLED 0x3C + VL53L0X 0x29) | Servo GP15 (5V from VBUS) | Button GP14 to GND
+import math, time, board, busio, digitalio, displayio, pwmio, i2cdisplaybus
+import adafruit_vl53l0x, adafruit_displayio_ssd1306
+from adafruit_motor import servo
+
+displayio.release_displays()
+i2c = busio.I2C(board.GP5, board.GP4)
+tof = adafruit_vl53l0x.VL53L0X(i2c)
+bus = i2cdisplaybus.I2CDisplayBus(i2c, device_address=0x3C)
+oled = adafruit_displayio_ssd1306.SSD1306(bus, width=128, height=64)
+bmp = displayio.Bitmap(128, 64, 2)
+pal = displayio.Palette(2)
+pal[1] = 0xFFFFFF
+root = displayio.Group()
+root.append(displayio.TileGrid(bmp, pixel_shader=pal))
+oled.root_group = root
+arm = servo.Servo(pwmio.PWMOut(board.GP15, frequency=50))
+btn = digitalio.DigitalInOut(board.GP14)
+btn.switch_to_input(pull=digitalio.Pull.UP)
+MAX_MM = 1200
+
+def sweep(angles):
+    for a in angles:
+        arm.angle = a
+        time.sleep(0.04)
+        mm = tof.range
+        print((a, mm))  # the Serial log: (angle, mm)
+        r = min(mm, MAX_MM) * 60 // MAX_MM
+        x = 64 + int(math.cos(math.radians(a)) * r)
+        y = 63 - int(math.sin(math.radians(a)) * r)
+        if 0 <= x < 128 and 0 <= y < 64:
+            bmp[x, y] = 1
+
+while True:
+    if not btn.value:  # press to start a new scan
+        bmp.fill(0)
+        sweep(range(0, 181, 5))
+        sweep(range(180, -1, -5))
+    time.sleep(0.05)
+`]] },
+    { id: 'retrocam', preset: true, play: 'retrocam', name: 'Retro Cam / Wiggle-Cam', level: 'Medium', cost: '~$12–$18', short: 'A pocket camera with an OLED viewfinder', group: 'make', style: 'camera',
+      line: 'An ESP32-CAM with a tiny monochrome viewfinder and a shutter button. Add an SG90 for Wiggle mode: two shots from side to side.',
+      parts: [['esp32cam', 1], ['oled096', 1], ['tact12', 1]],
+      credit: { project: 'DIY-Camera', by: 'derdacavga', url: 'https://github.com/derdacavga/DIY-Camera', license: 'see the repo' },
+      links: [['derdacavga/DIY-Camera', 'https://github.com/derdacavga/DIY-Camera', 'The full camera project'], ['espressif/esp32-camera', 'https://github.com/espressif/esp32-camera', 'Camera driver (comes with Arduino-ESP32)'], ['Adafruit SSD1306', 'https://github.com/adafruit/Adafruit_SSD1306', 'The OLED viewfinder']],
+      note: 'The ESP32-CAM has no USB plug: Shop adds the $2 ESP32-CAM-MB programmer. Wiggle mode needs 1 SG90 (about $2) on GPIO 2. This starter shows the viewfinder and counts shots; DIY-Camera shows saving to the SD card.',
+      code: [['retrocam.ino', `// Retro Cam starter (NOCIV). Board: AI Thinker ESP32-CAM, program it through the ESP32-CAM-MB.
+// Libraries: Adafruit SSD1306 + Adafruit GFX. esp_camera comes with Arduino-ESP32.
+// Wiring: OLED SDA 15, SCL 14 | Shutter 13 to GND | Wiggle servo (optional) 2
+#include "esp_camera.h"
+#include <Wire.h>
+#include <Adafruit_GFX.h>
+#include <Adafruit_SSD1306.h>
+
+Adafruit_SSD1306 oled(128, 64, &Wire, -1);
+const int SHUTTER = 13;
+int shots = 0;
+
+void setup() {
+  Serial.begin(115200);
+  pinMode(SHUTTER, INPUT_PULLUP);
+  Wire.begin(15, 14);
+  oled.begin(SSD1306_SWITCHCAPVCC, 0x3C);
+  camera_config_t c = {};
+  c.pin_pwdn = 32; c.pin_reset = -1; c.pin_xclk = 0; c.pin_sccb_sda = 26; c.pin_sccb_scl = 27;
+  c.pin_d7 = 35; c.pin_d6 = 34; c.pin_d5 = 39; c.pin_d4 = 36; c.pin_d3 = 21; c.pin_d2 = 19; c.pin_d1 = 18; c.pin_d0 = 5;
+  c.pin_vsync = 25; c.pin_href = 23; c.pin_pclk = 22;
+  c.xclk_freq_hz = 20000000; c.ledc_timer = LEDC_TIMER_0; c.ledc_channel = LEDC_CHANNEL_0;
+  c.pixel_format = PIXFORMAT_GRAYSCALE; c.frame_size = FRAMESIZE_QQVGA; c.fb_count = 1;
+  if (esp_camera_init(&c) != ESP_OK) Serial.println("Camera not found");
+}
+
+void loop() {
+  camera_fb_t *fb = esp_camera_fb_get();
+  if (!fb) return;
+  oled.clearDisplay();
+  for (int y = 0; y < 64; y++)
+    for (int x = 0; x < 128; x++)
+      if (fb->buf[(y * 120 / 64) * 160 + (x * 160 / 128)] > 110) oled.drawPixel(x, y, SSD1306_WHITE);
+  esp_camera_fb_return(fb);
+  oled.setCursor(0, 0);
+  oled.setTextColor(SSD1306_WHITE, SSD1306_BLACK);
+  oled.printf("SHOTS %d", shots);
+  oled.display();
+  if (digitalRead(SHUTTER) == LOW) {
+    shots++;
+    Serial.printf("Shot %d\\r\\n", shots);
+    oled.invertDisplay(true); delay(80); oled.invertDisplay(false);
+    while (digitalRead(SHUTTER) == LOW) delay(10);
+  }
+}
+`]] },
+    { id: 'gamepad', preset: true, play: 'gamepad', name: 'Wireless Gamepad', level: 'Medium', cost: '~$15–$22', short: 'A Bluetooth controller with two sticks', group: 'games', style: 'pad',
+      line: 'Two thumbsticks, a D-pad and 6 buttons over Bluetooth LE. Pairs like any store-bought gamepad.',
+      parts: [['esp32', 1], ['thumb', 2], ['dpad', 1], ['tact12', 6]],
+      credit: { project: 'ESP32-BLE-Gamepad', by: 'lemmingDev', url: 'https://github.com/lemmingDev/ESP32-BLE-Gamepad', license: 'MIT' },
+      links: [['lemmingDev/ESP32-BLE-Gamepad', 'https://github.com/lemmingDev/ESP32-BLE-Gamepad', 'Turns the ESP32 into a BLE gamepad'], ['h2zero/NimBLE-Arduino', 'https://github.com/h2zero/NimBLE-Arduino', 'The Bluetooth LE stack it needs: install both']],
+      note: 'Works with PC, Android and Linux. Not iOS: iPhones and iPads do not accept this kind of custom Bluetooth gamepad. Sticks go on ADC1 pins because ADC2 stops working while Bluetooth is on.',
+      code: [['gamepad.ino', `// Wireless Gamepad starter (NOCIV). Board: ESP32 Dev Module (ESP32 DevKit V1).
+// Libraries: ESP32-BLE-Gamepad (lemmingDev) + NimBLE-Arduino (h2zero).
+// Works with PC, Android and Linux. Not iOS.
+// Wiring: Left stick X 34, Y 35 | Right stick X 32, Y 33 (ADC1 only) | sticks to 3V3 + GND
+//         D-pad up 25, down 26, left 27, right 14 | Buttons 16, 17, 18, 19, 21, 22 | all buttons to GND
+#include <BleGamepad.h>
+
+BleGamepad pad("Case Zero Pad", "NOCIV", 100);
+const int BTN[6] = {16, 17, 18, 19, 21, 22};
+const int UP = 25, DOWN = 26, LEFT = 27, RIGHT = 14;
+
+int axis(int pin) { return map(analogRead(pin), 0, 4095, 0, 32767); }
+
+void setup() {
+  for (int i = 0; i < 6; i++) pinMode(BTN[i], INPUT_PULLUP);
+  pinMode(UP, INPUT_PULLUP); pinMode(DOWN, INPUT_PULLUP); pinMode(LEFT, INPUT_PULLUP); pinMode(RIGHT, INPUT_PULLUP);
+  BleGamepadConfiguration cfg;
+  cfg.setButtonCount(6);
+  cfg.setHatSwitchCount(1);
+  pad.begin(&cfg);
+}
+
+void loop() {
+  if (!pad.isConnected()) { delay(100); return; }
+  pad.setX(axis(34)); pad.setY(axis(35));
+  pad.setZ(axis(32)); pad.setRZ(axis(33));
+  for (int i = 0; i < 6; i++) { if (digitalRead(BTN[i]) == LOW) pad.press(i + 1); else pad.release(i + 1); }
+  bool u = !digitalRead(UP), d = !digitalRead(DOWN), l = !digitalRead(LEFT), r = !digitalRead(RIGHT);
+  uint8_t hat = HAT_CENTERED;
+  if (u && r) hat = HAT_UP_RIGHT; else if (u && l) hat = HAT_UP_LEFT; else if (d && r) hat = HAT_DOWN_RIGHT; else if (d && l) hat = HAT_DOWN_LEFT;
+  else if (u) hat = HAT_UP; else if (d) hat = HAT_DOWN; else if (l) hat = HAT_LEFT; else if (r) hat = HAT_RIGHT;
+  pad.setHat1(hat);
+  delay(10);
+}
+`]] },
+    { id: 'cyddeck', preset: true, play: 'cyd', name: 'CYD Touch Deck', level: 'Easy', cost: '~$12–$15', short: 'A 2.8 in touch panel of buttons', group: 'make', style: 'slate',
+      line: 'One board, no wiring: tap tiles on the 2.8 in touch screen and the RGB LED shows what is on.',
+      parts: [['cyd', 1]],
+      credit: { project: 'ESP32-Cheap-Yellow-Display', by: 'Brian Lough (witnessmenow) and community', url: 'https://github.com/witnessmenow/ESP32-Cheap-Yellow-Display', license: 'MIT' },
+      links: [['witnessmenow/ESP32-Cheap-Yellow-Display', 'https://github.com/witnessmenow/ESP32-Cheap-Yellow-Display', 'Setup, pinout and examples. Copy its DisplayConfig/User_Setup.h into TFT_eSPI'], ['Bodmer/TFT_eSPI', 'https://github.com/Bodmer/TFT_eSPI', 'The screen'], ['PaulStoffregen/XPT2046_Touchscreen', 'https://github.com/PaulStoffregen/XPT2046_Touchscreen', 'The touch']],
+      note: 'Touch is on its own SPI pins (CLK 25, MISO 39, MOSI 32, CS 33, IRQ 36). The RGB LED is on 4, 16 and 17 and lights when the pin is LOW.',
+      code: [['cyddeck.ino', `// CYD Touch Deck starter (NOCIV). Board: ESP32 Dev Module.
+// Libraries: TFT_eSPI (with the CYD User_Setup.h from witnessmenow/ESP32-Cheap-Yellow-Display), XPT2046_Touchscreen.
+#include <SPI.h>
+#include <TFT_eSPI.h>
+#include <XPT2046_Touchscreen.h>
+
+#define T_IRQ 36
+#define T_MOSI 32
+#define T_MISO 39
+#define T_CLK 25
+#define T_CS 33
+SPIClass touchSpi(VSPI);
+XPT2046_Touchscreen ts(T_CS, T_IRQ);
+TFT_eSPI tft;
+const int LED_R = 4, LED_G = 16, LED_B = 17; // LOW = on
+const char *NAMES[6] = {"Lights", "Music", "Fan", "Timer", "Scene", "Wi-Fi"};
+bool on[6];
+
+void led(int t) {
+  digitalWrite(LED_R, !(on[t] && (t == 0 || t == 3)));
+  digitalWrite(LED_G, !(on[t] && (t == 1 || t == 4)));
+  digitalWrite(LED_B, !(on[t] && (t == 2 || t == 5)));
+}
+
+void tile(int i) {
+  int x = 8 + (i % 3) * 104, y = 40 + (i / 3) * 96;
+  tft.fillRoundRect(x, y, 96, 88, 10, on[i] ? TFT_GREEN : TFT_DARKGREY);
+  tft.setTextColor(TFT_BLACK);
+  tft.drawCentreString(NAMES[i], x + 48, y + 36, 2);
+}
+
+void setup() {
+  pinMode(LED_R, OUTPUT); pinMode(LED_G, OUTPUT); pinMode(LED_B, OUTPUT);
+  digitalWrite(LED_R, HIGH); digitalWrite(LED_G, HIGH); digitalWrite(LED_B, HIGH);
+  touchSpi.begin(T_CLK, T_MISO, T_MOSI, T_CS);
+  ts.begin(touchSpi);
+  ts.setRotation(1);
+  tft.init();
+  tft.setRotation(1);
+  tft.fillScreen(TFT_BLACK);
+  tft.setTextColor(TFT_WHITE);
+  tft.drawString("CYD Touch Deck", 8, 10, 4);
+  for (int i = 0; i < 6; i++) tile(i);
+}
+
+void loop() {
+  if (ts.tirqTouched() && ts.touched()) {
+    TS_Point p = ts.getPoint();
+    int x = map(p.x, 200, 3700, 0, 320), y = map(p.y, 240, 3800, 0, 240);
+    if (y > 40) {
+      int i = min(2, x / 107) + (y > 136 ? 3 : 0);
+      on[i] = !on[i];
+      tile(i);
+      led(i);
+      delay(250);
+    }
+  }
+}
+`]] },
+    { id: 'arcade', preset: true, play: 'arcade', name: 'Pocket Arcade', level: 'Medium', cost: '~$18–$25', short: 'A Pico handheld with a 2.8 in screen', group: 'games', style: 'hand',
+      line: 'D-pad, 4 buttons and a speaker around a 2.8 in screen. Test it with the sprite starter, then flash Pico-GB to play the Game Boy games you own.',
+      parts: [['pico', 1], ['tft28', 1], ['dpad', 1], ['tact12', 4], ['speaker28', 1]],
+      credit: { project: 'Pico-GB', by: 'YouMakeTech, built on RP2040-GB by deltabeard', url: 'https://github.com/YouMakeTech/Pico-GB', license: 'MIT' },
+      links: [['YouMakeTech/Pico-GB', 'https://github.com/YouMakeTech/Pico-GB', 'Game Boy emulator firmware for the Pico (.uf2)'], ['deltabeard/RP2040-GB', 'https://github.com/deltabeard/RP2040-GB', 'The emulator it is built on'], ['Adafruit CircuitPython ILI9341', 'https://github.com/adafruit/Adafruit_CircuitPython_ILI9341', 'The screen, for the sprite starter']],
+      note: 'Pico-GB is written for a 2.2 in ILI9225 screen, so with the 2.8 in ILI9341 here its screen code needs changing. Bring your own game files.',
+      code: [['code.py', `# Pocket Arcade starter (NOCIV). CircuitPython 9 on a Raspberry Pi Pico. Tests every button and the speaker.
+# lib/: adafruit_ili9341
+# Wiring: Screen SCK GP18, MOSI GP19, CS GP17, DC GP20, RST GP21 | D-pad GP2 up, GP3 down, GP4 left, GP5 right
+#         Buttons GP6 A, GP7 B, GP8 X, GP9 Y (all to GND) | Speaker GP15 (through a 100 ohm resistor)
+import time, board, busio, digitalio, displayio, fourwire, pwmio, vectorio
+import adafruit_ili9341
+
+displayio.release_displays()
+spi = busio.SPI(board.GP18, MOSI=board.GP19)
+bus = fourwire.FourWire(spi, command=board.GP20, chip_select=board.GP17, reset=board.GP21)
+tft = adafruit_ili9341.ILI9341(bus, width=320, height=240)
+pal = displayio.Palette(1)
+pal[0] = 0xFFD23F
+hero = vectorio.Rectangle(pixel_shader=pal, width=16, height=16, x=152, y=112)
+root = displayio.Group()
+root.append(hero)
+tft.root_group = root
+
+def pin(p):
+    b = digitalio.DigitalInOut(p)
+    b.switch_to_input(pull=digitalio.Pull.UP)
+    return b
+
+up, down, left, right = pin(board.GP2), pin(board.GP3), pin(board.GP4), pin(board.GP5)
+keys = [pin(p) for p in (board.GP6, board.GP7, board.GP8, board.GP9)]
+spk = pwmio.PWMOut(board.GP15, duty_cycle=0, frequency=440, variable_frequency=True)
+
+def blip(f, t=0.04):
+    spk.frequency = f
+    spk.duty_cycle = 32768
+    time.sleep(t)
+    spk.duty_cycle = 0
+
+while True:
+    dx = (not right.value) - (not left.value)
+    dy = (not down.value) - (not up.value)
+    if dx or dy:
+        hero.x = max(0, min(304, hero.x + dx * 4))
+        hero.y = max(0, min(224, hero.y + dy * 4))
+        blip(220, 0.01)
+    for i, k in enumerate(keys):
+        if not k.value:
+            blip((523, 659, 784, 1047)[i])
+    time.sleep(0.02)
+`]] }
+  );
   // Community picks (Reddit, Instructables, maker blogs): cheap and well documented.
   C.PICKS = [
     ['cyd', 'The Cheap Yellow Display', 'Brain plus touch screen on one board, around $15. Huge community.'],
