@@ -184,7 +184,7 @@ function snapBrain(it) { // the brain sits against a wall with its USB end throu
   for (const [, r, at] of walls) { const p = at(); it.r = r; it.x = p[0]; it.y = p[1]; if (!problems(it).length) return; for (const d of [10, -10, 20, -20, 30, -30]) { if (r % 2) it.x = p[0] + d; else it.y = p[1] + d; if (!problems(it).length) return; } }
   it.x = x0; it.y = y0; it.r = r0;
 }
-function focusPanel(it) { const p = panels().indexOf(it.panel) >= 0 ? it.panel : homePanel(), pi = PAGES.findIndex((q) => q.name === 'Arrange'); S.tab[1] = p; if (!S.seen) S.seen = {}; S.seen[pi] = '1:' + p; }
+function focusPanel(it) { const p = panels().indexOf(it.panel) >= 0 ? it.panel : homePanel(), pi = PAGES.findIndex((q) => q.name === 'Parts'); S.tab[1] = p; if (!S.seen) S.seen = {}; S.seen[pi] = '1:' + p; }
 function removePart(type) { snapU(); for (let i = S.items.length - 1; i >= 0; i--) if (S.items[i].type === type) { S.items.splice(i, 1); break; } save(); }
 function reflow() { // style or size changed: move parts onto the panels this shape has, re-place anything that no longer fits
   S.items.forEach((it) => { if (it.panel !== 'inside' && panels().indexOf(it.panel) < 0) it.panel = defaultPanel(PP(it)) === 'inside' ? 'inside' : homePanel(); });
@@ -697,7 +697,7 @@ function tabsFor(step) {
   if (step === 2) return [['shape', 'Shape', 'shape'], ['measure', 'Measure', 'measure']]; /* size and fit sit on Shape itself */
   if (step === 3) return [['colors', 'Color', 'colors'], ['tex', 'Texture', 'tex'], ['labels', 'Buttons', 'labels'], ['logo', 'Logo', 'logo']];
   if (step === 4) return [['printer', 'Printer', 'printer'], ['strong', 'Strength', 'strong'], ['mat', 'Material', 'mat'], ['split', 'Split', 'split']];
-  return [['3d', '3D', 'cube'], ['shop', 'Shop', 'cart'], ['files', 'Files', 'file'], ['pcb', 'Board', 'brain'], ['extras', 'Extras', 'parts'], ['wire', 'Wire it', 'wire'], ['map', 'Wiring map', 'wire'], ['test', 'Test it', 'wire'], ['try', 'Try it', 'wire']];
+  return [['3d', '3D', 'cube'], ['shop', 'Shop', 'cart'], ['files', 'Files', 'file'], ['pcb', 'Board', 'brain'], ['extras', 'Extras', 'parts'], ['wire', 'Wire it', 'wire'], ['map', 'Wired', 'wire'], ['test', 'Test It', 'wire'], ['try', 'Try It', 'wire'], ['sounds', 'Sound Files', 'file'], ['guide', 'Guide & Code', 'file']];
 }
 function curTab() { const t = tabsFor(S.step), c = S.tab[S.step]; return t.some((x) => x[0] === c) ? c : t[S.step === 0 ? 1 : 0][0]; }
 function nudgeRow() { return '<div class="selbar nud"><b>Nudge</b><button data-act="nudge" data-nx="-1" data-ny="0" aria-label="Left">&larr;</button><button data-act="nudge" data-nx="0" data-ny="1" aria-label="Up">&uarr;</button><button data-act="nudge" data-nx="0" data-ny="-1" aria-label="Down">&darr;</button><button data-act="nudge" data-nx="1" data-ny="0" aria-label="Right">&rarr;</button></div>'; }
@@ -712,21 +712,20 @@ function undo() { const u = UNDO.pop(); CLEARED = false; if (!u) return; const o
 // ---- Studio shell (11-13). Two rooms, like the Case Zero page: the Body is what holds it, the Brain is what it does.
 // One job per page. A page shows only its own tools; everything else stays out of sight until you go there.
 // A page is a list of [step, tab] pairs from the old six steps, so every pane, action and saved build keeps working. '*' = every tab of that step.
-const PAGES = [
-  { room: 'body', name: 'Shape', hint: 'Pick a body', tabs: [[2, '*']], more: ['measure', 'psize', 'notch'] },
-  { room: 'body', name: 'Style', hint: 'Pick its colors', tabs: [[3, '*']] },
-  { room: 'body', name: 'Arrange', hint: 'Drag the electronics into place', tabs: [[1, '*']], more: ['size', 'psize'] },
-  { room: 'body', name: 'Print', hint: 'Pick your printer', tabs: [[4, '*']], more: ['strong', 'mat', 'split'] },
-  { room: 'body', name: 'Finish', hint: 'Look, then save the files', tabs: [[5, '3d'], [5, 'files']] },
-  { room: 'addons', name: 'Add-ons', hint: 'Print it, add it on', tabs: [[5, 'extras']] },
-  { room: 'parts', name: 'Electronics', hint: 'What should it do?', tabs: [[0, 'parts'], [0, 'snap'], [0, 'picks']], more: ['snap', 'picks'] },
-  { room: 'parts', name: 'Shop', hint: 'What to buy', tall: true, tabs: [[5, 'shop']] },
-  { room: 'brain', name: 'Test it', hint: 'Tap a part, watch the code run', tall: true, bare: true, tabs: [[5, 'test'], [5, 'map']] },
-  { room: 'brain', name: 'Wire it', hint: 'One wire at a time', tall: true, tabs: [[5, 'wire'], [0, 'pins']], more: ['pins'] },
-  { room: 'brain', name: 'Board', hint: 'One board, no loose wires', tall: true, tabs: [[5, 'pcb']] },
-  { room: 'try', name: 'Try it', hint: 'Play first, pick parts after', tall: true, bare: true, tabs: [[5, 'try']] } /* last, so saved page numbers keep working */
+const PAGES = [ /* three rooms: DESIGN (make the case), PLAY (hear and test it), BUILD (files, parts, links) */
+  { room: 'design', name: 'Shape', tabs: [[2, '*']], more: ['psize', 'notch'] },
+  { room: 'design', name: 'Parts', tabs: [[0, 'parts'], [1, '*'], [5, 'extras'], [0, 'snap'], [0, 'picks']], more: ['snap', 'picks', 'size', 'psize'] },
+  { room: 'design', name: 'Style', tabs: [[3, '*']] },
+  { room: 'design', name: 'Print Prep', tabs: [[4, '*']], more: ['strong', 'mat', 'split'] },
+  { room: 'play', name: 'Play', tabs: [[5, 'try'], [5, 'test'], [5, 'map'], [5, 'wire'], [0, 'pins']] },
+  { room: 'build', name: 'Print Files', tabs: [[5, 'files'], [5, '3d']] },
+  { room: 'build', name: 'Parts & Boards', tabs: [[5, 'shop'], [5, 'pcb']] },
+  { room: 'build', name: 'Sound Files', tabs: [[5, 'sounds']] },
+  { room: 'build', name: 'Guide & Code', tabs: [[5, 'guide']] }
 ];
-const ROOMS = [['try', 'Try'], ['body', 'Body'], ['addons', 'Add-ons'], ['parts', 'Parts'], ['brain', 'Brain']];
+const ROOMS = [['design', 'Design'], ['play', 'Play'], ['build', 'Build']];
+const ROOMOF = { body: 'design', addons: 'design', parts: 'design', brain: 'play', try: 'play' }; /* old links and saved builds */
+const JUMP = { Finish: [5, '3d'], Shop: [5, 'shop'], 'Wire it': [5, 'wire'] };
 function pageTabs(p) { const out = []; p.tabs.forEach(([st, id]) => tabsFor(st).forEach((x) => { if (id === '*' || x[0] === id) out.push([st, x[0], x[1], x[2]]); })); return out; }
 function pageOf(step, tab) { let hit = -1; PAGES.forEach((p, i) => { if (hit < 0 && pageTabs(p).some((x) => x[0] === step && x[1] === tab)) hit = i; }); if (hit < 0) hit = PAGES.findIndex((p) => p.tabs.some((x) => x[0] === step)); return hit < 0 ? 0 : hit; }
 function openPage(i) { // go to a page: its first tool, or the one you last used there
@@ -741,39 +740,52 @@ function render() {
   const t = curTab(); S.page = pageOf(S.step, t); const pg = PAGES[S.page], list = pageTabs(pg), mine = PAGES.map((p, i) => [p, i]).filter((x) => x[0].room === pg.room), at = mine.findIndex((x) => x[1] === S.page);
   if (!S.seen) S.seen = {}; S.seen[S.page] = S.step + ':' + t; if (!S.lastIn) S.lastIn = {}; S.lastIn[pg.room] = S.page;
   $('rooms').innerHTML = ROOMS.map((r) => '<button type="button" data-room="' + r[0] + '" aria-pressed="' + (r[0] === pg.room) + '">' + r[1] + '</button>').join('');
-  $('ph').innerHTML = '<b class="nb">0' + (at + 1) + '</b><span class="pt">' + pg.name + '</span><span class="hint">' + pg.hint + '</span>';
+  document.body.dataset.room = pg.room;
+  $('ph').innerHTML = mine.length > 1 ? mine.map((x, k) => '<button type="button" data-pg="' + x[1] + '" aria-current="' + (x[1] === S.page ? 'step' : 'false') + '"><b>' + (k + 1) + '.</b> ' + x[0].name + '</button>').join('') : '';
+  $('ph').hidden = mine.length < 2;
   // the main tool of the page shows by itself. The rest sit behind More, so a first-timer sees one thing and anyone can still reach everything.
   const extra = pg.more || [], isMore = (x) => extra.indexOf(x[1]) > -1, mains = list.filter((x) => !isMore(x)), rest = list.filter(isMore);
   if (!S.moreOn) S.moreOn = {}; const open = !!S.moreOn[S.page] || rest.some((x) => x[0] === S.step && x[1] === t);
   const pill = (x) => '<button type="button" data-st="' + x[0] + '" data-t="' + x[1] + '" aria-pressed="' + (x[0] === S.step && x[1] === t) + '"><span>' + x[2] + '</span></button>';
-  const body = pg.room === 'body', pro = body && !!S.pro, opn = body ? pro || rest.some((x) => x[0] === S.step && x[1] === t) : open; /* Body: one Simple | Pro (mm) switch instead of More options on every page */
-  const sp = body ? '<span class="spro" role="group" aria-label="Simple or Pro"><button type="button" data-pro="0" aria-pressed="' + !pro + '">Simple</button><button type="button" data-pro="1" aria-pressed="' + pro + '">Pro (mm)</button></span>' : '';
+  const body = pg.room === 'design', pro = body && !!S.pro, opn = body ? pro || rest.some((x) => x[0] === S.step && x[1] === t) : open; /* Body: one Simple | Pro (mm) switch instead of More options on every page */
+  const sp = body ? '<span class="spro" role="group" aria-label="Simple or Pro"><button type="button" data-pro="0" aria-pressed="' + !pro + '">Simple</button><button type="button" data-pro="1" aria-pressed="' + pro + '">Pro</button></span>' : '';
   $('parts').innerHTML = sp + (mains.length > 1 || opn ? mains.map(pill).join('') : '') + (opn ? rest.map(pill).join('') : '') + (rest.length && !body ? '<button type="button" class="mo" data-more="' + (open ? '0' : '1') + '"><span>' + (open ? 'Less' : 'More options') + '</span></button>' : '');
   $('parts').parentNode.hidden = !!pg.bare || (!body && mains.length < 2 && !rest.length);
   const prev = mine[at - 1], next = mine[at + 1];
-  $('bbar').innerHTML = '<button type="button" data-pg="' + (prev ? prev[1] : '') + '"' + (prev ? '' : ' disabled') + '>Back</button><span class="dots">' + mine.map((x) => '<b role="button" data-pg="' + x[1] + '" aria-label="' + x[0].name + '" title="' + x[0].name + '"' + (x[1] === S.page ? ' class="on" aria-current="step"' : '') + '></b>').join('') + '</span>' +
+  if (0) $('bbar').innerHTML = '<button type="button" data-pg="' + (prev ? prev[1] : '') + '"' + (prev ? '' : ' disabled') + '>Back</button><span class="dots">' + mine.map((x) => '<b role="button" data-pg="' + x[1] + '" aria-label="' + x[0].name + '" title="' + x[0].name + '"' + (x[1] === S.page ? ' class="on" aria-current="step"' : '') + '></b>').join('') + '</span>' +
     (next ? '<button type="button" class="nx" data-pg="' + next[1] + '">Next: ' + next[0].name + '</button>' : (() => { const nr = ROOMS[(ROOMS.findIndex((r) => r[0] === pg.room) + 1) % ROOMS.length]; return '<button type="button" class="nx" data-pg="' + PAGES.findIndex((p) => p.room === nr[0]) + '">' + nr[1] + '</button>'; })()) /* the next room opens on its first page */;
-  $('con').classList.toggle('tall', !!pg.tall); $('con').classList.toggle('slim', deco3d());
+  $('con').classList.toggle('tall', false); $('con').classList.toggle('slim', deco3d());
   if (SHOWN !== S.page) { if (SHOWN !== -1) { const st = $('stage'), cn = $('con'); st.classList.remove('zin'); cn.classList.remove('pop'); void st.offsetWidth; st.classList.add('zin'); cn.classList.add('pop'); } SHOWN = S.page; }
   // re-drawing the same view (a + or - tap) keeps folded sections as they were and the scroll where it was
   const vk = S.step + ':' + t + ':' + (S.fn || '') + ':' + (S.xsel || ''), same = vk === VIEWKEY, was = same ? Array.from($('pane').querySelectorAll('details')).map((x) => x.open) : [], top = same ? $('pane').scrollTop : 0; VIEWKEY = vk; if (!same && vk.split(':').slice(0, 2).join(':') !== (render.pg || '')) tag(''); render.pg = S.step + ':' + t; /* a new room or step: the old caption goes, the new view writes its own */
   $('pane').classList.toggle('padb', t === 'map'); $('stage').classList.toggle('wmap', t === 'map'); $('pane').innerHTML = pane(t); const now = $('pane').querySelectorAll('details'); if (now.length === was.length) now.forEach((x, i) => { x.open = was[i]; });
-  $('pane').scrollTop = top; after(t); tidy(); draw();
+  if (pg.room !== 'build') $('pane').querySelectorAll('a[href^="http"]').forEach((x) => { const sp = document.createElement('span'); sp.innerHTML = x.innerHTML; x.replaceWith(sp); }); /* outside links live in BUILD only */
+  else $('pane').innerHTML = '<div class="bcard"><h3>' + (at + 1) + '. ' + pg.name + '</h3>' + $('pane').innerHTML + '</div>';
+  $('pane').scrollTop = top; after(t); tidy(); draw(); stat();
 }
 // Less to read: long grey notes show two lines with a 'more' you can tap. Warnings (red) always show in full.
-function tidy() {
-  $('pane').querySelectorAll('.note').forEach((n) => { if (n.querySelector('.bad') || n.id === 'partTip' || n.classList.contains('keep')) return; n.classList.add('clamp'); if (n.scrollHeight > n.clientHeight + 3) n.classList.add('cut'); else n.classList.remove('clamp'); });
+function tidy() { /* long explanations sit behind a small i next to their section title */
+  let n = 0; $('pane').querySelectorAll('.note').forEach((x) => { if (x.classList.contains('bad') || x.querySelector('.bad') || x.id === 'partTip' || x.classList.contains('keep') || x.closest('.cop')) return;
+    let h = x.previousElementSibling, k = 0; while (h && k < 6 && !(h.classList && h.classList.contains('h'))) { h = h.previousElementSibling; k++; }
+    const id = 'tip' + (n++); x.classList.add('tip'); x.dataset.tip = id;
+    if (h && h.classList.contains('h')) { if (!h.querySelector('.ib')) h.insertAdjacentHTML('beforeend', '<button type="button" class="ib" aria-label="More info" data-ib="' + id + '">i</button>'); else x.dataset.tip = h.querySelector('.ib').dataset.ib; }
+    else x.insertAdjacentHTML('beforebegin', '<button type="button" class="ib solo" aria-label="More info" data-ib="' + id + '">i</button>'); });
   const on = $('pane').querySelector('.hrow [aria-pressed=true]'); if (on && on.scrollIntoView) { const r = on.parentNode; r.scrollLeft = Math.max(0, on.offsetLeft - r.clientWidth / 2 + on.offsetWidth / 2); }
 }
-$('pane').addEventListener('click', (e) => { const n = e.target.closest('.note.cut'); if (n && !e.target.closest('a,button,select,input')) n.classList.toggle('open'); });
+$('pane').addEventListener('click', (e) => { const i = e.target.closest('.ib'); if (!i) return; e.stopPropagation(); const o = i.classList.toggle('on'); $('pane').querySelectorAll('[data-tip="' + i.dataset.ib + '"]').forEach((x) => x.classList.toggle('open', o)); }, true);
+function stat() { let d = null; try { d = dims(); } catch (e) {} const n = S.items.filter((i) => i.of == null).length; STAT = (d ? Math.round(d.W) + ' \u00d7 ' + Math.round(d.D) + ' mm \u00b7 ' : '') + n + ' part' + (n === 1 ? '' : 's'); if (!TAGT) $('tag').textContent = STAT; }
+let STAT = '', TAGT = 0;
 function nextBtn() { return ''; }
 function go(step) { S.step = step; BIG3D = false; save(); $('con').classList.remove('down'); render(); }
-function goRoom(room) { const i = (S.lastIn || {})[room], j = i != null && PAGES[i] && PAGES[i].room === room ? i : PAGES.findIndex((p) => p.room === room); openPage(j); }
+function goRoom(room) { room = ROOMOF[room] || room; const i = (S.lastIn || {})[room], j = i != null && PAGES[i] && PAGES[i].room === room ? i : PAGES.findIndex((p) => p.room === room); openPage(j); }
+$('ph').addEventListener('click', (e) => { const b = e.target.closest('[data-pg]'); if (b) openPage(+b.dataset.pg); });
 $('bbar').addEventListener('click', (e) => { const r = e.target.closest('[data-room]'); if (r) { goRoom(r.dataset.room); return; } const b = e.target.closest('[data-pg]'); if (b && b.dataset.pg !== '') openPage(+b.dataset.pg); });
 $('rooms').addEventListener('click', (e) => { const r = e.target.closest('[data-room]'); if (r) goRoom(r.dataset.room); });
 $('parts').addEventListener('click', (e) => { const pr = e.target.closest('[data-pro]'); if (pr) { S.pro = pr.dataset.pro === '1'; if (!S.pro) { const L = pageTabs(PAGES[S.page]), ex = PAGES[S.page].more || [], f = L.find((x) => ex.indexOf(x[1]) < 0); if (f && ex.indexOf(S.tab[S.step]) > -1) { S.step = f[0]; S.tab[f[0]] = f[1]; } } save(); render(); return; } const m = e.target.closest('[data-more]'); if (m) { if (!S.moreOn) S.moreOn = {}; S.moreOn[S.page] = m.dataset.more === '1'; if (!S.moreOn[S.page]) { const p = PAGES[S.page], f = pageTabs(p).find((x) => (p.more || []).indexOf(x[1]) < 0); if (f) { S.step = f[0]; S.tab[f[0]] = f[1]; } } save(); render(); return; }
   const b = e.target.closest('[data-t]'); if (!b) return; S.step = +b.dataset.st; S.tab[S.step] = b.dataset.t; BIG3D = false; save(); $('con').classList.remove('down'); render(); });
-$('drop').addEventListener('click', () => { $('con').classList.toggle('down'); draw(); });
+let DRG = null, DRGSKIP = false; $('drop').addEventListener('pointerdown', (e) => { DRG = e.clientY; });
+$('drop').addEventListener('pointerup', (e) => { if (DRG == null) return; const dy = e.clientY - DRG; DRG = null; if (Math.abs(dy) > 24) { $('con').classList.toggle('down', dy > 0); DRGSKIP = true; draw(); } });
+$('drop').addEventListener('click', () => { if (DRGSKIP) { DRGSKIP = false; return; } $('con').classList.toggle('down'); draw(); });
 
 // ---------- panes ----------
 function seg(name, opts, val) { return '<div class="seg" data-sg="' + name + '">' + opts.map((o) => '<button type="button" data-v="' + o[0] + '" aria-pressed="' + (String(o[0]) === String(val)) + '">' + o[1] + '</button>').join('') + '</div>'; }
@@ -795,6 +807,10 @@ function pane(t) {
     '<p class="h">Not built yet</p><div class="grid g2"><button class="btn dark" data-act="snap">' + (PHOTO ? 'Take another photo' : 'Take a photo of my electronics') + '</button><button class="btn" data-act="toParts">Pick from the list</button></div>' +
     '<p class="note">Lay your electronics out on a table and snap them. The photo stays here on your phone so you can match each one to the list. Then tap Electronics and add each one you see.</p>' + (PHOTO ? '<button class="btn" data-act="nophoto" style="margin-top:8px">Remove the photo</button>' : '') + chosenChips();
   if (t === 'try') return tryPane();
+  if (t === 'sounds') return '<div class="list">' + (CZ.SOUND_LIBS || []).map(([n, u, d]) => '<a href="' + u + '" target="_blank" rel="noopener"><b>' + n + '</b>' + d + '</a>').join('') + '</div><p class="note keep">Pico tip: <b>16-bit, 22 kHz, mono .wav</b>.</p>';
+  if (t === 'guide') { const lk = (u, n) => '<a href="' + u + '" target="_blank" rel="noopener"><b>' + n + '</b></a>';
+    return (S.items.length ? GUIDE_BTN : '<p class="note keep">Add parts in Design first.</p>') + '<p class="h" style="margin-top:12px">Code files</p><div class="grid g2">' + codeNow().map((c, i) => '<button type="button" class="btn" data-cf="' + i + '">' + esc(c[0]) + '</button>').join('') + '</div>' +
+      '<p class="h" style="margin-top:12px">Tools</p><div class="list">' + lk(LIBURL.ino, 'Arduino IDE') + lk('https://circuitpython.org/', 'CircuitPython.org') + '</div>' + (libsBox() || '<button type="button" class="btn red" data-act="saveall" style="width:100%;margin:10px 0 0">Download Full Project (.zip)</button>'); }
   if (t === 'parts') { const ts = TSEL != null && S.items.find((i) => i.id === TSEL), sb = ts ? swapBar(ts) : ''; if (sb) return copilotHtml() + sb + partsPane(P, c); return copilotHtml() + partsPane(P, c); }
   return paneRest(t, P, c);
 }
@@ -895,7 +911,7 @@ function paneRest(t, P, c) {
   if (t === 'files') { const probs = allProblems(); return PRINT_SVC + (S.material === 'wood' ? '' : '<div class="row"><b>File type</b>' + seg('fmt', [['stl', 'STL'], ['3mf', '3MF']], fmtOf()) + '</div>') + (S.material === 'wood' ? '' : '<div class="row"><b>Print</b>' + seg('xmode', [['solid', 'Full Solid'], ['skel', 'Skeleton Test (~20 min)']], skelMode() ? 'skel' : 'solid') + '</div>' + (skelMode() ? (() => { let e = null; try { e = estimate(); } catch (er) {} return '<p class="note" style="margin:0 0 6px">' + (e ? '<b>About ' + hm(e.sec) + ', ' + Math.round(e.grams) + ' g.</b> ' : '') + 'A 0.6 mm frame, fast as toothpicks: a 3 mm border, a 3 mm rim round every opening and screw hole, solid bands along the puzzle seams, 1.6 mm ribs 40 mm apart, and a ruler notch every 10 mm on the front edge. Print it, lay it on your parts and your box, then adjust below.</p>'; })() : '')) + '<div class="grid g2"><button class="btn red" data-act="make"' + (probs.length || !S.items.length ? ' aria-disabled="true"' : '') + '>' + (skelMode() ? 'Make the test frame' : 'Make my files') + '</button>' + (S.material === 'wood' || isPanel() ? '' : '<button class="btn" data-act="swatch">Download 15-min Fit Swatch</button>') + '</div>' + (gcodeOk() && printerRow()[5] === 'bambu' ? '<p class="note" style="margin:8px 0 0">Ready-to-print G-code is made for Marlin printers (Ender, Prusa MK, Anycubic...). For your ' + esc(printerRow()[1]) + ', open the STL in Bambu Studio, or pick another printer in 04 Print.</p>' : '') + (gcodeOk() && printerRow()[5] !== 'bambu' ? '<button class="btn dark" data-act="gcode" style="width:100%;margin-top:8px">G-code (' + esc(printerRow()[0] === 'custom' ? 'my printer' : printerRow()[1]) + ' / Marlin, PLA)</button>' + (gcodePieces() > 1 ? '<div class="chosen" style="margin:6px 0 0">' + Array.from({ length: gcodePieces() }, (_, i) => '<span data-gcp="' + i + '" style="cursor:pointer">Piece ' + (i + 1) + '</span>').join('') + '<span data-gcp="all" style="cursor:pointer;background:#1a1a1a;color:#fff">All pieces</span></div>' : '') + '<p class="note" style="margin:4px 0 0">Flat pieces need no slicer: this file goes straight on the SD card. 0.28 mm layers at 60 mm/s; the printer shows its time and progress. Marlin printers: Ender, Prusa MK, Anycubic and most others.</p>' : '') + (S.material === 'wood' ? '' : '<button class="btn" data-act="papersvg" style="width:100%;margin-top:8px">1:1 Paper Template (SVG)</button>' + adjustHtml()) + (S.material === 'wood' || isPanel() ? '' : '<p class="note" style="margin:6px 0 0">The swatch is a ' + swatchSize() + ' mm plate with ' + (isClam() && S.magnets ? 'a magnet pocket, ' : '') + 'the M3 bore, the snap pin slot and ' + esc(swatchButton().short) + ' opening, at your ' + tolOf() + ' mm clearance and ' + R.T + ' mm walls. Print it first: if they fit, the case will.</p>') + '<p class="note">' + (!S.items.length ? 'Add electronics in Brain first.' : probs.length ? '<span class="bad">Fix the electronics marked ! in Arrange first.</span>' : (S.material === 'wood' ? 'Wood: real size templates (SVG) to print at 100 percent or laser cut, plus the cut list.' : 'One file per piece, numbered, as STL or 3MF. Print the deck face down, the tray open side up.')) + '</p><div class="files" id="fileList" style="margin-top:8px"></div>' + (S.items.length ? GUIDE_BTN : '') + (S.material === 'wood' ? '' : sliceGuide() + faqHtml()); } /* make, then the files, then how to slice them */
   if (t === 'wire') return wireHtml();
   if (t === 'map') return simRow() + '<p class="note keep" style="margin:0 0 6px"><b style="color:#c8412f">Red</b> = power, <b>black</b> = ground, <b style="color:#2f6fdb">blue</b> / <b style="color:#c9a200">yellow</b> / <b style="color:#2f9a5b">green</b> = signals. Every wire from every part to its pin on the brain, the same plan as the step-by-step cards and ' + CFILE() + '.</p>' + pfHtml() + (mapWhy() ? '<p class="note bad">' + esc(mapWhy()) + '</p>' : '');
-  if (t === 'test') return behHtml() + simRow() + '<div id="bswap">' + bswapHtml() + '</div><p class="note keep" style="margin:0 0 6px">' + ({ macro: 'Your macro pad: each button sends a shortcut. Press them to see what the computer gets.', midi: 'Your MIDI controller: each button sends a note in the ' + SCN[TW().scale] + ' scale, each knob a MIDI CC. Any music app on the computer plays it.', sound: 'Your soundboard: each button plays its own jingle on the speaker.', timer: 'Your desk timer: press the button to start or pause, hold it 1 s to reset, turn the wheel to set the minutes. It beeps at 00:00.', synth: 'Your synth: hold a button to play its note. Knob 1 moves the pitch, knob 2 the tempo of the arpeggio.', sampler: 'Your sampler: tap a pad to hear it. Mode switches Chopper, Drum and Ambient; Bank moves the notes up. Turn the Pitch and Effect wheels and move the stick while a pad rings.' }[recipeFn()] || 'Press the buttons, drag the knobs and sliders, wave at the motion sensor.') + ' This acts out what your ' + CFILE() + ' does, step by step, before you wire anything.</p>' + libsBox() + (mapWhy() ? '<p class="note bad">' + esc(mapWhy()) + '</p>' : '') + '<div class="list" id="tlog" style="font:600 12px/1.35 ui-monospace,Menlo,monospace">' + TEST.log.map((l) => '<div class="it" style="padding:5px 8px">' + esc(l) + '</div>').join('') + '</div><button class="btn" data-act="treset" style="margin-top:8px;padding:8px">Start the test again</button>' + libsDrawer();
+  if (t === 'test') return behHtml() + simRow() + '<div id="bswap">' + bswapHtml() + '</div><p class="note keep" style="margin:0 0 6px">' + ({ macro: 'Your macro pad: each button sends a shortcut. Press them to see what the computer gets.', midi: 'Your MIDI controller: each button sends a note in the ' + SCN[TW().scale] + ' scale, each knob a MIDI CC. Any music app on the computer plays it.', sound: 'Your soundboard: each button plays its own jingle on the speaker.', timer: 'Your desk timer: press the button to start or pause, hold it 1 s to reset, turn the wheel to set the minutes. It beeps at 00:00.', synth: 'Your synth: hold a button to play its note. Knob 1 moves the pitch, knob 2 the tempo of the arpeggio.', sampler: 'Your sampler: tap a pad to hear it. Mode switches Chopper, Drum and Ambient; Bank moves the notes up. Turn the Pitch and Effect wheels and move the stick while a pad rings.' }[recipeFn()] || 'Press the buttons, drag the knobs and sliders, wave at the motion sensor.') + '</p>' + pfHtml() + (mapWhy() ? '<p class="note bad">' + esc(mapWhy()) + '</p>' : '') + '<div class="list" id="tlog" style="font:600 12px/1.35 ui-monospace,Menlo,monospace">' + TEST.log.map((l) => '<div class="it" style="padding:5px 8px">' + esc(l) + '</div>').join('') + '</div><button class="btn" data-act="treset" style="margin-top:8px;padding:8px">Start the test again</button>';
   if (t === 'extras') return partsRoomHtml();
   return '';
 }
@@ -997,7 +1013,7 @@ $('pane').addEventListener('change', (e) => {
   im.src = URL.createObjectURL(f);
 });
 function after(t) {
-  codeBox(t === 'test');
+  codeBox(PAGES[S.page].room === 'play');
   if (t === 'parts') { const s = $('cat'); if (s) s.onchange = () => { S.cat = s.value; save(); render(); }; }
   $('sb').hidden = !(native3d() || BIG3D);
   const tv = $('tryv'); if (tv) { tv.hidden = t !== 'try'; if (t === 'try') { tryWire(); tryStage(); } } if (t !== 'try' && t !== 'test') djStop(); else if (t === 'try') djSync(TRYS.dj);
@@ -1007,6 +1023,7 @@ function after(t) {
 $('pane').addEventListener('click', (e) => {
   const pa = e.target.closest('[data-pact]'); if (pa) { const [id, k] = pa.dataset.pact.split(':'), it = S.items.find((i) => i.id === +id); if (it) { it.action = k; testReset(); save(); render(); tag(label(it).split(' ')[0] + ' is now ' + ACTN(k) + ': Test It and ' + CFILE() + ' follow it.'); } return; }
   const cpb = e.target.closest('[data-cp]'); if (cpb) { cpFix(cpb.dataset.cp); return; }
+  if (e.target.closest('[data-act=cpopen]')) { $('sheetIn').innerHTML = '<button class="x" id="sheetX" aria-label="Close">&times;</button><h2>Notes</h2>' + copilotFull(); $('sheet').hidden = false; return; }
   const bw = e.target.closest('[data-bswap]'); if (bw) { const [id, t] = bw.dataset.bswap.split(':'), it = S.items.find((i) => i.id === +id); if (it && t !== swapCur(it)) { testReset(); swapType(it, t); } return; }
   const sp = e.target.closest('[data-sim],[data-wired]'); if (sp) { if (sp.dataset.sim) simTap(sp.dataset.sim); else { S.tab[5] = curTab() === 'map' ? 'test' : 'map'; save(); render(); if (S.tab[5] === 'map') pfTag(); } return; }
   const b = e.target.closest('button, [data-sel], [data-delmine], [data-sub], [data-nsel], [data-ins], [data-mpan], [data-gcp]'); if (!b) return; const d = b.dataset;
@@ -1024,7 +1041,8 @@ $('pane').addEventListener('click', (e) => {
   if (d.mrm != null) { S.attachedParts = S.attachedParts.filter((m) => m.id !== +d.mrm); save(); render(); return; }
   if (d.mtog != null) { const m = S.attachedParts.find((x) => x.id === +d.mtog); if (m) { m.mountType = m.mountType === 'screw' ? 'snap' : 'screw'; save(); render(); } return; }
   if (d.msave != null) { const i = S.attachedParts.findIndex((x) => x.id === +d.msave), m = S.attachedParts[i]; if (m) saveFile(fileOut(mountFile(m, i))); return; }
-  if (d.xgo) { S.xsel = d.xgo; goRoom('parts'); return; }
+  if (d.xgo) { S.xsel = d.xgo; S.tab[5] = 'extras'; go(5); return; }
+  if (d.cf != null) { const c = codeNow()[+d.cf]; if (c) saveFile({ name: c[0], blob: new Blob([c[1]], { type: 'text/plain' }) }); return; }
   if (d.act === 'undo1') { undo(); return; }
   if (d.beh) { S.beh = d.beh; actsFill(true); testReset(); save(); render(); tag((BEH.find((b) => b[0] === d.beh) || [0, 'Sampler'])[1] + ': Test It and the code follow it.'); return; }
   if (d.tw) { const [k, v] = d.tw.split(':'); TW()[k] = k === 'mac' ? v === '1' : k === 'min' ? +v : v; testReset(); save(); render(); return; }
@@ -1118,6 +1136,7 @@ $('pane').addEventListener('click', (e) => {
   if (d.dface) { S.dface = d.dface; if (DECO) DECO.sel = null; save(); render(); return; }
   if (d.dact) { const q = DECO && (S.deco || []).find((z) => z.id === DECO.sel); if (!q) return; snapU(); if (d.dact === 'rm') { S.deco = S.deco.filter((z) => z !== q); DECO.sel = null; } else if (d.dact === 'big') q.s = Math.min(3.2, (q.s || 1.4) + 0.3); else if (d.dact === 'small') q.s = Math.max(0.8, (q.s || 1.4) - 0.3); else if (d.dact === 'flip') q.f = q.f ? 0 : 1; else if (d.dact === 'turnl' || d.dact === 'turnr') q.a = (((q.a || 0) + (d.dact === 'turnl' ? -45 : 45)) % 360 + 360) % 360; else q.mt = d.dact; save(); render(); return; }
   if (d.mt) { const it = S.items.find((i) => i.id === sel); if (it) { snapU(); it.mt = d.mt; save(); render(); } return; }
+  if (d.jump && JUMP[d.jump]) { const [st, tb] = JUMP[d.jump]; S.step = st; S.tab[st] = tb; go(st); return; }
   if (d.jump) { const pi = PAGES.findIndex((q) => q.name === d.jump); if (pi >= 0) openPage(pi); return; }
   if (act === 'guide') { printGuide(); return; }
   if (act === 'saveall') { if (!FILES || !FILES.length) { try { FILES = filesOf(); } catch (e) { FILES = null; } } if (!FILES || !FILES.length) { tag('Add a body first, then save the project.'); return; } tag('Packing your files...'); const pf = pfList();
@@ -1240,7 +1259,7 @@ function frame(W, H, dW, dD) { // fit a flat picture, leaving room for the 3D bo
   if (rs && kA > kB) return { k: kA, ox: pad + (aw - rs - dW * kA) / 2, oy: pad };
   return { k: kB, ox: (W - dW * kB) / 2, oy: pad + (rs && kB < Math.min(aw / dW, ah / dD) ? rs : 0) };
 }
-function tag(s) { $('tag').textContent = String(s).replace(/&(amp|lt|gt|quot|#39);/g, (m, k) => ({ amp: '&', lt: '<', gt: '>', quot: '"', '#39': "'" })[k]); } /* captions are plain text: names escaped for the page read right here */
+function tag(s) { s = String(s || ''); if (!/^(Saved|Copied|Building|Drawing)|could not|Warning|cannot/i.test(s)) { if (!TAGT) $('tag').textContent = STAT; return; } clearTimeout(TAGT); TAGT = setTimeout(() => { TAGT = 0; $('tag').textContent = STAT; }, 3000); $('tag').textContent = s.replace(/&(amp|lt|gt|quot|#39);/g, (m, k) => ({ amp: '&', lt: '<', gt: '>', quot: '"', '#39': "'" })[k]); } /* captions are plain text: names escaped for the page read right here */
 let TRAY = [], TSEL = null; // where each tray picture sits, and the one that is picked
 function drawBrain(W, H) {
   TRAY = [];
@@ -2026,7 +2045,7 @@ function codeNow() { const out = []; try { const c = codeFor(wiring(), summaryLi
   try { const mm = micMain(wiring(), summaryLine().replace(/<[^>]+>/g, ''), BRDX()); if (mm) out.push(['main.py', mm]); } catch (e) {} return out; }
 let CODEF = 0;
 const hlLine = (txt) => { const t = hlTag(); if (!t) return -1; const re = new RegExp('(^|[^A-Za-z0-9_])' + t.replace(/[.]/g, '\\.') + '(?![0-9])'); return txt.split('\n').findIndex((l) => re.test(l)); };
-function codeBox(on) { const b = $('cbx'); b.hidden = !on; if (!on) return; const c = codeNow(), hi = hlLine(c[0][1]); $('cbxName').textContent = c[0][0] + (hi > -1 ? ' : ' + (hi + 1) : ''); if (hi > -1) { $('cbxPre').textContent = c[0][1].split('\n').slice(hi, hi + 4).join('\n'); return; } $('cbxPre').textContent = c[0][1].split('\n').filter((l) => l.trim() && !/^(#|\/\/)/.test(l.trim())).slice(0, 4).join('\n') || c[0][1].split('\n').slice(0, 4).join('\n'); }
+function codeBox(on) { const b = $('cbx'); b.hidden = !on; if (!on) return; const c = codeNow(), hi = hlLine(c[0][1]); $('cbxName').textContent = 'Code'; if (hi > -1) { $('cbxPre').textContent = c[0][1].split('\n').slice(hi, hi + 4).join('\n'); return; } $('cbxPre').textContent = c[0][1].split('\n').filter((l) => l.trim() && !/^(#|\/\/)/.test(l.trim())).slice(0, 4).join('\n') || c[0][1].split('\n').slice(0, 4).join('\n'); }
 // a light syntax colourer for the Code viewer: comments, strings, numbers, keywords, #include. One line at a time, no library.
 const KW = { py: /^(import|from|as|def|class|return|if|elif|else|for|while|in|not|and|or|is|try|except|finally|with|pass|break|continue|global|lambda|raise|True|False|None)$/,
   ino: /^(void|int|long|bool|char|byte|float|double|const|unsigned|static|if|else|for|while|do|return|break|continue|switch|case|new|true|false|String|HIGH|LOW|INPUT|OUTPUT|INPUT_PULLUP)$/ };
@@ -2054,7 +2073,7 @@ function headerPins(B) { const P = {}, nl = B.left.length + B.right.length; B.le
 function wiring() { if (!S.pins) S.pins = {}; return planWiring(wiringItems(), S.pins, BRDX()); }
 // Pin preflight: duplicate pins and 3.3V parts on a 5V Uno, checked before code is exported or Wired is shown
 function pfList() { try { return preflight(wiring(), BRDX()); } catch (e) { return []; } }
-function pfHtml() { const L = pfList(); return copilotHtml() + (L.length ? '<div class="note bad keep" role="alert" style="margin:0 0 6px"><b>Check before you wire</b>' + L.map((w) => '<div>' + esc(w) + '</div>').join('') + '</div>' : ''); }
+function pfHtml() { return copilotHtml(); }
 function pfTag() { const L = pfList(); if (L.length) tag('Warning: ' + L[0] + (L.length > 1 ? ' (+' + (L.length - 1) + ' more)' : '')); return L; }
 function wiringText() { const w = wiring(), B = BRDX(), L = ['NOCIV Case Zero wiring', 'Brain: ' + B.name, ''];
   pfList().forEach((x) => L.push('CHECK FIRST: ' + x)); w.problems.forEach((x) => L.push('FIX: ' + x)); if (L.length > 3) L.push('');
@@ -2699,7 +2718,8 @@ function copilot() {
       [['enc', '', 'Swap 1 Knob to Click Wheel'], ['ok', '', 'Continue']]);
   return out;
 }
-function copilotHtml() { const L = copilot(); return L.map((c) => '<div class="cop" role="status"><b>' + esc(c.title) + '</b><p>' + esc(c.why) + '</p><div class="cofx">' + c.fixes.map((f) => '<button type="button" class="' + (f[0] === 'ok' ? 'go' : 'fx') + '" data-cp="' + c.id + '|' + f[0] + '|' + f[1] + '">' + (f[0] === 'ok' ? '' : '<i>1-Tap Fix</i>') + esc(f[2]) + '</button>').join('') + '</div></div>').join(''); }
+function copilotHtml() { const n = copilot().length + pfList().length; return n ? '<button type="button" class="warnp" data-act="cpopen">&#9888; ' + n + ' note' + (n > 1 ? 's' : '') + ' &middot; Tap to fix</button>' : ''; } /* hardware notes fold into one amber pill; the fixes open in a sheet */
+function copilotFull() { const L = copilot(), F = pfList(); return (F.length ? '<div class="cop"><b>Check before you wire</b>' + F.map((w) => '<p>' + esc(w) + '</p>').join('') + '</div>' : '') + L.map((c) => '<div class="cop" role="status"><b>' + esc(c.title) + '</b><p>' + esc(c.why) + '</p><div class="cofx">' + c.fixes.map((f) => '<button type="button" class="' + (f[0] === 'ok' ? 'go' : 'fx') + '" data-cp="' + c.id + '|' + f[0] + '|' + f[1] + '">' + (f[0] === 'ok' ? '' : '<i>1-Tap Fix</i>') + esc(f[2]) + '</button>').join('') + '</div></div>').join(''); }
 function cpFix(v) {
   const [id, kind, arg] = v.split('|'), bi = brainInfo(), bk = bi && BOARD_OF[bi.type], P = PARTS();
   if (kind === 'ok') { S.cpOk = S.cpOk || {}; S.cpOk[id + ':' + bk] = 1; save(); render(); tag('Carry on: nothing changed.'); return; }
@@ -3150,7 +3170,7 @@ function openHelp() { $('sheetIn').innerHTML = '<button class="x" id="sheetX" ar
 $('helpTop').onclick = openHelp;
 document.addEventListener('toggle', (e) => { if (e.target && e.target.id === 'adjBox') { S.adjOpen = e.target.open; save(); } }, true); /* the Adjust section stays open while you work in it */
 $('freshTop').onclick = () => { $('sheetIn').innerHTML = '<h2>Clear current build and start fresh?</h2><p class="note" style="font-size:14px">This clears the body, the electronics, the mounted parts, the ports, the logos and the saved draft.</p><div class="list" style="margin-top:10px"><button class="btn start" data-door="wipe"><b>Clear and start fresh</b>Begin again from the start screen.</button><button class="btn start" data-door="cancel"><b>Keep my build</b>Go back to what I was making.</button></div>'; $('sheet').hidden = false; };
-$('sheet').addEventListener('click', (e) => { if (e.target === $('sheet')) $('sheet').hidden = true; });
+$('sheet').addEventListener('click', (e) => { if (e.target === $('sheet') || e.target.closest('#sheetX')) { $('sheet').hidden = true; return; } const cp = e.target.closest('[data-cp]'); if (cp) { $('sheet').hidden = true; cpFix(cp.dataset.cp); } });
 window.addEventListener('resize', draw);
 // mounting: drag a part onto a spot (desktop), or tap a spot or a dot on the case (phone)
 $('pane').addEventListener('dragstart', (e) => { const t = e.target.closest && e.target.closest('[data-mdrag]'); if (t) { e.dataTransfer.setData('text/plain', t.dataset.mdrag); e.dataTransfer.effectAllowed = 'copy'; } });
@@ -3280,7 +3300,7 @@ function tryPane() { const T = TRY(), pr = tPreset(); if (!T) return '';
     '<p class="h">Sound pack for every pad</p><div class="hrow simr" role="group" aria-label="Sound pack">' + Object.keys(PACKS()).map((p) => '<button type="button" data-tpack="' + p + '">' + esc(PACKS()[p].name) + '</button>').join('') + '<button type="button" data-tup="all">Upload .wav / .mp3</button></div>' +
     '<p class="h">Pads: what each one does</p><div class="tlist">' + T.pads.map((id, i) => '<label class="tsel"><b>' + (i + 1) + '</b><select data-tps="' + i + '" aria-label="Pad ' + (i + 1) + '">' + opts(id) + '</select><button type="button" data-tup="' + i + '" aria-label="Upload a sound for pad ' + (i + 1) + '">&#x2191;</button></label>').join('') + '</div>' +
     '<p class="h" style="margin-top:8px">Knobs</p><div class="tlist">' + T.knobs.map((k, i) => '<label class="tsel"><b>K' + (i + 1) + '</b><select data-tks="' + i + '" aria-label="Knob ' + (i + 1) + '">' + (CZ.KNOB_FNS || []).map(([v, n]) => '<option value="' + v + '"' + (v === k ? ' selected' : '') + '>' + esc(n) + '</option>').join('') + '</select></label>').join('') + '</div>' +
-    '<p class="note keep">Uploaded files stay on this phone and play only here. The real build plays them from the Pico as .wav files.</p>' + libsDrawer() + '<input type="file" id="tryFile" accept=".wav,.mp3,audio/wav,audio/mpeg,audio/*" multiple hidden>'; }
+    '<p class="note keep">Uploaded files stay on this phone and play only here. The real build plays them from the Pico as .wav files.</p><input type="file" id="tryFile" accept=".wav,.mp3,audio/wav,audio/mpeg,audio/*" multiple hidden>'; }
 function tryUpload(files, at) { const c = auCtx(); if (!c || !files.length) return; const T = TRY(); let i = at === 'all' ? 0 : +at;
   Array.from(files).slice(0, at === 'all' ? T.pads.length : 1).forEach((f, j) => { const pad = i + j, key = String(Date.now()) + j; f.arrayBuffer().then((ab) => new Promise((ok, no) => c.decodeAudioData(ab, ok, no))).then((buf) => { AU.user[key] = buf; (AU.userName = AU.userName || {})[key] = f.name.replace(/\.[^.]+$/, '').slice(0, 18); T.pads[pad] = 'user:' + key; save(); render(); tag('Pad ' + (pad + 1) + ': ' + f.name); }).catch(() => tag('That file could not be played. Try a .wav or .mp3')); }); }
 // Make this my build: the parts, a body that fits them, the pins on their own. No pin picking.
@@ -3294,7 +3314,7 @@ function tryMake() { const T = TRY(), pr = tPreset(), btns = T.pads.length, whee
   actsFill(true); const B = S.items.filter((i) => i.type === pr.pad), K = S.items.filter((i) => i.type === 'pot' || i.type === 'encoder');
   B.forEach((it, i) => { const id = T.pads[i] || ''; if (/^fx:/.test(id)) it.action = id.slice(3); else if (/^mac:/.test(id)) it.action = 'macro'; else if (pr.fn === 'synth') it.action = 'note'; });
   K.forEach((it, i) => { const k = T.knobs[i]; if (k === 'beat' || k === 'wet') it.action = k; });
-  djStop(); tryTimerStop(); save(); goRoom('parts'); tag('Your ' + pr.name + ': ' + S.items.length + ' parts, a ' + S.cols * 20 + ' x ' + S.rows * 20 + ' mm body, every pin picked for you. See Brain, Wire it.'); }
+  djStop(); tryTimerStop(); save(); S.tab[0] = 'parts'; go(0); tag('Your ' + pr.name + ': ' + S.items.length + ' parts, a ' + S.cols * 20 + ' x ' + S.rows * 20 + ' mm body, every pin picked for you. See Brain, Wire it.'); }
 function tryWire() { const el = $('tryv'); if (!el || el.dataset.on) return; el.dataset.on = '1';
   el.addEventListener('pointerdown', (e) => { const b = e.target.closest('[data-tpad]'); if (!b) return; e.preventDefault(); const i = +b.dataset.tpad; if (TRY().sel !== i) { TRY().sel = i; el.querySelectorAll('.tpad.sel').forEach((x) => x.classList.remove('sel')); b.classList.add('sel'); } tryPad(i, true); });
   ['pointerup', 'pointercancel', 'pointerleave'].forEach((ev) => el.addEventListener(ev, (e) => { const b = e.target.closest && e.target.closest('[data-tpad]'); if (b) tryPad(+b.dataset.tpad, false); }));
@@ -3318,4 +3338,4 @@ try { if (S.items.length) { keepInside(); save(); } } catch (e) {} /* a saved bu
   } else if (r) { clean(); if (S.items.length) { $('sheetIn').innerHTML = '<h2>Start the ' + esc(r.name) + '?</h2><p class="note" style="font-size:14px">This replaces the ' + S.items.length + ' electronics in the build you have now. It is kept, so Bring back can return it.</p><div class="list" style="margin-top:10px"><button class="btn start" data-rok="' + r.id + '"><b>Start the ' + esc(r.name) + '</b>' + esc(r.line) + '</button><button class="btn start" data-door="close"><b>Keep my build</b>Go back to what I was making.</button></div>'; $('sheet').hidden = false; } else loadRecipe(r.id); }
   else if (!S.started && !S.items.length) showStart(); }
 // arriving from the Case Zero page: /casezero/build/?room=brain opens that room
-{ const rq = new URLSearchParams(location.search).get('room'); if ((rq === 'brain' || rq === 'body' || rq === 'parts' || rq === 'try') && PAGES[S.page || 0].room !== rq) goRoom(rq); }
+{ const rq = new URLSearchParams(location.search).get('room'); if (rq && (ROOMOF[rq] || ROOMS.some((r) => r[0] === rq)) && PAGES[S.page || 0].room !== (ROOMOF[rq] || rq)) goRoom(rq); }
