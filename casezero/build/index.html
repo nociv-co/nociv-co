@@ -247,6 +247,29 @@ svg.la{fill:none;stroke:currentColor;stroke-width:2.2;stroke-linecap:round;strok
 /* Board: order 5 */
 .order5{margin:8px 0 0;padding:9px 11px;border:2px solid var(--ink);border-radius:12px;background:#fffbe9;font:500 12.5px/1.4 var(--sys)}.order5 b{font-weight:900}.order5 ol{margin:6px 0 4px 18px;padding:0}.order5 p{margin:4px 0 0;color:var(--mute)}.order5 a{color:var(--ink)}
 .cfull mark{background:#c8412f;color:#fff}
+.cfull pre{counter-reset:ln;padding-left:0}
+.cfull .ln{display:block;min-height:1.45em;counter-increment:ln;padding-right:12px}
+.cfull .ln::before{content:counter(ln);display:inline-block;width:4ch;margin-right:1.4ch;padding-right:.6ch;text-align:right;color:#5f8792;border-right:1px solid #24414b;-webkit-user-select:none;user-select:none}
+.cfull .ln.hl{background:#c8412f;color:#fff}.cfull .ln.hl span{color:#fff}
+.cfull .tc{color:#86a7b1;font-style:italic}.cfull .ts{color:#ffd27a}.cfull .tn{color:#9fe0a8}.cfull .tk{color:#ff9e8a;font-weight:700}.cfull .tp{color:#c9a6ff;font-weight:700}
+.cop{margin:0 0 10px;padding:10px 12px;border:2px solid #b7791f;border-radius:12px;background:#fff8ea;color:var(--ink)}
+.cop b{display:block;font:900 13px/1.25 var(--sys)}
+.cop p{margin:4px 0 8px;font:600 12.5px/1.4 var(--sys)}
+.cofx{display:flex;flex-wrap:wrap;gap:6px}
+.cofx button{all:unset;cursor:pointer;box-sizing:border-box;display:inline-flex;flex-direction:column;gap:2px;padding:8px 10px;min-height:40px;justify-content:center;border:2px solid var(--ink);border-radius:10px;background:#fff;font:800 12px/1.15 var(--sys);max-width:100%}
+.cofx button.fx{background:var(--ink);color:#fff}
+.cofx button i{font:900 8.5px/1 var(--sys);font-style:normal;letter-spacing:.06em;text-transform:uppercase;color:#f3c879}
+.pick .cb{position:absolute;bottom:3px;left:3px;right:3px;font:900 8px/1.1 var(--sys);padding:2px 3px;border-radius:4px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.pick .cb.ok{background:#cfe9d7;color:#1d5c37}.pick .cb.note{background:#fbe3b4;color:#7a4d0b}.pick .cb.no{background:#e7e2d6;color:#6f6a60}
+.hrow .pick:has(.cb){padding-bottom:16px}
+.pick.dim{opacity:.5;border-style:dashed}
+.cbl{margin:6px 0 2px;display:grid;gap:4px;font:600 12px/1.35 var(--sys)}
+.cbl div{padding:6px 8px;border-radius:9px;border-left:4px solid #b7791f;background:#fff8ea}.cbl div.no{border-left-color:#a39d90;background:#f2efe8}
+.into{margin:0 0 10px;padding:10px 12px;border:2px solid var(--ink);border-radius:12px;background:#fff;display:grid;gap:6px}
+.into>div{display:grid;grid-template-columns:72px 1fr;column-gap:8px;align-items:baseline}
+.into span{font:900 10.5px/1.2 var(--sys);letter-spacing:.05em;text-transform:uppercase;color:#6f6a60}
+.into b{font:900 13px/1.25 var(--sys)}.into b.ok{color:#2f9a5b}.into b.amb{color:#b7791f}
+.into small{grid-column:2;font:600 11.5px/1.35 var(--sys);color:#4a463f}
 /* Try room: play first. The pretend device on the stage, Sound pill, pads and knobs */
 .stage .tryv{position:absolute;inset:0;z-index:2;overflow-y:auto;-webkit-overflow-scrolling:touch;display:flex;align-items:flex-start;justify-content:center;padding:8px 10px 26px}
 .stage .tryv[hidden]{display:none}
@@ -268,7 +291,7 @@ details.slib .list a{font-size:12px}
 @media (max-width:350px){.rooms button{padding:7px 3.5px;font-size:9.5px}}
 </style>
 <script src="/vendor/clipper/clipper.js"></script>
-<script src="parts.js?v=34"></script>
+<script src="parts.js?v=35"></script>
 <script type="importmap">{ "imports": { "three": "/vendor/three/three.module.js", "three/addons/": "/vendor/three/" } }</script>
 </head>
 <body>
@@ -289,8 +312,8 @@ details.slib .list a{font-size:12px}
 </section>
 <nav class="bbar" id="bbar" aria-label="Steps"></nav>
 <input type="file" id="snapIn" accept="image/*" capture="environment" hidden>
-<div class="cfull" id="cfull" hidden role="dialog" aria-label="Your code"><div class="cfh"><span id="cfTabs"></span><span class="sp"></span><button type="button" id="cfCopy">Copy</button><button type="button" id="cfSave">Save</button><button type="button" id="cfX" aria-label="Close">&#x2715;</button></div><pre id="cfPre"></pre></div>
+<div class="cfull" id="cfull" hidden role="dialog" aria-label="Your code"><div class="cfh"><span id="cfTabs"></span><span class="sp"></span><button type="button" id="cfCopy">Copy Code</button><button type="button" id="cfSave">Save</button><button type="button" id="cfX" aria-label="Close">&#x2715;</button></div><pre id="cfPre"></pre></div>
 <div class="sheet" id="sheet" hidden><div class="in" id="sheetIn"></div></div>
-<script type="module" src="builder.js?v=73"></script>
+<script type="module" src="builder.js?v=74"></script>
 </body>
 </html>
