@@ -241,4 +241,25 @@
     magnets: ['Magnets', '6 x 3 mm round magnets pressed into pockets. Snaps shut, comes apart in a second.'],
     snap: ['Snap fit', 'Printed clips. No hardware. Best in PETG, PLA can crack.']
   };
+  // Try room: sound packs the sandbox plays with Web Audio (made in the browser, nothing to download). [id, name, kind]
+  // kind: drum | noise | tone | fx. The Pico plays the same idea from a 16-bit, 22 kHz, mono .wav per pad.
+  C.SOUND_PACKS = {
+    drums808: { name: '808 Drums', sounds: [['kick', 'Kick'], ['snare', 'Snare'], ['hat', 'Hi-hat'], ['clap', 'Clap'], ['tom', 'Tom'], ['ohat', 'Open hat'], ['rim', 'Rim'], ['cow', 'Cowbell']] },
+    nature: { name: 'Nature & Ambient', sounds: [['rain', 'Rain'], ['ocean', 'Ocean'], ['wind', 'Wind'], ['bird', 'Bird chirp'], ['thunder', 'Thunder'], ['stream', 'Stream'], ['cricket', 'Crickets'], ['drip', 'Drip']] },
+    synth: { name: 'Synth & Bass', sounds: [['bassC', 'Bass C'], ['bassF', 'Bass F'], ['bassG', 'Bass G'], ['leadC', 'Lead C'], ['leadE', 'Lead E'], ['leadG', 'Lead G'], ['pluck', 'Pluck'], ['pad', 'Pad chord']] },
+    djfx: { name: 'DJ FX Loop', sounds: [['fx:loop', 'Loop'], ['fx:echo', 'Echo'], ['fx:spiral', 'Spiral'], ['fx:phaser', 'Phaser'], ['horn', 'Air horn'], ['riser', 'Riser'], ['scratch', 'Scratch'], ['laser', 'Laser']] }
+  };
+  // Try room presets: what the pads and knobs do, and what Make this my build turns them into. fn = the Brain program.
+  // pad: the button part, knob: the knob part, brain: the right microcontroller for the job.
+  C.TRY_PRESETS = [
+    { id: 'djfx', name: 'DJ FX', fn: 'djfx', pack: 'djfx', pads: 8, knobs: ['beat', 'wet'], screen: true, speaker: true, pad: 'arcade24', knob: 'pot', brain: 'pico', style: 'groove', line: 'A beat loop through Echo, Phaser and Spiral. Beat sets the echo time, Wet/Dry the mix.' },
+    { id: 'drums', name: 'Drums & Nature', fn: 'sound', pads: 8, sounds: ['drums808.kick', 'drums808.snare', 'drums808.hat', 'drums808.clap', 'nature.rain', 'nature.ocean', 'nature.wind', 'nature.bird'], knobs: ['volume', 'pitch'], speaker: true, pad: 'arcade24', knob: 'pot', brain: 'pico', style: 'groove', line: '808 drums on the top row, rain, ocean, wind and birds below.' },
+    { id: 'synth', name: 'Mini Synth', fn: 'synth', pack: 'synth', pads: 8, knobs: ['cutoff', 'volume'], screen: true, speaker: true, pad: 'tact12', knob: 'pot', brain: 'pico', style: 'groove', line: 'Bass, lead and pad sounds. Cutoff makes it darker or brighter.' },
+    { id: 'sampler', name: 'Voice Sampler', fn: 'sound', pads: 8, sounds: ['synth.pluck', 'drums808.clap', 'nature.bird', 'djfx.horn', 'drums808.kick', 'drums808.snare', 'synth.pad', 'djfx.laser'], knobs: ['pitch', 'effect'], screen: true, speaker: true, pad: 'arcade24', knob: 'pot', brain: 'pico2', style: 'groove', line: 'Upload your own .wav or .mp3 per pad. Pitch and Effect (echo) change it live.' },
+    { id: 'macro', name: 'Macro Pad', fn: 'macro', pads: 6, macros: ['Copy', 'Paste', 'Undo', 'Play/Pause', 'Mute', 'Screenshot'], knobs: ['volume'], pad: 'button16', knob: 'encoder', brain: 'pico', style: 'slate', line: 'Each button types a shortcut on your computer over USB. The wheel is the volume.' },
+    { id: 'timer', name: 'Timer', fn: 'timer', pads: 2, timer: true, knobs: ['minutes'], screen: true, speaker: true, pad: 'button16', knob: 'encoder', brain: 'pico', style: 'slate', line: 'Set the minutes, press Start, it beeps at 00:00.' }
+  ];
+  C.KNOB_FNS = [['volume', 'Volume'], ['pitch', 'Pitch'], ['cutoff', 'Cutoff'], ['beat', 'Beat'], ['wet', 'Wet/Dry'], ['effect', 'Effect (echo)'], ['minutes', 'Minutes']];
+  C.MACROS = ['Copy', 'Paste', 'Undo', 'Redo', 'Play/Pause', 'Mute', 'Screenshot', 'Save'];
+  C.SOUND_LIBS = [['Freesound', 'https://freesound.org/', 'Huge free library, check each license'], ['99Sounds', 'https://99sounds.org/', 'Free sample packs, royalty free'], ['OpenGameArt', 'https://opengameart.org/', 'Free game sounds and loops']];
 })();

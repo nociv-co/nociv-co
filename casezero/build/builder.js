@@ -3,7 +3,7 @@
 // Print: your printer and bed, material, how it joins, where the puzzle seams go. Files: STL per piece, wood templates, wiring.
 import * as THREE from 'three';
 import { OrbitControls } from 'three/addons/OrbitControls.js';
-import * as G from './geo.js?v=37';
+import * as G from './geo.js?v=38';
 import { CARABINER_HOOK_OUTLINE_MM, CARABINER_DEFAULT_THICKNESS_MM } from './charm_carabiner_hook.js?v=1';
 import { openMeasure, GROUPS } from './capture.js?v=26';
 import { makeBoard, boardFiles, boardSvg, zip as zipFiles, dipOf } from './board.js?v=5';
@@ -697,7 +697,7 @@ function tabsFor(step) {
   if (step === 2) return [['shape', 'Shape', 'shape'], ['measure', 'Measure', 'measure']]; /* size and fit sit on Shape itself */
   if (step === 3) return [['colors', 'Color', 'colors'], ['tex', 'Texture', 'tex'], ['labels', 'Buttons', 'labels'], ['logo', 'Logo', 'logo']];
   if (step === 4) return [['printer', 'Printer', 'printer'], ['strong', 'Strength', 'strong'], ['mat', 'Material', 'mat'], ['split', 'Split', 'split']];
-  return [['3d', '3D', 'cube'], ['shop', 'Shop', 'cart'], ['files', 'Files', 'file'], ['pcb', 'Board', 'brain'], ['extras', 'Extras', 'parts'], ['wire', 'Wire it', 'wire'], ['map', 'Wiring map', 'wire'], ['test', 'Test it', 'wire']];
+  return [['3d', '3D', 'cube'], ['shop', 'Shop', 'cart'], ['files', 'Files', 'file'], ['pcb', 'Board', 'brain'], ['extras', 'Extras', 'parts'], ['wire', 'Wire it', 'wire'], ['map', 'Wiring map', 'wire'], ['test', 'Test it', 'wire'], ['try', 'Try it', 'wire']];
 }
 function curTab() { const t = tabsFor(S.step), c = S.tab[S.step]; return t.some((x) => x[0] === c) ? c : t[S.step === 0 ? 1 : 0][0]; }
 function nudgeRow() { return '<div class="selbar nud"><b>Nudge</b><button data-act="nudge" data-nx="-1" data-ny="0" aria-label="Left">&larr;</button><button data-act="nudge" data-nx="0" data-ny="1" aria-label="Up">&uarr;</button><button data-act="nudge" data-nx="0" data-ny="-1" aria-label="Down">&darr;</button><button data-act="nudge" data-nx="1" data-ny="0" aria-label="Right">&rarr;</button></div>'; }
@@ -723,9 +723,10 @@ const PAGES = [
   { room: 'parts', name: 'Shop', hint: 'What to buy', tall: true, tabs: [[5, 'shop']] },
   { room: 'brain', name: 'Test it', hint: 'Tap a part, watch the code run', tall: true, bare: true, tabs: [[5, 'test'], [5, 'map']] },
   { room: 'brain', name: 'Wire it', hint: 'One wire at a time', tall: true, tabs: [[5, 'wire'], [0, 'pins']], more: ['pins'] },
-  { room: 'brain', name: 'Board', hint: 'One board, no loose wires', tall: true, tabs: [[5, 'pcb']] }
+  { room: 'brain', name: 'Board', hint: 'One board, no loose wires', tall: true, tabs: [[5, 'pcb']] },
+  { room: 'try', name: 'Try it', hint: 'Play first, pick parts after', tall: true, bare: true, tabs: [[5, 'try']] } /* last, so saved page numbers keep working */
 ];
-const ROOMS = [['body', 'Body'], ['addons', 'Add-ons'], ['parts', 'Parts'], ['brain', 'Brain']];
+const ROOMS = [['try', 'Try'], ['body', 'Body'], ['addons', 'Add-ons'], ['parts', 'Parts'], ['brain', 'Brain']];
 function pageTabs(p) { const out = []; p.tabs.forEach(([st, id]) => tabsFor(st).forEach((x) => { if (id === '*' || x[0] === id) out.push([st, x[0], x[1], x[2]]); })); return out; }
 function pageOf(step, tab) { let hit = -1; PAGES.forEach((p, i) => { if (hit < 0 && pageTabs(p).some((x) => x[0] === step && x[1] === tab)) hit = i; }); if (hit < 0) hit = PAGES.findIndex((p) => p.tabs.some((x) => x[0] === step)); return hit < 0 ? 0 : hit; }
 function openPage(i) { // go to a page: its first tool, or the one you last used there
@@ -793,6 +794,7 @@ function pane(t) {
   if (t === 'snap') return '<p class="h">Already built and soldered?</p><button class="btn red" data-act="measure">Photo my board, front and back</button><p class="note" style="margin-bottom:10px">A card next to it is the ruler. Press on each part on the photo, say what it is, do the brain too. Your board goes inside the case, every part on it becomes its own part you can change. Photos stay on your phone.</p>' +
     '<p class="h">Not built yet</p><div class="grid g2"><button class="btn dark" data-act="snap">' + (PHOTO ? 'Take another photo' : 'Take a photo of my electronics') + '</button><button class="btn" data-act="toParts">Pick from the list</button></div>' +
     '<p class="note">Lay your electronics out on a table and snap them. The photo stays here on your phone so you can match each one to the list. Then tap Electronics and add each one you see.</p>' + (PHOTO ? '<button class="btn" data-act="nophoto" style="margin-top:8px">Remove the photo</button>' : '') + chosenChips();
+  if (t === 'try') return tryPane();
   if (t === 'parts') { const ts = TSEL != null && S.items.find((i) => i.id === TSEL), sb = ts ? swapBar(ts) : ''; if (sb) return sb + partsPane(P, c); return partsPane(P, c); }
   return paneRest(t, P, c);
 }
@@ -891,7 +893,7 @@ function paneRest(t, P, c) {
   if (t === 'files') { const probs = allProblems(); return '<p class="note" style="margin:0 0 8px">No printer? A print service or a library takes these same files. To print from a USB stick, open them in your printer\'s free slicer app first: it turns them into the file your printer reads.</p>' + (S.material === 'wood' ? '' : '<div class="row"><b>File type</b>' + seg('fmt', [['stl', 'STL'], ['3mf', '3MF']], fmtOf()) + '</div>') + (S.material === 'wood' ? '' : '<div class="row"><b>Print</b>' + seg('xmode', [['solid', 'Full Solid'], ['skel', 'Skeleton Test (~20 min)']], skelMode() ? 'skel' : 'solid') + '</div>' + (skelMode() ? (() => { let e = null; try { e = estimate(); } catch (er) {} return '<p class="note" style="margin:0 0 6px">' + (e ? '<b>About ' + hm(e.sec) + ', ' + Math.round(e.grams) + ' g.</b> ' : '') + 'A 0.6 mm frame, fast as toothpicks: a 3 mm border, a 3 mm rim round every opening and screw hole, solid bands along the puzzle seams, 1.6 mm ribs 40 mm apart, and a ruler notch every 10 mm on the front edge. Print it, lay it on your parts and your box, then adjust below.</p>'; })() : '')) + '<div class="grid g2"><button class="btn red" data-act="make"' + (probs.length || !S.items.length ? ' aria-disabled="true"' : '') + '>' + (skelMode() ? 'Make the test frame' : 'Make my files') + '</button>' + (S.material === 'wood' || isPanel() ? '' : '<button class="btn" data-act="swatch">Download 15-min Fit Swatch</button>') + '</div>' + (gcodeOk() && printerRow()[5] === 'bambu' ? '<p class="note" style="margin:8px 0 0">Ready-to-print G-code is made for Marlin printers (Ender, Prusa MK, Anycubic...). For your ' + esc(printerRow()[1]) + ', open the STL in Bambu Studio, or pick another printer in 04 Print.</p>' : '') + (gcodeOk() && printerRow()[5] !== 'bambu' ? '<button class="btn dark" data-act="gcode" style="width:100%;margin-top:8px">G-code (' + esc(printerRow()[0] === 'custom' ? 'my printer' : printerRow()[1]) + ' / Marlin, PLA)</button>' + (gcodePieces() > 1 ? '<div class="chosen" style="margin:6px 0 0">' + Array.from({ length: gcodePieces() }, (_, i) => '<span data-gcp="' + i + '" style="cursor:pointer">Piece ' + (i + 1) + '</span>').join('') + '<span data-gcp="all" style="cursor:pointer;background:#1a1a1a;color:#fff">All pieces</span></div>' : '') + '<p class="note" style="margin:4px 0 0">Flat pieces need no slicer: this file goes straight on the SD card. 0.28 mm layers at 60 mm/s; the printer shows its time and progress. Marlin printers: Ender, Prusa MK, Anycubic and most others.</p>' : '') + (S.material === 'wood' ? '' : '<button class="btn" data-act="papersvg" style="width:100%;margin-top:8px">1:1 Paper Template (SVG)</button>' + adjustHtml()) + (S.material === 'wood' || isPanel() ? '' : '<p class="note" style="margin:6px 0 0">The swatch is a ' + swatchSize() + ' mm plate with ' + (isClam() && S.magnets ? 'a magnet pocket, ' : '') + 'the M3 bore, the snap pin slot and ' + esc(swatchButton().short) + ' opening, at your ' + tolOf() + ' mm clearance and ' + R.T + ' mm walls. Print it first: if they fit, the case will.</p>') + '<p class="note">' + (!S.items.length ? 'Add electronics in Brain first.' : probs.length ? '<span class="bad">Fix the electronics marked ! in Arrange first.</span>' : (S.material === 'wood' ? 'Wood: real size templates (SVG) to print at 100 percent or laser cut, plus the cut list.' : 'One file per piece, numbered, as STL or 3MF. Print the deck face down, the tray open side up.')) + '</p><div class="files" id="fileList" style="margin-top:8px"></div>' + (S.material === 'wood' ? '' : sliceGuide() + faqHtml()); } /* make, then the files, then how to slice them */
   if (t === 'wire') return wireHtml();
   if (t === 'map') return simRow() + '<p class="note keep" style="margin:0 0 6px"><b style="color:#c8412f">Red</b> = power, <b>black</b> = ground, <b style="color:#2f6fdb">blue</b> / <b style="color:#c9a200">yellow</b> / <b style="color:#2f9a5b">green</b> = signals. Every wire from every part to its pin on the brain, the same plan as the step-by-step cards and ' + CFILE() + '.</p>' + pfHtml() + (mapWhy() ? '<p class="note bad">' + esc(mapWhy()) + '</p>' : '');
-  if (t === 'test') return behHtml() + simRow() + '<div id="bswap">' + bswapHtml() + '</div><p class="note keep" style="margin:0 0 6px">' + ({ macro: 'Your macro pad: each button sends a shortcut. Press them to see what the computer gets.', midi: 'Your MIDI controller: each button sends a note in the ' + SCN[TW().scale] + ' scale, each knob a MIDI CC. Any music app on the computer plays it.', sound: 'Your soundboard: each button plays its own jingle on the speaker.', timer: 'Your desk timer: press the button to start or pause, hold it 1 s to reset, turn the wheel to set the minutes. It beeps at 00:00.', synth: 'Your synth: hold a button to play its note. Knob 1 moves the pitch, knob 2 the tempo of the arpeggio.', sampler: 'Your sampler: tap a pad to hear it. Mode switches Chopper, Drum and Ambient; Bank moves the notes up. Turn the Pitch and Effect wheels and move the stick while a pad rings.' }[recipeFn()] || 'Press the buttons, drag the knobs and sliders, wave at the motion sensor.') + ' This acts out what your ' + CFILE() + ' does, step by step, before you wire anything.</p>' + libsBox() + (mapWhy() ? '<p class="note bad">' + esc(mapWhy()) + '</p>' : '') + '<div class="list" id="tlog" style="font:600 12px/1.35 ui-monospace,Menlo,monospace">' + TEST.log.map((l) => '<div class="it" style="padding:5px 8px">' + esc(l) + '</div>').join('') + '</div><button class="btn" data-act="treset" style="margin-top:8px;padding:8px">Start the test again</button>';
+  if (t === 'test') return behHtml() + simRow() + '<div id="bswap">' + bswapHtml() + '</div><p class="note keep" style="margin:0 0 6px">' + ({ macro: 'Your macro pad: each button sends a shortcut. Press them to see what the computer gets.', midi: 'Your MIDI controller: each button sends a note in the ' + SCN[TW().scale] + ' scale, each knob a MIDI CC. Any music app on the computer plays it.', sound: 'Your soundboard: each button plays its own jingle on the speaker.', timer: 'Your desk timer: press the button to start or pause, hold it 1 s to reset, turn the wheel to set the minutes. It beeps at 00:00.', synth: 'Your synth: hold a button to play its note. Knob 1 moves the pitch, knob 2 the tempo of the arpeggio.', sampler: 'Your sampler: tap a pad to hear it. Mode switches Chopper, Drum and Ambient; Bank moves the notes up. Turn the Pitch and Effect wheels and move the stick while a pad rings.' }[recipeFn()] || 'Press the buttons, drag the knobs and sliders, wave at the motion sensor.') + ' This acts out what your ' + CFILE() + ' does, step by step, before you wire anything.</p>' + libsBox() + (mapWhy() ? '<p class="note bad">' + esc(mapWhy()) + '</p>' : '') + '<div class="list" id="tlog" style="font:600 12px/1.35 ui-monospace,Menlo,monospace">' + TEST.log.map((l) => '<div class="it" style="padding:5px 8px">' + esc(l) + '</div>').join('') + '</div><button class="btn" data-act="treset" style="margin-top:8px;padding:8px">Start the test again</button>' + libsDrawer();
   if (t === 'extras') return partsRoomHtml();
   return '';
 }
@@ -996,6 +998,7 @@ function after(t) {
   codeBox(t === 'test');
   if (t === 'parts') { const s = $('cat'); if (s) s.onchange = () => { S.cat = s.value; save(); render(); }; }
   $('sb').hidden = !(native3d() || BIG3D);
+  const tv = $('tryv'); if (tv) { tv.hidden = t !== 'try'; if (t === 'try') { tryWire(); tryStage(); } } if (t !== 'try' && t !== 'test') djStop(); else if (t === 'try') djSync(TRYS.dj);
 }
 
 // ---------- taps ----------
@@ -1208,6 +1211,7 @@ function draw() {
   if (S.step === 4) return drawBeds(W, H);
   if (S.step === 5 && curTab() === 'map') return drawMap(W, H);
   if (S.step === 5 && curTab() === 'test') return drawTest(W, H);
+  if (S.step === 5 && curTab() === 'try') return;
   if (curTab() === 'extras') return drawPrinted(W, H);
   drawBrain(W, H);
 }
@@ -1788,7 +1792,7 @@ function drawMap(W, H) {
   tag(rows.length + ' parts wired to the ' + (bi ? bi.name : 'brain') + (w.problems.length ? '. ' + w.problems[0] : ''));
 }
 const TEST = { text: 'Ready', led: false, ring: false, angle: null, lamp: false, val: {}, last: {}, pos: {}, pir: {}, dist: {}, cam: null, log: [], hits: [], drag: null, held: null, ac: null, osc: null };
-function testReset() { clearInterval(TEST.tick); synthOff(); sAllOff(); TEST.sm = null; TEST.mx = null; TEST.tm = null; TEST.note = null; TEST.tr = 0; TEST.bpm = 120; TEST.dj = null; Object.assign(TEST, { text: 'Ready', led: false, ring: false, angle: null, lamp: false, val: {}, last: {}, pos: {}, pir: {}, dist: {}, cam: null, log: [], drag: null, held: null }); toneOff(); }
+function testReset() { clearInterval(TEST.tick); synthOff(); sAllOff(); TEST.sm = null; TEST.mx = null; TEST.tm = null; TEST.note = null; TEST.tr = 0; TEST.bpm = 120; TEST.dj = null; djStop(); Object.assign(TEST, { text: 'Ready', led: false, ring: false, angle: null, lamp: false, val: {}, last: {}, pos: {}, pir: {}, dist: {}, cam: null, log: [], drag: null, held: null }); toneOff(); }
 function testLog(s) { TEST.log.unshift(s); TEST.log.length = Math.min(TEST.log.length, 40); const el = $('tlog'); if (el) el.innerHTML = TEST.log.map((l) => '<div class="it" style="padding:5px 8px">' + esc(l) + '</div>').join(''); }
 function tone(f) { try { if (!TEST.ac) TEST.ac = new (window.AudioContext || window.webkitAudioContext)(); toneOff(); const o = TEST.ac.createOscillator(), gn = TEST.ac.createGain(); o.type = 'square'; o.frequency.value = f; gn.gain.value = 0.06; o.connect(gn).connect(TEST.ac.destination); o.start(); TEST.osc = o; setTimeout(() => { if (TEST.osc === o) toneOff(); }, 600); } catch (e) { TEST.osc = null; } }
 function toneOff() { if (TEST.osc) { try { TEST.osc.stop(); } catch (e) {} TEST.osc = null; } }
@@ -1902,7 +1906,7 @@ function behHtml() { const cur = recipeFn() || 'test', tw = [], list = (recipe()
   if (['synth', 'midi', 'sound'].indexOf(cur) > -1) tw.push(pillRow('Scale', 'scale', [['major', 'Major'], ['penta', 'Pentatonic'], ['minor', 'Minor']]), pillRow('Button', 'btn', [['hold', 'Hold'], ['step', 'Step 1/4']]));
   if (cur === 'macro') tw.push(pillRow('Computer', 'mac', [[0, 'Windows'], [1, 'Mac']]));
   if (cur === 'timer') tw.push(pillRow('Minutes', 'min', [[5, '5'], [25, '25'], [45, '45']]));
-  return '<p class="h" style="margin-top:0">What should the code do?</p><div class="hrow beh" role="group" aria-label="What should the code do?">' + list.map(([k, n]) => '<button type="button" data-beh="' + k + '" aria-pressed="' + (k === cur) + '">' + n + '</button>').join('') + '</div>' + tw.join(''); }
+  return '<div class="trtop">' + soundPill() + '</div><p class="h" style="margin-top:0">What should the code do?</p><div class="hrow beh" role="group" aria-label="What should the code do?">' + list.map(([k, n]) => '<button type="button" data-beh="' + k + '" aria-pressed="' + (k === cur) + '">' + n + '</button>').join('') + '</div>' + tw.join(''); }
 // Libraries You Need: the exact names for this board's language
 function libsBox() { const B = BRDX(); let c; try { c = codeFor(wiring(), summaryLine(), recipeFn(), B, TW()); } catch (e) { return ''; }
   const a = (u, t) => '<a href="' + u + '" target="_blank" rel="noopener">' + t + '</a>';
@@ -1916,7 +1920,7 @@ function libsBox() { const B = BRDX(); let c; try { c = codeFor(wiring(), summar
   return pfHtml() + zipBtn + '<div class="libs"><b>CircuitPython Libraries You Need</b>' + (L.length ? '<ul>' + L.join('') + '</ul>' : '<p>None: everything this code.py uses is built into CircuitPython.</p>') +
     '<ol><li>Put CircuitPython on the ' + esc(bshort()) + ' (circuitpython.org, search your board).</li>' + (L.length ? '<li>Get the Library Bundle at ' + a(LIBURL.cp, 'circuitpython.org/libraries') + ', unzip it, copy the names above into <code>CIRCUITPY/lib/</code>.</li>' : '') + '<li>Open ' + a(LIBURL.web, 'code.circuitpython.org') + ' to edit code.py in the browser, or save it on the CIRCUITPY drive.</li></ol></div>'; }
 // Test It for DJ FX, step for step like its code: the first 4 buttons are Loop, Echo, Spiral, Phaser; the Beat wheel is CC 14, Wet/Dry CC 15
-function djScreen() { const D = TEST.dj, on = DJFX.filter((f, i) => D.on[i]).map((f) => f[0]); TEST.text = (on.length ? on.join('+') : 'No FX') + ' | ' + BEATS[D.beat] + ' | Wet ' + D.wet + '%'; TEST.lamp = on.length > 0; }
+function djScreen() { const D = TEST.dj, on = DJFX.filter((f, i) => D.on[i]).map((f) => f[0]); TEST.text = (on.length ? on.join('+') : 'No FX') + ' | ' + BEATS[D.beat] + ' | Wet ' + D.wet + '%'; TEST.lamp = on.length > 0; djSync(D); } /* the real sound: the beat loop through the same FX */
 function djAct(m, h, down) { const D = TEST.dj || (TEST.dj = { on: [false, false, false, false], beat: 2, wet: 0, at: [], skip: [] }), A = (q) => actOf(itemOf(q)), fxOf = (k) => (k.btn && k.pad == null ? DJA[A(k)] : undefined);
   const beatPot = m.encs.some((e) => A(e) === 'beat') ? null : m.pots.find((p) => p.kind === 'knob' && A(p) === 'beat') || null, wetPot = m.pots.find((p) => p.kind === 'knob' && A(p) === 'wet') || null; /* part.action, the same as the saved code */
   const fx = (i, st) => { D.on[i] = st; const f = DJFX[i]; djScreen(); return f[0] + (st ? ' ON -> MIDI note on ' : ' OFF -> MIDI note off ') + f[1] + ' (' + DJMODE[f[2]] + ') | ' + TEST.text; };
@@ -2167,14 +2171,28 @@ function mountAt(m) { // where a mount sits on the case: the point on the outsid
   if (m.face === 'bottom') w = { face: 'bottom', type: m.mountType, x: sx, y: sy, zc: 0, B, o: [sx, sy, 0], H: h.H };
   else if (m.face === 'plate') { if (isClam() || isPanel()) return null; const top = h.H - h.recess; w = { face: 'plate', type: m.mountType, x: sx, y: sy, zc: 0, B, o: [sx, sy, top], H: h.H }; }
   else if (m.face === 'lid') { if (!isClam()) return null; const d = dims(), lx = S.style === 'small' ? sx : d.W - sx, ly = S.style === 'small' ? d.D - sy : sy; w = { face: 'lid', type: m.mountType, x: lx, y: ly, zc: 0, B, o: [lx, ly, 0], H: h.Hl }; } /* the lid's outside, in the lid's own frame: the spot is where you see it from outside */
-  else { const p = G.wallAt(outline(), m.face, m.face === 'back' || m.face === 'front' ? sx : sy0(a)); if (!p) return null; /* back: along x, left and right: along y */
+  else { const s0 = m.face === 'back' || m.face === 'front' ? sx : sy0(a), p = G.wallAt(outline(), m.face, s0 + charmSlide(m, s0)); if (!p) return null; /* back: along x, left and right: along y */
     const deckZ = h.H - R.LT - h.recess, zc = Math.max(R.F + 4, Math.min(deckZ - 6, (R.F + deckZ) / 2));
     w = { face: m.face, type: m.mountType, x: p[0], y: p[1], zc: +zc.toFixed(2), B, o: [p[0], p[1], zc], H: h.H, deckZ }; }
   const w2 = Object.assign({}, w, { B: [B[0].map((q) => -q), B[1].map((q) => -q), B[2]] });
   if (m.anchors && m.anchors.length > 1) { const ax = m.face === 'left' || m.face === 'right' ? 1 : 0; return Math.sign(m.anchors[1].u - m.anchors[0].u) === Math.sign(B[0][ax]) ? w : w2; } /* two points: the part runs from the first to the second */
-  if (!edgeWhy(m, w)) return w; /* the part runs one way from its screw. If it does not fit that way, it turns around */
-  return edgeWhy(m, w2) ? w : w2;
+  if (!edgeWhy(m, w)) return landed(m, w); /* the part runs one way from its screw. If it does not fit that way, it turns around */
+  return landed(m, edgeWhy(m, w2) ? w : w2);
 }
+// a Mini charm in a corner: the deck screw post sits there, so it slides along the wall (3 mm steps, up to 12 mm) to the nearest clear spot
+function charmSlide(m, s) { if (m.partId !== 'charm' || twoPoint('charm', m.charm) || FLATF(m.face)) return 0; const out = outline(), b = G.bbox(out), v = m.face === 'back' || m.face === 'front', lo = v ? b.x0 : b.y0, hi = v ? b.x1 : b.y1, ps = posts();
+  const mags = isClam() && S.magnets ? G.magnetSpots(out) : [];
+  for (const d of [0, 3, -3, 6, -6, 9, -9, 12, -12]) { const at = s + d; if (at < lo + 8 || at > hi - 8) continue; const p = G.wallAt(out, m.face, at); if (!p) continue; const z = [G.mountRect({ face: m.face, x: p[0], y: p[1] }, 6, R.T + 7.5, 0)];
+    if (ps.some(([x, y]) => G.area(G.inter(z, [G.circle(x, y, R.POSTR + 1, 20)])) > 0.3) || mags.some(([x, y]) => G.area(G.inter(z, [G.circle(x, y, R.MAG / 2 + 2.6, 24)])) > 0.3)) continue; return d; }
+  return 0; }
+// a curved or uneven wall: the part's flat back goes on the plane that touches the wall's outermost point under it, and the case gets a flat land
+// from that plane into the wall (overlapping it), so the plate sits flat and the two print as one solid. land.out: how far the plane stands off the screw spot.
+function landed(m, w) { if (FLATF(m.face) || !w) return w; const v = m.face === 'back' || m.face === 'front', sg = m.face === 'back' || m.face === 'right' ? 1 : -1, pf = plateFace(m, w), out = outline();
+  const s0 = Math.min(...pf.map((q) => q[0])), s1 = Math.max(...pf.map((q) => q[0])), z0 = Math.min(...pf.map((q) => q[1])), z1 = Math.max(...pf.map((q) => q[1])), c = [];
+  for (let i = 0; i <= 10; i++) { const p = G.wallAt(out, m.face, s0 + (s1 - s0) * i / 10); if (p) c.push(sg * (v ? p[1] : p[0])); }
+  const here = sg * (v ? w.y : w.x); if (!c.length) return w; const top = Math.max(here, ...c), sag = top - Math.min(...c);
+  if (sag < 0.05) return w; const t = sg * top, o = w.o.slice(); o[v ? 1 : 0] = t;
+  return Object.assign({}, w, { o, land: { s0: +s0.toFixed(3), s1: +s1.toFixed(3), z0: +z0.toFixed(3), z1: +z1.toFixed(3), t: +t.toFixed(3), d: +(sag + R.T * 0.6).toFixed(3), out: +(top - here).toFixed(3), sag: +sag.toFixed(3) } }); }
 function mountPoints(m) { // every screw or pin of a mount: one, or two for a part that must not turn
   const w = mountAt(m); if (!w) return []; const P = mp(m); if (!P.pitch) return [w];
   const ax = m.face === 'left' || m.face === 'right' ? 1 : 0, d = w.B[0][ax] * P.pitch;
@@ -2199,6 +2217,7 @@ function mountBlocked(m) { // why this spot cannot take this part, or '' if it c
   if (m.face === 'lid' && !isClam()) return 'no lid'; if (m.face === 'plate' && (isClam() || isPanel())) return 'no plate';
   const w = mountAt(m); if (!w) return 'off the edge';
   const out = outline(), pf = plateFace(m, w), ew = edgeWhy(m, w); if (ew) return ew;
+  if (w.land && w.land.sag > (m.partId === 'charm' ? 8 : 3)) return 'too curved'; /* a deep land would be a lump: a flatter spot is better */
   const zone = G.union(mountPoints(m).map((q) => (FLATF(m.face) ? G.rect(q.x - 6, q.y - 6, q.x + 6, q.y + 6) : G.mountRect(q, 6, R.T + 7.5, 0)))), ztop = FLATF(m.face) ? R.F + 6 : w.zc + 5, hit = (polys) => G.area(G.inter(zone, polys)) > 0.3;
   if (isClam() && S.magnets && G.magnetSpots(out).some(([x, y]) => hit([G.circle(x, y, R.MAG / 2 + 2.6, 24)]))) return 'magnet';
   if (posts().some(([x, y]) => hit([G.circle(x, y, R.POSTR + 1, 20)]))) return 'deck screw';
@@ -2992,7 +3011,147 @@ window.addEventListener('pageshow', (e) => { if (e.persisted) resync(); });
 window.addEventListener('storage', (e) => { if (e.key === KEY) resync(); });
 document.addEventListener('visibilitychange', () => { if (!document.hidden) resync(); });
 
-window.__cz = { openPage, boardBuild, bomCpl, actOf, get HL() { return HL; }, PAGES, decoMove, mountPart, TEST, testModel, wiring, wallArt, LG, hookPolys, addBoard, packBuild, unpackBuild, shareState, portBlocked, portAt, mountBlocked, swatchFile, loadRecipe, get DECO() { return DECO; }, get T3() { return T3; }, THREE, wiring, codeFor, get S() { return S; }, get view() { return view; }, AZ, get UNDO() { return UNDO.length; }, halves, plan, makeFiles, get FILES() { return FILES; }, allProblems, G, addPart, go, render, dims, heights, addonFile, addonPolys, charParts, charCache, kb, kbBoard, kbCode, kbReadme, boardSvg, wiring, PP, gcodeFiles, gcodePieces, mountGeos, xp, sliceGuide, skeletonOf, skelOf, adjust, posts, estimate, reflow, fitAll, filesOf, MEASURED, portBlocked, testAct, testModel, micMain, get TRAY() { return TRAY; }, showStart, loadRecipe, cost, boardBuild, boardFiles, boardReadme, extraRows, keepBox };
+// ---------- Sound engine: real Web Audio, made in the browser. One AudioContext, unlocked on the first tap (iPhone Safari needs a tap). ----------
+var AU = { ctx: null, on: (() => { try { return localStorage.getItem(KEY + ':sound') !== '0'; } catch (e) { return true; } })(), user: {}, dj: null };
+function auCtx() { if (AU.ctx) return AU.ctx; const AC = window.AudioContext || window.webkitAudioContext; if (!AC) return null;
+  try { const c = new AC(); AU.ctx = c; TEST.ac = c; AU.out = c.createGain(); AU.out.gain.value = 0.8; const lim = c.createDynamicsCompressor(); AU.out.connect(lim); lim.connect(c.destination);
+    const n = c.createBuffer(1, c.sampleRate * 2, c.sampleRate), d = n.getChannelData(0); for (let i = 0; i < d.length; i++) d[i] = Math.random() * 2 - 1; AU.noise = n; } catch (e) { AU.ctx = null; } return AU.ctx; }
+function auUnlock() { const c = auCtx(); if (!c) return null; if (!AU.on) { if (c.state === 'running') c.suspend().catch(() => {}); return c; }
+  if (c.state !== 'running') c.resume().catch(() => {}); if (!AU.primed) { AU.primed = true; try { const b = c.createBufferSource(); b.buffer = c.createBuffer(1, 1, 22050); b.connect(c.destination); b.start(0); } catch (e) {} } return c; }
+document.addEventListener('pointerdown', function first() { if (AU.on) auUnlock(); document.removeEventListener('pointerdown', first, true); }, true);
+function auSet(on) { AU.on = on; try { localStorage.setItem(KEY + ':sound', on ? '1' : '0'); } catch (e) {} const c = auCtx(); if (c) { if (on) auUnlock(); else c.suspend().catch(() => {}); } }
+const soundPill = () => '<button type="button" class="spill' + (AU.on ? ' on' : '') + '" data-snd="' + (AU.on ? '0' : '1') + '" aria-pressed="' + AU.on + '">Sound: ' + (AU.on ? 'On' : 'Off') + '</button>';
+const libsDrawer = () => '<details class="fold slib"><summary>Free Sound Libraries</summary><div class="list">' + (CZ.SOUND_LIBS || []).map(([n, u, t]) => '<a href="' + u + '" target="_blank" rel="noopener"><b>' + n + '</b>' + t + '</a>').join('') + '</div><p class="note keep">Tip: for the Pico save each sound as a <b>16-bit, 22 kHz, mono .wav</b>.</p></details>';
+function auEnv(g, t, a, peak, dec) { g.gain.setValueAtTime(0.0001, t); g.gain.exponentialRampToValueAtTime(peak, t + a); g.gain.exponentialRampToValueAtTime(0.0001, t + a + dec); }
+function auNoise(c, t, dur, dest, rate) { const s = c.createBufferSource(); s.buffer = AU.noise; s.loop = true; if (rate) s.playbackRate.value = rate; s.connect(dest); s.start(t, Math.random()); s.stop(t + dur + 0.05); return s; }
+function auOsc(c, type, f, t, dur, dest) { const o = c.createOscillator(); o.type = type; o.frequency.setValueAtTime(f, t); o.connect(dest); o.start(t); o.stop(t + dur + 0.05); return o; }
+function auFilt(c, type, f, q, dest) { const b = c.createBiquadFilter(); b.type = type; b.frequency.value = f; if (q != null) b.Q.value = q; b.connect(dest); return b; }
+// one sound: id = 'pack.name' or 'user:n'. o: { pitch 0.5..2, vol 0..1, cutoff Hz, dest, t }
+function auPlay(id, o) { const c = auUnlock(); if (!c || !AU.on) return null; o = o || {}; const t = o.t || c.currentTime + 0.005, p = o.pitch || 1, g = c.createGain(); g.gain.value = 1; g.connect(o.dest || AU.out);
+  const vol = c.createGain(); vol.gain.value = o.vol == null ? 1 : o.vol; vol.connect(g); const n = String(id).split('.').pop(), out = o.cutoff ? auFilt(c, 'lowpass', o.cutoff, 0.8, vol) : vol, e = (a, pk, d) => { const q = c.createGain(); auEnv(q, t, a, pk, d); q.connect(out); return q; };
+  if (/^user:/.test(id)) { const b = AU.user[id.slice(5)]; if (!b) return null; const s = c.createBufferSource(); s.buffer = b; s.playbackRate.value = p; s.connect(out); s.start(t); return { stop: () => { try { s.stop(); } catch (x) {} } }; }
+  switch (n) {
+    case 'kick': { const q = e(0.002, 1, 0.45), s = auOsc(c, 'sine', 150 * p, t, 0.5, q); s.frequency.exponentialRampToValueAtTime(42 * p, t + 0.14); break; }
+    case 'snare': auNoise(c, t, 0.22, auFilt(c, 'highpass', 1200, null, e(0.001, 0.7, 0.2))); auOsc(c, 'triangle', 185 * p, t, 0.12, e(0.001, 0.5, 0.1)); break;
+    case 'hat': auNoise(c, t, 0.06, auFilt(c, 'highpass', 7000 * p, null, e(0.001, 0.45, 0.05))); break;
+    case 'ohat': auNoise(c, t, 0.4, auFilt(c, 'highpass', 6500 * p, null, e(0.001, 0.4, 0.35))); break;
+    case 'clap': { const bp = auFilt(c, 'bandpass', 1500 * p, 1.2, out); [0, 0.011, 0.022].forEach((d) => { const q = c.createGain(); auEnv(q, t + d, 0.001, 0.8, 0.012); q.connect(bp); auNoise(c, t + d, 0.03, q); }); const tl = c.createGain(); auEnv(tl, t + 0.03, 0.001, 0.6, 0.16); tl.connect(bp); auNoise(c, t + 0.03, 0.2, tl); break; }
+    case 'tom': { const s = auOsc(c, 'sine', 210 * p, t, 0.35, e(0.002, 0.9, 0.3)); s.frequency.exponentialRampToValueAtTime(95 * p, t + 0.3); break; }
+    case 'rim': auOsc(c, 'square', 820 * p, t, 0.04, auFilt(c, 'bandpass', 1700, 3, e(0.001, 0.5, 0.03))); break;
+    case 'cow': { const q = auFilt(c, 'bandpass', 800 * p, 2, e(0.001, 0.5, 0.3)); auOsc(c, 'square', 540 * p, t, 0.35, q); auOsc(c, 'square', 800 * p, t, 0.35, q); break; }
+    case 'rain': { const q = e(0.25, 0.5, 2.6), lp = auFilt(c, 'lowpass', 2600 * p, null, q); auNoise(c, t, 2.9, lp); for (let i = 0; i < 26; i++) { const tt = t + Math.random() * 2.6, k = c.createGain(); auEnv(k, tt, 0.001, 0.25 + Math.random() * 0.3, 0.02); k.connect(auFilt(c, 'bandpass', 2500 + Math.random() * 3500, 2, out)); auNoise(c, tt, 0.03, k); } break; }
+    case 'ocean': { const q = c.createGain(), lp = auFilt(c, 'lowpass', 500 * p, null, q); q.connect(out); q.gain.setValueAtTime(0.0001, t); [[0.9, 0.7], [2.0, 0.12], [3.0, 0.75], [4.4, 0.0001]].forEach(([d, v]) => q.gain.exponentialRampToValueAtTime(v, t + d)); lp.frequency.setValueAtTime(300 * p, t); lp.frequency.linearRampToValueAtTime(1100 * p, t + 0.9); lp.frequency.linearRampToValueAtTime(350 * p, t + 2); lp.frequency.linearRampToValueAtTime(1000 * p, t + 3); auNoise(c, t, 4.5, lp); break; }
+    case 'wind': { const q = e(0.6, 0.6, 3), bp = auFilt(c, 'bandpass', 400 * p, 1.4, q); bp.frequency.setValueAtTime(350 * p, t); bp.frequency.linearRampToValueAtTime(950 * p, t + 1.3); bp.frequency.linearRampToValueAtTime(280 * p, t + 3.4); auNoise(c, t, 3.6, bp); break; }
+    case 'bird': for (let i = 0; i < 4; i++) { const tt = t + i * 0.13 + (i > 1 ? 0.15 : 0), q = c.createGain(); auEnv(q, tt, 0.005, 0.35, 0.08); q.connect(out); const s = auOsc(c, 'sine', 2600 * p, tt, 0.1, q); s.frequency.exponentialRampToValueAtTime(4300 * p, tt + 0.04); s.frequency.exponentialRampToValueAtTime(3000 * p, tt + 0.09); } break;
+    case 'thunder': auNoise(c, t, 3.2, auFilt(c, 'lowpass', 180 * p, null, e(0.05, 1, 3)), 0.5); break;
+    case 'stream': { const q = e(0.2, 0.35, 2.6), bp = auFilt(c, 'bandpass', 2400 * p, 0.8, q); const l = c.createOscillator(), lg = c.createGain(); l.frequency.value = 7; lg.gain.value = 900; l.connect(lg); lg.connect(bp.frequency); l.start(t); l.stop(t + 3); auNoise(c, t, 2.9, bp); break; }
+    case 'cricket': for (let i = 0; i < 6; i++) { const tt = t + i * 0.32, q = c.createGain(); q.connect(out); for (let k = 0; k < 4; k++) { q.gain.setValueAtTime(0.0001, tt + k * 0.03); q.gain.linearRampToValueAtTime(0.18, tt + k * 0.03 + 0.008); q.gain.linearRampToValueAtTime(0.0001, tt + k * 0.03 + 0.022); } auOsc(c, 'sine', 4500 * p, tt, 0.14, q); } break;
+    case 'drip': { const s = auOsc(c, 'sine', 1400 * p, t, 0.2, e(0.002, 0.6, 0.15)); s.frequency.exponentialRampToValueAtTime(380 * p, t + 0.12); break; }
+    case 'bassC': case 'bassF': case 'bassG': { const f = { bassC: 65.41, bassF: 87.31, bassG: 98 }[n] * p, lp = auFilt(c, 'lowpass', o.cutoff || 900, 6, e(0.005, 0.8, 0.5)); lp.frequency.setValueAtTime((o.cutoff || 900) * 2.5, t); lp.frequency.exponentialRampToValueAtTime(Math.max(120, (o.cutoff || 900) / 3), t + 0.35); auOsc(c, 'sawtooth', f, t, 0.6, lp); auOsc(c, 'square', f / 2, t, 0.6, lp); break; }
+    case 'leadC': case 'leadE': case 'leadG': { const f = { leadC: 523.25, leadE: 659.25, leadG: 783.99 }[n] * p, q = e(0.01, 0.35, 0.6); auOsc(c, 'square', f, t, 0.65, q); auOsc(c, 'sawtooth', f * 1.005, t, 0.65, q); break; }
+    case 'pluck': auOsc(c, 'triangle', 392 * p, t, 0.4, e(0.002, 0.7, 0.35)); auOsc(c, 'sine', 784 * p, t, 0.2, e(0.002, 0.3, 0.15)); break;
+    case 'pad': { const q = e(0.4, 0.25, 1.8); [261.63, 329.63, 392].forEach((f) => [-6, 6].forEach((dt) => { const s = auOsc(c, 'sawtooth', f * p, t, 2.3, q); s.detune.value = dt; })); break; }
+    case 'horn': { const q = e(0.02, 0.5, 0.7); [0, 0.18, 0.36].forEach((d) => [440, 554, 659].forEach((f) => { const qq = c.createGain(); auEnv(qq, t + d, 0.01, 0.25, 0.16); qq.connect(q); auOsc(c, 'sawtooth', f * p, t + d, 0.18, qq); })); break; }
+    case 'riser': { const q = e(1.4, 0.4, 0.2), bp = auFilt(c, 'bandpass', 300, 3, q); bp.frequency.setValueAtTime(300 * p, t); bp.frequency.exponentialRampToValueAtTime(6000 * p, t + 1.6); auNoise(c, t, 1.7, bp); const s = auOsc(c, 'sawtooth', 110 * p, t, 1.7, q); s.frequency.exponentialRampToValueAtTime(880 * p, t + 1.6); break; }
+    case 'scratch': { const bp = auFilt(c, 'bandpass', 1200 * p, 2, out); [0, 0.12, 0.2].forEach((d, i) => { const q = c.createGain(); auEnv(q, t + d, 0.005, 0.7, 0.08); q.connect(bp); auNoise(c, t + d, 0.1, q, i % 2 ? 0.6 : 1.4); }); break; }
+    case 'laser': { const s = auOsc(c, 'square', 2200 * p, t, 0.35, e(0.002, 0.3, 0.3)); s.frequency.exponentialRampToValueAtTime(120 * p, t + 0.3); break; }
+    case 'click': auOsc(c, 'square', 1800, t, 0.02, e(0.001, 0.2, 0.015)); break;
+    case 'beep': [0, 0.25, 0.5].forEach((d) => { const q = c.createGain(); auEnv(q, t + d, 0.005, 0.4, 0.15); q.connect(out); auOsc(c, 'square', 1760, t + d, 0.18, q); }); break;
+    default: auOsc(c, 'sine', 440 * p, t, 0.3, e(0.005, 0.4, 0.25));
+  }
+  return { stop: () => { try { g.gain.setTargetAtTime(0, c.currentTime, 0.03); } catch (x) {} } };
+}
+// DJ FX: a real beat loop, through an Echo (feedback delay), a Phaser (4 all-pass filters swept by an LFO) and a Spiral (a delay whose time sweeps down, with a rising filter).
+// Beat sets the echo time (1/4 to 8 beats), Wet/Dry the mix. Same four buttons and two controls as the DJ FX code.
+const DJBPM = 120, DJDIV = [0.25, 0.5, 1, 2, 4, 8];
+function djGraph() { const c = auUnlock(); if (!c) return null; if (AU.dj) return AU.dj; const G0 = { bus: c.createGain(), dry: c.createGain(), wet: c.createGain(), sends: [] };
+  G0.bus.connect(G0.dry); G0.dry.connect(AU.out); G0.wet.connect(AU.out);
+  const send = () => { const s = c.createGain(); s.gain.value = 0; G0.bus.connect(s); G0.sends.push(s); return s; };
+  { const s = send(), d = c.createDelay(5), fb = c.createGain(); d.delayTime.value = 0.5; fb.gain.value = 0.55; s.connect(d); d.connect(fb); fb.connect(d); d.connect(G0.wet); G0.echo = d; } /* Echo */
+  { const s = send(), d = c.createDelay(2), fb = c.createGain(), hp = c.createBiquadFilter(), l = c.createOscillator(), lg = c.createGain(); d.delayTime.value = 0.25; fb.gain.value = 0.7; hp.type = 'highpass'; hp.frequency.value = 200; l.frequency.value = 0.25; lg.gain.value = 0.2; l.connect(lg); lg.connect(d.delayTime); l.start(); s.connect(d); d.connect(hp); hp.connect(fb); fb.connect(d); hp.connect(G0.wet); G0.spiral = { d, hp }; } /* Spiral */
+  { const s = send(), l = c.createOscillator(), lg = c.createGain(); l.frequency.value = 0.5; lg.gain.value = 700; l.connect(lg); l.start(); let at = s; for (let i = 0; i < 4; i++) { const a = c.createBiquadFilter(); a.type = 'allpass'; a.frequency.value = 900; a.Q.value = 0.7; lg.connect(a.frequency); at.connect(a); at = a; } const mix = c.createGain(); s.connect(mix); at.connect(mix); mix.connect(G0.wet); } /* Phaser: dry + all-pass, the notches sweep */
+  AU.dj = G0; return G0; }
+function djSync(D) { if (!AU) return; // D: { on: [loop, echo, spiral, phaser], beat 0..5, wet 0..100 }
+  const c = AU.ctx; if (!D || !AU.on) { djStop(); return; } if (!D.on.some(Boolean)) { djStop(); return; } const G0 = djGraph(); if (!G0) return; const now = c.currentTime, beat = 60 / DJBPM, w = (D.wet || 0) / 100;
+  G0.echo.delayTime.setTargetAtTime(Math.min(4.9, beat * DJDIV[D.beat == null ? 2 : D.beat]), now, 0.05);
+  G0.spiral.d.delayTime.setTargetAtTime(Math.min(1.5, beat * DJDIV[D.beat == null ? 2 : D.beat] / 2), now, 0.3); G0.spiral.hp.frequency.setTargetAtTime(D.on[2] ? 2400 : 200, now, 0.8); /* the Spiral climbs while it is on */
+  [1, 2, 3].forEach((k, i) => G0.sends[i].gain.setTargetAtTime(D.on[k] ? 1 : 0, now, 0.02)); G0.wet.gain.setTargetAtTime(w, now, 0.03); G0.dry.gain.setTargetAtTime(1 - w * 0.6, now, 0.03);
+  if (D.on[0] && !AU.loopT) { let next = c.currentTime + 0.05, step = 0; AU.loopT = setInterval(() => { if (!AU.ctx) return; while (next < AU.ctx.currentTime + 0.12) { const s = step % 16; if (s % 4 === 0) auPlay('kick', { t: next, dest: G0.bus }); if (s === 4 || s === 12) auPlay('snare', { t: next, dest: G0.bus }); if (s % 2 === 0) auPlay('hat', { t: next, dest: G0.bus, vol: 0.6 }); if (s === 14) auPlay('clap', { t: next, dest: G0.bus, vol: 0.5 }); next += beat / 4; step++; } }, 25); }
+  if (!D.on[0] && AU.loopT) { clearInterval(AU.loopT); AU.loopT = null; }
+}
+function djStop() { if (!AU) return; if (AU.loopT) { clearInterval(AU.loopT); AU.loopT = null; } if (AU.dj && AU.ctx) { const now = AU.ctx.currentTime; AU.dj.sends.forEach((s) => s.gain.setTargetAtTime(0, now, 0.05)); } }
+
+// ---------- TRY: a sandbox to play before any hardware is picked. Pick a preset, give each pad a sound, set the knobs, then Make this my build. ----------
+const TRYP = () => CZ.TRY_PRESETS || [], KFN = (k) => ((CZ.KNOB_FNS || []).find((x) => x[0] === k) || [k, k])[1];
+const PACKS = () => CZ.SOUND_PACKS || {}, sid = (p, n) => (/^fx:/.test(n) ? n : p + '.' + n), sndName = (id) => { if (/^fx:/.test(id)) return id[3].toUpperCase() + id.slice(4); if (/^user:/.test(id)) return (AU.userName || {})[id.slice(5)] || 'Your file'; if (/^mac:/.test(id)) return id.slice(4); if (/^tm:/.test(id)) return id === 'tm:start' ? 'Start/Pause' : 'Reset'; const [p, n] = id.split('.'), P = PACKS()[p]; const s = P && P.sounds.find((x) => x[0] === n); return s ? s[1] : id; };
+const KDEF = { volume: 80, pitch: 50, cutoff: 70, beat: 2, wet: 50, effect: 0, minutes: 25 }, KMAX = { beat: 5, minutes: 60 };
+function TRY() { if (!S.tr) S.tr = {}; const T = S.tr, pr = TRYP().find((p) => p.id === T.preset) || TRYP()[0]; if (!pr) return null;
+  if (T.preset !== pr.id || !Array.isArray(T.pads) || T.pads.length !== pr.pads) trySetPreset(pr.id); return S.tr; }
+function trySetPreset(id) { const pr = TRYP().find((p) => p.id === id) || TRYP()[0], T = S.tr = { preset: pr.id, sel: 0, kv: {} };
+  T.pads = pr.sounds ? pr.sounds.slice() : pr.macros ? pr.macros.map((m) => 'mac:' + m) : pr.timer ? ['tm:start', 'tm:reset'] : PACKS()[pr.pack].sounds.slice(0, pr.pads).map((s) => sid(pr.pack, s[0]));
+  T.knobs = pr.knobs.slice(); T.knobs.forEach((k) => { T.kv[k] = KDEF[k]; }); TRYS.dj = { on: [false, false, false, false], beat: KDEF.beat, wet: KDEF.wet }; djStop(); tryTimerStop(); TRYS.text = pr.name; }
+var TRYS = { text: '', held: {}, dj: { on: [false, false, false, false], beat: 2, wet: 50 } };
+const tPreset = () => TRYP().find((p) => p.id === TRY().preset);
+const kv = (k) => { const T = TRY(); return T.kv[k] == null ? KDEF[k] : T.kv[k]; };
+function tryPad(i, down) { const T = TRY(), id = T.pads[i]; if (!id) return; if (!down) { delete TRYS.held[i]; tryStage(true); return; } TRYS.held[i] = true; auUnlock();
+  const pitch = T.knobs.indexOf('pitch') > -1 ? Math.pow(2, (kv('pitch') - 50) / 50) : 1, vol = T.knobs.indexOf('volume') > -1 ? kv('volume') / 100 : 0.9, cutoff = T.knobs.indexOf('cutoff') > -1 ? 200 * Math.pow(60, kv('cutoff') / 100) : 0;
+  if (/^fx:/.test(id)) { const k = DJA[id.slice(3)]; TRYS.dj.on[k] = !TRYS.dj.on[k]; TRYS.dj.beat = kv('beat'); TRYS.dj.wet = kv('wet'); djSync(TRYS.dj); const on = DJFX.filter((f, j) => TRYS.dj.on[j]).map((f) => f[0]); TRYS.text = (on.length ? on.join('+') : 'No FX') + ' | ' + BEATS[TRYS.dj.beat] + ' | Wet ' + TRYS.dj.wet + '%'; }
+  else if (/^mac:/.test(id)) { auPlay('click'); TRYS.text = 'Types ' + id.slice(4); }
+  else if (id === 'tm:start') { auPlay('click'); tryTimerToggle(); }
+  else if (id === 'tm:reset') { auPlay('click'); tryTimerStop(); TRYS.text = String(kv('minutes')).padStart(2, '0') + ':00'; }
+  else { let dest = null; if (T.knobs.indexOf('effect') > -1 && kv('effect') > 0) dest = tryEcho(kv('effect') / 100); auPlay(id, { pitch, vol, cutoff, dest }); TRYS.text = sndName(id); }
+  tryStage(true); }
+function tryEcho(w) { const c = auUnlock(); if (!c) return null; if (!AU.techo) { const i = c.createGain(), d = c.createDelay(2), fb = c.createGain(), wg = c.createGain(); d.delayTime.value = 0.28; i.connect(AU.out); i.connect(d); d.connect(fb); fb.connect(d); d.connect(wg); wg.connect(AU.out); AU.techo = { i, fb, wg }; }
+  AU.techo.fb.gain.value = 0.3 + w * 0.4; AU.techo.wg.gain.value = w; return AU.techo.i; }
+function tryTimerToggle() { if (TRYS.tm) { clearInterval(TRYS.tm); TRYS.tm = null; TRYS.text = 'Paused ' + tmTxt(); return; } if (!TRYS.left) TRYS.left = kv('minutes') * 60; TRYS.tm = setInterval(() => { TRYS.left--; TRYS.text = tmTxt(); if (TRYS.left <= 0) { tryTimerStop(); TRYS.text = '00:00 Done!'; auPlay('beep'); } tryStage(true); }, 1000); TRYS.text = tmTxt(); }
+function tryTimerStop() { if (TRYS.tm) clearInterval(TRYS.tm); TRYS.tm = null; TRYS.left = 0; }
+const tmTxt = () => String(Math.floor(TRYS.left / 60)).padStart(2, '0') + ':' + String(TRYS.left % 60).padStart(2, '0');
+function tryKnob(k, v) { const T = TRY(); T.kv[k] = v; if (k === 'beat' || k === 'wet') { TRYS.dj.beat = kv('beat'); TRYS.dj.wet = kv('wet'); djSync(TRYS.dj); TRYS.text = KFN(k) + ' ' + (k === 'beat' ? BEATS[v] : v + '%'); } else if (k === 'minutes') { if (!TRYS.tm) TRYS.left = 0; TRYS.text = String(v).padStart(2, '0') + ':00'; } else TRYS.text = KFN(k) + ' ' + v; save(); tryStage(true); }
+// the stage: a pretend device you can play, pads big enough for a thumb
+function tryStage(light) { const el = $('tryv'); if (!el) return; const T = TRY(), pr = tPreset(); if (!T || !pr) return;
+  if (light && el.firstChild) { const sc = el.querySelector('.tscr'); if (sc) sc.textContent = TRYS.text || pr.name; el.querySelectorAll('[data-tpad]').forEach((b) => { const i = +b.dataset.tpad, id = T.pads[i]; b.classList.toggle('hit', !!TRYS.held[i]); b.classList.toggle('lit', /^fx:/.test(id) && !!TRYS.dj.on[DJA[id.slice(3)]]); }); return; }
+  const cols = pr.pads <= 2 ? 2 : pr.pads <= 6 ? 3 : 4;
+  el.innerHTML = '<div class="tdev"><div class="trow">' + (pr.screen ? '<div class="tscr">' + esc(TRYS.text || pr.name) + '</div>' : '<div class="tscr dim">' + esc(TRYS.text || pr.name) + '</div>') + '</div>' +
+    '<div class="tpads" style="grid-template-columns:repeat(' + cols + ',minmax(0,1fr))">' + T.pads.map((id, i) => '<button type="button" class="tpad' + (i === T.sel ? ' sel' : '') + (/^fx:/.test(id) ? ' fx' : '') + '" data-tpad="' + i + '"><b>' + (i + 1) + '</b><span>' + esc(sndName(id)) + '</span></button>').join('') + '</div>' +
+    '<div class="tknobs">' + T.knobs.map((k) => '<label class="tknob"><span>' + esc(KFN(k)) + ' <output>' + (k === 'beat' ? BEATS[kv(k)] : kv(k)) + '</output></span><input type="range" min="' + (k === 'minutes' ? 1 : 0) + '" max="' + (KMAX[k] || 100) + '" step="1" value="' + kv(k) + '" data-tknob="' + k + '" aria-label="' + esc(KFN(k)) + '"></label>').join('') + '</div></div>';
+  tryStage(true); }
+function tryPane() { const T = TRY(), pr = tPreset(); if (!T) return '';
+  const all = [].concat(...Object.keys(PACKS()).map((p) => PACKS()[p].sounds.filter((s) => !/^fx:/.test(s[0])).map((s) => [p + '.' + s[0], PACKS()[p].name + ': ' + s[1]]))), users = Object.keys(AU.user).map((k) => ['user:' + k, 'Your file: ' + sndName('user:' + k)]);
+  const opts = (cur) => '<optgroup label="Sounds">' + all.concat(users).map(([v, n]) => '<option value="' + v + '"' + (v === cur ? ' selected' : '') + '>' + esc(n) + '</option>').join('') + '</optgroup><optgroup label="Functions">' + DJFX.map((f) => 'fx:' + f[0].toLowerCase()).concat((CZ.MACROS || []).map((m) => 'mac:' + m), ['tm:start', 'tm:reset']).map((v) => '<option value="' + v + '"' + (v === cur ? ' selected' : '') + '>' + esc(/^fx:/.test(v) ? 'DJ FX: ' + sndName(v) : /^mac:/.test(v) ? 'Shortcut: ' + v.slice(4) : 'Timer: ' + sndName(v)) + '</option>').join('') + '</optgroup>';
+  return '<div class="trtop">' + soundPill() + '<button type="button" class="btn red tmake" data-tmake="1">Make this my build &rarr;</button></div>' +
+    '<p class="h">Preset</p><div class="hrow simr" role="group" aria-label="Preset">' + TRYP().map((p) => '<button type="button" data-tpre="' + p.id + '" aria-pressed="' + (p.id === pr.id) + '">' + esc(p.name) + '</button>').join('') + '</div><p class="note keep" style="margin:0 0 8px">' + esc(pr.line) + '</p>' +
+    '<p class="h">Sound pack for every pad</p><div class="hrow simr" role="group" aria-label="Sound pack">' + Object.keys(PACKS()).map((p) => '<button type="button" data-tpack="' + p + '">' + esc(PACKS()[p].name) + '</button>').join('') + '<button type="button" data-tup="all">Upload .wav / .mp3</button></div>' +
+    '<p class="h">Pads: what each one does</p><div class="tlist">' + T.pads.map((id, i) => '<label class="tsel"><b>' + (i + 1) + '</b><select data-tps="' + i + '" aria-label="Pad ' + (i + 1) + '">' + opts(id) + '</select><button type="button" data-tup="' + i + '" aria-label="Upload a sound for pad ' + (i + 1) + '">&#x2191;</button></label>').join('') + '</div>' +
+    '<p class="h" style="margin-top:8px">Knobs</p><div class="tlist">' + T.knobs.map((k, i) => '<label class="tsel"><b>K' + (i + 1) + '</b><select data-tks="' + i + '" aria-label="Knob ' + (i + 1) + '">' + (CZ.KNOB_FNS || []).map(([v, n]) => '<option value="' + v + '"' + (v === k ? ' selected' : '') + '>' + esc(n) + '</option>').join('') + '</select></label>').join('') + '</div>' +
+    '<p class="note keep">Uploaded files stay on this phone and play only here. The real build plays them from the Pico as .wav files.</p>' + libsDrawer() + '<input type="file" id="tryFile" accept=".wav,.mp3,audio/wav,audio/mpeg,audio/*" multiple hidden>'; }
+function tryUpload(files, at) { const c = auCtx(); if (!c || !files.length) return; const T = TRY(); let i = at === 'all' ? 0 : +at;
+  Array.from(files).slice(0, at === 'all' ? T.pads.length : 1).forEach((f, j) => { const pad = i + j, key = String(Date.now()) + j; f.arrayBuffer().then((ab) => new Promise((ok, no) => c.decodeAudioData(ab, ok, no))).then((buf) => { AU.user[key] = buf; (AU.userName = AU.userName || {})[key] = f.name.replace(/\.[^.]+$/, '').slice(0, 18); T.pads[pad] = 'user:' + key; save(); render(); tag('Pad ' + (pad + 1) + ': ' + f.name); }).catch(() => tag('That file could not be played. Try a .wav or .mp3')); }); }
+// Make this my build: the parts, a body that fits them, the pins on their own. No pin picking.
+function tryMake() { const T = TRY(), pr = tPreset(), btns = T.pads.length, wheel = pr.knob === 'encoder';
+  backup(); wipeAll(); S.items = []; S.pins = {}; S.have = {}; sel = null; LAST = null; UNDO.length = 0; S.recipe = null; S.beh = pr.fn; S.picked = true; S.started = true; S.pcb = false; S.wired = {};
+  S.style = pr.style; const z = SIZES[pr.style] || [6, 4]; S.cols = z[0]; S.rows = z[1]; S.xw = S.xd = 0; S.add = 0; S.attachedParts = []; S.ports = []; MPC = {};
+  const mk = (t, n) => { for (let k = 0; k < n; k++) if (CZ.PARTS[t]) S.items.push({ id: ++uid, type: t, panel: defaultPanel(CZ.PARTS[t]), x: -999, y: -999, r: 0 }); };
+  const needAdc = wheel ? 0 : T.knobs.length, brain = needAdc > 3 ? 'esp32' : pr.brain; /* the Pico has 3 analog pins: more knobs, a brain with more */
+  mk(brain, 1); mk(pr.pad, btns); mk(wheel ? 'encoder' : 'pot', T.knobs.length); if (pr.screen) mk('oled096', 1); if (pr.speaker || T.pads.some((id) => !/^(mac|tm):/.test(id))) mk('speaker28', 1);
+  fitAll(); keepInside(); if (S.beh === 'timer') TW().min = kv('minutes');
+  actsFill(true); const B = S.items.filter((i) => i.type === pr.pad), K = S.items.filter((i) => i.type === 'pot' || i.type === 'encoder');
+  B.forEach((it, i) => { const id = T.pads[i] || ''; if (/^fx:/.test(id)) it.action = id.slice(3); else if (/^mac:/.test(id)) it.action = 'macro'; else if (pr.fn === 'synth') it.action = 'note'; });
+  K.forEach((it, i) => { const k = T.knobs[i]; if (k === 'beat' || k === 'wet') it.action = k; });
+  djStop(); tryTimerStop(); save(); goRoom('parts'); tag('Your ' + pr.name + ': ' + S.items.length + ' parts, a ' + S.cols * 20 + ' x ' + S.rows * 20 + ' mm body, every pin picked for you. See Brain, Wire it.'); }
+function tryWire() { const el = $('tryv'); if (!el || el.dataset.on) return; el.dataset.on = '1';
+  el.addEventListener('pointerdown', (e) => { const b = e.target.closest('[data-tpad]'); if (!b) return; e.preventDefault(); const i = +b.dataset.tpad; if (TRY().sel !== i) { TRY().sel = i; el.querySelectorAll('.tpad.sel').forEach((x) => x.classList.remove('sel')); b.classList.add('sel'); } tryPad(i, true); });
+  ['pointerup', 'pointercancel', 'pointerleave'].forEach((ev) => el.addEventListener(ev, (e) => { const b = e.target.closest && e.target.closest('[data-tpad]'); if (b) tryPad(+b.dataset.tpad, false); }));
+  el.addEventListener('input', (e) => { const r = e.target.closest('[data-tknob]'); if (!r) return; const k = r.dataset.tknob, v = +r.value, o = r.parentNode.querySelector('output'); if (o) o.textContent = k === 'beat' ? BEATS[v] : v; tryKnob(k, v); }); }
+$('pane').addEventListener('click', (e) => { const b = e.target.closest('[data-snd],[data-tpre],[data-tpack],[data-tup],[data-tmake]'); if (!b) return; const d = b.dataset;
+  if (d.snd != null) { auSet(d.snd === '1'); if (!AU.on) djStop(); else if (curTab() === 'try') djSync(TRYS.dj); render(); return; }
+  if (d.tpre) { trySetPreset(d.tpre); save(); render(); return; }
+  if (d.tpack) { const T = TRY(), P = PACKS()[d.tpack]; T.pads = T.pads.map((id, i) => sid(d.tpack, P.sounds[i % P.sounds.length][0])); save(); render(); tag(P.name + ' on every pad'); return; }
+  if (d.tup != null) { const f = $('tryFile'); if (f) { f.dataset.at = d.tup; f.onchange = () => { tryUpload(f.files, f.dataset.at); f.value = ''; }; f.click(); } return; }
+  if (d.tmake) { tryMake(); } });
+$('pane').addEventListener('change', (e) => { const s = e.target.closest('[data-tps],[data-tks]'); if (!s) return; const T = TRY();
+  if (s.dataset.tps != null) { T.pads[+s.dataset.tps] = s.value; T.sel = +s.dataset.tps; } else { T.knobs[+s.dataset.tks] = s.value; if (T.kv[s.value] == null) T.kv[s.value] = KDEF[s.value]; } save(); render(); });
+
+window.__cz = { AU, TRY, tryMake, trySetPreset, auPlay, djSync, openPage, boardBuild, bomCpl, actOf, get HL() { return HL; }, PAGES, decoMove, mountPart, TEST, testModel, wiring, wallArt, LG, hookPolys, addBoard, packBuild, unpackBuild, shareState, portBlocked, portAt, mountBlocked, swatchFile, loadRecipe, get DECO() { return DECO; }, get T3() { return T3; }, THREE, wiring, codeFor, get S() { return S; }, get view() { return view; }, AZ, get UNDO() { return UNDO.length; }, halves, plan, makeFiles, get FILES() { return FILES; }, allProblems, G, addPart, go, render, dims, heights, addonFile, addonPolys, charParts, charCache, kb, kbBoard, kbCode, kbReadme, boardSvg, wiring, PP, gcodeFiles, gcodePieces, mountGeos, xp, sliceGuide, skeletonOf, skelOf, adjust, posts, estimate, reflow, fitAll, filesOf, MEASURED, portBlocked, testAct, testModel, micMain, get TRAY() { return TRAY; }, showStart, loadRecipe, cost, boardBuild, boardFiles, boardReadme, extraRows, keepBox };
 render();
 try { if (S.items.length) { keepInside(); save(); } } catch (e) {} /* a saved build from an older builder: nothing left floating outside */
 { const q = new URLSearchParams(location.search), code = q.get('build'), rid = q.get('recipe'), r = rid && (CZ.RECIPES || []).find((x) => x.id === rid), clean = () => { try { history.replaceState(null, '', location.pathname); } catch (e) {} };
@@ -3002,4 +3161,4 @@ try { if (S.items.length) { keepInside(); save(); } } catch (e) {} /* a saved bu
   } else if (r) { clean(); if (S.items.length) { $('sheetIn').innerHTML = '<h2>Start the ' + esc(r.name) + '?</h2><p class="note" style="font-size:14px">This replaces the ' + S.items.length + ' electronics in the build you have now. It is kept, so Bring back can return it.</p><div class="list" style="margin-top:10px"><button class="btn start" data-rok="' + r.id + '"><b>Start the ' + esc(r.name) + '</b>' + esc(r.line) + '</button><button class="btn start" data-door="close"><b>Keep my build</b>Go back to what I was making.</button></div>'; $('sheet').hidden = false; } else loadRecipe(r.id); }
   else if (!S.started && !S.items.length) showStart(); }
 // arriving from the Case Zero page: /casezero/build/?room=brain opens that room
-{ const rq = new URLSearchParams(location.search).get('room'); if ((rq === 'brain' || rq === 'body' || rq === 'parts') && PAGES[S.page || 0].room !== rq) goRoom(rq); }
+{ const rq = new URLSearchParams(location.search).get('room'); if ((rq === 'brain' || rq === 'body' || rq === 'parts' || rq === 'try') && PAGES[S.page || 0].room !== rq) goRoom(rq); }

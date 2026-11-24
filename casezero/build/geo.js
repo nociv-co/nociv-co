@@ -125,6 +125,11 @@ export function buildHalf(o) {
   const zs = new Set([R.F, H]); if (o.port) zs.add(o.port.z); if (o.port2) zs.add(o.port2.z); if (snapOK) { zs.add(gz[0]); zs.add(gz[1]); }
   if (wt && wt.kind !== 'vstripe') { const bh = Math.max(1, wt.sp / 2); for (let z = R.F + bh; z < H - 0.3; z += bh) zs.add(+z.toFixed(2)); }
   wallM.forEach((m) => m.bands.forEach((q) => { zs.add(q.z0); zs.add(q.z1); }));
+  // a mount on a curved wall: a flat land from the plane the part's back sits on into the wall (it overlaps the wall, so they are one solid), never into the inside
+  const lands = wallM.filter((m) => m.land && m.land.d > 0).map((m) => { const L = m.land, z0 = Math.max(R.F, L.z0), z1 = Math.min(H, L.z1), t = L.t, d = L.d;
+    const r = m.face === 'back' ? rect(L.s0, t - d, L.s1, t) : m.face === 'front' ? rect(L.s0, t, L.s1, t + d) : m.face === 'left' ? rect(t, L.s0, t + d, L.s1) : rect(t - d, L.s0, t, L.s1);
+    const polys = diff([r], innerWall); return z1 - z0 > 0.2 && polys.length ? { z0: +z0.toFixed(3), z1: +z1.toFixed(3), polys } : null; }).filter(Boolean);
+  lands.forEach((l) => { zs.add(l.z0); zs.add(l.z1); });
   const ports = (o.ports || []).map((p) => Object.assign({}, p, { rects: p.rects.map((q) => ({ s0: q.s0, s1: q.s1, z0: +Math.max(R.F, q.z0).toFixed(3), z1: +Math.min(H, q.z1).toFixed(3) })).filter((q) => q.z1 - q.z0 > 0.2) })); /* ports and vents: openings through a side wall */
   ports.forEach((p) => p.rects.forEach((q) => { zs.add(q.z0); zs.add(q.z1); }));
   const art = o.art || []; art.forEach((a) => a.bands.forEach((q) => { zs.add(q.z0); zs.add(q.z1); })); /* logos on the side walls: one band per print layer */
@@ -142,7 +147,8 @@ export function buildHalf(o) {
     if (snapOK && mid > gz[0] && mid < gz[1]) w = diff(w, offset(out, -(R.T - 1.2)));
     if (o.port && mid > o.port.z) w = diff(w, [rect(o.port.x0, o.port.y0, o.port.x1, o.port.y1)]);
     if (o.port2 && mid > o.port2.z) w = diff(w, [rect(o.port2.x0, o.port2.y0, o.port2.x1, o.port2.y1)]);
-    wallM.forEach((m) => { const q = m.bands.find((x) => mid > x.z0 && mid < x.z1); if (q) w = diff(w, [mountRect(m, q.hw, R.T + 8, 2)]); });
+    lands.forEach((l) => { if (mid > l.z0 && mid < l.z1) w = union(w, l.polys); });
+    wallM.forEach((m) => { const q = m.bands.find((x) => mid > x.z0 && mid < x.z1); if (q) w = diff(w, [mountRect(m, q.hw, R.T + 8, 2 + (m.land ? m.land.out : 0))]); });
     art.forEach((a) => { const q = a.bands.find((x) => mid > x.z0 && mid < x.z1); if (!q) return; const v = a.face === 'back' || a.face === 'front';
       q.iv.forEach(([s0, s1]) => { const c = (s0 + s1) / 2, m = { face: a.face, x: v ? c : a.x, y: v ? a.y : c }, hw = (s1 - s0) / 2;
         if (a.how === 'raised') w = union(w, [mountRect(m, hw, 0.1, a.depth)]); else w = diff(w, [mountRect(m, hw, a.how === 'cut' ? R.T + 1 : a.depth, 2)]); }); });
