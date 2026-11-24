@@ -8,7 +8,7 @@ import { CARABINER_HOOK_OUTLINE_MM, CARABINER_DEFAULT_THICKNESS_MM } from './cha
 import { openMeasure, GROUPS } from './capture.js?v=26';
 import { makeBoard, boardFiles, boardSvg, zip as zipFiles, dipOf } from './board.js?v=5';
 import { charParts, chSpec, charBuyList, CH_DEF, headDims, faceSpots, faceLimit, featPoly, flatParts, FEATS } from './char3d.js?v=5';
-import { micMain, planWiring, codeFor, PICO_LEFT, PICO_RIGHT, PICO_PINS, PICO_BRAINS, NEED, BOARDS, BOARD_OF, SCALES, LIBURL, preflight, DJFX, BEATS, DJMODE, libsFor, ACTS, ACTN, DJA } from './wiring.js?v=30';
+import { micMain, planWiring, codeFor, PICO_LEFT, PICO_RIGHT, PICO_PINS, PICO_BRAINS, NEED, BOARDS, BOARD_OF, SCALES, LIBURL, preflight, DJFX, BEATS, DJMODE, libsFor, ACTS, ACTN, DJA, V33 } from './wiring.js?v=31';
 
 const CZ = window.CZ, R = G.RULE, $ = (id) => document.getElementById(id);
 const esc = (s) => String(s == null ? '' : s).replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
@@ -791,11 +791,11 @@ function chosenChips() { const c = counts(), P = PARTS(); const k = Object.keys(
     (CLEARED && UNDO.length ? '<button class="btn dark" data-act="undo1" style="margin-top:8px;padding:8px">Undo: put it back</button>' : ''); }
 function pane(t) {
   const P = PARTS(), c = counts();
-  if (t === 'snap') return '<p class="h">Already built and soldered?</p><button class="btn red" data-act="measure">Photo my board, front and back</button><p class="note" style="margin-bottom:10px">A card next to it is the ruler. Press on each part on the photo, say what it is, do the brain too. Your board goes inside the case, every part on it becomes its own part you can change. Photos stay on your phone.</p>' +
+  if (t === 'snap') return copilotHtml() + '<p class="h">Already built and soldered?</p><button class="btn red" data-act="measure">Photo my board, front and back</button><p class="note" style="margin-bottom:10px">A card next to it is the ruler. Press on each part on the photo, say what it is, do the brain too. Your board goes inside the case, every part on it becomes its own part you can change. Photos stay on your phone.</p>' +
     '<p class="h">Not built yet</p><div class="grid g2"><button class="btn dark" data-act="snap">' + (PHOTO ? 'Take another photo' : 'Take a photo of my electronics') + '</button><button class="btn" data-act="toParts">Pick from the list</button></div>' +
     '<p class="note">Lay your electronics out on a table and snap them. The photo stays here on your phone so you can match each one to the list. Then tap Electronics and add each one you see.</p>' + (PHOTO ? '<button class="btn" data-act="nophoto" style="margin-top:8px">Remove the photo</button>' : '') + chosenChips();
   if (t === 'try') return tryPane();
-  if (t === 'parts') { const ts = TSEL != null && S.items.find((i) => i.id === TSEL), sb = ts ? swapBar(ts) : ''; if (sb) return sb + partsPane(P, c); return partsPane(P, c); }
+  if (t === 'parts') { const ts = TSEL != null && S.items.find((i) => i.id === TSEL), sb = ts ? swapBar(ts) : ''; if (sb) return copilotHtml() + sb + partsPane(P, c); return copilotHtml() + partsPane(P, c); }
   return paneRest(t, P, c);
 }
 function partsPane(P, c) {
@@ -806,8 +806,10 @@ function partsPane(P, c) {
       return FGROUPS.map((g) => '<p class="h"' + (g[0] === 'Inputs' ? ' style="margin-top:0"' : '') + '>' + g[0] + ' <span style="font-weight:600;text-transform:none;letter-spacing:0">' + g[1] + '</span></p><div class="grid g3" style="margin-bottom:10px">' + g[2].map((k) => tile(FUNCS.find((f) => f[0] === k))).join('') + '</div>').join('') + chosenChips(); }
     const head = '<div class="fnh"><button type="button" class="btn" data-fn="">&lsaquo; All</button><b>' + fn[1] + '</b></div>';
     const list = Object.keys(P).filter((k) => P[k].cat === fn[0]);
-    return head + '<div class="hrow">' + (list.map((k) => '<button type="button" class="pick" data-add="' + k + '">' + (c[k] ? '<span class="n">' + c[k] + '</span><span class="rmv" data-sub="' + k + '" role="button" aria-label="Remove one">&minus;</span>' : '') + '<span class="lk ' + P[k].link + '">' + LK[P[k].link] + '</span>' + (lineArt(k) || partSvg(P[k])) + esc(P[k].short) + '<small>' + (P[k].price ? '$' + P[k].price + ' &middot; ' : '') + esc((P[k].w + ' x ' + P[k].h).replace(/\.0\b/g, '')) + ' mm</small></button>').join('') + (fn[0] === 'mine' || !list.length ? /* My own board: the presets, and measuring one with the phone */
+    const cb = {}; list.forEach((k) => { cb[k] = compat(k); });
+    return head + '<div class="hrow">' + (list.map((k) => '<button type="button" class="pick' + (cb[k] && cb[k][0] === 'no' ? ' dim' : '') + '" data-add="' + k + '"' + (cb[k] && cb[k][2] ? ' title="' + esc(cb[k][1] + ': ' + cb[k][2]) + '"' : '') + '>' + (cb[k] ? '<span class="cb ' + cb[k][0] + '">' + cb[k][1] + '</span>' : '') + (c[k] ? '<span class="n">' + c[k] + '</span><span class="rmv" data-sub="' + k + '" role="button" aria-label="Remove one">&minus;</span>' : '') + '<span class="lk ' + P[k].link + '">' + LK[P[k].link] + '</span>' + (lineArt(k) || partSvg(P[k])) + esc(P[k].short) + '<small>' + (P[k].price ? '$' + P[k].price + ' &middot; ' : '') + esc((P[k].w + ' x ' + P[k].h).replace(/\.0\b/g, '')) + ' mm</small></button>').join('') + (fn[0] === 'mine' || !list.length ? /* My own board: the presets, and measuring one with the phone */
         '<button type="button" class="pick" data-act="measure" style="grid-column:span 2">' + ico('measure') + 'Measure one with my phone<small>Card as the ruler</small></button>' : '')) + '</div>' +
+      (list.some((k) => cb[k] && cb[k][0] !== 'ok') ? '<div class="cbl">' + list.filter((k) => cb[k] && cb[k][0] !== 'ok').map((k) => '<div class="' + cb[k][0] + '"><b>' + esc(P[k].short) + '</b> ' + esc(cb[k][1]) + ': ' + esc(cb[k][2]) + '</div>').join('') + '</div>' : '') +
       (fn[0] === 'brain' ? '<div class="btags">' + list.filter((k) => P[k].tag).map((k) => '<div><b>' + esc(P[k].short) + '</b> &middot; ' + esc(P[k].tag) + '</div>').join('') + '</div>' : '') + '<p class="note" id="partTip">' + (list[0] ? 'Tap one to add it. The red minus takes one out. ' + esc(P[list[0]].tip) : '') + '</p>' + (fn[0] === 'power' ? '<p class="note">' + powerNote() + '</p>' : '') + chosenChips();
   }
 }
@@ -1004,6 +1006,7 @@ function after(t) {
 // ---------- taps ----------
 $('pane').addEventListener('click', (e) => {
   const pa = e.target.closest('[data-pact]'); if (pa) { const [id, k] = pa.dataset.pact.split(':'), it = S.items.find((i) => i.id === +id); if (it) { it.action = k; testReset(); save(); render(); tag(label(it).split(' ')[0] + ' is now ' + ACTN(k) + ': Test It and ' + CFILE() + ' follow it.'); } return; }
+  const cpb = e.target.closest('[data-cp]'); if (cpb) { cpFix(cpb.dataset.cp); return; }
   const bw = e.target.closest('[data-bswap]'); if (bw) { const [id, t] = bw.dataset.bswap.split(':'), it = S.items.find((i) => i.id === +id); if (it && t !== swapCur(it)) { testReset(); swapType(it, t); } return; }
   const sp = e.target.closest('[data-sim],[data-wired]'); if (sp) { if (sp.dataset.sim) simTap(sp.dataset.sim); else { S.tab[5] = curTab() === 'map' ? 'test' : 'map'; save(); render(); if (S.tab[5] === 'map') pfTag(); } return; }
   const b = e.target.closest('button, [data-sel], [data-delmine], [data-sub], [data-nsel], [data-ins], [data-mpan], [data-gcp]'); if (!b) return; const d = b.dataset;
@@ -2023,12 +2026,22 @@ function codeNow() { const out = []; try { const c = codeFor(wiring(), summaryLi
 let CODEF = 0;
 const hlLine = (txt) => { const t = hlTag(); if (!t) return -1; const re = new RegExp('(^|[^A-Za-z0-9_])' + t.replace(/[.]/g, '\\.') + '(?![0-9])'); return txt.split('\n').findIndex((l) => re.test(l)); };
 function codeBox(on) { const b = $('cbx'); b.hidden = !on; if (!on) return; const c = codeNow(), hi = hlLine(c[0][1]); $('cbxName').textContent = c[0][0] + (hi > -1 ? ' : ' + (hi + 1) : ''); if (hi > -1) { $('cbxPre').textContent = c[0][1].split('\n').slice(hi, hi + 4).join('\n'); return; } $('cbxPre').textContent = c[0][1].split('\n').filter((l) => l.trim() && !/^(#|\/\/)/.test(l.trim())).slice(0, 4).join('\n') || c[0][1].split('\n').slice(0, 4).join('\n'); }
-function codeFull(i) { const c = codeNow(); CODEF = Math.min(i || 0, c.length - 1); $('cfTabs').innerHTML = c.map((x, j) => '<button type="button" data-cf="' + j + '" aria-pressed="' + (j === CODEF) + '">' + x[0] + '</button>').join(''); const hi = hlLine(c[CODEF][1]), T = c[CODEF][1].split('\n'); $('cfPre').innerHTML = T.map((l, j) => (j === hi ? '<mark id="cfHL">' + esc(l) + '</mark>' : esc(l))).join('\n'); $('cfull').hidden = false; const mk = $('cfHL'); if (mk && mk.scrollIntoView) mk.scrollIntoView({ block: 'center' }); }
+// a light syntax colourer for the Code viewer: comments, strings, numbers, keywords, #include. One line at a time, no library.
+const KW = { py: /^(import|from|as|def|class|return|if|elif|else|for|while|in|not|and|or|is|try|except|finally|with|pass|break|continue|global|lambda|raise|True|False|None)$/,
+  ino: /^(void|int|long|bool|char|byte|float|double|const|unsigned|static|if|else|for|while|do|return|break|continue|switch|case|new|true|false|String|HIGH|LOW|INPUT|OUTPUT|INPUT_PULLUP)$/ };
+const TOK = { py: /(#.*$)|("(?:\\.|[^"\\])*"|'(?:\\.|[^'\\])*')|(\b0x[0-9A-Fa-f]+\b|\b\d+(?:\.\d+)?\b)|([A-Za-z_]\w*)/g, ino: /(\/\/.*$)|(^\s*#\w+)|("(?:\\.|[^"\\])*"|'(?:\\.|[^'\\])*'|<[\w./]+\.h>)|(\b0x[0-9A-Fa-f]+\b|\b\d+(?:\.\d+)?\b)|([A-Za-z_]\w*)/g };
+function hlCode(line, lang) { const re = new RegExp(TOK[lang].source, 'g'), kw = KW[lang]; let out = '', at = 0, m;
+  while ((m = re.exec(line))) { out += esc(line.slice(at, m.index)); const t = m[0], g = lang === 'ino' ? [m[1], m[2], m[3], m[4], m[5]] : [m[1], null, m[2], m[3], m[4]];
+    out += g[0] ? '<span class="tc">' + esc(t) + '</span>' : g[1] ? '<span class="tp">' + esc(t) + '</span>' : g[2] ? '<span class="ts">' + esc(t) + '</span>' : g[3] ? '<span class="tn">' + esc(t) + '</span>' : kw.test(t) ? '<span class="tk">' + esc(t) + '</span>' : esc(t); at = re.lastIndex; }
+  return out + esc(line.slice(at)); }
+function codeFull(i) { const c = codeNow(); CODEF = Math.min(i || 0, c.length - 1); $('cfTabs').innerHTML = c.map((x, j) => '<button type="button" data-cf="' + j + '" aria-pressed="' + (j === CODEF) + '">' + x[0] + '</button>').join(''); const hi = hlLine(c[CODEF][1]), T = c[CODEF][1].split('\n'), lang = /\.ino$/.test(c[CODEF][0]) ? 'ino' : 'py'; $('cfPre').innerHTML = T.map((l, j) => '<span class="ln' + (j === hi ? ' hl" id="cfHL' : '') + '">' + hlCode(l, lang) + '</span>').join(''); $('cfCopy').textContent = 'Copy Code'; $('cfull').hidden = false; const mk = $('cfHL'); if (mk && mk.scrollIntoView) mk.scrollIntoView({ block: 'center' }); }
 $('cbx').addEventListener('click', () => codeFull(0));
 $('cfull').addEventListener('click', (e) => { const b = e.target.closest('button'); if (!b) return;
   if (b.dataset.cf != null) { codeFull(+b.dataset.cf); return; }
   if (b.id === 'cfX') { $('cfull').hidden = true; return; }
-  if (b.id === 'cfCopy') { const t = $('cfPre').textContent; const ok = () => { b.textContent = 'Copied'; setTimeout(() => { b.textContent = 'Copy'; }, 1200); }; try { navigator.clipboard.writeText(t).then(ok, () => {}); } catch (er) {} return; }
+  if (b.id === 'cfCopy') { const t = (codeNow()[CODEF] || ['', ''])[1], ok = () => { b.textContent = 'Copied!'; setTimeout(() => { b.textContent = 'Copy Code'; }, 1400); };
+    const old = () => { try { const ta = document.createElement('textarea'); ta.value = t; ta.setAttribute('readonly', ''); ta.style.cssText = 'position:fixed;opacity:0;top:0'; document.body.appendChild(ta); ta.select(); const done = document.execCommand('copy'); ta.remove(); if (done) ok(); } catch (er) {} }; /* no clipboard API (plain http, older phones) */
+    try { if (navigator.clipboard && navigator.clipboard.writeText) navigator.clipboard.writeText(t).then(ok, old); else old(); } catch (er) { old(); } return; }
   if (b.id === 'cfSave') { pfTag(); const c = codeNow()[CODEF]; saveFile({ name: c[0], blob: new Blob([c[1]], { type: 'text/x-python' }) }); } });
 document.addEventListener('keydown', (e) => { if (e.key === 'Escape' && !$('cfull').hidden) $('cfull').hidden = true; });
 function testUp() { if (TEST.drag && TEST.drag.kind === 'tof') testAct(TEST.drag, true); TEST.drag = null; if (TEST.held) testAct(TEST.held, false); }
@@ -2040,7 +2053,7 @@ function headerPins(B) { const P = {}, nl = B.left.length + B.right.length; B.le
 function wiring() { if (!S.pins) S.pins = {}; return planWiring(wiringItems(), S.pins, BRDX()); }
 // Pin preflight: duplicate pins and 3.3V parts on a 5V Uno, checked before code is exported or Wired is shown
 function pfList() { try { return preflight(wiring(), BRDX()); } catch (e) { return []; } }
-function pfHtml() { const L = pfList(); return L.length ? '<div class="note bad keep" role="alert" style="margin:0 0 6px"><b>Check before you wire</b>' + L.map((w) => '<div>' + esc(w) + '</div>').join('') + '</div>' : ''; }
+function pfHtml() { const L = pfList(); return copilotHtml() + (L.length ? '<div class="note bad keep" role="alert" style="margin:0 0 6px"><b>Check before you wire</b>' + L.map((w) => '<div>' + esc(w) + '</div>').join('') + '</div>' : ''); }
 function pfTag() { const L = pfList(); if (L.length) tag('Warning: ' + L[0] + (L.length > 1 ? ' (+' + (L.length - 1) + ' more)' : '')); return L; }
 function wiringText() { const w = wiring(), B = BRDX(), L = ['NOCIV Case Zero wiring', 'Brain: ' + B.name, ''];
   pfList().forEach((x) => L.push('CHECK FIRST: ' + x)); w.problems.forEach((x) => L.push('FIX: ' + x)); if (L.length > 3) L.push('');
@@ -2652,13 +2665,83 @@ function creditHtml() {
   const r = recipe(); if (!r) return '';
   return '<details class="fold"><summary>Code: ' + esc(r.credit.project) + ' by ' + esc(r.credit.by) + '</summary><div class="list"><div class="it"><b>' + esc(r.name) + ': the code</b>Comes from <a href="' + esc(r.credit.url) + '" target="_blank" rel="noopener" style="display:inline;padding:0;border:0;text-decoration:underline">' + esc(r.credit.project) + '</a> by ' + esc(r.credit.by) + ' (license: ' + esc(r.credit.license) + '). Their work, their credit. Our starter code in Brain, Wire it, Wiring only proves your wiring works.<small>' + esc(r.note) + (r.tested ? '' : ' Not test-built by NOCIV yet.') + '</small></div></div></details>';
 }
+// ---------- Compatibility Co-Pilot: when a build hits a hardware limit, a calm why plus 1-Tap Fixes, and always a way to carry on ----------
+const SOUNDOUT = ['speaker28', 'jack35', 'i2sdac'], AVRB = ['uno', 'nano', 'promicro'], ANALOG = ['pot', 'slider', 'thumb'];
+const brainItem = () => S.items.find((i) => PP(i) && PP(i).cat === 'brain');
+const hasT = (t) => S.items.some((i) => i.type === t);
+const clipCount = () => S.items.reduce((n, i) => n + (BTNS.indexOf(i.type) > -1 && !i.step ? 1 : i.type === 'keypad44' ? 12 : i.type === 'dpad' ? 4 : 0), 0); /* every pad that can play its own clip */
+const analogUsed = () => S.items.filter((i) => ANALOG.indexOf(i.type) > -1).length;
+function copilot() {
+  const bi = brainInfo(); if (!bi) return [];
+  const bk = BOARD_OF[bi.type], B = BRDX(), nm = bmini(B.name), ok = S.cpOk || {}, out = [], fn = recipeFn(), canSwap = bk !== 'pico' && !!brainItem();
+  let w; try { w = wiring(); } catch (e) { w = { problems: [], rows: [] }; }
+  const add = (id, title, why, fixes) => { if (!ok[id + ':' + bk]) out.push({ id, title, why, fixes }); };
+  const sound = SOUNDOUT.some(hasT) || fn === 'sound' || fn === 'sampler', store = hasT('dfplayer') || hasT('sdcard');
+  if (AVRB.indexOf(bk) > -1 && sound && !store && S.beh !== 'midi')
+    add('audio', 'Sound clips need somewhere to live', 'The ' + nm + ' keeps its code in 32 KB and has no room for sound files, so on its own it can only beep tones. Pick one way to play real clips.',
+      [['add', 'dfplayer', '+ Add $2 DFPlayer Mini + SD'], ['beh', 'midi', 'Play via Laptop (Serial MIDI)']].concat(canSwap ? [['brain', 'pico', 'Swap to Pico']] : []).concat([['ok', '', 'I already have this / Continue']]));
+  if (bk === 'pico' && sound && !store && clipCount() > 4)
+    add('clips', 'Room for about 4 clips', 'The Pico keeps clips in its own 2 MB of flash, next to the code: about 4 short .wav clips (16-bit, 22 kHz, 5 s each) fit. Your build has ' + clipCount() + ' pads.',
+      [['add', 'sdcard', '+ Add $2 MicroSD Reader'], ['ok', '', 'Keep 4 clips']]);
+  if (w.problems.some((p) => /^Out of pins/.test(p))) {
+    const loose = S.items.filter((i) => BTNS.indexOf(i.type) > -1 && i.of == null && !i.step).length;
+    add('pins', 'Out of pins', 'The ' + nm + ' has run out of free pins: every button and part wants its own wire. A 4x4 matrix reads 16 buttons on 8 wires.',
+      (loose >= 2 && !hasT('keypad44') ? [['matrix', '', 'Switch to 4x4 Matrix']] : []).concat(canSwap ? [['brain', 'pico', 'Swap to Pico']] : []).concat([['ok', '', 'Continue']]));
+  }
+  const low = AVRB.indexOf(bk) > -1 ? S.items.filter((i) => V33[i.type]) : [];
+  if (low.length && !hasT('lvlshift'))
+    add('v33', '3.3V part on a 5V ' + nm, Array.from(new Set(low.map((i) => PP(i).short))).join(', ') + (low.length > 1 ? ' run' : ' runs') + ' on 3.3V. ' + (B.v3 === '3V3' ? 'Power is already routed to the 3V3 pin in Wired, so the part is safe to power.' : 'The ' + nm + ' has no 3V3 pin: use a breakout with its own 3.3V regulator.') + ' A level shifter keeps the 5V signal wires gentle on it too.',
+      [['add', 'lvlshift', '+ Add $1 Level Shifter'], ['ok', '', 'I already have this / Continue']]);
+  if (bk === 'pico' && w.problems.some((p) => /needs an analog pin/.test(p)))
+    add('analog', 'More than 3 knobs', 'The Pico has 3 analog pins (GP26, GP27, GP28) and your build has ' + analogUsed() + ' knobs, sliders or sticks. A Click wheel turns like a knob but uses normal pins.',
+      [['enc', '', 'Swap 1 Knob to Click Wheel'], ['ok', '', 'Continue']]);
+  return out;
+}
+function copilotHtml() { const L = copilot(); return L.map((c) => '<div class="cop" role="status"><b>' + esc(c.title) + '</b><p>' + esc(c.why) + '</p><div class="cofx">' + c.fixes.map((f) => '<button type="button" class="' + (f[0] === 'ok' ? 'go' : 'fx') + '" data-cp="' + c.id + '|' + f[0] + '|' + f[1] + '">' + (f[0] === 'ok' ? '' : '<i>1-Tap Fix</i>') + esc(f[2]) + '</button>').join('') + '</div></div>').join(''); }
+function cpFix(v) {
+  const [id, kind, arg] = v.split('|'), bi = brainInfo(), bk = bi && BOARD_OF[bi.type], P = PARTS();
+  if (kind === 'ok') { S.cpOk = S.cpOk || {}; S.cpOk[id + ':' + bk] = 1; save(); render(); tag('Carry on: nothing changed.'); return; }
+  if (kind === 'enc') { const it = S.items.slice().reverse().find((i) => (i.type === 'pot' || i.type === 'slider') && i.of == null); if (it) { testReset(); swapType(it, 'encoder'); } return; }
+  snapU();
+  if (kind === 'add') { addPart(arg); S.pins = {}; tag('Added the ' + P[arg].short + '. Wired, the code and the shop list follow it.'); }
+  if (kind === 'beh') { S.beh = arg; testReset(); tag('Sound now goes to your laptop as Serial MIDI. Run the free Hairless MIDI bridge on the computer.'); }
+  if (kind === 'brain') { const b = brainItem(); if (b) { b.type = arg; S.pins = {}; snapBrain(b); tag('Your brain is now a ' + P[arg].short + '. Pins and code follow it.'); } }
+  if (kind === 'matrix') { const n = S.items.filter((i) => BTNS.indexOf(i.type) > -1 && i.of == null && !i.step).length; S.items = S.items.filter((i) => !(BTNS.indexOf(i.type) > -1 && i.of == null && !i.step)); addPart('keypad44'); S.pins = {}; tag(n + ' buttons became one 4x4 matrix: 16 keys on 8 pins.'); }
+  testReset(); save(); render();
+}
+// Chip-aware badges: with a brain picked, every part says how well it goes with it
+function compat(k) {
+  const bi = brainInfo(), P = PARTS()[k]; if (!bi || !P || P.cat === 'brain' || P.cat === 'mine') return null;
+  const N = NEED[k], B = BRDX(), bk = BOARD_OF[bi.type], nm = bmini(B.name), avr = AVRB.indexOf(bk) > -1, an = N && N.pins && N.pins.some((p) => p[1] === 'a');
+  const no = (alt) => ['no', 'Not compatible', alt], note = (why) => ['note', 'Works with 1 note', why];
+  if (N && N.pi && !B.pi) return no('An HDMI screen needs a Raspberry Pi. Try the 2.8 in screen.');
+  if (!B.spi && N && (N.spi || N.cam || N.sd)) return no('Its SPI runs ' + (B.builtIn || 'other parts') + '. Try the 0.96 in OLED (I2C).');
+  if (avr && k === 'i2sdac') return no('No I2S sound on the ' + nm + '. Try the $2 DFPlayer Mini.');
+  if (avr && k === 'inmp441') return no('No I2S input on the ' + nm + '. Swap to a Pico for the mic.');
+  if (B.pi && an) return note('The Pi has no analog pins: add an ADS1115 board.');
+  if (avr && V33[k]) return note('3.3V part: Wired powers it from 3V3. A $1 level shifter protects its signal pins.');
+  if (!avr && k === 'lcd1602') return note('Runs on 5V: put a level shifter on SDA and SCL.');
+  if (avr && k === 'sdcard') return note('The SD library uses about 600 bytes of the ' + nm + "'s 2 KB memory.");
+  if (bk === 'pico' && an && analogUsed() >= 3) return note('All 3 analog pins are taken. A Click wheel fits.');
+  return ['ok', 'Works right away', ''];
+}
+// "What You're Getting Into": three calm lines before buying
+function intoCard() {
+  const B = BRDX(), loose = S.items.filter((i) => PP(i) && i.of == null && PP(i).cat !== 'mine'), sol = loose.filter((i) => PP(i).link === 'solder');
+  const wire = pcbOn() ? ['5 pre-assembled boards', 'One carrier board for everything, made 5 at a time by a board factory.'] : sol.length ? ['Light soldering', 'A few joints on the ' + Array.from(new Set(sol.map((i) => PP(i).short))).join(', ') + '. The rest push on.'] : ['Push-on wires', 'Jumper wires push onto the pins. No soldering iron.'];
+  const code = B.ino ? ['Arduino IDE .ino', 'Open it in the free Arduino IDE and press Upload.'] : B.cp ? ['Drag-and-drop code.py', 'Copy code.py onto the CIRCUITPY drive. It runs by itself.'] : ['Python on the Pi', 'The pin list for your own Python script.'];
+  let n = copilot().length; try { n += wiring().problems.length + pfList().length; } catch (e) {}
+  const chk = n ? [n + ' thing' + (n > 1 ? 's' : '') + ' to check', 'See the notes above, each with a 1-Tap Fix.', 'amb'] : ['All parts check out', 'Every part works with the ' + bmini(B.name) + '.', 'ok'];
+  const row = (k, v, c) => '<div><span>' + k + '</span><b' + (c ? ' class="' + c + '"' : '') + '>' + esc(v[0]) + '</b><small>' + esc(v[1]) + '</small></div>';
+  return '<div class="into"><p class="h" style="margin:0 0 4px">What You\'re Getting Into</p>' + row('Wiring', wire) + row('Coding', code) + row('Hardware', chk, chk[2]) + '</div>';
+}
 function shopHtml() {
   const c = cost(); if (!S.items.length) return '<p class="note" style="margin-top:0">Nothing to buy yet. Add electronics in Parts, or pick a recipe on the start screen.</p>';
   const a = (u, n) => '<a href="' + esc(u) + '" target="_blank" rel="noopener">' + n + '</a>';
   const amz = (q) => 'https://www.amazon.com/s?k=' + encodeURIComponent(q);
   const link = (p) => { const sq = p.searchQuery || CZ.cleanQuery(p.find || p.name), q = encodeURIComponent(sq); return '<span class="buy"><a class="amz" href="' + esc(amz(sq)) + '" target="_blank" rel="noopener">Amazon</a>' + (p.url ? a(p.url, 'Maker') : '') + a('https://www.adafruit.com/search?q=' + q, 'Adafruit') + a('https://www.aliexpress.com/wholesale?SearchText=' + q, 'AliExpress') + '</span>'; };
   const haveBtn = (t, on) => '<button data-have="' + t + '" style="all:unset;cursor:pointer;float:right;padding:6px 9px;border:1.5px solid #1a1a1a;border-radius:9px;font:800 11.5px/1 var(--sys);' + (on ? 'background:#1a1a1a;color:#fff' : '') + '">' + (on ? 'Have it' : 'I have this') + '</button>';
-  let h = '<div class="est"><b>About ' + money(c.total) + ' to build</b><span>' + money(c.parts) + ' electronics + ' + money(c.extras) + ' small stuff + ' + money(c.plastic) + ' plastic. Shipping is extra. Typical prices, not live.</span></div>';
+  let h = copilotHtml() + intoCard() + '<div class="est"><b>About ' + money(c.total) + ' to build</b><span>' + money(c.parts) + ' electronics + ' + money(c.extras) + ' small stuff + ' + money(c.plastic) + ' plastic. Shipping is extra. Typical prices, not live.</span></div>';
   h += '<div class="list shopl">' + c.rows.map((r) => '<div class="it">' + haveBtn(r.t, r.have) + '<b>' + r.n + ' x ' + esc(r.p.name) + (r.p.check ? ' *' : '') + ' <span class="pr">' + money(r.have ? 0 : r.sum) + '</span></b>' + (r.have ? 'You have it: $0.' : r.own ? (r.own === r.n ? 'Already on your board: $0.' : r.own + ' already on your board. ' + money(r.sum) + ' for the other ' + r.buy + '.') : money(r.p.price || 0) + ' each, ' + money(r.sum) + '.') + ' ' + link(r.p) + '</div>').join('') +
     c.ex.map((r) => '<div class="it">' + haveBtn(r.t, r.have) + '<b>' + esc(r.name) + ' <span class="pr">' + money(r.have ? 0 : r.each) + '</span></b>' + (r.have ? 'You have it: $0.' : 'About ' + money(r.each) + '.') + ' ' + link({ name: r.name }) + '</div>').join('') + '</div>';
   h += '<p class="note" style="margin:8px 0">' + powerNote() + '</p>';

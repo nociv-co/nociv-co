@@ -16,7 +16,7 @@ export const PICO_BRAINS = ['pico', 'picow'];
 const range = (a, b) => { const o = []; for (let i = a; i <= b; i++) o.push(i); return o; };
 const PICO_PWM = (n) => (n >> 1) & 7;
 export const BOARDS = {
-  pico: { name: 'Raspberry Pi Pico', left: PICO_LEFT, right: PICO_RIGHT, all: ALL, adc: ADC, spi: [18, 19, 16], i2c: [4, 5], spiPick: [[17, 20, 21], [22, 16, 15], [14, 13, 12]], camCs: [17, 20, 21, 22], lab: (n) => 'GP' + n, cp: 'board.GP', pwm: PICO_PWM, v5: 'VBUS', v3: '3V3' },
+  pico: { name: 'Raspberry Pi Pico', left: PICO_LEFT, right: PICO_RIGHT, all: ALL, adc: ADC, spi: [18, 19, 16], i2c: [4, 5], spiPick: [[17, 20, 21], [22, 16, 15], [14, 13, 12]], camCs: [17, 20, 21, 22], uart: [0, 4, 8, 12, 16], lab: (n) => 'GP' + n, cp: 'board.GP', pwm: PICO_PWM, v5: 'VBUS', v3: '3V3' },
   nano: { name: 'Arduino Nano', left: ['D13', '3V3', 'AREF', 'A0', 'A1', 'A2', 'A3', 'A4', 'A5', 'A6', 'A7', '5V', 'RST', 'GND', 'VIN'], right: ['D12', 'D11', 'D10', 'D9', 'D8', 'D7', 'D6', 'D5', 'D4', 'D3', 'D2', 'GND', 'RST', 'D0', 'D1'],
     all: range(2, 19), adc: range(14, 21), spi: [13, 11, 12], i2c: [18, 19], spiPick: [[10, 9, 8], [7, 6, 5]], camCs: [10, 9, 8], lab: (n) => (n >= 14 ? 'A' + (n - 14) : 'D' + n), cp: null, ino: true, pwm: (n) => ([3, 5, 6, 9, 10, 11].indexOf(n) > -1 ? n : -1), v5: '5V', v3: '3V3' },
   uno: { name: 'Elegoo / Arduino Uno', left: ['IOREF', 'RST', '3V3', '5V', 'GND', 'GND', 'VIN', 'A0', 'A1', 'A2', 'A3', 'A4', 'A5'], right: ['SCL', 'SDA', 'AREF', 'GND', 'D13', 'D12', 'D11', 'D10', 'D9', 'D8', 'D7', 'D6', 'D5', 'D4', 'D3', 'D2', 'D1', 'D0'],
@@ -58,6 +58,9 @@ export const NEED = {
   hdmi5: { pi: true }, hdmi7: { pi: true },
   pir: { pins: [['out', 'd']], power: 'VBUS', what: 'motion', note: 'Power it from VBUS (5 V). Its OUT pin gives 3.3 V, safe for the Pico. The two small screws set the range and how long it stays on.' },
   vl53: { i2c: true, what: 'distance', note: 'Shares the two I2C wires with any other I2C part. Most VL53L0X boards take 3V3.' },
+  dfplayer: { pins: [['tx+rx', 'uart']], power: 'VBUS', what: 'mp3', note: 'The brain TX (first pin) through a 1K resistor to the DFPlayer RX, the DFPlayer TX to the brain RX (second pin). VCC to 5V. A small speaker on SPK1 and SPK2.' },
+  sdcard: { sd: true, power: 'VBUS', what: 'sd', note: 'VCC to 5V (the module has its own 3.3V regulator). SCK, MOSI and MISO are the SPI pins, CS can be any pin.' },
+  lcd1602: { i2c: true, power: 'VBUS', what: 'lcd', note: 'VCC to 5V. Shares the two I2C wires with any other I2C part. Address 0x27 (some are 0x3F). On a 3.3V brain the backpack pulls SDA and SCL up to 5V: put a level shifter on those two wires.' },
   arducam: { cam: true, what: 'camera', note: 'SPI carries the picture (it needs MISO too), I2C sets the camera up. VCC to 3V3.' }
 };
 const slice = (n) => (n >> 1) & 7;
@@ -69,13 +72,15 @@ export function planWiring(items, over, B) {
   const take = (pin, who) => { if (used[pin] && used[pin] !== who) problems.push(L(pin) + ' is used twice (' + used[pin] + ' and ' + who + ').'); used[pin] = who; };
   const free = (p) => used[p] == null;
   const firstFree = (list) => list.find(free);
-  if (!B.spi) items.filter((i) => NEED[i.type] && (NEED[i.type].spi || NEED[i.type].cam)).forEach((i) => problems.push(i.label + ' needs SPI, and the ' + B.name + ' has no free SPI pins.' + (B.builtIn ? ' Its SPI drives ' + B.builtIn + '.' : '')));
+  if (!B.spi) items.filter((i) => NEED[i.type] && (NEED[i.type].spi || NEED[i.type].cam || NEED[i.type].sd)).forEach((i) => problems.push(i.label + ' needs SPI, and the ' + B.name + ' has no free SPI pins.' + (B.builtIn ? ' Its SPI drives ' + B.builtIn + '.' : '')));
   const spiParts = !B.spi ? [] : items.filter((i) => NEED[i.type] && NEED[i.type].spi), i2cParts = items.filter((i) => NEED[i.type] && NEED[i.type].i2c);
   // 1. screens first: they need fixed pins. SPI0 = GP18 clock, GP19 data. I2C0 = GP4 SDA, GP5 SCL.
-  const camParts = !B.spi ? [] : items.filter((i) => NEED[i.type] && NEED[i.type].cam);
-  if (spiParts.length || camParts.length) { take(sp[0], 'SPI (clock)'); take(sp[1], 'SPI (data)'); }
+  const camParts = !B.spi ? [] : items.filter((i) => NEED[i.type] && NEED[i.type].cam), sdParts = !B.spi ? [] : items.filter((i) => NEED[i.type] && NEED[i.type].sd);
+  if (spiParts.length || camParts.length || sdParts.length) { take(sp[0], 'SPI (clock)'); take(sp[1], 'SPI (data)'); }
   if (i2cParts.length || camParts.length) { take(ic[0], 'I2C (SDA)'); take(ic[1], 'I2C (SCL)'); }
-  if (camParts.length) take(sp[2], 'SPI (camera MISO)');
+  if (camParts.length || sdParts.length) take(sp[2], 'SPI (MISO)');
+  sdParts.forEach((it) => { const k = it.key + ':cs', pin = over[k] != null ? over[k] : firstFree(ALLB.filter((x) => ADCB.indexOf(x) < 0)); if (pin != null) take(pin, it.label); else problems.push('Out of pins for ' + it.label + '. Take a part off.');
+    rows.push({ it, roles: [{ role: 'clock', pin: sp[0], fixed: true }, { role: 'data', pin: sp[1], fixed: true }, { role: 'miso', pin: sp[2], fixed: true }, { role: 'cs', pin, kind: 'd', k }], power: NEED[it.type].power, note: NEED[it.type].note, N: NEED[it.type] }); });
   camParts.forEach((it) => { const k = it.key + ':cs', pin = over[k] != null ? over[k] : B.camCs.find(free) != null ? B.camCs.find(free) : firstFree(ALLB.filter((x) => ADCB.indexOf(x) < 0)); if (pin != null) take(pin, it.label);
     rows.push({ it, roles: [{ role: 'clock', pin: sp[0], fixed: true }, { role: 'data', pin: sp[1], fixed: true }, { role: 'miso', pin: sp[2], fixed: true }, { role: 'cs', pin, kind: 'd', k }, { role: 'SDA', pin: ic[0], fixed: true }, { role: 'SCL', pin: ic[1], fixed: true }], power: '3V3', note: NEED[it.type].note, N: NEED[it.type] }); });
   const spiPick = B.spiPick;
@@ -83,11 +88,11 @@ export function planWiring(items, over, B) {
     const N = NEED[it.type], p = spiPick[n] || [], roles = [['cs', p[0]], ['dc', p[1]], ['rst', p[2]]].map(([r, d]) => { const k = it.key + ':' + r, pin = over[k] != null ? over[k] : (d != null && free(d) ? d : firstFree(ALLB.filter((x) => ADCB.indexOf(x) < 0))); if (pin != null) take(pin, it.label); return { role: r, pin, kind: 'd', k }; });
     rows.push({ it, roles: [{ role: 'clock', pin: sp[0], fixed: true }, { role: 'data', pin: sp[1], fixed: true }].concat(roles), power: '3V3', note: 'Backlight (LED or BL) to 3V3. MISO is not needed.', N });
   });
-  i2cParts.forEach((it) => rows.push({ it, roles: [{ role: 'SDA', pin: ic[0], fixed: true }, { role: 'SCL', pin: ic[1], fixed: true }], power: '3V3', note: NEED[it.type].note, N: NEED[it.type] }));
+  i2cParts.forEach((it) => rows.push({ it, roles: [{ role: 'SDA', pin: ic[0], fixed: true }, { role: 'SCL', pin: ic[1], fixed: true }], power: NEED[it.type].power || '3V3', note: NEED[it.type].note, N: NEED[it.type] }));
   // 2. her own pin choices are held before anything else is picked
-  items.forEach((it) => { const N = NEED[it.type]; if (!N || !N.pins) return; N.pins.forEach(([r, kind]) => { const k = it.key + ':' + r; if (over[k] != null) { take(over[k], it.label); if (kind === 'enc') take(over[k] + 1, it.label); if (kind === 'pwm') pwmSlices[B.pwm(over[k])] = it.label; } }); });
+  items.forEach((it) => { const N = NEED[it.type]; if (!N || !N.pins) return; N.pins.forEach(([r, kind]) => { const k = it.key + ':' + r; if (over[k] != null) { take(over[k], it.label); if (kind === 'enc' || kind === 'uart') take(over[k] + 1, it.label); if (kind === 'pwm') pwmSlices[B.pwm(over[k])] = it.label; } }); });
   // 3. analog, then wheels (two pins side by side), then sound and motors, then everything else
-  const order = { a: 0, enc: 1, pwm: 2, d: 3 }, wants = [], dac = items.some((i) => i.type === 'i2sdac'); /* a jack with a DAC is wired to the DAC, not the brain */
+  const order = { a: 0, uart: 1, enc: 1, pwm: 2, d: 3 }, wants = [], dac = items.some((i) => i.type === 'i2sdac'); /* a jack with a DAC is wired to the DAC, not the brain */
   items.forEach((it) => { const N = NEED[it.type]; if (!N) return; if (N.pi) { if (!B.pi) problems.push(it.label + ' is an HDMI screen: it needs a Raspberry Pi brain, not a ' + B.name + '.'); return; } if (!N.pins || (N.viaDac && dac)) return; N.pins.forEach(([r, kind]) => wants.push({ it, r, kind })); });
   const got = {};
   wants.slice().sort((a, b) => order[a.kind] + ((NEED[a.it.type].opt || []).indexOf(a.r) > -1 ? 0.5 : 0) - order[b.kind] - ((NEED[b.it.type].opt || []).indexOf(b.r) > -1 ? 0.5 : 0)).forEach(({ it, r, kind }) => {
@@ -95,13 +100,15 @@ export function planWiring(items, over, B) {
     let pin = null;
     if (kind === 'a') { pin = firstFree(ADCB.filter((p) => ALLB.indexOf(p) < 0)); if (pin == null) pin = firstFree(ADCB); if (pin == null && (NEED[it.type].opt || []).indexOf(r) > -1) { got[k] = null; return; } if (pin == null) problems.push(it.label + ' needs an analog pin, and the ' + B.name + (ADCB.length ? ' has only ' + ADCB.length + ' (' + ADCB.map(L).join(', ') + ').' : ' has none: add an analog board such as an ADS1115.')); }
     else if (kind === 'enc') { pin = ALLB.find((p) => ALLB.indexOf(p + 1) > -1 && ADCB.indexOf(p) < 0 && free(p) && free(p + 1)); if (pin != null) take(pin + 1, it.label); }
+    else if (kind === 'uart') { const ok = (p) => (!B.uart || B.uart.indexOf(p) > -1) && ALLB.indexOf(p + 1) > -1 && free(p) && free(p + 1); /* TX and RX side by side; on a Pico a real UART pair */
+      pin = ALLB.find((p) => ok(p) && ADCB.indexOf(p) < 0 && ADCB.indexOf(p + 1) < 0); if (pin == null) pin = ALLB.find(ok); if (pin != null) take(pin + 1, it.label); }
     else if (kind === 'pwm') { pin = ALLB.find((p) => ADCB.indexOf(p) < 0 && free(p) && B.pwm(p) > -1 && !pwmSlices[B.pwm(p)]); if (pin != null) pwmSlices[B.pwm(pin)] = it.label; }
     else pin = firstFree(ALLB.filter((p) => ADCB.indexOf(p) < 0)) != null ? firstFree(ALLB.filter((p) => ADCB.indexOf(p) < 0)) : firstFree(ADCB.filter((p) => ALLB.indexOf(p) > -1));
     if (pin == null && kind !== 'a') problems.push('Out of pins for ' + it.label + '. Take a part off, or use a Qwiic button board (one plug for many buttons).');
     if (pin != null) take(pin, it.label); got[k] = pin;
   });
   items.forEach((it) => { const N = NEED[it.type]; if (!N || !N.pins) return; if (N.viaDac && dac) { rows.push({ it, roles: [], power: null, note: 'Wired to the audio DAC: its LOUT, ROUT and AGND go to the tip, ring and sleeve. No brain pin.', N: Object.assign({}, N, { what: 'jack' }) }); return; }
-    rows.push({ it, roles: N.pins.filter(([r]) => !((N.opt || []).indexOf(r) > -1 && got[it.key + ':' + r] == null)).map(([r, kind]) => ({ role: r, pin: got[it.key + ':' + r], kind, k: it.key + ':' + r, two: kind === 'enc' })), power: N.power || null, note: N.note || '', N }); });
+    rows.push({ it, roles: N.pins.filter(([r]) => !((N.opt || []).indexOf(r) > -1 && got[it.key + ':' + r] == null)).map(([r, kind]) => ({ role: r, pin: got[it.key + ':' + r], kind, k: it.key + ':' + r, two: kind === 'enc' || kind === 'uart' })), power: N.power || null, note: N.note || '', N }); });
   rows.sort((a, b) => items.indexOf(a.it) - items.indexOf(b.it));
   return { rows, problems: Array.from(new Set(problems)), used };
 }
@@ -141,15 +148,16 @@ const LIB = (n, by, inc, built) => ({ n, by, inc, built: !!built }), GFX = LIB('
 export const INO_LIBS = {
   oled096: [LIB('Adafruit SSD1306', 'Adafruit', 'Adafruit_SSD1306.h'), GFX], tft28: [LIB('Adafruit ILI9341', 'Adafruit', 'Adafruit_ILI9341.h'), GFX], round128: [LIB('Adafruit GC9A01A', 'Adafruit', 'Adafruit_GC9A01A.h'), GFX],
   keypad44: [LIB('Keypad', 'Mark Stanley, Alexander Brevig', 'Keypad.h')], mat8: [LIB('LedControl', 'Eberhard Fahle', 'LedControl.h')], vl53: [LIB('Adafruit_VL53L0X', 'Adafruit', 'Adafruit_VL53L0X.h')],
+  dfplayer: [LIB('DFRobotDFPlayerMini', 'DFRobot', 'DFRobotDFPlayerMini.h'), LIB('SoftwareSerial', 'Arduino (built in)', 'SoftwareSerial.h', true)], sdcard: [LIB('SD', 'Arduino (built in)', 'SD.h', true)], lcd1602: [LIB('LiquidCrystal I2C', 'Frank de Brabander', 'LiquidCrystal_I2C.h')],
   ring12: [LIB('Adafruit NeoPixel', 'Adafruit', 'Adafruit_NeoPixel.h')], servo: [LIB('Servo', 'Arduino (built in)', 'Servo.h', true)], arducam: [LIB('ArduCAM', 'ArduCAM', 'ArduCAM.h')]
 };
 export const PY_LIBS = { oled096: ['adafruit_displayio_ssd1306.mpy', 'adafruit_display_text'], tft28: ['adafruit_ili9341.mpy', 'adafruit_display_text'], round128: ['gc9a01.mpy', 'adafruit_display_text'],
-  vl53: ['adafruit_vl53l0x.mpy'], mat8: ['adafruit_max7219'], ring12: ['neopixel.mpy'], servo: ['adafruit_motor'], i2sdac: [], inmp441: [] };
+  vl53: ['adafruit_vl53l0x.mpy'], mat8: ['adafruit_max7219'], ring12: ['neopixel.mpy'], servo: ['adafruit_motor'], i2sdac: [], inmp441: [], dfplayer: [], sdcard: [], lcd1602: ['lcd (from the Community Bundle)'] };
 const PROF = (b, logic, lang, libs) => { const B = BOARDS[b]; return { key: b, board: B, name: B.name, pins: { left: B.left, right: B.right, all: B.all, adc: B.adc, i2c: B.i2c, spi: B.spi, label: B.lab }, logic, v5: B.v5, v3: B.v3, lang, file: lang === 'ino' ? 'casezero.ino' : 'code.py', libs }; };
 export const BOARD_PROFILES = {
   uno: PROF('uno', '5V', 'ino', INO_LIBS), nano: PROF('nano', '5V', 'ino', INO_LIBS), promicro: PROF('promicro', '5V', 'ino', INO_LIBS),
   pico: PROF('pico', '3.3V', 'py', PY_LIBS), esp32c3: PROF('c3', '3.3V', 'py', PY_LIBS),
-  cyd: PROF('cyd', '3.3V', 'ino', Object.assign({}, INO_LIBS, { servo: [LIB('ESP32Servo', 'Kevin Harrington', 'ESP32Servo.h')], tft28: [], round128: [] }))
+  cyd: PROF('cyd', '3.3V', 'ino', Object.assign({}, INO_LIBS, { servo: [LIB('ESP32Servo', 'Kevin Harrington', 'ESP32Servo.h')], tft28: [], round128: [], dfplayer: [LIB('DFRobotDFPlayerMini', 'DFRobot', 'DFRobotDFPlayerMini.h')] }))
 };
 export const profileOf = (B) => Object.values(BOARD_PROFILES).find((p) => p.board === B) || null;
 // the Arduino libraries a list of part types needs on brain B (deduped, in part order)
@@ -248,13 +256,19 @@ const cStr = (s) => '"' + String(s).replace(/\\/g, '\\\\').replace(/"/g, '\\"') 
 // ---------- the Arduino sketch (.ino): Elegoo / Arduino Uno, Nano, Pro Micro and the Cheap Yellow Display ----------
 function inoFor(plan, title, fn, B, tw) {
   const ap = (n) => { const s = B.lab(n); return /^A\d/.test(s) ? s : s.replace(/^\D+/, ''); };
-  const pm = B === BOARDS.promicro, cyd = B === BOARDS.cyd, keys = [], pots = [], steps = [], encs = [], outs = [], pirs = [], mats = [], notes = [];
-  let screen = null;
+  const pm = B === BOARDS.promicro, cyd = B === BOARDS.cyd, keys = [], pots = [], steps = [], encs = [], outs = [], pirs = [], mats = [], notes = [], tofs = [], cams = [];
+  let screen = null, mx = null, dfp = null, sdc = null, lcd = false;
   plan.rows.forEach((row) => {
     const it = row.it, tag = it.label.split(' ')[0], N = row.N, R = {}; row.roles.forEach((r) => { R[r.role] = r.pin; });
     if (N.what === 'motion' && R.out != null) { pirs.push([R.out, tag]); return; }
     if (N.what === 'keypad') { if (!mats.length) mats.push({ R, tag }); return; }
-    if (['distance', 'camera', 'matrix8', 'i2sout', 'i2sin'].indexOf(N.what) > -1) { notes.push(it.label + ': ' + row.roles.map((r) => r.role + ' ' + (r.pin == null ? '?' : B.lab(r.pin))).join(', ') + ' (wired, not used by this sketch yet)'); return; }
+    if (N.what === 'distance') { tofs.push(tag); return; }
+    if (N.what === 'camera') { if (!cams.length && R.cs != null) cams.push([R.cs, tag]); return; }
+    if (N.what === 'matrix8') { if (!mx) mx = R; return; }
+    if (N.what === 'mp3') { if (dfp == null && R['tx+rx'] != null) dfp = R['tx+rx']; return; }
+    if (N.what === 'sd') { if (sdc == null && R.cs != null) sdc = R.cs; return; }
+    if (N.what === 'lcd') { lcd = true; return; }
+    if (N.what === 'i2sout' || N.what === 'i2sin') { notes.push(it.label + ': ' + row.roles.map((r) => r.role + ' ' + (r.pin == null ? '?' : B.lab(r.pin)) + (r.two ? ' + ' + B.lab(r.pin + 1) : '')).join(', ') + (cyd ? ' (wired; I2S sound needs the ESP32 I2S driver, not used by this sketch)' : '. The ' + B.name + ' has no I2S hardware, so this sketch cannot use it: a DFPlayer Mini plays sound files instead.')); return; }
     if (N.what === 'jack') return;
     if (N.spi || N.i2c) { if (!screen) screen = { N, R, label: it.label }; return; }
     if (N.what === 'button' && it.step && row.roles.length === 1 && row.roles[0].pin != null) { steps.push([row.roles[0].pin, tag]); return; }
@@ -273,6 +287,12 @@ function inoFor(plan, title, fn, B, tw) {
   else if (drv === 'ili9341') { lib('Adafruit ILI9341', 'Adafruit', 'Adafruit_ILI9341.h'); lib('Adafruit GFX Library', 'Adafruit', 'Adafruit_GFX.h'); }
   else if (drv === 'gc9a01') { lib('Adafruit GC9A01A', 'Adafruit', 'Adafruit_GC9A01A.h'); lib('Adafruit GFX Library', 'Adafruit', 'Adafruit_GFX.h'); }
   if (mats.length) lib('Keypad', 'Mark Stanley, Alexander Brevig', 'Keypad.h');
+  if (lcd) lib('LiquidCrystal I2C', 'Frank de Brabander', 'LiquidCrystal_I2C.h');
+  if (tofs.length) lib('Adafruit_VL53L0X', 'Adafruit', 'Adafruit_VL53L0X.h');
+  if (cams.length) lib('ArduCAM', 'ArduCAM', 'ArduCAM.h');
+  if (mx) lib('LedControl', 'Eberhard Fahle', 'LedControl.h');
+  if (dfp != null) { if (!cyd) lib('SoftwareSerial', 'Arduino (built in)', 'SoftwareSerial.h', true); lib('DFRobotDFPlayerMini', 'DFRobot', 'DFRobotDFPlayerMini.h'); }
+  if (sdc != null) lib('SD', 'Arduino (built in)', 'SD.h', true);
   if (out('ring')) lib('Adafruit NeoPixel', 'Adafruit', 'Adafruit_NeoPixel.h');
   if (out('servo')) lib(cyd ? 'ESP32Servo' : 'Servo', cyd ? 'Kevin Harrington' : 'Arduino (built in)', cyd ? 'ESP32Servo.h' : 'Servo.h', !cyd);
   if (mode === 'macro' && pm) lib('Keyboard', 'Arduino (built in)', 'Keyboard.h', true);
@@ -290,8 +310,9 @@ function inoFor(plan, title, fn, B, tw) {
   notes.forEach((n) => L.push('// ' + n));
   L.push('', '// ===== 1. LIBRARIES =====', '// Code other people wrote that this sketch borrows. (install) = install it once in the Library Manager.');
   const incs = []; libs.forEach((l) => { if (incs.indexOf(l.inc) < 0) { incs.push(l.inc); L.push('#include <' + l.inc + '>' + ' '.repeat(Math.max(1, 26 - l.inc.length)) + '// ' + (l.built ? 'built in' : '(install) "' + l.n + '" by ' + l.by)); } });
-  if (drv === 'ssd1306' && !cyd) L.push('#include <Wire.h>                 // built in: the 2-wire I2C bus');
-  if (cyd) L.push('#include <SPI.h>                  // built in');
+  if ((drv === 'ssd1306' && !cyd) || lcd || tofs.length || cams.length) L.push('#include <Wire.h>                 // built in: the 2-wire I2C bus');
+  if (cyd || cams.length || sdc != null) L.push('#include <SPI.h>                  // built in: the SPI bus');
+  if (cams.length) L.push('// ArduCAM: open the library folder, edit memorysaver.h and keep only #define OV2640_MINI_2MP switched on.');
   if (!incs.length && !cyd) L.push('// Nothing extra needed: everything here is built into Arduino.');
   L.push('', '// ===== 2. YOUR PINS =====', '// Which wire goes to which pin. They match the wiring guide in the app. Change a number here if you used another pin.');
   const arr = (nm, list, f) => list.length && L.push('const int ' + nm + '[] = {' + list.map(f).join(', ') + '};');
@@ -308,6 +329,12 @@ function inoFor(plan, title, fn, B, tw) {
   if (screen && !cyd) { const R = screen.R; L.push('// Screen: ' + screen.label);
     if (drv === 'ssd1306') L.push('Adafruit_SSD1306 screen(128, 64, &Wire, -1);  // SDA ' + B.lab(B.i2c[0]) + ', SCL ' + B.lab(B.i2c[1]));
     else L.push((drv === 'ili9341' ? 'Adafruit_ILI9341' : 'Adafruit_GC9A01A') + ' screen(' + ap(R.cs) + ', ' + ap(R.dc) + ', ' + ap(R.rst) + ');  // CS, DC, RST. SCK ' + B.lab(B.spi[0]) + ', MOSI ' + B.lab(B.spi[1])); }
+  if (lcd) L.push('// 1602 LCD on I2C: SDA ' + B.lab(B.i2c[0]) + ', SCL ' + B.lab(B.i2c[1]) + ', VCC to ' + B.v5, 'LiquidCrystal_I2C lcd(0x27, 16, 2);  // address 0x27 (some are 0x3F), 16 letters, 2 lines');
+  if (tofs.length) L.push('// Laser distance (VL53L0X) on I2C: SDA ' + B.lab(B.i2c[0]) + ', SCL ' + B.lab(B.i2c[1]) + ', VCC to ' + B.v3, 'Adafruit_VL53L0X tof;', 'const char* TOF_NAME = ' + cStr(tofs[0]) + ';', 'bool tofOk = false;', 'unsigned long tofNext = 0;');
+  if (cams.length) L.push('// SPI camera (Arducam Mini 2MP): SCK ' + B.lab(B.spi[0]) + ', MOSI ' + B.lab(B.spi[1]) + ', MISO ' + B.lab(B.spi[2]) + ', CS below, SDA ' + B.lab(B.i2c[0]) + ', SCL ' + B.lab(B.i2c[1]), 'const int CAM_CS = ' + ap(cams[0][0]) + ';', 'ArduCAM cam(OV2640, CAM_CS);');
+  if (mx) L.push('// 8x8 LED matrix (MAX7219): DIN ' + B.lab(mx.din) + ', CLK ' + B.lab(mx.clk) + ', CS ' + B.lab(mx.cs), 'LedControl leds = LedControl(' + ap(mx.din) + ', ' + ap(mx.clk) + ', ' + ap(mx.cs) + ', 1);  // DIN, CLK, CS, 1 matrix');
+  if (dfp != null) L.push('// DFPlayer Mini: DF_TX goes through a 1K resistor to its RX, its TX comes back to DF_RX. Files 0001.mp3, 0002.mp3... on its microSD card.', 'const int DF_TX = ' + ap(dfp) + ';', 'const int DF_RX = ' + ap(dfp + 1) + ';', cyd ? 'HardwareSerial dfSerial(2);' : 'SoftwareSerial dfSerial(DF_RX, DF_TX);  // RX, TX', 'DFRobotDFPlayerMini player;', 'bool playerOk = false;');
+  if (sdc != null) L.push('// MicroSD reader: SCK ' + B.lab(B.spi[0]) + ', MOSI ' + B.lab(B.spi[1]) + ', MISO ' + B.lab(B.spi[2]) + ', CS below', 'const int SD_CS = ' + ap(sdc) + ';', 'bool sdOk = false;');
   if (cyd) L.push('TFT_eSPI screen;                    // the built-in 2.8 in screen', 'SPIClass touchBus(VSPI);', 'XPT2046_Touchscreen touch(33, 36);  // touch: CS 33, IRQ 36 (MOSI 32, MISO 39, CLK 25)');
   if (out('ring')) L.push('Adafruit_NeoPixel ring(12, RING_PIN, NEO_GRB + NEO_KHZ800);');
   if (out('servo')) L.push('Servo arm;');
@@ -330,7 +357,8 @@ function inoFor(plan, title, fn, B, tw) {
   if (drv === 'ssd1306' && !cyd) L.push('  screen.clearDisplay();', '  screen.setTextSize(2);', '  screen.setTextColor(SSD1306_WHITE);', '  screen.setCursor(0, 20);', '  screen.println(text);', '  screen.display();');
   else if (cyd) L.push('  screen.fillRect(0, 100, 320, 40, TFT_BLACK);', '  screen.drawString(text, 10, 104, 4);');
   else if (screen) L.push('  screen.fillRect(0, 100, 320, 40, 0x0000);', '  screen.setCursor(8, 108);', '  screen.setTextSize(3);', '  screen.setTextColor(0xFFFF);', '  screen.print(text);');
-  else L.push('  // no screen: the Serial Monitor shows it');
+  else if (!lcd) L.push('  // no screen: the Serial Monitor shows it');
+  if (lcd) L.push('  lcd.clear();', '  lcd.setCursor(0, 0);', '  lcd.print(text.substring(0, 16));', '  if (text.length() > 16) { lcd.setCursor(0, 1); lcd.print(text.substring(16, 32)); }');
   L.push('}', '', 'void say(String name, int value) {  // "NOCIV B1 1": the live test in the app reads these lines');
   L.push(mode === 'midi' && !pm ? '  // (quiet in MIDI mode: the serial cable carries the MIDI)' : '  Serial.print("NOCIV "); Serial.print(name); Serial.print(" "); Serial.println(value);', '}', '');
   if (['synth', 'midi', 'sound'].indexOf(mode) > -1) L.push('int noteNumber(int n) { return 60 + SCALE[n % 8] + 12 * (n / 8) + transpose; }  // 60 = middle C', 'float noteHz(int n) { return 440.0 * pow(2, (noteNumber(n) - 69) / 12.0); }', '');
@@ -339,6 +367,8 @@ function inoFor(plan, title, fn, B, tw) {
   const beep = (hz, ms) => (SP ? 'tone(SOUND_PIN, ' + hz + ', ' + ms + ');' : '/* add a buzzer to hear it */');
   // press / release
   L.push('// A button (or a keypad key) went down. n = which one.', 'void press(int n, String name) {', '  say(name, 1);');
+  if (dfp != null) L.push('  if (playerOk) player.play(n + 1);  // button 1 plays 0001.mp3, button 2 0002.mp3...');
+  if (mx) L.push('  leds.clearDisplay(0);', '  leds.setLed(0, (n / 8) % 8, n % 8, true);  // one light per button');
   if (out('led')) L.push('  digitalWrite(LED_PIN, !digitalRead(LED_PIN));');
   if (out('ring')) L.push('  ring.fill(ring.Color(200, 40, 30)); ring.show();');
   if (mode === 'test') { L.push('  show(name);'); if (SP) L.push('  ' + beep('330 + 60 * n', 80)); if (out('servo') && !pots.length) L.push('  arm.write(arm.read() < 45 ? 90 : 0);'); }
@@ -371,6 +401,12 @@ function inoFor(plan, title, fn, B, tw) {
   if (out('ring')) L.push('  ring.begin(); ring.setBrightness(50); ring.show();');
   if (out('servo')) L.push('  arm.attach(SERVO_PIN);');
   if (mode === 'macro' && pm) L.push('  Keyboard.begin();');
+  if (lcd) L.push('  lcd.init();', '  lcd.backlight();');
+  if (tofs.length) L.push('  tofOk = tof.begin();', '  say("Distance", tofOk ? 1 : 0);  // 0: check SDA, SCL and 3V3');
+  if (cams.length) L.push('  pinMode(CAM_CS, OUTPUT);', '  digitalWrite(CAM_CS, HIGH);', '  Wire.begin();', '  SPI.begin();', '  cam.write_reg(ARDUCHIP_TEST1, 0x55);', '  say("Camera", cam.read_reg(ARDUCHIP_TEST1) == 0x55 ? 1 : 0);  // 1: the camera answers on SPI');
+  if (mx) L.push('  leds.shutdown(0, false);  // wake it up', '  leds.setIntensity(0, 3);', '  leds.clearDisplay(0);');
+  if (dfp != null) L.push(cyd ? '  dfSerial.begin(9600, SERIAL_8N1, DF_RX, DF_TX);' : '  dfSerial.begin(9600);', '  playerOk = player.begin(dfSerial);', '  if (playerOk) player.volume(20);  // 0 to 30', '  say("DFPlayer", playerOk ? 1 : 0);  // 0: check TX, RX and the SD card');
+  if (sdc != null) L.push('  sdOk = SD.begin(SD_CS);', '  say("SD", sdOk ? 1 : 0);  // 0: check the wires and that the card is FAT32');
   if (drv === 'ssd1306' && !cyd) L.push('  screen.begin(SSD1306_SWITCHCAPVCC, 0x3C);');
   else if (cyd) L.push('  screen.init();', '  screen.setRotation(1);', '  screen.fillScreen(TFT_BLACK);', '  screen.setTextColor(TFT_WHITE, TFT_BLACK);', '  screen.drawString("NOCIV", 10, 20, 4);', '  touchBus.begin(25, 39, 32, 33);', '  touch.begin(touchBus);');
   else if (screen) L.push('  screen.begin();', '  screen.fillScreen(0x0000);');
@@ -382,6 +418,7 @@ function inoFor(plan, title, fn, B, tw) {
   if (encs.length) L.push('  for (int i = 0; i < NENC; i++) {  // click wheels', '    int clk = digitalRead(ENC_PIN[i][0]);', '    if (clk != encWas[i]) { encWas[i] = clk; if (clk == LOW) { int dir = digitalRead(ENC_PIN[i][1]) != clk ? 1 : -1; encPos[i] += dir; wheel(i, ENC_NAME[i], encPos[i], dir); } }', '  }');
   if (pirs.length) L.push('  for (int i = 0; i < NPIR; i++) {  // motion sensors', '    bool now = digitalRead(PIR_PIN[i]);', '    if (now != pirWas[i]) { pirWas[i] = now; say(PIR_NAME[i], now); show(String(PIR_NAME[i]) + (now ? " motion" : " still")); }', '  }');
   if (mats.length) L.push('  if (pad.getKeys()) {  // the 4x4 keypad', '    for (int i = 0; i < LIST_MAX; i++) {', '      if (!pad.key[i].stateChanged) continue;', '      String name = String("Key-") + pad.key[i].kchar;', '      if (pad.key[i].kstate == PRESSED) press(pad.key[i].kcode, name);', '      else if (pad.key[i].kstate == RELEASED) release(pad.key[i].kcode, name);', '    }', '  }');
+  if (tofs.length) L.push('  if (tofOk && millis() > tofNext) {  // laser distance, 4 times a second', '    tofNext = millis() + 250;', '    VL53L0X_RangingMeasurementData_t m;', '    tof.rangingTest(&m, false);', '    if (m.RangeStatus != 4) say(TOF_NAME, m.RangeMilliMeter);  // 4 = out of range', '  }');
   if (cyd) L.push('  static bool wasTouched = false;  // the touch screen counts as one more button', '  bool t = touch.tirqTouched() && touch.touched();', '  if (t != wasTouched) { wasTouched = t; if (t) press(' + keys.length + ', "Touch"); else release(' + keys.length + ', "Touch"); }');
   if (mode === 'midi') L.push('  if (noteOn >= 0 && STEP_MODE && millis() > noteOff) { midi(0x80, noteNumber(noteOn), 0); noteOn = -1; }  // the short 1/4 note ends');
   if (mode === 'timer') L.push('  if (running && millis() - tick >= 1000) {  // one second passed', '    tick += 1000; remaining--; show(clock());', '    if (remaining <= 0) { running = false; show("00:00 done!"); for (int i = 0; i < 3; i++) { ' + beep(880, 150) + ' delay(250); } remaining = minutes * 60L; }', '  }');
@@ -393,8 +430,8 @@ function codePy(plan, title, fn, B, tw) {
   B = B || BOARDS.pico; const PFX = B.cp || 'board.GP', LB = B.lab, SPI = B.spi || [18, 19, 16], I2C = B.i2c || [4, 5];
   if (!B.cp) return pinList(plan, title, B, fn);
    // fn: a recipe's own program (macro, timer, synth) in place of the pin test
-  const keys = [], pots = [], encs = [], outs = [], pirs = [], tofs = [], cams = [], mats = [], L = [];
-  let mx = null, i2s = null, mic = null;
+  const keys = [], pots = [], encs = [], outs = [], pirs = [], tofs = [], cams = [], mats = [], sds = [], lcds = [], L = [];
+  let mx = null, i2s = null, mic = null, dfp = null;
   let screen = null;
   plan.rows.forEach((row) => {
     const it = row.it, tag = it.label.split(' ')[0], N = row.N, R = {}; row.roles.forEach((r) => { R[r.role] = r.pin; });
@@ -406,6 +443,9 @@ function codePy(plan, title, fn, B, tw) {
     if (N.what === 'i2sout') { if (!i2s) i2s = R; return; }
     if (N.what === 'i2sin') { if (!mic) mic = R; return; }
     if (N.what === 'jack') return; /* on the DAC, no brain pin */
+    if (N.what === 'mp3') { if (!dfp && R['tx+rx'] != null) dfp = R; return; }
+    if (N.what === 'sd') { if (R.cs != null) sds.push([R.cs, tag]); return; }
+    if (N.what === 'lcd') { lcds.push(tag); return; }
     if (N.spi || N.i2c) { if (!screen) screen = { N, R, label: it.label }; return; }
     if (N.what === 'button' && it.step && row.roles.length === 1 && row.roles[0].pin != null) { pots.push([row.roles[0].pin, tag, 'step']); return; } /* a Stepped Button: read like a knob, 25/50/75/100 */
     if (N.what === 'button') row.roles.forEach((r) => { if (r.pin != null) keys.push([r.pin, row.roles.length > 1 ? tag + ' ' + r.role : tag, 'btn']); });
@@ -418,10 +458,10 @@ function codePy(plan, title, fn, B, tw) {
   const has = (w) => outs.some((o) => o[0] === w), libs = [];
   if (screen) { libs.push('adafruit_display_text'); if (screen.N.driver === 'ili9341') libs.push('adafruit_ili9341.mpy'); if (screen.N.driver === 'ssd1306') libs.push('adafruit_displayio_ssd1306.mpy'); if (screen.N.driver === 'gc9a01') libs.push('gc9a01.mpy (from the Community Bundle)'); }
   if (has('ring')) libs.push('neopixel.mpy'); if (has('servo')) libs.push('adafruit_motor'); if (tofs.length) libs.push('adafruit_vl53l0x.mpy'); if (fn === 'macro' && keys.length) libs.push('adafruit_hid');
-  if (mx) libs.push('adafruit_max7219', 'adafruit_framebuf.mpy', 'adafruit_bus_device'); if (fn === 'sampler' || (fn === 'midi' && keys.length)) libs.push('adafruit_midi');
+  if (mx) libs.push('adafruit_max7219', 'adafruit_framebuf.mpy', 'adafruit_bus_device'); if (lcds.length) libs.push('lcd (from the Community Bundle)'); if (fn === 'sampler' || (fn === 'midi' && keys.length)) libs.push('adafruit_midi');
   const SC = SCALES[tw.scale] || SCALES.major, TAP = tw.btn === 'step' ? '0.25' : 'None', SCN = { major: 'Major', penta: 'Pentatonic', minor: 'Minor' }[tw.scale] || 'Major';
   const sam = fn === 'sampler' && mats.length, synth = !!i2s || (sam && has('sound')); /* synthio plays the pads: out of the I2S DAC, or one PWM pin to the jack */
-  const bus = !!(cams.length || tofs.length); /* sensors share one I2C bus (and the camera the SPI bus) with the screen, made once at the top */
+  const i2cBus = !!(cams.length || tofs.length || lcds.length), misoBus = !!(cams.length || sds.length), bus = i2cBus || misoBus; /* sensors share one I2C bus (and the camera and SD card the SPI bus, with MISO) with the screen, made once at the top */
   L.push('# NOCIV Case Zero starter code. ' + title, '# Brain: ' + B.name + (B === BOARDS.pico ? ', Pico W or Pico 2 (same pins).' : '. CircuitPython names its pins board.IO and the number.'), '#',
     '# 1. Put CircuitPython 9 or newer on the Pico: circuitpython.org, search your board, follow the steps.',
     libs.length ? '# 2. From the CircuitPython Library Bundle, copy into CIRCUITPY/lib: ' + libs.join(', ') + '.' : '# 2. No extra libraries needed.',
@@ -433,7 +473,8 @@ function codePy(plan, title, fn, B, tw) {
   if (encs.length) L.push('import rotaryio');
   const inputs = keys.length || pots.length || encs.length || pirs.length || mats.length;
   if (has('led') || inputs || cams.length) L.push('import digitalio');
-  if (bus) L.push('import busio');
+  if (bus || dfp) L.push('import busio');
+  if (sds.length) L.push('import sdcardio', 'import storage');
   if ((has('sound') && !sam) || has('servo')) L.push('import pwmio');
   if (synth) L.push('import synthio', i2s ? 'import audiobusio' : 'import audiopwmio');
   if (mx) L.push('import bitbangio', 'from adafruit_max7219 import matrices');
@@ -441,21 +482,22 @@ function codePy(plan, title, fn, B, tw) {
   if (has('servo')) L.push('from adafruit_motor import servo');
   L.push('');
   L.push('status = None', '');
-  if (bus) { L.push('# ---- the shared wires: I2C on ' + LB(I2C[0]) + ' (SDA) and ' + LB(I2C[1]) + ' (SCL)' + (cams.length ? ', SPI on ' + SPI.map(LB).join(', ') : '') + ' ----', 'try:', '    i2c = busio.I2C(' + PFX + I2C[1] + ', ' + PFX + I2C[0] + ')', 'except Exception as err:', '    i2c = None', '    print("NOCIV I2C not found yet:", err)');
-    if (cams.length) L.push('spi = busio.SPI(' + PFX + SPI[0] + ', MOSI=' + PFX + SPI[1] + ', MISO=' + PFX + SPI[2] + ')');
+  if (bus) { L.push('# ---- the shared wires: ' + [i2cBus ? 'I2C on ' + LB(I2C[0]) + ' (SDA) and ' + LB(I2C[1]) + ' (SCL)' : '', misoBus ? 'SPI on ' + SPI.map(LB).join(', ') + ' (SCK, MOSI, MISO)' : ''].filter(Boolean).join(', ') + ' ----');
+    if (i2cBus) L.push('try:', '    i2c = busio.I2C(' + PFX + I2C[1] + ', ' + PFX + I2C[0] + ')', 'except Exception as err:', '    i2c = None', '    print("NOCIV I2C not found yet:", err)');
+    if (misoBus) L.push('spi = busio.SPI(' + PFX + SPI[0] + ', MOSI=' + PFX + SPI[1] + ', MISO=' + PFX + SPI[2] + ')');
     L.push(''); }
   if (screen) {
     const S2 = screen.N, R = screen.R, big = S2.w >= 240, at = L.length;
     L.push('# ---- screen: ' + screen.label + ' ----', 'import busio', 'import displayio', 'import terminalio', 'from adafruit_display_text import label', 'displayio.release_displays()');
     if (S2.spi) {
       L.push('try:', '    from fourwire import FourWire', 'except ImportError:', '    from displayio import FourWire');
-      if (!cams.length) L.push('spi = busio.SPI(' + PFX + SPI[0] + ', MOSI=' + PFX + SPI[1] + ')');
+      if (!misoBus) L.push('spi = busio.SPI(' + PFX + SPI[0] + ', MOSI=' + PFX + SPI[1] + ')');
       L.push('bus = FourWire(spi, command=' + PFX + R.dc + ', chip_select=' + PFX + R.cs + ', reset=' + PFX + R.rst + ', baudrate=24000000)');
       if (S2.driver === 'ili9341') L.push('import adafruit_ili9341', 'display = adafruit_ili9341.ILI9341(bus, width=320, height=240)');
       else L.push('import gc9a01', 'display = gc9a01.GC9A01(bus, width=240, height=240)');
     } else {
       L.push('try:', '    from i2cdisplaybus import I2CDisplayBus', 'except ImportError:', '    from displayio import I2CDisplay as I2CDisplayBus');
-      L.push('import adafruit_displayio_ssd1306'); if (!bus) L.push('i2c = busio.I2C(' + PFX + I2C[1] + ', ' + PFX + I2C[0] + ')'); L.push('bus = I2CDisplayBus(i2c, device_address=0x3C)', 'display = adafruit_displayio_ssd1306.SSD1306(bus, width=128, height=64)');
+      L.push('import adafruit_displayio_ssd1306'); if (!i2cBus) L.push('i2c = busio.I2C(' + PFX + I2C[1] + ', ' + PFX + I2C[0] + ')'); L.push('bus = I2CDisplayBus(i2c, device_address=0x3C)', 'display = adafruit_displayio_ssd1306.SSD1306(bus, width=128, height=64)');
     }
     L.push('group = displayio.Group()', 'display.root_group = group',
       'title = label.Label(terminalio.FONT, text="NOCIV", scale=' + (big ? 3 : 2) + ', x=' + (S2.driver === 'gc9a01' ? 70 : 8) + ', y=' + (big ? 40 : 12) + ')',
@@ -464,7 +506,14 @@ function codePy(plan, title, fn, B, tw) {
     // everything about the screen sits inside one try: with no screen connected yet, the rest still runs and can be tested
     const body = L.splice(at + 1).map((x) => '    ' + x); L.push('try:'); body.forEach((x) => L.push(x)); L.push('except Exception as err:', '    status = None', '    print("NOCIV screen not found yet:", err)', '');
   }
-  L.push('def show(text):', '    if status:', '        status.text = text', '');
+  if (lcds.length) L.push('# ---- ' + lcds[0] + ' 1602 LCD: I2C backpack at 0x27 (some are 0x3F), VCC to ' + B.v5 + ' ----', 'lcd = None', 'try:', '    from lcd.lcd import LCD', '    from lcd.i2c_pcf8574_interface import I2CPCF8574Interface', '    lcd = LCD(I2CPCF8574Interface(i2c, 0x27), num_rows=2, num_cols=16)', '    lcd.print("NOCIV")', 'except Exception as err:', '    print("NOCIV LCD not found yet:", err)', '');
+  if (sds.length) L.push('# ---- ' + sds[0][1] + ' microSD reader: CS ' + LB(sds[0][0]) + ', on the shared SPI. Sound clips go on the card, the code sees them in /sd ----', 'try:', '    sd = sdcardio.SDCard(spi, ' + PFX + sds[0][0] + ')', '    storage.mount(storage.VfsFat(sd), "/sd")', '    print("NOCIV SD 1")', 'except Exception as err:', '    print("NOCIV SD not found yet:", err)', '');
+  if (dfp) L.push('# ---- DFPlayer Mini: TX ' + LB(dfp['tx+rx']) + ' through a 1K resistor to its RX, RX ' + LB(dfp['tx+rx'] + 1) + ' from its TX. Files 0001.mp3, 0002.mp3... on its card ----', 'df = busio.UART(' + PFX + dfp['tx+rx'] + ', ' + PFX + (dfp['tx+rx'] + 1) + ', baudrate=9600)', '',
+    'def df_cmd(cmd, arg=0):', '    # one DFPlayer command: 7E FF 06 cmd 00 high low checksum EF', '    hi, lo = arg >> 8, arg & 0xFF', '    total = -(0xFF + 0x06 + cmd + hi + lo) & 0xFFFF', '    df.write(bytes([0x7E, 0xFF, 0x06, cmd, 0x00, hi, lo, total >> 8, total & 0xFF, 0xEF]))', '',
+    'time.sleep(1)  # the DFPlayer needs a moment after power on', 'df_cmd(0x06, 20)  # volume, 0 to 30', '');
+  L.push('def show(text):', '    if status:', '        status.text = text');
+  if (lcds.length) L.push('    if lcd:', '        lcd.clear()', '        lcd.print(text[:16])');
+  L.push('');
   if (keys.length) L.push('# ---- buttons (pressed = pin to GND, the Pico pulls it up inside) ----', 'KEYS = (' + keys.map((k) => '' + PFX + k[0]).join(', ') + ',)', 'NAMES = (' + keys.map((k) => pyStr(k[1])).join(', ') + ',)', 'keys = keypad.Keys(KEYS, value_when_pressed=False, pull=True)', '');
   if (pots.some((p) => p[2] === 'step')) L.push('# ---- Stepped Button: each press steps 1/4 -> 2/4 -> 3/4 -> 4/4 (25% -> 50% -> 75% -> 100%), read like a knob ----', 'class Stepper:', '    def __init__(self, pin):', '        self.io = digitalio.DigitalInOut(pin)', '        self.io.switch_to_input(pull=digitalio.Pull.UP)', '        self.level = 0', '        self.was = True', '', '    @property', '    def value(self):', '        now = self.io.value', '        if self.was and not now:', '            self.level = self.level % 4 + 1', '            print("NOCIV step", self.level, "/ 4")', '        self.was = now', '        return self.level * 65535 // 4', '');
   if (pots.length) L.push('# ---- knobs, sliders and sticks (0 to 100) ----', 'POTS = (' + pots.map((p) => '(' + (p[2] === 'step' ? 'Stepper(' : 'analogio.AnalogIn(') + PFX + p[0] + '), ' + pyStr(p[1]) + ')').join(', ') + ',)', 'last = [-10] * len(POTS)', '');
@@ -561,11 +610,13 @@ function codePy(plan, title, fn, B, tw) {
   L.push('show("Ready")', 'print("NOCIV ready")', '', 'while True:');
   let body = 0;
   if (mats.length) { L.push('    event = PADS.events.get()', '    if event:', '        print("NOCIV", "Key-" + PAD_NAMES[event.key_number], 1 if event.pressed else 0)', '        if lamp:', '            lamp.value = event.pressed', '        if event.pressed:', '            show("Key " + PAD_NAMES[event.key_number])');
+    if (dfp) L.push('            df_cmd(0x03, event.key_number + 1)  # key 1 plays 0001.mp3');
     if (mx) L.push('            if leds:', '                leds.fill(0)', '                leds.pixel(event.key_number % 4 * 2, event.key_number // 4 * 2, 1)', '                leds.show()');
     if (synth) L.push('            synth.press(60 + event.key_number)', '        else:', '            synth.release(60 + event.key_number)');
     body++; }
   if (keys.length) {
     L.push('    event = keys.events.get()', '    if event:', '        name = NAMES[event.key_number]', '        down = 1 if event.pressed else 0', '        print("NOCIV", name.replace(" ", "-"), down)', '        if lamp:', '            lamp.value = bool(down)', '        if down:', '            show(name + " pressed")');
+    if (dfp) L.push('            df_cmd(0x03, event.key_number + 1)  # button 1 plays 0001.mp3');
     if (has('led')) L.push('            led.value = not led.value');
     if (has('ring')) L.push('            ring.fill((200, 40, 30))');
     if (has('sound') && !synth) L.push('            beep.frequency = 330 + 60 * event.key_number', '            beep.duty_cycle = 2 ** 14');

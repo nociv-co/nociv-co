@@ -35,6 +35,8 @@
       tip: 'Watch faces and eyes. Comes with a plug cable, no solder.', price: 9, src: 'Waveshare 1.28inch LCD Module: 40.4 x 37.5 mm, picture 32.4 mm round, PH2.0 plug', url: 'https://www.waveshare.com/1.28inch-lcd-module.htm' },
     oled096: { cat: 'screen', name: '0.96 in OLED (SSD1306, I2C)', short: 'Small screen', w: 27.3, h: 27.8, depth: 4, screen: true, cut: { o: 'rect', w: 24, h: 13 }, link: 'plug', check: true,
       tip: 'Get the Qwiic or STEMMA QT version and it plugs in with one cable.', price: 6, src: 'Common SSD1306 0.96 in module, picture 21.7 x 10.9 mm', url: 'https://www.adafruit.com/product/326' },
+    lcd1602: { cat: 'screen', name: '1602 LCD (16x2, I2C backpack)', short: '1602 LCD', w: 80, h: 36, depth: 20, screen: true, cut: { o: 'rect', w: 71.2, h: 24.2 }, link: 'pins', check: true,
+      tip: 'Two lines of 16 letters. Get it with the I2C backpack already soldered on: 4 wires (GND, VCC, SDA, SCL). VCC to 5V. The blue screw on the back sets the contrast. Address 0x27 (some are 0x3F).', price: 4, src: 'Common HD44780 1602A module: 80 x 36 mm board, 71 x 24 mm bezel, PCF8574 backpack', url: '' },
     hdmi5: { cat: 'screen', name: '5 in HDMI screen 800x480', short: '5 in', w: 121, h: 90, depth: 12, screen: true, cut: { o: 'rect', w: 110, h: 66 }, link: 'plug',
       tip: 'Pi screen, plugs in with HDMI and USB. AdventurePi style.', price: 55, src: 'Waveshare 5inch HDMI LCD: 121 x 89.5 mm, picture 108 x 64.8 mm', url: 'https://www.waveshare.com/wiki/5inch_HDMI_LCD_(H)' },
     hdmi7: { cat: 'screen', name: '7 in HDMI screen 1024x600', short: '7 in', w: 165, h: 100, depth: 12, screen: true, cut: { o: 'rect', w: 156, h: 88 }, link: 'plug', check: true,
@@ -87,6 +89,10 @@
     inmp441: { cat: 'sense', lid: true, name: 'I2S Mic (INMP441)', short: 'Mic', w: 14, h: 14, depth: 3, cut: { o: 'circle', d: 3 }, link: 'pins',
       tip: 'A digital microphone. It hears through a 3 mm hole in the lid: glue it with its sound hole over the hole. Three I2S wires (SCK, WS, SD) and 3V3.', price: 3, src: 'INMP441 breakout, about 14 mm round board', url: '' },
     // ---------- power (new 11-13): run it without a cable ----------
+    dfplayer: { cat: 'out', name: 'DFPlayer Mini MP3 player (microSD, TX/RX)', short: 'DFPlayer', w: 21, h: 21, depth: 6, inside: true, holes: [], link: 'pins', check: true, store: true,
+      tip: 'Plays MP3 or WAV files from its own microSD card and drives a small speaker (SPK1, SPK2) itself. Two signal wires: the brain TX to its RX through a 1K resistor, its TX to the brain RX. VCC to 5V. Copy the files onto its card as 0001.mp3, 0002.mp3..., in that order.', price: 2, src: 'DFRobot DFR0299 DFPlayer Mini: 20 x 20 mm board. Clones are similar, measure yours.', url: 'https://wiki.dfrobot.com/DFPlayer_Mini_SKU_DFR0299' },
+    sdcard: { cat: 'out', name: 'MicroSD card reader (SPI)', short: 'MicroSD', w: 42, h: 24, depth: 5, inside: true, holes: [], link: 'pins', check: true, store: true,
+      tip: 'Room for hundreds of sound clips. SPI: SCK, MOSI, MISO and CS. Get the one with a 3.3V regulator and level shifter (VCC to 5V), it works on a 5V Uno and a 3.3V Pico.', price: 2, src: 'Common Catalex style microSD module: about 42 x 24 mm. Sellers differ, measure yours.', url: '' },
     lipo1200: { cat: 'power', name: 'Battery, flat LiPo 1200 mAh', short: 'Battery', w: 62, h: 34, depth: 6, inside: true, holes: [], link: 'plug', check: true, mah: 1200,
       tip: 'Rechargeable, with a small JST plug. Buy one with a protection circuit. Hold it down with double sided tape, never a screw, and never bend or poke it. Red and black are swapped on some sellers: check before you plug it in.', price: 10, src: 'Adafruit 258: about 62 x 34 x 5 mm. Sellers differ, measure yours.', url: 'https://www.adafruit.com/product/258' },
     lipo500: { cat: 'power', name: 'Battery, flat LiPo 500 mAh', short: 'Small battery', w: 36, h: 29, depth: 6, inside: true, holes: [], link: 'plug', check: true, mah: 500,
@@ -95,6 +101,8 @@
       tip: 'Solders to the back of the Pico and has a power button. The battery plugs into it and charges through the Pico USB plug, so one opening does both. It rides on the Pico: its square here saves the room and keeps it on your list.', price: 9, src: 'Pimoroni PIM557: 21 x 21 x 7 mm', url: 'https://shop.pimoroni.com/products/pico-lipo-shim' },
     tp4056: { cat: 'power', name: 'USB-C charger board (TP4056 with protection)', short: 'USB-C charger', w: 28, h: 17, depth: 5, inside: true, holes: [], link: 'solder', check: true, charger: true, usb: 'USB-C on a short end',
       tip: 'The cheapest way to charge. Battery to B+ and B-. OUT+ goes through the power switch, then through a 1N5817 diode (stripe toward the Pico) to the Pico VSYS pin. The diode matters: without it USB power can push back into the battery. It gets its own opening in the wall for the USB-C plug.', price: 1.5, src: 'Common TP4056 USB-C module with protection: about 28 x 17 mm. Sellers differ, measure yours.', url: '' },
+    lvlshift: { cat: 'power', name: 'Logic level shifter (4 channel, BSS138)', short: 'Level shifter', w: 15, h: 13, depth: 4, inside: true, holes: [], link: 'pins', check: true,
+      tip: 'Lets a 3.3V part talk to a 5V Uno safely. LV to 3V3, HV to 5V, GND to GND, then each signal goes in on the HV side and out on the LV side.', price: 1, src: 'SparkFun BOB-12009 style 4 channel board: about 15 x 13 mm', url: 'https://www.sparkfun.com/products/12009' },
     rocker: { cat: 'power', name: 'On/off switch (small rocker)', short: 'Power switch', w: 15, h: 10.5, depth: 14, cut: { o: 'rect', w: 13.2, h: 8.8 }, keep: 6, link: 'solder', check: true,
       tip: 'Snaps into the top. Wire it between the charger and the brain so off really is off.', price: 0.5, src: 'Common KCD11 rocker: about 13 x 8.5 mm opening. Sellers differ, measure yours.', url: '' },
     // ---------- movement ----------
@@ -115,6 +123,8 @@
     round128: { fp: 'Connector_PinHeader_2.54mm:PinHeader_1x08_P2.54mm_Vertical', mpn: 'GC9A01 1.28 in round' }, led5: { fp: 'LED_THT:LED_D5.0mm', mpn: '5 mm LED + 220R' },
     ring12: { fp: 'Connector_PinHeader_2.54mm:PinHeader_1x03_P2.54mm_Vertical', mpn: 'Adafruit 1643' }, speaker28: { fp: 'Connector_PinHeader_2.54mm:PinHeader_1x02_P2.54mm_Vertical', mpn: '28 mm 8 ohm speaker' },
     mat8: { fp: 'Connector_PinHeader_2.54mm:PinHeader_1x05_P2.54mm_Vertical', mpn: 'MAX7219 8x8 module' }, jack35: { fp: 'Connector_Audio:Jack_3.5mm_CUI_SJ1-3523N_Horizontal', mpn: 'SJ1-3523N' },
+    dfplayer: { fp: 'Connector_PinHeader_2.54mm:PinHeader_1x08_P2.54mm_Vertical x2', mpn: 'DFR0299' }, sdcard: { fp: 'Connector_PinHeader_2.54mm:PinHeader_1x06_P2.54mm_Vertical', mpn: 'MicroSD SPI module' },
+    lcd1602: { fp: 'Connector_PinHeader_2.54mm:PinHeader_1x04_P2.54mm_Vertical', mpn: 'LCD1602 + PCF8574' }, lvlshift: { fp: 'Connector_PinHeader_2.54mm:PinHeader_1x06_P2.54mm_Vertical x2', mpn: 'BOB-12009' },
     i2sdac: { fp: 'Connector_PinHeader_2.54mm:PinHeader_1x06_P2.54mm_Vertical', mpn: 'PCM5102A module' }, inmp441: { fp: 'Connector_PinHeader_2.54mm:PinHeader_1x06_P2.54mm_Vertical', mpn: 'INMP441 module' },
     pir: { fp: 'Connector_PinHeader_2.54mm:PinHeader_1x03_P2.54mm_Vertical', mpn: 'HC-SR501' }, vl53: { fp: 'Connector_PinHeader_2.54mm:PinHeader_1x04_P2.54mm_Vertical', mpn: 'Adafruit 3317' },
     arducam: { fp: 'Connector_PinHeader_2.54mm:PinHeader_1x08_P2.54mm_Vertical', mpn: 'ArduCAM Mini 2MP' }, servo: { fp: 'Connector_PinHeader_2.54mm:PinHeader_1x03_P2.54mm_Vertical', mpn: 'SG90' },
@@ -128,7 +138,7 @@
     arcade30: '30mm arcade button', keypad44: '4x4 matrix keypad', dpad: '6x6mm tactile switch', arducam: 'Arducam Mini 2MP OV2640', pir: 'HC-SR501 PIR sensor', vl53: 'VL53L0X distance sensor', esp32cam: 'ESP32-CAM',
     pot: '10K potentiometer', encoder: 'KY-040 rotary encoder', thumb: 'KY-023 joystick module', stick: 'Sanwa JLF joystick', slider: '60mm slide potentiometer', led5: '5mm LED assortment', ring12: 'WS2812 12 LED ring',
     speaker28: '28mm mini speaker', mat8: 'MAX7219 8x8 LED matrix', jack35: '3.5mm audio jack breakout', i2sdac: 'MAX98357A I2S amplifier', inmp441: 'INMP441 I2S microphone', lipo1200: '1200mAh LiPo battery JST',
-    lipo500: '500mAh LiPo battery JST', liposhim: 'LiPo SHIM for Pico', tp4056: 'TP4056 USB-C charger protection', rocker: 'mini rocker switch', servo: 'SG90 micro servo' };
+    lipo500: '500mAh LiPo battery JST', liposhim: 'LiPo SHIM for Pico', tp4056: 'TP4056 USB-C charger protection', rocker: 'mini rocker switch', dfplayer: 'DFPlayer Mini MP3 module', sdcard: 'Micro SD card reader module SPI', lcd1602: 'LCD1602 I2C module', lvlshift: 'logic level converter 4 channel', servo: 'SG90 micro servo' };
   Object.keys(C.PARTS).forEach(function (k) { C.PARTS[k].searchQuery = SQ[k] || (C.PARTS[k].find || C.PARTS[k].name).replace(/\([^)]*\)/g, ' ').replace(/[,/]+/g, ' ').replace(/\s+/g, ' ').trim(); });
   C.cleanQuery = function (t) { return String(t || '').replace(/\([^)]*\)/g, ' ').replace(/[(),/]+/g, ' ').replace(/\s+/g, ' ').trim(); };
   // Cheap starter kits and assortments: one bag covers many builds. [name, Amazon search words, why]
