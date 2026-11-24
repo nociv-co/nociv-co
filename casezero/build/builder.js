@@ -508,7 +508,7 @@ const LART = {
 const LF = (() => { const dk = '#2b2b2b', mt = '#9aa3ad', gy = '#b8b0a2', sc = '#1f2937', sky = '#7cc8f5', pcb = '#2f7a4b', lt = 'none|#f3efe6';
   return { board: [pcb, '#1a1a1a', '#d4a017'], oled096: [sc, sky], tft28: [sc, sky], round128: [sc, sky], tact12: [mt, dk], button16: [mt, dk], arcade24: [dk, '#4b5563'], arcade30: [dk, '#4b5563'],
     pot: [dk, lt], encoder: [dk].concat(Array(12).fill('none'), [mt]), thumb: ['#3a3a3a', 'none', dk], stick: [mt, 'none', dk], slider: [mt, dk, lt], keypad44: [dk].concat(Array(16).fill('#e5e7eb')),
-    dpad: [dk], speaker: [gy, '#6b665e'].concat(Array(6).fill('#3a3a3a')), servo: ['#8a847a', gy, '#f3efe6', '#6b665e'] }; })();
+    dpad: [dk], speaker: [mt, '#5b636d'].concat(Array(6).fill('#2b2f35')), servo: [mt, '#6b7480', '#d7dce2', '#4b5563'] }; })();
 LART.servo = '<rect x="4" y="17" width="40" height="5" rx="1.5"/><rect x="9" y="12" width="30" height="20" rx="2"/><rect x="9" y="5" width="18" height="6" rx="3"/><circle cx="18" cy="8" r="2"/>';
 const tintArt = (k) => { const L = LF[k] || []; let n = 0; return (LART[k] || '').replace(/<(rect|circle|path|ellipse)\b/g, (m) => { const c = L[n++]; if (!c || c === 'none') return m; const [f, s] = c.split('|'); return m + (f && f !== 'none' ? ' fill="' + f + '"' : '') + (s ? ' stroke="' + s + '"' : ''); }); };
 const artKey = (k) => (LART[k] ? k : BOARD_OF[k] ? 'board' : /^speaker/.test(k) ? 'speaker' : ''); /* every brain board and speaker gets a picture too */
@@ -805,7 +805,7 @@ function render() {
   if (SHOWN !== S.page) { if (SHOWN !== -1) { const st = $('stage'), cn = $('con'); st.classList.remove('zin'); cn.classList.remove('pop'); void st.offsetWidth; st.classList.add('zin'); cn.classList.add('pop'); } SHOWN = S.page; }
   // re-drawing the same view (a + or - tap) keeps folded sections as they were and the scroll where it was
   const vk = S.step + ':' + t + ':' + (S.fn || '') + ':' + (S.xsel || ''), same = vk === VIEWKEY, was = same ? Array.from($('pane').querySelectorAll('details')).map((x) => x.open) : [], top = same ? $('pane').scrollTop : 0; VIEWKEY = vk; if (!same && vk.split(':').slice(0, 2).join(':') !== (render.pg || '')) tag(''); render.pg = S.step + ':' + t; /* a new room or step: the old caption goes, the new view writes its own */
-  $('pane').classList.toggle('padb', t === 'map'); $('stage').classList.toggle('wmap', t === 'map'); $('pane').innerHTML = pane(t); const now = $('pane').querySelectorAll('details'); if (now.length === was.length) now.forEach((x, i) => { x.open = was[i]; });
+  $('pane').classList.toggle('padb', t === 'map'); $('stage').classList.toggle('wmap', t === 'map'); $('pane').innerHTML = (pg.name === 'Parts' && (S.step === 0 || S.step === 1) ? viewTgl() : '') + pane(t); const now = $('pane').querySelectorAll('details'); if (now.length === was.length) now.forEach((x, i) => { x.open = was[i]; });
   if (pg.room !== 'build') $('pane').querySelectorAll('a[href^="http"]').forEach((x) => { const sp = document.createElement('span'); sp.innerHTML = x.innerHTML; x.replaceWith(sp); }); /* outside links live in BUILD only */
   else $('pane').innerHTML = '<div class="bcard"><h3>' + (at + 1) + '. ' + pg.name + '</h3>' + $('pane').innerHTML + '</div>';
   $('pane').scrollTop = top; after(t); tidy(); draw(); stat();
@@ -846,9 +846,11 @@ const LK = { solder: 'SOLDER', pins: 'NO SOLDER', plug: 'PLUG IN' };
 function counts() { const c = {}; S.items.forEach((i) => { c[i.type] = (c[i.type] || 0) + 1; }); return c; }
 // what the running total is made of: the electronics, plus the small stuff every build needs (screws, magnets, wires)
 function costSplit() { const c = cost(true), ex = c.ex.filter((x) => !x.have); return money(c.parts) + ' electronics + ' + money(c.extras) + ' small stuff' + (ex.length ? ' (' + ex.map((x) => esc(x.name.split(/[,(]/)[0].trim()) + ' ' + money(x.each)).join(', ') + ')' : '') + '.'; }
-function chosenChips(lean) { const c = counts(), P = PARTS(); const k = Object.keys(c).filter((t) => !(P[t] && P[t].board)), n = S.items.filter((i) => i.of == null && !(PP(i) && PP(i).board)).length, arm = Date.now() - CLEARARM < 4000;
+function chosenChips(lean) { lean = true; /* the tray and the right column already list your parts: just the cost and Take out all here */ const c = counts(), P = PARTS(); const k = Object.keys(c).filter((t) => !(P[t] && P[t].board)), n = S.items.filter((i) => i.of == null && !(PP(i) && PP(i).board)).length, arm = Date.now() - CLEARARM < 4000;
   return (k.length ? (lean ? '<p class="note keep" style="margin-top:10px">' : '<p class="h" style="margin-top:12px">Electronics in your build</p><div class="chosen">' + k.map((t) => '<span>' + esc(P[t] ? P[t].short : t) + ' <i>x' + c[t] + '</i><button type="button" class="rm" data-sub="' + t + '" aria-label="Remove one ' + esc(P[t] ? P[t].short : t) + '">&times;</button></span>').join('') + '</div><p class="note keep" style="margin-top:6px">Tap the x to take one out. ') + '<b>About ' + money(cost(true).total) + ' so far.</b> ' + costSplit() + '</p>' + (n > 1 ? '<button class="btn' + (arm ? ' red' : '') + '" data-act="clearall" style="margin-top:8px;padding:8px">' + (arm ? 'Tap again: take out all ' + n + ' electronics' : 'Take out all electronics (your case stays)') + '</button>' : '') : '<p class="note keep">Nothing yet. Tap a group, then tap what you want.' + (cost(true).extras ? ' The case alone: ' + costSplit() : '') + '</p>') +
     (CLEARED && UNDO.length ? '<button class="btn dark" data-act="undo1" style="margin-top:8px;padding:8px">Undo: put it back</button>' : ''); }
+// Parts: look at the flat top, or the whole case in 3D (front, back, sides, the Character head) and tap a part there to pick it
+const viewTgl = () => '<div class="vtg" role="group" aria-label="View"><button type="button" data-v3="0" aria-pressed="' + !BIG3D + '">2D Top</button><button type="button" data-v3="1" aria-pressed="' + BIG3D + '">3D</button></div>' + (BIG3D ? '<p class="note keep" style="margin:-2px 0 8px">Drag to spin to any side. Tap a part to pick it.</p>' : '');
 function pane(t) {
   const P = PARTS(), c = counts();
   if (t === 'snap') return copilotHtml() + '<p class="h">Already built and soldered?</p><button class="btn red" data-act="measure">Photo my board, front and back</button><p class="note" style="margin-bottom:10px">A card next to it is the ruler. Press on each part on the photo, say what it is, do the brain too. Your board goes inside the case, every part on it becomes its own part you can change. Photos stay on your phone.</p>' +
@@ -859,7 +861,7 @@ function pane(t) {
   if (t === 'guide') { const lk = (u, n) => '<a href="' + u + '" target="_blank" rel="noopener"><b>' + n + '</b></a>';
     return (S.items.length ? GUIDE_BTN : '<p class="note keep">Add parts in Design first.</p>') + presetLinksHtml() + '<p class="h" style="margin-top:12px">Code files</p><div class="grid g2">' + codeNow().map((c, i) => '<button type="button" class="btn" data-cf="' + i + '">' + esc(c[0]) + '</button>').join('') + '</div>' +
       '<p class="h" style="margin-top:12px">Tools</p><div class="list">' + lk(LIBURL.ino, 'Arduino IDE') + lk('https://circuitpython.org/', 'CircuitPython.org') + '</div>' + (libsBox() || '<button type="button" class="btn red" data-act="saveall" style="width:100%;margin:10px 0 0">Download Full Project (.zip)</button>'); }
-  if (t === 'parts') { const ts = TSEL != null && S.items.find((i) => i.id === TSEL), sb = ts ? swapBar(ts) : ''; if (sb) return copilotHtml() + sb + partsPane(P, c); return copilotHtml() + partsPane(P, c); }
+  if (t === 'parts') { return copilotHtml() + partsPane(P, c); } /* no swap dropdown here: the tray x and the - n + steppers do it */
   return paneRest(t, P, c);
 }
 const plainTag = (t) => String(t || '').replace('CircuitPython (code.py)', 'Beginner-friendly').replace('Arduino (.ino)', 'Uses the free Arduino app'); /* no jargon on the Brain tags */
@@ -868,8 +870,12 @@ const SIMPLE = { camera: ['tact12', 'oled096', 'arducam', 'esp32cam', 'tp4056'],
   calc: ['pico', 'keypad44', 'oled096', 'tact12', 'tp4056'], pad: ['pico', 'button16', 'arcade24', 'oled096', 'ring12'], face: ['esp32s3', 'round128', 'tact12', 'speaker28', 'ring12'], deck: ['pico', 'button16', 'pot', 'slider', 'oled096', 'arcade24'],
   panel: ['uno', 'tact12', 'pot', 'lcd1602', 'led5', 'servo'], _: ['pico', 'tact12', 'oled096', 'pot', 'speaker28', 'tp4056'] };
 const SNAME = { camera: { tact12: 'Shutter Button', esp32cam: 'ESP32-CAM-MB', oled096: '0.96" OLED' }, mini: { tact12: 'Capture Button', oled096: '0.96" OLED', vl53: 'VL53L0X', pir: 'HC-SR501' }, groove: { tact12: 'Buttons', pot: 'Knobs', oled096: 'OLED', speaker28: 'Speaker' } };
+// a part card: tap it to add the first one; once you have it, a clear - n + stepper is the only way to change how many (the card itself does nothing)
+const pickOpen = (k, c, cls, at) => c[k] ? '<div class="pick has' + cls + '"' + (at || '') + '>' : '<button type="button" class="pick' + cls + '" data-add="' + k + '"' + (at || '') + '>';
+const pickClose = (k, c) => c[k] ? '</div>' : '</button>';
+const qty = (k, c) => c[k] ? '<span class="qs" role="group" aria-label="How many"><span role="button" tabindex="0" data-sub="' + k + '" aria-label="Take one out">&minus;</span><b>' + c[k] + '</b><span role="button" tabindex="0" data-add="' + k + '" aria-label="Add one more">+</span></span>' : '<span class="qa">+ Add</span>';
 function simplePicks(P, c) { const ids = (SIMPLE[S.style] || SIMPLE._).filter((k) => P[k]), nm = styleRow()[1];
-  return '<p class="h bfh" style="margin-top:0">Best for your ' + esc(nm) + '<span>The ' + ids.length + ' parts most builds use</span></p><div class="grid g3 simp">' + ids.map((k) => '<button type="button" class="pick" data-add="' + k + '">' + (c[k] ? '<span class="n">' + c[k] + '</span><span class="rmv" data-sub="' + k + '" role="button" aria-label="Remove one">&minus;</span>' : '') + (lineArt(k) || partSvg(P[k])) + esc((SNAME[S.style] || {})[k] || P[k].short) + '<small>' + (P[k].price ? '$' + P[k].price : '') + '</small></button>').join('') + '</div>' +
+  return '<p class="h bfh" style="margin-top:0">Best for your ' + esc(nm) + '<span>The ' + ids.length + ' parts most builds use</span></p><div class="grid g3 simp">' + ids.map((k) => pickOpen(k, c, '') + (lineArt(k) || partSvg(P[k])) + esc((SNAME[S.style] || {})[k] || P[k].short) + '<small>' + (P[k].price ? '$' + P[k].price : '') + '</small>' + qty(k, c) + pickClose(k, c)).join('') + '</div>' +
     '<button type="button" class="btn" data-act="allparts" style="margin-top:8px">See every part (Pro)</button>' + chosenChips(true); } /* the tray above already lists what you picked */
 function partsPane(P, c) {
   {
@@ -881,10 +887,10 @@ function partsPane(P, c) {
     const head = '<div class="fnh"><button type="button" class="btn" data-fn="" aria-label="Back to categories">&lsaquo; Back</button><b>' + fn[1] + '</b></div>';
     const list = Object.keys(P).filter((k) => P[k].cat === fn[0]);
     const cb = {}; list.forEach((k) => { cb[k] = compat(k); });
-    return head + '<div class="hrow">' + (list.map((k) => '<button type="button" class="pick' + (cb[k] && cb[k][0] === 'no' ? ' dim' : '') + '" data-add="' + k + '"' + (cb[k] && cb[k][2] ? ' title="' + esc(cb[k][1] + ': ' + cb[k][2]) + '"' : '') + '>' + (cb[k] ? '<span class="cb ' + cb[k][0] + '">' + cb[k][1] + '</span>' : '') + (c[k] ? '<span class="n">' + c[k] + '</span><span class="rmv" data-sub="' + k + '" role="button" aria-label="Remove one">&minus;</span>' : '') + '<span class="lk ' + P[k].link + '">' + LK[P[k].link] + '</span>' + (lineArt(k) || partSvg(P[k])) + esc(P[k].short) + '<small>' + (P[k].price ? '$' + P[k].price : '') + '<span class="sz">' + esc((P[k].w + ' x ' + P[k].h).replace(/\.0\b/g, '')) + ' mm</span></small></button>').join('') + (fn[0] === 'mine' || !list.length ? /* My own board: the presets, and measuring one with the phone */
+    return head + '<div class="hrow">' + (list.map((k) => pickOpen(k, c, (cb[k] && cb[k][0] === 'no' ? ' dim' : ''), cb[k] && cb[k][2] ? ' title="' + esc(cb[k][1] + ': ' + cb[k][2]) + '"' : '') + (cb[k] ? '<span class="cb ' + cb[k][0] + '">' + cb[k][1] + '</span>' : '') + '' + '<span class="lk ' + P[k].link + '">' + LK[P[k].link] + '</span>' + (lineArt(k) || partSvg(P[k])) + esc(P[k].short) + '<small>' + (P[k].price ? '$' + P[k].price : '') + '<span class="sz">' + esc((P[k].w + ' x ' + P[k].h).replace(/\.0\b/g, '')) + ' mm</span></small>' + qty(k, c) + pickClose(k, c)).join('') + (fn[0] === 'mine' || !list.length ? /* My own board: the presets, and measuring one with the phone */
         '<button type="button" class="pick" data-act="measure" style="grid-column:span 2">' + ico('measure') + 'Measure one with my phone<small>Card as the ruler</small></button>' : '')) + '</div>' +
       (list.some((k) => cb[k] && cb[k][0] !== 'ok') ? '<div class="cbl">' + list.filter((k) => cb[k] && cb[k][0] !== 'ok').map((k) => '<div class="' + cb[k][0] + '"><b>' + esc(P[k].short) + '</b> ' + esc(cb[k][1]) + ': ' + esc(cb[k][2]) + '</div>').join('') + '</div>' : '') +
-      (fn[0] === 'brain' ? '<div class="btags">' + list.filter((k) => P[k].tag).map((k) => '<div><b>' + esc(P[k].short) + '</b> &middot; ' + esc(plainTag(P[k].tag)) + '</div>').join('') + '</div>' : '') + '<p class="note" id="partTip">' + (list[0] ? 'Tap one to add it. The red minus takes one out. ' + esc(P[list[0]].tip) : '') + '</p>' + (fn[0] === 'power' ? '<p class="note">' + powerNote() + '</p>' : '') + chosenChips();
+      (fn[0] === 'brain' ? '<div class="btags">' + list.filter((k) => P[k].tag).map((k) => '<div><b>' + esc(P[k].short) + '</b> &middot; ' + esc(plainTag(P[k].tag)) + '</div>').join('') + '</div>' : '') + '<p class="note" id="partTip">' + (list[0] ? 'Tap + Add, then use - and + to change how many. ' + esc(P[list[0]].tip) : '') + '</p>' + (fn[0] === 'power' ? '<p class="note">' + powerNote() + '</p>' : '') + chosenChips();
   }
 }
 function paneRest(t, P, c) {
@@ -1085,7 +1091,7 @@ $('pane').addEventListener('click', (e) => {
   if (e.target.closest('[data-act=cpopen]')) { $('sheetIn').innerHTML = '<button class="x" id="sheetX" aria-label="Close">&times;</button><h2>Notes</h2>' + copilotFull(); $('sheet').hidden = false; return; }
   const bw = e.target.closest('[data-bswap]'); if (bw) { const [id, t] = bw.dataset.bswap.split(':'), it = S.items.find((i) => i.id === +id); if (it && t !== swapCur(it)) { testReset(); swapType(it, t); } return; }
   const sp = e.target.closest('[data-sim],[data-wired]'); if (sp) { if (sp.dataset.sim) simTap(sp.dataset.sim); else { S.tab[5] = curTab() === 'map' ? 'test' : 'map'; save(); render(); if (S.tab[5] === 'map') pfTag(); } return; }
-  const b = e.target.closest('button, [data-sel], [data-delmine], [data-sub], [data-nsel], [data-ins], [data-mpan], [data-gcp]'); if (!b) return; const d = b.dataset;
+  const b = e.target.closest('button, [data-sel], [data-delmine], [data-sub], [data-add], [data-nsel], [data-ins], [data-mpan], [data-gcp]'); if (!b) return; const d = b.dataset;
   if (d.gcp != null) { saveGcode(d.gcp === 'all' ? null : +d.gcp); return; }
   if (d.adj != null) { adjust(d.adj); return; }
   if (d.mpan != null) { mpanLoad(+d.mpan); tag(S.mpan.list[S.mpan.cur].name + ': ' + S.pw + ' x ' + S.pd + ' mm'); return; }
@@ -1106,6 +1112,7 @@ $('pane').addEventListener('click', (e) => {
   if (d.beh) { S.beh = d.beh; actsFill(true); testReset(); save(); render(); tag((BEH.find((b) => b[0] === d.beh) || [0, 'Sampler'])[1] + ': Test It and the code follow it.'); return; }
   if (d.tw) { const [k, v] = d.tw.split(':'); TW()[k] = k === 'mac' ? v === '1' : k === 'min' ? +v : v; testReset(); save(); render(); return; }
   if (d.fn != null) { S.fn = d.fn || null; if (d.fn && d.fn !== 'print') S.cat = d.fn; save(); render(); return; }
+  if (d.v3 != null) { BIG3D = d.v3 === '1'; render(); return; }
   if (d.sub) { e.stopPropagation(); removePart(d.sub); render(); return; }
   if (d.add) { let it = null; d.add.split('+').forEach((k) => { it = addPart(k); }); const P = PP(it); const tip = $('partTip'); render(); if ($('partTip')) $('partTip').textContent = P.tip; void tip; return; }
   if (d.sel) { sel = +d.sel; HL = sel; render(); return; }
@@ -1356,7 +1363,7 @@ function drawBrain(W, H) {
 }
 // the picked part, in the right column under the 3D box: name, one line, size, Remove / Swap
 function selCard(it) { const el = $('selc'), p = it && PP(it); if (!el) return; if (!p || !miniRoom()) { el.hidden = true; return; }
-  el.innerHTML = '<b>' + esc(p.short) + '</b><span class="d">' + esc(p.name || p.short) + '</span><span class="mm">' + [p.w, p.h, p.depth].filter((v) => v != null).map((v) => +(+v).toFixed(1)).join(' &times; ') + ' mm</span><span class="ac"><button type="button" data-sc="rm">Remove</button><button type="button" data-sc="swap">Swap</button></span>';
+  el.innerHTML = '<b>' + esc(p.name || p.short) + '</b><span class="d">' + esc([p.tip, [p.w, p.h, p.depth].filter((v) => v != null).map((v) => +(+v).toFixed(1)).join(' x ') + ' mm.'].filter(Boolean).join(' ')) + '</span>'; /* plain text, no card: the x on its tile takes it out */
   el.hidden = false; }
 $('selc').addEventListener('click', (e) => { const b = e.target.closest('[data-sc]'), it = S.items.find((i) => i.id === TSEL); if (!b || !it) return;
   if (b.dataset.sc === 'rm') { snapU(); S.items = S.items.filter((i) => i !== it && i.of !== it.id); CLEARED = true; if (sel === TSEL) sel = null; TSEL = null; save(); render(); return; }
@@ -1629,7 +1636,9 @@ function setup3d() {
   T3 = { renderer, scene, camera, controls, root, key: '', slots: {}, hl: null, fit: () => {} };
   T3.draw = () => renderer.render(scene, camera); controls.addEventListener('change', T3.draw);
   new ResizeObserver(() => { const w = wrap.clientWidth, h = wrap.clientHeight; if (!w || !h) return; renderer.setSize(w, h, false); camera.aspect = w / h; camera.updateProjectionMatrix(); T3.fit(); T3.draw(); }).observe(wrap);
-  wrap.addEventListener('click', () => { if (wrap.classList.contains('mini')) { BIG3D = true; draw(); } }); play3dWire();
+  let pd0 = null; wrap.addEventListener('pointerdown', (e) => { pd0 = [e.clientX, e.clientY]; });
+  wrap.addEventListener('click', (e) => { if (wrap.classList.contains('mini')) { BIG3D = true; render(); return; }
+    if (BIG3D && !play3d() && !native3d() && pd0 && Math.hypot(e.clientX - pd0[0], e.clientY - pd0[1]) < 6) { const h = playHit(e); if (h && S.items.some((i) => i.id === h.id)) { sel = TSEL = h.id; render(); } } }); /* 3D: tap a part on any face to pick it (a drag still spins) */ play3dWire();
   return T3;
 }
 // ---------- PLAY: press the real 3D case. A tap (moved < 6 px) on a control presses it 1.2 mm, lights it and runs its Function; a drag still spins the case ----------
@@ -1859,7 +1868,7 @@ function draw3d(isMini) {
   const sb = $('sb'), flat = BIG3D && !native3d();
   sb.innerHTML = (flat ? '<button type="button" id="flatBtn" aria-pressed="true">Back to flat</button>' : '') + (isClam() && !lidTop ? '<button type="button" id="openBtn">' + (S.open ? 'Close it' : 'Open it') + '</button>' : '');
   sb.hidden = !sb.innerHTML; const ob = $('openBtn'); if (ob) ob.onclick = () => { S.open = !S.open; save(); render(); };
-  const fb = $('flatBtn'); if (fb) fb.onclick = () => { BIG3D = false; draw(); };
+  const fb = $('flatBtn'); if (fb) fb.onclick = () => { BIG3D = false; render(); };
 }
 
 function makeKids(it, P) { // the parts tagged on the photo, each its own item on the board
