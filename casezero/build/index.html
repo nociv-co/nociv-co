@@ -247,9 +247,28 @@ svg.la{fill:none;stroke:currentColor;stroke-width:2.2;stroke-linecap:round;strok
 /* Board: order 5 */
 .order5{margin:8px 0 0;padding:9px 11px;border:2px solid var(--ink);border-radius:12px;background:#fffbe9;font:500 12.5px/1.4 var(--sys)}.order5 b{font-weight:900}.order5 ol{margin:6px 0 4px 18px;padding:0}.order5 p{margin:4px 0 0;color:var(--mute)}.order5 a{color:var(--ink)}
 .cfull mark{background:#c8412f;color:#fff}
+/* Try room: play first. The pretend device on the stage, Sound pill, pads and knobs */
+.stage .tryv{position:absolute;inset:0;z-index:2;overflow-y:auto;-webkit-overflow-scrolling:touch;display:flex;align-items:flex-start;justify-content:center;padding:8px 10px 26px}
+.stage .tryv[hidden]{display:none}
+.tdev{width:100%;max-width:440px;background:#1a1a1a;border-radius:16px;padding:8px;box-shadow:0 3px 10px rgba(0,0,0,.22);-webkit-user-select:none;user-select:none}
+.tscr{height:28px;margin:0 0 7px;padding:0 10px;border-radius:7px;background:#000;color:#9ff0ff;font:700 13px/28px ui-monospace,Menlo,monospace;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.tscr.dim{background:#2a2a2a;color:#ddd}
+.tpads{display:grid;gap:6px}
+.tpad{all:unset;box-sizing:border-box;cursor:pointer;touch-action:none;min-height:46px;padding:4px;border-radius:11px;background:#f3efe6;color:#1a1a1a;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px;border:2px solid transparent;transition:transform .05s}
+.tpad b{font:900 10px/1 var(--sys);opacity:.5}.tpad span{font:800 11.5px/1.1 var(--sys);text-align:center;max-width:100%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.tpad.sel{border-color:#9ff0ff}.tpad.fx{background:#3a3a3a;color:#fff}.tpad.lit{background:var(--red);color:#fff}.tpad.hit{transform:scale(.94);background:#c8412f;color:#fff}
+.tknobs{display:flex;gap:10px;margin-top:7px}.tknob{flex:1;min-width:0;display:flex;flex-direction:column;gap:2px;color:#fff;font:800 11px/1.1 var(--sys)}.tknob output{color:#9ff0ff}.tknob input{width:100%;accent-color:#c8412f;height:26px;margin:0}
+.trtop{display:flex;gap:8px;align-items:center;margin:0 0 8px}.trtop .tmake{flex:1;padding:12px 8px;font-size:14px}
+.spill{all:unset;cursor:pointer;flex:none;padding:10px 12px;border-radius:999px;border:1.5px solid var(--ink);background:#fff;font:900 12px/1 var(--sys);white-space:nowrap}.spill.on{background:var(--green);border-color:var(--green);color:#fff}
+.tlist{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:6px}.tsel{display:flex;align-items:center;gap:4px;min-width:0}.tsel b{flex:none;width:22px;font:900 11px/1 var(--sys);text-align:center}
+.tsel select{flex:1;min-width:0;height:34px;border:1.5px solid var(--ink);border-radius:9px;background:#fff;font:700 12px var(--sys);padding:0 4px}.tsel button{all:unset;cursor:pointer;flex:none;width:30px;height:30px;text-align:center;border:1.5px solid var(--ink);border-radius:8px;font:900 13px/30px var(--sys);background:#fff}
+details.slib .list a{font-size:12px}
+/* five rooms: Try | Body | Add-ons | Parts | Brain + reset + ? on one line at 375 px */
+.rooms button{padding:8px 9px}
+@media (max-width:420px){.top{gap:3px;padding-left:6px;padding-right:6px}.top a.back{padding:4px 3px;font-size:20px}.top .tb{width:32px;height:32px;font-size:15px}.top #freshTop{margin-right:0;font-size:17px}.rooms{margin-left:0}.rooms button{padding:7px 5.5px;font-size:10px;letter-spacing:0}}
+@media (max-width:350px){.rooms button{padding:7px 3.5px;font-size:9.5px}}
 </style>
 <script src="/vendor/clipper/clipper.js"></script>
-<script src="parts.js?v=33"></script>
+<script src="parts.js?v=34"></script>
 <script type="importmap">{ "imports": { "three": "/vendor/three/three.module.js", "three/addons/": "/vendor/three/" } }</script>
 </head>
 <body>
@@ -257,6 +276,7 @@ svg.la{fill:none;stroke:currentColor;stroke-width:2.2;stroke-linecap:round;strok
 <section class="stage" id="stage" aria-label="Your device">
   <canvas id="view"></canvas>
   <div id="v3" hidden></div>
+  <div class="tryv" id="tryv" hidden aria-label="Try it: play the pads"></div>
   <div class="sb" id="sb" hidden></div>
   <div class="zm" id="zm" hidden><button type="button" data-z="1" aria-label="Zoom in">+</button><button type="button" data-z="-1" aria-label="Zoom out">&minus;</button><button type="button" data-z="0">Fit</button><button type="button" data-z="u">Undo</button></div>
   <button type="button" class="cbx" id="cbx" hidden aria-label="Open the code full screen"><span class="ch"><b id="cbxName">code.py</b><i aria-hidden="true">&#x2922;</i></span><pre id="cbxPre"></pre></button>
@@ -271,6 +291,6 @@ svg.la{fill:none;stroke:currentColor;stroke-width:2.2;stroke-linecap:round;strok
 <input type="file" id="snapIn" accept="image/*" capture="environment" hidden>
 <div class="cfull" id="cfull" hidden role="dialog" aria-label="Your code"><div class="cfh"><span id="cfTabs"></span><span class="sp"></span><button type="button" id="cfCopy">Copy</button><button type="button" id="cfSave">Save</button><button type="button" id="cfX" aria-label="Close">&#x2715;</button></div><pre id="cfPre"></pre></div>
 <div class="sheet" id="sheet" hidden><div class="in" id="sheetIn"></div></div>
-<script type="module" src="builder.js?v=72"></script>
+<script type="module" src="builder.js?v=73"></script>
 </body>
 </html>
