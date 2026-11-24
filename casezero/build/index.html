@@ -66,7 +66,7 @@ html.embedded .top{display:none}
 .grid{display:grid;gap:7px}
 .g2{grid-template-columns:repeat(2,minmax(0,1fr))}.g3{grid-template-columns:repeat(3,minmax(0,1fr))}.g4{grid-template-columns:repeat(4,minmax(0,1fr))}
 .pick{all:unset;cursor:pointer;box-sizing:border-box;position:relative;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:3px;text-align:center;padding:6px 4px;min-height:44px;border:2px solid var(--ink);border-radius:12px;background:#fff;font:800 12px/1.15 var(--sys)}
-.pick small{font-weight:600;font-size:10px;color:var(--mute)}
+.pick small{font-weight:600;font-size:10px;line-height:1.25;color:var(--mute)}.pick small .sz{display:block;white-space:nowrap}.top .tb svg{display:block;flex:none}
 .pick svg{width:100%;height:36px;display:block}
 .pick[aria-pressed=true]{background:var(--ink);color:#fff}.pick[aria-pressed=true] small{color:#d8d2c4}
 .pick .n{position:absolute;top:-7px;right:-6px;min-width:20px;height:20px;padding:0 5px;border-radius:10px;background:var(--red);color:#fff;font:900 11px/20px var(--sys)}
@@ -188,7 +188,7 @@ details.fold .list .it{border-color:var(--line)}
 .prog b{position:relative;display:block;text-align:center;font:900 13px/26px var(--sys)}
 .pane .hrow{padding-top:2px}
 .bbar .dots{gap:0}.bbar .dots b{box-sizing:content-box;width:8px;height:8px;padding:14px 4px;border-radius:50%;background:#cfc9bb content-box;cursor:pointer}.bbar .dots b.on{background:var(--ink) content-box;width:22px;border-radius:4px}
-.mgrid{display:grid;gap:5px;margin:4px 0 6px}.manc{all:unset;cursor:pointer;box-sizing:border-box;min-height:34px;display:flex;flex-direction:column;align-items:center;justify-content:center;border:1.5px solid var(--green);border-radius:8px;background:#e8f4ec;color:var(--green);font:900 12px/1 var(--sys)}.manc small{font:800 8px/1.1 var(--sys);text-transform:uppercase}.manc.on{background:var(--ink);border-color:var(--ink);color:#fff}.manc[disabled]{cursor:not-allowed;border-color:var(--red);color:var(--red);background:repeating-linear-gradient(45deg,#fdeeea 0 5px,#f6d9d3 5px 10px)}.mdrag{display:inline-block;padding:3px 8px;border:1.5px dashed var(--ink);border-radius:999px;background:#fff;color:var(--ink);font-weight:800;cursor:grab}
+.mgrid{display:grid;gap:5px;margin:4px 0 6px}.manc{all:unset;cursor:pointer;box-sizing:border-box;min-height:34px;display:flex;flex-direction:column;align-items:center;justify-content:center;border:1.5px solid var(--green);border-radius:8px;background:#e8f4ec;color:var(--green);font:900 12px/1 var(--sys)}.manc small{font:800 8px/1.1 var(--sys);text-transform:uppercase;white-space:nowrap;max-width:100%;overflow:hidden}.manc.on{background:var(--ink);border-color:var(--ink);color:#fff}.manc[disabled]{cursor:not-allowed;border-color:var(--red);color:var(--red);background:repeating-linear-gradient(45deg,#fdeeea 0 5px,#f6d9d3 5px 10px)}.mdrag{display:inline-block;padding:3px 8px;border:1.5px dashed var(--ink);border-radius:999px;background:#fff;color:var(--ink);font-weight:800;cursor:grab}
 .row .num.mm{flex:0 0 64px;padding:0 4px;text-align:center;font-size:14px}
 @media(min-width:900px){body{max-width:560px;margin:0 auto;border-left:1.5px solid var(--ink);border-right:1.5px solid var(--ink)}}
 /* small phones: Body, Brain and Parts always fit next to the two round buttons */
@@ -295,7 +295,7 @@ details.slib .list a{font-size:12px}
 <script type="importmap">{ "imports": { "three": "/vendor/three/three.module.js", "three/addons/": "/vendor/three/" } }</script>
 </head>
 <body>
-<header class="top"><a class="back" href="/casezero/" aria-label="Back to Case Zero">&lsaquo;</a><div class="rooms" id="rooms" role="tablist" aria-label="Rooms"></div><span class="sp"></span><button class="tb" id="freshTop" aria-label="Start fresh: clear this build" title="Start fresh">&#8634;</button><button class="tb" id="helpTop" aria-label="Help and Learn">?</button></header>
+<header class="top"><a class="back" href="/casezero/" aria-label="Back to Case Zero">&lsaquo;</a><div class="rooms" id="rooms" role="tablist" aria-label="Rooms"></div><span class="sp"></span><button class="tb" id="freshTop" aria-label="Start fresh: clear this build" title="Start fresh"><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4.5 12a7.5 7.5 0 1 0 2.2-5.3"/><path d="M4 3.5v4.6h4.6"/></svg></button><button class="tb" id="helpTop" aria-label="Help and Learn">?</button></header>
 <section class="stage" id="stage" aria-label="Your device">
   <canvas id="view"></canvas>
   <div id="v3" hidden></div>
@@ -314,6 +314,6 @@ details.slib .list a{font-size:12px}
 <input type="file" id="snapIn" accept="image/*" capture="environment" hidden>
 <div class="cfull" id="cfull" hidden role="dialog" aria-label="Your code"><div class="cfh"><span id="cfTabs"></span><span class="sp"></span><button type="button" id="cfCopy">Copy Code</button><button type="button" id="cfSave">Save</button><button type="button" id="cfX" aria-label="Close">&#x2715;</button></div><pre id="cfPre"></pre></div>
 <div class="sheet" id="sheet" hidden><div class="in" id="sheetIn"></div></div>
-<script type="module" src="builder.js?v=75"></script>
+<script type="module" src="builder.js?v=76"></script>
 </body>
 </html>
