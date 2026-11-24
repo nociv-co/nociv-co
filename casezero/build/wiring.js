@@ -27,11 +27,15 @@ export const BOARDS = {
     all: [5, 6, 7, 10, 20, 21, 0, 1, 2, 3, 4, 8, 9], adc: [0, 1, 2, 3, 4], spi: [4, 6, 5], i2c: [8, 9] /* 8 (the LED) and 9 (BOOT) last */, spiPick: [[7, 10, 3]], camCs: [7, 10], lab: (n) => 'GPIO' + n, cp: 'board.IO', pwm: (n) => n, v5: '5V', v3: '3V3' },
   esp32: { name: 'ESP32 DevKit', left: ['EN', 'GPIO36', 'GPIO39', 'GPIO34', 'GPIO35', 'GPIO32', 'GPIO33', 'GPIO25', 'GPIO26', 'GPIO27', 'GPIO14', 'GPIO12', 'GPIO13', 'GND', 'VIN'], right: ['GPIO23', 'GPIO22', 'TX0', 'RX0', 'GPIO21', 'GPIO19', 'GPIO18', 'GPIO5', 'GPIO17', 'GPIO16', 'GPIO4', 'GPIO2', 'GPIO15', 'GND', '3V3'],
     all: [4, 5, 13, 14, 15, 16, 17, 18, 19, 21, 22, 23, 25, 26, 27, 32, 33], adc: [32, 33, 34, 35, 36, 39], spi: [18, 23, 19], i2c: [21, 22], spiPick: [[5, 17, 16], [15, 4, 2]], camCs: [5, 15], lab: (n) => 'GPIO' + n, cp: 'board.IO', pwm: (n) => n, v5: 'VIN', v3: '3V3' },
+  /* ESP32-S3-DevKitC-1 (N16R8): GPIO35 to 37 belong to the octal PSRAM, GPIO0/3/45/46 are strapping pins, 19/20 are USB: none of them are handed out. */
+  s3: { name: 'ESP32-S3 DevKit', left: ['3V3', '3V3', 'RST', 'GPIO4', 'GPIO5', 'GPIO6', 'GPIO7', 'GPIO15', 'GPIO16', 'GPIO17', 'GPIO18', 'GPIO8', 'GPIO3', 'GPIO46', 'GPIO9', 'GPIO10', 'GPIO11', 'GPIO12', 'GPIO13', 'GPIO14', '5V', 'GND'],
+    right: ['GND', 'TX', 'RX', 'GPIO1', 'GPIO2', 'GPIO42', 'GPIO41', 'GPIO40', 'GPIO39', 'GPIO38', 'GPIO37', 'GPIO36', 'GPIO35', 'GPIO0', 'GPIO45', 'GPIO48', 'GPIO47', 'GPIO21', 'GPIO20', 'GPIO19', 'GND', 'GND'],
+    all: [4, 5, 6, 7, 15, 16, 17, 18, 1, 2, 42, 41, 40, 39, 38, 21, 47, 48, 14, 10, 11, 12, 13, 8, 9], adc: [1, 2, 4, 5, 6, 7, 8, 9, 10], spi: [12, 11, 13], i2c: [8, 9], spiPick: [[10, 14, 21]], camCs: [10, 14], lab: (n) => 'GPIO' + n, cp: 'board.IO', ino: true, pwm: (n) => n, v5: '5V', v3: '3V3' },
   cyd: { name: 'Cheap Yellow Display', left: ['3V3', 'GPIO27', 'GPIO22', 'GND'], right: ['VIN', 'GPIO35', 'GPIO21', 'GND'], all: [22, 27, 21], adc: [35], spi: null, i2c: [27, 22], spiPick: [], camCs: [], lab: (n) => 'GPIO' + n, cp: 'board.IO', ino: true, pwm: (n) => n, v5: 'VIN', v3: '3V3', builtIn: 'its own 2.8 in touch screen' },
   pi: { name: 'Raspberry Pi (40 pin header)', left: ['3V3', 'GPIO2', 'GPIO3', 'GPIO4', 'GND', 'GPIO17', 'GPIO27', 'GPIO22', '3V3', 'GPIO10', 'GPIO9', 'GPIO11', 'GND', 'ID_SD', 'GPIO5', 'GPIO6', 'GPIO13', 'GPIO19', 'GPIO26', 'GND'], right: ['5V', '5V', 'GND', 'GPIO14', 'GPIO15', 'GPIO18', 'GND', 'GPIO23', 'GPIO24', 'GND', 'GPIO25', 'GPIO8', 'GPIO7', 'ID_SC', 'GND', 'GPIO12', 'GND', 'GPIO16', 'GPIO20', 'GPIO21'],
     all: [4, 17, 27, 22, 5, 6, 13, 19, 26, 23, 24, 25, 12, 16, 20, 21, 18], adc: [], spi: [11, 10, 9], i2c: [2, 3], spiPick: [[8, 25, 24], [7, 23, 22]], camCs: [8, 7], lab: (n) => 'GPIO' + n, cp: null, pwm: (n) => ([12, 13, 18, 19].indexOf(n) > -1 ? n % 2 : -1), v5: '5V', v3: '3V3', pi: true }
 };
-export const BOARD_OF = { uno: 'uno', pico: 'pico', picow: 'pico', pico2: 'pico', nano: 'nano', promicro: 'promicro', esp32c3: 'c3', esp32: 'esp32', cyd: 'cyd', zero2: 'pi', pi5: 'pi' };
+export const BOARD_OF = { uno: 'uno', pico: 'pico', picow: 'pico', pico2: 'pico', nano: 'nano', promicro: 'promicro', esp32c3: 'c3', esp32s3: 's3', esp32: 'esp32', cyd: 'cyd', zero2: 'pi', pi5: 'pi' };
 
 // What each kind of part needs. d = any pin, a = an analog pin (GP26 to 28), enc = two pins next to each other,
 // pwm = a pin whose PWM slice no other sound or motor uses. power: 3V3 or VBUS (5 V from USB).
@@ -157,7 +161,8 @@ export const PY_LIBS = { oled096: ['adafruit_displayio_ssd1306.mpy', 'adafruit_d
 const PROF = (b, logic, lang, libs) => { const B = BOARDS[b]; return { key: b, board: B, name: B.name, pins: { left: B.left, right: B.right, all: B.all, adc: B.adc, i2c: B.i2c, spi: B.spi, label: B.lab }, logic, v5: B.v5, v3: B.v3, lang, file: lang === 'ino' ? 'casezero.ino' : 'code.py', libs }; };
 export const BOARD_PROFILES = {
   uno: PROF('uno', '5V', 'ino', INO_LIBS), nano: PROF('nano', '5V', 'ino', INO_LIBS), promicro: PROF('promicro', '5V', 'ino', INO_LIBS),
-  pico: PROF('pico', '3.3V', 'py', PY_LIBS), esp32c3: PROF('c3', '3.3V', 'py', PY_LIBS),
+  pico: PROF('pico', '3.3V', 'py', PY_LIBS), esp32c3: PROF('c3', '3.3V', 'py', PY_LIBS), esp32: PROF('esp32', '3.3V', 'py', PY_LIBS),
+  esp32s3: PROF('s3', '3.3V', 'ino', Object.assign({}, INO_LIBS, { servo: [LIB('ESP32Servo', 'Kevin Harrington', 'ESP32Servo.h')], i2sdac: [LIB('ESP_I2S', 'Espressif (built in, Arduino-ESP32 3.x)', 'ESP_I2S.h', true)], inmp441: [LIB('ESP_I2S', 'Espressif (built in, Arduino-ESP32 3.x)', 'ESP_I2S.h', true)] })),
   cyd: PROF('cyd', '3.3V', 'ino', Object.assign({}, INO_LIBS, { servo: [LIB('ESP32Servo', 'Kevin Harrington', 'ESP32Servo.h')], tft28: [], round128: [], dfplayer: [LIB('DFRobotDFPlayerMini', 'DFRobot', 'DFRobotDFPlayerMini.h')] }))
 };
 export const profileOf = (B) => Object.values(BOARD_PROFILES).find((p) => p.board === B) || null;
