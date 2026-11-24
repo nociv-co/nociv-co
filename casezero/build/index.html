@@ -118,6 +118,22 @@ html.embedded .top{display:none}
 .sheet details ul,.sheet details ol{padding-left:18px;margin:0 0 12px}
 .sheet table{border-collapse:collapse;width:100%;margin:0 0 12px}.sheet td{border-top:1px solid var(--line);padding:5px 4px;vertical-align:top}.sheet td:first-child{font-weight:800;white-space:nowrap}
 .sheet a{color:var(--ink)}
+/* project picker: short cards, details one tap away */
+.rfilt{display:flex;gap:6px;margin:0 0 10px;overflow-x:auto;scrollbar-width:none}.rfilt::-webkit-scrollbar{display:none}
+.rfilt button{all:unset;cursor:pointer;flex:none;padding:7px 13px;border:1.5px solid var(--line);border-radius:999px;background:#fff;font:800 12.5px/1 var(--sys)}.rfilt button[aria-pressed=true]{background:var(--ink);border-color:var(--ink);color:#fff}
+.rgrid{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.rcard{all:unset;cursor:pointer;box-sizing:border-box;display:flex;flex-direction:column;gap:6px;min-height:124px;padding:12px;border:1px solid var(--line);border-radius:14px;background:#fff;transition:border-color .15s,box-shadow .15s}
+.rcard:hover,.rcard:focus-visible{border-color:var(--ink);box-shadow:0 0 0 1.5px var(--ink)}.rcard:active{transform:scale(.985)}
+.rcard b{font:900 15.5px/1.2 var(--sys);text-wrap:balance}
+.rcard .rl{flex:1;font:500 12.5px/1.35 var(--sys);color:#4a463f;display:-webkit-box;-webkit-line-clamp:3;-webkit-box-orient:vertical;overflow:hidden}
+.chips{display:flex;flex-wrap:wrap;gap:5px}.chip{display:inline-flex;align-items:center;gap:4px;white-space:nowrap;padding:3px 8px;border-radius:999px;background:#f1ede2;font:800 11px/1.2 var(--sys);font-variant-numeric:tabular-nums;color:#2c2a26}
+.chip.lvl i{font-style:normal;font-size:8px;letter-spacing:1px;color:var(--red)}.chip.ok{background:#e8f4ec;color:#2f7a4b}.chip.cm{background:#fff;border:1px solid var(--line);color:#6f6a60}
+.rback{all:unset;cursor:pointer;display:inline-block;padding:6px 0 8px;font:800 13px/1 var(--sys)}
+.sheet h2.rh{text-transform:none;letter-spacing:0;font-size:22px;margin:0 0 8px;text-wrap:balance}.rline{font:500 15px/1.45 var(--sys);margin:0 0 8px}
+.sheet td.num{text-align:right;white-space:nowrap;font-variant-numeric:tabular-nums}.sheet td:first-child{white-space:nowrap}
+body:has(#sheet:not([hidden])) #sb{visibility:hidden}
+.rd details{border:1px solid var(--line);border-radius:14px}.rd table{margin:0 0 8px}.rd td{border:0;border-top:1px solid var(--line);padding:7px 4px;font-weight:500}.rd td:first-child{font-weight:800;color:var(--mute)}.rd summary{font-size:14px}
+@media (prefers-reduced-motion:reduce){.rcard{transition:none}.rcard:active{transform:none}}
 @media(max-height:620px){.con{height:296px}}
 .texg .pick{min-height:0;padding:4px 2px;font-size:11px}.texg .pick svg{height:22px}
 .pane .row{margin-bottom:7px}
@@ -291,7 +307,7 @@ details.slib .list a{font-size:12px}
 @media (max-width:350px){.rooms button{padding:7px 3.5px;font-size:9.5px}}
 </style>
 <script src="/vendor/clipper/clipper.js"></script>
-<script src="parts.js?v=35"></script>
+<script src="parts.js?v=36"></script>
 <script type="importmap">{ "imports": { "three": "/vendor/three/three.module.js", "three/addons/": "/vendor/three/" } }</script>
 </head>
 <body>
@@ -314,6 +330,6 @@ details.slib .list a{font-size:12px}
 <input type="file" id="snapIn" accept="image/*" capture="environment" hidden>
 <div class="cfull" id="cfull" hidden role="dialog" aria-label="Your code"><div class="cfh"><span id="cfTabs"></span><span class="sp"></span><button type="button" id="cfCopy">Copy Code</button><button type="button" id="cfSave">Save</button><button type="button" id="cfX" aria-label="Close">&#x2715;</button></div><pre id="cfPre"></pre></div>
 <div class="sheet" id="sheet" hidden><div class="in" id="sheetIn"></div></div>
-<script type="module" src="builder.js?v=76"></script>
+<script type="module" src="builder.js?v=77"></script>
 </body>
 </html>

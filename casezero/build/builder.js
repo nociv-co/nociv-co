@@ -2839,13 +2839,30 @@ function showNew() {
     '<button class="btn start" data-go="panel"><b>A panel for a box I have</b>One flat piece with a screen window, holes and notches for wires.</button>' +
     '<button class="btn start" data-go="part"><b>One part</b>Stand, feet, standoffs, cable clips, knobs.</button></div><button class="btn" data-door="back" style="margin-top:10px">Back</button>';
 }
-function showRecipes() {
-  $('sheetIn').innerHTML = '<h2>Pick one to start from</h2><div class="list">' + (CZ.RECIPES || []).map((r) =>
-    '<button class="btn start" data-recipe="' + r.id + '"><b>' + esc(r.name) + ' <span style="font:800 11px/1 var(--sys);letter-spacing:0;text-transform:none;color:#6f6a60">' + esc(r.level) + ', about ' + money(recipeCost(r)) + ' in electronics</span></b>' + esc(r.line) + '<span style="display:block;margin-top:5px;font:600 11.5px/1.3 var(--sys);color:#6f6a60">Code: ' + esc(r.credit.project) + ' by ' + esc(r.credit.by) + '.' + (r.tested ? '' : ' Not test-built by NOCIV yet.') + '</span></button>').join('') +
-    '</div><p class="note">Every recipe is someone\'s open project. We lay out the body and the electronics, and send you to their code with their name on it.</p><button class="btn" data-door="back" style="margin-top:10px">Back</button>';
+const RGROUPS = [['all', 'All'], ['music', 'Music'], ['games', 'Games'], ['desk', 'Desk']], LEVELN = { Easy: 1, Medium: 2, Hard: 3 };
+const lvlChip = (r) => '<span class="chip lvl" aria-label="' + esc(r.level) + '"><i aria-hidden="true">' + [1, 2, 3].map((n) => (n <= (LEVELN[r.level] || 1) ? '\u25CF' : '\u25CB')).join('') + '</i>' + esc(r.level) + '</span>';
+const aboutCost = (r) => '~$' + Math.max(1, Math.round(recipeCost(r)));
+let RGROUP = 'all';
+function showRecipes() { /* the picker: name, one short line, level and rough price. Everything else is one tap away */
+  const L = (CZ.RECIPES || []).filter((r) => RGROUP === 'all' || r.group === RGROUP);
+  $('sheetIn').innerHTML = '<h2>Start from a project</h2><div class="rfilt" role="group" aria-label="Filter projects">' + RGROUPS.filter((g) => g[0] === 'all' || (CZ.RECIPES || []).some((r) => r.group === g[0])).map((g) => '<button type="button" data-rgroup="' + g[0] + '" aria-pressed="' + (g[0] === RGROUP) + '">' + g[1] + '</button>').join('') + '</div>' +
+    '<div class="rgrid">' + L.map((r) => '<button type="button" class="rcard" data-rinfo="' + r.id + '"><b>' + esc(r.name) + '</b><span class="rl">' + esc(r.short || r.line) + '</span><span class="chips">' + lvlChip(r) + '<span class="chip">' + aboutCost(r) + '</span></span></button>').join('') + '</div>' +
+    '<button class="btn" data-door="back" style="margin-top:12px">Back</button>';
+}
+function showRecipe(id) { /* the detail: the full story, what you buy, the credit and the test status */
+  const r = CZ.RECIPES.find((x) => x.id === id); if (!r) return; const P = CZ.PARTS;
+  const rows = r.parts.filter(([t]) => P[t]).map(([t, n]) => '<tr><td>' + n + ' x</td><td>' + esc(P[t].name) + '</td><td class="num">' + (P[t].price ? money(P[t].price * n) : '') + '</td></tr>').join('');
+  $('sheetIn').innerHTML = '<button type="button" class="rback" data-door="known" aria-label="All projects">&lsaquo; All projects</button><h2 class="rh">' + esc(r.name) + '</h2>' +
+    '<div class="chips" style="margin:0 0 10px">' + lvlChip(r) + '<span class="chip">' + aboutCost(r) + ' in parts</span><span class="chip ' + (r.tested ? 'ok' : 'cm') + '">' + (r.tested ? 'NOCIV tested' : 'Community code') + '</span></div>' +
+    '<p class="rline">' + esc(r.line) + '</p>' + (r.note ? '<p class="note" style="margin:0 0 10px">' + esc(r.note) + '</p>' : '') +
+    '<button class="btn red" data-recipe="' + r.id + '" style="width:100%;margin:2px 0 12px">Start with this</button>' +
+    '<div class="rd"><details><summary>What you\'ll buy</summary><table><tbody>' + rows + '<tr><td></td><td><b>Total, roughly</b></td><td class="num"><b>' + money(recipeCost(r)) + '</b></td></tr></tbody></table><p class="note" style="margin:0 0 12px">Typical prices, not live. Plastic and screws come after, in Shop.</p></details>' +
+    '<details><summary>Where the code comes from</summary><p><b>' + esc(r.credit.project) + '</b> by ' + esc(r.credit.by) + (r.credit.license ? ', ' + esc(r.credit.license) + ' license' : '') + '. <a href="' + esc(r.credit.url) + '" target="_blank" rel="noopener">Their page</a></p><p>' + (r.tested ? 'NOCIV has built this one for real.' : 'Community code: NOCIV has not built this one for real yet. We lay out the case and parts and link to their code, with their name on it.') + '</p></details></div>';
+  const sc = $('sheetIn'); sc.scrollTop = 0; const b = sc.querySelector('[data-recipe]'); if (b) b.focus({ preventScroll: true });
 }
 $('sheetIn').addEventListener('click', (e) => {
   const dr = e.target.closest('[data-door]'), rc = e.target.closest('[data-recipe]'), ok = e.target.closest('[data-rok]');
+  const ri = e.target.closest('[data-rinfo]'), rg = e.target.closest('[data-rgroup]'); if (ri) { showRecipe(ri.dataset.rinfo); return; } if (rg) { RGROUP = rg.dataset.rgroup; showRecipes(); return; }
   if (e.target.closest('[data-act=keepbox]')) { $('sheet').hidden = true; keepBox(); return; }
   if (dr) { const v = dr.dataset.door;
     if (v === 'known') showRecipes(); else if (v === 'new') showNew(); else if (v === 'back') showStart();
