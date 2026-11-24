@@ -203,7 +203,7 @@
   // Body presets: one open-source starter per body shape. preset: true shows it on the Shape page. play = its PLAY simulation.
   // links (repos and libraries) show only in Build, Guide & Code. code = a starter file that proves the wiring, also in Guide & Code.
   C.RECIPES.push(
-    { id: 'deskbot', preset: true, play: 'deskbot', name: 'AI Desk-Bot', level: 'Medium', cost: '~$25–$40', short: 'Eyes, a voice and a turning head', group: 'desk', style: 'face',
+    { id: 'deskbot', preset: true, play: 'deskbot', name: 'AI Desk-Bot', level: 'Medium', cost: '~$25–$40', short: 'Eyes, a voice and a turning head', group: 'desk', style: 'face', ch: { eyes: 'screen' }, headScreen: 'oled096',
       line: 'Press the wake button: OLED eyes open, it plays a chime and the servo turns its head. Mic and speaker are ready for a voice assistant.',
       parts: [['esp32s3', 1], ['oled096', 1], ['inmp441', 1], ['i2sdac', 1], ['speaker28', 1], ['servo', 1], ['tact12', 1]],
       credit: { project: 'xiaozhi-esp32', by: '78 (Xiaozhi open-source AI chatbot)', url: 'https://github.com/78/xiaozhi-esp32', license: 'MIT' },

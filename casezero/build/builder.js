@@ -504,10 +504,17 @@ const LART = {
   board: '<rect x="10" y="3" width="28" height="30" rx="2"/><rect x="19" y="13" width="10" height="10" rx="1"/><path d="M20 3v-1h8v1"/>' + [0, 1, 2, 3, 4].map((i) => '<path d="M14 ' + (8 + i * 5) + 'h1M33 ' + (8 + i * 5) + 'h1"/>').join(''),
   speaker: '<circle cx="24" cy="18" r="14"/><circle cx="24" cy="18" r="4"/>' + [0, 1, 2, 3, 4, 5].map((i) => { const a = i * Math.PI / 3; return '<circle cx="' + (24 + 9 * Math.cos(a)).toFixed(1) + '" cy="' + (18 + 9 * Math.sin(a)).toFixed(1) + '" r="1"/>'; }).join('')
 };
+// real-world colour, one entry per shape in order ('fill' or 'fill|stroke'); shapes past the list stay outlines
+const LF = (() => { const dk = '#2b2b2b', mt = '#9aa3ad', gy = '#b8b0a2', sc = '#1f2937', sky = '#7cc8f5', pcb = '#2f7a4b', lt = 'none|#f3efe6';
+  return { board: [pcb, '#1a1a1a', '#d4a017'], oled096: [sc, sky], tft28: [sc, sky], round128: [sc, sky], tact12: [mt, dk], button16: [mt, dk], arcade24: [dk, '#4b5563'], arcade30: [dk, '#4b5563'],
+    pot: [dk, lt], encoder: [dk].concat(Array(12).fill('none'), [mt]), thumb: ['#3a3a3a', 'none', dk], stick: [mt, 'none', dk], slider: [mt, dk, lt], keypad44: [dk].concat(Array(16).fill('#e5e7eb')),
+    dpad: [dk], speaker: [gy, '#6b665e'].concat(Array(6).fill('#3a3a3a')), servo: ['#8a847a', gy, '#f3efe6', '#6b665e'] }; })();
+LART.servo = '<rect x="4" y="17" width="40" height="5" rx="1.5"/><rect x="9" y="12" width="30" height="20" rx="2"/><rect x="9" y="5" width="18" height="6" rx="3"/><circle cx="18" cy="8" r="2"/>';
+const tintArt = (k) => { const L = LF[k] || []; let n = 0; return (LART[k] || '').replace(/<(rect|circle|path|ellipse)\b/g, (m) => { const c = L[n++]; if (!c || c === 'none') return m; const [f, s] = c.split('|'); return m + (f && f !== 'none' ? ' fill="' + f + '"' : '') + (s ? ' stroke="' + s + '"' : ''); }); };
 const artKey = (k) => (LART[k] ? k : BOARD_OF[k] ? 'board' : /^speaker/.test(k) ? 'speaker' : ''); /* every brain board and speaker gets a picture too */
-const lineArt = (k0, sz) => { const k = artKey(k0); return (LART[k] ? '<svg class="la" viewBox="0 0 48 36"' + (sz ? ' width="' + sz + '" height="' + Math.round(sz * 0.75) + '"' : '') + ' aria-hidden="true">' + LART[k] + '</svg>' : '') };
+const lineArt = (k0, sz) => { const k = artKey(k0); return (LART[k] ? '<svg class="la" viewBox="0 0 48 36"' + (sz ? ' width="' + sz + '" height="' + Math.round(sz * 0.75) + '"' : '') + ' aria-hidden="true">' + tintArt(k) + '</svg>' : '') };
 const ARTIMG = {}; /* the same line art as an image, for the canvas cards in Parts, Shop and Board */
-function artImg(k0) { const k = artKey(k0); if (!k) return null; let im = ARTIMG[k]; if (!im) { im = ARTIMG[k] = new Image(); im.onload = () => { try { draw(); } catch (e) {} }; im.src = 'data:image/svg+xml;charset=utf-8,' + encodeURIComponent('<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 48 36" width="192" height="144" fill="none" stroke="#1a1a1a" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">' + LART[k] + '</svg>'); } return im.complete && im.naturalWidth ? im : null; }
+function artImg(k0) { const k = artKey(k0); if (!k) return null; let im = ARTIMG[k]; if (!im) { im = ARTIMG[k] = new Image(); im.onload = () => { try { draw(); } catch (e) {} }; im.src = 'data:image/svg+xml;charset=utf-8,' + encodeURIComponent('<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 48 36" width="192" height="144" fill="none" stroke="#1a1a1a" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">' + tintArt(k) + '</svg>'); } return im.complete && im.naturalWidth ? im : null; }
 function partSvg(P) {
   const m = Math.max(P.w, P.h) + 6, s = 'width="100%" height="36" viewBox="' + (-m / 2) + ' ' + (-m / 2) + ' ' + m + ' ' + m + '"';
   let g = '';
@@ -787,7 +794,8 @@ function render() {
   const pill = (x) => '<button type="button" data-st="' + x[0] + '" data-t="' + x[1] + '" aria-pressed="' + (x[0] === S.step && x[1] === t) + '"><span>' + x[2] + '</span></button>';
   const body = pg.room === 'design', pro = body && !!S.pro, opn = body ? pro || rest.some((x) => x[0] === S.step && x[1] === t) : open; /* Body: one Simple | Pro (mm) switch instead of More options on every page */
   const sp = body ? '<span class="spro" role="group" aria-label="Simple or Pro"><button type="button" data-pro="0" aria-pressed="' + !pro + '">Simple</button><button type="button" data-pro="1" aria-pressed="' + pro + '">Pro</button></span>' : '';
-  $('parts').innerHTML = sp + (mains.length > 1 || opn ? mains.map(pill).join('') : '') + (opn ? rest.map(pill).join('') : '') + (rest.length && !body ? '<button type="button" class="mo" data-more="' + (open ? '0' : '1') + '"><span>' + (open ? 'Less' : 'More options') + '</span></button>' : '');
+  const pills = (mains.length > 1 || opn ? mains.map(pill).join('') : '') + (opn ? rest.map(pill).join('') : '') + (rest.length && !body ? '<button type="button" class="mo" data-more="' + (open ? '0' : '1') + '"><span>' + (open ? 'Less' : 'More options') + '</span></button>' : '');
+  $('parts').classList.toggle('hasp', !!sp); $('parts').innerHTML = sp ? '<div class="sprow"><span class="sprl">Detail</span>' + sp + '</div><div class="pills">' + pills + '</div>' : pills; /* Simple | Pro on its own row, the page tabs under it */
   $('parts').parentNode.hidden = !!pg.bare || (!body && mains.length < 2 && !rest.length);
   const prev = mine[at - 1], next = mine[at + 1];
   if (0) $('bbar').innerHTML = '<button type="button" data-pg="' + (prev ? prev[1] : '') + '"' + (prev ? '' : ' disabled') + '>Back</button><span class="dots">' + mine.map((x) => '<b role="button" data-pg="' + x[1] + '" aria-label="' + x[0].name + '" title="' + x[0].name + '"' + (x[1] === S.page ? ' class="on" aria-current="step"' : '') + '></b>').join('') + '</span>' +
@@ -838,8 +846,8 @@ const LK = { solder: 'SOLDER', pins: 'NO SOLDER', plug: 'PLUG IN' };
 function counts() { const c = {}; S.items.forEach((i) => { c[i.type] = (c[i.type] || 0) + 1; }); return c; }
 // what the running total is made of: the electronics, plus the small stuff every build needs (screws, magnets, wires)
 function costSplit() { const c = cost(true), ex = c.ex.filter((x) => !x.have); return money(c.parts) + ' electronics + ' + money(c.extras) + ' small stuff' + (ex.length ? ' (' + ex.map((x) => esc(x.name.split(/[,(]/)[0].trim()) + ' ' + money(x.each)).join(', ') + ')' : '') + '.'; }
-function chosenChips() { const c = counts(), P = PARTS(); const k = Object.keys(c).filter((t) => !(P[t] && P[t].board)), n = S.items.filter((i) => i.of == null && !(PP(i) && PP(i).board)).length, arm = Date.now() - CLEARARM < 4000;
-  return (k.length ? '<p class="h" style="margin-top:12px">Electronics in your build</p><div class="chosen">' + k.map((t) => '<span>' + esc(P[t] ? P[t].short : t) + ' <i>x' + c[t] + '</i><button type="button" class="rm" data-sub="' + t + '" aria-label="Remove one ' + esc(P[t] ? P[t].short : t) + '">&times;</button></span>').join('') + '</div><p class="note keep" style="margin-top:6px">Tap the x to take one out. <b>About ' + money(cost(true).total) + ' so far.</b> ' + costSplit() + '</p>' + (n > 1 ? '<button class="btn' + (arm ? ' red' : '') + '" data-act="clearall" style="margin-top:8px;padding:8px">' + (arm ? 'Tap again: take out all ' + n + ' electronics' : 'Take out all electronics (your case stays)') + '</button>' : '') : '<p class="note keep">Nothing yet. Tap a group, then tap what you want.' + (cost(true).extras ? ' The case alone: ' + costSplit() : '') + '</p>') +
+function chosenChips(lean) { const c = counts(), P = PARTS(); const k = Object.keys(c).filter((t) => !(P[t] && P[t].board)), n = S.items.filter((i) => i.of == null && !(PP(i) && PP(i).board)).length, arm = Date.now() - CLEARARM < 4000;
+  return (k.length ? (lean ? '<p class="note keep" style="margin-top:10px">' : '<p class="h" style="margin-top:12px">Electronics in your build</p><div class="chosen">' + k.map((t) => '<span>' + esc(P[t] ? P[t].short : t) + ' <i>x' + c[t] + '</i><button type="button" class="rm" data-sub="' + t + '" aria-label="Remove one ' + esc(P[t] ? P[t].short : t) + '">&times;</button></span>').join('') + '</div><p class="note keep" style="margin-top:6px">Tap the x to take one out. ') + '<b>About ' + money(cost(true).total) + ' so far.</b> ' + costSplit() + '</p>' + (n > 1 ? '<button class="btn' + (arm ? ' red' : '') + '" data-act="clearall" style="margin-top:8px;padding:8px">' + (arm ? 'Tap again: take out all ' + n + ' electronics' : 'Take out all electronics (your case stays)') + '</button>' : '') : '<p class="note keep">Nothing yet. Tap a group, then tap what you want.' + (cost(true).extras ? ' The case alone: ' + costSplit() : '') + '</p>') +
     (CLEARED && UNDO.length ? '<button class="btn dark" data-act="undo1" style="margin-top:8px;padding:8px">Undo: put it back</button>' : ''); }
 function pane(t) {
   const P = PARTS(), c = counts();
@@ -861,8 +869,8 @@ const SIMPLE = { camera: ['tact12', 'oled096', 'arducam', 'esp32cam', 'tp4056'],
   panel: ['uno', 'tact12', 'pot', 'lcd1602', 'led5', 'servo'], _: ['pico', 'tact12', 'oled096', 'pot', 'speaker28', 'tp4056'] };
 const SNAME = { camera: { tact12: 'Shutter Button', esp32cam: 'ESP32-CAM-MB', oled096: '0.96" OLED' }, mini: { tact12: 'Capture Button', oled096: '0.96" OLED', vl53: 'VL53L0X', pir: 'HC-SR501' }, groove: { tact12: 'Buttons', pot: 'Knobs', oled096: 'OLED', speaker28: 'Speaker' } };
 function simplePicks(P, c) { const ids = (SIMPLE[S.style] || SIMPLE._).filter((k) => P[k]), nm = styleRow()[1];
-  return '<p class="h" style="margin-top:0">Best for your ' + esc(nm) + ' &mdash; <span style="display:inline;font-weight:600;text-transform:none;letter-spacing:0">the ' + ids.length + ' parts most builds use</span></p><div class="grid g3 simp">' + ids.map((k) => '<button type="button" class="pick" data-add="' + k + '">' + (c[k] ? '<span class="n">' + c[k] + '</span><span class="rmv" data-sub="' + k + '" role="button" aria-label="Remove one">&minus;</span>' : '') + (lineArt(k) || partSvg(P[k])) + esc((SNAME[S.style] || {})[k] || P[k].short) + '<small>' + (P[k].price ? '$' + P[k].price : '') + '</small></button>').join('') + '</div>' +
-    '<button type="button" class="btn" data-act="allparts" style="margin-top:8px">See every part (Pro)</button>' + chosenChips(); }
+  return '<p class="h bfh" style="margin-top:0">Best for your ' + esc(nm) + '<span>The ' + ids.length + ' parts most builds use</span></p><div class="grid g3 simp">' + ids.map((k) => '<button type="button" class="pick" data-add="' + k + '">' + (c[k] ? '<span class="n">' + c[k] + '</span><span class="rmv" data-sub="' + k + '" role="button" aria-label="Remove one">&minus;</span>' : '') + (lineArt(k) || partSvg(P[k])) + esc((SNAME[S.style] || {})[k] || P[k].short) + '<small>' + (P[k].price ? '$' + P[k].price : '') + '</small></button>').join('') + '</div>' +
+    '<button type="button" class="btn" data-act="allparts" style="margin-top:8px">See every part (Pro)</button>' + chosenChips(true); } /* the tray above already lists what you picked */
 function partsPane(P, c) {
   {
     // Parts are about what the device does, not about catalog names. First the question, then the few parts that answer it.
@@ -1278,6 +1286,7 @@ let BIG3D = false, miniTimer = 0;
 const native3d = () => { const t = curTab(); if (t === 'extras') return !decoOn() || deco3d(); /* nothing picked yet: the case itself, live */ return xrayOn() || (S.step === 2 && !isPanel()) || (S.step === 5 && (t === '3d' || t === 'files')) || (S.step === 3 && (t === 'colors' || (t === 'logo' && !!WALLF[logoFace()]))); }; /* a side-wall logo is placed on the case in 3D */
 const wantsMini = () => (play3d() || S.step === 0 || S.step === 1 || S.step === 3 || S.step === 4 || (S.step === 2 && isPanel())) && !$('con').classList.contains('down');
 function draw() {
+  { const sc = $('selc'); if (sc) sc.hidden = true; } /* drawBrain shows it again when the tray is up */
   const big = native3d() || BIG3D, mini = !big && wantsMini(), v3 = $('v3');
   v3.hidden = !(big || mini); v3.classList.toggle('mini', mini); cv.style.visibility = big ? 'hidden' : 'visible';
   if (T3) T3.controls.enabled = big;
@@ -1343,8 +1352,16 @@ function drawBrain(W, H) {
     if (on) { const bx = x + o.w - 4 * d, by = y + 4 * d; g.fillStyle = '#c8412f'; g.beginPath(); g.arc(bx, by, 11 * d, 0, 7); g.fill(); g.strokeStyle = '#fff'; g.lineWidth = 2.5 * d; g.beginPath(); g.moveTo(bx - 4 * d, by - 4 * d); g.lineTo(bx + 4 * d, by + 4 * d); g.moveTo(bx + 4 * d, by - 4 * d); g.lineTo(bx - 4 * d, by + 4 * d); g.stroke(); }
   });
   if (!list.some((i) => i.id === TSEL)) TSEL = null;
-  { const ts = S.items.find((i) => i.id === TSEL); tag(ts ? 'Tap ' + P[ts.type].short + ' again to take it out' : list.length + ' in your build. Tap one to take it out.'); }
+  { const ts = S.items.find((i) => i.id === TSEL); selCard(ts); tag(ts ? 'Tap ' + P[ts.type].short + ' again to take it out' : list.length + ' in your build. Tap one to take it out.'); }
 }
+// the picked part, in the right column under the 3D box: name, one line, size, Remove / Swap
+function selCard(it) { const el = $('selc'), p = it && PP(it); if (!el) return; if (!p || !miniRoom()) { el.hidden = true; return; }
+  el.innerHTML = '<b>' + esc(p.short) + '</b><span class="d">' + esc(p.name || p.short) + '</span><span class="mm">' + [p.w, p.h, p.depth].filter((v) => v != null).map((v) => +(+v).toFixed(1)).join(' &times; ') + ' mm</span><span class="ac"><button type="button" data-sc="rm">Remove</button><button type="button" data-sc="swap">Swap</button></span>';
+  el.hidden = false; }
+$('selc').addEventListener('click', (e) => { const b = e.target.closest('[data-sc]'), it = S.items.find((i) => i.id === TSEL); if (!b || !it) return;
+  if (b.dataset.sc === 'rm') { snapU(); S.items = S.items.filter((i) => i !== it && i.of !== it.id); CLEARED = true; if (sel === TSEL) sel = null; TSEL = null; save(); render(); return; }
+  if (!swapGroup(it.type) && PP(it) && FUNCS.some((f) => f[0] === PP(it).cat)) S.fn = PP(it).cat; /* nothing to swap in place: open its group so you can pick another */
+  render(); const pn = $('pane'); if (pn) pn.scrollTop = 0; });
 const PIMG = new Map();
 function pimg(src) { let im = PIMG.get(src); if (!im) { im = new Image(); im.onload = () => draw(); im.src = src; PIMG.set(src, im); } return im.complete && im.naturalWidth ? im : null; }
 function drawPartAt(P, cx, cy, k, rq, dim) {
@@ -1456,7 +1473,7 @@ cv.addEventListener('pointerdown', (e) => {
   if (S.step === 3 && view && curTab() === 'logo' && !WALLF[logoFace()] && LG().on) { const p = mm(e), L = LG(); L.x = p[0]; L.y = p[1]; drag = { logo: true }; cv.setPointerCapture(e.pointerId); draw(); return; }
   if (TRAY.length) { const r = cv.getBoundingClientRect(), k = cv.width / r.width, x = (e.clientX - r.left) * k, y = (e.clientY - r.top) * k, h = TRAY.find((t) => x >= t.x - 12 * k && x <= t.x + t.w + 12 * k && y >= t.y - 12 * k && y <= t.y + t.h) || null;
     if (h && h.id === TSEL) { const it = S.items.find((i) => i.id === TSEL); if (it) { snapU(); S.items = S.items.filter((i) => i !== it && i.of !== it.id); CLEARED = true; } TSEL = null; save(); render(); }
-    else { TSEL = h ? h.id : null; render(); } /* the pane shows Swap part for it */
+    else { if (sel === TSEL) sel = null; TSEL = h ? h.id : null; if (TSEL != null) sel = TSEL; render(); } /* the pane shows Swap part for it; sel lights it blue in 3D too */
     return; }
   if (S.step !== 1 || !view) return;
   try { cv.setPointerCapture(e.pointerId); } catch (er) { /* not a real pointer */ }
@@ -1668,7 +1685,11 @@ const BLUE = 0x2563eb;
 function blueSel(r) { const id = play3d() ? HL : sel != null ? sel : HL;
   Object.keys(r.ctl || {}).forEach((k) => { const q = r.ctl[k]; if (!q.m) return; const on = +k === id;
     q.m.traverse((x) => { const mt = x.material; if (!mt || !mt.color || r.scrM.includes(x)) return; if (!x.userData.bown) { x.material = mt.clone(); x.userData.bown = 1; x.userData.c0 = mt.color.getHex(); } if (x.userData.own == null && mt.emissive) { x.userData.own = 1; x.userData.e0 = mt.emissive.getHex(); }
-      x.material.color.setHex(on ? BLUE : x.userData.c0); if (x.material.emissive) x.material.emissive.setHex(on ? 0x1d4ed8 : x.userData.e0 || 0); }); }); }
+      x.material.color.setHex(on ? BLUE : x.userData.c0); if (x.material.emissive) x.material.emissive.setHex(on ? 0x1d4ed8 : x.userData.e0 || 0); }); });
+  if (r.head) r.head.scr.forEach((s) => s.bz.material.color.setHex(r.head.id === id ? BLUE : 0x1a1a1a)); }
+// PLAY: the Desk-Bot's eyes run on the OLED in the character's head, frame by frame from the live preview
+function headPaint(src) { const r = T3; if (!r || !r.head || !src) return; const H = r.head; if (!H.tex || H.tex.image !== src) { H.tex = new THREE.CanvasTexture(src); H.tex.colorSpace = THREE.SRGBColorSpace; H.tex.magFilter = THREE.NearestFilter; }
+  H.tex.needsUpdate = true; H.scr.forEach((s) => { const mt = s.m.material; if (mt.map !== H.tex) { mt.map = H.tex; mt.emissiveMap = H.tex; mt.color.setHex(0xffffff); mt.emissive.setHex(0xffffff); mt.needsUpdate = true; } }); r.draw(); }
 function setHighlight(r) {
   // yellow see-through box: where the part you just added (or picked) sits and how deep it goes
   if (r.hl) { r.hl.parent && r.hl.parent.remove(r.hl); r.hl.traverse((o) => { if (o.geometry) o.geometry.dispose(); }); r.hl = null; }
@@ -1682,7 +1703,7 @@ function charGroup() { // the assembled character, feet at z = 0, the way it sta
   const C = charCache(), out = new THREE.Group();
   C.parts.forEach((q) => { if (q.kind === 'up') { const m = mesh(G.layerGeos(q.layers), q.color); m.position.set(q.pose[0], q.pose[1], q.pose[2]); if (q.spin) m.rotation.z = q.spin; out.add(m); }
     else q.at.forEach((a) => { const m = mesh(G.layerGeos(q.layers), q.color); m.matrixAutoUpdate = false; m.matrix.makeBasis(new THREE.Vector3(0, 1, 0), new THREE.Vector3(0, 0, 1), new THREE.Vector3(1, 0, 0)).setPosition(a[0], a[1], a[2]); out.add(m); }); });
-  C.screens.forEach((sc) => { const m = new THREE.Mesh(new THREE.BoxGeometry(sc.w, 1.2, sc.h), new THREE.MeshStandardMaterial({ color: 0x10242c, emissive: 0x1c6f86 })); m.position.set(sc.x, sc.y, sc.z); out.add(m); });
+  out.userData.scr = []; C.screens.forEach((sc) => { const bz = new THREE.Mesh(new THREE.BoxGeometry(sc.w + 3, 1, sc.h + 3), new THREE.MeshStandardMaterial({ color: 0x1a1a1a })), m = new THREE.Mesh(new THREE.BoxGeometry(sc.w, 1.2, sc.h), new THREE.MeshStandardMaterial({ color: 0x10242c, emissive: 0x1c6f86 })); bz.position.set(sc.x, sc.y + 0.3, sc.z); m.position.set(sc.x, sc.y, sc.z); out.add(bz); out.add(m); out.userData.scr.push({ m, bz }); });
   return out;
 }
 // the key caps sitting on their switches over the plate, so you see what the caps files make. Not printed this way: the caps print top down.
@@ -1815,20 +1836,20 @@ function draw3d(isMini) {
       } else r.root.add(grp);
     });
     const CHP = S.style === 'face' && !D3 && !MV && !XR, CT = CHP ? charCache().tall : 0; /* Character Base: the character stands on it */
-    if (CHP) { const cg = charGroup(); cg.position.set(d.W / 2, d.D / 2, h.H - 0.1); r.root.add(cg); }
+    r.head = null; if (CHP) { const cg = charGroup(); cg.position.set(d.W / 2, d.D / 2, h.H - 0.1); r.root.add(cg); const hs = S.items.find((i) => i.head || (i.panel === 'inside' && i.type === (recipe() || {}).headScreen)), sc = cg.userData.scr || []; if (hs && sc.length) r.head = { id: hs.id, scr: sc }; } /* the head OLED: lit blue when picked, PLAY draws on it */
     const UPR = UPRIGHT[S.style]; r.root.rotation.x = UPR ? 0 : -Math.PI / 2; r.root.position.set(-d.W / 2, 0, UPR ? -h.H / 2 : d.D / 2); /* upright: stands on its front edge, the plate facing you */
     r.fit = () => {
       const dk = deco3d(), hh = dk && decoFace() === 'lid' ? h.H + h.Hl : h.H, lm = dk && (S.deco || []).some(isLimb) ? 62 : 0, rad = dk ? Math.hypot(d.W + lm, d.D + lm, hh) / 2 * 1.06 : Math.hypot(d.W, d.D, h.H + h.Hl + CT + (OPEN ? d.D : 0)) / 2, v = r.camera.fov * Math.PI / 360, hz = Math.atan(Math.tan(v) * r.camera.aspect), dist = rad / Math.sin(Math.min(v, hz)) * (r.mode === 'mini' ? 1.0 : 1.15);
       r.controls.target.set(0, UPRIGHT[S.style] ? d.D / 2 : CT ? (h.H + CT) / 2 : dk ? hh / 2 : (h.H + (isClam() && OPEN ? d.D * 0.4 : h.Hl)) / 2, lm ? 16 : 0);
       // in Style, turn to the side being decorated: the lid's outside faces the back when it is open, the bottom faces down
-      const f = S.step === 3 && curTab() !== 'colors' ? curFace() : 'top', MD = { plate: [0.3, 0.95, 0.45], lid: [0.3, 0.95, 0.45], back: [0.35, 0.55, -0.85], front: [0.35, 0.55, 0.85], left: [-0.9, 0.5, 0.35], right: [0.9, 0.5, 0.35], bottom: [0.35, -0.85, 0.6] }, MDU = { plate: [0.3, 0.25, 0.95], front: [0.35, -0.85, 0.45], back: [0.35, 0.9, -0.3], left: [-0.9, 0.35, 0.4], right: [0.9, 0.35, 0.4], bottom: [0.35, 0.3, -0.9] }, dir = play3d() ? (UPRIGHT[S.style] ? [0, 0.08, 1] : [0, 1, 0.08]) : UPRIGHT[S.style] ? (MV ? MDU[PORTS[S.xsel] ? pface() : mnt().face] : [0.45, 0.3, 0.85]) : MV ? MD[PORTS[S.xsel] ? pface() : mnt().face] : dk ? [0, 1, 0.5] : WALLF[f] ? MD[f] : f === 'lidout' && isClam() ? [0.2, 1, 0.55] : f === 'bottom' ? [0.4, -0.85, 0.6] : [0.45, 0.7, 0.8];
+      const f = S.step === 3 && curTab() !== 'colors' ? curFace() : 'top', MD = { plate: [0.3, 0.95, 0.45], lid: [0.3, 0.95, 0.45], back: [0.35, 0.55, -0.85], front: [0.35, 0.55, 0.85], left: [-0.9, 0.5, 0.35], right: [0.9, 0.5, 0.35], bottom: [0.35, -0.85, 0.6] }, MDU = { plate: [0.3, 0.25, 0.95], front: [0.35, -0.85, 0.45], back: [0.35, 0.9, -0.3], left: [-0.9, 0.35, 0.4], right: [0.9, 0.35, 0.4], bottom: [0.35, 0.3, -0.9] }, dir = S.step === 5 && T3 && T3.head && simKind() === 'deskbot' ? [0.12, 0.3, 1] /* PLAY: face the Desk-Bot so its OLED eyes look at you */ : play3d() ? (UPRIGHT[S.style] ? [0, 0.08, 1] : [0, 1, 0.08]) : UPRIGHT[S.style] ? (MV ? MDU[PORTS[S.xsel] ? pface() : mnt().face] : [0.45, 0.3, 0.85]) : MV ? MD[PORTS[S.xsel] ? pface() : mnt().face] : dk ? [0, 1, 0.5] : WALLF[f] ? MD[f] : f === 'lidout' && isClam() ? [0.2, 1, 0.55] : f === 'bottom' ? [0.4, -0.85, 0.6] : [0.45, 0.7, 0.8];
       r.camera.position.copy(new THREE.Vector3(dir[0], dir[1], dir[2]).normalize().multiplyScalar(dist)).add(r.controls.target); r.controls.update();
     };
     const limbs = (S.deco || []).some(isLimb) + DF, stay = D3 && r.view === 'bigdeco' && r.hadLimb === limbs; r.hadLimb = limbs; /* you turned the case to reach a spot: adding or dropping a piece must not turn it back */
-    r.mode = mode; r.view = mode + (play3d() ? 'play' : '') + (D3 ? 'deco' : S.step === 3 ? curFace() + curTab() : '') + (MV ? 'm' + (PORTS[S.xsel] ? pface() : mnt().face) : ''); if (!stay) r.fit();
+    r.mode = mode; r.view = mode + (play3d() ? 'play' : S.step === 5 ? 's5' : '') + (D3 ? 'deco' : S.step === 3 ? curFace() + curTab() : '') + (MV ? 'm' + (PORTS[S.xsel] ? pface() : mnt().face) : ''); if (!stay) r.fit();
   }
   r.controls.enabled = !isMini && !play3d(); /* PLAY: locked top-down, so a tap is always a press */
-  const view = mode + (play3d() ? 'play' : '') + (D3 ? 'deco' : S.step === 3 ? curFace() + curTab() : '') + (MV ? 'm' + (PORTS[S.xsel] ? pface() : mnt().face) : '');
+  const view = mode + (play3d() ? 'play' : S.step === 5 ? 's5' : '') + (D3 ? 'deco' : S.step === 3 ? curFace() + curTab() : '') + (MV ? 'm' + (PORTS[S.xsel] ? pface() : mnt().face) : '');
   if (r.mode !== mode || r.view !== view) { r.mode = mode; r.view = view; r.fit(); }
   setHighlight(r); blueSel(r); decoMark(); playPaint(r);
   r.draw();
@@ -2941,7 +2962,8 @@ function loadRecipe(id) {
   const r = (CZ.RECIPES || []).find((x) => x.id === id); if (!r) return;
   wipeAll(); S.items = []; S.pins = {}; S.have = {}; sel = null; LAST = null; UNDO.length = 0; /* a recipe starts from nothing too */
   S.style = r.style; const z = r.size || SIZES[r.style]; S.cols = z[0]; S.rows = z[1]; S.xw = S.xd = 0; S.add = r.add || 0; S.recipe = r.id; S.picked = true; S.started = true; S.pcb = false; S.wired = {};
-  const mk = (t, x, y, rq) => { const P = CZ.PARTS[t]; if (P) S.items.push({ id: ++uid, type: t, panel: defaultPanel(P), x, y, r: rq || 0 }); };
+  if (r.ch) xp().ch = Object.assign({}, xp().ch || {}, r.ch); /* e.g. Desk-Bot: screen eyes on the character's head */
+  const mk = (t, x, y, rq) => { const P = CZ.PARTS[t]; if (P) S.items.push({ id: ++uid, type: t, panel: r.headScreen === t ? 'inside' : defaultPanel(P), head: r.headScreen === t || undefined, x, y, r: rq || 0 }); }; /* the head screen hangs in the head, not on the base */
   if (r.place) r.place.forEach(([t, x, y, rq]) => mk(t, x, y, rq)); /* a hand-made layout, in mm from the bottom left */
   else r.parts.forEach(([t, n]) => { for (let i = 0; i < n; i++) mk(t, -999, -999, 0); });
   if (!r.place || allProblems().length) fitAll(); /* no layout, or it does not fit after a size change in the list: place them for her */
@@ -3552,7 +3574,7 @@ function simStage(el) { const k = simKind(); if (!k) return; const [W, H] = SIMS
     cv.addEventListener('pointermove', (e) => simPointer(e, 'move', cv)); ['pointerup', 'pointercancel'].forEach((ev) => cv.addEventListener(ev, (e) => simPointer(e, 'up', cv))); }
   if (SIM.live) return; SIM.live = true; SIM.tp = 0;
   const loop = (ms) => { const cv = el.querySelector('canvas.simc'); if (el.hidden || !cv || SIM.k !== simKind()) { SIM.live = false; return; }
-    const t = ms / 1000, dt = SIM.tp ? Math.min(0.1, t - SIM.tp) : 0; SIM.tp = t; const txt = simDraw(cv.getContext('2d'), W, H, t, dt), rd = el.querySelector('.simread'); if (rd && rd.textContent !== txt) rd.textContent = txt;
+    const t = ms / 1000, dt = SIM.tp ? Math.min(0.1, t - SIM.tp) : 0; SIM.tp = t; const txt = simDraw(cv.getContext('2d'), W, H, t, dt), rd = el.querySelector('.simread'); if (rd && rd.textContent !== txt) rd.textContent = txt; if (SIM.k === 'deskbot') headPaint(cv);
     const led = el.querySelector('.simled'); if (led) led.style.background = SIM.st.led || '#333'; requestAnimationFrame(loop); };
   requestAnimationFrame(loop); }
 function simPane() { const r = recipe();
