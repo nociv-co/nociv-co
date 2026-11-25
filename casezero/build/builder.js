@@ -3,7 +3,7 @@
 // Print: your printer and bed, material, how it joins, where the puzzle seams go. Files: STL per piece, wood templates, wiring.
 import * as THREE from 'three';
 import { OrbitControls } from 'three/addons/OrbitControls.js';
-import * as G from './geo.js?v=38';
+import * as G from './geo.js?v=39';
 import { CARABINER_HOOK_OUTLINE_MM, CARABINER_DEFAULT_THICKNESS_MM } from './charm_carabiner_hook.js?v=1';
 import { openMeasure, GROUPS } from './capture.js?v=26';
 import { makeBoard, boardFiles, boardSvg, zip as zipFiles, dipOf } from './board.js?v=5';
@@ -361,7 +361,7 @@ function halfFor(panel, h) {
   }
   const hingeOn = isClam() && S.hinge === 'printed', lk = looksFor(panel);
   return G.buildHalf({ inset: S.inset || 0, style: S.style, W: d.W, D: d.D, H: lid ? h.Hl : h.H, recess: lid ? h.recessL : h.recess, parts, inside, port, port2, deco: !lid && panel === homePanel() ? decoPolys() : [], decoOut: lid && isClam() ? decoPolys('lid') : [],
-    top: lk.top, bottom: lk.bottom, walls: lk.walls, snap: S.snap,
+    top: lk.top, bottom: lk.bottom, walls: lk.walls, snap: S.snap, deckMag: !S.snap && !!S.deckMag, hatch: !lid && panel === homePanel() ? hatchKind() : null, hatchTol: tolOf(),
     mounts: !lid && panel === homePanel() ? activeMounts() : lid && isClam() ? activeLidMounts() : [], art: !lid && panel === homePanel() ? wallArt() : [], ports: (!lid && panel === homePanel() ? activePorts() : []).concat(isClam() ? wireNotch(lid ? 'lid' : 'base') : []), duct: !lid && isClam() && S.wpass === 'channel' ? wireDuct() : null,
     magnets: isClam() && S.magnets, hinge: { on: hingeOn, side: S.style === 'small' ? (S.hside === 'right' ? 'right' : 'left') : 'back' }, hingeSet: lid ? 'b' : 'a' });
 }
@@ -510,9 +510,11 @@ const LF = (() => { const dk = '#2b2b2b', mt = '#9aa3ad', gy = '#b8b0a2', sc = '
     pot: [dk, lt], encoder: [dk].concat(Array(12).fill('none'), [mt]), thumb: ['#3a3a3a', 'none', dk], stick: [mt, 'none', dk], slider: [mt, dk, lt], keypad44: [dk].concat(Array(16).fill('#e5e7eb')),
     dpad: [dk], speaker: [mt, '#5b636d'].concat(Array(6).fill('#2b2f35')), servo: [mt, '#6b7480', '#d7dce2', '#4b5563'] }; })();
 LART.servo = '<rect x="4" y="17" width="40" height="5" rx="1.5"/><rect x="9" y="12" width="30" height="20" rx="2"/><rect x="9" y="5" width="18" height="6" rx="3"/><circle cx="18" cy="8" r="2"/>';
-const tintArt = (k) => { const L = LF[k] || []; let n = 0; return (LART[k] || '').replace(/<(rect|circle|path|ellipse)\b/g, (m) => { const c = L[n++]; if (!c || c === 'none') return m; const [f, s] = c.split('|'); return m + (f && f !== 'none' ? ' fill="' + f + '"' : '') + (s ? ' stroke="' + s + '"' : ''); }); };
+const tintArt = (k, pal) => { const L = pal || LF[k] || []; let n = 0; return (LART[k] || '').replace(/<(rect|circle|path|ellipse)\b/g, (m) => { const c = L[n++]; if (!c || c === 'none') return m; const [f, s] = c.split('|'); return m + (f && f !== 'none' ? ' fill="' + f + '"' : '') + (s ? ' stroke="' + s + '"' : ''); }); };
 const artKey = (k) => (LART[k] ? k : BOARD_OF[k] ? 'board' : /^speaker/.test(k) ? 'speaker' : ''); /* every brain board and speaker gets a picture too */
-const lineArt = (k0, sz) => { const k = artKey(k0); return (LART[k] ? '<svg class="la" viewBox="0 0 48 36"' + (sz ? ' width="' + sz + '" height="' + Math.round(sz * 0.75) + '"' : '') + ' aria-hidden="true">' + tintArt(k) + '</svg>' : '') };
+const lineArt = (k0, sz, pal) => { const k = artKey(k0); return (LART[k] ? '<svg class="la" viewBox="0 0 48 36"' + (sz ? ' width="' + sz + '" height="' + Math.round(sz * 0.75) + '"' : '') + ' aria-hidden="true">' + tintArt(k, pal) + '</svg>' : '') };
+/* the category tiles in Parts: a soft color per job, like Screens, Sensors and Brain */
+const FTINT = { press: ['#f6dc9a', '#e8826f'], turn: ['#bcd3ec'].concat(Array(12).fill('none'), ['#4f6f94']), out: ['#f8cfae', '#d9773f'].concat(Array(6).fill('#8a3b16')), move: ['#c3d6f3', '#8fb2e8', '#eef3fb', '#5b86c9'] };
 const ARTIMG = {}; /* the same line art as an image, for the canvas cards in Parts, Shop and Board */
 function artImg(k0) { const k = artKey(k0); if (!k) return null; let im = ARTIMG[k]; if (!im) { im = ARTIMG[k] = new Image(); im.onload = () => { try { draw(); } catch (e) {} }; im.src = 'data:image/svg+xml;charset=utf-8,' + encodeURIComponent('<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 48 36" width="192" height="144" fill="none" stroke="#1a1a1a" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">' + tintArt(k) + '</svg>'); } return im.complete && im.naturalWidth ? im : null; }
 function partSvg(P) {
@@ -550,7 +552,7 @@ const FUNCS = [['brain', 'Brain', 'The chip that runs it', 'pico'], ['screen', '
 const FGROUPS = [['Inputs', 'you press, turn or slide, or it senses', ['press', 'turn', 'sense']], ['Outputs', 'it shows, lights, sounds or moves', ['screen', 'out', 'move']], ['Connections', 'the brain, the power, your own board', ['brain', 'power', 'mine']]];
 const FN_STAND = '<svg viewBox="0 0 60 36" aria-hidden="true"><path d="M17 31L29 6l9 4-12 25z" fill="#c8412f" stroke="#1a1a1a" stroke-width="2" stroke-linejoin="round"/><path d="M35 15l11 17" stroke="#1a1a1a" stroke-width="3" stroke-linecap="round"/><path d="M7 33h47" stroke="#1a1a1a" stroke-width="2" stroke-linecap="round"/></svg>';
 const PSVG = { p_hdmi: '<svg viewBox="0 0 60 36" aria-hidden="true"><rect x="6" y="6" width="48" height="24" rx="3" fill="#e9e2cc" stroke="#1a1a1a" stroke-width="2"/><path d="M16 13h28v6l-3 4H19l-3-4z" fill="#1a1a1a"/></svg>', p_minihdmi: '<svg viewBox="0 0 60 36" aria-hidden="true"><rect x="6" y="6" width="48" height="24" rx="3" fill="#e9e2cc" stroke="#1a1a1a" stroke-width="2"/><path d="M20 14h20v5l-2 3H22l-2-3z" fill="#1a1a1a"/></svg>', p_microhdmi: '<svg viewBox="0 0 60 36" aria-hidden="true"><rect x="6" y="6" width="48" height="24" rx="3" fill="#e9e2cc" stroke="#1a1a1a" stroke-width="2"/><path d="M24 15h12v4l-1 2H25l-1-2z" fill="#1a1a1a"/></svg>', p_jack: '<svg viewBox="0 0 60 36" aria-hidden="true"><rect x="6" y="6" width="48" height="24" rx="3" fill="#e9e2cc" stroke="#1a1a1a" stroke-width="2"/><circle cx="30" cy="18" r="6" fill="#1a1a1a"/></svg>', p_usbc: '<svg viewBox="0 0 60 36" aria-hidden="true"><rect x="6" y="6" width="48" height="24" rx="3" fill="#e9e2cc" stroke="#1a1a1a" stroke-width="2"/><rect x="20" y="15" width="20" height="7" rx="3.5" fill="#1a1a1a"/></svg>', p_switch: '<svg viewBox="0 0 60 36" aria-hidden="true"><rect x="6" y="6" width="48" height="24" rx="3" fill="#e9e2cc" stroke="#1a1a1a" stroke-width="2"/><rect x="19" y="14" width="22" height="9" fill="#1a1a1a"/><rect x="22" y="16" width="7" height="5" fill="#c8412f"/></svg>', p_vent: '<svg viewBox="0 0 60 36" aria-hidden="true"><rect x="6" y="6" width="48" height="24" rx="3" fill="#e9e2cc" stroke="#1a1a1a" stroke-width="2"/>' + [17, 24, 31, 38, 45].map((x) => '<rect x="' + (x - 1.5) + '" y="11" width="3" height="14" fill="#1a1a1a"/>').join('') + '</svg>' };
-const XGROUPS = [['Stand and carry', ['dstand', 'stand', 'handle', 'feet', 'charm']], ['Deeper box', ['shroud']], ['Camera and sensor', ['lens', 'grip', 'tripod']], ['Character', ['char', 'deco', 'limbs']], ['Moving parts', ['gears', 'hinge', 'clamp']], ['Keyboard', ['keys']], ['Hardware', ['panel', 'standoff', 'clip']]];
+const XGROUPS = [['Stand and carry', ['dstand', 'stand', 'handle', 'feet', 'charm']], ['Camera and sensor', ['lens', 'grip', 'tripod']], ['Character', ['char', 'deco', 'limbs']], ['Moving parts', ['gears', 'hinge', 'clamp']], ['Keyboard', ['keys']], ['Hardware', ['panel', 'standoff', 'clip']]];
 const NEWP = ' Sized from published specs, not from a test print.';
 function attachSeg(id) { return '<div class="row"><b>Attach to</b>' + seg('xatt_' + id, [['case', 'Case Zero'], ['box', 'Existing Box']], xp()[id].box ? 'box' : 'case') + '</div>'; } /* a box you already have: wood screws, no Case Zero walls */
 function xmeta(id) { // one printed part: [short name, what it is and how it goes on, its few settings]
@@ -718,19 +720,20 @@ function btnHtml() {
     '<div class="it"><b>Printed knobs</b>Every turn knob and click wheel gets a printed knob in your case files.</div></div>' +
     '<p class="note">Every button still needs a small switch under it to make the click: plastic alone cannot carry a signal.</p>';
 }
+const xBack = () => (S.xfrom === 'shape' ? '<button type="button" class="btn" data-xback="1">&lsaquo; Shape</button>' : '<button type="button" class="btn" data-xsel="">&lsaquo; All</button>');
 function partsRoomHtml() {
   if (PORTS[S.xsel]) return portHtml(S.xsel);
   const id = S.xsel, T = id && xmeta(id);
   const XG = S.style === 'camera' ? [['Make it look like a camera', ['lens', 'grip', 'tripod']]].concat(XGROUPS.filter((g) => g[0] !== 'Camera and sensor')) : XGROUPS,
     cam = S.style === 'camera' ? (() => { const done = ['lens', 'grip'].every((k) => S.attachedParts.some((m) => m.partId === k)); return '<div class="it camk"><b style="display:inline">Make it a camera</b> &mdash; a lens ring round the front lens cut-out and a grip on the side, so it reads as a camera, not a box.<button class="btn ' + (done ? 'dark' : 'red') + '" data-act="camlook" style="margin-top:8px;display:block"' + (done ? ' aria-pressed="true"' : '') + '>' + (done ? 'Lens ring + Grip added &#10003;' : 'Add Lens Ring + Grip') + '</button></div>'; })() : '';
   if (!T) return cam + filBar() + XG.map((g) => '<p class="h">' + g[0] + '</p><div class="grid g3" style="margin-bottom:10px">' + g[1].map((k) => { const v = filV(k)[0]; return '<button type="button" class="pick fn xt" data-xsel="' + k + '">' + xThumb(k) + xmeta(k)[0] + (v < 2 ? '<small class="vd v' + v + '">' + VWORD[v] + '</small>' : '') + '</button>'; }).join('') + '</div>').join('') +
-    '<p class="h">Ports and vents</p><div class="grid g3" style="margin-bottom:10px">' + Object.keys(PORTS).map((k) => '<button type="button" class="pick fn xt" data-xsel="' + k + '">' + PSVG[k] + PORTS[k][0] + '</button>').join('') + '</div>' +
+    '<p class="note">Openings in the case (Raised Shroud, Wire hole, USB-C, HDMI, 3.5mm Audio, Vents) are in Design, Shape. <button type="button" class="btn" data-act="toopen" style="display:inline-block;padding:6px 10px">Go to Openings</button></p>' +
     '<details class="fold"><summary>Printed buttons and knobs</summary>' + btnHtml() + '</details><p class="note">Each one is its own print. Make it now or later, then add it to what you already built.</p>';
-  return '<div class="fnh"><button type="button" class="btn" data-xsel="">&lsaquo; All</button><b>' + T[0] + '</b></div><p class="note" style="margin-top:6px">' + T[1] + '</p>' + T[2] + (T[3] ? '' : filLine(id)) +
+  return '<div class="fnh">' + xBack() + '<b>' + T[0] + '</b></div><p class="note" style="margin-top:6px">' + T[1] + '</p>' + T[2] + (T[3] ? '' : filLine(id)) +
     (T[3] === 'none' ? '' : '<button class="btn red" data-xsave="' + id + '" style="margin-top:10px">Save the ' + (T[3] || 'print file') + '</button>' + printCard(id)) + mountHtml(id);
 }
 function tabsFor(step) {
-  if (step === 0) return [['snap', 'Snap', 'snap'], ['parts', 'Electronics', 'parts'], ['picks', 'Picks', 'picks'], ['pins', 'Wiring', 'wire']];
+  if (step === 0) return [['snap', 'Photo', 'snap'], ['parts', 'Electronics', 'parts'], ['picks', 'Picks', 'picks'], ['pins', 'Wiring', 'wire']];
   if (step === 1) return panels().map((p) => [p, PNAME[p], p]).concat([[isPanel() ? 'psize' : 'size', 'Size', 'size']]);
   if (step === 2 && isPanel()) return [['shape', 'Shape', 'shape'], ['psize', 'Size', 'size'], ['notch', 'Notches', 'notch'], ['measure', 'Measure', 'measure']];
   if (step === 2) return [['shape', 'Shape', 'shape'], ['measure', 'Measure', 'measure']]; /* size and fit sit on Shape itself */
@@ -837,6 +840,13 @@ $('drop').addEventListener('click', () => { if (DRGSKIP) { DRGSKIP = false; retu
 
 // ---------- panes ----------
 function seg(name, opts, val) { return '<div class="seg" data-sg="' + name + '">' + opts.map((o) => '<button type="button" data-v="' + o[0] + '" aria-pressed="' + (String(o[0]) === String(val)) + '">' + o[1] + '</button>').join('') + '</div>'; }
+const hatchKind = () => (!isPanel() && (S.hatch === 'snap' || S.hatch === 'screw') ? S.hatch : null);
+function hatchZ() { const k = hatchKind(); return k ? G.hatchZone(outline(), k, tolOf()) : null; }
+function hatchNote() { const z = hatchZ(); if (!z) return 'The box is too small for a hatch: make it wider or taller.'; return (z.kind === 'snap' ? 'Snap hatch: ' : 'M3 screw hatch: ') + (2 * z.hw).toFixed(0) + ' x ' + (2 * z.hh).toFixed(0) + ' mm door in the ' + (UPRIGHT[S.style] ? 'back' : 'bottom') + ', flush in a recessed lip, ' + tolOf() + ' mm clearance. ' + (z.kind === 'snap' ? 'Two clips click over the lip; squeeze them to take it out.' : 'Two M3 x 6 screws go into the lip frame.') + ' The door is its own print file.'; }
+function joinHtml() { const m = CZ.MATERIALS.find((x) => x[0] === S.material) || CZ.MATERIALS[0]; return '<p class="h" style="margin-top:12px">How the pieces join <span style="font-weight:600;color:var(--mute)">(best for ' + esc(m[1]) + ' first)</span></p><div class="grid g3">' + m[3].concat(Object.keys(CZ.JOINS).filter((k) => m[3].indexOf(k) < 0)).map((k, i) => '<button type="button" class="pick" data-join="' + k + '" aria-pressed="' + (S.join === k) + '">' + esc(CZ.JOINS[k][0]) + (i < 2 ? '<small>good fit</small>' : '') + '</button>').join('') + '</div><p class="note">' + esc(CZ.JOINS[S.join][1]) + '</p>'; }
+const OPENS = [['shroud', 'Raised Shroud'], ['p_jack', 'Wire hole', 'Wire hole'], ['p_usbc', 'USB-C'], ['p_hdmi', 'HDMI'], ['p_jack', '3.5mm Audio'], ['p_vent', 'Vents']];
+function openHtml() { const n = (k) => (k === 'shroud' ? (S.items.some((i) => i.type === 'shroud') || S.ports.some((p) => p.kind === 'p_shroud') ? 1 : 0) : S.ports.filter((p) => p.kind === k).length);
+  return '<p class="h" style="margin-top:12px">Openings</p><div class="grid g3">' + OPENS.map((o) => '<button type="button" class="pick" data-xgo="' + o[0] + '" data-xfrom="shape" aria-pressed="' + (n(o[0]) > 0) + '">' + o[1] + '<small>' + (n(o[0]) ? n(o[0]) + ' added &#10003;' : 'Add') + '</small></button>').join('') + '</div><p class="note">Openings are cut into the case walls. Tap one to pick its wall and spot.</p>'; }
 function proHtml() { if (!S.pro || isPanel()) return ''; /* Pro (mm): the numbers behind the smart defaults */
   return '<div class="prob"><p class="h" style="margin:0 0 6px">Pro (mm)</p><div class="row"><b>Walls</b>' + seg('walls', [['normal', '2.4'], ['tough', '3.2']], S.wallT ? '' : S.walls) + '<input class="num mm" id="wallT" type="number" inputmode="decimal" step="0.1" min="2" max="5" value="' + R.T + '" aria-label="Wall thickness in mm"><span class="u">mm</span></div>' +
     '<div class="row"><b>Clearance</b>' + seg('tol', [['0.1', '0.1'], ['0.2', '0.2'], ['0.3', '0.3']], String(tolOf())) + '<input class="num mm" id="tolIn" type="number" inputmode="decimal" step="0.05" min="0.05" max="0.6" value="' + tolOf() + '" aria-label="Clearance in mm"><span class="u">mm</span></div>' +
@@ -895,7 +905,7 @@ function partsPane(P, c) {
     // Parts are about what the device does, not about catalog names. First the question, then the few parts that answer it.
     const fn = FUNCS.find((f) => f[0] === S.fn);
     if (!fn && !S.pro) return simplePicks(P, c);
-    if (!fn) { const tile = (f) => { const n = Object.keys(c).reduce((q, k) => q + (P[k] && P[k].cat === f[0] ? c[k] : 0), 0); return '<button type="button" class="pick fn" data-fn="' + f[0] + '">' + (n ? '<span class="n">' + n + '</span>' : '') + (f[3] && P[f[3]] ? lineArt(f[3]) || partSvg(P[f[3]]) : ico('measure')) + f[1] + '<small>' + f[2] + '</small></button>'; };
+    if (!fn) { const tile = (f) => { const n = Object.keys(c).reduce((q, k) => q + (P[k] && P[k].cat === f[0] ? c[k] : 0), 0); return '<button type="button" class="pick fn" data-fn="' + f[0] + '">' + (n ? '<span class="n">' + n + '</span>' : '') + (f[3] && P[f[3]] ? lineArt(f[3], 0, FTINT[f[0]]) || partSvg(P[f[3]]) : ico('measure')) + f[1] + '<small>' + f[2] + '</small></button>'; };
       return FGROUPS.map((g) => '<p class="h"' + (g[0] === 'Inputs' ? ' style="margin-top:0"' : '') + '>' + g[0] + ' <span style="font-weight:600;text-transform:none;letter-spacing:0">' + g[1] + '</span></p><div class="grid g3" style="margin-bottom:10px">' + g[2].map((k) => tile(FUNCS.find((f) => f[0] === k))).join('') + '</div>').join('') + chosenChips(); }
     const head = '<div class="fnh"><button type="button" class="btn" data-fn="" aria-label="Back to categories">&lsaquo; Back</button><b>' + fn[1] + '</b></div>';
     const list = Object.keys(P).filter((k) => P[k].cat === fn[0]);
@@ -942,12 +952,13 @@ function paneRest(t, P, c) {
     const h = geom();
     let o = stepper('cols', 'Wide', S.cols + ' sq' + (S.xw ? ' + ' + S.xw : '')).replace(/<\/div>$/, '<input class="num mm" id="mmw" type="number" inputmode="decimal" step="0.5" value="' + +h.W.toFixed(1) + '" aria-label="Width in mm"><span class="u">mm</span></div>') + stepper('rows', 'Tall', S.rows + ' sq' + (S.xd ? ' + ' + S.xd : '')).replace(/<\/div>$/, '<input class="num mm" id="mmd" type="number" inputmode="decimal" step="0.5" value="' + +h.D.toFixed(1) + '" aria-label="Depth in mm"><span class="u">mm</span></div>') + (!S.pro ? '<p class="note keep" style="margin:-2px 0 8px">' + (isClam() ? 'Base ' + h.H + ' mm, lid ' + h.Hl + ' mm deep' : h.closed + ' mm tall') + ': the smart default for your parts. Pro (mm) changes it.</p>' : isClam() ? stepper('add', 'Base', h.H + ' mm deep' + (S.add ? ' (+' + S.add + ')' : '')) + stepper('addL', 'Lid', h.Hl + ' mm deep' + (S.addL ? ' (+' + S.addL + ')' : '')) + '<p class="note keep" style="margin:-2px 0 8px">' + h.closed + ' mm closed. Deepen the base for batteries or tall parts without thickening the lid.</p>' : stepper('add', 'Height', h.closed + ' mm' + (S.add ? ' (+' + S.add + ')' : '')));
     if (S.lockBox) o = '<p class="vline v1">Box kept: ' + Math.round(dims().W) + ' x ' + Math.round(dims().D) + ' x ' + h.closed + ' mm. <button type="button" class="btn" data-act="unlockbox" style="display:inline-block;padding:6px 10px">Unlock</button></p>' + o + (heights().grew ? '<p class="note bad">Something you added is deeper than the kept box.</p>' : '');
-    o += '<div class="row"><b>Deck on</b>' + seg('snap', [['0', 'Screws'], ['1', 'Snap clips']], S.snap ? '1' : '0') + '</div>';
+    o += '<p class="h" style="margin-top:12px">Closures</p><div class="row"><b>Deck on</b>' + seg('snap', [['0', 'Screws'], ['1', 'Snap clips'], ['mag', 'Magnets 6x3']], S.snap ? '1' : S.deckMag ? 'mag' : '0') + '</div>';
     if (S.items.some((i) => i.type === 'tact12')) o += '<div class="row"><b>Buttons</b>' + seg('spring', [['0', 'Caps'], ['1', 'Printed springs']], S.spring ? '1' : '0') + '</div>';
     if (isClam()) o += '<div class="row"><b>Hinge</b>' + seg('hinge', [['printed', 'Printed'], ['metal', 'Metal'], ['none', 'Lift off']], S.hinge) + '</div>' + (S.style === 'small' ? '<div class="row"><b>Opens on</b>' + seg('hside', [['left', 'Left'], ['right', 'Right']], S.hside) + '</div>' : '') + '<div class="row"><b>Closes</b>' + seg('magnets', [['1', 'Magnets'], ['0', 'Latch or strap']], S.magnets ? '1' : '0') + '</div><div class="row"><b>Wires</b>' + seg('wpass', [['slot', 'Hinge slot'], ['ribbon', 'Ribbon notch'], ['channel', 'Covered channel']], S.wpass || 'slot') + '</div>';
     if (UPRIGHT[S.style]) o += '<div class="row"><b>Tripod</b>' + seg('tripodOn', [['0', 'None'], ['1', 'Bottom 1/4-20']], S.attachedParts.some((m) => m.partId === 'tripod' && m.face === 'front') ? '1' : '0') + '</div>';
-    o += '<p class="note">' + (S.snap ? 'Snap clips: 4 arms under the deck click into a groove in the wall. No screws. ' : '') + (S.spring ? 'Printed springs: the deck around each small button becomes a little flexing pad, no caps to buy. ' : '') + (isClam() ? (S.hinge === 'printed' ? 'Printed hinge: a piece of 1.75 mm filament is the pin. ' : S.hinge === 'metal' ? 'Metal hinges: 2 small butt hinges (25 mm) screwed to the back. ' : '') + (S.magnets ? 'Two 6 x 3 mm magnets in each half hold it shut. ' : '') : 'Height grows to fit your deepest part. Add more for batteries or a speaker. ') + '</p>';
-    return o;
+    o += '<div class="row"><b>Hatch</b>' + seg('hatch', [['none', 'None'], ['snap', 'Snap hatch'], ['screw', 'M3 Screw hatch']], hatchKind() || 'none') + '</div>';
+    o += '<p class="note">' + (S.snap ? 'Snap clips: 4 arms under the deck click into a groove in the wall. No screws. ' : '') + (!S.snap && S.deckMag ? 'Deck magnets: a 6 x 3 mm magnet in the top of each post and one under the deck above it. Lift it off, no screws. ' : '') + (hatchKind() ? hatchNote() + ' ' : '') + (S.spring ? 'Printed springs: the deck around each small button becomes a little flexing pad, no caps to buy. ' : '') + (isClam() ? (S.hinge === 'printed' ? 'Printed hinge: a piece of 1.75 mm filament is the pin. ' : S.hinge === 'metal' ? 'Metal hinges: 2 small butt hinges (25 mm) screwed to the back. ' : '') + (S.magnets ? 'Two 6 x 3 mm magnets in each half hold it shut. ' : '') : 'Height grows to fit your deepest part. Add more for batteries or a speaker. ') + '</p>';
+    return o + joinHtml() + openHtml();
   }
   if (t === 'measure') { const mine = Object.keys(S.mine); return '<button class="btn dark" data-act="measure">Measure a part with my phone</button><p class="note">Lay a bank, ID or library card next to it. The camera shows a green outline and arrows, and snaps when your phone is level. Then drag the dots onto the corners and tap the holes. Front holes get cut in the deck, back screw holes get posts.</p>' + (mine.length ? '<p class="h" style="margin-top:10px">My electronics</p><div class="chosen">' + mine.map((k) => '<span>' + esc(S.mine[k].name) + ' ' + S.mine[k].w + ' x ' + S.mine[k].h + ' <i data-delmine="' + k + '" style="cursor:pointer">&times;</i></span>').join('') + '</div>' : ''); }
   if (t === 'logo') { const f = logoFace(), L = LG(f), wall = !!WALLF[f], img = LOGOIMGS[f], dot = (x) => (logoOn(x) ? ' &bull;' : '');
@@ -978,7 +989,7 @@ function paneRest(t, P, c) {
       '<p class="note"><b>Hollow or solid?</b> A case is already a hollow shell. Its walls are ' + R.T + ' mm thin, so 4 walls in the slicer print them as solid plastic and infill changes almost nothing. To make it tougher, pick Thick: the sides and floor get thicker (the outside grows ' + (2 * (3.2 - 2.4)).toFixed(1) + ' mm), the deck stays the same so your buttons still reach. Fast shows the layer lines, Smooth takes about twice as long.</p>' +
       '<details class="fold"><summary>What do those slicer words mean?</summary><div class="list" style="margin-top:6px"><div class="it"><b>Layer height</b>How thick each layer of plastic is. Thinner looks smoother and takes longer.</div><div class="it"><b>Walls</b>How many outlines go around each piece. This is where the strength comes from.</div><div class="it"><b>Infill</b>How full the inside is. A case is mostly walls, so 15 percent is plenty.</div><div class="it"><b>Supports</b>Throwaway scaffolding under overhangs. The case is drawn to print without any.</div><div class="it"><b>Brim</b>A thin skirt that keeps corners from lifting. Turn it on only if yours lift.</div></div><p class="note" style="margin-top:6px">In your slicer pick the standard profile for your printer and your filament. That sets the heat for you.</p></details>';
   }
-  if (t === 'mat') { const m = CZ.MATERIALS.find((x) => x[0] === S.material); return '<div class="grid g4">' + CZ.MATERIALS.map((x) => '<button type="button" class="pick" data-mat="' + x[0] + '" aria-pressed="' + (S.material === x[0]) + '">' + esc(x[1]) + '</button>').join('') + '</div><p class="note">' + esc(m[2]) + '</p><p class="h" style="margin-top:8px">How the pieces join (best for ' + esc(m[1]) + ' first)</p><div class="grid g3">' + m[3].concat(Object.keys(CZ.JOINS).filter((k) => m[3].indexOf(k) < 0)).map((k, i) => '<button type="button" class="pick" data-join="' + k + '" aria-pressed="' + (S.join === k) + '">' + esc(CZ.JOINS[k][0]) + (i < 2 ? '<small>good fit</small>' : '') + '</button>').join('') + '</div><p class="note">' + esc(CZ.JOINS[S.join][1]) + '</p>'; }
+  if (t === 'mat') { const m = CZ.MATERIALS.find((x) => x[0] === S.material); return '<div class="grid g4">' + CZ.MATERIALS.map((x) => '<button type="button" class="pick" data-mat="' + x[0] + '" aria-pressed="' + (S.material === x[0]) + '">' + esc(x[1]) + '</button>').join('') + '</div><p class="note">' + esc(m[2]) + ' How the pieces join is in Design, Shape.</p>'; }
   if (t === 'split') {
     const hs = halves(), pl = hs.map((x) => plan(x.built)), n = pl.reduce((s, p) => s + p.regs.length, 0), bad = pl.some((p) => !p.fit);
     return '<div class="row"><b>Seams go</b>' + seg('sdir', [['auto', 'Auto'], ['v', '|'], ['h', '&mdash;'], ['both', '+'], ['d', '/']], S.sdir) + '</div><div class="row"><b>How many</b>' + seg('sn', [['auto', 'Auto'], ['1', '1'], ['2', '2'], ['3', '3'], ['4', '4']], S.sn) + '</div><div class="row"><b>Edges</b>' + seg('tab3', [['dovetail', 'Puzzle tabs'], ['flat', 'Flat + glue']], S.tab3) + '</div>' +
@@ -1112,16 +1123,18 @@ $('pane').addEventListener('click', (e) => {
   if (d.mpan != null) { mpanLoad(+d.mpan); tag(S.mpan.list[S.mpan.cur].name + ': ' + S.pw + ' x ' + S.pd + ' mm'); return; }
   if (d.ins != null) { swapTo(+d.ins); save(); render(); tag(swapList()[S.swap.cur].name + ': its parts'); return; }
   if (d.nsel != null) { S.nsel = +d.nsel; save(); render(); return; }
-  if (d.xsel != null) { DECO = null; S.xsel = d.xsel || null; save(); render(); return; }
+  if (d.xsel != null) { DECO = null; S.xsel = d.xsel || null; if (!S.xsel) S.xfrom = null; save(); render(); return; }
   if (d.manc != null) { const [u, v] = d.manc.split(',').map(Number), on = S.attachedParts.find((m) => m.partId === S.xsel && m.face === mnt().face && (m.anchors || [m.anchor]).some((q) => q.u === u && q.v === v)); if (on) { S.attachedParts = S.attachedParts.filter((m) => m !== on); save(); render(); } else attachAt({ u, v }); return; }
   if (d.panc != null) { const u = +d.panc, on = S.ports.find((p) => p.kind === S.xsel && p.face === pface() && p.anchor.u === u); if (on) { S.ports = S.ports.filter((p) => p !== on); save(); render(); } else portAttach({ u }); return; }
   if (d.prm != null) { S.ports = S.ports.filter((p) => p.id !== +d.prm); if (PSEL === +d.prm) PSEL = null; save(); render(); return; }
   if (d.act === 'swatch') { saveFile(fileOut(swatchFile())); return; }
+  if (d.act === 'toopen') { S.xsel = null; S.xfrom = null; save(); openPage(PAGES.findIndex((p) => p.name === 'Shape')); return; }
   if (d.act === 'share') { shareLink(); return; }
   if (d.mrm != null) { S.attachedParts = S.attachedParts.filter((m) => m.id !== +d.mrm); save(); render(); return; }
   if (d.mtog != null) { const m = S.attachedParts.find((x) => x.id === +d.mtog); if (m) { m.mountType = m.mountType === 'screw' ? 'snap' : 'screw'; save(); render(); } return; }
   if (d.msave != null) { const i = S.attachedParts.findIndex((x) => x.id === +d.msave), m = S.attachedParts[i]; if (m) saveFile(fileOut(mountFile(m, i))); return; }
-  if (d.xgo) { S.xsel = d.xgo; S.tab[5] = 'extras'; go(5); return; }
+  if (d.xgo) { S.xsel = d.xgo; S.xfrom = d.xfrom || null; S.tab[5] = 'extras'; go(5); return; }
+  if (d.xback) { S.xsel = null; S.xfrom = null; S.step = 2; S.tab[2] = 'shape'; save(); openPage(PAGES.findIndex((p) => p.name === 'Shape')); return; }
   if (d.cf != null) { const c = codeNow()[+d.cf]; if (c) saveFile({ name: c[0], blob: new Blob([c[1]], { type: 'text/plain' }) }); return; }
   if (d.act === 'undo1') { undo(); return; }
   if (d.beh) { S.beh = d.beh; actsFill(true); testReset(); save(); render(); tag((BEH.find((b) => b[0] === d.beh) || [0, 'Sampler'])[1] + ': Test It and the code follow it.'); return; }
@@ -1288,7 +1301,7 @@ $('pane').addEventListener('click', (e) => {
     if (k === 'tol') { if (v === 'c') S.tolC = true; else { S.tolC = false; S.tol = +v; } applyWalls(); reflow(); save(); render(); return; }
     if (k === 'fmt') { S.fmt = v; save(); sg.querySelectorAll('button').forEach((x) => x.setAttribute('aria-pressed', String(x === b))); $('fileList').querySelectorAll('[data-f]').forEach((x) => { const f = FILES[+x.dataset.f]; if (f) x.textContent = 'Save ' + f.label + fmtTag(f); }); return; }
     if (k === 'layer') { S.layer = v; save(); render(); return; }
-    if (k === 'magnets') S.magnets = v === '1'; else if (k === 'snap') S.snap = v === '1'; else if (k === 'spring') S.spring = v === '1';
+    if (k === 'magnets') S.magnets = v === '1'; else if (k === 'snap') { S.snap = v === '1'; S.deckMag = v === 'mag'; } else if (k === 'hatch') S.hatch = v; else if (k === 'spring') S.spring = v === '1';
     else if (k === 'lg_src') { const q = LG(); q.on = v !== 'off'; if (v !== 'off') q.src = v; } else if (k === 'lg_face') { L.logoAt = v; } else if (k === 'lg_how') LG().how = v;
     else if (k === 'lb_place') { L.labels.on = v !== 'off'; if (v !== 'off') L.labels.place = v; } else if (k === 'lb_how') L.labels.how = v;
     else if (k === 'tx_face') L.texFace = v; else if (k === 'tx_bump') L.tex[L.texFace].bump = v === '1';
@@ -2488,7 +2501,7 @@ function portHtml(id) {
   const f = pface(), hf = hingeFace(), mine = S.ports.filter((p) => p.kind === id), at = anchorsOf(f);
   const btn = (a) => { const t = { kind: id, face: f, anchor: a }, on = mine.find((p) => p.face === f && p.anchor.u === a.u), why = on ? '' : portBlocked(t);
     return '<button type="button" class="manc' + (on ? ' on' : '') + '" data-panc="' + a.u + '"' + (why ? ' disabled aria-disabled="true" title="Blocked: ' + why + '"' : ' title="Cut it here"') + '>' + (a.u + 1) + (why ? '<small>' + pillWhy(why) + '</small>' : '') + '</button>'; };
-  return '<div class="fnh"><button type="button" class="btn" data-xsel="">&lsaquo; All</button><b>' + PORTS[id][0] + '</b></div><p class="note" style="margin-top:6px">' + PORTS[id][1] + ' It is cut into the case walls in your files.</p>' +
+  return '<div class="fnh">' + xBack() + '<b>' + PORTS[id][0] + '</b></div><p class="note" style="margin-top:6px">' + PORTS[id][1] + ' It is cut into the case walls in your files.</p>' +
     '<div class="row"><b>Wall</b>' + seg('m_pface', PFACES.map((x) => [x[0], x[1] + (x[0] === hf ? ' (hinge)' : '')]), f) + '</div>' +
     '<div class="mgrid" style="grid-template-columns:repeat(' + Math.min(12, at.length) + ',minmax(0,1fr))">' + at.map(btn).join('') + '</div>' +
     '<p class="note keep">Tap a spot, or drag <span class="mdrag" draggable="true" data-mdrag="' + id + '">' + PORTS[id][0] + '</span> onto a spot or a green dot. Red spots are blocked by the hinge, a magnet, a deck screw, your electronics or a mounted part.</p>' +
@@ -2829,7 +2842,7 @@ function extraRows() {
   const P = PARTS(), out = [], loose = S.items.filter((i) => P[i.type] && P[i.type].cat !== 'mine' && i.of == null), wires = loose.some((i) => P[i.type].link !== 'plug' && (WIRES[i.type] == null || WIRES[i.type] > 0));
   if (wires) out.push({ t: 'x_wires', name: 'Jumper wires, 40 pack', each: 4 });
   if (wires && (S.how || 'push') === 'push') { const wp = wirePlan(); if (wp.hubs && wp.hubs.length) out.push({ t: 'x_lever', name: 'Lever connectors, 5 hole (' + wp.hubs.length + ')', each: Math.max(1, Math.round(wp.hubs.length * 0.7)) }); }
-  { const dS = !isPanel() && !S.snap ? posts().length * panels().length : 0, mS = S.attachedParts.filter((m) => m.mountType === 'screw' && MOUNTABLE[m.partId]).reduce((q, m) => q + mountCount(m), 0); /* the deck screws plus one for every part mounted with a screw */
+  { const dS = !isPanel() && !S.snap && !S.deckMag ? posts().length * panels().length : 0, mS = S.attachedParts.filter((m) => m.mountType === 'screw' && MOUNTABLE[m.partId]).reduce((q, m) => q + mountCount(m), 0); /* the deck screws plus one for every part mounted with a screw */
     if (dS + mS) out.push({ t: 'x_m3', name: 'M3 screws, 8 mm, ' + (dS + mS) + ' (' + [dS ? dS + ' for the deck' : '', mS ? mS + ' for mounted parts' : ''].filter(Boolean).join(', ') + ', small box)', each: 3 }); }
   if (isPanel() && S.phold === 'screws' && !swapOn()) out.push({ t: 'x_m3', name: 'M3 screws (small box)', each: 3 }); /* swap mode: the insert has no box screws, the frame does */
   if (S.items.some((i) => i.type === 'esp32cam')) out.push({ t: 'x_cammb', name: 'ESP32-CAM-MB USB programmer (the ESP32-CAM has no USB plug)', each: 2 });
@@ -2839,6 +2852,8 @@ function extraRows() {
   { const nT = S.attachedParts.filter((m) => m.partId === 'tripod').length; if (nT) out.push({ t: 'x_nut', name: nT + ' x 1/4"-20 hex nut (tripod mount)', each: 0.5 * nT }); }
   { const nC = S.attachedParts.filter((m) => m.partId === 'charm' && (m.charm || xp().charm).hook === 'lug').length; if (nC) out.push({ t: 'x_clasp', name: nC + ' x Trigger clasp keyring (for the charm lug)', each: 2 * nC }); }
   if (isClam() && S.magnets) out.push({ t: 'x_mag', name: 'Round magnets 6 x 3 mm, 4 or more', each: 3 });
+  if (!isPanel() && !S.snap && S.deckMag) out.push({ t: 'x_dmag', name: 'Round magnets 6 x 3 mm for the deck, ' + 2 * posts().length * panels().length, each: 3 });
+  if (hatchZ() && hatchKind() === 'screw') out.push({ t: 'x_hatch', name: 'M3 x 6 screws for the hatch, 2', each: 1 });
   if (isClam() && S.hinge === 'metal') out.push({ t: 'x_hinge', name: '25 mm butt hinges, 2', each: 3 });
   const pw = powerInfo(); if (pw.mah && !loose.some((i) => i.type === 'liposhim')) out.push({ t: 'x_d1', name: 'Schottky diode 1N5817 (keeps USB power out of the battery)', each: 0.5 });
   if (pcbOn()) { const Bd = boardBuild(); if (Bd.ok) { out.push({ t: 'x_pcb', name: 'Carrier boards, 5 from a board factory (rough price, shipping extra)', each: Bd.box.w > 100 || Bd.box.h > 100 ? 15 : 4 }); out.push({ t: 'x_m2', name: 'M2 screws, 6 mm, 4 for the board', each: 2 }); } }
@@ -2930,7 +2945,7 @@ function cpFix(v) {
 function compat(k) {
   const bi = brainInfo(), P = PARTS()[k]; if (!bi || !P || P.cat === 'brain' || P.cat === 'mine') return null;
   const N = NEED[k], B = BRDX(), bk = BOARD_OF[bi.type], nm = bmini(B.name), avr = AVRB.indexOf(bk) > -1, an = N && N.pins && N.pins.some((p) => p[1] === 'a');
-  const no = (alt) => ['no', 'Not compatible', alt], note = (why) => ['note', 'Works with 1 note', why];
+  const no = (alt) => ['no', 'Not compatible', alt], note = (why) => ['note', '1 note', why];
   if (N && N.pi && !B.pi) return no('An HDMI screen needs a Raspberry Pi. Try the 2.8 in screen.');
   if (!B.spi && N && (N.spi || N.cam || N.sd)) return no('Its SPI runs ' + (B.builtIn || 'other parts') + '. Try the 0.96 in OLED (I2C).');
   if (avr && k === 'i2sdac') return no('No I2S sound on the ' + nm + '. Try the $2 DFPlayer Mini.');
@@ -2940,7 +2955,7 @@ function compat(k) {
   if (!avr && k === 'lcd1602') return note('Runs on 5V: put a level shifter on SDA and SCL.');
   if (avr && k === 'sdcard') return note('The SD library uses about 600 bytes of the ' + nm + "'s 2 KB memory.");
   if (bk === 'pico' && an && analogUsed() >= 3) return note('All 3 analog pins are taken. A Click wheel fits.');
-  return ['ok', 'Works right away', ''];
+  return ['ok', 'Fits', ''];
 }
 // "What You're Getting Into": three calm lines before buying
 function intoCard() {
@@ -3160,7 +3175,7 @@ function threeMf(tris, name) {
 }
 // every file of the build, made now: the Files list, the Print Bed view and the list of pieces all use it
 function piecesHtml() { // every printed piece, by what it is, with how many files it takes
-  if (S.material === 'wood') return ''; const fs = bedFiles(), grp = {}; fs.forEach((f) => { const n = f.name.replace(/^casezero-/, '').replace(/\.stl$/, ''), k = /test-fit/.test(n) ? 'Test fit' : /color2/.test(n) ? 'Marks color' : /^(lid|base|top|panel)-(box|deck)?/.test(n) ? n.split('-')[0].replace(/^./, (c) => c.toUpperCase()) + (/deck/.test(n) ? ' deck' : isPanel() ? '' : ' box') : /^mount/.test(n) ? 'Mounted parts' : /keycap/.test(n) ? 'Keycaps' : /keys-plate/.test(n) ? 'Keyboard plate' : /shroud/.test(n) ? 'Raised shroud' : /swap-frame/.test(n) ? 'Swap frame' : /swap-insert/.test(n) ? 'Swap inserts' : /knob/.test(n) ? 'Knobs' : /dpad/.test(n) ? 'D-pad' : /hook/.test(n) ? 'Carabiner hook' : /glue/.test(n) ? 'Glue-on pieces' : f.label; grp[k] = (grp[k] || 0) + 1; });
+  if (S.material === 'wood') return ''; const fs = bedFiles(), grp = {}; fs.forEach((f) => { const n = f.name.replace(/^casezero-/, '').replace(/\.stl$/, ''), k = /test-fit/.test(n) ? 'Test fit' : /color2/.test(n) ? 'Marks color' : /^(lid|base|top|panel)-(box|deck)?/.test(n) ? n.split('-')[0].replace(/^./, (c) => c.toUpperCase()) + (/deck/.test(n) ? ' deck' : isPanel() ? '' : ' box') : /^mount/.test(n) ? 'Mounted parts' : /keycap/.test(n) ? 'Keycaps' : /keys-plate/.test(n) ? 'Keyboard plate' : /shroud/.test(n) ? 'Raised shroud' : /hatch/.test(n) ? 'Hatch door' : /swap-frame/.test(n) ? 'Swap frame' : /swap-insert/.test(n) ? 'Swap inserts' : /knob/.test(n) ? 'Knobs' : /dpad/.test(n) ? 'D-pad' : /hook/.test(n) ? 'Carabiner hook' : /glue/.test(n) ? 'Glue-on pieces' : f.label; grp[k] = (grp[k] || 0) + 1; });
   const ex = []; if (S.items.some((i) => i.panel === 'inside' && (riserOf(i) > 0))) ex.push('Standoffs and slates (print with the case)'); { const sn = S.attachedParts.filter((m) => MOUNTABLE[m.partId] && m.mountType === 'snap').reduce((q, m) => q + mountCount(m), 0); if (sn) ex.push(sn + ' snap pins (in the mounted part files)'); }
   if (!fs.length) return ''; return '<p class="h" style="margin:4px 0">' + fs.length + ' printed files</p><div class="chosen" style="margin-bottom:6px">' + Object.keys(grp).map((k) => '<span>' + esc(k) + (grp[k] > 1 ? ' x' + grp[k] : '') + '</span>').join('') + ex.map((e) => '<span>' + esc(e) + '</span>').join('') + '</div>'; }
 // Next: slice to .gcode. Three steps from the files to the printer, with a slicer that runs in the browser.
@@ -3262,6 +3277,7 @@ function filesOf(only) { /* only: just this panel's pieces, for the other measur
       pcs(swapFrame(), 'casezero-swap-frame', 'Swap frame (stays in the box)');
       swapList().forEach((q, i) => { if (i === S.swap.cur) return; const keep = S.items; S.items = q.items || []; markCache = {}; try { pcs(panelBuilt().tray, 'casezero-swap-insert-' + (i + 1), q.name + ' (swap insert)'); } finally { S.items = keep; markCache = {}; } }); }
     if (!wood && xp().dstand.on) files.push({ label: 'Mini desk stand (prints flat)', name: 'casezero-desk-stand.stl', blob: meshBlob(G.trisOf(G.layerGeos(addonPolys('dstand').layers)), 'desk stand') });
+    if (!wood && hatchZ()) files.push({ label: 'Hatch door', name: 'casezero-hatch-door.stl', blob: meshBlob(G.trisOf(G.layerGeos(G.hatchDoor(hatchZ()))), 'hatch-door') });
     if (!wood && (S.items.some((i) => i.type === 'shroud') || S.ports.some((p) => p.kind === 'p_shroud' && !portBlocked(p)))) files.push({ label: 'Raised shroud', name: 'casezero-shroud.stl', blob: meshBlob(G.trisOf(G.layerGeos(addonPolys('shroud').layers)), 'shroud') });
     if (!wood) S.attachedParts.forEach((m, i) => { if (MOUNTABLE[m.partId]) files.push(mountFile(m, i)); });
     { const hs = wood ? [] : S.attachedParts.filter((m) => m.partId === 'charm' && (m.charm || xp().charm).hook === 'hook'); if (hs.length) { const geos = []; let y = 0; hs.forEach((m) => { const hp = hookPolys(m.charm), hb = G.bbox(hp); G.layerGeos([{ polys: hp, z0: 0, z1: CARABINER_DEFAULT_THICKNESS_MM }]).forEach((gg) => { gg.translate(-hb.x0, -hb.y0 + y, 0); geos.push(gg); }); y += hb.h + 4; }); files.push({ label: hs.length + ' printed carabiner hook' + (hs.length > 1 ? 's' : ''), name: 'casezero-charm-hook.stl', blob: meshBlob(G.trisOf(geos), 'charm hook') }); } }
@@ -3315,6 +3331,7 @@ function guideHtml() {
     st.push('ADD-ONS, ' + e(nm) + ': ' + (boxed ? 'hold it on your box and drive the <b>#4 wood screws</b> (12 mm) straight in.' : m.mountType === 'snap' ? 'push ' + n + ' printed snap pin' + (n > 1 ? 's' : '') + ' through it into the box until they click.' : 'fix it with ' + n + ' x M3 x 8 mm screw' + (n > 1 ? 's' : '') + '.')); });
   if (brain) st.push('Wire every part (step 3) and load the code (step 4) before you close it.');
   if (isPanel()) st.push(swapOn() ? 'Done: swap inserts whenever you like.' : S.phold === 'screws' && posts().length ? 'Set the panel in your box and fix it with ' + posts().length + ' x M3 screws.' : 'Drop the panel into your box. Done.');
+  else if (!S.snap && S.deckMag) st.push('Press a <b>6 x 3 mm magnet</b> into the top of each post and one into each pocket under the deck. Check every pair attracts before you glue. Then set the deck on. Done.');
   else st.push(S.snap ? 'Press the deck down until the snap clips click into the wall. Done.' : 'Screw the deck down with ' + posts().length * panels().length + ' x <b>M3 x 8 mm screws</b>. Done.');
   // 3. wire every part
   let s3 = '', s4 = '';
