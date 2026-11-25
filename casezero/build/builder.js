@@ -850,7 +850,20 @@ function chosenChips(lean) { lean = true; /* the tray and the right column alrea
   return (k.length ? (lean ? '<p class="note keep" style="margin-top:10px">' : '<p class="h" style="margin-top:12px">Electronics in your build</p><div class="chosen">' + k.map((t) => '<span>' + esc(P[t] ? P[t].short : t) + ' <i>x' + c[t] + '</i><button type="button" class="rm" data-sub="' + t + '" aria-label="Remove one ' + esc(P[t] ? P[t].short : t) + '">&times;</button></span>').join('') + '</div><p class="note keep" style="margin-top:6px">Tap the x to take one out. ') + '<b>About ' + money(cost(true).total) + ' so far.</b> ' + costSplit() + '</p>' + (n > 1 ? '<button class="btn' + (arm ? ' red' : '') + '" data-act="clearall" style="margin-top:8px;padding:8px">' + (arm ? 'Tap again: take out all ' + n + ' electronics' : 'Take out all electronics (your case stays)') + '</button>' : '') : '<p class="note keep">Nothing yet. Tap a group, then tap what you want.' + (cost(true).extras ? ' The case alone: ' + costSplit() : '') + '</p>') +
     (CLEARED && UNDO.length ? '<button class="btn dark" data-act="undo1" style="margin-top:8px;padding:8px">Undo: put it back</button>' : ''); }
 // Parts: look at the flat top, or the whole case in 3D (front, back, sides, the Character head) and tap a part there to pick it
-const viewTgl = () => '<div class="vtg" role="group" aria-label="View"><button type="button" data-v3="0" aria-pressed="' + !BIG3D + '">2D Top</button><button type="button" data-v3="1" aria-pressed="' + BIG3D + '">3D</button></div>' + (BIG3D ? '<p class="note keep" style="margin:-2px 0 8px">Drag to spin to any side. Tap a part to pick it.</p>' : '');
+let PSEL = null; /* the wall port picked in Parts */
+// Face: which side the picked part sits on. Electronics: the top they poke through (lid or base), or the floor when inside. Ports: their wall.
+function faceRow(s) { if (!s || (PP(s) && PP(s).board)) return '';
+  const o = s.panel === 'inside' ? [['inside', 'Bottom (floor)']] : panels().map((p) => [p, p === 'lid' ? 'Lid' : 'Top']);
+  return '<div class="selbar"><b>Face</b>' + o.map((m) => '<button data-act="pan_' + m[0] + '"' + (s.panel === m[0] ? ' style="background:#1a1a1a;color:#fff"' : '') + '>' + m[1] + '</button>').join('') + '</div>'; }
+function portSelHtml() { const p = S.ports.find((q) => q.id === PSEL); if (!p || !PORTS[p.kind]) return ''; const why = portBlocked(p), hf = hingeFace();
+  return '<div class="selbar" style="flex-wrap:wrap"><b style="flex:1 0 100%">' + esc(PORTS[p.kind][0]) + ' &middot; Outside wall</b>' + PFACES.filter((x) => x[0] !== hf).map((x) => '<button type="button" data-pf="' + x[0] + '"' + (p.face === x[0] ? ' style="background:#1a1a1a;color:#fff"' : '') + '>' + x[1] + '</button>').join('') + '</div>' +
+    '<div class="selbar"><b>Spot ' + (p.anchor.u + 1) + '</b><button type="button" data-pmv="-1" aria-label="Move left">&lsaquo;</button><button type="button" data-pmv="1" aria-label="Move right">&rsaquo;</button><button type="button" data-prm="' + p.id + '">Remove</button></div>' +
+    (why ? '<p class="note"><span class="bad">Blocked: ' + esc(why) + '. It is not cut until you move it.</span></p>' : ''); }
+function portMove(p, face, step) { const n = anchorsOf(face).length; if (!n) return; snapU(); let u = Math.max(0, Math.min(n - 1, p.anchor.u + step));
+  const t = (k) => portBlocked(Object.assign({}, p, { face, anchor: { u: k, v: 0 } })); if (t(u)) { const free = anchorsOf(face).map((a) => a.u).filter((k) => !t(k)).sort((a, b) => Math.abs(a - u) - Math.abs(b - u)); if (free.length && (step === 0 || (free[0] - p.anchor.u) * step > 0)) u = free[0]; }
+  p.face = face; p.anchor = { u, v: 0 }; save(); render(); const why = portBlocked(p); tag(why ? 'Blocked there: ' + why + '.' : PORTS[p.kind][0] + ' on the ' + face + ' wall, spot ' + (u + 1) + '.'); }
+const viewMode = () => (xrayOn() ? 2 : BIG3D ? 1 : 0);
+const viewTgl = () => { const m = viewMode(); return '<div class="vtg" role="group" aria-label="View">' + [['0', '2D'], ['1', '3D'], ['2', 'X-Ray']].map((o) => '<button type="button" data-v3="' + o[0] + '" aria-pressed="' + (m === +o[0]) + '">' + o[1] + '</button>').join('') + '</div>' + (m ? '<p class="note keep" style="margin:-2px 0 8px">' + (m === 2 ? 'The shell is see-through: spin it to check the room around the board, battery, motors and risers inside.' : 'Drag to spin to any side. Tap a part to pick it.') + '</p>' : ''); };
 function pane(t) {
   const P = PARTS(), c = counts();
   if (t === 'snap') return copilotHtml() + '<p class="h">Already built and soldered?</p><button class="btn red" data-act="measure">Photo my board, front and back</button><p class="note" style="margin-bottom:10px">A card next to it is the ruler. Press on each part on the photo, say what it is, do the brain too. Your board goes inside the case, every part on it becomes its own part you can change. Photos stay on your phone.</p>' +
@@ -898,14 +911,16 @@ function paneRest(t, P, c) {
   if (t === 'picks') return '<p class="h">Cheap, loved by the maker community</p><div class="list">' + CZ.PICKS.map((p) => '<div class="it"><b>' + esc(p[1]) + (c[p[0].split('+')[0]] ? ' <span class="ok">added</span>' : '') + '</b>' + esc(p[2]) + '<div style="margin-top:6px"><button class="btn" data-add="' + p[0] + '" style="display:inline-block;padding:7px 12px">+ Add ' + esc(p[0].split('+').map((k) => P[k].short).join(' + ')) + '</button></div></div>').join('') + '</div><p class="note">From Reddit (r/esp32, r/raspberry_pi), Instructables and maker blogs. Sources in the ? help.</p>';
   if (t === 'lid' || t === 'base' || t === 'top') {
     const mine = S.items.filter((i) => i.panel === t || (t !== 'lid' && i.panel === 'inside')), s = S.items.find((i) => i.id === sel), probs = allProblems(), N = numbers();
-    let h = s && s.of != null ? '<div class="selbar"><b>' + esc(label(s)) + '</b><select class="pin" data-kidtype="' + s.id + '" aria-label="What it is">' + KID_TYPES.filter((t) => CZ.PARTS[t]).map((t) => '<option value="' + t + '"' + (t === s.type ? ' selected' : '') + '>' + esc(CZ.PARTS[t].short) + '</option>').join('') + '</select>' + (RECTK(s) ? '<button data-act="rot">Turn</button>' : '') + '<button data-act="del">Remove</button></div>' + nudgeRow() + '<p class="note" style="margin:-2px 0 8px">Drag it, or use the arrows (0.5 mm), until it sits where the real part is (turn My photo on to check). Your board stays put.</p>' + (s.panel !== 'inside' ? stepper('kh', 'Height', kidH(s) + ' mm above board') + '<p class="note" style="margin:-2px 0 8px">' + esc(pokeNote(s)) + '</p>' : '') : s ? '<div class="selbar"><b>' + esc(label(s)) + '</b><button data-act="rot">Turn</button>' + (isClam() && s.panel !== 'inside' && !(PP(s) && PP(s).board) ? '<button data-act="swap">To ' + (s.panel === 'lid' ? 'base' : 'lid') + '</button>' : '') + '<button data-act="del">Remove</button></div>' + swapBar(s) +
-      (PP(s) && !PP(s).inside ? '<div class="selbar"><b>Mount</b>' + [['top', 'On top'], ['in', 'Inside']].map((m) => '<button data-act="mnt_' + m[0] + '"' + ((s.panel === 'inside') === (m[0] === 'in') ? ' style="background:#1a1a1a;color:#fff"' : '') + '>' + m[1] + '</button>').join('') + '</div>' : '') +
+    let h = s && s.of != null ? '<div class="selbar"><b>' + esc(label(s)) + '</b><select class="pin" data-kidtype="' + s.id + '" aria-label="What it is">' + KID_TYPES.filter((t) => CZ.PARTS[t]).map((t) => '<option value="' + t + '"' + (t === s.type ? ' selected' : '') + '>' + esc(CZ.PARTS[t].short) + '</option>').join('') + '</select>' + (RECTK(s) ? '<button data-act="rot">Turn</button>' : '') + '<button data-act="del">Remove</button></div>' + nudgeRow() + '<p class="note" style="margin:-2px 0 8px">Drag it, or use the arrows (0.5 mm), until it sits where the real part is (turn My photo on to check). Your board stays put.</p>' + (s.panel !== 'inside' ? stepper('kh', 'Height', kidH(s) + ' mm above board') + '<p class="note" style="margin:-2px 0 8px">' + esc(pokeNote(s)) + '</p>' : '') : s ? '<div class="selbar"><b>' + esc(label(s)) + '</b><button data-act="rot">Turn 90&deg;</button><button data-act="del">Remove</button></div>' + swapBar(s) + faceRow(s) +
+      (PP(s) && !PP(s).inside ? '<div class="selbar"><b>Mount</b>' + [['top', 'Outside'], ['in', 'Inside']].map((m) => '<button data-act="mnt_' + m[0] + '"' + ((s.panel === 'inside') === (m[0] === 'in') ? ' style="background:#1a1a1a;color:#fff"' : '') + '>' + m[1] + '</button>').join('') + '</div>' : '') +
       (s.panel === 'inside' ? stepper('riser', 'Riser', PP(s) && PP(s).holes && PP(s).holes.length ? riserOf(s) + ' mm standoffs' : s.riser != null && s.riser > 0 ? s.riser + ' mm slate' : 'On the floor') + '<p class="note keep" style="margin:-2px 0 8px">' + (PP(s) && PP(s).holes && PP(s).holes.length ? 'Standoffs at its screw holes, printed with the case.' : 'A flat plate on 4 corner posts lifts it; it prints with the case.') + '</p>' : '') : '';
     if (s && PP(s) && PP(s).board) h += '<div class="selbar"><b>My photo</b>' + [['off', 'Hide'], ['faded', 'Faint'], ['clear', 'Show']].map((m) => '<button data-photo="' + m[0] + '"' + ((S.photo || 'off') === m[0] ? ' style="background:#1a1a1a;color:#fff"' : '') + '>' + m[1] + '</button>').join('') + '</div>' + ((PP(s).kids || []).length ? '<button class="btn" data-act="kidsreset" style="margin:0 0 8px;padding:8px">Put the parts back where my photo had them</button>' : '') + '<div class="selbar"><b>Board</b><button data-act="bmove">' + (s.move ? 'Unlocked: drag moves it' : 'Locked in place') + '</button></div>' + (s.move ? nudgeRow() : '') + '<p class="note" style="margin:-2px 0 8px">Tap an empty spot on your board to add a part there.</p>' + stepper('btop', 'Tallest', (PP(s).top || 9) + ' mm button') + '<p class="note" style="margin:-2px 0 8px">Your board hangs under the top so a ' + (PP(s).top || 9) + ' mm button pokes through 1.5 mm. Tap one to see how far it pokes through.</p>' + stepper('bund', 'Under', (PP(s).under != null ? PP(s).under : 8.5) + ' mm below') + '<p class="note" style="margin:-2px 0 8px">Space under the board for pins, solder and wires' + (PP(s).under != null ? ', from your side photo' : ', a guess: take the side photo to measure it') + '.</p>';
+    if (!s && PSEL != null) h += portSelHtml();
     h += '<p class="h">' + (t === 'lid' ? 'The lid: screens live here' : t === 'base' ? 'The base: controls, the brain sits under it' : 'The top') + '</p>';
     h += mine.length ? '<div class="chosen">' + mine.map((i) => '<span data-sel="' + i.id + '" class="ach" style="cursor:pointer' + (i.id === sel ? ';background:#1a1a1a;color:#fff' : '') + '">' + lineArt(i.type, 26) + esc(N[i.id] + ' ' + PP(i).short) + (problems(i).length ? ' <i>!</i>' : '') + '</span>').join('') + '</div>' : '<p class="note">No electronics here yet. Add some in Brain.</p>';
+    if (t !== 'lid' && S.ports.length) h += '<p class="h" style="margin-top:8px">Wall ports</p><div class="chosen">' + S.ports.filter((p) => PORTS[p.kind]).map((p) => '<span data-psel="' + p.id + '" class="ach" style="cursor:pointer' + (p.id === PSEL ? ';background:#1a1a1a;color:#fff' : '') + '">' + esc(PORTS[p.kind][0] + ' ' + p.face) + (portBlocked(p) ? ' <i>!</i>' : '') + '</span>').join('') + '</div>';
     if (s && s.of == null && s.panel !== 'inside' && PP(s) && !PP(s).board && !isPanel()) { const mt = s.mt || 'flush'; h += '<div class="selbar"><b>Sits</b>' + [['flush', 'Flush'], ['raised', 'Raised rim'], ['sunk', 'Sunk in'], ['top', 'On top']].map((m) => '<button data-mt="' + m[0] + '"' + (mt === m[0] ? ' style="background:#1a1a1a;color:#fff"' : '') + '>' + m[1] + '</button>').join('') + '</div><p class="note" style="margin:2px 0 0">' + ({ flush: 'Level with the top.', raised: 'A rim stands up around it. The rim prints as its own flat piece that you glue on.', sunk: 'It sits down in a shallow pocket.', top: 'No opening. The part sits on the top, only its wires go through a small hole.' })[mt] + '</p>'; }
-    h += '<div class="grid g2" style="margin-top:8px"><button class="btn dark" data-act="auto">Arrange for me</button><button class="btn" data-act="toBrain">Add electronics</button></div><button class="btn' + (S.xray ? ' dark' : '') + '" data-act="xray" style="margin-top:8px;width:100%">' + (S.xray ? 'Back to flat view' : 'Inside view (open lid, X-ray)') + '</button>';
+    h += '<div class="grid g2" style="margin-top:8px"><button class="btn dark" data-act="auto">Arrange for me</button><button class="btn" data-act="toBrain">Add electronics</button></div>';
     h += '<p class="note">' + (probs.length ? probs.map((x) => '<span class="bad">' + esc(label(x.it)) + ' is ' + esc(x.list[0]) + '.</span>').join(' ') : (mine.length ? '<span class="ok">Everything fits.</span> ' + (S.items.some((i) => PP(i) && PP(i).board) ? 'Tap your board to add a part there. Drag a part to line it up. Two fingers zoom in, and the part numbers show.' : 'Drag anything to move it. Tap to pick it.') : '')) + '</p>';
     return h;
   }
@@ -1091,7 +1106,7 @@ $('pane').addEventListener('click', (e) => {
   if (e.target.closest('[data-act=cpopen]')) { $('sheetIn').innerHTML = '<button class="x" id="sheetX" aria-label="Close">&times;</button><h2>Notes</h2>' + copilotFull(); $('sheet').hidden = false; return; }
   const bw = e.target.closest('[data-bswap]'); if (bw) { const [id, t] = bw.dataset.bswap.split(':'), it = S.items.find((i) => i.id === +id); if (it && t !== swapCur(it)) { testReset(); swapType(it, t); } return; }
   const sp = e.target.closest('[data-sim],[data-wired]'); if (sp) { if (sp.dataset.sim) simTap(sp.dataset.sim); else { S.tab[5] = curTab() === 'map' ? 'test' : 'map'; save(); render(); if (S.tab[5] === 'map') pfTag(); } return; }
-  const b = e.target.closest('button, [data-sel], [data-delmine], [data-sub], [data-add], [data-nsel], [data-ins], [data-mpan], [data-gcp]'); if (!b) return; const d = b.dataset;
+  const b = e.target.closest('button, [data-sel], [data-psel], [data-delmine], [data-sub], [data-add], [data-nsel], [data-ins], [data-mpan], [data-gcp]'); if (!b) return; const d = b.dataset;
   if (d.gcp != null) { saveGcode(d.gcp === 'all' ? null : +d.gcp); return; }
   if (d.adj != null) { adjust(d.adj); return; }
   if (d.mpan != null) { mpanLoad(+d.mpan); tag(S.mpan.list[S.mpan.cur].name + ': ' + S.pw + ' x ' + S.pd + ' mm'); return; }
@@ -1100,7 +1115,7 @@ $('pane').addEventListener('click', (e) => {
   if (d.xsel != null) { DECO = null; S.xsel = d.xsel || null; save(); render(); return; }
   if (d.manc != null) { const [u, v] = d.manc.split(',').map(Number), on = S.attachedParts.find((m) => m.partId === S.xsel && m.face === mnt().face && (m.anchors || [m.anchor]).some((q) => q.u === u && q.v === v)); if (on) { S.attachedParts = S.attachedParts.filter((m) => m !== on); save(); render(); } else attachAt({ u, v }); return; }
   if (d.panc != null) { const u = +d.panc, on = S.ports.find((p) => p.kind === S.xsel && p.face === pface() && p.anchor.u === u); if (on) { S.ports = S.ports.filter((p) => p !== on); save(); render(); } else portAttach({ u }); return; }
-  if (d.prm != null) { S.ports = S.ports.filter((p) => p.id !== +d.prm); save(); render(); return; }
+  if (d.prm != null) { S.ports = S.ports.filter((p) => p.id !== +d.prm); if (PSEL === +d.prm) PSEL = null; save(); render(); return; }
   if (d.act === 'swatch') { saveFile(fileOut(swatchFile())); return; }
   if (d.act === 'share') { shareLink(); return; }
   if (d.mrm != null) { S.attachedParts = S.attachedParts.filter((m) => m.id !== +d.mrm); save(); render(); return; }
@@ -1112,10 +1127,13 @@ $('pane').addEventListener('click', (e) => {
   if (d.beh) { S.beh = d.beh; actsFill(true); testReset(); save(); render(); tag((BEH.find((b) => b[0] === d.beh) || [0, 'Sampler'])[1] + ': Test It and the code follow it.'); return; }
   if (d.tw) { const [k, v] = d.tw.split(':'); TW()[k] = k === 'mac' ? v === '1' : k === 'min' ? +v : v; testReset(); save(); render(); return; }
   if (d.fn != null) { S.fn = d.fn || null; if (d.fn && d.fn !== 'print') S.cat = d.fn; save(); render(); return; }
-  if (d.v3 != null) { BIG3D = d.v3 === '1'; render(); return; }
+  if (d.v3 != null) { BIG3D = d.v3 !== '0'; S.xray = d.v3 === '2'; save(); render(); return; }
+  if (d.psel != null) { PSEL = +d.psel; sel = null; render(); return; }
+  if (d.pf != null) { const p = S.ports.find((q) => q.id === PSEL); if (p) portMove(p, d.pf, 0); return; }
+  if (d.pmv != null) { const p = S.ports.find((q) => q.id === PSEL); if (p) portMove(p, p.face, +d.pmv); return; }
   if (d.sub) { e.stopPropagation(); removePart(d.sub); render(); return; }
   if (d.add) { let it = null; d.add.split('+').forEach((k) => { it = addPart(k); }); const P = PP(it); const tip = $('partTip'); render(); if ($('partTip')) $('partTip').textContent = P.tip; void tip; return; }
-  if (d.sel) { sel = +d.sel; HL = sel; render(); return; }
+  if (d.sel) { sel = +d.sel; HL = sel; PSEL = null; render(); return; }
   if (d.delmine) { delete S.mine[d.delmine]; S.items = S.items.filter((i) => i.type !== d.delmine); save(); render(); return; }
   if (d.style && S.lockBox) { tag('The box is kept. Unlock it below to pick another shape.'); return; }
   if (d.style) { S.picked = true; S.style = d.style; const z = SIZES[S.style]; S.cols = z[0]; S.rows = z[1]; S.xw = S.xd = 0; if (UPRIGHT[S.style]) S.snap = true; /* the front plate snaps on */ reflow(); if (allProblems().length) fitAll(); /* the new shape is too small for what is in it: grow it until everything fits */ save(); render(); return; }
@@ -1198,6 +1216,7 @@ $('pane').addEventListener('click', (e) => {
   if (act === 'treset') { testReset(); render(); return; }
   if (act === 'xray') { S.xray = !S.xray; BIG3D = false; save(); render(); return; }
   if ((act === 'mnt_top' || act === 'mnt_in') && s) { snapU(); if (act === 'mnt_in') { if (s.panel !== 'inside') { s.top0 = s.panel; s.panel = 'inside'; } } else if (s.panel === 'inside') { s.panel = s.top0 && panels().indexOf(s.top0) > -1 ? s.top0 : defaultPanel(Object.assign({}, PP(s), { inside: false })); } if (problems(s).length) autoPlace(s); save(); render(); return; }
+  if (act && act.indexOf('pan_') === 0 && s) { const p = act.slice(4); if (panels().indexOf(p) > -1 && s.panel !== p) { snapU(); s.panel = p; autoPlace(s); S.tab[1] = p; save(); render(); } return; }
   if (act === 'swap' && s) { s.panel = s.panel === 'lid' ? 'base' : 'lid'; autoPlace(s); S.tab[1] = s.panel; save(); render(); return; }
   if (act === 'del' && s) { snapU(); S.items = S.items.filter((i) => i !== s && i.of !== s.id); sel = null; save(); render(); return; }
   
@@ -1675,8 +1694,8 @@ function playPaint(r) { if (!r || !r.ctl) return; const on = play3d();
     const O = r.oled, txt = String(TEST.text || 'Ready'); if (O.txt !== txt) { O.txt = txt; const x = O.cv2.getContext('2d'); x.fillStyle = '#06141a'; x.fillRect(0, 0, 256, 128); x.fillStyle = '#9ff0ff'; x.textAlign = 'center'; x.textBaseline = 'middle'; let fs = 44; do { x.font = '800 ' + fs + 'px -apple-system,Arial,sans-serif'; fs -= 2; } while (fs > 14 && x.measureText(txt).width > 236); x.fillText(txt, 128, 64); O.tex.needsUpdate = true; } }
   r.scrM.forEach((s) => { const mt = s.material, want = on && r.oled ? r.oled.tex : null; if (mt.map !== want) { mt.map = want; mt.emissiveMap = want; mt.color.setHex(want ? 0xffffff : 0x8fd3ff); mt.emissive.setHex(want ? 0xffffff : 0x16323f); mt.needsUpdate = true; } }); /* the virtual OLED shows what code.py would */
   r.leds.forEach((L) => { const lit = on && (L.ring ? TEST.ring || TEST.lamp : TEST.led || TEST.lamp); L.m.traverse((x) => { if (x.material && x.material.emissive) x.material.emissive.setHex(lit ? (L.ring ? 0xff2a2a : 0xff5030) : 0); }); }); }
-const xrayOn = () => !!S.xray && S.step === 1; /* Arrange, Inside view: the lid opens and the deck goes see-through */
-function ghost(o) { o.traverse((c) => { if (c.material) { c.material = c.material.clone(); c.material.transparent = true; c.material.opacity = 0.22; c.material.depthWrite = false; } }); }
+const xrayOn = () => !!S.xray && (S.step === 1 || (S.step === 0 && BIG3D && curTab() !== 'pins')); /* Arrange, Inside view: the lid opens and the deck goes see-through */
+function ghost(o) { o.traverse((c) => { if (c.material) { c.material = c.material.clone(); c.material.transparent = true; c.material.opacity = 0.3; c.material.depthWrite = false; } }); }
 function mesh(geos, color) { const grp = new THREE.Group(), mat = new THREE.MeshStandardMaterial({ color, roughness: .85, flatShading: true, side: THREE.DoubleSide }); geos.forEach((gg) => { gg.computeVertexNormals(); grp.add(new THREE.Mesh(gg, mat)); }); return grp; }
 const KEYXY = (c) => { const o = []; for (let j = 0; j < c.m; j++) for (let i = 0; i < c.n; i++) o.push([(i - (c.n - 1) / 2) * c.p, (j - (c.m - 1) / 2) * c.p]); return o; }; /* a keypad's key centers, from its middle */
 function standIn(P, x, y, rq, top) { // a simple 3D stand-in for what shows above the deck: screen glass, button caps, D-pad
@@ -1692,7 +1711,8 @@ function standIn(P, x, y, rq, top) { // a simple 3D stand-in for what shows abov
 // the part you picked (DESIGN) or pressed (PLAY) turns bright blue on the 3D case
 const BLUE = 0x2563eb;
 function blueSel(r) { const id = play3d() ? HL : sel != null ? sel : HL;
-  Object.keys(r.ctl || {}).forEach((k) => { const q = r.ctl[k]; if (!q.m) return; const on = +k === id;
+  const all = Object.assign({}, r.ctl || {}, r.ins || {}); Object.keys(r.pm || {}).forEach((k) => { all['p' + k] = r.pm[k]; });
+  Object.keys(all).forEach((k) => { const q = all[k]; if (!q.m) return; const on = k[0] === 'p' ? PSEL === +k.slice(1) && !play3d() : +k === id;
     q.m.traverse((x) => { const mt = x.material; if (!mt || !mt.color || r.scrM.includes(x)) return; if (!x.userData.bown) { x.material = mt.clone(); x.userData.bown = 1; x.userData.c0 = mt.color.getHex(); } if (x.userData.own == null && mt.emissive) { x.userData.own = 1; x.userData.e0 = mt.emissive.getHex(); }
       x.material.color.setHex(on ? BLUE : x.userData.c0); if (x.material.emissive) x.material.emissive.setHex(on ? 0x1d4ed8 : x.userData.e0 || 0); }); });
   if (r.head) r.head.scr.forEach((s) => s.bz.material.color.setHex(r.head.id === id ? BLUE : 0x1a1a1a)); }
@@ -1702,7 +1722,7 @@ function headPaint(src) { const r = T3; if (!r || !r.head || !src) return; const
 function setHighlight(r) {
   // yellow see-through box: where the part you just added (or picked) sits and how deep it goes
   if (r.hl) { r.hl.parent && r.hl.parent.remove(r.hl); r.hl.traverse((o) => { if (o.geometry) o.geometry.dispose(); }); r.hl = null; }
-  const id = S.step === 1 || S.step === 2 ? sel : S.step === 0 ? LAST : null, sl = id != null && r.slots[id]; if (!sl) return;
+  const id = PSEL != null && sel == null && S.step <= 1 ? 'p' + PSEL : S.step === 1 || S.step === 2 ? sel : S.step === 0 ? LAST : null, sl = id != null && r.slots[id]; if (!sl) return;
   const geo = new THREE.BoxGeometry(sl.w + 1, sl.h + 1, sl.dep), box = new THREE.Group();
   const fill = new THREE.Mesh(geo, new THREE.MeshBasicMaterial({ color: BLUE, transparent: true, opacity: 0.45, depthTest: false })), edge = new THREE.LineSegments(new THREE.EdgesGeometry(geo), new THREE.LineBasicMaterial({ color: BLUE, depthTest: false }));
   fill.renderOrder = 998; edge.renderOrder = 999; box.add(fill, edge); box.position.set(sl.x, sl.y, sl.z); sl.grp.add(box); r.hl = box;
@@ -1773,6 +1793,23 @@ function drawBed3d() {
   }
   r.controls.enabled = true; r.draw();
 }
+// X-Ray: the hardware itself, at its real place. Colors say what it is.
+function hwColor(it, P) { const t = it.type || ''; if (P.cat === 'brain') return 0x2f7a4b; if (P.charger) return 0x1f4fa0; if (P.cat === 'power') return 0xd9a030; if (P.cat === 'move' || /servo|sg90|motor/i.test(t)) return 0x7a4fd0; if (P.screen || P.isScreen) return 0x22262a; return 0x4a4a4a; }
+function insideMesh(it, P, x, y, rq) { const g = new THREE.Group(), bw = rq % 2 ? P.h : P.w, bh = rq % 2 ? P.w : P.h, rs = riserOf(it), z0 = R.F + rs, a = rq * Math.PI / 2, post = new THREE.MeshStandardMaterial({ color: 0xb8b2a4, roughness: .9 });
+  const b = new THREE.Mesh(new THREE.BoxGeometry(bw, bh, Math.max(1, P.depth)), new THREE.MeshStandardMaterial({ color: hwColor(it, P), roughness: .7 })); b.position.set(x, y, z0 + Math.max(1, P.depth) / 2); g.add(b);
+  if (rs > 0) { const holes = P.holes && P.holes.length ? P.holes.map(([hx, hy]) => [hx - P.w / 2, hy - P.h / 2]) : null, pts = holes || [[-1, -1], [1, -1], [1, 1], [-1, 1]].map(([sx, sy]) => [sx * (P.w / 2 - 2.5), sy * (P.h / 2 - 2.5)]);
+    pts.forEach(([u, v]) => { const c = new THREE.Mesh(new THREE.CylinderGeometry(holes ? 2.4 : 2, holes ? 2.4 : 2, rs, 16), post); c.rotation.x = Math.PI / 2; c.position.set(x + u * Math.cos(a) - v * Math.sin(a), y + u * Math.sin(a) + v * Math.cos(a), R.F + rs / 2); g.add(c); }); /* standoffs at its screw holes */
+    if (!holes) { const sl = new THREE.Mesh(new THREE.BoxGeometry(bw + 2, bh + 2, 1.2), post); sl.position.set(x, y, z0 - 0.6); g.add(sl); } } /* or a slate on 4 posts */
+  return g; }
+const WIRE_C = { press: 0xe53935, turn: 0xfbc02d, out: 0x1e88e5, sense: 0x43a047, move: 0x8e24aa, power: 0xd32f2f };
+function wirePreview(grp, slots, parts, top) { const br = S.items.find((i) => i.panel === 'inside' && PP(i) && PP(i).cat === 'brain' && slots[i.id] && slots[i.id].grp === grp); if (!br) return; const b = slots[br.id], bz = R.F + riserOf(br) + PP(br).depth;
+  parts.concat(S.items.filter((i) => i.panel === 'inside' && i !== br)).forEach((it) => { const P = PP(it), q = slots[it.id]; if (!P || !q || q.grp !== grp || P.board || it.of != null) return;
+    const ins = it.panel === 'inside', z = ins ? R.F + riserOf(it) + P.depth : top - R.LT - (P.depth || 0), mid = Math.max(bz, z) + 4, pts = [new THREE.Vector3(b.x, b.y, bz), new THREE.Vector3(b.x, b.y, mid), new THREE.Vector3(q.x, q.y, mid), new THREE.Vector3(q.x, q.y, z)];
+    grp.add(new THREE.Line(new THREE.BufferGeometry().setFromPoints(pts), new THREE.LineBasicMaterial({ color: WIRE_C[P.cat] || 0x9e9e9e }))); }); }
+const PLUG_C = { p_usbc: 0xa0a4aa, p_hdmi: 0xa0a4aa, p_minihdmi: 0xa0a4aa, p_microhdmi: 0xa0a4aa, p_jack: 0x2a2a2a, p_switch: 0x3a3a3a };
+function portPlugs(r, grp) { S.ports.forEach((p) => { if (!PLUG_C[p.kind]) return; const w = portAt(p); if (!w) return; const v = p.face === 'back' || p.face === 'front', N = PNORM[p.face], s0 = Math.min(...w.rects.map((q) => q.s0)), s1 = Math.max(...w.rects.map((q) => q.s1)), al = s1 - s0, ht = w.z1 - w.z0, dn = 7, mid = (s0 + s1) / 2, off = R.T + dn / 2 - 1;
+  const m = new THREE.Mesh(new THREE.BoxGeometry(v ? al : dn, v ? dn : al, ht), new THREE.MeshStandardMaterial({ color: portBlocked(p) ? 0xd94a3a : PLUG_C[p.kind], roughness: .4, metalness: .3 })), x = v ? mid : w.x - N[0] * off, y = v ? w.y - N[1] * off : mid, z = (w.z0 + w.z1) / 2;
+  m.position.set(x, y, z); grp.add(m); r.pm[p.id] = { m }; r.slots['p' + p.id] = { grp, x, y, z, w: v ? al : dn, h: v ? dn : al, dep: ht }; }); } /* the socket behind each wall opening */
 function draw3d(isMini) {
   const D3 = deco3d();
   if ($('v3').hidden || (!isMini && $('v3').classList.contains('mini'))) return; // the view changed before this frame ran
@@ -1782,17 +1819,17 @@ function draw3d(isMini) {
   // styling the lid's outside: show it closed, from above, the way people will see it
   const XR = xrayOn();
   const lidTop = !XR && S.step === 3 && curTab() !== 'colors' && (curFace() === 'lidout' || !!WALLF[curFace()]), DF = D3 ? decoFace() : '', OPEN = XR ? true : D3 || MV ? false : S.open && !lidTop; /* mounting: the lid stays shut, out of the way */
-  const r = setup3d(), d = geom(), h = d, key = JSON.stringify([buildKey(), DF, OPEN, logoImgKey(), S.style === 'face' ? JSON.stringify((S.xp || {}).ch || 0) : 0, MV ? S.xsel : 0, S.attachedParts.length ? S.xp : 0]);
+  const r = setup3d(), d = geom(), h = d, key = JSON.stringify([buildKey(), DF, OPEN, logoImgKey(), S.style === 'face' ? JSON.stringify((S.xp || {}).ch || 0) : 0, MV ? S.xsel : 0, S.attachedParts.length ? S.xp : 0, XR]);
   if (isMini && (!$('v3').classList.contains('mini') || $('v3').hidden)) return; // left the flat view before the timer ran
   const mode = isMini ? 'mini' : 'big';
   if (r.key !== key) {
-    r.key = key; r.slots = {}; r.ctl = {}; r.scrM = []; r.leds = []; r.hl = null; r.decoM = {}; r.decoRing = null; r.decoGrp = null; r.marks = [];
+    r.key = key; r.slots = {}; r.ctl = {}; r.scrM = []; r.leds = []; r.ins = {}; r.pm = {}; r.hl = null; r.decoM = {}; r.decoRing = null; r.decoGrp = null; r.marks = [];
     r.root.children.slice().forEach((c) => { r.root.remove(c); c.traverse((o) => { if (o.geometry) o.geometry.dispose(); }); });
     PAINTED = true; let hs; try { hs = halves(); } catch (e) { r.key = ''; throw e; /* do not keep an empty view: try again on the next draw */ } finally { PAINTED = false; }
     hs.forEach((x) => {
       const grp = new THREE.Group();
       const c1 = new THREE.Color(S.look.c1).getHex(), c2 = new THREE.Color(S.look.c2).getHex();
-      { const tm = mesh(G.layerGeos(x.built.tray, x.built.extra), c1); if (XR && x.key === 'lid') ghost(tm); grp.add(tm); }
+      { const tm = mesh(G.layerGeos(x.built.tray, x.built.extra), c1); if (XR) ghost(tm); grp.add(tm); } /* X-Ray: the whole shell turns see-through */
       if (x.built.frame) { const fm = mesh(G.layerGeos(x.built.frame), 0x2f4a6b); fm.position.z = -swapLedge(); grp.add(fm); } /* swap panels: the frame the insert sits in */ (x.built.plugs || []).forEach((pg) => grp.add(mesh(G.plugGeos(pg), c1)));
       { const dm = mesh(G.layerGeos(x.built.deck), x.key === 'lid' ? 0x2a2a2a : 0xc8412f); if (x.key === 'lid') dm.position.z = -0.1; /* the lid liner's inner face sat exactly on the screen frames: 0.1 mm apart, no flicker */ if (XR) ghost(dm); grp.add(dm); }
       if (x.built.inlay.length) grp.add(mesh(G.layerGeos(x.built.inlay.map((l) => ({ polys: l.polys, z0: l.z0 + (l.tag === 'inlayT' ? 0.02 : -0.02), z1: l.z1 + (l.tag === 'inlayT' ? 0.02 : -0.02) }))), c2));
@@ -1800,6 +1837,7 @@ function draw3d(isMini) {
       const hf = x.key === 'lid' ? (isClam() ? 'lid' : '') : x.key === homePanel() ? 'top' : ''; // the face reads dark, the arms and legs hang from their screws. One group each, so a piece can follow your finger.
       if (hf) { const tz = hf === 'lid' ? 0 : x.built.deckZ + R.LT; if (hf === decoFace()) { r.decoZ = tz; r.decoGrp = grp; r.decoUp = hf === 'lid' ? -1 : 1; }
         (S.deco || []).forEach((q) => { if (onFace(q) !== hf) return; const m = decoMesh(q, tz); m.position.set(q.x, q.y, 0); grp.add(m); r.decoM[q.id] = m; }); }
+      if (x.key === homePanel()) portPlugs(r, grp);
       if (x.key === homePanel()) { // parts mounted on the case, and while mounting: a dot on every spot, green free, red blocked
         S.attachedParts.forEach((m) => { if (m.face === 'lid') return; const w = mountAt(m); if (!w || !MOUNTABLE[m.partId]) return; const pm = mesh(mountGeos(m, false), mountBlocked(m) ? 0xd94a3a : 0x2f4a6b); pm.matrixAutoUpdate = false; pm.matrix.makeBasis(new THREE.Vector3(...w.B[0]), new THREE.Vector3(...w.B[1]), new THREE.Vector3(...w.B[2])).setPosition(...w.o); grp.add(pm); });
         if (MV && PORTS[S.xsel]) anchorsOf(pface()).forEach((a) => { const t = { kind: S.xsel, face: pface(), anchor: a }, w = portAt(t); if (!w) return; const why = portBlocked(t), N = PNORM[t.face], dot = new THREE.Mesh(new THREE.SphereGeometry(2.6, 14, 10), new THREE.MeshBasicMaterial({ color: why ? 0xc8412f : 0x2f9a5b }));
@@ -1820,7 +1858,8 @@ function draw3d(isMini) {
         const f = fp(it), ins = it.panel === 'inside', dep = ins ? P.depth + 2 : P.depth + (P.up || 0);
         r.slots[it.id] = { grp, x: px0, y: py0, z: ins ? R.F + riserOf(it) + P.depth / 2 : top - P.depth / 2 + (P.up || 0) / 2, w: f.w, h: f.h, dep };
         if (P.board) { const bw = rq % 2 ? P.h : P.w, bh = rq % 2 ? P.w : P.h, pl = new THREE.Mesh(new THREE.BoxGeometry(bw, bh, 1.6), new THREE.MeshStandardMaterial({ color: 0x2f7a4b })); pl.position.set(px0, py0, top - R.LT - (P.hang || 6) - 0.8); grp.add(pl); return; } /* her board, inside under the top */
-        if (ins) return;
+        if (ins) { const im = insideMesh(it, P, px0, py0, rq); grp.add(im); r.ins[it.id] = { m: im }; return; }
+        if (P.depth > 0) { const bw = rq % 2 ? f.h : f.w, bh = rq % 2 ? f.w : f.h, bd = new THREE.Mesh(new THREE.BoxGeometry(Math.max(2, Math.min(bw, P.w || bw)), Math.max(2, Math.min(bh, P.h || bh)), P.depth), new THREE.MeshStandardMaterial({ color: hwColor(it, P), roughness: .7 })); bd.position.set(px0, py0, top - R.LT - P.depth / 2 - 0.2); grp.add(bd); } /* its body under the top: seen in X-Ray */
         const m = standIn(P, px0, py0, rq, top); if (m) { grp.add(m); m.userData.z0 = m.position.z; m.children.forEach((ch) => { ch.userData.z0 = ch.position.z; }); }
         r.ctl[it.id] = { m, grp, x: px0, y: py0, top, up: P.up || 2, w: f.w, h: f.h, c: P.cut || {}, rq }; /* PLAY: tap it on the case */
         if (m && (P.screen || ((P.cut || {}).o === 'rect' && P.isScreen))) r.scrM.push(m); if (m && (it.type === 'led5' || it.type === 'ring12')) r.leds.push({ m, ring: it.type === 'ring12' });
@@ -1828,6 +1867,7 @@ function draw3d(isMini) {
         const a = rq * Math.PI / 2, ca = Math.cos(a), sa = Math.sin(a);
         (P.userCuts || []).forEach((u) => { const K = CZ.PARTS[u.kind] || {}, mm = standIn({ cut: u.cut, up: K.up, isScreen: u.kind === 'screen' }, px0 + u.x * ca - u.y * sa, py0 + u.x * sa + u.y * ca, rq, top); if (mm) grp.add(mm); });
       });
+      if (!lid) wirePreview(grp, r.slots, parts, top);
       if (x.key === 'lid' && DF === 'top') return; /* adding to the inside: the lid is out of the way */
       if (x.key === 'lid') {
         // place the lid: turn it 180 about z so its hinge edge faces the base, then fold it up about the hinge axis
