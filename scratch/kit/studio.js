@@ -107,6 +107,12 @@ function shuffleStyle(cur) {
 
 function it(title, price, tag, text) { return { id: rid(), title: title, price: price || '', tag: tag || '', text: text || '', images: [], buy: '', soldout: false }; }
 function tab(type, name, extra) { var t = { id: rid(), type: type, name: name || TYPES[type][0], intro: '', items: [] }; for (var k in extra) t[k] = extra[k]; return t; }
+var SELL = { stripe: ['Stripe', 'Buy', 'Stripe runs checkout, asks for the shipping address and emails the receipt. 2.9% + 30\u00a2 per US card.'],
+  amazon: ['Amazon', 'Buy on Amazon', 'Paste your Amazon product page link (KDP books work too).'],
+  lulu: ['Lulu', 'Buy on Lulu', 'Paste your Lulu bookstore link. Lulu prints and ships each order.'],
+  bandcamp: ['Bandcamp', 'Get on Bandcamp', 'Paste your Bandcamp track or album link. Bandcamp handles downloads and streams.'],
+  custom: ['Custom', '', 'Any https:// link works: a booking page, a preorder form, another shop.'] };
+var QSEC = [['grid', 'Shop / Books'], ['tracks', 'Music / Packs'], ['gallery', 'Gallery'], ['links', 'Links'], ['log', 'Log'], ['contact', 'Contact']];
 var SHIP = { currency: 'USD', shipping: 'Ships in 3 to 5 business days. US only for now.', returns: 'Unused items can come back within 30 days. Email us first.' };
 var PRESETS = {
   shop: function () { return { v: 1, base: 'shop', name: 'Corner Store', tagline: 'Small batch goods, made by hand.', notice: 'Free shipping on orders over $50', email: '', footer: '', domain: '', description: '', logo: '', shareImage: '',
@@ -202,6 +208,14 @@ var PRESETS = {
       tab('log', 'Events', { intro: 'Upcoming.', items: [lit('Board game night', today(-10), 'Twenty people, ten games, one host.'), lit('Gallery walk', today(-24), 'Look at art, talk about it, get a drink after.')] }),
       tab('page', 'How it works', { body: '# Today\nYou join the waitlist, we invite you to events.\n\n# Good to know\nThis site is a front door. Live profiles, matching and messages need a backend with accounts and a database, like Supabase or Cloudflare D1. A static site cannot keep people\'s private data safe on its own.' }),
       tab('contact', 'Contact', { body: 'Hosting in your city? Write to us.' })] }; },
+  bookstore: function () { var bk = function (t, p, tag, txt, sell) { var x = it(t, p, tag, txt); x.sell = sell; x.cta = SELL[sell][1]; return x; };
+    return { v: 1, base: 'shop', name: 'Small Press', tagline: 'Books and records, sold direct.', notice: 'Signed copies ship free in the US', email: '', footer: '', domain: '', description: '', logo: '', shareImage: '',
+    style: Object.assign({ nav: 'tabs' }, lookStyle('editorial,#f7f3ea,#1c1a17,#7a2e1f,sharp,comfy,left,grid,portrait,solid,normal,grain,plain,fade')),
+    shop: clone(SHIP),
+    tabs: [tab('grid', 'Books', { intro: 'Every title we print. Signed copies ship from us.', items: [bk('The Long Field', '18', 'Paperback', 'Paperback, 212 pages.\nISBN 978-0-000000-01-1\n\nA novel about one summer on a farm.', 'stripe'), bk('Night Notes', '24', 'Hardcover', 'Hardcover, 140 pages.\nISBN 978-0-000000-02-8\n\nPoems, written after midnight.', 'lulu'), bk('Field Guide Zine', '6', 'Zine', 'Stapled, 32 pages. Risograph.\nNo ISBN.', 'stripe'), bk('The Long Field (Kindle)', '7', 'Ebook', 'Ebook edition.\nISBN 978-0-000000-03-5', 'amazon')] }),
+      tab('tracks', 'Music', { intro: 'Tap play to hear it. Buy or stream the full record.', items: [bk('Side A', '1', 'Single', 'From the audiobook score. 3:40.', 'bandcamp'), bk('Reading Room', '9', 'Album', 'Eight instrumentals. Digital and cassette.', 'bandcamp')] }),
+      tab('page', 'About', { body: 'Who you are and what you publish.\n\n# How we print\nSmall runs, real paper, no middlemen.' }),
+      tab('contact', 'Contact', { body: 'Bookshops, readings, review copies. We answer every email.' })] }; },
   blank: function () { return { v: 1, base: 'shop', name: '', tagline: '', notice: '', email: '', footer: '', domain: '', description: '', logo: '', shareImage: '',
     style: { nav: 'tabs', motion: 'fade', font: 'clean', bg: '#ffffff', text: '#111111', accent: '#111111', corner: 'soft', density: 'comfy', header: 'left', layout: 'grid', photo: 'square' },
     shop: clone(SHIP), tabs: [tab('home', 'Home', { headline: 'Hello', button: '', buttonTo: null })] }; }
@@ -209,7 +223,7 @@ var PRESETS = {
 
 // starter categories per kind of site: offered as one-tap tags on every item
 var CATS = { shop: ['Tees', 'Prints', 'Stickers', 'New'], archive: ['Photo', 'Type', 'Sound', 'Object'], archiveProducer: ['Beat', 'Sample pack', 'Merch'], archiveLog: ['Progress', 'Problem', 'Done'],
-  app: ['New', 'Popular', 'Free'], music: ['Single', 'Album', 'Merch', 'Vinyl'], food: ['Mains', 'Sides', 'Drinks', 'Sweets'], event: ['Tickets', 'Merch', 'Vendors'], software: ['Core', 'Teams', 'Plan'], tool: ['Template', 'Export'], community: ['Meetup', 'Online'], dating: ['Event'], links: ['Featured'], blank: ['New'] };
+  app: ['New', 'Popular', 'Free'], music: ['Single', 'Album', 'Merch', 'Vinyl'], food: ['Mains', 'Sides', 'Drinks', 'Sweets'], event: ['Tickets', 'Merch', 'Vendors'], software: ['Core', 'Teams', 'Plan'], tool: ['Template', 'Export'], community: ['Meetup', 'Online'], bookstore: ['Paperback', 'Hardcover', 'Ebook', 'Zine', 'Single', 'Album'], dating: ['Event'], links: ['Featured'], blank: ['New'] };
 Object.keys(CATS).forEach(function (k) { var f = PRESETS[k]; if (f) PRESETS[k] = function () { var d = f(); d.cats = CATS[k].slice(); return d; }; });
 var FUL = [['', 'Not set'], ['ready', 'Ready to ship'], ['store', 'Made in store'], ['custom', 'Custom order'], ['digital', 'Digital']];
 
@@ -478,7 +492,11 @@ function pPages() {
       '<button type="button" class="ic" data-act="down" data-i="' + i + '" aria-label="Move down"' + (i < D.tabs.length - 1 ? '' : ' disabled') + '>&darr;</button>' +
       '<button type="button" class="ic" data-act="del" data-i="' + i + '" aria-label="Delete page">&times;</button></div>' + (k ? '<ul class="ly-kids">' + k + '</ul>' : '') + '</li>';
   }).join('');
-  return '<p class="lede">Tap a page or anything in it to fill it in. You can also tap things right in the preview.</p><ul class="lys">' + rows + '</ul>' +
+  var qs = '<div class="qsec" role="group" aria-label="Quick sections"><span class="lab">Quick sections</span><div class="ch">' + QSEC.map(function (q) {
+    var on = D.tabs.some(function (x) { return x.type === q[0] && !x.hidden; });
+    return '<button type="button" class="c qs' + (on ? ' on' : '') + '" data-act="qsec" data-v="' + q[0] + '" aria-pressed="' + on + '">' + (on ? '✓ ' : '+ ') + q[1] + '</button>';
+  }).join('') + '</div></div>';
+  return '<p class="lede">Tap a page or anything in it to fill it in. You can also tap things right in the preview.</p>' + qs + '<ul class="lys">' + rows + '</ul>' +
     '<button type="button" class="add" data-act="pane" data-v="add">+ Add a page</button>';
 }
 
@@ -543,12 +561,36 @@ function pItem() {
   return top + audio + pics +
     fld('Name', P + '.title') +
     fld('Price', P + '.price', { mode: 'decimal', ph: 'Leave empty if not for sale' }) +
-    fld('Buy link', P + '.buy', { type: 'url', mode: 'url', ph: 'https://buy.stripe.com/...', help: bad ? '<b class="warn">Links must start with https://</b>' : 'Paste a Stripe Payment Link. Stripe runs the checkout, asks for the shipping address and emails the receipt. Any link works too, like a booking or a preorder form.' }) +
+    sellf(x, P, bad) +
     fld('Button words', P + '.cta', { ph: x.price ? 'Buy' : 'Open' }) +
     tagsf(t, x, P) + (t.type === 'grid' ? fulf(x) + sizef(x) : '') + videof(P + '.video') +
     (t.type === 'grid' ? fld('Badge', P + '.badge', { ph: 'New, Last one, Preorder', max: 16 }) : '') +
     fld(t.type === 'tracks' ? 'Details' : 'Describe it', P + '.text', { area: true, rows: 6, help: t.type === 'tracks' ? 'BPM, key, what is in the pack, lease terms.' : 'Size, material, how it is made. Blank line for a new paragraph.' }) +
     chk('Sold out', P + '.soldout') + del;
+}
+
+function sellf(x, P, bad) {
+  var sv = SELL[x.sell] ? x.sell : 'stripe', ph = { stripe: 'https://buy.stripe.com/...', amazon: 'https://www.amazon.com/dp/...', lulu: 'https://www.lulu.com/shop/...', bandcamp: 'https://you.bandcamp.com/...', custom: 'https://' }[sv];
+  var h = '<div class="f"><span class="lab">Where it sells</span><div class="ch sell">' + Object.keys(SELL).map(function (k) { return '<button type="button" class="c' + (sv === k ? ' on' : '') + '" data-act="sell" data-v="' + k + '" aria-pressed="' + (sv === k) + '">' + SELL[k][0] + '</button>'; }).join('') + '</div></div>';
+  h += fld('Buy link', P + '.buy', { type: 'url', mode: 'url', ph: ph, help: bad ? '<b class="warn">Links must start with https://</b>' : SELL[sv][2] });
+  if (sv === 'stripe') h += '<div class="stl"><div class="ch"><a class="sm" href="https://dashboard.stripe.com/payment-links/create" target="_blank" rel="noopener">Create Stripe Link ↗</a><button type="button" class="sm" data-act="genlink">Generate 1-Click Link</button></div>' +
+    '<ol class="help"><li>Enter title &amp; price</li><li>Turn on Shipping Address</li><li>Paste link here</li></ol><p class="help" id="glmsg" aria-live="polite"></p></div>';
+  return h;
+}
+var SETUP_NOTE = '<b>One-time setup.</b> 1-Click links work on your live site (yoursite/admin.html) once you add <code>STRIPE_SECRET_KEY</code> in Cloudflare: your project, Settings, Variables and Secrets. Deploy with Connect to Git or Wrangler so the <code>functions</code> folder runs. Until then, use Create Stripe Link ↗.';
+function genLink(x) {
+  var m = $('#glmsg'), say = function (h) { if (m) m.innerHTML = h; };
+  if (!x.title || !(parseFloat(x.price) > 0)) { say('<b class="warn">Add a name and a price first.</b>'); return; }
+  if (/\/scratch\/studio\.html$/.test(location.pathname)) { say(SETUP_NOTE); return; } /* the nociv.co studio has no Function: only the deployed site does */
+  say('Making your link…');
+  fetch('/api/create-payment-link', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ title: x.title, price: x.price, currency: (D.shop && D.shop.currency) || 'USD' }) })
+    .then(function (r) { return r.json().catch(function () { return { error: 'setup' }; }).then(function (j) { j._s = r.status; return j; }); })
+    .then(function (j) {
+      if (j.url) { x.buy = j.url; x.sell = 'stripe'; save(); draw(); var n = $('#glmsg'); if (n) n.textContent = 'Done. Your Stripe link is in Buy link.'; return; }
+      throw j;
+    }).catch(function (j) {
+      say(j && j.error && j.error !== 'setup' && j._s !== 404 ? '<b class="warn">' + esc(j.error) + '</b>' : SETUP_NOTE);
+    });
 }
 
 function tagsf(t, x, P) {
@@ -633,14 +675,14 @@ function adminTest() {
 }
 function pPublish() {
   var cs = checks(), bad = cs.filter(function (x) { return !x.ok; }).length;
-  return '<h2>Publish</h2><ol class="roadmap" aria-label="How publishing works"><li><b>1</b>Download file</li><li><b>2</b>Drop onto Cloudflare (free)</li><li><b>3</b>Your link is live</li></ol><ul class="checks">' + cs.map(function (x) { return '<li class="' + (x.ok ? 'ok' : 'bad') + '"><span>' + (x.ok ? '✓' : '!') + '</span>' + x.t + (x.ok ? '' : ' <button type="button" class="sm" data-act="fix" data-v="' + x.go.p + '"' + (x.go.i != null ? ' data-i="' + x.go.i + '"' : '') + (x.go.j != null ? ' data-j="' + x.go.j + '"' : '') + (x.go.f ? ' data-f="' + x.go.f + '"' : '') + '>Fix</button>') + '</li>'; }).join('') + '</ul>' +
+  return '<h2>Publish</h2><ol class="roadmap" aria-label="How publishing works"><li><b>1</b>Download file</li><li><b>2</b>Drop onto Cloudflare (free)</li><li><b>3</b>Your link is live</li></ol><div class="ch golinks"><a class="sm" href="https://dash.cloudflare.com/sign-up" target="_blank" rel="noopener">Open Cloudflare (Free Hosting) ↗</a><a class="sm" href="https://dashboard.stripe.com/register" target="_blank" rel="noopener">Open Stripe (Get Paid) ↗</a></div><ul class="checks">' + cs.map(function (x) { return '<li class="' + (x.ok ? 'ok' : 'bad') + '"><span>' + (x.ok ? '✓' : '!') + '</span>' + x.t + (x.ok ? '' : ' <button type="button" class="sm" data-act="fix" data-v="' + x.go.p + '"' + (x.go.i != null ? ' data-i="' + x.go.i + '"' : '') + (x.go.j != null ? ' data-j="' + x.go.j + '"' : '') + (x.go.f ? ' data-f="' + x.go.f + '"' : '') + '>Fix</button>') + '</li>'; }).join('') + '</ul>' +
     (bad ? '<p class="help">You can still download. These just make it better.</p>' : '') +
     '<button type="button" class="big" data-act="zip">Download Starter Kit (.zip)</button><p class="help" id="zipmsg"></p>' +
     '<p class="help"><b>Ready to use now.</b> Your layout, look and pages work the moment you upload it. Add real photos and videos later from your own domain.</p>' +
     '<button type="button" class="sm wide" data-act="code">View and add code</button>' +
     '<button type="button" class="sm wide" data-act="admintest" aria-expanded="' + adminOpen + '">' + (adminOpen ? 'Close the Admin test' : 'Test your Admin') + '</button>' + (adminOpen ? adminTest() : '') +
-    '<div class="steps"><h3>Then put it online. Free.</h3><ol><li>Make a free Cloudflare account.</li><li>Workers and Pages, Create, Pages, Upload assets. Pick the zip. Deploy.</li><li>You get a free link like yourname.pages.dev. Done.</li><li>Optional: your own domain (about $11 a year), and Stripe buy links if you sell.</li></ol></div>' +
-    '<details class="fine"><summary>Selling with Stripe</summary><ol class="help"><li>Make a Stripe account and add your bank.</li><li>Payment Links, New. Add the product and price.</li><li>Turn on collecting the shipping address and add shipping rates.</li><li>Copy the link and paste it in the item\'s Buy link.</li></ol><p class="help">Stripe charges 2.9% + 30&cent; per US card and emails you and the buyer on every sale.</p></details>' +
+    '<div class="steps"><h3>Then put it online. Free.</h3><ol><li><a href="https://dash.cloudflare.com/sign-up" target="_blank" rel="noopener">Make a free Cloudflare account ↗</a></li><li>Workers and Pages, Create, Pages, Upload assets. Pick the zip. Deploy.</li><li>You get a free link like yourname.pages.dev. Done.</li><li>Optional: your own domain (about $11 a year), and Stripe buy links if you sell.</li></ol></div>' +
+    '<details class="fine"><summary>Selling with Stripe</summary><ol class="help"><li><a href="https://dashboard.stripe.com/register" target="_blank" rel="noopener">Make a Stripe account ↗</a> and add your bank.</li><li><a href="https://dashboard.stripe.com/payment-links/create" target="_blank" rel="noopener">Payment Links, New ↗</a>. Add the product and price.</li><li>Turn on collecting the shipping address and add shipping rates.</li><li>Copy the link and paste it in the item\'s Buy link.</li></ol><p class="help">Stripe charges 2.9% + 30&cent; per US card and emails you and the buyer on every sale.</p></details>' +
     '<details class="fine"><summary>Using GitHub instead</summary><ol class="help"><li>Unzip your site. You need the folder, not the zip.</li><li>On github.com tap New repository. Name it. Leave it Public.</li><li>Tap uploading an existing file. Drag in everything inside your folder. Commit changes.</li><li>Settings, Pages. Under Branch pick main and save. Your link is yourname.github.io/the-repo-name.</li></ol><p class="help">Free GitHub Pages needs a public repository. Want it private? Keep it private on GitHub and pick Connect to Git in Cloudflare instead of Upload assets. Pick this at the start: a project made from a zip cannot switch later.</p></details>' +
     '<div class="steps"><h3>To change it later</h3><ol><li>Open your site address + /admin.html. Your live site loads in.</li><li>Edit.</li><li>Download my site again.</li><li>In Cloudflare: your project, Create deployment, pick the new zip.</li></ol><p class="help">Your live site only changes when you deploy. Using GitHub instead? See below.</p></div>' +
     '<h3>Share your look</h3><p class="help">A link with your colors, type, menu, motion and page layout. Never your words, photos, prices or email. Nothing is stored anywhere, it all rides in the link. Whoever opens it starts their own site from your look, and their footer credits you.</p><button type="button" class="sm wide" data-act="remix">Copy my remix link</button><p class="help" id="remixMsg"></p>' +
@@ -782,6 +824,7 @@ function buildZip() {
   files.push({ name: 'index.html', data: enc.encode(html) }, { name: '404.html', data: enc.encode(html) },
     { name: 'site.json', data: enc.encode(JSON.stringify(json, null, 2)) }, { name: 'README.txt', data: enc.encode(README) },
     { name: 'LICENSE.txt', data: enc.encode(LICENSE) }, { name: 'robots.txt', data: enc.encode('User-agent: *\nDisallow: /admin.html\nDisallow: /preview.html\n') });
+  files.push({ name: 'functions/api/create-payment-link.js', data: enc.encode(PAYFN) });
   if (!D.logo) files.push({ name: 'favicon.svg', data: enc.encode(faviconSvg()) });
   if (D.enablePwa) files.push({ name: 'manifest.webmanifest', data: enc.encode(manifest()) }, { name: 'sw.js', data: enc.encode(SW) });
   var kit = [['kit/site.js', 'kit/site.js'], ['kit/site.css', 'kit/site.css'], ['kit/studio.js', 'kit/studio.js'], ['kit/studio.css', 'kit/studio.css'], ['preview.html', 'preview.html'], ['admin.html', self]].concat(fontFiles());
@@ -791,6 +834,33 @@ function buildZip() {
   });
   return Promise.all(jobs).then(function () { return makeZip(files); });
 }
+var PAYFN = [
+'// Cloudflare Pages Function: POST /api/create-payment-link  { title, price, currency }',
+'// Add STRIPE_SECRET_KEY in Cloudflare: your project, Settings, Variables and Secrets.',
+'// Optional: SHIP_COUNTRIES (e.g. "US,CA,GB") and LINK_KEY (then send it as the X-Link-Key header).',
+'export async function onRequestPost({ request, env }) {',
+'  const out = (o, s) => new Response(JSON.stringify(o), { status: s || 200, headers: { "Content-Type": "application/json" } });',
+'  if (!env.STRIPE_SECRET_KEY) return out({ error: "setup" }, 501);',
+'  const origin = request.headers.get("Origin");',
+'  if (origin && new URL(origin).host !== new URL(request.url).host) return out({ error: "Not allowed from another site." }, 403);',
+'  if (env.LINK_KEY && request.headers.get("X-Link-Key") !== env.LINK_KEY) return out({ error: "Wrong link key." }, 401);',
+'  let b; try { b = await request.json(); } catch (e) { return out({ error: "Send JSON." }, 400); }',
+'  const title = String(b.title || "").trim().slice(0, 250), cents = Math.round(parseFloat(b.price) * 100), cur = String(b.currency || "USD").toLowerCase();',
+'  if (!title || !(cents > 0)) return out({ error: "Add a name and a price first." }, 400);',
+'  const stripe = async (path, form) => {',
+'    const r = await fetch("https://api.stripe.com/v1/" + path, { method: "POST", headers: { Authorization: "Bearer " + env.STRIPE_SECRET_KEY, "Content-Type": "application/x-www-form-urlencoded" }, body: new URLSearchParams(form) });',
+'    const j = await r.json(); if (!r.ok) throw new Error((j.error && j.error.message) || "Stripe said no."); return j;',
+'  };',
+'  try {',
+'    const product = await stripe("products", { name: title });',
+'    const price = await stripe("prices", { product: product.id, unit_amount: String(cents), currency: cur });',
+'    const form = { "line_items[0][price]": price.id, "line_items[0][quantity]": "1" };',
+'    String(env.SHIP_COUNTRIES || "US").split(",").map(c => c.trim().toUpperCase()).filter(Boolean).forEach((c, i) => { form["shipping_address_collection[allowed_countries][" + i + "]"] = c; });',
+'    const link = await stripe("payment_links", form);',
+'    return out({ url: link.url });',
+'  } catch (e) { return out({ error: e.message }, 502); }',
+'}',
+''].join('\n');
 function download(blob, name) {
   var a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = name;
   document.body.appendChild(a); a.click(); setTimeout(function () { URL.revokeObjectURL(a.href); a.remove(); }, 4000);
@@ -863,6 +933,12 @@ function onAct(b) {
       if (a === 'tagnew' && D.cats && D.cats.indexOf(tg) < 0) D.cats.push(tg); save(); break;
     case 'tagdel': var ty = t.items[editItem]; ty.tags = (ty.tags || []).filter(function (g) { return g !== b.dataset.v; }); save(); break;
     case 'ful': t.items[editItem].ful = b.dataset.v; save(); break;
+    case 'sell': var sx = t.items[editItem], old = SELL[sx.sell] ? SELL[sx.sell][1] : ''; if (!sx.cta || sx.cta === old || sx.cta === 'Buy') sx.cta = SELL[b.dataset.v][1]; sx.sell = b.dataset.v; save(); break;
+    case 'genlink': genLink(t.items[editItem]); return;
+    case 'qsec': var qv = b.dataset.v, qt = D.tabs.filter(function (x) { return x.type === qv; }), qvis = qt.filter(function (x) { return !x.hidden; });
+      if (qvis.length) qvis.forEach(function (x) { x.hidden = true; }); else if (qt.length) qt[0].hidden = false;
+      else { var qn = tab(qv, (QSEC.filter(function (q) { return q[0] === qv; })[0][1]).split(' / ')[0]); if (qv === 'grid' || qv === 'tracks') qn.items = [it(qv === 'tracks' ? 'New track' : 'New item')]; var ci = D.tabs.map(function (x) { return x.type; }).lastIndexOf('contact'); if (qv !== 'contact' && ci > -1) D.tabs.splice(ci, 0, qn); else D.tabs.push(qn); }
+      save(); break;
     case 'isz': t.items[editItem].size = b.dataset.v; save(); break;
     case 'admintest': adminOpen = !adminOpen; break;
     case 'view': D[b.dataset.k] = b.dataset.v; save(); break;
