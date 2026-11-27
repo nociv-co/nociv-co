@@ -2480,7 +2480,7 @@ function portRects(kind) { // the openings: along the wall from the spot (u) and
   const top = Math.min(dz - 2.5, F + 15); return [-8, -4, 0, 4, 8].map((u) => ({ u0: u - 1 - c, u1: u + 1 + c, z0: F + 3, z1: Math.max(F + 6, top) }));
 }
 function portAt(p) { const g0 = R.T + R.CLR + 1, s = g0 + ((p.anchor || { u: 0 }).u + 0.5) * 20 + ((p.anchor || {}).du || 0), w = G.wallAt(outline(), p.face, s); if (!w) return null;
-  const rects = (p.kind === 'p_shroud' ? shroudRects(p) : portRects(p.kind)).map((q) => ({ s0: s + q.u0, s1: s + q.u1, z0: q.z0, z1: q.z1 })), z0 = Math.min(...rects.map((q) => q.z0)), z1 = Math.max(...rects.map((q) => q.z1));
+  const dz = p.kind === 'p_shroud' ? 0 : (p.anchor || {}).dz || 0, rects = (p.kind === 'p_shroud' ? shroudRects(p) : portRects(p.kind)).map((q) => ({ s0: s + q.u0, s1: s + q.u1, z0: +(q.z0 + dz).toFixed(3), z1: +(q.z1 + dz).toFixed(3) })), z0 = Math.min(...rects.map((q) => q.z0)), z1 = Math.max(...rects.map((q) => q.z1));
   return { face: p.face, x: w[0], y: w[1], s, rects, z0, z1, o: [w[0], w[1], (z0 + z1) / 2], step: !!STEPPED[p.kind], kind: p.kind }; }
 function portFace(p) { const w = portAt(p); return w ? w.rects.map((q) => G.rect(q.s0, q.z0, q.s1, q.z1)) : []; } /* in (along the wall, height), like a mount plate */
 function portBlocked(p) {
@@ -2492,7 +2492,7 @@ function portBlocked(p) {
   const zone = [G.mountRect({ face: p.face, x: v ? (s0 + s1) / 2 : w.x, y: v ? w.y : (s0 + s1) / 2 }, (s1 - s0) / 2 + 1.5, R.T + 6, 0)], hit = (polys) => G.area(G.inter(zone, polys)) > 0.3, dz = h.H - R.LT - h.recess;
   if (isClam() && S.magnets && G.magnetSpots(outline()).some(([x, y]) => hit([G.circle(x, y, R.MAG / 2 + 2.6, 24)]))) return 'magnet';
   if (posts().some(([x, y]) => hit([G.circle(x, y, R.POSTR + 1, 20)]))) return 'deck screw';
-  if (S.items.some((it) => { const P = PP(it); if (!P || !(it.panel === 'inside' || it.panel === homePanel()) || (P.jack && p.kind === 'p_jack') || (P.sw && p.kind === 'p_switch')) return false; /* the jack and the slide switch sit at their own holes */ const zr = it.panel === 'inside' ? [R.F, R.F + riserOf(it) + (P.depth || 0)] : [dz - (P.depth || 0), dz]; return zr[0] < w.z1 && zr[1] > w.z0 && hit(rectPoly(fp(it))); })) return 'electronics';
+  if (S.items.some((it) => { const P = PP(it); if (!P || !(it.panel === 'inside' || it.panel === homePanel()) || (P.jack && p.kind === 'p_jack') || (P.sw && p.kind === 'p_switch') || (p.auto === 'usb' && P.cat === 'brain')) return false; /* the jack and the slide switch sit at their own holes */ const zr = it.panel === 'inside' ? [R.F, R.F + riserOf(it) + (P.depth || 0)] : [dz - (P.depth || 0), dz]; return zr[0] < w.z1 && zr[1] > w.z0 && hit(rectPoly(fp(it))); })) return 'electronics';
   const pf = portFace(p);
   if (S.ports.some((q) => q !== p && q.id !== p.id && q.face === p.face && G.area(G.inter(G.offset(pf, 1), portFace(q))) > 0.1)) return 'taken';
   if (S.attachedParts.some((m) => m.face === p.face && MOUNTABLE[m.partId] && (() => { const mw = mountAt(m); return mw && G.area(G.inter(G.offset(pf, 1), [plateFace(m, mw)])) > 0.1; })())) return 'taken';
@@ -2968,7 +2968,8 @@ function presetLinksHtml() { const r = recipe(); if (!r) return '';
 const SOUNDOUT = ['speaker28', 'jack35', 'i2sdac'], AVRB = ['uno', 'nano', 'promicro'], ANALOG = ['pot', 'slider', 'thumb'];
 const brainItem = () => S.items.find((i) => PP(i) && PP(i).cat === 'brain');
 const hasT = (t) => S.items.some((i) => i.type === t);
-const clipCount = () => S.items.reduce((n, i) => n + (BTNS.indexOf(i.type) > -1 && !i.step ? 1 : i.type === 'keypad44' ? 12 : i.type === 'dpad' ? 4 : 0), 0); /* every pad that can play its own clip */
+const NOCLIP = ['loop', 'echo', 'spiral', 'phaser', 'beat', 'wet', 'step', 'note', 'macro'];
+const clipCount = () => S.items.reduce((n, i) => n + (BTNS.indexOf(i.type) > -1 && !i.step && NOCLIP.indexOf(i.action) < 0 ? 1 : i.type === 'keypad44' ? 12 : i.type === 'dpad' ? 4 : 0), 0); /* every pad that can play its own clip */
 const analogUsed = () => S.items.filter((i) => ANALOG.indexOf(i.type) > -1).length;
 function copilot() {
   const bi = brainInfo(); if (!bi) return [];
@@ -3109,14 +3110,28 @@ function placeRecipe(r) { // a starter's own body size, parts, layout, mounts an
   S.attachedParts = []; S.ports = []; MPC = {};
   (r.mounts || []).forEach((q) => { const m = { id: S.attachedParts.length + 1, partId: q.partId, face: q.face, anchor: Object.assign({ v: 0 }, q.anchor), mountType: q.mountType }; if (mountBlocked(m)) return; const pts = mountPoints(m); m.anchors = [m.anchor]; if (pts.length > 1) { const ax = m.face === 'left' || m.face === 'right' ? 1 : 0; m.anchors.push({ u: m.anchor.u + Math.round(pts[0].B[0][ax] * mp(m).pitch / 20), v: m.anchor.v }); } S.attachedParts.push(m); });
   (r.ports || []).forEach((q) => { const p = { id: S.ports.length + 1, kind: q.kind, face: q.face, anchor: { u: q.u, v: 0 } }; if (!portBlocked(p)) S.ports.push(p); });
-  const br = S.items.find((i) => i.panel === 'inside' && PP(i) && PP(i).cat === 'brain'); if (br && !hasBattery() && !autoPorts().length) snapBrain(br); /* its USB end flush with a wall, in its stepped port */
+  edgeLock();
 }
 // Reset layout: the starter's (or the shape's) own part spots, edge-locked port and default parts. Colors, logos, printer and the rest of the build stay.
+const k0 = (it) => USBK[it.type];
+function edgeLock() { // the brain's USB end flush with a wall in its stepped port; a brain on the top (CYD) gets a stepped port at its short end
+  if (isPanel() || hasBattery()) return; const br = S.items.find((i) => i.of == null && PP(i) && PP(i).cat === 'brain'); if (!br) return; const P = PP(br), k = USBK[br.type];
+  if (br.panel === 'inside') { if (autoPorts().length) return; snapBrain(br); if (autoPorts().length) return; /* the nearest wall was full: make room, then try again */
+    const b = G.bbox(outline()), cx = (b.x0 + b.x1) / 2, cy = (b.y0 + b.y1) / 2, m = R.T + 0.9, hw = P.w / 2, x0 = br.x, y0 = br.y, r0 = br.r || 0, others = S.items.filter((i) => i !== br && i.panel === 'inside' && i.of == null);
+    const spot = (f, k) => (f === 'left' ? [0, b.x0 + m + k + hw, cy] : f === 'right' ? [2, b.x1 - m - k - hw, cy] : f === 'front' ? [1, cx, b.y0 + m + k + hw] : [3, cx, b.y1 - m - k - hw]);
+    for (const f of ['left', 'right', 'front', 'back'].filter((x) => x !== hingeFace())) for (const k of [0, 0.8, 1.6, 2.4]) { /* a round or curved wall: on the centre line, a little in from the flat point */
+      const [r, x, y] = spot(f, k); br.r = r; br.x = x; br.y = y; if (problems(br).filter((q) => !/^on top of|under /.test(q)).length || !wallPortOf(br, k0(br))) continue;
+      others.filter((i) => problems(i).length).forEach((i) => { i.x = -999; i.y = -999; }); others.filter((i) => i.x === -999).forEach((i) => autoPlace(i)); if (!problems(br).length) return; }
+    br.x = x0; br.y = y0; br.r = r0; return; }
+  if (!k || S.ports.some((p) => p.auto === 'usb')) return; const d = dims(), odd = (br.r || 0) % 2, ends = odd ? [['front', br.x, br.y - P.w / 2], ['back', br.x, d.D - br.y - P.w / 2]] : [['left', br.y, br.x - P.w / 2], ['right', br.y, d.W - br.x - P.w / 2]];
+  ends.sort((a, b) => a[2] - b[2]); const hf = hingeFace(), id = S.ports.reduce((q, x) => Math.max(q, +x.id || 0), 0) + 1, dz = geom().H - R.LT - geom().recess - (P.depth || 0) + 2 - (R.F + 3 + PBORE[k][1] / 2);
+  for (const [face, sAt] of ends) { if (face === hf) continue; const g0 = R.T + R.CLR + 1, p = { id, kind: k, face, auto: 'usb', anchor: { u: Math.round((sAt - g0) / 20 - 0.5), v: 0, du: 0, dz } }; p.anchor.du = +(sAt - (g0 + (p.anchor.u + 0.5) * 20)).toFixed(2); if (!portBlocked(p)) { S.ports.push(p); return; } }
+}
 function resetLayout() {
   if (isPanel()) return; snapU(); const r = recipe(); sel = null; LAST = null; PSEL = null;
   if (r) placeRecipe(r);
-  else { const z = SIZES[S.style]; if (z) { S.cols = z[0]; S.rows = z[1]; } S.xw = S.xd = 0; S.add = 0; reflow(); S.items.forEach((i) => { i.x = -999; i.y = -999; }); fitAll(); keepInside();
-    const br = S.items.find((i) => i.panel === 'inside' && PP(i) && PP(i).cat === 'brain'); if (br && !hasBattery()) snapBrain(br); }
+  else { S.ports = S.ports.filter((p) => p.auto !== 'usb'); const z = SIZES[S.style]; if (z) { S.cols = z[0]; S.rows = z[1]; } S.xw = S.xd = 0; S.add = 0; reflow(); S.items.forEach((i) => { i.x = -999; i.y = -999; }); fitAll(); keepInside();
+    edgeLock(); }
   save(); render(); tag('Layout reset: ' + (r ? r.name + ' as it was made' : 'every part back in its spot') + (allProblems().length ? '. Something still overlaps: see Arrange.' : '.'));
 }
 const recipeCost = (r) => r.parts.reduce((a, [t, n]) => a + ((CZ.PARTS[t] && CZ.PARTS[t].price) || 0) * n, 0);
@@ -3733,7 +3748,7 @@ function tryMake() { const T = TRY(), pr = tPreset(), btns = T.pads.length, whee
   const mk = (t, n) => { for (let k = 0; k < n; k++) if (CZ.PARTS[t]) S.items.push({ id: ++uid, type: t, panel: defaultPanel(CZ.PARTS[t]), x: -999, y: -999, r: 0 }); };
   const needAdc = wheel ? 0 : T.knobs.length, brain = needAdc > 3 ? 'esp32' : pr.brain; /* the Pico has 3 analog pins: more knobs, a brain with more */
   mk(brain, 1); mk(pr.pad, btns); mk(wheel ? 'encoder' : 'pot', T.knobs.length); if (pr.screen) mk('oled096', 1); if (pr.speaker || T.pads.some((id) => !/^(mac|tm):/.test(id))) mk('speaker28', 1);
-  fitAll(); keepInside(); if (S.beh === 'timer') TW().min = kv('minutes');
+  fitAll(); keepInside(); edgeLock(); if (S.beh === 'timer') TW().min = kv('minutes');
   actsFill(true); const B = S.items.filter((i) => i.type === pr.pad), K = S.items.filter((i) => i.type === 'pot' || i.type === 'encoder');
   B.forEach((it, i) => { const id = T.pads[i] || ''; if (/^fx:/.test(id)) it.action = id.slice(3); else if (/^mac:/.test(id)) it.action = 'macro'; else if (pr.fn === 'synth') it.action = 'note'; });
   K.forEach((it, i) => { const k = T.knobs[i]; if (k === 'beat' || k === 'wet') it.action = k; });
@@ -3747,7 +3762,7 @@ $('rlay').addEventListener('click', (e) => { e.stopPropagation(); resetLayout();
 CZ.audit = () => { const w = wiring(), br = S.items.find((i) => PP(i) && PP(i).cat === 'brain'); let code = '', err = '', pf = [];
   try { pf = preflight(w, BRDX()); } catch (e) { pf = ['preflight: ' + e.message]; }
   try { code = codeFor(w, summaryLine(), recipeFn(), BRDX(), TW()).text || ''; } catch (e) { err = e.message; }
-  return { recipe: S.recipe, style: S.style, items: S.items.map((i) => i.type), probs: allProblems().map((x) => label(x.it) + ': ' + x.list.join(', ')), pins: w.problems, preflight: pf, brain: br ? br.type : null, battery: hasBattery(), autoPorts: autoPorts().map((q) => q.kind + '@' + q.face), legacyPort: !!(br && !hasBattery() && !autoPorts().length), ports: S.ports.map((p) => p.kind + '@' + p.face + (portBlocked(p) ? '!' + portBlocked(p) : '')), code: code.length, codeErr: err }; };
+  return { recipe: S.recipe, style: S.style, items: S.items.map((i) => i.type), probs: allProblems().map((x) => label(x.it) + ': ' + x.list.join(', ')), pins: w.problems, preflight: pf, brain: br ? br.type : null, battery: hasBattery(), autoPorts: autoPorts().map((q) => q.kind + '@' + q.face).concat(S.ports.filter((p) => p.auto === 'usb' && !portBlocked(p)).map((p) => p.kind + '@' + p.face)), notes: copilot().map((c) => c.id + ': ' + c.title), legacyPort: !!(br && !hasBattery() && !autoPorts().length), ports: S.ports.map((p) => p.kind + '@' + p.face + (portBlocked(p) ? '!' + portBlocked(p) : '')), code: code.length, codeErr: err }; };
 $('pane').addEventListener('click', (e) => { const p = e.target.closest('[data-spre]'); if (p) { showRecipe(p.dataset.spre); $('sheet').hidden = false; } });
 $('pane').addEventListener('click', (e) => { const b = e.target.closest('[data-snd],[data-tpre],[data-tpack],[data-tup],[data-tmake]'); if (!b) return; const d = b.dataset;
   if (d.snd != null) { auSet(d.snd === '1'); if (!AU.on) djStop(); else if (playSim()) djSync(TRYS.dj); render(); return; }
