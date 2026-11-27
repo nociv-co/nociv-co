@@ -24,7 +24,7 @@ button,input,select,textarea{font:inherit;color:inherit}
 button{cursor:pointer}
 :focus-visible{outline:3px solid var(--hi);outline-offset:2px}
 
-.st-top{position:sticky;top:0;z-index:20;height:52px;display:flex;align-items:center;gap:10px;padding:0 14px;padding-top:env(safe-area-inset-top);background:var(--ink);color:var(--paper)}
+.st-top{position:sticky;top:0;z-index:20;height:calc(52px + env(safe-area-inset-top));display:flex;align-items:center;gap:10px;padding:0 14px;padding-top:env(safe-area-inset-top);background:var(--ink);color:var(--paper)}
 .st-logo{font-family:var(--mono);font-weight:800;letter-spacing:.04em;text-transform:uppercase;font-size:14px}
 .st-logo span{background:var(--hi);color:var(--ink);padding:1px 5px;margin-left:4px}
 .st-saved{font-family:var(--mono);font-size:12px;opacity:0;transition:opacity .2s;color:var(--hi)}
@@ -34,10 +34,10 @@ button{cursor:pointer}
 .st-top button.on{background:var(--paper);color:var(--ink);border-color:var(--paper)}
 .st-dev{display:none;gap:4px}
 
-.st-prev{position:sticky;top:52px;z-index:10;height:44vh;background:#d9d6cc;display:flex;align-items:center;justify-content:center}
+.st-prev{position:sticky;top:calc(52px + env(safe-area-inset-top));z-index:10;height:44vh;background:#d9d6cc;display:flex;align-items:center;justify-content:center}
 .st-frame{width:100%;height:100%;position:relative}
 .st-frame iframe{width:100%;height:100%;border:0;background:#fff;display:block}
-body.full .st-prev{height:calc(100dvh - 88px)}
+body.full .st-prev{height:calc(100dvh - 88px - env(safe-area-inset-top) - env(safe-area-inset-bottom))}
 
 .st-ed{padding:0 16px calc(96px + env(safe-area-inset-bottom))}
 .st-tabs{position:sticky;top:calc(88px + 44vh);z-index:9;display:flex;gap:2px;background:var(--paper);margin:0 -16px 12px;padding:8px 10px;border-bottom:1px solid var(--line);overflow-x:auto;scrollbar-width:none}
@@ -128,7 +128,7 @@ body.full .st-prev{height:calc(100dvh - 88px)}
 .steps li{margin:6px 0}
 
 @media(min-width:960px){
-  body{display:grid;grid-template-columns:440px 1fr;grid-template-rows:52px 36px 1fr;height:100dvh;overflow:hidden}
+  body{display:grid;grid-template-columns:440px 1fr;grid-template-rows:calc(52px + env(safe-area-inset-top)) 36px 1fr;height:100dvh;overflow:hidden}
   .st-bar{grid-row:2;grid-column:2;position:relative;top:0}
   .st-top{grid-column:1/-1}
   .st-dev{display:flex}
@@ -181,17 +181,17 @@ details.fine[open] summary::after{transform:rotate(-135deg);margin-top:4px}
 .st-logo{font-size:12px}
 @media(max-width:380px){.st-logo{display:none}}
 /* preview toolbar: its own 36px row, so nothing floats over the site */
-.st-bar{position:sticky;top:calc(52px + 44vh);z-index:10;height:36px;display:flex;align-items:center;gap:6px;padding:0 10px;background:#d9d6cc;border-top:1px solid #c6c2b6;border-bottom:2px solid var(--ink)}
+.st-bar{position:sticky;top:calc(52px + env(safe-area-inset-top) + 44vh);z-index:10;min-height:calc(36px + env(safe-area-inset-bottom));box-sizing:border-box;display:flex;align-items:center;gap:6px;padding:0 10px env(safe-area-inset-bottom);background:#d9d6cc;border-top:1px solid #c6c2b6;border-bottom:2px solid var(--ink)}
 .st-bar .sp{flex:1}
 .st-bar .st-dev{display:flex;gap:2px;background:rgba(22,22,22,.08);border-radius:999px;padding:2px}
 .st-bar .st-dev button,#full{border:0;background:transparent;color:var(--ink);font-size:12px;font-weight:700;min-height:28px;padding:0 12px;border-radius:999px}
 .st-bar .st-dev button.on,#full{background:var(--ink);color:var(--paper)}
-body.full .st-bar{top:calc(100dvh - 36px)}
+body.full .st-bar{top:calc(100dvh - 36px - env(safe-area-inset-bottom))}
 /* undo / redo */
 .st-top .st-ur{width:36px;padding:0;justify-content:center}
 .st-ur svg{width:18px;height:18px;fill:none;stroke:currentColor;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
 .st-top .st-ur:disabled{opacity:.35;cursor:default}
-@media(max-width:420px){.st-top{gap:6px;padding:0 10px}.st-top .st-tool button{width:36px}.st-saved{position:absolute;left:34px;bottom:2px;font-size:10px}}
+@media(max-width:420px){.st-top{gap:6px;padding-left:10px;padding-right:10px}.st-top .st-tool button{width:36px}.st-saved{position:absolute;left:34px;bottom:2px;font-size:10px}}
 /* a field you jumped to */
 @keyframes hl{0%{box-shadow:0 0 0 3px var(--hi)}100%{box-shadow:0 0 0 3px transparent}}
 .hl{animation:hl 1.6s ease-out;border-radius:8px}
