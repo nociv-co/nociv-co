@@ -449,7 +449,7 @@ function pLook() {
   var VW = [['phone', 'Phone'], ['tablet', 'Tablet'], ['desktop', 'Desktop']];
   function vrow(k, title, help) { return '<p class="step-s">' + title + '</p><div class="ch vrow">' + VW.map(function (o) { return '<button type="button" class="c' + ((D[k] || (k === 'primaryView' ? 'phone' : 'desktop')) === o[0] ? ' on' : '') + '" data-act="view" data-k="' + k + '" data-v="' + o[0] + '">' + o[1] + '</button>'; }).join('') + '</div>' + (help ? '<p class="help">' + help + '</p>' : ''); }
   var views = '<p class="step-h">Screens</p>' + vrow('primaryView', 'Built mostly for') + vrow('secondaryView', 'Also looks good on', 'Spacing, type and columns scale smoothly between the two. Check it with Phone, Tablet and Wide under the preview.');
-  return gal + lay + views + colors + type + btns + ics + '<details class="fine"' + (fineOpen ? ' open' : '') + '><summary>Fine tune</summary>' +
+  return gal + lay + colors + type + btns + ics + '<details class="fine"' + (fineOpen ? ' open' : '') + '><summary>Fine tune</summary>' + views +
     group('Menu', 'nav', [['tabs', 'Tabs', 'on top'], ['menu', 'Menu', 'button'], ['bottom', 'Bottom bar', 'like an app'], ['side', 'Side list', 'computer']], navNote) +
     group('Page change', 'motion', [['none', 'None'], ['fade', 'Fade'], ['slide', 'Slide'], ['rise', 'Rise'], ['zoom', 'Zoom']]) +
     '<button type="button" class="sm wide" data-act="demo">▶ Watch it</button>' +
@@ -575,7 +575,7 @@ function pInfo() {
     '<h3>Search and sharing</h3>' + fld('Your domain', 'domain', { type: 'url', mode: 'url', ph: 'yourname.com', help: 'So link previews in texts show your photo.' }) +
     fld('Description', 'description', { area: true, rows: 3, max: 160, help: 'One or two sentences. Google shows this under your name. Under 160 letters.' }) +
     imgf('Share photo', 'shareImage') +
-    '<h3>Home screen app</h3>' + chk('Make a Home Screen App', 'enablePwa') + '<p class="help">Adds an Install App button to your footer. People can keep your site on their phone like an app, and it opens even with a weak connection.</p>' +
+    '<h3>Home screen app</h3>' + chk('Allow "Add to Home Screen" (App Mode)', 'enablePwa') + '<p class="help">Adds an Install App button to your footer. People can keep your site on their phone like an app, and it opens even with a weak connection.</p>' +
     codef();
 }
 function footerf() {
@@ -586,7 +586,7 @@ function footerf() {
     '<select class="sm" data-act-select="flpage" aria-label="Link a page"><option value="">+ A page</option>' + vis().map(function (t) { return '<option value="' + D.tabs.indexOf(t) + '">' + esc(t.name) + '</option>'; }).join('') + '</select></div></div>';
 }
 function codef() {
-  return '<details class="fine" id="code"' + (codeOpen ? ' open' : '') + '><summary>Code</summary>' +
+  return '<details class="fine" id="code"' + (codeOpen ? ' open' : '') + '><summary>Advanced / For Developers (Optional)</summary>' +
     fld('Custom CSS', 'customCss', { area: true, rows: 5, ph: '.hero-h { letter-spacing: 0 }', help: 'Applies right away in the preview and on your site.' }) +
     fld('Extra code in &lt;head&gt;', 'customHead', { area: true, rows: 3, ph: '<!-- analytics, fonts, verification tags -->', help: 'Added to index.html when you download. Not run in the preview.' }) +
     fld('Extra code before &lt;/body&gt;', 'customBody', { area: true, rows: 3, ph: '<script>...</script>' }) +
@@ -633,7 +633,7 @@ function adminTest() {
 }
 function pPublish() {
   var cs = checks(), bad = cs.filter(function (x) { return !x.ok; }).length;
-  return '<h2>Publish</h2><ul class="checks">' + cs.map(function (x) { return '<li class="' + (x.ok ? 'ok' : 'bad') + '"><span>' + (x.ok ? '✓' : '!') + '</span>' + x.t + (x.ok ? '' : ' <button type="button" class="sm" data-act="fix" data-v="' + x.go.p + '"' + (x.go.i != null ? ' data-i="' + x.go.i + '"' : '') + (x.go.j != null ? ' data-j="' + x.go.j + '"' : '') + (x.go.f ? ' data-f="' + x.go.f + '"' : '') + '>Fix</button>') + '</li>'; }).join('') + '</ul>' +
+  return '<h2>Publish</h2><ol class="roadmap" aria-label="How publishing works"><li><b>1</b>Download file</li><li><b>2</b>Drop onto Cloudflare (free)</li><li><b>3</b>Your link is live</li></ol><ul class="checks">' + cs.map(function (x) { return '<li class="' + (x.ok ? 'ok' : 'bad') + '"><span>' + (x.ok ? '✓' : '!') + '</span>' + x.t + (x.ok ? '' : ' <button type="button" class="sm" data-act="fix" data-v="' + x.go.p + '"' + (x.go.i != null ? ' data-i="' + x.go.i + '"' : '') + (x.go.j != null ? ' data-j="' + x.go.j + '"' : '') + (x.go.f ? ' data-f="' + x.go.f + '"' : '') + '>Fix</button>') + '</li>'; }).join('') + '</ul>' +
     (bad ? '<p class="help">You can still download. These just make it better.</p>' : '') +
     '<button type="button" class="big" data-act="zip">Download Starter Kit (.zip)</button><p class="help" id="zipmsg"></p>' +
     '<p class="help"><b>Ready to use now.</b> Your layout, look and pages work the moment you upload it. Add real photos and videos later from your own domain.</p>' +
@@ -644,7 +644,7 @@ function pPublish() {
     '<details class="fine"><summary>Using GitHub instead</summary><ol class="help"><li>Unzip your site. You need the folder, not the zip.</li><li>On github.com tap New repository. Name it. Leave it Public.</li><li>Tap uploading an existing file. Drag in everything inside your folder. Commit changes.</li><li>Settings, Pages. Under Branch pick main and save. Your link is yourname.github.io/the-repo-name.</li></ol><p class="help">Free GitHub Pages needs a public repository. Want it private? Keep it private on GitHub and pick Connect to Git in Cloudflare instead of Upload assets. Pick this at the start: a project made from a zip cannot switch later.</p></details>' +
     '<div class="steps"><h3>To change it later</h3><ol><li>Open your site address + /admin.html. Your live site loads in.</li><li>Edit.</li><li>Download my site again.</li><li>In Cloudflare: your project, Create deployment, pick the new zip.</li></ol><p class="help">Your live site only changes when you deploy. Using GitHub instead? See below.</p></div>' +
     '<h3>Share your look</h3><p class="help">A link with your colors, type, menu, motion and page layout. Never your words, photos, prices or email. Nothing is stored anywhere, it all rides in the link. Whoever opens it starts their own site from your look, and their footer credits you.</p><button type="button" class="sm wide" data-act="remix">Copy my remix link</button><p class="help" id="remixMsg"></p>' +
-    '<h3>Backup</h3><div class="ch"><button type="button" class="sm" data-act="backup">Save backup</button><label class="sm up">Open backup<input type="file" accept=".json,application/json" data-restore="1"></label><button type="button" class="sm" data-act="live">Load live site</button><button type="button" class="sm danger" data-act="reset">Start over</button></div>';
+    '<h3>Site Backup File</h3><div class="ch"><button type="button" class="sm" data-act="backup">Save Site Backup File</button><label class="sm up">Open backup<input type="file" accept=".json,application/json" data-restore="1"></label><button type="button" class="sm" data-act="live">Load live site</button><button type="button" class="sm danger" data-act="reset">Start over</button></div>';
 }
 
 function draw(fromPick) {
@@ -893,7 +893,7 @@ function onAct(b) {
     case 'pane': pane = b.dataset.v; if (pane === 'pages') { editTab = editItem = null; pvHash = null; } break;
     case 'zip':
       var m = $('#zipmsg'); b.disabled = true; m.textContent = 'Packing your site...';
-      buildZip().then(function (z) { download(z, slug(D.name || 'my-site') + '-site.zip'); m.textContent = 'Done. ' + (z.size / 1048576).toFixed(1) + ' MB. Look in your Downloads (Files app on iPhone).'; })
+      buildZip().then(function (z) { download(z, slug(D.name || 'my-site') + '-site.zip'); m.textContent = 'Done. ' + (z.size / 1048576).toFixed(1) + ' MB. On iPhone: open Files → Downloads. Once live, bookmark yoursite.com/admin.html to edit anytime.'; })
         .catch(function (e) { m.textContent = 'Could not pack it: ' + e.message; }).then(function () { b.disabled = false; });
       return;
     case 'remix':

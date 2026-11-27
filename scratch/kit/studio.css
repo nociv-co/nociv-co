@@ -293,3 +293,7 @@ textarea.mono{font-family:var(--mono);font-size:13px;line-height:1.45;white-spac
 .fl{display:grid;grid-template-columns:1fr;gap:0}
 select.sm{appearance:auto;background:var(--card)}
 #code .ch{gap:6px;margin-top:6px}
+.roadmap{list-style:none;display:flex;align-items:stretch;gap:14px;padding:0;margin:0 0 14px;font-size:13px;line-height:1.25}
+.roadmap li{flex:1;min-width:0;display:flex;flex-direction:column;align-items:center;text-align:center;gap:4px;padding:8px 4px;border:1.5px solid var(--ink);border-radius:10px;background:var(--card);color:var(--ink);position:relative}
+.roadmap li+li::before{content:'→';position:absolute;left:-7px;top:50%;transform:translate(-50%,-50%);font-weight:800;color:var(--ink)}
+.roadmap b{width:22px;height:22px;border-radius:50%;background:var(--ink);color:var(--card);display:flex;align-items:center;justify-content:center;font-size:12px}
