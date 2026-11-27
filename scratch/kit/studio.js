@@ -176,6 +176,12 @@ var PRESETS = {
     shop: clone(SHIP), tabs: [tab('home', 'Home', { headline: 'Hello', button: '', buttonTo: null })] }; }
 };
 
+// starter categories per kind of site: offered as one-tap tags on every item
+var CATS = { shop: ['Tees', 'Prints', 'Stickers', 'New'], archive: ['Photo', 'Type', 'Sound', 'Object'], archiveProducer: ['Beat', 'Sample pack', 'Merch'], archiveLog: ['Progress', 'Problem', 'Done'],
+  app: ['New', 'Popular', 'Free'], music: ['Single', 'Album', 'Merch', 'Vinyl'], food: ['Mains', 'Sides', 'Drinks', 'Sweets'], event: ['Tickets', 'Merch', 'Vendors'], links: ['Featured'], blank: ['New'] };
+Object.keys(CATS).forEach(function (k) { var f = PRESETS[k]; if (f) PRESETS[k] = function () { var d = f(); d.cats = CATS[k].slice(); return d; }; });
+var FUL = [['', 'Not set'], ['ready', 'Ready to ship'], ['store', 'Made in store'], ['custom', 'Custom order'], ['digital', 'Digital']];
+
 /* ---------- storage ---------- */
 function idb() {
   return new Promise(function (res) {
@@ -302,6 +308,28 @@ function imgf(label, p) {
   return '<div class="f"><span class="lab">' + label + '</span><div class="imgf">' + (v ? '<img src="' + esc(url(v)) + '" alt=""><button type="button" class="sm" data-act="imgclear" data-p="' + p + '">Remove</button>' : '') +
     '<label class="up">' + (v ? 'Change' : '+ Add photo') + '<input type="file" accept="image/*" data-up="' + p + '"></label></div></div>';
 }
+function picsf(label, p, help) {
+  var arr = get(p) || [];
+  return '<div class="f" data-sec="' + p + '"><span class="lab">' + label + '</span><div class="pics">' + arr.map(function (q, k) {
+    return '<div class="pic"><img src="' + esc(url(q)) + '" alt=""><div><button type="button" class="ic" data-act="pleft" data-p="' + p + '" data-k="' + k + '" aria-label="Move left"' + (k ? '' : ' disabled') + '>‹</button><button type="button" class="ic" data-act="pdel" data-p="' + p + '" data-k="' + k + '" aria-label="Remove">×</button></div></div>';
+  }).join('') + '<label class="pic up">+<input type="file" accept="image/*" multiple data-many="' + p + '"></label></div>' + (help ? '<p class="help">' + help + '</p>' : '') + '</div>';
+}
+function videof(p) {
+  var v = get(p) || '', local = /^video\//.test(v);
+  return '<div class="f" data-sec="' + p + '"><label for="v' + p.replace(/\W/g, '_') + '">Video <small class="opt">optional</small></label>' +
+    (local ? '<div class="aud"><video src="' + esc(url(v)) + '" controls playsinline preload="metadata"></video><button type="button" class="sm" data-act="imgclear" data-p="' + p + '">Remove</button></div>'
+      : '<input id="v' + p.replace(/\W/g, '_') + '" data-b="' + p + '" type="url" inputmode="url" value="' + esc(v) + '" placeholder="YouTube, Vimeo or .mp4 link" autocomplete="off" autocapitalize="off">') +
+    '<label class="add up">' + (local ? 'Replace video' : '+ Or upload an mp4 / webm') + '<input type="file" accept="video/mp4,video/webm" data-video="' + p + '"></label><p class="help">Uploads up to 15 MB. Longer videos: put them on YouTube or Vimeo and paste the link.</p></div>';
+}
+function linksf(p) {
+  var arr = get(p) || [];
+  return '<div class="f" data-sec="' + p + '"><span class="lab">Links on this page</span>' + arr.map(function (x, j) {
+    var q = p + '.' + j;
+    return '<div class="lrow">' + fld('Words', q + '.title') + fld('Goes to', q + '.url', { type: 'url', mode: 'url', ph: 'https://' }) + fld('Small line under it', q + '.sub', { ph: 'Optional' }) +
+      '<div class="ch lsty">' + [['thumb', 'Thumbnail card'], ['button', 'Button']].map(function (o) { return '<button type="button" class="c' + ((x.style || 'button') === o[0] ? ' on' : '') + '" data-act="lstyle" data-p="' + q + '" data-v="' + o[0] + '">' + o[1] + '</button>'; }).join('') + '</div>' +
+      ((x.style || 'button') === 'thumb' ? imgf('Thumbnail', q + '.image') : '') + '<button type="button" class="sm" data-act="ldel" data-p="' + p + '" data-k="' + j + '">Remove link</button></div>';
+  }).join('') + '<button type="button" class="add" data-act="lnew" data-p="' + p + '">+ Add link</button></div>';
+}
 function group(title, key, opts, note) {
   return '<div class="g"><h3>' + title + '</h3><div class="ch">' + opts.map(function (o) {
     return '<button type="button" class="c' + (D.style[key] === o[0] ? ' on' : '') + '" data-act="style" data-k="' + key + '" data-v="' + o[0] + '"' + (o[3] ? ' style="' + o[3] + '"' : '') + '>' + o[1] + (o[2] ? '<small>' + o[2] + '</small>' : '') + '</button>';
@@ -336,8 +364,20 @@ function pLook() {
       return '<label class="swatch"><input type="color" data-b="' + c[0] + '" value="' + esc(c[2]) + '"><i style="background:' + esc(c[2]) + '"></i><span>' + c[1] + '</span></label>';
     }).join('') + '</div><ul class="ratios">' + rd(tr, 4.5, 'Words are easy to read') + rd(ar, 4.5, 'Button words are easy to read') + '</ul>';
   var FL = [['clean', 'Clean'], ['space', 'Space Grotesk'], ['grotesk', 'Inter Tight'], ['block', 'Archivo Black'], ['gallery', 'Syne'], ['bricolage', 'Bricolage'], ['condensed', 'Barlow'], ['humanist', 'Tenor Sans'], ['soft', 'Nunito'], ['editorial', 'Fraunces'], ['journal', 'Instrument'], ['didone', 'DM Serif'], ['slab', 'Roboto Slab'], ['type', 'Plex Mono'], ['typed', 'Special Elite'], ['mono', 'Rubik Mono'], ['marker', 'Marker']];
-  var type = '<p class="step-h">Type</p><div class="ftiles">' + FL.map(function (f) {
+  var FC = { Sans: ['clean', 'space', 'grotesk', 'condensed', 'humanist', 'soft'], Serif: ['editorial', 'journal', 'didone', 'slab'], Display: ['block', 'gallery', 'bricolage', 'marker'], Mono: ['type', 'typed', 'mono'] };
+  var cat = fontCat || Object.keys(FC).filter(function (k) { return FC[k].indexOf(s.font) >= 0; })[0] || 'Sans', cf = s.customFont;
+  if (cf && cf.key && URLS[cf.key]) customFace();
+  var type = '<p class="step-h">Type</p><div class="lk-fams" role="tablist">' + Object.keys(FC).map(function (k) { return '<button type="button" class="c' + (k === cat ? ' on' : '') + '" data-act="fcat" data-v="' + k + '">' + k + '</button>'; }).join('') + '</div><div class="ftiles">' +
+    (cf && cf.key ? '<button type="button" class="ft' + (s.font === 'custom' ? ' on' : '') + '" data-act="style" data-k="font" data-v="custom"><b style="font-family:\'FS Custom\',system-ui">Aa</b><span>' + esc(cf.name || 'Your font') + '</span></button>' : '') +
+    FL.filter(function (f) { return FC[cat].indexOf(f[0]) >= 0; }).map(function (f) {
     return '<button type="button" class="ft' + (s.font === f[0] ? ' on' : '') + '" data-act="style" data-k="font" data-v="' + f[0] + '"><b style="font-family:' + FONT_H[f[0]].replace(/"/g, "'") + ';font-weight:' + (FONT_W[f[0]] || 800) + '">Aa</b><span>' + f[1] + '</span></button>';
+  }).join('') + '<label class="ft up"><b>+</b><span>Upload font</span><input type="file" accept=".woff2,.woff,.ttf,font/woff2,font/woff,font/ttf" data-font="1"></label></div>';
+  var lay = '<p class="step-h">Layout</p><div class="btiles">' + [['site', 'Site', 'Pages and a menu'], ['links', 'Linktree', 'One centered column of links']].map(function (x) {
+    var on = (s.layout === 'links') === (x[0] === 'links');
+    return '<button type="button" class="bt2' + (on ? ' on' : '') + '" data-act="layout" data-v="' + x[0] + '"><i style="background:' + s.bg + ';color:' + s.text + ';display:flex;flex-direction:' + (x[0] === 'links' ? 'column;align-items:center;gap:3px;padding:6px 18px' : 'row;gap:4px;padding:8px 10px') + '">' +
+      (x[0] === 'links' ? '<em style="width:14px;height:14px;border-radius:50%;background:' + s.text + '"></em><em style="width:46px;height:6px;border:1.5px solid ' + s.text + ';border-radius:3px"></em><em style="width:46px;height:6px;border:1.5px solid ' + s.text + ';border-radius:3px"></em>'
+        : '<em style="width:20px;height:22px;background:' + s.text + ';opacity:.25"></em><em style="width:20px;height:22px;background:' + s.text + ';opacity:.25"></em><em style="width:20px;height:22px;background:' + s.text + ';opacity:.25"></em>') +
+      '</i><span>' + x[1] + '</span><small class="help" style="margin:0;text-align:center">' + x[2] + '</small></button>';
   }).join('') + '</div>';
   var acx = onColor(s.accent), rr = { sharp: '0', soft: '7px', round: '14px' }[s.corner] || '7px';
   var bstyle = { solid: 'background:' + s.accent + ';color:' + acx + ';border:2px solid ' + s.accent + ';border-radius:' + rr, outline: 'background:transparent;color:' + s.text + ';border:2px solid ' + s.text + ';border-radius:' + rr, pill: 'background:' + s.accent + ';color:' + acx + ';border:2px solid ' + s.accent + ';border-radius:99px', underline: 'background:transparent;color:' + s.text + ';border:0;border-bottom:3px solid ' + s.accent + ';border-radius:0' };
@@ -349,14 +389,14 @@ function pLook() {
     var one = function (n) { return '<svg viewBox="0 0 24 24" style="' + st + ';' + fill + (x[0] === 'badge' ? ';background:' + s.accent + ';color:' + acx + ';border-radius:6px;padding:3px' : '') + '">' + ICONS[n] + '</svg>'; };
     return '<button type="button" class="ic2' + ((s.icons || 'line') === x[0] ? ' on' : '') + '" data-act="style" data-k="icons" data-v="' + x[0] + '"><i>' + (x[0] === 'none' ? '<em>Home Shop</em>' : one('home') + one('bag') + one('user')) + '</i><span>' + x[1] + '</span></button>';
   }).join('') + '</div>';
-  return gal + colors + type + btns + ics + '<details class="fine"' + (fineOpen ? ' open' : '') + '><summary>Fine tune</summary>' +
+  return gal + lay + colors + type + btns + ics + '<details class="fine"' + (fineOpen ? ' open' : '') + '><summary>Fine tune</summary>' +
     group('Menu', 'nav', [['tabs', 'Tabs', 'on top'], ['menu', 'Menu', 'button'], ['bottom', 'Bottom bar', 'like an app'], ['side', 'Side list', 'computer']], navNote) +
     group('Page change', 'motion', [['none', 'None'], ['fade', 'Fade'], ['slide', 'Slide'], ['rise', 'Rise'], ['zoom', 'Zoom']]) +
     '<button type="button" class="sm wide" data-act="demo">▶ Watch it</button>' +
     group('Corners', 'corner', [['sharp', 'Sharp'], ['soft', 'Soft'], ['round', 'Round']]) +
     group('Spacing', 'density', [['comfy', 'Roomy'], ['compact', 'Tight']]) +
     group('Name at top', 'header', [['left', 'Left'], ['center', 'Center'], ['stack', 'Big']]) +
-    group('Item layout', 'layout', [['grid', 'Grid'], ['masonry', 'Stagger'], ['list', 'List']]) +
+    group('Item layout', 'layout', [['grid', 'Grid'], ['masonry', 'Stagger'], ['list', 'List'], ['links', 'Linktree']]) +
     group('Photo shape', 'photo', [['square', 'Square'], ['portrait', 'Tall'], ['landscape', 'Wide'], ['natural', 'As is']]) +
     group('Headings', 'case', [['normal', 'As typed'], ['upper', 'ALL CAPS']]) +
     group('Background', 'tex', [['none', 'Plain'], ['grain', 'Grain'], ['grid', 'Graph'], ['lines', 'Lined'], ['dots', 'Dots']]) +
@@ -387,11 +427,13 @@ function pTab() {
   h += fld('Page name', P + '.name', { max: 24, help: 'Short works best. One or two words.' });
   if (D.style.nav === 'bottom') h += '<div class="f"><span class="lab">Icon</span><div class="icons">' + ICON_NAMES.map(function (n) { return '<button type="button" class="' + ((t.icon || '') === n ? 'on' : '') + '" data-act="icon" data-v="' + n + '" aria-label="' + n + '"><svg viewBox="0 0 24 24">' + ICONS[n] + '</svg></button>'; }).join('') + '</div></div>';
   if (t.type === 'home') {
-    h += fld('Big headline', P + '.headline', { ph: D.name }) + fld('Line under it', P + '.intro', { area: true, rows: 2, ph: D.tagline }) + imgf('Cover photo', P + '.image');
-    h += fld('Button words', P + '.button', { ph: 'Shop now' }) + '<div class="f"><label for="bto">Button goes to</label><select id="bto" data-b="' + P + '.buttonTo" data-num="1"><option value="">No button</option>' +
-      vis().map(function (x) { if (x === t) return ''; return '<option value="' + vis().indexOf(x) + '"' + (t.buttonTo === vis().indexOf(x) ? ' selected' : '') + '>' + esc(x.name) + '</option>'; }).join('') + '</select></div>';
+    h += fld('Big headline', P + '.headline', { ph: D.name }) + fld('Line under it', P + '.intro', { area: true, rows: 2, ph: D.tagline }) + imgf('Cover photo', P + '.image') +
+      picsf('Slideshow photos', P + '.images', 'Add two or more with the cover to make a slideshow with arrows and dots.') + videof(P + '.video');
+    h += fld('Button words', P + '.button', { ph: 'Shop now' }) + '<div class="f"><label for="bto">Button goes to</label><select id="bto" data-b="' + P + '.buttonTo" data-num="1"><option value="">No button</option><option value="-1"' + (t.buttonTo === -1 ? ' selected' : '') + '>A web link (https://)</option>' +
+      vis().map(function (x) { if (x === t) return ''; return '<option value="' + vis().indexOf(x) + '"' + (t.buttonTo === vis().indexOf(x) ? ' selected' : '') + '>' + esc(x.name) + '</option>'; }).join('') + '</select></div>' +
+      (t.buttonTo === -1 ? fld('Button link', P + '.buttonUrl', { type: 'url', mode: 'url', ph: 'https://', help: 'Any web address: a shop, a booking page, a video.' }) : '') + linksf(P + '.links');
   } else if (t.type === 'page') {
-    h += imgf('Photo at top', P + '.image') + fld('Words', P + '.body', { area: true, rows: 10, help: 'Leave a blank line for a new paragraph. Start a line with # and a space to make a heading.' });
+    h += imgf('Photo at top', P + '.image') + videof(P + '.video') + fld('Words', P + '.body', { area: true, rows: 10, help: 'Leave a blank line for a new paragraph. Start a line with # and a space to make a heading.' }) + linksf(P + '.links');
   } else if (t.type === 'contact') {
     h += fld('Intro', P + '.intro', { area: true, rows: 2 }) + fld('Email', P + '.email', { type: 'email', mode: 'email', ph: D.email || 'you@yourname.com', help: 'Leave empty to use the email in Info.' }) + fld('More words', P + '.body', { area: true, rows: 4 });
   } else {
@@ -405,13 +447,17 @@ function pTab() {
       }).join('') + '</ul><button type="button" class="add" data-act="iadd">+ Add ' + ({ log: 'entry', finds: 'find', tracks: 'track' }[t.type] || 'item') + '</button>';
       if (t.type === 'grid') h += '<p class="help">Tags become filter buttons when you use two or more.</p>';
     } else if (t.type === 'gallery') {
+      h += '<div class="g"><h3>Show as</h3><div class="ch">' + [['masonry', 'Masonry'], ['slideshow', 'Slideshow']].map(function (o) { return '<button type="button" class="c' + ((t.mode || 'masonry') === o[0] ? ' on' : '') + '" data-act="gmode" data-v="' + o[0] + '">' + o[1] + '</button>'; }).join('') + '</div></div>';
       h += '<h3>Photos <small>' + t.items.length + '</small></h3><div class="gthumbs">' + t.items.map(function (x, j) {
         var p = x.images && x.images[0];
         return '<div class="gt">' + (p ? '<img src="' + esc(url(p)) + '" alt="">' : '<span class="nopic"></span>') + '<input data-b="' + P + '.items.' + j + '.title" value="' + esc(x.title) + '" placeholder="Caption" aria-label="Caption"><button type="button" class="ic" data-act="idel" data-j="' + j + '" aria-label="Delete">×</button></div>';
       }).join('') + '</div><label class="add up">+ Add photos<input type="file" accept="image/*" multiple data-gal="' + editTab + '"></label>';
     } else if (t.type === 'links') {
       h += '<h3>Links</h3>' + t.items.map(function (x, j) {
-        return '<div class="lrow">' + fld('Words', P + '.items.' + j + '.title') + fld('Goes to', P + '.items.' + j + '.buy', { type: 'url', mode: 'url', ph: 'https://' }) + '<button type="button" class="sm" data-act="idel" data-j="' + j + '">Remove link</button></div>';
+        var q = P + '.items.' + j, st = x.style || (x.images && x.images[0] ? 'thumb' : 'button');
+        return '<div class="lrow">' + fld('Words', q + '.title') + fld('Goes to', q + '.buy', { type: 'url', mode: 'url', ph: 'https://' }) + fld('Small line under it', q + '.sub', { ph: 'Optional' }) +
+          '<div class="ch lsty">' + [['thumb', 'Thumbnail card'], ['button', 'Button']].map(function (o) { return '<button type="button" class="c' + (st === o[0] ? ' on' : '') + '" data-act="lstyle" data-p="' + q + '" data-v="' + o[0] + '">' + o[1] + '</button>'; }).join('') + '</div>' +
+          (st === 'thumb' ? imgf('Thumbnail', q + '.images.0') : '') + '<button type="button" class="sm" data-act="idel" data-j="' + j + '">Remove link</button></div>';
       }).join('') + '<button type="button" class="add" data-act="ladd">+ Add link</button>';
     }
   }
@@ -439,11 +485,23 @@ function pItem() {
     fld('Price', P + '.price', { mode: 'decimal', ph: 'Leave empty if not for sale' }) +
     fld('Buy link', P + '.buy', { type: 'url', mode: 'url', ph: 'https://buy.stripe.com/...', help: bad ? '<b class="warn">Links must start with https://</b>' : 'Paste a Stripe Payment Link. Stripe runs the checkout, asks for the shipping address and emails the receipt. Any link works too, like a booking or a preorder form.' }) +
     fld('Button words', P + '.cta', { ph: x.price ? 'Buy' : 'Open' }) +
-    fld('Tag', P + '.tag', { ph: t.type === 'tracks' ? 'Beat, Sample pack, Merch' : 'Tees, Prints, 2024...', help: 'Groups items. Two or more tags make filter buttons.' }) +
+    tagsf(t, x, P) + (t.type === 'grid' ? fulf(x) + sizef(x) : '') + videof(P + '.video') +
     (t.type === 'grid' ? fld('Badge', P + '.badge', { ph: 'New, Last one, Preorder', max: 16 }) : '') +
     fld(t.type === 'tracks' ? 'Details' : 'Describe it', P + '.text', { area: true, rows: 6, help: t.type === 'tracks' ? 'BPM, key, what is in the pack, lease terms.' : 'Size, material, how it is made. Blank line for a new paragraph.' }) +
     chk('Sold out', P + '.soldout') + del;
 }
+
+function tagsf(t, x, P) {
+  if (x.tag && !x.tags) { x.tags = [x.tag]; x.tag = ''; }
+  var mine = x.tags || [], sug = [];
+  (D.cats || CATS[D._preset] || CATS.shop).concat([].concat.apply([], t.items.map(function (y) { return (y.tags || []).concat(y.tag ? [y.tag] : []); }))).forEach(function (g) { if (g && mine.indexOf(g) < 0 && sug.indexOf(g) < 0) sug.push(g); });
+  return '<div class="f" data-sec="' + P + '.tags"><span class="lab">Categories</span><div class="tags">' +
+    mine.map(function (g) { return '<button type="button" class="tagc on" data-act="tagdel" data-v="' + esc(g) + '" aria-label="Remove ' + esc(g) + '">' + esc(g) + ' <span aria-hidden="true">×</span></button>'; }).join('') +
+    sug.slice(0, 10).map(function (g) { return '<button type="button" class="tagc" data-act="tagadd" data-v="' + esc(g) + '">+ ' + esc(g) + '</button>'; }).join('') +
+    '</div><div class="tagnew"><input id="tagin" placeholder="New category" maxlength="24" autocomplete="off" aria-label="New category"><button type="button" class="sm" data-act="tagnew">Add</button></div><p class="help">An item can have several. Two or more make filter buttons.</p></div>';
+}
+function fulf(x) { return '<div class="g"><h3>How it is made</h3><div class="ch">' + FUL.map(function (o) { return '<button type="button" class="c' + ((x.ful || '') === o[0] ? ' on' : '') + '" data-act="ful" data-v="' + o[0] + '">' + o[1] + '</button>'; }).join('') + '</div><p class="help">Shows on the card and becomes a filter.</p></div>'; }
+function sizef(x) { return '<div class="g"><h3>Card size</h3><div class="ch">' + [['', 'Standard'], ['wide', 'Wide'], ['tall', 'Tall']].map(function (o) { return '<button type="button" class="c' + ((x.size || '') === o[0] ? ' on' : '') + '" data-act="isz" data-v="' + o[0] + '">' + o[1] + '</button>'; }).join('') + '</div><p class="help">Mix sizes to make the grid feel like a magazine.</p></div>'; }
 
 function pInfo() {
   var c = ['USD', 'CAD', 'MXN', 'EUR', 'GBP', 'AUD', 'JPY'];
@@ -487,11 +545,21 @@ function checks() {
   return out;
 }
 
+function adminTest() {
+  var host = String(D.domain || '').trim().replace(/^https?:\/\//, '').replace(/\/.*$/, '') || 'yourname.pages.dev';
+  var json = JSON.stringify({ name: D.name, tagline: D.tagline, tabs: D.tabs.length + ' pages' }, null, 2);
+  return '<div class="adm"><div class="adm-url"><i></i>' + esc(host) + '/admin.html</div>' +
+    '<ol class="help"><li>Your site carries this studio as admin.html. It reads your own site.json.</li><li>Edits save only in this browser. Nothing goes to nociv.co or anyone else.</li><li>Download, upload to Cloudflare, and the live site changes.</li></ol>' +
+    fld('Try it: change your site name', 'name', { max: 40, help: 'Watch the preview and the file below change. This is what admin.html does on your site.' }) +
+    '<pre class="adm-json" id="admjson">site.json\n' + esc(json) + '</pre></div>';
+}
 function pPublish() {
   var cs = checks(), bad = cs.filter(function (x) { return !x.ok; }).length;
   return '<h2>Publish</h2><ul class="checks">' + cs.map(function (x) { return '<li class="' + (x.ok ? 'ok' : 'bad') + '"><span>' + (x.ok ? '✓' : '!') + '</span>' + x.t + (x.ok ? '' : ' <button type="button" class="sm" data-act="fix" data-v="' + x.go.p + '"' + (x.go.i != null ? ' data-i="' + x.go.i + '"' : '') + (x.go.j != null ? ' data-j="' + x.go.j + '"' : '') + (x.go.f ? ' data-f="' + x.go.f + '"' : '') + '>Fix</button>') + '</li>'; }).join('') + '</ul>' +
     (bad ? '<p class="help">You can still download. These just make it better.</p>' : '') +
-    '<button type="button" class="big" data-act="zip">Download my site (.zip)</button><p class="help" id="zipmsg"></p>' +
+    '<button type="button" class="big" data-act="zip">Download Starter Kit (.zip)</button><p class="help" id="zipmsg"></p>' +
+    '<p class="help"><b>Ready to use now.</b> Your layout, look and pages work the moment you upload it. Add real photos and videos later from your own domain.</p>' +
+    '<button type="button" class="sm wide" data-act="admintest" aria-expanded="' + adminOpen + '">' + (adminOpen ? 'Close the Admin test' : 'Test your Admin') + '</button>' + (adminOpen ? adminTest() : '') +
     '<div class="steps"><h3>Then put it online. Free.</h3><ol><li>Make a free Cloudflare account.</li><li>Workers and Pages, Create, Pages, Upload assets. Pick the zip. Deploy.</li><li>You get a free link like yourname.pages.dev. Done.</li><li>Optional: your own domain (about $11 a year), and Stripe buy links if you sell.</li></ol></div>' +
     '<details class="fine"><summary>Selling with Stripe</summary><ol class="help"><li>Make a Stripe account and add your bank.</li><li>Payment Links, New. Add the product and price.</li><li>Turn on collecting the shipping address and add shipping rates.</li><li>Copy the link and paste it in the item\'s Buy link.</li></ol><p class="help">Stripe charges 2.9% + 30&cent; per US card and emails you and the buyer on every sale.</p></details>' +
     '<details class="fine"><summary>Using GitHub instead</summary><ol class="help"><li>Unzip your site. You need the folder, not the zip.</li><li>On github.com tap New repository. Name it. Leave it Public.</li><li>Tap uploading an existing file. Drag in everything inside your folder. Commit changes.</li><li>Settings, Pages. Under Branch pick main and save. Your link is yourname.github.io/the-repo-name.</li></ol><p class="help">Free GitHub Pages needs a public repository. Want it private? Keep it private on GitHub and pick Connect to Git in Cloudflare instead of Upload assets. Pick this at the start: a project made from a zip cannot switch later.</p></details>' +
@@ -516,7 +584,12 @@ function focusSel(sel) {
   try { el.focus({ preventScroll: true }); } catch (e) {}
   box.classList.remove('hl'); void box.offsetWidth; box.classList.add('hl');
 }
-function fieldSel(path) { return '[data-b="' + path + '"],[data-up="' + path + '"],[data-many="' + path + '"]'; }
+function customFace() {
+  var cf = D.style.customFont, el = $('#fs-cf'); if (!el) { el = document.createElement('style'); el.id = 'fs-cf'; document.head.appendChild(el); }
+  var fmt = { woff2: 'woff2', woff: 'woff', ttf: 'truetype' }[cf.key.split('.').pop()] || 'woff2';
+  el.textContent = '@font-face{font-family:"FS Custom";src:url("' + URLS[cf.key] + '") format("' + fmt + '")}';
+}
+function fieldSel(path) { return '[data-b="' + path + '"],[data-up="' + path + '"],[data-many="' + path + '"],[data-sec="' + path + '"]'; }
 
 /* ---------- images ---------- */
 function shrink(file) {
@@ -577,9 +650,10 @@ function indexHtml() {
 function firstImage() { var f = ''; D.tabs.some(function (t) { if (t.image) { f = t.image; return true; } return (t.items || []).some(function (x) { if (x.images && x.images[0]) { f = x.images[0]; return true; } return false; }); }); return f; }
 function usedImages() {
   var s = {};
-  function add(p) { if (p && /^(images|audio)\//.test(p)) s[p] = 1; }
+  function add(p) { if (p && /^(images|audio|video|fonts)\//.test(p)) s[p] = 1; }
   add(D.logo); add(D.shareImage);
-  D.tabs.forEach(function (t) { add(t.image); (t.items || []).forEach(function (x) { (x.images || []).forEach(add); add(x.audio); }); });
+  if (D.style.font === 'custom' && D.style.customFont) add(D.style.customFont.key);
+  D.tabs.forEach(function (t) { add(t.image); add(t.video); (t.images || []).forEach(add); (t.links || []).forEach(function (l) { add(l.image); }); (t.items || []).forEach(function (x) { (x.images || []).forEach(add); add(x.audio); add(x.video); }); });
   return Object.keys(s);
 }
 var README = 'YOUR SITE\n=========\n\nThis folder is your whole website. You own it.\n\nindex.html     the site\nsite.json      everything you typed: pages, items, colors\nimages/        your photos\nadmin.html     the studio, to change things later\nkit/           the engine. You do not need to touch it.\n\nPUT IT ONLINE (Cloudflare, free hosting, $0)\n1. Make a free Cloudflare account.\n2. Workers and Pages > Create > Pages > Upload assets. Name it, then drop in this zip or folder. Deploy.\n   You get a free link right away, like yourname.pages.dev. That is all you need.\n3. Optional: your own domain. Buy one in Cloudflare (sold at cost, about $11 a year for .com), then Custom domains > Set up a domain > type it.\n\nSELL THINGS (Stripe)\n1. Make a Stripe account. Stripe is who pays you.\n2. Payment Links > New. Add the product and price. Turn on: collect shipping address, shipping rates.\n3. Copy the link and paste it into the item\'s Buy link in admin.html.\nStripe sends the receipt email. You see orders in Stripe and buy labels at USPS or Pirate Ship.\n\nCHANGE IT LATER\nGo to your site address + /admin.html (like yourname.pages.dev/admin.html). Edit. Download a new zip. Upload it again in Cloudflare (Create deployment).\nYour live site only changes when you upload.\n';
@@ -662,7 +736,7 @@ function remixApply(r) {
 }
 
 /* ---------- events ---------- */
-var lookFam = null, fineOpen = false;
+var lookFam = null, fineOpen = false, fontCat = null, adminOpen = false;
 function onAct(b) {
   var a = b.dataset.act, i = +b.dataset.i, j = +b.dataset.j, t = D.tabs[editTab];
   switch (a) {
@@ -688,8 +762,22 @@ function onAct(b) {
     case 'ladd': t.items.push({ id: rid(), title: '', buy: '', images: [] }); save(); break;
     case 'iup': t.items.splice(j - 1, 0, t.items.splice(j, 1)[0]); save(); break;
     case 'idel': if (!confirm('Delete "' + (t.items[j].title || 'this') + '"?')) return; t.items.splice(j, 1); editItem = null; save(); break;
-    case 'pleft': var im = t.items[editItem].images, k = +b.dataset.k; im.splice(k - 1, 0, im.splice(k, 1)[0]); save(); break;
-    case 'pdel': t.items[editItem].images.splice(+b.dataset.k, 1); save(); break;
+    case 'pleft': var im = b.dataset.p ? get(b.dataset.p) : t.items[editItem].images, k = +b.dataset.k; im.splice(k - 1, 0, im.splice(k, 1)[0]); save(); break;
+    case 'pdel': (b.dataset.p ? get(b.dataset.p) : t.items[editItem].images).splice(+b.dataset.k, 1); save(); break;
+    case 'layout': D.style.layout = b.dataset.v === 'links' ? 'links' : (D.style.layout === 'links' ? 'grid' : D.style.layout || 'grid'); save(); break;
+    case 'fcat': fontCat = b.dataset.v; break;
+    case 'gmode': t.mode = b.dataset.v; save(); break;
+    case 'lstyle': set(b.dataset.p + '.style', b.dataset.v); save(); break;
+    case 'lnew': var la = get(b.dataset.p) || []; la.push({ id: rid(), title: '', url: '', sub: '', image: '', style: 'button' }); set(b.dataset.p, la); save(); break;
+    case 'ldel': get(b.dataset.p).splice(+b.dataset.k, 1); save(); break;
+    case 'tagadd': case 'tagnew':
+      var tx = t.items[editItem], tg = a === 'tagnew' ? ($('#tagin').value || '').trim() : b.dataset.v;
+      if (!tg) return; tx.tags = (tx.tags || []).filter(function (g) { return g !== tg; }).concat([tg]);
+      if (a === 'tagnew' && D.cats && D.cats.indexOf(tg) < 0) D.cats.push(tg); save(); break;
+    case 'tagdel': var ty = t.items[editItem]; ty.tags = (ty.tags || []).filter(function (g) { return g !== b.dataset.v; }); save(); break;
+    case 'ful': t.items[editItem].ful = b.dataset.v; save(); break;
+    case 'isz': t.items[editItem].size = b.dataset.v; save(); break;
+    case 'admintest': adminOpen = !adminOpen; break;
     case 'imgclear': set(b.dataset.p, ''); save(); break;
     case 'fix':
       pane = b.dataset.v; pvHash = null; var fi = b.dataset.i, fj = b.dataset.j, ff = b.dataset.f;
@@ -729,12 +817,14 @@ function bind() {
     if (e.target.closest('#redo')) { travel(REDO, UNDO); return; }
     if (e.target.closest('#full')) { document.body.classList.toggle('full'); $('#full').textContent = document.body.classList.contains('full') ? 'Close' : 'Full view'; }
   });
+  document.addEventListener('keydown', function (e) { if (e.key === 'Enter' && e.target.id === 'tagin') { e.preventDefault(); var b = $('[data-act="tagnew"]'); if (b) onAct(b); } });
   document.addEventListener('toggle', function (e) { if (e.target.classList && e.target.classList.contains('fine')) fineOpen = e.target.open; }, true);
   document.addEventListener('input', function (e) {
     var el = e.target, p = el.dataset.b; if (!p) return;
     var v = el.type === 'checkbox' ? el.checked : el.value;
     if (el.dataset.num) v = v === '' ? null : +v;
     set(p, v); save(true);
+    var aj = $('#admjson'); if (aj) aj.textContent = 'site.json\n' + JSON.stringify({ name: D.name, tagline: D.tagline, tabs: D.tabs.length + ' pages' }, null, 2);
     if (el.type === 'color' && pane === 'look') { clearTimeout(bind.t); bind.t = setTimeout(draw, 250); }
   });
   document.addEventListener('change', function (e) {
@@ -747,6 +837,18 @@ function bind() {
       var r = new FileReader();
       r.onload = function () { try { var d = JSON.parse(r.result); if (!d.tabs || !d.style) throw 0; D = d; editTab = editItem = null; save(); draw(); } catch (x) { alert('That file is not a site backup.'); } };
       r.readAsText(files[0]); return;
+    }
+    if (el.dataset.video) {
+      var vf = files[0]; if (vf.size > 15 * 1048576) { alert('That video is ' + (vf.size / 1048576).toFixed(1) + ' MB. Keep uploads under 15 MB, or paste a YouTube or Vimeo link.'); return; }
+      var vk = 'video/' + rid() + (/webm$/i.test(vf.type || vf.name) ? '.webm' : '.mp4');
+      URLS[vk] = URL.createObjectURL(vf); putImg(vk, vf).then(function () { set(el.dataset.video, vk); save(); draw(); }); return;
+    }
+    if (el.dataset.font) {
+      var ff = files[0], fx = (ff.name.match(/\.(woff2|woff|ttf)$/i) || [])[1];
+      if (!fx) { alert('Pick a .woff2, .woff or .ttf font file.'); return; }
+      if (ff.size > 3 * 1048576) { alert('That font is over 3 MB. Use a .woff2 version.'); return; }
+      var fk = 'fonts/' + rid() + '.' + fx.toLowerCase();
+      URLS[fk] = URL.createObjectURL(ff); putImg(fk, ff).then(function () { D.style.customFont = { key: fk, name: ff.name.replace(/\.[^.]+$/, '').slice(0, 24) }; D.style.font = 'custom'; save(); draw(); }); return;
     }
     if (el.dataset.audio) {
       var af = files[0]; if (af.size > 12 * 1048576) { alert('That sound is ' + (af.size / 1048576).toFixed(1) + ' MB. Keep previews under 12 MB.'); return; }
