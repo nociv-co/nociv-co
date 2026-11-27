@@ -198,7 +198,7 @@ body:has(#sheet:not([hidden])) #sb{visibility:hidden}
 .grid.g2{display:grid;grid-template-columns:1fr 1fr;gap:8px}
 .xbig{background:#fff;border:2px solid var(--ink);border-radius:12px;padding:10px}.xbig svg{display:block;width:100%;height:110px}
 .rooms button{padding-left:13px;padding-right:13px}
-.pick.fn{min-height:84px;padding:8px 4px;font-size:12.5px}.pick.fn svg{height:30px}.pick.fn small{font-size:10.5px}
+.pick.fn{min-height:84px;padding:8px 4px;font-size:12.5px}.pick.fn svg{height:30px}.pick.fn svg.fic{height:30px;width:100%}.pick.fn small{font-size:10.5px}
 .fnh{display:flex;align-items:center;gap:10px;margin:0 0 6px}.fnh .btn{padding:7px 12px;border-width:1.5px;border-radius:999px;font-size:12.5px}.fnh b{font:900 15px/1 var(--sys);letter-spacing:.04em;text-transform:uppercase}
 .tabs .tl button.mo{border-style:dashed;color:var(--mute);background:transparent}
 .pane .note{position:relative;font-size:12.5px}
@@ -387,7 +387,11 @@ body{height:100dvh;overflow:hidden;display:flex;flex-direction:column}
 .nxt{all:unset;box-sizing:border-box;position:fixed;right:12px;bottom:calc(12px + env(safe-area-inset-bottom));z-index:8;cursor:pointer;background:var(--red);color:#fff;border-radius:999px;padding:12px 18px;font:900 13px/1 var(--sys);letter-spacing:.02em;box-shadow:0 4px 14px rgba(0,0,0,.22);white-space:nowrap}
 .nxt[hidden]{display:none}.nxt:active{transform:translateY(1px)}
 #pane::after{content:"";display:block;height:58px}
-.kitc{border:2px solid var(--red)!important;border-radius:12px}.est.vals{margin-top:8px}
+.kitc{border:2px solid var(--red)!important;border-radius:12px}
+.bnd{display:flex;flex-direction:column;gap:6px;margin-bottom:8px}.bnd>b{font:900 17px/1.15 var(--sys)}.bndl{font:700 12px/1.2 var(--sys);color:var(--mute)}
+.bndi{display:flex;align-items:center;gap:8px;padding:9px 10px;border:1px solid var(--line);border-radius:10px;background:#fff;color:var(--ink);text-decoration:none;font:700 13px/1.25 var(--sys)}.bndi i{flex:none;width:22px;height:22px;border-radius:50%;background:var(--red);color:#fff;font:900 12px/22px var(--sys);text-align:center;font-style:normal}.bndi span{flex:1;min-width:0}.bndi em{font-style:normal;font-weight:900}
+.est.lg{gap:0;padding:4px 12px;margin-top:8px}.lgl{display:flex;justify-content:space-between;align-items:center;gap:10px;padding:8px 0;border-top:1px solid var(--line)}.lgl:first-child{border-top:0}.lgl span{display:flex;flex-direction:column;font:800 13px/1.2 var(--sys);color:var(--ink)}.lgl small{font:600 11px/1.3 var(--sys);color:var(--mute)}.lgl b{font:900 17px/1 var(--sys);white-space:nowrap}
+.shc{margin-top:10px}.est.vals{margin-top:8px}
 .tgl{all:unset;cursor:pointer;min-width:44px;text-align:center;padding:7px 10px;border:1.5px solid #1a1a1a;border-radius:999px;font:800 12px/1 var(--sys)}.tgl[aria-checked=true]{background:#1a1a1a;color:#fff}
 .camk{border:2px solid var(--red);border-radius:12px;margin-bottom:10px}
 @media (max-width:400px){.top .tb.ur{width:28px;height:28px}.top .tb.ur svg{width:15px;height:15px}}
@@ -453,7 +457,7 @@ body:has(#nxt:not([hidden])) .pane{padding-bottom:calc(84px + env(safe-area-inse
 <input type="file" id="snapIn" accept="image/*" capture="environment" hidden>
 <div class="cfull" id="cfull" hidden role="dialog" aria-label="Your code"><div class="cfh"><span id="cfTabs"></span><span class="sp"></span><button type="button" id="cfCopy">Copy Code</button><button type="button" id="cfSave">Save</button><button type="button" id="cfX" aria-label="Close">&#x2715;</button></div><pre id="cfPre"></pre></div>
 <div class="sheet" id="sheet" hidden><div class="in" id="sheetIn"></div></div>
-<script type="module" src="builder.js?v=90"></script>
+<script type="module" src="builder.js?v=91"></script>
 <script>if('serviceWorker' in navigator){addEventListener('load',function(){navigator.serviceWorker.register('sw.js',{scope:'./'}).catch(function(){})})}</script>
 </body>
 </html>
