@@ -33,6 +33,9 @@ html.embedded .top{display:none}
 .stage #v3.mini::after{content:'3D';position:absolute;left:6px;top:5px;padding:2px 5px;border-radius:5px;background:var(--ink);color:#fff;font:900 10px/1 var(--sys);letter-spacing:.06em;pointer-events:none}
 .stage #v3.mini::before{content:'Tap to zoom';position:absolute;left:0;right:0;bottom:4px;text-align:center;color:var(--mute);font:800 9.5px/1 var(--sys);pointer-events:none}
 .stage #v3 canvas{display:block;width:100%;height:100%}
+.stage .rlay{position:absolute;top:130px;right:8px;width:116px;z-index:2;padding:6px 0;border:0;background:none;color:var(--ink);font:800 11.5px/1.2 var(--sys);text-decoration:underline;text-underline-offset:2px;cursor:pointer}
+.stage .rlay[hidden]{display:none}
+.stage:has(#cbx:not([hidden])) .rlay{top:168px}
 .stage .tag:empty{display:none!important}
 .stage .tag{position:absolute;left:8px;bottom:8px;padding:4px 8px;border-radius:8px;background:rgba(26,26,26,.82);color:#fff;font:700 11.5px/1.2 var(--sys);pointer-events:none;max-width:calc(100% - 16px)}
 .stage .zm{position:absolute;left:8px;top:8px;display:flex;gap:5px;z-index:2}.stage .zm[hidden]{display:none}.stage .zm button{all:unset;cursor:pointer;min-width:40px;height:36px;padding:0 9px;box-sizing:border-box;text-align:center;border-radius:9px;background:rgba(26,26,26,.86);color:#fff;font:900 14px/36px var(--sys)}.stage .zm button[disabled]{opacity:.35}
@@ -425,6 +428,7 @@ body:has(#nxt:not([hidden])) .pane{padding-bottom:calc(84px + env(safe-area-inse
 <section class="stage" id="stage" aria-label="Your device">
   <canvas id="view"></canvas>
   <div id="v3" hidden></div>
+  <button type="button" id="rlay" class="rlay" hidden aria-label="Reset layout: put every part back in its starting spot">Reset layout</button>
   <div class="tryv" id="tryv" hidden aria-label="Try it: play the pads"></div>
   <div class="sb" id="sb" hidden></div>
   <div class="pind" id="pind" hidden aria-live="polite"></div>
@@ -444,6 +448,6 @@ body:has(#nxt:not([hidden])) .pane{padding-bottom:calc(84px + env(safe-area-inse
 <input type="file" id="snapIn" accept="image/*" capture="environment" hidden>
 <div class="cfull" id="cfull" hidden role="dialog" aria-label="Your code"><div class="cfh"><span id="cfTabs"></span><span class="sp"></span><button type="button" id="cfCopy">Copy Code</button><button type="button" id="cfSave">Save</button><button type="button" id="cfX" aria-label="Close">&#x2715;</button></div><pre id="cfPre"></pre></div>
 <div class="sheet" id="sheet" hidden><div class="in" id="sheetIn"></div></div>
-<script type="module" src="builder.js?v=85"></script>
+<script type="module" src="builder.js?v=86"></script>
 </body>
 </html>

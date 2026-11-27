@@ -1333,6 +1333,7 @@ function draw() {
   { const sc = $('selc'); if (sc) sc.hidden = true; } /* drawBrain shows it again when the tray is up */
   const big = native3d() || BIG3D, mini = !big && wantsMini(), v3 = $('v3');
   v3.hidden = !(big || mini); v3.classList.toggle('mini', mini); cv.style.visibility = big ? 'hidden' : 'visible';
+  { const rl = $('rlay'); if (rl) rl.hidden = !(mini && (PAGES[S.page] || {}).room === 'design' && !isPanel() && S.items.length > 0); }
   if (T3) T3.controls.enabled = big;
   if (big) { zmBar(); requestAnimationFrame(() => draw3d(false)); return; }
   if (mini && !drag) { clearTimeout(miniTimer); miniTimer = setTimeout(() => draw3d(true), 160); }
@@ -3092,6 +3093,12 @@ function fitAll() { // place every loose part; if they do not all fit, grow the 
 function loadRecipe(id) {
   const r = (CZ.RECIPES || []).find((x) => x.id === id); if (!r) return;
   wipeAll(); S.items = []; S.pins = {}; S.have = {}; sel = null; LAST = null; UNDO.length = 0; /* a recipe starts from nothing too */
+  placeRecipe(r);
+  LAST = null; S.tab[2] = 'shape'; S.tab[5] = '3d'; save(); go(2);
+  draw(); requestAnimationFrame(() => { if (T3) T3.key = ''; draw(); tag(summaryLine()); }); /* paint the case now, not an empty grid under "Building it..." */
+}
+function placeRecipe(r) { // a starter's own body size, parts, layout, mounts and wall ports
+  S.items = []; S.pins = {}; S.power = null;
   S.style = r.style; const z = r.size || SIZES[r.style]; S.cols = z[0]; S.rows = z[1]; S.xw = S.xd = 0; S.add = r.add || 0; S.recipe = r.id; S.picked = true; S.started = true; S.pcb = false; S.wired = {};
   if (r.ch) xp().ch = Object.assign({}, xp().ch || {}, r.ch); /* e.g. Desk-Bot: screen eyes on the character's head */
   const mk = (t, x, y, rq) => { const P = CZ.PARTS[t]; if (P) S.items.push({ id: ++uid, type: t, panel: r.headScreen === t ? 'inside' : defaultPanel(P), head: r.headScreen === t || undefined, x, y, r: rq || 0 }); }; /* the head screen hangs in the head, not on the base */
@@ -3102,8 +3109,15 @@ function loadRecipe(id) {
   S.attachedParts = []; S.ports = []; MPC = {};
   (r.mounts || []).forEach((q) => { const m = { id: S.attachedParts.length + 1, partId: q.partId, face: q.face, anchor: Object.assign({ v: 0 }, q.anchor), mountType: q.mountType }; if (mountBlocked(m)) return; const pts = mountPoints(m); m.anchors = [m.anchor]; if (pts.length > 1) { const ax = m.face === 'left' || m.face === 'right' ? 1 : 0; m.anchors.push({ u: m.anchor.u + Math.round(pts[0].B[0][ax] * mp(m).pitch / 20), v: m.anchor.v }); } S.attachedParts.push(m); });
   (r.ports || []).forEach((q) => { const p = { id: S.ports.length + 1, kind: q.kind, face: q.face, anchor: { u: q.u, v: 0 } }; if (!portBlocked(p)) S.ports.push(p); });
-  LAST = null; S.tab[2] = 'shape'; S.tab[5] = '3d'; save(); go(2);
-  draw(); requestAnimationFrame(() => { if (T3) T3.key = ''; draw(); tag(summaryLine()); }); /* paint the case now, not an empty grid under "Building it..." */
+  const br = S.items.find((i) => i.panel === 'inside' && PP(i) && PP(i).cat === 'brain'); if (br && !hasBattery() && !autoPorts().length) snapBrain(br); /* its USB end flush with a wall, in its stepped port */
+}
+// Reset layout: the starter's (or the shape's) own part spots, edge-locked port and default parts. Colors, logos, printer and the rest of the build stay.
+function resetLayout() {
+  if (isPanel()) return; snapU(); const r = recipe(); sel = null; LAST = null; PSEL = null;
+  if (r) placeRecipe(r);
+  else { const z = SIZES[S.style]; if (z) { S.cols = z[0]; S.rows = z[1]; } S.xw = S.xd = 0; S.add = 0; reflow(); S.items.forEach((i) => { i.x = -999; i.y = -999; }); fitAll(); keepInside();
+    const br = S.items.find((i) => i.panel === 'inside' && PP(i) && PP(i).cat === 'brain'); if (br && !hasBattery()) snapBrain(br); }
+  save(); render(); tag('Layout reset: ' + (r ? r.name + ' as it was made' : 'every part back in its spot') + (allProblems().length ? '. Something still overlaps: see Arrange.' : '.'));
 }
 const recipeCost = (r) => r.parts.reduce((a, [t, n]) => a + ((CZ.PARTS[t] && CZ.PARTS[t].price) || 0) * n, 0);
 // ---------- start: three doors ----------
@@ -3728,6 +3742,12 @@ function tryWire() { const el = $('tryv'); if (!el || el.dataset.on) return; el.
   el.addEventListener('pointerdown', (e) => { const b = e.target.closest('[data-tpad]'); if (!b) return; e.preventDefault(); const i = +b.dataset.tpad; if (TRY().sel !== i) { TRY().sel = i; el.querySelectorAll('.tpad.sel').forEach((x) => x.classList.remove('sel')); b.classList.add('sel'); } tryPad(i, true); });
   ['pointerup', 'pointercancel', 'pointerleave'].forEach((ev) => el.addEventListener(ev, (e) => { const b = e.target.closest && e.target.closest('[data-tpad]'); if (b) tryPad(+b.dataset.tpad, false); }));
   el.addEventListener('input', (e) => { const r = e.target.closest('[data-tknob]'); if (!r) return; const k = r.dataset.tknob, v = +r.value, o = r.parentNode.querySelector('output'); if (o) o.textContent = k === 'beat' ? BEATS[v] : v; tryKnob(k, v); }); }
+$('rlay').addEventListener('click', (e) => { e.stopPropagation(); resetLayout(); });
+// a read-only check of the build as it stands: parts that overlap or hang off the edge, pin clashes, the brain's wall port, and whether starter code comes out
+CZ.audit = () => { const w = wiring(), br = S.items.find((i) => PP(i) && PP(i).cat === 'brain'); let code = '', err = '', pf = [];
+  try { pf = preflight(w, BRDX()); } catch (e) { pf = ['preflight: ' + e.message]; }
+  try { code = codeFor(w, summaryLine(), recipeFn(), BRDX(), TW()).text || ''; } catch (e) { err = e.message; }
+  return { recipe: S.recipe, style: S.style, items: S.items.map((i) => i.type), probs: allProblems().map((x) => label(x.it) + ': ' + x.list.join(', ')), pins: w.problems, preflight: pf, brain: br ? br.type : null, battery: hasBattery(), autoPorts: autoPorts().map((q) => q.kind + '@' + q.face), legacyPort: !!(br && !hasBattery() && !autoPorts().length), ports: S.ports.map((p) => p.kind + '@' + p.face + (portBlocked(p) ? '!' + portBlocked(p) : '')), code: code.length, codeErr: err }; };
 $('pane').addEventListener('click', (e) => { const p = e.target.closest('[data-spre]'); if (p) { showRecipe(p.dataset.spre); $('sheet').hidden = false; } });
 $('pane').addEventListener('click', (e) => { const b = e.target.closest('[data-snd],[data-tpre],[data-tpack],[data-tup],[data-tmake]'); if (!b) return; const d = b.dataset;
   if (d.snd != null) { auSet(d.snd === '1'); if (!AU.on) djStop(); else if (playSim()) djSync(TRYS.dj); render(); return; }
