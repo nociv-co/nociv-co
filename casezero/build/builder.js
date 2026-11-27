@@ -3,12 +3,12 @@
 // Print: your printer and bed, material, how it joins, where the puzzle seams go. Files: STL per piece, wood templates, wiring.
 import * as THREE from 'three';
 import { OrbitControls } from 'three/addons/OrbitControls.js';
-import * as G from './geo.js?v=39';
+import * as G from './geo.js?v=40';
 import { CARABINER_HOOK_OUTLINE_MM, CARABINER_DEFAULT_THICKNESS_MM } from './charm_carabiner_hook.js?v=1';
 import { openMeasure, GROUPS } from './capture.js?v=26';
 import { makeBoard, boardFiles, boardSvg, zip as zipFiles, dipOf } from './board.js?v=5';
 import { charParts, chSpec, charBuyList, CH_DEF, headDims, faceSpots, faceLimit, featPoly, flatParts, FEATS } from './char3d.js?v=5';
-import { micMain, planWiring, codeFor, PICO_LEFT, PICO_RIGHT, PICO_PINS, PICO_BRAINS, NEED, BOARDS, BOARD_OF, SCALES, LIBURL, preflight, DJFX, BEATS, DJMODE, libsFor, ACTS, ACTN, DJA, V33, BOARD_PROFILES } from './wiring.js?v=31';
+import { powerPlan, POWER_MODES, micMain, planWiring, codeFor, PICO_LEFT, PICO_RIGHT, PICO_PINS, PICO_BRAINS, NEED, BOARDS, BOARD_OF, SCALES, LIBURL, preflight, DJFX, BEATS, DJMODE, libsFor, ACTS, ACTN, DJA, V33, BOARD_PROFILES } from './wiring.js?v=32';
 
 const CZ = window.CZ, R = G.RULE, $ = (id) => document.getElementById(id);
 const esc = (s) => String(s == null ? '' : s).replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
@@ -355,14 +355,15 @@ function halfFor(panel, h) {
        A charger board with its own plug (USB-C) gets a second opening. */
     const o = G.bbox(outline()), wallPort = (b, z) => { const P = b.P, r = b.r % 4; return r === 0 ? { x0: o.x0 - 1, x1: b.x - P.w / 2 + 2, y0: b.y - 7, y1: b.y + 7, z } : r === 2 ? { x0: b.x + P.w / 2 - 2, x1: o.x1 + 1, y0: b.y - 7, y1: b.y + 7, z } : r === 1 ? { x0: b.x - 7, x1: b.x + 7, y0: o.y0 - 1, y1: b.y - P.w / 2 + 2, z } : { x0: b.x - 7, x1: b.x + 7, y0: b.y + P.w / 2 - 2, y1: o.y1 + 1, z }; };
     const br = onBoard ? flip(onBoard) : inside.find((q) => q.P.cat === 'brain');
-    if (br) port = wallPort(br, onBoard && bp ? Math.max(R.F + 1, (h.H - R.LT - h.recess) - (bp.hang || 6) - 4) : R.F + 3);
-    const ch = inside.find((q) => q.P.charger && q.P.usb);
-    if (ch) { const p2 = wallPort(ch, R.F + 1.5); if (port) port2 = p2; else port = p2; }
+    const ap = autoPorts(), ids = ap.map((q) => q.auto), pb = pwrBrain(), brA = !onBoard && pb && (ids.indexOf(pb.id) > -1 || (pwrMode() && pwrMode() !== 'usb' && USBK[pb.type])); /* a stepped port (or a battery brain away from the wall) replaces the open slot */
+    if (br && !brA) port = wallPort(br, onBoard && bp ? Math.max(R.F + 1, (h.H - R.LT - h.recess) - (bp.hang || 6) - 4) : R.F + 3);
+    const ch = inside.find((q) => q.P.charger && q.P.usb), hasA = () => S.items.some((i) => PP(i) && PP(i).charger && ids.indexOf(i.id) > -1);
+    if (ch && !hasA()) { const p2 = wallPort(ch, R.F + 1.5); if (port) port2 = p2; else port = p2; }
   }
   const hingeOn = isClam() && S.hinge === 'printed', lk = looksFor(panel);
   return G.buildHalf({ inset: S.inset || 0, style: S.style, W: d.W, D: d.D, H: lid ? h.Hl : h.H, recess: lid ? h.recessL : h.recess, parts, inside, port, port2, deco: !lid && panel === homePanel() ? decoPolys() : [], decoOut: lid && isClam() ? decoPolys('lid') : [],
-    top: lk.top, bottom: lk.bottom, walls: lk.walls, snap: S.snap, deckMag: !S.snap && !!S.deckMag, hatch: !lid && panel === homePanel() ? hatchKind() : null, hatchTol: tolOf(),
-    mounts: !lid && panel === homePanel() ? activeMounts() : lid && isClam() ? activeLidMounts() : [], art: !lid && panel === homePanel() ? wallArt() : [], ports: (!lid && panel === homePanel() ? activePorts() : []).concat(isClam() ? wireNotch(lid ? 'lid' : 'base') : []), duct: !lid && isClam() && S.wpass === 'channel' ? wireDuct() : null,
+    top: lk.top, bottom: lk.bottom, walls: lk.walls, snap: S.snap, deckMag: !S.snap && !!S.deckMag, hatch: !lid && panel === homePanel() ? hatchKind() : null, hatchTol: tolOf(), hatchPack: hpack(),
+    mounts: !lid && panel === homePanel() ? activeMounts() : lid && isClam() ? activeLidMounts() : [], art: !lid && panel === homePanel() ? wallArt() : [], ports: (!lid && panel === homePanel() ? activePorts().concat(autoPorts()) : []).concat(isClam() ? wireNotch(lid ? 'lid' : 'base') : []), duct: !lid && isClam() && S.wpass === 'channel' ? wireDuct() : null,
     magnets: isClam() && S.magnets, hinge: { on: hingeOn, side: S.style === 'small' ? (S.hside === 'right' ? 'right' : 'left') : 'back' }, hingeSet: lid ? 'b' : 'a' });
 }
 // Swap panels: a frame (a ledge round the inside of the box) stays put; each insert plate drops into it and is held at the 4 corners by M3 screws or 6 x 3 mm magnets.
@@ -841,10 +842,11 @@ $('drop').addEventListener('click', () => { if (DRGSKIP) { DRGSKIP = false; retu
 // ---------- panes ----------
 function seg(name, opts, val) { return '<div class="seg" data-sg="' + name + '">' + opts.map((o) => '<button type="button" data-v="' + o[0] + '" aria-pressed="' + (String(o[0]) === String(val)) + '">' + o[1] + '</button>').join('') + '</div>'; }
 const hatchKind = () => (!isPanel() && (S.hatch === 'snap' || S.hatch === 'screw') ? S.hatch : null);
-function hatchZ() { const k = hatchKind(); return k ? G.hatchZone(outline(), k, tolOf()) : null; }
-function hatchNote() { const z = hatchZ(); if (!z) return 'The box is too small for a hatch: make it wider or taller.'; return (z.kind === 'snap' ? 'Snap hatch: ' : 'M3 screw hatch: ') + (2 * z.hw).toFixed(0) + ' x ' + (2 * z.hh).toFixed(0) + ' mm door in the ' + (UPRIGHT[S.style] ? 'back' : 'bottom') + ', flush in a recessed lip, ' + tolOf() + ' mm clearance. ' + (z.kind === 'snap' ? 'Two clips click over the lip; squeeze them to take it out.' : 'Two M3 x 6 screws go into the lip frame.') + ' The door is its own print file.'; }
+const hpack = () => (G.PACKS[S.hpack] ? S.hpack : null);
+function hatchZ() { const k = hatchKind(); return k ? G.hatchZone(outline(), k, tolOf(), hpack()) : null; }
+function hatchNote() { const z = hatchZ(); if (!z) return 'The box is too small for ' + (hpack() ? 'a ' + G.PACKS[hpack()][0] + ' hatch' : 'a hatch') + ': make it wider or taller.'; return (z.pack ? G.PACKS[z.pack][0] + ' battery hatch (' + G.PACKS[z.pack][1] + ' x ' + G.PACKS[z.pack][2] + ' mm pack), 1.5 mm stepped rabbet lip, pry notch. ' : '') + (z.kind === 'snap' ? 'Snap hatch: ' : 'M3 screw hatch: ') + (2 * z.hw).toFixed(0) + ' x ' + (2 * z.hh).toFixed(0) + ' mm door in the ' + (UPRIGHT[S.style] ? 'back' : 'bottom') + ', flush in a recessed lip, ' + tolOf() + ' mm clearance. ' + (z.kind === 'snap' ? 'Two clips click over the lip; squeeze them to take it out.' : 'Two M3 x 6 screws go into the lip frame.') + ' The door is its own print file.'; }
 function joinHtml() { const m = CZ.MATERIALS.find((x) => x[0] === S.material) || CZ.MATERIALS[0]; return '<p class="h" style="margin-top:12px">How the pieces join <span style="font-weight:600;color:var(--mute)">(best for ' + esc(m[1]) + ' first)</span></p><div class="grid g3">' + m[3].concat(Object.keys(CZ.JOINS).filter((k) => m[3].indexOf(k) < 0)).map((k, i) => '<button type="button" class="pick" data-join="' + k + '" aria-pressed="' + (S.join === k) + '">' + esc(CZ.JOINS[k][0]) + (i < 2 ? '<small>good fit</small>' : '') + '</button>').join('') + '</div><p class="note">' + esc(CZ.JOINS[S.join][1]) + '</p>'; }
-const OPENS = [['shroud', 'Raised Shroud'], ['p_jack', 'Wire hole', 'Wire hole'], ['p_usbc', 'USB-C'], ['p_hdmi', 'HDMI'], ['p_jack', '3.5mm Audio'], ['p_vent', 'Vents']];
+const OPENS = [['shroud', 'Raised Shroud'], ['p_jack', 'Wire hole', 'Wire hole'], ['p_usbc', 'USB-C'], ['p_microusb', 'Micro-USB'], ['p_usbb', 'USB-B'], ['p_hdmi', 'HDMI'], ['p_microhdmi', 'Micro-HDMI'], ['p_jack', '3.5mm Audio'], ['p_switch', 'Slide Switch'], ['p_vent', 'Vents']];
 function openHtml() { const n = (k) => (k === 'shroud' ? (S.items.some((i) => i.type === 'shroud') || S.ports.some((p) => p.kind === 'p_shroud') ? 1 : 0) : S.ports.filter((p) => p.kind === k).length);
   return '<p class="h" style="margin-top:12px">Openings</p><div class="grid g3">' + OPENS.map((o) => '<button type="button" class="pick" data-xgo="' + o[0] + '" data-xfrom="shape" aria-pressed="' + (n(o[0]) > 0) + '">' + o[1] + '<small>' + (n(o[0]) ? n(o[0]) + ' added &#10003;' : 'Add') + '</small></button>').join('') + '</div><p class="note">Openings are cut into the case walls. Tap one to pick its wall and spot.</p>'; }
 function proHtml() { if (!S.pro || isPanel()) return ''; /* Pro (mm): the numbers behind the smart defaults */
@@ -899,7 +901,7 @@ const pickClose = (k, c) => c[k] ? '</div>' : '</button>';
 const qty = (k, c) => c[k] ? '<span class="qs" role="group" aria-label="How many"><span role="button" tabindex="0" data-sub="' + k + '" aria-label="Take one out">&minus;</span><b>' + c[k] + '</b><span role="button" tabindex="0" data-add="' + k + '" aria-label="Add one more">+</span></span>' : '<span class="qa">+ Add</span>';
 function simplePicks(P, c) { const ids = (SIMPLE[S.style] || SIMPLE._).filter((k) => P[k]), nm = styleRow()[1];
   return '<p class="h bfh" style="margin-top:0">Best for your ' + esc(nm) + '<span>The ' + ids.length + ' parts most builds use</span></p><div class="grid g3 simp">' + ids.map((k) => pickOpen(k, c, '') + (lineArt(k) || partSvg(P[k])) + esc((SNAME[S.style] || {})[k] || P[k].short) + '<small>' + (P[k].price ? '$' + P[k].price : '') + '</small>' + qty(k, c) + pickClose(k, c)).join('') + '</div>' +
-    '<button type="button" class="btn" data-act="allparts" style="margin-top:8px">See every part (Pro)</button>' + chosenChips(true); } /* the tray above already lists what you picked */
+    '<button type="button" class="btn" data-fn="power" style="margin-top:8px">Power: USB, AA or LiPo' + (pwrMode() ? ' &middot; ' + esc(POWER_MODES[pwrMode()][0]) : '') + '</button><button type="button" class="btn" data-act="allparts" style="margin-top:8px">See every part (Pro)</button>' + chosenChips(true); } /* the tray above already lists what you picked */
 function partsPane(P, c) {
   {
     // Parts are about what the device does, not about catalog names. First the question, then the few parts that answer it.
@@ -910,7 +912,7 @@ function partsPane(P, c) {
     const head = '<div class="fnh"><button type="button" class="btn" data-fn="" aria-label="Back to categories">&lsaquo; Back</button><b>' + fn[1] + '</b></div>';
     const list = Object.keys(P).filter((k) => P[k].cat === fn[0]);
     const cb = {}; list.forEach((k) => { cb[k] = compat(k); });
-    return head + '<div class="hrow">' + (list.map((k) => pickOpen(k, c, (cb[k] && cb[k][0] === 'no' ? ' dim' : ''), cb[k] && cb[k][2] ? ' title="' + esc(cb[k][1] + ': ' + cb[k][2]) + '"' : '') + (cb[k] ? '<span class="cb ' + cb[k][0] + '">' + cb[k][1] + '</span>' : '') + '' + '<span class="lk ' + P[k].link + '">' + LK[P[k].link] + '</span>' + (lineArt(k) || partSvg(P[k])) + esc(P[k].short) + '<small>' + (P[k].price ? '$' + P[k].price : '') + '<span class="sz">' + esc((P[k].w + ' x ' + P[k].h).replace(/\.0\b/g, '')) + ' mm</span></small>' + qty(k, c) + pickClose(k, c)).join('') + (fn[0] === 'mine' || !list.length ? /* My own board: the presets, and measuring one with the phone */
+    return head + (fn[0] === 'power' ? powerPane() : '') + '<div class="hrow">' + (list.map((k) => pickOpen(k, c, (cb[k] && cb[k][0] === 'no' ? ' dim' : ''), cb[k] && cb[k][2] ? ' title="' + esc(cb[k][1] + ': ' + cb[k][2]) + '"' : '') + (cb[k] ? '<span class="cb ' + cb[k][0] + '">' + cb[k][1] + '</span>' : '') + '' + '<span class="lk ' + P[k].link + '">' + LK[P[k].link] + '</span>' + (lineArt(k) || partSvg(P[k])) + esc(P[k].short) + '<small>' + (P[k].price ? '$' + P[k].price : '') + '<span class="sz">' + esc((P[k].w + ' x ' + P[k].h).replace(/\.0\b/g, '')) + ' mm</span></small>' + qty(k, c) + pickClose(k, c)).join('') + (fn[0] === 'mine' || !list.length ? /* My own board: the presets, and measuring one with the phone */
         '<button type="button" class="pick" data-act="measure" style="grid-column:span 2">' + ico('measure') + 'Measure one with my phone<small>Card as the ruler</small></button>' : '')) + '</div>' +
       (list.some((k) => cb[k] && cb[k][0] !== 'ok') ? '<div class="cbl">' + list.filter((k) => cb[k] && cb[k][0] !== 'ok').map((k) => '<div class="' + cb[k][0] + '"><b>' + esc(P[k].short) + '</b> ' + esc(cb[k][1]) + ': ' + esc(cb[k][2]) + '</div>').join('') + '</div>' : '') +
       (fn[0] === 'brain' ? '<div class="btags">' + list.filter((k) => P[k].tag).map((k) => '<div><b>' + esc(P[k].short) + '</b> &middot; ' + esc(plainTag(P[k].tag)) + '</div>').join('') + '</div>' : '') + '<p class="note" id="partTip">' + (list[0] ? 'Tap + Add, then use - and + to change how many. ' + esc(P[list[0]].tip) : '') + '</p>' + (fn[0] === 'power' ? '<p class="note">' + powerNote() + '</p>' : '') + chosenChips();
@@ -957,6 +959,7 @@ function paneRest(t, P, c) {
     if (isClam()) o += '<div class="row"><b>Hinge</b>' + seg('hinge', [['printed', 'Printed'], ['metal', 'Metal'], ['none', 'Lift off']], S.hinge) + '</div>' + (S.style === 'small' ? '<div class="row"><b>Opens on</b>' + seg('hside', [['left', 'Left'], ['right', 'Right']], S.hside) + '</div>' : '') + '<div class="row"><b>Closes</b>' + seg('magnets', [['1', 'Magnets'], ['0', 'Latch or strap']], S.magnets ? '1' : '0') + '</div><div class="row"><b>Wires</b>' + seg('wpass', [['slot', 'Hinge slot'], ['ribbon', 'Ribbon notch'], ['channel', 'Covered channel']], S.wpass || 'slot') + '</div>';
     if (UPRIGHT[S.style]) o += '<div class="row"><b>Tripod</b>' + seg('tripodOn', [['0', 'None'], ['1', 'Bottom 1/4-20']], S.attachedParts.some((m) => m.partId === 'tripod' && m.face === 'front') ? '1' : '0') + '</div>';
     o += '<div class="row"><b>Hatch</b>' + seg('hatch', [['none', 'None'], ['snap', 'Snap hatch'], ['screw', 'M3 Screw hatch']], hatchKind() || 'none') + '</div>';
+    if (hatchKind()) o += '<div class="row"><b>Pack</b>' + seg('hpack', [['', 'Any']].concat(Object.keys(G.PACKS).map((k) => [k, G.PACKS[k][0]])), hpack() || '') + '</div>';
     o += '<p class="note">' + (S.snap ? 'Snap clips: 4 arms under the deck click into a groove in the wall. No screws. ' : '') + (!S.snap && S.deckMag ? 'Deck magnets: a 6 x 3 mm magnet in the top of each post and one under the deck above it. Lift it off, no screws. ' : '') + (hatchKind() ? hatchNote() + ' ' : '') + (S.spring ? 'Printed springs: the deck around each small button becomes a little flexing pad, no caps to buy. ' : '') + (isClam() ? (S.hinge === 'printed' ? 'Printed hinge: a piece of 1.75 mm filament is the pin. ' : S.hinge === 'metal' ? 'Metal hinges: 2 small butt hinges (25 mm) screwed to the back. ' : '') + (S.magnets ? 'Two 6 x 3 mm magnets in each half hold it shut. ' : '') : 'Height grows to fit your deepest part. Add more for batteries or a speaker. ') + '</p>';
     return o + joinHtml() + openHtml();
   }
@@ -1173,6 +1176,8 @@ $('pane').addEventListener('click', (e) => {
   if (act === 'toWiring') { S.tab[0] = 'pins'; go(0); return; }
   if (act === 'toBoard') { S.tab[5] = 'pcb'; go(5); return; }
   if (act === 'unwire') { S.wired = {}; save(); render(); return; }
+  if (act && act.indexOf('pwr_') === 0 && POWER_MODES[act.slice(4)]) { setPower(act.slice(4)); return; }
+  if (act === 'deepen') { const n = zNeed(); snapU(); S.add = (S.add || 0) + n; if (S.lockBox) S.lockBox.H += n; save(); render(); tag('Base deepened ' + n + ' mm: the battery and the part above it both fit.'); return; }
   if (d.how) { S.how = d.how; save(); render(); return; }
   if (d.wired) { if (!S.wired) S.wired = {}; if (S.wired[d.wired]) delete S.wired[d.wired]; else S.wired[d.wired] = true; save(); const top = $('pane').scrollTop; render(); $('pane').scrollTop = top; return; }
   if (act === 'addNotch') { S.notches = S.notches || []; S.notches.push({ edge: 'bottom', shape: 'rrect', w: 20, d: 8, at: Math.round(dims().W / 2) }); S.nsel = S.notches.length - 1; reflow(); save(); render(); return; }
@@ -1301,7 +1306,7 @@ $('pane').addEventListener('click', (e) => {
     if (k === 'tol') { if (v === 'c') S.tolC = true; else { S.tolC = false; S.tol = +v; } applyWalls(); reflow(); save(); render(); return; }
     if (k === 'fmt') { S.fmt = v; save(); sg.querySelectorAll('button').forEach((x) => x.setAttribute('aria-pressed', String(x === b))); $('fileList').querySelectorAll('[data-f]').forEach((x) => { const f = FILES[+x.dataset.f]; if (f) x.textContent = 'Save ' + f.label + fmtTag(f); }); return; }
     if (k === 'layer') { S.layer = v; save(); render(); return; }
-    if (k === 'magnets') S.magnets = v === '1'; else if (k === 'snap') { S.snap = v === '1'; S.deckMag = v === 'mag'; } else if (k === 'hatch') S.hatch = v; else if (k === 'spring') S.spring = v === '1';
+    if (k === 'magnets') S.magnets = v === '1'; else if (k === 'snap') { S.snap = v === '1'; S.deckMag = v === 'mag'; } else if (k === 'hatch') S.hatch = v; else if (k === 'hpack') S.hpack = v || null; else if (k === 'spring') S.spring = v === '1';
     else if (k === 'lg_src') { const q = LG(); q.on = v !== 'off'; if (v !== 'off') q.src = v; } else if (k === 'lg_face') { L.logoAt = v; } else if (k === 'lg_how') LG().how = v;
     else if (k === 'lb_place') { L.labels.on = v !== 'off'; if (v !== 'off') L.labels.place = v; } else if (k === 'lb_how') L.labels.how = v;
     else if (k === 'tx_face') L.texFace = v; else if (k === 'tx_bump') L.tex[L.texFace].bump = v === '1';
@@ -1819,10 +1824,14 @@ function wirePreview(grp, slots, parts, top) { const br = S.items.find((i) => i.
   parts.concat(S.items.filter((i) => i.panel === 'inside' && i !== br)).forEach((it) => { const P = PP(it), q = slots[it.id]; if (!P || !q || q.grp !== grp || P.board || it.of != null) return;
     const ins = it.panel === 'inside', z = ins ? R.F + riserOf(it) + P.depth : top - R.LT - (P.depth || 0), mid = Math.max(bz, z) + 4, pts = [new THREE.Vector3(b.x, b.y, bz), new THREE.Vector3(b.x, b.y, mid), new THREE.Vector3(q.x, q.y, mid), new THREE.Vector3(q.x, q.y, z)];
     grp.add(new THREE.Line(new THREE.BufferGeometry().setFromPoints(pts), new THREE.LineBasicMaterial({ color: WIRE_C[P.cat] || 0x9e9e9e }))); }); }
-const PLUG_C = { p_usbc: 0xa0a4aa, p_hdmi: 0xa0a4aa, p_minihdmi: 0xa0a4aa, p_microhdmi: 0xa0a4aa, p_jack: 0x2a2a2a, p_switch: 0x3a3a3a };
-function portPlugs(r, grp) { S.ports.forEach((p) => { if (!PLUG_C[p.kind]) return; const w = portAt(p); if (!w) return; const v = p.face === 'back' || p.face === 'front', N = PNORM[p.face], s0 = Math.min(...w.rects.map((q) => q.s0)), s1 = Math.max(...w.rects.map((q) => q.s1)), al = s1 - s0, ht = w.z1 - w.z0, dn = 7, mid = (s0 + s1) / 2, off = R.T + dn / 2 - 1;
-  const m = new THREE.Mesh(new THREE.BoxGeometry(v ? al : dn, v ? dn : al, ht), new THREE.MeshStandardMaterial({ color: portBlocked(p) ? 0xd94a3a : PLUG_C[p.kind], roughness: .4, metalness: .3 })), x = v ? mid : w.x - N[0] * off, y = v ? w.y - N[1] * off : mid, z = (w.z0 + w.z1) / 2;
-  m.position.set(x, y, z); grp.add(m); r.pm[p.id] = { m }; r.slots['p' + p.id] = { grp, x, y, z, w: v ? al : dn, h: v ? dn : al, dep: ht }; }); } /* the socket behind each wall opening */
+const PLUG_C = { p_usbc: 0xa0a4aa, p_microusb: 0xa0a4aa, p_usbb: 0xa0a4aa, p_hdmi: 0xa0a4aa, p_minihdmi: 0xa0a4aa, p_microhdmi: 0xa0a4aa, p_jack: 0x2a2a2a, p_switch: 0x3a3a3a };
+const BEZEL = new THREE.MeshStandardMaterial({ color: 0x3b3b3b, roughness: .55, metalness: .2 });
+function portPlugs(r, grp) { S.ports.map((p) => [p, PLUG_C[p.kind] && portAt(p)]).concat(autoPorts().map((w, i) => [{ id: 'auto' + i, kind: w.kind, face: w.face, auto: true }, w])).forEach(([p, w]) => { if (!w) return; const v = p.face === 'back' || p.face === 'front', N = PNORM[p.face], s0 = Math.min(...w.rects.map((q) => q.s0)), s1 = Math.max(...w.rects.map((q) => q.s1)), al = s1 - s0, ht = w.z1 - w.z0, dn = 7, mid = (s0 + s1) / 2, off = R.T + dn / 2 - 1;
+  const m = new THREE.Mesh(new THREE.BoxGeometry(v ? al : dn, v ? dn : al, ht), new THREE.MeshStandardMaterial({ color: !p.auto && portBlocked(p) ? 0xd94a3a : PLUG_C[p.kind], roughness: .4, metalness: .3 })), x = v ? mid : w.x - N[0] * off, y = v ? w.y - N[1] * off : mid, z = (w.z0 + w.z1) / 2;
+  m.position.set(x, y, z); grp.add(m); r.pm[p.id] = { m }; r.slots['p' + p.id] = { grp, x, y, z, w: v ? al : dn, h: v ? dn : al, dep: ht };
+  if (w.step) { const bt = G.STEP.boot, d0 = G.STEP.bd - 0.15, t = 0.5, W = al + 2 * bt, Hh = ht + 2 * bt, bx = v ? mid : w.x - N[0] * d0, by = v ? w.y - N[1] * d0 : mid; /* a subtle bezel: a thin frame at the bottom of the boot recess */
+    [[0, (Hh - t) / 2, W, t], [0, -(Hh - t) / 2, W, t], [(W - t) / 2, 0, t, Hh], [-(W - t) / 2, 0, t, Hh]].forEach(([du, dz, sw, sh]) => { const f = new THREE.Mesh(new THREE.BoxGeometry(v ? sw : 0.3, v ? 0.3 : sw, sh), BEZEL); f.position.set(v ? bx + du : bx, v ? by : by + du, z + dz); grp.add(f); }); }
+  }); } /* the socket behind each wall opening */
 function draw3d(isMini) {
   const D3 = deco3d();
   if ($('v3').hidden || (!isMini && $('v3').classList.contains('mini'))) return; // the view changed before this frame ran
@@ -1976,13 +1985,14 @@ function brainInfo() {
   return null;
 }
 // ---------- Wiring map: the whole plan as one drawing. Test it: the parts act out what code.py does ----------
-const WCOL = ['#2f6fdb', '#c9a200', '#2f9a5b'], netCol = (net, i) => (net === '3V3' || net === 'VBUS' ? '#d23b2a' : net === 'GND' ? '#1a1a1a' : WCOL[i % 3]);
-function mapWhy() { const bi = brainInfo(); if (!BRD()) return 'The map and the test do not know the pins of the ' + bi.name + ' yet.'; if (!wiring().rows.length) return 'Add buttons, knobs, screens, sensors or lights in Electronics first.'; return ''; }
+const WCOL = ['#2f6fdb', '#c9a200', '#2f9a5b'], PWRNET = ['3V3', 'VBUS', 'VSYS', 'VIN', '5V', 'RAW', 'VCC'], netCol = (net, i) => (PWRNET.indexOf(net) > -1 ? '#d23b2a' : net === 'GND' ? '#1a1a1a' : WCOL[i % 3]);
+function powerMapItems() { const m = pwrMode(); if (!m || m === 'usb') return []; const pl = pwrPlan(); if (!pl.wires.length) return []; return [{ row: { it: { id: null, label: (pl.pack ? G.PACKS[pl.pack][0] : 'Battery') + ' ' + pl.volts + 'V' } }, pads: pl.wires, side: BRDX().left.indexOf(pl.pin) > -1 ? 'L' : 'R' }]; }
+function mapWhy() { const bi = brainInfo(); if (!BRD()) return 'The map and the test do not know the pins of the ' + bi.name + ' yet.'; if (!wiring().rows.length && !powerMapItems().length) return 'Add buttons, knobs, screens, sensors or lights in Electronics first.'; return ''; }
 function pcx(e) { const r = cv.getBoundingClientRect(), k = cv.width / r.width; return [(e.clientX - r.left) * k, (e.clientY - r.top) * k]; }
 let MAPHITS = [];
 function drawMap(W, H) {
   MAPHITS = []; const d = px(), w = wiring(), rows = w.rows, bi = brainInfo(); g.fillStyle = '#f7f4ec'; g.fillRect(0, 0, W, H);
-  if (!rows.length) { g.fillStyle = '#6f6a60'; g.font = '800 ' + 14 * d + 'px -apple-system,Arial'; g.textAlign = 'center'; g.fillText('Add parts to see the wiring map', W / 2, H / 2); tag('Wiring map'); return; }
+  const pwrIt = powerMapItems(); if (!rows.length && !pwrIt.length) { g.fillStyle = '#6f6a60'; g.font = '800 ' + 14 * d + 'px -apple-system,Arial'; g.textAlign = 'center'; g.fillText('Add parts to see the wiring map', W / 2, H / 2); tag('Wiring map'); return; }
   const B = BRDX(), BL = B.left, BRr = B.right, nr = Math.max(BL.length, BRr.length), bw = Math.min(W * 0.2, 96 * d), top = 28 * d, bh = H - top - 40 * d, bx = W / 2 - bw / 2, step = bh / nr, gnd = (side) => (side === 'L' ? BL : BRr).map((p, i) => (p === 'GND' ? i : -1)).filter((i) => i > -1);
   const pinAt = (net0, side, yNear) => { const net = netName(net0); let i = BL.indexOf(net); if (i > -1 && net !== 'GND') return ['L', i]; i = BRr.indexOf(net); if (i > -1 && net !== 'GND') return ['R', i]; if (net === 'GND') { const list = gnd(side).length ? gnd(side) : gnd(side === 'L' ? 'R' : 'L'); side = gnd(side).length ? side : side === 'L' ? 'R' : 'L'; const iy = list.reduce((a, c) => (Math.abs(top + (c + 0.5) * step - yNear) < Math.abs(top + (a + 0.5) * step - yNear) ? c : a), list[0]); return list.length ? [side, iy] : null; } return null; };
   const pxy = (sd, i) => [sd === 'L' ? bx : bx + bw, top + (i + 0.5) * step];
@@ -1990,13 +2000,14 @@ function drawMap(W, H) {
   g.fillStyle = '#fff'; g.font = '800 ' + 11 * d + 'px -apple-system,Arial'; g.textAlign = 'center'; g.fillText(bmini(B.name).slice(0, 14), W / 2, top + bh / 2);
   g.font = '700 ' + Math.min(9 * d, step * 0.62) + 'px -apple-system,Arial';
   for (let i = 0; i < nr; i++) { const yl = top + (i + 0.5) * step; g.textAlign = 'left'; g.fillStyle = '#e8f3ec'; if (BL[i]) g.fillText(BL[i], bx + 4 * d, yl + 3 * d); g.textAlign = 'right'; if (BRr[i]) g.fillText(BRr[i], bx + bw - 4 * d, yl + 3 * d); g.fillStyle = '#d9c46a'; if (BL[i]) g.fillRect(bx - 2 * d, yl - 1.5 * d, 4 * d, 3 * d); if (BRr[i]) g.fillRect(bx + bw - 2 * d, yl - 1.5 * d, 4 * d, 3 * d); }
-  const items = rows.map((row) => { const pads = padsFor(row), gl = pads.filter((p) => p[1] !== 'GND' && p[1] !== '3V3' && p[1] !== 'VBUS' && p[1] !== B.v5 && p[1] !== B.v3).map((p) => BL.indexOf(p[1]) > -1 ? -1 : 1).reduce((a, c) => a + c, 0); return { row, pads, side: gl > 0 ? 'R' : 'L' }; });
+  const items = rows.map((row) => { const pads = padsFor(row), gl = pads.filter((p) => p[1] !== 'GND' && p[1] !== '3V3' && p[1] !== 'VBUS' && p[1] !== B.v5 && p[1] !== B.v3).map((p) => BL.indexOf(p[1]) > -1 ? -1 : 1).reduce((a, c) => a + c, 0); return { row, pads, side: gl > 0 ? 'R' : 'L' }; }).concat(pwrIt);
   ['L', 'R'].forEach((sd) => { const list = items.filter((x) => x.side === sd); if (!list.length) return; const lh = 11 * d, need = list.reduce((a, x) => a + 16 * d + x.pads.length * lh, 0) + 6 * d * (list.length - 1), k = Math.min(1, bh / need), colW = (sd === 'L' ? bx : W - bx - bw) - 70 * d, x0 = sd === 'L' ? 8 * d : bx + bw + 62 * d; let y = top + Math.max(0, (bh - need * k) / 2), lane = 0;
     list.forEach((it) => { const h = (16 * d + it.pads.length * lh) * k, lit = it.row.it.id != null && it.row.it.id === HL; g.fillStyle = lit ? '#fdeeea' : '#fff'; g.strokeStyle = lit ? '#c8412f' : '#1a1a1a'; g.lineWidth = (lit ? 3.5 : 1.5) * d; g.beginPath(); g.rect(x0, y, Math.max(40 * d, colW), h); g.fill(); g.stroke(); MAPHITS.push({ id: it.row.it.id, x: x0, y, w: Math.max(40 * d, colW), h });
       g.fillStyle = '#1a1a1a'; g.font = '800 ' + 10 * d * Math.max(0.7, k) + 'px -apple-system,Arial'; g.textAlign = sd === 'L' ? 'left' : 'right'; g.fillText(it.row.it.label.slice(0, 18), sd === 'L' ? x0 + 4 * d : x0 + Math.max(40 * d, colW) - 4 * d, y + 11 * d * k);
       it.pads.forEach(([lbl, net], j) => { const py = y + (15 * d + (j + 0.5) * lh) * k, ex = sd === 'L' ? x0 + Math.max(40 * d, colW) : x0, at = pinAt(net, sd, py); g.font = '700 ' + 8.5 * d * Math.max(0.7, k) + 'px -apple-system,Arial'; g.fillStyle = '#6f6a60'; g.textAlign = sd === 'L' ? 'right' : 'left'; g.fillText(lbl, sd === 'L' ? ex - 3 * d : ex + 3 * d, py + 3 * d);
         if (!at) return; const [qx, qy] = pxy(at[0], at[1]), lx = sd === 'L' ? bx - 10 * d - (lane % 10) * 4 * d : bx + bw + 10 * d + (lane % 10) * 4 * d; lane++;
-        g.strokeStyle = netCol(net, lane); g.lineWidth = 2 * d; g.beginPath(); g.moveTo(ex, py); g.lineTo(lx, py); g.lineTo(lx, qy); g.lineTo(qx, qy); g.stroke(); });
+        g.strokeStyle = netCol(net, lane); g.lineWidth = 2 * d; g.beginPath(); g.moveTo(ex, py); g.lineTo(lx, py); g.lineTo(lx, qy); g.lineTo(qx, qy); g.stroke();
+        if (it.pads[j][2] === 'sw') { const sx = (ex + lx) / 2, sw = 22 * d, sh = 9 * d; g.fillStyle = '#fff'; g.strokeStyle = '#1a1a1a'; g.lineWidth = 1.5 * d; g.beginPath(); g.rect(sx - sw / 2, py - sh / 2, sw, sh); g.fill(); g.stroke(); g.fillStyle = '#1a1a1a'; g.font = '800 ' + 6.5 * d + 'px -apple-system,Arial'; g.textAlign = 'center'; g.fillText('ON/OFF', sx, py + 2.3 * d); } }); /* the On/Off switch sits in the red wire */
       y += h + 6 * d * k; }); });
   tag(rows.length + ' parts wired to the ' + (bi ? bi.name : 'brain') + (w.problems.length ? '. ' + w.problems[0] : ''));
 }
@@ -2454,22 +2465,22 @@ function mountBlocked(m) { // why this spot cannot take this part, or '' if it c
 }
 // ---------- ports and vents through a side wall: the same spots, the same blocking rules ----------
 // S.ports: [{ id, kind: p_usbc | p_switch | p_vent | p_hdmi | p_minihdmi | p_microhdmi | p_jack, face: back | front | left | right, anchor: { u } }]
-const PORTS = { p_hdmi: ['HDMI', 'An opening for a full size HDMI plug: 16.5 x 6.5 mm plus the clearance.'], p_minihdmi: ['Mini HDMI', 'An opening for a Mini HDMI plug (Pi Zero): 12.5 x 4.5 mm plus the clearance.'], p_microhdmi: ['Micro HDMI', 'An opening for a Micro HDMI plug (Pi 4 and 5): 8.5 x 4 mm plus the clearance.'], p_jack: ['3.5mm jack', 'A 6.2 mm round hole for a headphone or audio plug, lined up with the jack inside.'], p_usbc: ['USB-C', 'An opening for a USB-C cable to reach the brain or a charger inside: 9.2 x 3.4 mm plus the clearance.'], p_switch: ['Slide switch', 'A slot for a small slide switch (SS12D10 type) so you can turn it on and off from outside: 9 x 4 mm plus the clearance.'], p_vent: ['Vent grille', 'Five slots to let warm air out of the case.'] };
+const PORTS = { p_hdmi: ['HDMI', 'An opening for a full size HDMI plug: 16.5 x 6.5 mm plus the clearance.'], p_minihdmi: ['Mini HDMI', 'An opening for a Mini HDMI plug (Pi Zero): 12.5 x 4.5 mm plus the clearance.'], p_microhdmi: ['Micro HDMI', 'An opening for a Micro HDMI plug (Pi 4 and 5): 8.5 x 4 mm plus the clearance.'], p_jack: ['3.5mm jack', 'A 6.2 mm round hole for a headphone or audio plug, lined up with the jack inside.'], p_usbc: ['USB-C', 'A stepped USB-C port: a 9.2 x 3.4 mm plug bore, a 1.2 mm recess outside for the cable boot and a collar inside the socket butts against.'], p_microusb: ['Micro-USB', 'A stepped Micro-USB port (Pico): an 8 x 3.6 mm plug bore, a 1.2 mm boot recess outside, a backstop collar inside.'], p_usbb: ['USB-B', 'A stepped USB-B port (Uno): a 12.4 x 11.4 mm plug bore, a 1.2 mm boot recess outside, a backstop collar inside.'], p_switch: ['Slide switch', 'A slot for a small slide switch (SS12D10 type) so you can turn it on and off from outside: 9 x 4 mm plus the clearance.'], p_vent: ['Vent grille', 'Five slots to let warm air out of the case.'] };
 const PFACES = [['back', 'Back'], ['front', 'Front'], ['left', 'Left'], ['right', 'Right']], PNORM = { back: [0, 1, 0], front: [0, -1, 0], left: [-1, 0, 0], right: [1, 0, 0] };
 const pface = () => (PNORM[mnt().pface] ? mnt().pface : 'back');
+const PBORE = { p_usbc: [9.2, 3.4], p_microusb: [8, 3.6], p_usbb: [12.4, 11.4], p_hdmi: [16.5, 6.5], p_minihdmi: [12.5, 4.5], p_microhdmi: [8.5, 4], p_switch: [9, 4] }; /* plug bores, w x h mm */
+const STEPPED = { p_usbc: 1, p_microusb: 1, p_usbb: 1, p_hdmi: 1, p_minihdmi: 1, p_microhdmi: 1, p_jack: 1, p_switch: 1 }; /* real 2-stage ports: bore + boot recess + backstop collar */
+function boreRects(kind, zc) { const c = tolOf(), b = PBORE[kind]; return [{ u0: -b[0] / 2 - c, u1: b[0] / 2 + c, z0: +(zc - b[1] / 2 - c).toFixed(3), z1: +(zc + b[1] / 2 + c).toFixed(3) }]; }
 function portRects(kind) { // the openings: along the wall from the spot (u) and height (z), with the clearance on every side
   const c = tolOf(), F = R.F, dz = geom().H - R.LT - geom().recess;
-  if (kind === 'p_usbc') return [{ u0: -4.6 - c, u1: 4.6 + c, z0: F + 3 - c, z1: F + 6.4 + c }];
-  if (kind === 'p_hdmi') return [{ u0: -8.25 - c, u1: 8.25 + c, z0: F + 3 - c, z1: F + 9.5 + c }];
-  if (kind === 'p_minihdmi') return [{ u0: -6.25 - c, u1: 6.25 + c, z0: F + 3 - c, z1: F + 7.5 + c }];
-  if (kind === 'p_microhdmi') return [{ u0: -4.25 - c, u1: 4.25 + c, z0: F + 3 - c, z1: F + 7 + c }];
+  if (kind === 'p_switch') return boreRects(kind, F + 5.5);
+  if (PBORE[kind]) return boreRects(kind, F + 3 + PBORE[kind][1] / 2 + 0.2 * (kind === 'p_usbb' ? 0 : 1));
   if (kind === 'p_jack') { const r = 3.1 + c, zc = F + 3 + 3.1, nb = 8; return Array.from({ length: nb }, (_, i) => { const z0 = zc - r + i * 2 * r / nb, z1 = z0 + 2 * r / nb, e = Math.min(Math.abs(z0 - zc), Math.abs(z1 - zc)) * (z0 < zc && z1 > zc ? 0 : 1), hw = Math.sqrt(r * r - e * e); return { u0: -hw, u1: hw, z0: +z0.toFixed(3), z1: +z1.toFixed(3) }; }); } /* round, from 8 bands: each one as wide as the circle where it is widest */
-  if (kind === 'p_switch') return [{ u0: -4.5 - c, u1: 4.5 + c, z0: F + 3.5 - c, z1: F + 7.5 + c }];
   const top = Math.min(dz - 2.5, F + 15); return [-8, -4, 0, 4, 8].map((u) => ({ u0: u - 1 - c, u1: u + 1 + c, z0: F + 3, z1: Math.max(F + 6, top) }));
 }
 function portAt(p) { const g0 = R.T + R.CLR + 1, s = g0 + ((p.anchor || { u: 0 }).u + 0.5) * 20 + ((p.anchor || {}).du || 0), w = G.wallAt(outline(), p.face, s); if (!w) return null;
   const rects = (p.kind === 'p_shroud' ? shroudRects(p) : portRects(p.kind)).map((q) => ({ s0: s + q.u0, s1: s + q.u1, z0: q.z0, z1: q.z1 })), z0 = Math.min(...rects.map((q) => q.z0)), z1 = Math.max(...rects.map((q) => q.z1));
-  return { face: p.face, x: w[0], y: w[1], s, rects, z0, z1, o: [w[0], w[1], (z0 + z1) / 2] }; }
+  return { face: p.face, x: w[0], y: w[1], s, rects, z0, z1, o: [w[0], w[1], (z0 + z1) / 2], step: !!STEPPED[p.kind], kind: p.kind }; }
 function portFace(p) { const w = portAt(p); return w ? w.rects.map((q) => G.rect(q.s0, q.z0, q.s1, q.z1)) : []; } /* in (along the wall, height), like a mount plate */
 function portBlocked(p) {
   if (isPanel()) return 'needs a case';
@@ -2480,7 +2491,7 @@ function portBlocked(p) {
   const zone = [G.mountRect({ face: p.face, x: v ? (s0 + s1) / 2 : w.x, y: v ? w.y : (s0 + s1) / 2 }, (s1 - s0) / 2 + 1.5, R.T + 6, 0)], hit = (polys) => G.area(G.inter(zone, polys)) > 0.3, dz = h.H - R.LT - h.recess;
   if (isClam() && S.magnets && G.magnetSpots(outline()).some(([x, y]) => hit([G.circle(x, y, R.MAG / 2 + 2.6, 24)]))) return 'magnet';
   if (posts().some(([x, y]) => hit([G.circle(x, y, R.POSTR + 1, 20)]))) return 'deck screw';
-  if (S.items.some((it) => { const P = PP(it); if (!P || !(it.panel === 'inside' || it.panel === homePanel()) || (P.jack && p.kind === 'p_jack')) return false; /* the jack sits at its own hole */ const zr = it.panel === 'inside' ? [R.F, R.F + riserOf(it) + (P.depth || 0)] : [dz - (P.depth || 0), dz]; return zr[0] < w.z1 && zr[1] > w.z0 && hit(rectPoly(fp(it))); })) return 'electronics';
+  if (S.items.some((it) => { const P = PP(it); if (!P || !(it.panel === 'inside' || it.panel === homePanel()) || (P.jack && p.kind === 'p_jack') || (P.sw && p.kind === 'p_switch')) return false; /* the jack and the slide switch sit at their own holes */ const zr = it.panel === 'inside' ? [R.F, R.F + riserOf(it) + (P.depth || 0)] : [dz - (P.depth || 0), dz]; return zr[0] < w.z1 && zr[1] > w.z0 && hit(rectPoly(fp(it))); })) return 'electronics';
   const pf = portFace(p);
   if (S.ports.some((q) => q !== p && q.id !== p.id && q.face === p.face && G.area(G.inter(G.offset(pf, 1), portFace(q))) > 0.1)) return 'taken';
   if (S.attachedParts.some((m) => m.face === p.face && MOUNTABLE[m.partId] && (() => { const mw = mountAt(m); return mw && G.area(G.inter(G.offset(pf, 1), [plateFace(m, mw)])) > 0.1; })())) return 'taken';
@@ -2492,6 +2503,62 @@ function wireNotch(half) { const f = hingeFace(); if (!f) return []; const b = G
   return [{ face: f, x: w[0], y: w[1], rects: [{ s0: c - hw, s1: c + hw, z0: H - dz, z1: H + 1 }] }]; }
 function wireDuct() { const f = hingeFace(); if (!f) return null; const b = G.bbox(outline()), v = f === 'back', c = v ? (b.x0 + b.x1) / 2 : (b.y0 + b.y1) / 2, w = G.wallAt(outline(), f, c); return w ? { face: f, x: v ? c : w[0], y: v ? w[1] : c } : null; }
 function activePorts() { return S.ports.filter((p) => (PORTS[p.kind] || p.kind === 'p_shroud') && !portBlocked(p)).map(portAt).filter(Boolean); }
+// ---------- power: USB cable, AA cells or a USB-C LiPo. Each picks its parts, its wall ports, the brain's spot and the red/black wires ----------
+const USBK = { pico: 'p_microusb', picow: 'p_microusb', pico2: 'p_microusb', cyd: 'p_microusb', uno: 'p_usbb', nano: 'p_usbc', promicro: 'p_usbc', esp32c3: 'p_usbc', esp32s3: 'p_usbc', esp32: 'p_usbc' };
+const PWR_TYPES = ['aa3', 'aa4', 'slidesw', 'lipo1200', 'lipo500', 'tp4056'];
+const pwrMode = () => (POWER_MODES[S.power] ? S.power : null);
+const pwrBrain = () => S.items.find((i) => i.panel === 'inside' && i.of == null && PP(i) && PP(i).cat === 'brain');
+const pwrPlan = () => powerPlan(pwrMode() || 'usb', (pwrBrain() || {}).type || (brainInfo() || {}).type || 'pico');
+function wallPortOf(it, kind) { // the stepped port at the wall a part's plug end touches: r 0 left, 1 front, 2 right, 3 back
+  if (!it || !PBORE[kind] || isPanel()) return null; const P = PP(it), b = G.bbox(outline()), r = (it.r || 0) % 4, face = ['left', 'front', 'right', 'back'][r], hf = hingeFace(); if (face === hf) return null;
+  const end = r === 0 ? it.x - P.w / 2 - b.x0 : r === 2 ? b.x1 - (it.x + P.w / 2) : r === 1 ? it.y - P.w / 2 - b.y0 : b.y1 - (it.y + P.w / 2); if (end > R.T + 3.5) return null; /* only a plug end flush with the wall gets a port */
+  const sAt = r % 2 ? it.x : it.y, w = G.wallAt(outline(), face, sAt); if (!w) return null;
+  const zc = R.F + riserOf(it) + 1.6 + PBORE[kind][1] / 2 + 0.2, rects = boreRects(kind, zc).map((q) => ({ s0: sAt + q.u0, s1: sAt + q.u1, z0: q.z0, z1: q.z1 })), z0 = rects[0].z0, z1 = rects[0].z1;
+  if (z1 > geom().H - R.LT - geom().recess - 0.5) return null;
+  return { face, x: w[0], y: w[1], s: sAt, rects, z0, z1, o: [w[0], w[1], (z0 + z1) / 2], step: true, kind, auto: it.id };
+}
+function autoPorts() { if (isPanel()) return []; const out = [], br = pwrBrain(), ch = S.items.find((i) => i.panel === 'inside' && PP(i) && PP(i).charger && PP(i).usb && /USB-C/.test(PP(i).usb));
+  const a = br && wallPortOf(br, USBK[br.type]); if (a) out.push(a); const c = ch && wallPortOf(ch, 'p_usbc'); if (c) out.push(c); return out; }
+function snapWall(it) { // a part with a plug: flush against the nearest wall that is not the hinge, plug end out
+  const P = PP(it); if (!P || isPanel()) return false; const b = G.bbox(outline()), m = R.T + 0.6 + 0.3, x0 = it.x, y0 = it.y, r0 = it.r || 0, hf = hingeFace();
+  const walls = [['left', 0, () => [b.x0 + m + P.w / 2, y0]], ['right', 2, () => [b.x1 - m - P.w / 2, y0]], ['front', 1, () => [x0, b.y0 + m + P.w / 2]], ['back', 3, () => [x0, b.y1 - m - P.w / 2]]].filter((w) => w[0] !== hf);
+  walls.sort((a, c) => { const pa = a[2](), pc = c[2](); return Math.hypot(pa[0] - x0, pa[1] - y0) - Math.hypot(pc[0] - x0, pc[1] - y0); });
+  for (const [, r, at] of walls) { const p = at(); it.r = r; it.x = p[0]; it.y = p[1]; if (!problems(it).length) return true; for (const d of [10, -10, 20, -20, 30, -30]) { if (r % 2) it.x = p[0] + d; else it.y = p[1] + d; if (!problems(it).length) return true; } }
+  it.x = x0; it.y = y0; it.r = r0; return false;
+}
+function switchHole() { // the On/Off slide switch: a stepped slot in a side wall, its switch parked right behind it
+  if (isPanel()) return; S.ports = S.ports.filter((p) => p.auto !== 'power'); const id = S.ports.reduce((q, x) => Math.max(q, +x.id || 0), 0) + 1, hf = hingeFace(), sw = S.items.find((i) => i.type === 'slidesw');
+  for (const f of ['right', 'left', 'front', 'back'].filter((x) => x !== hf)) for (const a of anchorsOf(f)) { const p = { id, kind: 'p_switch', face: f, anchor: { u: a.u, v: 0 }, auto: 'power' }; if (portBlocked(p)) continue;
+    S.ports = S.ports.concat([p]); const w = portAt(p); if (sw && w) { const N = PNORM[f], k = R.T + 0.9 + 3; sw.r = f === 'left' || f === 'right' ? 1 : 0; sw.riser = 0; sw.x = f === 'left' || f === 'right' ? w.x - N[0] * k : w.s; sw.y = f === 'left' || f === 'right' ? w.s : w.y - N[1] * k; } return; }
+}
+function setPower(mode) { snapU();
+  const plan = powerPlan(mode, (pwrBrain() || {}).type || (brainInfo() || {}).type || 'pico'); S.power = mode;
+  S.items = S.items.filter((i) => PWR_TYPES.indexOf(i.type) < 0); S.ports = S.ports.filter((p) => p.auto !== 'power');
+  if (S.hatchAuto) { S.hatch = 'none'; S.hpack = null; S.hatchAuto = false; }
+  plan.parts.forEach((t) => { const it = addPart(t); if (PP(it).mah || t === 'slidesw') it.riser = 0; });
+  const bat = S.items.find((i) => PWR_TYPES.indexOf(i.type) > -1 && PP(i).mah);
+  if (mode === 'aa' && plan.pack && !isPanel()) { if (!hatchKind()) { S.hatch = 'snap'; S.hatchAuto = true; } S.hpack = plan.pack; }
+  if (mode === 'lipo' && hatchKind()) S.hpack = 'lipo';
+  const z = hatchZ(); if (bat && z && z.pack) { const P = PP(bat); bat.r = 2 * z.sw >= P.w ? 0 : 1; bat.x = z.cx; bat.y = z.cy; if (problems(bat).length) autoPlace(bat); } /* the pack sits right over its hatch */
+  const ch = S.items.find((i) => i.type === 'tp4056'); if (ch) snapWall(ch);
+  const br = pwrBrain(); if (br) { if (mode === 'usb') snapBrain(br); else if (problems(br).length) autoPlace(br); }
+  if (mode !== 'usb') switchHole();
+  S.items.filter((i) => problems(i).length).forEach((i) => autoPlace(i)); if (allProblems().length) fitAll();
+  S.pins = {}; save(); render(); tag(POWER_MODES[mode][0] + ': ' + (plan.warn || plan.note));
+}
+function zNeed() { // vertical room: a battery on the floor and a part hanging under the deck above it
+  if (isPanel()) return 0; const h = heights(), dz = h.H - R.LT - h.recess; let need = 0;
+  S.items.filter((b) => b.panel === 'inside' && PP(b) && (PP(b).mah || PP(b).cat === 'brain')).forEach((b) => { const f = fp(b), top = R.F + riserOf(b) + PP(b).depth + (pcbOn() ? 1.6 : 0);
+    itemsOn(homePanel()).forEach((q) => { if (!PP(q)) return; const g = fp(q); if (!(f.x0 < g.x1 - 0.1 && f.x1 > g.x0 + 0.1 && f.y0 < g.y1 - 0.1 && f.y1 > g.y0 + 0.1)) return; need = Math.max(need, top + (PP(q).depth || 0) + 1 - dz); }); });
+  return Math.ceil(Math.max(0, need));
+}
+const PWR_CARD = { usb: ['$0', 'Locks the brain flush to a wall with its stepped USB port'], aa: ['~$2', 'Battery hatch, On/Off slide switch, the right voltage'], lipo: ['~$10', 'LiPo + TP4056 USB-C charger + On/Off switch'] };
+function powerPane() { const m = pwrMode(), plan = pwrPlan(), br = pwrBrain(), zn = zNeed(), bk = br ? (PP(br).short || PP(br).name) : 'brain', pk = USBK[(br || {}).type];
+  let h = '<p class="h" style="margin-top:0">Power <span style="font-weight:600;text-transform:none;letter-spacing:0">how it gets its volts</span></p><div class="grid g3 pwr">' + Object.keys(POWER_MODES).map((k) => '<button type="button" class="pick" data-act="pwr_' + k + '" aria-pressed="' + (m === k) + '"' + (m === k ? ' style="background:#1a1a1a;color:#fff"' : '') + '>' + esc(POWER_MODES[k][0]) + '<small>' + PWR_CARD[k][0] + ' &middot; ' + PWR_CARD[k][1] + '</small></button>').join('') + '</div>';
+  if (m) h += '<div class="list" style="margin-top:8px"><div class="it"><b>' + esc(POWER_MODES[m][0]) + (m === 'usb' ? ' &middot; ' + esc(bk) + ' ' + (pk ? esc(PORTS[pk][0]) : 'USB') + ' port' : ' &middot; ' + plan.volts + ' V into ' + esc(plan.pin)) + '</b>' + esc(plan.note) + (plan.warn ? ' <span class="bad">' + esc(plan.warn) + '</span>' : '') + (m !== 'usb' ? '<small>Red (+) runs through the On/Off switch; black (-) to GND. See PLAY, Wired.</small>' : '') + '</div></div>';
+  if (zn) h += '<p class="note bad">Battery + the part above it need ' + zn + ' mm more height than the inside has.</p><button type="button" class="btn red" data-act="deepen" style="width:100%">Deepen Base +' + zn + ' mm</button>';
+  h += '<details class="fold"><summary>&#9432; Learn: 3.7V LiPo vs 5V vs 3.3V</summary><div class="list"><div class="it"><b>5 V</b>What USB gives. Uno and Nano run on it; Pico VBUS and ESP32 5V/VIN take it in.</div><div class="it"><b>3.3 V</b>What Pico and ESP32 pins speak. The 3V3 pin is an output: never feed a battery into it.</div><div class="it"><b>3.7 V LiPo</b>4.2 V full, 3.0 V empty. Fine on Pico VSYS (1.8 to 5.5 V) through a diode; too low for an Uno without a 5 V boost board.</div><div class="it"><b>Plug and play</b>Buy batteries and holders with a JST-PH 2.0 plug, and check red (+) and black (-) before you plug in: sellers swap them.</div></div></details>';
+  return h; }
 function jackHole() { // the audio jack gets its round hole in a free spot of a wall: the back first, or a side wall on a lid + base case. Move it in Ports & Vents.
   if (isPanel() || S.ports.some((p) => p.kind === 'p_jack')) return; const id = S.ports.reduce((q, x) => Math.max(q, x.id || 0), 0) + 1, hf = hingeFace();
   for (const f of (isClam() ? ['right', 'left', 'front'] : ['back', 'right', 'left', 'front']).filter((x) => x !== hf)) /* a lid + base case: a side wall, never the hinge wall */ for (const a of anchorsOf(f)) { const p = { id, kind: 'p_jack', face: f, anchor: { u: a.u, v: 0 } }; if (!portBlocked(p)) { S.ports = S.ports.concat([p]); tag('3.5mm jack: a 6.2 mm hole cut in the ' + f + ' wall. Move it in Parts, Ports and vents.'); return; } } }
@@ -2870,7 +2937,7 @@ const DRAW = { pico: 30, picow: 60, pico2: 30, esp32: 90, zero2: 250, pi5: 900, 
 function powerInfo() {
   const P = PARTS(), list = S.items.filter((i) => P[i.type]), mah = list.reduce((a, i) => a + (P[i.type].mah || 0), 0), bi = brainInfo();
   const ma = Math.max(30, list.reduce((a, i) => a + (DRAW[i.type] || 0), 0) + (bi && !list.some((i) => i.type === bi.type) ? DRAW[bi.type] || 30 : 0));
-  return { mah, ma, hours: mah ? mah * 0.8 / ma : 0, charger: list.some((i) => P[i.type].charger), sw: list.some((i) => i.type === 'rocker' || i.type === 'liposhim'), pi: !!bi && (bi.type === 'pi5' || bi.type === 'zero2') };
+  return { mah, ma, hours: mah ? mah * 0.8 / ma : 0, charger: list.some((i) => P[i.type].charger), sw: list.some((i) => i.type === 'rocker' || i.type === 'liposhim' || i.type === 'slidesw'), pi: !!bi && (bi.type === 'pi5' || bi.type === 'zero2') };
 }
 function powerNote() {
   const p = powerInfo(); if (!S.items.length) return 'Add your electronics first, then a battery: the run time depends on what it has to power.';

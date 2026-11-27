@@ -99,6 +99,11 @@ export function footprint(P, x, y, rotq) {
 
 // ---------- build one half (tray + deck) as layers ----------
 // layer = { polys, z0, z1 }. Units mm, z up, tray floor at z = 0.
+// A stepped wall port: the plug bore through the wall, a recess round it from the outside for the cable's moulded boot, and a thin collar round it on the inside the socket butts against.
+export const STEP = { boot: 1.2, bd: 1.2, col: 1.2, cd: 0.6 };
+function portEnv(p) { if (!p.step || !p.rects.length) return null; const s0 = Math.min(...p.rects.map((q) => q.s0)), s1 = Math.max(...p.rects.map((q) => q.s1)), z0 = Math.min(...p.rects.map((q) => q.z0)), z1 = Math.max(...p.rects.map((q) => q.z1));
+  return Object.assign({ c: (s0 + s1) / 2, hw: (s1 - s0) / 2, z0, z1 }, STEP, p.step === true ? {} : p.step); }
+const e2 = (e) => (e ? e.cd + 1 : 1);
 export function buildHalf(o) {
   // o: { style, W, D, H, parts:[{P,x,y,r}], inside:[{P,x,y,r}], hinge, magnets, port, joins, deckOnTop }
   const R = RULE, out = outline(o.style, o.W, o.D);
@@ -119,9 +124,9 @@ export function buildHalf(o) {
   if (bm.recess.length) { tray.push({ polys: diff(floorCut, bm.recess), z0: 0, z1: D, tag: 'floor' }); tray.push({ polys: floorCut, z0: D, z1: R.F, tag: 'floor' }); if (bm.fill.length) inlay.push({ polys: inter(bm.fill, floorCut), z0: 0, z1: D, tag: 'inlayB' }); }
   else tray.push({ polys: floorCut, z0: 0, z1: R.F, tag: 'floor' });
   bm.stick.forEach((sp) => { sp.layers.forEach((l) => { const h = l.z1; l.z0 = -(h - D); l.z1 = D; }); sp.face = 'bottom'; stick.push(sp); });
-  const hz = o.hatch ? hatchZone(out, o.hatch, o.hatchTol) : null; /* an access hatch in the floor: a door pocket from below, a smaller opening above it, the ledge between is the recessed lip */
+  const hz = o.hatch ? hatchZone(out, o.hatch, o.hatchTol, o.hatchPack) : null; /* an access hatch in the floor: a door pocket from below, a smaller opening above it, the ledge between is the recessed lip */
   if (hz) { const fl = tray.splice(0, tray.length); fl.forEach((l) => { if (l.tag !== 'floor') { tray.push(l); return; }
-      if (l.z0 < hz.dT - 1e-6) tray.push(Object.assign({}, l, { polys: diff(l.polys, [hz.pocket]), z1: Math.min(l.z1, hz.dT) }));
+      if (l.z0 < hz.dT - 1e-6) tray.push(Object.assign({}, l, { polys: diff(l.polys, hz.pockets || [hz.pocket]), z1: Math.min(l.z1, hz.dT) }));
       if (l.z1 > hz.dT + 1e-6) tray.push(Object.assign({}, l, { polys: diff(l.polys, [hz.open].concat(hz.holes)), z0: Math.max(l.z0, hz.dT) })); });
     tray.push({ polys: diff(inter([hz.frame], innerWall), [hz.open].concat(hz.holes)), z0: R.F, z1: hz.top, tag: 'frame' }); }
   // walls: split into height bands where the USB notch, the snap groove or a texture changes the outline
@@ -136,7 +141,7 @@ export function buildHalf(o) {
     const polys = diff([r], innerWall); return z1 - z0 > 0.2 && polys.length ? { z0: +z0.toFixed(3), z1: +z1.toFixed(3), polys } : null; }).filter(Boolean);
   lands.forEach((l) => { zs.add(l.z0); zs.add(l.z1); });
   const ports = (o.ports || []).map((p) => Object.assign({}, p, { rects: p.rects.map((q) => ({ s0: q.s0, s1: q.s1, z0: +Math.max(R.F, q.z0).toFixed(3), z1: +Math.min(H, q.z1).toFixed(3) })).filter((q) => q.z1 - q.z0 > 0.2) })); /* ports and vents: openings through a side wall */
-  ports.forEach((p) => p.rects.forEach((q) => { zs.add(q.z0); zs.add(q.z1); }));
+  ports.forEach((p) => { p.rects.forEach((q) => { zs.add(q.z0); zs.add(q.z1); }); const e = portEnv(p); if (e) { p.env = e; [e.z0 - e.boot, e.z1 + e.boot, e.z0 - e.col, e.z1 + e.col].forEach((z) => { if (z > R.F && z < H) zs.add(+z.toFixed(3)); }); } });
   const art = o.art || []; art.forEach((a) => a.bands.forEach((q) => { zs.add(q.z0); zs.add(q.z1); })); /* logos on the side walls: one band per print layer */
   const Z = [...zs].filter((z) => z >= R.F && z <= H).sort((x, y) => x - y);
   const ringOut = wt ? diff(offset(out, wt.depth), out) : [];
@@ -157,7 +162,10 @@ export function buildHalf(o) {
     art.forEach((a) => { const q = a.bands.find((x) => mid > x.z0 && mid < x.z1); if (!q) return; const v = a.face === 'back' || a.face === 'front';
       q.iv.forEach(([s0, s1]) => { const c = (s0 + s1) / 2, m = { face: a.face, x: v ? c : a.x, y: v ? a.y : c }, hw = (s1 - s0) / 2;
         if (a.how === 'raised') w = union(w, [mountRect(m, hw, 0.1, a.depth)]); else w = diff(w, [mountRect(m, hw, a.how === 'cut' ? R.T + 1 : a.depth, 2)]); }); });
-    ports.forEach((p) => p.rects.forEach((q) => { if (mid > q.z0 && mid < q.z1) { const c = (q.s0 + q.s1) / 2, v = p.face === 'back' || p.face === 'front'; w = diff(w, [mountRect({ face: p.face, x: v ? c : p.x, y: v ? p.y : c }, (q.s1 - q.s0) / 2, R.T + 1, 2)]); } }));
+    ports.forEach((p) => { const v = p.face === 'back' || p.face === 'front', at = (c) => ({ face: p.face, x: v ? c : p.x, y: v ? p.y : c }), e = p.env;
+      if (e && mid > e.z0 - e.col && mid < e.z1 + e.col) w = union(w, [mountRect(at(e.c), e.hw + e.col, R.T + e.cd, -(R.T - 1))]); /* the backstop collar: a ring on the inside face the socket butts against */
+      p.rects.forEach((q) => { if (mid > q.z0 && mid < q.z1) w = diff(w, [mountRect(at((q.s0 + q.s1) / 2), (q.s1 - q.s0) / 2, R.T + e2(e), 2)]); }); /* the plug bore, through the wall (and the collar) */
+      if (e && mid > e.z0 - e.boot && mid < e.z1 + e.boot) w = diff(w, [mountRect(at(e.c), e.hw + e.boot, e.bd, 2)]); }); /* the cable-boot recess from the outside */
     tray.push({ polys: w, z0, z1, tag: 'wall' });
   }
   // screw posts: deck sits on top of them, flush with the wall
@@ -260,9 +268,23 @@ function marks(list) {
 }
 // Battery / access hatch in the floor. kind: 'snap' (two flexing clips catch the lip) or 'screw' (two M3 screws into the lip frame).
 // The door drops into a pocket from below (flush with the floor); the floor above it has a smaller opening, the ledge between is the recessed lip.
-export function hatchZone(out, kind, tol) {
-  const R = RULE, t = tol == null ? R.CLR : tol, inn = bbox(offset(out, -(R.T + 6))), cx = (inn.x0 + inn.x1) / 2, cy = (inn.y0 + inn.y1) / 2, scr = kind === 'screw';
-  const lw = scr ? 5 : 3, hw = Math.max(14, Math.min(35, inn.w / 2 - lw - 2)), hh = Math.max(12, Math.min(25, inn.h / 2 - lw - 2)), dT = 1.6, top = R.F + (scr ? 4 : 1.6);
+// Battery packs a hatch can be sized for: the pack (or its holder) footprint, mm
+export const PACKS = { lipo: ['LiPo Pouch', 56, 40], c18650: ['18650', 81, 25], aa2: ['2xAA', 58, 32], aa3: ['3xAA', 58, 47], aa4: ['4xAA', 63, 58] };
+export function hatchZone(out, kind, tol, pack) {
+  const R = RULE, t = tol == null ? R.CLR : tol, inn = bbox(offset(out, -(R.T + 6))), cx = (inn.x0 + inn.x1) / 2, cy = (inn.y0 + inn.y1) / 2, scr = kind === 'screw', dT = 1.6, top = R.F + (scr ? 4 : 1.6);
+  const pk = pack && PACKS[pack];
+  if (pk) { /* sized for the pack: the opening lets the pack through, a 1.5 mm rabbet lip round it holds the door. Screw doors get two ears at the ends for the M3 screws. */
+    const lw = 1.5, ear = scr ? 9 : 0, fit = (a, b) => inn.w >= 2 * (a / 2 + 0.5 + lw + ear + 1.5) && inn.h >= 2 * (b / 2 + 0.5 + lw + 1.5);
+    let pw = pk[1], ph = pk[2]; if (!fit(pw, ph)) { if (fit(ph, pw)) { pw = pk[2]; ph = pk[1]; } else return null; }
+    const sw = pw / 2 + 0.5, sh = ph / 2 + 0.5, hw = sw + lw, hh = sh + lw, ex = hw + ear / 2, ey = Math.min(5, hh - 1);
+    const door = scr ? union([rect(-hw, -hh, hw, hh), rect(-hw - ear, -ey, hw + ear, ey)]) : [rect(-hw, -hh, hw, hh)];
+    const mv = (polys, d) => offset(polys, d).map((q) => q.map(([x, y]) => [x + cx, y + cy]));
+    const notch = rect(cx - 4, cy - hh - t - 2.2, cx + 4, cy - hh - t + 0.2); /* the pry notch: a coin or a nail lifts the door here */
+    return { cx, cy, hw, hh, sw, sh, dT, top, tol: t, kind, pack, lw, ear, door, screws: scr ? [[cx - ex, cy], [cx + ex, cy]] : [],
+      pocket: rect(cx - hw - t, cy - hh - t, cx + hw + t, cy + hh + t), pockets: union(mv(door, t), [notch]), open: rect(cx - sw, cy - sh, cx + sw, cy + sh),
+      frame: rect(cx - hw - lw - ear - 1.5, cy - hh - lw - 1.5, cx + hw + lw + ear + 1.5, cy + hh + lw + 1.5), holes: scr ? [circle(cx - ex, cy, R.PILOT / 2 + R.FIT, 20), circle(cx + ex, cy, R.PILOT / 2 + R.FIT, 20)] : [] };
+  }
+  const lw = scr ? 5 : 3, hw = Math.max(14, Math.min(35, inn.w / 2 - lw - 2)), hh = Math.max(12, Math.min(25, inn.h / 2 - lw - 2));
   if (inn.w < 2 * (hw + lw) || inn.h < 2 * (hh + lw)) return null;
   const sw = hw - lw, sh = hh - lw, hx = hw - lw / 2;
   return { cx, cy, hw, hh, sw, sh, dT, top, tol: t, kind, screws: scr ? [[cx - hx, cy], [cx + hx, cy]] : [],
@@ -271,12 +293,12 @@ export function hatchZone(out, kind, tol) {
 }
 // the removable door, printed outer face down: a plate that fills the pocket, and two snap clips or two M3 clearance holes
 export function hatchDoor(z) {
-  const R = RULE, t = z.tol, L = [], hw = z.hw, hh = z.hh, plate = rect(-hw, -hh, hw, hh), lt = z.top - z.dT; /* lt: how thick the lip is */
-  if (z.kind === 'screw') { const hx = hw - (hw - z.sw) / 2, cs = (R.HOLE + R.FIT * 2) / 2; L.push({ polys: diff([plate], [circle(-hx, 0, cs, 24), circle(hx, 0, cs, 24)]), z0: 0, z1: z.dT }); return L; }
-  L.push({ polys: [plate], z0: 0, z1: z.dT });
-  const ax = z.sw - t, aw = 1.2, ay = Math.min(6, z.sh - 2), za = z.dT + lt + t, zb = za + 1.2;
+  const R = RULE, t = z.tol, L = [], hw = z.hw, hh = z.hh, plate = z.door || [rect(-hw, -hh, hw, hh)], lt = z.top - z.dT; /* lt: how thick the lip is */
+  if (z.kind === 'screw') { const hx = z.ear ? hw + z.ear / 2 : hw - (hw - z.sw) / 2, cs = (R.HOLE + R.FIT * 2) / 2; L.push({ polys: diff(plate, [circle(-hx, 0, cs, 24), circle(hx, 0, cs, 24)]), z0: 0, z1: z.dT }); return L; }
+  L.push({ polys: plate, z0: 0, z1: z.dT });
+  const ax = z.sw - t, aw = 1.2, ay = Math.min(6, z.sh - 2), za = z.dT + lt + t, zb = za + 1.2, lip = z.lw ? Math.min(0.9, z.lw - 0.3) : 0.9;
   L.push({ polys: [rect(-ax, -ay, -ax + aw, ay), rect(ax - aw, -ay, ax, ay)], z0: z.dT - 0.01, z1: za }); /* the arms overlap the plate 0.01 mm so they print as one */
-  L.push({ polys: [rect(-ax - 0.9 - t, -ay, -ax + aw, ay), rect(ax - aw, -ay, ax + 0.9 + t, ay)], z0: za, z1: zb }); /* the lips catch the top of the ledge */
+  L.push({ polys: [rect(-ax - lip - t, -ay, -ax + aw, ay), rect(ax - aw, -ay, ax + lip + t, ay)], z0: za, z1: zb }); /* the latches catch the top of the ledge */
   return L;
 }
 // where the closing magnets sit: two bosses near the front wall

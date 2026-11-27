@@ -673,3 +673,23 @@ export function micMain(plan, title, B) {
   L.push('    time.sleep_ms(20)', '');
   return L.join('\n');
 }
+
+// ---------- power: where the battery's red (+) and black (-) wires go, at a voltage the brain can take ----------
+// mode: usb (the cable powers it), aa (AA cells), lipo (3.7 V LiPo + TP4056 USB-C charger). Every red wire goes through the On/Off switch first.
+export const POWER_MODES = { usb: ['USB Cable', 0], aa: ['AA Batteries', 2], lipo: ['USB-C Rechargeable LiPo', 10] };
+const AA_PIN = { uno: ['aa4', 'VIN'], nano: ['aa4', 'VIN'], pico: ['aa3', 'VSYS'], esp32: ['aa3', 'VIN'], c3: ['aa3', '5V'], s3: ['aa3', '5V'], promicro: ['aa3', 'RAW'], cyd: ['aa3', 'VIN'] };
+const LIPO_PIN = { pico: 'VSYS', esp32: 'VIN', c3: '5V', s3: '5V', promicro: 'RAW', cyd: 'VIN', uno: '5V', nano: '5V' };
+export function powerPlan(mode, brainType) {
+  const bk = BOARD_OF[brainType] || 'pico', B = BOARDS[bk];
+  if (mode === 'usb' || !POWER_MODES[mode]) return { mode: 'usb', parts: [], pin: B.v5, volts: 5, wires: [], note: 'The USB cable gives the ' + B.name + ' 5 V and its code. No battery, no switch.' };
+  if (B.pi) return { mode, parts: [], pin: '5V', volts: 5, wires: [], warn: 'A Raspberry Pi needs 5 V at 2.5 A or more: AA cells and a bare LiPo cannot run it. Use a USB power bank or a Pi UPS board.' };
+  if (mode === 'aa') { const [pack, pin] = AA_PIN[bk] || ['aa3', B.v5], v = pack === 'aa4' ? 6 : 4.5;
+    return { mode, pack, parts: [pack, 'slidesw'], pin, volts: v, wires: [['+ red', pin, 'sw'], ['- black', 'GND']],
+      note: (pack === 'aa4' ? '4xAA = 6 V' : '3xAA = 4.5 V') + ' into ' + pin + (pin === 'VSYS' ? ' (takes 1.8 to 5.5 V)' : pin === 'VIN' && v >= 6 ? ' (through the on-board regulator)' : '') + '. Never into a 3V3 pin.',
+      warn: bk === 'uno' || bk === 'nano' ? 'VIN wants 7 V or more for a steady 5 V: fresh AA cells (6 V) work, tired ones brown out. A 9 V pack or 6xAA lasts longer.' : '' };
+  }
+  const pin = LIPO_PIN[bk] || B.v5, avr = bk === 'uno' || bk === 'nano';
+  return { mode, pack: 'lipo', parts: ['lipo1200', 'tp4056', 'slidesw'], pin, volts: 3.7, wires: [['OUT+ red', pin, 'sw'], ['OUT- black', 'GND']],
+    note: 'LiPo 3.7 V (4.2 V full) to B+ / B- on the TP4056. OUT+ through the switch' + (pin === 'VSYS' ? ' and a 1N5817 diode' : '') + ' to ' + pin + '. Charge through the USB-C port on the wall.',
+    warn: avr ? 'An Uno or Nano needs 5 V: put a $1 MT3608 boost board (set to 5 V) between the switch and the 5V pin.' : bk === 'esp32' ? 'The DevKit regulator drops about 1 V: a full LiPo runs it, a low one browns out. A 5 V boost board fixes it.' : '' };
+}
