@@ -4,7 +4,7 @@
 (function () {
 'use strict';
 
-var KEYBASE = 'fromscratch-v1', KEY = KEYBASE, ORIGIN = location.origin, GUIDE = 'https://nociv.co/scratch/#steps';
+var KEYBASE = 'fromscratch-v1', KEY = KEYBASE, ORIGIN = location.origin;
 var D = null, pane = 'look', editTab = null, editItem = null, pvHash = null, mode = 'pick', URLS = {}, db = null, ready = false, timer = null;
 
 function $(s, el) { return (el || document).querySelector(s); }
@@ -79,21 +79,6 @@ var LOOKS = {
     ['Studio Black', 'condensed,#0a0a0a,#ffffff,#ffffff,sharp,compact,stack,list,landscape,outline,upper,none,border,slide']]
 };
 var LOOK_FAMS = Object.keys(LOOKS);
-var KIND_ICON = {"shop": "<path d=\"M5 8h14l-1 13H6z\"/><path d=\"M9 8V6a3 3 0 0 1 6 0v2\"/>", "archive": "<rect x=\"3\" y=\"4\" width=\"18\" height=\"5\" rx=\"1\"/><path d=\"M5 9v11h14V9\"/><path d=\"M10 13h4\"/>", "app": "<rect x=\"6\" y=\"2.5\" width=\"12\" height=\"19\" rx=\"3\"/><path d=\"M10.5 18.5h3\"/>", "music": "<path d=\"M9 18V5l11-2v13\"/><circle cx=\"6.5\" cy=\"18\" r=\"2.5\"/><circle cx=\"17.5\" cy=\"16\" r=\"2.5\"/>", "food": "<path d=\"M4 11h16a8 8 0 0 1-16 0z\"/><path d=\"M8 7c0-1.5 1-2 1-3.5M12 7c0-1.5 1-2 1-3.5M16 7c0-1.5 1-2 1-3.5\"/>", "event": "<path d=\"M4 7a2 2 0 0 0 2-2h12a2 2 0 0 0 2 2v3a2 2 0 0 0 0 4v3a2 2 0 0 0-2 2H6a2 2 0 0 0-2-2v-3a2 2 0 0 0 0-4z\"/><path d=\"M14 5v14\" stroke-dasharray=\"2 2\"/>", "links": "<path d=\"M10 14a4 4 0 0 0 6 0l3-3a4 4 0 0 0-6-6l-1 1\"/><path d=\"M14 10a4 4 0 0 0-6 0l-3 3a4 4 0 0 0 6 6l1-1\"/>", "blank": "<rect x=\"4\" y=\"3\" width=\"16\" height=\"18\" rx=\"1.5\" stroke-dasharray=\"3 2.5\"/><path d=\"M12 9v6M9 12h6\"/>"};
-var KINDS = [["shop", "Shop", "Sell your stuff"], ["archive", "Archive", "Finds, beats or a log"], ["app", "App", "Feels like a phone app"], ["music", "Music", "Songs, shows, links"], ["food", "Food", "Menu, hours, orders"], ["event", "Event", "One date, tickets"], ["links", "Links", "One page of buttons"], ["blank", "Blank", "Start empty"]];
-// each kind opens to picture tiles: [template, look ("Family:index" or null), name]
-var VARIANTS = {
-  shop: [['shop', null, 'Corner store'], ['shop', 'Street:0', 'Stencil'], ['shop', 'Night:0', 'Ink'], ['shop', 'Clean:0', 'Gallery']],
-  archive: [['archive', null, 'Finds'], ['archiveProducer', null, 'Producer'], ['archiveLog', null, 'Log']],
-  app: [['app', null, 'Pocket'], ['app', 'Loud:3', 'Bubblegum'], ['app', 'Clean:3', 'Air'], ['app', 'Night:1', 'Neon']],
-  music: [['music', null, 'Record'], ['music', 'Loud:2', 'Electric'], ['music', 'Editorial:4', 'Gallery night'], ['music', 'Street:4', 'Skate']],
-  food: [['food', null, 'Kitchen'], ['food', 'Warm:2', 'Peach'], ['food', 'Night:3', 'Ember'], ['food', 'Editorial:2', 'Newsprint']],
-  event: [['event', null, 'Night market'], ['event', 'Street:2', 'Sticker'], ['event', 'Night:1', 'Neon'], ['event', 'Clean:2', 'Swiss']],
-  links: [['links', null, 'Bubble'], ['links', 'Clean:0', 'Gallery'], ['links', 'Street:1', 'Denim'], ['links', 'Night:2', 'Midnight']],
-  blank: [['blank', null, 'Blank']]
-};
-function kindOf(preset) { if (!preset) return 'shop'; if (/^archive/.test(preset)) return 'archive'; return VARIANTS[preset] ? preset : 'shop'; }
-function variantStyle(v) { var st = clone(PRESETS[v[0]]().style); if (v[1]) { var f = v[1].split(':'); Object.assign(st, lookStyle(LOOKS[f[0]][+f[1]][1])); } return st; }
 
 function lookStyle(spec) { var v = spec.split(','), o = {}; LOOK_KEYS.forEach(function (k, i) { o[k] = v[i]; }); return o; }
 function lookTile(name, st, act, v) {
@@ -190,16 +175,6 @@ var PRESETS = {
     style: { nav: 'tabs', motion: 'fade', font: 'clean', bg: '#ffffff', text: '#111111', accent: '#111111', corner: 'soft', density: 'comfy', header: 'left', layout: 'grid', photo: 'square' },
     shop: clone(SHIP), tabs: [tab('home', 'Home', { headline: 'Hello', button: '', buttonTo: null })] }; }
 };
-var BASES = [
-  ['shop', 'Shop', 'Sell anything. Home, product pages, shipping info, buy buttons.'],
-  ['archive', 'Archive', 'Three versions: Finds (curated things with links), Producer (beats and packs with a play button), Log (dated entries documenting something).'],
-  ['app', 'App', 'Feels like a phone app. Bottom bar, cards, dark mode.'],
-  ['music', 'Music', 'Releases, shows, where to listen, booking.'],
-  ['food', 'Food', 'Menu with prices, hours, catering. For a truck, cart or kitchen.'],
-  ['event', 'Event', 'One date. Schedule, vendors, tickets, photos.'],
-  ['links', 'Links', 'One page of big buttons. Put it in your bio or on a sticker.'],
-  ['blank', 'Blank', 'One empty page. Build it your way.']
-];
 
 /* ---------- storage ---------- */
 function idb() {
@@ -227,10 +202,28 @@ function getBlob(k) { return idbDo('readonly', function (s) { return s.get(k); }
 // every kind of site keeps its own save, so opening another kind never replaces your work
 function keyFor(p) { return KEYBASE + ':' + (p || 'shop'); }
 function readKey(k) { try { return JSON.parse(localStorage.getItem(k) || 'null'); } catch (e) { return null; } }
-function save() {
+function save(soft, noTrack) {
   D._touched = true; KEY = keyFor(D._preset);
+  if (!noTrack) track(soft);
   try { localStorage.setItem(KEY, JSON.stringify(D)); localStorage.setItem(KEYBASE + ':last', D._preset || 'shop'); flash('Saved'); } catch (e) { flash('Not saved, storage full'); }
   clearTimeout(timer); timer = setTimeout(push, 90);
+}
+/* undo / redo: snapshots of D. Typing within a second counts as one step. */
+var UNDO = [], REDO = [], SNAP = null, typedAt = 0;
+function snapOf() { var c = clone(D); delete c._touched; return JSON.stringify(c); }
+function track(soft) {
+  var s = snapOf(), now = Date.now();
+  if (SNAP === null || s === SNAP) { SNAP = s; return; }
+  if (!(soft && typedAt && now - typedAt < 1000)) { UNDO.push(SNAP); if (UNDO.length > 100) UNDO.shift(); }
+  typedAt = soft ? now : 0; SNAP = s; REDO.length = 0; undoBtns();
+}
+function undoBtns() { var u = $('#undo'), r = $('#redo'); if (u) u.disabled = !UNDO.length; if (r) r.disabled = !REDO.length; }
+function travel(from, to) {
+  if (!from.length) return;
+  to.push(SNAP); SNAP = from.pop(); typedAt = 0;
+  D = JSON.parse(SNAP); if (!D.shop) D.shop = clone(SHIP);
+  if (editTab != null && !D.tabs[editTab]) editTab = editItem = null;
+  save(false, true); undoBtns(); draw();
 }
 function flash(t) { var s = $('#saved'); if (!s) return; s.textContent = t; s.classList.add('on'); clearTimeout(flash.t); flash.t = setTimeout(function () { s.classList.remove('on'); }, 900); }
 
@@ -271,7 +264,12 @@ window.addEventListener('message', function (e) {
       pane = 'pages'; editTab = ti; editItem = null;
       if (d.item) (D.tabs[ti].items || []).forEach(function (x, j) { if (x.id === d.item) editItem = j; });
     }
-    draw(true); $('.st-ed').scrollTop = 0;
+    draw(true); $('.st-ed').scrollTop = 0; scrollTo(0, 0);
+    if (d.field) {
+      var fp = d.kind === 'site' ? d.field : 'tabs.' + editTab + (editItem != null ? '.items.' + editItem : '') + '.' + d.field;
+      if (d.field === 'images' && D.tabs[editTab] && D.tabs[editTab].type === 'gallery' && editItem == null) focusSel('[data-gal="' + editTab + '"]');
+      else focusSel(fieldSel(fp));
+    }
   }
 });
 
@@ -311,23 +309,6 @@ function group(title, key, opts, note) {
 }
 
 /* ---------- panes ---------- */
-function pStart() {
-  var k = kindSel || kindOf(D._preset);
-  var row = '<div class="kinds-grid" role="list">' + KINDS.map(function (x) {
-    return '<button type="button" class="kd' + (x[0] === kindOf(D._preset) ? ' on' : '') + '" data-act="kind" data-v="' + x[0] + '"><svg viewBox="0 0 24 24" aria-hidden="true">' + KIND_ICON[x[0]] + '</svg><b>' + x[1] + '</b></button>';
-  }).join('') + '</div>';
-  var more = '';
-  if (k === 'archive') {
-    more = '<p class="step-h">Which kind of archive?</p><div class="vers3">' + [['archive', 'Finds', 'Cool things you found, with links', 'star'], ['archiveProducer', 'Producer', 'Beats and packs with a play button', 'play'], ['archiveLog', 'Log', 'Dated entries documenting something', 'page']].map(function (v) {
-      return '<button type="button" class="vr' + (D._preset === v[0] ? ' on' : '') + '" data-act="variant" data-v="archive:' + ['archive', 'archiveProducer', 'archiveLog'].indexOf(v[0]) + '">' + ico(v[3]) + '<b>' + v[1] + '</b><span>' + v[2] + '</span></button>';
-    }).join('') + '</div>';
-  }
-  var pages = D.tabs.map(function (t) { return '<li>' + ico(t.icon || T_ICON[t.type]) + esc(t.name) + '</li>'; }).join('');
-  return '<p class="step-h">What are you making?</p>' + row + more +
-    '<p class="step-h">You get these pages</p><ul class="youget">' + pages + '</ul>' +
-    '<p class="help">You can rename, add or remove any page after.</p>' +
-    '<button type="button" class="next" data-act="pane" data-v="look">Next: pick a look &rarr;</button>';
-}
 
 function pAdd() {
   return '<button type="button" class="back" data-act="pane" data-v="pages">&lsaquo; Pages</button><h2>Add a page</h2><p class="lede">It shows up in your menu.</p><div class="tools">' +
@@ -479,47 +460,63 @@ function pInfo() {
 }
 
 function checks() {
-  var out = [], s = D.style, priced = [], nolink = 0, badlink = 0, empty = 0, nopic = 0;
-  D.tabs.forEach(function (t) {
+  var out = [], s = D.style, priced = [], nolink = 0, badlink = 0, empty = 0, nopic = 0, at = {};
+  function first(k, i, j, f) { if (!at[k]) at[k] = { i: i, j: j, f: f }; }
+  D.tabs.forEach(function (t, i) {
     if (t.hidden) return;
-    if ((t.type === 'grid' || t.type === 'gallery' || t.type === 'links') && !t.items.length) empty++;
-    if (t.type === 'page' && !t.body) empty++;
-    (t.items || []).forEach(function (x) {
-      if (t.type === 'grid' && x.price) { priced.push(x); if (!x.buy && !x.soldout) nolink++; }
-      if (x.buy && !/^https:\/\//i.test(x.buy)) badlink++;
-      if ((t.type === 'grid' || t.type === 'gallery') && !(x.images && x.images.length)) nopic++;
+    if ((t.type === 'grid' || t.type === 'gallery' || t.type === 'links') && !t.items.length) { empty++; first('empty', i, null, t.type === 'gallery' ? 'gal' : t.type === 'links' ? 'ladd' : 'iadd'); }
+    if (t.type === 'page' && !t.body) { empty++; first('empty', i, null, 'body'); }
+    (t.items || []).forEach(function (x, j) {
+      var lj = t.type === 'links' ? null : j, lf = t.type === 'links' ? 'items.' + j + '.buy' : 'buy';
+      if (t.type === 'grid' && x.price) { priced.push(x); if (!x.buy && !x.soldout) { nolink++; first('nolink', i, j, 'buy'); } }
+      if (x.buy && !/^(https:\/\/|mailto:)/i.test(x.buy)) { badlink++; first('badlink', i, lj, lf); }
+      if ((t.type === 'grid' || t.type === 'gallery') && !(x.images && x.images.length)) { nopic++; first('nopic', i, t.type === 'gallery' ? null : j, t.type === 'gallery' ? 'gal' : 'images'); }
     });
   });
-  function c(ok, yes, no, go) { out.push({ ok: ok, t: ok ? yes : no, go: go }); }
-  c(!!D.name, 'Your site has a name', 'Give your site a name', 'info');
+  function c(ok, yes, no, go) { out.push({ ok: ok, t: ok ? yes : no, go: typeof go === 'string' ? { p: go } : go }); }
+  function pg(k) { var a = at[k] || {}; return { p: 'pages', i: a.i, j: a.j, f: a.f }; }
+  c(!!D.name, 'Your site has a name', 'Give your site a name', { p: 'info', f: 'name' });
   c(ratio(s.bg, s.text) >= 4.5, 'Text is easy to read', 'Text is hard to read on that background', 'look');
-  c(!nolink, priced.length ? 'Every item for sale has a buy link' : 'Nothing priced yet, that is fine', nolink + ' priced item' + (nolink > 1 ? 's have' : ' has') + ' no buy link', 'pages');
-  c(!badlink, 'Links look right', badlink + ' link' + (badlink > 1 ? 's do' : ' does') + ' not start with https://', 'pages');
-  c(!priced.length || !!D.shop.shipping, 'Shipping info is on item pages', 'Add shipping info, shoppers look for it', 'info');
-  c(!nopic, 'Every item has a photo', nopic + ' item' + (nopic > 1 ? 's need' : ' needs') + ' a photo', 'pages');
-  c(!empty, 'No empty pages', empty + ' page' + (empty > 1 ? 's are' : ' is') + ' empty', 'pages');
-  c(!!D.description, 'Search description is set', 'Add a search description', 'info');
+  c(!nolink, priced.length ? 'Every item for sale has a buy link' : 'Nothing priced yet, that is fine', nolink + ' priced item' + (nolink > 1 ? 's have' : ' has') + ' no buy link', pg('nolink'));
+  c(!badlink, 'Links look right', badlink + ' link' + (badlink > 1 ? 's do' : ' does') + ' not start with https://', pg('badlink'));
+  c(!priced.length || !!D.shop.shipping, 'Shipping info is on item pages', 'Add shipping info, shoppers look for it', { p: 'info', f: 'shop.shipping' });
+  c(!nopic, 'Every item has a photo', nopic + ' item' + (nopic > 1 ? 's need' : ' needs') + ' a photo', pg('nopic'));
+  c(!empty, 'No empty pages', empty + ' page' + (empty > 1 ? 's are' : ' is') + ' empty', pg('empty'));
+  c(!!D.description, 'Search description is set', 'Add a search description', { p: 'info', f: 'description' });
   c(true, D.domain ? 'Your own domain is set' : 'Free link works, no domain needed. You can add one any time in Info', '', 'info');
   return out;
 }
 
 function pPublish() {
   var cs = checks(), bad = cs.filter(function (x) { return !x.ok; }).length;
-  return '<h2>Publish</h2><ul class="checks">' + cs.map(function (x) { return '<li class="' + (x.ok ? 'ok' : 'bad') + '"><span>' + (x.ok ? '✓' : '!') + '</span>' + x.t + (x.ok ? '' : ' <button type="button" class="sm" data-act="pane" data-v="' + x.go + '">Fix</button>') + '</li>'; }).join('') + '</ul>' +
+  return '<h2>Publish</h2><ul class="checks">' + cs.map(function (x) { return '<li class="' + (x.ok ? 'ok' : 'bad') + '"><span>' + (x.ok ? '✓' : '!') + '</span>' + x.t + (x.ok ? '' : ' <button type="button" class="sm" data-act="fix" data-v="' + x.go.p + '"' + (x.go.i != null ? ' data-i="' + x.go.i + '"' : '') + (x.go.j != null ? ' data-j="' + x.go.j + '"' : '') + (x.go.f ? ' data-f="' + x.go.f + '"' : '') + '>Fix</button>') + '</li>'; }).join('') + '</ul>' +
     (bad ? '<p class="help">You can still download. These just make it better.</p>' : '') +
     '<button type="button" class="big" data-act="zip">Download my site (.zip)</button><p class="help" id="zipmsg"></p>' +
-    '<div class="steps"><h3>Then put it online. Free.</h3><ol><li>Make a free Cloudflare account.</li><li>Workers and Pages, Create, Pages, Upload assets. Pick the zip. Deploy.</li><li>You get a free link like yourname.pages.dev. Done.</li><li>Optional: your own domain (about $11 a year), and Stripe buy links if you sell.</li></ol><a class="sm" href="' + GUIDE + '" target="_blank" rel="noopener">Full guide with every tap</a></div>' +
-    '<div class="steps"><h3>To change it later</h3><ol><li>Open your site address + /admin.html. Your live site loads in.</li><li>Edit.</li><li>Download my site again.</li><li>In Cloudflare: your project, Create deployment, pick the new zip.</li></ol><p class="help">Your live site only changes when you deploy. Using GitHub instead? The full guide has that too.</p></div>' +
+    '<div class="steps"><h3>Then put it online. Free.</h3><ol><li>Make a free Cloudflare account.</li><li>Workers and Pages, Create, Pages, Upload assets. Pick the zip. Deploy.</li><li>You get a free link like yourname.pages.dev. Done.</li><li>Optional: your own domain (about $11 a year), and Stripe buy links if you sell.</li></ol></div>' +
+    '<details class="fine"><summary>Selling with Stripe</summary><ol class="help"><li>Make a Stripe account and add your bank.</li><li>Payment Links, New. Add the product and price.</li><li>Turn on collecting the shipping address and add shipping rates.</li><li>Copy the link and paste it in the item\'s Buy link.</li></ol><p class="help">Stripe charges 2.9% + 30&cent; per US card and emails you and the buyer on every sale.</p></details>' +
+    '<details class="fine"><summary>Using GitHub instead</summary><ol class="help"><li>Unzip your site. You need the folder, not the zip.</li><li>On github.com tap New repository. Name it. Leave it Public.</li><li>Tap uploading an existing file. Drag in everything inside your folder. Commit changes.</li><li>Settings, Pages. Under Branch pick main and save. Your link is yourname.github.io/the-repo-name.</li></ol><p class="help">Free GitHub Pages needs a public repository. Want it private? Keep it private on GitHub and pick Connect to Git in Cloudflare instead of Upload assets. Pick this at the start: a project made from a zip cannot switch later.</p></details>' +
+    '<div class="steps"><h3>To change it later</h3><ol><li>Open your site address + /admin.html. Your live site loads in.</li><li>Edit.</li><li>Download my site again.</li><li>In Cloudflare: your project, Create deployment, pick the new zip.</li></ol><p class="help">Your live site only changes when you deploy. Using GitHub instead? See below.</p></div>' +
     '<h3>Share your look</h3><p class="help">A link with your colors, type, menu, motion and page layout. Never your words, photos, prices or email. Nothing is stored anywhere, it all rides in the link. Whoever opens it starts their own site from your look, and their footer credits you.</p><button type="button" class="sm wide" data-act="remix">Copy my remix link</button><p class="help" id="remixMsg"></p>' +
     '<h3>Backup</h3><div class="ch"><button type="button" class="sm" data-act="backup">Save backup</button><label class="sm up">Open backup<input type="file" accept=".json,application/json" data-restore="1"></label><button type="button" class="sm" data-act="live">Load live site</button><button type="button" class="sm danger" data-act="reset">Start over</button></div>';
 }
 
 function draw(fromPick) {
   if (!fromPick) post({ type: 'mark', mark: markFor() });
-  var P = { start: pStart, add: pAdd, look: pLook, pages: pPages, info: pInfo, publish: pPublish };
+  var P = { add: pAdd, look: pLook, pages: pPages, info: pInfo, publish: pPublish };
   $('#pane').innerHTML = P[pane]();
   $$('.st-tabs button').forEach(function (b) { var on = b.dataset.p === pane || (pane === 'add' && b.dataset.p === 'pages'); b.classList.toggle('on', on); b.setAttribute('aria-selected', on); });
 }
+
+/* jump to one field: scroll it into view, focus it and flash it */
+function focusSel(sel) {
+  if (!sel) return;
+  var el = $(sel); if (!el) return;
+  var box = el.closest('.f,.lrow,.gt,label') || el;
+  box.scrollIntoView({ block: 'center' });
+  try { el.focus({ preventScroll: true }); } catch (e) {}
+  box.classList.remove('hl'); void box.offsetWidth; box.classList.add('hl');
+}
+function fieldSel(path) { return '[data-b="' + path + '"],[data-up="' + path + '"],[data-many="' + path + '"]'; }
 
 /* ---------- images ---------- */
 function shrink(file) {
@@ -569,13 +566,13 @@ function makeZip(files) {
 function absUrl(p) { var d = String(D.domain || '').trim().replace(/^https?:\/\//, '').replace(/\/.*$/, ''); return d ? 'https://' + d + '/' + p : p; }
 function indexHtml() {
   var title = esc(D.name || 'My site'), desc = esc(D.description || D.tagline || ''), share = D.shareImage || firstImage();
-  var icon = D.logo ? esc(D.logo) : 'data:image/svg+xml,' + encodeURIComponent('<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64"><rect width="64" height="64" rx="14" fill="' + D.style.accent + '"/><text x="50%" y="66%" text-anchor="middle" font-family="Arial" font-weight="700" font-size="38" fill="' + onColor(D.style.accent) + '">' + esc((D.name || 'S').charAt(0).toUpperCase()) + '</text></svg>');
+  var icon = D.logo ? esc(D.logo) : 'favicon.svg';
   return '<!DOCTYPE html>\n<html lang="en">\n<head>\n<meta charset="utf-8">\n<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">\n<title>' + title + '</title>\n' +
     '<meta name="description" content="' + desc + '">\n<meta property="og:type" content="website">\n<meta property="og:title" content="' + title + '">\n<meta property="og:description" content="' + desc + '">\n' +
     (share ? '<meta property="og:image" content="' + esc(absUrl(share)) + '">\n<meta name="twitter:card" content="summary_large_image">\n' : '') +
     (D.domain ? '<link rel="canonical" href="' + esc(absUrl('')) + '">\n' : '') +
     '<meta name="theme-color" content="' + esc(D.style.bg) + '">\n<link rel="icon" href="' + icon + '">\n<link rel="apple-touch-icon" href="' + (D.logo ? esc(D.logo) : icon) + '">\n<link rel="stylesheet" href="kit/site.css">\n</head>\n<body>\n' +
-    '<div id="site"><noscript><p style="padding:24px">' + title + '. Turn on JavaScript to see this site.</p></noscript></div>\n<script src="kit/site.js"></script>\n</body>\n</html>\n';
+    '<div id="site"><noscript><div style="padding:24px;max-width:720px">' + noscriptHtml() + '<p>Turn on JavaScript to see the full site.</p></div></noscript></div>\n<script src="kit/site.js"></script>\n</body>\n</html>\n';
 }
 function firstImage() { var f = ''; D.tabs.some(function (t) { if (t.image) { f = t.image; return true; } return (t.items || []).some(function (x) { if (x.images && x.images[0]) { f = x.images[0]; return true; } return false; }); }); return f; }
 function usedImages() {
@@ -585,9 +582,36 @@ function usedImages() {
   D.tabs.forEach(function (t) { add(t.image); (t.items || []).forEach(function (x) { (x.images || []).forEach(add); add(x.audio); }); });
   return Object.keys(s);
 }
-var README = 'YOUR SITE\n=========\n\nThis folder is your whole website. You own it.\n\nindex.html     the site\nsite.json      everything you typed: pages, items, colors\nimages/        your photos\nadmin.html     the studio, to change things later\nkit/           the engine. You do not need to touch it.\n\nPUT IT ONLINE (Cloudflare, free hosting, $0)\n1. Make a free Cloudflare account.\n2. Workers and Pages > Create > Pages > Upload assets. Name it, then drop in this zip or folder. Deploy.\n   You get a free link right away, like yourname.pages.dev. That is all you need.\n3. Optional: your own domain. Buy one in Cloudflare (sold at cost, about $11 a year for .com), then Custom domains > Set up a domain > type it.\n\nSELL THINGS (Stripe)\n1. Make a Stripe account. Stripe is who pays you.\n2. Payment Links > New. Add the product and price. Turn on: collect shipping address, shipping rates.\n3. Copy the link and paste it into the item\'s Buy link in admin.html.\nStripe sends the receipt email. You see orders in Stripe and buy labels at USPS or Pirate Ship.\n\nCHANGE IT LATER\nGo to your site address + /admin.html (like yourname.pages.dev/admin.html). Edit. Download a new zip. Upload it again in Cloudflare (Create deployment).\nYour live site only changes when you upload.\n\nFull guide: ' + GUIDE + '\n';
+var README = 'YOUR SITE\n=========\n\nThis folder is your whole website. You own it.\n\nindex.html     the site\nsite.json      everything you typed: pages, items, colors\nimages/        your photos\nadmin.html     the studio, to change things later\nkit/           the engine. You do not need to touch it.\n\nPUT IT ONLINE (Cloudflare, free hosting, $0)\n1. Make a free Cloudflare account.\n2. Workers and Pages > Create > Pages > Upload assets. Name it, then drop in this zip or folder. Deploy.\n   You get a free link right away, like yourname.pages.dev. That is all you need.\n3. Optional: your own domain. Buy one in Cloudflare (sold at cost, about $11 a year for .com), then Custom domains > Set up a domain > type it.\n\nSELL THINGS (Stripe)\n1. Make a Stripe account. Stripe is who pays you.\n2. Payment Links > New. Add the product and price. Turn on: collect shipping address, shipping rates.\n3. Copy the link and paste it into the item\'s Buy link in admin.html.\nStripe sends the receipt email. You see orders in Stripe and buy labels at USPS or Pirate Ship.\n\nCHANGE IT LATER\nGo to your site address + /admin.html (like yourname.pages.dev/admin.html). Edit. Download a new zip. Upload it again in Cloudflare (Create deployment).\nYour live site only changes when you upload.\n';
 var LICENSE = 'MIT License\n\nCopyright (c) ' + new Date().getFullYear() + ' NOCIV.CO From Scratch\n\nPermission is hereby granted, free of charge, to any person obtaining a copy of this software and associated documentation files (the "Software"), to deal in the Software without restriction, including without limitation the rights to use, copy, modify, merge, publish, distribute, sublicense, and/or sell copies of the Software, and to permit persons to whom the Software is furnished to do so, subject to the following conditions:\n\nThe above copyright notice and this permission notice shall be included in all copies or substantial portions of the Software.\n\nTHE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.\n';
 
+var FONT_FILE = { 'FS Space Grotesk': ['space-grotesk-400.woff', 'space-grotesk-700.woff', 'spacegrotesk'], 'FS Archivo Black': ['archivo-black.woff', 'archivoblack'], 'FS DM Serif Display': ['dm-serif-display.woff', 'dmserifdisplay'], 'FS Syne': ['syne-800.woff', 'syne'], 'FS Instrument Serif': ['instrument-serif.woff', 'instrumentserif'], 'FS Rubik Mono One': ['rubik-mono-one.woff', 'rubikmonoone'], 'FS Bricolage': ['bricolage-grotesque-800.woff', 'bricolagegrotesque'], 'FS Special Elite': ['special-elite.woff', 'specialelite'], 'FS Permanent Marker': ['permanent-marker.woff', 'permanentmarker'], 'FS Inter Tight': ['inter-tight-800.woff', 'intertight'], 'FS Barlow Condensed': ['barlow-condensed-700.woff', 'barlowcondensed'], 'FS Tenor Sans': ['tenor-sans.woff', 'tenorsans'], 'FS Nunito': ['nunito-800.woff', 'nunito'], 'FS Fraunces': ['fraunces-700.woff', 'fraunces'], 'FS Roboto Slab': ['roboto-slab-800.woff', 'robotoslab'], 'FS IBM Plex Mono': ['ibm-plex-mono-600.woff', 'ibmplexmono'] };
+// only the font the site uses goes in the zip, with its license
+function fontFiles() {
+  var f = D.style.font || 'clean', stack = FONT_H[f] || '';
+  try { var sk = $('#pv').contentWindow.SiteKit; if (sk && sk.FONTS && sk.FONTS[f]) stack = sk.FONTS[f].join(','); } catch (e) {}
+  var out = [], seen = {};
+  (stack.match(/"FS [^"]+"/g) || []).forEach(function (q) {
+    var e = FONT_FILE[q.slice(1, -1)]; if (!e || seen[q]) return; seen[q] = 1;
+    e.slice(0, -1).forEach(function (w) { out.push(['kit/fonts/' + w, 'kit/fonts/' + w]); });
+    out.push(['kit/fonts/LICENSE-' + e[e.length - 1] + '.txt', 'kit/fonts/LICENSE-' + e[e.length - 1] + '.txt']);
+  });
+  return out;
+}
+function faviconSvg() { return '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64"><rect width="64" height="64" rx="14" fill="' + esc(D.style.accent) + '"/><text x="50%" y="66%" text-anchor="middle" font-family="Arial" font-weight="700" font-size="38" fill="' + onColor(D.style.accent) + '">' + esc((D.name || 'S').charAt(0).toUpperCase()) + '</text></svg>'; }
+function noscriptHtml() {
+  var h = '<header><h1>' + esc(D.name || 'My site') + '</h1>' + (D.tagline ? '<p>' + esc(D.tagline) + '</p>' : '') + '</header><main>';
+  vis().forEach(function (t) {
+    h += '<section><h2>' + esc(t.name || '') + '</h2>';
+    if (t.headline) h += '<p><strong>' + esc(t.headline) + '</strong></p>';
+    if (t.intro) h += '<p>' + esc(t.intro) + '</p>';
+    if (t.body) h += '<p>' + esc(String(t.body).replace(/^#\s+/gm, '')).replace(/\n\s*\n/g, '</p><p>') + '</p>';
+    var xs = (t.items || []).filter(function (x) { return x.title; }).slice(0, 50);
+    if (xs.length) h += '<ul>' + xs.map(function (x) { return '<li>' + (x.buy && /^https:\/\//i.test(x.buy) ? '<a href="' + esc(x.buy) + '">' + esc(x.title) + '</a>' : esc(x.title)) + (x.price ? ' ' + esc(x.price) : '') + (x.text ? ': ' + esc(String(x.text).split(/\n/)[0]) : '') + '</li>'; }).join('') + '</ul>';
+    h += '</section>';
+  });
+  return h + '</main>' + (D.email ? '<footer><a href="mailto:' + esc(D.email) + '">' + esc(D.email) + '</a></footer>' : '');
+}
 function bytes(r) { return r.arrayBuffer().then(function (b) { return new Uint8Array(b); }); }
 function fetchBytes(p) { return fetch(p, { cache: 'no-cache' }).then(function (r) { if (!r.ok) throw new Error(p + ' is missing'); return bytes(r); }); }
 function buildZip() {
@@ -598,7 +622,8 @@ function buildZip() {
   files.push({ name: 'index.html', data: enc.encode(html) }, { name: '404.html', data: enc.encode(html) },
     { name: 'site.json', data: enc.encode(JSON.stringify(json, null, 2)) }, { name: 'README.txt', data: enc.encode(README) },
     { name: 'LICENSE.txt', data: enc.encode(LICENSE) }, { name: 'robots.txt', data: enc.encode('User-agent: *\nDisallow: /admin.html\nDisallow: /preview.html\n') });
-  var kit = [['kit/site.js', 'kit/site.js'], ['kit/site.css', 'kit/site.css'], ['kit/studio.js', 'kit/studio.js'], ['kit/studio.css', 'kit/studio.css'], ['preview.html', 'preview.html'], ['admin.html', self], ['kit/fonts/archivo-black.woff', 'kit/fonts/archivo-black.woff'], ['kit/fonts/bricolage-grotesque-800.woff', 'kit/fonts/bricolage-grotesque-800.woff'], ['kit/fonts/dm-serif-display.woff', 'kit/fonts/dm-serif-display.woff'], ['kit/fonts/instrument-serif.woff', 'kit/fonts/instrument-serif.woff'], ['kit/fonts/permanent-marker.woff', 'kit/fonts/permanent-marker.woff'], ['kit/fonts/rubik-mono-one.woff', 'kit/fonts/rubik-mono-one.woff'], ['kit/fonts/space-grotesk-400.woff', 'kit/fonts/space-grotesk-400.woff'], ['kit/fonts/space-grotesk-700.woff', 'kit/fonts/space-grotesk-700.woff'], ['kit/fonts/special-elite.woff', 'kit/fonts/special-elite.woff'], ['kit/fonts/syne-800.woff', 'kit/fonts/syne-800.woff'], ['kit/fonts/LICENSE-spacegrotesk.txt', 'kit/fonts/LICENSE-spacegrotesk.txt'], ['kit/fonts/LICENSE-archivoblack.txt', 'kit/fonts/LICENSE-archivoblack.txt'], ['kit/fonts/LICENSE-dmserifdisplay.txt', 'kit/fonts/LICENSE-dmserifdisplay.txt'], ['kit/fonts/LICENSE-syne.txt', 'kit/fonts/LICENSE-syne.txt'], ['kit/fonts/LICENSE-instrumentserif.txt', 'kit/fonts/LICENSE-instrumentserif.txt'], ['kit/fonts/LICENSE-rubikmonoone.txt', 'kit/fonts/LICENSE-rubikmonoone.txt'], ['kit/fonts/LICENSE-bricolagegrotesque.txt', 'kit/fonts/LICENSE-bricolagegrotesque.txt'], ['kit/fonts/LICENSE-specialelite.txt', 'kit/fonts/LICENSE-specialelite.txt'], ['kit/fonts/LICENSE-permanentmarker.txt', 'kit/fonts/LICENSE-permanentmarker.txt'], ['kit/fonts/inter-tight-800.woff', 'kit/fonts/inter-tight-800.woff'], ['kit/fonts/barlow-condensed-700.woff', 'kit/fonts/barlow-condensed-700.woff'], ['kit/fonts/tenor-sans.woff', 'kit/fonts/tenor-sans.woff'], ['kit/fonts/nunito-800.woff', 'kit/fonts/nunito-800.woff'], ['kit/fonts/fraunces-700.woff', 'kit/fonts/fraunces-700.woff'], ['kit/fonts/roboto-slab-800.woff', 'kit/fonts/roboto-slab-800.woff'], ['kit/fonts/ibm-plex-mono-600.woff', 'kit/fonts/ibm-plex-mono-600.woff'], ['kit/fonts/LICENSE-intertight.txt', 'kit/fonts/LICENSE-intertight.txt'], ['kit/fonts/LICENSE-barlowcondensed.txt', 'kit/fonts/LICENSE-barlowcondensed.txt'], ['kit/fonts/LICENSE-tenorsans.txt', 'kit/fonts/LICENSE-tenorsans.txt'], ['kit/fonts/LICENSE-nunito.txt', 'kit/fonts/LICENSE-nunito.txt'], ['kit/fonts/LICENSE-fraunces.txt', 'kit/fonts/LICENSE-fraunces.txt'], ['kit/fonts/LICENSE-ibmplexmono.txt', 'kit/fonts/LICENSE-ibmplexmono.txt'], ['kit/fonts/LICENSE-robotoslab.txt', 'kit/fonts/LICENSE-robotoslab.txt']];
+  if (!D.logo) files.push({ name: 'favicon.svg', data: enc.encode(faviconSvg()) });
+  var kit = [['kit/site.js', 'kit/site.js'], ['kit/site.css', 'kit/site.css'], ['kit/studio.js', 'kit/studio.js'], ['kit/studio.css', 'kit/studio.css'], ['preview.html', 'preview.html'], ['admin.html', self]].concat(fontFiles());
   var jobs = kit.map(function (k) { return fetchBytes(k[1]).then(function (d) { files.push({ name: k[0], data: d }); }); });
   usedImages().forEach(function (p) {
     jobs.push(getBlob(p).then(function (b) { return b ? bytes(b) : fetchBytes(p); }).then(function (d) { files.push({ name: p, data: d }); }));
@@ -637,28 +662,12 @@ function remixApply(r) {
 }
 
 /* ---------- events ---------- */
-var lookFam = null, fineOpen = false, kindSel = null;
+var lookFam = null, fineOpen = false;
 function onAct(b) {
   var a = b.dataset.act, i = +b.dataset.i, j = +b.dataset.j, t = D.tabs[editTab];
   switch (a) {
-    case 'base':
-      if (D._touched && !confirm('Start from the ' + b.textContent.trim().split(/\s/)[0] + ' start? What you have now gets replaced. Save a backup first if you want it.')) return;
-      D = PRESETS[b.dataset.v](); D._preset = b.dataset.v; editTab = editItem = null; save(); D._touched = false; localStorage.setItem(KEY, JSON.stringify(D)); break;
     case 'style': D.style[b.dataset.k] = b.dataset.v; save(); break;
     case 'fam': lookFam = b.dataset.v; break;
-    case 'kind':
-      kindSel = b.dataset.v;
-      if (kindSel === 'archive' && /^archive/.test(D._preset || '')) break;
-      var base0 = kindSel === 'archive' ? 'archive' : kindSel;
-      if (base0 === D._preset) break;
-      if (D._touched && !confirm('Start a new ' + b.textContent.trim() + ' site? What you have now gets replaced. Save a backup first if you want it.')) return;
-      D = PRESETS[base0](); D._preset = base0; editTab = editItem = null; pvHash = null; save(); break;
-    case 'variant':
-      var vk = b.dataset.v.split(':'), vv = VARIANTS[vk[0]][+vk[1]];
-      if (D._touched && D._preset !== vv[0] && !confirm('Start a new ' + vv[2] + ' site? What you have now gets replaced. Save a backup first if you want it.')) return;
-      if (D._preset === vv[0] && D._touched) { D._prevStyle = clone(D.style); D.style = Object.assign({}, D.style, variantStyle(vv)); }
-      else { D = PRESETS[vv[0]](); D.style = variantStyle(vv); }
-      D._preset = vv[0]; D._variant = b.dataset.v; kindSel = vk[0]; editTab = editItem = null; pvHash = null; save(); break;
     case 'look': var lv = b.dataset.v.split(':'); D._prevStyle = clone(D.style); D.style = Object.assign({}, D.style, lookStyle(LOOKS[lv[0]][+lv[1]][1])); save(); break;
     case 'shuffle': D._prevStyle = clone(D.style); D.style = shuffleStyle(D.style); save(); break;
     case 'lookundo': if (D._prevStyle) { D.style = D._prevStyle; delete D._prevStyle; save(); } break;
@@ -682,6 +691,12 @@ function onAct(b) {
     case 'pleft': var im = t.items[editItem].images, k = +b.dataset.k; im.splice(k - 1, 0, im.splice(k, 1)[0]); save(); break;
     case 'pdel': t.items[editItem].images.splice(+b.dataset.k, 1); save(); break;
     case 'imgclear': set(b.dataset.p, ''); save(); break;
+    case 'fix':
+      pane = b.dataset.v; pvHash = null; var fi = b.dataset.i, fj = b.dataset.j, ff = b.dataset.f;
+      editTab = fi != null ? +fi : null; editItem = fj != null ? +fj : null; push(); draw();
+      $('.st-ed').scrollTop = 0; scrollTo(0, 0);
+      if (ff) focusSel(ff === 'gal' ? '[data-gal="' + fi + '"]' : ff === 'iadd' || ff === 'ladd' ? '[data-act="' + ff + '"]' : fieldSel(editTab == null ? ff : 'tabs.' + editTab + (editItem != null ? '.items.' + editItem : '') + '.' + ff));
+      return;
     case 'pane': pane = b.dataset.v; if (pane === 'pages') { editTab = editItem = null; pvHash = null; } break;
     case 'zip':
       var m = $('#zipmsg'); b.disabled = true; m.textContent = 'Packing your site...';
@@ -710,6 +725,8 @@ function bind() {
     var p = e.target.closest('.st-tabs button'); if (p) { pane = p.dataset.p; if (pane === 'pages' && editTab != null) { editTab = editItem = null; pvHash = null; push(); } draw(); $('.st-ed').scrollTop = 0; }
     var md = e.target.closest('[data-mode]'); if (md) { mode = md.dataset.mode; $$('[data-mode]').forEach(function (x) { var on = x === md; x.classList.toggle('on', on); x.setAttribute('aria-pressed', on); }); post({ type: 'mode', pick: mode === 'pick' }); document.body.classList.toggle('viewing', mode !== 'pick'); }
     var d = e.target.closest('[data-dev]'); if (d) { $$('[data-dev]').forEach(function (x) { x.classList.toggle('on', x === d); }); document.body.dataset.dev = d.dataset.dev; }
+    if (e.target.closest('#undo')) { travel(UNDO, REDO); return; }
+    if (e.target.closest('#redo')) { travel(REDO, UNDO); return; }
     if (e.target.closest('#full')) { document.body.classList.toggle('full'); $('#full').textContent = document.body.classList.contains('full') ? 'Close' : 'Full view'; }
   });
   document.addEventListener('toggle', function (e) { if (e.target.classList && e.target.classList.contains('fine')) fineOpen = e.target.open; }, true);
@@ -717,7 +734,7 @@ function bind() {
     var el = e.target, p = el.dataset.b; if (!p) return;
     var v = el.type === 'checkbox' ? el.checked : el.value;
     if (el.dataset.num) v = v === '' ? null : +v;
-    set(p, v); save();
+    set(p, v); save(true);
     if (el.type === 'color' && pane === 'look') { clearTimeout(bind.t); bind.t = setTimeout(draw, 250); }
   });
   document.addEventListener('change', function (e) {
@@ -775,7 +792,7 @@ function boot() {
       .catch(function () { var p = PRESETS.shop(); p._preset = 'shop'; return p; });
   }).then(function (d) {
     D = d; if (!D.shop) D.shop = clone(SHIP); if (!D.style) D.style = PRESETS.blank().style;
-    bind(); draw();
+    SNAP = snapOf(); bind(); draw(); undoBtns();
     var f = $('#pv'); f.addEventListener('load', function () { ready = true; push(); });
     try { if (f.contentWindow.SiteKit) ready = true; } catch (e) {}
     push();

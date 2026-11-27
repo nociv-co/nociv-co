@@ -14,12 +14,14 @@
   <span class="st-saved" id="saved" aria-live="polite">Saved</span>
   <span class="sp"></span>
   <div class="st-tool" role="group" aria-label="Mode"><button type="button" data-mode="pick" class="on" aria-pressed="true" aria-label="Select: tap things in the preview to edit them"><svg viewBox="0 0 24 24"><path d="M5 2.5l13.5 11.2-6.1.6 3.6 6.9-2.6 1.3-3.6-7-4.8 3.9z"/></svg></button><button type="button" data-mode="view" aria-pressed="false" aria-label="Preview: use the site like a visitor"><svg viewBox="0 0 24 24"><path d="M8 5l11 7-11 7z"/></svg></button></div>
+  <button type="button" class="st-ur" id="undo" aria-label="Undo" disabled><svg viewBox="0 0 24 24"><path d="M9 14L4 9l5-5"/><path d="M4 9h10a6 6 0 0 1 0 12h-3"/></svg></button><button type="button" class="st-ur" id="redo" aria-label="Redo" disabled><svg viewBox="0 0 24 24"><path d="M15 14l5-5-5-5"/><path d="M20 9H10a6 6 0 0 0 0 12h3"/></svg></button>
   <button type="button" class="th-q st-q" data-help="studio" aria-label="Studio help">?</button>
   <button type="button" class="st-pub" data-act="pane" data-v="publish">Publish</button>
 </header>
 <section class="st-prev" aria-label="Live preview">
-  <div class="st-frame"><iframe id="pv" src="preview.html" title="Live preview of your site"></iframe><button type="button" id="full">Full view</button><div class="st-dev" role="group" aria-label="Preview size"><button type="button" data-dev="phone" class="on">Phone</button><button type="button" data-dev="wide">Wide</button></div></div>
+  <div class="st-frame"><iframe id="pv" src="preview.html" title="Live preview of your site"></iframe></div>
 </section>
+<div class="st-bar"><div class="st-dev" role="group" aria-label="Preview size"><button type="button" data-dev="phone" class="on">Phone</button><button type="button" data-dev="wide">Wide</button></div><span class="sp"></span><button type="button" id="full">Full view</button></div>
 <section class="st-ed">
   <nav class="st-tabs" role="tablist" aria-label="Studio">
     <button type="button" role="tab" data-p="look">Look</button>

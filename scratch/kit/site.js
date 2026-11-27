@@ -71,8 +71,11 @@ function money(p) {
 function ph(label) {
   var c = S.style || {};
   var a = c.accent || '#888', t = c.text || '#111', b = mix(c.bg || '#fff', t, 0.08);
-  var l = esc(String(label || '?').trim().charAt(0).toUpperCase() || '?');
-  return 'data:image/svg+xml,' + encodeURIComponent('<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 400"><rect width="400" height="400" fill="' + b + '"/><circle cx="300" cy="110" r="70" fill="' + a + '" opacity=".35"/><text x="50%" y="58%" text-anchor="middle" font-family="system-ui,Arial" font-weight="800" font-size="150" fill="' + t + '" opacity=".22">' + l + '</text></svg>');
+  var r = { sharp: 0, soft: 8, round: 22 }[c.corner]; if (r == null) r = 8;
+  /* a quiet picture frame: border, hills and a sun in the accent color */
+  return 'data:image/svg+xml,' + encodeURIComponent('<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 400"><rect width="400" height="400" fill="' + b + '"/>' +
+    '<g fill="none" stroke="' + t + '" stroke-opacity=".3" stroke-width="6" stroke-linejoin="round" stroke-linecap="round"><rect x="130" y="140" width="140" height="120" rx="' + r + '"/><path d="M144 246l40-42 30 28 20-18 24 32"/></g>' +
+    '<circle cx="238" cy="176" r="11" fill="' + a + '"/></svg>');
 }
 function pic(it, cls) {
   var p = it.images && it.images[0];
@@ -394,8 +397,23 @@ function start(data, images) {
    Menus, play buttons and photo thumbs still work. The studio opens the matching settings. ---------- */
 var PICK = true, LAST = null, BOX = null, HOV = null;
 var PASS = '.tt,.bt,.panel a,.menu-btn,.back,.chip,.gal-th button,.trk-play,.lb,.lb *';
-var PICKABLE = '.card,.find,.log-e,.trk,.m-it,.lnk,.tile,.hero,.ttl,.intro,.prose,.page-img,.brand,.notice,.item,.gal,.feat .row-h,.links,.tracks,.empty';
+var PICKABLE = '.hero-h,.hero-p,.hero-img,.card,.find,.log-e,.trk,.m-it,.lnk,.tile,.hero,.ttl,.intro,.prose,.page-img,.brand,.notice,.item,.gal,.feat .row-h,.links,.tracks,.empty';
+// which input in the studio a tapped element belongs to
+function fieldOf(el, t, isItem) {
+  if (el.matches('.hero-h')) return 'headline';
+  if (el.matches('.hero-p,.intro')) return 'intro';
+  if (el.matches('.hero-img,.page-img')) return 'image';
+  if (el.matches('.prose')) return isItem ? 'text' : 'body';
+  if (el.matches('.ttl')) return isItem ? 'title' : 'name';
+  if (isItem && el.closest('.gal')) return 'images';
+  return null;
+}
 function pickInfo(el) {
+  var info = pickBase(el);
+  info.field = info.kind === 'site' ? (el.closest('.notice') ? 'notice' : 'name') : fieldOf(el, route().tab, info.kind === 'item' && !!el.closest('.item'));
+  return info;
+}
+function pickBase(el) {
   var r = route(), sl = slugs(), t = r.tab, k = 'tab', slug = sl[r.i], item = null, name = t ? t.name : '';
   if (el.closest('.brand,.notice')) return { kind: 'site', label: 'Site: ' + (S.name || 'name') };
   var a = el.matches('a') ? el : el.querySelector('a[href^="#/"]');
@@ -430,7 +448,7 @@ function initPick() {
     e.preventDefault(); e.stopPropagation();
     var box = el.closest('.card,.find,.log-e,.trk,.m-it,.lnk,.tile') || el;
     LAST = pickInfo(box); outline(box, LAST.label); outline(null, '', true);
-    parent.postMessage({ type: 'pick', kind: LAST.kind, slug: LAST.slug, item: LAST.item, hash: location.hash }, location.origin);
+    parent.postMessage({ type: 'pick', kind: LAST.kind, slug: LAST.slug, item: LAST.item, field: LAST.field || null, hash: location.hash }, location.origin);
   }, true);
   document.addEventListener('mouseover', function (e) { if (!PICK || !matchMedia('(hover:hover)').matches) return; var el = e.target.closest(PICKABLE); if (el && !e.target.closest(PASS)) outline(el.closest('.card,.find,.log-e,.trk,.m-it,.lnk,.tile') || el, '', true); else outline(null, '', true); });
   window.addEventListener('resize', remark); window.addEventListener('hashchange', function () { LAST = null; outline(null); });
