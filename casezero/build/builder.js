@@ -520,6 +520,13 @@ const artKey = (k) => (LART[k] ? k : BOARD_OF[k] ? 'board' : /^speaker/.test(k) 
 const lineArt = (k0, sz, pal) => { const k = artKey(k0); return (LART[k] ? '<svg class="la" viewBox="0 0 48 36"' + (sz ? ' width="' + sz + '" height="' + Math.round(sz * 0.75) + '"' : '') + ' aria-hidden="true">' + tintArt(k, pal) + '</svg>' : '') };
 /* the category tiles in Parts: a soft color per job, like Screens, Sensors and Brain */
 const FTINT = { press: ['#f6dc9a', '#e8826f'], turn: ['#bcd3ec'].concat(Array(12).fill('none'), ['#4f6f94']), out: ['#f8cfae', '#d9773f'].concat(Array(6).fill('#8a3b16')), move: ['#c3d6f3', '#8fb2e8', '#eef3fb', '#5b86c9'] };
+/* Parts category tiles: one filled, colored icon style for every job (the look of Screens, Sensors and Brain) */
+const FIC = (g) => '<svg class="fic" viewBox="0 0 48 36" aria-hidden="true">' + g + '</svg>', FICON = {
+  press: FIC('<rect x="10" y="4" width="28" height="28" rx="3" fill="#2f7a4b"/><circle cx="24" cy="18" r="10" fill="#1a1a1a"/><circle cx="24" cy="18" r="6.5" fill="#c8412f"/><circle cx="14" cy="8" r="1.4" fill="#f3efe6"/><circle cx="34" cy="28" r="1.4" fill="#f3efe6"/>'),
+  turn: FIC('<circle cx="24" cy="18" r="14" fill="#5b636d"/><circle cx="24" cy="18" r="10" fill="#1a1a1a"/><rect x="22.6" y="8" width="2.8" height="9" rx="1.4" fill="#ffd23a"/>'),
+  out: FIC('<rect x="5" y="8" width="20" height="20" rx="3" fill="#5b636d"/><circle cx="15" cy="18" r="7" fill="#1a1a1a"/><circle cx="15" cy="18" r="2.4" fill="#999"/><circle cx="35" cy="18" r="8" fill="#ffd23a" opacity=".35"/><circle cx="35" cy="18" r="5" fill="#ffd23a"/>'),
+  move: FIC('<rect x="8" y="12" width="32" height="18" rx="2" fill="#3b6fb6"/><rect x="4" y="16" width="40" height="5" rx="1.5" fill="#2a4f86"/><circle cx="18" cy="12" r="5" fill="#1a1a1a"/><rect x="12" y="4" width="22" height="5" rx="2.5" fill="#f3efe6" stroke="#1a1a1a" stroke-width="1.2"/>')
+};
 const ARTIMG = {}; /* the same line art as an image, for the canvas cards in Parts, Shop and Board */
 function artImg(k0) { const k = artKey(k0); if (!k) return null; let im = ARTIMG[k]; if (!im) { im = ARTIMG[k] = new Image(); im.onload = () => { try { draw(); } catch (e) {} }; im.src = 'data:image/svg+xml;charset=utf-8,' + encodeURIComponent('<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 48 36" width="192" height="144" fill="none" stroke="#1a1a1a" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">' + tintArt(k) + '</svg>'); } return im.complete && im.naturalWidth ? im : null; }
 function partSvg(P) {
@@ -816,7 +823,7 @@ function render() {
   const vk = S.step + ':' + t + ':' + (S.fn || '') + ':' + (S.xsel || ''), same = vk === VIEWKEY, was = same ? Array.from($('pane').querySelectorAll('details')).map((x) => x.open) : [], top = same ? $('pane').scrollTop : 0; VIEWKEY = vk; if (!same && vk.split(':').slice(0, 2).join(':') !== (render.pg || '')) tag(''); render.pg = S.step + ':' + t; /* a new room or step: the old caption goes, the new view writes its own */
   $('pane').classList.toggle('padb', t === 'map'); $('stage').classList.toggle('wmap', t === 'map'); $('pane').innerHTML = (pg.name === 'Parts' && (S.step === 0 || S.step === 1) ? viewTgl() : '') + pane(t); const now = $('pane').querySelectorAll('details'); if (now.length === was.length) now.forEach((x, i) => { x.open = was[i]; });
   if (pg.room !== 'build') $('pane').querySelectorAll('a[href^="http"]').forEach((x) => { const sp = document.createElement('span'); sp.innerHTML = x.innerHTML; x.replaceWith(sp); }); /* outside links live in BUILD only */
-  else $('pane').innerHTML = '<div class="bcard"><h3>' + (at + 1) + '. ' + pg.name + '</h3>' + $('pane').innerHTML + '</div>';
+  else $('pane').innerHTML = '<div class="bcard"><h3>' + (at + 1) + '. ' + pg.name + '</h3>' + $('pane').innerHTML + '</div>' + (S.items.length ? shareCard() : '');
   $('pane').scrollTop = top; after(t); tidy(); draw(); stat();
 }
 // Less to read: long grey notes show two lines with a 'more' you can tap. Warnings (red) always show in full.
@@ -912,7 +919,7 @@ function partsPane(P, c) {
     // Parts are about what the device does, not about catalog names. First the question, then the few parts that answer it.
     const fn = FUNCS.find((f) => f[0] === S.fn);
     if (!fn && !S.pro) return simplePicks(P, c);
-    if (!fn) { const tile = (f) => { const n = Object.keys(c).reduce((q, k) => q + (P[k] && P[k].cat === f[0] ? c[k] : 0), 0); return '<button type="button" class="pick fn" data-fn="' + f[0] + '">' + (n ? '<span class="n">' + n + '</span>' : '') + (f[3] && P[f[3]] ? lineArt(f[3], 0, FTINT[f[0]]) || partSvg(P[f[3]]) : ico('measure')) + f[1] + '<small>' + f[2] + '</small></button>'; };
+    if (!fn) { const tile = (f) => { const n = Object.keys(c).reduce((q, k) => q + (P[k] && P[k].cat === f[0] ? c[k] : 0), 0); return '<button type="button" class="pick fn" data-fn="' + f[0] + '">' + (n ? '<span class="n">' + n + '</span>' : '') + (FICON[f[0]] || (f[3] && P[f[3]] ? lineArt(f[3], 0, FTINT[f[0]]) || partSvg(P[f[3]]) : ico('measure'))) + f[1] + '<small>' + f[2] + '</small></button>'; };
       return FGROUPS.map((g) => '<p class="h"' + (g[0] === 'Inputs' ? ' style="margin-top:0"' : '') + '>' + g[0] + ' <span style="font-weight:600;text-transform:none;letter-spacing:0">' + g[1] + '</span></p><div class="grid g3" style="margin-bottom:10px">' + g[2].map((k) => tile(FUNCS.find((f) => f[0] === k))).join('') + '</div>').join('') + chosenChips(); }
     const head = '<div class="fnh"><button type="button" class="btn" data-fn="" aria-label="Back to categories">&lsaquo; Back</button><b>' + fn[1] + '</b></div>';
     const list = Object.keys(P).filter((k) => P[k].cat === fn[0]);
@@ -1138,6 +1145,8 @@ $('pane').addEventListener('click', (e) => {
   if (d.act === 'swatch') { saveFile(fileOut(swatchFile())); return; }
   if (d.act === 'toopen') { S.xsel = null; S.xfrom = null; save(); openPage(PAGES.findIndex((p) => p.name === 'Shape')); return; }
   if (d.act === 'share') { shareLink(); return; }
+  if (d.act === 'sharebuild') { shareBuild(); return; }
+  if (d.act === 'copyparts') { copyTxt(partsCopyText(), (ok) => flash(ok ? 'Copied: parts list' : 'Copy did not work here: use Save the shopping list')); return; }
   if (d.mrm != null) { S.attachedParts = S.attachedParts.filter((m) => m.id !== +d.mrm); save(); render(); return; }
   if (d.mtog != null) { const m = S.attachedParts.find((x) => x.id === +d.mtog); if (m) { m.mountType = m.mountType === 'screw' ? 'snap' : 'screw'; save(); render(); } return; }
   if (d.msave != null) { const i = S.attachedParts.findIndex((x) => x.id === +d.msave), m = S.attachedParts[i]; if (m) saveFile(fileOut(mountFile(m, i))); return; }
@@ -1336,7 +1345,7 @@ const FLOCKS = [['spin', 'Spin'], ['top', 'Top'], ['back', 'Back'], ['left', 'Le
 const flockOn = () => FLOCK !== 'spin' && (PAGES[S.page] || {}).room === 'design' && (native3d() || BIG3D) && !deco3d() && !mountView() && !play3d() && !isPanel();
 const FCASE = { top: [0, -0.002, 1], bottom: [0, -0.002, -1], back: [0, 1, 0.002], left: [-1, 0, 0.002], right: [1, 0, 0.002] }; /* case axes; the tiny tilt keeps the orbit camera off its pole */
 const flockDir = () => { const c = FCASE[FLOCK]; return UPRIGHT[S.style] ? c : [c[0], c[2], -c[1]]; };
-const native3d = () => { const t = curTab(); if (t === 'extras') return !decoOn() || deco3d(); /* nothing picked yet: the case itself, live */ return xrayOn() || (S.step === 2 && !isPanel()) || (S.step === 5 && (t === '3d' || t === 'files')) || (S.step === 3 && (t === 'colors' || (t === 'logo' && !!WALLF[logoFace()]))); }; /* a side-wall logo is placed on the case in 3D */
+const native3d = () => { const t = curTab(); if (t === 'extras') return !decoOn() || deco3d(); /* nothing picked yet: the case itself, live */ return xrayOn() || (S.step === 2 && !isPanel()) || (S.step === 5 && (t === '3d' || t === 'files' || t === 'shop' || t === 'sounds' || t === 'guide')) || (S.step === 3 && (t === 'colors' || (t === 'logo' && !!WALLF[logoFace()]))); }; /* a side-wall logo is placed on the case in 3D */
 const wantsMini = () => ((play3d() && !simKind()) /* a preset's PLAY console fills the stage: no 3D box over its controls */ || S.step === 0 || S.step === 1 || S.step === 3 || S.step === 4 || (S.step === 2 && isPanel())) && !$('con').classList.contains('down');
 function draw() {
   { const sc = $('selc'); if (sc) sc.hidden = true; } /* drawBrain shows it again when the tray is up */
@@ -3103,16 +3112,39 @@ function kitHtml(c, amz) {
   if (k) h += '<div class="it kitc"><b style="display:inline">Best Value Kit ~' + money(k.kit.price) + '</b> &middot; ' + esc(k.kit.name) + ' covers <b>' + k.cover.length + ' of your ' + k.all + ' shopping lines</b> (' + k.pieces + ' part' + (k.pieces === 1 ? '' : 's') + (k.wires.length ? ' + jumper wires' : '') + ', worth ' + money(k.val) + ' one by one). The rest of the box is spares: LEDs, resistors, a buzzer, sensors and a breadboard for your next build. ' + lk(k.kit.q) +
     '<div class="row" style="margin-top:8px"><b>I already own a Starter Kit</b><button type="button" class="tgl" data-act="ownkit" role="switch" aria-checked="' + !!S.ownKit + '">' + (S.ownKit ? 'On' : 'Off') + '</button></div>' +
     '<p class="note keep" style="margin:4px 0 0">' + (S.ownKit ? 'Checked off: ' : 'One tap checks off ') + 'Uno, buttons, pots, joystick, servo, 1602 LCD, LEDs and jumper wires. With the kit: about ' + money(k.kit.price + k.rest) + ' all in.</p></div>';
-  h += '<div class="est vals"><b>Parts Used Value ' + money(co.used) + ' &middot; Realistic Amazon Checkout ~' + money(co.real) + '</b><span>Small parts only come in packs, so the checkout is what you really pay.</span></div>';
   if (co.packs.length) h += '<div class="list shopl">' + co.packs.map((x) => '<div class="it"><b>' + (x.cnt > 1 ? x.cnt + ' x ' : '') + esc(x.m.name) + ' <span class="pr">~' + money(x.cnt * x.m.price) + '</span></b>' + (x.m.each ? '~' + money(x.m.each) + ' each. ' : '') + (x.m.per ? 'Covers your ' + x.n + ', the rest are spares. ' : 'One pack covers it. ') + lk(x.m.q) + '</div>').join('') + '</div>';
   return h; }
+// BUILD, Parts & Boards: the fewest Amazon checkouts (a starter kit, then the biggest multipack), the true cost, and the list to copy
+function bundleOf(c) { const k = kitInfo(c), co = checkout(c), L = [];
+  if (k && !S.ownKit) L.push({ name: k.kit.name, q: k.kit.q, price: k.kit.price, what: 'Starter Kit' });
+  co.packs.slice().sort((a, b) => b.cnt * b.m.price - a.cnt * a.m.price).forEach((x) => { if (L.length < 2) L.push({ name: (x.cnt > 1 ? x.cnt + ' x ' : '') + x.m.name, q: x.m.q, price: x.cnt * x.m.price, what: 'Multipack' }); });
+  return (k && !S.ownKit) || co.packs.length >= 2 ? L : null; }
+function ledger(c) { const k = kitInfo(c), co = checkout(c), today = k && !S.ownKit ? Math.min(co.real, k.kit.price + k.rest) : co.real, g = Math.round(c.plastic / 0.02);
+  const ln = (a, v, n) => '<div class="lgl"><span>' + a + (n ? '<small>' + n + '</small>' : '') + '</span><b>' + v + '</b></div>';
+  return '<div class="est lg">' + ln('Amazon Checkout Today', '~' + money(today), 'Small parts come in packs: this is what you pay.') + ln('Est. PLA Filament (~$0.02/g)', money(c.plastic), g ? 'About ' + g + ' g of plastic.' : 'No printed case yet.') + ln('Per-Device Value (after spares)', money(co.used + c.plastic), 'What goes into this one device. The rest are spares.') + '</div>'; }
+function bundleHtml(c, amz) { const L = bundleOf(c), cp = '<button type="button" class="btn dark" data-act="copyparts" style="width:100%;margin-top:8px">Copy Parts List</button>';
+  if (!L) return cp;
+  return '<div class="it kitc bnd"><b>Best 2-Click Bundle ~' + money(L.reduce((a, x) => a + x.price, 0)) + '</b><span class="bndl">' + L.map((x) => '1 ' + x.what).join(' + ') + '</span>' +
+    L.map((x, i) => '<a class="bndi" href="' + esc(amz(x.q)) + '" target="_blank" rel="noopener"><i>' + (i + 1) + '</i><span>' + esc(x.name) + '</span><em>~' + money(x.price) + '</em></a>').join('') + cp + '</div>'; }
+function partsCopyText() { const c = cost(), L = ['Case Zero parts list' + (recipe() ? ': ' + recipe().name : '')];
+  c.rows.filter((r) => !r.have).forEach((r) => L.push((r.buy != null ? r.buy : r.n) + ' x ' + r.p.name + ' (~' + money(r.sum) + ')'));
+  c.ex.filter((r) => !r.have).forEach((r) => L.push('1 x ' + r.name + ' (~' + money(r.sum) + ')'));
+  const B = bundleOf(c); if (B) L.push('', 'Best 2-Click Bundle: ' + B.map((x) => x.name + ' ~' + money(x.price)).join(' + '));
+  L.push('', 'Total to build: about ' + money(c.total) + ' (typical prices, shipping extra)'); return L.join('\n'); }
+function copyTxt(t, done) { const old = () => { try { const ta = document.createElement('textarea'); ta.value = t; ta.setAttribute('readonly', ''); ta.style.cssText = 'position:fixed;opacity:0;top:0'; document.body.appendChild(ta); ta.select(); const ok = document.execCommand('copy'); ta.remove(); done(ok); } catch (er) { done(false); } };
+  try { if (navigator.clipboard && navigator.clipboard.writeText) navigator.clipboard.writeText(t).then(() => done(true), old); else old(); } catch (er) { old(); } }
+const shareCard = () => '<div class="bcard shc"><h3>Share This Build</h3><p class="note" style="margin:0 0 8px">One link with the case, parts list and code, plus a one-line summary.</p><button type="button" class="btn dark" data-act="sharebuild" style="width:100%">Share This Build</button><div id="shareOut2"></div></div>';
+async function shareBuild() { const url = location.origin + location.pathname + '?build=' + (await packBuild()), c = cost(), r = recipe();
+  let nm = String(r ? r.name : styleRow()[1]).replace(/&amp;/g, '&'); nm = /case zero/i.test(nm) ? 'device' : /\b(box|case|device)$/i.test(nm) ? nm : nm + ' box';
+  const line = 'I designed a ' + money(Math.round(c.total)) + ' ' + nm + ' in Case Zero \u2014 print files, parts list, and code included: ' + url;
+  copyTxt(line, (ok) => { const o = $('shareOut2'); if (o) o.innerHTML = '<p class="note keep" style="margin:6px 0 0">' + (ok ? '<b>Copied.</b> Paste it anywhere.' : 'Copy this:') + '</p><textarea class="num" readonly rows="3" style="width:100%;margin-top:6px;font-size:12px" onclick="this.select()">' + esc(line) + '</textarea>'; flash(ok ? 'Copied: share line + build link' : 'Share line ready below'); }); }
 function shopHtml() {
   const c = cost(); if (!S.items.length) return '<p class="note" style="margin-top:0">Nothing to buy yet. Add electronics in Parts, or pick a recipe on the start screen.</p>';
   const a = (u, n) => '<a href="' + esc(u) + '" target="_blank" rel="noopener">' + n + '</a>';
   const amz = (q) => 'https://www.amazon.com/s?k=' + encodeURIComponent(q);
   const link = (p) => { const sq = p.searchQuery || CZ.cleanQuery(p.find || p.name), q = encodeURIComponent(sq); return '<span class="buy"><a class="amz" href="' + esc(amz(sq)) + '" target="_blank" rel="noopener">Amazon</a>' + (p.url ? a(p.url, 'Maker') : '') + a('https://www.adafruit.com/search?q=' + q, 'Adafruit') + a('https://www.aliexpress.com/wholesale?SearchText=' + q, 'AliExpress') + '</span>'; };
   const haveBtn = (t, on) => '<button data-have="' + t + '" style="all:unset;cursor:pointer;float:right;padding:6px 9px;border:1.5px solid #1a1a1a;border-radius:9px;font:800 11.5px/1 var(--sys);' + (on ? 'background:#1a1a1a;color:#fff' : '') + '">' + (on ? 'Have it' : 'I have this') + '</button>';
-  let h = copilotHtml() + intoCard() + '<div class="est"><b>About ' + money(c.total) + ' to build</b><span>' + money(c.parts) + ' electronics + ' + money(c.extras) + ' small stuff + ' + money(c.plastic) + ' plastic. Shipping is extra. Typical prices, not live.</span></div>';
+  let h = bundleHtml(c, amz) + ledger(c) + copilotHtml() + intoCard() + '<div class="est"><b>About ' + money(c.total) + ' to build</b><span>' + money(c.parts) + ' electronics + ' + money(c.extras) + ' small stuff + ' + money(c.plastic) + ' plastic. Shipping is extra. Typical prices, not live.</span></div>';
   h += kitHtml(c, amz);
   h += '<div class="list shopl">' + c.rows.map((r) => '<div class="it">' + haveBtn(r.t, r.have) + '<b>' + r.n + ' x ' + esc(r.p.name) + (r.p.check ? ' *' : '') + ' <span class="pr">' + money(r.have ? 0 : r.sum) + '</span></b>' + (r.have ? 'You have it: $0.' : r.own ? (r.own === r.n ? 'Already on your board: $0.' : r.own + ' already on your board. ' + money(r.sum) + ' for the other ' + r.buy + '.') : money(r.p.price || 0) + ' each, ' + money(r.sum) + '.') + ' ' + link(r.p) + '</div>').join('') +
     c.ex.map((r) => '<div class="it">' + haveBtn(r.t, r.have) + '<b>' + esc(r.name) + ' <span class="pr">' + money(r.have ? 0 : r.each) + '</span></b>' + (r.have ? 'You have it: $0.' : 'About ' + money(r.each) + '.') + ' ' + link({ name: r.name }) + '</div>').join('') + '</div>';
