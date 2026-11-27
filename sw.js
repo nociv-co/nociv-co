@@ -70,7 +70,7 @@ self.addEventListener('install', function (e) {
   }).then(function () { return self.skipWaiting(); }));
 });
 self.addEventListener('activate', function (e) {
-  e.waitUntil(caches.keys().then(function (ks) { return Promise.all(ks.filter(function (k) { return k !== CACHE; }).map(function (k) { return caches.delete(k); })); }).then(function () { return self.clients.claim(); }));
+  e.waitUntil(caches.keys().then(function (ks) { return Promise.all(ks.filter(function (k) { return k !== CACHE && k.indexOf('cz-build-') !== 0; }).map(function (k) { return caches.delete(k); })); }).then(function () { return self.clients.claim(); }));
 });
 function keepable(r) { var d = r.destination; return r.mode === 'navigate' || d === 'script' || d === 'style' || d === 'font' || d === 'image' || d === 'document' || d === 'iframe' || d === 'worker' || d === ''; }
 self.addEventListener('fetch', function (e) {

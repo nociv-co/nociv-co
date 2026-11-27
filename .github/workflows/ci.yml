@@ -1,0 +1,30 @@
+name: Case Zero CI
+on:
+  pull_request:
+  push:
+    branches: [main]
+permissions:
+  contents: read
+jobs:
+  casezero:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Firmware for every preset (.py py_compile, .ino strict syntax / arduino-cli when present)
+        run: node casezero/build/ci/firmware.mjs "$RUNNER_TEMP/fw"
+      - name: Install Playwright (Chromium)
+        run: |
+          npm install --no-save --no-package-lock playwright@1.48.2
+          npx playwright install --with-deps chromium
+      - name: 375 px phone check (no console errors, no sideways scroll, offline worker)
+        run: |
+          python3 -m http.server 8080 --bind 127.0.0.1 >/dev/null 2>&1 &
+          sleep 1
+          node casezero/build/ci/mobile375.cjs http://127.0.0.1:8080/casezero/build/

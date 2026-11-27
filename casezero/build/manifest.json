@@ -1,0 +1,16 @@
+{
+  "id": "/casezero/build/",
+  "name": "NOCIV Case Zero",
+  "short_name": "Case Zero",
+  "description": "Build your own device: the case, the parts, the wiring and the code. Works offline in the workshop.",
+  "start_url": "/casezero/build/?source=app",
+  "scope": "/casezero/build/",
+  "display": "standalone",
+  "background_color": "#F3F1EC",
+  "theme_color": "#F3F1EC",
+  "icons": [
+    { "src": "/icons/shop-192.png", "sizes": "192x192", "type": "image/png", "purpose": "any" },
+    { "src": "/icons/shop-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any" },
+    { "src": "/icons/shop-maskable-512.png", "sizes": "512x512", "type": "image/png", "purpose": "maskable" }
+  ]
+}
