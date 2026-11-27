@@ -86,7 +86,13 @@ function pic(it, cls) {
 function applyStyle() {
   var c = S.style || {};
   var bg = c.bg || '#ffffff', tx = c.text || '#111111', ac = c.accent || '#111111';
-  var f = FONTS[c.font] || FONTS.clean;
+  var f = FONTS[c.font] || FONTS.clean, cf = c.customFont, fs = $('#fs-cf');
+  if (c.font === 'custom' && cf && cf.key) {
+    if (!fs) { fs = document.createElement('style'); fs.id = 'fs-cf'; document.head.appendChild(fs); }
+    var fmt = { woff2: 'woff2', woff: 'woff', ttf: 'truetype' }[String(cf.key).split('.').pop()] || 'woff2';
+    fs.textContent = '@font-face{font-family:"FS Custom";src:url("' + src(cf.key) + '") format("' + fmt + '");font-display:swap}';
+    f = ['"FS Custom",system-ui,sans-serif', '"FS Custom",system-ui,sans-serif'];
+  } else if (fs) fs.textContent = '';
   var r = document.documentElement.style;
   r.setProperty('--bg', bg); r.setProperty('--tx', tx); r.setProperty('--ac', ac);
   r.setProperty('--acx', onColor(ac));
@@ -147,15 +153,64 @@ function route() {
 }
 function href(i, item) { return '#/' + slugs()[i] + (item ? '/' + encodeURIComponent(item) : ''); }
 
+/* ---------- shared blocks: link lists, slideshows, video, tags ---------- */
+function isOut(u) { return /^(https?:|mailto:|tel:)/i.test(u || ''); }
+function linkList(list, cls) {
+  list = (list || []).filter(function (x) { return x && (x.title || x.url || x.buy); });
+  if (!list.length) return '';
+  return '<div class="links' + (cls ? ' ' + cls : '') + '">' + list.map(function (x) {
+    var u = x.url || x.buy || '#', im = x.image || (x.images && x.images[0]), st = x.style || (im ? 'thumb' : 'button');
+    var tx = '<span class="lnk-tx"><b>' + esc(x.title || via(u) || 'Link') + '</b>' + (x.sub ? '<small>' + esc(x.sub) + '</small>' : '') + '</span>';
+    return '<a class="lnk lnk-' + st + '" href="' + esc(u) + '"' + (isOut(u) && !/^mailto:|^tel:/i.test(u) ? ' target="_blank" rel="noopener"' : '') + '>' +
+      (st === 'thumb' ? '<span class="lnk-img">' + (im ? '<img src="' + esc(src(im)) + '" alt="" loading="lazy">' : icon('link')) + '</span>' : '') + tx + '<i aria-hidden="true">' + (isOut(u) ? '↗' : '›') + '</i></a>';
+  }).join('') + '</div>';
+}
+function slides(list, cls) {
+  list = list.filter(function (x) { return x.p; });
+  if (!list.length) return '';
+  var one = list.length < 2;
+  return '<div class="ss ' + (cls || '') + '" data-n="' + list.length + '">' + list.map(function (x, k) {
+    return '<figure class="ss-s' + (k ? '' : ' on') + '"><img src="' + esc(src(x.p)) + '" alt="' + esc(x.c || '') + '"' + (k ? ' loading="lazy"' : '') + '>' + (x.c && cls !== 'hero-img' ? '<figcaption>' + esc(x.c) + '</figcaption>' : '') + '</figure>';
+  }).join('') + (one ? '' : '<button type="button" class="ss-p" aria-label="Previous photo">‹</button><button type="button" class="ss-n" aria-label="Next photo">›</button><div class="ss-dots">' +
+    list.map(function (x, k) { return '<button type="button" class="' + (k ? '' : 'on') + '" data-k="' + k + '" aria-label="Photo ' + (k + 1) + '"></button>'; }).join('') + '</div>') + '</div>';
+}
+function video(v) {
+  if (!v) return '';
+  var m = String(v).match(/(?:youtu\.be\/|youtube\.com\/(?:watch\?(?:.*&)?v=|shorts\/|embed\/))([\w-]{6,})/i);
+  if (m) return '<div class="vid"><iframe src="https://www.youtube-nocookie.com/embed/' + m[1] + '" title="Video" loading="lazy" allow="encrypted-media; picture-in-picture; fullscreen" allowfullscreen></iframe></div>';
+  m = String(v).match(/vimeo\.com\/(?:video\/)?(\d+)/i);
+  if (m) return '<div class="vid"><iframe src="https://player.vimeo.com/video/' + m[1] + '" title="Video" loading="lazy" allow="fullscreen; picture-in-picture" allowfullscreen></iframe></div>';
+  return '<div class="vid vid-f"><video src="' + esc(src(v)) + '" controls playsinline preload="metadata"></video></div>';
+}
+var FUL = { ready: 'Ready to ship', store: 'Made in store', custom: 'Custom order', digital: 'Digital' };
+function itemTags(it) { var o = []; (it.tags || []).concat(it.tag ? [it.tag] : []).forEach(function (g) { g = String(g).trim(); if (g && o.indexOf(g) < 0) o.push(g); }); return o; }
+function filters(it) { var o = itemTags(it); if (FUL[it.ful]) o.push(FUL[it.ful]); return o; }
+function isLinktree() { return (S.style || {}).layout === 'links'; }
+
 /* ---------- views ---------- */
 function intro(t) { return (t.intro ? '<p class="intro">' + esc(t.intro).replace(/\n/g, '<br>') + '</p>' : ''); }
 function head(t) { return '<h1 class="ttl">' + esc(t.name) + '</h1>' + intro(t); }
 
 function vHome(t, r) {
-  var h = '<section class="hero">' + (t.image ? '<img class="hero-img" src="' + esc(src(t.image)) + '" alt="">' : '') +
-    '<div class="hero-tx"><h1 class="hero-h">' + esc(t.headline || S.name || '') + '</h1>' +
-    ((t.intro || S.tagline) ? '<p class="hero-p">' + esc(t.intro || S.tagline) + '</p>' : '') +
-    (t.button && t.buttonTo != null && tabs()[t.buttonTo] ? '<a class="btn" href="' + href(t.buttonTo) + '">' + esc(t.button) + '</a>' : '') + '</div></section>';
+  var pics = [t.image].concat(t.images || []).filter(Boolean).map(function (p) { return { p: p }; });
+  var bt = '';
+  if (t.button && t.buttonTo === -1 && isOut(t.buttonUrl)) bt = '<a class="btn" href="' + esc(t.buttonUrl) + '" target="_blank" rel="noopener">' + esc(t.button) + '</a>';
+  else if (t.button && t.buttonTo != null && t.buttonTo >= 0 && tabs()[t.buttonTo]) bt = '<a class="btn" href="' + href(t.buttonTo) + '">' + esc(t.button) + '</a>';
+  var tx = '<h1 class="hero-h">' + esc(t.headline || S.name || '') + '</h1>' + ((t.intro || S.tagline) ? '<p class="hero-p">' + esc(t.intro || S.tagline) + '</p>' : '') + bt;
+  if (isLinktree()) {
+    /* Linktree: profile on top, then one stacked list of links, pages and items */
+    var av = S.logo || (pics[0] && pics[0].p);
+    var h0 = '<section class="prof">' + (av ? '<img class="prof-av" src="' + esc(src(av)) + '" alt="">' : '') + '<div class="hero-tx">' + tx + '</div></section>' + video(t.video) + linkList(t.links);
+    var sl0 = slugs(), pages = [];
+    tabs().forEach(function (o, i) {
+      if (i === r.i) return;
+      var cover = (o.items && o.items[0] && o.items[0].images && o.items[0].images[0]) || o.image;
+      pages.push({ title: o.name, sub: o.intro ? firstLine(o.intro, 60) : '', url: '#/' + sl0[i], image: cover, style: 'thumb' });
+    });
+    return h0 + linkList(pages, 'links-pages');
+  }
+  var h = '<section class="hero">' + (pics.length > 1 ? slides(pics, 'hero-img') : pics.length ? '<img class="hero-img" src="' + esc(src(pics[0].p)) + '" alt="">' : '') +
+    '<div class="hero-tx">' + tx + '</div></section>' + video(t.video) + linkList(t.links);
   var sl = slugs(), tiles = '';
   tabs().forEach(function (o, i) {
     if (i === r.i) return;
@@ -171,17 +226,17 @@ function vHome(t, r) {
 
 function cards(t, ti, list) {
   return '<div class="cards">' + list.map(function (it) {
-    return '<a class="card' + (it.soldout ? ' is-out' : '') + '" href="' + href(ti, it.id) + '"><span class="card-img">' + pic(it) +
+    return '<a class="card' + (it.soldout ? ' is-out' : '') + (it.size === 'wide' || it.size === 'tall' ? ' sz-' + it.size : '') + '" href="' + href(ti, it.id) + '"><span class="card-img">' + pic(it) +
       (it.soldout ? '<b class="badge">Sold out</b>' : (it.badge ? '<b class="badge">' + esc(it.badge) + '</b>' : '')) + '</span>' +
       '<span class="card-t">' + esc(it.title || 'Untitled') + '</span>' +
-      (it.price ? '<span class="card-p">' + money(it.price) + '</span>' : (it.tag ? '<span class="card-p">' + esc(it.tag) + '</span>' : '')) + '</a>';
+      (it.price ? '<span class="card-p">' + money(it.price) + '</span>' : (itemTags(it)[0] ? '<span class="card-p">' + esc(itemTags(it)[0]) + '</span>' : '')) + (FUL[it.ful] ? '<span class="card-f">' + FUL[it.ful] + '</span>' : '') + '</a>';
   }).join('') + '</div>';
 }
 
 function vGrid(t, r) {
   var items = t.items || [];
-  var tags = []; items.forEach(function (it) { if (it.tag && tags.indexOf(it.tag) < 0) tags.push(it.tag); });
-  var tag = r.tag, list = tag ? items.filter(function (it) { return it.tag === tag; }) : items;
+  var tags = []; items.forEach(function (it) { filters(it).forEach(function (g) { if (tags.indexOf(g) < 0) tags.push(g); }); });
+  var tag = r.tag, list = tag ? items.filter(function (it) { return filters(it).indexOf(tag) >= 0; }) : items;
   var h = head(t);
   if (tags.length > 1) {
     h += '<div class="chips" role="group" aria-label="Filter"><a class="chip' + (tag ? '' : ' on') + '" href="' + href(r.i) + '">All</a>' +
@@ -214,9 +269,9 @@ function vItem(t, r) {
     '<div class="item-tx">' + (it.date ? '<p class="item-tag">' + day(it.date) + '</p>' : '') + '<h1 class="ttl">' + esc(it.title || 'Untitled') + '</h1>' +
     (it.audio ? '<div class="trk trk-one"><button type="button" class="trk-play" data-audio="' + esc(src(it.audio)) + '" aria-label="Play">' + PLAY + '</button><span class="trk-tx"><b>Preview</b></span><i class="trk-bar" aria-hidden="true"><i></i></i></div>' : '') +
     (t.type === 'finds' && via(it.buy) ? '<p class="item-tag">via ' + esc(via(it.buy)) + '</p>' : '') +
-    (it.price ? '<p class="item-p">' + money(it.price) + '</p>' : '') + (it.tag ? '<p class="item-tag">' + esc(it.tag) + '</p>' : '') +
+    (it.price ? '<p class="item-p">' + money(it.price) + '</p>' : '') + (filters(it).length ? '<p class="item-tag">' + filters(it).map(esc).join(' \u00b7 ') + '</p>' : '') +
     (buy ? '<div class="buybar">' + buy + '</div>' : '') +
-    (it.text ? '<div class="prose">' + para(it.text) + '</div>' : '') + more + '</div></article>';
+    video(it.video) + (it.text ? '<div class="prose">' + para(it.text) + '</div>' : '') + more + '</div></article>';
 }
 
 function para(s) {
@@ -228,20 +283,19 @@ function para(s) {
 }
 
 function vPage(t) {
-  return (t.image ? '<img class="page-img" src="' + esc(src(t.image)) + '" alt="">' : '') + '<h1 class="ttl">' + esc(t.name) + '</h1><div class="prose">' + para(t.body || t.intro) + '</div>';
+  return (t.image ? '<img class="page-img" src="' + esc(src(t.image)) + '" alt="">' : '') + video(t.video) + '<h1 class="ttl">' + esc(t.name) + '</h1><div class="prose">' + para(t.body || t.intro) + '</div>' + linkList(t.links);
 }
 
 function vGallery(t) {
   var items = t.items || [];
+  if (t.mode === 'slideshow' && items.length) return head(t) + slides(items.map(function (x) { return { p: (x.images && x.images[0]) || ph(x.title), c: x.title }; }), 'ss-box');
   return head(t) + (items.length ? '<div class="masonry">' + items.map(function (it, k) {
     return '<button type="button" class="m-it" data-k="' + k + '">' + pic(it) + (it.title ? '<span>' + esc(it.title) + '</span>' : '') + '</button>';
   }).join('') + '</div>' : '<p class="empty">Nothing here yet.</p>');
 }
 
 function vLinks(t) {
-  return head(t) + '<div class="links">' + (t.items || []).map(function (it) {
-    return '<a class="lnk" href="' + esc(it.buy || '#') + '" target="_blank" rel="noopener"><span>' + esc(it.title || it.buy || 'Link') + '</span><i aria-hidden="true">↗</i></a>';
-  }).join('') + '</div>';
+  return head(t) + (linkList(t.items) || '<p class="empty">No links yet.</p>');
 }
 
 function vContact(t) {
@@ -279,7 +333,7 @@ function vTracks(t, r) {
     var p = it.images && it.images[0];
     return '<div class="trk">' + (it.audio ? '<button type="button" class="trk-play" data-audio="' + esc(src(it.audio)) + '" aria-label="Play ' + esc(it.title || 'track') + '">' + PLAY + '</button>' : '<span class="trk-play is-off" title="No preview">' + PLAY + '</span>') +
       (p ? '<img class="trk-art" src="' + esc(src(p)) + '" alt="" loading="lazy">' : '') +
-      '<a class="trk-tx" href="' + href(r.i, it.id) + '"><b>' + esc(it.title || 'Untitled') + '</b><small>' + esc([it.tag, firstLine(it.text, 60)].filter(Boolean).join(' \u00b7 ')) + '</small></a>' +
+      '<a class="trk-tx" href="' + href(r.i, it.id) + '"><b>' + esc(it.title || 'Untitled') + '</b><small>' + esc([itemTags(it).join(', '), firstLine(it.text, 60)].filter(Boolean).join(' \u00b7 ')) + '</small></a>' +
       (it.price && (!it.buy || it.soldout) ? '<span class="trk-p">' + money(it.price) + '</span>' : '') +
       (it.soldout ? '<span class="btn is-off trk-buy">Sold</span>' : it.buy ? '<a class="btn trk-buy" href="' + esc(it.buy) + '" target="_blank" rel="noopener">' + esc(it.cta || (it.price ? 'Buy' : 'Get')) + (it.price ? ' ' + money(it.price) : '') + '</a>' : '') +
       '<i class="trk-bar" aria-hidden="true"><i></i></i></div>';
@@ -344,6 +398,15 @@ function wire(v, r) {
     var it = (r.tab.items || []).filter(function (x) { return x.id === r.item; })[0];
     $$('.gal-slide', v).forEach(function (b) { b.onclick = function () { if (it && it.images && it.images.length) lightbox(it.images.map(function (p) { return { p: p, c: it.title }; }), +b.dataset.k); }; });
   }
+  $$('.ss', v).forEach(function (ss) {
+    var sl = $$('.ss-s', ss), dots = $$('.ss-dots button', ss), k = 0, sx = null;
+    if (sl.length < 2) return;
+    function show(n) { k = (n + sl.length) % sl.length; sl.forEach(function (x, j) { x.classList.toggle('on', j === k); }); dots.forEach(function (d, j) { d.classList.toggle('on', j === k); }); }
+    $('.ss-p', ss).onclick = function () { show(k - 1); }; $('.ss-n', ss).onclick = function () { show(k + 1); };
+    dots.forEach(function (d) { d.onclick = function () { show(+d.dataset.k); }; });
+    ss.addEventListener('touchstart', function (e) { sx = e.touches[0].clientX; }, { passive: true });
+    ss.addEventListener('touchend', function (e) { if (sx == null) return; var d = e.changedTouches[0].clientX - sx; if (Math.abs(d) > 40) show(k + (d < 0 ? 1 : -1)); sx = null; });
+  });
   $$('.trk-play[data-audio]', v).forEach(function (b) { b.onclick = function () { playToggle(b); }; });
   $$('.m-it', v).forEach(function (b) {
     b.onclick = function () { lightbox((r.tab.items || []).map(function (x) { return { p: x.images && x.images[0], c: x.title, t: x.title }; }), +b.dataset.k); };
@@ -396,11 +459,13 @@ function start(data, images) {
 /* ---------- Studio select mode (preview only): tap anything to select it, like a design tool.
    Menus, play buttons and photo thumbs still work. The studio opens the matching settings. ---------- */
 var PICK = true, LAST = null, BOX = null, HOV = null;
-var PASS = '.tt,.bt,.panel a,.menu-btn,.back,.chip,.gal-th button,.trk-play,.lb,.lb *';
-var PICKABLE = '.hero-h,.hero-p,.hero-img,.card,.find,.log-e,.trk,.m-it,.lnk,.tile,.hero,.ttl,.intro,.prose,.page-img,.brand,.notice,.item,.gal,.feat .row-h,.links,.tracks,.empty';
+var PASS = '.ss-p,.ss-n,.ss-dots,.ss-dots *,.tt,.bt,.panel a,.menu-btn,.back,.chip,.gal-th button,.trk-play,.lb,.lb *';
+var PICKABLE = '.vid,.prof,.hero-h,.hero-p,.hero-img,.card,.find,.log-e,.trk,.m-it,.lnk,.tile,.hero,.ttl,.intro,.prose,.page-img,.brand,.notice,.item,.gal,.feat .row-h,.links,.tracks,.empty';
 // which input in the studio a tapped element belongs to
 function fieldOf(el, t, isItem) {
   if (el.matches('.hero-h')) return 'headline';
+  if (el.closest('.vid')) return 'video';
+  if (el.closest('.lnk') && t && t.type !== 'links' && !el.closest('.links-pages')) return 'links';
   if (el.matches('.hero-p,.intro')) return 'intro';
   if (el.matches('.hero-img,.page-img')) return 'image';
   if (el.matches('.prose')) return isItem ? 'text' : 'body';
@@ -418,7 +483,7 @@ function pickBase(el) {
   if (el.closest('.brand,.notice')) return { kind: 'site', label: 'Site: ' + (S.name || 'name') };
   var a = el.matches('a') ? el : el.querySelector('a[href^="#/"]');
   var hm = a && (a.getAttribute('href') || '').match(/^#\/([^\/]+)(?:\/([^\/]+))?/);
-  if (el.closest('.tile') && hm) { slug = hm[1]; var ti = sl.indexOf(slug); return { kind: 'tab', slug: slug, label: 'Page: ' + (tabs()[ti] ? tabs()[ti].name : slug) }; }
+  if (el.closest('.tile,.links-pages') && hm) { slug = hm[1]; var ti = sl.indexOf(slug); return { kind: 'tab', slug: slug, label: 'Page: ' + (tabs()[ti] ? tabs()[ti].name : slug) }; }
   if (hm && hm[2] && hm[2] !== '~') { slug = hm[1]; item = decodeURIComponent(hm[2]); }
   if (el.closest('.item') && r.item) item = r.item;
   var mi = el.closest('.m-it'); if (mi && t && t.items && t.items[+mi.dataset.k]) item = t.items[+mi.dataset.k].id;
