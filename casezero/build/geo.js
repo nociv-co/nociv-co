@@ -529,6 +529,12 @@ export function knobGeo() {
   const bore = new THREE.Path(); bore.absarc(0, 0, 3, 0, Math.PI * 2, true); sh.holes.push(bore);
   return new THREE.ExtrudeGeometry(sh, { depth: 12, bevelEnabled: false, curveSegments: 24 });
 }
+// a thumb stick as it really looks: a rubber gimbal dome on the deck, a narrow shaft, and a wide mushroom cap with a concave thumb dish (mm, revolved about +y, 0 = the deck)
+export function thumbStickGeo() {
+  const P = [[0, 0], [10.5, 0], [10.2, 1.4], [9, 2.8], [6.5, 3.8], [3.2, 4.4], [2.4, 4.8], [2.4, 10.4], [3.4, 11.2], [6.5, 11.9], [8.9, 12.6], [9.6, 13.6], [9.7, 15.4], [9.2, 16.4], [8.2, 16.7],
+    [6.5, 16.2], [4.5, 15.7], [2.2, 15.4], [0, 15.3]].map(([r, h]) => new THREE.Vector2(r, h));
+  return new THREE.LatheGeometry(P, 40);
+}
 export function dpadGeos() {
   // cross 32 mm, 9 mm tall, with a 1.2 mm lip under the deck so it cannot fall out, and a pivot nub in the middle
   const cross = union([rect(-16, -5.5, 16, 5.5), rect(-5.5, -16, 5.5, 16)]), lip = offset(cross, 1.6);

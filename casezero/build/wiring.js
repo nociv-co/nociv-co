@@ -27,6 +27,9 @@ export const BOARDS = {
     all: [5, 6, 7, 10, 20, 21, 0, 1, 2, 3, 4, 8, 9], adc: [0, 1, 2, 3, 4], spi: [4, 6, 5], i2c: [8, 9] /* 8 (the LED) and 9 (BOOT) last */, spiPick: [[7, 10, 3]], camCs: [7, 10], lab: (n) => 'GPIO' + n, cp: 'board.IO', pwm: (n) => n, v5: '5V', v3: '3V3' },
   esp32: { name: 'ESP32 DevKit', left: ['EN', 'GPIO36', 'GPIO39', 'GPIO34', 'GPIO35', 'GPIO32', 'GPIO33', 'GPIO25', 'GPIO26', 'GPIO27', 'GPIO14', 'GPIO12', 'GPIO13', 'GND', 'VIN'], right: ['GPIO23', 'GPIO22', 'TX0', 'RX0', 'GPIO21', 'GPIO19', 'GPIO18', 'GPIO5', 'GPIO17', 'GPIO16', 'GPIO4', 'GPIO2', 'GPIO15', 'GND', '3V3'],
     all: [4, 5, 13, 14, 15, 16, 17, 18, 19, 21, 22, 23, 25, 26, 27, 32, 33], adc: [32, 33, 34, 35, 36, 39], spi: [18, 23, 19], i2c: [21, 22], spiPick: [[5, 17, 16], [15, 4, 2]], camCs: [5, 15], lab: (n) => 'GPIO' + n, cp: 'board.IO', pwm: (n) => n, v5: 'VIN', v3: '3V3' },
+  /* AI-Thinker ESP32-CAM: the camera takes most GPIOs and the SD slot shares 2/4/12-15, so only these are handed out; 15/14 are the OLED's I2C (as in retrocam.ino) */
+  cam: { name: 'ESP32-CAM (AI-Thinker)', left: ['5V', 'GND', 'GPIO12', 'GPIO13', 'GPIO15', 'GPIO14', 'GPIO2', 'GPIO4'], right: ['3V3', 'GPIO16', 'GPIO0', 'GND', 'VCC', 'U0R', 'U0T', 'GND'],
+    all: [13, 2, 12, 4], adc: [], spi: null, i2c: [15, 14], spiPick: [], camCs: [], lab: (n) => 'GPIO' + n, cp: null, ino: true, pwm: (n) => n, v5: '5V', v3: '3V3' },
   /* ESP32-S3-DevKitC-1 (N16R8): GPIO35 to 37 belong to the octal PSRAM, GPIO0/3/45/46 are strapping pins, 19/20 are USB: none of them are handed out. */
   s3: { name: 'ESP32-S3 DevKit', left: ['3V3', '3V3', 'RST', 'GPIO4', 'GPIO5', 'GPIO6', 'GPIO7', 'GPIO15', 'GPIO16', 'GPIO17', 'GPIO18', 'GPIO8', 'GPIO3', 'GPIO46', 'GPIO9', 'GPIO10', 'GPIO11', 'GPIO12', 'GPIO13', 'GPIO14', '5V', 'GND'],
     right: ['GND', 'TX', 'RX', 'GPIO1', 'GPIO2', 'GPIO42', 'GPIO41', 'GPIO40', 'GPIO39', 'GPIO38', 'GPIO37', 'GPIO36', 'GPIO35', 'GPIO0', 'GPIO45', 'GPIO48', 'GPIO47', 'GPIO21', 'GPIO20', 'GPIO19', 'GND', 'GND'],
@@ -35,7 +38,7 @@ export const BOARDS = {
   pi: { name: 'Raspberry Pi (40 pin header)', left: ['3V3', 'GPIO2', 'GPIO3', 'GPIO4', 'GND', 'GPIO17', 'GPIO27', 'GPIO22', '3V3', 'GPIO10', 'GPIO9', 'GPIO11', 'GND', 'ID_SD', 'GPIO5', 'GPIO6', 'GPIO13', 'GPIO19', 'GPIO26', 'GND'], right: ['5V', '5V', 'GND', 'GPIO14', 'GPIO15', 'GPIO18', 'GND', 'GPIO23', 'GPIO24', 'GND', 'GPIO25', 'GPIO8', 'GPIO7', 'ID_SC', 'GND', 'GPIO12', 'GND', 'GPIO16', 'GPIO20', 'GPIO21'],
     all: [4, 17, 27, 22, 5, 6, 13, 19, 26, 23, 24, 25, 12, 16, 20, 21, 18], adc: [], spi: [11, 10, 9], i2c: [2, 3], spiPick: [[8, 25, 24], [7, 23, 22]], camCs: [8, 7], lab: (n) => 'GPIO' + n, cp: null, pwm: (n) => ([12, 13, 18, 19].indexOf(n) > -1 ? n % 2 : -1), v5: '5V', v3: '3V3', pi: true }
 };
-export const BOARD_OF = { uno: 'uno', pico: 'pico', picow: 'pico', pico2: 'pico', nano: 'nano', promicro: 'promicro', esp32c3: 'c3', esp32s3: 's3', esp32: 'esp32', cyd: 'cyd', zero2: 'pi', pi5: 'pi' };
+export const BOARD_OF = { uno: 'uno', pico: 'pico', picow: 'pico', pico2: 'pico', nano: 'nano', promicro: 'promicro', esp32c3: 'c3', esp32s3: 's3', esp32cam: 'cam', esp32: 'esp32', cyd: 'cyd', zero2: 'pi', pi5: 'pi' };
 
 // What each kind of part needs. d = any pin, a = an analog pin (GP26 to 28), enc = two pins next to each other,
 // pwm = a pin whose PWM slice no other sound or motor uses. power: 3V3 or VBUS (5 V from USB).
@@ -163,6 +166,7 @@ export const BOARD_PROFILES = {
   uno: PROF('uno', '5V', 'ino', INO_LIBS), nano: PROF('nano', '5V', 'ino', INO_LIBS), promicro: PROF('promicro', '5V', 'ino', INO_LIBS),
   pico: PROF('pico', '3.3V', 'py', PY_LIBS), esp32c3: PROF('c3', '3.3V', 'py', PY_LIBS), esp32: PROF('esp32', '3.3V', 'py', PY_LIBS),
   esp32s3: PROF('s3', '3.3V', 'ino', Object.assign({}, INO_LIBS, { servo: [LIB('ESP32Servo', 'Kevin Harrington', 'ESP32Servo.h')], i2sdac: [LIB('ESP_I2S', 'Espressif (built in, Arduino-ESP32 3.x)', 'ESP_I2S.h', true)], inmp441: [LIB('ESP_I2S', 'Espressif (built in, Arduino-ESP32 3.x)', 'ESP_I2S.h', true)] })),
+  esp32cam: PROF('cam', '3.3V', 'ino', Object.assign({}, INO_LIBS, { servo: [LIB('ESP32Servo', 'Kevin Harrington', 'ESP32Servo.h')] })),
   cyd: PROF('cyd', '3.3V', 'ino', Object.assign({}, INO_LIBS, { servo: [LIB('ESP32Servo', 'Kevin Harrington', 'ESP32Servo.h')], tft28: [], round128: [], dfplayer: [LIB('DFRobotDFPlayerMini', 'DFRobot', 'DFRobotDFPlayerMini.h')] }))
 };
 export const profileOf = (B) => Object.values(BOARD_PROFILES).find((p) => p.board === B) || null;
@@ -262,7 +266,7 @@ const cStr = (s) => '"' + String(s).replace(/\\/g, '\\\\').replace(/"/g, '\\"') 
 // ---------- the Arduino sketch (.ino): Elegoo / Arduino Uno, Nano, Pro Micro and the Cheap Yellow Display ----------
 function inoFor(plan, title, fn, B, tw) {
   const ap = (n) => { const s = B.lab(n); return /^A\d/.test(s) ? s : s.replace(/^\D+/, ''); };
-  const pm = B === BOARDS.promicro, cyd = B === BOARDS.cyd, keys = [], pots = [], steps = [], encs = [], outs = [], pirs = [], mats = [], notes = [], tofs = [], cams = [];
+  const pm = B === BOARDS.promicro, cyd = B === BOARDS.cyd, cam = B === BOARDS.cam, keys = [], pots = [], steps = [], encs = [], outs = [], pirs = [], mats = [], notes = [], tofs = [], cams = [];
   let screen = null, mx = null, dfp = null, sdc = null, lcd = false;
   plan.rows.forEach((row) => {
     const it = row.it, tag = it.label.split(' ')[0], N = row.N, R = {}; row.roles.forEach((r) => { R[r.role] = r.pin; });
@@ -300,10 +304,10 @@ function inoFor(plan, title, fn, B, tw) {
   if (dfp != null) { if (!cyd) lib('SoftwareSerial', 'Arduino (built in)', 'SoftwareSerial.h', true); lib('DFRobotDFPlayerMini', 'DFRobot', 'DFRobotDFPlayerMini.h'); }
   if (sdc != null) lib('SD', 'Arduino (built in)', 'SD.h', true);
   if (out('ring')) lib('Adafruit NeoPixel', 'Adafruit', 'Adafruit_NeoPixel.h');
-  if (out('servo')) lib(cyd ? 'ESP32Servo' : 'Servo', cyd ? 'Kevin Harrington' : 'Arduino (built in)', cyd ? 'ESP32Servo.h' : 'Servo.h', !cyd);
+  if (out('servo')) lib(cyd || cam ? 'ESP32Servo' : 'Servo', cyd || cam ? 'Kevin Harrington' : 'Arduino (built in)', cyd || cam ? 'ESP32Servo.h' : 'Servo.h', !(cyd || cam));
   if (mode === 'macro' && pm) lib('Keyboard', 'Arduino (built in)', 'Keyboard.h', true);
   if (mode === 'midi' && pm) lib('MIDIUSB', 'Gary Grewal', 'MIDIUSB.h');
-  const boardPick = pm ? 'SparkFun Pro Micro (or Arduino Leonardo)' : cyd ? 'ESP32 Dev Module (add the ESP32 boards first: Tools -> Board -> Boards Manager -> esp32)' : B === BOARDS.nano ? 'Arduino Nano (Processor: ATmega328P, try "Old Bootloader" if upload fails)' : 'Arduino Uno';
+  const boardPick = pm ? 'SparkFun Pro Micro (or Arduino Leonardo)' : cam ? 'AI Thinker ESP32-CAM (add the ESP32 boards first, upload through the ESP32-CAM-MB)' : cyd ? 'ESP32 Dev Module (add the ESP32 boards first: Tools -> Board -> Boards Manager -> esp32)' : B === BOARDS.nano ? 'Arduino Nano (Processor: ATmega328P, try "Old Bootloader" if upload fails)' : 'Arduino Uno';
   const L = [];
   L.push('// NOCIV Case Zero sketch. ' + title, '// Brain: ' + B.name + '. Arduino language (.ino).', '//',
     '// How to put it on the board:', '//   1. Install the free Arduino IDE: https://www.arduino.cc/en/software',
@@ -413,6 +417,7 @@ function inoFor(plan, title, fn, B, tw) {
   if (mx) L.push('  leds.shutdown(0, false);  // wake it up', '  leds.setIntensity(0, 3);', '  leds.clearDisplay(0);');
   if (dfp != null) L.push(cyd ? '  dfSerial.begin(9600, SERIAL_8N1, DF_RX, DF_TX);' : '  dfSerial.begin(9600);', '  playerOk = player.begin(dfSerial);', '  if (playerOk) player.volume(20);  // 0 to 30', '  say("DFPlayer", playerOk ? 1 : 0);  // 0: check TX, RX and the SD card');
   if (sdc != null) L.push('  sdOk = SD.begin(SD_CS);', '  say("SD", sdOk ? 1 : 0);  // 0: check the wires and that the card is FAT32');
+  if (cam && (drv === 'ssd1306' || lcd || tofs.length)) L.push('  Wire.begin(15, 14);  // ESP32-CAM: SDA 15, SCL 14');
   if (drv === 'ssd1306' && !cyd) L.push('  screen.begin(SSD1306_SWITCHCAPVCC, 0x3C);');
   else if (cyd) L.push('  screen.init();', '  screen.setRotation(1);', '  screen.fillScreen(TFT_BLACK);', '  screen.setTextColor(TFT_WHITE, TFT_BLACK);', '  screen.drawString("NOCIV", 10, 20, 4);', '  touchBus.begin(25, 39, 32, 33);', '  touch.begin(touchBus);');
   else if (screen) L.push('  screen.begin();', '  screen.fillScreen(0x0000);');
@@ -677,8 +682,8 @@ export function micMain(plan, title, B) {
 // ---------- power: where the battery's red (+) and black (-) wires go, at a voltage the brain can take ----------
 // mode: usb (the cable powers it), aa (AA cells), lipo (3.7 V LiPo + TP4056 USB-C charger). Every red wire goes through the On/Off switch first.
 export const POWER_MODES = { usb: ['USB Cable', 0], aa: ['AA Batteries', 2], lipo: ['USB-C Rechargeable LiPo', 10] };
-const AA_PIN = { uno: ['aa4', 'VIN'], nano: ['aa4', 'VIN'], pico: ['aa3', 'VSYS'], esp32: ['aa3', 'VIN'], c3: ['aa3', '5V'], s3: ['aa3', '5V'], promicro: ['aa3', 'RAW'], cyd: ['aa3', 'VIN'] };
-const LIPO_PIN = { pico: 'VSYS', esp32: 'VIN', c3: '5V', s3: '5V', promicro: 'RAW', cyd: 'VIN', uno: '5V', nano: '5V' };
+const AA_PIN = { uno: ['aa4', 'VIN'], nano: ['aa4', 'VIN'], pico: ['aa3', 'VSYS'], esp32: ['aa3', 'VIN'], cam: ['aa3', '5V'], c3: ['aa3', '5V'], s3: ['aa3', '5V'], promicro: ['aa3', 'RAW'], cyd: ['aa3', 'VIN'] };
+const LIPO_PIN = { cam: '5V', pico: 'VSYS', esp32: 'VIN', c3: '5V', s3: '5V', promicro: 'RAW', cyd: 'VIN', uno: '5V', nano: '5V' };
 export function powerPlan(mode, brainType) {
   const bk = BOARD_OF[brainType] || 'pico', B = BOARDS[bk];
   if (mode === 'usb' || !POWER_MODES[mode]) return { mode: 'usb', parts: [], pin: B.v5, volts: 5, wires: [], note: 'The USB cable gives the ' + B.name + ' 5 V and its code. No battery, no switch.' };

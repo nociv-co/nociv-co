@@ -780,6 +780,7 @@ function pageOf(step, tab) { let hit = -1; PAGES.forEach((p, i) => { if (hit < 0
 function openPage(i) { // go to a page: its first tool, or the one you last used there
   const p = PAGES[i]; if (!p) return; const list = pageTabs(p), keep = list.find((x) => x[0] === S.step && x[1] === S.tab[x[0]] && S.page === i) || list.find((x) => (S.seen || {})[i] === x[0] + ':' + x[1]) || list[0];
   S.step = keep[0]; S.tab[keep[0]] = keep[1]; S.page = i; BIG3D = false; save(); $('con').classList.remove('down'); render();
+  if (p.room === 'design') requestAnimationFrame(() => requestAnimationFrame(() => { if (S.page !== i) return; if (T3) T3.key = ''; draw(); })); /* back from PLAY or BUILD: repaint the case once the stage has its size again */
 }
 let SHOWN = -1, VIEWKEY = '';
 function render() {
@@ -1326,9 +1327,13 @@ const cv = $('view'), g = cv.getContext('2d'); decoWire(); deco3dWire();
 let view = null; // current 2D mapping for taps
 function fit() { const r = cv.getBoundingClientRect(), d = Math.min(2, devicePixelRatio || 1); cv.width = Math.max(1, Math.round(r.width * d)); cv.height = Math.max(1, Math.round(r.height * d)); }
 // The 3D box: steps that show a flat picture also show the case in 3D in the top right corner. Tap it to make it big.
-let BIG3D = false, miniTimer = 0;
+let BIG3D = false, miniTimer = 0, FLOCK = 'spin'; /* DESIGN 3D Face Lock: spin freely, or look straight at one face and drag parts on it */
+const FLOCKS = [['spin', 'Spin'], ['top', 'Top'], ['back', 'Back'], ['left', 'Left'], ['right', 'Right'], ['bottom', 'Bottom']];
+const flockOn = () => FLOCK !== 'spin' && (PAGES[S.page] || {}).room === 'design' && (native3d() || BIG3D) && !deco3d() && !mountView() && !play3d() && !isPanel();
+const FCASE = { top: [0, -0.002, 1], bottom: [0, -0.002, -1], back: [0, 1, 0.002], left: [-1, 0, 0.002], right: [1, 0, 0.002] }; /* case axes; the tiny tilt keeps the orbit camera off its pole */
+const flockDir = () => { const c = FCASE[FLOCK]; return UPRIGHT[S.style] ? c : [c[0], c[2], -c[1]]; };
 const native3d = () => { const t = curTab(); if (t === 'extras') return !decoOn() || deco3d(); /* nothing picked yet: the case itself, live */ return xrayOn() || (S.step === 2 && !isPanel()) || (S.step === 5 && (t === '3d' || t === 'files')) || (S.step === 3 && (t === 'colors' || (t === 'logo' && !!WALLF[logoFace()]))); }; /* a side-wall logo is placed on the case in 3D */
-const wantsMini = () => (play3d() || S.step === 0 || S.step === 1 || S.step === 3 || S.step === 4 || (S.step === 2 && isPanel())) && !$('con').classList.contains('down');
+const wantsMini = () => ((play3d() && !simKind()) /* a preset's PLAY console fills the stage: no 3D box over its controls */ || S.step === 0 || S.step === 1 || S.step === 3 || S.step === 4 || (S.step === 2 && isPanel())) && !$('con').classList.contains('down');
 function draw() {
   { const sc = $('selc'); if (sc) sc.hidden = true; } /* drawBrain shows it again when the tray is up */
   const big = native3d() || BIG3D, mini = !big && wantsMini(), v3 = $('v3');
@@ -1676,7 +1681,7 @@ function setup3d() {
   new ResizeObserver(() => { const w = wrap.clientWidth, h = wrap.clientHeight; if (!w || !h) return; renderer.setSize(w, h, false); camera.aspect = w / h; camera.updateProjectionMatrix(); T3.fit(); T3.draw(); }).observe(wrap);
   let pd0 = null; wrap.addEventListener('pointerdown', (e) => { pd0 = [e.clientX, e.clientY]; });
   wrap.addEventListener('click', (e) => { if (wrap.classList.contains('mini')) { BIG3D = true; render(); return; }
-    if (BIG3D && !play3d() && !native3d() && pd0 && Math.hypot(e.clientX - pd0[0], e.clientY - pd0[1]) < 6) { const h = playHit(e); if (h && S.items.some((i) => i.id === h.id)) { sel = TSEL = h.id; render(); } } }); /* 3D: tap a part on any face to pick it (a drag still spins) */ play3dWire();
+    if (BIG3D && !play3d() && !native3d() && pd0 && Math.hypot(e.clientX - pd0[0], e.clientY - pd0[1]) < 6) { const h = playHit(e); if (h && S.items.some((i) => i.id === h.id)) { sel = TSEL = h.id; render(); } } }); /* 3D: tap a part on any face to pick it (a drag still spins) */ play3dWire(); flock3dWire();
   return T3;
 }
 // ---------- PLAY: press the real 3D case. A tap (moved < 6 px) on a control presses it 1.2 mm, lights it and runs its Function; a drag still spins the case ----------
@@ -1703,6 +1708,31 @@ function playPress(hit) { const m = testModel(), id = hit.id, it = S.items.find(
   if (pi > -1) { const h = { kind: 'pot', i: pi }; if (m.pots[pi].kind === 'step') { stepPress(h); return; } TEST.val[pi] = ((TEST.val[pi] || 0) + 25) % 125 > 100 ? 0 : ((TEST.val[pi] || 0) + 25) % 125; testAct(h, true); return; }
   if (ei > -1) { testAct({ kind: 'enc', i: ei, dir: 1 }, true); return; }
   draw(); tag((it && PP(it) ? PP(it).short || PP(it).name : 'This part') + ' is not wired yet. See Wire it.'); }
+// Face Lock: the pointer's ray in the case's own mm (x, y on the deck, z up), on the locked face's plane
+function flockRay(e) { const r = T3; if (!r) return null; const el = $('v3'), bx = el.getBoundingClientRect(), rc = new THREE.Raycaster(); rc.setFromCamera(new THREE.Vector2(((e.clientX - bx.left) / bx.width) * 2 - 1, -((e.clientY - bx.top) / bx.height) * 2 + 1), r.camera);
+  r.root.updateMatrixWorld(true); const ray = rc.ray.clone().applyMatrix4(new THREE.Matrix4().copy(r.root.matrixWorld).invert()), b = G.bbox(outline()), F = FLOCK;
+  const ax = F === 'top' || F === 'bottom' ? 2 : F === 'back' ? 1 : 0, at = F === 'top' ? (r.caseH || geom().H) : F === 'bottom' ? 0 : F === 'back' ? b.y1 : F === 'left' ? b.x0 : b.x1, o = ray.origin.getComponent(ax), dd = ray.direction.getComponent(ax);
+  if (Math.abs(dd) < 1e-6) return null; const t = (at - o) / dd; if (t < 0) return null; const p = ray.at(t, new THREE.Vector3()); return [p.x, p.y, p.z]; }
+function flockTargets() { const F = FLOCK; if (F === 'top') return S.items.filter((i) => PP(i) && (i.panel === homePanel() || (xrayOn() && i.panel === 'inside'))); if (F === 'bottom') return S.items.filter((i) => PP(i) && i.panel === 'inside'); return []; }
+function flock3dWire() { const el = $('v3'); let dr = null, raf = 0;
+  const redraw = () => { if (raf) return; raf = requestAnimationFrame(() => { raf = 0; draw3d(false); }); };
+  el.addEventListener('pointerdown', (e) => { if (!flockOn() || el.classList.contains('mini')) return; const p = flockRay(e); if (!p) return; let hit = null;
+    if (WALLF[FLOCK]) { const s = FLOCK === 'back' ? p[0] : p[1]; let bd = 14; S.ports.forEach((q) => { if (q.face !== FLOCK || q.auto) return; const w = portAt(q); if (!w) return; const d = Math.abs(w.s - s) + Math.max(0, w.z0 - p[2], p[2] - w.z1); if (d < bd) { bd = d; hit = { port: q }; } }); }
+    else { const hs = flockTargets().filter((i) => { const f = fp(i); return p[0] >= f.x0 - 2 && p[0] <= f.x1 + 2 && p[1] >= f.y0 - 2 && p[1] <= f.y1 + 2; }); hs.sort((a, b) => (a.of != null ? 0 : PP(a).board ? 3 : 1) - (b.of != null ? 0 : PP(b).board ? 3 : 1)); const it = hs[0];
+      if (it && !(PP(it).board && !it.move)) hit = { it, dx: it.x - p[0], dy: it.y - p[1], fine: it.of != null }; }
+    if (!hit) return; e.stopPropagation(); e.preventDefault(); dr = Object.assign(hit, { id: e.pointerId, moved: false, x0: e.clientX, y0: e.clientY }); try { el.setPointerCapture(e.pointerId); } catch (x) {}
+    if (hit.it && sel !== hit.it.id) { sel = hit.it.id; redraw(); } }, true);
+  el.addEventListener('pointermove', (e) => { if (!dr || e.pointerId !== dr.id) return; e.stopPropagation(); e.preventDefault(); const p = flockRay(e); if (!p) return;
+    if (!dr.moved) { if (Math.hypot(e.clientX - dr.x0, e.clientY - dr.y0) < 6) return; dr.moved = true; snapU(); } /* a tap only picks it */
+    if (dr.port) { const q = dr.port, g0 = R.T + R.CLR + 1, n = anchorsOf(q.face).length, u = Math.max(0, Math.min(n - 1, Math.round(((FLOCK === 'back' ? p[0] : p[1]) - g0) / 20 - 0.5))), a0 = q.anchor; if (u === a0.u) return;
+      q.anchor = Object.assign({}, a0, { u }); if (portBlocked(q)) { q.anchor = a0; return; } redraw(); return; }
+    const it = dr.it, sn = dr.fine ? 0.5 : 2.5; it.x = Math.round((p[0] + dr.dx) / sn) * sn; it.y = Math.round((p[1] + dr.dy) / sn) * sn; clampIn(it); /* edge clamp, live */
+    if (it.of != null) unSync(it); if (PP(it).board) syncKids(it); redraw(); }, true);
+  ['pointerup', 'pointercancel'].forEach((ev) => el.addEventListener(ev, (e) => { if (!dr || e.pointerId !== dr.id) return; const d0 = dr; dr = null; e.stopPropagation(); if (!d0.moved) { render(); return; }
+    if (d0.it) { const it = d0.it; if (it.of == null && problems(it).length) placeNear(it); /* collision: the nearest free spot */ snapBrain(it); tag(label(it) + (problems(it).length ? ': ' + problems(it).join(', ') : ' placed on the ' + FLOCK + '.')); }
+    else tag(PORTS[d0.port.kind][0] + ' on the ' + d0.port.face + ' wall, spot ' + (d0.port.anchor.u + 1) + '.');
+    save(); render(); }, true));
+}
 function play3dWire() { const el = $('v3'); let dn = null;
   el.addEventListener('pointerdown', (e) => { if (!play3d() || el.classList.contains('mini')) return; dn = { x: e.clientX, y: e.clientY, id: e.pointerId, hit: playHit(e) }; });
   el.addEventListener('pointermove', (e) => { if (dn && e.pointerId === dn.id && Math.hypot(e.clientX - dn.x, e.clientY - dn.y) >= 6) dn = null; }); /* it became a spin */
@@ -1720,6 +1750,7 @@ const KEYXY = (c) => { const o = []; for (let j = 0; j < c.m; j++) for (let i = 
 function standIn(P, x, y, rq, top) { // a simple 3D stand-in for what shows above the deck: screen glass, button caps, D-pad
   const c = P.cut || {}; let m = null;
   if (P.screen || (c.o === 'rect' && P.isScreen)) { m = new THREE.Mesh(c.o === 'circle' ? new THREE.CylinderGeometry(c.d / 2, c.d / 2, 0.6, 40) : new THREE.BoxGeometry(((rq % 2) ? c.h : c.w), 0.6, ((rq % 2) ? c.w : c.h)), new THREE.MeshStandardMaterial({ color: 0x8fd3ff, emissive: 0x16323f })); m.rotation.x = Math.PI / 2; m.position.set(x, y, top - 1.2); }
+  else if (P.joy) { m = new THREE.Mesh(G.thumbStickGeo(), new THREE.MeshStandardMaterial({ color: 0x262626, roughness: .75 })); m.rotation.x = Math.PI / 2; m.position.set(x, y, top); } /* mushroom-cap thumb stick */
   else if (c.o === 'circle' && P.up) { const rr = c.d / 2; m = new THREE.Mesh(new THREE.CylinderGeometry(rr * (P.up > 12 ? .55 : 1.05), rr * 1.1, Math.min(P.up, 14), 32), new THREE.MeshStandardMaterial({ color: P.up > 9 ? 0xf2ecd6 : 0x1a1a1a })); m.rotation.x = Math.PI / 2; m.position.set(x, y, top + Math.min(P.up, 14) / 2); }
   else if (c.o === 'cross') { m = mesh(G.dpadGeos(), 0x1a1a1a); m.position.set(x, y, top - 1.2); }
   else if (c.o === 'keys') { m = new THREE.Group(); const a = (rq || 0) * Math.PI / 2, mat = new THREE.MeshStandardMaterial({ color: 0x1a1a1a }), hh = Math.min(P.up || 4, 14); KEYXY(c).forEach(([dx, dy]) => { const k = new THREE.Mesh(new THREE.CylinderGeometry(c.d / 2 * 0.9, c.d / 2, hh, 24), mat); k.rotation.x = Math.PI / 2; k.position.set(x + dx * Math.cos(a) - dy * Math.sin(a), y + dx * Math.sin(a) + dy * Math.cos(a), top + hh / 2); m.add(k); }); }
@@ -1915,23 +1946,27 @@ function draw3d(isMini) {
       r.controls.target.set(0, UPRIGHT[S.style] ? d.D / 2 : CT ? (h.H + CT) / 2 : dk ? hh / 2 : (h.H + (isClam() && OPEN ? d.D * 0.4 : h.Hl)) / 2, lm ? 16 : 0);
       // in Style, turn to the side being decorated: the lid's outside faces the back when it is open, the bottom faces down
       const f = S.step === 3 && curTab() !== 'colors' ? curFace() : 'top', MD = { plate: [0.3, 0.95, 0.45], lid: [0.3, 0.95, 0.45], back: [0.35, 0.55, -0.85], front: [0.35, 0.55, 0.85], left: [-0.9, 0.5, 0.35], right: [0.9, 0.5, 0.35], bottom: [0.35, -0.85, 0.6] }, MDU = { plate: [0.3, 0.25, 0.95], front: [0.35, -0.85, 0.45], back: [0.35, 0.9, -0.3], left: [-0.9, 0.35, 0.4], right: [0.9, 0.35, 0.4], bottom: [0.35, 0.3, -0.9] }, dir = S.step === 5 && T3 && T3.head && simKind() === 'deskbot' ? [0.12, 0.3, 1] /* PLAY: face the Desk-Bot so its OLED eyes look at you */ : play3d() ? (UPRIGHT[S.style] ? [0, 0.08, 1] : [0, 1, 0.08]) : UPRIGHT[S.style] ? (MV ? MDU[PORTS[S.xsel] ? pface() : mnt().face] : [0.45, 0.3, 0.85]) : MV ? MD[PORTS[S.xsel] ? pface() : mnt().face] : dk ? [0, 1, 0.5] : WALLF[f] ? MD[f] : f === 'lidout' && isClam() ? [0.2, 1, 0.55] : f === 'bottom' ? [0.4, -0.85, 0.6] : [0.45, 0.7, 0.8];
-      r.camera.position.copy(new THREE.Vector3(dir[0], dir[1], dir[2]).normalize().multiplyScalar(dist)).add(r.controls.target); r.controls.update();
+      const fd = r.mode !== 'mini' && flockOn() ? flockDir() : dir; r.camera.position.copy(new THREE.Vector3(fd[0], fd[1], fd[2]).normalize().multiplyScalar(dist)).add(r.controls.target); r.controls.update();
     };
     const limbs = (S.deco || []).some(isLimb) + DF, stay = D3 && r.view === 'bigdeco' && r.hadLimb === limbs; r.hadLimb = limbs; /* you turned the case to reach a spot: adding or dropping a piece must not turn it back */
-    r.mode = mode; r.view = mode + (play3d() ? 'play' : S.step === 5 ? 's5' : '') + (D3 ? 'deco' : S.step === 3 ? curFace() + curTab() : '') + (MV ? 'm' + (PORTS[S.xsel] ? pface() : mnt().face) : ''); if (!stay) r.fit();
+    r.mode = mode; r.view = mode + (play3d() ? 'play' : S.step === 5 ? 's5' : '') + (D3 ? 'deco' : S.step === 3 ? curFace() + curTab() : '') + (MV ? 'm' + (PORTS[S.xsel] ? pface() : mnt().face) : '') + (flockOn() ? 'f' + FLOCK : ''); if (!stay) r.fit();
   }
   r.controls.enabled = !isMini && !play3d(); /* PLAY: locked top-down, so a tap is always a press */
-  const view = mode + (play3d() ? 'play' : S.step === 5 ? 's5' : '') + (D3 ? 'deco' : S.step === 3 ? curFace() + curTab() : '') + (MV ? 'm' + (PORTS[S.xsel] ? pface() : mnt().face) : '');
+  r.controls.enableRotate = !(!isMini && flockOn()); r.caseH = h.H; /* Face Lock: straight on, zoom only, a drag moves the part */
+  const view = mode + (play3d() ? 'play' : S.step === 5 ? 's5' : '') + (D3 ? 'deco' : S.step === 3 ? curFace() + curTab() : '') + (MV ? 'm' + (PORTS[S.xsel] ? pface() : mnt().face) : '') + (flockOn() ? 'f' + FLOCK : '');
   if (r.mode !== mode || r.view !== view) { r.mode = mode; r.view = view; r.fit(); }
   setHighlight(r); blueSel(r); decoMark(); playPaint(r);
   r.draw();
   if (isMini) return;
   if (D3) { tag((S.deco || []).length ? 'Drag a piece to move it. Drag the empty space to spin.' : 'Drag a piece from below onto your case'); $('sb').hidden = true; $('sb').innerHTML = ''; return; }
-  if (play3d()) tag('Tap any button, pad, knob or wheel on your case.'); else tag(MV ? 'Tap a green dot to ' + (PORTS[S.xsel] ? 'cut the ' : 'mount the ') + xname(S.xsel).toLowerCase() + '. Red is blocked.' : summaryLine());
+  if (play3d()) tag('Tap any button, pad, knob or wheel on your case.'); else if (flockOn()) tag('Face Lock ' + FLOCK + ': drag a ' + (WALLF[FLOCK] ? 'port along the wall' : FLOCK === 'bottom' ? 'part inside on the floor' : 'part') + ' to its spot. It snaps, stays inside the edge and steps off other parts.'); else tag(MV ? 'Tap a green dot to ' + (PORTS[S.xsel] ? 'cut the ' : 'mount the ') + xname(S.xsel).toLowerCase() + '. Red is blocked.' : summaryLine());
   const sb = $('sb'), flat = BIG3D && !native3d();
-  sb.innerHTML = (flat ? '<button type="button" id="flatBtn" aria-pressed="true">Back to flat</button>' : '') + (isClam() && !lidTop ? '<button type="button" id="openBtn">' + (S.open ? 'Close it' : 'Open it') + '</button>' : '');
+  const flk = (PAGES[S.page] || {}).room === 'design' && !MV && !isPanel() ? '<div class="flk" role="group" aria-label="Face Lock" style="display:flex;flex-wrap:wrap;gap:4px;align-items:center;justify-content:center;width:100%"><b style="font-size:12px">Face Lock:</b>' + FLOCKS.map(([k, n]) => '<button type="button" data-flk="' + k + '" aria-pressed="' + (FLOCK === k) + '" style="padding:5px 8px;font-size:12px' + (FLOCK === k ? ';background:#c8412f;color:#fff' : '') + '">' + n + '</button>').join('') + '</div>' : '';
+  const sbh = flk + (flat ? '<button type="button" id="flatBtn" aria-pressed="true">Back to flat</button>' : '') + (isClam() && !lidTop ? '<button type="button" id="openBtn">' + (S.open ? 'Close it' : 'Open it') + '</button>' : '');
+  if (sb.dataset.h !== sbh || !sb.innerHTML !== !sbh) { sb.innerHTML = sbh; sb.dataset.h = sbh; } /* only when it changed: a redraw must not swap the button under your finger */
   sb.hidden = !sb.innerHTML; const ob = $('openBtn'); if (ob) ob.onclick = () => { S.open = !S.open; save(); render(); };
   const fb = $('flatBtn'); if (fb) fb.onclick = () => { BIG3D = false; render(); };
+  sb.querySelectorAll('[data-flk]').forEach((b) => { b.onclick = () => { FLOCK = b.dataset.flk; render(); }; });
 }
 
 function makeKids(it, P) { // the parts tagged on the photo, each its own item on the board
@@ -1982,6 +2017,7 @@ const BRAIN_NAMES = { pico: 'Raspberry Pi Pico', picow: 'Raspberry Pi Pico W', p
 function brainInfo() {
   // the brain can be a part from the list, or the one she said is on her photographed board
   const b = S.items.find((i) => PP(i) && PP(i).cat === 'brain'); if (b) return { type: b.type, name: PP(b).name };
+  const c = S.items.find((i) => PP(i) && PP(i).selfBrain); if (c) return { type: c.type, name: PP(c).name }; /* the ESP32-CAM is its own brain: no Pico beside it */
   const m = S.items.find((i) => PP(i) && PP(i).brain && PP(i).brain !== 'none'); if (m) return { type: PP(m).brain, name: BRAIN_NAMES[PP(m).brain] + ' (on your board)' };
   return null;
 }
@@ -1991,6 +2027,10 @@ function powerMapItems() { const m = pwrMode(); if (!m || m === 'usb') return []
 function mapWhy() { const bi = brainInfo(); if (!BRD()) return 'The map and the test do not know the pins of the ' + bi.name + ' yet.'; if (!wiring().rows.length && !powerMapItems().length) return 'Add buttons, knobs, screens, sensors or lights in Electronics first.'; return ''; }
 function pcx(e) { const r = cv.getBoundingClientRect(), k = cv.width / r.width; return [(e.clientX - r.left) * k, (e.clientY - r.top) * k]; }
 let MAPHITS = [];
+const MAPNAME = { 'Cheap Yellow Display': 'CYD', 'ESP32-S3 DevKit': 'ESP32-S3', 'ESP32 DevKit': 'ESP32', 'ESP32-C3 SuperMini': 'ESP32-C3', 'ESP32-CAM (AI-Thinker)': 'ESP32-CAM', 'Raspberry Pi (40 pin header)': 'Pi header' };
+function fitTxt(t, max, px, wt) { // the font shrinks to 70% to fit, then the words get an ellipsis: a Wired label never runs past its box
+  let s = px; g.font = wt + ' ' + s + 'px -apple-system,Arial'; while (g.measureText(t).width > max && s > px * 0.7) { s -= 0.5; g.font = wt + ' ' + s + 'px -apple-system,Arial'; }
+  if (g.measureText(t).width <= max) return t; let u = t; while (u.length > 1 && g.measureText(u + '\u2026').width > max) u = u.slice(0, -1); return u + '\u2026'; }
 function drawMap(W, H) {
   MAPHITS = []; const d = px(), w = wiring(), rows = w.rows, bi = brainInfo(); g.fillStyle = '#f7f4ec'; g.fillRect(0, 0, W, H);
   const pwrIt = powerMapItems(); if (!rows.length && !pwrIt.length) { g.fillStyle = '#6f6a60'; g.font = '800 ' + 14 * d + 'px -apple-system,Arial'; g.textAlign = 'center'; g.fillText('Add parts to see the wiring map', W / 2, H / 2); tag('Wiring map'); return; }
@@ -1998,13 +2038,13 @@ function drawMap(W, H) {
   const pinAt = (net0, side, yNear) => { const net = netName(net0); let i = BL.indexOf(net); if (i > -1 && net !== 'GND') return ['L', i]; i = BRr.indexOf(net); if (i > -1 && net !== 'GND') return ['R', i]; if (net === 'GND') { const list = gnd(side).length ? gnd(side) : gnd(side === 'L' ? 'R' : 'L'); side = gnd(side).length ? side : side === 'L' ? 'R' : 'L'; const iy = list.reduce((a, c) => (Math.abs(top + (c + 0.5) * step - yNear) < Math.abs(top + (a + 0.5) * step - yNear) ? c : a), list[0]); return list.length ? [side, iy] : null; } return null; };
   const pxy = (sd, i) => [sd === 'L' ? bx : bx + bw, top + (i + 0.5) * step];
   g.fillStyle = '#2f7a4b'; g.beginPath(); g.roundRect ? g.roundRect(bx, top, bw, bh, 8 * d) : g.rect(bx, top, bw, bh); g.fill();
-  g.fillStyle = '#fff'; g.font = '800 ' + 11 * d + 'px -apple-system,Arial'; g.textAlign = 'center'; g.fillText(bmini(B.name).slice(0, 14), W / 2, top + bh / 2);
-  g.font = '700 ' + Math.min(9 * d, step * 0.62) + 'px -apple-system,Arial';
-  for (let i = 0; i < nr; i++) { const yl = top + (i + 0.5) * step; g.textAlign = 'left'; g.fillStyle = '#e8f3ec'; if (BL[i]) g.fillText(BL[i], bx + 4 * d, yl + 3 * d); g.textAlign = 'right'; if (BRr[i]) g.fillText(BRr[i], bx + bw - 4 * d, yl + 3 * d); g.fillStyle = '#d9c46a'; if (BL[i]) g.fillRect(bx - 2 * d, yl - 1.5 * d, 4 * d, 3 * d); if (BRr[i]) g.fillRect(bx + bw - 2 * d, yl - 1.5 * d, 4 * d, 3 * d); }
+  g.fillStyle = '#1a1a1a'; g.textAlign = 'center'; g.fillText(fitTxt(MAPNAME[B.name] || bmini(B.name), W * 0.9, 11 * d, '800'), W / 2, top - 8 * d); /* the board's short name above it, clear of the pin labels */
+  const pl = (p) => (bw < 90 * d ? p.replace(/^GPIO/, 'IO') : p), pw = bw / 2 - 6 * d, pf = Math.min(9 * d, step * 0.62);
+  for (let i = 0; i < nr; i++) { const yl = top + (i + 0.5) * step; g.textAlign = 'left'; g.fillStyle = '#e8f3ec'; if (BL[i]) g.fillText(fitTxt(pl(BL[i]), pw, pf, '700'), bx + 4 * d, yl + 3 * d); g.textAlign = 'right'; if (BRr[i]) g.fillText(fitTxt(pl(BRr[i]), pw, pf, '700'), bx + bw - 4 * d, yl + 3 * d); g.fillStyle = '#d9c46a'; if (BL[i]) g.fillRect(bx - 2 * d, yl - 1.5 * d, 4 * d, 3 * d); if (BRr[i]) g.fillRect(bx + bw - 2 * d, yl - 1.5 * d, 4 * d, 3 * d); }
   const items = rows.map((row) => { const pads = padsFor(row), gl = pads.filter((p) => p[1] !== 'GND' && p[1] !== '3V3' && p[1] !== 'VBUS' && p[1] !== B.v5 && p[1] !== B.v3).map((p) => BL.indexOf(p[1]) > -1 ? -1 : 1).reduce((a, c) => a + c, 0); return { row, pads, side: gl > 0 ? 'R' : 'L' }; }).concat(pwrIt);
   ['L', 'R'].forEach((sd) => { const list = items.filter((x) => x.side === sd); if (!list.length) return; const lh = 11 * d, need = list.reduce((a, x) => a + 16 * d + x.pads.length * lh, 0) + 6 * d * (list.length - 1), k = Math.min(1, bh / need), colW = (sd === 'L' ? bx : W - bx - bw) - 70 * d, x0 = sd === 'L' ? 8 * d : bx + bw + 62 * d; let y = top + Math.max(0, (bh - need * k) / 2), lane = 0;
     list.forEach((it) => { const h = (16 * d + it.pads.length * lh) * k, lit = it.row.it.id != null && it.row.it.id === HL; g.fillStyle = lit ? '#fdeeea' : '#fff'; g.strokeStyle = lit ? '#c8412f' : '#1a1a1a'; g.lineWidth = (lit ? 3.5 : 1.5) * d; g.beginPath(); g.rect(x0, y, Math.max(40 * d, colW), h); g.fill(); g.stroke(); MAPHITS.push({ id: it.row.it.id, x: x0, y, w: Math.max(40 * d, colW), h });
-      g.fillStyle = '#1a1a1a'; g.font = '800 ' + 10 * d * Math.max(0.7, k) + 'px -apple-system,Arial'; g.textAlign = sd === 'L' ? 'left' : 'right'; g.fillText(it.row.it.label.slice(0, 18), sd === 'L' ? x0 + 4 * d : x0 + Math.max(40 * d, colW) - 4 * d, y + 11 * d * k);
+      g.fillStyle = '#1a1a1a'; g.textAlign = sd === 'L' ? 'left' : 'right'; g.fillText(fitTxt(it.row.it.label, Math.max(40 * d, colW) - 8 * d, 10 * d * Math.max(0.7, k), '800'), sd === 'L' ? x0 + 4 * d : x0 + Math.max(40 * d, colW) - 4 * d, y + 11 * d * k);
       it.pads.forEach(([lbl, net], j) => { const py = y + (15 * d + (j + 0.5) * lh) * k, ex = sd === 'L' ? x0 + Math.max(40 * d, colW) : x0, at = pinAt(net, sd, py); g.font = '700 ' + 8.5 * d * Math.max(0.7, k) + 'px -apple-system,Arial'; g.fillStyle = '#6f6a60'; g.textAlign = sd === 'L' ? 'right' : 'left'; g.fillText(lbl, sd === 'L' ? ex - 3 * d : ex + 3 * d, py + 3 * d);
         if (!at) return; const [qx, qy] = pxy(at[0], at[1]), lx = sd === 'L' ? bx - 10 * d - (lane % 10) * 4 * d : bx + bw + 10 * d + (lane % 10) * 4 * d; lane++;
         g.strokeStyle = netCol(net, lane); g.lineWidth = 2 * d; g.beginPath(); g.moveTo(ex, py); g.lineTo(lx, py); g.lineTo(lx, qy); g.lineTo(qx, qy); g.stroke();
@@ -2958,7 +2998,7 @@ function creditHtml() {
   const r = recipe(); if (!r) return '';
   return '<details class="fold"><summary>Code: ' + esc(r.credit.project) + ' by ' + esc(r.credit.by) + '</summary><div class="list"><div class="it"><b>' + esc(r.name) + ': the code</b>Comes from <a href="' + esc(r.credit.url) + '" target="_blank" rel="noopener" style="display:inline;padding:0;border:0;text-decoration:underline">' + esc(r.credit.project) + '</a> by ' + esc(r.credit.by) + ' (license: ' + esc(r.credit.license) + '). Their work, their credit. Our starter code in Brain, Wire it, Wiring only proves your wiring works.<small>' + esc(r.note) + (r.tested ? '' : ' Not test-built by NOCIV yet.') + '</small></div></div></details>';
 }
-const shapePreset = () => (CZ.RECIPES || []).find((r) => r.preset && r.style === S.style) || null;
+const shapePreset = () => { const a = recipe(); if (a && a.preset && a.style === S.style) return a; /* the preset you are on, not just the first one for this shape */ return (CZ.RECIPES || []).find((r) => r.preset && r.style === S.style) || null; };
 function shapePresetHtml() { const r = shapePreset(); if (!r) return '';
   return '<button type="button" class="btn red" data-spre="' + r.id + '" style="width:100%;margin-top:8px"><b>Open-source preset: ' + esc(r.name) + '</b> &middot; ' + esc(r.cost || aboutCost(r)) + '<small style="display:block;font-weight:500">' + esc(r.parts.map(([t, n]) => (n > 1 ? n + 'x ' : '') + ((CZ.PARTS[t] || {}).short || t)).join(' + ')) + '</small></button>'; }
 function presetLinksHtml() { const r = recipe(); if (!r) return '';
@@ -3043,7 +3083,7 @@ function kitInfo(c) { // an Uno and 3 or more starter parts: one kit box beats b
   const rows = c.rows.filter((r) => kit.cov.includes(r.t)), wires = c.ex.filter((r) => /jumper|dupont/i.test(r.name)), pieces = rows.reduce((a, r) => a + r.n, 0);
   const val = rows.reduce((a, r) => a + (r.p.price || 0) * r.n, 0) + wires.reduce((a, r) => a + (r.each || 0), 0), rest = c.rows.filter((r) => !kit.cov.includes(r.t) && !r.have).reduce((a, r) => a + r.sum, 0) + c.ex.filter((r) => !wires.includes(r) && !r.have).reduce((a, r) => a + r.sum, 0);
   return { kit, rows, wires, pieces, val, rest, cover: rows.map((r) => r.t).concat(wires.map((r) => r.t)), all: c.rows.length + c.ex.length }; }
-const MPACKS = [{ t: ['tact12', 'button16'], name: '150-pc Tactile Button Kit', q: 'tactile push button assortment kit 150 pcs', price: 7, per: 150 }, { t: ['servo'], name: '4-pack SG90 Servos', q: 'SG90 micro servo 4 pack', price: 10, per: 4 }, { t: ['esp32cam'], name: 'ESP32-CAM-MB w/ USB board', q: 'ESP32-CAM-MB USB programmer board', price: 12, per: 1 },
+const MPACKS = [{ t: ['tact12', 'button16'], name: '150-pc Tactile Button Kit', q: 'tactile push button assortment kit 150 pcs', price: 7, per: 150 }, { t: ['servo'], name: '4-pack SG90 Servos', q: 'SG90 micro servo 4 pack', price: 10, per: 4 }, { t: ['slidesw'], name: 'Slide Switch 20-pack', q: 'SS12D10 mini slide switch 20 pack', price: 6.5, per: 20, each: 0.33 }, { t: ['esp32cam'], name: 'ESP32-CAM-MB w/ USB board', q: 'ESP32-CAM-MB USB programmer board', price: 12, per: 1 },
   { ex: /\bM3\b/, name: 'M3 Screw Assortment', q: 'M3 screw nut assortment kit', price: 10 }, { ex: /magnet/i, name: '6x3mm Magnet Pack', q: '6x3mm neodymium magnets', price: 8 }];
 function checkout(c) { // what you really pay on Amazon: small parts only come in packs
   const used = c.rows.filter((r) => !r.have).reduce((a, r) => a + r.sum, 0) + c.ex.filter((r) => !r.have).reduce((a, r) => a + r.sum, 0), packs = [];
@@ -3059,7 +3099,7 @@ function kitHtml(c, amz) {
     '<div class="row" style="margin-top:8px"><b>I already own a Starter Kit</b><button type="button" class="tgl" data-act="ownkit" role="switch" aria-checked="' + !!S.ownKit + '">' + (S.ownKit ? 'On' : 'Off') + '</button></div>' +
     '<p class="note keep" style="margin:4px 0 0">' + (S.ownKit ? 'Checked off: ' : 'One tap checks off ') + 'Uno, buttons, pots, joystick, servo, 1602 LCD, LEDs and jumper wires. With the kit: about ' + money(k.kit.price + k.rest) + ' all in.</p></div>';
   h += '<div class="est vals"><b>Parts Used Value ' + money(co.used) + ' &middot; Realistic Amazon Checkout ~' + money(co.real) + '</b><span>Small parts only come in packs, so the checkout is what you really pay.</span></div>';
-  if (co.packs.length) h += '<div class="list shopl">' + co.packs.map((x) => '<div class="it"><b>' + (x.cnt > 1 ? x.cnt + ' x ' : '') + esc(x.m.name) + ' <span class="pr">~' + money(x.cnt * x.m.price) + '</span></b>' + (x.m.per ? 'Covers your ' + x.n + ', the rest are spares. ' : 'One pack covers it. ') + lk(x.m.q) + '</div>').join('') + '</div>';
+  if (co.packs.length) h += '<div class="list shopl">' + co.packs.map((x) => '<div class="it"><b>' + (x.cnt > 1 ? x.cnt + ' x ' : '') + esc(x.m.name) + ' <span class="pr">~' + money(x.cnt * x.m.price) + '</span></b>' + (x.m.each ? '~' + money(x.m.each) + ' each. ' : '') + (x.m.per ? 'Covers your ' + x.n + ', the rest are spares. ' : 'One pack covers it. ') + lk(x.m.q) + '</div>').join('') + '</div>';
   return h; }
 function shopHtml() {
   const c = cost(); if (!S.items.length) return '<p class="note" style="margin-top:0">Nothing to buy yet. Add electronics in Parts, or pick a recipe on the start screen.</p>';
@@ -3545,7 +3585,7 @@ function playInd() { const el = $('pind'); if (!el || !AU) return; const on = (P
 function auHot() { AU.hot = Date.now(); playInd(); clearTimeout(AU.indT); AU.indT = setTimeout(playInd, 1300); }
 $('pind').addEventListener('click', (e) => { const b = e.target.closest('[data-snd]'); if (!b) return; auSet(b.dataset.snd === '1'); if (!AU.on) djStop(); else if (playSim()) djSync(TRYS.dj); else if (curTab() === 'test' && TEST.dj) djSync(TEST.dj); render(); });
 function auSet(on) { AU.on = on; try { localStorage.setItem(KEY + ':sound', on ? '1' : '0'); } catch (e) {} const c = auCtx(); if (c) { if (on) auUnlock(); else c.suspend().catch(() => {}); } }
-const soundPill = () => '<button type="button" class="spill' + (AU.on ? ' on' : '') + '" data-snd="' + (AU.on ? '0' : '1') + '" aria-pressed="' + AU.on + '">Sound: ' + (AU.on ? 'On' : 'Off') + '</button>';
+const soundPill = () => ((PAGES[S.page] || {}).room === 'play' && curTab() !== 'map' ? '' /* the top bar already has Sound: On/Off */ : '<button type="button" class="spill' + (AU.on ? ' on' : '') + '" data-snd="' + (AU.on ? '0' : '1') + '" aria-pressed="' + AU.on + '">Sound: ' + (AU.on ? 'On' : 'Off') + '</button>');
 const libsDrawer = () => '<details class="fold slib"><summary>Free Sound Libraries</summary><div class="list">' + (CZ.SOUND_LIBS || []).map(([n, u, t]) => '<a href="' + u + '" target="_blank" rel="noopener"><b>' + n + '</b>' + t + '</a>').join('') + '</div><p class="note keep">Tip: for the Pico save each sound as a <b>16-bit, 22 kHz, mono .wav</b>.</p></details>';
 function auEnv(g, t, a, peak, dec) { g.gain.setValueAtTime(0.0001, t); g.gain.exponentialRampToValueAtTime(peak, t + a); g.gain.exponentialRampToValueAtTime(0.0001, t + a + dec); }
 function auNoise(c, t, dur, dest, rate) { const s = c.createBufferSource(); s.buffer = AU.noise; s.loop = true; if (rate) s.playbackRate.value = rate; s.connect(dest); s.start(t, Math.random()); s.stop(t + dur + 0.05); return s; }
@@ -3667,13 +3707,17 @@ function simInit(k) { if (k === 'scanner') return { ang: 0, dir: 1, mm: 400, run
   if (k === 'cyd') return { on: [false, false, false, false, false, false], led: '', msg: 'Tap a tile' };
   if (k === 'arcade') return { x: 152, y: 112, cx: 60, cy: 60, keys: {}, score: 0, walk: 0 };
   return { wake: 0, shots: 0, flash: 0, wig: false }; }
+const GPS = [[92, 88], [164, 88]]; /* PLAY gamepad: the two sticks low and inboard, like on the case */
 const simDpad = (extra) => '<div class="simpad" style="display:grid;grid-template-columns:repeat(3,44px);grid-template-rows:repeat(3,40px);gap:4px">' + [['u', '&uarr;', 2, 1], ['l', '&larr;', 1, 2], ['r', '&rarr;', 3, 2], ['d', '&darr;', 2, 3]].map(([k, l, c, rw]) => '<button type="button" class="btn" data-sim="' + k + '" aria-label="D-pad ' + k + '" style="grid-column:' + c + ';grid-row:' + rw + ';padding:0">' + l + '</button>').join('') + '</div>' +
   '<div style="display:grid;grid-template-columns:repeat(' + (extra.length > 4 ? 3 : 2) + ',52px);gap:6px">' + extra.map((b) => '<button type="button" class="btn" data-sim="' + b + '" style="padding:8px 0">' + b + '</button>').join('') + '</div>';
 function simCtl(k) {
   if (k === 'deskbot') return '<button type="button" class="btn red" data-sim="wake" style="width:100%">Wake button</button>';
   if (k === 'scanner') return '<label class="tknob"><span>Distance <output>400</output> mm</span><input type="range" min="30" max="1200" step="10" value="400" data-simr="mm" aria-label="Distance in mm"></label><button type="button" class="btn" data-sim="scan" style="width:100%">Button: pause the scan</button>';
   if (k === 'retrocam') return '<div class="grid g2"><button type="button" class="btn red" data-sim="shutter">Shutter</button><button type="button" class="btn" data-sim="wiggle" aria-pressed="false">Wiggle mode (SG90)</button></div>';
-  if (k === 'gamepad') return '<p class="note keep" style="margin:0 0 6px">Drag the two sticks on the screen.</p><div style="display:flex;flex-wrap:wrap;gap:12px;justify-content:center">' + simDpad(['1', '2', '3', '4', '5', '6']) + '</div>';
+  if (k === 'gamepad') { const gb = (id, c, rw, w) => '<button type="button" class="btn" data-sim="' + id + '" aria-label="Button ' + id + '" style="grid-column:' + c + ';grid-row:' + rw + ';padding:0;min-width:0;width:100%' + (w ? ';font-size:11px;height:30px' : '') + '">' + (w || id) + '</button>';
+    return '<p class="note keep" style="margin:0 0 6px">Drag the two sticks on the screen.</p><div style="display:flex;gap:6px;justify-content:space-between;align-items:center;max-width:330px;margin:0 auto">' + simDpad([]).replace(/<div style="display:grid;grid-template-columns:repeat\(2,52px\);gap:6px"><\/div>$/, '') +
+      '<div style="display:grid;grid-template-columns:48px;gap:6px">' + gb('5', 1, 1, 'Select') + gb('6', 1, 2, 'Start') + '</div>' +
+      '<div class="simpad" style="display:grid;grid-template-columns:repeat(3,32px);grid-template-rows:repeat(3,34px);gap:3px">' + gb('4', 2, 1) + gb('3', 1, 2) + gb('2', 3, 2) + gb('1', 2, 3) + '</div></div>'; } /* laid out like the controller: D-pad | Select Start | face diamond */
   if (k === 'cyd') return '<p class="note keep" style="margin:0;display:flex;align-items:center;gap:8px"><span class="simled" style="width:16px;height:16px;border-radius:50%;background:#333;border:2px solid #888;flex:none"></span>RGB LED (GPIO 4, 16, 17). Tap the tiles on the screen.</p>';
   if (k === 'arcade') return '<div style="display:flex;flex-wrap:wrap;gap:12px;justify-content:center">' + simDpad(['A', 'B', 'X', 'Y']) + '</div>';
   return ''; }
@@ -3689,7 +3733,7 @@ function simAct(a, down, b) { const st = SIM.st, k = SIM.k, now = performance.no
     if (down && k === 'arcade' && 'ABXY'.indexOf(a) > -1) simTone({ A: 523, B: 659, X: 784, Y: 1047 }[a], 0.08, 'square'); } }
 function simPointer(e, type, cv) { const k = SIM.k, st = SIM.st, [W, H] = SIMSZ[k], b = cv.getBoundingClientRect(), x = ((e.clientX - b.left) / b.width) * W, y = ((e.clientY - b.top) / b.height) * H;
   if (k === 'gamepad') { if (type === 'down') st.drag = x < W / 2 ? 0 : 1; if (type === 'up') { if (st.drag > -1) st.s[st.drag] = { x: 0, y: 0 }; st.drag = -1; return; }
-    if (st.drag < 0) return; const cx = st.drag ? 216 : 40, dx = (x - cx) / 30, dy = (y - 64) / 30, m = Math.max(1, Math.hypot(dx, dy)); st.s[st.drag] = { x: dx / m, y: dy / m }; return; }
+    if (st.drag < 0) return; const cx = GPS[st.drag][0], dx = (x - cx) / 22, dy = (y - GPS[st.drag][1]) / 22, m = Math.max(1, Math.hypot(dx, dy)); st.s[st.drag] = { x: dx / m, y: dy / m }; return; }
   if (k === 'cyd' && type === 'down' && y > 36) { const i = Math.min(2, Math.floor((x - 4) / 104)) + (y > 134 ? 3 : 0); if (i < 0) return; st.on[i] = !st.on[i]; st.led = st.on[i] ? CYDT[i][1] : (st.on.some(Boolean) ? CYDT[st.on.lastIndexOf(true)][1] : ''); st.msg = 'Touch x=' + Math.round(x) + ' y=' + Math.round(y) + ': ' + CYDT[i][0] + (st.on[i] ? ' ON' : ' OFF'); simTone(st.on[i] ? 1046 : 523, 0.05, 'square'); } }
 const BAYER = [0, 8, 2, 10, 12, 4, 14, 6, 3, 11, 1, 9, 15, 7, 13, 5];
 function simDraw(g, W, H, t, dt) { const k = SIM.k, st = SIM.st; let out = '';
@@ -3713,9 +3757,10 @@ function simDraw(g, W, H, t, dt) { const k = SIM.k, st = SIM.st; let out = '';
     g.putImageData(im, 0, 0); if (t - st.flash < 0.12) { g.fillRect(0, 0, W, H); } g.fillStyle = '#000'; g.fillRect(0, 0, 50, 9); g.fillStyle = '#fff'; g.fillText('SHOTS ' + st.shots, 1, 1);
     out = 'Viewfinder: 1-bit, 128 x 64\nPhotos: ' + st.shots + (st.wig ? '\nWiggle: servo swings left and right' : ''); }
   else if (k === 'gamepad') { const ax = (v) => Math.round((v + 1) / 2 * 32767), keys = st.keys, u = keys.u, dn = keys.d, l = keys.l, r = keys.r;
-    st.s.forEach((s, i) => { const cx = i ? 216 : 40; g.globalAlpha = 0.4; g.beginPath(); g.arc(cx, 64, 32, 0, 7); g.stroke(); g.globalAlpha = 1; g.beginPath(); g.arc(cx + s.x * 24, 64 + s.y * 24, 12, 0, 7); g.fill(); });
-    [['u', 98, 42], ['d', 98, 74], ['l', 82, 58], ['r', 114, 58]].forEach(([kk, x, y]) => { g.globalAlpha = keys[kk] ? 1 : 0.3; g.fillRect(x, y, 14, 14); });
-    ['1', '2', '3', '4', '5', '6'].forEach((kk, i) => { g.globalAlpha = keys[kk] ? 1 : 0.3; g.beginPath(); g.arc(146 + (i % 3) * 14, 52 + Math.floor(i / 3) * 22, 6, 0, 7); g.fill(); }); g.globalAlpha = 1;
+    g.save(); g.globalAlpha = 0.22; g.beginPath(); g.moveTo(58, 14); g.lineTo(198, 14); g.arc(198, 50, 36, -Math.PI / 2, 0.35); g.arc(214, 92, 30, -0.4, 1.9); g.lineTo(158, 116); g.lineTo(98, 116); g.arc(42, 92, 30, 1.25, 3.55); g.arc(58, 50, 36, 2.8, -Math.PI / 2); g.closePath(); g.stroke(); g.restore(); /* the Controller body, as laid out on the case */
+    st.s.forEach((s, i) => { const [cx, cy] = GPS[i]; g.globalAlpha = 0.4; g.beginPath(); g.arc(cx, cy, 20, 0, 7); g.stroke(); g.globalAlpha = 1; g.beginPath(); g.arc(cx + s.x * 14, cy + s.y * 14, 9, 0, 7); g.fill(); });
+    [['u', 51, 27], ['d', 51, 55], ['l', 37, 41], ['r', 65, 41]].forEach(([kk, x, y]) => { g.globalAlpha = keys[kk] ? 1 : 0.3; g.fillRect(x, y, 13, 13); });
+    [['1', 204, 61], ['2', 218, 47], ['3', 190, 47], ['4', 204, 33], ['5', 114, 38], ['6', 142, 38]].forEach(([kk, x, y]) => { g.globalAlpha = keys[kk] ? 1 : 0.3; g.beginPath(); g.arc(x, y, +kk > 4 ? 5 : 6.5, 0, 7); g.fill(); }); g.globalAlpha = 1; /* face diamond right, Select + Start in the middle */
     const hat = (u ? 'UP' : dn ? 'DOWN' : '') + (l ? (u || dn ? '_' : '') + 'LEFT' : r ? (u || dn ? '_' : '') + 'RIGHT' : '') || 'CENTERED', pr = ['1', '2', '3', '4', '5', '6'].filter((kk) => keys[kk]);
     out = 'BLE: connected as "Case Zero Pad"\nLeft  X ' + String(ax(st.s[0].x)).padStart(5) + '  Y ' + String(ax(st.s[0].y)).padStart(5) + '\nRight Z ' + String(ax(st.s[1].x)).padStart(5) + '  RZ ' + String(ax(st.s[1].y)).padStart(5) + '\nHat ' + hat + '  Buttons: ' + (pr.join(' ') || 'none'); }
   else if (k === 'cyd') { g.fillStyle = '#fff'; g.font = 'bold 18px sans-serif'; g.fillText('CYD Touch Deck', 8, 8);
