@@ -2980,7 +2980,7 @@ function copilot() {
   if (AVRB.indexOf(bk) > -1 && sound && !store && S.beh !== 'midi')
     add('audio', 'Sound clips need somewhere to live', 'The ' + nm + ' keeps its code in 32 KB and has no room for sound files, so on its own it can only beep tones. Pick one way to play real clips.',
       [['add', 'dfplayer', '+ Add $2 DFPlayer Mini + SD'], ['beh', 'midi', 'Play via Laptop (Serial MIDI)']].concat(canSwap ? [['brain', 'pico', 'Swap to Pico']] : []).concat([['ok', '', 'I already have this / Continue']]));
-  if (bk === 'pico' && sound && !store && clipCount() > 4)
+  if (bk === 'pico' && sound && !store && clipCount() > 4 && (recipe() || {}).group !== 'games' && !(fn === 'sampler' && hasT('keypad44'))) /* a game's buttons steer; the keypad sampler synthesizes its pads (synthio), no clips */
     add('clips', 'Room for about 4 clips', 'The Pico keeps clips in its own 2 MB of flash, next to the code: about 4 short .wav clips (16-bit, 22 kHz, 5 s each) fit. Your build has ' + clipCount() + ' pads.',
       [['add', 'sdcard', '+ Add $2 MicroSD Reader'], ['ok', '', 'Keep 4 clips']]);
   if (w.problems.some((p) => /^Out of pins/.test(p))) {
@@ -3114,7 +3114,11 @@ function placeRecipe(r) { // a starter's own body size, parts, layout, mounts an
 }
 // Reset layout: the starter's (or the shape's) own part spots, edge-locked port and default parts. Colors, logos, printer and the rest of the build stay.
 const k0 = (it) => USBK[it.type];
-function edgeLock() { // the brain's USB end flush with a wall in its stepped port; a brain on the top (CYD) gets a stepped port at its short end
+function edgeLock() { // and when no wall has room for it, the body grows a square at a time (up to 3) until one does
+  for (let n = 0; n < 4; n++) { edgeLock1(); const br = S.items.find((i) => i.of == null && i.panel === 'inside' && PP(i) && PP(i).cat === 'brain'); if (!br || hasBattery() || isPanel() || !USBK[br.type] || autoPorts().length || n === 3 || S.lockBox) return;
+    if (S.cols <= S.rows) S.cols++; else S.rows++; reflow(); S.items.forEach((i) => { i.x = -999; i.y = -999; }); fitAll(); keepInside(); }
+}
+function edgeLock1() { // the brain's USB end flush with a wall in its stepped port; a brain on the top (CYD) gets a stepped port at its short end
   if (isPanel() || hasBattery()) return; const br = S.items.find((i) => i.of == null && PP(i) && PP(i).cat === 'brain'); if (!br) return; const P = PP(br), k = USBK[br.type];
   if (br.panel === 'inside') { if (autoPorts().length) return; snapBrain(br); if (autoPorts().length) return; /* the nearest wall was full: make room, then try again */
     const b = G.bbox(outline()), cx = (b.x0 + b.x1) / 2, cy = (b.y0 + b.y1) / 2, m = R.T + 0.9, hw = P.w / 2, x0 = br.x, y0 = br.y, r0 = br.r || 0, others = S.items.filter((i) => i !== br && i.panel === 'inside' && i.of == null);
