@@ -384,3 +384,19 @@ body.t-dots{background-image:radial-gradient(var(--tex) 1.3px,transparent 1.6px)
 .ss.hero-img{position:absolute}
 .hero .ss-s.on{z-index:0}
 .hero .ss-dots{top:10px;bottom:auto}
+/* fluid scale: values come from computeScale() in site.js */
+body,body.d-compact{font-size:var(--fs-body,17px)}
+.ttl{font-size:var(--fs-h1,clamp(30px,8vw,52px))}
+.hero-h{font-size:clamp(44px,calc(var(--fs-h1,52px) * 1.75),104px)}
+.cards{grid-template-columns:repeat(auto-fill,minmax(max(140px,calc((100% - (var(--cols,4) - 1) * var(--gap)) / var(--cols,4))),1fr))}
+.g-list .cards,.g-links .cards{grid-template-columns:1fr}
+.tiles{grid-template-columns:repeat(auto-fill,minmax(max(140px,calc((100% - (var(--cols,4) - 1) * var(--gap)) / var(--cols,4))),1fr))}
+/* footer links and install */
+.ft-links{display:flex;flex-wrap:wrap;gap:0 18px}
+.ft-links a{text-decoration:none}
+@media(hover:hover){.ft-links a:hover{text-decoration:underline;text-underline-offset:3px}}
+.ft-app{flex-basis:100%;display:flex;flex-direction:column;align-items:flex-start;gap:6px}
+.ft-app .btn{min-height:44px;padding:0 18px;font-size:14px}
+.ft-tip{margin:0;font-size:13px}
+.emb{aspect-ratio:4/5;background:var(--sf)}
+@media(min-width:760px){.emb{aspect-ratio:16/10}}
