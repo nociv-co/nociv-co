@@ -8,7 +8,7 @@ import { CARABINER_HOOK_OUTLINE_MM, CARABINER_DEFAULT_THICKNESS_MM } from './cha
 import { openMeasure, GROUPS } from './capture.js?v=26';
 import { makeBoard, boardFiles, boardSvg, zip as zipFiles, dipOf } from './board.js?v=5';
 import { charParts, chSpec, charBuyList, CH_DEF, headDims, faceSpots, faceLimit, featPoly, flatParts, FEATS } from './char3d.js?v=5';
-import { powerPlan, POWER_MODES, micMain, planWiring, codeFor, PICO_LEFT, PICO_RIGHT, PICO_PINS, PICO_BRAINS, NEED, BOARDS, BOARD_OF, SCALES, LIBURL, preflight, DJFX, BEATS, DJMODE, libsFor, ACTS, ACTN, DJA, V33, BOARD_PROFILES } from './wiring.js?v=32';
+import { powerPlan, POWER_MODES, micMain, planWiring, codeFor, PICO_LEFT, PICO_RIGHT, PICO_PINS, PICO_BRAINS, NEED, BOARDS, BOARD_OF, SCALES, LIBURL, preflight, DJFX, BEATS, DJMODE, libsFor, ACTS, ACTN, DJA, V33, BOARD_PROFILES } from './wiring.js?v=33';
 
 const CZ = window.CZ, R = G.RULE, $ = (id) => document.getElementById(id);
 const esc = (s) => String(s == null ? '' : s).replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
@@ -23,9 +23,10 @@ let S = { step: 2, tab: {}, cat: 'brain', items: [], mine: {}, style: 'clam', co
 const LOOK0 = () => ({ logos: {}, logoAt: 'lidout', labels: { on: false, place: 'below', size: 4, how: 'dip', text: {} }, tex: { top: { kind: 'none', sp: 6, bump: false }, bottom: { kind: 'none', sp: 6, bump: false }, walls: { kind: 'none', sp: 6 }, lidout: { kind: 'none', sp: 6, bump: false }, lidin: { kind: 'none', sp: 6, bump: false } }, texFace: 'top', colors: 1, c1: '#e9e2cc', c2: '#1a1a1a', single: 'paint' });
 // One store for Body, Brain and Parts: S, kept in localStorage. STORED is the text this page last read or wrote,
 // so a page that was left open (another tab, or one the Back button brings back) can tell the build changed and take it, instead of saving its old copy over it.
-const S_DEF = JSON.stringify(S); let STORED = null;
+const S_DEF = JSON.stringify(S), VKEY = 'cz_build_v1'; let STORED = null; /* VKEY: versioned crash-proof copy { v: 1, at, S } */
 function hydrate() {
-  let raw = null; try { raw = localStorage.getItem(KEY); const s = JSON.parse(raw || 'null'); if (s && Array.isArray(s.items)) S = Object.assign(JSON.parse(S_DEF), s); } catch (e) {}
+  let raw = null; try { raw = localStorage.getItem(KEY); const s = JSON.parse(raw || 'null'); if (s && Array.isArray(s.items)) S = Object.assign(JSON.parse(S_DEF), s); else raw = null; } catch (e) { raw = null; }
+  if (raw == null) try { const v = JSON.parse(localStorage.getItem(VKEY) || 'null'); if (v && v.v === 1 && v.S && Array.isArray(v.S.items)) { S = Object.assign(JSON.parse(S_DEF), v.S); raw = JSON.stringify(v.S); localStorage.setItem(KEY, raw); } } catch (e) {} /* iOS reload or a damaged main copy: the versioned copy brings the build back */
   STORED = raw;
   S.look = Object.assign(LOOK0(), S.look || {}); /* a look saved by an older builder gets any part it is missing */
   if (S.look.logo) { const o = S.look.logo; S.look.logos = S.look.logos || {}; S.look.logos[o.face || 'lidout'] = { on: !!o.on, src: o.src || 'text', text: o.text || 'NOCIV', x: o.x, y: o.y, size: o.size || 40, how: o.how || 'dip' }; S.look.logoAt = o.face || 'lidout'; delete S.look.logo; } /* one logo for the whole case becomes the logo of its face */
@@ -43,7 +44,10 @@ function applyWalls() { const t = +S.wallT || (S.walls === 'tough' ? 3.2 : 2.4),
   const c = tolOf(); R.CLR = r3(0.1 + c); R.MAG = r3(6.1 + c); R.FIT = r3(c - 0.2); R.SEAM = r3(c * 0.375); }
 function tolOf() { return S.tol > 0 ? +S.tol : 0.2; }
 applyWalls();
-const save = () => { try { const raw = JSON.stringify(S); localStorage.setItem(KEY, raw); STORED = raw; } catch (e) {} histNote(); };
+const save = () => { try { const raw = JSON.stringify(S); localStorage.setItem(KEY, raw); STORED = raw; localStorage.setItem(VKEY, '{"v":1,"at":' + Date.now() + ',"S":' + raw + '}'); } catch (e) {} histNote(); };
+/* iOS Safari can drop a tab at any time: flush the build when the page hides, unless another tab saved a newer one */
+const flush = () => { try { const cur = localStorage.getItem(KEY); if (cur != null && cur === STORED && JSON.stringify(S) !== STORED) save(); } catch (e) {} };
+addEventListener('pagehide', flush); document.addEventListener('visibilitychange', () => { if (document.visibilityState === 'hidden') flush(); });
 // Undo / Redo: every saved change to the build is one step (moves, swaps, deletes, sizes, shrouds, extras). Where you are (room, page, tab, Simple | Pro) is not a change.
 // Quick saves in a row (a drag) fold into one step; snapU() marks a hard edge before a tap that changes things.
 const NAVK = ['step', 'tab', 'page', 'seen', 'lastIn', 'moreOn', 'pro', 'fn', 'xsel', 'cat', 'nsel'], HIST = { u: [], r: [], cur: null, t: 0, cut: false, lock: false };
@@ -2315,7 +2319,7 @@ function pfList() { try { return preflight(wiring(), BRDX()); } catch (e) { retu
 function pfHtml() { return copilotHtml(); }
 function pfTag() { const L = pfList(); if (L.length) tag('Warning: ' + L[0] + (L.length > 1 ? ' (+' + (L.length - 1) + ' more)' : '')); return L; }
 function wiringText() { const w = wiring(), B = BRDX(), L = ['NOCIV Case Zero wiring', 'Brain: ' + B.name, ''];
-  pfList().forEach((x) => L.push('CHECK FIRST: ' + x)); w.problems.forEach((x) => L.push('FIX: ' + x)); if (L.length > 3) L.push('');
+  pfList().forEach((x) => L.push('CHECK FIRST: ' + x)); w.problems.forEach((x) => L.push('FIX: ' + x)); if (w.power && w.power.over) L.push(w.power.tip, '   ' + w.power.detail); if (L.length > 3) L.push('');
   w.rows.forEach((row) => L.push(row.it.label + ': ' + (row.roles.length ? row.roles.map((r) => r.role + ' -> ' + (r.pin == null ? '?' : B.lab(r.pin)) + (r.two ? ' + ' + B.lab(r.pin + 1) : '')).join(', ') : 'no brain pin') + (row.power ? ', power -> ' + netName(row.power) : '') + ', GND -> GND' + (row.note ? '\n   ' + row.note : '')));
   return L.join('\n') + '\n'; }
 function pinsHtml() {
@@ -2327,6 +2331,7 @@ function pinsHtml() {
   let h = '<div class="grid g2" style="margin:6px 0"><button class="btn dark" data-act="savecode">Save ' + CFILE() + '</button><button class="btn" data-act="repin">Pick pins for me</button></div>' + (S.items.some((i) => i.type === 'inmp441') && BRDX().cp ? '<button class="btn" data-act="savemic" style="width:100%;margin-bottom:6px">Save main.py (records the mic, MicroPython)</button>' : '') + '<p class="note" style="margin-top:0">' + (bp ? '<b>' + esc(bp.name) + '</b>.' : '<b>No brain picked</b>, showing a Raspberry Pi Pico.') + ' Every part gets its pins by the real rules. Soldered already? Pick the pins you used. * = taken. ' + (BRDX().ino ? 'casezero.ino is Arduino code' : 'code.py is CircuitPython') + ': buttons print their name, the screen shows what you press, knobs show 0 to 100. Steps are at the top of the file.</p>' + libsBox();
   const tagScr = S.items.filter((i) => PP(i) && (PP(i).userCuts || []).some((u) => u.kind === 'screen')).length; if (tagScr) h += '<p class="note"><span class="bad">A screen tagged on your board photo is not wired yet.</span> Which screen is it? Add it in Electronics, Screens (2.8 in, round, OLED) and it gets its pins and code here.</p>';
   if (w.problems.length) h += '<p class="note">' + w.problems.map((x) => '<span class="bad">' + esc(x) + '</span>').join('<br>') + '</p>';
+  if (w.power && w.power.over) h += '<details class="fold pwtip"><summary>' + esc(w.power.tip) + ' &#9432;</summary><p class="note" style="margin:6px 0 0">' + esc(w.power.detail) + '</p></details>';
   h += '<div class="list" style="margin-top:6px">' + w.rows.map((r) => '<div class="it"><b>' + esc(r.it.label) + '</b>' + r.roles.map((x) => '<span class="pr">' + esc(x.role) + ' ' + (x.fixed || !x.k ? '<i>' + LABP(x.pin) + '</i>' : opt(x.k, x.pin) + (x.two ? ' <i>+ ' + LABP(x.pin + 1) + '</i>' : '')) + '</span>').join('') + '<span class="pr">' + (r.power ? '+ to ' + r.power + ', ' : '') + 'GND to GND</span>' + (r.note ? '<small>' + esc(r.note) + '</small>' : '') + '</div>').join('') + '</div>';
   return h;
 }
@@ -3185,7 +3190,7 @@ const recipeCost = (r) => r.parts.reduce((a, [t, n]) => a + ((CZ.PARTS[t] && CZ.
 // The printer and its bed stay (they are her machine, not the build). The old build is kept once, so "Bring back the build I had before" still works.
 function wipeAll() {
   backup(); const keep = { printer: S.printer, bed: S.bed };
-  try { [KEY, KEY + ':photo', KEY + ':logo'].concat(['lidout', 'lidin', 'top', 'bottom', 'back', 'front', 'left', 'right'].map((f) => KEY + ':logo:' + f)).forEach((k) => localStorage.removeItem(k)); } catch (e) {}
+  try { [KEY, VKEY, KEY + ':photo', KEY + ':logo'].concat(['lidout', 'lidin', 'top', 'bottom', 'back', 'front', 'left', 'right'].map((f) => KEY + ':logo:' + f)).forEach((k) => localStorage.removeItem(k)); } catch (e) {}
   try { if (location.search) history.replaceState(null, '', location.pathname); } catch (e) {}
   S = Object.assign(JSON.parse(S_DEF), keep); S.look = LOOK0(); S.phold = 'screws';
   Object.keys(LOGOIMGS).forEach((k) => delete LOGOIMGS[k]); PHOTO = null; uid = 0; sel = null; LAST = null; UNDO.length = 0; MPC = {}; markCache = {}; FILES = [];

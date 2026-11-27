@@ -117,7 +117,22 @@ export function planWiring(items, over, B) {
   items.forEach((it) => { const N = NEED[it.type]; if (!N || !N.pins) return; if (N.viaDac && dac) { rows.push({ it, roles: [], power: null, note: 'Wired to the audio DAC: its LOUT, ROUT and AGND go to the tip, ring and sleeve. No brain pin.', N: Object.assign({}, N, { what: 'jack' }) }); return; }
     rows.push({ it, roles: N.pins.filter(([r]) => !((N.opt || []).indexOf(r) > -1 && got[it.key + ':' + r] == null)).map(([r, kind]) => ({ role: r, pin: got[it.key + ':' + r], kind, k: it.key + ':' + r, two: kind === 'enc' || kind === 'uart' })), power: N.power || null, note: N.note || '', N }); });
   rows.sort((a, b) => items.indexOf(a.it) - items.indexOf(b.it));
-  return { rows, problems: Array.from(new Set(problems)), used };
+  rows.forEach((row) => { if (HIGH_DRAW[row.it.type]) row.power = 'VBUS'; }); /* servos, the LED matrix and the amp always take 5 V, never 3V3 */
+  return { rows, problems: Array.from(new Set(problems)), used, power: powerBudget(items, B) };
+}
+
+// Silent power budget: typical current (mA) per part, kept out of sight. Only a calm tip shows, and only past ~500 mA.
+export const DRAW_MA = { servo: 250, mat8: 320, i2sdac: 300, ring12: 240, tft28: 80, round128: 50, oled096: 20, lcd1602: 30, dfplayer: 100, sdcard: 50, arducam: 100, vl53: 20, inmp441: 2, pir: 1, led5: 10, speaker28: 30 };
+export const HIGH_DRAW = { servo: 'SG90 servo', mat8: 'LED matrix', i2sdac: 'MAX98357A amp' };
+export const BRAIN_MA = { pico: 30, uno: 50, nano: 25, promicro: 30, c3: 80, esp32: 120, s3: 120, cyd: 200, pi: 500 };
+export const POWER_LIMIT_MA = 500;
+export const POWER_TIP = 'Tip: plug into a wall USB charger or good battery pack for steady motor/speaker power.';
+export function powerBudget(items, B) {
+  B = B || BOARDS.pico; const k = Object.keys(BOARDS).find((x) => BOARDS[x] === B) || 'pico';
+  let mA = BRAIN_MA[k] || 50; const big = [];
+  (items || []).forEach((it) => { const d = DRAW_MA[it.type] || 0; mA += d; if (HIGH_DRAW[it.type]) big.push(HIGH_DRAW[it.type] + ' ~' + d + ' mA'); });
+  const over = mA > POWER_LIMIT_MA;
+  return { mA, over, tip: over ? POWER_TIP : '', detail: over ? 'About ' + mA + ' mA in total (a computer USB port gives ~500 mA). ' + (big.length ? big.join(', ') + ', all on ' + B.v5 + '. ' : '') + 'Put a 100 \u00b5F capacitor across ' + B.v5 + ' and GND, close to the parts, to smooth out motor and speaker kicks.' : '' };
 }
 
 // a board that does not run CircuitPython (Arduino Nano, Pro Micro, a Raspberry Pi): the pin list for your own code
@@ -149,6 +164,7 @@ export function codeFor(plan, title, fn, B, tw) {
   const fa = (plan.rows || []).filter((r) => r.it.action); /* part.action: what each control does, the same list Test It acts out */
   if (fa.length && c.lang !== 'txt') c.text = [cm + 'FUNCTIONS (set in Test It, tap a part, Function):'].concat(fa.map((r) => cm + '  ' + r.it.label + ' -> ' + ACTN(r.it.action))).join('\n') + '\n' + c.text;
   if (pf.length) c.text = pf.map((w) => cm + 'CHECK FIRST: ' + w).join('\n') + '\n' + c.text;
+  const pw = plan.power || powerBudget((plan.rows || []).map((r) => r.it), B); if (pw.over && c.lang !== 'txt') c.text = cm + pw.tip + '\n' + cm + '  ' + pw.detail + '\n' + c.text;
   return c;
 }
 // ---------- board profiles: one lookup for pins, logic voltage, code file and the library each part needs ----------

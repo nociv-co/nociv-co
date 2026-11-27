@@ -10,6 +10,9 @@
 <meta name="theme-color" content="#F3F1EC">
 <link rel="apple-touch-icon" href="/icons/shop-180.png">
 <link rel="icon" type="image/png" sizes="192x192" href="/icons/shop-192.png">
+<link rel="manifest" href="manifest.json">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="Case Zero">
 <style>
 :root{--ink:#1a1a1a;--paper:#f3efe6;--panel:#fbf9f4;--line:#d9d4c8;--mute:#6f6a60;--red:#c8412f;--green:#2f7a4b;--sys:-apple-system,BlinkMacSystemFont,"Helvetica Neue",Arial,sans-serif}
 *{box-sizing:border-box}
@@ -450,6 +453,7 @@ body:has(#nxt:not([hidden])) .pane{padding-bottom:calc(84px + env(safe-area-inse
 <input type="file" id="snapIn" accept="image/*" capture="environment" hidden>
 <div class="cfull" id="cfull" hidden role="dialog" aria-label="Your code"><div class="cfh"><span id="cfTabs"></span><span class="sp"></span><button type="button" id="cfCopy">Copy Code</button><button type="button" id="cfSave">Save</button><button type="button" id="cfX" aria-label="Close">&#x2715;</button></div><pre id="cfPre"></pre></div>
 <div class="sheet" id="sheet" hidden><div class="in" id="sheetIn"></div></div>
-<script type="module" src="builder.js?v=89"></script>
+<script type="module" src="builder.js?v=90"></script>
+<script>if('serviceWorker' in navigator){addEventListener('load',function(){navigator.serviceWorker.register('sw.js',{scope:'./'}).catch(function(){})})}</script>
 </body>
 </html>
