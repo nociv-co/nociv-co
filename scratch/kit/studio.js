@@ -171,6 +171,37 @@ var PRESETS = {
     shop: clone(SHIP),
     tabs: [tab('links', 'Links', { intro: 'Everything I do, in one place.', items: [{ id: rid(), title: 'New drop', buy: 'https://example.com', images: [] }, { id: rid(), title: 'My shop', buy: 'https://example.com', images: [] }, { id: rid(), title: 'Mailing list', buy: 'https://example.com', images: [] }, { id: rid(), title: 'Book me', buy: 'mailto:you@example.com', images: [] }] }),
       tab('page', 'About', { body: 'Two lines about you. What you make and where.' })] }; },
+  software: function () { return { v: 1, base: 'software', name: 'Appname', tagline: 'The simple way to do the one thing.', notice: 'New: version 2.0 is out', email: '', footer: '', domain: '', description: '', logo: '', shareImage: '',
+    style: Object.assign({ nav: 'tabs' }, lookStyle('grotesk,#f7f8fa,#0f172a,#3b5bfd,round,comfy,left,grid,landscape,pill,normal,none,border,fade')),
+    shop: clone(SHIP),
+    tabs: [tab('home', 'Home', { headline: 'Do the one thing. Faster.', intro: 'Appname turns a ten step chore into one tap. Free to start.', button: 'See pricing', buttonTo: 2 }),
+      tab('grid', 'Features', { intro: 'What it does.', items: [it('Fast setup', '', 'Core', 'Up and running in two minutes.'), it('Works offline', '', 'Core', 'Keeps going without a connection.'), it('Team sharing', '', 'Teams', 'Invite people with a link.'), it('Exports', '', 'Teams', 'CSV, PDF and JSON.')] }),
+      tab('grid', 'Pricing', { intro: 'Start free. Upgrade when it pays for itself.', items: [Object.assign(it('Free', '0', 'Plan', 'One user\nCore features\nCommunity help'), { cta: 'Start free' }), Object.assign(it('Pro', '9', 'Plan', 'Everything in Free\nExports\nEmail help'), { badge: 'Most popular', cta: 'Get Pro' }), Object.assign(it('Team', '29', 'Plan', 'Everything in Pro\nUp to 10 people\nPriority help'), { cta: 'Get Team' })] }),
+      tab('log', 'Changelog', { intro: 'What changed, newest first.', items: [lit('2.0: offline mode', today(0), 'Everything works without a connection now.'), lit('1.4: exports', today(21), 'CSV and PDF exports.')] }),
+      tab('page', 'Docs', { body: '# Getting started\nSign up, make your first project, invite your team.\n\n# Help\nEmail us any time. We answer within a day.' })] }; },
+  tool: function () { return { v: 1, base: 'tool', name: 'Toolname', tagline: 'A small studio for making one kind of thing.', notice: '', email: '', footer: '', domain: '', description: '', logo: '', shareImage: '',
+    style: Object.assign({ nav: 'tabs' }, lookStyle('space,#111214,#f1f1ee,#c6ff3d,soft,comfy,left,masonry,natural,solid,normal,grid,plain,rise')),
+    shop: clone(SHIP),
+    tabs: [tab('home', 'Home', { headline: 'Make it in a minute.', intro: 'Open the demo, pick a few settings, export the result.', button: 'Try the demo', buttonTo: 1 }),
+      tab('page', 'Demo', { body: 'Paste a link to your live tool in Demo link and it runs right here. Or add a short screen recording as the video.', embed: '' }),
+      tab('page', 'Guide', { body: '# 1. Start\nOpen the tool and pick a template.\n\n# 2. Adjust\nChange the settings until it looks right.\n\n# 3. Export\nDownload the file and use it anywhere.' }),
+      tab('gallery', 'Made with it', { intro: 'Things people made.', items: [it('Example one'), it('Example two'), it('Example three'), it('Example four')] })] }; },
+  community: function () { return { v: 1, base: 'community', name: 'Community Name', tagline: 'A place for people who make things.', notice: 'Front door only: members talk on our Discord', email: '', footer: '', domain: '', description: '', logo: '', shareImage: '',
+    style: Object.assign({ nav: 'tabs' }, lookStyle('soft,#fff8ef,#2b1d14,#e2553d,round,comfy,center,list,landscape,pill,normal,none,plain,fade')),
+    shop: clone(SHIP),
+    tabs: [tab('home', 'Home', { headline: 'Come build with us.', intro: 'Meetups, critiques and a friendly chat for people who make things.', button: 'Join the chat', buttonTo: 3 }),
+      tab('page', 'About', { body: 'Who this is for, what happens here and how it started.\n\n# Good to know\nThis site is the front door. Member accounts and chat live on an outside platform like Discord or Circle. A static site cannot hold logins or messages.' }),
+      tab('log', 'Events', { intro: 'Next one first.', items: [lit('Monthly meetup', today(-14), 'Bring something you are working on.'), lit('Open critique night', today(-30), 'Share work, get kind and useful notes.')] }),
+      tab('links', 'Join', { intro: 'Pick where you want to hang out.', items: [{ id: rid(), title: 'Discord', sub: 'Chat and voice rooms', buy: 'https://discord.com', images: [], style: 'button' }, { id: rid(), title: 'Circle', sub: 'Long posts and courses', buy: 'https://circle.so', images: [], style: 'button' }, { id: rid(), title: 'Newsletter', sub: 'Once a month', buy: 'mailto:you@example.com', images: [], style: 'button' }] }),
+      tab('page', 'Guidelines', { body: '# Be kind\nCritique the work, never the person.\n\n# Share credit\nName who made it.\n\n# No spam\nAsk before you promote.' })] }; },
+  dating: function () { return { v: 1, base: 'dating', name: 'Meet Slow', tagline: 'Real events for people tired of swiping.', notice: 'Waitlist and events only for now', email: '', footer: '', domain: '', description: '', logo: '', shareImage: '',
+    style: Object.assign({ nav: 'tabs' }, lookStyle('editorial,#fbeff0,#2b1418,#d6336c,round,comfy,center,grid,portrait,pill,normal,none,shadow,fade')),
+    shop: clone(SHIP),
+    tabs: [tab('home', 'Home', { headline: 'Meet people in real life.', intro: 'Small hosted events in your city. Join the waitlist to hear first.', button: 'Join the waitlist', buttonTo: 1 }),
+      tab('links', 'Waitlist', { intro: 'Tell us a little about you. It takes one minute.', items: [{ id: rid(), title: 'Join the waitlist', sub: 'A short form', buy: 'https://forms.gle/', images: [], style: 'button' }] }),
+      tab('log', 'Events', { intro: 'Upcoming.', items: [lit('Board game night', today(-10), 'Twenty people, ten games, one host.'), lit('Gallery walk', today(-24), 'Look at art, talk about it, get a drink after.')] }),
+      tab('page', 'How it works', { body: '# Today\nYou join the waitlist, we invite you to events.\n\n# Good to know\nThis site is a front door. Live profiles, matching and messages need a backend with accounts and a database, like Supabase or Cloudflare D1. A static site cannot keep people\'s private data safe on its own.' }),
+      tab('contact', 'Contact', { body: 'Hosting in your city? Write to us.' })] }; },
   blank: function () { return { v: 1, base: 'shop', name: '', tagline: '', notice: '', email: '', footer: '', domain: '', description: '', logo: '', shareImage: '',
     style: { nav: 'tabs', motion: 'fade', font: 'clean', bg: '#ffffff', text: '#111111', accent: '#111111', corner: 'soft', density: 'comfy', header: 'left', layout: 'grid', photo: 'square' },
     shop: clone(SHIP), tabs: [tab('home', 'Home', { headline: 'Hello', button: '', buttonTo: null })] }; }
@@ -178,9 +209,35 @@ var PRESETS = {
 
 // starter categories per kind of site: offered as one-tap tags on every item
 var CATS = { shop: ['Tees', 'Prints', 'Stickers', 'New'], archive: ['Photo', 'Type', 'Sound', 'Object'], archiveProducer: ['Beat', 'Sample pack', 'Merch'], archiveLog: ['Progress', 'Problem', 'Done'],
-  app: ['New', 'Popular', 'Free'], music: ['Single', 'Album', 'Merch', 'Vinyl'], food: ['Mains', 'Sides', 'Drinks', 'Sweets'], event: ['Tickets', 'Merch', 'Vendors'], links: ['Featured'], blank: ['New'] };
+  app: ['New', 'Popular', 'Free'], music: ['Single', 'Album', 'Merch', 'Vinyl'], food: ['Mains', 'Sides', 'Drinks', 'Sweets'], event: ['Tickets', 'Merch', 'Vendors'], software: ['Core', 'Teams', 'Plan'], tool: ['Template', 'Export'], community: ['Meetup', 'Online'], dating: ['Event'], links: ['Featured'], blank: ['New'] };
 Object.keys(CATS).forEach(function (k) { var f = PRESETS[k]; if (f) PRESETS[k] = function () { var d = f(); d.cats = CATS[k].slice(); return d; }; });
 var FUL = [['', 'Not set'], ['ready', 'Ready to ship'], ['store', 'Made in store'], ['custom', 'Custom order'], ['digital', 'Digital']];
+
+/* ---------- schema: fill in fields newer than a save ---------- */
+function migrate(d) {
+  if (!d || typeof d !== 'object') return d;
+  if (!d.shop) d.shop = clone(SHIP);
+  if (!d.style) d.style = PRESETS.blank().style;
+  if (!Array.isArray(d.tabs)) d.tabs = [];
+  if (!Array.isArray(d.footerLinks)) d.footerLinks = [];
+  if (!d.primaryView) d.primaryView = 'phone';
+  if (!d.secondaryView) d.secondaryView = 'desktop';
+  if (typeof d.enablePwa !== 'boolean') d.enablePwa = false;
+  ['customCss', 'customHead', 'customBody'].forEach(function (k) { if (typeof d[k] !== 'string') d[k] = ''; });
+  return d;
+}
+/* mark and sweep: drop stored files no save on this phone points at */
+function sweep() {
+  if (!db) return;
+  var keep = {}, re = /(?:images|audio|video|fonts)\/[\w.-]+/g;
+  function mark(t) { (String(t || '').match(re) || []).forEach(function (k) { keep[k] = 1; }); }
+  try { for (var i = 0; i < localStorage.length; i++) { var k = localStorage.key(i); if (k && k.indexOf(KEYBASE) === 0) mark(localStorage.getItem(k)); } } catch (e) { return; }
+  mark(JSON.stringify(D));
+  try {
+    var tx = db.transaction('img', 'readwrite'), req = tx.objectStore('img').openCursor();
+    req.onsuccess = function () { var c = req.result; if (!c) return; if (!keep[c.key]) { if (URLS[c.key]) { URL.revokeObjectURL(URLS[c.key]); delete URLS[c.key]; } c.delete(); } c.continue(); };
+  } catch (e) {}
+}
 
 /* ---------- storage ---------- */
 function idb() {
@@ -389,7 +446,10 @@ function pLook() {
     var one = function (n) { return '<svg viewBox="0 0 24 24" style="' + st + ';' + fill + (x[0] === 'badge' ? ';background:' + s.accent + ';color:' + acx + ';border-radius:6px;padding:3px' : '') + '">' + ICONS[n] + '</svg>'; };
     return '<button type="button" class="ic2' + ((s.icons || 'line') === x[0] ? ' on' : '') + '" data-act="style" data-k="icons" data-v="' + x[0] + '"><i>' + (x[0] === 'none' ? '<em>Home Shop</em>' : one('home') + one('bag') + one('user')) + '</i><span>' + x[1] + '</span></button>';
   }).join('') + '</div>';
-  return gal + lay + colors + type + btns + ics + '<details class="fine"' + (fineOpen ? ' open' : '') + '><summary>Fine tune</summary>' +
+  var VW = [['phone', 'Phone'], ['tablet', 'Tablet'], ['desktop', 'Desktop']];
+  function vrow(k, title, help) { return '<p class="step-s">' + title + '</p><div class="ch vrow">' + VW.map(function (o) { return '<button type="button" class="c' + ((D[k] || (k === 'primaryView' ? 'phone' : 'desktop')) === o[0] ? ' on' : '') + '" data-act="view" data-k="' + k + '" data-v="' + o[0] + '">' + o[1] + '</button>'; }).join('') + '</div>' + (help ? '<p class="help">' + help + '</p>' : ''); }
+  var views = '<p class="step-h">Screens</p>' + vrow('primaryView', 'Built mostly for') + vrow('secondaryView', 'Also looks good on', 'Spacing, type and columns scale smoothly between the two. Check it with Phone, Tablet and Wide under the preview.');
+  return gal + lay + views + colors + type + btns + ics + '<details class="fine"' + (fineOpen ? ' open' : '') + '><summary>Fine tune</summary>' +
     group('Menu', 'nav', [['tabs', 'Tabs', 'on top'], ['menu', 'Menu', 'button'], ['bottom', 'Bottom bar', 'like an app'], ['side', 'Side list', 'computer']], navNote) +
     group('Page change', 'motion', [['none', 'None'], ['fade', 'Fade'], ['slide', 'Slide'], ['rise', 'Rise'], ['zoom', 'Zoom']]) +
     '<button type="button" class="sm wide" data-act="demo">▶ Watch it</button>' +
@@ -433,7 +493,7 @@ function pTab() {
       vis().map(function (x) { if (x === t) return ''; return '<option value="' + vis().indexOf(x) + '"' + (t.buttonTo === vis().indexOf(x) ? ' selected' : '') + '>' + esc(x.name) + '</option>'; }).join('') + '</select></div>' +
       (t.buttonTo === -1 ? fld('Button link', P + '.buttonUrl', { type: 'url', mode: 'url', ph: 'https://', help: 'Any web address: a shop, a booking page, a video.' }) : '') + linksf(P + '.links');
   } else if (t.type === 'page') {
-    h += imgf('Photo at top', P + '.image') + videof(P + '.video') + fld('Words', P + '.body', { area: true, rows: 10, help: 'Leave a blank line for a new paragraph. Start a line with # and a space to make a heading.' }) + linksf(P + '.links');
+    h += imgf('Photo at top', P + '.image') + videof(P + '.video') + fld('Demo link <small class="opt">optional</small>', P + '.embed', { type: 'url', mode: 'url', ph: 'https://your-tool.app', help: 'A live tool, form or map that runs inside this page. Some sites block this; if it stays blank, link to it instead.' }) + fld('Words', P + '.body', { area: true, rows: 10, help: 'Leave a blank line for a new paragraph. Start a line with # and a space to make a heading.' }) + linksf(P + '.links');
   } else if (t.type === 'contact') {
     h += fld('Intro', P + '.intro', { area: true, rows: 2 }) + fld('Email', P + '.email', { type: 'email', mode: 'email', ph: D.email || 'you@yourname.com', help: 'Leave empty to use the email in Info.' }) + fld('More words', P + '.body', { area: true, rows: 4 });
   } else {
@@ -508,14 +568,32 @@ function pInfo() {
   return fld('Name', 'name', { max: 40 }) + fld('Tagline', 'tagline', { max: 90 }) + imgf('Logo', 'logo') +
     fld('Top banner', 'notice', { max: 70, ph: 'Free shipping over $50', help: 'A short line across the very top. Leave empty to hide.' }) +
     fld('Email', 'email', { type: 'email', mode: 'email', ph: 'you@yourname.com', help: 'Shown in the footer and on Contact.' }) +
-    fld('Footer', 'footer', { ph: '© ' + new Date().getFullYear() + ' ' + (D.name || 'Your Name') }) +
+    fld('Footer line', 'footer', { ph: '© ' + new Date().getFullYear() + ' ' + (D.name || 'Your Name') }) + footerf() +
     '<h3>Selling</h3><div class="f"><label for="cur">Money</label><select id="cur" data-b="shop.currency">' + c.map(function (k) { return '<option' + (D.shop.currency === k ? ' selected' : '') + '>' + k + '</option>'; }).join('') + '</select></div>' +
     fld('Shipping', 'shop.shipping', { area: true, rows: 3, help: 'Shows on every item page. Most shoppers look for this before they buy.' }) +
     fld('Returns', 'shop.returns', { area: true, rows: 3 }) +
     '<h3>Search and sharing</h3>' + fld('Your domain', 'domain', { type: 'url', mode: 'url', ph: 'yourname.com', help: 'So link previews in texts show your photo.' }) +
     fld('Description', 'description', { area: true, rows: 3, max: 160, help: 'One or two sentences. Google shows this under your name. Under 160 letters.' }) +
-    imgf('Share photo', 'shareImage');
+    imgf('Share photo', 'shareImage') +
+    '<h3>Home screen app</h3>' + chk('Make a Home Screen App', 'enablePwa') + '<p class="help">Adds an Install App button to your footer. People can keep your site on their phone like an app, and it opens even with a weak connection.</p>' +
+    codef();
 }
+function footerf() {
+  var fl = D.footerLinks || [];
+  return '<div class="f" data-sec="footerLinks"><span class="lab">Footer links</span>' + fl.map(function (x, j) {
+    return '<div class="lrow fl">' + fld('Words', 'footerLinks.' + j + '.label') + fld('Goes to', 'footerLinks.' + j + '.url', { type: 'url', mode: 'url', ph: 'https:// or a page' }) + '<button type="button" class="sm" data-act="ldel" data-p="footerLinks" data-k="' + j + '">Remove</button></div>';
+  }).join('') + '<div class="ch">' + [['contact', '+ Contact Us'], ['careers', '+ Careers'], ['privacy', '+ Privacy'], ['link', '+ Link']].map(function (o) { return '<button type="button" class="sm" data-act="fladd" data-v="' + o[0] + '">' + o[1] + '</button>'; }).join('') +
+    '<select class="sm" data-act-select="flpage" aria-label="Link a page"><option value="">+ A page</option>' + vis().map(function (t) { return '<option value="' + D.tabs.indexOf(t) + '">' + esc(t.name) + '</option>'; }).join('') + '</select></div></div>';
+}
+function codef() {
+  return '<details class="fine" id="code"' + (codeOpen ? ' open' : '') + '><summary>Code</summary>' +
+    fld('Custom CSS', 'customCss', { area: true, rows: 5, ph: '.hero-h { letter-spacing: 0 }', help: 'Applies right away in the preview and on your site.' }) +
+    fld('Extra code in &lt;head&gt;', 'customHead', { area: true, rows: 3, ph: '<!-- analytics, fonts, verification tags -->', help: 'Added to index.html when you download. Not run in the preview.' }) +
+    fld('Extra code before &lt;/body&gt;', 'customBody', { area: true, rows: 3, ph: '<script>...</script>' }) +
+    '<div class="f"><label for="codejson">site.json</label><textarea id="codejson" rows="10" spellcheck="false" class="mono">' + esc(JSON.stringify(exportJson(), null, 2)) + '</textarea><div class="ch"><button type="button" class="sm" data-act="jsonapply">Apply</button><button type="button" class="sm" data-act="copy" data-v="codejson">Copy</button></div><p class="help" id="jsonmsg">Edit and tap Apply. It is checked first, and Undo brings back what was there.</p></div>' +
+    '<div class="f"><span class="lab">index.html <small class="opt">read only</small></span><textarea id="codehtml" rows="8" readonly spellcheck="false" class="mono">' + esc(indexHtml()) + '</textarea><div class="ch"><button type="button" class="sm" data-act="copy" data-v="codehtml">Copy</button></div></div></details>';
+}
+function exportJson() { var j = clone(D); delete j._touched; delete j._preset; delete j._prevStyle; return j; }
 
 function checks() {
   var out = [], s = D.style, priced = [], nolink = 0, badlink = 0, empty = 0, nopic = 0, at = {};
@@ -559,6 +637,7 @@ function pPublish() {
     (bad ? '<p class="help">You can still download. These just make it better.</p>' : '') +
     '<button type="button" class="big" data-act="zip">Download Starter Kit (.zip)</button><p class="help" id="zipmsg"></p>' +
     '<p class="help"><b>Ready to use now.</b> Your layout, look and pages work the moment you upload it. Add real photos and videos later from your own domain.</p>' +
+    '<button type="button" class="sm wide" data-act="code">View and add code</button>' +
     '<button type="button" class="sm wide" data-act="admintest" aria-expanded="' + adminOpen + '">' + (adminOpen ? 'Close the Admin test' : 'Test your Admin') + '</button>' + (adminOpen ? adminTest() : '') +
     '<div class="steps"><h3>Then put it online. Free.</h3><ol><li>Make a free Cloudflare account.</li><li>Workers and Pages, Create, Pages, Upload assets. Pick the zip. Deploy.</li><li>You get a free link like yourname.pages.dev. Done.</li><li>Optional: your own domain (about $11 a year), and Stripe buy links if you sell.</li></ol></div>' +
     '<details class="fine"><summary>Selling with Stripe</summary><ol class="help"><li>Make a Stripe account and add your bank.</li><li>Payment Links, New. Add the product and price.</li><li>Turn on collecting the shipping address and add shipping rates.</li><li>Copy the link and paste it in the item\'s Buy link.</li></ol><p class="help">Stripe charges 2.9% + 30&cent; per US card and emails you and the buyer on every sale.</p></details>' +
@@ -644,9 +723,16 @@ function indexHtml() {
     '<meta name="description" content="' + desc + '">\n<meta property="og:type" content="website">\n<meta property="og:title" content="' + title + '">\n<meta property="og:description" content="' + desc + '">\n' +
     (share ? '<meta property="og:image" content="' + esc(absUrl(share)) + '">\n<meta name="twitter:card" content="summary_large_image">\n' : '') +
     (D.domain ? '<link rel="canonical" href="' + esc(absUrl('')) + '">\n' : '') +
-    '<meta name="theme-color" content="' + esc(D.style.bg) + '">\n<link rel="icon" href="' + icon + '">\n<link rel="apple-touch-icon" href="' + (D.logo ? esc(D.logo) : icon) + '">\n<link rel="stylesheet" href="kit/site.css">\n</head>\n<body>\n' +
-    '<div id="site"><noscript><div style="padding:24px;max-width:720px">' + noscriptHtml() + '<p>Turn on JavaScript to see the full site.</p></div></noscript></div>\n<script src="kit/site.js"></script>\n</body>\n</html>\n';
+    '<meta name="theme-color" content="' + esc(D.style.bg) + '">\n<link rel="icon" href="' + icon + '">\n<link rel="apple-touch-icon" href="' + (D.logo ? esc(D.logo) : icon) + '">\n' +
+    (D.enablePwa ? '<link rel="manifest" href="manifest.webmanifest">\n<meta name="apple-mobile-web-app-capable" content="yes">\n<meta name="apple-mobile-web-app-title" content="' + title + '">\n' : '') +
+    '<link rel="stylesheet" href="kit/site.css">\n' + (D.customHead ? D.customHead + '\n' : '') + '</head>\n<body>\n' +
+    '<div id="site"><noscript><div style="padding:24px;max-width:720px">' + noscriptHtml() + '<p>Turn on JavaScript to see the full site.</p></div></noscript></div>\n<script src="kit/site.js"></script>\n' + (D.customBody ? D.customBody + '\n' : '') + '</body>\n</html>\n';
 }
+function manifest() {
+  var icon = D.logo ? { src: D.logo, sizes: '512x512', type: /\.png$/i.test(D.logo) ? 'image/png' : 'image/jpeg' } : { src: 'favicon.svg', sizes: 'any', type: 'image/svg+xml' };
+  return JSON.stringify({ name: D.name || 'My site', short_name: (D.name || 'Site').slice(0, 12), description: D.description || D.tagline || '', start_url: './', scope: './', display: 'standalone', background_color: D.style.bg, theme_color: D.style.accent, icons: [icon] }, null, 2);
+}
+var SW = "/* Offline cache for this site. Pages load from the network first, then fall back to the last copy. */\nvar C='site-v1';\nself.addEventListener('install',function(e){e.waitUntil(caches.open(C).then(function(c){return c.addAll(['./','index.html','site.json','kit/site.css','kit/site.js']).catch(function(){})}));self.skipWaiting()});\nself.addEventListener('activate',function(e){e.waitUntil(self.clients.claim())});\nself.addEventListener('fetch',function(e){if(e.request.method!=='GET'||new URL(e.request.url).origin!==location.origin)return;e.respondWith(fetch(e.request).then(function(r){var k=r.clone();caches.open(C).then(function(c){c.put(e.request,k)});return r}).catch(function(){return caches.match(e.request).then(function(m){return m||caches.match('index.html')})}))});\n";
 function firstImage() { var f = ''; D.tabs.some(function (t) { if (t.image) { f = t.image; return true; } return (t.items || []).some(function (x) { if (x.images && x.images[0]) { f = x.images[0]; return true; } return false; }); }); return f; }
 function usedImages() {
   var s = {};
@@ -697,6 +783,7 @@ function buildZip() {
     { name: 'site.json', data: enc.encode(JSON.stringify(json, null, 2)) }, { name: 'README.txt', data: enc.encode(README) },
     { name: 'LICENSE.txt', data: enc.encode(LICENSE) }, { name: 'robots.txt', data: enc.encode('User-agent: *\nDisallow: /admin.html\nDisallow: /preview.html\n') });
   if (!D.logo) files.push({ name: 'favicon.svg', data: enc.encode(faviconSvg()) });
+  if (D.enablePwa) files.push({ name: 'manifest.webmanifest', data: enc.encode(manifest()) }, { name: 'sw.js', data: enc.encode(SW) });
   var kit = [['kit/site.js', 'kit/site.js'], ['kit/site.css', 'kit/site.css'], ['kit/studio.js', 'kit/studio.js'], ['kit/studio.css', 'kit/studio.css'], ['preview.html', 'preview.html'], ['admin.html', self]].concat(fontFiles());
   var jobs = kit.map(function (k) { return fetchBytes(k[1]).then(function (d) { files.push({ name: k[0], data: d }); }); });
   usedImages().forEach(function (p) {
@@ -736,7 +823,7 @@ function remixApply(r) {
 }
 
 /* ---------- events ---------- */
-var lookFam = null, fineOpen = false, fontCat = null, adminOpen = false;
+var lookFam = null, fineOpen = false, fontCat = null, adminOpen = false, codeOpen = false;
 function onAct(b) {
   var a = b.dataset.act, i = +b.dataset.i, j = +b.dataset.j, t = D.tabs[editTab];
   switch (a) {
@@ -778,6 +865,24 @@ function onAct(b) {
     case 'ful': t.items[editItem].ful = b.dataset.v; save(); break;
     case 'isz': t.items[editItem].size = b.dataset.v; save(); break;
     case 'admintest': adminOpen = !adminOpen; break;
+    case 'view': D[b.dataset.k] = b.dataset.v; save(); break;
+    case 'fladd':
+      var fk = b.dataset.v, ct = D.tabs.filter(function (x) { return x.type === 'contact' && !x.hidden; })[0], fe = { label: '', url: '' };
+      if (fk === 'contact') fe = { label: 'Contact Us', url: ct ? '#/' + slugOf(D.tabs.indexOf(ct)) : (D.email ? 'mailto:' + D.email : '') };
+      if (fk === 'careers') fe = { label: 'Careers', url: D.email ? 'mailto:' + D.email + '?subject=Careers' : '' };
+      if (fk === 'privacy') {
+        var pv = D.tabs.filter(function (x) { return x.name === 'Privacy'; })[0];
+        if (!pv) { pv = tab('page', 'Privacy', { body: 'This site does not use accounts or tracking. If you email us, we only use your address to reply.\n\n# Payments\nCheckout runs on Stripe. We never see your card.', hidden: false }); D.tabs.push(pv); }
+        fe = { label: 'Privacy', url: '#/' + slugOf(D.tabs.indexOf(pv)) };
+      }
+      D.footerLinks = (D.footerLinks || []).concat([fe]); save(); break;
+    case 'jsonapply':
+      var jm = $('#jsonmsg');
+      try { var nj = JSON.parse($('#codejson').value); if (!nj || !Array.isArray(nj.tabs) || !nj.tabs.length || !nj.style) throw new Error('It needs "tabs" and "style".'); nj._preset = D._preset; D = migrate(nj); editTab = editItem = null; save(); codeOpen = true; }
+      catch (x) { jm.textContent = 'Not applied: ' + (x.message || 'that is not valid JSON.'); jm.className = 'help warn'; return; }
+      break;
+    case 'copy': var ce = $('#' + b.dataset.v); (navigator.clipboard ? navigator.clipboard.writeText(ce.value) : Promise.reject()).then(function () { b.textContent = 'Copied'; }).catch(function () { ce.select(); }); return;
+    case 'code': pane = 'info'; codeOpen = true; draw(); var cd = $('#code'); if (cd) cd.scrollIntoView({ block: 'start' }); return;
     case 'imgclear': set(b.dataset.p, ''); save(); break;
     case 'fix':
       pane = b.dataset.v; pvHash = null; var fi = b.dataset.i, fj = b.dataset.j, ff = b.dataset.f;
@@ -799,7 +904,7 @@ function onAct(b) {
     case 'backup': var c = clone(D); delete c._touched; download(new Blob([JSON.stringify(c, null, 2)], { type: 'application/json' }), 'site.json'); return;
     case 'live':
       fetch('site.json', { cache: 'no-cache' }).then(function (r) { if (!r.ok) throw 0; return r.json(); }).then(function (d) {
-        if (!confirm('Replace what is here with your live site?')) return; D = d; editTab = editItem = null; save(); draw();
+        if (!confirm('Replace what is here with your live site?')) return; D = migrate(d); editTab = editItem = null; save(); draw();
       }).catch(function () { alert('No live site.json found here. This works from your own site\'s admin.html.'); });
       return;
     case 'reset': if (!confirm('Start this site over? This clears it on this phone.')) return; D = PRESETS[D._preset || 'blank'] ? PRESETS[D._preset || 'blank']() : PRESETS.blank(); D._preset = D._preset || 'blank'; editTab = editItem = null; pane = 'look'; save(); break;
@@ -807,18 +912,27 @@ function onAct(b) {
   draw();
 }
 
+/* Tablet (768px) and Wide (1280px) preview: render at the real width, scaled down to fit */
+function fitDev() {
+  var f = $('#pv'), fr = $('.st-frame'), dev = document.body.dataset.dev, w = dev === 'tablet' ? 768 : dev === 'wide' ? 1280 : 0;
+  if (!f || !fr) return;
+  var W = fr.clientWidth, H = fr.clientHeight;
+  if (!w || W >= w) { f.style.width = f.style.height = f.style.transform = ''; return; }
+  var k = W / w; f.style.width = w + 'px'; f.style.height = Math.round(H / k) + 'px'; f.style.transform = 'scale(' + k + ')'; f.style.transformOrigin = '0 0';
+}
+window.addEventListener('resize', function () { fitDev(); });
 function bind() {
   document.addEventListener('click', function (e) {
     var b = e.target.closest('[data-act]'); if (b && !b.disabled) { e.preventDefault(); onAct(b); return; }
     var p = e.target.closest('.st-tabs button'); if (p) { pane = p.dataset.p; if (pane === 'pages' && editTab != null) { editTab = editItem = null; pvHash = null; push(); } draw(); $('.st-ed').scrollTop = 0; }
     var md = e.target.closest('[data-mode]'); if (md) { mode = md.dataset.mode; $$('[data-mode]').forEach(function (x) { var on = x === md; x.classList.toggle('on', on); x.setAttribute('aria-pressed', on); }); post({ type: 'mode', pick: mode === 'pick' }); document.body.classList.toggle('viewing', mode !== 'pick'); }
-    var d = e.target.closest('[data-dev]'); if (d) { $$('[data-dev]').forEach(function (x) { x.classList.toggle('on', x === d); }); document.body.dataset.dev = d.dataset.dev; }
+    var d = e.target.closest('[data-dev]'); if (d) { $$('[data-dev]').forEach(function (x) { x.classList.toggle('on', x === d); }); document.body.dataset.dev = d.dataset.dev; fitDev(); }
     if (e.target.closest('#undo')) { travel(UNDO, REDO); return; }
     if (e.target.closest('#redo')) { travel(REDO, UNDO); return; }
-    if (e.target.closest('#full')) { document.body.classList.toggle('full'); $('#full').textContent = document.body.classList.contains('full') ? 'Close' : 'Full view'; }
+    if (e.target.closest('#full')) { document.body.classList.toggle('full'); setTimeout(fitDev, 30); $('#full').textContent = document.body.classList.contains('full') ? 'Close' : 'Full view'; }
   });
   document.addEventListener('keydown', function (e) { if (e.key === 'Enter' && e.target.id === 'tagin') { e.preventDefault(); var b = $('[data-act="tagnew"]'); if (b) onAct(b); } });
-  document.addEventListener('toggle', function (e) { if (e.target.classList && e.target.classList.contains('fine')) fineOpen = e.target.open; }, true);
+  document.addEventListener('toggle', function (e) { if (e.target.id === 'code') { codeOpen = e.target.open; return; } if (e.target.classList && e.target.classList.contains('fine')) fineOpen = e.target.open; }, true);
   document.addEventListener('input', function (e) {
     var el = e.target, p = el.dataset.b; if (!p) return;
     var v = el.type === 'checkbox' ? el.checked : el.value;
@@ -831,11 +945,12 @@ function bind() {
     var el = e.target;
     if (el.type === 'checkbox' && el.dataset.b && pane === 'pages') draw();
     if (el.tagName === 'SELECT' && el.dataset.b) draw();
+    if (el.dataset.actSelect === 'flpage' && el.value !== '') { var ft = D.tabs[+el.value]; D.footerLinks = (D.footerLinks || []).concat([{ label: ft.name, url: '#/' + slugOf(+el.value) }]); save(); draw(); return; }
     if (el.type !== 'file' || !el.files || !el.files.length) return;
     var files = el.files;
     if (el.dataset.restore) {
       var r = new FileReader();
-      r.onload = function () { try { var d = JSON.parse(r.result); if (!d.tabs || !d.style) throw 0; D = d; editTab = editItem = null; save(); draw(); } catch (x) { alert('That file is not a site backup.'); } };
+      r.onload = function () { try { var d = JSON.parse(r.result); if (!d.tabs || !d.style) throw 0; D = migrate(d); editTab = editItem = null; save(); draw(); } catch (x) { alert('That file is not a site backup.'); } };
       r.readAsText(files[0]); return;
     }
     if (el.dataset.video) {
@@ -893,8 +1008,8 @@ function boot() {
       .then(function (d) { pane = 'pages'; return d; })
       .catch(function () { var p = PRESETS.shop(); p._preset = 'shop'; return p; });
   }).then(function (d) {
-    D = d; if (!D.shop) D.shop = clone(SHIP); if (!D.style) D.style = PRESETS.blank().style;
-    SNAP = snapOf(); bind(); draw(); undoBtns();
+    D = migrate(d);
+    SNAP = snapOf(); bind(); draw(); undoBtns(); setTimeout(sweep, 1500);
     var f = $('#pv'); f.addEventListener('load', function () { ready = true; push(); });
     try { if (f.contentWindow.SiteKit) ready = true; } catch (e) {}
     push();
@@ -915,7 +1030,7 @@ function liveCheck() {
     var bar = document.createElement('div'); bar.className = 'steps'; bar.style.margin = '10px 12px';
     bar.innerHTML = '<h3>Your live site changed somewhere else</h3><p class="help">This phone has an older copy with its own edits. Which one do you want to work on?</p><div class="ch"><button type="button" class="sm" data-lv="live">Use the live site</button><button type="button" class="sm" data-lv="mine">Keep this copy</button></div>';
     var pn = document.getElementById('pane'); if (!pn || !pn.parentNode) return; pn.parentNode.insertBefore(bar, pn);
-    bar.addEventListener('click', function (e) { var b = e.target.closest('[data-lv]'); if (!b) return; if (b.getAttribute('data-lv') === 'live') { D = live; if (!D.shop) D.shop = clone(SHIP); if (!D.style) D.style = PRESETS.blank().style; editTab = editItem = null; save(); draw(); } mark(); bar.remove(); });
+    bar.addEventListener('click', function (e) { var b = e.target.closest('[data-lv]'); if (!b) return; if (b.getAttribute('data-lv') === 'live') { D = migrate(live); if (!D.shop) D.shop = clone(SHIP); if (!D.style) D.style = PRESETS.blank().style; editTab = editItem = null; save(); draw(); } mark(); bar.remove(); });
   }).catch(function () {});
 }
 boot();

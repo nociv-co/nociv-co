@@ -83,6 +83,22 @@ function pic(it, cls) {
 }
 
 /* ---------- style ---------- */
+/* Fluid sizes between the screen the site is built for and the one it should also look good on.
+   Each value is clamp(small, a straight line across screen widths, large), so nothing jumps at a breakpoint. */
+var VIEWS = { phone: { w: 375, pad: 16, gap: 12, sec: 32, h1: 32, body: 16, cols: 2 }, tablet: { w: 768, pad: 28, gap: 18, sec: 52, h1: 46, body: 17, cols: 3 }, desktop: { w: 1280, pad: 40, gap: 24, sec: 72, h1: 60, body: 18, cols: 4 } };
+function computeScale(primaryView, density, secondaryView) {
+  var a = VIEWS[primaryView] || VIEWS.phone, b = VIEWS[secondaryView] || VIEWS.desktop;
+  var lo = a.w <= b.w ? a : b, hi = a.w <= b.w ? b : a, k = density === 'compact' ? 0.72 : 1, out = {};
+  function fl(key, kk) {
+    var x = lo[key] * kk, y = hi[key] * kk;
+    if (hi.w === lo.w || x === y) return x.toFixed(1) + 'px';
+    var m = (y - x) / (hi.w - lo.w), c = x - m * lo.w;
+    return 'clamp(' + x.toFixed(1) + 'px, ' + c.toFixed(2) + 'px + ' + (m * 100).toFixed(3) + 'vw, ' + y.toFixed(1) + 'px)';
+  }
+  out['--pad'] = fl('pad', k); out['--gap'] = fl('gap', k); out['--sec'] = fl('sec', k);
+  out['--fs-h1'] = fl('h1', 1); out['--fs-body'] = fl('body', density === 'compact' ? 0.95 : 1); out['--cols'] = String(hi.cols);
+  return out;
+}
 function applyStyle() {
   var c = S.style || {};
   var bg = c.bg || '#ffffff', tx = c.text || '#111111', ac = c.accent || '#111111';
@@ -104,6 +120,8 @@ function applyStyle() {
   b.className = ['nav-' + (c.nav || 'tabs'), 'm-' + (reduce ? 'none' : (c.motion || 'fade')), 'f-' + (c.font || 'clean'), 'd-' + (c.density || 'comfy'),
     'h-' + (c.header || 'left'), 'g-' + (c.layout || 'grid'), 'p-' + (c.photo || 'square'), 'base-' + (S.base || 'shop'),
     'b-' + (c.btn || 'solid'), 'c-' + (c.case || 'normal'), 't-' + (c.tex || 'none'), 'k-' + (c.card || 'plain'), 'ic-' + (c.icons || 'line')].join(' ');
+  var sc = computeScale(S.primaryView, c.density, S.secondaryView); for (var key in sc) b.style.setProperty(key, sc[key]);
+  var cs = $('#fs-css'); if (S.customCss) { if (!cs) { cs = document.createElement('style'); cs.id = 'fs-css'; document.head.appendChild(cs); } cs.textContent = S.customCss; } else if (cs) cs.textContent = '';
   var tc = $('meta[name="theme-color"]'); if (tc) tc.setAttribute('content', bg);
 }
 
@@ -132,8 +150,11 @@ function shell() {
   h += '<div class="body">';
   if (nav === 'side') h += '<aside class="rail"><nav aria-label="Main">' + navLinks('rl') + '</nav></aside>';
   h += '<main id="main" class="view" tabindex="-1"></main></div>';
+  var fl = (S.footerLinks || []).filter(function (x) { return x && x.label; });
   h += '<footer class="ft"><div>' + esc(S.footer || ('© ' + new Date().getFullYear() + ' ' + (S.name || ''))) + (S.remixFrom ? '<br><small>Remixed from ' + esc(S.remixFrom) + '</small>' : '') + '</div>' +
-    (S.email ? '<a href="mailto:' + esc(S.email) + '">' + esc(S.email) + '</a>' : '') + '</footer>';
+    (fl.length || S.email ? '<nav class="ft-links" aria-label="Footer">' + fl.map(function (x) { var u = x.url || '#'; return '<a href="' + esc(u) + '"' + (/^https?:/i.test(u) ? ' target="_blank" rel="noopener"' : '') + '>' + esc(x.label) + '</a>'; }).join('') +
+      (S.email ? '<a href="mailto:' + esc(S.email) + '">' + esc(S.email) + '</a>' : '') + '</nav>' : '') +
+    (S.enablePwa ? '<div class="ft-app"><button type="button" class="btn ghost ft-inst" hidden>Make a Home Screen App</button><p class="ft-tip" hidden>On iPhone: tap Share <span aria-hidden="true">&#x2191;&#xFE0E;</span>, then Add to Home Screen.</p></div>' : '') + '</footer>';
   if (nav === 'bottom') {
     var all = tabs(), sl = slugs(), max = all.length > 5 ? 4 : all.length, bh = '';
     for (var i = 0; i < max; i++) bh += '<a class="bt" href="#/' + sl[i] + '" data-i="' + i + '">' + icon(all[i].icon || TYPE_ICON[all[i].type]) + '<span>' + esc(all[i].name) + '</span></a>';
@@ -283,7 +304,7 @@ function para(s) {
 }
 
 function vPage(t) {
-  return (t.image ? '<img class="page-img" src="' + esc(src(t.image)) + '" alt="">' : '') + video(t.video) + '<h1 class="ttl">' + esc(t.name) + '</h1><div class="prose">' + para(t.body || t.intro) + '</div>' + linkList(t.links);
+  return (t.image ? '<img class="page-img" src="' + esc(src(t.image)) + '" alt="">' : '') + video(t.video) + (/^https:\/\//i.test(t.embed || '') ? '<div class="vid emb"><iframe src="' + esc(t.embed) + '" title="Live demo" loading="lazy" sandbox="allow-scripts allow-same-origin allow-forms allow-popups allow-downloads" allow="fullscreen; clipboard-write"></iframe></div>' : '') + '<h1 class="ttl">' + esc(t.name) + '</h1><div class="prose">' + para(t.body || t.intro) + '</div>' + linkList(t.links);
 }
 
 function vGallery(t) {
@@ -431,7 +452,22 @@ function closePanel() {
   p.hidden = true; document.body.classList.remove('panel-open');
   $$('[aria-controls="panel"]').forEach(function (b) { b.setAttribute('aria-expanded', 'false'); });
 }
+var DEFER = null;
+window.addEventListener('beforeinstallprompt', function (e) { e.preventDefault(); DEFER = e; var b = $('.ft-inst'); if (b) { b.hidden = false; b.textContent = 'Install App'; } });
+function wireInstall() {
+  var b = $('.ft-inst'), tip = $('.ft-tip'); if (!b) return;
+  var ios = /iphone|ipad|ipod/i.test(navigator.userAgent) || (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
+  var standalone = (window.matchMedia && matchMedia('(display-mode: standalone)').matches) || navigator.standalone;
+  if (standalone) return;
+  if (DEFER) { b.hidden = false; b.textContent = 'Install App'; }
+  else if (ios || document.documentElement.hasAttribute('data-preview')) b.hidden = false;
+  b.onclick = function () {
+    if (DEFER) { DEFER.prompt(); DEFER.userChoice.then(function () { DEFER = null; b.hidden = true; }); return; }
+    tip.hidden = !tip.hidden;
+  };
+}
 function wireShell() {
+  wireInstall();
   $$('[aria-controls="panel"]').forEach(function (b) {
     b.onclick = function () {
       var p = $('#panel'), open = p.hidden;
@@ -537,7 +573,10 @@ if (document.documentElement.hasAttribute('data-preview')) {
   initPick(); document.documentElement.classList.add('fs-picking');
   parent.postMessage({ type: 'ready' }, location.origin);
 } else {
-  fetch('site.json', { cache: 'no-cache' }).then(function (r) { return r.json(); }).then(function (d) { start(d, {}); })
+  fetch('site.json', { cache: 'no-cache' }).then(function (r) { return r.json(); }).then(function (d) {
+    start(d, {});
+    if (d.enablePwa && 'serviceWorker' in navigator && location.protocol === 'https:') navigator.serviceWorker.register('sw.js').catch(function () {});
+  })
     .catch(function () { document.getElementById('site').innerHTML = '<p style="padding:24px;font-family:system-ui">site.json is missing or broken. Open admin.html to fix it.</p>'; });
 }
 })();
